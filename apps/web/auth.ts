@@ -3,11 +3,12 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import { prisma } from "@repo/db";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { authConfig } from "./auth.config";
 
 // @ts-ignore - NextAuth types are complex and not portable in this monorepo setup
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
   providers: [
     Credentials({
       credentials: {
@@ -45,26 +46,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      // Add custom claims to the JWT token
-      if (user) {
-        token.roles = (user as any).roles;
-        token.id = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      // Make custom claims available on the client session object
-      if (token && session.user) {
-        (session.user as any).roles = token.roles;
-        (session.user as any).id = token.id;
-      }
-      return session;
-    },
-  },
-  pages: {
-    signIn: "/login", // Custom login page
-  },
-  trustHost: true,
 });
