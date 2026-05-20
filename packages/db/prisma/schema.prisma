@@ -1,0 +1,174 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------
+// 1. User & Identity Management
+// ---------------------------------------------
+
+enum Role {
+  ADMIN
+  LECTURER
+  STUDENT
+  RESEARCHER
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  roles        Role[]   // A user can have multiple roles
+
+  // Relations
+  authoredCourses   Course[]          @relation("CourseAuthor")
+  enrollments       Enrollment[]
+  quizAttempts      QuizAttempt[]
+  researchProjects  ResearchProject[] @relation("LeadResearcher")
+}
+
+// ---------------------------------------------
+// 2. Learning Management System (LMS)
+// ---------------------------------------------
+
+model Course {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  thumbnail   String?
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  authorId    String
+  author      User     @relation("CourseAuthor", fields: [authorId], references: [id])
+  
+  modules     Module[]
+  enrollments Enrollment[]
+}
+
+model Module {
+  id        String   @id @default(uuid())
+  title     String
+  order     Int      // Defines sequence within the course
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  lessons   Lesson[]
+  quizzes   Quiz[]
+}
+
+model Lesson {
+  id        String   @id @default(uuid())
+  title     String
+  content   String?  // Rich text or Markdown
+  videoUrl  String?
+  order     Int      // Defines sequence within the module
+  moduleId  String
+  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+}
+
+model Enrollment {
+  id                 String   @id @default(uuid())
+  userId             String
+  courseId           String
+  progressPercentage Float    @default(0)
+  enrolledAt         DateTime @default(now())
+  completedAt        DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+// ---------------------------------------------
+// 3. Test Bank & Exercises
+// ---------------------------------------------
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TEXT
+}
+
+model Quiz {
+  id       String   @id @default(uuid())
+  title    String
+  moduleId String
+  module   Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  questions Question[]
+  attempts  QuizAttempt[]
+}
+
+model Question {
+  id       String       @id @default(uuid())
+  text     String
+  type     QuestionType @default(MULTIPLE_CHOICE)
+  quizId   String
+  quiz     Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  answers  Answer[]
+}
+
+model Answer {
+  id         String   @id @default(uuid())
+  text       String
+  isCorrect  Boolean  @default(false)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuizAttempt {
+  id        String   @id @default(uuid())
+  userId    String
+  quizId    String
+  score     Float
+  attemptedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------
+// 4. Research Management
+// ---------------------------------------------
+
+enum ProjectStatus {
+  PROPOSED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model ResearchProject {
+  id               String        @id @default(uuid())
+  title            String
+  abstract         String?
+  status           ProjectStatus @default(PROPOSED)
+  createdAt        DateTime      @default(now())
+  
+  leadResearcherId String
+  leadResearcher   User          @relation("LeadResearcher", fields: [leadResearcherId], references: [id])
+
+  publications     Publication[]
+}
+
+model Publication {
+  id            String   @id @default(uuid())
+  title         String
+  url           String?
+  publishedDate DateTime
+  projectId     String
+  project       ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
