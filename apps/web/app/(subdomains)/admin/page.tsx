@@ -1,13 +1,34 @@
-export default function AdminPage() {
+import { prisma } from "@repo/db";
+
+export default async function AdminDashboard() {
+  const [totalUsers, totalCourses, totalProjects] = await Promise.all([
+    prisma.user.count(),
+    prisma.course.count(),
+    prisma.researchProject.count(),
+  ]);
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-          Admin Dashboard
-        </h1>
-        <p className="text-slate-400 text-lg">
-          Welcome to the control center. Here you can manage configurations, users, and content across all subdomains.
-        </p>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-white mb-8">Dashboard Overview</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Stat Card 1 */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
+          <h3 className="text-slate-400 font-medium mb-2">Total Users</h3>
+          <p className="text-4xl font-bold text-white">{totalUsers}</p>
+        </div>
+        
+        {/* Stat Card 2 */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
+          <h3 className="text-slate-400 font-medium mb-2">Active Courses</h3>
+          <p className="text-4xl font-bold text-blue-400">{totalCourses}</p>
+        </div>
+        
+        {/* Stat Card 3 */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
+          <h3 className="text-slate-400 font-medium mb-2">Research Projects</h3>
+          <p className="text-4xl font-bold text-emerald-400">{totalProjects}</p>
+        </div>
       </div>
     </div>
   );
