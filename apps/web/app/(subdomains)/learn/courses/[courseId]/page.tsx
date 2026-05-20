@@ -1,4 +1,5 @@
 import { prisma } from "@repo/db";
+import type { Module, Session } from "@repo/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PlayCircle, Code, FileText, CheckSquare, FileEdit } from "lucide-react";
@@ -86,7 +87,7 @@ export default async function CourseDetailPage({
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Curriculum</h2>
         
         <div className="space-y-6">
-          {course.modules.map((module, mIdx) => (
+          {course.modules.map((module: Module & { sessions: Session[] }, mIdx: number) => (
             <div key={module.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
               {/* Module Header */}
               <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
@@ -100,7 +101,7 @@ export default async function CourseDetailPage({
               
               {/* Sessions List */}
               <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
-                {module.sessions.map((session, sIdx) => (
+                {module.sessions.map((session: Session, sIdx: number) => (
                   <Link 
                     key={session.id}
                     href={`/courses/${course.id}/sessions/${session.id}`}

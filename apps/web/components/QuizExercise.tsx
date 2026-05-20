@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 type Question = {
   id: string;
@@ -101,7 +101,7 @@ export function QuizExercise({
                 
                 // Determine styling based on state
                 let cardClass = "border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 cursor-pointer";
-                let icon = null;
+                let icon: ReactNode = null;
 
                 if (isSelected) {
                   cardClass = "border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500 cursor-pointer";

@@ -1,4 +1,5 @@
 import { prisma } from "@repo/db";
+import type { Role, User } from "@repo/db";
 
 export default async function UsersManagementPage() {
   const users = await prisma.user.findMany({
@@ -25,7 +26,7 @@ export default async function UsersManagementPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-            {users.map((user) => (
+            {users.map((user: User) => (
               <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
                 <td className="px-6 py-4">
                   <div className="text-slate-900 dark:text-white font-medium">{user.name || "N/A"}</div>
@@ -33,7 +34,7 @@ export default async function UsersManagementPage() {
                 <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{user.email}</td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-2">
-                    {user.roles.map((role) => (
+                    {user.roles.map((role: Role) => (
                       <span key={role} className="px-2 py-1 text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 rounded-full">
                         {role}
                       </span>
