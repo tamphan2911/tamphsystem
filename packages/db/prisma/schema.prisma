@@ -16,9 +16,12 @@ datasource db {
 
 enum Role {
   ADMIN
+  MODERATOR
   LECTURER
   STUDENT
   RESEARCHER
+  ASSISTANT
+  CHIEF_ASSISTANT
 }
 
 model User {
@@ -159,29 +162,89 @@ model QuizAttempt {
 // 4. Research Management
 // ---------------------------------------------
 
-enum ProjectStatus {
-  PROPOSED
-  IN_PROGRESS
-  COMPLETED
+enum ResearchStage {
+  PRODUCTION
+  SUBMITTING
+  ACCEPTED
+  PUBLISHED
+}
+
+enum ClaimStatus {
+  CANNOT_CLAIM
+  MAKING_DOCUMENT
+  WAITING
+  CLAIMED
 }
 
 model ResearchProject {
-  id               String        @id @default(uuid())
-  title            String
-  abstract         String?
-  status           ProjectStatus @default(PROPOSED)
-  createdAt        DateTime      @default(now())
+  id                     String        @id @default(uuid())
+  title                  String
+  abstract               String?
+  stage                  ResearchStage @default(PRODUCTION)
   
-  leadResearcherId String
-  leadResearcher   User          @relation("LeadResearcher", fields: [leadResearcherId], references: [id])
+  // Production Stage Tracking
+  coAuthors              String?
+  universityRegistration String?       // e.g., "Q1 2026"
+  claimStatus            ClaimStatus   @default(CANNOT_CLAIM)
+  
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  
+  leadResearcherId       String
+  leadResearcher         User          @relation("LeadResearcher", fields: [leadResearcherId], references: [id])
 
-  publications     Publication[]
+  publications           Publication[]
+  submissions            ResearchSubmission[]
+}
+
+model Journal {
+  id            String  @id @default(uuid())
+  name          String
+  issn          String?
+  field         String?
+  rank          String? // Q1, Q2, Q3, Q4
+  publisher     String?
+  apc           String?
+  submissionFee String?
+  note          String?
+  
+  submissions   ResearchSubmission[]
+  accounts      PublisherAccount[]
+}
+
+model PublisherAccount {
+  id         String  @id @default(uuid())
+  username   String
+  password   String  // Stored in plain/reversible text for personal tracking
+  email      String?
+  note       String?
+  journalId  String?
+  journal    Journal? @relation(fields: [journalId], references: [id], onDelete: SetNull)
+
+  submissions ResearchSubmission[]
+}
+
+model ResearchSubmission {
+  id                String   @id @default(uuid())
+  researchProjectId String
+  journalId         String
+  accountId         String?  // Which account was used to submit
+  
+  submittedAt       DateTime @default(now())
+  status            String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  
+  project   ResearchProject  @relation(fields: [researchProjectId], references: [id], onDelete: Cascade)
+  journal   Journal          @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  account   PublisherAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
 }
 
 model Publication {
   id            String   @id @default(uuid())
   title         String
   url           String?
+  scimagoLink   String?
+  scopusLink    String?
+  rank          String?
   publishedDate DateTime
   projectId     String
   project       ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
