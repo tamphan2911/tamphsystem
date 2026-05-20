@@ -4,6 +4,12 @@
 
 @theme {
   --color-primary: #3b82f6; /* Tailwind Blue 500 */
+  
+  --animate-blink: blink 1s step-end infinite;
+  @keyframes blink {
+    0%, 100% { border-color: transparent; }
+    50% { border-color: inherit; }
+  }
 }
 
 /* Base styles to ensure everything looks premium and modern */
