@@ -7,9 +7,13 @@
   "scripts": {
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
+    "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "lint": "eslint \"**/*.ts*\"",
     "clean": "rm -rf .turbo node_modules"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0"

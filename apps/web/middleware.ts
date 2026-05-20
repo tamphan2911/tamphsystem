@@ -1,45 +1,57 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { auth } from './auth';
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - fonts
-     * - images
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico|fonts|images).*)',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|fonts|images).*)'],
 };
 
-export default function middleware(req: NextRequest) {
+export default auth((req) => {
   const url = req.nextUrl;
   const hostname = req.headers.get('host') || '';
+  const isLoggedIn = !!req.auth;
+  const userRole = (req.auth?.user as any)?.roles?.[0]; // Assuming roles array
 
-  // Parse the subdomain
   let currentHost = hostname
     .replace(`.tamph.com`, '')
     .replace(`.localhost:3000`, '');
 
-  // If the host is exactly tamph.com or localhost:3000, we do not rewrite (serves from /(main))
+  // 1. Shared Global Routes (do not prefix with subdomains)
+  if (url.pathname.startsWith('/login')) {
+    if (isLoggedIn) {
+      // If already logged in, go to admin if they are ADMIN, else home
+      if (userRole === 'ADMIN') return NextResponse.redirect(new URL('https://admin.tamph.com', req.url));
+      return NextResponse.redirect(new URL('/', req.url));
+    }
+    return NextResponse.next();
+  }
+
+  // 2. Root Domain Routing
   if (hostname === 'tamph.com' || hostname === 'localhost:3000') {
-    // We can also block access to /admin, /learn, /research from the root domain if we want
+    // Block direct access to subdomains from the root URL path
     if (url.pathname.startsWith('/admin') || url.pathname.startsWith('/learn') || url.pathname.startsWith('/research')) {
       return NextResponse.redirect(new URL('/', req.url));
     }
     return NextResponse.next();
   }
 
-  // Rewrite subdomain requests to their respective paths
+  // 3. Subdomain Route Protection & Rewriting
   if (currentHost === 'admin') {
+    // Protect Admin Subdomain
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL('/login', req.url));
+    }
+    if (!req.auth?.user || !((req.auth.user as any).roles || []).includes('ADMIN')) {
+      // If logged in but not an admin, send them to the main domain
+      return NextResponse.redirect(new URL('https://tamph.com', req.url));
+    }
     return NextResponse.rewrite(new URL(`/admin${url.pathname}`, req.url));
   }
   
   if (currentHost === 'learn') {
+    // Protect LMS (Optional: you might want public landing pages later)
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL('/login', req.url));
+    }
     return NextResponse.rewrite(new URL(`/learn${url.pathname}`, req.url));
   }
   
@@ -48,4 +60,4 @@ export default function middleware(req: NextRequest) {
   }
 
   return NextResponse.next();
-}
+});
