@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PlayCircle, Code, FileText, CheckSquare, FileEdit } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function CourseDetailPage({
   params,
 }: {

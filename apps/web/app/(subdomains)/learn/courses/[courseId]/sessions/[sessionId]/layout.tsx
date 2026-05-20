@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PlayCircle, Code, FileText, CheckSquare, FileEdit, CheckCircle2 } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function LearningInterfaceLayout({
   params,
   children,

@@ -4,6 +4,8 @@ import { CodingExercise } from "../../../../../../../components/CodingExercise";
 import { QuizExercise } from "../../../../../../../components/QuizExercise";
 import { GsapScrollToTop } from "../../../../../../../components/GsapScrollToTop";
 
+export const dynamic = "force-dynamic";
+
 export default async function SessionPage({
   params,
 }: {
