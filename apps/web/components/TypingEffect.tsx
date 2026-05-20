@@ -22,7 +22,7 @@ export function TypingEffect() {
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    const currentPhrase = PHRASES[loopNum % PHRASES.length];
+    const currentPhrase = PHRASES[loopNum % PHRASES.length] || "";
 
     if (isDeleting) {
       setText(currentPhrase.substring(0, text.length - 1));

@@ -40,7 +40,7 @@ export default auth((req) => {
     if (!isLoggedIn) {
       return NextResponse.redirect(new URL('/login', req.url));
     }
-    const roles = (req.auth.user as any).roles || [];
+    const roles = (req.auth?.user as any)?.roles || [];
     if (!roles.includes('ADMIN') && !roles.includes('MODERATOR')) {
       // If logged in but not an admin/moderator, send them to unauthorized page
       return NextResponse.redirect(new URL('https://tamph.com/401', req.url));
@@ -53,7 +53,7 @@ export default auth((req) => {
     if (!isLoggedIn) {
       return NextResponse.redirect(new URL('/login', req.url));
     }
-    const roles = (req.auth.user as any).roles || [];
+    const roles = (req.auth?.user as any)?.roles || [];
     if (!roles.includes('ADMIN') && !roles.includes('LECTURER') && !roles.includes('STUDENT')) {
       return NextResponse.redirect(new URL('https://tamph.com/401', req.url));
     }
@@ -64,7 +64,7 @@ export default auth((req) => {
     if (!isLoggedIn) {
       return NextResponse.redirect(new URL('/login', req.url));
     }
-    const roles = (req.auth.user as any).roles || [];
+    const roles = (req.auth?.user as any).roles || [];
     if (!roles.includes('ADMIN') && !roles.includes('CHIEF_ASSISTANT') && !roles.includes('ASSISTANT')) {
       return NextResponse.redirect(new URL('https://tamph.com/401', req.url));
     }

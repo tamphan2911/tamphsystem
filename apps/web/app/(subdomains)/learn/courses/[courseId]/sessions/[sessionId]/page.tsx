@@ -1,7 +1,7 @@
 import { prisma } from "@repo/db";
 import { notFound } from "next/navigation";
-import { CodingExercise } from "../../../../../../components/CodingExercise";
-import { QuizExercise } from "../../../../../../components/QuizExercise";
+import { CodingExercise } from "../../../../../../../components/CodingExercise";
+import { QuizExercise } from "../../../../../../../components/QuizExercise";
 
 export default async function SessionPage({
   params,

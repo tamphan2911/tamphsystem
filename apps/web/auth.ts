@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { prisma } from "@repo/db";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 
+// @ts-ignore - NextAuth types are complex and not portable in this monorepo setup
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
