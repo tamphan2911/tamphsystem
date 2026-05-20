@@ -65,18 +65,32 @@ model Module {
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   
-  lessons   Lesson[]
+  sessions  Session[]
   quizzes   Quiz[]
 }
 
-model Lesson {
-  id        String   @id @default(uuid())
+enum SessionType {
+  LESSON_TEXT
+  LESSON_VIDEO
+  EXERCISE_QUIZ
+  EXERCISE_ESSAY
+  EXERCISE_CODING
+}
+
+model Session {
+  id        String      @id @default(uuid())
   title     String
-  content   String?  // Rich text or Markdown
-  videoUrl  String?
-  order     Int      // Defines sequence within the module
+  type      SessionType
+  order     Int         // Defines sequence within the module
   moduleId  String
-  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  module    Module      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  
+  // Polymorphic Fields based on Type
+  content         String?  // Rich text for lessons or prompts for essays
+  videoUrl        String?  // For Video lessons
+  codingLanguage  String?  // "python" or "r"
+  initialCode     String?  // Starter code for exercises
+  expectedOutput  String?  // Expected string output for basic validation
 }
 
 model Enrollment {

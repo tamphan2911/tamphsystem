@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
+    "@monaco-editor/react": "^4.7.0",
     "@repo/db": "*",
     "@repo/ui": "*",
     "bcrypt": "^6.0.0",
