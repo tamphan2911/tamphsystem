@@ -1,76 +1,111 @@
-import { prisma } from "@repo/db";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { prisma } from "@repo/db";
 import { CodingExercise } from "../../../../../../../components/CodingExercise";
 import { QuizExercise } from "../../../../../../../components/QuizExercise";
 import { GsapScrollToTop } from "../../../../../../../components/GsapScrollToTop";
+import { updateCourseProgress } from "../../../../actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function SessionPage({
   params,
 }: {
-  params: Promise<{ sessionId: string }>;
+  params: Promise<{ courseId: string; sessionId: string }>;
 }) {
-  const { sessionId } = await params;
-  
-  const session = await prisma.session.findUnique({
-    where: { id: sessionId },
-  });
+  const { courseId, sessionId } = await params;
 
-  if (!session) notFound();
+  const [session, course] = await Promise.all([
+    prisma.session.findUnique({ where: { id: sessionId } }),
+    prisma.course.findUnique({
+      where: { id: courseId },
+      include: {
+        modules: {
+          orderBy: { order: "asc" },
+          include: { sessions: { orderBy: { order: "asc" } } },
+        },
+      },
+    }),
+  ]);
+
+  if (!session || !course) notFound();
+
+  const orderedSessions = course.modules.flatMap((module) => module.sessions);
+  const currentIndex = orderedSessions.findIndex((item) => item.id === session.id);
+  const nextSession = orderedSessions[currentIndex + 1];
+  const progressAfterThis = orderedSessions.length > 0
+    ? Math.round(((Math.max(currentIndex, 0) + 1) / orderedSessions.length) * 100)
+    : 100;
+  const completeAction = updateCourseProgress.bind(null, courseId, progressAfterThis);
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-          {session.title}
-        </h1>
-        <div className="w-12 h-1 bg-blue-600 rounded-full"></div>
+    <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-blue-600">
+              Session {currentIndex + 1} of {orderedSessions.length}
+            </p>
+            <h1 className="mt-2 text-2xl font-extrabold tracking-tight">{session.title}</h1>
+            <p className="mt-1 text-sm text-slate-500">{session.type.replace("_", " ").toLowerCase()}</p>
+          </div>
+          <form action={completeAction}>
+            <button className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+              <CheckCircle2 className="h-4 w-4" />
+              Mark Complete ({progressAfterThis}%)
+            </button>
+          </form>
+        </div>
       </div>
 
-      <div className="prose dark:prose-invert max-w-none">
-        
-        {/* Render Text Lesson */}
-        {session.type === "LESSON_TEXT" && (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm whitespace-pre-wrap text-slate-700 dark:text-slate-300 relative min-h-[150vh]">
-            {session.content || "No content provided."}
-            <GsapScrollToTop />
-          </div>
-        )}
+      {session.type === "LESSON_TEXT" && (
+        <div className="relative min-h-[60vh] whitespace-pre-wrap rounded-xl border border-slate-200 bg-white p-6 text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+          {session.content || "No content provided."}
+          <GsapScrollToTop />
+        </div>
+      )}
 
-        {/* Render Video Lesson */}
-        {session.type === "LESSON_VIDEO" && session.videoUrl && (
-          <div className="aspect-video w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl bg-slate-100 dark:bg-slate-900">
-            <iframe 
-              src={session.videoUrl} 
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-              allowFullScreen
-            ></iframe>
-          </div>
-        )}
+      {session.type === "LESSON_VIDEO" && session.videoUrl && (
+        <div className="aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <iframe
+            src={session.videoUrl}
+            className="h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      )}
 
-        {/* Render Coding Exercise */}
-        {session.type === "EXERCISE_CODING" && (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Instructions</h3>
-              <div className="text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
-                {session.content || "Write your code in the editor below to solve the exercise."}
-              </div>
+      {session.type === "EXERCISE_CODING" && (
+        <div className="space-y-6">
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="font-bold">Instructions</h2>
+            <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-slate-300">
+              {session.content || "Write your code in the editor below to solve the exercise."}
             </div>
-            
-            <CodingExercise 
-              initialCode={session.initialCode || ""} 
-              language={session.codingLanguage || "python"}
-              expectedOutput={session.expectedOutput || ""}
-            />
           </div>
-        )}
+          <CodingExercise
+            initialCode={session.initialCode || ""}
+            language={session.codingLanguage || "python"}
+            expectedOutput={session.expectedOutput || ""}
+          />
+        </div>
+      )}
 
-        {/* Render Quiz Exercise */}
-        {session.type === "EXERCISE_QUIZ" && (
-          <QuizExercise title={session.title} />
+      {session.type === "EXERCISE_QUIZ" && <QuizExercise title={session.title} />}
+
+      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <Link href={`/courses/${courseId}`} className="text-sm font-semibold text-slate-500 hover:text-slate-950 dark:hover:text-white">
+          Back to course
+        </Link>
+        {nextSession ? (
+          <Link href={`/courses/${courseId}/sessions/${nextSession.id}`} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+            Next session
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        ) : (
+          <span className="text-sm font-semibold text-emerald-600">Final session</span>
         )}
       </div>
     </div>

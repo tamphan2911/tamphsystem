@@ -1,55 +1,66 @@
-import { prisma } from "@repo/db";
-import type { Role, User } from "@repo/db";
+import { Role, prisma } from "@repo/db";
+import { createUser, updateUserRoles } from "../actions";
 
 export const dynamic = "force-dynamic";
 
+const roleOptions = Object.values(Role);
+
 export default async function UsersManagementPage() {
   const users = await prisma.user.findMany({
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Users Management</h1>
-        <button className="bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-          + Add User
-        </button>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-extrabold tracking-tight">Users & Roles</h1>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          Create accounts and assign access across admin, Learn, and Research domains.
+        </p>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-        <table className="w-full text-left">
-          <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-            <tr>
-              <th className="px-6 py-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Name</th>
-              <th className="px-6 py-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Email</th>
-              <th className="px-6 py-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Roles</th>
-              <th className="px-6 py-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Joined Date</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-            {users.map((user: User) => (
-              <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="text-slate-900 dark:text-white font-medium">{user.name || "N/A"}</div>
-                </td>
-                <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{user.email}</td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-2">
-                    {user.roles.map((role: Role) => (
-                      <span key={role} className="px-2 py-1 text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 rounded-full">
-                        {role}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-sm">
-                  {new Date(user.createdAt).toLocaleDateString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <form action={createUser} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <h2 className="mb-4 font-bold">Create user</h2>
+        <div className="grid gap-3 lg:grid-cols-4">
+          <input name="name" placeholder="Name" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950" />
+          <input name="email" type="email" required placeholder="Email" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950" />
+          <input name="password" type="password" placeholder="Password (default: password)" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950" />
+          <button className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Create</button>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3">
+          {roleOptions.map((role) => (
+            <label key={role} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-800">
+              <input type="checkbox" name="roles" value={role} defaultChecked={role === Role.STUDENT} />
+              {role}
+            </label>
+          ))}
+        </div>
+      </form>
+
+      <div className="space-y-4">
+        {users.map((user) => (
+          <form key={user.id} action={updateUserRoles} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <input type="hidden" name="userId" value={user.id} />
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div className="min-w-0">
+                <h2 className="font-bold">{user.name || "Unnamed user"}</h2>
+                <p className="text-sm text-slate-500">{user.email}</p>
+                <p className="mt-1 text-xs text-slate-400">Joined {user.createdAt.toLocaleDateString()}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {roleOptions.map((role) => (
+                  <label key={role} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-800">
+                    <input type="checkbox" name="roles" value={role} defaultChecked={user.roles.includes(role)} />
+                    {role}
+                  </label>
+                ))}
+              </div>
+              <button className="w-fit rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">
+                Save Roles
+              </button>
+            </div>
+          </form>
+        ))}
       </div>
     </div>
   );

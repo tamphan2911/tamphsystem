@@ -1,77 +1,123 @@
-import { prisma } from "@repo/db";
 import Link from "next/link";
+import { ArrowRight, BookOpen, CheckCircle2, Clock, Search } from "lucide-react";
+import { auth } from "../../../../auth";
+import { prisma } from "@repo/db";
+import { enrollInCourse } from "../actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function CoursesListingPage() {
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+
   const courses = await prisma.course.findMany({
     where: { isPublished: true },
     include: {
       author: true,
       modules: {
-        include: { sessions: true }
-      }
-    }
+        orderBy: { order: "asc" },
+        include: { sessions: { orderBy: { order: "asc" } } },
+      },
+      enrollments: userId ? { where: { userId } } : false,
+    },
+    orderBy: { updatedAt: "desc" },
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 w-full">
-      <div className="mb-12">
-        <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
-          Explore Courses
-        </h1>
-        <p className="text-xl text-slate-600 dark:text-slate-400">
-          Discover professional courses to advance your career.
-        </p>
+    <div className="space-y-8">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="grid gap-6 lg:grid-cols-[1fr_22rem] lg:items-center">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight">Course Catalog</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400">
+              Browse published courses, inspect the curriculum, enroll, and continue through lessons, videos, coding exercises, and quizzes.
+            </p>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              placeholder="Search catalog"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-800 dark:bg-slate-950"
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         {courses.map((course) => {
           const totalSessions = course.modules.reduce((acc, mod) => acc + mod.sessions.length, 0);
+          const enrollment = course.enrollments?.[0];
+          const enrollAction = enrollInCourse.bind(null, course.id);
 
           return (
-            <Link 
-              key={course.id} 
-              href={`/courses/${course.id}`}
-              className="group block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
-            >
-              {/* Thumbnail Placeholder */}
-              <div className="h-48 bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center text-slate-400">
-                  <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                </div>
-              </div>
-              
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  {course.title}
-                </h3>
-                <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-2 mb-6">
-                  {course.description}
-                </p>
-                
-                <div className="flex items-center justify-between mt-auto">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">
-                      {course.author.name?.charAt(0) || "U"}
-                    </div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {course.author.name}
+            <article key={course.id} className="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-blue-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700">
+              <div className="border-b border-slate-100 p-5 dark:border-slate-800">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-bold leading-6">{course.title}</h2>
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                      {course.description || "No description yet."}
+                    </p>
+                  </div>
+                  {enrollment && (
+                    <span className="rounded bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                      Enrolled
                     </span>
-                  </div>
-                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
-                    {totalSessions} Sessions
-                  </div>
+                  )}
                 </div>
               </div>
-            </Link>
+
+              <div className="flex flex-1 flex-col p-5">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
+                    <p className="text-xs uppercase text-slate-400">Modules</p>
+                    <p className="mt-1 font-bold">{course.modules.length}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
+                    <p className="text-xs uppercase text-slate-400">Sessions</p>
+                    <p className="mt-1 font-bold">{totalSessions}</p>
+                  </div>
+                </div>
+
+                {enrollment && (
+                  <div className="mt-4">
+                    <div className="flex justify-between text-xs font-semibold text-slate-500">
+                      <span>Progress</span>
+                      <span>{Math.round(enrollment.progressPercentage)}%</span>
+                    </div>
+                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                      <div className="h-full bg-blue-600" style={{ width: `${Math.round(enrollment.progressPercentage)}%` }} />
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
+                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <BookOpen className="h-4 w-4" />
+                    {course.author.name || course.author.email}
+                  </div>
+                  {enrollment ? (
+                    <Link href={`/courses/${course.id}`} className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600">
+                      Continue <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  ) : (
+                    <form action={enrollAction}>
+                      <button className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                        Enroll
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
+            </article>
           );
         })}
 
         {courses.length === 0 && (
-          <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">No courses available</h3>
-            <p className="text-slate-500 dark:text-slate-400">Check back later or sign in to create one.</p>
+          <div className="col-span-full rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
+            <Clock className="mx-auto h-8 w-8 text-slate-400" />
+            <h2 className="mt-3 font-bold">No published courses</h2>
+            <p className="mt-1 text-sm text-slate-500">Publish a course from admin to show it here.</p>
           </div>
         )}
       </div>
