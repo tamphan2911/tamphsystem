@@ -1,6 +1,8 @@
 import { prisma } from "@repo/db";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function CoursesListingPage() {
   const courses = await prisma.course.findMany({
     where: { isPublished: true },

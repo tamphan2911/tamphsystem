@@ -1,6 +1,8 @@
 import { prisma } from "@repo/db";
 import type { Role, User } from "@repo/db";
 
+export const dynamic = "force-dynamic";
+
 export default async function UsersManagementPage() {
   const users = await prisma.user.findMany({
     orderBy: { createdAt: 'desc' },
