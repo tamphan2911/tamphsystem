@@ -1,6 +1,11 @@
 import { HeroSearchBox } from "../../../components/HeroSearchBox";
 import { TypingEffect } from "../../../components/TypingEffect";
-import { VantaNetBackground } from "../../../components/VantaNetBackground";
+import dynamic from "next/dynamic";
+
+const VantaNetBackground = dynamic(
+  () => import("../../../components/VantaNetBackground").then((mod) => mod.VantaNetBackground),
+  { ssr: false }
+);
 
 export default function LearnLandingPage() {
   return (

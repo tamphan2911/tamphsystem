@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-// @ts-ignore
-import NET from "vanta/dist/vanta.net.min";
+
 import { useTheme } from "next-themes";
 
 export function VantaNetBackground({ children }: { children: React.ReactNode }) {
@@ -21,24 +20,28 @@ export function VantaNetBackground({ children }: { children: React.ReactNode }) 
     const color = resolvedTheme === "dark" ? 0x3b82f6 : 0x2563eb; 
 
     if (vantaRef.current) {
-      effect = NET({
-        el: vantaRef.current,
-        THREE,
-        mouseControls: true,
-        touchControls: true,
-        gyroControls: false,
-        minHeight: 200.00,
-        minWidth: 200.00,
-        scale: 1.00,
-        scaleMobile: 1.00,
-        color: color,
-        backgroundColor: backgroundColor,
-        points: 15.00,
-        maxDistance: 22.00,
-        spacing: 18.00,
-        showDots: true
+      // Safely import Vanta only on the client
+      import("vanta/dist/vanta.net.min").then((vantaModule) => {
+        const NET = vantaModule.default || vantaModule;
+        effect = NET({
+          el: vantaRef.current,
+          THREE,
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.00,
+          minWidth: 200.00,
+          scale: 1.00,
+          scaleMobile: 1.00,
+          color: color,
+          backgroundColor: backgroundColor,
+          points: 15.00,
+          maxDistance: 22.00,
+          spacing: 18.00,
+          showDots: true
+        });
+        setVantaEffect(effect);
       });
-      setVantaEffect(effect);
     }
 
     return () => {
