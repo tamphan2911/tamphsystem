@@ -1,151 +1,244 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BookOpen, Code, GraduationCap, Briefcase, ChevronRight, TrendingUp, Cpu } from "lucide-react";
+import {
+  ArrowUpRight,
+  BookOpen,
+  BriefcaseBusiness,
+  Database,
+  GraduationCap,
+  Library,
+  Mail,
+  NotebookPen,
+  ShieldCheck,
+  TrendingUp,
+} from "lucide-react";
 import { ThemeToggle } from "../components/ThemeToggle";
-import { GsapHoverButton } from "../components/GsapHoverButton";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
-import { useRef } from "react";
 
-gsap.registerPlugin(useGSAP);
+const focusAreas = [
+  {
+    title: "Academic research",
+    description: "Banking, fintech, corporate finance, publication strategy, and research production workflows.",
+    icon: Library,
+  },
+  {
+    title: "Learning systems",
+    description: "Course infrastructure, assessments, coding exercises, and operational tools for academic teams.",
+    icon: GraduationCap,
+  },
+  {
+    title: "Fintech software",
+    description: "Data products, internal platforms, quantitative tooling, and workflow automation.",
+    icon: TrendingUp,
+  },
+];
+
+const systems = [
+  {
+    name: "Learning platform",
+    href: "https://learn.tamph.com",
+    description: "Courses, modules, sessions, coding exercises, and student learning flows.",
+    meta: "LMS",
+  },
+  {
+    name: "Research hub",
+    href: "https://research.tamph.com",
+    description: "Pipeline tracking for research, journals, publisher accounts, submissions, and publications.",
+    meta: "Research operations",
+  },
+  {
+    name: "Admin console",
+    href: "https://admin.tamph.com",
+    description: "User, role, and platform management for the connected subdomains.",
+    meta: "System control",
+  },
+];
+
+const notes = [
+  "Lecturer and researcher working across finance, banking, fintech, and software engineering.",
+  "Building practical infrastructure for research teams, teaching workflows, and publication operations.",
+  "Interested in systems that reduce repetitive academic work and make complex processes easier to manage.",
+];
 
 export default function PersonalPortfolio() {
-  const sliderRef = useRef<HTMLDivElement>(null);
-
-  useGSAP(() => {
-    // Infinite horizontal slider
-    if (sliderRef.current) {
-      gsap.to(sliderRef.current, {
-        xPercent: -50, // Move left by 50% of the total width
-        ease: "none",
-        duration: 30,  // Adjust speed here
-        repeat: -1,    // Infinite repeat
-      });
-    }
-  }, { scope: sliderRef });
-
-  const services = [
-    { icon: BookOpen, title: "Research Consulting", desc: "Guiding research methodology, data analysis, and publication strategies in Business, Finance, and Banking.", color: "blue" },
-    { icon: Code, title: "Fintech Solutions", desc: "Architecting and building modern fintech applications, quantitative models, and secure enterprise systems.", color: "emerald" },
-    { icon: GraduationCap, title: "Academic Infrastructure", desc: "Developing custom Learning Management Systems, test banks, and interactive educational tools for institutions.", color: "purple" },
-    { icon: TrendingUp, title: "Quantitative Analytics", desc: "Building high-performance data pipelines and statistical models for market research and financial predictions.", color: "orange" },
-    { icon: Cpu, title: "AI Integration", desc: "Implementing generative AI workflows into academic research pipelines and enterprise software products.", color: "pink" },
-  ];
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans selection:bg-blue-500/30">
-      
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="text-xl font-black tracking-tighter text-slate-900 dark:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-slate-50/85 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/85">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
+          <Link href="/" className="text-sm font-black tracking-wide">
             TAMPH<span className="text-blue-600">.</span>
-          </div>
-          <div className="flex items-center gap-6">
-            <a href="#about" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">About</a>
-            <a href="#research" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">Research</a>
-            <a href="#services" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">Services</a>
-            <ThemeToggle />
-          </div>
+          </Link>
+          <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-300 md:flex">
+            <a href="#work" className="transition hover:text-slate-950 dark:hover:text-white">Work</a>
+            <a href="#systems" className="transition hover:text-slate-950 dark:hover:text-white">Systems</a>
+            <a href="#research" className="transition hover:text-slate-950 dark:hover:text-white">Research</a>
+            <a href="#contact" className="transition hover:text-slate-950 dark:hover:text-white">Contact</a>
+          </nav>
+          <ThemeToggle />
         </div>
-      </nav>
+      </header>
 
-      {/* Hero Section */}
-      <main className="pt-32 pb-20 px-6 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
-        <div className="flex-1 space-y-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm font-semibold tracking-wide">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            University Lecturer & Researcher
-          </div>
-          
-          <h1 className="text-5xl lg:text-7xl font-black text-slate-900 dark:text-white leading-[1.1] tracking-tight">
-            Bridging the gap between <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Finance</span> and <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">Code.</span>
-          </h1>
-          
-          <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-            I'm Tamph, exploring the intersections of Banking, Fintech, and Software Engineering. I build educational platforms, conduct academic research, and solve complex business problems.
-          </p>
-          
-          <div className="flex flex-wrap items-center gap-4">
-            <GsapHoverButton href="https://learn.tamph.com" variant="primary">
-              Join My Courses <ArrowRight className="w-5 h-5" />
-            </GsapHoverButton>
-            <GsapHoverButton href="https://research.tamph.com" variant="outline">
-              Read Research
-            </GsapHoverButton>
-          </div>
-        </div>
-
-        {/* Hero Visual */}
-        <div className="flex-1 relative w-full max-w-lg aspect-square">
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/20 to-emerald-500/20 rounded-[3rem] rotate-3 filter blur-xl animate-pulse"></div>
-          <div className="absolute inset-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col">
-            <div className="h-12 border-b border-slate-100 dark:border-slate-800 flex items-center px-6 gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-              <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+      <main>
+        <section className="mx-auto grid max-w-6xl gap-10 px-5 py-16 md:grid-cols-[1.1fr_0.9fr] md:items-center md:py-20">
+          <div>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+              <BriefcaseBusiness className="h-3.5 w-3.5 text-blue-600" />
+              Lecturer, researcher, and software builder
             </div>
-            <div className="flex-1 p-8 bg-[#1e1e1e] font-mono text-sm sm:text-base text-emerald-400">
-              <p><span className="text-pink-500">class</span> <span className="text-blue-400">Tamph</span>:</p>
-              <p className="pl-4"><span className="text-pink-500">def</span> <span className="text-yellow-200">__init__</span>(self):</p>
-              <p className="pl-8">self.roles = [<span className="text-orange-300">"Lecturer"</span>, <span className="text-orange-300">"Researcher"</span>]</p>
-              <p className="pl-8">self.fields = [<span className="text-orange-300">"Finance"</span>, <span className="text-orange-300">"Fintech"</span>]</p>
-              <br/>
-              <p className="pl-4"><span className="text-pink-500">def</span> <span className="text-yellow-200">innovate</span>(self):</p>
-              <p className="pl-8"><span className="text-pink-500">while</span> <span className="text-purple-400">True</span>:</p>
-              <p className="pl-12">self.build_systems()</p>
-              <p className="pl-12">self.publish_papers()</p>
+
+            <h1 className="max-w-2xl text-3xl font-extrabold leading-tight tracking-normal text-slate-950 dark:text-white md:text-4xl">
+              I build academic and fintech systems around research, learning, and data-driven work.
+            </h1>
+
+            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
+              I work at the intersection of finance, software engineering, and academic research. This site is the front door to my courses, research operations, and internal tools.
+            </p>
+
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link
+                href="https://learn.tamph.com"
+                className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+              >
+                Learning platform
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="https://research.tamph.com"
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-white dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-900"
+              >
+                Research hub
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
-        </div>
-      </main>
 
-      {/* Services Section - Infinite Slider */}
-      <section id="services" className="py-24 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 mb-16">
-          <div className="text-center">
-            <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">Academic & Industry Solutions</h2>
-            <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Leveraging deep expertise in both academia and software engineering to provide specialized consulting services.
+          <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+              <div>
+                <p className="text-sm font-bold">Current focus</p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Research and platform work</p>
+              </div>
+              <ShieldCheck className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div className="mt-5 space-y-4">
+              {notes.map((note) => (
+                <div key={note} className="flex gap-3">
+                  <div className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-blue-600" />
+                  <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{note}</p>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </section>
+
+        <section id="work" className="border-y border-slate-200 bg-white py-14 dark:border-slate-800 dark:bg-slate-900/40">
+          <div className="mx-auto max-w-6xl px-5">
+            <div className="max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Work</p>
+              <h2 className="mt-2 text-2xl font-bold tracking-normal">What I spend time on</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                My work combines research management, teaching infrastructure, and applied software systems.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {focusAreas.map((area) => {
+                const Icon = area.icon;
+                return (
+                  <article key={area.title} className="rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-950">
+                    <Icon className="h-5 w-5 text-blue-600" />
+                    <h3 className="mt-4 text-base font-bold">{area.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{area.description}</p>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section id="systems" className="mx-auto max-w-6xl px-5 py-14">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Systems</p>
+              <h2 className="mt-2 text-2xl font-bold tracking-normal">Connected platforms</h2>
+            </div>
+            <p className="max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+              The main domain stays personal. Subdomains host the actual tools and workflows.
             </p>
           </div>
-        </div>
 
-        {/* The Slider Container */}
-        <div className="relative w-full overflow-hidden pb-12 cursor-grab active:cursor-grabbing">
-          {/* Gradient Masks for smooth fading on edges */}
-          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
-          
-          <div ref={sliderRef} className="flex gap-8 w-max pl-8">
-            {/* Render two sets of cards to create the infinite loop illusion */}
-            {[...services, ...services].map((service, index) => {
-              const Icon = service.icon;
-              return (
-                <div key={index} className="w-[350px] flex-shrink-0 p-8 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group">
-                  <div className={`w-14 h-14 rounded-2xl bg-${service.color}-100 dark:bg-${service.color}-900/50 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
-                    <Icon className={`w-7 h-7 text-${service.color}-600 dark:text-${service.color}-400`} />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{service.title}</h3>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    {service.desc}
-                  </p>
+          <div className="mt-8 grid gap-4">
+            {systems.map((system) => (
+              <Link
+                key={system.name}
+                href={system.href}
+                className="group grid gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700 md:grid-cols-[10rem_1fr_auto] md:items-center"
+              >
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{system.meta}</span>
+                <div>
+                  <h3 className="text-base font-bold">{system.name}</h3>
+                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">{system.description}</p>
                 </div>
-              );
-            })}
+                <ArrowUpRight className="h-5 w-5 text-slate-400 transition group-hover:text-blue-600" />
+              </Link>
+            ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Footer */}
-      <footer className="py-12 text-center border-t border-slate-200 dark:border-slate-800">
-        <p className="text-slate-500 dark:text-slate-400 font-medium">
-          © {new Date().getFullYear()} Tamph. Designed for the Future of Learning.
-        </p>
+        <section id="research" className="border-y border-slate-200 bg-white py-14 dark:border-slate-800 dark:bg-slate-900/40">
+          <div className="mx-auto grid max-w-6xl gap-8 px-5 md:grid-cols-2">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Research</p>
+              <h2 className="mt-2 text-2xl font-bold tracking-normal">Research operations, not just publication lists</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                I manage research as a pipeline: idea, data, model, writing, journal targeting, submission, revision, acceptance, publication, and claim documentation.
+              </p>
+            </div>
+            <div className="grid gap-3">
+              {[
+                { icon: NotebookPen, text: "Production notes for data, modeling, writing, humanizing, and references." },
+                { icon: BookOpen, text: "Journal database with ranks, ISSN, publisher, APC, fees, and account records." },
+                { icon: Database, text: "Submission tracking with the journal and account used for each manuscript." },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.text} className="flex gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                    <Icon className="mt-0.5 h-4 w-4 flex-none text-blue-600" />
+                    <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{item.text}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section id="contact" className="mx-auto max-w-6xl px-5 py-14">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Contact</p>
+                <h2 className="mt-2 text-2xl font-bold tracking-normal">For academic, research, or system work</h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  Use the connected systems for structured work. For direct conversation, reach out by email or through the appropriate platform.
+                </p>
+              </div>
+              <a
+                href="mailto:admin@tamph.com"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              >
+                <Mail className="h-4 w-4" />
+                admin@tamph.com
+              </a>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t border-slate-200 py-8 dark:border-slate-800">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 text-sm text-slate-500 dark:text-slate-400 md:flex-row md:items-center md:justify-between">
+          <p>© {new Date().getFullYear()} Tamph.</p>
+          <p>Finance, research, learning systems, and software infrastructure.</p>
+        </div>
       </footer>
     </div>
   );
