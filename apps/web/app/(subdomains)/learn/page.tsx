@@ -1,16 +1,11 @@
 import { HeroSearchBox } from "../../../components/HeroSearchBox";
 import { TypingEffect } from "../../../components/TypingEffect";
-import dynamic from "next/dynamic";
-
-const VantaNetBackground = dynamic(
-  () => import("../../../components/VantaNetBackground").then((mod) => mod.VantaNetBackground),
-  { ssr: false }
-);
+import { VantaNetBackgroundClient } from "../../../components/VantaNetBackgroundClient";
 
 export default function LearnLandingPage() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden h-full min-h-[calc(100vh-64px)]">
-      <VantaNetBackground>
+      <VantaNetBackgroundClient>
         <div className="max-w-4xl mx-auto px-6 text-center w-full mt-[-10vh] drop-shadow-xl">
         
         {/* Main Headline */}
@@ -42,7 +37,7 @@ export default function LearnLandingPage() {
           </div>
         </div>
         </div>
-      </VantaNetBackground>
+      </VantaNetBackgroundClient>
     </div>
   );
 }

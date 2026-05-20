@@ -3,6 +3,6 @@ builder = "NIXPACKS"
 buildCommand = "npm run build"
 
 [deploy]
-startCommand = "npm run start --workspace=apps/web"
+startCommand = "npm run db:push --workspace=packages/db && npm run start --workspace=apps/web"
 healthcheckPath = "/"
 healthcheckTimeout = 100
