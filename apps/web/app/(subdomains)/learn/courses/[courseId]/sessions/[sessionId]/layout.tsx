@@ -98,7 +98,7 @@ export default async function LearningInterfaceLayout({
       </aside>
 
       {/* Main Learning Content Area (Right Pane) */}
-      <main className="flex-1 min-w-0 md:h-[calc(100vh-5rem)] overflow-y-auto">
+      <main id="learn-main-content" className="flex-1 min-w-0 md:h-[calc(100vh-5rem)] overflow-y-auto relative scroll-smooth">
         {children}
       </main>
 

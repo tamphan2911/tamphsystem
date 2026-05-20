@@ -2,6 +2,7 @@ import { prisma } from "@repo/db";
 import { notFound } from "next/navigation";
 import { CodingExercise } from "../../../../../../../components/CodingExercise";
 import { QuizExercise } from "../../../../../../../components/QuizExercise";
+import { GsapScrollToTop } from "../../../../../../../components/GsapScrollToTop";
 
 export default async function SessionPage({
   params,
@@ -29,8 +30,9 @@ export default async function SessionPage({
         
         {/* Render Text Lesson */}
         {session.type === "LESSON_TEXT" && (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm whitespace-pre-wrap text-slate-700 dark:text-slate-300">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm whitespace-pre-wrap text-slate-700 dark:text-slate-300 relative min-h-[150vh]">
             {session.content || "No content provided."}
+            <GsapScrollToTop />
           </div>
         )}
 
