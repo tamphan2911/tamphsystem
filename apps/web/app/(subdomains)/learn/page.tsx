@@ -1,14 +1,12 @@
 import { HeroSearchBox } from "../../../components/HeroSearchBox";
 import { TypingEffect } from "../../../components/TypingEffect";
+import { VantaNetBackground } from "../../../components/VantaNetBackground";
 
 export default function LearnLandingPage() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
-      
-      {/* Background decoration */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-500/10 dark:bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
-
-      <div className="max-w-4xl mx-auto px-6 text-center z-10 w-full mt-[-10vh]">
+    <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden h-full min-h-[calc(100vh-64px)]">
+      <VantaNetBackground>
+        <div className="max-w-4xl mx-auto px-6 text-center w-full mt-[-10vh] drop-shadow-xl">
         
         {/* Main Headline */}
         <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-6">
@@ -38,7 +36,8 @@ export default function LearnLandingPage() {
             Enterprise Grade
           </div>
         </div>
-      </div>
+        </div>
+      </VantaNetBackground>
     </div>
   );
 }
