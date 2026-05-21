@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { ThemeToggle } from "../../../components/ThemeToggle";
-import { SignOutButton } from "../../../components/SignOutButton";
-import { BookOpen, FolderGit2, KeyRound, ShieldCheck, BarChart3 } from "lucide-react";
+import { BookOpen, BriefcaseBusiness, FolderGit2, GraduationCap, KeyRound, ShieldCheck, SlidersHorizontal, BarChart3 } from "lucide-react";
+import { ActiveNavLink } from "../../../components/ActiveNavLink";
+import { ProfileMenu } from "../../../components/ProfileMenu";
+import { auth } from "../../../auth";
+import { Role } from "@repo/db";
 
 const navItems = [
   { href: "/projects", label: "Research Pipeline", icon: FolderGit2 },
@@ -10,11 +13,20 @@ const navItems = [
   { href: "/assistants", label: "Assistants", icon: ShieldCheck },
 ];
 
-export default function ResearchLayout({
+export default async function ResearchLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ?? []) as Role[];
+  const isAdmin = roles.includes(Role.ADMIN);
+  const adminLinks = [
+    { href: "https://tamph.com", label: "Portfolio", icon: BriefcaseBusiness },
+    { href: "https://learn.tamph.com", label: "Learn", icon: GraduationCap },
+    { href: "https://admin.tamph.com", label: "Admin", icon: SlidersHorizontal },
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-slate-200 bg-white lg:flex lg:flex-col dark:border-slate-800 dark:bg-slate-900">
@@ -29,19 +41,9 @@ export default function ResearchLayout({
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-4">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-              >
-                <Icon className="h-5 w-5 text-slate-400" />
-                {item.label}
-              </Link>
-            );
-          })}
+          {navItems.map((item) => (
+            <ActiveNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
+          ))}
         </nav>
       </aside>
 
@@ -58,12 +60,31 @@ export default function ResearchLayout({
               </Link>
             ))}
           </div>
-          <div className="hidden text-sm text-slate-500 lg:block dark:text-slate-400">
-            Research operations
+          <div className="hidden min-w-0 items-center gap-2 lg:flex">
+            <span className="text-sm text-slate-500 dark:text-slate-400">Research operations</span>
+            {isAdmin && (
+              <div className="ml-3 flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1">
+                {adminLinks.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 hover:shadow-sm"
+                  >
+                    <item.icon className="h-3.5 w-3.5" />
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <SignOutButton />
+            <ProfileMenu
+              email={session?.user?.email}
+              name={session?.user?.name}
+              profileHref="/profile"
+              adminHref="https://admin.tamph.com"
+            />
           </div>
         </header>
 

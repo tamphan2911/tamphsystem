@@ -13,8 +13,8 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { SignOutButton } from "../../../components/SignOutButton";
 import { ThemeToggle } from "../../../components/ThemeToggle";
+import { ProfileMenu } from "../../../components/ProfileMenu";
 import { auth } from "../../../auth";
 import { redirect } from "next/navigation";
 
@@ -123,7 +123,12 @@ export default async function AdminLayout({
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <SignOutButton />
+            <ProfileMenu
+              email={session.user.email}
+              name={session.user.name}
+              profileHref="/users"
+              adminHref="/"
+            />
           </div>
         </header>
 

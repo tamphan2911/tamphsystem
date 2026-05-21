@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BookOpen, GraduationCap, LayoutDashboard, UserCircle } from "lucide-react";
 import { ThemeToggle } from "../../../components/ThemeToggle";
-import { SignOutButton } from "../../../components/SignOutButton";
+import { ProfileMenu } from "../../../components/ProfileMenu";
 import { auth } from "../../../auth";
 
 const navItems = [
@@ -50,7 +50,12 @@ export default async function LearnLayout({
           <div className="flex items-center gap-3">
             <ThemeToggle />
             {session?.user ? (
-              <SignOutButton />
+              <ProfileMenu
+                email={session.user.email}
+                name={session.user.name}
+                profileHref="/profile"
+                adminHref="https://admin.tamph.com"
+              />
             ) : (
               <Link href="/login" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                 Log in

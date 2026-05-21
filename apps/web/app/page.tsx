@@ -10,6 +10,7 @@ import {
   Library,
   Mail,
   NotebookPen,
+  UserCircle,
   ShieldCheck,
   TrendingUp,
 } from "lucide-react";
@@ -74,7 +75,29 @@ export default function PersonalPortfolio() {
             <a href="#research" className="transition hover:text-slate-950 dark:hover:text-white">Research</a>
             <a href="#contact" className="transition hover:text-slate-950 dark:hover:text-white">Contact</a>
           </nav>
-          <ThemeToggle />
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <div className="group relative">
+              <button
+                type="button"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 hover:shadow-md"
+                aria-label="Open site menu"
+              >
+                <UserCircle className="h-5 w-5" />
+              </button>
+              <div className="pointer-events-none absolute right-0 top-12 z-50 w-56 translate-y-2 rounded-xl border border-slate-200 bg-white p-2 opacity-0 shadow-xl ring-1 ring-slate-950/5 transition duration-200 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                <Link href="https://learn.tamph.com/profile" className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  Learning profile
+                </Link>
+                <Link href="https://admin.tamph.com" className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  Admin console
+                </Link>
+                <Link href="/login" className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  Sign in
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
