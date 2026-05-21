@@ -2,6 +2,7 @@ import { ShieldCheck, UserRound, Users } from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { assertResearchManager } from "../actions";
 import { AssistantsTable, type AssistantRow } from "./AssistantsTable";
+import { AddAssistantDialog, type AssistantCandidate } from "./AddAssistantDialog";
 
 export const dynamic = "force-dynamic";
 
@@ -15,13 +16,21 @@ const manageableRoles = [
 ];
 
 export default async function AssistantsPage() {
-  await assertResearchManager();
+  const currentUser = await assertResearchManager();
+  const canAssignAssistants = currentUser.roles.includes(Role.ADMIN);
 
   const users = await prisma.user.findMany({
     orderBy: [{ name: "asc" }, { email: "asc" }],
   });
 
   const rows: AssistantRow[] = users.map((user) => ({
+    id: user.id,
+    name: user.name ?? "",
+    email: user.email,
+    roles: user.roles,
+  }));
+
+  const candidates: AssistantCandidate[] = users.map((user) => ({
     id: user.id,
     name: user.name ?? "",
     email: user.email,
@@ -41,16 +50,20 @@ export default async function AssistantsPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:flex xl:flex-wrap">
-        {stats.map((item) => (
-          <div key={item.label} className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
-            <item.icon className={`h-4 w-4 ${item.color}`} />
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.label}</p>
-              <p className="text-base font-black text-slate-950">{item.value}</p>
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:flex xl:flex-wrap">
+          {stats.map((item) => (
+            <div key={item.label} className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+              <item.icon className={`h-4 w-4 ${item.color}`} />
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.label}</p>
+                <p className="text-base font-black text-slate-950">{item.value}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        {canAssignAssistants && <AddAssistantDialog users={candidates} />}
       </div>
 
       <AssistantsTable rows={rows} roleOptions={manageableRoles} />

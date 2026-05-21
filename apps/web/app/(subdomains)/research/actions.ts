@@ -177,6 +177,33 @@ export async function updateResearchRoles(formData: FormData) {
   revalidatePath("/assistants");
 }
 
+export async function assignResearchAssistant(formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const userId = optionalString(formData.get("userId"));
+  const role = formData.get("assistantRole");
+  if (!userId || (role !== Role.ASSISTANT && role !== Role.CHIEF_ASSISTANT)) return;
+
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: true },
+  });
+  if (!target) return;
+
+  const roles = new Set(target.roles);
+  roles.delete(Role.ASSISTANT);
+  roles.delete(Role.CHIEF_ASSISTANT);
+  roles.add(role);
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { roles: Array.from(roles) },
+  });
+
+  revalidatePath("/assistants");
+}
+
 export async function assertResearchManager() {
   const user = await requireCurrentUser();
   if (!canManageResearch(user.roles)) {
