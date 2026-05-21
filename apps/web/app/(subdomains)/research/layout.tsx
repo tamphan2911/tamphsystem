@@ -48,7 +48,7 @@ export default async function ResearchLayout({
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white/85 px-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/85 sm:px-8">
+        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-slate-200 bg-white/85 px-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/85 sm:px-8">
           <div className="flex min-w-0 items-center gap-2 overflow-x-auto lg:hidden">
             {navItems.map((item) => (
               <Link
@@ -88,7 +88,7 @@ export default async function ResearchLayout({
           </div>
         </header>
 
-        <main className="min-h-[calc(100vh-4rem)] p-4 sm:p-8">{children}</main>
+        <main className="min-h-[calc(100vh-5rem)] p-4 sm:p-8">{children}</main>
       </div>
     </div>
   );
