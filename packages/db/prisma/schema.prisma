@@ -208,6 +208,8 @@ model Journal {
   publisher     String?
   apc           String?
   submissionFee String?
+  scimagoLink   String?
+  scopusLink    String?
   note          String?
 
   submissions ResearchSubmission[]

@@ -84,6 +84,8 @@ export async function createJournal(formData: FormData) {
       publisher: optionalString(formData.get("publisher")),
       apc: optionalString(formData.get("apc")),
       submissionFee: optionalString(formData.get("submissionFee")),
+      scimagoLink: optionalString(formData.get("scimagoLink")),
+      scopusLink: optionalString(formData.get("scopusLink")),
       note: optionalString(formData.get("note")),
     },
   });

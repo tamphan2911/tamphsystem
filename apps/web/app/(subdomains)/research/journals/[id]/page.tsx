@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, BarChart3, Database, Hash } from "lucide-react";
 import { prisma } from "@repo/db";
-import { ReviewsTable, type ReviewRow } from "../../reviews/ReviewsTable";
+import {
+  JournalDetailTabs,
+  type JournalAccountRow,
+  type JournalReviewRow,
+  type JournalSubmissionRow,
+} from "./JournalDetailTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +25,17 @@ export default async function JournalDetailPage({
   const journal = await prisma.journal.findUnique({
     where: { id },
     include: {
+      submissions: {
+        include: {
+          project: { select: { id: true, title: true } },
+          account: { select: { username: true } },
+        },
+        orderBy: { submittedAt: "desc" },
+      },
+      accounts: {
+        include: { _count: { select: { submissions: true } } },
+        orderBy: [{ username: "asc" }],
+      },
       reviews: { orderBy: [{ dueDate: "asc" }, { requestedAt: "desc" }] },
       _count: { select: { submissions: true, accounts: true, reviews: true } },
     },
@@ -27,11 +43,47 @@ export default async function JournalDetailPage({
 
   if (!journal) notFound();
 
-  const reviewRows: ReviewRow[] = journal.reviews.map((review) => ({
+  const relatedTasks = await prisma.researchTask.findMany({
+    where: {
+      OR: [
+        { title: { contains: journal.name, mode: "insensitive" } },
+        { description: { contains: journal.name, mode: "insensitive" } },
+      ],
+    },
+    orderBy: { updatedAt: "desc" },
+    select: { title: true, description: true },
+  });
+
+  const submissionRows: JournalSubmissionRow[] = journal.submissions.map((submission) => {
+    const taskTitles = relatedTasks
+      .filter((task) => {
+        const haystack = `${task.title} ${task.description ?? ""} ${submission.project.title}`.toLowerCase();
+        return haystack.includes(journal.name.toLowerCase()) || haystack.includes(submission.project.title.toLowerCase());
+      })
+      .map((task) => task.title);
+
+    return {
+      id: submission.id,
+      projectId: submission.project.id,
+      projectTitle: submission.project.title,
+      status: submission.status,
+      account: submission.account?.username ?? "",
+      submittedAt: dateText(submission.submittedAt),
+      taskTitles,
+    };
+  });
+
+  const accountRows: JournalAccountRow[] = journal.accounts.map((account) => ({
+    id: account.id,
+    username: account.username,
+    password: account.password,
+    email: account.email ?? "",
+    note: account.note ?? "",
+    submissions: account._count.submissions,
+  }));
+
+  const reviewRows: JournalReviewRow[] = journal.reviews.map((review) => ({
     id: review.id,
-    journalId: journal.id,
-    journalName: journal.name,
-    publisher: journal.publisher ?? "",
     manuscriptTitle: review.manuscriptTitle,
     manuscriptId: review.manuscriptId ?? "",
     status: review.status,
@@ -44,6 +96,11 @@ export default async function JournalDetailPage({
     note: review.note ?? "",
   }));
 
+  const externalLinks = [
+    { href: journal.scimagoLink, label: "Scimago", icon: BarChart3 },
+    { href: journal.scopusLink, label: "Scopus", icon: Database },
+  ].filter((item) => Boolean(item.href));
+
   return (
     <div className="mx-auto max-w-7xl space-y-5">
       <Link href="/journals" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white">
@@ -53,22 +110,24 @@ export default async function JournalDetailPage({
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">{journal.name}</h1>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{journal.note || "No journal notes yet."}</p>
-          </div>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800">
-              <p className="text-[11px] font-bold uppercase text-slate-400">Submits</p>
-              <p className="font-black">{journal._count.submissions}</p>
-            </div>
-            <div className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800">
-              <p className="text-[11px] font-bold uppercase text-slate-400">Accounts</p>
-              <p className="font-black">{journal._count.accounts}</p>
-            </div>
-            <div className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800">
-              <p className="text-[11px] font-bold uppercase text-slate-400">Reviews</p>
-              <p className="font-black">{journal._count.reviews}</p>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">{journal.name}</h1>
+              <div className="flex items-center gap-1">
+                {externalLinks.map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href as string}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:text-blue-600 hover:shadow-sm dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
+                    aria-label={item.label}
+                    title={item.label}
+                  >
+                    <item.icon className="h-4 w-4" />
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -80,18 +139,11 @@ export default async function JournalDetailPage({
           <div><dt className="text-xs font-bold uppercase text-slate-400">Publisher</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.publisher || "-"}</dd></div>
           <div><dt className="text-xs font-bold uppercase text-slate-400">APC</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.apc || "-"}</dd></div>
           <div><dt className="text-xs font-bold uppercase text-slate-400">Submission Fee</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.submissionFee || "-"}</dd></div>
+          <div className="md:col-span-2"><dt className="text-xs font-bold uppercase text-slate-400"><Hash className="inline h-3.5 w-3.5" /> Note</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.note || "-"}</dd></div>
         </dl>
       </section>
 
-      {reviewRows.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="flex items-center gap-2 text-base font-black text-slate-950 dark:text-white">
-            <ClipboardCheck className="h-4 w-4 text-emerald-600" />
-            Academic reviews for this journal
-          </h2>
-          <ReviewsTable rows={reviewRows} />
-        </section>
-      )}
+      <JournalDetailTabs submissions={submissionRows} accounts={accountRows} reviews={reviewRows} />
     </div>
   );
 }
