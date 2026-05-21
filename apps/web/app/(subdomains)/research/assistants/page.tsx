@@ -1,19 +1,10 @@
-import { ShieldCheck, UserRound, Users } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { assertResearchManager } from "../actions";
 import { AssistantsTable, type AssistantRow } from "./AssistantsTable";
 import { AddAssistantDialog, type AssistantCandidate } from "./AddAssistantDialog";
 
 export const dynamic = "force-dynamic";
-
-const manageableRoles = [
-  Role.ADMIN,
-  Role.CHIEF_ASSISTANT,
-  Role.ASSISTANT,
-  Role.RESEARCHER,
-  Role.LECTURER,
-  Role.STUDENT,
-];
 
 export default async function AssistantsPage() {
   const currentUser = await assertResearchManager();
@@ -23,11 +14,13 @@ export default async function AssistantsPage() {
     orderBy: [{ name: "asc" }, { email: "asc" }],
   });
 
-  const rows: AssistantRow[] = users.map((user) => ({
+  const assistantUsers = users.filter((user) => user.roles.includes(Role.ASSISTANT) || user.roles.includes(Role.CHIEF_ASSISTANT));
+
+  const rows: AssistantRow[] = assistantUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
     email: user.email,
-    roles: user.roles,
+    assistantRole: user.roles.includes(Role.CHIEF_ASSISTANT) ? Role.CHIEF_ASSISTANT : Role.ASSISTANT,
   }));
 
   const candidates: AssistantCandidate[] = users.map((user) => ({
@@ -37,15 +30,8 @@ export default async function AssistantsPage() {
     roles: user.roles,
   }));
 
-  const adminUsers = users.filter((user) => user.roles.includes(Role.ADMIN)).length;
-  const assistants = users.filter(
-    (user) => user.roles.includes(Role.ASSISTANT) || user.roles.includes(Role.CHIEF_ASSISTANT),
-  ).length;
-
   const stats = [
-    { label: "Users", value: users.length, icon: Users, color: "text-blue-600" },
-    { label: "Admins", value: adminUsers, icon: ShieldCheck, color: "text-emerald-600" },
-    { label: "Assistants", value: assistants, icon: UserRound, color: "text-purple-600" },
+    { label: "Assistants", value: assistantUsers.length, icon: UserRound, color: "text-purple-600" },
   ];
 
   return (
@@ -66,7 +52,7 @@ export default async function AssistantsPage() {
         {canAssignAssistants && <AddAssistantDialog users={candidates} />}
       </div>
 
-      <AssistantsTable rows={rows} roleOptions={manageableRoles} />
+      <AssistantsTable rows={rows} canManage={canAssignAssistants} />
     </div>
   );
 }

@@ -244,6 +244,29 @@ export async function assignResearchAssistant(formData: FormData) {
   revalidatePath("/assistants");
 }
 
+export async function removeResearchAssistantRole(formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const userId = optionalString(formData.get("userId"));
+  if (!userId) return;
+
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: true },
+  });
+  if (!target) return;
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      roles: target.roles.filter((role) => role !== Role.ASSISTANT && role !== Role.CHIEF_ASSISTANT),
+    },
+  });
+
+  revalidatePath("/assistants");
+}
+
 export async function createResearchTask(formData: FormData) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
