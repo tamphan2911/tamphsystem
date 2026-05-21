@@ -10,6 +10,7 @@ import {
 } from "../../actions";
 import { SubmissionsTable, type SubmissionRow } from "./SubmissionsTable";
 import { SuggestedJournalsPanel, type SuggestedJournalOption, type TaskAssigneeOption } from "./SuggestedJournalsPanel";
+import { SaveForm } from "../../components/SaveForm";
 
 export const dynamic = "force-dynamic";
 
@@ -147,7 +148,7 @@ export default async function ProjectDetailPage({
         </div>
       </div>
 
-      <form action={updateAction} className="grid gap-6 xl:grid-cols-[1fr_22rem]">
+      <SaveForm action={updateAction} className="grid gap-6 xl:grid-cols-[1fr_22rem]">
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-5 flex items-center justify-end">
             <button className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">
@@ -227,7 +228,7 @@ export default async function ProjectDetailPage({
             })}
           </div>
         </aside>
-      </form>
+      </SaveForm>
 
       <section className="space-y-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Search, ShieldCheck, UserRound } from "lucide-react";
 import { updateResearchRoles } from "../actions";
 import { FilterSelect, IconHint, TablePagination, useTablePagination } from "../components/TableControls";
+import { SaveForm } from "../components/SaveForm";
 
 export type AssistantRow = {
   id: string;
@@ -70,7 +71,7 @@ export function AssistantsTable({ rows, roleOptions }: { rows: AssistantRow[]; r
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-normal text-slate-700 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:text-slate-200 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">{user.name || "Unnamed user"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{user.email}</td>
                 <td className="px-4 py-3">
-                  <form id={`roles-${user.id}`} action={updateResearchRoles}>
+                  <SaveForm id={`roles-${user.id}`} action={updateResearchRoles}>
                     <input type="hidden" name="userId" value={user.id} />
                     <div className="flex flex-wrap gap-2">
                       {roleOptions.map((item) => (
@@ -89,7 +90,7 @@ export function AssistantsTable({ rows, roleOptions }: { rows: AssistantRow[]; r
                         </label>
                       ))}
                     </div>
-                  </form>
+                  </SaveForm>
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button

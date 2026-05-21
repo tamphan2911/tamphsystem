@@ -14,6 +14,7 @@ import { ActiveNavLink } from "../../../components/ActiveNavLink";
 import { ProfileMenu } from "../../../components/ProfileMenu";
 import { ThemeToggle } from "../../../components/ThemeToggle";
 import { ResearchNotificationBell } from "./ResearchNotificationBell";
+import { ResearchToastProvider } from "./components/ResearchToast";
 
 const navItems = [
   { href: "/projects", label: "Research Pipeline", icon: "projects" as const },
@@ -51,6 +52,7 @@ export function ResearchShell({
   });
 
   return (
+    <ResearchToastProvider>
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
       <aside
         className={`fixed inset-y-0 left-0 z-40 hidden border-r border-slate-200 bg-white transition-[width] duration-300 ease-out lg:flex lg:flex-col dark:border-slate-700 dark:bg-slate-900 ${
@@ -138,5 +140,6 @@ export function ResearchShell({
         <main className="min-h-[calc(100vh-5rem)] p-4 transition-[padding] duration-300 sm:p-8">{children}</main>
       </div>
     </div>
+    </ResearchToastProvider>
   );
 }
