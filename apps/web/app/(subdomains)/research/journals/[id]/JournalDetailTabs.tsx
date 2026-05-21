@@ -185,7 +185,7 @@ export function JournalDetailTabs({
                   {submissionPagination.pagedRows.map((row) => (
                     <tr key={row.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                       <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                        <Link href={`/projects/${row.projectId}`} className="inline-flex items-center gap-2 font-semibold text-slate-950 transition hover:text-blue-600 dark:text-white dark:hover:text-blue-300">
+                        <Link href={`/projects/${row.projectId}`} className="inline-flex items-center gap-2 text-sm font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">
                           <FileText className="h-4 w-4 text-slate-400" />
                           {row.projectTitle}
                         </Link>
@@ -232,7 +232,7 @@ export function JournalDetailTabs({
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {accountPagination.pagedRows.map((account) => (
                     <tr key={account.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                      <td className="sticky left-0 z-10 bg-white px-4 py-3 font-semibold text-slate-950 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:text-white dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">{account.username}</td>
+                      <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-normal text-slate-700 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">{account.username}</td>
                       <td className="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">{account.password || "-"}</td>
                       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.email || "-"}</td>
                       <td className="px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{account.submissions}</td>
@@ -267,7 +267,7 @@ export function JournalDetailTabs({
                   {reviewPagination.pagedRows.map((review) => (
                     <tr key={review.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                       <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                        <p className="font-semibold text-slate-950 dark:text-white">{review.manuscriptTitle}</p>
+                        <p className="text-sm font-normal text-slate-700 dark:text-slate-200">{review.manuscriptTitle}</p>
                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{review.manuscriptId || review.reviewRound || "No tracking code"}</p>
                       </td>
                       <td className="px-4 py-3">

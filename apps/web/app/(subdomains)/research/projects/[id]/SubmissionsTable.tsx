@@ -89,7 +89,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
                   <Link href={`/journals/${row.journalId}`} className="flex items-start gap-3">
                     <BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" />
                     <span>
-                      <span className="block font-semibold text-slate-950 group-hover:text-blue-600 dark:text-white">{row.journalName}</span>
+                      <span className="block text-sm font-normal text-slate-700 group-hover:text-blue-600 dark:text-slate-200">{row.journalName}</span>
                       <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">Journal detail</span>
                     </span>
                   </Link>

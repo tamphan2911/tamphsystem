@@ -182,7 +182,7 @@ export function TasksClient({ isAdmin, userId }: { isAdmin: boolean; userId: str
                 return (
                   <tr key={task.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                     <td className="sticky left-0 z-10 max-w-md bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                      <p className="font-semibold text-slate-950 dark:text-white">{task.title}</p>
+                      <p className="text-sm font-normal text-slate-700 dark:text-slate-200">{task.title}</p>
                       <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{task.description || "No description"}</p>
                     </td>
                     <td className="px-4 py-3">

@@ -76,7 +76,7 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
             {pagination.pagedRows.map((account) => (
               <tr key={account.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800">
-                  <div className="flex items-center gap-2 font-semibold text-slate-950 dark:text-white">
+                  <div className="flex items-center gap-2 text-sm font-normal text-slate-700 dark:text-slate-200">
                     <KeyRound className="h-4 w-4 text-slate-400" />
                     {account.username}
                   </div>

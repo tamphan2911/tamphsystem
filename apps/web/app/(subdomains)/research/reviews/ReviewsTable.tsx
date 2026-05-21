@@ -99,7 +99,7 @@ export function ReviewsTable({ rows }: { rows: ReviewRow[] }) {
                   <div className="flex items-start gap-3">
                     <ClipboardCheck className="mt-0.5 h-4 w-4 flex-none text-slate-400" />
                     <div>
-                      <p className="font-semibold text-slate-950 dark:text-white">{row.manuscriptTitle}</p>
+                      <p className="text-sm font-normal text-slate-700 dark:text-slate-200">{row.manuscriptTitle}</p>
                       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{row.manuscriptId || row.reviewRound || "No tracking code"}</p>
                     </div>
                   </div>

@@ -99,7 +99,7 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
                     <div className="flex items-start gap-3">
                       <FileText className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" />
                       <div>
-                        <p className="font-semibold text-slate-950 dark:text-white group-hover:text-blue-600">{row.title}</p>
+                        <p className="text-sm font-normal text-slate-700 group-hover:text-blue-600 dark:text-slate-200">{row.title}</p>
                         <p className="mt-1 line-clamp-1 max-w-lg text-xs text-slate-500 dark:text-slate-400">{row.coAuthors || row.abstract || "No notes"}</p>
                       </div>
                     </div>
