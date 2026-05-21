@@ -32,13 +32,15 @@ model User {
   avatarUrl    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  roles        Role[]   // A user can have multiple roles
+  roles        Role[] // A user can have multiple roles
 
   // Relations
-  authoredCourses   Course[]          @relation("CourseAuthor")
-  enrollments       Enrollment[]
-  quizAttempts      QuizAttempt[]
-  researchProjects  ResearchProject[] @relation("LeadResearcher")
+  authoredCourses       Course[]                 @relation("CourseAuthor")
+  enrollments           Enrollment[]
+  quizAttempts          QuizAttempt[]
+  researchProjects      ResearchProject[]        @relation("LeadResearcher")
+  createdResearchTasks  ResearchTask[]           @relation("ResearchTaskCreator")
+  assignedResearchTasks ResearchTaskAssignment[] @relation("ResearchTaskAssignee")
 }
 
 // ---------------------------------------------
@@ -54,22 +56,22 @@ model Course {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  authorId    String
-  author      User     @relation("CourseAuthor", fields: [authorId], references: [id])
-  
+  authorId String
+  author   User   @relation("CourseAuthor", fields: [authorId], references: [id])
+
   modules     Module[]
   enrollments Enrollment[]
 }
 
 model Module {
-  id        String   @id @default(uuid())
-  title     String
-  order     Int      // Defines sequence within the course
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  
-  sessions  Session[]
-  quizzes   Quiz[]
+  id       String @id @default(uuid())
+  title    String
+  order    Int // Defines sequence within the course
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  sessions Session[]
+  quizzes  Quiz[]
 }
 
 enum SessionType {
@@ -81,27 +83,27 @@ enum SessionType {
 }
 
 model Session {
-  id        String      @id @default(uuid())
-  title     String
-  type      SessionType
-  order     Int         // Defines sequence within the module
-  moduleId  String
-  module    Module      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  
+  id       String      @id @default(uuid())
+  title    String
+  type     SessionType
+  order    Int // Defines sequence within the module
+  moduleId String
+  module   Module      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
   // Polymorphic Fields based on Type
-  content         String?  // Rich text for lessons or prompts for essays
-  videoUrl        String?  // For Video lessons
-  codingLanguage  String?  // "python" or "r"
-  initialCode     String?  // Starter code for exercises
-  expectedOutput  String?  // Expected string output for basic validation
+  content        String? // Rich text for lessons or prompts for essays
+  videoUrl       String? // For Video lessons
+  codingLanguage String? // "python" or "r"
+  initialCode    String? // Starter code for exercises
+  expectedOutput String? // Expected string output for basic validation
 }
 
 model Enrollment {
-  id                 String   @id @default(uuid())
+  id                 String    @id @default(uuid())
   userId             String
   courseId           String
-  progressPercentage Float    @default(0)
-  enrolledAt         DateTime @default(now())
+  progressPercentage Float     @default(0)
+  enrolledAt         DateTime  @default(now())
   completedAt        DateTime?
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -120,23 +122,23 @@ enum QuestionType {
 }
 
 model Quiz {
-  id       String   @id @default(uuid())
+  id       String @id @default(uuid())
   title    String
   moduleId String
-  module   Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   questions Question[]
   attempts  QuizAttempt[]
 }
 
 model Question {
-  id       String       @id @default(uuid())
-  text     String
-  type     QuestionType @default(MULTIPLE_CHOICE)
-  quizId   String
-  quiz     Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  id     String       @id @default(uuid())
+  text   String
+  type   QuestionType @default(MULTIPLE_CHOICE)
+  quizId String
+  quiz   Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
-  answers  Answer[]
+  answers Answer[]
 }
 
 model Answer {
@@ -148,10 +150,10 @@ model Answer {
 }
 
 model QuizAttempt {
-  id        String   @id @default(uuid())
-  userId    String
-  quizId    String
-  score     Float
+  id          String   @id @default(uuid())
+  userId      String
+  quizId      String
+  score       Float
   attemptedAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -177,24 +179,24 @@ enum ClaimStatus {
 }
 
 model ResearchProject {
-  id                     String        @id @default(uuid())
-  title                  String
-  abstract               String?
-  stage                  ResearchStage @default(PRODUCTION)
-  
+  id       String        @id @default(uuid())
+  title    String
+  abstract String?
+  stage    ResearchStage @default(PRODUCTION)
+
   // Production Stage Tracking
   coAuthors              String?
-  universityRegistration String?       // e.g., "Q1 2026"
-  claimStatus            ClaimStatus   @default(CANNOT_CLAIM)
-  
-  createdAt              DateTime      @default(now())
-  updatedAt              DateTime      @updatedAt
-  
-  leadResearcherId       String
-  leadResearcher         User          @relation("LeadResearcher", fields: [leadResearcherId], references: [id])
+  universityRegistration String? // e.g., "Q1 2026"
+  claimStatus            ClaimStatus @default(CANNOT_CLAIM)
 
-  publications           Publication[]
-  submissions            ResearchSubmission[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leadResearcherId String
+  leadResearcher   User   @relation("LeadResearcher", fields: [leadResearcherId], references: [id])
+
+  publications Publication[]
+  submissions  ResearchSubmission[]
 }
 
 model Journal {
@@ -207,59 +209,90 @@ model Journal {
   apc           String?
   submissionFee String?
   note          String?
-  
-  submissions   ResearchSubmission[]
-  accounts      PublisherAccount[]
-  reviews       AcademicReview[]
+
+  submissions ResearchSubmission[]
+  accounts    PublisherAccount[]
+  reviews     AcademicReview[]
 }
 
 model AcademicReview {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   journalId       String
   manuscriptTitle String
   manuscriptId    String?
-  status          String   @default("INVITED") // INVITED, ACCEPTED, IN_PROGRESS, SUBMITTED, DECLINED
+  status          String    @default("INVITED") // INVITED, ACCEPTED, IN_PROGRESS, SUBMITTED, DECLINED
   recommendation  String?
-  requestedAt     DateTime @default(now())
+  requestedAt     DateTime  @default(now())
   dueDate         DateTime?
   completedAt     DateTime?
   editorName      String?
   reviewRound     String?
   note            String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  journal         Journal  @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  journal Journal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+}
+
+model ResearchTask {
+  id            String    @id @default(uuid())
+  title         String
+  description   String?
+  category      String?
+  status        String    @default("OPEN") // OPEN, IN_PROGRESS, COMPLETED
+  dueDate       DateTime?
+  completedAt   DateTime?
+  adminViewedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  createdById String
+  createdBy   User   @relation("ResearchTaskCreator", fields: [createdById], references: [id])
+
+  assignments ResearchTaskAssignment[]
+}
+
+model ResearchTaskAssignment {
+  id         String    @id @default(uuid())
+  taskId     String
+  userId     String
+  finishedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  task ResearchTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User         @relation("ResearchTaskAssignee", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
 }
 
 model PublisherAccount {
-  id         String  @id @default(uuid())
-  username   String
-  password   String  // Stored in plain/reversible text for personal tracking
-  email      String?
-  note       String?
-  journalId  String?
-  journal    Journal? @relation(fields: [journalId], references: [id], onDelete: SetNull)
+  id        String   @id @default(uuid())
+  username  String
+  password  String // Stored in plain/reversible text for personal tracking
+  email     String?
+  note      String?
+  journalId String?
+  journal   Journal? @relation(fields: [journalId], references: [id], onDelete: SetNull)
 
   submissions ResearchSubmission[]
 }
 
 model ResearchSubmission {
-  id                String   @id @default(uuid())
+  id                String  @id @default(uuid())
   researchProjectId String
   journalId         String
-  accountId         String?  // Which account was used to submit
-  
-  submittedAt       DateTime @default(now())
-  status            String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
-  
-  project   ResearchProject  @relation(fields: [researchProjectId], references: [id], onDelete: Cascade)
-  journal   Journal          @relation(fields: [journalId], references: [id], onDelete: Cascade)
-  account   PublisherAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  accountId         String? // Which account was used to submit
+
+  submittedAt DateTime @default(now())
+  status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+
+  project ResearchProject   @relation(fields: [researchProjectId], references: [id], onDelete: Cascade)
+  journal Journal           @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  account PublisherAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
 }
 
 model Publication {
-  id            String   @id @default(uuid())
+  id            String          @id @default(uuid())
   title         String
   url           String?
   scimagoLink   String?

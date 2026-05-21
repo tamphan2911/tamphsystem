@@ -236,6 +236,34 @@ export async function assignResearchAssistant(formData: FormData) {
   revalidatePath("/assistants");
 }
 
+export async function createResearchTask(formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const assigneeIds = formData
+    .getAll("assigneeIds")
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+
+  if (assigneeIds.length === 0) return;
+
+  await prisma.researchTask.create({
+    data: {
+      title: optionalString(formData.get("title")) ?? "Untitled task",
+      description: optionalString(formData.get("description")),
+      category: optionalString(formData.get("category")),
+      dueDate: optionalString(formData.get("dueDate"))
+        ? new Date(optionalString(formData.get("dueDate")) as string)
+        : null,
+      createdById: user.id,
+      assignments: {
+        create: assigneeIds.map((userId) => ({ userId })),
+      },
+    },
+  });
+
+  revalidatePath("/tasks");
+}
+
 export async function assertResearchManager() {
   const user = await requireCurrentUser();
   if (!canManageResearch(user.roles)) {

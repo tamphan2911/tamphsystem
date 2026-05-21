@@ -15,6 +15,7 @@ export default async function ResearchLayout({
       email={session?.user?.email}
       name={session?.user?.name}
       isAdmin={roles.includes(Role.ADMIN)}
+      isAssistant={roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT)}
     >
       {children}
     </ResearchShell>

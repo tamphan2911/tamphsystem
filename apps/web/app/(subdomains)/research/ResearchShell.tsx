@@ -13,13 +13,15 @@ import {
 import { ActiveNavLink } from "../../../components/ActiveNavLink";
 import { ProfileMenu } from "../../../components/ProfileMenu";
 import { ThemeToggle } from "../../../components/ThemeToggle";
+import { ResearchNotificationBell } from "./ResearchNotificationBell";
 
 const navItems = [
   { href: "/projects", label: "Research Pipeline", icon: "projects" as const },
+  { href: "/tasks", label: "Tasks", icon: "tasks" as const, requiresTaskAccess: true },
   { href: "/journals", label: "Journals", icon: "journals" as const },
   { href: "/reviews", label: "Academic Reviews", icon: "reviews" as const },
   { href: "/accounts", label: "Publisher Accounts", icon: "accounts" as const },
-  { href: "/assistants", label: "Assistants", icon: "assistants" as const },
+  { href: "/assistants", label: "Assistants", icon: "assistants" as const, adminOnly: true },
 ];
 
 const adminLinks = [
@@ -33,13 +35,20 @@ export function ResearchShell({
   email,
   name,
   isAdmin,
+  isAssistant,
 }: {
   children: React.ReactNode;
   email?: string | null;
   name?: string | null;
   isAdmin: boolean;
+  isAssistant: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const visibleNavItems = navItems.filter((item) => {
+    if ("adminOnly" in item && item.adminOnly) return isAdmin;
+    if ("requiresTaskAccess" in item && item.requiresTaskAccess) return isAdmin || isAssistant;
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
@@ -70,7 +79,7 @@ export function ResearchShell({
         </div>
 
         <nav className={`flex-1 space-y-1 overflow-y-auto transition-all duration-300 ${collapsed ? "p-3" : "p-4"}`}>
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <ActiveNavLink
               key={item.href}
               href={item.href}
@@ -85,7 +94,7 @@ export function ResearchShell({
       <div className={`transition-[padding] duration-300 ease-out ${collapsed ? "lg:pl-20" : "lg:pl-72"}`}>
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-slate-200 bg-white/85 px-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/85 sm:px-8">
           <div className="flex min-w-0 items-center gap-2 overflow-x-auto lg:hidden">
-            {navItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -113,6 +122,7 @@ export function ResearchShell({
             )}
           </div>
           <div className="flex items-center gap-3">
+            <ResearchNotificationBell enabled={isAdmin || isAssistant} />
             <ThemeToggle />
             <ProfileMenu
               email={email}

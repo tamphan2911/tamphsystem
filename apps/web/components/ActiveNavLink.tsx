@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, ClipboardCheck, FolderGit2, KeyRound, ShieldCheck } from "lucide-react";
+import { BookOpen, ClipboardCheck, ClipboardList, FolderGit2, KeyRound, ShieldCheck } from "lucide-react";
 
 const icons = {
   projects: FolderGit2,
@@ -10,6 +10,7 @@ const icons = {
   accounts: KeyRound,
   assistants: ShieldCheck,
   reviews: ClipboardCheck,
+  tasks: ClipboardList,
 };
 
 export function ActiveNavLink({
