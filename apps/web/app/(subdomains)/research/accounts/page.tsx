@@ -25,6 +25,7 @@ export default async function PublisherAccountsPage() {
     password: account.password,
     email: account.email ?? "",
     note: account.note ?? "",
+    journalId: account.journalId ?? "",
     journalName: account.journal?.name ?? "",
     publisher: account.journal?.publisher ?? "",
     submissions: account._count.submissions,

@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
-import { AtSign, BookOpen, Building2, KeyRound, LockKeyhole, Send, StickyNote, UserRound } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { FilterSelect, IconHint, TablePagination, TableSearchInput, useTablePagination } from "../components/TableControls";
 
 export type AccountRow = {
@@ -10,6 +11,7 @@ export type AccountRow = {
   password: string;
   email: string;
   note: string;
+  journalId: string;
   journalName: string;
   publisher: string;
   submissions: number;
@@ -55,13 +57,13 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
         <table className="w-full min-w-[72rem] text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]"><IconHint label="Account ID"><UserRound className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-              <th className="px-4 py-3"><IconHint label="Password"><LockKeyhole className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-              <th className="px-4 py-3"><IconHint label="Email"><AtSign className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-              <th className="px-4 py-3"><IconHint label="Journal"><BookOpen className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-              <th className="px-4 py-3"><IconHint label="Publisher"><Building2 className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-              <th className="px-4 py-3"><IconHint label="Submissions"><Send className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-              <th className="px-4 py-3"><IconHint label="Note"><StickyNote className="h-4 w-4" aria-hidden="true" /></IconHint></th>
+              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Account ID</th>
+              <th className="px-4 py-3">Password</th>
+              <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Journal</th>
+              <th className="px-4 py-3">Publisher</th>
+              <th className="px-4 py-3">Submissions</th>
+              <th className="px-4 py-3">Note</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -75,7 +77,15 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
                 </td>
                 <td className="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">{account.password || "-"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.email || "-"}</td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.journalName || "Publisher-wide"}</td>
+                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                  {account.journalId ? (
+                    <Link href={`/journals/${account.journalId}`} className="font-medium text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">
+                      {account.journalName}
+                    </Link>
+                  ) : (
+                    "Publisher-wide"
+                  )}
+                </td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.publisher || "-"}</td>
                 <td className="px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{account.submissions}</td>
                 <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.note || "-"}</td>
