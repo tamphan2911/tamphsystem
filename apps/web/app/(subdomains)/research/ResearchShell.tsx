@@ -17,12 +17,12 @@ import { ResearchNotificationBell } from "./ResearchNotificationBell";
 import { ResearchToastProvider } from "./components/ResearchToast";
 
 const navItems = [
-  { href: "/projects", label: "Research Pipeline", icon: "projects" as const },
+  { href: "/projects", label: "Research", icon: "projects" as const },
   { href: "/tasks", label: "Tasks", icon: "tasks" as const, requiresTaskAccess: true },
   { href: "/journals", label: "Journals", icon: "journals" as const },
   { href: "/conferences", label: "Conferences", icon: "conferences" as const },
-  { href: "/reviews", label: "Academic Reviews", icon: "reviews" as const },
-  { href: "/accounts", label: "Publisher Accounts", icon: "accounts" as const },
+  { href: "/reviews", label: "Academic", icon: "reviews" as const },
+  { href: "/accounts", label: "Accounts", icon: "accounts" as const },
   { href: "/assistants", label: "Assistants", icon: "assistants" as const, adminOnly: true },
 ];
 
