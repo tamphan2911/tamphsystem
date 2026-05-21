@@ -61,7 +61,7 @@ export function ResearchShell({
           <button
             type="button"
             onClick={() => setCollapsed((value) => !value)}
-            className={`flex w-full items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 hover:shadow-md ${
+            className={`flex w-full items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 hover:shadow-md dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white ${
               collapsed ? "justify-center" : "justify-between"
             }`}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -101,12 +101,12 @@ export function ResearchShell({
           <div className="hidden min-w-0 items-center gap-2 lg:flex">
             <span className="text-sm text-slate-500 dark:text-slate-400">Research operations</span>
             {isAdmin && (
-              <div className="ml-3 flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1">
+              <div className="ml-3 flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
                 {adminLinks.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 hover:shadow-sm"
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 hover:shadow-sm dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                   >
                     <item.icon className="h-3.5 w-3.5" />
                     {item.label}

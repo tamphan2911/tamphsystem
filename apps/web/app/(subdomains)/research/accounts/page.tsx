@@ -49,11 +49,11 @@ export default async function PublisherAccountsPage() {
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
           {stats.map((item) => (
-            <div key={item.label} className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+            <div key={item.label} className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <item.icon className={`h-4 w-4 ${item.color}`} />
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.label}</p>
-                <p className="text-base font-black text-slate-950">{item.value}</p>
+                <p className="text-base font-black text-slate-950 dark:text-white">{item.value}</p>
               </div>
             </div>
           ))}

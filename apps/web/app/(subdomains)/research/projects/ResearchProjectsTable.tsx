@@ -22,10 +22,10 @@ const stages = ["ALL", "PRODUCTION", "SUBMITTING", "ACCEPTED", "PUBLISHED"];
 const claims = ["ALL", "CANNOT_CLAIM", "MAKING_DOCUMENT", "WAITING", "CLAIMED"];
 
 function statusClass(stage: string) {
-  if (stage === "PUBLISHED") return "bg-emerald-50 text-emerald-700 ring-emerald-100";
-  if (stage === "ACCEPTED") return "bg-purple-50 text-purple-700 ring-purple-100";
-  if (stage === "SUBMITTING") return "bg-blue-50 text-blue-700 ring-blue-100";
-  return "bg-slate-50 text-slate-700 ring-slate-200";
+  if (stage === "PUBLISHED") return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (stage === "ACCEPTED") return "bg-purple-50 text-purple-700 ring-purple-100 dark:bg-purple-950/40 dark:text-purple-300 dark:ring-purple-900";
+  if (stage === "SUBMITTING") return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
 }
 
 export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) {
@@ -55,18 +55,18 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
     });
   }, [claim, lead, query, rows, stage]);
 
-  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
+  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between">
         <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search research, authors, registration..."
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 dark:border-slate-700 dark:bg-slate-950 pl-9 pr-3 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
           />
         </div>
         <div className="flex flex-wrap gap-2">
@@ -84,9 +84,9 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[74rem] text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)]">Research</th>
+              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Research</th>
               <th className="px-4 py-3">Stage</th>
               <th className="px-4 py-3">Claim</th>
               <th className="px-4 py-3">Reg.</th>
@@ -96,16 +96,16 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
               <th className="px-4 py-3 text-right">Open</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {filtered.map((row) => (
-              <tr key={row.id} className="group transition duration-200 ease-out hover:bg-slate-50">
-                <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50">
+              <tr key={row.id} className="group transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800">
                   <Link href={`/projects/${row.id}`} className="group">
                     <div className="flex items-start gap-3">
                       <FileText className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" />
                       <div>
-                        <p className="font-semibold text-slate-950 group-hover:text-blue-600">{row.title}</p>
-                        <p className="mt-1 line-clamp-1 max-w-lg text-xs text-slate-500">{row.coAuthors || row.abstract || "No notes"}</p>
+                        <p className="font-semibold text-slate-950 dark:text-white group-hover:text-blue-600">{row.title}</p>
+                        <p className="mt-1 line-clamp-1 max-w-lg text-xs text-slate-500 dark:text-slate-400">{row.coAuthors || row.abstract || "No notes"}</p>
                       </div>
                     </div>
                   </Link>
@@ -113,13 +113,13 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
                 <td className="px-4 py-3">
                   <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(row.stage)}`}>{row.stage}</span>
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600">{row.claimStatus.replace("_", " ")}</td>
-                <td className="px-4 py-3 text-sm text-slate-600">{row.universityRegistration || "-"}</td>
-                <td className="px-4 py-3 text-sm text-slate-600">{row.leadResearcher}</td>
-                <td className="px-4 py-3 text-center text-sm font-semibold text-slate-600">{row.submissions}</td>
-                <td className="px-4 py-3 text-center text-sm font-semibold text-slate-600">{row.publications}</td>
+                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.claimStatus.replace("_", " ")}</td>
+                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.universityRegistration || "-"}</td>
+                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.leadResearcher}</td>
+                <td className="px-4 py-3 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">{row.submissions}</td>
+                <td className="px-4 py-3 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">{row.publications}</td>
                 <td className="px-4 py-3 text-right">
-                  <Link href={`/projects/${row.id}`} className="inline-flex items-center justify-center rounded-lg p-2 text-slate-500 transition hover:bg-blue-50 hover:text-blue-600" title="Open research">
+                  <Link href={`/projects/${row.id}`} className="inline-flex items-center justify-center rounded-lg p-2 text-slate-500 dark:text-slate-400 transition hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 dark:hover:text-blue-300" title="Open research">
                     <ExternalLink className="h-4 w-4" />
                   </Link>
                 </td>
@@ -127,7 +127,7 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-14 text-center text-sm text-slate-500">
+                <td colSpan={8} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
                   No research matches the current search.
                 </td>
               </tr>

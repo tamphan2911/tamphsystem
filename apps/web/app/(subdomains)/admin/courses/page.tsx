@@ -32,15 +32,15 @@ export default async function AdminCoursesPage() {
         </p>
       </div>
 
-      <form action={createCourse} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <form action={createCourse} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
         <h2 className="mb-4 flex items-center gap-2 font-bold">
           <PlusCircle className="h-4 w-4 text-blue-600" />
           New course
         </h2>
         <div className="grid gap-3 lg:grid-cols-4">
-          <input name="title" required placeholder="Course title" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950" />
-          <input name="description" placeholder="Description" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 lg:col-span-2" />
-          <select name="authorId" required className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950">
+          <input name="title" required placeholder="Course title" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
+          <input name="description" placeholder="Description" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 lg:col-span-2" />
+          <select name="authorId" required className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
             <option value="">Author</option>
             {authors.map((author) => (
               <option key={author.id} value={author.id}>{author.name || author.email}</option>
@@ -51,12 +51,12 @@ export default async function AdminCoursesPage() {
           <input type="checkbox" name="isPublished" />
           Publish immediately
         </label>
-        <button className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+        <button className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md dark:bg-blue-500 dark:hover:bg-blue-400">
           Create Course
         </button>
       </form>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
         <div className="overflow-x-auto">
         <table className="w-full min-w-[56rem] text-left">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
@@ -83,7 +83,7 @@ export default async function AdminCoursesPage() {
                   <form action={updateCoursePublishing} className="flex items-center gap-2">
                     <input type="hidden" name="courseId" value={course.id} />
                     <input type="checkbox" name="isPublished" defaultChecked={course.isPublished} />
-                    <button className="rounded bg-slate-100 px-2 py-1 text-xs font-semibold hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700">
+                    <button className="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
                       Save
                     </button>
                   </form>

@@ -44,15 +44,15 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
 
       {isOpen && (
         <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="w-full max-w-3xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
-            <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+          <div className="w-full max-w-3xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
               <div className="flex items-start gap-3">
                 <div className="rounded-lg bg-emerald-50 p-2 text-emerald-600">
                   <ShieldCheck className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-950">Add Assistant</h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <h2 className="text-lg font-bold text-slate-950 dark:text-white">Add Assistant</h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     Search one account by email or ID, then assign assistant jurisdiction.
                   </p>
                 </div>
@@ -60,7 +60,7 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
@@ -80,11 +80,11 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
                     setSelectedUserId("");
                   }}
                   placeholder="Search by email, user ID, name, or role..."
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                 />
               </div>
 
-              <div className="max-h-80 overflow-y-auto rounded-xl border border-slate-200">
+              <div className="max-h-80 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800">
                 {filtered.map((user) => {
                   const isSelected = selectedUserId === user.id;
                   return (
@@ -92,16 +92,16 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
                       key={user.id}
                       type="button"
                       onClick={() => setSelectedUserId(user.id)}
-                      className={`flex w-full items-start justify-between gap-4 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-slate-50 ${
-                        isSelected ? "bg-blue-50 ring-1 ring-inset ring-blue-200" : ""
+                      className={`flex w-full items-start justify-between gap-4 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50 ${
+                        isSelected ? "bg-blue-50 ring-1 ring-inset ring-blue-200 dark:bg-blue-950/40 dark:ring-blue-900" : ""
                       }`}
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <UserRound className="h-4 w-4 text-slate-400" />
-                          <p className="truncate text-sm font-bold text-slate-950">{user.name || "Unnamed user"}</p>
+                          <p className="truncate text-sm font-bold text-slate-950 dark:text-white">{user.name || "Unnamed user"}</p>
                         </div>
-                        <div className="mt-1 flex min-w-0 items-center gap-2 text-xs text-slate-500">
+                        <div className="mt-1 flex min-w-0 items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                           <Mail className="h-3.5 w-3.5 flex-none" />
                           <span className="truncate">{user.email}</span>
                         </div>
@@ -109,7 +109,7 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
                       </div>
                       <div className="flex flex-wrap justify-end gap-1">
                         {user.roles.map((role) => (
-                          <span key={role} className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500">
+                          <span key={role} className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                             {role}
                           </span>
                         ))}
@@ -118,7 +118,7 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
                   );
                 })}
                 {filtered.length === 0 && (
-                  <div className="px-4 py-12 text-center text-sm text-slate-500">No user account matches this search.</div>
+                  <div className="px-4 py-12 text-center text-sm text-slate-500 dark:text-slate-400">No user account matches this search.</div>
                 )}
               </div>
 
@@ -127,42 +127,42 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
                   type="button"
                   onClick={() => setAssistantRole("ASSISTANT")}
                   className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
-                    assistantRole === "ASSISTANT" ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-700"
+                    assistantRole === "ASSISTANT" ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300" : "border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
                   }`}
                 >
                   <ShieldCheck className="h-5 w-5" />
                   <div>
                     <p className="text-sm font-bold">Assistant</p>
-                    <p className="text-xs text-slate-500">Submission and task support</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Submission and task support</p>
                   </div>
                 </button>
                 <button
                   type="button"
                   onClick={() => setAssistantRole("CHIEF_ASSISTANT")}
                   className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
-                    assistantRole === "CHIEF_ASSISTANT" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-white text-slate-700"
+                    assistantRole === "CHIEF_ASSISTANT" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300" : "border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
                   }`}
                 >
                   <Crown className="h-5 w-5" />
                   <div>
                     <p className="text-sm font-bold">Chief Assistant</p>
-                    <p className="text-xs text-slate-500">Can coordinate research operations</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Can coordinate research operations</p>
                   </div>
                 </button>
               </div>
 
               {selected && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                  Selected <span className="font-semibold text-slate-950">{selected.name || selected.email}</span> for{" "}
-                  <span className="font-semibold text-slate-950">{assistantRole.replace("_", " ")}</span>.
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+                  Selected <span className="font-semibold text-slate-950 dark:text-white">{selected.name || selected.email}</span> for{" "}
+                  <span className="font-semibold text-slate-950 dark:text-white">{assistantRole.replace("_", " ")}</span>.
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5">
+              <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>

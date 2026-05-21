@@ -34,8 +34,8 @@ export function ActiveNavLink({
         collapsed ? "justify-center" : ""
       } ${
         isActive
-          ? "bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-100"
-          : "text-slate-700 hover:bg-slate-100 hover:text-slate-950"
+          ? "bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900"
+          : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
       }`}
     >
       <span className={`absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full transition ${isActive ? "bg-emerald-600 opacity-100" : "opacity-0"}`} />

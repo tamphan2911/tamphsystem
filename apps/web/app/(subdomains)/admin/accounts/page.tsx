@@ -25,31 +25,31 @@ export default async function AdminAccountsPage() {
         </p>
       </div>
 
-      <form action={createAdminPublisherAccount} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <form action={createAdminPublisherAccount} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
         <h2 className="mb-4 flex items-center gap-2 font-bold">
           <PlusCircle className="h-4 w-4 text-blue-600" />
           Add publisher account
         </h2>
         <div className="grid gap-3 lg:grid-cols-4">
-          <input name="username" required placeholder="ID / username" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950" />
-          <input name="password" placeholder="Password" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950" />
-          <input name="email" placeholder="Email" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950" />
-          <select name="journalId" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950">
+          <input name="username" required placeholder="ID / username" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
+          <input name="password" placeholder="Password" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
+          <input name="email" placeholder="Email" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
+          <select name="journalId" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
             <option value="">Publisher-wide</option>
             {journals.map((journal) => (
               <option key={journal.id} value={journal.id}>{journal.publisher ? `${journal.publisher} - ` : ""}{journal.name}</option>
             ))}
           </select>
-          <input name="note" placeholder="Login URL, note, publisher scope" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 lg:col-span-4" />
+          <input name="note" placeholder="Login URL, note, publisher scope" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 lg:col-span-4" />
         </div>
-        <button className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+        <button className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md dark:bg-blue-500 dark:hover:bg-blue-400">
           Add Account
         </button>
       </form>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {accounts.map((account) => (
-          <article key={account.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <article key={account.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="font-bold">{account.username}</h2>
