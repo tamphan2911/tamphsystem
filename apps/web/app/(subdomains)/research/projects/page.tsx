@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { CheckCircle, FileText, Library, PlusCircle, Send, UploadCloud } from "lucide-react";
+import { CheckCircle, FileText, Library, Send, UploadCloud } from "lucide-react";
 import { prisma, type ResearchProject, type User } from "@repo/db";
-import { createResearchProject } from "../actions";
+import { NewResearchDialog } from "./NewResearchDialog";
 
 export const dynamic = "force-dynamic";
 
@@ -112,7 +112,7 @@ export default async function ProjectsDashboard() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white">
             Research Pipeline
@@ -122,28 +122,7 @@ export default async function ProjectsDashboard() {
           </p>
         </div>
 
-        <form action={createResearchProject} className="grid w-full gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 xl:max-w-2xl">
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-200">
-            <PlusCircle className="h-4 w-4 text-blue-500" />
-            New research
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input name="title" required placeholder="Research title" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-800 dark:bg-slate-950" />
-            <select name="stage" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-800 dark:bg-slate-950">
-              <option value="PRODUCTION">Production</option>
-              <option value="SUBMITTING">Submitting</option>
-              <option value="ACCEPTED">Accepted</option>
-              <option value="PUBLISHED">Published</option>
-            </select>
-            <input name="coAuthors" placeholder="Co-authors" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-800 dark:bg-slate-950" />
-            <input name="universityRegistration" placeholder="University registration, e.g. Q2 2026" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-800 dark:bg-slate-950" />
-          </div>
-          <textarea name="abstract" placeholder="Idea, data, model, writing notes, references..." className="min-h-20 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-800 dark:bg-slate-950" />
-          <button className="inline-flex w-fit items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
-            <PlusCircle className="h-4 w-4" />
-            Add Project
-          </button>
-        </form>
+        <NewResearchDialog />
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
