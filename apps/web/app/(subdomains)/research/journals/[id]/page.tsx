@@ -17,10 +17,14 @@ function dateText(value: Date | null) {
 
 export default async function JournalDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ back?: string }>;
 }) {
   const { id } = await params;
+  const { back } = await searchParams;
+  const backHref = back?.startsWith("/journals") ? back : "/journals";
 
   const journal = await prisma.journal.findUnique({
     where: { id },
@@ -104,7 +108,7 @@ export default async function JournalDetailPage({
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
-      <Link href="/journals" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white">
+      <Link href={backHref} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white">
         <ArrowLeft className="h-4 w-4" />
         Journals
       </Link>

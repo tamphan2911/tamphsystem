@@ -56,8 +56,8 @@ export function FilterSelect({
   );
 }
 
-export function useTablePagination<T>(rows: T[], pageSize = 10) {
-  const [page, setPage] = useState(1);
+export function useTablePagination<T>(rows: T[], pageSize = 10, initialPage = 1) {
+  const [page, setPage] = useState(initialPage);
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
 
   useEffect(() => {

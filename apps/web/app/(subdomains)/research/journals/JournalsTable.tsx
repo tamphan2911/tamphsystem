@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { BadgeCheck, BookOpen, Building2, Hash, ReceiptText, Search, StickyNote, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { BadgeCheck, BookOpen, ReceiptText, Search, StickyNote, Users } from "lucide-react";
 import { FilterSelect, IconHint, TablePagination, useTablePagination } from "../components/TableControls";
 
 export type JournalRow = {
@@ -32,10 +33,13 @@ function rankBadge(rank: string) {
 }
 
 export function JournalsTable({ rows }: { rows: JournalRow[] }) {
-  const [query, setQuery] = useState("");
-  const [rank, setRank] = useState("ALL");
-  const [field, setField] = useState("ALL");
-  const [publisher, setPublisher] = useState("ALL");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
+  const [rank, setRank] = useState(() => searchParams.get("rank") ?? "ALL");
+  const [field, setField] = useState(() => searchParams.get("field") ?? "ALL");
+  const [publisher, setPublisher] = useState(() => searchParams.get("publisher") ?? "ALL");
 
   const fieldOptions = useMemo(() => ["ALL", ...Array.from(new Set(rows.map((row) => row.field).filter(Boolean))).sort()], [rows]);
   const publisherOptions = useMemo(() => ["ALL", ...Array.from(new Set(rows.map((row) => row.publisher).filter(Boolean))).sort()], [rows]);
@@ -54,7 +58,21 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
     });
   }, [field, publisher, query, rank, rows]);
 
-  const pagination = useTablePagination(filtered, 10);
+  const initialPage = Number(searchParams.get("page") ?? "1");
+  const pagination = useTablePagination(filtered, 10, Number.isFinite(initialPage) && initialPage > 0 ? initialPage : 1);
+  const currentListPath = useMemo(() => {
+    const params = new URLSearchParams();
+    if (query.trim()) params.set("q", query.trim());
+    if (rank !== "ALL") params.set("rank", rank);
+    if (field !== "ALL") params.set("field", field);
+    if (publisher !== "ALL") params.set("publisher", publisher);
+    if (pagination.page > 1) params.set("page", String(pagination.page));
+    return params.toString() ? `${pathname}?${params.toString()}` : pathname;
+  }, [field, pagination.page, pathname, publisher, query, rank]);
+
+  useEffect(() => {
+    router.replace(currentListPath, { scroll: false });
+  }, [currentListPath, router]);
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -76,14 +94,12 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[78rem] text-left">
+        <table className="w-full min-w-[66rem] text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
               <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]"><IconHint label="Journal"><BookOpen className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-              <th className="px-4 py-3"><IconHint label="ISSN"><Hash className="h-4 w-4" aria-hidden="true" /></IconHint></th>
               <th className="px-4 py-3">Field</th>
               <th className="px-4 py-3"><IconHint label="Rank"><BadgeCheck className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-              <th className="px-4 py-3"><IconHint label="Publisher"><Building2 className="h-4 w-4" aria-hidden="true" /></IconHint></th>
               <th className="px-4 py-3"><IconHint label="APC"><ReceiptText className="h-4 w-4" aria-hidden="true" /></IconHint></th>
               <th className="px-4 py-3">Fee</th>
               <th className="px-4 py-3"><IconHint label="Usage"><Users className="h-4 w-4" aria-hidden="true" /></IconHint></th>
@@ -95,18 +111,18 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
             {pagination.pagedRows.map((journal) => (
               <tr key={journal.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-normal text-slate-700 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:text-slate-200 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                  <Link href={`/journals/${journal.id}`} className="hover:text-blue-600 dark:hover:text-blue-300">
+                  <Link href={`/journals/${journal.id}?back=${encodeURIComponent(currentListPath)}`} className="hover:text-blue-600 dark:hover:text-blue-300">
                     {journal.name}
+                    {journal.issn ? <span className="ml-1 text-xs text-slate-400 dark:text-slate-500">({journal.issn})</span> : null}
                   </Link>
+                  {journal.publisher ? <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{journal.publisher}</p> : null}
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.issn || "-"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.field || "-"}</td>
                 <td className="px-4 py-3">
                   <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${rankBadge(journal.rank)}`}>
                     {journal.rank || "N/A"}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.publisher || "-"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.apc || "-"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.submissionFee || "-"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.submissions} / {journal.accounts}</td>
@@ -116,7 +132,7 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
             ))}
             {pagination.total === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
+                <td colSpan={8} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
                   No journals match the current search.
                 </td>
               </tr>
