@@ -304,6 +304,62 @@ export async function deleteSuggestedJournal(projectId: string, journalId: strin
   revalidatePath(`/projects/${projectId}`);
 }
 
+export async function finishResearchTask(taskId: string) {
+  const user = await requireCurrentUser();
+  const isAdmin = user.roles.includes(Role.ADMIN);
+
+  if (!isAdmin && !user.roles.includes(Role.ASSISTANT) && !user.roles.includes(Role.CHIEF_ASSISTANT)) {
+    redirect("/401");
+  }
+
+  if (isAdmin) {
+    const now = new Date();
+    await prisma.researchTask.update({
+      where: { id: taskId },
+      data: {
+        status: "COMPLETED",
+        completedAt: now,
+        adminViewedAt: null,
+        assignments: {
+          updateMany: {
+            where: { finishedAt: null },
+            data: { finishedAt: now },
+          },
+        },
+      },
+    });
+  } else {
+    const assignment = await prisma.researchTaskAssignment.findUnique({
+      where: { taskId_userId: { taskId, userId: user.id } },
+    });
+
+    if (!assignment) redirect("/401");
+
+    await prisma.researchTaskAssignment.update({
+      where: { id: assignment.id },
+      data: { finishedAt: assignment.finishedAt ?? new Date() },
+    });
+
+    const assignments = await prisma.researchTaskAssignment.findMany({
+      where: { taskId },
+      select: { finishedAt: true },
+    });
+
+    const allFinished = assignments.length > 0 && assignments.every((item) => item.finishedAt);
+    const anyFinished = assignments.some((item) => item.finishedAt);
+
+    await prisma.researchTask.update({
+      where: { id: taskId },
+      data: allFinished
+        ? { status: "COMPLETED", completedAt: new Date(), adminViewedAt: null }
+        : { status: anyFinished ? "IN_PROGRESS" : "OPEN" },
+    });
+  }
+
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+}
+
 export async function assertResearchManager() {
   const user = await requireCurrentUser();
   if (!canManageResearch(user.roles)) {

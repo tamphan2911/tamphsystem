@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Clock3, ClipboardList, Search, UsersRound } from "lucide-react";
 import { FilterSelect, IconHint, TablePagination, useTablePagination } from "../components/TableControls";
@@ -32,19 +33,71 @@ function formatDate(value: string | null) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "2-digit", year: "numeric" }).format(new Date(value));
 }
 
-function statusClass(status: string) {
-  if (status === "COMPLETED") return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
-  if (status === "IN_PROGRESS") return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
-  return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+function durationText(ms: number) {
+  const absolute = Math.abs(ms);
+  const hours = Math.max(1, Math.round(absolute / (1000 * 60 * 60)));
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  const restHours = hours % 24;
+  return restHours > 0 ? `${days}d ${restHours}h` : `${days}d`;
 }
 
-export function TasksClient({ isAdmin, userId }: { isAdmin: boolean; userId: string }) {
+function statusMeta(task: TaskRow) {
+  const due = task.dueDate ? new Date(task.dueDate) : null;
+  const completed = task.completedAt ? new Date(task.completedAt) : null;
+  const now = new Date();
+
+  if (task.status === "COMPLETED") {
+    if (!due || !completed) {
+      return {
+        label: "Complete",
+        detail: "Finished",
+        className: "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+        detailClassName: "text-emerald-600 dark:text-emerald-300",
+      };
+    }
+    if (completed <= due) {
+      return {
+        label: "Complete",
+        detail: `${durationText(due.getTime() - completed.getTime())} before due`,
+        className: "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+        detailClassName: "text-emerald-600 dark:text-emerald-300",
+      };
+    }
+    return {
+      label: "Overdue",
+      detail: `${durationText(completed.getTime() - due.getTime())} late finish`,
+      className: "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
+      detailClassName: "text-rose-600 dark:text-rose-300",
+    };
+  }
+
+  if (due && now > due) {
+    return {
+      label: "Overdue",
+      detail: `${durationText(now.getTime() - due.getTime())} overdue`,
+      className: "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
+      detailClassName: "text-rose-600 dark:text-rose-300",
+    };
+  }
+
+  return {
+    label: task.status === "IN_PROGRESS" ? "In progress" : "Open",
+    detail: due ? `${durationText(due.getTime() - now.getTime())} remaining` : "No due date",
+    className:
+      task.status === "IN_PROGRESS"
+        ? "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900"
+        : "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+    detailClassName: "text-slate-500 dark:text-slate-400",
+  };
+}
+
+export function TasksClient({ isAdmin }: { isAdmin: boolean }) {
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("ALL");
   const [assignee, setAssignee] = useState("ALL");
   const [isLoading, setIsLoading] = useState(true);
-  const [finishingId, setFinishingId] = useState<string | null>(null);
 
   const loadTasks = useCallback(async () => {
     const response = await fetch("/api/research/tasks", { cache: "no-store" });
@@ -99,13 +152,6 @@ export function TasksClient({ isAdmin, userId }: { isAdmin: boolean; userId: str
   }, [assignee, query, status, tasks]);
   const pagination = useTablePagination(filtered, 10);
 
-  async function markFinished(taskId: string) {
-    setFinishingId(taskId);
-    await fetch(`/api/research/tasks/${taskId}/finish`, { method: "POST" });
-    await loadTasks();
-    setFinishingId(null);
-  }
-
   const stats = [
     { label: "Tasks", value: tasks.length, icon: ClipboardList, color: "text-slate-600 dark:text-slate-300" },
     { label: "Open", value: tasks.filter((task) => task.status !== "COMPLETED").length, icon: Clock3, color: "text-blue-600" },
@@ -153,82 +199,68 @@ export function TasksClient({ isAdmin, userId }: { isAdmin: boolean; userId: str
                 { value: "COMPLETED", label: "Completed" },
               ]}
             />
-            <FilterSelect
-              value={assignee}
-              onChange={setAssignee}
-              ariaLabel="Filter by assignee"
-              options={assigneeOptions.map((item) => ({ value: item, label: item === "ALL" ? "All assignees" : item }))}
-            />
+            {isAdmin && (
+              <FilterSelect
+                value={assignee}
+                onChange={setAssignee}
+                ariaLabel="Filter by assignee"
+                options={assigneeOptions.map((item) => ({ value: item, label: item === "ALL" ? "All assignees" : item }))}
+              />
+            )}
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[76rem] text-left">
+          <table className={`w-full text-left ${isAdmin ? "min-w-[58rem]" : "min-w-[42rem]"}`}>
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
                 <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Task</th>
                 <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Category</th>
-                <th className="px-4 py-3">Assignees</th>
+                {isAdmin && <th className="px-4 py-3">Assignees</th>}
                 <th className="px-4 py-3">Due</th>
-                <th className="px-4 py-3">Updated</th>
-                <th className="px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {pagination.pagedRows.map((task) => {
-                const myAssignment = task.assignments.find((assignment) => assignment.userId === userId);
-                const canFinish = !isAdmin && myAssignment && !myAssignment.finishedAt;
+                const status = statusMeta(task);
                 return (
                   <tr key={task.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                     <td className="sticky left-0 z-10 max-w-md bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                      <p className="text-sm font-normal text-slate-700 dark:text-slate-200">{task.title}</p>
+                      <Link href={`/tasks/${task.id}`} className="text-sm font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">
+                        {task.title}
+                      </Link>
                       <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{task.description || "No description"}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(task.status)}`}>{task.status.replace("_", " ")}</span>
+                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ring-1 ${status.className}`}>{status.label}</span>
+                      <p className={`mt-1 text-xs font-semibold ${status.detailClassName}`}>{status.detail}</p>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{task.category || "-"}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1.5">
-                        {task.assignments.map((assignment) => (
-                          <span
-                            key={assignment.id}
-                            className={`rounded-full px-2 py-1 text-xs font-semibold ring-1 ${
-                              assignment.finishedAt
-                                ? "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900"
-                                : "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700"
-                            }`}
-                            title={assignment.userEmail}
-                          >
-                            {assignment.userName}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
+                    {isAdmin && (
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1.5">
+                          {task.assignments.map((assignment) => (
+                            <span
+                              key={assignment.id}
+                              className={`rounded-full px-2 py-1 text-xs font-semibold ring-1 ${
+                                assignment.finishedAt
+                                  ? "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900"
+                                  : "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700"
+                              }`}
+                              title={assignment.userEmail}
+                            >
+                              {assignment.userName}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                    )}
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{formatDate(task.dueDate)}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{formatDate(task.updatedAt)}</td>
-                    <td className="px-4 py-3 text-right">
-                      {canFinish ? (
-                        <button
-                          type="button"
-                          onClick={() => markFinished(task.id)}
-                          disabled={finishingId === task.id}
-                          className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
-                        >
-                          <IconHint label="Mark task finished"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></IconHint>
-                          Finish
-                        </button>
-                      ) : (
-                        <span className="text-xs font-semibold text-slate-400">{task.status === "COMPLETED" ? "Done" : isAdmin ? "Tracking" : "Waiting"}</span>
-                      )}
-                    </td>
                   </tr>
                 );
               })}
               {pagination.total === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
+                  <td colSpan={isAdmin ? 4 : 3} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
                     {isLoading ? "Loading tasks..." : "No tasks match the current filters."}
                   </td>
                 </tr>

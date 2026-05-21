@@ -15,6 +15,7 @@ export function NewTaskDialog({ assistants }: { assistants: TaskAssigneeOption[]
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [category, setCategory] = useState<"Submitting" | "Production">("Submitting");
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -70,6 +71,7 @@ export function NewTaskDialog({ assistants }: { assistants: TaskAssigneeOption[]
               {selectedIds.map((id) => (
                 <input key={id} type="hidden" name="assigneeIds" value={id} />
               ))}
+              <input type="hidden" name="category" value={category} />
 
               <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
                 <label className="grid gap-1.5">
@@ -94,21 +96,23 @@ export function NewTaskDialog({ assistants }: { assistants: TaskAssigneeOption[]
                 </label>
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-[18rem_1fr]">
-                <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Category</span>
-                  <select
-                    name="category"
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-                  >
-                    <option value="Submit research">Submit research</option>
-                    <option value="Research production">Research production</option>
-                    <option value="Data collection">Data collection</option>
-                    <option value="Modeling">Modeling</option>
-                    <option value="References">References</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </label>
+              <div className="grid gap-4">
+                <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+                  {(["Submitting", "Production"] as const).map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setCategory(item)}
+                      className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
+                        category === item
+                          ? "bg-white text-blue-700 shadow-sm dark:bg-slate-800 dark:text-blue-300"
+                          : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
                 <label className="grid gap-1.5">
                   <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Description</span>
                   <textarea

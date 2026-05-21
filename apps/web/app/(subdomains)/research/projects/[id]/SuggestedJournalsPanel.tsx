@@ -220,7 +220,7 @@ export function SuggestedJournalsPanel({
               <input type="hidden" name="projectId" value={projectId} />
               <input type="hidden" name="journalId" value={assignJournal.id} />
               <input type="hidden" name="taskType" value={taskMode === "submit" ? "SUBMIT_RESEARCH" : "OTHER"} />
-              <input type="hidden" name="category" value={taskMode === "submit" ? "Submit research" : "Other"} />
+              <input type="hidden" name="category" value={taskMode === "submit" ? "Submitting" : "Production"} />
 
               <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
                 {(["submit", "other"] as const).map((mode) => (

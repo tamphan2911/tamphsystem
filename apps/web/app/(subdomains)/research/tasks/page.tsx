@@ -23,7 +23,7 @@ export default async function ResearchTasksPage() {
         await prisma.user.findMany({
           where: {
             roles: {
-              hasSome: [Role.ASSISTANT, Role.CHIEF_ASSISTANT],
+              hasSome: [Role.ADMIN, Role.ASSISTANT, Role.CHIEF_ASSISTANT],
             },
           },
           orderBy: [{ name: "asc" }, { email: "asc" }],
@@ -39,18 +39,11 @@ export default async function ResearchTasksPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div>
-          <h1 className="text-xl font-black text-slate-950 dark:text-white">Research Tasks</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {isAdmin ? "Assign work to assistants and monitor completion." : "Track assigned research work and mark it finished when complete."}
-          </p>
-        </div>
-
+      <div className="flex justify-end">
         {isAdmin && <NewTaskDialog assistants={assistants} />}
       </div>
 
-      <TasksClient isAdmin={isAdmin} userId={userId} />
+      <TasksClient isAdmin={isAdmin} />
     </div>
   );
 }
