@@ -56,19 +56,15 @@ export function ResearchShell({
             <p className="truncate text-lg font-bold text-slate-950 dark:text-white">Research Hub</p>
             <p className="truncate text-xs text-slate-500 dark:text-slate-300">Pipeline and journal control</p>
           </div>
-        </div>
-
-        <div className="border-b border-slate-100 p-3 dark:border-slate-800">
           <button
             type="button"
             onClick={() => setCollapsed((value) => !value)}
-            className={`flex w-full items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:shadow-none dark:hover:border-emerald-400/30 dark:hover:bg-slate-700 dark:hover:text-emerald-100 ${
-              collapsed ? "justify-center" : "justify-between"
+            className={`flex h-8 w-8 flex-none items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:shadow-none dark:hover:border-emerald-400/30 dark:hover:bg-slate-700 dark:hover:text-emerald-100 ${
+              collapsed ? "absolute right-2 top-6" : "ml-auto"
             }`}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {!collapsed && <span>Collapse</span>}
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
         </div>
