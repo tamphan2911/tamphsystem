@@ -147,7 +147,7 @@ export function JournalDetailTabs({
       </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
           <TableSearchInput value={query} onChange={setQuery} placeholder={`Search ${activeTab}...`} />
           {activeTab !== "accounts" && (
             <FilterSelect

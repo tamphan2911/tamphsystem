@@ -60,9 +60,9 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput value={query} onChange={setQuery} placeholder="Search research, authors, registration..." />
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
           <FilterSelect value={stage} onChange={setStage} ariaLabel="Filter by stage" options={stages.map((item) => ({ value: item, label: item === "ALL" ? "All stages" : item }))} />
           <FilterSelect value={claim} onChange={setClaim} ariaLabel="Filter by claim" options={claims.map((item) => ({ value: item, label: item === "ALL" ? "All claims" : item.replace("_", " ") }))} />
           <FilterSelect value={lead} onChange={setLead} ariaLabel="Filter by lead" options={leadOptions.map((item) => ({ value: item, label: item === "ALL" ? "All leads" : item }))} />

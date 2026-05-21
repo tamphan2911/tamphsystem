@@ -1,8 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Search, SlidersHorizontal } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 export type FilterOption = {
   value: string;
@@ -33,26 +33,78 @@ export function FilterSelect({
   label?: string;
   ariaLabel: string;
 }) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const selected = options.find((option) => option.value === value) ?? options[0];
+
+  useEffect(() => {
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!wrapperRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
   return (
-    <label className="group relative inline-flex min-w-36 items-center rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-950 dark:hover:border-slate-600">
-      <span className="flex h-full items-center border-r border-slate-200 px-2.5 text-slate-400 transition group-hover:text-blue-600 dark:border-slate-800 dark:group-hover:text-blue-300">
-        <SlidersHorizontal className="h-3.5 w-3.5" />
-      </span>
+    <div ref={wrapperRef} className="relative w-full sm:w-44">
       <span className="sr-only">{label ?? ariaLabel}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
+      <button
+        type="button"
         aria-label={ariaLabel}
-        className="min-h-10 w-full appearance-none rounded-xl bg-transparent py-2 pl-3 pr-9 text-xs font-bold text-slate-700 outline-none dark:text-slate-200"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className="group inline-flex h-10 w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-800 shadow-sm shadow-slate-900/[0.03] outline-none transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:shadow-black/10 dark:hover:border-slate-600 dark:hover:bg-slate-900"
       >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition group-hover:text-slate-600 dark:group-hover:text-slate-200" />
-    </label>
+        <span className="min-w-0 truncate text-left">{selected?.label}</span>
+        <ChevronDown className={`h-4 w-4 flex-none text-slate-400 transition group-hover:text-slate-600 dark:group-hover:text-slate-300 ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1.5 w-full min-w-48 overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
+          <div className="max-h-64 overflow-y-auto" role="listbox" aria-label={ariaLabel}>
+            {options.map((option) => {
+              const isSelected = option.value === value;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm transition ${
+                    isSelected
+                      ? "bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-200"
+                      : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <span className="min-w-0 truncate">{option.label}</span>
+                  {isSelected && <Check className="h-4 w-4 flex-none" aria-hidden="true" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -66,15 +118,13 @@ export function TableSearchInput({
   placeholder: string;
 }) {
   return (
-    <div className="relative max-w-md flex-1">
-      <IconHint label="Search" className="absolute inset-y-0 left-0 z-10 w-10 text-slate-400">
-        <Search className="h-4 w-4" aria-hidden="true" />
-      </IconHint>
+    <div className="relative w-full min-w-0 flex-1 lg:max-w-md">
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" aria-hidden="true" />
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+        className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-10 pr-3 text-sm text-slate-900 shadow-sm shadow-slate-900/[0.03] outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:shadow-black/10 dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
       />
     </div>
   );
