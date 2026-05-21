@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function JournalsPage() {
   const journals = await prisma.journal.findMany({
     include: {
-      _count: { select: { submissions: true, accounts: true } },
+      _count: { select: { submissions: true, accounts: true, reviews: true } },
     },
     orderBy: [{ rank: "asc" }, { name: "asc" }],
   });
@@ -25,6 +25,7 @@ export default async function JournalsPage() {
     note: journal.note ?? "",
     submissions: journal._count.submissions,
     accounts: journal._count.accounts,
+    reviews: journal._count.reviews,
   }));
 
   const publishers = new Set(journals.map((journal) => journal.publisher).filter(Boolean));

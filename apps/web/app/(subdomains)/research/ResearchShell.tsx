@@ -17,6 +17,7 @@ import { ThemeToggle } from "../../../components/ThemeToggle";
 const navItems = [
   { href: "/projects", label: "Research Pipeline", icon: "projects" as const },
   { href: "/journals", label: "Journals", icon: "journals" as const },
+  { href: "/reviews", label: "Academic Reviews", icon: "reviews" as const },
   { href: "/accounts", label: "Publisher Accounts", icon: "accounts" as const },
   { href: "/assistants", label: "Assistants", icon: "assistants" as const },
 ];

@@ -210,6 +210,26 @@ model Journal {
   
   submissions   ResearchSubmission[]
   accounts      PublisherAccount[]
+  reviews       AcademicReview[]
+}
+
+model AcademicReview {
+  id              String   @id @default(uuid())
+  journalId       String
+  manuscriptTitle String
+  manuscriptId    String?
+  status          String   @default("INVITED") // INVITED, ACCEPTED, IN_PROGRESS, SUBMITTED, DECLINED
+  recommendation  String?
+  requestedAt     DateTime @default(now())
+  dueDate         DateTime?
+  completedAt     DateTime?
+  editorName      String?
+  reviewRound     String?
+  note            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  journal         Journal  @relation(fields: [journalId], references: [id], onDelete: Cascade)
 }
 
 model PublisherAccount {

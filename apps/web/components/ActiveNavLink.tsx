@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, FolderGit2, KeyRound, ShieldCheck } from "lucide-react";
+import { BookOpen, ClipboardCheck, FolderGit2, KeyRound, ShieldCheck } from "lucide-react";
 
 const icons = {
   projects: FolderGit2,
   journals: BookOpen,
   accounts: KeyRound,
   assistants: ShieldCheck,
+  reviews: ClipboardCheck,
 };
 
 export function ActiveNavLink({

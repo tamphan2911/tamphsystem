@@ -108,6 +108,38 @@ export async function createPublisherAccount(formData: FormData) {
   revalidatePath("/journals");
 }
 
+export async function createAcademicReview(formData: FormData) {
+  await requireCurrentUser();
+
+  const journalId = optionalString(formData.get("journalId"));
+  if (!journalId) return;
+
+  await prisma.academicReview.create({
+    data: {
+      journalId,
+      manuscriptTitle: optionalString(formData.get("manuscriptTitle")) ?? "Untitled manuscript",
+      manuscriptId: optionalString(formData.get("manuscriptId")),
+      status: optionalString(formData.get("status")) ?? "INVITED",
+      recommendation: optionalString(formData.get("recommendation")),
+      editorName: optionalString(formData.get("editorName")),
+      reviewRound: optionalString(formData.get("reviewRound")),
+      note: optionalString(formData.get("note")),
+      requestedAt: optionalString(formData.get("requestedAt"))
+        ? new Date(optionalString(formData.get("requestedAt")) as string)
+        : new Date(),
+      dueDate: optionalString(formData.get("dueDate"))
+        ? new Date(optionalString(formData.get("dueDate")) as string)
+        : null,
+      completedAt: optionalString(formData.get("completedAt"))
+        ? new Date(optionalString(formData.get("completedAt")) as string)
+        : null,
+    },
+  });
+
+  revalidatePath("/reviews");
+  revalidatePath("/journals");
+}
+
 export async function createResearchSubmission(projectId: string, formData: FormData) {
   await requireCurrentUser();
 

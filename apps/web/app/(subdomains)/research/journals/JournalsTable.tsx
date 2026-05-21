@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BadgeCheck, BookOpen, Building2, Hash, ReceiptText, Search, StickyNote, Users } from "lucide-react";
 
@@ -15,6 +16,7 @@ export type JournalRow = {
   note: string;
   submissions: number;
   accounts: number;
+  reviews: number;
 };
 
 const ranks = ["ALL", "Q1", "Q2", "Q3", "Q4", "Scopus", "ISI", "UNRANKED"];
@@ -90,13 +92,18 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
               <th className="px-4 py-3"><ReceiptText className="h-4 w-4" aria-label="APC" /></th>
               <th className="px-4 py-3">Fee</th>
               <th className="px-4 py-3"><Users className="h-4 w-4" aria-label="Usage" /></th>
+              <th className="px-4 py-3">Reviews</th>
               <th className="px-4 py-3"><StickyNote className="h-4 w-4" aria-label="Note" /></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {filtered.map((journal) => (
               <tr key={journal.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                <td className="sticky left-0 z-10 bg-white px-4 py-3 font-semibold text-slate-950 dark:text-white shadow-[1px_0_0_0_rgb(226,232,240)] dark:shadow-[1px_0_0_0_rgb(30,41,59)] transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800">{journal.name}</td>
+                <td className="sticky left-0 z-10 bg-white px-4 py-3 font-semibold text-slate-950 dark:text-white shadow-[1px_0_0_0_rgb(226,232,240)] dark:shadow-[1px_0_0_0_rgb(30,41,59)] transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800">
+                  <Link href={`/journals/${journal.id}`} className="hover:text-blue-600 dark:hover:text-blue-300">
+                    {journal.name}
+                  </Link>
+                </td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.issn || "-"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.field || "-"}</td>
                 <td className="px-4 py-3">
@@ -108,12 +115,13 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.apc || "-"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.submissionFee || "-"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.submissions} / {journal.accounts}</td>
+                <td className="px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{journal.reviews}</td>
                 <td className="max-w-xs px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.note || "-"}</td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
+                <td colSpan={10} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
                   No journals match the current search.
                 </td>
               </tr>
