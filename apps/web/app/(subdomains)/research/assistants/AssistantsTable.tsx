@@ -14,15 +14,22 @@ export type AssistantRow = {
 export function AssistantsTable({ rows, roleOptions }: { rows: AssistantRow[]; roleOptions: string[] }) {
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("ALL");
+  const [status, setStatus] = useState("ALL");
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const matchesRole = role === "ALL" || row.roles.includes(role);
+      const matchesStatus =
+        status === "ALL" ||
+        (status === "RESEARCH_TEAM" && (row.roles.includes("ASSISTANT") || row.roles.includes("CHIEF_ASSISTANT") || row.roles.includes("RESEARCHER"))) ||
+        (status === "NON_RESEARCH" && !row.roles.includes("ASSISTANT") && !row.roles.includes("CHIEF_ASSISTANT") && !row.roles.includes("RESEARCHER"));
       const haystack = [row.name, row.email, ...row.roles].join(" ").toLowerCase();
-      return matchesRole && (!needle || haystack.includes(needle));
+      return matchesRole && matchesStatus && (!needle || haystack.includes(needle));
     });
-  }, [query, role, rows]);
+  }, [query, role, rows, status]);
+
+  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -37,18 +44,14 @@ export function AssistantsTable({ rows, roleOptions }: { rows: AssistantRow[]; r
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          {["ALL", ...roleOptions].map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setRole(item)}
-              className={`rounded-lg px-3 py-2 text-xs font-bold transition hover:-translate-y-0.5 ${
-                role === item ? "bg-slate-950 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {item === "ALL" ? "All" : item}
-            </button>
-          ))}
+          <select value={role} onChange={(event) => setRole(event.target.value)} className={selectClass} aria-label="Filter by role">
+            {["ALL", ...roleOptions].map((item) => <option key={item} value={item}>{item === "ALL" ? "All roles" : item}</option>)}
+          </select>
+          <select value={status} onChange={(event) => setStatus(event.target.value)} className={selectClass} aria-label="Filter by research status">
+            <option value="ALL">All users</option>
+            <option value="RESEARCH_TEAM">Research team</option>
+            <option value="NON_RESEARCH">Non-research</option>
+          </select>
         </div>
       </div>
 
@@ -56,7 +59,7 @@ export function AssistantsTable({ rows, roleOptions }: { rows: AssistantRow[]; r
         <table className="w-full min-w-[72rem] text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-4 py-3"><UserRound className="h-4 w-4" aria-label="User" /></th>
+              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)]"><UserRound className="h-4 w-4" aria-label="User" /></th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3"><ShieldCheck className="h-4 w-4" aria-label="Roles" /></th>
               <th className="px-4 py-3 text-right">Save</th>
@@ -64,8 +67,8 @@ export function AssistantsTable({ rows, roleOptions }: { rows: AssistantRow[]; r
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.map((user) => (
-              <tr key={user.id} className="align-top transition duration-200 ease-out hover:bg-slate-50">
-                <td className="px-4 py-3 font-semibold text-slate-950">{user.name || "Unnamed user"}</td>
+              <tr key={user.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50">
+                <td className="sticky left-0 z-10 bg-white px-4 py-3 font-semibold text-slate-950 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50">{user.name || "Unnamed user"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600">{user.email}</td>
                 <td className="px-4 py-3">
                   <form id={`roles-${user.id}`} action={updateResearchRoles}>

@@ -19,16 +19,25 @@ const scopes = ["ALL", "PUBLISHER", "JOURNAL"];
 export function AccountsTable({ rows }: { rows: AccountRow[] }) {
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState("ALL");
+  const [journal, setJournal] = useState("ALL");
+  const [publisher, setPublisher] = useState("ALL");
+
+  const journalOptions = useMemo(() => ["ALL", ...Array.from(new Set(rows.map((row) => row.journalName).filter(Boolean))).sort()], [rows]);
+  const publisherOptions = useMemo(() => ["ALL", ...Array.from(new Set(rows.map((row) => row.publisher).filter(Boolean))).sort()], [rows]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const rowScope = row.journalName ? "JOURNAL" : "PUBLISHER";
       const matchesScope = scope === "ALL" || rowScope === scope;
+      const matchesJournal = journal === "ALL" || row.journalName === journal;
+      const matchesPublisher = publisher === "ALL" || row.publisher === publisher;
       const haystack = [row.username, row.email, row.journalName, row.publisher, row.note].join(" ").toLowerCase();
-      return matchesScope && (!needle || haystack.includes(needle));
+      return matchesScope && matchesJournal && matchesPublisher && (!needle || haystack.includes(needle));
     });
-  }, [query, rows, scope]);
+  }, [journal, publisher, query, rows, scope]);
+
+  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -43,18 +52,15 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          {scopes.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setScope(item)}
-              className={`rounded-lg px-3 py-2 text-xs font-bold transition hover:-translate-y-0.5 ${
-                scope === item ? "bg-slate-950 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {item === "ALL" ? "All" : item === "PUBLISHER" ? "Publisher-wide" : "Journal"}
-            </button>
-          ))}
+          <select value={scope} onChange={(event) => setScope(event.target.value)} className={selectClass} aria-label="Filter by scope">
+            {scopes.map((item) => <option key={item} value={item}>{item === "ALL" ? "All scopes" : item === "PUBLISHER" ? "Publisher-wide" : "Journal-specific"}</option>)}
+          </select>
+          <select value={journal} onChange={(event) => setJournal(event.target.value)} className={selectClass} aria-label="Filter by journal">
+            {journalOptions.map((item) => <option key={item} value={item}>{item === "ALL" ? "All journals" : item}</option>)}
+          </select>
+          <select value={publisher} onChange={(event) => setPublisher(event.target.value)} className={selectClass} aria-label="Filter by publisher">
+            {publisherOptions.map((item) => <option key={item} value={item}>{item === "ALL" ? "All publishers" : item}</option>)}
+          </select>
         </div>
       </div>
 
@@ -62,7 +68,7 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
         <table className="w-full min-w-[72rem] text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-4 py-3"><UserRound className="h-4 w-4" aria-label="ID" /></th>
+              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)]"><UserRound className="h-4 w-4" aria-label="ID" /></th>
               <th className="px-4 py-3"><LockKeyhole className="h-4 w-4" aria-label="Password" /></th>
               <th className="px-4 py-3"><AtSign className="h-4 w-4" aria-label="Email" /></th>
               <th className="px-4 py-3"><BookOpen className="h-4 w-4" aria-label="Journal" /></th>
@@ -73,8 +79,8 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.map((account) => (
-              <tr key={account.id} className="align-top transition duration-200 ease-out hover:bg-slate-50">
-                <td className="px-4 py-3">
+              <tr key={account.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50">
+                <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50">
                   <div className="flex items-center gap-2 font-semibold text-slate-950">
                     <KeyRound className="h-4 w-4 text-slate-400" />
                     {account.username}

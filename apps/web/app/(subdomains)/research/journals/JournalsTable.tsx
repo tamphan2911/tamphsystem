@@ -31,18 +31,27 @@ function rankBadge(rank: string) {
 export function JournalsTable({ rows }: { rows: JournalRow[] }) {
   const [query, setQuery] = useState("");
   const [rank, setRank] = useState("ALL");
+  const [field, setField] = useState("ALL");
+  const [publisher, setPublisher] = useState("ALL");
+
+  const fieldOptions = useMemo(() => ["ALL", ...Array.from(new Set(rows.map((row) => row.field).filter(Boolean))).sort()], [rows]);
+  const publisherOptions = useMemo(() => ["ALL", ...Array.from(new Set(rows.map((row) => row.publisher).filter(Boolean))).sort()], [rows]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const rowRank = row.rank || "UNRANKED";
       const matchesRank = rank === "ALL" || rowRank === rank;
+      const matchesField = field === "ALL" || row.field === field;
+      const matchesPublisher = publisher === "ALL" || row.publisher === publisher;
       const haystack = [row.name, row.issn, row.field, row.rank, row.publisher, row.apc, row.submissionFee, row.note]
         .join(" ")
         .toLowerCase();
-      return matchesRank && (!needle || haystack.includes(needle));
+      return matchesRank && matchesField && matchesPublisher && (!needle || haystack.includes(needle));
     });
-  }, [query, rank, rows]);
+  }, [field, publisher, query, rank, rows]);
+
+  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -57,18 +66,15 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          {ranks.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setRank(item)}
-              className={`rounded-lg px-3 py-2 text-xs font-bold transition hover:-translate-y-0.5 ${
-                rank === item ? "bg-slate-950 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {item === "UNRANKED" ? "No rank" : item === "ALL" ? "All" : item}
-            </button>
-          ))}
+          <select value={rank} onChange={(event) => setRank(event.target.value)} className={selectClass} aria-label="Filter by rank">
+            {ranks.map((item) => <option key={item} value={item}>{item === "UNRANKED" ? "No rank" : item === "ALL" ? "All ranks" : item}</option>)}
+          </select>
+          <select value={field} onChange={(event) => setField(event.target.value)} className={selectClass} aria-label="Filter by field">
+            {fieldOptions.map((item) => <option key={item} value={item}>{item === "ALL" ? "All fields" : item}</option>)}
+          </select>
+          <select value={publisher} onChange={(event) => setPublisher(event.target.value)} className={selectClass} aria-label="Filter by publisher">
+            {publisherOptions.map((item) => <option key={item} value={item}>{item === "ALL" ? "All publishers" : item}</option>)}
+          </select>
         </div>
       </div>
 
@@ -76,7 +82,7 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
         <table className="w-full min-w-[78rem] text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-4 py-3"><BookOpen className="h-4 w-4" aria-label="Journal" /></th>
+              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)]"><BookOpen className="h-4 w-4" aria-label="Journal" /></th>
               <th className="px-4 py-3"><Hash className="h-4 w-4" aria-label="ISSN" /></th>
               <th className="px-4 py-3">Field</th>
               <th className="px-4 py-3"><BadgeCheck className="h-4 w-4" aria-label="Rank" /></th>
@@ -89,8 +95,8 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.map((journal) => (
-              <tr key={journal.id} className="align-top transition duration-200 ease-out hover:bg-slate-50">
-                <td className="px-4 py-3 font-semibold text-slate-950">{journal.name}</td>
+              <tr key={journal.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50">
+                <td className="sticky left-0 z-10 bg-white px-4 py-3 font-semibold text-slate-950 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50">{journal.name}</td>
                 <td className="px-4 py-3 text-sm text-slate-600">{journal.issn || "-"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600">{journal.field || "-"}</td>
                 <td className="px-4 py-3">

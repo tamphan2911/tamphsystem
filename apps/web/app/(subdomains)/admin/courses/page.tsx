@@ -57,10 +57,11 @@ export default async function AdminCoursesPage() {
       </form>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="overflow-x-auto">
         <table className="w-full min-w-[56rem] text-left">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
             <tr>
-              <th className="px-5 py-3">Course</th>
+              <th className="sticky left-0 z-20 bg-slate-50 px-5 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800">Course</th>
               <th className="px-5 py-3">Author</th>
               <th className="px-5 py-3">Modules</th>
               <th className="px-5 py-3">Enrollments</th>
@@ -70,8 +71,8 @@ export default async function AdminCoursesPage() {
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {courses.map((course) => (
-              <tr key={course.id}>
-                <td className="px-5 py-4">
+              <tr key={course.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                <td className="sticky left-0 z-10 bg-white px-5 py-4 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:group-hover:bg-slate-800">
                   <p className="font-semibold">{course.title}</p>
                   <p className="mt-1 max-w-xl text-sm text-slate-500">{course.description || "-"}</p>
                 </td>
@@ -96,6 +97,7 @@ export default async function AdminCoursesPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

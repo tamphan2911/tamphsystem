@@ -51,10 +51,11 @@ export default async function AdminJournalsPage() {
       </form>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="overflow-x-auto">
         <table className="w-full min-w-[64rem] text-left">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
             <tr>
-              <th className="px-5 py-3">Journal</th>
+              <th className="sticky left-0 z-20 bg-slate-50 px-5 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800">Journal</th>
               <th className="px-5 py-3">ISSN</th>
               <th className="px-5 py-3">Field</th>
               <th className="px-5 py-3">Rank</th>
@@ -65,8 +66,8 @@ export default async function AdminJournalsPage() {
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {journals.map((journal) => (
-              <tr key={journal.id}>
-                <td className="px-5 py-4">
+              <tr key={journal.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                <td className="sticky left-0 z-10 bg-white px-5 py-4 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:group-hover:bg-slate-800">
                   <p className="font-semibold">{journal.name}</p>
                   <p className="mt-1 max-w-md text-sm text-slate-500">{journal.note || "-"}</p>
                 </td>
@@ -80,6 +81,7 @@ export default async function AdminJournalsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

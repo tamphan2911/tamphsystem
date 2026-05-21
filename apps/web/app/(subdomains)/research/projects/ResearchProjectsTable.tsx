@@ -19,6 +19,7 @@ export type ResearchProjectRow = {
 };
 
 const stages = ["ALL", "PRODUCTION", "SUBMITTING", "ACCEPTED", "PUBLISHED"];
+const claims = ["ALL", "CANNOT_CLAIM", "MAKING_DOCUMENT", "WAITING", "CLAIMED"];
 
 function statusClass(stage: string) {
   if (stage === "PUBLISHED") return "bg-emerald-50 text-emerald-700 ring-emerald-100";
@@ -30,11 +31,17 @@ function statusClass(stage: string) {
 export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) {
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("ALL");
+  const [claim, setClaim] = useState("ALL");
+  const [lead, setLead] = useState("ALL");
+
+  const leadOptions = useMemo(() => ["ALL", ...Array.from(new Set(rows.map((row) => row.leadResearcher).filter(Boolean))).sort()], [rows]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const matchesStage = stage === "ALL" || row.stage === stage;
+      const matchesClaim = claim === "ALL" || row.claimStatus === claim;
+      const matchesLead = lead === "ALL" || row.leadResearcher === lead;
       const haystack = [
         row.title,
         row.abstract,
@@ -44,9 +51,11 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
         row.claimStatus,
         row.stage,
       ].join(" ").toLowerCase();
-      return matchesStage && (!needle || haystack.includes(needle));
+      return matchesStage && matchesClaim && matchesLead && (!needle || haystack.includes(needle));
     });
-  }, [query, rows, stage]);
+  }, [claim, lead, query, rows, stage]);
+
+  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -61,18 +70,15 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          {stages.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setStage(item)}
-              className={`rounded-lg px-3 py-2 text-xs font-bold transition hover:-translate-y-0.5 ${
-                stage === item ? "bg-slate-950 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {item === "ALL" ? "All" : item}
-            </button>
-          ))}
+          <select value={stage} onChange={(event) => setStage(event.target.value)} className={selectClass} aria-label="Filter by stage">
+            {stages.map((item) => <option key={item} value={item}>{item === "ALL" ? "All stages" : item}</option>)}
+          </select>
+          <select value={claim} onChange={(event) => setClaim(event.target.value)} className={selectClass} aria-label="Filter by claim">
+            {claims.map((item) => <option key={item} value={item}>{item === "ALL" ? "All claims" : item.replace("_", " ")}</option>)}
+          </select>
+          <select value={lead} onChange={(event) => setLead(event.target.value)} className={selectClass} aria-label="Filter by lead">
+            {leadOptions.map((item) => <option key={item} value={item}>{item === "ALL" ? "All leads" : item}</option>)}
+          </select>
         </div>
       </div>
 
@@ -80,7 +86,7 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
         <table className="w-full min-w-[74rem] text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-4 py-3">Research</th>
+              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)]">Research</th>
               <th className="px-4 py-3">Stage</th>
               <th className="px-4 py-3">Claim</th>
               <th className="px-4 py-3">Reg.</th>
@@ -92,8 +98,8 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.map((row) => (
-            <tr key={row.id} className="transition duration-200 ease-out hover:bg-slate-50">
-                <td className="px-4 py-3">
+              <tr key={row.id} className="group transition duration-200 ease-out hover:bg-slate-50">
+                <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50">
                   <Link href={`/projects/${row.id}`} className="group">
                     <div className="flex items-start gap-3">
                       <FileText className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" />
