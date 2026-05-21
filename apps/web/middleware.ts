@@ -68,7 +68,7 @@ export default auth((req) => {
       return NextResponse.redirect(new URL('/login', req.url));
     }
     const roles = (req.auth?.user as any).roles || [];
-    if (!roles.includes('ADMIN') && !roles.includes('CHIEF_ASSISTANT') && !roles.includes('ASSISTANT')) {
+    if (!roles.includes('ADMIN') && !roles.includes('CHIEF_ASSISTANT') && !roles.includes('ASSISTANT') && !roles.includes('RESEARCHER')) {
       return NextResponse.redirect(new URL('https://tamph.com/401', req.url));
     }
     return NextResponse.rewrite(new URL(`/research${url.pathname}`, req.url));
