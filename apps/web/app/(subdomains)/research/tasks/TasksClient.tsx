@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Clock3, ClipboardList, Search, UsersRound } from "lucide-react";
-import { FilterSelect, IconHint, TablePagination, useTablePagination } from "../components/TableControls";
+import { CheckCircle2, Clock3, ClipboardList, UsersRound } from "lucide-react";
+import { FilterSelect, TablePagination, TableSearchInput, useTablePagination } from "../components/TableControls";
 
 type TaskAssignment = {
   id: string;
@@ -178,15 +178,7 @@ export function TasksClient({ isAdmin }: { isAdmin: boolean }) {
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between">
-          <div className="relative max-w-md flex-1">
-            <IconHint label="Search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><Search className="h-4 w-4" aria-hidden="true" /></IconHint>
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search task, assistant, category..."
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-            />
-          </div>
+          <TableSearchInput value={query} onChange={setQuery} placeholder="Search task, assistant, category..." />
           <div className="flex flex-wrap gap-2">
             <FilterSelect
               value={status}

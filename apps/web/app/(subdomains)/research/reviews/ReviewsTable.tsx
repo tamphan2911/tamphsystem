@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { BookOpen, CalendarClock, ClipboardCheck, Search, StickyNote } from "lucide-react";
-import { FilterSelect, IconHint, TablePagination, useTablePagination } from "../components/TableControls";
+import { BookOpen, CalendarClock, ClipboardCheck, StickyNote } from "lucide-react";
+import { FilterSelect, IconHint, TablePagination, TableSearchInput, useTablePagination } from "../components/TableControls";
 
 export type ReviewRow = {
   id: string;
@@ -64,15 +64,7 @@ export function ReviewsTable({ rows }: { rows: ReviewRow[] }) {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between">
-        <div className="relative max-w-md flex-1">
-          <IconHint label="Search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><Search className="h-4 w-4" aria-hidden="true" /></IconHint>
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search reviews, journal, manuscript..."
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 dark:border-slate-700 dark:bg-slate-950 pl-9 pr-3 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-          />
-        </div>
+        <TableSearchInput value={query} onChange={setQuery} placeholder="Search reviews, journal, manuscript..." />
         <div className="flex flex-wrap gap-2">
           <FilterSelect value={status} onChange={setStatus} ariaLabel="Filter by status" options={statuses.map((item) => ({ value: item, label: item === "ALL" ? "All statuses" : item.replace("_", " ") }))} />
           <FilterSelect value={journal} onChange={setJournal} ariaLabel="Filter by journal" options={journalOptions.map((item) => ({ value: item, label: item === "ALL" ? "All journals" : item }))} />
