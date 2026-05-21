@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { ThemeToggle } from "../../../components/ThemeToggle";
-import { BookOpen, BriefcaseBusiness, FolderGit2, GraduationCap, KeyRound, ShieldCheck, SlidersHorizontal, BarChart3 } from "lucide-react";
+import { BriefcaseBusiness, GraduationCap, SlidersHorizontal, BarChart3 } from "lucide-react";
 import { ActiveNavLink } from "../../../components/ActiveNavLink";
 import { ProfileMenu } from "../../../components/ProfileMenu";
 import { auth } from "../../../auth";
 import { Role } from "@repo/db";
 
 const navItems = [
-  { href: "/projects", label: "Research Pipeline", icon: FolderGit2 },
-  { href: "/journals", label: "Journals", icon: BookOpen },
-  { href: "/accounts", label: "Publisher Accounts", icon: KeyRound },
-  { href: "/assistants", label: "Assistants", icon: ShieldCheck },
+  { href: "/projects", label: "Research Pipeline", icon: "projects" as const },
+  { href: "/journals", label: "Journals", icon: "journals" as const },
+  { href: "/accounts", label: "Publisher Accounts", icon: "accounts" as const },
+  { href: "/assistants", label: "Assistants", icon: "assistants" as const },
 ];
 
 export default async function ResearchLayout({

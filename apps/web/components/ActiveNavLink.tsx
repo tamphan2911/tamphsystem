@@ -2,19 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
+import { BookOpen, FolderGit2, KeyRound, ShieldCheck } from "lucide-react";
+
+const icons = {
+  projects: FolderGit2,
+  journals: BookOpen,
+  accounts: KeyRound,
+  assistants: ShieldCheck,
+};
 
 export function ActiveNavLink({
   href,
   label,
-  icon: Icon,
+  icon,
 }: {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: keyof typeof icons;
 }) {
   const pathname = usePathname();
   const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
+  const Icon = icons[icon];
 
   return (
     <Link
