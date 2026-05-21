@@ -196,10 +196,46 @@ model ResearchProject {
   leadResearcherId String
   leadResearcher   User   @relation("LeadResearcher", fields: [leadResearcherId], references: [id])
 
-  publications      Publication[]
-  submissions       ResearchSubmission[]
-  suggestedJournals SuggestedJournal[]
-  tasks             ResearchTask[]
+  publications          Publication[]
+  submissions           ResearchSubmission[]
+  conferenceSubmissions ConferenceSubmission[]
+  suggestedJournals     SuggestedJournal[]
+  tasks                 ResearchTask[]
+}
+
+model Conference {
+  id          String    @id @default(uuid())
+  name        String
+  type        String? // International, National
+  themes      String?
+  targetTheme String?
+  isbn        String?
+  organizer   String?
+  location    String?
+  startDate   DateTime?
+  endDate     DateTime?
+  website     String?
+  note        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  submissions ConferenceSubmission[]
+}
+
+model ConferenceSubmission {
+  id                String    @id @default(uuid())
+  conferenceId      String
+  researchProjectId String
+  status            String    @default("PLANNED")
+  submittedAt       DateTime?
+  note              String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  conference Conference      @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
+  project    ResearchProject @relation(fields: [researchProjectId], references: [id], onDelete: Cascade)
+
+  @@unique([conferenceId, researchProjectId])
 }
 
 model Journal {
