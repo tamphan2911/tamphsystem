@@ -13,6 +13,7 @@ import {
   Send,
   StickyNote,
 } from "lucide-react";
+import { FilterSelect, TablePagination, useTablePagination } from "../../components/TableControls";
 
 export type JournalSubmissionRow = {
   id: string;
@@ -107,14 +108,15 @@ export function JournalDetailTabs({
       return matchesStatus && (!needle || haystack.includes(needle));
     });
   }, [query, reviews, status]);
+  const submissionPagination = useTablePagination(filteredSubmissions, 10);
+  const accountPagination = useTablePagination(filteredAccounts, 10);
+  const reviewPagination = useTablePagination(filteredReviews, 10);
 
   const tabs = [
     { key: "submissions" as const, label: "Submits", value: submissions.length, icon: Send },
     { key: "accounts" as const, label: "Accounts", value: accounts.length, icon: KeyRound },
     { key: "reviews" as const, label: "Reviews", value: reviews.length, icon: ClipboardCheck },
   ];
-
-  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300";
 
   return (
     <section className="space-y-3">
@@ -157,124 +159,134 @@ export function JournalDetailTabs({
             />
           </div>
           {activeTab !== "accounts" && (
-            <select value={status} onChange={(event) => setStatus(event.target.value)} className={selectClass} aria-label="Filter by status">
-              {statusOptions.map((item) => (
-                <option key={item} value={item}>{item === "ALL" ? "All status" : item.replace("_", " ")}</option>
-              ))}
-            </select>
+            <FilterSelect
+              value={status}
+              onChange={setStatus}
+              ariaLabel="Filter by status"
+              options={statusOptions.map((item) => ({ value: item, label: item === "ALL" ? "All status" : item.replace("_", " ") }))}
+            />
           )}
         </div>
 
         {activeTab === "submissions" && (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[72rem] text-left">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-                <tr>
-                  <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Research</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Account</th>
-                  <th className="px-4 py-3">Submitted</th>
-                  <th className="px-4 py-3">Task</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredSubmissions.map((row) => (
-                  <tr key={row.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                      <Link href={`/projects/${row.projectId}`} className="inline-flex items-center gap-2 font-semibold text-slate-950 transition hover:text-blue-600 dark:text-white dark:hover:text-blue-300">
-                        <FileText className="h-4 w-4 text-slate-400" />
-                        {row.projectTitle}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(row.status)}`}>{row.status}</span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.account || "-"}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.submittedAt || "-"}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                      {row.taskTitles.length > 0 ? (
-                        <Link href="/tasks" className="font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200">
-                          {row.taskTitles.join(", ")}
-                        </Link>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[72rem] text-left">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                  <tr>
+                    <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Research</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Account</th>
+                    <th className="px-4 py-3">Submitted</th>
+                    <th className="px-4 py-3">Task</th>
                   </tr>
-                ))}
-                {filteredSubmissions.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">No submissions match the current filters.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {submissionPagination.pagedRows.map((row) => (
+                    <tr key={row.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
+                        <Link href={`/projects/${row.projectId}`} className="inline-flex items-center gap-2 font-semibold text-slate-950 transition hover:text-blue-600 dark:text-white dark:hover:text-blue-300">
+                          <FileText className="h-4 w-4 text-slate-400" />
+                          {row.projectTitle}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(row.status)}`}>{row.status}</span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.account || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.submittedAt || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        {row.taskTitles.length > 0 ? (
+                          <Link href="/tasks" className="font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200">
+                            {row.taskTitles.join(", ")}
+                          </Link>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {submissionPagination.total === 0 && (
+                    <tr><td colSpan={5} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">No submissions match the current filters.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <TablePagination page={submissionPagination.page} pageCount={submissionPagination.pageCount} total={submissionPagination.total} pageSize={submissionPagination.pageSize} onPageChange={submissionPagination.setPage} />
+          </>
         )}
 
         {activeTab === "accounts" && (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[70rem] text-left">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-                <tr>
-                  <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]"><KeyRound className="h-4 w-4" aria-label="ID" /></th>
-                  <th className="px-4 py-3"><LockKeyhole className="h-4 w-4" aria-label="Password" /></th>
-                  <th className="px-4 py-3"><AtSign className="h-4 w-4" aria-label="Email" /></th>
-                  <th className="px-4 py-3"><Send className="h-4 w-4" aria-label="Submissions" /></th>
-                  <th className="px-4 py-3"><StickyNote className="h-4 w-4" aria-label="Note" /></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredAccounts.map((account) => (
-                  <tr key={account.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    <td className="sticky left-0 z-10 bg-white px-4 py-3 font-semibold text-slate-950 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:text-white dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">{account.username}</td>
-                    <td className="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">{account.password || "-"}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.email || "-"}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{account.submissions}</td>
-                    <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.note || "-"}</td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[70rem] text-left">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                  <tr>
+                    <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]"><KeyRound className="h-4 w-4" aria-label="ID" /></th>
+                    <th className="px-4 py-3"><LockKeyhole className="h-4 w-4" aria-label="Password" /></th>
+                    <th className="px-4 py-3"><AtSign className="h-4 w-4" aria-label="Email" /></th>
+                    <th className="px-4 py-3"><Send className="h-4 w-4" aria-label="Submissions" /></th>
+                    <th className="px-4 py-3"><StickyNote className="h-4 w-4" aria-label="Note" /></th>
                   </tr>
-                ))}
-                {filteredAccounts.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">No accounts match the current search.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {accountPagination.pagedRows.map((account) => (
+                    <tr key={account.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td className="sticky left-0 z-10 bg-white px-4 py-3 font-semibold text-slate-950 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:text-white dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">{account.username}</td>
+                      <td className="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">{account.password || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.email || "-"}</td>
+                      <td className="px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{account.submissions}</td>
+                      <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.note || "-"}</td>
+                    </tr>
+                  ))}
+                  {accountPagination.total === 0 && (
+                    <tr><td colSpan={5} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">No accounts match the current search.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <TablePagination page={accountPagination.page} pageCount={accountPagination.pageCount} total={accountPagination.total} pageSize={accountPagination.pageSize} onPageChange={accountPagination.setPage} />
+          </>
         )}
 
         {activeTab === "reviews" && (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[78rem] text-left">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-                <tr>
-                  <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Manuscript</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3"><CalendarClock className="h-4 w-4" aria-label="Due" /></th>
-                  <th className="px-4 py-3">Recommendation</th>
-                  <th className="px-4 py-3">Editor</th>
-                  <th className="px-4 py-3"><StickyNote className="h-4 w-4" aria-label="Note" /></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredReviews.map((review) => (
-                  <tr key={review.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                      <p className="font-semibold text-slate-950 dark:text-white">{review.manuscriptTitle}</p>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{review.manuscriptId || review.reviewRound || "No tracking code"}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(review.status)}`}>{review.status.replace("_", " ")}</span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{review.dueDate || "-"}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{review.recommendation || "-"}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{review.editorName || "-"}</td>
-                    <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{review.note || "-"}</td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[78rem] text-left">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                  <tr>
+                    <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Manuscript</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3"><CalendarClock className="h-4 w-4" aria-label="Due" /></th>
+                    <th className="px-4 py-3">Recommendation</th>
+                    <th className="px-4 py-3">Editor</th>
+                    <th className="px-4 py-3"><StickyNote className="h-4 w-4" aria-label="Note" /></th>
                   </tr>
-                ))}
-                {filteredReviews.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">No reviews match the current filters.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {reviewPagination.pagedRows.map((review) => (
+                    <tr key={review.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
+                        <p className="font-semibold text-slate-950 dark:text-white">{review.manuscriptTitle}</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{review.manuscriptId || review.reviewRound || "No tracking code"}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(review.status)}`}>{review.status.replace("_", " ")}</span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{review.dueDate || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{review.recommendation || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{review.editorName || "-"}</td>
+                      <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{review.note || "-"}</td>
+                    </tr>
+                  ))}
+                  {reviewPagination.total === 0 && (
+                    <tr><td colSpan={6} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">No reviews match the current filters.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <TablePagination page={reviewPagination.page} pageCount={reviewPagination.pageCount} total={reviewPagination.total} pageSize={reviewPagination.pageSize} onPageChange={reviewPagination.setPage} />
+          </>
         )}
       </div>
     </section>

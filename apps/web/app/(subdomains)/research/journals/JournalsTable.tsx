@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BadgeCheck, BookOpen, Building2, Hash, ReceiptText, Search, StickyNote, Users } from "lucide-react";
+import { FilterSelect, TablePagination, useTablePagination } from "../components/TableControls";
 
 export type JournalRow = {
   id: string;
@@ -53,7 +54,7 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
     });
   }, [field, publisher, query, rank, rows]);
 
-  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
+  const pagination = useTablePagination(filtered, 10);
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -68,15 +69,9 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          <select value={rank} onChange={(event) => setRank(event.target.value)} className={selectClass} aria-label="Filter by rank">
-            {ranks.map((item) => <option key={item} value={item}>{item === "UNRANKED" ? "No rank" : item === "ALL" ? "All ranks" : item}</option>)}
-          </select>
-          <select value={field} onChange={(event) => setField(event.target.value)} className={selectClass} aria-label="Filter by field">
-            {fieldOptions.map((item) => <option key={item} value={item}>{item === "ALL" ? "All fields" : item}</option>)}
-          </select>
-          <select value={publisher} onChange={(event) => setPublisher(event.target.value)} className={selectClass} aria-label="Filter by publisher">
-            {publisherOptions.map((item) => <option key={item} value={item}>{item === "ALL" ? "All publishers" : item}</option>)}
-          </select>
+          <FilterSelect value={rank} onChange={setRank} ariaLabel="Filter by rank" options={ranks.map((item) => ({ value: item, label: item === "UNRANKED" ? "No rank" : item === "ALL" ? "All ranks" : item }))} />
+          <FilterSelect value={field} onChange={setField} ariaLabel="Filter by field" options={fieldOptions.map((item) => ({ value: item, label: item === "ALL" ? "All fields" : item }))} />
+          <FilterSelect value={publisher} onChange={setPublisher} ariaLabel="Filter by publisher" options={publisherOptions.map((item) => ({ value: item, label: item === "ALL" ? "All publishers" : item }))} />
         </div>
       </div>
 
@@ -97,7 +92,7 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filtered.map((journal) => (
+            {pagination.pagedRows.map((journal) => (
               <tr key={journal.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 font-semibold text-slate-950 dark:text-white shadow-[1px_0_0_0_rgb(226,232,240)] dark:shadow-[1px_0_0_0_rgb(30,41,59)] transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800">
                   <Link href={`/journals/${journal.id}`} className="hover:text-blue-600 dark:hover:text-blue-300">
@@ -119,7 +114,7 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
                 <td className="max-w-xs px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.note || "-"}</td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {pagination.total === 0 && (
               <tr>
                 <td colSpan={10} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
                   No journals match the current search.
@@ -129,6 +124,7 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
           </tbody>
         </table>
       </div>
+      <TablePagination page={pagination.page} pageCount={pagination.pageCount} total={pagination.total} pageSize={pagination.pageSize} onPageChange={pagination.setPage} />
     </div>
   );
 }

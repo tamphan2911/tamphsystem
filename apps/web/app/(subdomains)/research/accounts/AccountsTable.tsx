@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AtSign, BookOpen, Building2, KeyRound, LockKeyhole, Search, Send, StickyNote, UserRound } from "lucide-react";
+import { FilterSelect, TablePagination, useTablePagination } from "../components/TableControls";
 
 export type AccountRow = {
   id: string;
@@ -37,7 +38,7 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
     });
   }, [journal, publisher, query, rows, scope]);
 
-  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
+  const pagination = useTablePagination(filtered, 10);
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -52,15 +53,9 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          <select value={scope} onChange={(event) => setScope(event.target.value)} className={selectClass} aria-label="Filter by scope">
-            {scopes.map((item) => <option key={item} value={item}>{item === "ALL" ? "All scopes" : item === "PUBLISHER" ? "Publisher-wide" : "Journal-specific"}</option>)}
-          </select>
-          <select value={journal} onChange={(event) => setJournal(event.target.value)} className={selectClass} aria-label="Filter by journal">
-            {journalOptions.map((item) => <option key={item} value={item}>{item === "ALL" ? "All journals" : item}</option>)}
-          </select>
-          <select value={publisher} onChange={(event) => setPublisher(event.target.value)} className={selectClass} aria-label="Filter by publisher">
-            {publisherOptions.map((item) => <option key={item} value={item}>{item === "ALL" ? "All publishers" : item}</option>)}
-          </select>
+          <FilterSelect value={scope} onChange={setScope} ariaLabel="Filter by scope" options={scopes.map((item) => ({ value: item, label: item === "ALL" ? "All scopes" : item === "PUBLISHER" ? "Publisher-wide" : "Journal-specific" }))} />
+          <FilterSelect value={journal} onChange={setJournal} ariaLabel="Filter by journal" options={journalOptions.map((item) => ({ value: item, label: item === "ALL" ? "All journals" : item }))} />
+          <FilterSelect value={publisher} onChange={setPublisher} ariaLabel="Filter by publisher" options={publisherOptions.map((item) => ({ value: item, label: item === "ALL" ? "All publishers" : item }))} />
         </div>
       </div>
 
@@ -78,7 +73,7 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filtered.map((account) => (
+            {pagination.pagedRows.map((account) => (
               <tr key={account.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800">
                   <div className="flex items-center gap-2 font-semibold text-slate-950 dark:text-white">
@@ -94,7 +89,7 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
                 <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.note || "-"}</td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {pagination.total === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
                   No accounts match the current search.
@@ -104,6 +99,7 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
           </tbody>
         </table>
       </div>
+      <TablePagination page={pagination.page} pageCount={pagination.pageCount} total={pagination.total} pageSize={pagination.pageSize} onPageChange={pagination.setPage} />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ExternalLink, FileText, Search, Send, Trophy } from "lucide-react";
+import { FilterSelect, TablePagination, useTablePagination } from "../components/TableControls";
 
 export type ResearchProjectRow = {
   id: string;
@@ -55,7 +56,7 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
     });
   }, [claim, lead, query, rows, stage]);
 
-  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
+  const pagination = useTablePagination(filtered, 10);
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -70,15 +71,9 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          <select value={stage} onChange={(event) => setStage(event.target.value)} className={selectClass} aria-label="Filter by stage">
-            {stages.map((item) => <option key={item} value={item}>{item === "ALL" ? "All stages" : item}</option>)}
-          </select>
-          <select value={claim} onChange={(event) => setClaim(event.target.value)} className={selectClass} aria-label="Filter by claim">
-            {claims.map((item) => <option key={item} value={item}>{item === "ALL" ? "All claims" : item.replace("_", " ")}</option>)}
-          </select>
-          <select value={lead} onChange={(event) => setLead(event.target.value)} className={selectClass} aria-label="Filter by lead">
-            {leadOptions.map((item) => <option key={item} value={item}>{item === "ALL" ? "All leads" : item}</option>)}
-          </select>
+          <FilterSelect value={stage} onChange={setStage} ariaLabel="Filter by stage" options={stages.map((item) => ({ value: item, label: item === "ALL" ? "All stages" : item }))} />
+          <FilterSelect value={claim} onChange={setClaim} ariaLabel="Filter by claim" options={claims.map((item) => ({ value: item, label: item === "ALL" ? "All claims" : item.replace("_", " ") }))} />
+          <FilterSelect value={lead} onChange={setLead} ariaLabel="Filter by lead" options={leadOptions.map((item) => ({ value: item, label: item === "ALL" ? "All leads" : item }))} />
         </div>
       </div>
 
@@ -97,7 +92,7 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filtered.map((row) => (
+            {pagination.pagedRows.map((row) => (
               <tr key={row.id} className="group transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800">
                   <Link href={`/projects/${row.id}`} className="group">
@@ -125,7 +120,7 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {pagination.total === 0 && (
               <tr>
                 <td colSpan={8} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
                   No research matches the current search.
@@ -135,6 +130,7 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
           </tbody>
         </table>
       </div>
+      <TablePagination page={pagination.page} pageCount={pagination.pageCount} total={pagination.total} pageSize={pagination.pageSize} onPageChange={pagination.setPage} />
     </div>
   );
 }

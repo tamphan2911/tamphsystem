@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BookOpen, ExternalLink, Search, UserRound } from "lucide-react";
+import { FilterSelect, TablePagination, useTablePagination } from "../../components/TableControls";
 
 export type SubmissionRow = {
   id: string;
@@ -40,7 +41,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
     });
   }, [query, rank, rows, status]);
 
-  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300";
+  const pagination = useTablePagination(filtered, 10);
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -55,19 +56,15 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          <select value={status} onChange={(event) => setStatus(event.target.value)} className={selectClass} aria-label="Filter submissions by status">
-            <option value="ALL">All status</option>
-            <option value="PENDING">Pending</option>
-            <option value="REVISION">Revision</option>
-            <option value="ACCEPTED">Accepted</option>
-            <option value="REJECTED">Rejected</option>
-            <option value="WITHDRAWN">Withdrawn</option>
-          </select>
-          <select value={rank} onChange={(event) => setRank(event.target.value)} className={selectClass} aria-label="Filter submissions by rank">
-            {rankOptions.map((item) => (
-              <option key={item} value={item}>{item === "ALL" ? "All ranks" : item}</option>
-            ))}
-          </select>
+          <FilterSelect value={status} onChange={setStatus} ariaLabel="Filter submissions by status" options={[
+            { value: "ALL", label: "All status" },
+            { value: "PENDING", label: "Pending" },
+            { value: "REVISION", label: "Revision" },
+            { value: "ACCEPTED", label: "Accepted" },
+            { value: "REJECTED", label: "Rejected" },
+            { value: "WITHDRAWN", label: "Withdrawn" },
+          ]} />
+          <FilterSelect value={rank} onChange={setRank} ariaLabel="Filter submissions by rank" options={rankOptions.map((item) => ({ value: item, label: item === "ALL" ? "All ranks" : item }))} />
         </div>
       </div>
 
@@ -86,7 +83,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filtered.map((row) => (
+            {pagination.pagedRows.map((row) => (
               <tr key={row.id} className="group transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
                   <Link href={`/journals/${row.journalId}`} className="flex items-start gap-3">
@@ -117,7 +114,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {pagination.total === 0 && (
               <tr>
                 <td colSpan={8} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
                   No submissions match the current filters.
@@ -127,6 +124,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
           </tbody>
         </table>
       </div>
+      <TablePagination page={pagination.page} pageCount={pagination.pageCount} total={pagination.total} pageSize={pagination.pageSize} onPageChange={pagination.setPage} />
     </div>
   );
 }

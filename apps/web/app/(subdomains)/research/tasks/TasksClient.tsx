@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Clock3, ClipboardList, Search, UsersRound } from "lucide-react";
+import { FilterSelect, TablePagination, useTablePagination } from "../components/TableControls";
 
 type TaskAssignment = {
   id: string;
@@ -96,6 +97,7 @@ export function TasksClient({ isAdmin, userId }: { isAdmin: boolean; userId: str
       return matchesStatus && matchesAssignee && (!needle || haystack.includes(needle));
     });
   }, [assignee, query, status, tasks]);
+  const pagination = useTablePagination(filtered, 10);
 
   async function markFinished(taskId: string) {
     setFinishingId(taskId);
@@ -110,8 +112,6 @@ export function TasksClient({ isAdmin, userId }: { isAdmin: boolean; userId: str
     { label: "Done", value: tasks.filter((task) => task.status === "COMPLETED").length, icon: CheckCircle2, color: "text-emerald-600" },
     { label: "People", value: assigneeOptions.length - 1, icon: UsersRound, color: "text-purple-600" },
   ];
-
-  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300";
 
   return (
     <div className="space-y-4">
@@ -142,19 +142,23 @@ export function TasksClient({ isAdmin, userId }: { isAdmin: boolean; userId: str
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            <select value={status} onChange={(event) => setStatus(event.target.value)} className={selectClass} aria-label="Filter by task status">
-              <option value="ALL">All status</option>
-              <option value="OPEN">Open</option>
-              <option value="IN_PROGRESS">In progress</option>
-              <option value="COMPLETED">Completed</option>
-            </select>
-            <select value={assignee} onChange={(event) => setAssignee(event.target.value)} className={selectClass} aria-label="Filter by assignee">
-              {assigneeOptions.map((item) => (
-                <option key={item} value={item}>
-                  {item === "ALL" ? "All assignees" : item}
-                </option>
-              ))}
-            </select>
+            <FilterSelect
+              value={status}
+              onChange={setStatus}
+              ariaLabel="Filter by task status"
+              options={[
+                { value: "ALL", label: "All status" },
+                { value: "OPEN", label: "Open" },
+                { value: "IN_PROGRESS", label: "In progress" },
+                { value: "COMPLETED", label: "Completed" },
+              ]}
+            />
+            <FilterSelect
+              value={assignee}
+              onChange={setAssignee}
+              ariaLabel="Filter by assignee"
+              options={assigneeOptions.map((item) => ({ value: item, label: item === "ALL" ? "All assignees" : item }))}
+            />
           </div>
         </div>
 
@@ -172,7 +176,7 @@ export function TasksClient({ isAdmin, userId }: { isAdmin: boolean; userId: str
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filtered.map((task) => {
+              {pagination.pagedRows.map((task) => {
                 const myAssignment = task.assignments.find((assignment) => assignment.userId === userId);
                 const canFinish = !isAdmin && myAssignment && !myAssignment.finishedAt;
                 return (
@@ -222,7 +226,7 @@ export function TasksClient({ isAdmin, userId }: { isAdmin: boolean; userId: str
                   </tr>
                 );
               })}
-              {filtered.length === 0 && (
+              {pagination.total === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
                     {isLoading ? "Loading tasks..." : "No tasks match the current filters."}
@@ -232,6 +236,13 @@ export function TasksClient({ isAdmin, userId }: { isAdmin: boolean; userId: str
             </tbody>
           </table>
         </div>
+        <TablePagination
+          page={pagination.page}
+          pageCount={pagination.pageCount}
+          total={pagination.total}
+          pageSize={pagination.pageSize}
+          onPageChange={pagination.setPage}
+        />
       </div>
     </div>
   );

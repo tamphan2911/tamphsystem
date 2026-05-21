@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Search, ShieldCheck, UserRound } from "lucide-react";
 import { updateResearchRoles } from "../actions";
+import { FilterSelect, TablePagination, useTablePagination } from "../components/TableControls";
 
 export type AssistantRow = {
   id: string;
@@ -29,7 +30,7 @@ export function AssistantsTable({ rows, roleOptions }: { rows: AssistantRow[]; r
     });
   }, [query, role, rows, status]);
 
-  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
+  const pagination = useTablePagination(filtered, 10);
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -44,14 +45,12 @@ export function AssistantsTable({ rows, roleOptions }: { rows: AssistantRow[]; r
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          <select value={role} onChange={(event) => setRole(event.target.value)} className={selectClass} aria-label="Filter by role">
-            {["ALL", ...roleOptions].map((item) => <option key={item} value={item}>{item === "ALL" ? "All roles" : item}</option>)}
-          </select>
-          <select value={status} onChange={(event) => setStatus(event.target.value)} className={selectClass} aria-label="Filter by research status">
-            <option value="ALL">All users</option>
-            <option value="RESEARCH_TEAM">Research team</option>
-            <option value="NON_RESEARCH">Non-research</option>
-          </select>
+          <FilterSelect value={role} onChange={setRole} ariaLabel="Filter by role" options={["ALL", ...roleOptions].map((item) => ({ value: item, label: item === "ALL" ? "All roles" : item }))} />
+          <FilterSelect value={status} onChange={setStatus} ariaLabel="Filter by research status" options={[
+            { value: "ALL", label: "All users" },
+            { value: "RESEARCH_TEAM", label: "Research team" },
+            { value: "NON_RESEARCH", label: "Non-research" },
+          ]} />
         </div>
       </div>
 
@@ -66,7 +65,7 @@ export function AssistantsTable({ rows, roleOptions }: { rows: AssistantRow[]; r
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filtered.map((user) => (
+            {pagination.pagedRows.map((user) => (
               <tr key={user.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 font-semibold text-slate-950 dark:text-white shadow-[1px_0_0_0_rgb(226,232,240)] dark:shadow-[1px_0_0_0_rgb(30,41,59)] transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800">{user.name || "Unnamed user"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{user.email}</td>
@@ -102,7 +101,7 @@ export function AssistantsTable({ rows, roleOptions }: { rows: AssistantRow[]; r
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {pagination.total === 0 && (
               <tr>
                 <td colSpan={4} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
                   No users match the current search.
@@ -112,6 +111,7 @@ export function AssistantsTable({ rows, roleOptions }: { rows: AssistantRow[]; r
           </tbody>
         </table>
       </div>
+      <TablePagination page={pagination.page} pageCount={pagination.pageCount} total={pagination.total} pageSize={pagination.pageSize} onPageChange={pagination.setPage} />
     </div>
   );
 }

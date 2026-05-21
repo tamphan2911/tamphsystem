@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BookOpen, CalendarClock, ClipboardCheck, Search, StickyNote } from "lucide-react";
+import { FilterSelect, TablePagination, useTablePagination } from "../components/TableControls";
 
 export type ReviewRow = {
   id: string;
@@ -58,7 +59,7 @@ export function ReviewsTable({ rows }: { rows: ReviewRow[] }) {
     });
   }, [journal, query, rows, status]);
 
-  const selectClass = "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
+  const pagination = useTablePagination(filtered, 10);
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -73,12 +74,8 @@ export function ReviewsTable({ rows }: { rows: ReviewRow[] }) {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          <select value={status} onChange={(event) => setStatus(event.target.value)} className={selectClass} aria-label="Filter by status">
-            {statuses.map((item) => <option key={item} value={item}>{item === "ALL" ? "All statuses" : item.replace("_", " ")}</option>)}
-          </select>
-          <select value={journal} onChange={(event) => setJournal(event.target.value)} className={selectClass} aria-label="Filter by journal">
-            {journalOptions.map((item) => <option key={item} value={item}>{item === "ALL" ? "All journals" : item}</option>)}
-          </select>
+          <FilterSelect value={status} onChange={setStatus} ariaLabel="Filter by status" options={statuses.map((item) => ({ value: item, label: item === "ALL" ? "All statuses" : item.replace("_", " ") }))} />
+          <FilterSelect value={journal} onChange={setJournal} ariaLabel="Filter by journal" options={journalOptions.map((item) => ({ value: item, label: item === "ALL" ? "All journals" : item }))} />
         </div>
       </div>
 
@@ -96,7 +93,7 @@ export function ReviewsTable({ rows }: { rows: ReviewRow[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filtered.map((row) => (
+            {pagination.pagedRows.map((row) => (
               <tr key={row.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800">
                   <div className="flex items-start gap-3">
@@ -122,7 +119,7 @@ export function ReviewsTable({ rows }: { rows: ReviewRow[] }) {
                 <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.note || "-"}</td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {pagination.total === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
                   No academic reviews match the current filters.
@@ -132,6 +129,7 @@ export function ReviewsTable({ rows }: { rows: ReviewRow[] }) {
           </tbody>
         </table>
       </div>
+      <TablePagination page={pagination.page} pageCount={pagination.pageCount} total={pagination.total} pageSize={pagination.pageSize} onPageChange={pagination.setPage} />
     </div>
   );
 }
