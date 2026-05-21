@@ -58,7 +58,9 @@ export function ResearchShell({
         }`}
       >
         <div className={`flex h-20 items-center border-b border-slate-200 px-4 transition-all duration-300 dark:border-slate-800 ${collapsed ? "justify-center" : "gap-3"}`}>
-          <div className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
+          <div className={`flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm transition-all duration-300 ${
+            collapsed ? "w-0 scale-75 opacity-0" : "opacity-100"
+          }`}>
             <BarChart3 className="h-5 w-5" />
           </div>
           <div className={`min-w-0 overflow-hidden transition-all duration-300 ${collapsed ? "w-0 opacity-0" : "w-44 opacity-100"}`}>
