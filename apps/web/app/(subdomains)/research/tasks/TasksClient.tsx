@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Clock3, ClipboardList, Search, UsersRound } from "lucide-react";
-import { FilterSelect, TablePagination, useTablePagination } from "../components/TableControls";
+import { FilterSelect, IconHint, TablePagination, useTablePagination } from "../components/TableControls";
 
 type TaskAssignment = {
   id: string;
@@ -133,7 +133,7 @@ export function TasksClient({ isAdmin, userId }: { isAdmin: boolean; userId: str
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative max-w-md flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <IconHint label="Search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><Search className="h-4 w-4" aria-hidden="true" /></IconHint>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -216,7 +216,7 @@ export function TasksClient({ isAdmin, userId }: { isAdmin: boolean; userId: str
                           disabled={finishingId === task.id}
                           className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
                         >
-                          <CheckCircle2 className="h-4 w-4" />
+                          <IconHint label="Mark task finished"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></IconHint>
                           Finish
                         </button>
                       ) : (

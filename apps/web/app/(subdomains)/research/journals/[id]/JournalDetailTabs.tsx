@@ -13,7 +13,7 @@ import {
   Send,
   StickyNote,
 } from "lucide-react";
-import { FilterSelect, TablePagination, useTablePagination } from "../../components/TableControls";
+import { FilterSelect, IconHint, TablePagination, useTablePagination } from "../../components/TableControls";
 
 export type JournalSubmissionRow = {
   id: string;
@@ -150,7 +150,7 @@ export function JournalDetailTabs({
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative max-w-md flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <IconHint label="Search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><Search className="h-4 w-4" aria-hidden="true" /></IconHint>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -186,7 +186,7 @@ export function JournalDetailTabs({
                     <tr key={row.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                       <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
                         <Link href={`/projects/${row.projectId}`} className="inline-flex items-center gap-2 text-sm font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">
-                          <FileText className="h-4 w-4 text-slate-400" />
+                          <IconHint label="Research project"><FileText className="h-4 w-4 text-slate-400" aria-hidden="true" /></IconHint>
                           {row.projectTitle}
                         </Link>
                       </td>
@@ -222,11 +222,11 @@ export function JournalDetailTabs({
               <table className="w-full min-w-[70rem] text-left">
                 <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
                   <tr>
-                    <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]"><KeyRound className="h-4 w-4" aria-label="ID" /></th>
-                    <th className="px-4 py-3"><LockKeyhole className="h-4 w-4" aria-label="Password" /></th>
-                    <th className="px-4 py-3"><AtSign className="h-4 w-4" aria-label="Email" /></th>
-                    <th className="px-4 py-3"><Send className="h-4 w-4" aria-label="Submissions" /></th>
-                    <th className="px-4 py-3"><StickyNote className="h-4 w-4" aria-label="Note" /></th>
+                    <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]"><IconHint label="Account ID"><KeyRound className="h-4 w-4" aria-hidden="true" /></IconHint></th>
+                    <th className="px-4 py-3"><IconHint label="Password"><LockKeyhole className="h-4 w-4" aria-hidden="true" /></IconHint></th>
+                    <th className="px-4 py-3"><IconHint label="Email"><AtSign className="h-4 w-4" aria-hidden="true" /></IconHint></th>
+                    <th className="px-4 py-3"><IconHint label="Submissions"><Send className="h-4 w-4" aria-hidden="true" /></IconHint></th>
+                    <th className="px-4 py-3"><IconHint label="Note"><StickyNote className="h-4 w-4" aria-hidden="true" /></IconHint></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -257,10 +257,10 @@ export function JournalDetailTabs({
                   <tr>
                     <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Manuscript</th>
                     <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3"><CalendarClock className="h-4 w-4" aria-label="Due" /></th>
+                    <th className="px-4 py-3"><IconHint label="Due date"><CalendarClock className="h-4 w-4" aria-hidden="true" /></IconHint></th>
                     <th className="px-4 py-3">Recommendation</th>
                     <th className="px-4 py-3">Editor</th>
-                    <th className="px-4 py-3"><StickyNote className="h-4 w-4" aria-label="Note" /></th>
+                    <th className="px-4 py-3"><IconHint label="Note"><StickyNote className="h-4 w-4" aria-hidden="true" /></IconHint></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">

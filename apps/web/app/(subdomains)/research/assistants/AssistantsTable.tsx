@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Search, ShieldCheck, UserRound } from "lucide-react";
 import { updateResearchRoles } from "../actions";
-import { FilterSelect, TablePagination, useTablePagination } from "../components/TableControls";
+import { FilterSelect, IconHint, TablePagination, useTablePagination } from "../components/TableControls";
 
 export type AssistantRow = {
   id: string;
@@ -36,7 +36,7 @@ export function AssistantsTable({ rows, roleOptions }: { rows: AssistantRow[]; r
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between">
         <div className="relative max-w-md flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <IconHint label="Search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><Search className="h-4 w-4" aria-hidden="true" /></IconHint>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -58,9 +58,9 @@ export function AssistantsTable({ rows, roleOptions }: { rows: AssistantRow[]; r
         <table className="w-full min-w-[72rem] text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]"><UserRound className="h-4 w-4" aria-label="User" /></th>
+              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]"><IconHint label="User"><UserRound className="h-4 w-4" aria-hidden="true" /></IconHint></th>
               <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3"><ShieldCheck className="h-4 w-4" aria-label="Roles" /></th>
+              <th className="px-4 py-3"><IconHint label="Roles"><ShieldCheck className="h-4 w-4" aria-hidden="true" /></IconHint></th>
               <th className="px-4 py-3 text-right">Save</th>
             </tr>
           </thead>

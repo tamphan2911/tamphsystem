@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BookOpen, ExternalLink, Search, UserRound } from "lucide-react";
-import { FilterSelect, TablePagination, useTablePagination } from "../../components/TableControls";
+import { FilterSelect, IconHint, TablePagination, useTablePagination } from "../../components/TableControls";
 
 export type SubmissionRow = {
   id: string;
@@ -47,7 +47,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between">
         <div className="relative max-w-md flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <IconHint label="Search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><Search className="h-4 w-4" aria-hidden="true" /></IconHint>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -87,7 +87,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
               <tr key={row.id} className="group transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
                   <Link href={`/journals/${row.journalId}`} className="flex items-start gap-3">
-                    <BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" />
+                    <IconHint label="Journal"><BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" aria-hidden="true" /></IconHint>
                     <span>
                       <span className="block text-sm font-normal text-slate-700 group-hover:text-blue-600 dark:text-slate-200">{row.journalName}</span>
                       <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">Journal detail</span>
@@ -102,14 +102,14 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.apc || "-"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                   <span className="inline-flex items-center gap-1.5">
-                    <UserRound className="h-3.5 w-3.5 text-slate-400" />
+                    <IconHint label="Submission account"><UserRound className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" /></IconHint>
                     {row.account || "Not recorded"}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.submittedAt}</td>
                 <td className="px-4 py-3 text-right">
                   <Link href={`/journals/${row.journalId}`} className="inline-flex items-center justify-center rounded-lg p-2 text-slate-500 transition hover:bg-blue-50 hover:text-blue-600 dark:text-slate-400 dark:hover:bg-blue-950/40 dark:hover:text-blue-300" title="Open journal">
-                    <ExternalLink className="h-4 w-4" />
+                    <IconHint label="Open journal"><ExternalLink className="h-4 w-4" aria-hidden="true" /></IconHint>
                   </Link>
                 </td>
               </tr>

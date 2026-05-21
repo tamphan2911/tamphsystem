@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 
@@ -7,6 +8,17 @@ export type FilterOption = {
   value: string;
   label: string;
 };
+
+export function IconHint({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
+  return (
+    <span className={`group/icon relative inline-flex items-center justify-center align-middle ${className}`}>
+      {children}
+      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold normal-case tracking-normal text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
+        {label}
+      </span>
+    </span>
+  );
+}
 
 export function FilterSelect({
   value,
