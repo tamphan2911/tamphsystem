@@ -34,12 +34,12 @@ export function ActiveNavLink({
         collapsed ? "justify-center" : ""
       } ${
         isActive
-          ? "bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900"
-          : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+          ? "bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-200 dark:ring-emerald-400/20"
+          : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-800/80 dark:hover:text-emerald-100"
       }`}
     >
-      <span className={`absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full transition ${isActive ? "bg-emerald-600 opacity-100" : "opacity-0"}`} />
-      <Icon className={`h-5 w-5 ${isActive ? "text-emerald-600" : "text-slate-400"}`} />
+      <span className={`absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full transition ${isActive ? "bg-emerald-600 opacity-100 dark:bg-emerald-300" : "opacity-0"}`} />
+      <Icon className={`h-5 w-5 ${isActive ? "text-emerald-600 dark:text-emerald-200" : "text-slate-400 dark:text-slate-300"}`} />
       {!collapsed && <span className="truncate">{label}</span>}
     </Link>
   );
