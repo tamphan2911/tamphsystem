@@ -56,16 +56,21 @@ export async function createResearchProject(formData: FormData) {
 export async function updateResearchProject(projectId: string, formData: FormData) {
   await requireCurrentUser();
 
+  const data = {
+    title: optionalString(formData.get("title")) ?? "Untitled research",
+    stage: (formData.get("stage") as ResearchStage | null) ?? ResearchStage.PRODUCTION,
+    coAuthors: optionalString(formData.get("coAuthors")),
+    universityRegistration: optionalString(formData.get("universityRegistration")),
+    claimStatus: (formData.get("claimStatus") as ClaimStatus | null) ?? ClaimStatus.CANNOT_CLAIM,
+    completedProductionSteps: formData
+      .getAll("completedProductionSteps")
+      .filter((value): value is string => typeof value === "string" && value.trim().length > 0),
+    ...(formData.has("abstract") ? { abstract: optionalString(formData.get("abstract")) } : {}),
+  };
+
   await prisma.researchProject.update({
     where: { id: projectId },
-    data: {
-      title: optionalString(formData.get("title")) ?? "Untitled research",
-      abstract: optionalString(formData.get("abstract")),
-      stage: (formData.get("stage") as ResearchStage | null) ?? ResearchStage.PRODUCTION,
-      coAuthors: optionalString(formData.get("coAuthors")),
-      universityRegistration: optionalString(formData.get("universityRegistration")),
-      claimStatus: (formData.get("claimStatus") as ClaimStatus | null) ?? ClaimStatus.CANNOT_CLAIM,
-    },
+    data,
   });
 
   revalidatePath("/projects");
@@ -254,6 +259,9 @@ export async function createResearchTask(formData: FormData) {
       title: optionalString(formData.get("title")) ?? "Untitled task",
       description: optionalString(formData.get("description")),
       category: optionalString(formData.get("category")),
+      taskType: optionalString(formData.get("taskType")),
+      projectId: optionalString(formData.get("projectId")),
+      journalId: optionalString(formData.get("journalId")),
       dueDate: optionalString(formData.get("dueDate"))
         ? new Date(optionalString(formData.get("dueDate")) as string)
         : null,
@@ -265,6 +273,35 @@ export async function createResearchTask(formData: FormData) {
   });
 
   revalidatePath("/tasks");
+  const projectId = optionalString(formData.get("projectId"));
+  if (projectId) revalidatePath(`/projects/${projectId}`);
+}
+
+export async function addSuggestedJournal(projectId: string, formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const journalId = optionalString(formData.get("journalId"));
+  if (!journalId) return;
+
+  await prisma.suggestedJournal.upsert({
+    where: { projectId_journalId: { projectId, journalId } },
+    update: {},
+    create: { projectId, journalId },
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function deleteSuggestedJournal(projectId: string, journalId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.suggestedJournal.deleteMany({
+    where: { projectId, journalId },
+  });
+
+  revalidatePath(`/projects/${projectId}`);
 }
 
 export async function assertResearchManager() {

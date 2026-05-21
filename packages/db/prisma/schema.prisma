@@ -185,9 +185,10 @@ model ResearchProject {
   stage    ResearchStage @default(PRODUCTION)
 
   // Production Stage Tracking
-  coAuthors              String?
-  universityRegistration String? // e.g., "Q1 2026"
-  claimStatus            ClaimStatus @default(CANNOT_CLAIM)
+  coAuthors                String?
+  universityRegistration   String? // e.g., "Q1 2026"
+  claimStatus              ClaimStatus @default(CANNOT_CLAIM)
+  completedProductionSteps String[]    @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -195,8 +196,10 @@ model ResearchProject {
   leadResearcherId String
   leadResearcher   User   @relation("LeadResearcher", fields: [leadResearcherId], references: [id])
 
-  publications Publication[]
-  submissions  ResearchSubmission[]
+  publications      Publication[]
+  submissions       ResearchSubmission[]
+  suggestedJournals SuggestedJournal[]
+  tasks             ResearchTask[]
 }
 
 model Journal {
@@ -216,6 +219,20 @@ model Journal {
   submissions ResearchSubmission[]
   accounts    PublisherAccount[]
   reviews     AcademicReview[]
+  suggestions SuggestedJournal[]
+  tasks       ResearchTask[]
+}
+
+model SuggestedJournal {
+  id        String   @id @default(uuid())
+  projectId String
+  journalId String
+  createdAt DateTime @default(now())
+
+  project ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  journal Journal         @relation(fields: [journalId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, journalId])
 }
 
 model AcademicReview {
@@ -250,7 +267,12 @@ model ResearchTask {
   updatedAt     DateTime  @updatedAt
 
   createdById String
-  createdBy   User   @relation("ResearchTaskCreator", fields: [createdById], references: [id])
+  createdBy   User             @relation("ResearchTaskCreator", fields: [createdById], references: [id])
+  projectId   String?
+  journalId   String?
+  taskType    String?
+  project     ResearchProject? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  journal     Journal?         @relation(fields: [journalId], references: [id], onDelete: SetNull)
 
   assignments ResearchTaskAssignment[]
 }
