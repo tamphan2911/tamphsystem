@@ -1,0 +1,133 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import {
+  BarChart3,
+  BriefcaseBusiness,
+  ChevronLeft,
+  ChevronRight,
+  GraduationCap,
+  SlidersHorizontal,
+} from "lucide-react";
+import { ActiveNavLink } from "../../../components/ActiveNavLink";
+import { ProfileMenu } from "../../../components/ProfileMenu";
+import { ThemeToggle } from "../../../components/ThemeToggle";
+
+const navItems = [
+  { href: "/projects", label: "Research Pipeline", icon: "projects" as const },
+  { href: "/journals", label: "Journals", icon: "journals" as const },
+  { href: "/accounts", label: "Publisher Accounts", icon: "accounts" as const },
+  { href: "/assistants", label: "Assistants", icon: "assistants" as const },
+];
+
+const adminLinks = [
+  { href: "https://tamph.com", label: "Portfolio", icon: BriefcaseBusiness },
+  { href: "https://learn.tamph.com", label: "Learn", icon: GraduationCap },
+  { href: "https://admin.tamph.com", label: "Admin", icon: SlidersHorizontal },
+];
+
+export function ResearchShell({
+  children,
+  email,
+  name,
+  isAdmin,
+}: {
+  children: React.ReactNode;
+  email?: string | null;
+  name?: string | null;
+  isAdmin: boolean;
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 hidden border-r border-slate-200 bg-white transition-[width] duration-300 ease-out lg:flex lg:flex-col dark:border-slate-800 dark:bg-slate-900 ${
+          collapsed ? "w-20" : "w-72"
+        }`}
+      >
+        <div className={`flex h-20 items-center border-b border-slate-200 px-4 transition-all duration-300 dark:border-slate-800 ${collapsed ? "justify-center" : "gap-3"}`}>
+          <div className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
+            <BarChart3 className="h-5 w-5" />
+          </div>
+          <div className={`min-w-0 overflow-hidden transition-all duration-300 ${collapsed ? "w-0 opacity-0" : "w-44 opacity-100"}`}>
+            <p className="truncate text-lg font-bold">Research Hub</p>
+            <p className="truncate text-xs text-slate-500 dark:text-slate-400">Pipeline and journal control</p>
+          </div>
+        </div>
+
+        <div className="border-b border-slate-100 p-3 dark:border-slate-800">
+          <button
+            type="button"
+            onClick={() => setCollapsed((value) => !value)}
+            className={`flex w-full items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 hover:shadow-md ${
+              collapsed ? "justify-center" : "justify-between"
+            }`}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {!collapsed && <span>Collapse</span>}
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </button>
+        </div>
+
+        <nav className={`flex-1 space-y-1 overflow-y-auto transition-all duration-300 ${collapsed ? "p-3" : "p-4"}`}>
+          {navItems.map((item) => (
+            <ActiveNavLink
+              key={item.href}
+              href={item.href}
+              label={item.label}
+              icon={item.icon}
+              collapsed={collapsed}
+            />
+          ))}
+        </nav>
+      </aside>
+
+      <div className={`transition-[padding] duration-300 ease-out ${collapsed ? "lg:pl-20" : "lg:pl-72"}`}>
+        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-slate-200 bg-white/85 px-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/85 sm:px-8">
+          <div className="flex min-w-0 items-center gap-2 overflow-x-auto lg:hidden">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+          <div className="hidden min-w-0 items-center gap-2 lg:flex">
+            <span className="text-sm text-slate-500 dark:text-slate-400">Research operations</span>
+            {isAdmin && (
+              <div className="ml-3 flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1">
+                {adminLinks.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 hover:shadow-sm"
+                  >
+                    <item.icon className="h-3.5 w-3.5" />
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <ProfileMenu
+              email={email}
+              name={name}
+              profileHref="/profile"
+              adminHref="https://admin.tamph.com"
+            />
+          </div>
+        </header>
+
+        <main className="min-h-[calc(100vh-5rem)] p-4 transition-[padding] duration-300 sm:p-8">{children}</main>
+      </div>
+    </div>
+  );
+}
