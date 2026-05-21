@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, BarChart3, Database, Hash } from "lucide-react";
+import { ArrowLeft, BarChart3, Database, Globe2, Hash } from "lucide-react";
 import { prisma } from "@repo/db";
 import {
   JournalDetailTabs,
@@ -97,6 +97,7 @@ export default async function JournalDetailPage({
   }));
 
   const externalLinks = [
+    { href: journal.homepageLink, label: "Homepage", icon: Globe2 },
     { href: journal.scimagoLink, label: "Scimago", icon: BarChart3 },
     { href: journal.scopusLink, label: "Scopus", icon: Database },
   ].filter((item) => Boolean(item.href));
