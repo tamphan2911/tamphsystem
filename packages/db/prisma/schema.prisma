@@ -24,6 +24,13 @@ enum Role {
   CHIEF_ASSISTANT
 }
 
+enum RegistrationStatus {
+  NOT_REGISTERED
+  PREPARING
+  SUBMITTED
+  APPROVED
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -187,8 +194,9 @@ model ResearchProject {
   // Production Stage Tracking
   coAuthors                String?
   universityRegistration   String? // e.g., "Q1 2026"
-  claimStatus              ClaimStatus @default(CANNOT_CLAIM)
-  completedProductionSteps String[]    @default([])
+  registerStatus           RegistrationStatus @default(NOT_REGISTERED)
+  claimStatus              ClaimStatus        @default(CANNOT_CLAIM)
+  completedProductionSteps String[]           @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

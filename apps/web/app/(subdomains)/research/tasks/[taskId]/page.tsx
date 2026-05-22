@@ -5,6 +5,7 @@ import { ArrowLeft, CalendarClock, CheckCircle2, ClipboardList, FileText, Send, 
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { finishResearchTask } from "../../actions";
+import { ResearchFormSelect } from "../../components/ResearchFormSelect";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +87,16 @@ export default async function TaskDetailPage({
   const myAssignment = task.assignments.find((assignment) => assignment.userId === userId);
   if (!isAdmin && !myAssignment) redirect("/401");
 
+  const accountOptions =
+    task.taskType === "SUBMIT_RESEARCH"
+      ? await prisma.publisherAccount.findMany({
+          where: task.journalId
+            ? { OR: [{ journalId: task.journalId }, { journalId: null }] }
+            : { journalId: null },
+          include: { journal: true },
+          orderBy: [{ journalId: "desc" }, { username: "asc" }],
+        })
+      : [];
   const meta = statusMeta(task);
   const finishAction = finishResearchTask.bind(null, task.id);
   const canFinish = task.status !== "COMPLETED" && (isAdmin || Boolean(myAssignment && !myAssignment.finishedAt));
@@ -156,11 +167,30 @@ export default async function TaskDetailPage({
         </div>
 
         {canFinish && (
-          <form action={finishAction} className="mt-6 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
-            <button className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md">
-              <CheckCircle2 className="h-4 w-4" />
-              Mark finished
-            </button>
+          <form action={finishAction} className="mt-6 grid gap-4 border-t border-slate-200 pt-5 dark:border-slate-800">
+            {task.taskType === "SUBMIT_RESEARCH" && accountOptions.length > 0 && (
+              <label className="grid max-w-md gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                Account used for submission
+                <ResearchFormSelect
+                  name="accountId"
+                  defaultValue=""
+                  ariaLabel="Submission account"
+                  options={[
+                    { value: "", label: "No account selected" },
+                    ...accountOptions.map((account) => ({
+                      value: account.id,
+                      label: `${account.username}${account.journal ? ` - ${account.journal.name}` : " - publisher-wide"}`,
+                    })),
+                  ]}
+                />
+              </label>
+            )}
+            <div className="flex justify-end">
+              <button className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md">
+                <CheckCircle2 className="h-4 w-4" />
+                Mark finished
+              </button>
+            </div>
           </form>
         )}
 

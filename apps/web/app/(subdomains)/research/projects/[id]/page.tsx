@@ -5,12 +5,12 @@ import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import {
   createPublication,
-  createResearchSubmission,
   updateResearchProject,
 } from "../../actions";
 import { SubmissionsTable, type SubmissionRow } from "./SubmissionsTable";
 import { SuggestedJournalsPanel, type SuggestedJournalOption, type TaskAssigneeOption } from "./SuggestedJournalsPanel";
 import { SaveForm } from "../../components/SaveForm";
+import { ResearchFormSelect } from "../../components/ResearchFormSelect";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +23,27 @@ const productionSteps = [
   { label: "References", detail: "Verify citations, DOI, format, and links" },
 ];
 
+const stageOptions = [
+  { value: "PRODUCTION", label: "Production" },
+  { value: "SUBMITTING", label: "Submitting" },
+  { value: "ACCEPTED", label: "Accepted" },
+  { value: "PUBLISHED", label: "Published" },
+];
+
+const registerOptions = [
+  { value: "NOT_REGISTERED", label: "Not registered" },
+  { value: "PREPARING", label: "Preparing" },
+  { value: "SUBMITTED", label: "Submitted" },
+  { value: "APPROVED", label: "Approved" },
+];
+
+const claimOptions = [
+  { value: "CANNOT_CLAIM", label: "Cannot claim" },
+  { value: "MAKING_DOCUMENT", label: "Making document" },
+  { value: "WAITING", label: "Waiting response" },
+  { value: "CLAIMED", label: "Claimed" },
+];
+
 export default async function ProjectDetailPage({
   params,
 }: {
@@ -32,7 +53,7 @@ export default async function ProjectDetailPage({
   const session = await auth();
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ?? []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
-  const [project, journals, accounts, taskAssignees] = await Promise.all([
+  const [project, journals, taskAssignees] = await Promise.all([
     prisma.researchProject.findUnique({
       where: { id },
       include: {
@@ -46,13 +67,17 @@ export default async function ProjectDetailPage({
           include: { journal: true },
           orderBy: { createdAt: "desc" },
         },
+        tasks: {
+          where: { taskType: "SUBMIT_RESEARCH" },
+          include: {
+            journal: true,
+            assignments: { include: { user: true }, orderBy: { createdAt: "asc" } },
+          },
+          orderBy: [{ status: "asc" }, { dueDate: "asc" }, { createdAt: "desc" }],
+        },
       },
     }),
     prisma.journal.findMany({ orderBy: [{ rank: "asc" }, { name: "asc" }] }),
-    prisma.publisherAccount.findMany({
-      include: { journal: true },
-      orderBy: { username: "asc" },
-    }),
     prisma.user.findMany({
       where: { roles: { hasSome: [Role.ADMIN, Role.ASSISTANT, Role.CHIEF_ASSISTANT] } },
       orderBy: [{ name: "asc" }, { email: "asc" }],
@@ -63,7 +88,6 @@ export default async function ProjectDetailPage({
   if (!project) notFound();
 
   const updateAction = updateResearchProject.bind(null, project.id);
-  const submissionAction = createResearchSubmission.bind(null, project.id);
   const publicationAction = createPublication.bind(null, project.id);
   const showPublicationBlock = project.stage === "PUBLISHED" || project.publications.length > 0;
   const latestPublication = project.publications[0];
@@ -107,6 +131,7 @@ export default async function ProjectDetailPage({
     status: submission.status,
     submittedAt: submission.submittedAt.toLocaleDateString(),
   }));
+  const openSubmissionTasks = project.tasks.filter((task) => task.status !== "COMPLETED");
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
@@ -160,42 +185,36 @@ export default async function ProjectDetailPage({
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="grid gap-5">
             <section className="grid gap-4">
-              <div className="grid gap-4 md:grid-cols-2">
+              <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                Title
+                <input name="title" defaultValue={project.title} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
+              </label>
+              <div className="grid gap-4 md:grid-cols-[1fr_16rem]">
                 <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Title
-                  <input name="title" defaultValue={project.title} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
-                </label>
-                <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Co-authors
+                  Authors
                   <input name="coAuthors" defaultValue={project.coAuthors ?? ""} placeholder="Names separated by comma" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
                 </label>
+                <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  Stage
+                  <ResearchFormSelect name="stage" defaultValue={project.stage} options={stageOptions} ariaLabel="Research stage" />
+                </label>
               </div>
-              <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                Stage
-                <select name="stage" defaultValue={project.stage} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
-                  <option value="PRODUCTION">Production</option>
-                  <option value="SUBMITTING">Submitting</option>
-                  <option value="ACCEPTED">Accepted</option>
-                  <option value="PUBLISHED">Published</option>
-                </select>
-              </label>
             </section>
 
             <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
               <h2 className="mb-4 text-base font-bold text-slate-950 dark:text-white">Registration and claim</h2>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-3">
                 <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                   University registration
                   <input name="universityRegistration" defaultValue={project.universityRegistration ?? ""} placeholder="Q1 2026" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
                 </label>
                 <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  Register
+                  <ResearchFormSelect name="registerStatus" defaultValue={project.registerStatus} options={registerOptions} ariaLabel="Registration status" />
+                </label>
+                <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Claim status
-                  <select name="claimStatus" defaultValue={project.claimStatus} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
-                    <option value="CANNOT_CLAIM">Cannot claim</option>
-                    <option value="MAKING_DOCUMENT">Making document</option>
-                    <option value="WAITING">Waiting response</option>
-                    <option value="CLAIMED">Claimed</option>
-                  </select>
+                  <ResearchFormSelect name="claimStatus" defaultValue={project.claimStatus} options={claimOptions} ariaLabel="Claim status" />
                 </label>
               </div>
             </section>
@@ -237,36 +256,28 @@ export default async function ProjectDetailPage({
             <Send className="h-5 w-5 text-blue-500" />
             Submissions
           </h2>
-          <form action={submissionAction} className="grid gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-[16rem_16rem_10rem_auto]">
-            <select name="journalId" required className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
-              <option value="">Journal</option>
-              {journals.map((journal) => (
-                <option key={journal.id} value={journal.id}>
-                  {journal.name} {journal.rank ? `(${journal.rank})` : ""}
-                </option>
-              ))}
-            </select>
-            <select name="accountId" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
-              <option value="">Account used</option>
-              {accounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.username}{account.journal ? ` - ${account.journal.name}` : ""}
-                </option>
-              ))}
-            </select>
-            <select name="status" defaultValue="PENDING" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
-              <option value="PENDING">Pending</option>
-              <option value="REVISION">Revision</option>
-              <option value="ACCEPTED">Accepted</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="WITHDRAWN">Withdrawn</option>
-            </select>
-            <button className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md">
-              <Plus className="h-4 w-4" />
-              Log
-            </button>
-          </form>
+          <div className="rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-3 text-sm text-blue-900 shadow-sm dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
+            <p className="font-semibold">Submissions are updated from assigned tasks.</p>
+            <p className="mt-1 text-blue-800/80 dark:text-blue-200/80">
+              Assign a submit research task from Suggested journals. When the task is marked finished, this table and related journal/account views update automatically.
+            </p>
+          </div>
         </div>
+        {openSubmissionTasks.length > 0 && (
+          <div className="grid gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Open submission tasks</p>
+            <div className="grid gap-2 md:grid-cols-2">
+              {openSubmissionTasks.map((task) => (
+                <Link key={task.id} href={`/tasks/${task.id}`} className="rounded-lg border border-slate-200 px-3 py-2 text-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm dark:border-slate-800 dark:hover:border-blue-900 dark:hover:bg-blue-950/30">
+                  <span className="block font-semibold text-slate-800 dark:text-slate-100">{task.title}</span>
+                  <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                    {task.journal?.name || "No journal"} - {task.status.replace("_", " ")} - {task.assignments.map((assignment) => assignment.user.name || assignment.user.email).join(", ")}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
         <SubmissionsTable rows={submissionRows} />
       </section>
 

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "../../../auth";
-import { prisma, ClaimStatus, ResearchStage, Role } from "@repo/db";
+import { prisma, ClaimStatus, RegistrationStatus, ResearchStage, Role } from "@repo/db";
 
 function optionalString(value: FormDataEntryValue | null) {
   const text = typeof value === "string" ? value.trim() : "";
@@ -44,6 +44,7 @@ export async function createResearchProject(formData: FormData) {
       stage: (formData.get("stage") as ResearchStage | null) ?? ResearchStage.PRODUCTION,
       coAuthors: optionalString(formData.get("coAuthors")),
       universityRegistration: optionalString(formData.get("universityRegistration")),
+      registerStatus: (formData.get("registerStatus") as RegistrationStatus | null) ?? RegistrationStatus.NOT_REGISTERED,
       claimStatus: (formData.get("claimStatus") as ClaimStatus | null) ?? ClaimStatus.CANNOT_CLAIM,
       leadResearcherId: user.id,
     },
@@ -61,6 +62,7 @@ export async function updateResearchProject(projectId: string, formData: FormDat
     stage: (formData.get("stage") as ResearchStage | null) ?? ResearchStage.PRODUCTION,
     coAuthors: optionalString(formData.get("coAuthors")),
     universityRegistration: optionalString(formData.get("universityRegistration")),
+    registerStatus: (formData.get("registerStatus") as RegistrationStatus | null) ?? RegistrationStatus.NOT_REGISTERED,
     claimStatus: (formData.get("claimStatus") as ClaimStatus | null) ?? ClaimStatus.CANNOT_CLAIM,
     completedProductionSteps: formData
       .getAll("completedProductionSteps")
@@ -327,26 +329,35 @@ export async function deleteSuggestedJournal(projectId: string, journalId: strin
   revalidatePath(`/projects/${projectId}`);
 }
 
-export async function finishResearchTask(taskId: string) {
+export async function finishResearchTask(taskId: string, formData?: FormData) {
   const user = await requireCurrentUser();
   const isAdmin = user.roles.includes(Role.ADMIN);
+  const accountId = optionalString(formData?.get("accountId") ?? null);
 
   if (!isAdmin && !user.roles.includes(Role.ASSISTANT) && !user.roles.includes(Role.CHIEF_ASSISTANT)) {
     redirect("/401");
   }
 
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: { id: true, projectId: true, journalId: true, taskType: true },
+  });
+
+  if (!task) return;
+
+  const completedAt = new Date();
+
   if (isAdmin) {
-    const now = new Date();
     await prisma.researchTask.update({
       where: { id: taskId },
       data: {
         status: "COMPLETED",
-        completedAt: now,
+        completedAt,
         adminViewedAt: null,
         assignments: {
           updateMany: {
             where: { finishedAt: null },
-            data: { finishedAt: now },
+            data: { finishedAt: completedAt },
           },
         },
       },
@@ -360,7 +371,7 @@ export async function finishResearchTask(taskId: string) {
 
     await prisma.researchTaskAssignment.update({
       where: { id: assignment.id },
-      data: { finishedAt: assignment.finishedAt ?? new Date() },
+      data: { finishedAt: assignment.finishedAt ?? completedAt },
     });
 
     const assignments = await prisma.researchTaskAssignment.findMany({
@@ -374,9 +385,51 @@ export async function finishResearchTask(taskId: string) {
     await prisma.researchTask.update({
       where: { id: taskId },
       data: allFinished
-        ? { status: "COMPLETED", completedAt: new Date(), adminViewedAt: null }
+        ? { status: "COMPLETED", completedAt, adminViewedAt: null }
         : { status: anyFinished ? "IN_PROGRESS" : "OPEN" },
     });
+  }
+
+  const completedTask = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: { status: true, completedAt: true },
+  });
+
+  if (completedTask?.status === "COMPLETED" && task.taskType === "SUBMIT_RESEARCH" && task.projectId && task.journalId) {
+    const existingSubmission = await prisma.researchSubmission.findFirst({
+      where: {
+        researchProjectId: task.projectId,
+        journalId: task.journalId,
+      },
+      orderBy: { submittedAt: "desc" },
+    });
+
+    if (existingSubmission) {
+      await prisma.researchSubmission.update({
+        where: { id: existingSubmission.id },
+        data: {
+          status: existingSubmission.status || "PENDING",
+          submittedAt: existingSubmission.submittedAt ?? completedAt,
+          ...(accountId ? { accountId } : {}),
+        },
+      });
+    } else {
+      await prisma.researchSubmission.create({
+        data: {
+          researchProjectId: task.projectId,
+          journalId: task.journalId,
+          accountId,
+          status: "PENDING",
+          submittedAt: completedAt,
+        },
+      });
+    }
+
+    revalidatePath("/projects");
+    revalidatePath(`/projects/${task.projectId}`);
+    revalidatePath("/journals");
+    revalidatePath(`/journals/${task.journalId}`);
+    revalidatePath("/accounts");
   }
 
   revalidatePath("/tasks");
