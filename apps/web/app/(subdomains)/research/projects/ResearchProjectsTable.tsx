@@ -2,7 +2,18 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { FileText } from "lucide-react";
+import {
+  BadgeCheck,
+  Ban,
+  BookOpenCheck,
+  CheckCircle2,
+  CircleDollarSign,
+  FileCheck2,
+  FileClock,
+  FileText,
+  FlaskConical,
+  Send,
+} from "lucide-react";
 import { FilterSelect, IconHint, TablePagination, TableSearchInput, useTablePagination } from "../components/TableControls";
 
 export type ResearchProjectRow = {
@@ -34,6 +45,13 @@ function statusClass(stage: string) {
   return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
 }
 
+function stageIcon(stage: string) {
+  if (stage === "PUBLISHED") return BookOpenCheck;
+  if (stage === "ACCEPTED") return BadgeCheck;
+  if (stage === "SUBMITTING") return Send;
+  return FlaskConical;
+}
+
 function claimLabel(claim: string) {
   if (claim === "CANNOT_CLAIM") return "Cannot claim";
   if (claim === "MAKING_DOCUMENT") return "Making document";
@@ -47,6 +65,33 @@ function claimClass(claim: string) {
   if (claim === "WAITING") return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
   if (claim === "MAKING_DOCUMENT") return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
   return "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+}
+
+function claimIcon(claim: string) {
+  if (claim === "CLAIMED") return CheckCircle2;
+  if (claim === "WAITING") return FileClock;
+  if (claim === "MAKING_DOCUMENT") return FileCheck2;
+  if (claim === "CANNOT_CLAIM") return Ban;
+  return CircleDollarSign;
+}
+
+function StatusIconChip({
+  icon: Icon,
+  label,
+  className,
+}: {
+  icon: typeof FileText;
+  label: string;
+  className: string;
+}) {
+  return (
+    <IconHint label={label}>
+      <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}>
+        <Icon className="h-4 w-4" aria-hidden="true" />
+        <span className="sr-only">{label}</span>
+      </span>
+    </IconHint>
+  );
 }
 
 export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) {
@@ -110,10 +155,10 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
                   </Link>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(row.stage)}`}>{stageLabel(row.stage)}</span>
+                  <StatusIconChip icon={stageIcon(row.stage)} label={stageLabel(row.stage)} className={statusClass(row.stage)} />
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${claimClass(row.claimStatus)}`}>{claimLabel(row.claimStatus)}</span>
+                  <StatusIconChip icon={claimIcon(row.claimStatus)} label={claimLabel(row.claimStatus)} className={claimClass(row.claimStatus)} />
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.universityRegistration || "-"}</td>
                 <td className="px-4 py-3 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">{row.submissions}</td>
