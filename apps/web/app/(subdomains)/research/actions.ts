@@ -287,6 +287,7 @@ export async function createResearchTask(formData: FormData) {
       taskType: optionalString(formData.get("taskType")),
       projectId: optionalString(formData.get("projectId")),
       journalId: optionalString(formData.get("journalId")),
+      conferenceId: optionalString(formData.get("conferenceId")),
       dueDate: optionalString(formData.get("dueDate"))
         ? new Date(optionalString(formData.get("dueDate")) as string)
         : null,
@@ -329,6 +330,33 @@ export async function deleteSuggestedJournal(projectId: string, journalId: strin
   revalidatePath(`/projects/${projectId}`);
 }
 
+export async function addSuggestedConference(projectId: string, formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const conferenceId = optionalString(formData.get("conferenceId"));
+  if (!conferenceId) return;
+
+  await prisma.suggestedConference.upsert({
+    where: { projectId_conferenceId: { projectId, conferenceId } },
+    update: {},
+    create: { projectId, conferenceId },
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function deleteSuggestedConference(projectId: string, conferenceId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.suggestedConference.deleteMany({
+    where: { projectId, conferenceId },
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+}
+
 export async function finishResearchTask(taskId: string, formData?: FormData) {
   const user = await requireCurrentUser();
   const isAdmin = user.roles.includes(Role.ADMIN);
@@ -340,7 +368,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
 
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
-    select: { id: true, projectId: true, journalId: true, taskType: true },
+    select: { id: true, projectId: true, journalId: true, conferenceId: true, taskType: true },
   });
 
   if (!task) return;
@@ -430,6 +458,32 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     revalidatePath("/journals");
     revalidatePath(`/journals/${task.journalId}`);
     revalidatePath("/accounts");
+  }
+
+  if (completedTask?.status === "COMPLETED" && task.taskType === "SUBMIT_CONFERENCE" && task.projectId && task.conferenceId) {
+    await prisma.conferenceSubmission.upsert({
+      where: {
+        conferenceId_researchProjectId: {
+          conferenceId: task.conferenceId,
+          researchProjectId: task.projectId,
+        },
+      },
+      update: {
+        status: "SUBMITTED",
+        submittedAt: completedAt,
+      },
+      create: {
+        conferenceId: task.conferenceId,
+        researchProjectId: task.projectId,
+        status: "SUBMITTED",
+        submittedAt: completedAt,
+      },
+    });
+
+    revalidatePath("/projects");
+    revalidatePath(`/projects/${task.projectId}`);
+    revalidatePath("/conferences");
+    revalidatePath(`/conferences/${task.conferenceId}`);
   }
 
   revalidatePath("/tasks");

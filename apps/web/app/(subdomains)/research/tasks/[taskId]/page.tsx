@@ -76,6 +76,7 @@ export default async function TaskDetailPage({
       createdBy: { select: { name: true, email: true } },
       project: { select: { id: true, title: true } },
       journal: { select: { id: true, name: true, rank: true, publisher: true } },
+      conference: { select: { id: true, name: true, type: true, location: true } },
       assignments: {
         include: { user: { select: { id: true, name: true, email: true, roles: true } } },
         orderBy: { createdAt: "asc" },
@@ -137,6 +138,13 @@ export default async function TaskDetailPage({
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400"><Send className="h-4 w-4" /> Journal</div>
               <p className="mt-2 text-sm font-semibold text-slate-950 dark:text-white">{task.journal.name}</p>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{task.journal.publisher || "No publisher"} - {task.journal.rank || "No rank"}</p>
+            </Link>
+          )}
+          {task.conference && (
+            <Link href={`/conferences/${task.conference.id}`} className="rounded-xl border border-slate-200 p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm dark:border-slate-800 dark:hover:border-blue-900 dark:hover:bg-blue-950/30">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400"><Send className="h-4 w-4" /> Conference</div>
+              <p className="mt-2 text-sm font-semibold text-slate-950 dark:text-white">{task.conference.name}</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{task.conference.type || "No type"} - {task.conference.location || "No location"}</p>
             </Link>
           )}
         </div>

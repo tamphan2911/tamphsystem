@@ -8,7 +8,7 @@ import {
   updateResearchProject,
 } from "../../actions";
 import { SubmissionsTable, type SubmissionRow } from "./SubmissionsTable";
-import { SuggestedJournalsPanel, type SuggestedJournalOption, type TaskAssigneeOption } from "./SuggestedJournalsPanel";
+import { SuggestedJournalsPanel, type SuggestedConferenceOption, type SuggestedJournalOption, type TaskAssigneeOption } from "./SuggestedJournalsPanel";
 import { SaveForm } from "../../components/SaveForm";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
 
@@ -53,7 +53,7 @@ export default async function ProjectDetailPage({
   const session = await auth();
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ?? []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
-  const [project, journals, taskAssignees] = await Promise.all([
+  const [project, journals, conferences, taskAssignees] = await Promise.all([
     prisma.researchProject.findUnique({
       where: { id },
       include: {
@@ -67,10 +67,15 @@ export default async function ProjectDetailPage({
           include: { journal: true },
           orderBy: { createdAt: "desc" },
         },
+        suggestedConferences: {
+          include: { conference: true },
+          orderBy: { createdAt: "desc" },
+        },
         tasks: {
-          where: { taskType: "SUBMIT_RESEARCH" },
+          where: { taskType: { in: ["SUBMIT_RESEARCH", "SUBMIT_CONFERENCE"] } },
           include: {
             journal: true,
+            conference: true,
             assignments: { include: { user: true }, orderBy: { createdAt: "asc" } },
           },
           orderBy: [{ status: "asc" }, { dueDate: "asc" }, { createdAt: "desc" }],
@@ -78,6 +83,7 @@ export default async function ProjectDetailPage({
       },
     }),
     prisma.journal.findMany({ orderBy: [{ rank: "asc" }, { name: "asc" }] }),
+    prisma.conference.findMany({ orderBy: [{ startDate: "desc" }, { name: "asc" }] }),
     prisma.user.findMany({
       where: { roles: { hasSome: [Role.ADMIN, Role.ASSISTANT, Role.CHIEF_ASSISTANT] } },
       orderBy: [{ name: "asc" }, { email: "asc" }],
@@ -113,6 +119,24 @@ export default async function ProjectDetailPage({
     rank: journal.rank ?? "",
     publisher: journal.publisher ?? "",
     apc: journal.apc ?? "",
+  }));
+  const allConferenceOptions: SuggestedConferenceOption[] = conferences.map((conference) => ({
+    id: conference.id,
+    name: conference.name,
+    type: conference.type ?? "",
+    theme: conference.targetTheme || conference.themes || "",
+    location: conference.location ?? "",
+    organizer: conference.organizer ?? "",
+    time: [conference.startDate?.toLocaleDateString(), conference.endDate?.toLocaleDateString()].filter(Boolean).join(" - "),
+  }));
+  const suggestedConferenceOptions: SuggestedConferenceOption[] = project.suggestedConferences.map(({ conference }) => ({
+    id: conference.id,
+    name: conference.name,
+    type: conference.type ?? "",
+    theme: conference.targetTheme || conference.themes || "",
+    location: conference.location ?? "",
+    organizer: conference.organizer ?? "",
+    time: [conference.startDate?.toLocaleDateString(), conference.endDate?.toLocaleDateString()].filter(Boolean).join(" - "),
   }));
   const taskAssigneeOptions: TaskAssigneeOption[] = taskAssignees.map((user) => ({
     id: user.id,
@@ -271,7 +295,7 @@ export default async function ProjectDetailPage({
                 <Link key={task.id} href={`/tasks/${task.id}`} className="rounded-lg border border-slate-200 px-3 py-2 text-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm dark:border-slate-800 dark:hover:border-blue-900 dark:hover:bg-blue-950/30">
                   <span className="block font-semibold text-slate-800 dark:text-slate-100">{task.title}</span>
                   <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-                    {task.journal?.name || "No journal"} - {task.status.replace("_", " ")} - {task.assignments.map((assignment) => assignment.user.name || assignment.user.email).join(", ")}
+                    {task.journal?.name || task.conference?.name || "No venue"} - {task.status.replace("_", " ")} - {task.assignments.map((assignment) => assignment.user.name || assignment.user.email).join(", ")}
                   </span>
                 </Link>
               ))}
@@ -324,6 +348,8 @@ export default async function ProjectDetailPage({
         projectTitle={project.title}
         journals={allJournalOptions}
         suggested={suggestedJournalOptions}
+        conferences={allConferenceOptions}
+        suggestedConferences={suggestedConferenceOptions}
         assistants={taskAssigneeOptions}
         isAdmin={isAdmin}
       />
