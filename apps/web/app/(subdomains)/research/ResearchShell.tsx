@@ -21,7 +21,7 @@ const navItems = [
   { href: "/tasks", label: "Tasks", icon: "tasks" as const, requiresTaskAccess: true },
   { href: "/journals", label: "Journals", icon: "journals" as const },
   { href: "/conferences", label: "Conferences", icon: "conferences" as const },
-  { href: "/reviews", label: "Academic", icon: "reviews" as const },
+  { href: "/reviews", label: "Reviews", icon: "reviews" as const },
   { href: "/accounts", label: "Accounts", icon: "accounts" as const },
   { href: "/assistants", label: "Assistants", icon: "assistants" as const, adminOnly: true },
 ];
