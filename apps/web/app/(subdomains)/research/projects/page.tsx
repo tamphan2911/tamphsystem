@@ -28,6 +28,7 @@ export default async function ProjectsDashboard() {
     abstract: project.abstract ?? "",
     stage: project.stage,
     claimStatus: project.claimStatus,
+    registerStatus: project.registerStatus,
     coAuthors: project.coAuthors ?? "",
     universityRegistration: project.universityRegistration ?? "",
     leadResearcher: project.leadResearcher.name || project.leadResearcher.email,

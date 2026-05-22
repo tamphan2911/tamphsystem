@@ -6,14 +6,19 @@ import {
   BadgeCheck,
   Ban,
   BookOpenCheck,
+  CalendarCheck2,
   CheckCircle2,
   CircleDollarSign,
+  CircleOff,
   FileCheck2,
   FileClock,
   FileText,
   FlaskConical,
   Send,
+  SendHorizontal,
+  TriangleAlert,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { FilterSelect, IconHint, TablePagination, TableSearchInput, useTablePagination } from "../components/TableControls";
 
 export type ResearchProjectRow = {
@@ -22,6 +27,7 @@ export type ResearchProjectRow = {
   abstract: string;
   stage: string;
   claimStatus: string;
+  registerStatus: string;
   coAuthors: string;
   universityRegistration: string;
   leadResearcher: string;
@@ -75,12 +81,33 @@ function claimIcon(claim: string) {
   return CircleDollarSign;
 }
 
+function registrationLabel(status: string) {
+  if (status === "APPROVED") return "Approved";
+  if (status === "SUBMITTED") return "Submitted";
+  if (status === "PREPARING") return "Preparing";
+  return "Not registered";
+}
+
+function registrationClass(status: string) {
+  if (status === "APPROVED") return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (status === "SUBMITTED") return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  if (status === "PREPARING") return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  return "bg-rose-50 text-rose-600 ring-rose-100 dark:bg-rose-950/35 dark:text-rose-300 dark:ring-rose-900/70";
+}
+
+function registrationIcon(status: string) {
+  if (status === "APPROVED") return CalendarCheck2;
+  if (status === "SUBMITTED") return SendHorizontal;
+  if (status === "PREPARING") return FileClock;
+  return CircleOff;
+}
+
 function StatusIconChip({
   icon: Icon,
   label,
   className,
 }: {
-  icon: typeof FileText;
+  icon: LucideIcon;
   label: string;
   className: string;
 }) {
@@ -88,6 +115,61 @@ function StatusIconChip({
     <IconHint label={label}>
       <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}>
         <Icon className="h-4 w-4" aria-hidden="true" />
+        <span className="sr-only">{label}</span>
+      </span>
+    </IconHint>
+  );
+}
+
+function RegistrationCell({
+  status,
+  registration,
+}: {
+  status: string;
+  registration: string;
+}) {
+  const Icon = registrationIcon(status);
+  const label = registrationLabel(status);
+  const detail = registration || "No registration record";
+
+  return (
+    <div className="flex min-w-48 items-center gap-2">
+      <IconHint label={label}>
+        <span className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${registrationClass(status)}`}>
+          <Icon className="h-4 w-4" aria-hidden="true" />
+        </span>
+      </IconHint>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">{detail}</p>
+        <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+function SubmitCount({ count }: { count: number }) {
+  const isZero = count === 0;
+  const isHigh = count > 10;
+  const label = isZero ? "No submissions yet" : isHigh ? `${count} submissions, high submission count` : `${count} submissions`;
+  const className = isZero
+    ? "bg-rose-50 text-rose-500 ring-rose-100 dark:bg-rose-950/35 dark:text-rose-300 dark:ring-rose-900/70"
+    : isHigh
+      ? "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900"
+      : "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700";
+
+  return (
+    <IconHint label={label}>
+      <span className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-semibold ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}>
+        {isZero ? (
+          <SendHorizontal className="h-4 w-4" aria-hidden="true" />
+        ) : isHigh ? (
+          <span className="inline-flex items-center gap-1">
+            <TriangleAlert className="h-3.5 w-3.5" aria-hidden="true" />
+            {count}
+          </span>
+        ) : (
+          count
+        )}
         <span className="sr-only">{label}</span>
       </span>
     </IconHint>
@@ -160,8 +242,12 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
                 <td className="px-4 py-3">
                   <StatusIconChip icon={claimIcon(row.claimStatus)} label={claimLabel(row.claimStatus)} className={claimClass(row.claimStatus)} />
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.universityRegistration || "-"}</td>
-                <td className="px-4 py-3 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">{row.submissions}</td>
+                <td className="px-4 py-3">
+                  <RegistrationCell status={row.registerStatus} registration={row.universityRegistration} />
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <SubmitCount count={row.submissions} />
+                </td>
               </tr>
             ))}
             {pagination.total === 0 && (

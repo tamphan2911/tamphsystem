@@ -40,6 +40,7 @@ export default async function ConferenceDetailPage({ params }: { params: Promise
     abstract: project.abstract ?? "",
     stage: project.stage,
     claimStatus: project.claimStatus,
+    registerStatus: project.registerStatus,
     coAuthors: project.coAuthors ?? "",
     universityRegistration: project.universityRegistration ?? "",
     leadResearcher: project.leadResearcher.name || project.leadResearcher.email,
