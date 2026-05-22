@@ -137,7 +137,7 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
               <th className="px-4 py-3">Stage</th>
               <th className="px-4 py-3">Claim</th>
               <th className="px-4 py-3">Reg.</th>
-              <th className="px-4 py-3 text-center">Submissions</th>
+              <th className="px-4 py-3 text-center">Submit</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
