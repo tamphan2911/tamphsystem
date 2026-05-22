@@ -111,7 +111,7 @@ export default async function ProjectDetailPage({
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
+        <div className="min-w-0">
           <Link href="/projects" className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-950 dark:hover:text-white">
             <ArrowLeft className="h-4 w-4" />
             Back to projects
@@ -146,17 +146,18 @@ export default async function ProjectDetailPage({
             )}
           </div>
         </div>
+        <button
+          type="submit"
+          form="research-detail-form"
+          className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-md dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-200 dark:shadow-black/20 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/60"
+        >
+          <Save className="h-4 w-4" />
+          Save changes
+        </button>
       </div>
 
-      <SaveForm action={updateAction} className="grid gap-6 xl:grid-cols-[1fr_22rem]">
+      <SaveForm id="research-detail-form" action={updateAction} className="grid gap-6 xl:grid-cols-[1fr_22rem]">
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-5 flex items-center justify-end">
-            <button className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">
-              <Save className="h-4 w-4" />
-              Save
-            </button>
-          </div>
-
           <div className="grid gap-5">
             <section className="grid gap-4">
               <div className="grid gap-4 md:grid-cols-2">
