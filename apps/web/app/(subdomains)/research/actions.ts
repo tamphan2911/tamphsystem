@@ -43,6 +43,54 @@ function taskTypeFromForm(value: FormDataEntryValue | null) {
   return enumValue(ResearchTaskType, value);
 }
 
+const productionStepLabels = ["Idea forming", "Data collection", "Modeling", "Writing", "Humanizing", "References"];
+
+function orderedUniqueStrings(values: FormDataEntryValue[]) {
+  const seen = new Set<string>();
+  return values.filter((value): value is string => {
+    if (typeof value !== "string" || value.trim().length === 0 || seen.has(value)) {
+      return false;
+    }
+
+    seen.add(value);
+    return true;
+  });
+}
+
+function stageFromResearchState(completedProductionSteps: string[], submissionStatuses: SubmissionStatus[]) {
+  if (submissionStatuses.includes(SubmissionStatus.PUBLISHED)) return ResearchStage.PUBLISHED;
+  if (submissionStatuses.includes(SubmissionStatus.ACCEPTED)) return ResearchStage.ACCEPTED;
+  if (submissionStatuses.some((status) => status === SubmissionStatus.UNDER_REVIEW || status === SubmissionStatus.REVISION)) {
+    return ResearchStage.REVIEW;
+  }
+
+  return productionStepLabels.every((step) => completedProductionSteps.includes(step))
+    ? ResearchStage.SUBMITTING
+    : ResearchStage.PRODUCTION;
+}
+
+async function refreshResearchStage(projectId: string, completedProductionSteps?: string[]) {
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: {
+      completedProductionSteps: true,
+      submissions: { select: { status: true } },
+    },
+  });
+
+  if (!project) return;
+
+  await prisma.researchProject.update({
+    where: { id: projectId },
+    data: {
+      stage: stageFromResearchState(
+        completedProductionSteps ?? project.completedProductionSteps,
+        project.submissions.map((submission) => submission.status),
+      ),
+    },
+  });
+}
+
 async function requireCurrentUser() {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
@@ -69,16 +117,15 @@ function requireAdmin(roles: Role[]) {
 
 export async function createResearchProject(formData: FormData) {
   const user = await requireCurrentUser();
-  const authorIds = formData
-    .getAll("authorIds")
-    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+  const authorIds = orderedUniqueStrings(formData.getAll("authorUserIds"));
   const selectedAuthorIds = authorIds.length > 0 ? authorIds : [user.id];
+  const correspondingAuthorId = optionalString(formData.get("correspondingAuthorId")) ?? selectedAuthorIds[0];
 
   await prisma.researchProject.create({
     data: {
       title: optionalString(formData.get("title")) ?? "Untitled research",
       abstract: optionalString(formData.get("abstract")),
-      stage: (formData.get("stage") as ResearchStage | null) ?? ResearchStage.PRODUCTION,
+      stage: ResearchStage.PRODUCTION,
       coAuthors: optionalString(formData.get("coAuthors")),
       universityRegistration: optionalString(formData.get("universityRegistration")),
       registerStatus: (formData.get("registerStatus") as RegistrationStatus | null) ?? RegistrationStatus.NOT_REGISTERED,
@@ -86,6 +133,13 @@ export async function createResearchProject(formData: FormData) {
       leadResearcherId: user.id,
       authors: {
         connect: selectedAuthorIds.map((id) => ({ id })),
+      },
+      authorEntries: {
+        create: selectedAuthorIds.map((id, index) => ({
+          userId: id,
+          position: index,
+          isCorresponding: id === correspondingAuthorId,
+        })),
       },
     },
   });
@@ -96,32 +150,46 @@ export async function createResearchProject(formData: FormData) {
 
 export async function updateResearchProject(projectId: string, formData: FormData) {
   const user = await requireCurrentUser();
-  const authorIds = formData
-    .getAll("authorIds")
+  const authorIds = orderedUniqueStrings(formData.getAll("authorUserIds"));
+  const selectedAuthorIds = authorIds.length > 0 ? authorIds : [user.id];
+  const correspondingAuthorId = optionalString(formData.get("correspondingAuthorId")) ?? selectedAuthorIds[0];
+  const completedProductionSteps = formData
+    .getAll("completedProductionSteps")
     .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
 
   const data = {
     title: optionalString(formData.get("title")) ?? "Untitled research",
-    stage: (formData.get("stage") as ResearchStage | null) ?? ResearchStage.PRODUCTION,
     coAuthors: null,
     universityRegistration: optionalString(formData.get("universityRegistration")),
     registerStatus: (formData.get("registerStatus") as RegistrationStatus | null) ?? RegistrationStatus.NOT_REGISTERED,
     claimStatus: (formData.get("claimStatus") as ClaimStatus | null) ?? ClaimStatus.CANNOT_CLAIM,
-    completedProductionSteps: formData
-      .getAll("completedProductionSteps")
-      .filter((value): value is string => typeof value === "string" && value.trim().length > 0),
+    completedProductionSteps,
     ...(formData.has("abstract") ? { abstract: optionalString(formData.get("abstract")) } : {}),
   };
 
-  await prisma.researchProject.update({
-    where: { id: projectId },
-    data: {
-      ...data,
-      authors: {
-        set: (authorIds.length > 0 ? authorIds : [user.id]).map((id) => ({ id })),
+  await prisma.$transaction(async (tx) => {
+    await tx.researchProject.update({
+      where: { id: projectId },
+      data: {
+        ...data,
+        authors: {
+          set: selectedAuthorIds.map((id) => ({ id })),
+        },
       },
-    },
+    });
+
+    await tx.researchProjectAuthor.deleteMany({ where: { projectId } });
+    await tx.researchProjectAuthor.createMany({
+      data: selectedAuthorIds.map((id, index) => ({
+        projectId,
+        userId: id,
+        position: index,
+        isCorresponding: id === correspondingAuthorId,
+      })),
+    });
   });
+
+  await refreshResearchStage(projectId, completedProductionSteps);
 
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
@@ -215,6 +283,8 @@ export async function createResearchSubmission(projectId: string, formData: Form
         : new Date(),
     },
   });
+
+  await refreshResearchStage(projectId);
 
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);

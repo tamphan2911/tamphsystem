@@ -47,6 +47,7 @@ model User {
   quizAttempts          QuizAttempt[]
   researchProjects      ResearchProject[]        @relation("LeadResearcher")
   authoredResearch      ResearchProject[]        @relation("ResearchAuthors")
+  researchAuthorEntries ResearchProjectAuthor[]
   createdResearchTasks  ResearchTask[]           @relation("ResearchTaskCreator")
   assignedResearchTasks ResearchTaskAssignment[] @relation("ResearchTaskAssignee")
   suggestedJournals     SuggestedJournal[]       @relation("SuggestedJournalCreator")
@@ -249,8 +250,9 @@ model ResearchProject {
   updatedAt DateTime @updatedAt
 
   leadResearcherId String
-  leadResearcher   User   @relation("LeadResearcher", fields: [leadResearcherId], references: [id])
-  authors          User[] @relation("ResearchAuthors")
+  leadResearcher   User                    @relation("LeadResearcher", fields: [leadResearcherId], references: [id])
+  authors          User[]                  @relation("ResearchAuthors")
+  authorEntries    ResearchProjectAuthor[]
 
   publications          Publication[]
   submissions           ResearchSubmission[]
@@ -258,6 +260,22 @@ model ResearchProject {
   suggestedJournals     SuggestedJournal[]
   suggestedConferences  SuggestedConference[]
   tasks                 ResearchTask[]
+}
+
+model ResearchProjectAuthor {
+  id              String   @id @default(uuid())
+  projectId       String
+  userId          String
+  position        Int
+  isCorresponding Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  project ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId, position])
 }
 
 model Conference {

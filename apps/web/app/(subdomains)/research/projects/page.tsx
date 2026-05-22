@@ -170,6 +170,10 @@ export default async function ProjectsDashboard() {
     include: {
       leadResearcher: { select: { name: true, email: true } },
       authors: { select: { name: true, email: true }, orderBy: [{ name: "asc" }, { email: "asc" }] },
+      authorEntries: {
+        include: { user: { select: { name: true, email: true } } },
+        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+      },
       _count: {
         select: { submissions: true, publications: true },
       },
@@ -195,8 +199,10 @@ export default async function ProjectsDashboard() {
     claimStatus: project.claimStatus,
     registerStatus: project.registerStatus,
     coAuthors:
-      project.authors.length > 0
-        ? project.authors.map((author) => author.name || author.email).join(", ")
+      project.authorEntries.length > 0
+        ? project.authorEntries.map((entry) => `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`).join(", ")
+        : project.authors.length > 0
+          ? project.authors.map((author, index) => `${author.name || author.email}${index === 0 ? "*" : ""}`).join(", ")
         : project.coAuthors ?? "",
     universityRegistration: project.universityRegistration ?? "",
     leadResearcher: project.leadResearcher.name || project.leadResearcher.email,

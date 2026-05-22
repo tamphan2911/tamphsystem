@@ -21,7 +21,7 @@ import {
 } from "./SuggestedJournalsPanel";
 import { SaveForm } from "../../components/SaveForm";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
-import { AuthorsPicker, type AuthorOption } from "./AuthorsPicker";
+import { AuthorsPicker, type AuthorOption, type SelectedAuthor } from "./AuthorsPicker";
 
 export const dynamic = "force-dynamic";
 
@@ -41,14 +41,6 @@ const productionSteps = [
     detail: "Refine tone, flow, and academic readability",
   },
   { label: "References", detail: "Verify citations, DOI, format, and links" },
-];
-
-const stageOptions = [
-  { value: "PRODUCTION", label: "Production" },
-  { value: "SUBMITTING", label: "Submitting" },
-  { value: "REVIEW", label: "Review" },
-  { value: "ACCEPTED", label: "Accepted" },
-  { value: "PUBLISHED", label: "Published" },
 ];
 
 const registerOptions = [
@@ -100,6 +92,10 @@ export default async function ProjectDetailPage({
         publications: { orderBy: { publishedDate: "desc" } },
         leadResearcher: true,
         authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
+        authorEntries: {
+          include: { user: true },
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        },
         suggestedJournals: {
           include: {
             journal: true,
@@ -162,10 +158,12 @@ export default async function ProjectDetailPage({
   const publishedJournal =
     acceptedSubmission?.journal ?? project.submissions[0]?.journal;
   const authorNames =
-    project.authors.length > 0
-      ? project.authors.map((author) => author.name || author.email)
+    project.authorEntries.length > 0
+      ? project.authorEntries.map((entry) => `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`)
+      : project.authors.length > 0
+        ? project.authors.map((author, index) => `${author.name || author.email}${index === 0 ? "*" : ""}`)
       : [
-          project.leadResearcher.name || project.leadResearcher.email,
+          `${project.leadResearcher.name || project.leadResearcher.email}*`,
           project.coAuthors,
         ].filter(Boolean);
   const authorsLine = authorNames.join(", ");
@@ -247,10 +245,30 @@ export default async function ProjectDetailPage({
     email: user.email,
     role: displayRole(user.roles),
   }));
-  const defaultAuthorIds =
-    project.authors.length > 0
-      ? project.authors.map((author) => author.id)
-      : [project.leadResearcherId];
+  const defaultAuthors: SelectedAuthor[] =
+    project.authorEntries.length > 0
+      ? project.authorEntries.map((entry) => ({
+          id: entry.user.id,
+          name: entry.user.name ?? "",
+          email: entry.user.email,
+          role: displayRole(entry.user.roles),
+          isCorresponding: entry.isCorresponding,
+        }))
+      : project.authors.length > 0
+        ? project.authors.map((author, index) => ({
+            id: author.id,
+            name: author.name ?? "",
+            email: author.email,
+            role: displayRole(author.roles),
+            isCorresponding: index === 0,
+          }))
+        : [{
+            id: project.leadResearcher.id,
+            name: project.leadResearcher.name ?? "",
+            email: project.leadResearcher.email,
+            role: displayRole(project.leadResearcher.roles),
+            isCorresponding: true,
+          }];
   const submissionRows: SubmissionRow[] = project.submissions.map(
     (submission) => ({
       id: submission.id,
@@ -352,18 +370,7 @@ export default async function ProjectDetailPage({
                   className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
                 />
               </label>
-              <div className="grid gap-4 md:grid-cols-[1fr_16rem]">
-                <AuthorsPicker users={authorOptions} defaultAuthorIds={defaultAuthorIds} />
-                <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Stage
-                  <ResearchFormSelect
-                    name="stage"
-                    defaultValue={project.stage}
-                    options={stageOptions}
-                    ariaLabel="Research stage"
-                  />
-                </label>
-              </div>
+              <AuthorsPicker users={authorOptions} defaultAuthors={defaultAuthors} />
             </section>
 
             <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
