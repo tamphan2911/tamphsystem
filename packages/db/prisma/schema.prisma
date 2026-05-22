@@ -176,6 +176,7 @@ model QuizAttempt {
 enum ResearchStage {
   PRODUCTION
   SUBMITTING
+  REVIEW
   ACCEPTED
   PUBLISHED
 }

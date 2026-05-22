@@ -23,7 +23,9 @@ export function NewResearchDialog() {
           <div className="w-full max-w-2xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
               <div>
-                <h2 className="text-lg font-bold text-slate-950 dark:text-white">Add New Research</h2>
+                <h2 className="text-lg font-bold text-slate-950 dark:text-white">
+                  Add New Research
+                </h2>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   Create a research record and place it in the pipeline.
                 </p>
@@ -38,7 +40,10 @@ export function NewResearchDialog() {
               </button>
             </div>
 
-            <form action={createResearchProject} className="grid gap-4 px-6 py-5">
+            <form
+              action={createResearchProject}
+              className="grid gap-4 px-6 py-5"
+            >
               <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Research title
                 <input
@@ -58,6 +63,7 @@ export function NewResearchDialog() {
                   >
                     <option value="PRODUCTION">Production</option>
                     <option value="SUBMITTING">Submitting</option>
+                    <option value="REVIEW">Review</option>
                     <option value="ACCEPTED">Accepted</option>
                     <option value="PUBLISHED">Published</option>
                   </select>

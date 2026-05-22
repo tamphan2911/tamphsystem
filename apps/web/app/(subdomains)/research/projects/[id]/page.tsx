@@ -1,38 +1,58 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ClipboardCheck, ExternalLink, Library, Plus, Save, Send } from "lucide-react";
+import {
+  ArrowLeft,
+  ClipboardCheck,
+  ExternalLink,
+  Library,
+  Plus,
+  Save,
+  Send,
+} from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
-import {
-  createPublication,
-  updateResearchProject,
-} from "../../actions";
+import { createPublication, updateResearchProject } from "../../actions";
 import { SubmissionsTable, type SubmissionRow } from "./SubmissionsTable";
-import { SuggestedJournalsPanel, type SuggestedConferenceOption, type SuggestedJournalOption, type TaskAssigneeOption } from "./SuggestedJournalsPanel";
+import {
+  SuggestedJournalsPanel,
+  type SuggestedConferenceOption,
+  type SuggestedJournalOption,
+  type TaskAssigneeOption,
+} from "./SuggestedJournalsPanel";
 import { SaveForm } from "../../components/SaveForm";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
 
 export const dynamic = "force-dynamic";
 
 const productionSteps = [
-  { label: "Idea forming", detail: "Define research question and contribution" },
-  { label: "Data collection", detail: "Collect, clean, and document data sources" },
+  {
+    label: "Idea forming",
+    detail: "Define research question and contribution",
+  },
+  {
+    label: "Data collection",
+    detail: "Collect, clean, and document data sources",
+  },
   { label: "Modeling", detail: "Run analysis, models, robustness checks" },
   { label: "Writing", detail: "Build manuscript structure and core arguments" },
-  { label: "Humanizing", detail: "Refine tone, flow, and academic readability" },
+  {
+    label: "Humanizing",
+    detail: "Refine tone, flow, and academic readability",
+  },
   { label: "References", detail: "Verify citations, DOI, format, and links" },
 ];
 
 const stageOptions = [
   { value: "PRODUCTION", label: "Production" },
   { value: "SUBMITTING", label: "Submitting" },
+  { value: "REVIEW", label: "Review" },
   { value: "ACCEPTED", label: "Accepted" },
   { value: "PUBLISHED", label: "Published" },
 ];
 
 const registerOptions = [
   { value: "NOT_REGISTERED", label: "Not registered" },
-  { value: "PREPARING", label: "Preparing" },
+  { value: "PREPARING", label: "Plan" },
   { value: "SUBMITTED", label: "Submitted" },
   { value: "APPROVED", label: "Approved" },
 ];
@@ -50,7 +70,12 @@ function displayRole(roles: Role[]) {
   if (roles.includes(Role.ASSISTANT)) return "Assistant";
   if (roles.includes(Role.RESEARCHER)) return "Researcher";
   if (roles.includes(Role.LECTURER)) return "Lecturer";
-  return roles[0]?.replace("_", " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase()) || "User";
+  return (
+    roles[0]
+      ?.replace("_", " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (letter) => letter.toUpperCase()) || "User"
+  );
 }
 
 export default async function ProjectDetailPage({
@@ -60,7 +85,8 @@ export default async function ProjectDetailPage({
 }) {
   const { id } = await params;
   const session = await auth();
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ?? []) as Role[];
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+    []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
   const [project, journals, conferences, taskAssignees] = await Promise.all([
     prisma.researchProject.findUnique({
@@ -91,16 +117,27 @@ export default async function ProjectDetailPage({
           include: {
             journal: true,
             conference: true,
-            assignments: { include: { user: true }, orderBy: { createdAt: "asc" } },
+            assignments: {
+              include: { user: true },
+              orderBy: { createdAt: "asc" },
+            },
           },
-          orderBy: [{ status: "asc" }, { dueDate: "asc" }, { createdAt: "desc" }],
+          orderBy: [
+            { status: "asc" },
+            { dueDate: "asc" },
+            { createdAt: "desc" },
+          ],
         },
       },
     }),
     prisma.journal.findMany({ orderBy: [{ rank: "asc" }, { name: "asc" }] }),
-    prisma.conference.findMany({ orderBy: [{ startDate: "desc" }, { name: "asc" }] }),
+    prisma.conference.findMany({
+      orderBy: [{ startDate: "desc" }, { name: "asc" }],
+    }),
     prisma.user.findMany({
-      where: { roles: { hasSome: [Role.ADMIN, Role.ASSISTANT, Role.CHIEF_ASSISTANT] } },
+      where: {
+        roles: { hasSome: [Role.ADMIN, Role.ASSISTANT, Role.CHIEF_ASSISTANT] },
+      },
       orderBy: [{ name: "asc" }, { email: "asc" }],
       select: { id: true, name: true, email: true, roles: true },
     }),
@@ -110,77 +147,117 @@ export default async function ProjectDetailPage({
 
   const updateAction = updateResearchProject.bind(null, project.id);
   const publicationAction = createPublication.bind(null, project.id);
-  const showPublicationBlock = project.stage === "PUBLISHED" || project.publications.length > 0;
+  const showPublicationBlock =
+    project.stage === "PUBLISHED" || project.publications.length > 0;
   const latestPublication = project.publications[0];
-  const acceptedSubmission = project.submissions.find((submission) => submission.status === "ACCEPTED");
-  const publishedJournal = acceptedSubmission?.journal ?? project.submissions[0]?.journal;
-  const authorsLine = [project.leadResearcher.name || project.leadResearcher.email, project.coAuthors].filter(Boolean).join(", ");
+  const acceptedSubmission = project.submissions.find(
+    (submission) => submission.status === "ACCEPTED",
+  );
+  const publishedJournal =
+    acceptedSubmission?.journal ?? project.submissions[0]?.journal;
+  const authorsLine = [
+    project.leadResearcher.name || project.leadResearcher.email,
+    project.coAuthors,
+  ]
+    .filter(Boolean)
+    .join(", ");
   const completedProductionSteps = new Set(project.completedProductionSteps);
-  const unfinishedSteps = productionSteps.filter((step) => !completedProductionSteps.has(step.label));
-  const allJournalOptions: SuggestedJournalOption[] = journals.map((journal) => ({
-    id: journal.id,
-    name: journal.name,
-    issn: journal.issn ?? "",
-    field: journal.field ?? "",
-    rank: journal.rank ?? "",
-    publisher: journal.publisher ?? "",
-    apc: journal.apc ?? "",
-  }));
-  const suggestedJournalOptions: SuggestedJournalOption[] = project.suggestedJournals.map(({ journal, createdBy }) => ({
-    id: journal.id,
-    name: journal.name,
-    issn: journal.issn ?? "",
-    field: journal.field ?? "",
-    rank: journal.rank ?? "",
-    publisher: journal.publisher ?? "",
-    apc: journal.apc ?? "",
-    suggestedByName: createdBy?.name || createdBy?.email || "Unknown user",
-    suggestedByRole: createdBy ? displayRole(createdBy.roles) : "Unknown role",
-  }));
-  const allConferenceOptions: SuggestedConferenceOption[] = conferences.map((conference) => ({
-    id: conference.id,
-    name: conference.name,
-    type: conference.type ?? "",
-    theme: conference.targetTheme || conference.themes || "",
-    location: conference.location ?? "",
-    organizer: conference.organizer ?? "",
-    time: [conference.startDate?.toLocaleDateString(), conference.endDate?.toLocaleDateString()].filter(Boolean).join(" - "),
-  }));
-  const suggestedConferenceOptions: SuggestedConferenceOption[] = project.suggestedConferences.map(({ conference, createdBy }) => ({
-    id: conference.id,
-    name: conference.name,
-    type: conference.type ?? "",
-    theme: conference.targetTheme || conference.themes || "",
-    location: conference.location ?? "",
-    organizer: conference.organizer ?? "",
-    time: [conference.startDate?.toLocaleDateString(), conference.endDate?.toLocaleDateString()].filter(Boolean).join(" - "),
-    suggestedByName: createdBy?.name || createdBy?.email || "Unknown user",
-    suggestedByRole: createdBy ? displayRole(createdBy.roles) : "Unknown role",
-  }));
-  const taskAssigneeOptions: TaskAssigneeOption[] = taskAssignees.map((user) => ({
-    id: user.id,
-    name: user.name ?? "",
-    email: user.email,
-    roles: user.roles,
-  }));
-  const submissionRows: SubmissionRow[] = project.submissions.map((submission) => ({
-    id: submission.id,
-    journalId: submission.journalId,
-    journalName: submission.journal.name,
-    publisher: submission.journal.publisher ?? "",
-    rank: submission.journal.rank ?? "",
-    apc: submission.journal.apc ?? "",
-    account: submission.account?.username ?? "",
-    status: submission.status,
-    submittedAt: submission.submittedAt.toLocaleDateString(),
-  }));
-  const openSubmissionTasks = project.tasks.filter((task) => task.status !== "COMPLETED");
+  const unfinishedSteps = productionSteps.filter(
+    (step) => !completedProductionSteps.has(step.label),
+  );
+  const allJournalOptions: SuggestedJournalOption[] = journals.map(
+    (journal) => ({
+      id: journal.id,
+      name: journal.name,
+      issn: journal.issn ?? "",
+      field: journal.field ?? "",
+      rank: journal.rank ?? "",
+      publisher: journal.publisher ?? "",
+      apc: journal.apc ?? "",
+    }),
+  );
+  const suggestedJournalOptions: SuggestedJournalOption[] =
+    project.suggestedJournals.map(({ journal, createdBy }) => ({
+      id: journal.id,
+      name: journal.name,
+      issn: journal.issn ?? "",
+      field: journal.field ?? "",
+      rank: journal.rank ?? "",
+      publisher: journal.publisher ?? "",
+      apc: journal.apc ?? "",
+      suggestedByName: createdBy?.name || createdBy?.email || "Unknown user",
+      suggestedByRole: createdBy
+        ? displayRole(createdBy.roles)
+        : "Unknown role",
+    }));
+  const allConferenceOptions: SuggestedConferenceOption[] = conferences.map(
+    (conference) => ({
+      id: conference.id,
+      name: conference.name,
+      type: conference.type ?? "",
+      theme: conference.targetTheme || conference.themes || "",
+      location: conference.location ?? "",
+      organizer: conference.organizer ?? "",
+      time: [
+        conference.startDate?.toLocaleDateString(),
+        conference.endDate?.toLocaleDateString(),
+      ]
+        .filter(Boolean)
+        .join(" - "),
+    }),
+  );
+  const suggestedConferenceOptions: SuggestedConferenceOption[] =
+    project.suggestedConferences.map(({ conference, createdBy }) => ({
+      id: conference.id,
+      name: conference.name,
+      type: conference.type ?? "",
+      theme: conference.targetTheme || conference.themes || "",
+      location: conference.location ?? "",
+      organizer: conference.organizer ?? "",
+      time: [
+        conference.startDate?.toLocaleDateString(),
+        conference.endDate?.toLocaleDateString(),
+      ]
+        .filter(Boolean)
+        .join(" - "),
+      suggestedByName: createdBy?.name || createdBy?.email || "Unknown user",
+      suggestedByRole: createdBy
+        ? displayRole(createdBy.roles)
+        : "Unknown role",
+    }));
+  const taskAssigneeOptions: TaskAssigneeOption[] = taskAssignees.map(
+    (user) => ({
+      id: user.id,
+      name: user.name ?? "",
+      email: user.email,
+      roles: user.roles,
+    }),
+  );
+  const submissionRows: SubmissionRow[] = project.submissions.map(
+    (submission) => ({
+      id: submission.id,
+      journalId: submission.journalId,
+      journalName: submission.journal.name,
+      publisher: submission.journal.publisher ?? "",
+      rank: submission.journal.rank ?? "",
+      apc: submission.journal.apc ?? "",
+      account: submission.account?.username ?? "",
+      status: submission.status,
+      submittedAt: submission.submittedAt.toLocaleDateString(),
+    }),
+  );
+  const openSubmissionTasks = project.tasks.filter(
+    (task) => task.status !== "COMPLETED",
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <Link href="/projects" className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-950 dark:hover:text-white">
+          <Link
+            href="/projects"
+            className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-950 dark:hover:text-white"
+          >
             <ArrowLeft className="h-4 w-4" />
             Back to projects
           </Link>
@@ -192,11 +269,23 @@ export default async function ProjectDetailPage({
             {project.stage === "PUBLISHED" && publishedJournal && (
               <div>
                 <p>
-                  {publishedJournal.name} - {publishedJournal.publisher || "No publisher"} - {latestPublication?.rank || publishedJournal.rank || "No rank"} -{" "}
-                  {latestPublication?.publishedDate ? latestPublication.publishedDate.toLocaleDateString() : "No published date"}
+                  {publishedJournal.name} -{" "}
+                  {publishedJournal.publisher || "No publisher"} -{" "}
+                  {latestPublication?.rank ||
+                    publishedJournal.rank ||
+                    "No rank"}{" "}
+                  -{" "}
+                  {latestPublication?.publishedDate
+                    ? latestPublication.publishedDate.toLocaleDateString()
+                    : "No published date"}
                 </p>
                 {latestPublication?.url && (
-                  <a href={latestPublication.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-blue-600 transition hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200">
+                  <a
+                    href={latestPublication.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-blue-600 transition hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200"
+                  >
                     DOI / article link <ExternalLink className="h-3 w-3" />
                   </a>
                 )}
@@ -204,12 +293,17 @@ export default async function ProjectDetailPage({
             )}
             {project.stage === "ACCEPTED" && publishedJournal && (
               <p>
-                {publishedJournal.name} - {publishedJournal.publisher || "No publisher"} - {publishedJournal.rank || "No rank"}
+                {publishedJournal.name} -{" "}
+                {publishedJournal.publisher || "No publisher"} -{" "}
+                {publishedJournal.rank || "No rank"}
               </p>
             )}
             {project.stage === "PRODUCTION" && (
               <p>
-                Not finished: {unfinishedSteps.length > 0 ? unfinishedSteps.map((step) => step.label).join(", ") : "All production stages checked"}
+                Not finished:{" "}
+                {unfinishedSteps.length > 0
+                  ? unfinishedSteps.map((step) => step.label).join(", ")
+                  : "All production stages checked"}
               </p>
             )}
           </div>
@@ -224,40 +318,75 @@ export default async function ProjectDetailPage({
         </button>
       </div>
 
-      <SaveForm id="research-detail-form" action={updateAction} className="grid gap-6 xl:grid-cols-[1fr_22rem]">
+      <SaveForm
+        id="research-detail-form"
+        action={updateAction}
+        className="grid gap-6 xl:grid-cols-[1fr_22rem]"
+      >
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="grid gap-5">
             <section className="grid gap-4">
               <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Title
-                <input name="title" defaultValue={project.title} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
+                <input
+                  name="title"
+                  defaultValue={project.title}
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                />
               </label>
               <div className="grid gap-4 md:grid-cols-[1fr_16rem]">
                 <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Authors
-                  <input name="coAuthors" defaultValue={project.coAuthors ?? ""} placeholder="Names separated by comma" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
+                  <input
+                    name="coAuthors"
+                    defaultValue={project.coAuthors ?? ""}
+                    placeholder="Names separated by comma"
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                  />
                 </label>
                 <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Stage
-                  <ResearchFormSelect name="stage" defaultValue={project.stage} options={stageOptions} ariaLabel="Research stage" />
+                  <ResearchFormSelect
+                    name="stage"
+                    defaultValue={project.stage}
+                    options={stageOptions}
+                    ariaLabel="Research stage"
+                  />
                 </label>
               </div>
             </section>
 
             <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
-              <h2 className="mb-4 text-base font-bold text-slate-950 dark:text-white">Registration and claim</h2>
+              <h2 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
+                Registration and claim
+              </h2>
               <div className="grid gap-4 md:grid-cols-3">
                 <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                   University registration
-                  <input name="universityRegistration" defaultValue={project.universityRegistration ?? ""} placeholder="Q1 2026" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
+                  <input
+                    name="universityRegistration"
+                    defaultValue={project.universityRegistration ?? ""}
+                    placeholder="Q1 2026"
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                  />
                 </label>
                 <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Register
-                  <ResearchFormSelect name="registerStatus" defaultValue={project.registerStatus} options={registerOptions} ariaLabel="Registration status" />
+                  <ResearchFormSelect
+                    name="registerStatus"
+                    defaultValue={project.registerStatus}
+                    options={registerOptions}
+                    ariaLabel="Registration status"
+                  />
                 </label>
                 <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Claim status
-                  <ResearchFormSelect name="claimStatus" defaultValue={project.claimStatus} options={claimOptions} ariaLabel="Claim status" />
+                  <ResearchFormSelect
+                    name="claimStatus"
+                    defaultValue={project.claimStatus}
+                    options={claimOptions}
+                    ariaLabel="Claim status"
+                  />
                 </label>
               </div>
             </section>
@@ -274,7 +403,10 @@ export default async function ProjectDetailPage({
             {productionSteps.map((step) => {
               const active = completedProductionSteps.has(step.label);
               return (
-                <label key={step.label} className="relative flex cursor-pointer gap-3 pb-4 last:pb-0">
+                <label
+                  key={step.label}
+                  className="relative flex cursor-pointer gap-3 pb-4 last:pb-0"
+                >
                   <input
                     type="checkbox"
                     name="completedProductionSteps"
@@ -283,8 +415,12 @@ export default async function ProjectDetailPage({
                     className="z-10 mt-1 h-5 w-5 cursor-pointer rounded-full border-slate-300 bg-white text-emerald-600 accent-emerald-600 shadow-sm transition focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-900"
                   />
                   <span>
-                    <span className="block text-sm font-bold text-slate-800 dark:text-slate-100">{step.label}</span>
-                    <span className="mt-0.5 block text-xs leading-5 text-slate-500 dark:text-slate-400">{step.detail}</span>
+                    <span className="block text-sm font-bold text-slate-800 dark:text-slate-100">
+                      {step.label}
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      {step.detail}
+                    </span>
                   </span>
                 </label>
               );
@@ -300,21 +436,40 @@ export default async function ProjectDetailPage({
             Submissions
           </h2>
           <div className="rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-3 text-sm text-blue-900 shadow-sm dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
-            <p className="font-semibold">Submissions are updated from assigned tasks.</p>
+            <p className="font-semibold">
+              Submissions are updated from assigned tasks.
+            </p>
             <p className="mt-1 text-blue-800/80 dark:text-blue-200/80">
-              Assign a submit research task from Suggested journals. When the task is marked finished, this table and related journal/account views update automatically.
+              Assign a submit research task from Suggested journals. When the
+              task is marked finished, this table and related journal/account
+              views update automatically.
             </p>
           </div>
         </div>
         {openSubmissionTasks.length > 0 && (
           <div className="grid gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Open submission tasks</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+              Open submission tasks
+            </p>
             <div className="grid gap-2 md:grid-cols-2">
               {openSubmissionTasks.map((task) => (
-                <Link key={task.id} href={`/tasks/${task.id}`} className="rounded-lg border border-slate-200 px-3 py-2 text-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm dark:border-slate-800 dark:hover:border-blue-900 dark:hover:bg-blue-950/30">
-                  <span className="block font-semibold text-slate-800 dark:text-slate-100">{task.title}</span>
+                <Link
+                  key={task.id}
+                  href={`/tasks/${task.id}`}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm dark:border-slate-800 dark:hover:border-blue-900 dark:hover:bg-blue-950/30"
+                >
+                  <span className="block font-semibold text-slate-800 dark:text-slate-100">
+                    {task.title}
+                  </span>
                   <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-                    {task.journal?.name || task.conference?.name || "No venue"} - {task.status.replace("_", " ")} - {task.assignments.map((assignment) => assignment.user.name || assignment.user.email).join(", ")}
+                    {task.journal?.name || task.conference?.name || "No venue"}{" "}
+                    - {task.status.replace("_", " ")} -{" "}
+                    {task.assignments
+                      .map(
+                        (assignment) =>
+                          assignment.user.name || assignment.user.email,
+                      )
+                      .join(", ")}
                   </span>
                 </Link>
               ))}
@@ -328,16 +483,46 @@ export default async function ProjectDetailPage({
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-5 flex items-center gap-2">
             <Library className="h-5 w-5 text-emerald-500" />
-            <h2 className="text-lg font-bold text-slate-950 dark:text-white">Publication information</h2>
+            <h2 className="text-lg font-bold text-slate-950 dark:text-white">
+              Publication information
+            </h2>
           </div>
 
-          <form action={publicationAction} className="mb-5 grid gap-3 rounded-lg bg-slate-50 p-4 dark:bg-slate-950 md:grid-cols-3">
-            <input name="title" required placeholder="Article title" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
-            <input name="url" placeholder="Article link" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
-            <input name="publishedDate" type="date" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
-            <input name="rank" placeholder="Rank, e.g. Q1" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
-            <input name="scimagoLink" placeholder="Scimago link" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
-            <input name="scopusLink" placeholder="Scopus link" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
+          <form
+            action={publicationAction}
+            className="mb-5 grid gap-3 rounded-lg bg-slate-50 p-4 dark:bg-slate-950 md:grid-cols-3"
+          >
+            <input
+              name="title"
+              required
+              placeholder="Article title"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            />
+            <input
+              name="url"
+              placeholder="Article link"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            />
+            <input
+              name="publishedDate"
+              type="date"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            />
+            <input
+              name="rank"
+              placeholder="Rank, e.g. Q1"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            />
+            <input
+              name="scimagoLink"
+              placeholder="Scimago link"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            />
+            <input
+              name="scopusLink"
+              placeholder="Scopus link"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            />
             <button className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md md:col-span-3 md:w-fit">
               <Plus className="h-4 w-4" />
               Add publication
@@ -346,15 +531,48 @@ export default async function ProjectDetailPage({
 
           <div className="grid gap-3 md:grid-cols-2">
             {project.publications.map((publication) => (
-              <div key={publication.id} className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
-                <p className="font-bold text-slate-950 dark:text-white">{publication.title}</p>
+              <div
+                key={publication.id}
+                className="rounded-lg border border-slate-200 p-4 dark:border-slate-800"
+              >
+                <p className="font-bold text-slate-950 dark:text-white">
+                  {publication.title}
+                </p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  Published {publication.publishedDate.toLocaleDateString()} • {publication.rank || "No rank"}
+                  Published {publication.publishedDate.toLocaleDateString()} •{" "}
+                  {publication.rank || "No rank"}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-3 text-sm">
-                  {publication.url && <a className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-300" href={publication.url} target="_blank" rel="noreferrer">Article <ExternalLink className="h-3 w-3" /></a>}
-                  {publication.scimagoLink && <a className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-300" href={publication.scimagoLink} target="_blank" rel="noreferrer">Scimago <ExternalLink className="h-3 w-3" /></a>}
-                  {publication.scopusLink && <a className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-300" href={publication.scopusLink} target="_blank" rel="noreferrer">Scopus <ExternalLink className="h-3 w-3" /></a>}
+                  {publication.url && (
+                    <a
+                      className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-300"
+                      href={publication.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Article <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                  {publication.scimagoLink && (
+                    <a
+                      className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-300"
+                      href={publication.scimagoLink}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Scimago <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                  {publication.scopusLink && (
+                    <a
+                      className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-300"
+                      href={publication.scopusLink}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Scopus <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
