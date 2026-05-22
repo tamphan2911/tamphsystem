@@ -44,6 +44,15 @@ const claimOptions = [
   { value: "CLAIMED", label: "Claimed" },
 ];
 
+function displayRole(roles: Role[]) {
+  if (roles.includes(Role.ADMIN)) return "Admin";
+  if (roles.includes(Role.CHIEF_ASSISTANT)) return "Chief assistant";
+  if (roles.includes(Role.ASSISTANT)) return "Assistant";
+  if (roles.includes(Role.RESEARCHER)) return "Researcher";
+  if (roles.includes(Role.LECTURER)) return "Lecturer";
+  return roles[0]?.replace("_", " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase()) || "User";
+}
+
 export default async function ProjectDetailPage({
   params,
 }: {
@@ -64,11 +73,17 @@ export default async function ProjectDetailPage({
         publications: { orderBy: { publishedDate: "desc" } },
         leadResearcher: true,
         suggestedJournals: {
-          include: { journal: true },
+          include: {
+            journal: true,
+            createdBy: { select: { name: true, email: true, roles: true } },
+          },
           orderBy: { createdAt: "desc" },
         },
         suggestedConferences: {
-          include: { conference: true },
+          include: {
+            conference: true,
+            createdBy: { select: { name: true, email: true, roles: true } },
+          },
           orderBy: { createdAt: "desc" },
         },
         tasks: {
@@ -111,7 +126,7 @@ export default async function ProjectDetailPage({
     publisher: journal.publisher ?? "",
     apc: journal.apc ?? "",
   }));
-  const suggestedJournalOptions: SuggestedJournalOption[] = project.suggestedJournals.map(({ journal }) => ({
+  const suggestedJournalOptions: SuggestedJournalOption[] = project.suggestedJournals.map(({ journal, createdBy }) => ({
     id: journal.id,
     name: journal.name,
     issn: journal.issn ?? "",
@@ -119,6 +134,8 @@ export default async function ProjectDetailPage({
     rank: journal.rank ?? "",
     publisher: journal.publisher ?? "",
     apc: journal.apc ?? "",
+    suggestedByName: createdBy?.name || createdBy?.email || "Unknown user",
+    suggestedByRole: createdBy ? displayRole(createdBy.roles) : "Unknown role",
   }));
   const allConferenceOptions: SuggestedConferenceOption[] = conferences.map((conference) => ({
     id: conference.id,
@@ -129,7 +146,7 @@ export default async function ProjectDetailPage({
     organizer: conference.organizer ?? "",
     time: [conference.startDate?.toLocaleDateString(), conference.endDate?.toLocaleDateString()].filter(Boolean).join(" - "),
   }));
-  const suggestedConferenceOptions: SuggestedConferenceOption[] = project.suggestedConferences.map(({ conference }) => ({
+  const suggestedConferenceOptions: SuggestedConferenceOption[] = project.suggestedConferences.map(({ conference, createdBy }) => ({
     id: conference.id,
     name: conference.name,
     type: conference.type ?? "",
@@ -137,6 +154,8 @@ export default async function ProjectDetailPage({
     location: conference.location ?? "",
     organizer: conference.organizer ?? "",
     time: [conference.startDate?.toLocaleDateString(), conference.endDate?.toLocaleDateString()].filter(Boolean).join(" - "),
+    suggestedByName: createdBy?.name || createdBy?.email || "Unknown user",
+    suggestedByRole: createdBy ? displayRole(createdBy.roles) : "Unknown role",
   }));
   const taskAssigneeOptions: TaskAssigneeOption[] = taskAssignees.map((user) => ({
     id: user.id,

@@ -20,6 +20,8 @@ export type SuggestedJournalOption = {
   rank: string;
   publisher: string;
   apc: string;
+  suggestedByName?: string;
+  suggestedByRole?: string;
 };
 
 export type SuggestedConferenceOption = {
@@ -30,6 +32,8 @@ export type SuggestedConferenceOption = {
   location: string;
   organizer: string;
   time: string;
+  suggestedByName?: string;
+  suggestedByRole?: string;
 };
 
 export type TaskAssigneeOption = {
@@ -426,6 +430,7 @@ function JournalCard({ journal, isAdmin, onAssign, onDelete }: { journal: Sugges
         {journal.field || "No field"} - {journal.rank || "No rank"} - {journal.publisher || "No publisher"}
       </p>
       {journal.apc && <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">APC: {journal.apc}</p>}
+      <SuggestedByLine name={journal.suggestedByName} role={journal.suggestedByRole} />
     </VenueCard>
   );
 }
@@ -440,7 +445,17 @@ function ConferenceCard({ conference, isAdmin, onAssign, onDelete }: { conferenc
       <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
         {[conference.time, conference.location].filter(Boolean).join(" - ") || "Time/location not set"}
       </p>
+      <SuggestedByLine name={conference.suggestedByName} role={conference.suggestedByRole} />
     </VenueCard>
+  );
+}
+
+function SuggestedByLine({ name, role }: { name?: string; role?: string }) {
+  return (
+    <p className="mt-3 border-t border-slate-100 pt-2 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      Suggested by <span className="font-semibold text-slate-700 dark:text-slate-200">{name || "Unknown user"}</span>
+      <span className="text-slate-400 dark:text-slate-500"> · {role || "Unknown role"}</span>
+    </p>
   );
 }
 

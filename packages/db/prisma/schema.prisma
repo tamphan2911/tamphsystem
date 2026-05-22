@@ -48,6 +48,8 @@ model User {
   researchProjects      ResearchProject[]        @relation("LeadResearcher")
   createdResearchTasks  ResearchTask[]           @relation("ResearchTaskCreator")
   assignedResearchTasks ResearchTaskAssignment[] @relation("ResearchTaskAssignee")
+  suggestedJournals     SuggestedJournal[]       @relation("SuggestedJournalCreator")
+  suggestedConferences  SuggestedConference[]    @relation("SuggestedConferenceCreator")
 }
 
 // ---------------------------------------------
@@ -237,10 +239,12 @@ model SuggestedConference {
   id           String   @id @default(uuid())
   projectId    String
   conferenceId String
+  createdById  String?
   createdAt    DateTime @default(now())
 
   project    ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
   conference Conference      @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
+  createdBy  User?           @relation("SuggestedConferenceCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@unique([projectId, conferenceId])
 }
@@ -283,13 +287,15 @@ model Journal {
 }
 
 model SuggestedJournal {
-  id        String   @id @default(uuid())
-  projectId String
-  journalId String
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  projectId   String
+  journalId   String
+  createdById String?
+  createdAt   DateTime @default(now())
 
-  project ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  journal Journal         @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  project   ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  journal   Journal         @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  createdBy User?           @relation("SuggestedJournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@unique([projectId, journalId])
 }

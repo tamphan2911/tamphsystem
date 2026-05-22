@@ -312,8 +312,8 @@ export async function addSuggestedJournal(projectId: string, formData: FormData)
 
   await prisma.suggestedJournal.upsert({
     where: { projectId_journalId: { projectId, journalId } },
-    update: {},
-    create: { projectId, journalId },
+    update: { createdById: user.id },
+    create: { projectId, journalId, createdById: user.id },
   });
 
   revalidatePath(`/projects/${projectId}`);
@@ -339,8 +339,8 @@ export async function addSuggestedConference(projectId: string, formData: FormDa
 
   await prisma.suggestedConference.upsert({
     where: { projectId_conferenceId: { projectId, conferenceId } },
-    update: {},
-    create: { projectId, conferenceId },
+    update: { createdById: user.id },
+    create: { projectId, conferenceId, createdById: user.id },
   });
 
   revalidatePath(`/projects/${projectId}`);
