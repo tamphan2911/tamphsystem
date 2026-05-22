@@ -43,9 +43,13 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
+      const selectedUser = users.find((user) => user.id === selectedUserId);
       await assignResearchAssistant(formData);
       closeDialog();
-      showSuccess("Assistant role assigned");
+      showSuccess({
+        title: "Assistant role assigned",
+        detail: `${selectedUser?.name || selectedUser?.email || "Selected user"} is now assigned as ${assistantRole === "CHIEF_ASSISTANT" ? "chief assistant" : "assistant"}.`,
+      });
       router.refresh();
     });
   }

@@ -8,11 +8,13 @@ export function SaveForm({
   action,
   className,
   id,
+  successMessage = "Research details saved",
   children,
 }: {
   action: (formData: FormData) => Promise<void>;
   className?: string;
   id?: string;
+  successMessage?: string;
   children: ReactNode;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -25,7 +27,10 @@ export function SaveForm({
     const formData = new FormData(form);
     startTransition(async () => {
       await action(formData);
-      showSuccess("Changes saved");
+      showSuccess({
+        title: successMessage,
+        detail: "Research information, registration, claim status, and production checklist are now saved.",
+      });
     });
   }
 

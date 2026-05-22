@@ -42,19 +42,27 @@ export function AssistantsTable({ rows, canManage }: { rows: AssistantRow[]; can
   }
 
   function submitEdit(formData: FormData) {
+    const assistant = editing;
     startTransition(async () => {
       await assignResearchAssistant(formData);
       setEditing(null);
-      showSuccess("Assistant role updated");
+      showSuccess({
+        title: "Assistant role updated",
+        detail: `${assistant?.name || assistant?.email || "Assistant"} is now set as ${editRole === "CHIEF_ASSISTANT" ? "chief assistant" : "assistant"}.`,
+      });
       router.refresh();
     });
   }
 
   function confirmDelete(formData: FormData) {
+    const assistant = deleting;
     startTransition(async () => {
       await removeResearchAssistantRole(formData);
       setDeleting(null);
-      showSuccess("Assistant role removed");
+      showSuccess({
+        title: "Assistant role removed",
+        detail: `${assistant?.name || assistant?.email || "Selected user"} no longer has assistant access in the research site.`,
+      });
       router.refresh();
     });
   }
