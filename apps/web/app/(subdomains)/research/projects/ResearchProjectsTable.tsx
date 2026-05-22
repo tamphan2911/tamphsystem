@@ -3,13 +3,22 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
+  BadgeCheck,
+  Ban,
+  BookOpenCheck,
   CalendarCheck2,
+  CheckCircle2,
+  CircleDollarSign,
   CircleOff,
+  FileCheck2,
   FileClock,
+  FileSearch,
   FileText,
+  FlaskConical,
+  Send,
   SendHorizontal,
-  TriangleAlert,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   FilterSelect,
   IconHint,
@@ -61,6 +70,14 @@ function statusClass(stage: string) {
   return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
 }
 
+function stageIcon(stage: string) {
+  if (stage === "PUBLISHED") return BookOpenCheck;
+  if (stage === "ACCEPTED") return BadgeCheck;
+  if (stage === "REVIEW") return FileSearch;
+  if (stage === "SUBMITTING") return Send;
+  return FlaskConical;
+}
+
 function claimLabel(claim: string) {
   if (claim === "CANNOT_CLAIM") return "Cannot claim";
   if (claim === "MAKING_DOCUMENT") return "Making document";
@@ -77,6 +94,14 @@ function claimClass(claim: string) {
   if (claim === "MAKING_DOCUMENT")
     return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
   return "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+}
+
+function claimIcon(claim: string) {
+  if (claim === "CLAIMED") return CheckCircle2;
+  if (claim === "WAITING") return FileClock;
+  if (claim === "MAKING_DOCUMENT") return FileCheck2;
+  if (claim === "CANNOT_CLAIM") return Ban;
+  return CircleDollarSign;
 }
 
 function registrationLabel(status: string) {
@@ -103,19 +128,22 @@ function registrationIcon(status: string) {
   return CircleOff;
 }
 
-function StatusTextPill({
+function StatusIconChip({
+  icon: Icon,
   label,
   className,
 }: {
+  icon: LucideIcon;
   label: string;
   className: string;
 }) {
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm ${className}`}
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
       >
-        {label}
+        <Icon className="h-4 w-4" aria-hidden="true" />
+        <span className="sr-only">{label}</span>
       </span>
     </IconHint>
   );
@@ -175,16 +203,7 @@ function SubmitCount({ count }: { count: number }) {
       <span
         className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-semibold ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
       >
-        {isZero ? (
-          <SendHorizontal className="h-4 w-4" aria-hidden="true" />
-        ) : isHigh ? (
-          <span className="inline-flex items-center gap-1">
-            <TriangleAlert className="h-3.5 w-3.5" aria-hidden="true" />
-            {count}
-          </span>
-        ) : (
-          count
-        )}
+        {count}
         <span className="sr-only">{label}</span>
       </span>
     </IconHint>
@@ -294,13 +313,15 @@ export function ResearchProjectsTable({
                   </Link>
                 </td>
                 <td className="px-4 py-3">
-                  <StatusTextPill
+                  <StatusIconChip
+                    icon={stageIcon(row.stage)}
                     label={stageLabel(row.stage)}
                     className={statusClass(row.stage)}
                   />
                 </td>
                 <td className="px-4 py-3">
-                  <StatusTextPill
+                  <StatusIconChip
+                    icon={claimIcon(row.claimStatus)}
                     label={claimLabel(row.claimStatus)}
                     className={claimClass(row.claimStatus)}
                   />
