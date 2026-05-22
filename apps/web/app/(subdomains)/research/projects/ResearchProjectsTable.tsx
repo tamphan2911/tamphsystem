@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ExternalLink, FileText, Send, Trophy } from "lucide-react";
+import { FileText } from "lucide-react";
 import { FilterSelect, IconHint, TablePagination, TableSearchInput, useTablePagination } from "../components/TableControls";
 
 export type ResearchProjectRow = {
@@ -22,6 +22,11 @@ export type ResearchProjectRow = {
 const stages = ["ALL", "PRODUCTION", "SUBMITTING", "ACCEPTED", "PUBLISHED"];
 const claims = ["ALL", "CANNOT_CLAIM", "MAKING_DOCUMENT", "WAITING", "CLAIMED"];
 
+function stageLabel(stage: string) {
+  if (stage === "SUBMITTING") return "SUBMITTED";
+  return stage;
+}
+
 function statusClass(stage: string) {
   if (stage === "PUBLISHED") return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
   if (stage === "ACCEPTED") return "bg-purple-50 text-purple-700 ring-purple-100 dark:bg-purple-950/40 dark:text-purple-300 dark:ring-purple-900";
@@ -29,20 +34,31 @@ function statusClass(stage: string) {
   return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
 }
 
+function claimLabel(claim: string) {
+  if (claim === "CANNOT_CLAIM") return "Cannot claim";
+  if (claim === "MAKING_DOCUMENT") return "Making document";
+  if (claim === "WAITING") return "Waiting";
+  if (claim === "CLAIMED") return "Claimed";
+  return claim.replace("_", " ");
+}
+
+function claimClass(claim: string) {
+  if (claim === "CLAIMED") return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (claim === "WAITING") return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  if (claim === "MAKING_DOCUMENT") return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  return "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+}
+
 export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) {
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("ALL");
   const [claim, setClaim] = useState("ALL");
-  const [lead, setLead] = useState("ALL");
-
-  const leadOptions = useMemo(() => ["ALL", ...Array.from(new Set(rows.map((row) => row.leadResearcher).filter(Boolean))).sort()], [rows]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const matchesStage = stage === "ALL" || row.stage === stage;
       const matchesClaim = claim === "ALL" || row.claimStatus === claim;
-      const matchesLead = lead === "ALL" || row.leadResearcher === lead;
       const haystack = [
         row.title,
         row.abstract,
@@ -52,9 +68,9 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
         row.claimStatus,
         row.stage,
       ].join(" ").toLowerCase();
-      return matchesStage && matchesClaim && matchesLead && (!needle || haystack.includes(needle));
+      return matchesStage && matchesClaim && (!needle || haystack.includes(needle));
     });
-  }, [claim, lead, query, rows, stage]);
+  }, [claim, query, rows, stage]);
 
   const pagination = useTablePagination(filtered, 10);
 
@@ -63,24 +79,20 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
       <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput value={query} onChange={setQuery} placeholder="Search research, authors, registration..." />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <FilterSelect value={stage} onChange={setStage} ariaLabel="Filter by stage" options={stages.map((item) => ({ value: item, label: item === "ALL" ? "All stages" : item }))} />
-          <FilterSelect value={claim} onChange={setClaim} ariaLabel="Filter by claim" options={claims.map((item) => ({ value: item, label: item === "ALL" ? "All claims" : item.replace("_", " ") }))} />
-          <FilterSelect value={lead} onChange={setLead} ariaLabel="Filter by lead" options={leadOptions.map((item) => ({ value: item, label: item === "ALL" ? "All leads" : item }))} />
+          <FilterSelect value={stage} onChange={setStage} ariaLabel="Filter by stage" options={stages.map((item) => ({ value: item, label: item === "ALL" ? "All stages" : stageLabel(item) }))} />
+          <FilterSelect value={claim} onChange={setClaim} ariaLabel="Filter by claim" options={claims.map((item) => ({ value: item, label: item === "ALL" ? "All claims" : claimLabel(item) }))} />
         </div>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[74rem] text-left">
+        <table className="w-full min-w-[56rem] text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
               <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Research</th>
               <th className="px-4 py-3">Stage</th>
               <th className="px-4 py-3">Claim</th>
               <th className="px-4 py-3">Reg.</th>
-              <th className="px-4 py-3">Lead</th>
-              <th className="px-4 py-3 text-center"><IconHint label="Submissions"><Send className="mx-auto h-4 w-4" aria-hidden="true" /></IconHint></th>
-              <th className="px-4 py-3 text-center"><IconHint label="Publications"><Trophy className="mx-auto h-4 w-4" aria-hidden="true" /></IconHint></th>
-              <th className="px-4 py-3 text-right">Open</th>
+              <th className="px-4 py-3 text-center">Submissions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -98,23 +110,18 @@ export function ResearchProjectsTable({ rows }: { rows: ResearchProjectRow[] }) 
                   </Link>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(row.stage)}`}>{row.stage}</span>
+                  <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(row.stage)}`}>{stageLabel(row.stage)}</span>
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.claimStatus.replace("_", " ")}</td>
+                <td className="px-4 py-3">
+                  <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${claimClass(row.claimStatus)}`}>{claimLabel(row.claimStatus)}</span>
+                </td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.universityRegistration || "-"}</td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.leadResearcher}</td>
                 <td className="px-4 py-3 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">{row.submissions}</td>
-                <td className="px-4 py-3 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">{row.publications}</td>
-                <td className="px-4 py-3 text-right">
-                  <Link href={`/projects/${row.id}`} className="inline-flex items-center justify-center rounded-lg p-2 text-slate-500 dark:text-slate-400 transition hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 dark:hover:text-blue-300" title="Open research">
-                    <IconHint label="Open research"><ExternalLink className="h-4 w-4" aria-hidden="true" /></IconHint>
-                  </Link>
-                </td>
               </tr>
             ))}
             {pagination.total === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
+                <td colSpan={5} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
                   No research matches the current search.
                 </td>
               </tr>

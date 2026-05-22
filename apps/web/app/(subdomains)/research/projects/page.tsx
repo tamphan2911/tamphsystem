@@ -38,7 +38,7 @@ export default async function ProjectsDashboard() {
 
   const stats = [
     { label: "Total", value: projects.length, icon: FileText, color: "text-slate-600" },
-    { label: "Submitting", value: submitting.length, icon: Send, color: "text-blue-600" },
+    { label: "Submitted", value: submitting.length, icon: Send, color: "text-blue-600" },
     { label: "Published", value: published.length, icon: Trophy, color: "text-emerald-600" },
     { label: "Claims", value: claimQueue.length, icon: Clock, color: "text-amber-600" },
   ];
