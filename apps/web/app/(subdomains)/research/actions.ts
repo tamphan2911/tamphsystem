@@ -3,11 +3,44 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "../../../auth";
-import { prisma, ClaimStatus, RegistrationStatus, ResearchStage, Role } from "@repo/db";
+import {
+  prisma,
+  ClaimStatus,
+  ConferenceSubmissionStatus,
+  RegistrationStatus,
+  ResearchStage,
+  ResearchTaskCategory,
+  ResearchTaskStatus,
+  ResearchTaskType,
+  Role,
+  SubmissionStatus,
+} from "@repo/db";
 
 function optionalString(value: FormDataEntryValue | null) {
   const text = typeof value === "string" ? value.trim() : "";
   return text.length > 0 ? text : null;
+}
+
+function enumValue<T extends Record<string, string>>(values: T, value: FormDataEntryValue | null) {
+  return typeof value === "string" && Object.values(values).includes(value) ? (value as T[keyof T]) : null;
+}
+
+function taskCategoryFromForm(value: FormDataEntryValue | null) {
+  if (typeof value !== "string") return null;
+
+  const normalized: Record<string, ResearchTaskCategory> = {
+    Submitting: ResearchTaskCategory.SUBMITTING,
+    "Submit research": ResearchTaskCategory.SUBMIT_RESEARCH,
+    Production: ResearchTaskCategory.PRODUCTION,
+    "Research production": ResearchTaskCategory.RESEARCH_PRODUCTION,
+    References: ResearchTaskCategory.REFERENCES,
+  };
+
+  return enumValue(ResearchTaskCategory, value) ?? normalized[value] ?? null;
+}
+
+function taskTypeFromForm(value: FormDataEntryValue | null) {
+  return enumValue(ResearchTaskType, value);
 }
 
 async function requireCurrentUser() {
@@ -161,7 +194,7 @@ export async function createResearchSubmission(projectId: string, formData: Form
       researchProjectId: projectId,
       journalId,
       accountId: optionalString(formData.get("accountId")),
-      status: optionalString(formData.get("status")) ?? "PENDING",
+      status: enumValue(SubmissionStatus, formData.get("status")) ?? SubmissionStatus.PENDING,
       submittedAt: optionalString(formData.get("submittedAt"))
         ? new Date(optionalString(formData.get("submittedAt")) as string)
         : new Date(),
@@ -283,8 +316,8 @@ export async function createResearchTask(formData: FormData) {
     data: {
       title: optionalString(formData.get("title")) ?? "Untitled task",
       description: optionalString(formData.get("description")),
-      category: optionalString(formData.get("category")),
-      taskType: optionalString(formData.get("taskType")),
+      category: taskCategoryFromForm(formData.get("category")),
+      taskType: taskTypeFromForm(formData.get("taskType")),
       projectId: optionalString(formData.get("projectId")),
       journalId: optionalString(formData.get("journalId")),
       conferenceId: optionalString(formData.get("conferenceId")),
@@ -379,7 +412,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     await prisma.researchTask.update({
       where: { id: taskId },
       data: {
-        status: "COMPLETED",
+        status: ResearchTaskStatus.COMPLETED,
         completedAt,
         adminViewedAt: null,
         assignments: {
@@ -413,8 +446,8 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     await prisma.researchTask.update({
       where: { id: taskId },
       data: allFinished
-        ? { status: "COMPLETED", completedAt, adminViewedAt: null }
-        : { status: anyFinished ? "IN_PROGRESS" : "OPEN" },
+        ? { status: ResearchTaskStatus.COMPLETED, completedAt, adminViewedAt: null }
+        : { status: anyFinished ? ResearchTaskStatus.IN_PROGRESS : ResearchTaskStatus.OPEN },
     });
   }
 
@@ -423,35 +456,31 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     select: { status: true, completedAt: true },
   });
 
-  if (completedTask?.status === "COMPLETED" && task.taskType === "SUBMIT_RESEARCH" && task.projectId && task.journalId) {
-    const existingSubmission = await prisma.researchSubmission.findFirst({
+  if (
+    completedTask?.status === ResearchTaskStatus.COMPLETED &&
+    task.taskType === ResearchTaskType.SUBMIT_RESEARCH &&
+    task.projectId &&
+    task.journalId
+  ) {
+    await prisma.researchSubmission.upsert({
       where: {
-        researchProjectId: task.projectId,
-        journalId: task.journalId,
-      },
-      orderBy: { submittedAt: "desc" },
-    });
-
-    if (existingSubmission) {
-      await prisma.researchSubmission.update({
-        where: { id: existingSubmission.id },
-        data: {
-          status: existingSubmission.status || "PENDING",
-          submittedAt: existingSubmission.submittedAt ?? completedAt,
-          ...(accountId ? { accountId } : {}),
-        },
-      });
-    } else {
-      await prisma.researchSubmission.create({
-        data: {
+        researchProjectId_journalId: {
           researchProjectId: task.projectId,
           journalId: task.journalId,
-          accountId,
-          status: "PENDING",
-          submittedAt: completedAt,
         },
-      });
-    }
+      },
+      update: {
+        submittedAt: completedTask.completedAt ?? completedAt,
+        ...(accountId ? { accountId } : {}),
+      },
+      create: {
+        researchProjectId: task.projectId,
+        journalId: task.journalId,
+        accountId,
+        status: SubmissionStatus.PENDING,
+        submittedAt: completedTask.completedAt ?? completedAt,
+      },
+    });
 
     revalidatePath("/projects");
     revalidatePath(`/projects/${task.projectId}`);
@@ -460,7 +489,12 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     revalidatePath("/accounts");
   }
 
-  if (completedTask?.status === "COMPLETED" && task.taskType === "SUBMIT_CONFERENCE" && task.projectId && task.conferenceId) {
+  if (
+    completedTask?.status === ResearchTaskStatus.COMPLETED &&
+    task.taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
+    task.projectId &&
+    task.conferenceId
+  ) {
     await prisma.conferenceSubmission.upsert({
       where: {
         conferenceId_researchProjectId: {
@@ -469,13 +503,13 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
         },
       },
       update: {
-        status: "SUBMITTED",
+        status: ConferenceSubmissionStatus.SUBMITTED,
         submittedAt: completedAt,
       },
       create: {
         conferenceId: task.conferenceId,
         researchProjectId: task.projectId,
-        status: "SUBMITTED",
+        status: ConferenceSubmissionStatus.SUBMITTED,
         submittedAt: completedAt,
       },
     });

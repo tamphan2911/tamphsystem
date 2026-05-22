@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma, Role } from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../../auth";
 
 export async function POST(
@@ -49,8 +49,8 @@ export async function POST(
   await prisma.researchTask.update({
     where: { id: taskId },
     data: allFinished
-      ? { status: "COMPLETED", completedAt: new Date(), adminViewedAt: null }
-      : { status: anyFinished ? "IN_PROGRESS" : "OPEN" },
+      ? { status: ResearchTaskStatus.COMPLETED, completedAt: new Date(), adminViewedAt: null }
+      : { status: anyFinished ? ResearchTaskStatus.IN_PROGRESS : ResearchTaskStatus.OPEN },
   });
 
   return NextResponse.json({ ok: true });

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma, Role } from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 
 function taskNotificationWhere(isAdmin: boolean, userId: string) {
   if (isAdmin) {
     return {
-      status: "COMPLETED",
+      status: ResearchTaskStatus.COMPLETED,
       adminViewedAt: null,
     };
   }

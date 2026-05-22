@@ -12,17 +12,14 @@ export default auth((req) => {
   const url = req.nextUrl;
   const hostname = req.headers.get('host') || '';
   const isLoggedIn = !!req.auth;
-  const userRole = (req.auth?.user as any)?.roles?.[0]; // Assuming roles array
-
   let currentHost = hostname
     .replace(`.tamph.com`, '')
     .replace(`.localhost:3000`, '');
 
   // 1. Shared Global Routes (do not prefix with subdomains)
-  if (url.pathname.startsWith('/login')) {
+  const isAuthRoute = url.pathname.startsWith('/login') || url.pathname.startsWith('/register');
+  if (isAuthRoute) {
     if (isLoggedIn) {
-      // If already logged in, go to admin if they are ADMIN, else home
-      if (userRole === 'ADMIN') return NextResponse.redirect(new URL('https://admin.tamph.com', req.url));
       return NextResponse.redirect(new URL('/', req.url));
     }
     return NextResponse.next();
@@ -41,7 +38,7 @@ export default auth((req) => {
   if (currentHost === 'admin') {
     // Protect Admin Subdomain
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL('/login', req.url));
+      return NextResponse.redirect(new URL(`/login?callbackUrl=${encodeURIComponent(url.pathname + url.search)}`, req.url));
     }
     const roles = (req.auth?.user as any)?.roles || [];
     if (!roles.includes('ADMIN') && !roles.includes('MODERATOR')) {
@@ -54,7 +51,7 @@ export default auth((req) => {
   if (currentHost === 'learn') {
     // Protect LMS
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL('/login', req.url));
+      return NextResponse.redirect(new URL(`/login?callbackUrl=${encodeURIComponent(url.pathname + url.search)}`, req.url));
     }
     const roles = (req.auth?.user as any)?.roles || [];
     if (!roles.includes('ADMIN') && !roles.includes('LECTURER') && !roles.includes('STUDENT')) {
@@ -65,7 +62,7 @@ export default auth((req) => {
   
   if (currentHost === 'research') {
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL('/login', req.url));
+      return NextResponse.redirect(new URL(`/login?callbackUrl=${encodeURIComponent(url.pathname + url.search)}`, req.url));
     }
     const roles = (req.auth?.user as any).roles || [];
     if (!roles.includes('ADMIN') && !roles.includes('CHIEF_ASSISTANT') && !roles.includes('ASSISTANT') && !roles.includes('RESEARCHER')) {

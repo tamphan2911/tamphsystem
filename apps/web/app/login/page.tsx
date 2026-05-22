@@ -1,6 +1,21 @@
 import { signIn } from "../../auth";
 
-export default function LoginPage() {
+function safeRedirectPath(value: string | undefined) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/";
+  }
+
+  return value;
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
+  const { callbackUrl } = await searchParams;
+  const redirectTo = safeRedirectPath(callbackUrl);
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 transition-colors duration-200">
       <div className="w-full max-w-md bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl p-8 shadow-xl dark:shadow-2xl">
@@ -13,7 +28,7 @@ export default function LoginPage() {
           action={async (formData) => {
             "use server";
             // NextAuth v5 automatically handles redirecting and errors
-            await signIn("credentials", formData, { redirectTo: "/" });
+            await signIn("credentials", formData, { redirectTo });
           }}
           className="space-y-6"
         >

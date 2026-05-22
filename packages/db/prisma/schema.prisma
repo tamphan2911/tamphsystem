@@ -187,6 +187,49 @@ enum ClaimStatus {
   CLAIMED
 }
 
+enum ConferenceType {
+  INTERNATIONAL @map("International")
+  NATIONAL      @map("National")
+}
+
+enum SubmissionStatus {
+  PENDING
+  UNDER_REVIEW
+  REVISION
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+  PUBLISHED
+}
+
+enum ConferenceSubmissionStatus {
+  PLANNED
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum ResearchTaskStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ResearchTaskType {
+  SUBMIT_RESEARCH
+  SUBMIT_CONFERENCE
+  OTHER
+}
+
+enum ResearchTaskCategory {
+  SUBMITTING          @map("Submitting")
+  SUBMIT_RESEARCH     @map("Submit research")
+  PRODUCTION          @map("Production")
+  RESEARCH_PRODUCTION @map("Research production")
+  REFERENCES          @map("References")
+}
+
 model ResearchProject {
   id       String        @id @default(uuid())
   title    String
@@ -215,9 +258,9 @@ model ResearchProject {
 }
 
 model Conference {
-  id          String    @id @default(uuid())
+  id          String          @id @default(uuid())
   name        String
-  type        String? // International, National
+  type        ConferenceType?
   themes      String?
   targetTheme String?
   isbn        String?
@@ -227,8 +270,8 @@ model Conference {
   endDate     DateTime?
   website     String?
   note        String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   submissions ConferenceSubmission[]
   suggestions SuggestedConference[]
@@ -250,14 +293,14 @@ model SuggestedConference {
 }
 
 model ConferenceSubmission {
-  id                String    @id @default(uuid())
+  id                String                     @id @default(uuid())
   conferenceId      String
   researchProjectId String
-  status            String    @default("PLANNED")
+  status            ConferenceSubmissionStatus @default(PLANNED)
   submittedAt       DateTime?
   note              String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
 
   conference Conference      @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
   project    ResearchProject @relation(fields: [researchProjectId], references: [id], onDelete: Cascade)
@@ -320,26 +363,26 @@ model AcademicReview {
 }
 
 model ResearchTask {
-  id            String    @id @default(uuid())
+  id            String                @id @default(uuid())
   title         String
   description   String?
-  category      String?
-  status        String    @default("OPEN") // OPEN, IN_PROGRESS, COMPLETED
+  category      ResearchTaskCategory?
+  status        ResearchTaskStatus    @default(OPEN)
   dueDate       DateTime?
   completedAt   DateTime?
   adminViewedAt DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
 
   createdById  String
-  createdBy    User             @relation("ResearchTaskCreator", fields: [createdById], references: [id])
+  createdBy    User              @relation("ResearchTaskCreator", fields: [createdById], references: [id])
   projectId    String?
   journalId    String?
   conferenceId String?
-  taskType     String?
-  project      ResearchProject? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  journal      Journal?         @relation(fields: [journalId], references: [id], onDelete: SetNull)
-  conference   Conference?      @relation(fields: [conferenceId], references: [id], onDelete: SetNull)
+  taskType     ResearchTaskType?
+  project      ResearchProject?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  journal      Journal?          @relation(fields: [journalId], references: [id], onDelete: SetNull)
+  conference   Conference?       @relation(fields: [conferenceId], references: [id], onDelete: SetNull)
 
   assignments ResearchTaskAssignment[]
 }
@@ -375,12 +418,14 @@ model ResearchSubmission {
   journalId         String
   accountId         String? // Which account was used to submit
 
-  submittedAt DateTime @default(now())
-  status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  submittedAt DateTime         @default(now())
+  status      SubmissionStatus @default(PENDING)
 
   project ResearchProject   @relation(fields: [researchProjectId], references: [id], onDelete: Cascade)
   journal Journal           @relation(fields: [journalId], references: [id], onDelete: Cascade)
   account PublisherAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@unique([researchProjectId, journalId])
 }
 
 model Publication {

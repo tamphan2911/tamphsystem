@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma, Role } from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 
 export async function POST() {
@@ -17,7 +17,7 @@ export async function POST() {
 
   await prisma.researchTask.updateMany({
     where: {
-      status: "COMPLETED",
+      status: ResearchTaskStatus.COMPLETED,
       adminViewedAt: null,
     },
     data: {
