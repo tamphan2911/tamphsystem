@@ -69,6 +69,10 @@ function requireAdmin(roles: Role[]) {
 
 export async function createResearchProject(formData: FormData) {
   const user = await requireCurrentUser();
+  const authorIds = formData
+    .getAll("authorIds")
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+  const selectedAuthorIds = authorIds.length > 0 ? authorIds : [user.id];
 
   await prisma.researchProject.create({
     data: {
@@ -80,6 +84,9 @@ export async function createResearchProject(formData: FormData) {
       registerStatus: (formData.get("registerStatus") as RegistrationStatus | null) ?? RegistrationStatus.NOT_REGISTERED,
       claimStatus: (formData.get("claimStatus") as ClaimStatus | null) ?? ClaimStatus.CANNOT_CLAIM,
       leadResearcherId: user.id,
+      authors: {
+        connect: selectedAuthorIds.map((id) => ({ id })),
+      },
     },
   });
 
@@ -88,12 +95,15 @@ export async function createResearchProject(formData: FormData) {
 }
 
 export async function updateResearchProject(projectId: string, formData: FormData) {
-  await requireCurrentUser();
+  const user = await requireCurrentUser();
+  const authorIds = formData
+    .getAll("authorIds")
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
 
   const data = {
     title: optionalString(formData.get("title")) ?? "Untitled research",
     stage: (formData.get("stage") as ResearchStage | null) ?? ResearchStage.PRODUCTION,
-    coAuthors: optionalString(formData.get("coAuthors")),
+    coAuthors: null,
     universityRegistration: optionalString(formData.get("universityRegistration")),
     registerStatus: (formData.get("registerStatus") as RegistrationStatus | null) ?? RegistrationStatus.NOT_REGISTERED,
     claimStatus: (formData.get("claimStatus") as ClaimStatus | null) ?? ClaimStatus.CANNOT_CLAIM,
@@ -105,7 +115,12 @@ export async function updateResearchProject(projectId: string, formData: FormDat
 
   await prisma.researchProject.update({
     where: { id: projectId },
-    data,
+    data: {
+      ...data,
+      authors: {
+        set: (authorIds.length > 0 ? authorIds : [user.id]).map((id) => ({ id })),
+      },
+    },
   });
 
   revalidatePath("/projects");

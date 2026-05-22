@@ -46,6 +46,7 @@ model User {
   enrollments           Enrollment[]
   quizAttempts          QuizAttempt[]
   researchProjects      ResearchProject[]        @relation("LeadResearcher")
+  authoredResearch      ResearchProject[]        @relation("ResearchAuthors")
   createdResearchTasks  ResearchTask[]           @relation("ResearchTaskCreator")
   assignedResearchTasks ResearchTaskAssignment[] @relation("ResearchTaskAssignee")
   suggestedJournals     SuggestedJournal[]       @relation("SuggestedJournalCreator")
@@ -249,6 +250,7 @@ model ResearchProject {
 
   leadResearcherId String
   leadResearcher   User   @relation("LeadResearcher", fields: [leadResearcherId], references: [id])
+  authors          User[] @relation("ResearchAuthors")
 
   publications          Publication[]
   submissions           ResearchSubmission[]

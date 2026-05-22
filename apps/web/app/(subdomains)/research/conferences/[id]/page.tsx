@@ -23,6 +23,7 @@ export default async function ConferenceDetailPage({ params }: { params: Promise
           project: {
             include: {
               leadResearcher: true,
+              authors: { select: { name: true, email: true }, orderBy: [{ name: "asc" }, { email: "asc" }] },
               _count: { select: { submissions: true, publications: true } },
             },
           },
@@ -41,7 +42,10 @@ export default async function ConferenceDetailPage({ params }: { params: Promise
     stage: project.stage,
     claimStatus: project.claimStatus,
     registerStatus: project.registerStatus,
-    coAuthors: project.coAuthors ?? "",
+    coAuthors:
+      project.authors.length > 0
+        ? project.authors.map((author) => author.name || author.email).join(", ")
+        : project.coAuthors ?? "",
     universityRegistration: project.universityRegistration ?? "",
     leadResearcher: project.leadResearcher.name || project.leadResearcher.email,
     submissions: project._count.submissions,

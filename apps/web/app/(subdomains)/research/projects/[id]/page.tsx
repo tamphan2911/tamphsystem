@@ -21,6 +21,7 @@ import {
 } from "./SuggestedJournalsPanel";
 import { SaveForm } from "../../components/SaveForm";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
+import { AuthorsPicker, type AuthorOption } from "./AuthorsPicker";
 
 export const dynamic = "force-dynamic";
 
@@ -88,7 +89,7 @@ export default async function ProjectDetailPage({
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
-  const [project, journals, conferences, taskAssignees] = await Promise.all([
+  const [project, journals, conferences, taskAssignees, authorUsers] = await Promise.all([
     prisma.researchProject.findUnique({
       where: { id },
       include: {
@@ -98,6 +99,7 @@ export default async function ProjectDetailPage({
         },
         publications: { orderBy: { publishedDate: "desc" } },
         leadResearcher: true,
+        authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
         suggestedJournals: {
           include: {
             journal: true,
@@ -141,6 +143,10 @@ export default async function ProjectDetailPage({
       orderBy: [{ name: "asc" }, { email: "asc" }],
       select: { id: true, name: true, email: true, roles: true },
     }),
+    prisma.user.findMany({
+      orderBy: [{ name: "asc" }, { email: "asc" }],
+      select: { id: true, name: true, email: true, roles: true },
+    }),
   ]);
 
   if (!project) notFound();
@@ -155,12 +161,14 @@ export default async function ProjectDetailPage({
   );
   const publishedJournal =
     acceptedSubmission?.journal ?? project.submissions[0]?.journal;
-  const authorsLine = [
-    project.leadResearcher.name || project.leadResearcher.email,
-    project.coAuthors,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const authorNames =
+    project.authors.length > 0
+      ? project.authors.map((author) => author.name || author.email)
+      : [
+          project.leadResearcher.name || project.leadResearcher.email,
+          project.coAuthors,
+        ].filter(Boolean);
+  const authorsLine = authorNames.join(", ");
   const completedProductionSteps = new Set(project.completedProductionSteps);
   const unfinishedSteps = productionSteps.filter(
     (step) => !completedProductionSteps.has(step.label),
@@ -233,6 +241,16 @@ export default async function ProjectDetailPage({
       roles: user.roles,
     }),
   );
+  const authorOptions: AuthorOption[] = authorUsers.map((user) => ({
+    id: user.id,
+    name: user.name ?? "",
+    email: user.email,
+    role: displayRole(user.roles),
+  }));
+  const defaultAuthorIds =
+    project.authors.length > 0
+      ? project.authors.map((author) => author.id)
+      : [project.leadResearcherId];
   const submissionRows: SubmissionRow[] = project.submissions.map(
     (submission) => ({
       id: submission.id,
@@ -335,15 +353,7 @@ export default async function ProjectDetailPage({
                 />
               </label>
               <div className="grid gap-4 md:grid-cols-[1fr_16rem]">
-                <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Authors
-                  <input
-                    name="coAuthors"
-                    defaultValue={project.coAuthors ?? ""}
-                    placeholder="Names separated by comma"
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
-                  />
-                </label>
+                <AuthorsPicker users={authorOptions} defaultAuthorIds={defaultAuthorIds} />
                 <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Stage
                   <ResearchFormSelect
