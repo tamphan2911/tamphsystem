@@ -125,26 +125,28 @@ export default async function JournalDetailPage({
                     href={item.href as string}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:text-blue-600 hover:shadow-sm dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
+                    className="group/icon relative inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:text-blue-600 hover:shadow-sm dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
                     aria-label={item.label}
-                    title={item.label}
                   >
                     <item.icon className="h-4 w-4" />
+                    <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
+                      {item.label}
+                    </span>
                   </a>
                 ))}
+                {journal.issn && <span className="ml-2 text-sm font-semibold text-slate-500 dark:text-slate-400">ISSN {journal.issn}</span>}
               </div>
             </div>
           </div>
         </div>
 
         <dl className="mt-5 grid gap-3 text-sm md:grid-cols-4">
-          <div><dt className="text-xs font-bold uppercase text-slate-400">ISSN</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.issn || "-"}</dd></div>
-          <div><dt className="text-xs font-bold uppercase text-slate-400">Field</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.field || "-"}</dd></div>
           <div><dt className="text-xs font-bold uppercase text-slate-400">Rank</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.rank || "-"}</dd></div>
           <div><dt className="text-xs font-bold uppercase text-slate-400">Publisher</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.publisher || "-"}</dd></div>
+          <div><dt className="text-xs font-bold uppercase text-slate-400">Area</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.field || "-"}</dd></div>
           <div><dt className="text-xs font-bold uppercase text-slate-400">APC</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.apc || "-"}</dd></div>
           <div><dt className="text-xs font-bold uppercase text-slate-400">Submission Fee</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.submissionFee || "-"}</dd></div>
-          <div className="md:col-span-2"><dt className="text-xs font-bold uppercase text-slate-400"><Hash className="inline h-3.5 w-3.5" /> Note</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.note || "-"}</dd></div>
+          <div className="md:col-span-3"><dt className="text-xs font-bold uppercase text-slate-400"><Hash className="inline h-3.5 w-3.5" /> Note</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.note || "-"}</dd></div>
         </dl>
       </section>
 
