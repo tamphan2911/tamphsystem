@@ -35,6 +35,7 @@ import {
   CreateSubmissionTaskDialog,
   type SubmissionTaskVenueOption,
 } from "./CreateSubmissionTaskDialog";
+import { ResearchContentLockButton } from "./ResearchContentLockButton";
 
 export const dynamic = "force-dynamic";
 
@@ -307,6 +308,12 @@ export default async function ProjectDetailPage({
   const highlightedConferenceClass = highlightedConferenceSubmission
     ? highlightedSubmissionBoxClass(highlightedConferenceSubmission.status)
     : undefined;
+  const journalSuccessLocksResearch = project.submissions.some(
+    (submission) =>
+      submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
+  );
+  const researchContentLocked =
+    journalSuccessLocksResearch && !project.contentUnlocked;
   const authorNames =
     project.authorEntries.length > 0
       ? project.authorEntries.map(
@@ -588,7 +595,13 @@ export default async function ProjectDetailPage({
             <button
               type="submit"
               form="research-detail-form"
-              className="inline-flex h-11 w-full shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-sm font-bold text-emerald-700 shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-md dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-200 dark:shadow-black/20 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/60 sm:w-[11.5rem]"
+              disabled={researchContentLocked}
+              title={
+                researchContentLocked
+                  ? "Research content is locked after journal acceptance or publication"
+                  : "Save research changes"
+              }
+              className="inline-flex h-11 w-full shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-sm font-bold text-emerald-700 shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-md disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:hover:translate-y-0 disabled:hover:bg-slate-100 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-200 dark:shadow-black/20 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/60 dark:disabled:border-slate-800 dark:disabled:bg-slate-900 dark:disabled:text-slate-500 sm:w-[11.5rem]"
             >
               <Save className="h-4 w-4 flex-none" />
               Save changes
@@ -599,24 +612,33 @@ export default async function ProjectDetailPage({
           <p>Authors: {authorsLine}</p>
           {highlightedJournalSubmission && highlightedJournalClass && (
             <div
-              className={`space-y-1 rounded-xl border px-3 py-2 ${highlightedJournalClass.box}`}
+              className={`flex items-center gap-3 rounded-xl border px-3 py-2 ${highlightedJournalClass.box}`}
             >
-              <p>
-                {highlightedJournalSubmission.journal.name} -{" "}
-                {highlightedJournalSubmission.journal.publisher ||
-                  "No publisher"}{" "}
-                - ISSN {highlightedJournalSubmission.journal.issn || "-"} -{" "}
-                {highlightedJournalSubmission.journal.rank || "No rank"}
-              </p>
-              <p className={`text-xs ${highlightedJournalClass.meta}`}>
-                Submitted: {shortDate(highlightedJournalSubmission.submittedAt)}
-                {highlightedJournalSubmission.acceptedAt
-                  ? ` - Accepted: ${shortDate(highlightedJournalSubmission.acceptedAt)}`
-                  : ""}
-                {highlightedJournalSubmission.publishedAt
-                  ? ` - Published: ${shortDate(highlightedJournalSubmission.publishedAt)}`
-                  : ""}
-              </p>
+              <div className="min-w-0 flex-1 space-y-1">
+                <p>
+                  {highlightedJournalSubmission.journal.name} -{" "}
+                  {highlightedJournalSubmission.journal.publisher ||
+                    "No publisher"}{" "}
+                  - ISSN {highlightedJournalSubmission.journal.issn || "-"} -{" "}
+                  {highlightedJournalSubmission.journal.rank || "No rank"}
+                </p>
+                <p className={`text-xs ${highlightedJournalClass.meta}`}>
+                  Submitted:{" "}
+                  {shortDate(highlightedJournalSubmission.submittedAt)}
+                  {highlightedJournalSubmission.acceptedAt
+                    ? ` - Accepted: ${shortDate(highlightedJournalSubmission.acceptedAt)}`
+                    : ""}
+                  {highlightedJournalSubmission.publishedAt
+                    ? ` - Published: ${shortDate(highlightedJournalSubmission.publishedAt)}`
+                    : ""}
+                </p>
+              </div>
+              {isAdmin && (
+                <ResearchContentLockButton
+                  projectId={project.id}
+                  locked={researchContentLocked}
+                />
+              )}
             </div>
           )}
           {highlightedConferenceSubmission && highlightedConferenceClass && (
@@ -660,94 +682,99 @@ export default async function ProjectDetailPage({
         action={updateAction}
         className="grid gap-6 xl:grid-cols-[1fr_22rem]"
       >
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="grid gap-5">
-            <section className="grid gap-4">
-              <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                Title
-                <input
-                  name="title"
-                  defaultValue={project.title}
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+        <fieldset disabled={researchContentLocked} className="contents">
+          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="grid gap-5">
+              <section className="grid gap-4">
+                <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  Title
+                  <input
+                    name="title"
+                    defaultValue={project.title}
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                  />
+                </label>
+                <AuthorsPicker
+                  users={authorOptions}
+                  defaultAuthors={defaultAuthors}
+                  disabled={researchContentLocked}
                 />
-              </label>
-              <AuthorsPicker
-                users={authorOptions}
-                defaultAuthors={defaultAuthors}
-              />
-            </section>
+              </section>
 
-            <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
-              <h2 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
-                Registration and claim
-              </h2>
-              <div className="grid gap-4 md:grid-cols-3">
-                <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  University registration
-                  <input
-                    name="universityRegistration"
-                    defaultValue={project.universityRegistration ?? ""}
-                    placeholder="Q1 2026"
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
-                  />
-                </label>
-                <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Register
-                  <ResearchFormSelect
-                    name="registerStatus"
-                    defaultValue={project.registerStatus}
-                    options={registerOptions}
-                    ariaLabel="Registration status"
-                  />
-                </label>
-                <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Claim status
-                  <ResearchFormSelect
-                    name="claimStatus"
-                    defaultValue={project.claimStatus}
-                    options={claimOptions}
-                    ariaLabel="Claim status"
-                  />
-                </label>
-              </div>
-            </section>
-          </div>
-        </section>
+              <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
+                <h2 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
+                  Registration and claim
+                </h2>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    University registration
+                    <input
+                      name="universityRegistration"
+                      defaultValue={project.universityRegistration ?? ""}
+                      placeholder="Q1 2026"
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                    />
+                  </label>
+                  <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    Register
+                    <ResearchFormSelect
+                      name="registerStatus"
+                      defaultValue={project.registerStatus}
+                      options={registerOptions}
+                      ariaLabel="Registration status"
+                      disabled={researchContentLocked}
+                    />
+                  </label>
+                  <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    Claim status
+                    <ResearchFormSelect
+                      name="claimStatus"
+                      defaultValue={project.claimStatus}
+                      options={claimOptions}
+                      ariaLabel="Claim status"
+                      disabled={researchContentLocked}
+                    />
+                  </label>
+                </div>
+              </section>
+            </div>
+          </section>
 
-        <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="mb-5 flex items-center gap-2 text-base font-bold text-slate-950 dark:text-white">
-            <ClipboardCheck className="h-4 w-4 text-emerald-500" />
-            Production timeline
-          </h2>
-          <div className="relative space-y-1">
-            <div className="absolute bottom-5 left-[0.78rem] top-5 w-px bg-slate-200 dark:bg-slate-700" />
-            {productionSteps.map((step) => {
-              const active = completedProductionSteps.has(step.label);
-              return (
-                <label
-                  key={step.label}
-                  className="relative flex cursor-pointer gap-3 pb-4 last:pb-0"
-                >
-                  <input
-                    type="checkbox"
-                    name="completedProductionSteps"
-                    value={step.label}
-                    defaultChecked={active}
-                    className="z-10 mt-1 h-5 w-5 cursor-pointer rounded-full border-slate-300 bg-white text-emerald-600 accent-emerald-600 shadow-sm transition focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-900"
-                  />
-                  <span>
-                    <span className="block text-sm font-bold text-slate-800 dark:text-slate-100">
-                      {step.label}
+          <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="mb-5 flex items-center gap-2 text-base font-bold text-slate-950 dark:text-white">
+              <ClipboardCheck className="h-4 w-4 text-emerald-500" />
+              Production timeline
+            </h2>
+            <div className="relative space-y-1">
+              <div className="absolute bottom-5 left-[0.78rem] top-5 w-px bg-slate-200 dark:bg-slate-700" />
+              {productionSteps.map((step) => {
+                const active = completedProductionSteps.has(step.label);
+                return (
+                  <label
+                    key={step.label}
+                    className="relative flex cursor-pointer gap-3 pb-4 last:pb-0"
+                  >
+                    <input
+                      type="checkbox"
+                      name="completedProductionSteps"
+                      value={step.label}
+                      defaultChecked={active}
+                      className="z-10 mt-1 h-5 w-5 cursor-pointer rounded-full border-slate-300 bg-white text-emerald-600 accent-emerald-600 shadow-sm transition focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-900"
+                    />
+                    <span>
+                      <span className="block text-sm font-bold text-slate-800 dark:text-slate-100">
+                        {step.label}
+                      </span>
+                      <span className="mt-0.5 block text-xs leading-5 text-slate-500 dark:text-slate-400">
+                        {step.detail}
+                      </span>
                     </span>
-                    <span className="mt-0.5 block text-xs leading-5 text-slate-500 dark:text-slate-400">
-                      {step.detail}
-                    </span>
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </aside>
+                  </label>
+                );
+              })}
+            </div>
+          </aside>
+        </fieldset>
       </SaveForm>
 
       <section className="space-y-4">

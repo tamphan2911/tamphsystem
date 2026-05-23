@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
+import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   BookOpen,
@@ -117,6 +118,28 @@ function dateInputValue(value: string) {
   return date.toISOString().slice(0, 10);
 }
 
+function editableStatusOptions(row: SubmissionRow) {
+  const options =
+    row.kind === "journal" ? statusOptions : conferenceStatusOptions;
+  const normalized = normalizedStatus(row.status);
+
+  if (normalized === "PUBLISHED") {
+    return options.filter(
+      (option) => normalizedStatus(option.value) === "PUBLISHED",
+    );
+  }
+
+  if (normalized === "ACCEPTED") {
+    return options.filter((option) =>
+      ["ACCEPTED", "PUBLISHED"].includes(normalizedStatus(option.value)),
+    );
+  }
+
+  return options.filter(
+    (option) => normalizedStatus(option.value) !== "PUBLISHED",
+  );
+}
+
 function statusDate(row: SubmissionRow) {
   const normalized = normalizedStatus(row.status);
   if (normalized === "PUBLISHED")
@@ -155,6 +178,8 @@ export function SubmissionsTable({
   const [status, setStatus] = useState("ALL");
   const [kind, setKind] = useState("ALL");
   const [editing, setEditing] = useState<SubmissionRow | null>(null);
+  const [acceptanceConfirmation, setAcceptanceConfirmation] =
+    useState<FormData | null>(null);
   const [isPending, startTransition] = useTransition();
   const { showSuccess } = useResearchToast();
 
@@ -183,17 +208,39 @@ export function SubmissionsTable({
 
   const pagination = useTablePagination(filtered, 10);
 
-  function submitStatus(formData: FormData) {
+  function persistStatus(formData: FormData, accepted = false) {
     startTransition(async () => {
       await updateSubmissionStatus(formData);
       setEditing(null);
+      setAcceptanceConfirmation(null);
       showSuccess({
-        title: "Submission status updated",
-        detail:
-          "The status date and research stage signals have been refreshed.",
+        title: accepted ? "Submission accepted" : "Submission status updated",
+        detail: accepted
+          ? "The research content is now locked to protect title, authors, and project details."
+          : "The status date and research stage signals have been refreshed.",
       });
       router.refresh();
     });
+  }
+
+  function submitStatus(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editing) return;
+
+    const formData = new FormData(event.currentTarget);
+    const nextStatus = String(formData.get("status") ?? "");
+    const movesToAccepted =
+      editing.kind === "journal" &&
+      normalizedStatus(nextStatus) === "ACCEPTED" &&
+      normalizedStatus(editing.status) !== "ACCEPTED" &&
+      normalizedStatus(editing.status) !== "PUBLISHED";
+
+    if (movesToAccepted) {
+      setAcceptanceConfirmation(formData);
+      return;
+    }
+
+    persistStatus(formData);
   }
 
   return (
@@ -397,7 +444,7 @@ export function SubmissionsTable({
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form action={submitStatus} className="grid gap-4 px-5 py-4">
+            <form onSubmit={submitStatus} className="grid gap-4 px-5 py-4">
               <input type="hidden" name="submissionId" value={editing.id} />
               <input type="hidden" name="submissionKind" value={editing.kind} />
               <label className="grid gap-1.5">
@@ -412,11 +459,7 @@ export function SubmissionsTable({
                       ? "SUBMITTED"
                       : editing.status
                   }
-                  options={
-                    editing.kind === "journal"
-                      ? statusOptions
-                      : conferenceStatusOptions
-                  }
+                  options={editableStatusOptions(editing)}
                   ariaLabel="Submission status"
                 />
               </label>
@@ -451,6 +494,62 @@ export function SubmissionsTable({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {acceptanceConfirmation && editing && (
+        <div className="fixed inset-0 z-[120] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/65 px-4 py-8 backdrop-blur-sm">
+          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-2xl dark:border-amber-900/70 dark:bg-slate-900">
+            <div className="border-b border-amber-100 bg-amber-50/70 px-5 py-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-bold text-slate-950 dark:text-white">
+                    Accept this submission?
+                  </h3>
+                  <p className="mt-1 text-sm leading-5 text-amber-900 dark:text-amber-100">
+                    Accepting this journal submission will lock the research
+                    title, authors, and project details.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAcceptanceConfirmation(null)}
+                  className="cursor-pointer rounded-lg p-2 text-slate-500 transition hover:bg-white/70 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+                  aria-label="Close confirmation"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div className="grid gap-3 px-5 py-4 text-sm leading-5 text-slate-600 dark:text-slate-300">
+              <p>
+                After the status becomes accepted, it cannot be changed back to
+                submitted, reviewing, or rejected.
+              </p>
+              <p>
+                You can unlock the research content later from the lock icon in
+                the accepted/published information box.
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 border-t border-slate-200 px-5 py-4 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setAcceptanceConfirmation(null)}
+                className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => persistStatus(acceptanceConfirmation, true)}
+                className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-amber-700 disabled:cursor-wait disabled:opacity-70"
+              >
+                <Check className="h-4 w-4" />
+                Accept and lock
+              </button>
+            </div>
           </div>
         </div>
       )}

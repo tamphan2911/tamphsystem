@@ -256,6 +256,7 @@ model ResearchProject {
   registerStatus           RegistrationStatus @default(NOT_REGISTERED)
   claimStatus              ClaimStatus        @default(CANNOT_CLAIM)
   completedProductionSteps String[]           @default([])
+  contentUnlocked          Boolean            @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -218,6 +218,25 @@ export async function updateResearchProject(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
+  const projectLock = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: {
+      contentUnlocked: true,
+      submissions: { select: { status: true } },
+    },
+  });
+
+  const hasLockedJournalSubmission = projectLock?.submissions.some(
+    (submission) =>
+      submission.status === SubmissionStatus.ACCEPTED ||
+      submission.status === SubmissionStatus.PUBLISHED,
+  );
+
+  if (hasLockedJournalSubmission && !projectLock?.contentUnlocked) {
+    revalidatePath(`/projects/${projectId}`);
+    return;
+  }
+
   const authorIds = orderedUniqueStrings(formData.getAll("authorUserIds"));
   const selectedAuthorIds = authorIds.length > 0 ? authorIds : [user.id];
   const correspondingAuthorId =
@@ -271,6 +290,22 @@ export async function updateResearchProject(
   });
 
   await refreshResearchStage(projectId, completedProductionSteps);
+
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function setResearchContentLock(
+  projectId: string,
+  locked: boolean,
+) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.researchProject.update({
+    where: { id: projectId },
+    data: { contentUnlocked: !locked },
+  });
 
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
@@ -643,8 +678,30 @@ export async function updateSubmissionStatus(formData: FormData) {
 
     const currentSubmission = await prisma.researchSubmission.findUnique({
       where: { id: submissionId },
-      select: { acceptedAt: true },
+      select: { acceptedAt: true, status: true },
     });
+    if (!currentSubmission) return;
+    if (
+      currentSubmission.status === SubmissionStatus.ACCEPTED ||
+      currentSubmission.status === SubmissionStatus.PUBLISHED
+    ) {
+      const lockedPastAcceptedStatuses = new Set<SubmissionStatus>([
+        SubmissionStatus.PENDING,
+        SubmissionStatus.UNDER_REVIEW,
+        SubmissionStatus.REVISION,
+        SubmissionStatus.REJECTED,
+        SubmissionStatus.WITHDRAWN,
+      ]);
+      const lockedPastAccepted = lockedPastAcceptedStatuses.has(journalStatus);
+      if (lockedPastAccepted) return;
+    }
+    if (
+      journalStatus === SubmissionStatus.PUBLISHED &&
+      currentSubmission.status !== SubmissionStatus.ACCEPTED &&
+      currentSubmission.status !== SubmissionStatus.PUBLISHED
+    ) {
+      return;
+    }
 
     const data: {
       status: SubmissionStatus;
@@ -667,7 +724,14 @@ export async function updateSubmissionStatus(formData: FormData) {
 
     const submission = await prisma.researchSubmission.update({
       where: { id: submissionId },
-      data,
+      data: {
+        ...data,
+        project:
+          journalStatus === SubmissionStatus.ACCEPTED ||
+          journalStatus === SubmissionStatus.PUBLISHED
+            ? { update: { contentUnlocked: false } }
+            : undefined,
+      },
       select: { researchProjectId: true, journalId: true },
     });
 
@@ -684,8 +748,31 @@ export async function updateSubmissionStatus(formData: FormData) {
 
     const currentSubmission = await prisma.conferenceSubmission.findUnique({
       where: { id: submissionId },
-      select: { acceptedAt: true },
+      select: { acceptedAt: true, status: true },
     });
+    if (!currentSubmission) return;
+    if (
+      currentSubmission.status === ConferenceSubmissionStatus.ACCEPTED ||
+      currentSubmission.status === ConferenceSubmissionStatus.PUBLISHED
+    ) {
+      const lockedPastAcceptedStatuses = new Set<ConferenceSubmissionStatus>([
+        ConferenceSubmissionStatus.PLANNED,
+        ConferenceSubmissionStatus.SUBMITTED,
+        ConferenceSubmissionStatus.REVIEWING,
+        ConferenceSubmissionStatus.REJECTED,
+        ConferenceSubmissionStatus.WITHDRAWN,
+      ]);
+      const lockedPastAccepted =
+        lockedPastAcceptedStatuses.has(conferenceStatus);
+      if (lockedPastAccepted) return;
+    }
+    if (
+      conferenceStatus === ConferenceSubmissionStatus.PUBLISHED &&
+      currentSubmission.status !== ConferenceSubmissionStatus.ACCEPTED &&
+      currentSubmission.status !== ConferenceSubmissionStatus.PUBLISHED
+    ) {
+      return;
+    }
 
     const data: {
       status: ConferenceSubmissionStatus;

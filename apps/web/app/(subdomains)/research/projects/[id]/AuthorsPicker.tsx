@@ -1,7 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Check, Mail, Search, Star, UserRound, X } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  LockKeyhole,
+  Mail,
+  Search,
+  Star,
+  UserRound,
+  X,
+} from "lucide-react";
 
 export type AuthorOption = {
   id: string;
@@ -21,17 +31,25 @@ function authorName(author: AuthorOption) {
 export function AuthorsPicker({
   users,
   defaultAuthors,
+  disabled = false,
 }: {
   users: AuthorOption[];
   defaultAuthors: SelectedAuthor[];
+  disabled?: boolean;
 }) {
-  const initialAuthors = defaultAuthors.length > 0 ? defaultAuthors : users.slice(0, 1).map((user) => ({ ...user, isCorresponding: true }));
+  const initialAuthors =
+    defaultAuthors.length > 0
+      ? defaultAuthors
+      : users.slice(0, 1).map((user) => ({ ...user, isCorresponding: true }));
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [authors, setAuthors] = useState<SelectedAuthor[]>(initialAuthors);
 
   const selectedIds = new Set(authors.map((author) => author.id));
-  const correspondingId = authors.find((author) => author.isCorresponding)?.id ?? authors[0]?.id ?? "";
+  const correspondingId =
+    authors.find((author) => author.isCorresponding)?.id ??
+    authors[0]?.id ??
+    "";
 
   const results = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -39,13 +57,23 @@ export function AuthorsPicker({
 
     return users
       .filter((user) => !selectedIds.has(user.id))
-      .filter((user) => [user.id, user.name, user.email, user.role].join(" ").toLowerCase().includes(needle))
+      .filter((user) =>
+        [user.id, user.name, user.email, user.role]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
       .slice(0, 8);
   }, [query, selectedIds, users]);
 
   function addAuthor(user: AuthorOption) {
+    if (disabled) return;
     setAuthors((current) => [
-      ...current.map((author, index) => ({ ...author, isCorresponding: index === 0 ? author.isCorresponding : author.isCorresponding })),
+      ...current.map((author, index) => ({
+        ...author,
+        isCorresponding:
+          index === 0 ? author.isCorresponding : author.isCorresponding,
+      })),
       { ...user, isCorresponding: current.length === 0 },
     ]);
     setQuery("");
@@ -53,6 +81,7 @@ export function AuthorsPicker({
   }
 
   function removeAuthor(userId: string) {
+    if (disabled) return;
     setAuthors((current) => {
       const next = current.filter((author) => author.id !== userId);
       if (next.length > 0 && !next.some((author) => author.isCorresponding)) {
@@ -66,10 +95,12 @@ export function AuthorsPicker({
   }
 
   function moveAuthor(userId: string, direction: -1 | 1) {
+    if (disabled) return;
     setAuthors((current) => {
       const index = current.findIndex((author) => author.id === userId);
       const nextIndex = index + direction;
-      if (index < 0 || nextIndex < 0 || nextIndex >= current.length) return current;
+      if (index < 0 || nextIndex < 0 || nextIndex >= current.length)
+        return current;
 
       const next = [...current];
       const [item] = next.splice(index, 1);
@@ -80,30 +111,57 @@ export function AuthorsPicker({
   }
 
   function setCorresponding(userId: string) {
-    setAuthors((current) => current.map((author) => ({ ...author, isCorresponding: author.id === userId })));
+    if (disabled) return;
+    setAuthors((current) =>
+      current.map((author) => ({
+        ...author,
+        isCorresponding: author.id === userId,
+      })),
+    );
   }
 
   return (
     <div className="grid gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-      <span>Authors</span>
+      <span className="flex items-center gap-2">
+        Authors
+        {disabled && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+            <LockKeyhole className="h-3 w-3" aria-hidden="true" />
+            Locked
+          </span>
+        )}
+      </span>
       {authors.map((author) => (
-        <input key={author.id} type="hidden" name="authorUserIds" value={author.id} />
+        <input
+          key={author.id}
+          type="hidden"
+          name="authorUserIds"
+          value={author.id}
+        />
       ))}
-      <input type="hidden" name="correspondingAuthorId" value={correspondingId} />
+      <input
+        type="hidden"
+        name="correspondingAuthorId"
+        value={correspondingId}
+      />
 
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-950">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            aria-hidden="true"
+          />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onFocus={() => setFocused(true)}
             onBlur={() => window.setTimeout(() => setFocused(false), 120)}
             placeholder="Search user by name, ID, or email..."
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            disabled={disabled}
+            className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
           />
 
-          {focused && query.trim().length > 0 && (
+          {!disabled && focused && query.trim().length > 0 && (
             <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
               <div className="max-h-72 overflow-y-auto">
                 {results.length > 0 ? (
@@ -119,12 +177,17 @@ export function AuthorsPicker({
                         <UserRound className="h-4 w-4" aria-hidden="true" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">{authorName(user)}</span>
+                        <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                          {authorName(user)}
+                        </span>
                         <span className="block truncate text-xs font-medium text-slate-400 dark:text-slate-500">
                           {user.role} - {user.email} - {user.id.slice(0, 8)}
                         </span>
                       </span>
-                      <Check className="h-4 w-4 flex-none text-blue-500" aria-hidden="true" />
+                      <Check
+                        className="h-4 w-4 flex-none text-blue-500"
+                        aria-hidden="true"
+                      />
                     </button>
                   ))
                 ) : (
@@ -151,7 +214,7 @@ export function AuthorsPicker({
                   <button
                     type="button"
                     aria-label={`Move ${authorName(author)} up`}
-                    disabled={index === 0}
+                    disabled={disabled || index === 0}
                     onClick={() => moveAuthor(author.id, -1)}
                     className="cursor-pointer rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                   >
@@ -160,7 +223,7 @@ export function AuthorsPicker({
                   <button
                     type="button"
                     aria-label={`Move ${authorName(author)} down`}
-                    disabled={index === authors.length - 1}
+                    disabled={disabled || index === authors.length - 1}
                     onClick={() => moveAuthor(author.id, 1)}
                     className="cursor-pointer rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                   >
@@ -196,6 +259,7 @@ export function AuthorsPicker({
                 <button
                   type="button"
                   aria-label={`Set ${authorName(author)} as corresponding author`}
+                  disabled={disabled}
                   onClick={() => setCorresponding(author.id)}
                   className={`cursor-pointer rounded-lg p-2 transition ${
                     corresponding
@@ -208,8 +272,9 @@ export function AuthorsPicker({
                 <button
                   type="button"
                   aria-label={`Remove ${authorName(author)}`}
+                  disabled={disabled}
                   onClick={() => removeAuthor(author.id)}
-                  className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                  className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
                 >
                   <X className="h-4 w-4" aria-hidden="true" />
                 </button>
