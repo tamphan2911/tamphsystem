@@ -90,7 +90,7 @@ function badgeClass(value: string) {
 function rowClass(value: string) {
   const normalized = normalizedStatus(value);
   if (normalized === "REJECTED")
-    return "bg-slate-100/80 hover:bg-slate-100 dark:bg-slate-800/45 dark:hover:bg-slate-800/65";
+    return "bg-slate-200/95 hover:bg-slate-200 dark:bg-slate-700/70 dark:hover:bg-slate-700/80";
   if (normalized === "ACCEPTED")
     return "bg-emerald-50/70 hover:bg-emerald-50 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30";
   if (normalized === "PUBLISHED")
@@ -299,19 +299,17 @@ export function SubmissionsTable({
                       >
                         {statusLabel(row.status)}
                       </span>
-                      {normalizedStatus(row.status) === "PUBLISHED" &&
-                        row.publishedAt && (
-                          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                            published: {shortDate(row.publishedAt)}
-                          </span>
-                        )}
+                      {normalizedStatus(row.status) === "PUBLISHED" && (
+                        <span className="text-[11px] font-medium text-blue-700/80 dark:text-blue-200/80">
+                          published: {shortDate(row.publishedAt) || "-"}
+                        </span>
+                      )}
                       {(normalizedStatus(row.status) === "PUBLISHED" ||
-                        normalizedStatus(row.status) === "ACCEPTED") &&
-                        row.acceptedAt && (
-                          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                            accepted: {shortDate(row.acceptedAt)}
-                          </span>
-                        )}
+                        normalizedStatus(row.status) === "ACCEPTED") && (
+                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                          accepted: {shortDate(row.acceptedAt) || "-"}
+                        </span>
+                      )}
                       {normalizedStatus(row.status) === "REJECTED" &&
                         row.rejectedAt && (
                           <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
@@ -426,13 +424,13 @@ export function SubmissionsTable({
                 <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Status date
                 </span>
-                <div className="relative">
-                  <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <div className="group/date relative rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 via-slate-50 to-emerald-50 p-1.5 shadow-sm transition focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-blue-900/60 dark:from-blue-950/30 dark:via-slate-950 dark:to-emerald-950/20">
+                  <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-500 transition group-focus-within/date:text-blue-600 dark:text-blue-300" />
                   <input
                     name="statusDate"
                     type="date"
                     defaultValue={dateInputValue(statusDate(editing))}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    className="w-full cursor-pointer rounded-lg border border-white/80 bg-white/85 py-2.5 pl-9 pr-3 text-sm font-semibold text-slate-800 outline-none transition [color-scheme:light] hover:bg-white dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-100 dark:[color-scheme:dark]"
                   />
                 </div>
               </label>
