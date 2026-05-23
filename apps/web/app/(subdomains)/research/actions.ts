@@ -11,6 +11,7 @@ import {
   CurrencyCode,
   RegistrationStatus,
   ResearchStage,
+  OrganizedProjectStatus,
   ResearchAuthorNotificationType,
   ResearchTaskCategory,
   ResearchTaskStatus,
@@ -299,6 +300,48 @@ export async function createResearchProject(formData: FormData) {
 
   revalidatePath("/projects");
   redirect("/projects");
+}
+
+export async function createOrganizedProject(formData: FormData) {
+  const user = await requireCurrentUser();
+  const researchProjectIds = orderedUniqueStrings(
+    formData.getAll("researchProjectIds"),
+  );
+  const requiredResearchCountText = optionalString(
+    formData.get("requiredResearchCount"),
+  );
+  const requiredResearchCount = requiredResearchCountText
+    ? Number(requiredResearchCountText)
+    : null;
+
+  await prisma.organizedProject.create({
+    data: {
+      title: optionalString(formData.get("title")) ?? "Untitled project",
+      organizer: optionalString(formData.get("organizer")),
+      referenceCode: optionalString(formData.get("referenceCode")),
+      description: optionalString(formData.get("description")),
+      note: optionalString(formData.get("note")),
+      status:
+        enumValue(OrganizedProjectStatus, formData.get("status")) ??
+        OrganizedProjectStatus.PLANNED,
+      requiredResearchCount:
+        typeof requiredResearchCount === "number" &&
+        Number.isFinite(requiredResearchCount)
+          ? requiredResearchCount
+          : null,
+      startDate: dateFromForm(formData.get("startDate")),
+      endDate: dateFromForm(formData.get("endDate")),
+      createdById: user.id,
+      research: {
+        create: researchProjectIds.map((researchProjectId) => ({
+          researchProjectId,
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/organized-projects");
+  redirect("/organized-projects");
 }
 
 export async function updateResearchProject(

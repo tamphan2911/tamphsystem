@@ -19,6 +19,7 @@ import { ResearchToastProvider } from "./components/ResearchToast";
 
 const navItems = [
   { href: "/projects", label: "Research", icon: "projects" as const },
+  { href: "/organized-projects", label: "Projects", icon: "organizedProjects" as const },
   { href: "/tasks", label: "Tasks", icon: "tasks" as const, requiresTaskAccess: true },
   { href: "/journals", label: "Journals", icon: "journals" as const },
   { href: "/conferences", label: "Conferences", icon: "conferences" as const },

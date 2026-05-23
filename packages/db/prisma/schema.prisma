@@ -60,6 +60,7 @@ model User {
   suggestedJournals               SuggestedJournal[]           @relation("SuggestedJournalCreator")
   suggestedConferences            SuggestedConference[]        @relation("SuggestedConferenceCreator")
   sentResearchAuthorNotifications ResearchAuthorNotification[] @relation("ResearchAuthorNotificationSender")
+  createdOrganizedProjects        OrganizedProject[]           @relation("OrganizedProjectCreator")
 }
 
 // ---------------------------------------------
@@ -252,6 +253,13 @@ enum ResearchTaskCategory {
   REFERENCES          @map("References")
 }
 
+enum OrganizedProjectStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
 model ResearchProject {
   id       String        @id @default(uuid())
   title    String
@@ -281,6 +289,43 @@ model ResearchProject {
   suggestedConferences  SuggestedConference[]
   tasks                 ResearchTask[]
   authorNotifications   ResearchAuthorNotification[]
+  organizedProjectLinks OrganizedProjectResearch[]
+}
+
+model OrganizedProject {
+  id                    String                 @id @default(uuid())
+  title                 String
+  organizer             String?
+  referenceCode         String?
+  description           String?
+  status                OrganizedProjectStatus @default(PLANNED)
+  requiredResearchCount Int?
+  startDate             DateTime?
+  endDate               DateTime?
+  note                  String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  createdById String?
+  createdBy   User?   @relation("OrganizedProjectCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  research    OrganizedProjectResearch[]
+
+  @@index([status])
+  @@index([organizer])
+}
+
+model OrganizedProjectResearch {
+  id                 String   @id @default(uuid())
+  organizedProjectId String
+  researchProjectId  String
+  resultNote         String?
+  createdAt          DateTime @default(now())
+
+  organizedProject OrganizedProject @relation(fields: [organizedProjectId], references: [id], onDelete: Cascade)
+  researchProject  ResearchProject  @relation(fields: [researchProjectId], references: [id], onDelete: Cascade)
+
+  @@unique([organizedProjectId, researchProjectId])
+  @@index([researchProjectId])
 }
 
 model ResearchAuthorNotification {

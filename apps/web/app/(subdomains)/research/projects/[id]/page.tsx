@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
+  Building2,
   ClipboardCheck,
   Save,
   Send,
@@ -235,6 +236,10 @@ export default async function ProjectDetailPage({
               conference: true,
               createdBy: { select: { name: true, email: true, roles: true } },
             },
+            orderBy: { createdAt: "desc" },
+          },
+          organizedProjectLinks: {
+            include: { organizedProject: true },
             orderBy: { createdAt: "desc" },
           },
           tasks: {
@@ -675,6 +680,32 @@ export default async function ProjectDetailPage({
           )}
         </div>
       </div>
+
+      {project.organizedProjectLinks.length > 0 && (
+        <section className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 shadow-sm dark:border-blue-900/60 dark:bg-blue-950/20">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-blue-900 dark:text-blue-100">
+            <Building2 className="h-4 w-4" />
+            Used as project result
+          </h2>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            {project.organizedProjectLinks.map(({ organizedProject }) => (
+              <Link
+                key={organizedProject.id}
+                href="/organized-projects"
+                className="rounded-lg border border-blue-100 bg-white/80 px-3 py-2 transition hover:border-blue-300 hover:bg-white dark:border-blue-900/60 dark:bg-slate-900/70 dark:hover:border-blue-700"
+              >
+                <p className="line-clamp-1 text-sm font-semibold text-slate-900 dark:text-white">
+                  {organizedProject.title}
+                </p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {organizedProject.organizer || "No organizer"} -{" "}
+                  {organizedProject.status}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <SaveForm
         id="research-detail-form"

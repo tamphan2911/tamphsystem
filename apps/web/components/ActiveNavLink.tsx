@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, CalendarDays, ClipboardCheck, ClipboardList, FolderGit2, KeyRound, ShieldCheck } from "lucide-react";
+import { BookOpen, Building2, CalendarDays, ClipboardCheck, ClipboardList, FolderGit2, KeyRound, ShieldCheck } from "lucide-react";
 
 const icons = {
   projects: FolderGit2,
@@ -12,6 +12,7 @@ const icons = {
   reviews: ClipboardCheck,
   tasks: ClipboardList,
   conferences: CalendarDays,
+  organizedProjects: Building2,
 };
 
 export function ActiveNavLink({
