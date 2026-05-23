@@ -274,66 +274,66 @@ export function ResearchProjectsTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[56rem] text-left">
+      <div className="overflow-hidden">
+        <table className="w-full table-fixed text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="sticky left-0 z-20 w-[5.75rem] bg-slate-50 px-3 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
+              <th className="w-[5.75rem] px-3 py-3">
                 ID
               </th>
-              <th className="px-4 py-3">
+              <th className="px-3 py-3">
                 Research
               </th>
-              <th className="px-4 py-3">Stage</th>
-              <th className="px-4 py-3">Claim</th>
-              <th className="px-4 py-3">Registration</th>
-              <th className="px-4 py-3 text-center">Submit</th>
+              <th className="w-[4.5rem] px-3 py-3">Stage</th>
+              <th className="w-[4.5rem] px-3 py-3">Claim</th>
+              <th className="w-[12rem] px-3 py-3">Registration</th>
+              <th className="w-[5rem] px-3 py-3 text-center">Submit</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {pagination.pagedRows.map((row) => (
               <tr
                 key={row.id}
-                className="group transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
               >
-                <td className="sticky left-0 z-10 bg-white px-3 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                  <Link href={`/projects/${row.id}`} className="group">
-                    <span className="font-mono text-xs font-bold text-slate-600 group-hover:text-blue-600 dark:text-slate-300">
+                <td className="px-3 py-3 align-top">
+                  <Link href={`/projects/${row.id}`}>
+                    <span className="font-mono text-xs font-bold text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300">
                       {row.researchCode || "-"}
                     </span>
                   </Link>
                 </td>
-                <td className="px-4 py-3">
+                <td className="min-w-0 px-3 py-3 align-top">
                   <Link href={`/projects/${row.id}`} className="group">
-                    <p className="text-base font-normal text-slate-700 group-hover:text-blue-600 dark:text-slate-200">
+                    <p className="line-clamp-2 text-base font-normal text-slate-700 transition group-hover:text-blue-600 dark:text-slate-200 dark:group-hover:text-blue-300">
                       {row.title}
                     </p>
-                    <p className="mt-1 line-clamp-1 max-w-lg text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
                       {row.coAuthors || row.abstract || "No notes"}
                     </p>
                   </Link>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3 align-top">
                   <StatusIconChip
                     icon={stageIcon(row.stage)}
                     label={stageLabel(row.stage)}
                     className={statusClass(row.stage)}
                   />
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3 align-top">
                   <StatusIconChip
                     icon={claimIcon(row.claimStatus)}
                     label={claimLabel(row.claimStatus)}
                     className={claimClass(row.claimStatus)}
                   />
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3 align-top">
                   <RegistrationCell
                     status={row.registerStatus}
                     registration={row.universityRegistration}
                   />
                 </td>
-                <td className="px-4 py-3 text-center">
+                <td className="px-3 py-3 text-center align-top">
                   <SubmitCount count={row.submissions} />
                 </td>
               </tr>
