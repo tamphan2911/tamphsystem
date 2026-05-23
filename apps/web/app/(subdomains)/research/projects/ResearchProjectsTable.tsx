@@ -305,7 +305,7 @@ export function ResearchProjectsTable({
                 </td>
                 <td className="px-4 py-3">
                   <Link href={`/projects/${row.id}`} className="group">
-                    <p className="text-sm font-normal text-slate-700 group-hover:text-blue-600 dark:text-slate-200">
+                    <p className="text-base font-normal text-slate-700 group-hover:text-blue-600 dark:text-slate-200">
                       {row.title}
                     </p>
                     <p className="mt-1 line-clamp-1 max-w-lg text-xs text-slate-500 dark:text-slate-400">

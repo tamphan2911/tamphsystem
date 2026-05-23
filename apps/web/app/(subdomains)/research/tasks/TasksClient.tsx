@@ -328,7 +328,7 @@ export function TasksClient({ isAdmin }: { isAdmin: boolean }) {
                     <td className="min-w-0 px-3 py-3 align-top">
                       <Link
                         href={`/tasks/${task.id}`}
-                        className="text-sm font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                        className="text-base font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
                       >
                         {task.title}
                       </Link>

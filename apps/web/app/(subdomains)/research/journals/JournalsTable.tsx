@@ -167,7 +167,7 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
                 key={journal.id}
                 className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
               >
-                <td className="px-4 py-3 text-sm font-normal text-slate-700 dark:text-slate-200">
+                <td className="px-4 py-3 text-base font-normal text-slate-700 dark:text-slate-200">
                   <Link
                     href={`/journals/${journal.id}?back=${encodeURIComponent(currentListPath)}`}
                     className="hover:text-blue-600 dark:hover:text-blue-300"
