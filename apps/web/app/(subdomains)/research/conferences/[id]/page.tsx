@@ -42,6 +42,7 @@ export default async function ConferenceDetailPage({ params }: { params: Promise
 
   const submittedResearch: ResearchProjectRow[] = conference.submissions.map(({ project }) => ({
     id: project.id,
+    researchCode: project.researchCode ?? "",
     title: project.title,
     abstract: project.abstract ?? "",
     stage: project.stage,

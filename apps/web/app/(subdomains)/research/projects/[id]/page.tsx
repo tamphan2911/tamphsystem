@@ -588,6 +588,11 @@ export default async function ProjectDetailPage({
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <h1 className="min-w-0 text-xl font-bold leading-8 tracking-tight text-slate-950 dark:text-white">
             {project.title}
+            {project.researchCode && (
+              <span className="ml-2 align-baseline text-sm font-semibold text-slate-500 dark:text-slate-400">
+                (ID: {project.researchCode})
+              </span>
+            )}
           </h1>
           <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row xl:justify-end">
             <div

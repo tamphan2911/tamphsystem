@@ -261,10 +261,11 @@ enum OrganizedProjectStatus {
 }
 
 model ResearchProject {
-  id       String        @id @default(uuid())
-  title    String
-  abstract String?
-  stage    ResearchStage @default(PRODUCTION)
+  id           String        @id @default(uuid())
+  researchCode String?       @unique
+  title        String
+  abstract     String?
+  stage        ResearchStage @default(PRODUCTION)
 
   // Production Stage Tracking
   coAuthors                String?

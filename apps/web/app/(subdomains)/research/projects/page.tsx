@@ -163,8 +163,55 @@ async function ensureDemoResearchProjects() {
   }
 }
 
+async function ensureResearchCodes() {
+  const projects = await prisma.researchProject.findMany({
+    where: { researchCode: null },
+    select: { id: true, createdAt: true },
+  });
+
+  if (projects.length === 0) return;
+
+  const existing = await prisma.researchProject.findMany({
+    where: { researchCode: { not: null } },
+    select: { researchCode: true },
+  });
+  const usedByYear = new Map<number, Set<number>>();
+
+  for (const project of existing) {
+    const [yearText, numberText] = project.researchCode?.split("-") ?? [];
+    const year = Number(yearText);
+    const number = Number(numberText);
+    if (!Number.isFinite(year) || !Number.isFinite(number)) continue;
+    const used = usedByYear.get(year) ?? new Set<number>();
+    used.add(number);
+    usedByYear.set(year, used);
+  }
+
+  const byYear = new Map<number, typeof projects>();
+  for (const project of projects) {
+    const year = project.createdAt.getFullYear();
+    byYear.set(year, [...(byYear.get(year) ?? []), project]);
+  }
+
+  for (const [year, yearProjects] of byYear) {
+    const used = usedByYear.get(year) ?? new Set<number>();
+    const shuffled = [...yearProjects].sort(() => Math.random() - 0.5);
+
+    for (const project of shuffled) {
+      let next = 1;
+      while (used.has(next)) next += 1;
+      used.add(next);
+      await prisma.researchProject.update({
+        where: { id: project.id },
+        data: { researchCode: `${year}-${String(next).padStart(2, "0")}` },
+      });
+    }
+  }
+}
+
 export default async function ProjectsDashboard() {
   await ensureDemoResearchProjects();
+  await ensureResearchCodes();
 
   const projects = await prisma.researchProject.findMany({
     include: {
@@ -193,6 +240,7 @@ export default async function ProjectsDashboard() {
 
   const rows: ResearchProjectRow[] = projects.map((project) => ({
     id: project.id,
+    researchCode: project.researchCode ?? "",
     title: project.title,
     abstract: project.abstract ?? "",
     stage: project.stage,

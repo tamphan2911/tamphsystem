@@ -13,7 +13,6 @@ import {
   FileCheck2,
   FileClock,
   FileSearch,
-  FileText,
   FlaskConical,
   Send,
   SendHorizontal,
@@ -29,6 +28,7 @@ import {
 
 export type ResearchProjectRow = {
   id: string;
+  researchCode: string;
   title: string;
   abstract: string;
   stage: string;
@@ -226,6 +226,7 @@ export function ResearchProjectsTable({
       const matchesClaim = claim === "ALL" || row.claimStatus === claim;
       const haystack = [
         row.title,
+        row.researchCode,
         row.abstract,
         row.coAuthors,
         row.universityRegistration,
@@ -274,10 +275,13 @@ export function ResearchProjectsTable({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[50rem] text-left">
+        <table className="w-full min-w-[56rem] text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
+              <th className="sticky left-0 z-20 w-32 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
+                ID
+              </th>
+              <th className="px-4 py-3">
                 Research
               </th>
               <th className="px-4 py-3">Stage</th>
@@ -292,24 +296,21 @@ export function ResearchProjectsTable({
                 key={row.id}
                 className="group transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
               >
-                <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800">
+                <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
                   <Link href={`/projects/${row.id}`} className="group">
-                    <div className="flex items-start gap-3">
-                      <IconHint label="Research project">
-                        <FileText
-                          className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600"
-                          aria-hidden="true"
-                        />
-                      </IconHint>
-                      <div>
-                        <p className="text-sm font-normal text-slate-700 group-hover:text-blue-600 dark:text-slate-200">
-                          {row.title}
-                        </p>
-                        <p className="mt-1 line-clamp-1 max-w-lg text-xs text-slate-500 dark:text-slate-400">
-                          {row.coAuthors || row.abstract || "No notes"}
-                        </p>
-                      </div>
-                    </div>
+                    <span className="font-mono text-sm font-bold text-slate-600 group-hover:text-blue-600 dark:text-slate-300">
+                      {row.researchCode || "-"}
+                    </span>
+                  </Link>
+                </td>
+                <td className="px-4 py-3">
+                  <Link href={`/projects/${row.id}`} className="group">
+                    <p className="text-sm font-normal text-slate-700 group-hover:text-blue-600 dark:text-slate-200">
+                      {row.title}
+                    </p>
+                    <p className="mt-1 line-clamp-1 max-w-lg text-xs text-slate-500 dark:text-slate-400">
+                      {row.coAuthors || row.abstract || "No notes"}
+                    </p>
                   </Link>
                 </td>
                 <td className="px-4 py-3">
@@ -340,7 +341,7 @@ export function ResearchProjectsTable({
             {pagination.total === 0 && (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                 >
                   No research matches the current search.

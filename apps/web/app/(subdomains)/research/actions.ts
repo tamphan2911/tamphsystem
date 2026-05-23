@@ -236,6 +236,27 @@ async function refreshResearchStage(
   });
 }
 
+async function generateResearchCode(year = new Date().getFullYear()) {
+  const existing = await prisma.researchProject.findMany({
+    where: {
+      researchCode: {
+        startsWith: `${year}-`,
+      },
+    },
+    select: { researchCode: true },
+  });
+  const used = new Set(
+    existing
+      .map((project) => project.researchCode?.split("-")[1])
+      .filter((value): value is string => Boolean(value))
+      .map((value) => Number(value)),
+  );
+
+  let next = 1;
+  while (used.has(next)) next += 1;
+  return `${year}-${String(next).padStart(2, "0")}`;
+}
+
 async function requireCurrentUser() {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
@@ -272,6 +293,7 @@ export async function createResearchProject(formData: FormData) {
   await prisma.researchProject.create({
     data: {
       title: optionalString(formData.get("title")) ?? "Untitled research",
+      researchCode: await generateResearchCode(),
       abstract: optionalString(formData.get("abstract")),
       stage: ResearchStage.PRODUCTION,
       coAuthors: optionalString(formData.get("coAuthors")),
