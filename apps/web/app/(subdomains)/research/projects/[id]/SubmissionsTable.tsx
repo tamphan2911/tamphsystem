@@ -11,9 +11,11 @@ import {
   CircleDollarSign,
   Edit3,
   Landmark,
+  Trash2,
+  TriangleAlert,
   X,
 } from "lucide-react";
-import { updateSubmissionStatus } from "../../actions";
+import { deleteSubmission, updateSubmissionStatus } from "../../actions";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
 import {
   FilterSelect,
@@ -171,16 +173,22 @@ export function SubmissionsTable({
   rows,
   isAdmin,
   disabled = false,
+  actionMode = isAdmin ? "edit" : "none",
 }: {
   rows: SubmissionRow[];
   isAdmin: boolean;
   disabled?: boolean;
+  actionMode?: "none" | "edit" | "delete";
 }) {
   const router = useRouter();
+  const hasAction = isAdmin && actionMode !== "none";
+  const showStatusEdit = isAdmin && actionMode === "edit";
+  const showDelete = isAdmin && actionMode === "delete";
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("ALL");
   const [kind, setKind] = useState("ALL");
   const [editing, setEditing] = useState<SubmissionRow | null>(null);
+  const [deleting, setDeleting] = useState<SubmissionRow | null>(null);
   const [acceptanceConfirmation, setAcceptanceConfirmation] =
     useState<FormData | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -254,6 +262,32 @@ export function SubmissionsTable({
     persistStatus(formData);
   }
 
+  function confirmDelete() {
+    if (!deleting) return;
+
+    const formData = new FormData();
+    formData.set("submissionId", deleting.id);
+    formData.set("submissionKind", deleting.kind);
+
+    startTransition(async () => {
+      const result = await deleteSubmission(formData);
+      if (result && !result.ok) {
+        showError({
+          title: "Submission not deleted",
+          detail: result.message,
+        });
+        return;
+      }
+      setDeleting(null);
+      showSuccess({
+        title: "Submission deleted",
+        detail:
+          "The submission list and related research records have been refreshed.",
+      });
+      router.refresh();
+    });
+  }
+
   return (
     <>
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -295,27 +329,37 @@ export function SubmissionsTable({
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
                 <th className="w-[7%] px-4 py-3">ID</th>
-                <th className={`${isAdmin ? "w-[29%]" : "w-[33%]"} px-4 py-3`}>
+                <th
+                  className={`${hasAction ? "w-[29%]" : "w-[33%]"} px-4 py-3`}
+                >
                   Journal / Conference
                 </th>
-                <th className={`${isAdmin ? "w-[18%]" : "w-[20%]"} px-4 py-3`}>
+                <th
+                  className={`${hasAction ? "w-[18%]" : "w-[20%]"} px-4 py-3`}
+                >
                   <span className="inline-flex items-center gap-2">
                     Status
-                    <IconHint label="Edit status from a row">
-                      <Edit3
-                        className="h-3.5 w-3.5 text-slate-400"
-                        aria-hidden="true"
-                      />
-                    </IconHint>
+                    {showStatusEdit && (
+                      <IconHint label="Edit status from a row">
+                        <Edit3
+                          className="h-3.5 w-3.5 text-slate-400"
+                          aria-hidden="true"
+                        />
+                      </IconHint>
+                    )}
                   </span>
                 </th>
                 <th className="w-[11%] px-4 py-3">APC</th>
                 <th className="w-[12%] px-4 py-3">Submission fee</th>
-                <th className={`${isAdmin ? "w-[16%]" : "w-[17%]"} px-4 py-3`}>
+                <th
+                  className={`${hasAction ? "w-[16%]" : "w-[17%]"} px-4 py-3`}
+                >
                   Account
                 </th>
-                {isAdmin && (
-                  <th className="w-[7%] px-4 py-3 text-right">Edit</th>
+                {hasAction && (
+                  <th className="w-[7%] px-4 py-3 text-right">
+                    {showDelete ? "Delete" : "Edit"}
+                  </th>
                 )}
               </tr>
             </thead>
@@ -401,22 +445,36 @@ export function SubmissionsTable({
                       ? "Email / website"
                       : row.account || "Not recorded"}
                   </td>
-                  {isAdmin && (
+                  {hasAction && (
                     <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        disabled={disabled}
-                        title={
-                          disabled
-                            ? "Research is locked. Unlock it before editing submission status."
-                            : "Edit submission status"
-                        }
-                        onClick={() => setEditing(row)}
-                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:shadow-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40"
-                        aria-label={`Edit status for ${row.venueName}`}
-                      >
-                        <Edit3 className="h-4 w-4" />
-                      </button>
+                      {showStatusEdit && (
+                        <button
+                          type="button"
+                          disabled={disabled}
+                          title={
+                            disabled
+                              ? "Research is locked. Unlock it before editing submission status."
+                              : "Edit submission status"
+                          }
+                          onClick={() => setEditing(row)}
+                          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:shadow-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40"
+                          aria-label={`Edit status for ${row.venueName}`}
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </button>
+                      )}
+                      {showDelete && (
+                        <button
+                          type="button"
+                          disabled={disabled}
+                          title="Delete submission"
+                          onClick={() => setDeleting(row)}
+                          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-rose-100 bg-rose-50 text-rose-600 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:text-rose-700 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50"
+                          aria-label={`Delete submission for ${row.venueName}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
                     </td>
                   )}
                 </tr>
@@ -424,7 +482,7 @@ export function SubmissionsTable({
               {pagination.total === 0 && (
                 <tr>
                   <td
-                    colSpan={isAdmin ? 7 : 6}
+                    colSpan={hasAction ? 7 : 6}
                     className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                   >
                     No submissions match the current filters.
@@ -573,6 +631,64 @@ export function SubmissionsTable({
               >
                 <Check className="h-4 w-4" />
                 Accept and lock
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleting && (
+        <div className="fixed inset-0 z-[90] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
+          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-2xl border border-rose-200 bg-white shadow-2xl dark:border-rose-900/70 dark:bg-slate-900">
+            <div className="border-b border-rose-100 bg-rose-50/70 px-5 py-4 dark:border-rose-900/60 dark:bg-rose-950/20">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-200">
+                    <TriangleAlert className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-950 dark:text-white">
+                      Delete this submission?
+                    </h3>
+                    <p className="mt-1 text-sm leading-5 text-rose-900 dark:text-rose-100">
+                      This will remove the submission record for{" "}
+                      {deleting.venueName}.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDeleting(null)}
+                  className="cursor-pointer rounded-lg p-2 text-slate-500 transition hover:bg-white/70 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+                  aria-label="Close confirmation"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div className="grid gap-2 px-5 py-4 text-sm leading-5 text-slate-600 dark:text-slate-300">
+              <p>
+                The submission ID, status history dates, and venue connection
+                will be deleted from the system.
+              </p>
+              <p>This action cannot be undone from this screen.</p>
+            </div>
+            <div className="flex justify-end gap-3 border-t border-slate-200 px-5 py-4 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setDeleting(null)}
+                className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={confirmDelete}
+                className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-wait disabled:opacity-70"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete submission
               </button>
             </div>
           </div>

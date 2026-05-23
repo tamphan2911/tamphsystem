@@ -1115,6 +1115,51 @@ export async function updateSubmissionStatus(formData: FormData) {
   return { ok: false, message: "Submission type is not valid." };
 }
 
+export async function deleteSubmission(formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const submissionId = optionalString(formData.get("submissionId"));
+  const submissionKind = optionalString(formData.get("submissionKind"));
+  if (!submissionId || !submissionKind)
+    return { ok: false, message: "Missing submission information." };
+
+  if (submissionKind === "journal") {
+    const submission = await prisma.researchSubmission.findUnique({
+      where: { id: submissionId },
+      select: { researchProjectId: true, journalId: true },
+    });
+    if (!submission) return { ok: false, message: "Submission was not found." };
+
+    await prisma.researchSubmission.delete({ where: { id: submissionId } });
+    await refreshResearchStage(submission.researchProjectId);
+
+    revalidatePath("/submissions");
+    revalidatePath("/projects");
+    revalidatePath(`/projects/${submission.researchProjectId}`);
+    revalidatePath(`/journals/${submission.journalId}`);
+    return { ok: true };
+  }
+
+  if (submissionKind === "conference") {
+    const submission = await prisma.conferenceSubmission.findUnique({
+      where: { id: submissionId },
+      select: { researchProjectId: true, conferenceId: true },
+    });
+    if (!submission) return { ok: false, message: "Submission was not found." };
+
+    await prisma.conferenceSubmission.delete({ where: { id: submissionId } });
+
+    revalidatePath("/submissions");
+    revalidatePath("/projects");
+    revalidatePath(`/projects/${submission.researchProjectId}`);
+    revalidatePath(`/conferences/${submission.conferenceId}`);
+    return { ok: true };
+  }
+
+  return { ok: false, message: "Submission type is not valid." };
+}
+
 export async function addSuggestedJournal(
   projectId: string,
   formData: FormData,

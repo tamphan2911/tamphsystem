@@ -2,7 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Building2, CalendarDays, ClipboardCheck, ClipboardList, FolderGit2, KeyRound, ShieldCheck } from "lucide-react";
+import {
+  BookOpen,
+  Building2,
+  CalendarDays,
+  ClipboardCheck,
+  ClipboardList,
+  FileCheck2,
+  FolderGit2,
+  KeyRound,
+  ShieldCheck,
+} from "lucide-react";
 
 const icons = {
   projects: FolderGit2,
@@ -10,6 +20,7 @@ const icons = {
   accounts: KeyRound,
   assistants: ShieldCheck,
   reviews: ClipboardCheck,
+  submissions: FileCheck2,
   tasks: ClipboardList,
   conferences: CalendarDays,
   organizedProjects: Building2,
@@ -27,7 +38,8 @@ export function ActiveNavLink({
   collapsed?: boolean;
 }) {
   const pathname = usePathname();
-  const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
+  const isActive =
+    pathname === href || (href !== "/" && pathname.startsWith(href));
   const Icon = icons[icon];
 
   return (
@@ -42,8 +54,12 @@ export function ActiveNavLink({
           : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-800/80 dark:hover:text-emerald-100"
       }`}
     >
-      <span className={`absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full transition ${isActive ? "bg-emerald-600 opacity-100 dark:bg-emerald-300" : "opacity-0"}`} />
-      <Icon className={`h-5 w-5 ${isActive ? "text-emerald-600 dark:text-emerald-200" : "text-slate-400 dark:text-slate-300"}`} />
+      <span
+        className={`absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full transition ${isActive ? "bg-emerald-600 opacity-100 dark:bg-emerald-300" : "opacity-0"}`}
+      />
+      <Icon
+        className={`h-5 w-5 ${isActive ? "text-emerald-600 dark:text-emerald-200" : "text-slate-400 dark:text-slate-300"}`}
+      />
       {!collapsed && <span className="truncate">{label}</span>}
     </Link>
   );
