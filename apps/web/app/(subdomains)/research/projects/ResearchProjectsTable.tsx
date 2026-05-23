@@ -278,7 +278,7 @@ export function ResearchProjectsTable({
         <table className="w-full min-w-[56rem] text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="sticky left-0 z-20 w-32 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
+              <th className="sticky left-0 z-20 w-[5.75rem] bg-slate-50 px-3 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
                 ID
               </th>
               <th className="px-4 py-3">
@@ -296,9 +296,9 @@ export function ResearchProjectsTable({
                 key={row.id}
                 className="group transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
               >
-                <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
+                <td className="sticky left-0 z-10 bg-white px-3 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
                   <Link href={`/projects/${row.id}`} className="group">
-                    <span className="font-mono text-sm font-bold text-slate-600 group-hover:text-blue-600 dark:text-slate-300">
+                    <span className="font-mono text-xs font-bold text-slate-600 group-hover:text-blue-600 dark:text-slate-300">
                       {row.researchCode || "-"}
                     </span>
                   </Link>
