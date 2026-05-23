@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BarChart3, Database, Globe2, Hash } from "lucide-react";
 import { prisma } from "@repo/db";
+import { formatMoney } from "../../lib/currency";
 import {
   JournalDetailTabs,
   type JournalAccountRow,
@@ -144,8 +145,8 @@ export default async function JournalDetailPage({
           <div><dt className="text-xs font-bold uppercase text-slate-400">Rank</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.rank || "-"}</dd></div>
           <div><dt className="text-xs font-bold uppercase text-slate-400">Publisher</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.publisher || "-"}</dd></div>
           <div><dt className="text-xs font-bold uppercase text-slate-400">Area</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.field || "-"}</dd></div>
-          <div><dt className="text-xs font-bold uppercase text-slate-400">APC</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.apc || "-"}</dd></div>
-          <div><dt className="text-xs font-bold uppercase text-slate-400">Submission Fee</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.submissionFee || "-"}</dd></div>
+          <div><dt className="text-xs font-bold uppercase text-slate-400">APC</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{formatMoney(journal.apc, journal.apcCurrency)}</dd></div>
+          <div><dt className="text-xs font-bold uppercase text-slate-400">Submission Fee</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{formatMoney(journal.submissionFee, journal.submissionFeeCurrency)}</dd></div>
           <div className="md:col-span-3"><dt className="text-xs font-bold uppercase text-slate-400"><Hash className="inline h-3.5 w-3.5" /> Note</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.note || "-"}</dd></div>
         </dl>
       </section>

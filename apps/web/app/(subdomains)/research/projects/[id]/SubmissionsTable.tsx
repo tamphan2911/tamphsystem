@@ -1,122 +1,292 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { BookOpen, ExternalLink, UserRound } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import { BookOpen, CalendarDays, Check, CircleDollarSign, Edit3, Landmark, X } from "lucide-react";
+import { updateSubmissionStatus } from "../../actions";
+import { ResearchFormSelect } from "../../components/ResearchFormSelect";
 import { FilterSelect, IconHint, TablePagination, TableSearchInput, useTablePagination } from "../../components/TableControls";
+import { useResearchToast } from "../../components/ResearchToast";
+import { currencySymbol } from "../../lib/currency";
 
 export type SubmissionRow = {
   id: string;
-  journalId: string;
-  journalName: string;
-  publisher: string;
-  rank: string;
+  kind: "journal" | "conference";
+  venueId: string;
+  venueName: string;
+  metaLine: string;
   apc: string;
+  apcCurrency: string;
+  submissionFee: string;
+  submissionFeeCurrency: string;
   account: string;
   status: string;
   submittedAt: string;
+  acceptedAt: string;
+  rejectedAt: string;
+  publishedAt: string;
 };
 
-function badgeClass(value: string) {
-  if (value === "ACCEPTED") return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
-  if (value === "REVISION") return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
-  if (value === "REJECTED" || value === "WITHDRAWN") return "bg-red-50 text-red-700 ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900";
-  return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+const statusOptions = [
+  { value: "PENDING", label: "Submitted" },
+  { value: "UNDER_REVIEW", label: "Reviewing" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "ACCEPTED", label: "Accepted" },
+  { value: "PUBLISHED", label: "Published" },
+];
+
+const conferenceStatusOptions = [
+  { value: "SUBMITTED", label: "Submitted" },
+  { value: "REVIEWING", label: "Reviewing" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "ACCEPTED", label: "Accepted" },
+  { value: "PUBLISHED", label: "Published" },
+];
+
+function normalizedStatus(value: string) {
+  if (value === "PENDING" || value === "SUBMITTED") return "SUBMITTED";
+  if (value === "UNDER_REVIEW" || value === "REVISION" || value === "REVIEWING") return "REVIEWING";
+  return value;
 }
 
-export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
+function statusLabel(value: string) {
+  const normalized = normalizedStatus(value);
+  if (normalized === "SUBMITTED") return "Submitted";
+  if (normalized === "REVIEWING") return "Reviewing";
+  return normalized.toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function badgeClass(value: string) {
+  const normalized = normalizedStatus(value);
+  if (normalized === "ACCEPTED") return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (normalized === "PUBLISHED") return "bg-sky-50 text-sky-700 ring-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-900";
+  if (normalized === "REJECTED") return "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+  if (normalized === "REVIEWING") return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
+  return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+}
+
+function rowClass(value: string) {
+  const normalized = normalizedStatus(value);
+  if (normalized === "REJECTED") return "bg-slate-100/80 hover:bg-slate-100 dark:bg-slate-800/45 dark:hover:bg-slate-800/65";
+  if (normalized === "ACCEPTED") return "bg-emerald-50/70 hover:bg-emerald-50 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30";
+  if (normalized === "PUBLISHED") return "bg-sky-50/70 hover:bg-sky-50 dark:bg-sky-950/20 dark:hover:bg-sky-950/30";
+  return "hover:bg-slate-50 dark:hover:bg-slate-800/40";
+}
+
+function shortDate(value: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(date);
+}
+
+function dateInputValue(value: string) {
+  if (!value) return new Date().toISOString().slice(0, 10);
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return new Date().toISOString().slice(0, 10);
+  return date.toISOString().slice(0, 10);
+}
+
+function statusDate(row: SubmissionRow) {
+  const normalized = normalizedStatus(row.status);
+  if (normalized === "PUBLISHED") return row.publishedAt || row.acceptedAt || row.submittedAt;
+  if (normalized === "ACCEPTED") return row.acceptedAt || row.submittedAt;
+  if (normalized === "REJECTED") return row.rejectedAt || row.submittedAt;
+  return row.submittedAt;
+}
+
+function MoneyCell({ amount, currency }: { amount: string; currency: string }) {
+  if (!amount) return <span>-</span>;
+  if (currency === "USD") {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <CircleDollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+        {amount}
+      </span>
+    );
+  }
+  return <span>{currencySymbol(currency)} {amount}</span>;
+}
+
+export function SubmissionsTable({ rows, isAdmin }: { rows: SubmissionRow[]; isAdmin: boolean }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("ALL");
-  const [rank, setRank] = useState("ALL");
-
-  const rankOptions = useMemo(() => ["ALL", ...Array.from(new Set(rows.map((row) => row.rank).filter(Boolean))).sort()], [rows]);
+  const [kind, setKind] = useState("ALL");
+  const [editing, setEditing] = useState<SubmissionRow | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const { showSuccess } = useResearchToast();
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
-      const matchesStatus = status === "ALL" || row.status === status;
-      const matchesRank = rank === "ALL" || row.rank === rank;
-      const haystack = [row.journalName, row.publisher, row.rank, row.apc, row.account, row.status].join(" ").toLowerCase();
-      return matchesStatus && matchesRank && (!needle || haystack.includes(needle));
+      const matchesStatus = status === "ALL" || normalizedStatus(row.status) === status;
+      const matchesKind = kind === "ALL" || row.kind === kind;
+      const haystack = [row.venueName, row.metaLine, row.apc, row.submissionFee, row.account, row.status, row.kind].join(" ").toLowerCase();
+      return matchesStatus && matchesKind && (!needle || haystack.includes(needle));
     });
-  }, [query, rank, rows, status]);
+  }, [kind, query, rows, status]);
 
   const pagination = useTablePagination(filtered, 10);
 
+  function submitStatus(formData: FormData) {
+    startTransition(async () => {
+      await updateSubmissionStatus(formData);
+      setEditing(null);
+      showSuccess({
+        title: "Submission status updated",
+        detail: "The status date and research stage signals have been refreshed.",
+      });
+    });
+  }
+
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
-        <TableSearchInput value={query} onChange={setQuery} placeholder="Search journal, publisher, account..." />
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <FilterSelect value={status} onChange={setStatus} ariaLabel="Filter submissions by status" options={[
-            { value: "ALL", label: "All status" },
-            { value: "PENDING", label: "Pending" },
-            { value: "REVISION", label: "Revision" },
-            { value: "ACCEPTED", label: "Accepted" },
-            { value: "REJECTED", label: "Rejected" },
-            { value: "WITHDRAWN", label: "Withdrawn" },
-          ]} />
-          <FilterSelect value={rank} onChange={setRank} ariaLabel="Filter submissions by rank" options={rankOptions.map((item) => ({ value: item, label: item === "ALL" ? "All ranks" : item }))} />
+    <>
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+          <TableSearchInput value={query} onChange={setQuery} placeholder="Search journal, conference, publisher, account..." />
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
+            <FilterSelect value={status} onChange={setStatus} ariaLabel="Filter submissions by status" options={[
+              { value: "ALL", label: "All status" },
+              { value: "SUBMITTED", label: "Submitted" },
+              { value: "REVIEWING", label: "Reviewing" },
+              { value: "ACCEPTED", label: "Accepted" },
+              { value: "REJECTED", label: "Rejected" },
+              { value: "PUBLISHED", label: "Published" },
+            ]} />
+            <FilterSelect value={kind} onChange={setKind} ariaLabel="Filter by venue type" options={[
+              { value: "ALL", label: "All venues" },
+              { value: "journal", label: "Journals" },
+              { value: "conference", label: "Conferences" },
+            ]} />
+          </div>
         </div>
+
+        <div className="overflow-hidden">
+          <table className="w-full table-fixed text-left">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+              <tr>
+                <th className="w-[32%] px-4 py-3">Journal / Conference</th>
+                <th className="w-[19%] px-4 py-3">
+                  <span className="inline-flex items-center gap-2">
+                    Status
+                    <IconHint label="Edit status from a row">
+                      <Edit3 className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                    </IconHint>
+                  </span>
+                </th>
+                <th className="w-[12%] px-4 py-3">APC</th>
+                <th className="w-[13%] px-4 py-3">Submission fee</th>
+                <th className="w-[17%] px-4 py-3">Account</th>
+                {isAdmin && <th className="w-[7%] px-4 py-3 text-right">Edit</th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {pagination.pagedRows.map((row) => (
+                <tr key={row.id} className={`group align-top transition duration-200 ease-out ${rowClass(row.status)}`}>
+                  <td className="px-4 py-3">
+                    <Link href={row.kind === "journal" ? `/journals/${row.venueId}` : `/conferences/${row.venueId}`} className="flex min-w-0 items-start gap-3">
+                      <IconHint label={row.kind === "journal" ? "Journal" : "Conference"}>
+                        {row.kind === "journal" ? <BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" /> : <Landmark className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" />}
+                      </IconHint>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold text-slate-700 group-hover:text-blue-600 dark:text-slate-100">{row.venueName}</span>
+                        <span className="mt-1 block line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">{row.metaLine || "-"}</span>
+                      </span>
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="grid gap-1.5">
+                      <span className={`w-fit rounded-full px-2 py-1 text-xs font-bold ring-1 ${badgeClass(row.status)}`}>{statusLabel(row.status)}</span>
+                      {normalizedStatus(row.status) === "PUBLISHED" && row.publishedAt && <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">published: {shortDate(row.publishedAt)}</span>}
+                      {(normalizedStatus(row.status) === "PUBLISHED" || normalizedStatus(row.status) === "ACCEPTED") && row.acceptedAt && <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">accepted: {shortDate(row.acceptedAt)}</span>}
+                      {normalizedStatus(row.status) === "REJECTED" && row.rejectedAt && <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">rejected: {shortDate(row.rejectedAt)}</span>}
+                      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">submitted: {shortDate(row.submittedAt) || "-"}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300"><MoneyCell amount={row.apc} currency={row.apcCurrency} /></td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300"><MoneyCell amount={row.submissionFee} currency={row.submissionFeeCurrency} /></td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.kind === "conference" ? "Email / website" : row.account || "Not recorded"}</td>
+                  {isAdmin && (
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(row)}
+                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40"
+                        aria-label={`Edit status for ${row.venueName}`}
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+              {pagination.total === 0 && (
+                <tr>
+                  <td colSpan={isAdmin ? 6 : 5} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
+                    No submissions match the current filters.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <TablePagination page={pagination.page} pageCount={pagination.pageCount} total={pagination.total} pageSize={pagination.pageSize} onPageChange={pagination.setPage} />
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[72rem] text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-            <tr>
-              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Journal</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Publisher</th>
-              <th className="px-4 py-3">Rank</th>
-              <th className="px-4 py-3">APC</th>
-              <th className="px-4 py-3">Account</th>
-              <th className="px-4 py-3">Submitted</th>
-              <th className="px-4 py-3 text-right">Open</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {pagination.pagedRows.map((row) => (
-              <tr key={row.id} className="group transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                  <Link href={`/journals/${row.journalId}`} className="flex items-start gap-3">
-                    <IconHint label="Journal"><BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" aria-hidden="true" /></IconHint>
-                    <span>
-                      <span className="block text-sm font-normal text-slate-700 group-hover:text-blue-600 dark:text-slate-200">{row.journalName}</span>
-                      <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">Journal detail</span>
-                    </span>
-                  </Link>
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${badgeClass(row.status)}`}>{row.status}</span>
-                </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.publisher || "-"}</td>
-                <td className="px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{row.rank || "-"}</td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.apc || "-"}</td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                  <span className="inline-flex items-center gap-1.5">
-                    <IconHint label="Submission account"><UserRound className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" /></IconHint>
-                    {row.account || "Not recorded"}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.submittedAt}</td>
-                <td className="px-4 py-3 text-right">
-                  <Link href={`/journals/${row.journalId}`} className="inline-flex items-center justify-center rounded-lg p-2 text-slate-500 transition hover:bg-blue-50 hover:text-blue-600 dark:text-slate-400 dark:hover:bg-blue-950/40 dark:hover:text-blue-300" title="Open journal">
-                    <IconHint label="Open journal"><ExternalLink className="h-4 w-4" aria-hidden="true" /></IconHint>
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {pagination.total === 0 && (
-              <tr>
-                <td colSpan={8} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
-                  No submissions match the current filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      <TablePagination page={pagination.page} pageCount={pagination.pageCount} total={pagination.total} pageSize={pagination.pageSize} onPageChange={pagination.setPage} />
-    </div>
+      {editing && (
+        <div className="fixed inset-0 z-[90] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
+          <div className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300">
+                  <Edit3 className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3 className="text-base font-bold text-slate-950 dark:text-white">Edit submission status</h3>
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{editing.venueName}</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setEditing(null)} className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200" aria-label="Close">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form action={submitStatus} className="grid gap-4 px-5 py-4">
+              <input type="hidden" name="submissionId" value={editing.id} />
+              <input type="hidden" name="submissionKind" value={editing.kind} />
+              <label className="grid gap-1.5">
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</span>
+                <ResearchFormSelect
+                  name="status"
+                  defaultValue={editing.kind === "conference" && editing.status === "PLANNED" ? "SUBMITTED" : editing.status}
+                  options={editing.kind === "journal" ? statusOptions : conferenceStatusOptions}
+                  ariaLabel="Submission status"
+                />
+              </label>
+              <label className="grid gap-1.5">
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Status date</span>
+                <div className="relative">
+                  <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    name="statusDate"
+                    type="date"
+                    defaultValue={dateInputValue(statusDate(editing))}
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  />
+                </div>
+              </label>
+              <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
+                <button type="button" onClick={() => setEditing(null)} className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                  Cancel
+                </button>
+                <button disabled={isPending} className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-wait disabled:opacity-70">
+                  <Check className="h-4 w-4" />
+                  Save status
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BadgeCheck, BookOpen, ReceiptText, StickyNote, Users } from "lucide-react";
 import { FilterSelect, IconHint, TablePagination, TableSearchInput, useTablePagination } from "../components/TableControls";
+import { formatMoney } from "../lib/currency";
 
 export type JournalRow = {
   id: string;
@@ -14,7 +15,9 @@ export type JournalRow = {
   rank: string;
   publisher: string;
   apc: string;
+  apcCurrency: string;
   submissionFee: string;
+  submissionFeeCurrency: string;
   note: string;
   submissions: number;
   accounts: number;
@@ -115,8 +118,8 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
                     {journal.rank || "N/A"}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.apc || "-"}</td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.submissionFee || "-"}</td>
+                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{formatMoney(journal.apc, journal.apcCurrency)}</td>
+                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{formatMoney(journal.submissionFee, journal.submissionFeeCurrency)}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.submissions} / {journal.accounts}</td>
                 <td className="px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{journal.reviews}</td>
                 <td className="max-w-xs px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{journal.note || "-"}</td>

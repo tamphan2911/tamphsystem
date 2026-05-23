@@ -7,6 +7,7 @@ import {
   prisma,
   ClaimStatus,
   ConferenceSubmissionStatus,
+  CurrencyCode,
   RegistrationStatus,
   ResearchStage,
   ResearchTaskCategory,
@@ -41,6 +42,11 @@ function taskCategoryFromForm(value: FormDataEntryValue | null) {
 
 function taskTypeFromForm(value: FormDataEntryValue | null) {
   return enumValue(ResearchTaskType, value);
+}
+
+function dateFromForm(value: FormDataEntryValue | null) {
+  const text = optionalString(value);
+  return text ? new Date(text) : null;
 }
 
 const productionStepLabels = ["Idea forming", "Data collection", "Modeling", "Writing", "Humanizing", "References"];
@@ -206,7 +212,9 @@ export async function createJournal(formData: FormData) {
       rank: optionalString(formData.get("rank")),
       publisher: optionalString(formData.get("publisher")),
       apc: optionalString(formData.get("apc")),
+      apcCurrency: enumValue(CurrencyCode, formData.get("apcCurrency")) ?? CurrencyCode.USD,
       submissionFee: optionalString(formData.get("submissionFee")),
+      submissionFeeCurrency: enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ?? CurrencyCode.USD,
       homepageLink: optionalString(formData.get("homepageLink")),
       scimagoLink: optionalString(formData.get("scimagoLink")),
       scopusLink: optionalString(formData.get("scopusLink")),
@@ -232,6 +240,8 @@ export async function createPublisherAccount(formData: FormData) {
 
   revalidatePath("/accounts");
   revalidatePath("/journals");
+  const projectId = optionalString(formData.get("projectId"));
+  if (projectId) revalidatePath(`/projects/${projectId}`);
 }
 
 export async function createAcademicReview(formData: FormData) {
@@ -419,6 +429,91 @@ export async function createResearchTask(formData: FormData) {
   revalidatePath("/tasks");
   const projectId = optionalString(formData.get("projectId"));
   if (projectId) revalidatePath(`/projects/${projectId}`);
+}
+
+export async function updateSubmissionStatus(formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const submissionId = optionalString(formData.get("submissionId"));
+  const submissionKind = optionalString(formData.get("submissionKind"));
+  const status = optionalString(formData.get("status"));
+  const statusDate = dateFromForm(formData.get("statusDate")) ?? new Date();
+  if (!submissionId || !submissionKind || !status) return;
+
+  if (submissionKind === "journal") {
+    const journalStatus = enumValue(SubmissionStatus, status);
+    if (!journalStatus) return;
+
+    const currentSubmission = await prisma.researchSubmission.findUnique({
+      where: { id: submissionId },
+      select: { acceptedAt: true },
+    });
+
+    const data: {
+      status: SubmissionStatus;
+      submittedAt?: Date;
+      acceptedAt?: Date | null;
+      rejectedAt?: Date | null;
+      publishedAt?: Date | null;
+    } = { status: journalStatus };
+
+    if (journalStatus === SubmissionStatus.PENDING) data.submittedAt = statusDate;
+    if (journalStatus === SubmissionStatus.ACCEPTED) data.acceptedAt = statusDate;
+    if (journalStatus === SubmissionStatus.REJECTED) data.rejectedAt = statusDate;
+    if (journalStatus === SubmissionStatus.PUBLISHED) {
+      data.publishedAt = statusDate;
+      data.acceptedAt = currentSubmission?.acceptedAt ?? statusDate;
+    }
+
+    const submission = await prisma.researchSubmission.update({
+      where: { id: submissionId },
+      data,
+      select: { researchProjectId: true, journalId: true },
+    });
+
+    await refreshResearchStage(submission.researchProjectId);
+    revalidatePath("/projects");
+    revalidatePath(`/projects/${submission.researchProjectId}`);
+    revalidatePath(`/journals/${submission.journalId}`);
+    return;
+  }
+
+  if (submissionKind === "conference") {
+    const conferenceStatus = enumValue(ConferenceSubmissionStatus, status);
+    if (!conferenceStatus) return;
+
+    const currentSubmission = await prisma.conferenceSubmission.findUnique({
+      where: { id: submissionId },
+      select: { acceptedAt: true },
+    });
+
+    const data: {
+      status: ConferenceSubmissionStatus;
+      submittedAt?: Date | null;
+      acceptedAt?: Date | null;
+      rejectedAt?: Date | null;
+      publishedAt?: Date | null;
+    } = { status: conferenceStatus };
+
+    if (conferenceStatus === ConferenceSubmissionStatus.SUBMITTED) data.submittedAt = statusDate;
+    if (conferenceStatus === ConferenceSubmissionStatus.ACCEPTED) data.acceptedAt = statusDate;
+    if (conferenceStatus === ConferenceSubmissionStatus.REJECTED) data.rejectedAt = statusDate;
+    if (conferenceStatus === ConferenceSubmissionStatus.PUBLISHED) {
+      data.publishedAt = statusDate;
+      data.acceptedAt = currentSubmission?.acceptedAt ?? statusDate;
+    }
+
+    const submission = await prisma.conferenceSubmission.update({
+      where: { id: submissionId },
+      data,
+      select: { researchProjectId: true, conferenceId: true },
+    });
+
+    revalidatePath("/projects");
+    revalidatePath(`/projects/${submission.researchProjectId}`);
+    revalidatePath(`/conferences/${submission.conferenceId}`);
+  }
 }
 
 export async function addSuggestedJournal(projectId: string, formData: FormData) {

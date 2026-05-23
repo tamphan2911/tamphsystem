@@ -31,6 +31,7 @@ export type SuggestedConferenceOption = {
   theme: string;
   location: string;
   organizer: string;
+  isbn?: string;
   time: string;
   suggestedByName?: string;
   suggestedByRole?: string;

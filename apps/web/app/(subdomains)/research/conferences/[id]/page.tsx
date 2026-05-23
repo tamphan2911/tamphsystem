@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Globe2, MapPin, Users } from "lucide-react";
 import { prisma } from "@repo/db";
+import { formatMoney } from "../../lib/currency";
 import { ResearchProjectsTable, type ResearchProjectRow } from "../../projects/ResearchProjectsTable";
 
 export const dynamic = "force-dynamic";
@@ -120,6 +121,14 @@ export default async function ConferenceDetailPage({ params }: { params: Promise
           <div>
             <dt className="text-xs font-bold uppercase text-slate-400">ISBN</dt>
             <dd className="mt-1 text-slate-700 dark:text-slate-300">{conference.isbn || "-"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-bold uppercase text-slate-400">APC</dt>
+            <dd className="mt-1 text-slate-700 dark:text-slate-300">{formatMoney(conference.apc, conference.apcCurrency)}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-bold uppercase text-slate-400">Submission fee</dt>
+            <dd className="mt-1 text-slate-700 dark:text-slate-300">{formatMoney(conference.submissionFee, conference.submissionFeeCurrency)}</dd>
           </div>
           {conference.note && (
             <div className="md:col-span-4">

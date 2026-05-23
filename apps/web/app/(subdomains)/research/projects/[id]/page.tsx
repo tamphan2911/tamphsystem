@@ -8,6 +8,10 @@ import {
   Plus,
   Save,
   Send,
+  CheckCircle2,
+  FileText,
+  Rocket,
+  SearchCheck,
 } from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
@@ -22,6 +26,10 @@ import {
 import { SaveForm } from "../../components/SaveForm";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
 import { AuthorsPicker, type AuthorOption, type SelectedAuthor } from "./AuthorsPicker";
+import {
+  CreateSubmissionTaskDialog,
+  type SubmissionTaskVenueOption,
+} from "./CreateSubmissionTaskDialog";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +65,43 @@ const claimOptions = [
   { value: "CLAIMED", label: "Claimed" },
 ];
 
+const stageStyles = {
+  PRODUCTION: {
+    label: "Production",
+    icon: FileText,
+    className: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200",
+  },
+  SUBMITTING: {
+    label: "Submitting",
+    icon: Send,
+    className: "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-900/70 dark:bg-indigo-950/40 dark:text-indigo-200",
+  },
+  REVIEW: {
+    label: "Review",
+    icon: SearchCheck,
+    className: "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-200",
+  },
+  ACCEPTED: {
+    label: "Accepted",
+    icon: CheckCircle2,
+    className: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200",
+  },
+  PUBLISHED: {
+    label: "Published",
+    icon: Rocket,
+    className: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/70 dark:bg-sky-950/40 dark:text-sky-200",
+  },
+};
+
+function isoDate(value: Date | null | undefined) {
+  return value ? value.toISOString() : "";
+}
+
+function shortDate(value: Date | null | undefined) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(value);
+}
+
 function displayRole(roles: Role[]) {
   if (roles.includes(Role.ADMIN)) return "Admin";
   if (roles.includes(Role.CHIEF_ASSISTANT)) return "Chief assistant";
@@ -88,6 +133,10 @@ export default async function ProjectDetailPage({
         submissions: {
           include: { journal: true, account: true },
           orderBy: { submittedAt: "desc" },
+        },
+        conferenceSubmissions: {
+          include: { conference: true },
+          orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
         },
         publications: { orderBy: { publishedDate: "desc" } },
         leadResearcher: true,
@@ -128,7 +177,10 @@ export default async function ProjectDetailPage({
         },
       },
     }),
-    prisma.journal.findMany({ orderBy: [{ rank: "asc" }, { name: "asc" }] }),
+    prisma.journal.findMany({
+      include: { accounts: { orderBy: [{ username: "asc" }] } },
+      orderBy: [{ rank: "asc" }, { name: "asc" }],
+    }),
     prisma.conference.findMany({
       orderBy: [{ startDate: "desc" }, { name: "asc" }],
     }),
@@ -152,11 +204,15 @@ export default async function ProjectDetailPage({
   const showPublicationBlock =
     project.stage === "PUBLISHED" || project.publications.length > 0;
   const latestPublication = project.publications[0];
-  const acceptedSubmission = project.submissions.find(
-    (submission) => submission.status === "ACCEPTED",
+  const highlightedJournalSubmission = project.submissions.find(
+    (submission) => submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
   );
+  const highlightedConferenceSubmission = project.conferenceSubmissions.find(
+    (submission) => submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
+  );
+  const highlightedSubmission = highlightedJournalSubmission ?? highlightedConferenceSubmission;
   const publishedJournal =
-    acceptedSubmission?.journal ?? project.submissions[0]?.journal;
+    highlightedJournalSubmission?.journal ?? project.submissions[0]?.journal;
   const authorNames =
     project.authorEntries.length > 0
       ? project.authorEntries.map((entry) => `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`)
@@ -204,6 +260,7 @@ export default async function ProjectDetailPage({
       theme: conference.targetTheme || conference.themes || "",
       location: conference.location ?? "",
       organizer: conference.organizer ?? "",
+      isbn: conference.isbn ?? "",
       time: [
         conference.startDate?.toLocaleDateString(),
         conference.endDate?.toLocaleDateString(),
@@ -269,27 +326,91 @@ export default async function ProjectDetailPage({
             role: displayRole(project.leadResearcher.roles),
             isCorresponding: true,
           }];
-  const submissionRows: SubmissionRow[] = project.submissions.map(
-    (submission) => ({
+  const venueOptions: SubmissionTaskVenueOption[] = [
+    ...journals.map((journal) => ({
+      kind: "journal" as const,
+      id: journal.id,
+      name: journal.name,
+      issn: journal.issn ?? "",
+      publisher: journal.publisher ?? "",
+      rank: journal.rank ?? "",
+      accounts: journal.accounts.map((account) => ({
+        id: account.id,
+        journalId: account.journalId ?? "",
+        username: account.username,
+        email: account.email ?? "",
+      })),
+    })),
+    ...conferences.map((conference) => ({
+      kind: "conference" as const,
+      id: conference.id,
+      name: conference.name,
+      isbn: conference.isbn ?? "",
+      organizer: conference.organizer ?? "",
+      type: conference.type ?? "",
+      location: conference.location ?? "",
+      time: [
+        conference.startDate?.toISOString(),
+        conference.endDate?.toISOString(),
+      ]
+        .filter(Boolean)
+        .join(" - "),
+    })),
+  ];
+  const submissionRows: SubmissionRow[] = [
+    ...project.submissions.map((submission) => ({
       id: submission.id,
-      journalId: submission.journalId,
-      journalName: submission.journal.name,
-      publisher: submission.journal.publisher ?? "",
-      rank: submission.journal.rank ?? "",
+      kind: "journal" as const,
+      venueId: submission.journalId,
+      venueName: submission.journal.name,
+      metaLine: `${submission.journal.publisher || "No publisher"} - ${submission.journal.rank || "No rank"}`,
       apc: submission.journal.apc ?? "",
+      apcCurrency: submission.journal.apcCurrency,
+      submissionFee: submission.journal.submissionFee ?? "",
+      submissionFeeCurrency: submission.journal.submissionFeeCurrency,
       account: submission.account?.username ?? "",
       status: submission.status,
-      submittedAt: submission.submittedAt.toLocaleDateString(),
-    }),
-  );
+      submittedAt: isoDate(submission.submittedAt),
+      acceptedAt: isoDate(submission.acceptedAt),
+      rejectedAt: isoDate(submission.rejectedAt),
+      publishedAt: isoDate(submission.publishedAt),
+    })),
+    ...project.conferenceSubmissions.map((submission) => ({
+      id: submission.id,
+      kind: "conference" as const,
+      venueId: submission.conferenceId,
+      venueName: submission.conference.name,
+      metaLine: [
+        submission.conference.organizer || "No organizer",
+        submission.conference.type || "No type",
+        submission.conference.location || "No location",
+        [
+          shortDate(submission.conference.startDate),
+          shortDate(submission.conference.endDate),
+        ].filter(Boolean).join(" - "),
+      ].filter(Boolean).join(" - "),
+      apc: submission.conference.apc ?? "",
+      apcCurrency: submission.conference.apcCurrency,
+      submissionFee: submission.conference.submissionFee ?? "",
+      submissionFeeCurrency: submission.conference.submissionFeeCurrency,
+      account: "",
+      status: submission.status,
+      submittedAt: isoDate(submission.submittedAt ?? submission.createdAt),
+      acceptedAt: isoDate(submission.acceptedAt),
+      rejectedAt: isoDate(submission.rejectedAt),
+      publishedAt: isoDate(submission.publishedAt),
+    })),
+  ].sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || ""));
   const openSubmissionTasks = project.tasks.filter(
     (task) => task.status !== "COMPLETED",
   );
+  const stageStyle = stageStyles[project.stage];
+  const StageIcon = stageStyle.icon;
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <Link
             href="/projects"
             className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-950 dark:hover:text-white"
@@ -297,11 +418,41 @@ export default async function ProjectDetailPage({
             <ArrowLeft className="h-4 w-4" />
             Back to projects
           </Link>
-          <h1 className="text-xl font-bold tracking-tight text-slate-950 dark:text-white">
-            {project.title}
-          </h1>
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+            <h1 className="min-w-0 text-xl font-bold leading-8 tracking-tight text-slate-950 dark:text-white">
+              {project.title}
+            </h1>
+            <div className={`inline-flex min-h-11 w-full max-w-[11.5rem] shrink-0 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold shadow-sm transition ${stageStyle.className}`}>
+              <StageIcon className="h-4 w-4 flex-none" />
+              <span className="truncate">{stageStyle.label}</span>
+            </div>
+          </div>
           <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
             <p>Authors: {authorsLine}</p>
+            {highlightedSubmission && highlightedJournalSubmission && (
+              <div className="space-y-1 rounded-xl border border-emerald-100 bg-emerald-50/50 px-3 py-2 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-100">
+                <p>
+                  {highlightedJournalSubmission.journal.name} - {highlightedJournalSubmission.journal.publisher || "No publisher"} - ISSN {highlightedJournalSubmission.journal.issn || "-"} - {highlightedJournalSubmission.journal.rank || "No rank"}
+                </p>
+                <p className="text-xs text-emerald-700/80 dark:text-emerald-200/80">
+                  Submitted: {shortDate(highlightedJournalSubmission.submittedAt)}
+                  {highlightedJournalSubmission.acceptedAt ? ` - Accepted: ${shortDate(highlightedJournalSubmission.acceptedAt)}` : ""}
+                  {highlightedJournalSubmission.publishedAt ? ` - Published: ${shortDate(highlightedJournalSubmission.publishedAt)}` : ""}
+                </p>
+              </div>
+            )}
+            {highlightedSubmission && !highlightedJournalSubmission && highlightedConferenceSubmission && (
+              <div className="space-y-1 rounded-xl border border-sky-100 bg-sky-50/50 px-3 py-2 text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/20 dark:text-sky-100">
+                <p>
+                  {highlightedConferenceSubmission.conference.name} - {highlightedConferenceSubmission.conference.organizer || "No organizer"} - {highlightedConferenceSubmission.conference.type || "No type"} - {highlightedConferenceSubmission.conference.location || "No location"}
+                </p>
+                <p className="text-xs text-sky-700/80 dark:text-sky-200/80">
+                  Submitted: {shortDate(highlightedConferenceSubmission.submittedAt)}
+                  {highlightedConferenceSubmission.acceptedAt ? ` - Accepted: ${shortDate(highlightedConferenceSubmission.acceptedAt)}` : ""}
+                  {highlightedConferenceSubmission.publishedAt ? ` - Published: ${shortDate(highlightedConferenceSubmission.publishedAt)}` : ""}
+                </p>
+              </div>
+            )}
             {project.stage === "PUBLISHED" && publishedJournal && (
               <div>
                 <p>
@@ -367,7 +518,7 @@ export default async function ProjectDetailPage({
                 <input
                   name="title"
                   defaultValue={project.title}
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
                 />
               </label>
               <AuthorsPicker users={authorOptions} defaultAuthors={defaultAuthors} />
@@ -452,16 +603,24 @@ export default async function ProjectDetailPage({
             <Send className="h-5 w-5 text-blue-500" />
             Submissions
           </h2>
-          <div className="rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-3 text-sm text-blue-900 shadow-sm dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
-            <p className="font-semibold">
-              Submissions are updated from assigned tasks.
-            </p>
-            <p className="mt-1 text-blue-800/80 dark:text-blue-200/80">
-              Assign a submit research task from Suggested journals. When the
-              task is marked finished, this table and related journal/account
-              views update automatically.
-            </p>
-          </div>
+          {isAdmin ? (
+            <CreateSubmissionTaskDialog
+              projectId={project.id}
+              projectTitle={project.title}
+              venues={venueOptions}
+              assistants={taskAssigneeOptions}
+            />
+          ) : (
+            <div className="rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-3 text-sm text-blue-900 shadow-sm dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
+              <p className="font-semibold">
+                Submissions are updated from assigned tasks.
+              </p>
+              <p className="mt-1 text-blue-800/80 dark:text-blue-200/80">
+                When an assigned submission task is marked finished, this table
+                and related journal/account views update automatically.
+              </p>
+            </div>
+          )}
         </div>
         {openSubmissionTasks.length > 0 && (
           <div className="grid gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -493,7 +652,7 @@ export default async function ProjectDetailPage({
             </div>
           </div>
         )}
-        <SubmissionsTable rows={submissionRows} />
+        <SubmissionsTable rows={submissionRows} isAdmin={isAdmin} />
       </section>
 
       {showPublicationBlock && (

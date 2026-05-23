@@ -208,9 +208,19 @@ enum SubmissionStatus {
 enum ConferenceSubmissionStatus {
   PLANNED
   SUBMITTED
+  REVIEWING
   ACCEPTED
   REJECTED
+  PUBLISHED
   WITHDRAWN
+}
+
+enum CurrencyCode {
+  VND
+  USD
+  CHF
+  GBP
+  EUR
 }
 
 enum ResearchTaskStatus {
@@ -279,20 +289,24 @@ model ResearchProjectAuthor {
 }
 
 model Conference {
-  id          String          @id @default(uuid())
-  name        String
-  type        ConferenceType?
-  themes      String?
-  targetTheme String?
-  isbn        String?
-  organizer   String?
-  location    String?
-  startDate   DateTime?
-  endDate     DateTime?
-  website     String?
-  note        String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id                    String          @id @default(uuid())
+  name                  String
+  type                  ConferenceType?
+  themes                String?
+  targetTheme           String?
+  isbn                  String?
+  organizer             String?
+  location              String?
+  startDate             DateTime?
+  endDate               DateTime?
+  apc                   String?
+  apcCurrency           CurrencyCode    @default(USD)
+  submissionFee         String?
+  submissionFeeCurrency CurrencyCode    @default(USD)
+  website               String?
+  note                  String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 
   submissions ConferenceSubmission[]
   suggestions SuggestedConference[]
@@ -319,6 +333,9 @@ model ConferenceSubmission {
   researchProjectId String
   status            ConferenceSubmissionStatus @default(PLANNED)
   submittedAt       DateTime?
+  acceptedAt        DateTime?
+  rejectedAt        DateTime?
+  publishedAt       DateTime?
   note              String?
   createdAt         DateTime                   @default(now())
   updatedAt         DateTime                   @updatedAt
@@ -330,18 +347,20 @@ model ConferenceSubmission {
 }
 
 model Journal {
-  id            String  @id @default(uuid())
-  name          String
-  issn          String?
-  field         String?
-  rank          String? // Q1, Q2, Q3, Q4
-  publisher     String?
-  apc           String?
-  submissionFee String?
-  homepageLink  String?
-  scimagoLink   String?
-  scopusLink    String?
-  note          String?
+  id                    String       @id @default(uuid())
+  name                  String
+  issn                  String?
+  field                 String?
+  rank                  String? // Q1, Q2, Q3, Q4
+  publisher             String?
+  apc                   String?
+  apcCurrency           CurrencyCode @default(USD)
+  submissionFee         String?
+  submissionFeeCurrency CurrencyCode @default(USD)
+  homepageLink          String?
+  scimagoLink           String?
+  scopusLink            String?
+  note                  String?
 
   submissions ResearchSubmission[]
   accounts    PublisherAccount[]
@@ -440,6 +459,9 @@ model ResearchSubmission {
   accountId         String? // Which account was used to submit
 
   submittedAt DateTime         @default(now())
+  acceptedAt  DateTime?
+  rejectedAt  DateTime?
+  publishedAt DateTime?
   status      SubmissionStatus @default(PENDING)
 
   project ResearchProject   @relation(fields: [researchProjectId], references: [id], onDelete: Cascade)

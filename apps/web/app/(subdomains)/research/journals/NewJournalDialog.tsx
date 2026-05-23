@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BookOpen, Coins, Link2, PlusCircle, X } from "lucide-react";
 import { createJournal } from "../actions";
+import { currencyOptions } from "../lib/currency";
 
 const inputClass = "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
 const labelClass = "grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400";
@@ -96,11 +97,25 @@ export function NewJournalDialog() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className={labelClass}>
                     APC
-                    <input name="apc" placeholder="APC" className={inputClass} />
+                    <span className="grid grid-cols-[1fr_9rem] gap-2">
+                      <input name="apc" type="number" min="0" step="0.01" placeholder="APC" className={inputClass} />
+                      <select name="apcCurrency" defaultValue="USD" className={inputClass}>
+                        {currencyOptions.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </span>
                   </label>
                   <label className={labelClass}>
                     Submission fee
-                    <input name="submissionFee" placeholder="Submission fee" className={inputClass} />
+                    <span className="grid grid-cols-[1fr_9rem] gap-2">
+                      <input name="submissionFee" type="number" min="0" step="0.01" placeholder="Submission fee" className={inputClass} />
+                      <select name="submissionFeeCurrency" defaultValue="USD" className={inputClass}>
+                        {currencyOptions.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </span>
                   </label>
                 </div>
               </section>
