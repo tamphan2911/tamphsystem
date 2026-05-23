@@ -2,7 +2,6 @@ import Link from "next/link";
 import { BookOpen, GraduationCap, LayoutDashboard, UserCircle } from "lucide-react";
 import { ThemeToggle } from "../../../components/ThemeToggle";
 import { ProfileMenu } from "../../../components/ProfileMenu";
-import { SidebarSupportCard } from "../../../components/SidebarSupportCard";
 import { auth } from "../../../auth";
 
 const navItems = [
@@ -68,24 +67,21 @@ export default async function LearnLayout({
 
       <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6 sm:px-6">
         <aside className="hidden w-60 flex-none md:block">
-          <div className="sticky top-24 flex max-h-[calc(100vh-7rem)] flex-col">
-            <nav className="flex-1 space-y-1 overflow-y-auto pb-4">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white"
-                  >
-                    <Icon className="h-4 w-4 text-slate-400" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-            <SidebarSupportCard />
-          </div>
+          <nav className="sticky top-24 space-y-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white"
+                >
+                  <Icon className="h-4 w-4 text-slate-400" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
         </aside>
         <main className="min-w-0 flex-1">{children}</main>
       </div>
