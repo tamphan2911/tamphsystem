@@ -162,6 +162,7 @@ export default async function TaskDetailPage({
           rank: true,
           publisher: true,
           homepageLink: true,
+          submissionLink: true,
           note: true,
         },
       },
@@ -204,7 +205,8 @@ export default async function TaskDetailPage({
     (isAdmin || Boolean(myAssignment));
   const canRevoke =
     isAdmin && task.status !== "COMPLETED" && task.status !== "REVOKED";
-  const journalSubmissionLink = firstUrl(task.journal?.note);
+  const journalSubmissionLink =
+    task.journal?.submissionLink || firstUrl(task.journal?.note);
   const conferenceSubmissionLink = firstUrl(task.conference?.note);
 
   return (

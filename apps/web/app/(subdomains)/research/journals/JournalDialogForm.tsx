@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import {
+  AlertTriangle,
   BookOpen,
   Check,
   Coins,
@@ -27,6 +28,7 @@ export type JournalFormValues = {
   submissionFee?: string | null;
   submissionFeeCurrency?: string;
   homepageLink?: string | null;
+  submissionLink?: string | null;
   scimagoLink?: string | null;
   scopusLink?: string | null;
   note?: string | null;
@@ -82,6 +84,7 @@ export function JournalDialogForm({
   const [isPending, startTransition] = useTransition();
   const [fieldQuery, setFieldQuery] = useState("");
   const [isFieldPickerOpen, setIsFieldPickerOpen] = useState(false);
+  const [warning, setWarning] = useState("");
   const [selectedFields, setSelectedFields] = useState<string[]>(() =>
     initialFields(initialValues),
   );
@@ -116,6 +119,10 @@ export function JournalDialogForm({
   const detail = isEdit
     ? "Update identity, fees, and source links."
     : "Add basic identity, fees, and source links.";
+  const closeDialog = () => {
+    setWarning("");
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
@@ -137,7 +144,7 @@ export function JournalDialogForm({
             </div>
             <button
               type="button"
-              onClick={onClose}
+              onClick={closeDialog}
               className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-white hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
               aria-label="Close"
             >
@@ -150,9 +157,27 @@ export function JournalDialogForm({
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
+            const missingFields = [
+              ["name", "journal name"],
+              ["publisher", "publisher"],
+              ["issn", "ISSN"],
+              ["apc", "APC"],
+            ].filter(([fieldName]) => {
+              const value = formData.get(fieldName);
+              return typeof value !== "string" || value.trim().length === 0;
+            });
+            if (missingFields.length > 0) {
+              setWarning(
+                `Please enter ${missingFields
+                  .map(([, label]) => label)
+                  .join(", ")} before saving this journal.`,
+              );
+              return;
+            }
+            setWarning("");
             startTransition(async () => {
               await submitAction(formData);
-              onClose();
+              closeDialog();
               toast.showSuccess({
                 title: isEdit ? "Journal details updated" : "Journal added",
                 detail: isEdit
@@ -175,26 +200,58 @@ export function JournalDialogForm({
                 Basic Information
               </h3>
             </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              <label className={`${labelClass} md:col-span-3`}>
+            <div className="grid gap-4">
+              {warning ? (
+                <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{warning}</span>
+                </div>
+              ) : null}
+              <label className={labelClass}>
                 Journal name
                 <input
                   name="name"
-                  required
                   defaultValue={initialValues?.name ?? ""}
                   placeholder="Journal name"
                   className={inputClass}
                 />
               </label>
-              <label className={labelClass}>
-                ISSN
-                <input
-                  name="issn"
-                  defaultValue={initialValues?.issn ?? ""}
-                  placeholder="ISSN"
-                  className={inputClass}
-                />
-              </label>
+              <div className="grid gap-4 md:grid-cols-4">
+                <label className={`${labelClass} md:col-span-2`}>
+                  Publisher
+                  <input
+                    name="publisher"
+                    defaultValue={initialValues?.publisher ?? ""}
+                    placeholder="Publisher"
+                    className={inputClass}
+                  />
+                </label>
+                <label className={labelClass}>
+                  ISSN
+                  <input
+                    name="issn"
+                    defaultValue={initialValues?.issn ?? ""}
+                    placeholder="ISSN"
+                    className={inputClass}
+                  />
+                </label>
+                <label className={labelClass}>
+                  Rank
+                  <select
+                    name="rank"
+                    defaultValue={initialValues?.rank ?? ""}
+                    className={inputClass}
+                  >
+                    <option value="">Rank</option>
+                    <option value="Q1">Q1</option>
+                    <option value="Q2">Q2</option>
+                    <option value="Q3">Q3</option>
+                    <option value="Q4">Q4</option>
+                    <option value="Scopus">Scopus</option>
+                    <option value="ISI">ISI</option>
+                  </select>
+                </label>
+              </div>
               <div className={`${labelClass} relative`}>
                 Field
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950">
@@ -245,17 +302,19 @@ export function JournalDialogForm({
                 </div>
                 {isFieldPickerOpen &&
                   (fieldQuery.trim() || filteredFieldOptions.length > 0) && (
-                    <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 normal-case tracking-normal shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/30">
+                    <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-2 normal-case tracking-normal shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/30">
                       {filteredFieldOptions.map((field) => (
                         <button
                           key={field}
                           type="button"
                           onMouseDown={(event) => event.preventDefault()}
                           onClick={() => addField(field)}
-                          className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
+                          className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
                         >
                           {field}
-                          <Check className="h-4 w-4 text-blue-500" />
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-500 dark:bg-blue-950/60 dark:text-blue-300">
+                            <Check className="h-3.5 w-3.5" />
+                          </span>
                         </button>
                       ))}
                       {fieldQuery.trim() &&
@@ -269,7 +328,7 @@ export function JournalDialogForm({
                           type="button"
                           onMouseDown={(event) => event.preventDefault()}
                           onClick={() => addField(fieldQuery)}
-                          className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2 text-left text-sm font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-slate-800 dark:text-blue-300 dark:hover:bg-blue-950/40"
+                          className="mt-1 flex w-full items-center gap-2 rounded-lg border-t border-slate-100 px-3 py-2.5 text-left text-sm font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-slate-800 dark:text-blue-300 dark:hover:bg-blue-950/40"
                         >
                           <PlusCircle className="h-4 w-4" />
                           Add "{fieldQuery.trim()}"
@@ -278,31 +337,6 @@ export function JournalDialogForm({
                     </div>
                   )}
               </div>
-              <label className={labelClass}>
-                Rank
-                <select
-                  name="rank"
-                  defaultValue={initialValues?.rank ?? ""}
-                  className={inputClass}
-                >
-                  <option value="">Rank</option>
-                  <option value="Q1">Q1</option>
-                  <option value="Q2">Q2</option>
-                  <option value="Q3">Q3</option>
-                  <option value="Q4">Q4</option>
-                  <option value="Scopus">Scopus</option>
-                  <option value="ISI">ISI</option>
-                </select>
-              </label>
-              <label className={`${labelClass} md:col-span-3`}>
-                Publisher
-                <input
-                  name="publisher"
-                  defaultValue={initialValues?.publisher ?? ""}
-                  placeholder="Publisher"
-                  className={inputClass}
-                />
-              </label>
             </div>
           </section>
 
@@ -378,13 +412,22 @@ export function JournalDialogForm({
                 Links and Notes
               </h3>
             </div>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               <label className={labelClass}>
                 Homepage
                 <input
                   name="homepageLink"
                   defaultValue={initialValues?.homepageLink ?? ""}
                   placeholder="Journal homepage"
+                  className={inputClass}
+                />
+              </label>
+              <label className={labelClass}>
+                Submission link
+                <input
+                  name="submissionLink"
+                  defaultValue={initialValues?.submissionLink ?? ""}
+                  placeholder="Submission portal link"
                   className={inputClass}
                 />
               </label>
@@ -406,12 +449,12 @@ export function JournalDialogForm({
                   className={inputClass}
                 />
               </label>
-              <label className={`${labelClass} md:col-span-3`}>
+              <label className={`${labelClass} md:col-span-2`}>
                 Note
                 <input
                   name="note"
                   defaultValue={initialValues?.note ?? ""}
-                  placeholder="Submission link, fit notes, login notes"
+                  placeholder="Fit notes, login notes, review notes"
                   className={inputClass}
                 />
               </label>
@@ -422,7 +465,7 @@ export function JournalDialogForm({
             <button
               type="button"
               disabled={isPending}
-              onClick={onClose}
+              onClick={closeDialog}
               className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               Cancel

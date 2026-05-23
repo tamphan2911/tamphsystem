@@ -138,27 +138,25 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
         <table className="w-full table-fixed text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="w-[30%] px-4 py-3">Journal</th>
-              <th className="w-[17%] px-4 py-3">Field</th>
-              <th className="w-[14%] px-4 py-3">Publisher</th>
-              <th className="w-[9%] px-4 py-3">APC</th>
-              <th className="w-[10%] px-4 py-3">Fee</th>
-              <th className="w-[5%] px-2 py-3 text-center">
+              <th className="w-[38%] px-4 py-3">Journal</th>
+              <th className="w-[22%] px-4 py-3">Field</th>
+              <th className="w-[11%] px-4 py-3">APC</th>
+              <th className="w-[11%] px-4 py-3">Fee</th>
+              <th className="w-[6%] px-2 py-3 text-center">
                 <IconHint label="Ongoing submissions">
-                  <Send className="mx-auto h-4 w-4" aria-hidden="true" />
+                  <Send className="mx-auto h-4 w-4 text-blue-600 dark:text-blue-300" aria-hidden="true" />
                 </IconHint>
               </th>
-              <th className="w-[5%] px-2 py-3 text-center">
+              <th className="w-[6%] px-2 py-3 text-center">
                 <IconHint label="Accepted and published submissions">
-                  <BadgeCheck className="mx-auto h-4 w-4" aria-hidden="true" />
+                  <BadgeCheck className="mx-auto h-4 w-4 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
                 </IconHint>
               </th>
-              <th className="w-[5%] px-2 py-3 text-center">
+              <th className="w-[6%] px-2 py-3 text-center">
                 <IconHint label="Reviews">
-                  <Star className="mx-auto h-4 w-4" aria-hidden="true" />
+                  <Star className="mx-auto h-4 w-4 text-amber-500 dark:text-amber-300" aria-hidden="true" />
                 </IconHint>
               </th>
-              <th className="w-[5%] px-4 py-3">Note</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -167,29 +165,23 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
                 key={journal.id}
                 className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
               >
-                <td className="px-4 py-3 text-base font-normal text-slate-700 dark:text-slate-200">
+                <td className="px-4 py-3">
                   <Link
                     href={`/journals/${journal.id}?back=${encodeURIComponent(currentListPath)}`}
-                    className="hover:text-blue-600 dark:hover:text-blue-300"
+                    className="text-base font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
                   >
                     {journal.name}
-                    {journal.issn || journal.rank ? (
-                      <span className="ml-1 text-xs text-slate-400 dark:text-slate-500">
-                        {[
-                          journal.issn ? `(${journal.issn})` : null,
-                          journal.rank || null,
-                        ]
-                          .filter(Boolean)
-                          .join(" - ")}
-                      </span>
-                    ) : null}
                   </Link>
+                  <p className="mt-1 line-clamp-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    {[
+                      journal.publisher || "No publisher",
+                      journal.issn ? `ISSN ${journal.issn}` : "No ISSN",
+                      journal.rank || "No rank",
+                    ].join(" - ")}
+                  </p>
                 </td>
                 <td className="px-4 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
                   {journal.fields.length > 0 ? journal.fields.join("; ") : "-"}
-                </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                  {journal.publisher || "-"}
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                   {formatMoney(journal.apc, journal.apcCurrency)}
@@ -209,18 +201,12 @@ export function JournalsTable({ rows }: { rows: JournalRow[] }) {
                 <td className="px-2 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-200">
                   {journal.reviews}
                 </td>
-                <td
-                  className="truncate px-4 py-3 text-sm text-slate-600 dark:text-slate-300"
-                  title={journal.note || undefined}
-                >
-                  {journal.note || "-"}
-                </td>
               </tr>
             ))}
             {pagination.total === 0 && (
               <tr>
                 <td
-                  colSpan={9}
+                  colSpan={7}
                   className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                 >
                   No journals match the current search.

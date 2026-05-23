@@ -432,6 +432,7 @@ model Journal {
   submissionFee         String?
   submissionFeeCurrency CurrencyCode @default(USD)
   homepageLink          String?
+  submissionLink        String?
   scimagoLink           String?
   scopusLink            String?
   note                  String?

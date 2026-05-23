@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, BarChart3, Database, Globe2, Hash } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart3,
+  Database,
+  Globe2,
+  Hash,
+  Send,
+} from "lucide-react";
 import { prisma } from "@repo/db";
 import { formatMoney } from "../../lib/currency";
 import {
@@ -116,6 +123,12 @@ export default async function JournalDetailPage({
       tone: "border-blue-100 bg-blue-50 text-blue-600 hover:border-blue-200 hover:bg-blue-100 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50",
     },
     {
+      href: journal.submissionLink,
+      label: "Open submission portal",
+      icon: Send,
+      tone: "border-sky-100 bg-sky-50 text-sky-600 hover:border-sky-200 hover:bg-sky-100 dark:border-sky-900/70 dark:bg-sky-950/40 dark:text-sky-300 dark:hover:bg-sky-900/50",
+    },
+    {
       href: journal.scimagoLink,
       label: "Open Scimago profile",
       icon: BarChart3,
@@ -190,6 +203,7 @@ export default async function JournalDetailPage({
                     submissionFee: journal.submissionFee,
                     submissionFeeCurrency: journal.submissionFeeCurrency,
                     homepageLink: journal.homepageLink,
+                    submissionLink: journal.submissionLink,
                     scimagoLink: journal.scimagoLink,
                     scopusLink: journal.scopusLink,
                     note: journal.note,

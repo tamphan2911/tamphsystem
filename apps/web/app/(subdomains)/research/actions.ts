@@ -489,6 +489,7 @@ export async function createJournal(formData: FormData) {
         enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??
         CurrencyCode.USD,
       homepageLink: optionalString(formData.get("homepageLink")),
+      submissionLink: optionalString(formData.get("submissionLink")),
       scimagoLink: optionalString(formData.get("scimagoLink")),
       scopusLink: optionalString(formData.get("scopusLink")),
       note: optionalString(formData.get("note")),
@@ -521,6 +522,7 @@ export async function updateJournal(journalId: string, formData: FormData) {
         enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??
         CurrencyCode.USD,
       homepageLink: optionalString(formData.get("homepageLink")),
+      submissionLink: optionalString(formData.get("submissionLink")),
       scimagoLink: optionalString(formData.get("scimagoLink")),
       scopusLink: optionalString(formData.get("scopusLink")),
       note: optionalString(formData.get("note")),
