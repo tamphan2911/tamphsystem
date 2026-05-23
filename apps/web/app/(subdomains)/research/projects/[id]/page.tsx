@@ -570,9 +570,6 @@ export default async function ProjectDetailPage({
       publishedAt: isoDate(submission.publishedAt),
     })),
   ].sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || ""));
-  const openSubmissionTasks = project.tasks.filter(
-    (task) => task.status !== "COMPLETED",
-  );
   const stageStyle = stageStyles[displayStage];
   const StageIcon = stageStyle.icon;
 
@@ -855,36 +852,6 @@ export default async function ProjectDetailPage({
             </div>
           )}
         </div>
-        {openSubmissionTasks.length > 0 && (
-          <div className="grid gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-              Active submission tasks
-            </p>
-            <div className="grid gap-2 md:grid-cols-2">
-              {openSubmissionTasks.map((task) => (
-                <Link
-                  key={task.id}
-                  href={`/tasks/${task.id}`}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm dark:border-slate-800 dark:hover:border-blue-900 dark:hover:bg-blue-950/30"
-                >
-                  <span className="block font-semibold text-slate-800 dark:text-slate-100">
-                    {task.title}
-                  </span>
-                  <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-                    {task.journal?.name || task.conference?.name || "No venue"}{" "}
-                    - {task.status.replace("_", " ")} -{" "}
-                    {task.assignments
-                      .map(
-                        (assignment) =>
-                          assignment.user.name || assignment.user.email,
-                      )
-                      .join(", ")}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
         <SubmissionsTable
           rows={submissionRows}
           isAdmin={isAdmin}
@@ -893,12 +860,15 @@ export default async function ProjectDetailPage({
       </section>
       <SuggestedJournalsPanel
         projectId={project.id}
+        projectTitle={project.title}
         journals={allJournalOptions}
         suggested={suggestedJournalOptions}
         conferences={allConferenceOptions}
         suggestedConferences={suggestedConferenceOptions}
+        assistants={taskAssigneeOptions}
         isAdmin={isAdmin}
         disabled={researchContentLocked}
+        productionComplete={productionComplete}
       />
     </div>
   );
