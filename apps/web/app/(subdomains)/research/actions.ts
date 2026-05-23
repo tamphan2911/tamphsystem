@@ -27,6 +27,24 @@ export type ResearchAuthorEmailResult = {
   reason?: string;
 };
 
+function storedAuthorEmailResults(value: unknown): ResearchAuthorEmailResult[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.filter(
+    (item): item is ResearchAuthorEmailResult =>
+      Boolean(item) &&
+      typeof item === "object" &&
+      "authorName" in item &&
+      "email" in item &&
+      "status" in item &&
+      typeof item.authorName === "string" &&
+      typeof item.email === "string" &&
+      (item.status === "sent" ||
+        item.status === "skipped" ||
+        item.status === "failed"),
+  );
+}
+
 function optionalString(value: FormDataEntryValue | null) {
   const text = typeof value === "string" ? value.trim() : "";
   return text.length > 0 ? text : null;
@@ -1519,15 +1537,8 @@ export async function sendResearchAuthorNotification(
 
   const existing = await prisma.researchAuthorNotification.findUnique({
     where: { projectId_type: { projectId, type } },
-    select: { id: true },
+    select: { id: true, results: true },
   });
-  if (existing) {
-    return {
-      ok: false,
-      message: "This author notification has already been sent.",
-      results: [] as ResearchAuthorEmailResult[],
-    };
-  }
 
   const project = await prisma.researchProject.findUnique({
     where: { id: projectId },
@@ -1589,11 +1600,19 @@ export async function sendResearchAuthorNotification(
   const researchUrl = `${researchBaseUrl()}/projects/${project.id}`;
   const venue = venueLine(project);
   const results: ResearchAuthorEmailResult[] = [];
+  const previousResults = storedAuthorEmailResults(existing?.results);
+  const previouslySentEmails = new Set(
+    previousResults
+      .filter((result) => result.status === "sent")
+      .map((result) => result.email.toLowerCase()),
+  );
   const canSend = smtpConfigured();
   const transporter = canSend ? createTransporter() : null;
 
   for (const author of authors) {
     const authorName = author.name || author.email;
+    if (previouslySentEmails.has(author.email.toLowerCase())) continue;
+
     if (!author.emailVerified) {
       results.push({
         authorName,
@@ -1641,19 +1660,49 @@ export async function sendResearchAuthorNotification(
     }
   }
 
-  await prisma.researchAuthorNotification.create({
-    data: {
-      projectId,
-      type,
-      sentById: user.id,
-      results,
-    },
-  });
+  const mergedByEmail = new Map<string, ResearchAuthorEmailResult>();
+  for (const result of previousResults) {
+    mergedByEmail.set(result.email.toLowerCase(), result);
+  }
+  for (const result of results) {
+    const key = result.email.toLowerCase();
+    const previous = mergedByEmail.get(key);
+    if (previous?.status === "sent") continue;
+    mergedByEmail.set(key, result);
+  }
+
+  const mergedResults = Array.from(mergedByEmail.values());
+  const complete = authors.every(
+    (author) =>
+      mergedByEmail.get(author.email.toLowerCase())?.status === "sent",
+  );
+
+  if (existing) {
+    await prisma.researchAuthorNotification.update({
+      where: { id: existing.id },
+      data: {
+        sentById: user.id,
+        results: mergedResults,
+      },
+    });
+  } else {
+    await prisma.researchAuthorNotification.create({
+      data: {
+        projectId,
+        type,
+        sentById: user.id,
+        results: mergedResults,
+      },
+    });
+  }
 
   revalidatePath(`/projects/${projectId}`);
   return {
     ok: true,
-    message: `${notificationLabel(type)} notification processed.`,
+    complete,
+    message: complete
+      ? `${notificationLabel(type)} notification sent to all authors.`
+      : `${notificationLabel(type)} notification processed. Some authors still have not received it.`,
     results,
   };
 }

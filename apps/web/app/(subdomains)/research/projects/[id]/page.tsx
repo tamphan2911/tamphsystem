@@ -111,6 +111,21 @@ function isoDate(value: Date | null | undefined) {
   return value ? value.toISOString() : "";
 }
 
+function sentAuthorEmail(value: unknown) {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    !("email" in value) ||
+    !("status" in value) ||
+    typeof value.email !== "string" ||
+    value.status !== "sent"
+  ) {
+    return null;
+  }
+
+  return value.email.toLowerCase();
+}
+
 function shortDate(value: Date | null | undefined) {
   if (!value) return "";
   return new Intl.DateTimeFormat("en-GB", {
@@ -227,7 +242,7 @@ export default async function ProjectDetailPage({
           },
           publications: { orderBy: { publishedDate: "desc" } },
           authorNotifications: {
-            select: { type: true },
+            select: { type: true, results: true },
           },
           leadResearcher: true,
           registrationUser: true,
@@ -526,6 +541,20 @@ export default async function ProjectDetailPage({
               isCorresponding: true,
             },
           ];
+  const authorNotificationSentTypes = project.authorNotifications
+    .filter((notification) => {
+      if (!Array.isArray(notification.results)) return false;
+      const sentEmails = new Set(
+        notification.results
+          .map((result) => sentAuthorEmail(result))
+          .filter((email): email is string => Boolean(email)),
+      );
+
+      return defaultAuthors.every((author) =>
+        sentEmails.has(author.email.toLowerCase()),
+      );
+    })
+    .map((notification) => notification.type);
   const venueOptions: SubmissionTaskVenueOption[] = [
     ...journals.map((journal) => ({
       kind: "journal" as const,
@@ -770,9 +799,7 @@ export default async function ProjectDetailPage({
                     isAdmin ? (
                       <AuthorNotificationActions
                         projectId={project.id}
-                        sentTypes={project.authorNotifications.map(
-                          (notification) => notification.type,
-                        )}
+                        sentTypes={authorNotificationSentTypes}
                       />
                     ) : null
                   }

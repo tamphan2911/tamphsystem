@@ -69,7 +69,7 @@ export function AuthorNotificationActions({
   function send(type: NotificationType) {
     startTransition(async () => {
       const result = await sendResearchAuthorNotification(projectId, type);
-      if (result.ok) {
+      if (result.ok && result.complete) {
         setLocalSent((current) => new Set([...current, type]));
       }
       setConfirmType(null);
@@ -118,7 +118,8 @@ export function AuthorNotificationActions({
                     Send author notification?
                   </h3>
                   <p className="mt-1 text-sm leading-5 text-slate-500 dark:text-slate-400">
-                    {selected.label}. This action can only be used once.
+                    {selected.label}. If any author fails, the next try will
+                    only send to authors who have not received this email yet.
                   </p>
                 </div>
               </div>
