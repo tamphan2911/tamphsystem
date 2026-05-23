@@ -192,7 +192,7 @@ export function SuggestedJournalsPanel({
       </div>
 
       <div className="grid gap-5">
-        <VenueSection title="Journals" emptyText="Add journals to build publication suggestions.">
+        <VenueSection title="Journals">
           {suggested.map((journal) => (
             <JournalCard
               key={journal.id}
@@ -204,7 +204,7 @@ export function SuggestedJournalsPanel({
           ))}
         </VenueSection>
 
-        <VenueSection title="Conferences" emptyText="Add conferences to build conference submission suggestions.">
+        <VenueSection title="Conferences">
           {suggestedConferences.map((conference) => (
             <ConferenceCard
               key={conference.id}
@@ -410,14 +410,15 @@ export function SuggestedJournalsPanel({
 
 const resultButtonClass = "cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm disabled:cursor-wait dark:border-slate-800 dark:bg-slate-950 dark:hover:border-blue-900 dark:hover:bg-blue-950/30";
 
-function VenueSection({ title, emptyText, children }: { title: string; emptyText: string; children: ReactNode }) {
+function VenueSection({ title, children }: { title: string; children: ReactNode }) {
   const hasChildren = Array.isArray(children) ? children.length > 0 : Boolean(children);
+  if (!hasChildren) return null;
 
   return (
     <div>
       <h3 className="mb-3 text-sm font-bold text-slate-700 dark:text-slate-200">{title}</h3>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {hasChildren ? children : <p className="text-sm text-slate-500 dark:text-slate-400">{emptyText}</p>}
+        {children}
       </div>
     </div>
   );
