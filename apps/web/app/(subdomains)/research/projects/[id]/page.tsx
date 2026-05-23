@@ -305,9 +305,9 @@ export default async function ProjectDetailPage({
     project.registrationUserId === userId ||
     Boolean(
       project.registrationName &&
-        registrationIdentityValues.includes(
-          project.registrationName.trim().toLowerCase(),
-        ),
+      registrationIdentityValues.includes(
+        project.registrationName.trim().toLowerCase(),
+      ),
     );
   if (!canManageResearch && !isProjectAuthor && !isRegistrationUser) {
     notFound();
@@ -560,6 +560,8 @@ export default async function ProjectDetailPage({
   const submissionRows: SubmissionRow[] = [
     ...project.submissions.map((submission) => ({
       id: submission.id,
+      code:
+        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
       kind: "journal" as const,
       venueId: submission.journalId,
       venueName: submission.journal.name,
@@ -577,6 +579,8 @@ export default async function ProjectDetailPage({
     })),
     ...project.conferenceSubmissions.map((submission) => ({
       id: submission.id,
+      code:
+        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
       kind: "conference" as const,
       venueId: submission.conferenceId,
       venueName: submission.conference.name,
@@ -826,7 +830,8 @@ export default async function ProjectDetailPage({
                   </div>
                   {!isAdmin && (
                     <p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                      Registration and claim details are view-only for the registered user.
+                      Registration and claim details are view-only for the
+                      registered user.
                     </p>
                   )}
                 </section>

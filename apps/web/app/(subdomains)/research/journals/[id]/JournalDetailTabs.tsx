@@ -1,28 +1,28 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   AtSign,
   CalendarClock,
   ClipboardCheck,
-  FileText,
   KeyRound,
   LockKeyhole,
   Send,
   StickyNote,
 } from "lucide-react";
-import { FilterSelect, IconHint, TablePagination, TableSearchInput, useTablePagination } from "../../components/TableControls";
+import {
+  FilterSelect,
+  IconHint,
+  TablePagination,
+  TableSearchInput,
+  useTablePagination,
+} from "../../components/TableControls";
+import {
+  SubmissionsTable,
+  type SubmissionRow,
+} from "../../projects/[id]/SubmissionsTable";
 
-export type JournalSubmissionRow = {
-  id: string;
-  projectId: string;
-  projectTitle: string;
-  status: string;
-  account: string;
-  submittedAt: string;
-  taskTitles: string[];
-};
+export type JournalSubmissionRow = SubmissionRow;
 
 export type JournalAccountRow = {
   id: string;
@@ -50,9 +50,12 @@ export type JournalReviewRow = {
 type TabKey = "submissions" | "accounts" | "reviews";
 
 function statusClass(status: string) {
-  if (status === "ACCEPTED" || status === "SUBMITTED") return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
-  if (status === "REVISION" || status === "IN_PROGRESS") return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
-  if (status === "REJECTED" || status === "WITHDRAWN" || status === "DECLINED") return "bg-red-50 text-red-700 ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900";
+  if (status === "ACCEPTED" || status === "SUBMITTED")
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (status === "REVISION" || status === "IN_PROGRESS")
+    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  if (status === "REJECTED" || status === "WITHDRAWN" || status === "DECLINED")
+    return "bg-red-50 text-red-700 ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900";
   return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
 }
 
@@ -70,23 +73,26 @@ export function JournalDetailTabs({
   const [status, setStatus] = useState("ALL");
 
   const statusOptions = useMemo(() => {
-    const rows = activeTab === "submissions" ? submissions : activeTab === "reviews" ? reviews : [];
-    return ["ALL", ...Array.from(new Set(rows.map((row) => row.status).filter(Boolean))).sort()];
+    const rows =
+      activeTab === "submissions"
+        ? submissions
+        : activeTab === "reviews"
+          ? reviews
+          : [];
+    return [
+      "ALL",
+      ...Array.from(
+        new Set(rows.map((row) => row.status).filter(Boolean)),
+      ).sort(),
+    ];
   }, [activeTab, reviews, submissions]);
-
-  const filteredSubmissions = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return submissions.filter((row) => {
-      const matchesStatus = status === "ALL" || row.status === status;
-      const haystack = [row.projectTitle, row.status, row.account, row.submittedAt, ...row.taskTitles].join(" ").toLowerCase();
-      return matchesStatus && (!needle || haystack.includes(needle));
-    });
-  }, [query, status, submissions]);
 
   const filteredAccounts = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return accounts.filter((row) => {
-      const haystack = [row.username, row.password, row.email, row.note].join(" ").toLowerCase();
+      const haystack = [row.username, row.password, row.email, row.note]
+        .join(" ")
+        .toLowerCase();
       return !needle || haystack.includes(needle);
     });
   }, [accounts, query]);
@@ -103,18 +109,34 @@ export function JournalDetailTabs({
         row.editorName,
         row.reviewRound,
         row.note,
-      ].join(" ").toLowerCase();
+      ]
+        .join(" ")
+        .toLowerCase();
       return matchesStatus && (!needle || haystack.includes(needle));
     });
   }, [query, reviews, status]);
-  const submissionPagination = useTablePagination(filteredSubmissions, 10);
   const accountPagination = useTablePagination(filteredAccounts, 10);
   const reviewPagination = useTablePagination(filteredReviews, 10);
 
   const tabs = [
-    { key: "submissions" as const, label: "Submits", value: submissions.length, icon: Send },
-    { key: "accounts" as const, label: "Accounts", value: accounts.length, icon: KeyRound },
-    { key: "reviews" as const, label: "Reviews", value: reviews.length, icon: ClipboardCheck },
+    {
+      key: "submissions" as const,
+      label: "Submits",
+      value: submissions.length,
+      icon: Send,
+    },
+    {
+      key: "accounts" as const,
+      label: "Accounts",
+      value: accounts.length,
+      icon: KeyRound,
+    },
+    {
+      key: "reviews" as const,
+      label: "Reviews",
+      value: reviews.length,
+      icon: ClipboardCheck,
+    },
   ];
 
   return (
@@ -146,140 +168,198 @@ export function JournalDetailTabs({
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
-          <TableSearchInput value={query} onChange={setQuery} placeholder={`Search ${activeTab}...`} />
-          {activeTab !== "accounts" && (
-            <FilterSelect
-              value={status}
-              onChange={setStatus}
-              ariaLabel="Filter by status"
-              options={statusOptions.map((item) => ({ value: item, label: item === "ALL" ? "All status" : item.replace("_", " ") }))}
+      {activeTab === "submissions" && (
+        <SubmissionsTable rows={submissions} isAdmin={false} />
+      )}
+
+      {activeTab !== "submissions" && (
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+            <TableSearchInput
+              value={query}
+              onChange={setQuery}
+              placeholder={`Search ${activeTab}...`}
             />
+            {activeTab !== "accounts" && (
+              <FilterSelect
+                value={status}
+                onChange={setStatus}
+                ariaLabel="Filter by status"
+                options={statusOptions.map((item) => ({
+                  value: item,
+                  label: item === "ALL" ? "All status" : item.replace("_", " "),
+                }))}
+              />
+            )}
+          </div>
+
+          {activeTab === "accounts" && (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[70rem] text-left">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                    <tr>
+                      <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
+                        <IconHint label="Account ID">
+                          <KeyRound className="h-4 w-4" aria-hidden="true" />
+                        </IconHint>
+                      </th>
+                      <th className="px-4 py-3">
+                        <IconHint label="Password">
+                          <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+                        </IconHint>
+                      </th>
+                      <th className="px-4 py-3">
+                        <IconHint label="Email">
+                          <AtSign className="h-4 w-4" aria-hidden="true" />
+                        </IconHint>
+                      </th>
+                      <th className="px-4 py-3">
+                        <IconHint label="Submissions">
+                          <Send className="h-4 w-4" aria-hidden="true" />
+                        </IconHint>
+                      </th>
+                      <th className="px-4 py-3">
+                        <IconHint label="Note">
+                          <StickyNote className="h-4 w-4" aria-hidden="true" />
+                        </IconHint>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {accountPagination.pagedRows.map((account) => (
+                      <tr
+                        key={account.id}
+                        className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                      >
+                        <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-normal text-slate-700 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
+                          {account.username}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">
+                          {account.password || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          {account.email || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                          {account.submissions}
+                        </td>
+                        <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          {account.note || "-"}
+                        </td>
+                      </tr>
+                    ))}
+                    {accountPagination.total === 0 && (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
+                        >
+                          No accounts match the current search.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <TablePagination
+                page={accountPagination.page}
+                pageCount={accountPagination.pageCount}
+                total={accountPagination.total}
+                pageSize={accountPagination.pageSize}
+                onPageChange={accountPagination.setPage}
+              />
+            </>
+          )}
+
+          {activeTab === "reviews" && (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[78rem] text-left">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                    <tr>
+                      <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
+                        Manuscript
+                      </th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">
+                        <IconHint label="Due date">
+                          <CalendarClock
+                            className="h-4 w-4"
+                            aria-hidden="true"
+                          />
+                        </IconHint>
+                      </th>
+                      <th className="px-4 py-3">Recommendation</th>
+                      <th className="px-4 py-3">Editor</th>
+                      <th className="px-4 py-3">
+                        <IconHint label="Note">
+                          <StickyNote className="h-4 w-4" aria-hidden="true" />
+                        </IconHint>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {reviewPagination.pagedRows.map((review) => (
+                      <tr
+                        key={review.id}
+                        className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                      >
+                        <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
+                          <p className="text-sm font-normal text-slate-700 dark:text-slate-200">
+                            {review.manuscriptTitle}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {review.manuscriptId ||
+                              review.reviewRound ||
+                              "No tracking code"}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(review.status)}`}
+                          >
+                            {review.status.replace("_", " ")}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          {review.dueDate || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          {review.recommendation || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          {review.editorName || "-"}
+                        </td>
+                        <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          {review.note || "-"}
+                        </td>
+                      </tr>
+                    ))}
+                    {reviewPagination.total === 0 && (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
+                        >
+                          No reviews match the current filters.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <TablePagination
+                page={reviewPagination.page}
+                pageCount={reviewPagination.pageCount}
+                total={reviewPagination.total}
+                pageSize={reviewPagination.pageSize}
+                onPageChange={reviewPagination.setPage}
+              />
+            </>
           )}
         </div>
-
-        {activeTab === "submissions" && (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[72rem] text-left">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-                  <tr>
-                    <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Research</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Account</th>
-                    <th className="px-4 py-3">Submitted</th>
-                    <th className="px-4 py-3">Task</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {submissionPagination.pagedRows.map((row) => (
-                    <tr key={row.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                      <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                        <Link href={`/projects/${row.projectId}`} className="inline-flex items-center gap-2 text-sm font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">
-                          <IconHint label="Research project"><FileText className="h-4 w-4 text-slate-400" aria-hidden="true" /></IconHint>
-                          {row.projectTitle}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(row.status)}`}>{row.status}</span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.account || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.submittedAt || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                        {row.taskTitles.length > 0 ? (
-                          <Link href="/tasks" className="font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200">
-                            {row.taskTitles.join(", ")}
-                          </Link>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                  {submissionPagination.total === 0 && (
-                    <tr><td colSpan={5} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">No submissions match the current filters.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-            <TablePagination page={submissionPagination.page} pageCount={submissionPagination.pageCount} total={submissionPagination.total} pageSize={submissionPagination.pageSize} onPageChange={submissionPagination.setPage} />
-          </>
-        )}
-
-        {activeTab === "accounts" && (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[70rem] text-left">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-                  <tr>
-                    <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]"><IconHint label="Account ID"><KeyRound className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-                    <th className="px-4 py-3"><IconHint label="Password"><LockKeyhole className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-                    <th className="px-4 py-3"><IconHint label="Email"><AtSign className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-                    <th className="px-4 py-3"><IconHint label="Submissions"><Send className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-                    <th className="px-4 py-3"><IconHint label="Note"><StickyNote className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {accountPagination.pagedRows.map((account) => (
-                    <tr key={account.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                      <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-normal text-slate-700 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">{account.username}</td>
-                      <td className="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">{account.password || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.email || "-"}</td>
-                      <td className="px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{account.submissions}</td>
-                      <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.note || "-"}</td>
-                    </tr>
-                  ))}
-                  {accountPagination.total === 0 && (
-                    <tr><td colSpan={5} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">No accounts match the current search.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-            <TablePagination page={accountPagination.page} pageCount={accountPagination.pageCount} total={accountPagination.total} pageSize={accountPagination.pageSize} onPageChange={accountPagination.setPage} />
-          </>
-        )}
-
-        {activeTab === "reviews" && (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[78rem] text-left">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-                  <tr>
-                    <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Manuscript</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3"><IconHint label="Due date"><CalendarClock className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-                    <th className="px-4 py-3">Recommendation</th>
-                    <th className="px-4 py-3">Editor</th>
-                    <th className="px-4 py-3"><IconHint label="Note"><StickyNote className="h-4 w-4" aria-hidden="true" /></IconHint></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {reviewPagination.pagedRows.map((review) => (
-                    <tr key={review.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                      <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                        <p className="text-sm font-normal text-slate-700 dark:text-slate-200">{review.manuscriptTitle}</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{review.manuscriptId || review.reviewRound || "No tracking code"}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(review.status)}`}>{review.status.replace("_", " ")}</span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{review.dueDate || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{review.recommendation || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{review.editorName || "-"}</td>
-                      <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{review.note || "-"}</td>
-                    </tr>
-                  ))}
-                  {reviewPagination.total === 0 && (
-                    <tr><td colSpan={6} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">No reviews match the current filters.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-            <TablePagination page={reviewPagination.page} pageCount={reviewPagination.pageCount} total={reviewPagination.total} pageSize={reviewPagination.pageSize} onPageChange={reviewPagination.setPage} />
-          </>
-        )}
-      </div>
+      )}
     </section>
   );
 }

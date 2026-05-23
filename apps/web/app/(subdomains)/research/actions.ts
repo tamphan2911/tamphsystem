@@ -161,6 +161,30 @@ async function generateTaskCode() {
   return crypto.randomUUID().replaceAll("-", "").slice(0, 12).toUpperCase();
 }
 
+async function generateSubmissionCode() {
+  const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const bytes = crypto.getRandomValues(new Uint8Array(6));
+    const code = Array.from(
+      bytes,
+      (byte) => alphabet[byte % alphabet.length],
+    ).join("");
+    const [journalSubmission, conferenceSubmission] = await Promise.all([
+      prisma.researchSubmission.findUnique({
+        where: { submissionCode: code },
+        select: { id: true },
+      }),
+      prisma.conferenceSubmission.findUnique({
+        where: { submissionCode: code },
+        select: { id: true },
+      }),
+    ]);
+    if (!journalSubmission && !conferenceSubmission) return code;
+  }
+
+  return crypto.randomUUID().replaceAll("-", "").slice(0, 10).toUpperCase();
+}
+
 const productionStepLabels = [
   "Idea forming",
   "Data collection",
@@ -314,16 +338,14 @@ export async function createResearchProject(formData: FormData) {
         : null,
       registrationName: null,
       registrationUserId,
-      registerStatus:
-        isAdmin
-          ? enumValue(RegistrationStatus, formData.get("registerStatus")) ??
-            RegistrationStatus.NOT_REGISTERED
-          : RegistrationStatus.NOT_REGISTERED,
-      claimStatus:
-        isAdmin
-          ? enumValue(ClaimStatus, formData.get("claimStatus")) ??
-            ClaimStatus.CANNOT_CLAIM
-          : ClaimStatus.CANNOT_CLAIM,
+      registerStatus: isAdmin
+        ? (enumValue(RegistrationStatus, formData.get("registerStatus")) ??
+          RegistrationStatus.NOT_REGISTERED)
+        : RegistrationStatus.NOT_REGISTERED,
+      claimStatus: isAdmin
+        ? (enumValue(ClaimStatus, formData.get("claimStatus")) ??
+          ClaimStatus.CANNOT_CLAIM)
+        : ClaimStatus.CANNOT_CLAIM,
       leadResearcherId: user.id,
       authors: {
         connect: selectedAuthorIds.map((id) => ({ id })),
@@ -620,6 +642,7 @@ export async function createResearchSubmission(
 
   await prisma.researchSubmission.create({
     data: {
+      submissionCode: await generateSubmissionCode(),
       researchProjectId: projectId,
       journalId,
       accountId: optionalString(formData.get("accountId")),
@@ -1258,6 +1281,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
           : {}),
       },
       create: {
+        submissionCode: await generateSubmissionCode(),
         researchProjectId: task.projectId,
         journalId: task.journalId,
         accountId: accountId ?? task.accountId,
@@ -1291,6 +1315,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
         status: ConferenceSubmissionStatus.SUBMITTED,
       },
       create: {
+        submissionCode: await generateSubmissionCode(),
         conferenceId: task.conferenceId,
         researchProjectId: task.projectId,
         status: ConferenceSubmissionStatus.SUBMITTED,

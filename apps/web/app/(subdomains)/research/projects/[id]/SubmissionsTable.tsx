@@ -27,6 +27,7 @@ import { currencySymbol } from "../../lib/currency";
 
 export type SubmissionRow = {
   id: string;
+  code: string;
   kind: "journal" | "conference";
   venueId: string;
   venueName: string;
@@ -193,6 +194,7 @@ export function SubmissionsTable({
       const matchesKind = kind === "ALL" || row.kind === kind;
       const haystack = [
         row.venueName,
+        row.code,
         row.metaLine,
         row.apc,
         row.submissionFee,
@@ -292,8 +294,11 @@ export function SubmissionsTable({
           <table className="w-full table-fixed text-left">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
-                <th className="w-[32%] px-4 py-3">Journal / Conference</th>
-                <th className="w-[19%] px-4 py-3">
+                <th className="w-[7%] px-4 py-3">ID</th>
+                <th className={`${isAdmin ? "w-[29%]" : "w-[33%]"} px-4 py-3`}>
+                  Journal / Conference
+                </th>
+                <th className={`${isAdmin ? "w-[18%]" : "w-[20%]"} px-4 py-3`}>
                   <span className="inline-flex items-center gap-2">
                     Status
                     <IconHint label="Edit status from a row">
@@ -304,9 +309,11 @@ export function SubmissionsTable({
                     </IconHint>
                   </span>
                 </th>
-                <th className="w-[12%] px-4 py-3">APC</th>
-                <th className="w-[13%] px-4 py-3">Submission fee</th>
-                <th className="w-[17%] px-4 py-3">Account</th>
+                <th className="w-[11%] px-4 py-3">APC</th>
+                <th className="w-[12%] px-4 py-3">Submission fee</th>
+                <th className={`${isAdmin ? "w-[16%]" : "w-[17%]"} px-4 py-3`}>
+                  Account
+                </th>
                 {isAdmin && (
                   <th className="w-[7%] px-4 py-3 text-right">Edit</th>
                 )}
@@ -318,6 +325,9 @@ export function SubmissionsTable({
                   key={row.id}
                   className={`group align-top transition duration-200 ease-out ${rowClass(row.status)}`}
                 >
+                  <td className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    {row.code}
+                  </td>
                   <td className="px-4 py-3">
                     <Link
                       href={
@@ -414,7 +424,7 @@ export function SubmissionsTable({
               {pagination.total === 0 && (
                 <tr>
                   <td
-                    colSpan={isAdmin ? 6 : 5}
+                    colSpan={isAdmin ? 7 : 6}
                     className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                   >
                     No submissions match the current filters.

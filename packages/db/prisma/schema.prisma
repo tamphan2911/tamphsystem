@@ -314,7 +314,7 @@ model OrganizedProject {
   updatedAt             DateTime               @updatedAt
 
   createdById String?
-  createdBy   User?   @relation("OrganizedProjectCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy   User?                      @relation("OrganizedProjectCreator", fields: [createdById], references: [id], onDelete: SetNull)
   research    OrganizedProjectResearch[]
 
   @@index([status])
@@ -407,6 +407,7 @@ model SuggestedConference {
 
 model ConferenceSubmission {
   id                String                     @id @default(uuid())
+  submissionCode    String?                    @unique
   conferenceId      String
   researchProjectId String
   status            ConferenceSubmissionStatus @default(PLANNED)
@@ -539,6 +540,7 @@ model PublisherAccount {
 
 model ResearchSubmission {
   id                String  @id @default(uuid())
+  submissionCode    String? @unique
   researchProjectId String
   journalId         String
   accountId         String? // Which account was used to submit

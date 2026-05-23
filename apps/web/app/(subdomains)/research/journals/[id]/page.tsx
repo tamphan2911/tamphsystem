@@ -56,38 +56,26 @@ export default async function JournalDetailPage({
 
   if (!journal) notFound();
 
-  const relatedTasks = await prisma.researchTask.findMany({
-    where: {
-      OR: [
-        { title: { contains: journal.name, mode: "insensitive" } },
-        { description: { contains: journal.name, mode: "insensitive" } },
-      ],
-    },
-    orderBy: { updatedAt: "desc" },
-    select: { title: true, description: true },
-  });
-
   const submissionRows: JournalSubmissionRow[] = journal.submissions.map(
     (submission) => {
-      const taskTitles = relatedTasks
-        .filter((task) => {
-          const haystack =
-            `${task.title} ${task.description ?? ""} ${submission.project.title}`.toLowerCase();
-          return (
-            haystack.includes(journal.name.toLowerCase()) ||
-            haystack.includes(submission.project.title.toLowerCase())
-          );
-        })
-        .map((task) => task.title);
-
       return {
         id: submission.id,
-        projectId: submission.project.id,
-        projectTitle: submission.project.title,
-        status: submission.status,
+        code:
+          submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
+        kind: "journal" as const,
+        venueId: journal.id,
+        venueName: journal.name,
+        metaLine: submission.project.title,
+        apc: journal.apc ?? "",
+        apcCurrency: journal.apcCurrency,
+        submissionFee: journal.submissionFee ?? "",
+        submissionFeeCurrency: journal.submissionFeeCurrency,
         account: submission.account?.username ?? "",
-        submittedAt: dateText(submission.submittedAt),
-        taskTitles,
+        status: submission.status,
+        submittedAt: submission.submittedAt.toISOString(),
+        acceptedAt: submission.acceptedAt?.toISOString() ?? "",
+        rejectedAt: submission.rejectedAt?.toISOString() ?? "",
+        publishedAt: submission.publishedAt?.toISOString() ?? "",
       };
     },
   );
@@ -184,11 +172,6 @@ export default async function JournalDetailPage({
                     </span>
                   </a>
                 ))}
-                {journal.issn && (
-                  <span className="ml-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
-                    ISSN {journal.issn}
-                  </span>
-                )}
                 <EditJournalDialog
                   journalId={journal.id}
                   journal={{
@@ -211,25 +194,15 @@ export default async function JournalDetailPage({
                 />
               </div>
             </div>
+            <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+              ISSN {journal.issn || "-"} - {journal.publisher || "No publisher"}{" "}
+              - {journal.rank || "No rank"}
+            </p>
           </div>
         </div>
 
         <dl className="mt-5 grid gap-3 text-sm md:grid-cols-4">
-          <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">Rank</dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
-              {journal.rank || "-"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">
-              Publisher
-            </dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
-              {journal.publisher || "-"}
-            </dd>
-          </div>
-          <div>
+          <div className="md:col-span-2">
             <dt className="text-xs font-bold uppercase text-slate-400">Area</dt>
             <dd className="mt-1 text-slate-700 dark:text-slate-300">
               {journalFields.length > 0 ? journalFields.join("; ") : "-"}
@@ -252,7 +225,7 @@ export default async function JournalDetailPage({
               )}
             </dd>
           </div>
-          <div className="md:col-span-3">
+          <div className="md:col-span-4">
             <dt className="text-xs font-bold uppercase text-slate-400">
               <span className="group/note relative inline-flex items-center gap-1">
                 <Hash className="h-3.5 w-3.5 text-amber-500" /> Note
