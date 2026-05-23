@@ -99,9 +99,11 @@ const stageStyles = {
     label: "Published",
     icon: Rocket,
     className:
-      "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/70 dark:bg-sky-950/40 dark:text-sky-200",
+      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-200",
   },
 };
+
+type DisplayStage = keyof typeof stageStyles;
 
 function isoDate(value: Date | null | undefined) {
   return value ? value.toISOString() : "";
@@ -129,6 +131,50 @@ function suggestedSubmissionState(
   )
     return "reviewing";
   return "submitted";
+}
+
+function stageFromJournalSubmissions(
+  submissions: { status: string }[],
+): DisplayStage {
+  if (submissions.some((submission) => submission.status === "PUBLISHED"))
+    return "PUBLISHED";
+  if (submissions.some((submission) => submission.status === "ACCEPTED"))
+    return "ACCEPTED";
+  if (
+    submissions.some(
+      (submission) =>
+        submission.status === "UNDER_REVIEW" ||
+        submission.status === "REVISION",
+    )
+  )
+    return "REVIEW";
+  return "SUBMITTING";
+}
+
+function stageFromConferenceSubmissions(
+  submissions: { status: string }[],
+): DisplayStage {
+  if (submissions.some((submission) => submission.status === "PUBLISHED"))
+    return "PUBLISHED";
+  if (submissions.some((submission) => submission.status === "ACCEPTED"))
+    return "ACCEPTED";
+  if (submissions.some((submission) => submission.status === "REVIEWING"))
+    return "REVIEW";
+  return "SUBMITTING";
+}
+
+function highlightedSubmissionBoxClass(status: string) {
+  if (status === "PUBLISHED") {
+    return {
+      box: "border-blue-100 bg-blue-50/60 text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/20 dark:text-blue-100",
+      meta: "text-blue-700/80 dark:text-blue-200/80",
+    };
+  }
+
+  return {
+    box: "border-emerald-100 bg-emerald-50/50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-100",
+    meta: "text-emerald-700/80 dark:text-emerald-200/80",
+  };
 }
 
 function displayRole(roles: Role[]) {
@@ -235,21 +281,32 @@ export default async function ProjectDetailPage({
 
   const updateAction = updateResearchProject.bind(null, project.id);
   const publicationAction = createPublication.bind(null, project.id);
+  const hasJournalSubmissions = project.submissions.length > 0;
+  const displayStage: DisplayStage = hasJournalSubmissions
+    ? stageFromJournalSubmissions(project.submissions)
+    : project.conferenceSubmissions.length > 0
+      ? stageFromConferenceSubmissions(project.conferenceSubmissions)
+      : project.stage;
   const showPublicationBlock =
-    project.stage === "PUBLISHED" || project.publications.length > 0;
-  const latestPublication = project.publications[0];
-  const highlightedJournalSubmission = project.submissions.find(
-    (submission) =>
-      submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
-  );
-  const highlightedConferenceSubmission = project.conferenceSubmissions.find(
-    (submission) =>
-      submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
-  );
-  const highlightedSubmission =
-    highlightedJournalSubmission ?? highlightedConferenceSubmission;
-  const publishedJournal =
-    highlightedJournalSubmission?.journal ?? project.submissions[0]?.journal;
+    displayStage === "PUBLISHED" || project.publications.length > 0;
+  const highlightedJournalSubmission = hasJournalSubmissions
+    ? project.submissions.find(
+        (submission) =>
+          submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
+      )
+    : undefined;
+  const highlightedConferenceSubmission = hasJournalSubmissions
+    ? undefined
+    : project.conferenceSubmissions.find(
+        (submission) =>
+          submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
+      );
+  const highlightedJournalClass = highlightedJournalSubmission
+    ? highlightedSubmissionBoxClass(highlightedJournalSubmission.status)
+    : undefined;
+  const highlightedConferenceClass = highlightedConferenceSubmission
+    ? highlightedSubmissionBoxClass(highlightedConferenceSubmission.status)
+    : undefined;
   const authorNames =
     project.authorEntries.length > 0
       ? project.authorEntries.map(
@@ -504,131 +561,98 @@ export default async function ProjectDetailPage({
   const openSubmissionTasks = project.tasks.filter(
     (task) => task.status !== "COMPLETED",
   );
-  const stageStyle = stageStyles[project.stage];
+  const stageStyle = stageStyles[displayStage];
   const StageIcon = stageStyle.icon;
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0 flex-1">
-          <Link
-            href="/projects"
-            className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-950 dark:hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to projects
-          </Link>
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-            <h1 className="min-w-0 text-xl font-bold leading-8 tracking-tight text-slate-950 dark:text-white">
-              {project.title}
-            </h1>
+      <div className="min-w-0">
+        <Link
+          href="/projects"
+          className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-950 dark:hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to projects
+        </Link>
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+          <h1 className="min-w-0 text-xl font-bold leading-8 tracking-tight text-slate-950 dark:text-white">
+            {project.title}
+          </h1>
+          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row xl:justify-end">
             <div
-              className={`inline-flex min-h-11 w-full max-w-[11.5rem] shrink-0 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold shadow-sm transition ${stageStyle.className}`}
+              className={`inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-bold shadow-sm transition sm:w-[11.5rem] ${stageStyle.className}`}
             >
               <StageIcon className="h-4 w-4 flex-none" />
               <span className="truncate">{stageStyle.label}</span>
             </div>
-          </div>
-          <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
-            <p>Authors: {authorsLine}</p>
-            {highlightedSubmission && highlightedJournalSubmission && (
-              <div className="space-y-1 rounded-xl border border-emerald-100 bg-emerald-50/50 px-3 py-2 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-100">
-                <p>
-                  {highlightedJournalSubmission.journal.name} -{" "}
-                  {highlightedJournalSubmission.journal.publisher ||
-                    "No publisher"}{" "}
-                  - ISSN {highlightedJournalSubmission.journal.issn || "-"} -{" "}
-                  {highlightedJournalSubmission.journal.rank || "No rank"}
-                </p>
-                <p className="text-xs text-emerald-700/80 dark:text-emerald-200/80">
-                  Submitted:{" "}
-                  {shortDate(highlightedJournalSubmission.submittedAt)}
-                  {highlightedJournalSubmission.acceptedAt
-                    ? ` - Accepted: ${shortDate(highlightedJournalSubmission.acceptedAt)}`
-                    : ""}
-                  {highlightedJournalSubmission.publishedAt
-                    ? ` - Published: ${shortDate(highlightedJournalSubmission.publishedAt)}`
-                    : ""}
-                </p>
-              </div>
-            )}
-            {highlightedSubmission &&
-              !highlightedJournalSubmission &&
-              highlightedConferenceSubmission && (
-                <div className="space-y-1 rounded-xl border border-sky-100 bg-sky-50/50 px-3 py-2 text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/20 dark:text-sky-100">
-                  <p>
-                    {highlightedConferenceSubmission.conference.name} -{" "}
-                    {highlightedConferenceSubmission.conference.organizer ||
-                      "No organizer"}{" "}
-                    -{" "}
-                    {highlightedConferenceSubmission.conference.type ||
-                      "No type"}{" "}
-                    -{" "}
-                    {highlightedConferenceSubmission.conference.location ||
-                      "No location"}
-                  </p>
-                  <p className="text-xs text-sky-700/80 dark:text-sky-200/80">
-                    Submitted:{" "}
-                    {shortDate(highlightedConferenceSubmission.submittedAt)}
-                    {highlightedConferenceSubmission.acceptedAt
-                      ? ` - Accepted: ${shortDate(highlightedConferenceSubmission.acceptedAt)}`
-                      : ""}
-                    {highlightedConferenceSubmission.publishedAt
-                      ? ` - Published: ${shortDate(highlightedConferenceSubmission.publishedAt)}`
-                      : ""}
-                  </p>
-                </div>
-              )}
-            {project.stage === "PUBLISHED" && publishedJournal && (
-              <div>
-                <p>
-                  {publishedJournal.name} -{" "}
-                  {publishedJournal.publisher || "No publisher"} -{" "}
-                  {latestPublication?.rank ||
-                    publishedJournal.rank ||
-                    "No rank"}{" "}
-                  -{" "}
-                  {latestPublication?.publishedDate
-                    ? latestPublication.publishedDate.toLocaleDateString()
-                    : "No published date"}
-                </p>
-                {latestPublication?.url && (
-                  <a
-                    href={latestPublication.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-blue-600 transition hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200"
-                  >
-                    DOI / article link <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-              </div>
-            )}
-            {project.stage === "ACCEPTED" && publishedJournal && (
-              <p>
-                {publishedJournal.name} -{" "}
-                {publishedJournal.publisher || "No publisher"} -{" "}
-                {publishedJournal.rank || "No rank"}
-              </p>
-            )}
-            {project.stage === "PRODUCTION" && (
-              <p>
-                Not finished:{" "}
-                {unfinishedSteps.length > 0
-                  ? unfinishedSteps.map((step) => step.label).join(", ")
-                  : "All production stages checked"}
-              </p>
-            )}
+            <button
+              type="submit"
+              form="research-detail-form"
+              className="inline-flex h-11 w-full shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-sm font-bold text-emerald-700 shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-md dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-200 dark:shadow-black/20 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/60 sm:w-[11.5rem]"
+            >
+              <Save className="h-4 w-4 flex-none" />
+              Save changes
+            </button>
           </div>
         </div>
-        <button
-          type="submit"
-          form="research-detail-form"
-          className="inline-flex min-h-11 w-fit shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-md dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-200 dark:shadow-black/20 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/60"
-        >
-          <Save className="h-4 w-4 flex-none" />
-          Save changes
-        </button>
+        <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+          <p>Authors: {authorsLine}</p>
+          {highlightedJournalSubmission && highlightedJournalClass && (
+            <div
+              className={`space-y-1 rounded-xl border px-3 py-2 ${highlightedJournalClass.box}`}
+            >
+              <p>
+                {highlightedJournalSubmission.journal.name} -{" "}
+                {highlightedJournalSubmission.journal.publisher ||
+                  "No publisher"}{" "}
+                - ISSN {highlightedJournalSubmission.journal.issn || "-"} -{" "}
+                {highlightedJournalSubmission.journal.rank || "No rank"}
+              </p>
+              <p className={`text-xs ${highlightedJournalClass.meta}`}>
+                Submitted: {shortDate(highlightedJournalSubmission.submittedAt)}
+                {highlightedJournalSubmission.acceptedAt
+                  ? ` - Accepted: ${shortDate(highlightedJournalSubmission.acceptedAt)}`
+                  : ""}
+                {highlightedJournalSubmission.publishedAt
+                  ? ` - Published: ${shortDate(highlightedJournalSubmission.publishedAt)}`
+                  : ""}
+              </p>
+            </div>
+          )}
+          {highlightedConferenceSubmission && highlightedConferenceClass && (
+            <div
+              className={`space-y-1 rounded-xl border px-3 py-2 ${highlightedConferenceClass.box}`}
+            >
+              <p>
+                {highlightedConferenceSubmission.conference.name} -{" "}
+                {highlightedConferenceSubmission.conference.organizer ||
+                  "No organizer"}{" "}
+                - {highlightedConferenceSubmission.conference.type || "No type"}{" "}
+                -{" "}
+                {highlightedConferenceSubmission.conference.location ||
+                  "No location"}
+              </p>
+              <p className={`text-xs ${highlightedConferenceClass.meta}`}>
+                Submitted:{" "}
+                {shortDate(highlightedConferenceSubmission.submittedAt)}
+                {highlightedConferenceSubmission.acceptedAt
+                  ? ` - Accepted: ${shortDate(highlightedConferenceSubmission.acceptedAt)}`
+                  : ""}
+                {highlightedConferenceSubmission.publishedAt
+                  ? ` - Published: ${shortDate(highlightedConferenceSubmission.publishedAt)}`
+                  : ""}
+              </p>
+            </div>
+          )}
+          {displayStage === "PRODUCTION" && (
+            <p>
+              Not finished:{" "}
+              {unfinishedSteps.length > 0
+                ? unfinishedSteps.map((step) => step.label).join(", ")
+                : "All production stages checked"}
+            </p>
+          )}
+        </div>
       </div>
 
       <SaveForm
