@@ -2,10 +2,25 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
-import { BookOpen, CalendarDays, Check, CircleDollarSign, Edit3, Landmark, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  BookOpen,
+  CalendarDays,
+  Check,
+  CircleDollarSign,
+  Edit3,
+  Landmark,
+  X,
+} from "lucide-react";
 import { updateSubmissionStatus } from "../../actions";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
-import { FilterSelect, IconHint, TablePagination, TableSearchInput, useTablePagination } from "../../components/TableControls";
+import {
+  FilterSelect,
+  IconHint,
+  TablePagination,
+  TableSearchInput,
+  useTablePagination,
+} from "../../components/TableControls";
 import { useResearchToast } from "../../components/ResearchToast";
 import { currencySymbol } from "../../lib/currency";
 
@@ -45,7 +60,8 @@ const conferenceStatusOptions = [
 
 function normalizedStatus(value: string) {
   if (value === "PENDING" || value === "SUBMITTED") return "SUBMITTED";
-  if (value === "UNDER_REVIEW" || value === "REVISION" || value === "REVIEWING") return "REVIEWING";
+  if (value === "UNDER_REVIEW" || value === "REVISION" || value === "REVIEWING")
+    return "REVIEWING";
   return value;
 }
 
@@ -53,23 +69,32 @@ function statusLabel(value: string) {
   const normalized = normalizedStatus(value);
   if (normalized === "SUBMITTED") return "Submitted";
   if (normalized === "REVIEWING") return "Reviewing";
-  return normalized.toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return normalized
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function badgeClass(value: string) {
   const normalized = normalizedStatus(value);
-  if (normalized === "ACCEPTED") return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
-  if (normalized === "PUBLISHED") return "bg-sky-50 text-sky-700 ring-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-900";
-  if (normalized === "REJECTED") return "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
-  if (normalized === "REVIEWING") return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
+  if (normalized === "ACCEPTED")
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (normalized === "PUBLISHED")
+    return "bg-sky-50 text-sky-700 ring-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-900";
+  if (normalized === "REJECTED")
+    return "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+  if (normalized === "REVIEWING")
+    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
   return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
 }
 
 function rowClass(value: string) {
   const normalized = normalizedStatus(value);
-  if (normalized === "REJECTED") return "bg-slate-100/80 hover:bg-slate-100 dark:bg-slate-800/45 dark:hover:bg-slate-800/65";
-  if (normalized === "ACCEPTED") return "bg-emerald-50/70 hover:bg-emerald-50 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30";
-  if (normalized === "PUBLISHED") return "bg-sky-50/70 hover:bg-sky-50 dark:bg-sky-950/20 dark:hover:bg-sky-950/30";
+  if (normalized === "REJECTED")
+    return "bg-slate-100/80 hover:bg-slate-100 dark:bg-slate-800/45 dark:hover:bg-slate-800/65";
+  if (normalized === "ACCEPTED")
+    return "bg-emerald-50/70 hover:bg-emerald-50 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30";
+  if (normalized === "PUBLISHED")
+    return "bg-sky-50/70 hover:bg-sky-50 dark:bg-sky-950/20 dark:hover:bg-sky-950/30";
   return "hover:bg-slate-50 dark:hover:bg-slate-800/40";
 }
 
@@ -77,19 +102,25 @@ function shortDate(value: string) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(date);
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  }).format(date);
 }
 
 function dateInputValue(value: string) {
   if (!value) return new Date().toISOString().slice(0, 10);
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return new Date().toISOString().slice(0, 10);
+  if (Number.isNaN(date.getTime()))
+    return new Date().toISOString().slice(0, 10);
   return date.toISOString().slice(0, 10);
 }
 
 function statusDate(row: SubmissionRow) {
   const normalized = normalizedStatus(row.status);
-  if (normalized === "PUBLISHED") return row.publishedAt || row.acceptedAt || row.submittedAt;
+  if (normalized === "PUBLISHED")
+    return row.publishedAt || row.acceptedAt || row.submittedAt;
   if (normalized === "ACCEPTED") return row.acceptedAt || row.submittedAt;
   if (normalized === "REJECTED") return row.rejectedAt || row.submittedAt;
   return row.submittedAt;
@@ -105,10 +136,21 @@ function MoneyCell({ amount, currency }: { amount: string; currency: string }) {
       </span>
     );
   }
-  return <span>{currencySymbol(currency)} {amount}</span>;
+  return (
+    <span>
+      {currencySymbol(currency)} {amount}
+    </span>
+  );
 }
 
-export function SubmissionsTable({ rows, isAdmin }: { rows: SubmissionRow[]; isAdmin: boolean }) {
+export function SubmissionsTable({
+  rows,
+  isAdmin,
+}: {
+  rows: SubmissionRow[];
+  isAdmin: boolean;
+}) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("ALL");
   const [kind, setKind] = useState("ALL");
@@ -119,10 +161,23 @@ export function SubmissionsTable({ rows, isAdmin }: { rows: SubmissionRow[]; isA
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
-      const matchesStatus = status === "ALL" || normalizedStatus(row.status) === status;
+      const matchesStatus =
+        status === "ALL" || normalizedStatus(row.status) === status;
       const matchesKind = kind === "ALL" || row.kind === kind;
-      const haystack = [row.venueName, row.metaLine, row.apc, row.submissionFee, row.account, row.status, row.kind].join(" ").toLowerCase();
-      return matchesStatus && matchesKind && (!needle || haystack.includes(needle));
+      const haystack = [
+        row.venueName,
+        row.metaLine,
+        row.apc,
+        row.submissionFee,
+        row.account,
+        row.status,
+        row.kind,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return (
+        matchesStatus && matchesKind && (!needle || haystack.includes(needle))
+      );
     });
   }, [kind, query, rows, status]);
 
@@ -134,8 +189,10 @@ export function SubmissionsTable({ rows, isAdmin }: { rows: SubmissionRow[]; isA
       setEditing(null);
       showSuccess({
         title: "Submission status updated",
-        detail: "The status date and research stage signals have been refreshed.",
+        detail:
+          "The status date and research stage signals have been refreshed.",
       });
+      router.refresh();
     });
   }
 
@@ -143,21 +200,35 @@ export function SubmissionsTable({ rows, isAdmin }: { rows: SubmissionRow[]; isA
     <>
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
-          <TableSearchInput value={query} onChange={setQuery} placeholder="Search journal, conference, publisher, account..." />
+          <TableSearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder="Search journal, conference, publisher, account..."
+          />
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-            <FilterSelect value={status} onChange={setStatus} ariaLabel="Filter submissions by status" options={[
-              { value: "ALL", label: "All status" },
-              { value: "SUBMITTED", label: "Submitted" },
-              { value: "REVIEWING", label: "Reviewing" },
-              { value: "ACCEPTED", label: "Accepted" },
-              { value: "REJECTED", label: "Rejected" },
-              { value: "PUBLISHED", label: "Published" },
-            ]} />
-            <FilterSelect value={kind} onChange={setKind} ariaLabel="Filter by venue type" options={[
-              { value: "ALL", label: "All venues" },
-              { value: "journal", label: "Journals" },
-              { value: "conference", label: "Conferences" },
-            ]} />
+            <FilterSelect
+              value={status}
+              onChange={setStatus}
+              ariaLabel="Filter submissions by status"
+              options={[
+                { value: "ALL", label: "All status" },
+                { value: "SUBMITTED", label: "Submitted" },
+                { value: "REVIEWING", label: "Reviewing" },
+                { value: "ACCEPTED", label: "Accepted" },
+                { value: "REJECTED", label: "Rejected" },
+                { value: "PUBLISHED", label: "Published" },
+              ]}
+            />
+            <FilterSelect
+              value={kind}
+              onChange={setKind}
+              ariaLabel="Filter by venue type"
+              options={[
+                { value: "ALL", label: "All venues" },
+                { value: "journal", label: "Journals" },
+                { value: "conference", label: "Conferences" },
+              ]}
+            />
           </div>
         </div>
 
@@ -170,42 +241,102 @@ export function SubmissionsTable({ rows, isAdmin }: { rows: SubmissionRow[]; isA
                   <span className="inline-flex items-center gap-2">
                     Status
                     <IconHint label="Edit status from a row">
-                      <Edit3 className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                      <Edit3
+                        className="h-3.5 w-3.5 text-slate-400"
+                        aria-hidden="true"
+                      />
                     </IconHint>
                   </span>
                 </th>
                 <th className="w-[12%] px-4 py-3">APC</th>
                 <th className="w-[13%] px-4 py-3">Submission fee</th>
                 <th className="w-[17%] px-4 py-3">Account</th>
-                {isAdmin && <th className="w-[7%] px-4 py-3 text-right">Edit</th>}
+                {isAdmin && (
+                  <th className="w-[7%] px-4 py-3 text-right">Edit</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {pagination.pagedRows.map((row) => (
-                <tr key={row.id} className={`group align-top transition duration-200 ease-out ${rowClass(row.status)}`}>
+                <tr
+                  key={row.id}
+                  className={`group align-top transition duration-200 ease-out ${rowClass(row.status)}`}
+                >
                   <td className="px-4 py-3">
-                    <Link href={row.kind === "journal" ? `/journals/${row.venueId}` : `/conferences/${row.venueId}`} className="flex min-w-0 items-start gap-3">
-                      <IconHint label={row.kind === "journal" ? "Journal" : "Conference"}>
-                        {row.kind === "journal" ? <BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" /> : <Landmark className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" />}
+                    <Link
+                      href={
+                        row.kind === "journal"
+                          ? `/journals/${row.venueId}`
+                          : `/conferences/${row.venueId}`
+                      }
+                      className="flex min-w-0 items-start gap-3"
+                    >
+                      <IconHint
+                        label={
+                          row.kind === "journal" ? "Journal" : "Conference"
+                        }
+                      >
+                        {row.kind === "journal" ? (
+                          <BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" />
+                        ) : (
+                          <Landmark className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" />
+                        )}
                       </IconHint>
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold text-slate-700 group-hover:text-blue-600 dark:text-slate-100">{row.venueName}</span>
-                        <span className="mt-1 block line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">{row.metaLine || "-"}</span>
+                        <span className="block truncate text-sm font-semibold text-slate-700 group-hover:text-blue-600 dark:text-slate-100">
+                          {row.venueName}
+                        </span>
+                        <span className="mt-1 block line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                          {row.metaLine || "-"}
+                        </span>
                       </span>
                     </Link>
                   </td>
                   <td className="px-4 py-3">
                     <div className="grid gap-1.5">
-                      <span className={`w-fit rounded-full px-2 py-1 text-xs font-bold ring-1 ${badgeClass(row.status)}`}>{statusLabel(row.status)}</span>
-                      {normalizedStatus(row.status) === "PUBLISHED" && row.publishedAt && <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">published: {shortDate(row.publishedAt)}</span>}
-                      {(normalizedStatus(row.status) === "PUBLISHED" || normalizedStatus(row.status) === "ACCEPTED") && row.acceptedAt && <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">accepted: {shortDate(row.acceptedAt)}</span>}
-                      {normalizedStatus(row.status) === "REJECTED" && row.rejectedAt && <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">rejected: {shortDate(row.rejectedAt)}</span>}
-                      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">submitted: {shortDate(row.submittedAt) || "-"}</span>
+                      <span
+                        className={`w-fit rounded-full px-2 py-1 text-xs font-bold ring-1 ${badgeClass(row.status)}`}
+                      >
+                        {statusLabel(row.status)}
+                      </span>
+                      {normalizedStatus(row.status) === "PUBLISHED" &&
+                        row.publishedAt && (
+                          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                            published: {shortDate(row.publishedAt)}
+                          </span>
+                        )}
+                      {(normalizedStatus(row.status) === "PUBLISHED" ||
+                        normalizedStatus(row.status) === "ACCEPTED") &&
+                        row.acceptedAt && (
+                          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                            accepted: {shortDate(row.acceptedAt)}
+                          </span>
+                        )}
+                      {normalizedStatus(row.status) === "REJECTED" &&
+                        row.rejectedAt && (
+                          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                            rejected: {shortDate(row.rejectedAt)}
+                          </span>
+                        )}
+                      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                        submitted: {shortDate(row.submittedAt) || "-"}
+                      </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300"><MoneyCell amount={row.apc} currency={row.apcCurrency} /></td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300"><MoneyCell amount={row.submissionFee} currency={row.submissionFeeCurrency} /></td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{row.kind === "conference" ? "Email / website" : row.account || "Not recorded"}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    <MoneyCell amount={row.apc} currency={row.apcCurrency} />
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    <MoneyCell
+                      amount={row.submissionFee}
+                      currency={row.submissionFeeCurrency}
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    {row.kind === "conference"
+                      ? "Email / website"
+                      : row.account || "Not recorded"}
+                  </td>
                   {isAdmin && (
                     <td className="px-4 py-3 text-right">
                       <button
@@ -222,7 +353,10 @@ export function SubmissionsTable({ rows, isAdmin }: { rows: SubmissionRow[]; isA
               ))}
               {pagination.total === 0 && (
                 <tr>
-                  <td colSpan={isAdmin ? 6 : 5} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
+                  <td
+                    colSpan={isAdmin ? 6 : 5}
+                    className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
+                  >
                     No submissions match the current filters.
                   </td>
                 </tr>
@@ -230,7 +364,13 @@ export function SubmissionsTable({ rows, isAdmin }: { rows: SubmissionRow[]; isA
             </tbody>
           </table>
         </div>
-        <TablePagination page={pagination.page} pageCount={pagination.pageCount} total={pagination.total} pageSize={pagination.pageSize} onPageChange={pagination.setPage} />
+        <TablePagination
+          page={pagination.page}
+          pageCount={pagination.pageCount}
+          total={pagination.total}
+          pageSize={pagination.pageSize}
+          onPageChange={pagination.setPage}
+        />
       </div>
 
       {editing && (
@@ -242,11 +382,20 @@ export function SubmissionsTable({ rows, isAdmin }: { rows: SubmissionRow[]; isA
                   <Edit3 className="h-5 w-5" />
                 </span>
                 <div>
-                  <h3 className="text-base font-bold text-slate-950 dark:text-white">Edit submission status</h3>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{editing.venueName}</p>
+                  <h3 className="text-base font-bold text-slate-950 dark:text-white">
+                    Edit submission status
+                  </h3>
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    {editing.venueName}
+                  </p>
                 </div>
               </div>
-              <button type="button" onClick={() => setEditing(null)} className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200" aria-label="Close">
+              <button
+                type="button"
+                onClick={() => setEditing(null)}
+                className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                aria-label="Close"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -254,16 +403,29 @@ export function SubmissionsTable({ rows, isAdmin }: { rows: SubmissionRow[]; isA
               <input type="hidden" name="submissionId" value={editing.id} />
               <input type="hidden" name="submissionKind" value={editing.kind} />
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</span>
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Status
+                </span>
                 <ResearchFormSelect
                   name="status"
-                  defaultValue={editing.kind === "conference" && editing.status === "PLANNED" ? "SUBMITTED" : editing.status}
-                  options={editing.kind === "journal" ? statusOptions : conferenceStatusOptions}
+                  defaultValue={
+                    editing.kind === "conference" &&
+                    editing.status === "PLANNED"
+                      ? "SUBMITTED"
+                      : editing.status
+                  }
+                  options={
+                    editing.kind === "journal"
+                      ? statusOptions
+                      : conferenceStatusOptions
+                  }
                   ariaLabel="Submission status"
                 />
               </label>
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Status date</span>
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Status date
+                </span>
                 <div className="relative">
                   <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
@@ -275,10 +437,17 @@ export function SubmissionsTable({ rows, isAdmin }: { rows: SubmissionRow[]; isA
                 </div>
               </label>
               <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
-                <button type="button" onClick={() => setEditing(null)} className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditing(null)}
+                  className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
                   Cancel
                 </button>
-                <button disabled={isPending} className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-wait disabled:opacity-70">
+                <button
+                  disabled={isPending}
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-wait disabled:opacity-70"
+                >
                   <Check className="h-4 w-4" />
                   Save status
                 </button>

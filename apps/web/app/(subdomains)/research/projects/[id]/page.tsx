@@ -21,11 +21,16 @@ import {
   SuggestedJournalsPanel,
   type SuggestedConferenceOption,
   type SuggestedJournalOption,
+  type SuggestedVenueState,
   type TaskAssigneeOption,
 } from "./SuggestedJournalsPanel";
 import { SaveForm } from "../../components/SaveForm";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
-import { AuthorsPicker, type AuthorOption, type SelectedAuthor } from "./AuthorsPicker";
+import {
+  AuthorsPicker,
+  type AuthorOption,
+  type SelectedAuthor,
+} from "./AuthorsPicker";
 import {
   CreateSubmissionTaskDialog,
   type SubmissionTaskVenueOption,
@@ -69,27 +74,32 @@ const stageStyles = {
   PRODUCTION: {
     label: "Production",
     icon: FileText,
-    className: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200",
+    className:
+      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200",
   },
   SUBMITTING: {
     label: "Submitting",
     icon: Send,
-    className: "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-900/70 dark:bg-indigo-950/40 dark:text-indigo-200",
+    className:
+      "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-900/70 dark:bg-indigo-950/40 dark:text-indigo-200",
   },
   REVIEW: {
     label: "Review",
     icon: SearchCheck,
-    className: "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-200",
+    className:
+      "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-200",
   },
   ACCEPTED: {
     label: "Accepted",
     icon: CheckCircle2,
-    className: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200",
+    className:
+      "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200",
   },
   PUBLISHED: {
     label: "Published",
     icon: Rocket,
-    className: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/70 dark:bg-sky-950/40 dark:text-sky-200",
+    className:
+      "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/70 dark:bg-sky-950/40 dark:text-sky-200",
   },
 };
 
@@ -99,7 +109,26 @@ function isoDate(value: Date | null | undefined) {
 
 function shortDate(value: Date | null | undefined) {
   if (!value) return "";
-  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(value);
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  }).format(value);
+}
+
+function suggestedSubmissionState(
+  status: string,
+): SuggestedVenueState["state"] {
+  if (status === "PUBLISHED") return "published";
+  if (status === "ACCEPTED") return "accepted";
+  if (status === "REJECTED") return "rejected";
+  if (
+    status === "UNDER_REVIEW" ||
+    status === "REVISION" ||
+    status === "REVIEWING"
+  )
+    return "reviewing";
+  return "submitted";
 }
 
 function displayRole(roles: Role[]) {
@@ -126,76 +155,81 @@ export default async function ProjectDetailPage({
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
-  const [project, journals, conferences, taskAssignees, authorUsers] = await Promise.all([
-    prisma.researchProject.findUnique({
-      where: { id },
-      include: {
-        submissions: {
-          include: { journal: true, account: true },
-          orderBy: { submittedAt: "desc" },
-        },
-        conferenceSubmissions: {
-          include: { conference: true },
-          orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
-        },
-        publications: { orderBy: { publishedDate: "desc" } },
-        leadResearcher: true,
-        authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
-        authorEntries: {
-          include: { user: true },
-          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-        },
-        suggestedJournals: {
-          include: {
-            journal: true,
-            createdBy: { select: { name: true, email: true, roles: true } },
+  const [project, journals, conferences, taskAssignees, authorUsers] =
+    await Promise.all([
+      prisma.researchProject.findUnique({
+        where: { id },
+        include: {
+          submissions: {
+            include: { journal: true, account: true },
+            orderBy: { submittedAt: "desc" },
           },
-          orderBy: { createdAt: "desc" },
-        },
-        suggestedConferences: {
-          include: {
-            conference: true,
-            createdBy: { select: { name: true, email: true, roles: true } },
+          conferenceSubmissions: {
+            include: { conference: true },
+            orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
           },
-          orderBy: { createdAt: "desc" },
-        },
-        tasks: {
-          where: { taskType: { in: ["SUBMIT_RESEARCH", "SUBMIT_CONFERENCE"] } },
-          include: {
-            journal: true,
-            conference: true,
-            assignments: {
-              include: { user: true },
-              orderBy: { createdAt: "asc" },
+          publications: { orderBy: { publishedDate: "desc" } },
+          leadResearcher: true,
+          authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
+          authorEntries: {
+            include: { user: true },
+            orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          },
+          suggestedJournals: {
+            include: {
+              journal: true,
+              createdBy: { select: { name: true, email: true, roles: true } },
             },
+            orderBy: { createdAt: "desc" },
           },
-          orderBy: [
-            { status: "asc" },
-            { dueDate: "asc" },
-            { createdAt: "desc" },
-          ],
+          suggestedConferences: {
+            include: {
+              conference: true,
+              createdBy: { select: { name: true, email: true, roles: true } },
+            },
+            orderBy: { createdAt: "desc" },
+          },
+          tasks: {
+            where: {
+              taskType: { in: ["SUBMIT_RESEARCH", "SUBMIT_CONFERENCE"] },
+            },
+            include: {
+              journal: true,
+              conference: true,
+              assignments: {
+                include: { user: true },
+                orderBy: { createdAt: "asc" },
+              },
+            },
+            orderBy: [
+              { status: "asc" },
+              { dueDate: "asc" },
+              { createdAt: "desc" },
+            ],
+          },
         },
-      },
-    }),
-    prisma.journal.findMany({
-      include: { accounts: { orderBy: [{ username: "asc" }] } },
-      orderBy: [{ rank: "asc" }, { name: "asc" }],
-    }),
-    prisma.conference.findMany({
-      orderBy: [{ startDate: "desc" }, { name: "asc" }],
-    }),
-    prisma.user.findMany({
-      where: {
-        roles: { hasSome: [Role.ADMIN, Role.ASSISTANT, Role.CHIEF_ASSISTANT] },
-      },
-      orderBy: [{ name: "asc" }, { email: "asc" }],
-      select: { id: true, name: true, email: true, roles: true },
-    }),
-    prisma.user.findMany({
-      orderBy: [{ name: "asc" }, { email: "asc" }],
-      select: { id: true, name: true, email: true, roles: true },
-    }),
-  ]);
+      }),
+      prisma.journal.findMany({
+        include: { accounts: { orderBy: [{ username: "asc" }] } },
+        orderBy: [{ rank: "asc" }, { name: "asc" }],
+      }),
+      prisma.conference.findMany({
+        orderBy: [{ startDate: "desc" }, { name: "asc" }],
+      }),
+      prisma.user.findMany({
+        where: {
+          roles: {
+            hasSome: [Role.ADMIN, Role.ASSISTANT, Role.CHIEF_ASSISTANT],
+          },
+        },
+        orderBy: [{ name: "asc" }, { email: "asc" }],
+        select: { id: true, name: true, email: true, roles: true },
+      }),
+      prisma.user.findMany({
+        orderBy: [{ name: "asc" }, { email: "asc" }],
+        select: { id: true, name: true, email: true, roles: true },
+      }),
+    ]);
 
   if (!project) notFound();
 
@@ -205,28 +239,86 @@ export default async function ProjectDetailPage({
     project.stage === "PUBLISHED" || project.publications.length > 0;
   const latestPublication = project.publications[0];
   const highlightedJournalSubmission = project.submissions.find(
-    (submission) => submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
+    (submission) =>
+      submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
   );
   const highlightedConferenceSubmission = project.conferenceSubmissions.find(
-    (submission) => submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
+    (submission) =>
+      submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
   );
-  const highlightedSubmission = highlightedJournalSubmission ?? highlightedConferenceSubmission;
+  const highlightedSubmission =
+    highlightedJournalSubmission ?? highlightedConferenceSubmission;
   const publishedJournal =
     highlightedJournalSubmission?.journal ?? project.submissions[0]?.journal;
   const authorNames =
     project.authorEntries.length > 0
-      ? project.authorEntries.map((entry) => `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`)
+      ? project.authorEntries.map(
+          (entry) =>
+            `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
+        )
       : project.authors.length > 0
-        ? project.authors.map((author, index) => `${author.name || author.email}${index === 0 ? "*" : ""}`)
-      : [
-          `${project.leadResearcher.name || project.leadResearcher.email}*`,
-          project.coAuthors,
-        ].filter(Boolean);
+        ? project.authors.map(
+            (author, index) =>
+              `${author.name || author.email}${index === 0 ? "*" : ""}`,
+          )
+        : [
+            `${project.leadResearcher.name || project.leadResearcher.email}*`,
+            project.coAuthors,
+          ].filter(Boolean);
   const authorsLine = authorNames.join(", ");
   const completedProductionSteps = new Set(project.completedProductionSteps);
   const unfinishedSteps = productionSteps.filter(
     (step) => !completedProductionSteps.has(step.label),
   );
+  const successfulJournalSubmission = project.submissions.find(
+    (submission) =>
+      submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
+  );
+  const journalSuccessState = successfulJournalSubmission
+    ? suggestedSubmissionState(successfulJournalSubmission.status)
+    : null;
+  const activeSubmitTasks = project.tasks.filter(
+    (task) => task.status !== "COMPLETED" && task.status !== "REVOKED",
+  );
+  const suggestedJournalState = (journalId: string): SuggestedVenueState => {
+    const submission = project.submissions.find(
+      (item) => item.journalId === journalId,
+    );
+    const task = activeSubmitTasks.find(
+      (item) =>
+        item.taskType === "SUBMIT_RESEARCH" && item.journalId === journalId,
+    );
+    if (submission) {
+      return {
+        state: suggestedSubmissionState(submission.status),
+        publishedAt: isoDate(submission.publishedAt),
+      };
+    }
+    if (task) return { state: "assigned" };
+    if (journalSuccessState) return { state: "blocked" };
+    return { state: "idle" };
+  };
+  const suggestedConferenceState = (
+    conferenceId: string,
+  ): SuggestedVenueState => {
+    const submission = project.conferenceSubmissions.find(
+      (item) => item.conferenceId === conferenceId,
+    );
+    const task = activeSubmitTasks.find(
+      (item) =>
+        item.taskType === "SUBMIT_CONFERENCE" &&
+        item.conferenceId === conferenceId,
+    );
+    if (submission) {
+      return {
+        state: suggestedSubmissionState(submission.status),
+        publishedAt: isoDate(submission.publishedAt),
+      };
+    }
+    if (task) return { state: "assigned" };
+    if (journalSuccessState) return { state: "blocked" };
+    return { state: "idle" };
+  };
   const allJournalOptions: SuggestedJournalOption[] = journals.map(
     (journal) => ({
       id: journal.id,
@@ -251,6 +343,7 @@ export default async function ProjectDetailPage({
       suggestedByRole: createdBy
         ? displayRole(createdBy.roles)
         : "Unknown role",
+      venueState: suggestedJournalState(journal.id),
     }));
   const allConferenceOptions: SuggestedConferenceOption[] = conferences.map(
     (conference) => ({
@@ -287,6 +380,7 @@ export default async function ProjectDetailPage({
       suggestedByRole: createdBy
         ? displayRole(createdBy.roles)
         : "Unknown role",
+      venueState: suggestedConferenceState(conference.id),
     }));
   const taskAssigneeOptions: TaskAssigneeOption[] = taskAssignees.map(
     (user) => ({
@@ -319,13 +413,15 @@ export default async function ProjectDetailPage({
             role: displayRole(author.roles),
             isCorresponding: index === 0,
           }))
-        : [{
-            id: project.leadResearcher.id,
-            name: project.leadResearcher.name ?? "",
-            email: project.leadResearcher.email,
-            role: displayRole(project.leadResearcher.roles),
-            isCorresponding: true,
-          }];
+        : [
+            {
+              id: project.leadResearcher.id,
+              name: project.leadResearcher.name ?? "",
+              email: project.leadResearcher.email,
+              role: displayRole(project.leadResearcher.roles),
+              isCorresponding: true,
+            },
+          ];
   const venueOptions: SubmissionTaskVenueOption[] = [
     ...journals.map((journal) => ({
       kind: "journal" as const,
@@ -387,8 +483,12 @@ export default async function ProjectDetailPage({
         [
           shortDate(submission.conference.startDate),
           shortDate(submission.conference.endDate),
-        ].filter(Boolean).join(" - "),
-      ].filter(Boolean).join(" - "),
+        ]
+          .filter(Boolean)
+          .join(" - "),
+      ]
+        .filter(Boolean)
+        .join(" - "),
       apc: submission.conference.apc ?? "",
       apcCurrency: submission.conference.apcCurrency,
       submissionFee: submission.conference.submissionFee ?? "",
@@ -422,7 +522,9 @@ export default async function ProjectDetailPage({
             <h1 className="min-w-0 text-xl font-bold leading-8 tracking-tight text-slate-950 dark:text-white">
               {project.title}
             </h1>
-            <div className={`inline-flex min-h-11 w-full max-w-[11.5rem] shrink-0 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold shadow-sm transition ${stageStyle.className}`}>
+            <div
+              className={`inline-flex min-h-11 w-full max-w-[11.5rem] shrink-0 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold shadow-sm transition ${stageStyle.className}`}
+            >
               <StageIcon className="h-4 w-4 flex-none" />
               <span className="truncate">{stageStyle.label}</span>
             </div>
@@ -432,27 +534,51 @@ export default async function ProjectDetailPage({
             {highlightedSubmission && highlightedJournalSubmission && (
               <div className="space-y-1 rounded-xl border border-emerald-100 bg-emerald-50/50 px-3 py-2 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-100">
                 <p>
-                  {highlightedJournalSubmission.journal.name} - {highlightedJournalSubmission.journal.publisher || "No publisher"} - ISSN {highlightedJournalSubmission.journal.issn || "-"} - {highlightedJournalSubmission.journal.rank || "No rank"}
+                  {highlightedJournalSubmission.journal.name} -{" "}
+                  {highlightedJournalSubmission.journal.publisher ||
+                    "No publisher"}{" "}
+                  - ISSN {highlightedJournalSubmission.journal.issn || "-"} -{" "}
+                  {highlightedJournalSubmission.journal.rank || "No rank"}
                 </p>
                 <p className="text-xs text-emerald-700/80 dark:text-emerald-200/80">
-                  Submitted: {shortDate(highlightedJournalSubmission.submittedAt)}
-                  {highlightedJournalSubmission.acceptedAt ? ` - Accepted: ${shortDate(highlightedJournalSubmission.acceptedAt)}` : ""}
-                  {highlightedJournalSubmission.publishedAt ? ` - Published: ${shortDate(highlightedJournalSubmission.publishedAt)}` : ""}
+                  Submitted:{" "}
+                  {shortDate(highlightedJournalSubmission.submittedAt)}
+                  {highlightedJournalSubmission.acceptedAt
+                    ? ` - Accepted: ${shortDate(highlightedJournalSubmission.acceptedAt)}`
+                    : ""}
+                  {highlightedJournalSubmission.publishedAt
+                    ? ` - Published: ${shortDate(highlightedJournalSubmission.publishedAt)}`
+                    : ""}
                 </p>
               </div>
             )}
-            {highlightedSubmission && !highlightedJournalSubmission && highlightedConferenceSubmission && (
-              <div className="space-y-1 rounded-xl border border-sky-100 bg-sky-50/50 px-3 py-2 text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/20 dark:text-sky-100">
-                <p>
-                  {highlightedConferenceSubmission.conference.name} - {highlightedConferenceSubmission.conference.organizer || "No organizer"} - {highlightedConferenceSubmission.conference.type || "No type"} - {highlightedConferenceSubmission.conference.location || "No location"}
-                </p>
-                <p className="text-xs text-sky-700/80 dark:text-sky-200/80">
-                  Submitted: {shortDate(highlightedConferenceSubmission.submittedAt)}
-                  {highlightedConferenceSubmission.acceptedAt ? ` - Accepted: ${shortDate(highlightedConferenceSubmission.acceptedAt)}` : ""}
-                  {highlightedConferenceSubmission.publishedAt ? ` - Published: ${shortDate(highlightedConferenceSubmission.publishedAt)}` : ""}
-                </p>
-              </div>
-            )}
+            {highlightedSubmission &&
+              !highlightedJournalSubmission &&
+              highlightedConferenceSubmission && (
+                <div className="space-y-1 rounded-xl border border-sky-100 bg-sky-50/50 px-3 py-2 text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/20 dark:text-sky-100">
+                  <p>
+                    {highlightedConferenceSubmission.conference.name} -{" "}
+                    {highlightedConferenceSubmission.conference.organizer ||
+                      "No organizer"}{" "}
+                    -{" "}
+                    {highlightedConferenceSubmission.conference.type ||
+                      "No type"}{" "}
+                    -{" "}
+                    {highlightedConferenceSubmission.conference.location ||
+                      "No location"}
+                  </p>
+                  <p className="text-xs text-sky-700/80 dark:text-sky-200/80">
+                    Submitted:{" "}
+                    {shortDate(highlightedConferenceSubmission.submittedAt)}
+                    {highlightedConferenceSubmission.acceptedAt
+                      ? ` - Accepted: ${shortDate(highlightedConferenceSubmission.acceptedAt)}`
+                      : ""}
+                    {highlightedConferenceSubmission.publishedAt
+                      ? ` - Published: ${shortDate(highlightedConferenceSubmission.publishedAt)}`
+                      : ""}
+                  </p>
+                </div>
+              )}
             {project.stage === "PUBLISHED" && publishedJournal && (
               <div>
                 <p>
@@ -521,7 +647,10 @@ export default async function ProjectDetailPage({
                   className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
                 />
               </label>
-              <AuthorsPicker users={authorOptions} defaultAuthors={defaultAuthors} />
+              <AuthorsPicker
+                users={authorOptions}
+                defaultAuthors={defaultAuthors}
+              />
             </section>
 
             <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
