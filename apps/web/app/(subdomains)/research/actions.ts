@@ -54,6 +54,34 @@ function dateFromForm(value: FormDataEntryValue | null) {
   return text ? new Date(text) : null;
 }
 
+function startOfDay(value: Date) {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+}
+
+function dateIsBefore(left: Date, right: Date) {
+  return startOfDay(left).getTime() < startOfDay(right).getTime();
+}
+
+async function researchContentIsLocked(projectId: string) {
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: {
+      contentUnlocked: true,
+      submissions: { select: { status: true } },
+    },
+  });
+
+  if (!project) return false;
+  return (
+    !project.contentUnlocked &&
+    project.submissions.some(
+      (submission) =>
+        submission.status === SubmissionStatus.ACCEPTED ||
+        submission.status === SubmissionStatus.PUBLISHED,
+    )
+  );
+}
+
 async function generateTaskCode() {
   const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
   for (let attempt = 0; attempt < 8; attempt += 1) {
@@ -577,6 +605,10 @@ export async function createResearchTask(formData: FormData) {
   const journalId = optionalString(formData.get("journalId"));
   const conferenceId = optionalString(formData.get("conferenceId"));
 
+  if (projectId && (await researchContentIsLocked(projectId))) {
+    return { ok: false, reason: "RESEARCH_LOCKED" };
+  }
+
   if (taskType === ResearchTaskType.SUBMIT_RESEARCH && projectId && journalId) {
     const existingTask = await prisma.researchTask.findFirst({
       where: {
@@ -670,17 +702,31 @@ export async function updateSubmissionStatus(formData: FormData) {
   const submissionKind = optionalString(formData.get("submissionKind"));
   const status = optionalString(formData.get("status"));
   const statusDate = dateFromForm(formData.get("statusDate")) ?? new Date();
-  if (!submissionId || !submissionKind || !status) return;
+  if (!submissionId || !submissionKind || !status)
+    return { ok: false, message: "Missing submission status information." };
 
   if (submissionKind === "journal") {
     const journalStatus = enumValue(SubmissionStatus, status);
-    if (!journalStatus) return;
+    if (!journalStatus)
+      return { ok: false, message: "This journal status is not valid." };
 
     const currentSubmission = await prisma.researchSubmission.findUnique({
       where: { id: submissionId },
-      select: { acceptedAt: true, status: true },
+      select: {
+        acceptedAt: true,
+        submittedAt: true,
+        status: true,
+        researchProjectId: true,
+      },
     });
-    if (!currentSubmission) return;
+    if (!currentSubmission)
+      return { ok: false, message: "Submission was not found." };
+    if (await researchContentIsLocked(currentSubmission.researchProjectId)) {
+      return {
+        ok: false,
+        message: "Research is locked. Unlock it before editing submissions.",
+      };
+    }
     if (
       currentSubmission.status === SubmissionStatus.ACCEPTED ||
       currentSubmission.status === SubmissionStatus.PUBLISHED
@@ -693,14 +739,47 @@ export async function updateSubmissionStatus(formData: FormData) {
         SubmissionStatus.WITHDRAWN,
       ]);
       const lockedPastAccepted = lockedPastAcceptedStatuses.has(journalStatus);
-      if (lockedPastAccepted) return;
+      if (lockedPastAccepted)
+        return {
+          ok: false,
+          message:
+            "Accepted or published submissions cannot be changed back to submitted, reviewing, or rejected.",
+        };
     }
     if (
       journalStatus === SubmissionStatus.PUBLISHED &&
       currentSubmission.status !== SubmissionStatus.ACCEPTED &&
       currentSubmission.status !== SubmissionStatus.PUBLISHED
     ) {
-      return;
+      return {
+        ok: false,
+        message:
+          "Submission must be accepted before it can be updated to published.",
+      };
+    }
+
+    if (
+      (journalStatus === SubmissionStatus.ACCEPTED ||
+        journalStatus === SubmissionStatus.REJECTED) &&
+      dateIsBefore(statusDate, currentSubmission.submittedAt)
+    ) {
+      return {
+        ok: false,
+        message:
+          "Rejected and accepted dates must be the same as or after the submission date.",
+      };
+    }
+
+    if (
+      journalStatus === SubmissionStatus.PUBLISHED &&
+      currentSubmission.acceptedAt &&
+      dateIsBefore(statusDate, currentSubmission.acceptedAt)
+    ) {
+      return {
+        ok: false,
+        message:
+          "Published date must be the same as or after the accepted date.",
+      };
     }
 
     const data: {
@@ -711,8 +790,6 @@ export async function updateSubmissionStatus(formData: FormData) {
       publishedAt?: Date | null;
     } = { status: journalStatus };
 
-    if (journalStatus === SubmissionStatus.PENDING)
-      data.submittedAt = statusDate;
     if (journalStatus === SubmissionStatus.ACCEPTED)
       data.acceptedAt = statusDate;
     if (journalStatus === SubmissionStatus.REJECTED)
@@ -739,18 +816,31 @@ export async function updateSubmissionStatus(formData: FormData) {
     revalidatePath("/projects");
     revalidatePath(`/projects/${submission.researchProjectId}`);
     revalidatePath(`/journals/${submission.journalId}`);
-    return;
+    return { ok: true };
   }
 
   if (submissionKind === "conference") {
     const conferenceStatus = enumValue(ConferenceSubmissionStatus, status);
-    if (!conferenceStatus) return;
+    if (!conferenceStatus)
+      return { ok: false, message: "This conference status is not valid." };
 
     const currentSubmission = await prisma.conferenceSubmission.findUnique({
       where: { id: submissionId },
-      select: { acceptedAt: true, status: true },
+      select: {
+        acceptedAt: true,
+        submittedAt: true,
+        status: true,
+        researchProjectId: true,
+      },
     });
-    if (!currentSubmission) return;
+    if (!currentSubmission)
+      return { ok: false, message: "Submission was not found." };
+    if (await researchContentIsLocked(currentSubmission.researchProjectId)) {
+      return {
+        ok: false,
+        message: "Research is locked. Unlock it before editing submissions.",
+      };
+    }
     if (
       currentSubmission.status === ConferenceSubmissionStatus.ACCEPTED ||
       currentSubmission.status === ConferenceSubmissionStatus.PUBLISHED
@@ -764,14 +854,48 @@ export async function updateSubmissionStatus(formData: FormData) {
       ]);
       const lockedPastAccepted =
         lockedPastAcceptedStatuses.has(conferenceStatus);
-      if (lockedPastAccepted) return;
+      if (lockedPastAccepted)
+        return {
+          ok: false,
+          message:
+            "Accepted or published submissions cannot be changed back to submitted, reviewing, or rejected.",
+        };
     }
     if (
       conferenceStatus === ConferenceSubmissionStatus.PUBLISHED &&
       currentSubmission.status !== ConferenceSubmissionStatus.ACCEPTED &&
       currentSubmission.status !== ConferenceSubmissionStatus.PUBLISHED
     ) {
-      return;
+      return {
+        ok: false,
+        message:
+          "Submission must be accepted before it can be updated to published.",
+      };
+    }
+
+    if (
+      (conferenceStatus === ConferenceSubmissionStatus.ACCEPTED ||
+        conferenceStatus === ConferenceSubmissionStatus.REJECTED) &&
+      currentSubmission.submittedAt &&
+      dateIsBefore(statusDate, currentSubmission.submittedAt)
+    ) {
+      return {
+        ok: false,
+        message:
+          "Rejected and accepted dates must be the same as or after the submission date.",
+      };
+    }
+
+    if (
+      conferenceStatus === ConferenceSubmissionStatus.PUBLISHED &&
+      currentSubmission.acceptedAt &&
+      dateIsBefore(statusDate, currentSubmission.acceptedAt)
+    ) {
+      return {
+        ok: false,
+        message:
+          "Published date must be the same as or after the accepted date.",
+      };
     }
 
     const data: {
@@ -782,8 +906,6 @@ export async function updateSubmissionStatus(formData: FormData) {
       publishedAt?: Date | null;
     } = { status: conferenceStatus };
 
-    if (conferenceStatus === ConferenceSubmissionStatus.SUBMITTED)
-      data.submittedAt = statusDate;
     if (conferenceStatus === ConferenceSubmissionStatus.ACCEPTED)
       data.acceptedAt = statusDate;
     if (conferenceStatus === ConferenceSubmissionStatus.REJECTED)
@@ -802,7 +924,10 @@ export async function updateSubmissionStatus(formData: FormData) {
     revalidatePath("/projects");
     revalidatePath(`/projects/${submission.researchProjectId}`);
     revalidatePath(`/conferences/${submission.conferenceId}`);
+    return { ok: true };
   }
+
+  return { ok: false, message: "Submission type is not valid." };
 }
 
 export async function addSuggestedJournal(
@@ -814,6 +939,7 @@ export async function addSuggestedJournal(
 
   const journalId = optionalString(formData.get("journalId"));
   if (!journalId) return;
+  if (await researchContentIsLocked(projectId)) return;
 
   await prisma.suggestedJournal.upsert({
     where: { projectId_journalId: { projectId, journalId } },
@@ -830,6 +956,7 @@ export async function deleteSuggestedJournal(
 ) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
+  if (await researchContentIsLocked(projectId)) return;
 
   await prisma.suggestedJournal.deleteMany({
     where: { projectId, journalId },
@@ -847,6 +974,7 @@ export async function addSuggestedConference(
 
   const conferenceId = optionalString(formData.get("conferenceId"));
   if (!conferenceId) return;
+  if (await researchContentIsLocked(projectId)) return;
 
   await prisma.suggestedConference.upsert({
     where: { projectId_conferenceId: { projectId, conferenceId } },
@@ -863,6 +991,7 @@ export async function deleteSuggestedConference(
 ) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
+  if (await researchContentIsLocked(projectId)) return;
 
   await prisma.suggestedConference.deleteMany({
     where: { projectId, conferenceId },
@@ -875,6 +1004,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
   const user = await requireCurrentUser();
   const isAdmin = user.roles.includes(Role.ADMIN);
   const accountId = optionalString(formData?.get("accountId") ?? null);
+  const submittedAt = dateFromForm(formData?.get("submissionDate") ?? null);
 
   if (
     !isAdmin &&
@@ -903,6 +1033,13 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     task.status === ResearchTaskStatus.REVOKED
   )
     return;
+  if (
+    (task.taskType === ResearchTaskType.SUBMIT_RESEARCH ||
+      task.taskType === ResearchTaskType.SUBMIT_CONFERENCE) &&
+    !submittedAt
+  ) {
+    return;
+  }
 
   const completedAt = new Date();
 
@@ -941,6 +1078,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     task.projectId &&
     task.journalId
   ) {
+    if (!submittedAt) return;
     await prisma.researchSubmission.upsert({
       where: {
         researchProjectId_journalId: {
@@ -949,7 +1087,6 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
         },
       },
       update: {
-        submittedAt: completedTask.completedAt ?? completedAt,
         ...(accountId || task.accountId
           ? { accountId: accountId ?? task.accountId }
           : {}),
@@ -959,7 +1096,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
         journalId: task.journalId,
         accountId: accountId ?? task.accountId,
         status: SubmissionStatus.PENDING,
-        submittedAt: completedTask.completedAt ?? completedAt,
+        submittedAt,
       },
     });
 
@@ -976,6 +1113,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     task.projectId &&
     task.conferenceId
   ) {
+    if (!submittedAt) return;
     await prisma.conferenceSubmission.upsert({
       where: {
         conferenceId_researchProjectId: {
@@ -985,13 +1123,12 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       },
       update: {
         status: ConferenceSubmissionStatus.SUBMITTED,
-        submittedAt: completedAt,
       },
       create: {
         conferenceId: task.conferenceId,
         researchProjectId: task.projectId,
         status: ConferenceSubmissionStatus.SUBMITTED,
-        submittedAt: completedAt,
+        submittedAt,
       },
     });
 

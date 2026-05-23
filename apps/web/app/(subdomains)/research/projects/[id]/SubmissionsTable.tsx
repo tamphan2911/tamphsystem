@@ -169,9 +169,11 @@ function MoneyCell({ amount, currency }: { amount: string; currency: string }) {
 export function SubmissionsTable({
   rows,
   isAdmin,
+  disabled = false,
 }: {
   rows: SubmissionRow[];
   isAdmin: boolean;
+  disabled?: boolean;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -181,7 +183,7 @@ export function SubmissionsTable({
   const [acceptanceConfirmation, setAcceptanceConfirmation] =
     useState<FormData | null>(null);
   const [isPending, startTransition] = useTransition();
-  const { showSuccess } = useResearchToast();
+  const { showSuccess, showError } = useResearchToast();
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -210,7 +212,14 @@ export function SubmissionsTable({
 
   function persistStatus(formData: FormData, accepted = false) {
     startTransition(async () => {
-      await updateSubmissionStatus(formData);
+      const result = await updateSubmissionStatus(formData);
+      if (result && !result.ok) {
+        showError({
+          title: "Status not updated",
+          detail: result.message,
+        });
+        return;
+      }
       setEditing(null);
       setAcceptanceConfirmation(null);
       showSuccess({
@@ -386,8 +395,14 @@ export function SubmissionsTable({
                     <td className="px-4 py-3 text-right">
                       <button
                         type="button"
+                        disabled={disabled}
+                        title={
+                          disabled
+                            ? "Research is locked. Unlock it before editing submission status."
+                            : "Edit submission status"
+                        }
                         onClick={() => setEditing(row)}
-                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40"
+                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:shadow-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40"
                         aria-label={`Edit status for ${row.venueName}`}
                       >
                         <Edit3 className="h-4 w-4" />

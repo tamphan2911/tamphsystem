@@ -82,6 +82,7 @@ export function SuggestedJournalsPanel({
   suggestedConferences,
   assistants,
   isAdmin,
+  disabled = false,
 }: {
   projectId: string;
   projectTitle: string;
@@ -91,6 +92,7 @@ export function SuggestedJournalsPanel({
   suggestedConferences: SuggestedConferenceOption[];
   assistants: TaskAssigneeOption[];
   isAdmin: boolean;
+  disabled?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -184,6 +186,7 @@ export function SuggestedJournalsPanel({
   }
 
   function addJournal(journalId: string) {
+    if (disabled) return;
     const formData = new FormData();
     formData.set("journalId", journalId);
     startTransition(async () => {
@@ -195,6 +198,7 @@ export function SuggestedJournalsPanel({
   }
 
   function addConference(conferenceId: string) {
+    if (disabled) return;
     const formData = new FormData();
     formData.set("conferenceId", conferenceId);
     startTransition(async () => {
@@ -206,6 +210,7 @@ export function SuggestedJournalsPanel({
   }
 
   function removeVenue() {
+    if (disabled) return;
     if (!deleteVenue) return;
     startTransition(async () => {
       if (deleteVenue.kind === "journal") {
@@ -219,6 +224,7 @@ export function SuggestedJournalsPanel({
   }
 
   function assignTask(formData: FormData) {
+    if (disabled) return;
     startTransition(async () => {
       await createResearchTask(formData);
       setAssignVenue(null);
@@ -230,6 +236,7 @@ export function SuggestedJournalsPanel({
   }
 
   function openSubmitTask(venue: Venue) {
+    if (disabled) return;
     setTaskMode("submit");
     setAssignVenue(venue);
   }
@@ -251,8 +258,14 @@ export function SuggestedJournalsPanel({
         {isAdmin && (
           <button
             type="button"
+            disabled={disabled}
+            title={
+              disabled
+                ? "Research is locked. Unlock it before adding suggested venues."
+                : "Add suggested venue"
+            }
             onClick={() => setAddOpen(true)}
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:-translate-y-0.5 hover:bg-blue-100 hover:shadow-sm dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950/70"
+            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:-translate-y-0.5 hover:bg-blue-100 hover:shadow-sm disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:hover:translate-y-0 disabled:hover:bg-slate-100 disabled:hover:shadow-none dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950/70 dark:disabled:border-slate-800 dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
           >
             <Plus className="h-4 w-4" />
             Add suggested venue
@@ -267,6 +280,7 @@ export function SuggestedJournalsPanel({
               key={journal.id}
               journal={journal}
               isAdmin={isAdmin}
+              disabled={disabled}
               onAssign={() =>
                 openSubmitTask({ kind: "journal", item: journal })
               }
@@ -283,6 +297,7 @@ export function SuggestedJournalsPanel({
               key={conference.id}
               conference={conference}
               isAdmin={isAdmin}
+              disabled={disabled}
               onAssign={() =>
                 openSubmitTask({ kind: "conference", item: conference })
               }
@@ -635,17 +650,20 @@ function VenueSection({
 function JournalCard({
   journal,
   isAdmin,
+  disabled,
   onAssign,
   onDelete,
 }: {
   journal: SuggestedJournalOption;
   isAdmin: boolean;
+  disabled: boolean;
   onAssign: () => void;
   onDelete: () => void;
 }) {
   return (
     <VenueCard
       isAdmin={isAdmin}
+      disabled={disabled}
       state={journal.venueState ?? { state: "idle" }}
       onAssign={onAssign}
       onDelete={onDelete}
@@ -675,17 +693,20 @@ function JournalCard({
 function ConferenceCard({
   conference,
   isAdmin,
+  disabled,
   onAssign,
   onDelete,
 }: {
   conference: SuggestedConferenceOption;
   isAdmin: boolean;
+  disabled: boolean;
   onAssign: () => void;
   onDelete: () => void;
 }) {
   return (
     <VenueCard
       isAdmin={isAdmin}
+      disabled={disabled}
       state={conference.venueState ?? { state: "idle" }}
       onAssign={onAssign}
       onDelete={onDelete}
@@ -727,6 +748,7 @@ function SuggestedByLine({ name, role }: { name?: string; role?: string }) {
 
 function VenueCard({
   isAdmin,
+  disabled,
   state,
   onAssign,
   onDelete,
@@ -735,6 +757,7 @@ function VenueCard({
   children,
 }: {
   isAdmin: boolean;
+  disabled: boolean;
   state: SuggestedVenueState;
   onAssign: () => void;
   onDelete: () => void;
@@ -744,8 +767,10 @@ function VenueCard({
 }) {
   const meta = venueStateMeta(state);
   const canAssign =
-    isAdmin && (state.state === "idle" || state.state === "rejected");
-  const canDelete = isAdmin && state.state === "idle";
+    isAdmin &&
+    !disabled &&
+    (state.state === "idle" || state.state === "rejected");
+  const canDelete = isAdmin && !disabled && state.state === "idle";
   const showActions = canAssign || canDelete;
 
   return (

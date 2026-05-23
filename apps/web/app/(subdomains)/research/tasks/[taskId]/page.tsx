@@ -358,6 +358,10 @@ export default async function TaskDetailPage({
               <FinishTaskForm
                 action={finishAction}
                 accountId={task.account?.id}
+                requiresSubmissionDate={
+                  task.taskType === "SUBMIT_RESEARCH" ||
+                  task.taskType === "SUBMIT_CONFERENCE"
+                }
               />
             )}
           </div>

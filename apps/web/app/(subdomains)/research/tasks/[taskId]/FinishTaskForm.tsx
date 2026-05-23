@@ -1,16 +1,21 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { CheckCircle2, Loader2, X } from "lucide-react";
+import { CalendarDays, CheckCircle2, Loader2, X } from "lucide-react";
 
 export function FinishTaskForm({
   action,
   accountId,
+  requiresSubmissionDate = false,
 }: {
   action: (formData: FormData) => void | Promise<void>;
   accountId?: string | null;
+  requiresSubmissionDate?: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const [submissionDate, setSubmissionDate] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -19,6 +24,9 @@ export function FinishTaskForm({
       <form ref={formRef} action={action} className="flex justify-end">
         {accountId ? (
           <input type="hidden" name="accountId" value={accountId} />
+        ) : null}
+        {requiresSubmissionDate ? (
+          <input type="hidden" name="submissionDate" value={submissionDate} />
         ) : null}
         <button
           type="button"
@@ -46,6 +54,12 @@ export function FinishTaskForm({
                     This will complete the task and update the related
                     submission records when applicable.
                   </p>
+                  {requiresSubmissionDate ? (
+                    <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium leading-5 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100">
+                      Choose the actual submission date carefully. This date is
+                      permanent after the submission is created.
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <button
@@ -58,32 +72,53 @@ export function FinishTaskForm({
               </button>
             </div>
 
-            <div className="flex items-center justify-end gap-3 px-5 py-4">
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => setIsOpen(false)}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => {
-                  startTransition(() => {
-                    formRef.current?.requestSubmit();
-                  });
-                }}
-                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none"
-              >
-                {isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="h-4 w-4" />
-                )}
-                Confirm
-              </button>
+            <div className="grid gap-4 px-5 py-4">
+              {requiresSubmissionDate ? (
+                <label className="grid gap-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Submission date
+                  </span>
+                  <div className="group/date relative rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 via-slate-50 to-emerald-50 p-1.5 shadow-sm transition focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-blue-900/60 dark:from-blue-950/30 dark:via-slate-950 dark:to-emerald-950/20">
+                    <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-500 transition group-focus-within/date:text-blue-600 dark:text-blue-300" />
+                    <input
+                      type="date"
+                      required
+                      value={submissionDate}
+                      onChange={(event) =>
+                        setSubmissionDate(event.target.value)
+                      }
+                      className="w-full cursor-pointer rounded-lg border border-white/80 bg-white/85 py-2.5 pl-9 pr-3 text-sm font-semibold text-slate-800 outline-none transition [color-scheme:light] hover:bg-white dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-100 dark:[color-scheme:dark]"
+                    />
+                  </div>
+                </label>
+              ) : null}
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => setIsOpen(false)}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => {
+                    startTransition(() => {
+                      formRef.current?.requestSubmit();
+                    });
+                  }}
+                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none"
+                >
+                  {isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4" />
+                  )}
+                  Confirm
+                </button>
+              </div>
             </div>
           </div>
         </div>

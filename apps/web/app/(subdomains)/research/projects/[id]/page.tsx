@@ -3,9 +3,6 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   ClipboardCheck,
-  ExternalLink,
-  Library,
-  Plus,
   Save,
   Send,
   CheckCircle2,
@@ -15,7 +12,7 @@ import {
 } from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
-import { createPublication, updateResearchProject } from "../../actions";
+import { updateResearchProject } from "../../actions";
 import { SubmissionsTable, type SubmissionRow } from "./SubmissionsTable";
 import {
   SuggestedJournalsPanel,
@@ -281,15 +278,12 @@ export default async function ProjectDetailPage({
   if (!project) notFound();
 
   const updateAction = updateResearchProject.bind(null, project.id);
-  const publicationAction = createPublication.bind(null, project.id);
   const hasJournalSubmissions = project.submissions.length > 0;
   const displayStage: DisplayStage = hasJournalSubmissions
     ? stageFromJournalSubmissions(project.submissions)
     : project.conferenceSubmissions.length > 0
       ? stageFromConferenceSubmissions(project.conferenceSubmissions)
       : project.stage;
-  const showPublicationBlock =
-    displayStage === "PUBLISHED" || project.publications.length > 0;
   const highlightedJournalSubmission = hasJournalSubmissions
     ? project.submissions.find(
         (submission) =>
@@ -789,6 +783,7 @@ export default async function ProjectDetailPage({
               projectTitle={project.title}
               venues={venueOptions}
               assistants={taskAssigneeOptions}
+              disabled={researchContentLocked}
             />
           ) : (
             <div className="rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-3 text-sm text-blue-900 shadow-sm dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
@@ -832,110 +827,12 @@ export default async function ProjectDetailPage({
             </div>
           </div>
         )}
-        <SubmissionsTable rows={submissionRows} isAdmin={isAdmin} />
+        <SubmissionsTable
+          rows={submissionRows}
+          isAdmin={isAdmin}
+          disabled={researchContentLocked}
+        />
       </section>
-
-      {showPublicationBlock && (
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-5 flex items-center gap-2">
-            <Library className="h-5 w-5 text-emerald-500" />
-            <h2 className="text-lg font-bold text-slate-950 dark:text-white">
-              Publication information
-            </h2>
-          </div>
-
-          <form
-            action={publicationAction}
-            className="mb-5 grid gap-3 rounded-lg bg-slate-50 p-4 dark:bg-slate-950 md:grid-cols-3"
-          >
-            <input
-              name="title"
-              required
-              placeholder="Article title"
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
-            />
-            <input
-              name="url"
-              placeholder="Article link"
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
-            />
-            <input
-              name="publishedDate"
-              type="date"
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
-            />
-            <input
-              name="rank"
-              placeholder="Rank, e.g. Q1"
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
-            />
-            <input
-              name="scimagoLink"
-              placeholder="Scimago link"
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
-            />
-            <input
-              name="scopusLink"
-              placeholder="Scopus link"
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
-            />
-            <button className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md md:col-span-3 md:w-fit">
-              <Plus className="h-4 w-4" />
-              Add publication
-            </button>
-          </form>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            {project.publications.map((publication) => (
-              <div
-                key={publication.id}
-                className="rounded-lg border border-slate-200 p-4 dark:border-slate-800"
-              >
-                <p className="font-bold text-slate-950 dark:text-white">
-                  {publication.title}
-                </p>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  Published {publication.publishedDate.toLocaleDateString()} •{" "}
-                  {publication.rank || "No rank"}
-                </p>
-                <div className="mt-2 flex flex-wrap gap-3 text-sm">
-                  {publication.url && (
-                    <a
-                      className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-300"
-                      href={publication.url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Article <ExternalLink className="h-3 w-3" />
-                    </a>
-                  )}
-                  {publication.scimagoLink && (
-                    <a
-                      className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-300"
-                      href={publication.scimagoLink}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Scimago <ExternalLink className="h-3 w-3" />
-                    </a>
-                  )}
-                  {publication.scopusLink && (
-                    <a
-                      className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-300"
-                      href={publication.scopusLink}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Scopus <ExternalLink className="h-3 w-3" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
       <SuggestedJournalsPanel
         projectId={project.id}
         projectTitle={project.title}
@@ -945,6 +842,7 @@ export default async function ProjectDetailPage({
         suggestedConferences={suggestedConferenceOptions}
         assistants={taskAssigneeOptions}
         isAdmin={isAdmin}
+        disabled={researchContentLocked}
       />
     </div>
   );
