@@ -86,6 +86,50 @@ const demoProjects = [
     coAuthors: "Demo Admin",
     submissions: 11,
   },
+  {
+    title: "AI Feedback Loops in Academic Writing Workflows",
+    abstract:
+      "Demo research record studying how AI feedback loops support clarity, revision speed, and manuscript quality.",
+    stage: ResearchStage.PRODUCTION,
+    claimStatus: ClaimStatus.CANNOT_CLAIM,
+    registerStatus: RegistrationStatus.PREPARING,
+    universityRegistration: "Demo plan Q3 2026",
+    coAuthors: "Demo Research Team",
+    submissions: 0,
+  },
+  {
+    title: "Journal Selection Signals for Interdisciplinary Manuscripts",
+    abstract:
+      "Demo project comparing venue fit, scope alignment, rank signals, and submission readiness for interdisciplinary manuscripts.",
+    stage: ResearchStage.SUBMITTING,
+    claimStatus: ClaimStatus.MAKING_DOCUMENT,
+    registerStatus: RegistrationStatus.SUBMITTED,
+    universityRegistration: "Demo registration 2026",
+    coAuthors: "Demo Admin; Demo Assistant",
+    submissions: 5,
+  },
+  {
+    title: "Research Task Assignment Efficiency in Submission Pipelines",
+    abstract:
+      "Demo operations study about assigning submission tasks, tracking overdue work, and reducing handoff delays.",
+    stage: ResearchStage.REVIEW,
+    claimStatus: ClaimStatus.WAITING,
+    registerStatus: RegistrationStatus.APPROVED,
+    universityRegistration: "Demo Q2 2026",
+    coAuthors: "Demo Chief Assistant",
+    submissions: 8,
+  },
+  {
+    title: "Conference-to-Journal Publication Pathways in Education Technology",
+    abstract:
+      "Demo research record following conference submission outcomes and later journal publication planning.",
+    stage: ResearchStage.ACCEPTED,
+    claimStatus: ClaimStatus.CLAIMED,
+    registerStatus: RegistrationStatus.APPROVED,
+    universityRegistration: "Demo Q1 2026",
+    coAuthors: "Demo Lecturer; Demo Researcher",
+    submissions: 10,
+  },
 ];
 
 async function ensureDemoResearchProjects() {
@@ -244,7 +288,9 @@ export default async function ProjectsDashboard() {
     []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
   const canManageResearch =
-    isAdmin || roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
+    isAdmin ||
+    roles.includes(Role.ASSISTANT) ||
+    roles.includes(Role.CHIEF_ASSISTANT);
   const projectWhere = canManageResearch
     ? {}
     : {
@@ -262,8 +308,13 @@ export default async function ProjectsDashboard() {
       where: projectWhere,
       include: {
         leadResearcher: { select: { name: true, email: true } },
-        registrationUser: { select: { id: true, name: true, email: true, roles: true } },
-        authors: { select: { name: true, email: true }, orderBy: [{ name: "asc" }, { email: "asc" }] },
+        registrationUser: {
+          select: { id: true, name: true, email: true, roles: true },
+        },
+        authors: {
+          select: { name: true, email: true },
+          orderBy: [{ name: "asc" }, { email: "asc" }],
+        },
         authorEntries: {
           include: { user: { select: { name: true, email: true } } },
           orderBy: [{ position: "asc" }, { createdAt: "asc" }],
@@ -306,19 +357,29 @@ export default async function ProjectsDashboard() {
     registerStatus: project.registerStatus,
     coAuthors:
       project.authorEntries.length > 0
-        ? project.authorEntries.map((entry) => `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`).join(", ")
+        ? project.authorEntries
+            .map(
+              (entry) =>
+                `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
+            )
+            .join(", ")
         : project.authors.length > 0
-          ? project.authors.map((author, index) => `${author.name || author.email}${index === 0 ? "*" : ""}`).join(", ")
-        : project.coAuthors ?? "",
+          ? project.authors
+              .map(
+                (author, index) =>
+                  `${author.name || author.email}${index === 0 ? "*" : ""}`,
+              )
+              .join(", ")
+          : (project.coAuthors ?? ""),
     universityRegistration: project.universityRegistration ?? "",
     canViewRegistrationClaim:
       isAdmin ||
       project.registrationUserId === userId ||
       Boolean(
         project.registrationName &&
-          registrationIdentityValues.includes(
-            project.registrationName.trim().toLowerCase(),
-          ),
+        registrationIdentityValues.includes(
+          project.registrationName.trim().toLowerCase(),
+        ),
       ),
     leadResearcher: project.leadResearcher.name || project.leadResearcher.email,
     submissions: project._count.submissions,
