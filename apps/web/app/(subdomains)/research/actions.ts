@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import nodemailer from "nodemailer";
 import { auth } from "../../../auth";
 import {
   prisma,
@@ -10,12 +11,20 @@ import {
   CurrencyCode,
   RegistrationStatus,
   ResearchStage,
+  ResearchAuthorNotificationType,
   ResearchTaskCategory,
   ResearchTaskStatus,
   ResearchTaskType,
   Role,
   SubmissionStatus,
 } from "@repo/db";
+
+export type ResearchAuthorEmailResult = {
+  authorName: string;
+  email: string;
+  status: "sent" | "skipped" | "failed";
+  reason?: string;
+};
 
 function optionalString(value: FormDataEntryValue | null) {
   const text = typeof value === "string" ? value.trim() : "";
@@ -60,6 +69,45 @@ function startOfDay(value: Date) {
 
 function dateIsBefore(left: Date, right: Date) {
   return startOfDay(left).getTime() < startOfDay(right).getTime();
+}
+
+function researchBaseUrl() {
+  const configured =
+    process.env.RESEARCH_BASE_URL ||
+    process.env.NEXT_PUBLIC_RESEARCH_BASE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.APP_URL;
+  if (configured) return configured.replace(/\/$/, "");
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "https://research.tamph.com";
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function smtpConfigured() {
+  return Boolean(process.env.SMTP_HOST && process.env.SMTP_FROM);
+}
+
+function createTransporter() {
+  const port = Number(process.env.SMTP_PORT || 587);
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port,
+    secure: process.env.SMTP_SECURE === "true" || port === 465,
+    auth:
+      process.env.SMTP_USER && process.env.SMTP_PASSWORD
+        ? {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASSWORD,
+          }
+        : undefined,
+  });
 }
 
 async function researchContentIsLocked(projectId: string) {
@@ -1140,6 +1188,286 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
 
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
+}
+
+function notificationLabel(type: ResearchAuthorNotificationType) {
+  if (type === ResearchAuthorNotificationType.CREATED) return "created";
+  if (type === ResearchAuthorNotificationType.ACCEPTED) return "accepted";
+  return "published";
+}
+
+function notificationSubject(
+  type: ResearchAuthorNotificationType,
+  title: string,
+) {
+  if (type === ResearchAuthorNotificationType.CREATED) {
+    return `Research record created: ${title}`;
+  }
+  if (type === ResearchAuthorNotificationType.ACCEPTED) {
+    return `Research accepted: ${title}`;
+  }
+  return `Research published: ${title}`;
+}
+
+function venueLine(project: {
+  submissions: {
+    status: SubmissionStatus;
+    acceptedAt: Date | null;
+    publishedAt: Date | null;
+    journal: {
+      name: string;
+      publisher: string | null;
+      issn: string | null;
+      rank: string | null;
+    };
+  }[];
+  conferenceSubmissions: {
+    status: ConferenceSubmissionStatus;
+    acceptedAt: Date | null;
+    publishedAt: Date | null;
+    conference: {
+      name: string;
+      organizer: string | null;
+      type: string | null;
+      location: string | null;
+    };
+  }[];
+}) {
+  const journal =
+    project.submissions.find(
+      (submission) => submission.status === "PUBLISHED",
+    ) ??
+    project.submissions.find((submission) => submission.status === "ACCEPTED");
+  if (journal) {
+    return `${journal.journal.name} - ${journal.journal.publisher || "No publisher"} - ISSN ${journal.journal.issn || "-"} - ${journal.journal.rank || "No rank"}`;
+  }
+
+  const conference =
+    project.conferenceSubmissions.find(
+      (submission) => submission.status === "PUBLISHED",
+    ) ??
+    project.conferenceSubmissions.find(
+      (submission) => submission.status === "ACCEPTED",
+    );
+  if (conference) {
+    return `${conference.conference.name} - ${conference.conference.organizer || "No organizer"} - ${conference.conference.type || "No type"} - ${conference.conference.location || "No location"}`;
+  }
+
+  return "";
+}
+
+function emailBody({
+  type,
+  authorName,
+  title,
+  authorsLine,
+  researchUrl,
+  venue,
+}: {
+  type: ResearchAuthorNotificationType;
+  authorName: string;
+  title: string;
+  authorsLine: string;
+  researchUrl: string;
+  venue: string;
+}) {
+  const status = notificationLabel(type);
+  const opening =
+    type === ResearchAuthorNotificationType.CREATED
+      ? "A research record has been created in the research management system."
+      : type === ResearchAuthorNotificationType.ACCEPTED
+        ? "The research has been marked as accepted."
+        : "The research has been marked as published.";
+  const venueText = venue ? `\nVenue: ${venue}` : "";
+  const text = `Dear ${authorName},
+
+${opening}
+
+Research title: ${title}
+Authors: ${authorsLine}${venueText}
+Status: ${status}
+
+You can track the full information here:
+${researchUrl}
+
+Best regards,
+Research Management System`;
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <p>Dear ${escapeHtml(authorName)},</p>
+      <p>${escapeHtml(opening)}</p>
+      <table style="border-collapse:collapse;margin:16px 0">
+        <tr><td style="padding:4px 12px 4px 0;font-weight:700">Research title</td><td>${escapeHtml(title)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;font-weight:700">Authors</td><td>${escapeHtml(authorsLine)}</td></tr>
+        ${
+          venue
+            ? `<tr><td style="padding:4px 12px 4px 0;font-weight:700">Venue</td><td>${escapeHtml(venue)}</td></tr>`
+            : ""
+        }
+        <tr><td style="padding:4px 12px 4px 0;font-weight:700">Status</td><td>${escapeHtml(status)}</td></tr>
+      </table>
+      <p><a href="${escapeHtml(researchUrl)}" style="color:#2563eb;font-weight:700">Open research detail page</a></p>
+      <p>Best regards,<br/>Research Management System</p>
+    </div>`;
+
+  return { text, html };
+}
+
+export async function sendResearchAuthorNotification(
+  projectId: string,
+  notificationType: string,
+) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+  const type = enumValue(ResearchAuthorNotificationType, notificationType);
+  if (!type) {
+    return {
+      ok: false,
+      message: "Notification type is not valid.",
+      results: [] as ResearchAuthorEmailResult[],
+    };
+  }
+
+  const existing = await prisma.researchAuthorNotification.findUnique({
+    where: { projectId_type: { projectId, type } },
+    select: { id: true },
+  });
+  if (existing) {
+    return {
+      ok: false,
+      message: "This author notification has already been sent.",
+      results: [] as ResearchAuthorEmailResult[],
+    };
+  }
+
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    include: {
+      leadResearcher: {
+        select: { id: true, name: true, email: true, emailVerified: true },
+      },
+      authors: {
+        select: { id: true, name: true, email: true, emailVerified: true },
+      },
+      authorEntries: {
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, emailVerified: true },
+          },
+        },
+        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+      },
+      submissions: {
+        include: { journal: true },
+        orderBy: { submittedAt: "desc" },
+      },
+      conferenceSubmissions: {
+        include: { conference: true },
+        orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
+      },
+    },
+  });
+
+  if (!project) {
+    return {
+      ok: false,
+      message: "Research project was not found.",
+      results: [] as ResearchAuthorEmailResult[],
+    };
+  }
+
+  const authorMap = new Map<
+    string,
+    {
+      id: string;
+      name: string | null;
+      email: string;
+      emailVerified: Date | null;
+    }
+  >();
+  const sourceAuthors =
+    project.authorEntries.length > 0
+      ? project.authorEntries.map((entry) => entry.user)
+      : project.authors.length > 0
+        ? project.authors
+        : [project.leadResearcher];
+  for (const author of sourceAuthors) authorMap.set(author.id, author);
+
+  const authors = Array.from(authorMap.values());
+  const authorsLine = authors
+    .map((author) => author.name || author.email)
+    .join(", ");
+  const researchUrl = `${researchBaseUrl()}/projects/${project.id}`;
+  const venue = venueLine(project);
+  const results: ResearchAuthorEmailResult[] = [];
+  const canSend = smtpConfigured();
+  const transporter = canSend ? createTransporter() : null;
+
+  for (const author of authors) {
+    const authorName = author.name || author.email;
+    if (!author.emailVerified) {
+      results.push({
+        authorName,
+        email: author.email,
+        status: "skipped",
+        reason: "Email is not verified.",
+      });
+      continue;
+    }
+
+    if (!canSend || !transporter) {
+      results.push({
+        authorName,
+        email: author.email,
+        status: "failed",
+        reason: "Email service is not configured.",
+      });
+      continue;
+    }
+
+    try {
+      const body = emailBody({
+        type,
+        authorName,
+        title: project.title,
+        authorsLine,
+        researchUrl,
+        venue,
+      });
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM,
+        to: author.email,
+        subject: notificationSubject(type, project.title),
+        text: body.text,
+        html: body.html,
+      });
+      results.push({ authorName, email: author.email, status: "sent" });
+    } catch (error) {
+      results.push({
+        authorName,
+        email: author.email,
+        status: "failed",
+        reason: error instanceof Error ? error.message : "Unknown email error.",
+      });
+    }
+  }
+
+  await prisma.researchAuthorNotification.create({
+    data: {
+      projectId,
+      type,
+      sentById: user.id,
+      results,
+    },
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+  return {
+    ok: true,
+    message: `${notificationLabel(type)} notification processed.`,
+    results,
+  };
 }
 
 export async function assertResearchManager() {

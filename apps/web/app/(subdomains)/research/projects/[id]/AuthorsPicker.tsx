@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -32,10 +33,12 @@ export function AuthorsPicker({
   users,
   defaultAuthors,
   disabled = false,
+  headerActions,
 }: {
   users: AuthorOption[];
   defaultAuthors: SelectedAuthor[];
   disabled?: boolean;
+  headerActions?: ReactNode;
 }) {
   const initialAuthors =
     defaultAuthors.length > 0
@@ -122,14 +125,17 @@ export function AuthorsPicker({
 
   return (
     <div className="grid gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-      <span className="flex items-center gap-2">
-        Authors
-        {disabled && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
-            <LockKeyhole className="h-3 w-3" aria-hidden="true" />
-            Locked
-          </span>
-        )}
+      <span className="flex flex-wrap items-center justify-between gap-2">
+        <span className="flex items-center gap-2">
+          Authors
+          {disabled && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+              <LockKeyhole className="h-3 w-3" aria-hidden="true" />
+              Locked
+            </span>
+          )}
+        </span>
+        {headerActions}
       </span>
       {authors.map((author) => (
         <input

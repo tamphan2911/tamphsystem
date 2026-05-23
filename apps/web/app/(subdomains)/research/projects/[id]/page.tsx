@@ -33,6 +33,7 @@ import {
   type SubmissionTaskVenueOption,
 } from "./CreateSubmissionTaskDialog";
 import { ResearchContentLockButton } from "./ResearchContentLockButton";
+import { AuthorNotificationActions } from "./AuthorNotificationActions";
 
 export const dynamic = "force-dynamic";
 
@@ -213,6 +214,9 @@ export default async function ProjectDetailPage({
             orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
           },
           publications: { orderBy: { publishedDate: "desc" } },
+          authorNotifications: {
+            select: { type: true },
+          },
           leadResearcher: true,
           authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
           authorEntries: {
@@ -692,6 +696,16 @@ export default async function ProjectDetailPage({
                   users={authorOptions}
                   defaultAuthors={defaultAuthors}
                   disabled={researchContentLocked}
+                  headerActions={
+                    isAdmin ? (
+                      <AuthorNotificationActions
+                        projectId={project.id}
+                        sentTypes={project.authorNotifications.map(
+                          (notification) => notification.type,
+                        )}
+                      />
+                    ) : null
+                  }
                 />
               </section>
 

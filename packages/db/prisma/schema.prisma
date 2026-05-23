@@ -24,6 +24,12 @@ enum Role {
   CHIEF_ASSISTANT
 }
 
+enum ResearchAuthorNotificationType {
+  CREATED
+  ACCEPTED
+  PUBLISHED
+}
+
 enum RegistrationStatus {
   NOT_REGISTERED
   PREPARING
@@ -32,26 +38,28 @@ enum RegistrationStatus {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  name         String?
-  passwordHash String
-  avatarUrl    String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  roles        Role[] // A user can have multiple roles
+  id            String    @id @default(uuid())
+  email         String    @unique
+  emailVerified DateTime? @default(now())
+  name          String?
+  passwordHash  String
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  roles         Role[] // A user can have multiple roles
 
   // Relations
-  authoredCourses       Course[]                 @relation("CourseAuthor")
-  enrollments           Enrollment[]
-  quizAttempts          QuizAttempt[]
-  researchProjects      ResearchProject[]        @relation("LeadResearcher")
-  authoredResearch      ResearchProject[]        @relation("ResearchAuthors")
-  researchAuthorEntries ResearchProjectAuthor[]
-  createdResearchTasks  ResearchTask[]           @relation("ResearchTaskCreator")
-  assignedResearchTasks ResearchTaskAssignment[] @relation("ResearchTaskAssignee")
-  suggestedJournals     SuggestedJournal[]       @relation("SuggestedJournalCreator")
-  suggestedConferences  SuggestedConference[]    @relation("SuggestedConferenceCreator")
+  authoredCourses                 Course[]                     @relation("CourseAuthor")
+  enrollments                     Enrollment[]
+  quizAttempts                    QuizAttempt[]
+  researchProjects                ResearchProject[]            @relation("LeadResearcher")
+  authoredResearch                ResearchProject[]            @relation("ResearchAuthors")
+  researchAuthorEntries           ResearchProjectAuthor[]
+  createdResearchTasks            ResearchTask[]               @relation("ResearchTaskCreator")
+  assignedResearchTasks           ResearchTaskAssignment[]     @relation("ResearchTaskAssignee")
+  suggestedJournals               SuggestedJournal[]           @relation("SuggestedJournalCreator")
+  suggestedConferences            SuggestedConference[]        @relation("SuggestedConferenceCreator")
+  sentResearchAuthorNotifications ResearchAuthorNotification[] @relation("ResearchAuthorNotificationSender")
 }
 
 // ---------------------------------------------
@@ -272,6 +280,22 @@ model ResearchProject {
   suggestedJournals     SuggestedJournal[]
   suggestedConferences  SuggestedConference[]
   tasks                 ResearchTask[]
+  authorNotifications   ResearchAuthorNotification[]
+}
+
+model ResearchAuthorNotification {
+  id        String                         @id @default(uuid())
+  projectId String
+  type      ResearchAuthorNotificationType
+  sentAt    DateTime                       @default(now())
+  sentById  String?
+  results   Json
+
+  project ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sentBy  User?           @relation("ResearchAuthorNotificationSender", fields: [sentById], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, type])
+  @@index([projectId])
 }
 
 model ResearchProjectAuthor {
