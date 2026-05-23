@@ -309,7 +309,7 @@ export default async function ProjectsDashboard() {
         ? project.authorEntries.map((entry) => `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`).join(", ")
         : project.authors.length > 0
           ? project.authors.map((author, index) => `${author.name || author.email}${index === 0 ? "*" : ""}`).join(", ")
-        : project.coAuthors ?? "",
+          : project.coAuthors ?? "",
     universityRegistration: project.universityRegistration ?? "",
     canViewRegistrationClaim:
       isAdmin ||
@@ -388,3 +388,4 @@ export default async function ProjectsDashboard() {
     </div>
   );
 }
+
