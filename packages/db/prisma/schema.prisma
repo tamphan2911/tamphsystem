@@ -268,7 +268,8 @@ model ResearchProject {
 
   // Production Stage Tracking
   coAuthors                String?
-  universityRegistration   String? // e.g., "Q1 2026"
+  universityRegistration   String? // Registration period, e.g., "Q1 2026"
+  registrationName         String?
   registerStatus           RegistrationStatus @default(NOT_REGISTERED)
   claimStatus              ClaimStatus        @default(CANNOT_CLAIM)
   completedProductionSteps String[]           @default([])

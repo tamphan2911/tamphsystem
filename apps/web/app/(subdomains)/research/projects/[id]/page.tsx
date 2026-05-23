@@ -745,13 +745,22 @@ export default async function ProjectDetailPage({
                 <h2 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
                   Registration and claim
                 </h2>
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    University registration
+                    Registration period
                     <input
                       name="universityRegistration"
                       defaultValue={project.universityRegistration ?? ""}
                       placeholder="Q1 2026"
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                    />
+                  </label>
+                  <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    Register name
+                    <input
+                      name="registrationName"
+                      defaultValue={project.registrationName ?? ""}
+                      placeholder="Person name"
                       className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
                     />
                   </label>

@@ -278,6 +278,7 @@ export async function createResearchProject(formData: FormData) {
       universityRegistration: optionalString(
         formData.get("universityRegistration"),
       ),
+      registrationName: optionalString(formData.get("registrationName")),
       registerStatus:
         (formData.get("registerStatus") as RegistrationStatus | null) ??
         RegistrationStatus.NOT_REGISTERED,
@@ -386,6 +387,7 @@ export async function updateResearchProject(
     universityRegistration: optionalString(
       formData.get("universityRegistration"),
     ),
+    registrationName: optionalString(formData.get("registrationName")),
     registerStatus:
       (formData.get("registerStatus") as RegistrationStatus | null) ??
       RegistrationStatus.NOT_REGISTERED,
