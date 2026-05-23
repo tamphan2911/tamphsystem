@@ -12,7 +12,7 @@ import {
   Send,
   UserRound,
 } from "lucide-react";
-import { prisma, Role } from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { finishResearchTask, revokeResearchTask } from "../../actions";
 import { FinishTaskForm } from "./FinishTaskForm";
@@ -98,12 +98,11 @@ function statusMeta(task: {
   }
 
   return {
-    label: task.status === "IN_PROGRESS" ? "In progress" : "Open",
+    label: "In progress",
     detail: task.dueDate
       ? `${durationText(task.dueDate.getTime() - now.getTime())} left`
       : "No due date",
-    tone:
-      task.status === "IN_PROGRESS" ? ("blue" as const) : ("slate" as const),
+    tone: "blue" as const,
   };
 }
 
@@ -145,6 +144,11 @@ export default async function TaskDetailPage({
   const isAssistant =
     roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
   if (!isAdmin && !isAssistant) redirect("/401");
+
+  await prisma.researchTask.updateMany({
+    where: { status: ResearchTaskStatus.OPEN },
+    data: { status: ResearchTaskStatus.IN_PROGRESS },
+  });
 
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },

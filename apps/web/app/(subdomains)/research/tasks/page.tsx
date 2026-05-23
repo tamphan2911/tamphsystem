@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { prisma, Role } from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { NewTaskDialog, type TaskAssigneeOption } from "./NewTaskDialog";
 import { TasksClient } from "./TasksClient";
@@ -17,6 +17,11 @@ export default async function ResearchTasksPage() {
   const isAssistant = roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
 
   if (!isAdmin && !isAssistant) redirect("/401");
+
+  await prisma.researchTask.updateMany({
+    where: { status: ResearchTaskStatus.OPEN },
+    data: { status: ResearchTaskStatus.IN_PROGRESS },
+  });
 
   const assistants: TaskAssigneeOption[] = isAdmin
     ? (

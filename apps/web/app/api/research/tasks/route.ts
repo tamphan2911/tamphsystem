@@ -38,6 +38,11 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  await prisma.researchTask.updateMany({
+    where: { status: ResearchTaskStatus.OPEN },
+    data: { status: ResearchTaskStatus.IN_PROGRESS },
+  });
+
   const where = isAdmin
     ? {}
     : {

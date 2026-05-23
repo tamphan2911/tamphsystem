@@ -856,7 +856,7 @@ export default async function ProjectDetailPage({
         {openSubmissionTasks.length > 0 && (
           <div className="grid gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-              Open submission tasks
+              Active submission tasks
             </p>
             <div className="grid gap-2 md:grid-cols-2">
               {openSubmissionTasks.map((task) => (
@@ -891,15 +891,12 @@ export default async function ProjectDetailPage({
       </section>
       <SuggestedJournalsPanel
         projectId={project.id}
-        projectTitle={project.title}
         journals={allJournalOptions}
         suggested={suggestedJournalOptions}
         conferences={allConferenceOptions}
         suggestedConferences={suggestedConferenceOptions}
-        assistants={taskAssigneeOptions}
         isAdmin={isAdmin}
         disabled={researchContentLocked}
-        productionComplete={productionComplete}
       />
     </div>
   );
