@@ -231,7 +231,7 @@ export default async function ProjectsDashboard() {
   await ensureResearchCodes();
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  if (!userId) redirect("/login");
+  if (!session || !userId) redirect("/login");
   const registrationIdentityValues = [session.user?.name, session.user?.email]
     .filter((value): value is string => Boolean(value?.trim()))
     .map((value) => value.trim().toLowerCase());
