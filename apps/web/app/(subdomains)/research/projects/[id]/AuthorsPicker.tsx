@@ -9,6 +9,7 @@ import {
   LockKeyhole,
   Mail,
   Search,
+  ShieldAlert,
   Star,
   UserRound,
   X,
@@ -47,8 +48,13 @@ export function AuthorsPicker({
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [authors, setAuthors] = useState<SelectedAuthor[]>(initialAuthors);
+  const [dirty, setDirty] = useState(false);
+  const [warningOpen, setWarningOpen] = useState(false);
 
-  const selectedIds = new Set(authors.map((author) => author.id));
+  const selectedIds = useMemo(
+    () => new Set(authors.map((author) => author.id)),
+    [authors],
+  );
   const correspondingId =
     authors.find((author) => author.isCorresponding)?.id ??
     authors[0]?.id ??
@@ -79,12 +85,17 @@ export function AuthorsPicker({
       })),
       { ...user, isCorresponding: current.length === 0 },
     ]);
+    setDirty(true);
     setQuery("");
     setFocused(false);
   }
 
   function removeAuthor(userId: string) {
     if (disabled) return;
+    if (authors.length <= 1) {
+      setWarningOpen(true);
+      return;
+    }
     setAuthors((current) => {
       const next = current.filter((author) => author.id !== userId);
       if (next.length > 0 && !next.some((author) => author.isCorresponding)) {
@@ -95,6 +106,7 @@ export function AuthorsPicker({
       }
       return next;
     });
+    setDirty(true);
   }
 
   function moveAuthor(userId: string, direction: -1 | 1) {
@@ -111,6 +123,7 @@ export function AuthorsPicker({
       next.splice(nextIndex, 0, item);
       return next;
     });
+    setDirty(true);
   }
 
   function setCorresponding(userId: string) {
@@ -121,174 +134,219 @@ export function AuthorsPicker({
         isCorresponding: author.id === userId,
       })),
     );
+    setDirty(true);
   }
 
   return (
-    <div className="grid gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-      <span className="flex flex-wrap items-center justify-between gap-2">
-        <span className="flex items-center gap-2">
-          Authors
-          {disabled && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
-              <LockKeyhole className="h-3 w-3" aria-hidden="true" />
-              Locked
-            </span>
-          )}
+    <>
+      <div className="grid gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <span className="flex flex-wrap items-center justify-between gap-2">
+          <span className="flex items-center gap-2">
+            Authors
+            {disabled && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+                <LockKeyhole className="h-3 w-3" aria-hidden="true" />
+                Locked
+              </span>
+            )}
+          </span>
+          {headerActions}
         </span>
-        {headerActions}
-      </span>
-      {authors.map((author) => (
-        <input
-          key={author.id}
-          type="hidden"
-          name="authorUserIds"
-          value={author.id}
-        />
-      ))}
-      <input
-        type="hidden"
-        name="correspondingAuthorId"
-        value={correspondingId}
-      />
-
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-950">
-        <div className="relative">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-            aria-hidden="true"
-          />
+        {authors.map((author) => (
           <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onFocus={() => setFocused(true)}
-            onBlur={() => window.setTimeout(() => setFocused(false), 120)}
-            placeholder="Search user by name, ID, or email..."
-            disabled={disabled}
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
+            key={author.id}
+            type="hidden"
+            name="authorUserIds"
+            value={author.id}
           />
+        ))}
+        <input
+          type="hidden"
+          name="correspondingAuthorId"
+          value={correspondingId}
+        />
 
-          {!disabled && focused && query.trim().length > 0 && (
-            <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
-              <div className="max-h-72 overflow-y-auto">
-                {results.length > 0 ? (
-                  results.map((user) => (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-950">
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
+            />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => window.setTimeout(() => setFocused(false), 120)}
+              placeholder="Search user by name, ID, or email..."
+              disabled={disabled}
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
+            />
+
+            {!disabled && focused && query.trim().length > 0 && (
+              <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
+                <div className="max-h-72 overflow-y-auto">
+                  {results.length > 0 ? (
+                    results.map((user) => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => addAuthor(user)}
+                        className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                      >
+                        <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-slate-50 text-slate-400 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+                          <UserRound className="h-4 w-4" aria-hidden="true" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                            {authorName(user)}
+                          </span>
+                          <span className="block truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+                            {user.role} - {user.email} - {user.id.slice(0, 8)}
+                          </span>
+                        </span>
+                        <Check
+                          className="h-4 w-4 flex-none text-blue-500"
+                          aria-hidden="true"
+                        />
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-8 text-center text-sm font-medium text-slate-400">
+                      No users match this search.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-3 grid gap-2">
+            {authors.map((author, index) => {
+              const roleLabel = index === 0 ? "First author" : "Author";
+              const corresponding = author.isCorresponding;
+
+              return (
+                <div
+                  key={author.id}
+                  className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm shadow-slate-900/[0.02] transition dark:border-slate-800 dark:bg-slate-900"
+                >
+                  <div className="flex flex-col gap-1">
                     <button
-                      key={user.id}
                       type="button"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => addAuthor(user)}
-                      className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                      aria-label={`Move ${authorName(author)} up`}
+                      disabled={disabled || index === 0}
+                      onClick={() => moveAuthor(author.id, -1)}
+                      className="cursor-pointer rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                     >
-                      <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-slate-50 text-slate-400 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-                        <UserRound className="h-4 w-4" aria-hidden="true" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
-                          {authorName(user)}
-                        </span>
-                        <span className="block truncate text-xs font-medium text-slate-400 dark:text-slate-500">
-                          {user.role} - {user.email} - {user.id.slice(0, 8)}
-                        </span>
-                      </span>
-                      <Check
-                        className="h-4 w-4 flex-none text-blue-500"
-                        aria-hidden="true"
-                      />
+                      <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
-                  ))
-                ) : (
-                  <div className="px-3 py-8 text-center text-sm font-medium text-slate-400">
-                    No users match this search.
+                    <button
+                      type="button"
+                      aria-label={`Move ${authorName(author)} down`}
+                      disabled={disabled || index === authors.length - 1}
+                      onClick={() => moveAuthor(author.id, 1)}
+                      className="cursor-pointer rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
                   </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
 
-        <div className="mt-3 grid gap-2">
-          {authors.map((author, index) => {
-            const roleLabel = index === 0 ? "First author" : "Author";
-            const corresponding = author.isCorresponding;
+                  <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900">
+                    <UserRound className="h-4 w-4" aria-hidden="true" />
+                  </span>
 
-            return (
-              <div
-                key={author.id}
-                className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm shadow-slate-900/[0.02] transition dark:border-slate-800 dark:bg-slate-900"
-              >
-                <div className="flex flex-col gap-1">
-                  <button
-                    type="button"
-                    aria-label={`Move ${authorName(author)} up`}
-                    disabled={disabled || index === 0}
-                    onClick={() => moveAuthor(author.id, -1)}
-                    className="cursor-pointer rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                  >
-                    <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`Move ${authorName(author)} down`}
-                    disabled={disabled || index === authors.length - 1}
-                    onClick={() => moveAuthor(author.id, 1)}
-                    className="cursor-pointer rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                  >
-                    <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                </div>
-
-                <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900">
-                  <UserRound className="h-4 w-4" aria-hidden="true" />
-                </span>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
-                      {authorName(author)}
-                      {corresponding ? "*" : ""}
-                    </p>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                      {roleLabel}
-                    </span>
-                    {corresponding && (
-                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900">
-                        Corresponding
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                        {authorName(author)}
+                        {corresponding ? "*" : ""}
+                      </p>
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                        {roleLabel}
                       </span>
-                    )}
+                      {corresponding && (
+                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900">
+                          Corresponding
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+                      <Mail className="h-3 w-3 flex-none" aria-hidden="true" />
+                      {author.email}
+                    </p>
                   </div>
-                  <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-slate-400 dark:text-slate-500">
-                    <Mail className="h-3 w-3 flex-none" aria-hidden="true" />
-                    {author.email}
-                  </p>
-                </div>
 
-                <button
-                  type="button"
-                  aria-label={`Set ${authorName(author)} as corresponding author`}
-                  disabled={disabled}
-                  onClick={() => setCorresponding(author.id)}
-                  className={`cursor-pointer rounded-lg p-2 transition ${
-                    corresponding
-                      ? "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900"
-                      : "text-slate-400 hover:bg-slate-100 hover:text-emerald-600 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  <Star className="h-4 w-4" aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Remove ${authorName(author)}`}
-                  disabled={disabled}
-                  onClick={() => removeAuthor(author.id)}
-                  className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </div>
-            );
-          })}
+                  <button
+                    type="button"
+                    aria-label={`Set ${authorName(author)} as corresponding author`}
+                    disabled={disabled}
+                    onClick={() => setCorresponding(author.id)}
+                    className={`cursor-pointer rounded-lg p-2 transition ${
+                      corresponding
+                        ? "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900"
+                        : "text-slate-400 hover:bg-slate-100 hover:text-emerald-600 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <Star className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${authorName(author)}`}
+                    disabled={disabled}
+                    onClick={() => removeAuthor(author.id)}
+                    className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
+        {dirty && !disabled && (
+          <p className="text-xs font-semibold text-amber-600 dark:text-amber-300">
+            Author changes are not saved yet. Click Save changes to keep the updated author list.
+          </p>
+        )}
       </div>
-    </div>
+
+      {warningOpen && (
+        <div className="fixed inset-0 z-[90] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
+          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-2xl dark:border-amber-900/70 dark:bg-slate-900">
+            <div className="flex items-start gap-3 border-b border-amber-100 px-5 py-4 dark:border-amber-900/50">
+              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300">
+                <ShieldAlert className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-bold text-slate-950 dark:text-white">
+                  At least one author is required
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  This research must keep one author in the author list. Add another author before removing this one.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWarningOpen(false)}
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                aria-label="Close author warning"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex justify-end px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setWarningOpen(false)}
+                className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

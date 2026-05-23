@@ -35,6 +35,7 @@ import {
 } from "./CreateSubmissionTaskDialog";
 import { ResearchContentLockButton } from "./ResearchContentLockButton";
 import { AuthorNotificationActions } from "./AuthorNotificationActions";
+import { ResearchTitleField } from "./ResearchTitleField";
 
 export const dynamic = "force-dynamic";
 
@@ -721,14 +722,10 @@ export default async function ProjectDetailPage({
           <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="grid gap-5">
               <section className="grid gap-4">
-                <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Title
-                  <input
-                    name="title"
-                    defaultValue={project.title}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
-                  />
-                </label>
+                <ResearchTitleField
+                  defaultValue={project.title}
+                  notes={project.abstract ?? ""}
+                />
                 <AuthorsPicker
                   users={authorOptions}
                   defaultAuthors={defaultAuthors}
