@@ -21,6 +21,7 @@ import {
   deleteSuggestedConference,
   deleteSuggestedJournal,
 } from "../../actions";
+import { useResearchToast } from "../../components/ResearchToast";
 
 export type SuggestedJournalOption = {
   id: string;
@@ -83,6 +84,7 @@ export function SuggestedJournalsPanel({
   assistants,
   isAdmin,
   disabled = false,
+  productionComplete = true,
 }: {
   projectId: string;
   projectTitle: string;
@@ -93,6 +95,7 @@ export function SuggestedJournalsPanel({
   assistants: TaskAssigneeOption[];
   isAdmin: boolean;
   disabled?: boolean;
+  productionComplete?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -109,6 +112,15 @@ export function SuggestedJournalsPanel({
     [],
   );
   const [taskMode, setTaskMode] = useState<"submit" | "other">("submit");
+  const { showSuccess } = useResearchToast();
+
+  function showProductionIncomplete() {
+    showSuccess({
+      title: "Research is still in production",
+      detail:
+        "Complete every production timeline checkbox before submitting this research anywhere.",
+    });
+  }
 
   const suggestedJournalIds = useMemo(
     () => new Set(suggested.map((journal) => journal.id)),
@@ -226,7 +238,26 @@ export function SuggestedJournalsPanel({
   function assignTask(formData: FormData) {
     if (disabled) return;
     startTransition(async () => {
-      await createResearchTask(formData);
+      const result = await createResearchTask(formData);
+      if (!result?.ok) {
+        if (result?.reason === "PRODUCTION_INCOMPLETE") {
+          showProductionIncomplete();
+        } else if (result?.reason === "RESEARCH_LOCKED") {
+          showSuccess({
+            title: "Research is locked",
+            detail:
+              "Unlock the research before creating submission tasks from this page.",
+          });
+        } else {
+          showSuccess({
+            title: "Submission task already exists",
+            detail:
+              "Revoke the unfinished task for this research and venue before assigning a new one.",
+          });
+        }
+        setAssignVenue(null);
+        return;
+      }
       setAssignVenue(null);
       setSelectedAssistantIds([]);
       setAssistantQuery("");
@@ -237,6 +268,10 @@ export function SuggestedJournalsPanel({
 
   function openSubmitTask(venue: Venue) {
     if (disabled) return;
+    if (!productionComplete) {
+      showProductionIncomplete();
+      return;
+    }
     setTaskMode("submit");
     setAssignVenue(venue);
   }
@@ -281,6 +316,7 @@ export function SuggestedJournalsPanel({
               journal={journal}
               isAdmin={isAdmin}
               disabled={disabled}
+              productionComplete={productionComplete}
               onAssign={() =>
                 openSubmitTask({ kind: "journal", item: journal })
               }
@@ -298,6 +334,7 @@ export function SuggestedJournalsPanel({
               conference={conference}
               isAdmin={isAdmin}
               disabled={disabled}
+              productionComplete={productionComplete}
               onAssign={() =>
                 openSubmitTask({ kind: "conference", item: conference })
               }
@@ -651,12 +688,14 @@ function JournalCard({
   journal,
   isAdmin,
   disabled,
+  productionComplete,
   onAssign,
   onDelete,
 }: {
   journal: SuggestedJournalOption;
   isAdmin: boolean;
   disabled: boolean;
+  productionComplete: boolean;
   onAssign: () => void;
   onDelete: () => void;
 }) {
@@ -664,6 +703,7 @@ function JournalCard({
     <VenueCard
       isAdmin={isAdmin}
       disabled={disabled}
+      productionComplete={productionComplete}
       state={journal.venueState ?? { state: "idle" }}
       onAssign={onAssign}
       onDelete={onDelete}
@@ -694,12 +734,14 @@ function ConferenceCard({
   conference,
   isAdmin,
   disabled,
+  productionComplete,
   onAssign,
   onDelete,
 }: {
   conference: SuggestedConferenceOption;
   isAdmin: boolean;
   disabled: boolean;
+  productionComplete: boolean;
   onAssign: () => void;
   onDelete: () => void;
 }) {
@@ -707,6 +749,7 @@ function ConferenceCard({
     <VenueCard
       isAdmin={isAdmin}
       disabled={disabled}
+      productionComplete={productionComplete}
       state={conference.venueState ?? { state: "idle" }}
       onAssign={onAssign}
       onDelete={onDelete}
@@ -749,6 +792,7 @@ function SuggestedByLine({ name, role }: { name?: string; role?: string }) {
 function VenueCard({
   isAdmin,
   disabled,
+  productionComplete,
   state,
   onAssign,
   onDelete,
@@ -758,6 +802,7 @@ function VenueCard({
 }: {
   isAdmin: boolean;
   disabled: boolean;
+  productionComplete: boolean;
   state: SuggestedVenueState;
   onAssign: () => void;
   onDelete: () => void;
@@ -788,6 +833,11 @@ function VenueCard({
             <button
               type="button"
               onClick={onAssign}
+              title={
+                productionComplete
+                  ? assignLabel
+                  : "Research is still in production"
+              }
               className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-blue-200 bg-white text-blue-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-50 dark:border-blue-900 dark:bg-slate-950 dark:text-blue-300 dark:hover:bg-blue-950/40"
               aria-label={assignLabel}
             >

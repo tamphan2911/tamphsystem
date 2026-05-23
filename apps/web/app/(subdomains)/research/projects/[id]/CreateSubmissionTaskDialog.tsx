@@ -60,12 +60,14 @@ export function CreateSubmissionTaskDialog({
   venues,
   assistants,
   disabled = false,
+  productionComplete = true,
 }: {
   projectId: string;
   projectTitle: string;
   venues: SubmissionTaskVenueOption[];
   assistants: SubmissionTaskAssigneeOption[];
   disabled?: boolean;
+  productionComplete?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [venueQuery, setVenueQuery] = useState("");
@@ -81,6 +83,14 @@ export function CreateSubmissionTaskDialog({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { showSuccess } = useResearchToast();
+
+  function showProductionIncomplete() {
+    showSuccess({
+      title: "Research is still in production",
+      detail:
+        "Complete every production timeline checkbox before submitting this research anywhere.",
+    });
+  }
 
   const venueResults = useMemo(() => {
     const needle = venueQuery.trim().toLowerCase();
@@ -163,6 +173,11 @@ export function CreateSubmissionTaskDialog({
     startTransition(async () => {
       const result = await createResearchTask(formData);
       if (!result?.ok) {
+        if (result?.reason === "PRODUCTION_INCOMPLETE") {
+          showProductionIncomplete();
+          setIsOpen(false);
+          return;
+        }
         if (result?.reason === "RESEARCH_LOCKED") {
           showSuccess({
             title: "Research is locked",
@@ -211,9 +226,17 @@ export function CreateSubmissionTaskDialog({
         title={
           disabled
             ? "Research is locked. Unlock it before creating a task."
-            : "Create task"
+            : !productionComplete
+              ? "Research is still in production"
+              : "Create task"
         }
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          if (!productionComplete) {
+            showProductionIncomplete();
+            return;
+          }
+          setIsOpen(true);
+        }}
         className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 px-4 py-2.5 text-sm font-bold text-indigo-700 shadow-sm shadow-indigo-900/5 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-900/10 disabled:cursor-not-allowed disabled:border-slate-200 disabled:from-slate-50 disabled:via-slate-50 disabled:to-slate-50 disabled:text-slate-400 disabled:hover:translate-y-0 disabled:hover:shadow-none dark:border-indigo-900/60 dark:from-indigo-950/60 dark:via-sky-950/50 dark:to-emerald-950/40 dark:text-indigo-200 dark:disabled:border-slate-800 dark:disabled:from-slate-900 dark:disabled:via-slate-900 dark:disabled:to-slate-900 dark:disabled:text-slate-500"
       >
         <ClipboardPlus className="h-4 w-4" />

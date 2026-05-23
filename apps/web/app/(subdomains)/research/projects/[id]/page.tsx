@@ -332,6 +332,7 @@ export default async function ProjectDetailPage({
   const unfinishedSteps = productionSteps.filter(
     (step) => !completedProductionSteps.has(step.label),
   );
+  const productionComplete = unfinishedSteps.length === 0;
   const successfulJournalSubmission = project.submissions.find(
     (submission) =>
       submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
@@ -798,6 +799,7 @@ export default async function ProjectDetailPage({
               venues={venueOptions}
               assistants={taskAssigneeOptions}
               disabled={researchContentLocked}
+              productionComplete={productionComplete}
             />
           ) : (
             <div className="rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-3 text-sm text-blue-900 shadow-sm dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
@@ -857,6 +859,7 @@ export default async function ProjectDetailPage({
         assistants={taskAssigneeOptions}
         isAdmin={isAdmin}
         disabled={researchContentLocked}
+        productionComplete={productionComplete}
       />
     </div>
   );

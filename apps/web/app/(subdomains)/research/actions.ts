@@ -130,6 +130,18 @@ async function researchContentIsLocked(projectId: string) {
   );
 }
 
+async function researchProductionIsComplete(projectId: string) {
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: { completedProductionSteps: true },
+  });
+
+  if (!project) return false;
+  return productionStepLabels.every((step) =>
+    project.completedProductionSteps.includes(step),
+  );
+}
+
 async function generateTaskCode() {
   const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
   for (let attempt = 0; attempt < 8; attempt += 1) {
@@ -657,6 +669,15 @@ export async function createResearchTask(formData: FormData) {
     return { ok: false, reason: "RESEARCH_LOCKED" };
   }
 
+  if (
+    projectId &&
+    (taskType === ResearchTaskType.SUBMIT_RESEARCH ||
+      taskType === ResearchTaskType.SUBMIT_CONFERENCE) &&
+    !(await researchProductionIsComplete(projectId))
+  ) {
+    return { ok: false, reason: "PRODUCTION_INCOMPLETE" };
+  }
+
   if (taskType === ResearchTaskType.SUBMIT_RESEARCH && projectId && journalId) {
     const existingTask = await prisma.researchTask.findFirst({
       where: {
@@ -1106,6 +1127,10 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       completedAt,
       revokedAt: null,
       adminViewedAt: null,
+      project:
+        task.taskType === ResearchTaskType.SUBMIT_RESEARCH && task.projectId
+          ? { update: { completedProductionSteps: productionStepLabels } }
+          : undefined,
       assignments: {
         updateMany: {
           where: { finishedAt: null },
