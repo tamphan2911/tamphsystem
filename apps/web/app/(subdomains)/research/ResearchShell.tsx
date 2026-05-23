@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { ActiveNavLink } from "../../../components/ActiveNavLink";
 import { ProfileMenu } from "../../../components/ProfileMenu";
+import { SidebarSupportCard } from "../../../components/SidebarSupportCard";
 import { ThemeToggle } from "../../../components/ThemeToggle";
 import { ResearchNotificationBell } from "./ResearchNotificationBell";
 import { ResearchToastProvider } from "./components/ResearchToast";
@@ -94,6 +95,7 @@ export function ResearchShell({
             />
           ))}
         </nav>
+        <SidebarSupportCard collapsed={collapsed} />
       </aside>
 
       <div className={`transition-[padding] duration-300 ease-out ${collapsed ? "lg:pl-20" : "lg:pl-72"}`}>

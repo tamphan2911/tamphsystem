@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "../../../components/ThemeToggle";
 import { ProfileMenu } from "../../../components/ProfileMenu";
+import { SidebarSupportCard } from "../../../components/SidebarSupportCard";
 import { auth } from "../../../auth";
 import { redirect } from "next/navigation";
 
@@ -111,6 +112,7 @@ export default async function AdminLayout({
             </div>
           ))}
         </nav>
+        <SidebarSupportCard />
       </aside>
 
       <div className="lg:pl-72">
