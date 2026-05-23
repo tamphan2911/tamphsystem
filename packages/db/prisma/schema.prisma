@@ -421,10 +421,12 @@ model ResearchTask {
   projectId    String?
   journalId    String?
   conferenceId String?
+  accountId    String?
   taskType     ResearchTaskType?
   project      ResearchProject?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
   journal      Journal?          @relation(fields: [journalId], references: [id], onDelete: SetNull)
   conference   Conference?       @relation(fields: [conferenceId], references: [id], onDelete: SetNull)
+  account      PublisherAccount? @relation("ResearchTaskAccount", fields: [accountId], references: [id], onDelete: SetNull)
 
   assignments ResearchTaskAssignment[]
 }
@@ -452,6 +454,7 @@ model PublisherAccount {
   journal   Journal? @relation(fields: [journalId], references: [id], onDelete: SetNull)
 
   submissions ResearchSubmission[]
+  tasks       ResearchTask[]       @relation("ResearchTaskAccount")
 }
 
 model ResearchSubmission {

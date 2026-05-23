@@ -513,6 +513,7 @@ export async function createResearchTask(formData: FormData) {
       projectId: optionalString(formData.get("projectId")),
       journalId: optionalString(formData.get("journalId")),
       conferenceId: optionalString(formData.get("conferenceId")),
+      accountId: optionalString(formData.get("accountId")),
       dueDate: optionalString(formData.get("dueDate"))
         ? new Date(optionalString(formData.get("dueDate")) as string)
         : null,
@@ -705,6 +706,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       projectId: true,
       journalId: true,
       conferenceId: true,
+      accountId: true,
       taskType: true,
     },
   });
@@ -713,57 +715,28 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
 
   const completedAt = new Date();
 
-  if (isAdmin) {
-    await prisma.researchTask.update({
-      where: { id: taskId },
-      data: {
-        status: ResearchTaskStatus.COMPLETED,
-        completedAt,
-        adminViewedAt: null,
-        assignments: {
-          updateMany: {
-            where: { finishedAt: null },
-            data: { finishedAt: completedAt },
-          },
-        },
-      },
-    });
-  } else {
+  if (!isAdmin) {
     const assignment = await prisma.researchTaskAssignment.findUnique({
       where: { taskId_userId: { taskId, userId: user.id } },
     });
 
     if (!assignment) redirect("/401");
-
-    await prisma.researchTaskAssignment.update({
-      where: { id: assignment.id },
-      data: { finishedAt: assignment.finishedAt ?? completedAt },
-    });
-
-    const assignments = await prisma.researchTaskAssignment.findMany({
-      where: { taskId },
-      select: { finishedAt: true },
-    });
-
-    const allFinished =
-      assignments.length > 0 && assignments.every((item) => item.finishedAt);
-    const anyFinished = assignments.some((item) => item.finishedAt);
-
-    await prisma.researchTask.update({
-      where: { id: taskId },
-      data: allFinished
-        ? {
-            status: ResearchTaskStatus.COMPLETED,
-            completedAt,
-            adminViewedAt: null,
-          }
-        : {
-            status: anyFinished
-              ? ResearchTaskStatus.IN_PROGRESS
-              : ResearchTaskStatus.OPEN,
-          },
-    });
   }
+
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: {
+      status: ResearchTaskStatus.COMPLETED,
+      completedAt,
+      adminViewedAt: null,
+      assignments: {
+        updateMany: {
+          where: { finishedAt: null },
+          data: { finishedAt: completedAt },
+        },
+      },
+    },
+  });
 
   const completedTask = await prisma.researchTask.findUnique({
     where: { id: taskId },
@@ -785,12 +758,14 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       },
       update: {
         submittedAt: completedTask.completedAt ?? completedAt,
-        ...(accountId ? { accountId } : {}),
+        ...(accountId || task.accountId
+          ? { accountId: accountId ?? task.accountId }
+          : {}),
       },
       create: {
         researchProjectId: task.projectId,
         journalId: task.journalId,
-        accountId,
+        accountId: accountId ?? task.accountId,
         status: SubmissionStatus.PENDING,
         submittedAt: completedTask.completedAt ?? completedAt,
       },
