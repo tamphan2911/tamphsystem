@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 function formatDate(value: Date | null) {
   if (!value) return "-";
-  return new Intl.DateTimeFormat("en", { month: "short", day: "2-digit", year: "numeric" }).format(value);
+  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(value);
 }
 
 function durationText(ms: number) {
@@ -31,9 +31,9 @@ function statusMeta(task: { status: string; dueDate: Date | null; completedAt: D
       return { label: "Complete", detail: "Finished", tone: "emerald" as const };
     }
     if (task.completedAt <= task.dueDate) {
-      return { label: "Complete", detail: `${durationText(task.dueDate.getTime() - task.completedAt.getTime())} before due`, tone: "emerald" as const };
+      return { label: "Complete", detail: `${durationText(task.dueDate.getTime() - task.completedAt.getTime())} early`, tone: "emerald" as const };
     }
-    return { label: "Overdue", detail: `${durationText(task.completedAt.getTime() - task.dueDate.getTime())} late finish`, tone: "rose" as const };
+    return { label: "Overdue", detail: `${durationText(task.completedAt.getTime() - task.dueDate.getTime())} late`, tone: "rose" as const };
   }
 
   if (task.dueDate && now > task.dueDate) {
@@ -42,7 +42,7 @@ function statusMeta(task: { status: string; dueDate: Date | null; completedAt: D
 
   return {
     label: task.status === "IN_PROGRESS" ? "In progress" : "Open",
-    detail: task.dueDate ? `${durationText(task.dueDate.getTime() - now.getTime())} remaining` : "No due date",
+    detail: task.dueDate ? `${durationText(task.dueDate.getTime() - now.getTime())} left` : "No due date",
     tone: task.status === "IN_PROGRESS" ? ("blue" as const) : ("slate" as const),
   };
 }
@@ -86,7 +86,7 @@ export default async function TaskDetailPage({
 
   if (!task) notFound();
   const myAssignment = task.assignments.find((assignment) => assignment.userId === userId);
-  if (!isAdmin && !myAssignment) redirect("/401");
+  if (!isAdmin && !myAssignment) notFound();
 
   const accountOptions =
     task.taskType === "SUBMIT_RESEARCH"

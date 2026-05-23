@@ -16,6 +16,7 @@ type TaskAssignment = {
 
 type TaskRow = {
   id: string;
+  taskCode: string | null;
   title: string;
   description: string;
   category: string;
@@ -30,7 +31,7 @@ type TaskRow = {
 
 function formatDate(value: string | null) {
   if (!value) return "-";
-  return new Intl.DateTimeFormat("en", { month: "short", day: "2-digit", year: "numeric" }).format(new Date(value));
+  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(new Date(value));
 }
 
 function durationText(ms: number) {
@@ -40,6 +41,10 @@ function durationText(ms: number) {
   const days = Math.floor(hours / 24);
   const restHours = hours % 24;
   return restHours > 0 ? `${days}d ${restHours}h` : `${days}d`;
+}
+
+function displayTaskId(task: TaskRow) {
+  return task.taskCode || task.id.replaceAll("-", "").slice(0, 10).toUpperCase();
 }
 
 function statusMeta(task: TaskRow) {
@@ -52,6 +57,7 @@ function statusMeta(task: TaskRow) {
       return {
         label: "Complete",
         detail: "Finished",
+        dateLine: completed ? `finished: ${formatDate(task.completedAt)}` : "",
         className: "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
         detailClassName: "text-emerald-600 dark:text-emerald-300",
       };
@@ -59,14 +65,16 @@ function statusMeta(task: TaskRow) {
     if (completed <= due) {
       return {
         label: "Complete",
-        detail: `${durationText(due.getTime() - completed.getTime())} before due`,
+        detail: `${durationText(due.getTime() - completed.getTime())} early`,
+        dateLine: `finished: ${formatDate(task.completedAt)}`,
         className: "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
         detailClassName: "text-emerald-600 dark:text-emerald-300",
       };
     }
     return {
       label: "Overdue",
-      detail: `${durationText(completed.getTime() - due.getTime())} late finish`,
+      detail: `${durationText(completed.getTime() - due.getTime())} late`,
+      dateLine: `finished: ${formatDate(task.completedAt)}`,
       className: "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
       detailClassName: "text-rose-600 dark:text-rose-300",
     };
@@ -75,21 +83,26 @@ function statusMeta(task: TaskRow) {
   if (due && now > due) {
     return {
       label: "Overdue",
-      detail: `${durationText(now.getTime() - due.getTime())} overdue`,
+      detail: `${durationText(now.getTime() - due.getTime())} late`,
+      dateLine: "",
       className: "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
       detailClassName: "text-rose-600 dark:text-rose-300",
     };
   }
 
   return {
-    label: task.status === "IN_PROGRESS" ? "In progress" : "Open",
-    detail: due ? `${durationText(due.getTime() - now.getTime())} remaining` : "No due date",
-    className:
-      task.status === "IN_PROGRESS"
-        ? "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900"
-        : "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+    label: "In progress",
+    detail: due ? `${durationText(due.getTime() - now.getTime())} left` : "No due date",
+    dateLine: due ? `due: ${formatDate(task.dueDate)}` : "",
+    className: "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900",
     detailClassName: "text-slate-500 dark:text-slate-400",
   };
+}
+
+function derivedStatus(task: TaskRow) {
+  const label = statusMeta(task).label;
+  if (label === "Complete") return "COMPLETED";
+  return label.toUpperCase().replace(" ", "_");
 }
 
 export function TasksClient({ isAdmin }: { isAdmin: boolean }) {
@@ -137,13 +150,14 @@ export function TasksClient({ isAdmin }: { isAdmin: boolean }) {
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return tasks.filter((task) => {
-      const matchesStatus = status === "ALL" || task.status === status;
+      const matchesStatus = status === "ALL" || derivedStatus(task) === status;
       const matchesAssignee = assignee === "ALL" || task.assignments.some((item) => item.userName === assignee);
       const haystack = [
+        displayTaskId(task),
         task.title,
         task.description,
         task.category,
-        task.status,
+        statusMeta(task).label,
         task.createdBy,
         ...task.assignments.flatMap((item) => [item.userName, item.userEmail, ...item.userRoles]),
       ].join(" ").toLowerCase();
@@ -154,7 +168,7 @@ export function TasksClient({ isAdmin }: { isAdmin: boolean }) {
 
   const stats = [
     { label: "Tasks", value: tasks.length, icon: ClipboardList, color: "text-slate-600 dark:text-slate-300" },
-    { label: "Open", value: tasks.filter((task) => task.status !== "COMPLETED").length, icon: Clock3, color: "text-blue-600" },
+    { label: "Active", value: tasks.filter((task) => task.status !== "COMPLETED").length, icon: Clock3, color: "text-blue-600" },
     { label: "Done", value: tasks.filter((task) => task.status === "COMPLETED").length, icon: CheckCircle2, color: "text-emerald-600" },
     { label: "People", value: assigneeOptions.length - 1, icon: UsersRound, color: "text-purple-600" },
   ];
@@ -186,8 +200,8 @@ export function TasksClient({ isAdmin }: { isAdmin: boolean }) {
               ariaLabel="Filter by task status"
               options={[
                 { value: "ALL", label: "All status" },
-                { value: "OPEN", label: "Open" },
                 { value: "IN_PROGRESS", label: "In progress" },
+                { value: "OVERDUE", label: "Overdue" },
                 { value: "COMPLETED", label: "Completed" },
               ]}
             />
@@ -202,14 +216,15 @@ export function TasksClient({ isAdmin }: { isAdmin: boolean }) {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className={`w-full text-left ${isAdmin ? "min-w-[58rem]" : "min-w-[42rem]"}`}>
+        <div className="overflow-hidden">
+          <table className="w-full table-fixed text-left">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
-                <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Task</th>
-                <th className="px-4 py-3">Status</th>
-                {isAdmin && <th className="px-4 py-3">Assignees</th>}
-                <th className="px-4 py-3">Due</th>
+                <th className="w-[6.5rem] px-3 py-3">Task ID</th>
+                <th className="px-3 py-3">Task</th>
+                <th className="w-[7.5rem] px-3 py-3">Status</th>
+                <th className="w-[10rem] px-3 py-3">Assignees</th>
+                <th className="w-[8.5rem] px-3 py-3">Time</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -217,42 +232,35 @@ export function TasksClient({ isAdmin }: { isAdmin: boolean }) {
                 const status = statusMeta(task);
                 return (
                   <tr key={task.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    <td className="sticky left-0 z-10 max-w-md bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
+                    <td className="px-3 py-3 align-top">
+                      <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400">{displayTaskId(task)}</span>
+                    </td>
+                    <td className="min-w-0 px-3 py-3 align-top">
                       <Link href={`/tasks/${task.id}`} className="text-sm font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">
                         {task.title}
                       </Link>
                       <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{task.description || "No description"}</p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3 align-top">
                       <span className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ring-1 ${status.className}`}>{status.label}</span>
-                      <p className={`mt-1 text-xs font-semibold ${status.detailClassName}`}>{status.detail}</p>
                     </td>
-                    {isAdmin && (
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1.5">
-                          {task.assignments.map((assignment) => (
-                            <span
-                              key={assignment.id}
-                              className={`rounded-full px-2 py-1 text-xs font-semibold ring-1 ${
-                                assignment.finishedAt
-                                  ? "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900"
-                                  : "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700"
-                              }`}
-                              title={assignment.userEmail}
-                            >
-                              {assignment.userName}
-                            </span>
-                          ))}
+                    <td className="px-3 py-3 align-top text-xs leading-5 text-slate-600 dark:text-slate-300">
+                      {task.assignments.map((assignment, index) => (
+                        <div key={assignment.id} title={assignment.userEmail}>
+                          {assignment.userName}{index < task.assignments.length - 1 ? "," : ""}
                         </div>
-                      </td>
-                    )}
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{formatDate(task.dueDate)}</td>
+                      ))}
+                    </td>
+                    <td className="px-3 py-3 align-top">
+                      {status.dateLine && <p className="whitespace-nowrap text-xs font-medium text-slate-500 dark:text-slate-400">{status.dateLine}</p>}
+                      <p className={`whitespace-nowrap text-xs font-semibold ${status.detailClassName}`}>{status.detail}</p>
+                    </td>
                   </tr>
                 );
               })}
               {pagination.total === 0 && (
                 <tr>
-                  <td colSpan={isAdmin ? 4 : 3} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
+                  <td colSpan={5} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
                     {isLoading ? "Loading tasks..." : "No tasks match the current filters."}
                   </td>
                 </tr>

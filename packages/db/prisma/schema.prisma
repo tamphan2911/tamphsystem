@@ -404,10 +404,11 @@ model AcademicReview {
 
 model ResearchTask {
   id            String                @id @default(uuid())
+  taskCode      String?               @unique
   title         String
   description   String?
   category      ResearchTaskCategory?
-  status        ResearchTaskStatus    @default(OPEN)
+  status        ResearchTaskStatus    @default(IN_PROGRESS)
   dueDate       DateTime?
   completedAt   DateTime?
   adminViewedAt DateTime?

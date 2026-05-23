@@ -49,6 +49,18 @@ function dateFromForm(value: FormDataEntryValue | null) {
   return text ? new Date(text) : null;
 }
 
+async function generateTaskCode() {
+  const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const bytes = crypto.getRandomValues(new Uint8Array(8));
+    const code = Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
+    const existing = await prisma.researchTask.findUnique({ where: { taskCode: code }, select: { id: true } });
+    if (!existing) return code;
+  }
+
+  return crypto.randomUUID().replaceAll("-", "").slice(0, 12).toUpperCase();
+}
+
 const productionStepLabels = ["Idea forming", "Data collection", "Modeling", "Writing", "Humanizing", "References"];
 
 function orderedUniqueStrings(values: FormDataEntryValue[]) {
@@ -410,9 +422,11 @@ export async function createResearchTask(formData: FormData) {
   await prisma.researchTask.create({
     data: {
       title: optionalString(formData.get("title")) ?? "Untitled task",
+      taskCode: await generateTaskCode(),
       description: optionalString(formData.get("description")),
       category: taskCategoryFromForm(formData.get("category")),
       taskType: taskTypeFromForm(formData.get("taskType")),
+      status: ResearchTaskStatus.IN_PROGRESS,
       projectId: optionalString(formData.get("projectId")),
       journalId: optionalString(formData.get("journalId")),
       conferenceId: optionalString(formData.get("conferenceId")),

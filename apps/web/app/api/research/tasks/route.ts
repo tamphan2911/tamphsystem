@@ -56,7 +56,7 @@ export async function GET() {
           orderBy: { createdAt: "asc" },
         },
       },
-      orderBy: [{ completedAt: "desc" }, { updatedAt: "desc" }],
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     }),
     prisma.researchTask.count({
       where: taskNotificationWhere(isAdmin, userId),
@@ -67,6 +67,7 @@ export async function GET() {
     notificationCount,
     tasks: tasks.map((task) => ({
       id: task.id,
+      taskCode: task.taskCode,
       title: task.title,
       description: task.description ?? "",
       category: task.category ?? "",
