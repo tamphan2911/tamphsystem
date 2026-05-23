@@ -79,7 +79,7 @@ function badgeClass(value: string) {
   if (normalized === "ACCEPTED")
     return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
   if (normalized === "PUBLISHED")
-    return "bg-sky-50 text-sky-700 ring-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-900";
+    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
   if (normalized === "REJECTED")
     return "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
   if (normalized === "REVIEWING")
@@ -94,7 +94,7 @@ function rowClass(value: string) {
   if (normalized === "ACCEPTED")
     return "bg-emerald-50/70 hover:bg-emerald-50 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30";
   if (normalized === "PUBLISHED")
-    return "bg-sky-50/70 hover:bg-sky-50 dark:bg-sky-950/20 dark:hover:bg-sky-950/30";
+    return "bg-blue-50/70 hover:bg-blue-50 dark:bg-blue-950/20 dark:hover:bg-blue-950/30";
   return "hover:bg-slate-50 dark:hover:bg-slate-800/40";
 }
 

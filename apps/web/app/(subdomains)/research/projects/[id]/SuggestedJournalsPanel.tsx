@@ -813,10 +813,10 @@ function venueStateMeta(state: SuggestedVenueState) {
   if (state.state === "published") {
     return {
       cardClass:
-        "border-sky-200 bg-sky-50/80 dark:border-sky-900/70 dark:bg-sky-950/30",
+        "border-blue-200 bg-blue-50/80 dark:border-blue-900/70 dark:bg-blue-950/30",
       badge: "Published",
       badgeClass:
-        "bg-sky-100 text-sky-700 ring-sky-200 dark:bg-sky-950/70 dark:text-sky-200 dark:ring-sky-800",
+        "bg-blue-100 text-blue-700 ring-blue-200 dark:bg-blue-950/70 dark:text-blue-200 dark:ring-blue-800",
       tooltip: "This venue has a published submission. Congratulations.",
     };
   }
