@@ -351,6 +351,7 @@ model Journal {
   name                  String
   issn                  String?
   field                 String?
+  fields                String[]     @default([])
   rank                  String? // Q1, Q2, Q3, Q4
   publisher             String?
   apc                   String?

@@ -7,16 +7,31 @@ export const dynamic = "force-dynamic";
 export default async function JournalsPage() {
   const journals = await prisma.journal.findMany({
     include: {
-      _count: { select: { submissions: true, accounts: true, reviews: true } },
+      submissions: { select: { status: true } },
+      _count: { select: { accounts: true, reviews: true } },
     },
     orderBy: [{ rank: "asc" }, { name: "asc" }],
   });
 
+  const activeSubmissionStatuses = new Set([
+    "PENDING",
+    "UNDER_REVIEW",
+    "REVISION",
+  ]);
+  const publishedSubmissionStatuses = new Set(["ACCEPTED", "PUBLISHED"]);
   const rows: JournalRow[] = journals.map((journal) => ({
     id: journal.id,
     name: journal.name,
     issn: journal.issn ?? "",
-    field: journal.field ?? "",
+    fields:
+      journal.fields.length > 0
+        ? journal.fields
+        : journal.field
+          ? journal.field
+              .split(";")
+              .map((field) => field.trim())
+              .filter(Boolean)
+          : [],
     rank: journal.rank ?? "",
     publisher: journal.publisher ?? "",
     apc: journal.apc ?? "",
@@ -24,15 +39,21 @@ export default async function JournalsPage() {
     submissionFee: journal.submissionFee ?? "",
     submissionFeeCurrency: journal.submissionFeeCurrency,
     note: journal.note ?? "",
-    submissions: journal._count.submissions,
-    accounts: journal._count.accounts,
+    ongoingSubmissions: journal.submissions.filter((submission) =>
+      activeSubmissionStatuses.has(submission.status),
+    ).length,
+    publishedSubmissions: journal.submissions.filter((submission) =>
+      publishedSubmissionStatuses.has(submission.status),
+    ).length,
     reviews: journal._count.reviews,
   }));
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Journal List</p>
+        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+          Journal List
+        </p>
         <NewJournalDialog />
       </div>
 

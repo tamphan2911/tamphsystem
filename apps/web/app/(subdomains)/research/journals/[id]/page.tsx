@@ -59,24 +59,30 @@ export default async function JournalDetailPage({
     select: { title: true, description: true },
   });
 
-  const submissionRows: JournalSubmissionRow[] = journal.submissions.map((submission) => {
-    const taskTitles = relatedTasks
-      .filter((task) => {
-        const haystack = `${task.title} ${task.description ?? ""} ${submission.project.title}`.toLowerCase();
-        return haystack.includes(journal.name.toLowerCase()) || haystack.includes(submission.project.title.toLowerCase());
-      })
-      .map((task) => task.title);
+  const submissionRows: JournalSubmissionRow[] = journal.submissions.map(
+    (submission) => {
+      const taskTitles = relatedTasks
+        .filter((task) => {
+          const haystack =
+            `${task.title} ${task.description ?? ""} ${submission.project.title}`.toLowerCase();
+          return (
+            haystack.includes(journal.name.toLowerCase()) ||
+            haystack.includes(submission.project.title.toLowerCase())
+          );
+        })
+        .map((task) => task.title);
 
-    return {
-      id: submission.id,
-      projectId: submission.project.id,
-      projectTitle: submission.project.title,
-      status: submission.status,
-      account: submission.account?.username ?? "",
-      submittedAt: dateText(submission.submittedAt),
-      taskTitles,
-    };
-  });
+      return {
+        id: submission.id,
+        projectId: submission.project.id,
+        projectTitle: submission.project.title,
+        status: submission.status,
+        account: submission.account?.username ?? "",
+        submittedAt: dateText(submission.submittedAt),
+        taskTitles,
+      };
+    },
+  );
 
   const accountRows: JournalAccountRow[] = journal.accounts.map((account) => ({
     id: account.id,
@@ -106,10 +112,22 @@ export default async function JournalDetailPage({
     { href: journal.scimagoLink, label: "Scimago", icon: BarChart3 },
     { href: journal.scopusLink, label: "Scopus", icon: Database },
   ].filter((item) => Boolean(item.href));
+  const journalFields =
+    journal.fields.length > 0
+      ? journal.fields
+      : journal.field
+        ? journal.field
+            .split(";")
+            .map((field) => field.trim())
+            .filter(Boolean)
+        : [];
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
-      <Link href={backHref} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white">
+      <Link
+        href={backHref}
+        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+      >
         <ArrowLeft className="h-4 w-4" />
         Journals
       </Link>
@@ -118,7 +136,9 @@ export default async function JournalDetailPage({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">{journal.name}</h1>
+              <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+                {journal.name}
+              </h1>
               <div className="flex items-center gap-1">
                 {externalLinks.map((item) => (
                   <a
@@ -135,23 +155,70 @@ export default async function JournalDetailPage({
                     </span>
                   </a>
                 ))}
-                {journal.issn && <span className="ml-2 text-sm font-semibold text-slate-500 dark:text-slate-400">ISSN {journal.issn}</span>}
+                {journal.issn && (
+                  <span className="ml-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
+                    ISSN {journal.issn}
+                  </span>
+                )}
               </div>
             </div>
           </div>
         </div>
 
         <dl className="mt-5 grid gap-3 text-sm md:grid-cols-4">
-          <div><dt className="text-xs font-bold uppercase text-slate-400">Rank</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.rank || "-"}</dd></div>
-          <div><dt className="text-xs font-bold uppercase text-slate-400">Publisher</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.publisher || "-"}</dd></div>
-          <div><dt className="text-xs font-bold uppercase text-slate-400">Area</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.field || "-"}</dd></div>
-          <div><dt className="text-xs font-bold uppercase text-slate-400">APC</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{formatMoney(journal.apc, journal.apcCurrency)}</dd></div>
-          <div><dt className="text-xs font-bold uppercase text-slate-400">Submission Fee</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{formatMoney(journal.submissionFee, journal.submissionFeeCurrency)}</dd></div>
-          <div className="md:col-span-3"><dt className="text-xs font-bold uppercase text-slate-400"><Hash className="inline h-3.5 w-3.5" /> Note</dt><dd className="mt-1 text-slate-700 dark:text-slate-300">{journal.note || "-"}</dd></div>
+          <div>
+            <dt className="text-xs font-bold uppercase text-slate-400">Rank</dt>
+            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+              {journal.rank || "-"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-bold uppercase text-slate-400">
+              Publisher
+            </dt>
+            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+              {journal.publisher || "-"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-bold uppercase text-slate-400">Area</dt>
+            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+              {journalFields.length > 0 ? journalFields.join("; ") : "-"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-bold uppercase text-slate-400">APC</dt>
+            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+              {formatMoney(journal.apc, journal.apcCurrency)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-bold uppercase text-slate-400">
+              Submission Fee
+            </dt>
+            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+              {formatMoney(
+                journal.submissionFee,
+                journal.submissionFeeCurrency,
+              )}
+            </dd>
+          </div>
+          <div className="md:col-span-3">
+            <dt className="text-xs font-bold uppercase text-slate-400">
+              <Hash className="inline h-3.5 w-3.5" /> Note
+            </dt>
+            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+              {journal.note || "-"}
+            </dd>
+          </div>
         </dl>
       </section>
 
-      <JournalDetailTabs submissions={submissionRows} accounts={accountRows} reviews={reviewRows} />
+      <JournalDetailTabs
+        submissions={submissionRows}
+        accounts={accountRows}
+        reviews={reviewRows}
+      />
     </div>
   );
 }

@@ -22,8 +22,13 @@ function optionalString(value: FormDataEntryValue | null) {
   return text.length > 0 ? text : null;
 }
 
-function enumValue<T extends Record<string, string>>(values: T, value: FormDataEntryValue | null) {
-  return typeof value === "string" && Object.values(values).includes(value) ? (value as T[keyof T]) : null;
+function enumValue<T extends Record<string, string>>(
+  values: T,
+  value: FormDataEntryValue | null,
+) {
+  return typeof value === "string" && Object.values(values).includes(value)
+    ? (value as T[keyof T])
+    : null;
 }
 
 function taskCategoryFromForm(value: FormDataEntryValue | null) {
@@ -53,20 +58,37 @@ async function generateTaskCode() {
   const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const bytes = crypto.getRandomValues(new Uint8Array(8));
-    const code = Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
-    const existing = await prisma.researchTask.findUnique({ where: { taskCode: code }, select: { id: true } });
+    const code = Array.from(
+      bytes,
+      (byte) => alphabet[byte % alphabet.length],
+    ).join("");
+    const existing = await prisma.researchTask.findUnique({
+      where: { taskCode: code },
+      select: { id: true },
+    });
     if (!existing) return code;
   }
 
   return crypto.randomUUID().replaceAll("-", "").slice(0, 12).toUpperCase();
 }
 
-const productionStepLabels = ["Idea forming", "Data collection", "Modeling", "Writing", "Humanizing", "References"];
+const productionStepLabels = [
+  "Idea forming",
+  "Data collection",
+  "Modeling",
+  "Writing",
+  "Humanizing",
+  "References",
+];
 
 function orderedUniqueStrings(values: FormDataEntryValue[]) {
   const seen = new Set<string>();
   return values.filter((value): value is string => {
-    if (typeof value !== "string" || value.trim().length === 0 || seen.has(value)) {
+    if (
+      typeof value !== "string" ||
+      value.trim().length === 0 ||
+      seen.has(value)
+    ) {
       return false;
     }
 
@@ -75,19 +97,35 @@ function orderedUniqueStrings(values: FormDataEntryValue[]) {
   });
 }
 
-function stageFromResearchState(completedProductionSteps: string[], submissionStatuses: SubmissionStatus[]) {
-  if (submissionStatuses.includes(SubmissionStatus.PUBLISHED)) return ResearchStage.PUBLISHED;
-  if (submissionStatuses.includes(SubmissionStatus.ACCEPTED)) return ResearchStage.ACCEPTED;
-  if (submissionStatuses.some((status) => status === SubmissionStatus.UNDER_REVIEW || status === SubmissionStatus.REVISION)) {
+function stageFromResearchState(
+  completedProductionSteps: string[],
+  submissionStatuses: SubmissionStatus[],
+) {
+  if (submissionStatuses.includes(SubmissionStatus.PUBLISHED))
+    return ResearchStage.PUBLISHED;
+  if (submissionStatuses.includes(SubmissionStatus.ACCEPTED))
+    return ResearchStage.ACCEPTED;
+  if (
+    submissionStatuses.some(
+      (status) =>
+        status === SubmissionStatus.UNDER_REVIEW ||
+        status === SubmissionStatus.REVISION,
+    )
+  ) {
     return ResearchStage.REVIEW;
   }
 
-  return productionStepLabels.every((step) => completedProductionSteps.includes(step))
+  return productionStepLabels.every((step) =>
+    completedProductionSteps.includes(step),
+  )
     ? ResearchStage.SUBMITTING
     : ResearchStage.PRODUCTION;
 }
 
-async function refreshResearchStage(projectId: string, completedProductionSteps?: string[]) {
+async function refreshResearchStage(
+  projectId: string,
+  completedProductionSteps?: string[],
+) {
   const project = await prisma.researchProject.findUnique({
     where: { id: projectId },
     select: {
@@ -119,7 +157,8 @@ async function requireCurrentUser() {
 
   return {
     id: userId,
-    roles: ((session?.user as { roles?: Role[] } | undefined)?.roles ?? []) as Role[],
+    roles: ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+      []) as Role[],
   };
 }
 
@@ -137,7 +176,9 @@ export async function createResearchProject(formData: FormData) {
   const user = await requireCurrentUser();
   const authorIds = orderedUniqueStrings(formData.getAll("authorUserIds"));
   const selectedAuthorIds = authorIds.length > 0 ? authorIds : [user.id];
-  const correspondingAuthorId = optionalString(formData.get("correspondingAuthorId")) ?? selectedAuthorIds[0];
+  const correspondingAuthorId =
+    optionalString(formData.get("correspondingAuthorId")) ??
+    selectedAuthorIds[0];
 
   await prisma.researchProject.create({
     data: {
@@ -145,9 +186,15 @@ export async function createResearchProject(formData: FormData) {
       abstract: optionalString(formData.get("abstract")),
       stage: ResearchStage.PRODUCTION,
       coAuthors: optionalString(formData.get("coAuthors")),
-      universityRegistration: optionalString(formData.get("universityRegistration")),
-      registerStatus: (formData.get("registerStatus") as RegistrationStatus | null) ?? RegistrationStatus.NOT_REGISTERED,
-      claimStatus: (formData.get("claimStatus") as ClaimStatus | null) ?? ClaimStatus.CANNOT_CLAIM,
+      universityRegistration: optionalString(
+        formData.get("universityRegistration"),
+      ),
+      registerStatus:
+        (formData.get("registerStatus") as RegistrationStatus | null) ??
+        RegistrationStatus.NOT_REGISTERED,
+      claimStatus:
+        (formData.get("claimStatus") as ClaimStatus | null) ??
+        ClaimStatus.CANNOT_CLAIM,
       leadResearcherId: user.id,
       authors: {
         connect: selectedAuthorIds.map((id) => ({ id })),
@@ -166,23 +213,39 @@ export async function createResearchProject(formData: FormData) {
   redirect("/projects");
 }
 
-export async function updateResearchProject(projectId: string, formData: FormData) {
+export async function updateResearchProject(
+  projectId: string,
+  formData: FormData,
+) {
   const user = await requireCurrentUser();
   const authorIds = orderedUniqueStrings(formData.getAll("authorUserIds"));
   const selectedAuthorIds = authorIds.length > 0 ? authorIds : [user.id];
-  const correspondingAuthorId = optionalString(formData.get("correspondingAuthorId")) ?? selectedAuthorIds[0];
+  const correspondingAuthorId =
+    optionalString(formData.get("correspondingAuthorId")) ??
+    selectedAuthorIds[0];
   const completedProductionSteps = formData
     .getAll("completedProductionSteps")
-    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+    .filter(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0,
+    );
 
   const data = {
     title: optionalString(formData.get("title")) ?? "Untitled research",
     coAuthors: null,
-    universityRegistration: optionalString(formData.get("universityRegistration")),
-    registerStatus: (formData.get("registerStatus") as RegistrationStatus | null) ?? RegistrationStatus.NOT_REGISTERED,
-    claimStatus: (formData.get("claimStatus") as ClaimStatus | null) ?? ClaimStatus.CANNOT_CLAIM,
+    universityRegistration: optionalString(
+      formData.get("universityRegistration"),
+    ),
+    registerStatus:
+      (formData.get("registerStatus") as RegistrationStatus | null) ??
+      RegistrationStatus.NOT_REGISTERED,
+    claimStatus:
+      (formData.get("claimStatus") as ClaimStatus | null) ??
+      ClaimStatus.CANNOT_CLAIM,
     completedProductionSteps,
-    ...(formData.has("abstract") ? { abstract: optionalString(formData.get("abstract")) } : {}),
+    ...(formData.has("abstract")
+      ? { abstract: optionalString(formData.get("abstract")) }
+      : {}),
   };
 
   await prisma.$transaction(async (tx) => {
@@ -215,18 +278,25 @@ export async function updateResearchProject(projectId: string, formData: FormDat
 
 export async function createJournal(formData: FormData) {
   await requireCurrentUser();
+  const fields = orderedUniqueStrings(formData.getAll("fields"));
+  const legacyField = optionalString(formData.get("field"));
 
   await prisma.journal.create({
     data: {
       name: optionalString(formData.get("name")) ?? "Untitled journal",
       issn: optionalString(formData.get("issn")),
-      field: optionalString(formData.get("field")),
+      field: fields.length > 0 ? fields.join("; ") : legacyField,
+      fields,
       rank: optionalString(formData.get("rank")),
       publisher: optionalString(formData.get("publisher")),
       apc: optionalString(formData.get("apc")),
-      apcCurrency: enumValue(CurrencyCode, formData.get("apcCurrency")) ?? CurrencyCode.USD,
+      apcCurrency:
+        enumValue(CurrencyCode, formData.get("apcCurrency")) ??
+        CurrencyCode.USD,
       submissionFee: optionalString(formData.get("submissionFee")),
-      submissionFeeCurrency: enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ?? CurrencyCode.USD,
+      submissionFeeCurrency:
+        enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??
+        CurrencyCode.USD,
       homepageLink: optionalString(formData.get("homepageLink")),
       scimagoLink: optionalString(formData.get("scimagoLink")),
       scopusLink: optionalString(formData.get("scopusLink")),
@@ -265,7 +335,9 @@ export async function createAcademicReview(formData: FormData) {
   await prisma.academicReview.create({
     data: {
       journalId,
-      manuscriptTitle: optionalString(formData.get("manuscriptTitle")) ?? "Untitled manuscript",
+      manuscriptTitle:
+        optionalString(formData.get("manuscriptTitle")) ??
+        "Untitled manuscript",
       manuscriptId: optionalString(formData.get("manuscriptId")),
       status: optionalString(formData.get("status")) ?? "INVITED",
       recommendation: optionalString(formData.get("recommendation")),
@@ -288,7 +360,10 @@ export async function createAcademicReview(formData: FormData) {
   revalidatePath("/journals");
 }
 
-export async function createResearchSubmission(projectId: string, formData: FormData) {
+export async function createResearchSubmission(
+  projectId: string,
+  formData: FormData,
+) {
   await requireCurrentUser();
 
   const journalId = optionalString(formData.get("journalId"));
@@ -299,7 +374,9 @@ export async function createResearchSubmission(projectId: string, formData: Form
       researchProjectId: projectId,
       journalId,
       accountId: optionalString(formData.get("accountId")),
-      status: enumValue(SubmissionStatus, formData.get("status")) ?? SubmissionStatus.PENDING,
+      status:
+        enumValue(SubmissionStatus, formData.get("status")) ??
+        SubmissionStatus.PENDING,
       submittedAt: optionalString(formData.get("submittedAt"))
         ? new Date(optionalString(formData.get("submittedAt")) as string)
         : new Date(),
@@ -365,7 +442,8 @@ export async function assignResearchAssistant(formData: FormData) {
 
   const userId = optionalString(formData.get("userId"));
   const role = formData.get("assistantRole");
-  if (!userId || (role !== Role.ASSISTANT && role !== Role.CHIEF_ASSISTANT)) return;
+  if (!userId || (role !== Role.ASSISTANT && role !== Role.CHIEF_ASSISTANT))
+    return;
 
   const target = await prisma.user.findUnique({
     where: { id: userId },
@@ -402,7 +480,9 @@ export async function removeResearchAssistantRole(formData: FormData) {
   await prisma.user.update({
     where: { id: userId },
     data: {
-      roles: target.roles.filter((role) => role !== Role.ASSISTANT && role !== Role.CHIEF_ASSISTANT),
+      roles: target.roles.filter(
+        (role) => role !== Role.ASSISTANT && role !== Role.CHIEF_ASSISTANT,
+      ),
     },
   });
 
@@ -415,7 +495,10 @@ export async function createResearchTask(formData: FormData) {
 
   const assigneeIds = formData
     .getAll("assigneeIds")
-    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+    .filter(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0,
+    );
 
   if (assigneeIds.length === 0) return;
 
@@ -472,9 +555,12 @@ export async function updateSubmissionStatus(formData: FormData) {
       publishedAt?: Date | null;
     } = { status: journalStatus };
 
-    if (journalStatus === SubmissionStatus.PENDING) data.submittedAt = statusDate;
-    if (journalStatus === SubmissionStatus.ACCEPTED) data.acceptedAt = statusDate;
-    if (journalStatus === SubmissionStatus.REJECTED) data.rejectedAt = statusDate;
+    if (journalStatus === SubmissionStatus.PENDING)
+      data.submittedAt = statusDate;
+    if (journalStatus === SubmissionStatus.ACCEPTED)
+      data.acceptedAt = statusDate;
+    if (journalStatus === SubmissionStatus.REJECTED)
+      data.rejectedAt = statusDate;
     if (journalStatus === SubmissionStatus.PUBLISHED) {
       data.publishedAt = statusDate;
       data.acceptedAt = currentSubmission?.acceptedAt ?? statusDate;
@@ -510,9 +596,12 @@ export async function updateSubmissionStatus(formData: FormData) {
       publishedAt?: Date | null;
     } = { status: conferenceStatus };
 
-    if (conferenceStatus === ConferenceSubmissionStatus.SUBMITTED) data.submittedAt = statusDate;
-    if (conferenceStatus === ConferenceSubmissionStatus.ACCEPTED) data.acceptedAt = statusDate;
-    if (conferenceStatus === ConferenceSubmissionStatus.REJECTED) data.rejectedAt = statusDate;
+    if (conferenceStatus === ConferenceSubmissionStatus.SUBMITTED)
+      data.submittedAt = statusDate;
+    if (conferenceStatus === ConferenceSubmissionStatus.ACCEPTED)
+      data.acceptedAt = statusDate;
+    if (conferenceStatus === ConferenceSubmissionStatus.REJECTED)
+      data.rejectedAt = statusDate;
     if (conferenceStatus === ConferenceSubmissionStatus.PUBLISHED) {
       data.publishedAt = statusDate;
       data.acceptedAt = currentSubmission?.acceptedAt ?? statusDate;
@@ -530,7 +619,10 @@ export async function updateSubmissionStatus(formData: FormData) {
   }
 }
 
-export async function addSuggestedJournal(projectId: string, formData: FormData) {
+export async function addSuggestedJournal(
+  projectId: string,
+  formData: FormData,
+) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
 
@@ -546,7 +638,10 @@ export async function addSuggestedJournal(projectId: string, formData: FormData)
   revalidatePath(`/projects/${projectId}`);
 }
 
-export async function deleteSuggestedJournal(projectId: string, journalId: string) {
+export async function deleteSuggestedJournal(
+  projectId: string,
+  journalId: string,
+) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
 
@@ -557,7 +652,10 @@ export async function deleteSuggestedJournal(projectId: string, journalId: strin
   revalidatePath(`/projects/${projectId}`);
 }
 
-export async function addSuggestedConference(projectId: string, formData: FormData) {
+export async function addSuggestedConference(
+  projectId: string,
+  formData: FormData,
+) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
 
@@ -573,7 +671,10 @@ export async function addSuggestedConference(projectId: string, formData: FormDa
   revalidatePath(`/projects/${projectId}`);
 }
 
-export async function deleteSuggestedConference(projectId: string, conferenceId: string) {
+export async function deleteSuggestedConference(
+  projectId: string,
+  conferenceId: string,
+) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
 
@@ -589,13 +690,23 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
   const isAdmin = user.roles.includes(Role.ADMIN);
   const accountId = optionalString(formData?.get("accountId") ?? null);
 
-  if (!isAdmin && !user.roles.includes(Role.ASSISTANT) && !user.roles.includes(Role.CHIEF_ASSISTANT)) {
+  if (
+    !isAdmin &&
+    !user.roles.includes(Role.ASSISTANT) &&
+    !user.roles.includes(Role.CHIEF_ASSISTANT)
+  ) {
     redirect("/401");
   }
 
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
-    select: { id: true, projectId: true, journalId: true, conferenceId: true, taskType: true },
+    select: {
+      id: true,
+      projectId: true,
+      journalId: true,
+      conferenceId: true,
+      taskType: true,
+    },
   });
 
   if (!task) return;
@@ -634,14 +745,23 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       select: { finishedAt: true },
     });
 
-    const allFinished = assignments.length > 0 && assignments.every((item) => item.finishedAt);
+    const allFinished =
+      assignments.length > 0 && assignments.every((item) => item.finishedAt);
     const anyFinished = assignments.some((item) => item.finishedAt);
 
     await prisma.researchTask.update({
       where: { id: taskId },
       data: allFinished
-        ? { status: ResearchTaskStatus.COMPLETED, completedAt, adminViewedAt: null }
-        : { status: anyFinished ? ResearchTaskStatus.IN_PROGRESS : ResearchTaskStatus.OPEN },
+        ? {
+            status: ResearchTaskStatus.COMPLETED,
+            completedAt,
+            adminViewedAt: null,
+          }
+        : {
+            status: anyFinished
+              ? ResearchTaskStatus.IN_PROGRESS
+              : ResearchTaskStatus.OPEN,
+          },
     });
   }
 
