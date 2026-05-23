@@ -14,12 +14,14 @@ export function ResearchFormSelect({
   options,
   ariaLabel,
   disabled = false,
+  onValueChange,
 }: {
   name: string;
   defaultValue: string;
-  options: ResearchFormSelectOption[];
+  options: readonly ResearchFormSelectOption[];
   ariaLabel: string;
   disabled?: boolean;
+  onValueChange?: (value: string) => void;
 }) {
   const [value, setValue] = useState(defaultValue);
   const [open, setOpen] = useState(false);
@@ -69,7 +71,7 @@ export function ResearchFormSelect({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1.5 w-full min-w-48 overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
+        <div className="absolute right-0 top-full z-50 mt-2 w-full min-w-48 overflow-hidden rounded-xl border border-blue-100 bg-white p-2 shadow-2xl shadow-slate-900/15 ring-1 ring-blue-50 dark:border-blue-900/60 dark:bg-slate-950 dark:shadow-black/35 dark:ring-blue-950/50">
           <div
             className="max-h-64 overflow-y-auto"
             role="listbox"
@@ -86,12 +88,13 @@ export function ResearchFormSelect({
                   aria-selected={isSelected}
                   onClick={() => {
                     setValue(option.value);
+                    onValueChange?.(option.value);
                     setOpen(false);
                   }}
                   className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm transition ${
                     isSelected
-                      ? "bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-200"
-                      : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                      ? "bg-blue-50 font-semibold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900"
+                      : "text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
                   }`}
                 >
                   <span className="min-w-0 truncate">{option.label}</span>

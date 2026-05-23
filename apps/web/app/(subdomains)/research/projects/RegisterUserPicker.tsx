@@ -96,7 +96,7 @@ export function RegisterUserPicker({
             />
 
             {focused && query.trim().length > 0 && (
-              <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/30">
+              <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-xl border border-blue-100 bg-white p-2 shadow-2xl shadow-slate-900/15 ring-1 ring-blue-50 dark:border-blue-900/60 dark:bg-slate-950 dark:shadow-black/35 dark:ring-blue-950/50">
                 {results.length > 0 ? (
                   results.map((user) => (
                     <button
@@ -104,9 +104,9 @@ export function RegisterUserPicker({
                       type="button"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => chooseUser(user)}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-blue-50 dark:hover:bg-blue-950/40"
                     >
-                      <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-slate-50 text-slate-400 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+                      <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900">
                         <UserRound className="h-4 w-4" aria-hidden="true" />
                       </span>
                       <span className="min-w-0 flex-1">
