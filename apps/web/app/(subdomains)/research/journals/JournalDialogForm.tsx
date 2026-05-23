@@ -157,12 +157,12 @@ export function JournalDialogForm({
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
-            const missingFields = [
+            const missingFields = ([
               ["name", "journal name"],
               ["publisher", "publisher"],
               ["issn", "ISSN"],
               ["apc", "APC"],
-            ].filter(([fieldName]) => {
+            ] as const).filter(([fieldName]) => {
               const value = formData.get(fieldName);
               return typeof value !== "string" || value.trim().length === 0;
             });
