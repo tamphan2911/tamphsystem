@@ -2,7 +2,17 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarClock, Check, ChevronDown, ClipboardPlus, KeyRound, Plus, Search, UserRound, X } from "lucide-react";
+import {
+  CalendarClock,
+  Check,
+  ChevronDown,
+  ClipboardPlus,
+  KeyRound,
+  Plus,
+  Search,
+  UserRound,
+  X,
+} from "lucide-react";
 import { createPublisherAccount, createResearchTask } from "../../actions";
 import { useResearchToast } from "../../components/ResearchToast";
 
@@ -58,9 +68,12 @@ export function CreateSubmissionTaskDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [venueQuery, setVenueQuery] = useState("");
   const [assistantQuery, setAssistantQuery] = useState("");
-  const [selectedVenue, setSelectedVenue] = useState<SubmissionTaskVenueOption | null>(null);
+  const [selectedVenue, setSelectedVenue] =
+    useState<SubmissionTaskVenueOption | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState("");
-  const [selectedAssistantIds, setSelectedAssistantIds] = useState<string[]>([]);
+  const [selectedAssistantIds, setSelectedAssistantIds] = useState<string[]>(
+    [],
+  );
   const [accountOpen, setAccountOpen] = useState(false);
   const [addAccountOpen, setAddAccountOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -74,8 +87,21 @@ export function CreateSubmissionTaskDialog({
         if (!needle) return true;
         const haystack =
           venue.kind === "journal"
-            ? [venue.name, venue.issn, venue.publisher, venue.rank, "journal"].join(" ")
-            : [venue.name, venue.isbn, venue.organizer, venue.type, venue.location, "conference"].join(" ");
+            ? [
+                venue.name,
+                venue.issn,
+                venue.publisher,
+                venue.rank,
+                "journal",
+              ].join(" ")
+            : [
+                venue.name,
+                venue.isbn,
+                venue.organizer,
+                venue.type,
+                venue.location,
+                "conference",
+              ].join(" ");
         return haystack.toLowerCase().includes(needle);
       })
       .slice(0, 12);
@@ -86,14 +112,24 @@ export function CreateSubmissionTaskDialog({
     return assistants
       .filter((assistant) => {
         if (!needle) return true;
-        return [assistant.name, assistant.email, assistant.id, ...assistant.roles].join(" ").toLowerCase().includes(needle);
+        return [
+          assistant.name,
+          assistant.email,
+          assistant.id,
+          ...assistant.roles,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle);
       })
       .slice(0, 12);
   }, [assistantQuery, assistants]);
 
   const selectedAccount =
     selectedVenue?.kind === "journal"
-      ? selectedVenue.accounts.find((account) => account.id === selectedAccountId)
+      ? selectedVenue.accounts.find(
+          (account) => account.id === selectedAccountId,
+        )
       : null;
 
   function reset() {
@@ -113,16 +149,30 @@ export function CreateSubmissionTaskDialog({
   }
 
   function toggleAssistant(id: string) {
-    setSelectedAssistantIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+    setSelectedAssistantIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id],
+    );
   }
 
   function submitTask(formData: FormData) {
     if (!selectedVenue) return;
     startTransition(async () => {
-      await createResearchTask(formData);
+      const result = await createResearchTask(formData);
+      if (!result?.ok) {
+        showSuccess({
+          title: "Submission task already exists",
+          detail:
+            "Revoke the unfinished task for this research and venue before assigning a new one.",
+        });
+        setIsOpen(false);
+        return;
+      }
       showSuccess({
         title: "Submission task created",
-        detail: "The assigned user must finish this task before the submission entry is created.",
+        detail:
+          "The assigned user must finish this task before the submission entry is created.",
       });
       reset();
       setIsOpen(false);
@@ -134,7 +184,8 @@ export function CreateSubmissionTaskDialog({
       await createPublisherAccount(formData);
       showSuccess({
         title: "Account added",
-        detail: "The account is linked to the selected journal. Refreshing keeps it available for future tasks.",
+        detail:
+          "The account is linked to the selected journal. Refreshing keeps it available for future tasks.",
       });
       setAddAccountOpen(false);
       router.refresh();
@@ -161,8 +212,12 @@ export function CreateSubmissionTaskDialog({
                   <ClipboardPlus className="h-5 w-5" />
                 </span>
                 <div>
-                  <h2 className="text-lg font-black text-slate-950 dark:text-white">Create submission task</h2>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Submission task is selected automatically for this research.</p>
+                  <h2 className="text-lg font-black text-slate-950 dark:text-white">
+                    Create submission task
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Submission task is selected automatically for this research.
+                  </p>
                 </div>
               </div>
               <button
@@ -178,43 +233,84 @@ export function CreateSubmissionTaskDialog({
               </button>
             </div>
 
-            <form action={submitTask} className="grid max-h-[calc(92vh-6rem)] gap-5 overflow-y-auto px-6 py-5">
+            <form
+              action={submitTask}
+              className="grid max-h-[calc(92vh-6rem)] gap-5 overflow-y-auto px-6 py-5"
+            >
               <input type="hidden" name="projectId" value={projectId} />
               <input type="hidden" name="category" value="Submitting" />
-              <input type="hidden" name="taskType" value={selectedVenue?.kind === "conference" ? "SUBMIT_CONFERENCE" : "SUBMIT_RESEARCH"} />
-              {selectedVenue?.kind === "journal" && <input type="hidden" name="journalId" value={selectedVenue.id} />}
-              {selectedVenue?.kind === "conference" && <input type="hidden" name="conferenceId" value={selectedVenue.id} />}
+              <input
+                type="hidden"
+                name="taskType"
+                value={
+                  selectedVenue?.kind === "conference"
+                    ? "SUBMIT_CONFERENCE"
+                    : "SUBMIT_RESEARCH"
+                }
+              />
+              {selectedVenue?.kind === "journal" && (
+                <input
+                  type="hidden"
+                  name="journalId"
+                  value={selectedVenue.id}
+                />
+              )}
+              {selectedVenue?.kind === "conference" && (
+                <input
+                  type="hidden"
+                  name="conferenceId"
+                  value={selectedVenue.id}
+                />
+              )}
               {selectedAssistantIds.map((id) => (
                 <input key={id} type="hidden" name="assigneeIds" value={id} />
               ))}
 
               <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 dark:border-indigo-900/60 dark:bg-indigo-950/20">
-                <p className="text-xs font-bold uppercase tracking-wide text-indigo-500 dark:text-indigo-300">Research</p>
-                <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">{projectTitle}</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-indigo-500 dark:text-indigo-300">
+                  Research
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {projectTitle}
+                </p>
               </div>
 
               <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
                 <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Task title</span>
+                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Task title
+                  </span>
                   <input
                     name="title"
                     required
-                    value={selectedVenue ? `Submit "${projectTitle}" to ${selectedVenue.name}` : `Submit "${projectTitle}"`}
+                    value={
+                      selectedVenue
+                        ? `Submit "${projectTitle}" to ${selectedVenue.name}`
+                        : `Submit "${projectTitle}"`
+                    }
                     onChange={() => undefined}
                     className={inputClass}
                   />
                 </label>
                 <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Due date</span>
+                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Due date
+                  </span>
                   <div className="relative">
                     <CalendarClock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input name="dueDate" type="date" className={`${inputClass} w-full pl-9`} />
+                    <input
+                      name="dueDate"
+                      type="date"
+                      className={`${inputClass} w-full pl-9`}
+                    />
                   </div>
                 </label>
               </div>
 
               <section className="grid gap-3">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Journal or conference</span>
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Journal or conference
+                </span>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
@@ -229,7 +325,9 @@ export function CreateSubmissionTaskDialog({
                 </div>
                 <div className="grid max-h-72 gap-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-inner dark:border-slate-800 dark:bg-slate-950">
                   {venueResults.map((venue) => {
-                    const selected = selectedVenue?.kind === venue.kind && selectedVenue.id === venue.id;
+                    const selected =
+                      selectedVenue?.kind === venue.kind &&
+                      selectedVenue.id === venue.id;
                     return (
                       <button
                         key={`${venue.kind}-${venue.id}`}
@@ -243,7 +341,9 @@ export function CreateSubmissionTaskDialog({
                       >
                         <span className="flex items-start justify-between gap-3">
                           <span>
-                            <span className="block text-sm font-bold">{venue.name}</span>
+                            <span className="block text-sm font-bold">
+                              {venue.name}
+                            </span>
                             <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
                               {venue.kind === "journal"
                                 ? `${venue.issn || "No ISSN"} - ${venue.publisher || "No publisher"} - ${venue.rank || "No rank"}`
@@ -257,14 +357,20 @@ export function CreateSubmissionTaskDialog({
                       </button>
                     );
                   })}
-                  {venueResults.length === 0 && <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">No venue matches this search.</p>}
+                  {venueResults.length === 0 && (
+                    <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                      No venue matches this search.
+                    </p>
+                  )}
                 </div>
               </section>
 
               {selectedVenue?.kind === "journal" && (
                 <section className="grid gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Account to submit</span>
+                    <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Account to submit
+                    </span>
                     <button
                       type="button"
                       onClick={() => setAddAccountOpen(true)}
@@ -276,14 +382,24 @@ export function CreateSubmissionTaskDialog({
                   </div>
                   {selectedVenue.accounts.length > 0 ? (
                     <div className="relative">
-                      <input type="hidden" name="accountId" value={selectedAccountId} />
+                      <input
+                        type="hidden"
+                        name="accountId"
+                        value={selectedAccountId}
+                      />
                       <button
                         type="button"
                         onClick={() => setAccountOpen((current) => !current)}
                         className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-left text-sm text-slate-800 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                       >
-                        <span className="min-w-0 truncate">{selectedAccount ? `${selectedAccount.username}${selectedAccount.email ? ` - ${selectedAccount.email}` : ""}` : "Choose an account"}</span>
-                        <ChevronDown className={`h-4 w-4 flex-none text-slate-400 transition ${accountOpen ? "rotate-180" : ""}`} />
+                        <span className="min-w-0 truncate">
+                          {selectedAccount
+                            ? `${selectedAccount.username}${selectedAccount.email ? ` - ${selectedAccount.email}` : ""}`
+                            : "Choose an account"}
+                        </span>
+                        <ChevronDown
+                          className={`h-4 w-4 flex-none text-slate-400 transition ${accountOpen ? "rotate-180" : ""}`}
+                        />
                       </button>
                       {accountOpen && (
                         <div className="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-950">
@@ -298,10 +414,16 @@ export function CreateSubmissionTaskDialog({
                               className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
                               <span>
-                                <span className="block font-semibold">{account.username}</span>
-                                <span className="block text-xs text-slate-500 dark:text-slate-400">{account.email || "No email"}</span>
+                                <span className="block font-semibold">
+                                  {account.username}
+                                </span>
+                                <span className="block text-xs text-slate-500 dark:text-slate-400">
+                                  {account.email || "No email"}
+                                </span>
                               </span>
-                              {selectedAccountId === account.id && <Check className="h-4 w-4 text-emerald-600" />}
+                              {selectedAccountId === account.id && (
+                                <Check className="h-4 w-4 text-emerald-600" />
+                              )}
                             </button>
                           ))}
                         </div>
@@ -316,17 +438,25 @@ export function CreateSubmissionTaskDialog({
               )}
 
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Note</span>
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Note
+                </span>
                 <textarea
                   name="description"
                   rows={3}
-                  defaultValue={selectedVenue ? `Prepare and submit this manuscript to ${selectedVenue.name}.` : "Prepare and submit this manuscript."}
+                  defaultValue={
+                    selectedVenue
+                      ? `Prepare and submit this manuscript to ${selectedVenue.name}.`
+                      : "Prepare and submit this manuscript."
+                  }
                   className={inputClass}
                 />
               </label>
 
               <section className="grid gap-3">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Assign to</span>
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Assign to
+                </span>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
@@ -338,7 +468,9 @@ export function CreateSubmissionTaskDialog({
                 </div>
                 <div className="grid max-h-64 gap-2 overflow-y-auto rounded-xl border border-slate-200 p-2 dark:border-slate-800">
                   {assistantResults.map((assistant) => {
-                    const selected = selectedAssistantIds.includes(assistant.id);
+                    const selected = selectedAssistantIds.includes(
+                      assistant.id,
+                    );
                     return (
                       <button
                         key={assistant.id}
@@ -353,8 +485,12 @@ export function CreateSubmissionTaskDialog({
                         <span className="flex min-w-0 items-center gap-3">
                           <UserRound className="h-4 w-4 flex-none text-slate-400" />
                           <span className="min-w-0">
-                            <span className="block truncate text-sm font-bold">{assistant.name || assistant.email}</span>
-                            <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{assistant.email}</span>
+                            <span className="block truncate text-sm font-bold">
+                              {assistant.name || assistant.email}
+                            </span>
+                            <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+                              {assistant.email}
+                            </span>
                           </span>
                         </span>
                         {selected && <Check className="h-4 w-4 flex-none" />}
@@ -376,7 +512,11 @@ export function CreateSubmissionTaskDialog({
                   Cancel
                 </button>
                 <button
-                  disabled={!selectedVenue || selectedAssistantIds.length === 0 || isPending}
+                  disabled={
+                    !selectedVenue ||
+                    selectedAssistantIds.length === 0 ||
+                    isPending
+                  }
                   className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0 disabled:hover:shadow-none"
                 >
                   <Plus className="h-4 w-4" />
@@ -396,9 +536,16 @@ export function CreateSubmissionTaskDialog({
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300">
                   <KeyRound className="h-5 w-5" />
                 </span>
-                <h3 className="text-base font-bold text-slate-950 dark:text-white">Add account</h3>
+                <h3 className="text-base font-bold text-slate-950 dark:text-white">
+                  Add account
+                </h3>
               </div>
-              <button type="button" onClick={() => setAddAccountOpen(false)} className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200" aria-label="Close">
+              <button
+                type="button"
+                onClick={() => setAddAccountOpen(false)}
+                className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                aria-label="Close"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -406,30 +553,51 @@ export function CreateSubmissionTaskDialog({
               <input type="hidden" name="journalId" value={selectedVenue.id} />
               <input type="hidden" name="projectId" value={projectId} />
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Journal</span>
-                <input readOnly value={selectedVenue.name} className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300" />
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Journal
+                </span>
+                <input
+                  readOnly
+                  value={selectedVenue.name}
+                  className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+                />
               </label>
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Username</span>
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Username
+                </span>
                 <input name="username" required className={inputClass} />
               </label>
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Password</span>
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Password
+                </span>
                 <input name="password" className={inputClass} />
               </label>
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Email</span>
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Email
+                </span>
                 <input name="email" type="email" className={inputClass} />
               </label>
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Note</span>
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Note
+                </span>
                 <input name="note" className={inputClass} />
               </label>
               <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
-                <button type="button" onClick={() => setAddAccountOpen(false)} className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setAddAccountOpen(false)}
+                  className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
                   Cancel
                 </button>
-                <button disabled={isPending} className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-wait disabled:opacity-70">
+                <button
+                  disabled={isPending}
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-wait disabled:opacity-70"
+                >
                   <Plus className="h-4 w-4" />
                   Add account
                 </button>

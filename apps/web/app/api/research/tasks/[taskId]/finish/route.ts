@@ -8,13 +8,18 @@ export async function POST(
 ) {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ?? []) as Role[];
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+    []) as Role[];
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!roles.includes(Role.ASSISTANT) && !roles.includes(Role.CHIEF_ASSISTANT) && !roles.includes(Role.ADMIN)) {
+  if (
+    !roles.includes(Role.ASSISTANT) &&
+    !roles.includes(Role.CHIEF_ASSISTANT) &&
+    !roles.includes(Role.ADMIN)
+  ) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -30,27 +35,41 @@ export async function POST(
   });
 
   if (!assignment) {
-    return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Assignment not found" },
+      { status: 404 },
+    );
   }
 
-  await prisma.researchTaskAssignment.update({
-    where: { id: assignment.id },
-    data: { finishedAt: assignment.finishedAt ?? new Date() },
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: { status: true },
   });
 
-  const assignments = await prisma.researchTaskAssignment.findMany({
-    where: { taskId },
-    select: { finishedAt: true },
-  });
+  if (
+    !task ||
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    return NextResponse.json({ error: "Task is closed" }, { status: 409 });
+  }
 
-  const allFinished = assignments.length > 0 && assignments.every((item) => item.finishedAt);
-  const anyFinished = assignments.some((item) => item.finishedAt);
+  const completedAt = new Date();
 
   await prisma.researchTask.update({
     where: { id: taskId },
-    data: allFinished
-      ? { status: ResearchTaskStatus.COMPLETED, completedAt: new Date(), adminViewedAt: null }
-      : { status: anyFinished ? ResearchTaskStatus.IN_PROGRESS : ResearchTaskStatus.OPEN },
+    data: {
+      status: ResearchTaskStatus.COMPLETED,
+      completedAt,
+      revokedAt: null,
+      adminViewedAt: null,
+      assignments: {
+        updateMany: {
+          where: { finishedAt: null },
+          data: { finishedAt: completedAt },
+        },
+      },
+    },
   });
 
   return NextResponse.json({ ok: true });

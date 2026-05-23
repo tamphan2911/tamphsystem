@@ -1,7 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarClock, Check, ClipboardList, PlusCircle, Search, UserRound, X } from "lucide-react";
+import {
+  CalendarClock,
+  Check,
+  ClipboardList,
+  PlusCircle,
+  Search,
+  UserRound,
+  X,
+} from "lucide-react";
 import { createResearchTask } from "../actions";
 
 export type TaskAssigneeOption = {
@@ -11,24 +19,46 @@ export type TaskAssigneeOption = {
   roles: string[];
 };
 
-export function NewTaskDialog({ assistants }: { assistants: TaskAssigneeOption[] }) {
+export function NewTaskDialog({
+  assistants,
+}: {
+  assistants: TaskAssigneeOption[];
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [category, setCategory] = useState<"Submitting" | "Production">("Submitting");
+  const [category, setCategory] = useState<"Submitting" | "Production">(
+    "Submitting",
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return assistants
       .filter((assistant) => {
         if (!needle) return true;
-        return [assistant.name, assistant.email, assistant.id, ...assistant.roles].join(" ").toLowerCase().includes(needle);
+        return [
+          assistant.name,
+          assistant.email,
+          assistant.id,
+          ...assistant.roles,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle);
       })
       .slice(0, 12);
   }, [assistants, query]);
 
   function toggleAssignee(id: string) {
-    setSelectedIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+    setSelectedIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id],
+    );
+  }
+
+  async function submitTask(formData: FormData) {
+    await createResearchTask(formData);
   }
 
   return (
@@ -51,7 +81,9 @@ export function NewTaskDialog({ assistants }: { assistants: TaskAssigneeOption[]
                   <ClipboardList className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-950 dark:text-white">Assign Task</h2>
+                  <h2 className="text-lg font-bold text-slate-950 dark:text-white">
+                    Assign Task
+                  </h2>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     Create one task and assign it to one or more assistants.
                   </p>
@@ -67,7 +99,10 @@ export function NewTaskDialog({ assistants }: { assistants: TaskAssigneeOption[]
               </button>
             </div>
 
-            <form action={createResearchTask} className="grid max-h-[calc(90vh-6rem)] gap-5 overflow-y-auto px-6 py-5">
+            <form
+              action={submitTask}
+              className="grid max-h-[calc(90vh-6rem)] gap-5 overflow-y-auto px-6 py-5"
+            >
               {selectedIds.map((id) => (
                 <input key={id} type="hidden" name="assigneeIds" value={id} />
               ))}
@@ -75,7 +110,9 @@ export function NewTaskDialog({ assistants }: { assistants: TaskAssigneeOption[]
 
               <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
                 <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Task title</span>
+                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Task title
+                  </span>
                   <input
                     name="title"
                     required
@@ -84,7 +121,9 @@ export function NewTaskDialog({ assistants }: { assistants: TaskAssigneeOption[]
                   />
                 </label>
                 <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Due date</span>
+                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Due date
+                  </span>
                   <div className="relative">
                     <CalendarClock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                     <input
@@ -114,7 +153,9 @@ export function NewTaskDialog({ assistants }: { assistants: TaskAssigneeOption[]
                   ))}
                 </div>
                 <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Description</span>
+                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Description
+                  </span>
                   <textarea
                     name="description"
                     rows={3}
@@ -152,8 +193,12 @@ export function NewTaskDialog({ assistants }: { assistants: TaskAssigneeOption[]
                         <span className="flex min-w-0 items-center gap-3">
                           <UserRound className="h-4 w-4 flex-none text-slate-400" />
                           <span className="min-w-0">
-                            <span className="block truncate text-sm font-bold">{assistant.name || assistant.email}</span>
-                            <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{assistant.email}</span>
+                            <span className="block truncate text-sm font-bold">
+                              {assistant.name || assistant.email}
+                            </span>
+                            <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+                              {assistant.email}
+                            </span>
                           </span>
                         </span>
                         {selected && <Check className="h-4 w-4 flex-none" />}
@@ -161,7 +206,9 @@ export function NewTaskDialog({ assistants }: { assistants: TaskAssigneeOption[]
                     );
                   })}
                   {filtered.length === 0 && (
-                    <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">No assistant matches this search.</div>
+                    <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                      No assistant matches this search.
+                    </div>
                   )}
                 </div>
               </div>

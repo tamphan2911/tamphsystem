@@ -227,6 +227,7 @@ enum ResearchTaskStatus {
   OPEN
   IN_PROGRESS
   COMPLETED
+  REVOKED
 }
 
 enum ResearchTaskType {
@@ -412,6 +413,7 @@ model ResearchTask {
   status        ResearchTaskStatus    @default(IN_PROGRESS)
   dueDate       DateTime?
   completedAt   DateTime?
+  revokedAt     DateTime?
   adminViewedAt DateTime?
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt

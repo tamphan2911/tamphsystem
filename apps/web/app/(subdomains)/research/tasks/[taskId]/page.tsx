@@ -14,8 +14,9 @@ import {
 } from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
-import { finishResearchTask } from "../../actions";
+import { finishResearchTask, revokeResearchTask } from "../../actions";
 import { FinishTaskForm } from "./FinishTaskForm";
+import { RevokeTaskForm } from "./RevokeTaskForm";
 
 export const dynamic = "force-dynamic";
 
@@ -52,8 +53,19 @@ function statusMeta(task: {
   status: string;
   dueDate: Date | null;
   completedAt: Date | null;
+  revokedAt?: Date | null;
 }) {
   const now = new Date();
+
+  if (task.status === "REVOKED") {
+    return {
+      label: "Revoked",
+      detail: task.revokedAt
+        ? `Revoked ${formatDate(task.revokedAt)}`
+        : "Revoked",
+      tone: "slate" as const,
+    };
+  }
 
   if (task.status === "COMPLETED") {
     if (!task.dueDate || !task.completedAt) {
@@ -181,8 +193,13 @@ export default async function TaskDetailPage({
 
   const meta = statusMeta(task);
   const finishAction = finishResearchTask.bind(null, task.id);
+  const revokeAction = revokeResearchTask.bind(null, task.id);
   const canFinish =
-    task.status !== "COMPLETED" && (isAdmin || Boolean(myAssignment));
+    task.status !== "COMPLETED" &&
+    task.status !== "REVOKED" &&
+    (isAdmin || Boolean(myAssignment));
+  const canRevoke =
+    isAdmin && task.status !== "COMPLETED" && task.status !== "REVOKED";
   const journalSubmissionLink = firstUrl(task.journal?.note);
   const conferenceSubmissionLink = firstUrl(task.conference?.note);
 
@@ -334,8 +351,16 @@ export default async function TaskDetailPage({
           </div>
         </div>
 
-        {canFinish && (
-          <FinishTaskForm action={finishAction} accountId={task.account?.id} />
+        {(canFinish || canRevoke) && (
+          <div className="mt-6 flex flex-col justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800 sm:flex-row">
+            {canRevoke && <RevokeTaskForm action={revokeAction} />}
+            {canFinish && (
+              <FinishTaskForm
+                action={finishAction}
+                accountId={task.account?.id}
+              />
+            )}
+          </div>
         )}
 
         <div className="mt-6 grid gap-3 border-t border-slate-200 pt-5 text-sm dark:border-slate-800 sm:grid-cols-3">
