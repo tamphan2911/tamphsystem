@@ -307,6 +307,39 @@ export async function createJournal(formData: FormData) {
   revalidatePath("/journals");
 }
 
+export async function updateJournal(journalId: string, formData: FormData) {
+  await requireCurrentUser();
+  const fields = orderedUniqueStrings(formData.getAll("fields"));
+  const legacyField = optionalString(formData.get("field"));
+
+  await prisma.journal.update({
+    where: { id: journalId },
+    data: {
+      name: optionalString(formData.get("name")) ?? "Untitled journal",
+      issn: optionalString(formData.get("issn")),
+      field: fields.length > 0 ? fields.join("; ") : legacyField,
+      fields,
+      rank: optionalString(formData.get("rank")),
+      publisher: optionalString(formData.get("publisher")),
+      apc: optionalString(formData.get("apc")),
+      apcCurrency:
+        enumValue(CurrencyCode, formData.get("apcCurrency")) ??
+        CurrencyCode.USD,
+      submissionFee: optionalString(formData.get("submissionFee")),
+      submissionFeeCurrency:
+        enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??
+        CurrencyCode.USD,
+      homepageLink: optionalString(formData.get("homepageLink")),
+      scimagoLink: optionalString(formData.get("scimagoLink")),
+      scopusLink: optionalString(formData.get("scopusLink")),
+      note: optionalString(formData.get("note")),
+    },
+  });
+
+  revalidatePath("/journals");
+  revalidatePath(`/journals/${journalId}`);
+}
+
 export async function createPublisherAccount(formData: FormData) {
   await requireCurrentUser();
 

@@ -9,6 +9,7 @@ import {
   type JournalReviewRow,
   type JournalSubmissionRow,
 } from "./JournalDetailTabs";
+import { EditJournalDialog } from "./EditJournalDialog";
 
 export const dynamic = "force-dynamic";
 
@@ -108,9 +109,24 @@ export default async function JournalDetailPage({
   }));
 
   const externalLinks = [
-    { href: journal.homepageLink, label: "Homepage", icon: Globe2 },
-    { href: journal.scimagoLink, label: "Scimago", icon: BarChart3 },
-    { href: journal.scopusLink, label: "Scopus", icon: Database },
+    {
+      href: journal.homepageLink,
+      label: "Open homepage",
+      icon: Globe2,
+      tone: "border-blue-100 bg-blue-50 text-blue-600 hover:border-blue-200 hover:bg-blue-100 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50",
+    },
+    {
+      href: journal.scimagoLink,
+      label: "Open Scimago profile",
+      icon: BarChart3,
+      tone: "border-emerald-100 bg-emerald-50 text-emerald-600 hover:border-emerald-200 hover:bg-emerald-100 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50",
+    },
+    {
+      href: journal.scopusLink,
+      label: "Open Scopus profile",
+      icon: Database,
+      tone: "border-violet-100 bg-violet-50 text-violet-600 hover:border-violet-200 hover:bg-violet-100 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-300 dark:hover:bg-violet-900/50",
+    },
   ].filter((item) => Boolean(item.href));
   const journalFields =
     journal.fields.length > 0
@@ -146,7 +162,7 @@ export default async function JournalDetailPage({
                     href={item.href as string}
                     target="_blank"
                     rel="noreferrer"
-                    className="group/icon relative inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:text-blue-600 hover:shadow-sm dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
+                    className={`group/icon relative inline-flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${item.tone}`}
                     aria-label={item.label}
                   >
                     <item.icon className="h-4 w-4" />
@@ -160,6 +176,25 @@ export default async function JournalDetailPage({
                     ISSN {journal.issn}
                   </span>
                 )}
+                <EditJournalDialog
+                  journalId={journal.id}
+                  journal={{
+                    name: journal.name,
+                    issn: journal.issn,
+                    fields: journalFields,
+                    field: journal.field,
+                    rank: journal.rank,
+                    publisher: journal.publisher,
+                    apc: journal.apc,
+                    apcCurrency: journal.apcCurrency,
+                    submissionFee: journal.submissionFee,
+                    submissionFeeCurrency: journal.submissionFeeCurrency,
+                    homepageLink: journal.homepageLink,
+                    scimagoLink: journal.scimagoLink,
+                    scopusLink: journal.scopusLink,
+                    note: journal.note,
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -205,7 +240,12 @@ export default async function JournalDetailPage({
           </div>
           <div className="md:col-span-3">
             <dt className="text-xs font-bold uppercase text-slate-400">
-              <Hash className="inline h-3.5 w-3.5" /> Note
+              <span className="group/note relative inline-flex items-center gap-1">
+                <Hash className="h-3.5 w-3.5 text-amber-500" /> Note
+                <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold normal-case tracking-normal text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/note:translate-y-0 group-hover/note:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
+                  Journal note
+                </span>
+              </span>
             </dt>
             <dd className="mt-1 text-slate-700 dark:text-slate-300">
               {journal.note || "-"}
