@@ -285,7 +285,8 @@ function requireAdmin(roles: Role[]) {
 export async function createResearchProject(formData: FormData) {
   const user = await requireCurrentUser();
   const authorIds = orderedUniqueStrings(formData.getAll("authorUserIds"));
-  const selectedAuthorIds = authorIds.length > 0 ? authorIds : [user.id];
+  if (authorIds.length === 0 || !optionalString(formData.get("title"))) return;
+  const selectedAuthorIds = authorIds;
   const correspondingAuthorId =
     optionalString(formData.get("correspondingAuthorId")) ??
     selectedAuthorIds[0];

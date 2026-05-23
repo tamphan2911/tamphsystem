@@ -4,6 +4,7 @@ import {
   prisma,
   RegistrationStatus,
   ResearchStage,
+  Role,
   SubmissionStatus,
 } from "@repo/db";
 import { NewResearchDialog } from "./NewResearchDialog";
@@ -13,6 +14,20 @@ import {
 } from "./ResearchProjectsTable";
 
 export const dynamic = "force-dynamic";
+
+function displayRole(roles: Role[]) {
+  if (roles.includes(Role.ADMIN)) return "Admin";
+  if (roles.includes(Role.CHIEF_ASSISTANT)) return "Chief assistant";
+  if (roles.includes(Role.ASSISTANT)) return "Assistant";
+  if (roles.includes(Role.RESEARCHER)) return "Researcher";
+  if (roles.includes(Role.LECTURER)) return "Lecturer";
+  return (
+    roles[0]
+      ?.replace("_", " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (letter) => letter.toUpperCase()) || "User"
+  );
+}
 
 const demoProjects = [
   {
@@ -213,20 +228,32 @@ export default async function ProjectsDashboard() {
   await ensureDemoResearchProjects();
   await ensureResearchCodes();
 
-  const projects = await prisma.researchProject.findMany({
-    include: {
-      leadResearcher: { select: { name: true, email: true } },
-      authors: { select: { name: true, email: true }, orderBy: [{ name: "asc" }, { email: "asc" }] },
-      authorEntries: {
-        include: { user: { select: { name: true, email: true } } },
-        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+  const [projects, authorUsers] = await Promise.all([
+    prisma.researchProject.findMany({
+      include: {
+        leadResearcher: { select: { name: true, email: true } },
+        authors: { select: { name: true, email: true }, orderBy: [{ name: "asc" }, { email: "asc" }] },
+        authorEntries: {
+          include: { user: { select: { name: true, email: true } } },
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        },
+        _count: {
+          select: { submissions: true, publications: true },
+        },
       },
-      _count: {
-        select: { submissions: true, publications: true },
-      },
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.user.findMany({
+      orderBy: [{ name: "asc" }, { email: "asc" }],
+      select: { id: true, name: true, email: true, roles: true },
+    }),
+  ]);
+  const authorOptions = authorUsers.map((user) => ({
+    id: user.id,
+    name: user.name ?? "",
+    email: user.email,
+    role: displayRole(user.roles),
+  }));
 
   const submitting = projects.filter(
     (project) => project.stage === "SUBMITTING",
@@ -308,7 +335,7 @@ export default async function ProjectsDashboard() {
           ))}
         </div>
 
-        <NewResearchDialog />
+        <NewResearchDialog users={authorOptions} />
       </div>
 
       <ResearchProjectsTable rows={rows} />
