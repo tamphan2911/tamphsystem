@@ -34,6 +34,7 @@ export type ResearchProjectRow = {
   stage: string;
   claimStatus: string;
   registerStatus: string;
+  canViewRegistrationClaim?: boolean;
   coAuthors: string;
   universityRegistration: string;
   leadResearcher: string;
@@ -218,21 +219,27 @@ export function ResearchProjectsTable({
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("ALL");
   const [claim, setClaim] = useState("ALL");
+  const showRegistrationClaim = rows.some(
+    (row) => row.canViewRegistrationClaim,
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const matchesStage = stage === "ALL" || row.stage === stage;
-      const matchesClaim = claim === "ALL" || row.claimStatus === claim;
+      const matchesClaim =
+        !showRegistrationClaim ||
+        claim === "ALL" ||
+        row.claimStatus === claim;
       const haystack = [
         row.title,
         row.researchCode,
         row.abstract,
         row.coAuthors,
-        row.universityRegistration,
         row.leadResearcher,
-        row.claimStatus,
         row.stage,
+        row.canViewRegistrationClaim ? row.universityRegistration : "",
+        row.canViewRegistrationClaim ? row.claimStatus : "",
       ]
         .join(" ")
         .toLowerCase();
@@ -240,7 +247,7 @@ export function ResearchProjectsTable({
         matchesStage && matchesClaim && (!needle || haystack.includes(needle))
       );
     });
-  }, [claim, query, rows, stage]);
+  }, [claim, query, rows, showRegistrationClaim, stage]);
 
   const pagination = useTablePagination(filtered, 10);
 
@@ -262,15 +269,17 @@ export function ResearchProjectsTable({
               label: item === "ALL" ? "All stages" : stageLabel(item),
             }))}
           />
-          <FilterSelect
-            value={claim}
-            onChange={setClaim}
-            ariaLabel="Filter by claim"
-            options={claims.map((item) => ({
-              value: item,
-              label: item === "ALL" ? "All claims" : claimLabel(item),
-            }))}
-          />
+          {showRegistrationClaim && (
+            <FilterSelect
+              value={claim}
+              onChange={setClaim}
+              ariaLabel="Filter by claim"
+              options={claims.map((item) => ({
+                value: item,
+                label: item === "ALL" ? "All claims" : claimLabel(item),
+              }))}
+            />
+          )}
         </div>
       </div>
 
@@ -285,8 +294,12 @@ export function ResearchProjectsTable({
                 Research
               </th>
               <th className="w-[4.5rem] px-3 py-3">Stage</th>
-              <th className="w-[4.5rem] px-3 py-3">Claim</th>
-              <th className="w-[12rem] px-3 py-3">Registration</th>
+              {showRegistrationClaim && (
+                <>
+                  <th className="w-[4.5rem] px-3 py-3">Claim</th>
+                  <th className="w-[12rem] px-3 py-3">Registration</th>
+                </>
+              )}
               <th className="w-[5rem] px-3 py-3 text-center">Submit</th>
             </tr>
           </thead>
@@ -320,19 +333,31 @@ export function ResearchProjectsTable({
                     className={statusClass(row.stage)}
                   />
                 </td>
-                <td className="px-3 py-3 align-top">
-                  <StatusIconChip
-                    icon={claimIcon(row.claimStatus)}
-                    label={claimLabel(row.claimStatus)}
-                    className={claimClass(row.claimStatus)}
-                  />
-                </td>
-                <td className="px-3 py-3 align-top">
-                  <RegistrationCell
-                    status={row.registerStatus}
-                    registration={row.universityRegistration}
-                  />
-                </td>
+                {showRegistrationClaim && (
+                  <>
+                    <td className="px-3 py-3 align-top">
+                      {row.canViewRegistrationClaim ? (
+                        <StatusIconChip
+                          icon={claimIcon(row.claimStatus)}
+                          label={claimLabel(row.claimStatus)}
+                          className={claimClass(row.claimStatus)}
+                        />
+                      ) : (
+                        <span className="text-sm text-slate-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 align-top">
+                      {row.canViewRegistrationClaim ? (
+                        <RegistrationCell
+                          status={row.registerStatus}
+                          registration={row.universityRegistration}
+                        />
+                      ) : (
+                        <span className="text-sm text-slate-400">-</span>
+                      )}
+                    </td>
+                  </>
+                )}
                 <td className="px-3 py-3 text-center align-top">
                   <SubmitCount count={row.submissions} />
                 </td>
@@ -341,7 +366,7 @@ export function ResearchProjectsTable({
             {pagination.total === 0 && (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={showRegistrationClaim ? 6 : 4}
                   className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                 >
                   No research matches the current search.

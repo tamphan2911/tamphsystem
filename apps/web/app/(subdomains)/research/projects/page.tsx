@@ -1,4 +1,5 @@
 import { Clock, FileText, Send, Trophy } from "lucide-react";
+import { redirect } from "next/navigation";
 import {
   ClaimStatus,
   prisma,
@@ -7,6 +8,7 @@ import {
   Role,
   SubmissionStatus,
 } from "@repo/db";
+import { auth } from "../../../../auth";
 import { NewResearchDialog } from "./NewResearchDialog";
 import {
   ResearchProjectsTable,
@@ -227,11 +229,40 @@ async function ensureResearchCodes() {
 export default async function ProjectsDashboard() {
   await ensureDemoResearchProjects();
   await ensureResearchCodes();
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) redirect("/login");
+  const registrationIdentityValues = [session.user?.name, session.user?.email]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .map((value) => value.trim().toLowerCase());
+  const registrationIdentityFilters = registrationIdentityValues.map(
+    (value) => ({
+      registrationName: { equals: value, mode: "insensitive" as const },
+    }),
+  );
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+    []) as Role[];
+  const isAdmin = roles.includes(Role.ADMIN);
+  const canManageResearch =
+    isAdmin || roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
+  const projectWhere = canManageResearch
+    ? {}
+    : {
+        OR: [
+          { leadResearcherId: userId },
+          { authors: { some: { id: userId } } },
+          { authorEntries: { some: { userId } } },
+          { registrationUserId: userId },
+          ...registrationIdentityFilters,
+        ],
+      };
 
   const [projects, authorUsers] = await Promise.all([
     prisma.researchProject.findMany({
+      where: projectWhere,
       include: {
         leadResearcher: { select: { name: true, email: true } },
+        registrationUser: { select: { id: true, name: true, email: true, roles: true } },
         authors: { select: { name: true, email: true }, orderBy: [{ name: "asc" }, { email: "asc" }] },
         authorEntries: {
           include: { user: { select: { name: true, email: true } } },
@@ -280,6 +311,15 @@ export default async function ProjectsDashboard() {
           ? project.authors.map((author, index) => `${author.name || author.email}${index === 0 ? "*" : ""}`).join(", ")
         : project.coAuthors ?? "",
     universityRegistration: project.universityRegistration ?? "",
+    canViewRegistrationClaim:
+      isAdmin ||
+      project.registrationUserId === userId ||
+      Boolean(
+        project.registrationName &&
+          registrationIdentityValues.includes(
+            project.registrationName.trim().toLowerCase(),
+          ),
+      ),
     leadResearcher: project.leadResearcher.name || project.leadResearcher.email,
     submissions: project._count.submissions,
     publications: project._count.publications,
@@ -316,26 +356,32 @@ export default async function ProjectsDashboard() {
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
-          {stats.map((item) => (
-            <div
-              key={item.label}
-              className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-            >
-              <item.icon className={`h-4 w-4 ${item.color}`} />
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                  {item.label}
-                </p>
-                <p className="text-base font-black text-slate-950 dark:text-white">
-                  {item.value}
-                </p>
+        {canManageResearch ? (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
+            {stats.map((item) => (
+              <div
+                key={item.label}
+                className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              >
+                <item.icon className={`h-4 w-4 ${item.color}`} />
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    {item.label}
+                  </p>
+                  <p className="text-base font-black text-slate-950 dark:text-white">
+                    {item.value}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div />
+        )}
 
-        <NewResearchDialog users={authorOptions} />
+        {canManageResearch && (
+          <NewResearchDialog users={authorOptions} isAdmin={isAdmin} />
+        )}
       </div>
 
       <ResearchProjectsTable rows={rows} />

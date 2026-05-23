@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { createResearchProject } from "../actions";
 import type { AuthorOption } from "./[id]/AuthorsPicker";
+import { RegisterUserPicker } from "./RegisterUserPicker";
 
 function authorName(author: AuthorOption) {
   return author.name || author.email;
@@ -174,7 +175,13 @@ function NewResearchAuthorsPicker({
   );
 }
 
-export function NewResearchDialog({ users }: { users: AuthorOption[] }) {
+export function NewResearchDialog({
+  users,
+  isAdmin,
+}: {
+  users: AuthorOption[];
+  isAdmin: boolean;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [registerStatus, setRegisterStatus] = useState("NOT_REGISTERED");
   const [selectedAuthors, setSelectedAuthors] = useState<AuthorOption[]>([]);
@@ -272,54 +279,53 @@ export function NewResearchDialog({ users }: { users: AuthorOption[] }) {
                 />
               </section>
 
-              <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
-                <h3 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
-                  Registration
-                </h3>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    Register
-                    <select
-                      name="registerStatus"
-                      value={registerStatus}
-                      onChange={(event) => setRegisterStatus(event.target.value)}
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              {isAdmin && (
+                <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
+                  <h3 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
+                    Registration
+                  </h3>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      Register
+                      <select
+                        name="registerStatus"
+                        value={registerStatus}
+                        onChange={(event) =>
+                          setRegisterStatus(event.target.value)
+                        }
+                        className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      >
+                        <option value="NOT_REGISTERED">Not registered</option>
+                        <option value="PREPARING">Plan</option>
+                        <option value="SUBMITTED">Submitted</option>
+                        <option value="APPROVED">Approved</option>
+                      </select>
+                    </label>
+                    <div
+                      className={`grid gap-4 transition-all duration-300 ease-out sm:col-span-2 sm:grid-cols-2 ${
+                        registerStatus === "NOT_REGISTERED"
+                          ? "pointer-events-none max-h-0 -translate-y-1 overflow-hidden opacity-0"
+                          : "max-h-32 translate-y-0 opacity-100"
+                      }`}
+                      aria-hidden={registerStatus === "NOT_REGISTERED"}
                     >
-                      <option value="NOT_REGISTERED">Not registered</option>
-                      <option value="PREPARING">Plan</option>
-                      <option value="SUBMITTED">Submitted</option>
-                      <option value="APPROVED">Approved</option>
-                    </select>
-                  </label>
-                  <div
-                    className={`grid gap-4 transition-all duration-300 ease-out sm:col-span-2 sm:grid-cols-2 ${
-                      registerStatus === "NOT_REGISTERED"
-                        ? "pointer-events-none max-h-0 -translate-y-1 overflow-hidden opacity-0"
-                        : "max-h-28 translate-y-0 opacity-100"
-                    }`}
-                    aria-hidden={registerStatus === "NOT_REGISTERED"}
-                  >
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                      Registration period
-                      <input
-                        name="universityRegistration"
-                        placeholder="Q2 2026"
+                      <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        Registration period
+                        <input
+                          name="universityRegistration"
+                          placeholder="Q2 2026"
+                          disabled={registerStatus === "NOT_REGISTERED"}
+                          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:disabled:bg-slate-900"
+                        />
+                      </label>
+                      <RegisterUserPicker
+                        users={users}
                         disabled={registerStatus === "NOT_REGISTERED"}
-                        className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:disabled:bg-slate-900"
                       />
-                    </label>
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                      Register name
-                      <input
-                        name="registrationName"
-                        placeholder="Person name"
-                        disabled={registerStatus === "NOT_REGISTERED"}
-                        className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:disabled:bg-slate-900"
-                      />
-                    </label>
+                    </div>
                   </div>
-                </div>
-              </section>
+                </section>
+              )}
 
               <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Abstract and working notes

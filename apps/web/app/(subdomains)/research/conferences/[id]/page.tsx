@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Globe2, MapPin, Users } from "lucide-react";
-import { prisma } from "@repo/db";
+import { prisma, Role } from "@repo/db";
+import { auth } from "../../../../../auth";
 import { formatMoney } from "../../lib/currency";
 import { ResearchProjectsTable, type ResearchProjectRow } from "../../projects/ResearchProjectsTable";
 
@@ -16,6 +17,10 @@ function dateText(start: Date | null, end: Date | null) {
 
 export default async function ConferenceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ?? []) as Role[];
+  const isAdmin = roles.includes(Role.ADMIN);
   const conference = await prisma.conference.findUnique({
     where: { id },
     include: {
@@ -24,6 +29,7 @@ export default async function ConferenceDetailPage({ params }: { params: Promise
           project: {
             include: {
               leadResearcher: true,
+              registrationUser: true,
               authors: { select: { name: true, email: true }, orderBy: [{ name: "asc" }, { email: "asc" }] },
               authorEntries: {
                 include: { user: { select: { name: true, email: true } } },
@@ -55,6 +61,8 @@ export default async function ConferenceDetailPage({ params }: { params: Promise
           ? project.authors.map((author, index) => `${author.name || author.email}${index === 0 ? "*" : ""}`).join(", ")
         : project.coAuthors ?? "",
     universityRegistration: project.universityRegistration ?? "",
+    canViewRegistrationClaim:
+      isAdmin || Boolean(userId && project.registrationUserId === userId),
     leadResearcher: project.leadResearcher.name || project.leadResearcher.email,
     submissions: project._count.submissions,
     publications: project._count.publications,

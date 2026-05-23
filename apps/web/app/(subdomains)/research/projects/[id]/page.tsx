@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   ArrowLeft,
   Building2,
@@ -36,6 +36,7 @@ import {
 import { ResearchContentLockButton } from "./ResearchContentLockButton";
 import { AuthorNotificationActions } from "./AuthorNotificationActions";
 import { ResearchTitleField } from "./ResearchTitleField";
+import { RegisterUserPicker } from "../RegisterUserPicker";
 
 export const dynamic = "force-dynamic";
 
@@ -199,9 +200,18 @@ export default async function ProjectDetailPage({
 }) {
   const { id } = await params;
   const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) redirect("/login");
+  const registrationIdentityValues = [session.user?.name, session.user?.email]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .map((value) => value.trim().toLowerCase());
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
+  const canManageResearch =
+    isAdmin ||
+    roles.includes(Role.ASSISTANT) ||
+    roles.includes(Role.CHIEF_ASSISTANT);
   const [project, journals, conferences, taskAssignees, authorUsers] =
     await Promise.all([
       prisma.researchProject.findUnique({
@@ -220,6 +230,7 @@ export default async function ProjectDetailPage({
             select: { type: true },
           },
           leadResearcher: true,
+          registrationUser: true,
           authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
           authorEntries: {
             include: { user: true },
@@ -286,6 +297,22 @@ export default async function ProjectDetailPage({
     ]);
 
   if (!project) notFound();
+  const isProjectAuthor =
+    project.leadResearcherId === userId ||
+    project.authors.some((author) => author.id === userId) ||
+    project.authorEntries.some((entry) => entry.userId === userId);
+  const isRegistrationUser =
+    project.registrationUserId === userId ||
+    Boolean(
+      project.registrationName &&
+        registrationIdentityValues.includes(
+          project.registrationName.trim().toLowerCase(),
+        ),
+    );
+  if (!canManageResearch && !isProjectAuthor && !isRegistrationUser) {
+    notFound();
+  }
+  const canViewRegistrationClaim = isAdmin || isRegistrationUser;
 
   const updateAction = updateResearchProject.bind(null, project.id);
   const hasJournalSubmissions = project.submissions.length > 0;
@@ -465,6 +492,14 @@ export default async function ProjectDetailPage({
     email: user.email,
     role: displayRole(user.roles),
   }));
+  const defaultRegistrationUser: AuthorOption | null = project.registrationUser
+    ? {
+        id: project.registrationUser.id,
+        name: project.registrationUser.name ?? "",
+        email: project.registrationUser.email,
+        role: displayRole(project.registrationUser.roles),
+      }
+    : null;
   const defaultAuthors: SelectedAuthor[] =
     project.authorEntries.length > 0
       ? project.authorEntries.map((entry) => ({
@@ -740,51 +775,62 @@ export default async function ProjectDetailPage({
                 />
               </section>
 
-              <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
-                <h2 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
-                  Registration and claim
-                </h2>
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    Registration period
-                    <input
-                      name="universityRegistration"
-                      defaultValue={project.universityRegistration ?? ""}
-                      placeholder="Q1 2026"
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+              {canViewRegistrationClaim && (
+                <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
+                  <h2 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
+                    Registration and claim
+                  </h2>
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      Registration period
+                      <input
+                        name="universityRegistration"
+                        defaultValue={project.universityRegistration ?? ""}
+                        placeholder="Q1 2026"
+                        disabled={researchContentLocked || !isAdmin}
+                        className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:disabled:bg-slate-900 dark:disabled:text-slate-400"
+                      />
+                    </label>
+                    <RegisterUserPicker
+                      users={authorOptions}
+                      defaultUser={defaultRegistrationUser}
+                      disabled={researchContentLocked || !isAdmin}
                     />
-                  </label>
-                  <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    Register name
-                    <input
-                      name="registrationName"
-                      defaultValue={project.registrationName ?? ""}
-                      placeholder="Person name"
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
-                    />
-                  </label>
-                  <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    Register
-                    <ResearchFormSelect
-                      name="registerStatus"
-                      defaultValue={project.registerStatus}
-                      options={registerOptions}
-                      ariaLabel="Registration status"
-                      disabled={researchContentLocked}
-                    />
-                  </label>
-                  <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    Claim status
-                    <ResearchFormSelect
-                      name="claimStatus"
-                      defaultValue={project.claimStatus}
-                      options={claimOptions}
-                      ariaLabel="Claim status"
-                      disabled={researchContentLocked}
-                    />
-                  </label>
-                </div>
-              </section>
+                    {!defaultRegistrationUser && project.registrationName && (
+                      <input
+                        type="hidden"
+                        name="registrationName"
+                        value={project.registrationName}
+                      />
+                    )}
+                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      Register
+                      <ResearchFormSelect
+                        name="registerStatus"
+                        defaultValue={project.registerStatus}
+                        options={registerOptions}
+                        ariaLabel="Registration status"
+                        disabled={researchContentLocked || !isAdmin}
+                      />
+                    </label>
+                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      Claim status
+                      <ResearchFormSelect
+                        name="claimStatus"
+                        defaultValue={project.claimStatus}
+                        options={claimOptions}
+                        ariaLabel="Claim status"
+                        disabled={researchContentLocked || !isAdmin}
+                      />
+                    </label>
+                  </div>
+                  {!isAdmin && (
+                    <p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Registration and claim details are view-only for the registered user.
+                    </p>
+                  )}
+                </section>
+              )}
             </div>
           </section>
 

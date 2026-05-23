@@ -55,6 +55,7 @@ model User {
   researchProjects                ResearchProject[]            @relation("LeadResearcher")
   authoredResearch                ResearchProject[]            @relation("ResearchAuthors")
   researchAuthorEntries           ResearchProjectAuthor[]
+  registeredResearch              ResearchProject[]            @relation("ResearchRegistrationUser")
   createdResearchTasks            ResearchTask[]               @relation("ResearchTaskCreator")
   assignedResearchTasks           ResearchTaskAssignment[]     @relation("ResearchTaskAssignee")
   suggestedJournals               SuggestedJournal[]           @relation("SuggestedJournalCreator")
@@ -271,6 +272,8 @@ model ResearchProject {
   coAuthors                String?
   universityRegistration   String? // Registration period, e.g., "Q1 2026"
   registrationName         String?
+  registrationUserId       String?
+  registrationUser         User?              @relation("ResearchRegistrationUser", fields: [registrationUserId], references: [id], onDelete: SetNull)
   registerStatus           RegistrationStatus @default(NOT_REGISTERED)
   claimStatus              ClaimStatus        @default(CANNOT_CLAIM)
   completedProductionSteps String[]           @default([])
@@ -292,6 +295,8 @@ model ResearchProject {
   tasks                 ResearchTask[]
   authorNotifications   ResearchAuthorNotification[]
   organizedProjectLinks OrganizedProjectResearch[]
+
+  @@index([registrationUserId])
 }
 
 model OrganizedProject {

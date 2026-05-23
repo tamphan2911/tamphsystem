@@ -273,7 +273,11 @@ async function requireCurrentUser() {
 }
 
 function canManageResearch(roles: Role[]) {
-  return roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  return (
+    roles.includes(Role.ADMIN) ||
+    roles.includes(Role.CHIEF_ASSISTANT) ||
+    roles.includes(Role.ASSISTANT)
+  );
 }
 
 function requireAdmin(roles: Role[]) {
@@ -284,12 +288,19 @@ function requireAdmin(roles: Role[]) {
 
 export async function createResearchProject(formData: FormData) {
   const user = await requireCurrentUser();
+  if (!canManageResearch(user.roles)) {
+    redirect("/401");
+  }
+  const isAdmin = user.roles.includes(Role.ADMIN);
   const authorIds = orderedUniqueStrings(formData.getAll("authorUserIds"));
   if (authorIds.length === 0 || !optionalString(formData.get("title"))) return;
   const selectedAuthorIds = authorIds;
   const correspondingAuthorId =
     optionalString(formData.get("correspondingAuthorId")) ??
     selectedAuthorIds[0];
+  const registrationUserId = isAdmin
+    ? optionalString(formData.get("registrationUserId"))
+    : null;
 
   await prisma.researchProject.create({
     data: {
@@ -298,16 +309,21 @@ export async function createResearchProject(formData: FormData) {
       abstract: optionalString(formData.get("abstract")),
       stage: ResearchStage.PRODUCTION,
       coAuthors: optionalString(formData.get("coAuthors")),
-      universityRegistration: optionalString(
-        formData.get("universityRegistration"),
-      ),
-      registrationName: optionalString(formData.get("registrationName")),
+      universityRegistration: isAdmin
+        ? optionalString(formData.get("universityRegistration"))
+        : null,
+      registrationName: null,
+      registrationUserId,
       registerStatus:
-        (formData.get("registerStatus") as RegistrationStatus | null) ??
-        RegistrationStatus.NOT_REGISTERED,
+        isAdmin
+          ? enumValue(RegistrationStatus, formData.get("registerStatus")) ??
+            RegistrationStatus.NOT_REGISTERED
+          : RegistrationStatus.NOT_REGISTERED,
       claimStatus:
-        (formData.get("claimStatus") as ClaimStatus | null) ??
-        ClaimStatus.CANNOT_CLAIM,
+        isAdmin
+          ? enumValue(ClaimStatus, formData.get("claimStatus")) ??
+            ClaimStatus.CANNOT_CLAIM
+          : ClaimStatus.CANNOT_CLAIM,
       leadResearcherId: user.id,
       authors: {
         connect: selectedAuthorIds.map((id) => ({ id })),
@@ -373,6 +389,7 @@ export async function updateResearchProject(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
+  const isAdmin = user.roles.includes(Role.ADMIN);
   const projectLock = await prisma.researchProject.findUnique({
     where: { id: projectId },
     select: {
@@ -404,20 +421,26 @@ export async function updateResearchProject(
         typeof value === "string" && value.trim().length > 0,
     );
 
+  const registrationUserId = optionalString(formData.get("registrationUserId"));
   const data = {
     title: optionalString(formData.get("title")) ?? "Untitled research",
     coAuthors: null,
-    universityRegistration: optionalString(
-      formData.get("universityRegistration"),
-    ),
-    registrationName: optionalString(formData.get("registrationName")),
-    registerStatus:
-      (formData.get("registerStatus") as RegistrationStatus | null) ??
-      RegistrationStatus.NOT_REGISTERED,
-    claimStatus:
-      (formData.get("claimStatus") as ClaimStatus | null) ??
-      ClaimStatus.CANNOT_CLAIM,
     completedProductionSteps,
+    ...(isAdmin
+      ? {
+          universityRegistration: optionalString(
+            formData.get("universityRegistration"),
+          ),
+          registrationName: null,
+          registrationUserId,
+          registerStatus:
+            enumValue(RegistrationStatus, formData.get("registerStatus")) ??
+            RegistrationStatus.NOT_REGISTERED,
+          claimStatus:
+            enumValue(ClaimStatus, formData.get("claimStatus")) ??
+            ClaimStatus.CANNOT_CLAIM,
+        }
+      : {}),
     ...(formData.has("abstract")
       ? { abstract: optionalString(formData.get("abstract")) }
       : {}),
