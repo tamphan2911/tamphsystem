@@ -181,7 +181,7 @@ function RegistrationCell({
       : label;
 
   return (
-    <div className="flex max-w-56 items-center gap-2">
+    <div className="grid max-w-56 grid-cols-[2rem_minmax(0,1fr)] items-start gap-2">
       <IconHint label={registerLine}>
         <span
           className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${registrationClass(status)}`}
