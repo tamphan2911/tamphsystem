@@ -57,7 +57,7 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
         <table className="w-full min-w-[72rem] text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Account ID</th>
+              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Account login ID</th>
               <th className="px-4 py-3">Password</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Journal</th>
@@ -72,8 +72,16 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800">
                   <div className="flex items-center gap-2 text-sm font-normal text-slate-700 dark:text-slate-200">
                     <IconHint label="Account credential"><KeyRound className="h-4 w-4 text-slate-400" aria-hidden="true" /></IconHint>
-                    {account.username}
+                    <Link
+                      href={`/accounts/${account.id}`}
+                      className="font-semibold text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                    >
+                      {account.username}
+                    </Link>
                   </div>
+                  <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    {account.id.slice(0, 8)}
+                  </p>
                 </td>
                 <td className="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">{account.password || "-"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.email || "-"}</td>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   AtSign,
   CalendarClock,
@@ -121,7 +122,7 @@ export function JournalDetailTabs({
   const tabs = [
     {
       key: "submissions" as const,
-      label: "Submits",
+      label: "Submissions",
       value: submissions.length,
       icon: Send,
     },
@@ -200,7 +201,7 @@ export function JournalDetailTabs({
                   <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
                     <tr>
                       <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
-                        <IconHint label="Account ID">
+                        <IconHint label="Account login ID">
                           <KeyRound className="h-4 w-4" aria-hidden="true" />
                         </IconHint>
                       </th>
@@ -233,7 +234,15 @@ export function JournalDetailTabs({
                         className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
                       >
                         <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-normal text-slate-700 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                          {account.username}
+                          <Link
+                            href={`/accounts/${account.id}`}
+                            className="font-semibold text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                          >
+                            {account.username}
+                          </Link>
+                          <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                            {account.id.slice(0, 8)}
+                          </p>
                         </td>
                         <td className="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">
                           {account.password || "-"}

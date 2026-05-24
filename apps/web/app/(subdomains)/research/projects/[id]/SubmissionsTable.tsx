@@ -10,16 +10,12 @@ import {
   Check,
   CircleDollarSign,
   Edit3,
-  BadgeCheck,
   Ban,
-  BookOpenCheck,
   CalendarCheck2,
   CheckCircle2,
   CircleOff,
   FileCheck2,
   FileClock,
-  FileSearch,
-  FlaskConical,
   Landmark,
   Send,
   Trash2,
@@ -50,7 +46,9 @@ export type SubmissionRow = {
   apcCurrency: string;
   submissionFee: string;
   submissionFeeCurrency: string;
+  accountId?: string;
   account: string;
+  accountEmail?: string;
   status: string;
   submittedAt: string;
   acceptedAt: string;
@@ -188,32 +186,6 @@ function MoneyCell({ amount, currency }: { amount: string; currency: string }) {
       {currencySymbol(currency)} {amount}
     </span>
   );
-}
-
-function stageLabel(stage: string) {
-  if (stage === "SUBMITTING") return "SUBMITTED";
-  if (stage === "REVIEW") return "REVIEW";
-  return stage;
-}
-
-function stageClass(stage: string) {
-  if (stage === "PUBLISHED")
-    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
-  if (stage === "ACCEPTED")
-    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
-  if (stage === "REVIEW")
-    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
-  if (stage === "SUBMITTING")
-    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
-  return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
-}
-
-function stageIcon(stage: string) {
-  if (stage === "PUBLISHED") return BookOpenCheck;
-  if (stage === "ACCEPTED") return BadgeCheck;
-  if (stage === "REVIEW") return FileSearch;
-  if (stage === "SUBMITTING") return Send;
-  return FlaskConical;
 }
 
 function claimLabel(claim: string) {
@@ -506,8 +478,8 @@ export function SubmissionsTable({
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
                 <th className={`${isResearchView ? "w-[8%]" : "w-[7%]"} px-4 py-3`}>ID</th>
-                <th className={`${isResearchView ? "w-[35%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-4 py-3`}>
-                  {isResearchView ? "Research" : "Journal / Conference"}
+                <th className={`${isResearchView ? "w-[42%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-4 py-3`}>
+                  {isResearchView ? "Research Associated" : "Journal / Conference"}
                 </th>
                 <th
                   className={`${isResearchView ? "w-[15%]" : hasAction ? "w-[18%]" : "w-[20%]"} px-4 py-3`}
@@ -526,14 +498,13 @@ export function SubmissionsTable({
                 </th>
                 {isResearchView ? (
                   <>
-                    <th className="w-[8%] px-4 py-3">Stage</th>
                     {showRegistrationClaim && (
                       <>
-                        <th className="w-[8%] px-4 py-3">Claim</th>
+                        <th className="w-[10%] px-4 py-3">Research claim</th>
                         <th className="w-[18%] px-4 py-3">Registration</th>
                       </>
                     )}
-                    <th className="w-[8%] px-4 py-3">Account</th>
+                    <th className="w-[12%] px-4 py-3">Account</th>
                   </>
                 ) : (
                   <>
@@ -629,13 +600,6 @@ export function SubmissionsTable({
                   </td>
                   {isResearchView ? (
                     <>
-                      <td className="px-4 py-3">
-                        <StatusIconChip
-                          icon={stageIcon(row.projectStage || "")}
-                          label={stageLabel(row.projectStage || "")}
-                          className={stageClass(row.projectStage || "")}
-                        />
-                      </td>
                       {showRegistrationClaim && (
                         <>
                           <td className="px-4 py-3">
@@ -665,7 +629,21 @@ export function SubmissionsTable({
                         </>
                       )}
                       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                        {row.account || "Not recorded"}
+                        {row.accountId ? (
+                          <Link
+                            href={`/accounts/${row.accountId}`}
+                            className="group/account block min-w-0"
+                          >
+                            <span className="block truncate font-semibold text-slate-700 transition group-hover/account:text-blue-600 dark:text-slate-200 dark:group-hover/account:text-blue-300">
+                              {row.account || "No login ID"}
+                            </span>
+                            <span className="mt-0.5 block truncate text-xs text-slate-500 dark:text-slate-400">
+                              {row.accountEmail || "No email"}
+                            </span>
+                          </Link>
+                        ) : (
+                          "Not recorded"
+                        )}
                       </td>
                     </>
                   ) : (
@@ -724,7 +702,11 @@ export function SubmissionsTable({
                 <tr>
                   <td
                     colSpan={
-                      hasAction ? 7 : isResearchView && showRegistrationClaim ? 7 : isResearchView ? 5 : 6
+                      isResearchView
+                        ? (showRegistrationClaim ? 6 : 4) + (hasAction ? 1 : 0)
+                        : hasAction
+                          ? 7
+                          : 6
                     }
                     className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                   >
