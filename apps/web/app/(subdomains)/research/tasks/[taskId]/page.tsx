@@ -211,13 +211,31 @@ export default async function TaskDetailPage({
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
-      <Link
-        href="/tasks"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to tasks
-      </Link>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Link
+          href="/tasks"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to tasks
+        </Link>
+
+        {(canFinish || canRevoke) && (
+          <div className="flex flex-col justify-end gap-2 sm:flex-row sm:items-center">
+            {canRevoke && <RevokeTaskForm action={revokeAction} />}
+            {canFinish && (
+              <FinishTaskForm
+                action={finishAction}
+                accountId={task.account?.id}
+                requiresSubmissionDate={
+                  task.taskType === "SUBMIT_RESEARCH" ||
+                  task.taskType === "SUBMIT_CONFERENCE"
+                }
+              />
+            )}
+          </div>
+        )}
+      </div>
 
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -356,22 +374,6 @@ export default async function TaskDetailPage({
             ))}
           </div>
         </div>
-
-        {(canFinish || canRevoke) && (
-          <div className="mt-6 flex flex-col justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800 sm:flex-row">
-            {canRevoke && <RevokeTaskForm action={revokeAction} />}
-            {canFinish && (
-              <FinishTaskForm
-                action={finishAction}
-                accountId={task.account?.id}
-                requiresSubmissionDate={
-                  task.taskType === "SUBMIT_RESEARCH" ||
-                  task.taskType === "SUBMIT_CONFERENCE"
-                }
-              />
-            )}
-          </div>
-        )}
 
         <div className="mt-6 grid gap-3 border-t border-slate-200 pt-5 text-sm dark:border-slate-800 sm:grid-cols-3">
           <MetaItem
