@@ -47,6 +47,7 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   roles         Role[] // A user can have multiple roles
+  activeSites   String[]  @default([])
 
   // Relations
   authoredCourses                 Course[]                     @relation("CourseAuthor")
@@ -246,6 +247,8 @@ enum ResearchTaskStatus {
 enum ResearchTaskType {
   SUBMIT_RESEARCH
   SUBMIT_CONFERENCE
+  PRODUCTION
+  REVIEW
   OTHER
 }
 
@@ -554,7 +557,8 @@ model AcademicReview {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  journal Journal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  journal Journal        @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  tasks   ResearchTask[]
 }
 
 model ResearchTask {
@@ -576,11 +580,13 @@ model ResearchTask {
   projectId    String?
   journalId    String?
   conferenceId String?
+  reviewId     String?
   accountId    String?
   taskType     ResearchTaskType?
   project      ResearchProject?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
   journal      Journal?          @relation(fields: [journalId], references: [id], onDelete: SetNull)
   conference   Conference?       @relation(fields: [conferenceId], references: [id], onDelete: SetNull)
+  review       AcademicReview?   @relation(fields: [reviewId], references: [id], onDelete: SetNull)
   account      PublisherAccount? @relation("ResearchTaskAccount", fields: [accountId], references: [id], onDelete: SetNull)
 
   assignments ResearchTaskAssignment[]

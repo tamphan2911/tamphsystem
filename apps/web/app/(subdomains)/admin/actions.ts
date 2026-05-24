@@ -13,7 +13,8 @@ function optionalString(value: FormDataEntryValue | null) {
 
 async function requireAdmin() {
   const session = await auth();
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ?? []) as Role[];
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+    []) as Role[];
 
   if (!roles.includes(Role.ADMIN)) {
     redirect("/401");
@@ -37,6 +38,7 @@ export async function createUser(formData: FormData) {
       name: optionalString(formData.get("name")),
       passwordHash: await bcrypt.hash(password, 10),
       roles: roles.length > 0 ? roles : [Role.STUDENT],
+      activeSites: ["admin"],
     },
   });
 
@@ -103,10 +105,16 @@ export async function createAdminResearchProject(formData: FormData) {
     data: {
       title: optionalString(formData.get("title")) ?? "Untitled research",
       abstract: optionalString(formData.get("abstract")),
-      stage: (formData.get("stage") as ResearchStage | null) ?? ResearchStage.PRODUCTION,
-      claimStatus: (formData.get("claimStatus") as ClaimStatus | null) ?? ClaimStatus.CANNOT_CLAIM,
+      stage:
+        (formData.get("stage") as ResearchStage | null) ??
+        ResearchStage.PRODUCTION,
+      claimStatus:
+        (formData.get("claimStatus") as ClaimStatus | null) ??
+        ClaimStatus.CANNOT_CLAIM,
       coAuthors: optionalString(formData.get("coAuthors")),
-      universityRegistration: optionalString(formData.get("universityRegistration")),
+      universityRegistration: optionalString(
+        formData.get("universityRegistration"),
+      ),
       leadResearcherId,
     },
   });

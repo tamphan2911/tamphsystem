@@ -327,15 +327,12 @@ export default async function ProjectDetailPage({
         orderBy: [{ startDate: "desc" }, { name: "asc" }],
       }),
       prisma.user.findMany({
-        where: {
-          roles: {
-            hasSome: [Role.ADMIN, Role.ASSISTANT, Role.CHIEF_ASSISTANT],
-          },
-        },
+        where: { activeSites: { has: "research" } },
         orderBy: [{ name: "asc" }, { email: "asc" }],
         select: { id: true, name: true, email: true, roles: true },
       }),
       prisma.user.findMany({
+        where: { activeSites: { has: "research" } },
         orderBy: [{ name: "asc" }, { email: "asc" }],
         select: { id: true, name: true, email: true, roles: true },
       }),

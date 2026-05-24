@@ -11,12 +11,15 @@ async function main() {
   // Create an initial Admin user
   const admin = await prisma.user.upsert({
     where: { email: 'admin@tamph.com' },
-    update: {},
+    update: {
+      activeSites: ['admin', 'learn', 'research', 'portfolio'],
+    },
     create: {
       email: 'admin@tamph.com',
       name: 'Tamph Admin',
       passwordHash: hashedPassword,
       roles: [Role.ADMIN, Role.LECTURER],
+      activeSites: ['admin', 'learn', 'research', 'portfolio'],
     },
   });
 

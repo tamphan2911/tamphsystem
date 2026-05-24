@@ -293,13 +293,7 @@ function RegistrationCell({
   );
 }
 
-function ResearchCount({
-  count,
-  label,
-}: {
-  count: number;
-  label: string;
-}) {
+function ResearchCount({ count, label }: { count: number; label: string }) {
   const isZero = count === 0;
   const className = isZero
     ? "bg-rose-50 text-rose-500 ring-rose-100 dark:bg-rose-950/35 dark:text-rose-300 dark:ring-rose-900/70"
@@ -398,6 +392,7 @@ export default async function OrganizedProjectDetailPage({
         },
       }),
       prisma.user.findMany({
+        where: { activeSites: { has: "research" } },
         select: { id: true, name: true, email: true, roles: true },
         orderBy: [{ name: "asc" }, { email: "asc" }],
       }),

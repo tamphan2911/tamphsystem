@@ -1,8 +1,16 @@
 import Link from "next/link";
-import { BookOpen, GraduationCap, LayoutDashboard, UserCircle } from "lucide-react";
+import {
+  BookOpen,
+  GraduationCap,
+  LayoutDashboard,
+  UserCircle,
+} from "lucide-react";
 import { ThemeToggle } from "../../../components/ThemeToggle";
 import { ProfileMenu } from "../../../components/ProfileMenu";
 import { auth } from "../../../auth";
+import { prisma } from "@repo/db";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -16,6 +24,17 @@ export default async function LearnLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (userId) {
+    const sitePathname = (await headers()).get("x-site-pathname") ?? "";
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { activeSites: true },
+    });
+    if (!user?.activeSites.includes("learn") && sitePathname !== "/activate") {
+      redirect("/activate");
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
@@ -27,7 +46,9 @@ export default async function LearnLayout({
             </div>
             <div>
               <p className="text-sm font-black">TamphSystem Learn</p>
-              <p className="hidden text-xs text-slate-500 sm:block">Courses and practice workspace</p>
+              <p className="hidden text-xs text-slate-500 sm:block">
+                Courses and practice workspace
+              </p>
             </div>
           </Link>
 
@@ -57,7 +78,10 @@ export default async function LearnLayout({
                 adminHref="https://admin.tamph.com"
               />
             ) : (
-              <Link href="/login" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+              <Link
+                href="/login"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
                 Log in
               </Link>
             )}

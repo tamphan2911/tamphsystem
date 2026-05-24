@@ -1,7 +1,13 @@
 import { redirect } from "next/navigation";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
-import { NewTaskDialog, type TaskAssigneeOption } from "./NewTaskDialog";
+import {
+  NewTaskDialog,
+  type TaskAssigneeOption,
+  type TaskResearchOption,
+  type TaskReviewOption,
+  type TaskVenueOption,
+} from "./NewTaskDialog";
 import { TasksClient } from "./TasksClient";
 
 export const dynamic = "force-dynamic";
@@ -9,12 +15,14 @@ export const dynamic = "force-dynamic";
 export default async function ResearchTasksPage() {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ?? []) as Role[];
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+    []) as Role[];
 
   if (!userId) redirect("/login");
 
   const isAdmin = roles.includes(Role.ADMIN);
-  const isAssistant = roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
+  const isAssistant =
+    roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
 
   if (!isAdmin && !isAssistant) redirect("/401");
 
@@ -23,30 +31,95 @@ export default async function ResearchTasksPage() {
     data: { status: ResearchTaskStatus.IN_PROGRESS },
   });
 
-  const assistants: TaskAssigneeOption[] = isAdmin
-    ? (
-        await prisma.user.findMany({
-          where: {
-            roles: {
-              hasSome: [Role.ADMIN, Role.ASSISTANT, Role.CHIEF_ASSISTANT],
-            },
-          },
+  const [assigneeUsers, projects, journals, conferences, reviews] = isAdmin
+    ? await Promise.all([
+        prisma.user.findMany({
+          where: { activeSites: { has: "research" } },
           orderBy: [{ name: "asc" }, { email: "asc" }],
           select: { id: true, name: true, email: true, roles: true },
-        })
-      ).map((user) => ({
-        id: user.id,
-        name: user.name ?? "",
-        email: user.email,
-        roles: user.roles,
-      }))
-    : [];
+        }),
+        prisma.researchProject.findMany({
+          orderBy: [{ updatedAt: "desc" }],
+          select: { id: true, researchCode: true, title: true, stage: true },
+        }),
+        prisma.journal.findMany({
+          orderBy: [{ name: "asc" }],
+          select: {
+            id: true,
+            name: true,
+            publisher: true,
+            rank: true,
+            issn: true,
+          },
+        }),
+        prisma.conference.findMany({
+          orderBy: [{ startDate: "desc" }, { name: "asc" }],
+          select: {
+            id: true,
+            name: true,
+            organizer: true,
+            type: true,
+            location: true,
+          },
+        }),
+        prisma.academicReview.findMany({
+          orderBy: [{ dueDate: "asc" }, { requestedAt: "desc" }],
+          include: { journal: { select: { name: true, publisher: true } } },
+        }),
+      ])
+    : [[], [], [], [], []];
+
+  const assignees: TaskAssigneeOption[] = assigneeUsers.map((user) => ({
+    id: user.id,
+    name: user.name ?? "",
+    email: user.email,
+    roles: user.roles,
+  }));
+  const researchOptions: TaskResearchOption[] = projects.map((project) => ({
+    id: project.id,
+    title: project.title,
+    code: project.researchCode ?? "",
+    stage: project.stage,
+  }));
+  const venueOptions: TaskVenueOption[] = [
+    ...journals.map((journal) => ({
+      kind: "journal" as const,
+      id: journal.id,
+      name: journal.name,
+      meta: [journal.publisher, journal.rank, journal.issn]
+        .filter(Boolean)
+        .join(" - "),
+    })),
+    ...conferences.map((conference) => ({
+      kind: "conference" as const,
+      id: conference.id,
+      name: conference.name,
+      meta: [conference.organizer, conference.type, conference.location]
+        .filter(Boolean)
+        .join(" - "),
+    })),
+  ];
+  const reviewOptions: TaskReviewOption[] = reviews.map((review) => ({
+    id: review.id,
+    title: review.manuscriptTitle,
+    journal: review.journal.name,
+    status: review.status,
+  }));
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <TasksClient
         isAdmin={isAdmin}
-        action={isAdmin ? <NewTaskDialog assistants={assistants} /> : null}
+        action={
+          isAdmin ? (
+            <NewTaskDialog
+              assignees={assignees}
+              researchOptions={researchOptions}
+              venueOptions={venueOptions}
+              reviewOptions={reviewOptions}
+            />
+          ) : null
+        }
       />
     </div>
   );

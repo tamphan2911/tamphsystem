@@ -326,6 +326,7 @@ export default async function ProjectsDashboard() {
       orderBy: { updatedAt: "desc" },
     }),
     prisma.user.findMany({
+      where: { activeSites: { has: "research" } },
       orderBy: [{ name: "asc" }, { email: "asc" }],
       select: { id: true, name: true, email: true, roles: true },
     }),

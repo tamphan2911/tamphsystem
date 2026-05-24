@@ -311,6 +311,7 @@ export default async function OrganizedProjectsPage() {
         orderBy: { updatedAt: "desc" },
       }),
       prisma.user.findMany({
+        where: { activeSites: { has: "research" } },
         select: { id: true, name: true, email: true, roles: true },
         orderBy: [{ name: "asc" }, { email: "asc" }],
       }),

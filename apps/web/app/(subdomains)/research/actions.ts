@@ -1064,10 +1064,7 @@ export async function deleteConference(conferenceId: string) {
 
   if (!conference) return;
 
-  if (
-    conference._count.submissions > 0 ||
-    conference._count.suggestions > 0
-  ) {
+  if (conference._count.submissions > 0 || conference._count.suggestions > 0) {
     throw new Error(
       "Delete the associated submissions and research links before deleting this conference.",
     );
@@ -1339,10 +1336,32 @@ export async function createResearchTask(formData: FormData) {
     return { ok: false, reason: "NO_ASSIGNEE" };
   }
 
+  const activeAssigneeCount = await prisma.user.count({
+    where: {
+      id: { in: assigneeIds },
+      activeSites: { has: "research" },
+    },
+  });
+  if (activeAssigneeCount !== new Set(assigneeIds).size) {
+    return { ok: false, reason: "INACTIVE_RESEARCH_ASSIGNEE" };
+  }
+
   const taskType = taskTypeFromForm(formData.get("taskType"));
   const projectId = optionalString(formData.get("projectId"));
   const journalId = optionalString(formData.get("journalId"));
   const conferenceId = optionalString(formData.get("conferenceId"));
+  const reviewId = optionalString(formData.get("reviewId"));
+
+  if (
+    (taskType === ResearchTaskType.SUBMIT_RESEARCH &&
+      (!projectId || !journalId)) ||
+    (taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
+      (!projectId || !conferenceId)) ||
+    (taskType === ResearchTaskType.PRODUCTION && !projectId) ||
+    (taskType === ResearchTaskType.REVIEW && !reviewId)
+  ) {
+    return { ok: false, reason: "MISSING_ASSOCIATION" };
+  }
 
   if (projectId && (await researchContentIsLocked(projectId))) {
     return { ok: false, reason: "RESEARCH_LOCKED" };
@@ -1406,6 +1425,7 @@ export async function createResearchTask(formData: FormData) {
       projectId,
       journalId,
       conferenceId,
+      reviewId,
       accountId: optionalString(formData.get("accountId")),
       dueDate: optionalString(formData.get("dueDate"))
         ? new Date(optionalString(formData.get("dueDate")) as string)
