@@ -1,10 +1,16 @@
-import { prisma } from "@repo/db";
+import { auth } from "../../../../auth";
+import { prisma, Role } from "@repo/db";
+import { deleteJournal } from "../actions";
 import { JournalsTable, type JournalRow } from "./JournalsTable";
 import { NewJournalDialog } from "./NewJournalDialog";
 
 export const dynamic = "force-dynamic";
 
 export default async function JournalsPage() {
+  const session = await auth();
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+    []) as Role[];
+  const isAdmin = roles.includes(Role.ADMIN);
   const journals = await prisma.journal.findMany({
     include: {
       submissions: { select: { status: true } },
@@ -57,7 +63,11 @@ export default async function JournalsPage() {
         <NewJournalDialog />
       </div>
 
-      <JournalsTable rows={rows} />
+      <JournalsTable
+        rows={rows}
+        isAdmin={isAdmin}
+        deleteAction={deleteJournal}
+      />
     </div>
   );
 }

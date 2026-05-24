@@ -1021,6 +1021,17 @@ export async function updateJournal(journalId: string, formData: FormData) {
   revalidatePath(`/journals/${journalId}`);
 }
 
+export async function deleteJournal(journalId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.journal.delete({
+    where: { id: journalId },
+  });
+
+  revalidatePath("/journals");
+}
+
 export async function createPublisherAccount(formData: FormData) {
   await requireCurrentUser();
 
