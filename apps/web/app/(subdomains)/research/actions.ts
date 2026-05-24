@@ -968,6 +968,7 @@ export async function createJournal(formData: FormData) {
       fields,
       rank: optionalString(formData.get("rank")),
       publisher: optionalString(formData.get("publisher")),
+      country: optionalString(formData.get("country")),
       apc: optionalString(formData.get("apc")),
       apcCurrency:
         enumValue(CurrencyCode, formData.get("apcCurrency")) ??
@@ -1001,6 +1002,7 @@ export async function updateJournal(journalId: string, formData: FormData) {
       fields,
       rank: optionalString(formData.get("rank")),
       publisher: optionalString(formData.get("publisher")),
+      country: optionalString(formData.get("country")),
       apc: optionalString(formData.get("apc")),
       apcCurrency:
         enumValue(CurrencyCode, formData.get("apcCurrency")) ??

@@ -13,6 +13,7 @@ import {
 } from "../components/TableControls";
 import { useResearchToast } from "../components/ResearchToast";
 import { formatMoney } from "../lib/currency";
+import { countryFlag, countryName } from "../lib/countries";
 
 export type JournalRow = {
   id: string;
@@ -21,6 +22,7 @@ export type JournalRow = {
   fields: string[];
   rank: string;
   publisher: string;
+  country: string;
   apc: string;
   apcCurrency: string;
   submissionFee: string;
@@ -188,6 +190,7 @@ export function JournalsTable({
         row.fields.join(" "),
         row.rank,
         row.publisher,
+        countryName(row.country),
         row.apc,
         row.submissionFee,
         row.note,
@@ -257,34 +260,57 @@ export function JournalsTable({
             <tr>
               <th
                 className={
-                  isAdmin ? "w-[35%] px-4 py-3" : "w-[38%] px-4 py-3"
+                  isAdmin ? "w-[31%] px-4 py-3" : "w-[34%] px-4 py-3"
                 }
               >
                 Journal
               </th>
               <th
                 className={
-                  isAdmin ? "w-[20%] px-4 py-3" : "w-[22%] px-4 py-3"
+                  isAdmin ? "w-[18%] px-4 py-3" : "w-[20%] px-4 py-3"
                 }
               >
                 Field
               </th>
-              <th className="w-[11%] px-4 py-3">APC</th>
-              <th className="w-[11%] px-4 py-3">Fee</th>
-              <th className="w-[6%] px-2 py-3 text-center">
+              <th className="w-[10%] px-4 py-3">APC</th>
+              <th className="w-[10%] px-4 py-3">Fee</th>
+              <th
+                className={
+                  isAdmin
+                    ? "w-[5%] px-2 py-3 text-center"
+                    : "w-[6%] px-2 py-3 text-center"
+                }
+              >
                 <IconHint label="Ongoing submissions">
                   <Send className="mx-auto h-4 w-4 text-blue-600 dark:text-blue-300" aria-hidden="true" />
                 </IconHint>
               </th>
-              <th className="w-[6%] px-2 py-3 text-center">
+              <th
+                className={
+                  isAdmin
+                    ? "w-[5%] px-2 py-3 text-center"
+                    : "w-[6%] px-2 py-3 text-center"
+                }
+              >
                 <IconHint label="Accepted and published submissions">
                   <BadgeCheck className="mx-auto h-4 w-4 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
                 </IconHint>
               </th>
-              <th className="w-[6%] px-2 py-3 text-center">
+              <th
+                className={
+                  isAdmin
+                    ? "w-[5%] px-2 py-3 text-center"
+                    : "w-[6%] px-2 py-3 text-center"
+                }
+              >
                 <IconHint label="Reviews">
                   <Star className="mx-auto h-4 w-4 text-amber-500 dark:text-amber-300" aria-hidden="true" />
                 </IconHint>
+              </th>
+              <th
+                className={isAdmin ? "w-[9%] px-2 py-3" : "w-[8%] px-2 py-3"}
+              >
+                Country
               </th>
               {isAdmin && (
                 <th className="w-[5%] px-2 py-3 text-center">
@@ -340,6 +366,22 @@ export function JournalsTable({
                 <td className="px-2 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-200">
                   {journal.reviews}
                 </td>
+                <td className="px-2 py-3">
+                  {journal.country ? (
+                    <span className="inline-flex max-w-full items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <span aria-hidden="true">
+                        {countryFlag(journal.country)}
+                      </span>
+                      <span className="truncate">
+                        {countryName(journal.country)}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                      -
+                    </span>
+                  )}
+                </td>
                 {isAdmin && (
                   <td className="px-2 py-3 text-center">
                     <DeleteJournalButton
@@ -353,7 +395,7 @@ export function JournalsTable({
             {pagination.total === 0 && (
               <tr>
                 <td
-                  colSpan={isAdmin ? 8 : 7}
+                  colSpan={isAdmin ? 9 : 8}
                   className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                 >
                   No journals match the current search.

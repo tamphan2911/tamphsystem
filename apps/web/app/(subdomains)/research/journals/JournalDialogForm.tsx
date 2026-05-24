@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { currencyOptions } from "../lib/currency";
+import { countryFlag, countryOptions } from "../lib/countries";
 import { useResearchToast } from "../components/ResearchToast";
 import { ResearchFormSelect } from "../components/ResearchFormSelect";
 
@@ -22,6 +23,7 @@ export type JournalFormValues = {
   field?: string | null;
   rank?: string | null;
   publisher?: string | null;
+  country?: string | null;
   apc?: string | null;
   apcCurrency?: string;
   submissionFee?: string | null;
@@ -66,6 +68,104 @@ function initialFields(values?: JournalFormValues) {
     : [];
 }
 
+function CountryPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedCountry = countryOptions.find(
+    (country) => country.code === value,
+  );
+  const filteredCountries = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return countryOptions.slice(0, 8);
+    return countryOptions
+      .filter(
+        (country) =>
+          country.name.toLowerCase().includes(needle) ||
+          country.code.toLowerCase().includes(needle),
+      )
+      .slice(0, 8);
+  }, [query]);
+
+  return (
+    <div className={`${labelClass} relative`}>
+      Country
+      <input type="hidden" name="country" value={value} />
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950">
+        {selectedCountry ? (
+          <div className="flex min-h-8 items-center gap-2">
+            <span className="text-base" aria-hidden="true">
+              {countryFlag(selectedCountry.code)}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-sm font-semibold normal-case tracking-normal text-slate-800 dark:text-slate-100">
+              {selectedCountry.name}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                setQuery("");
+                setIsOpen(true);
+              }}
+              className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              aria-label="Clear country"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <span className="flex min-h-8 items-center gap-2">
+            <Search className="h-4 w-4 text-slate-400" />
+            <input
+              value={query}
+              onFocus={() => setIsOpen(true)}
+              onBlur={() => window.setTimeout(() => setIsOpen(false), 120)}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search country"
+              className="min-w-0 flex-1 bg-transparent text-sm font-medium normal-case tracking-normal text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100"
+            />
+          </span>
+        )}
+      </div>
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 normal-case tracking-normal shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/30">
+          {filteredCountries.map((country) => (
+            <button
+              key={country.code}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                onChange(country.code);
+                setQuery("");
+                setIsOpen(false);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
+            >
+              <span className="text-base" aria-hidden="true">
+                {countryFlag(country.code)}
+              </span>
+              <span className="min-w-0 flex-1 truncate">{country.name}</span>
+              <span className="font-mono text-[11px] font-bold text-slate-400">
+                {country.code}
+              </span>
+            </button>
+          ))}
+          {filteredCountries.length === 0 && (
+            <p className="px-3 py-3 text-sm font-medium text-slate-400 dark:text-slate-500">
+              No country matches this search.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function JournalDialogForm({
   mode,
   isOpen,
@@ -87,6 +187,9 @@ export function JournalDialogForm({
   const warningRef = useRef<HTMLDivElement>(null);
   const [selectedFields, setSelectedFields] = useState<string[]>(() =>
     initialFields(initialValues),
+  );
+  const [selectedCountry, setSelectedCountry] = useState(
+    initialValues?.country ?? "",
   );
 
   useEffect(() => {
@@ -223,8 +326,8 @@ export function JournalDialogForm({
                   className={inputClass}
                 />
               </label>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <label className={`${labelClass} xl:col-span-2`}>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className={labelClass}>
                   Publisher
                   <input
                     name="publisher"
@@ -233,6 +336,12 @@ export function JournalDialogForm({
                     className={inputClass}
                   />
                 </label>
+                <CountryPicker
+                  value={selectedCountry}
+                  onChange={setSelectedCountry}
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
                 <label className={labelClass}>
                   ISSN
                   <input

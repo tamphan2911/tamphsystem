@@ -40,6 +40,7 @@ export default async function JournalsPage() {
           : [],
     rank: journal.rank ?? "",
     publisher: journal.publisher ?? "",
+    country: journal.country ?? "",
     apc: journal.apc ?? "",
     apcCurrency: journal.apcCurrency,
     submissionFee: journal.submissionFee ?? "",

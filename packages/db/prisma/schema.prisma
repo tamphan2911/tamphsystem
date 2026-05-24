@@ -506,6 +506,7 @@ model Journal {
   fields                String[]     @default([])
   rank                  String? // Q1, Q2, Q3, Q4
   publisher             String?
+  country               String?
   apc                   String?
   apcCurrency           CurrencyCode @default(USD)
   submissionFee         String?

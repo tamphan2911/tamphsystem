@@ -11,6 +11,7 @@ import {
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { formatMoney } from "../../lib/currency";
+import { countryFlag, countryName } from "../../lib/countries";
 import {
   JournalDetailTabs,
   type JournalAccountRow,
@@ -240,6 +241,7 @@ export default async function JournalDetailPage({
                     field: journal.field,
                     rank: journal.rank,
                     publisher: journal.publisher,
+                    country: journal.country,
                     apc: journal.apc,
                     apcCurrency: journal.apcCurrency,
                     submissionFee: journal.submissionFee,
@@ -260,7 +262,7 @@ export default async function JournalDetailPage({
           </div>
         </div>
 
-        <dl className="mt-5 grid gap-3 text-sm md:grid-cols-4">
+        <dl className="mt-5 grid gap-3 text-sm md:grid-cols-5">
           <div className="md:col-span-2">
             <dt className="text-xs font-bold uppercase text-slate-400">Area</dt>
             <dd className="mt-1 text-slate-700 dark:text-slate-300">
@@ -284,7 +286,24 @@ export default async function JournalDetailPage({
               )}
             </dd>
           </div>
-          <div className="md:col-span-4">
+          <div>
+            <dt className="text-xs font-bold uppercase text-slate-400">
+              Country
+            </dt>
+            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+              {journal.country ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="text-base" aria-hidden="true">
+                    {countryFlag(journal.country)}
+                  </span>
+                  <span>{countryName(journal.country)}</span>
+                </span>
+              ) : (
+                "-"
+              )}
+            </dd>
+          </div>
+          <div className="md:col-span-5">
             <dt className="text-xs font-bold uppercase text-slate-400">
               <span className="group/note relative inline-flex items-center gap-1">
                 <Hash className="h-3.5 w-3.5 text-amber-500" /> Note
