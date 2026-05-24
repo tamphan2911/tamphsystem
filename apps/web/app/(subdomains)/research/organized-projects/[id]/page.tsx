@@ -235,7 +235,7 @@ export default async function OrganizedProjectDetailPage({
         Projects
       </Link>
 
-      <header className="border-b border-slate-200 pb-5 dark:border-slate-800">
+      <header className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -285,7 +285,7 @@ export default async function OrganizedProjectDetailPage({
               </p>
             )}
           </div>
-          <div className="flex flex-none items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+          <div className="flex flex-none items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
             <CalendarDays className="h-4 w-4 text-blue-500" />
             <span>
               {shortDate(project.startDate)} - {shortDate(project.endDate)}
@@ -299,7 +299,7 @@ export default async function OrganizedProjectDetailPage({
         </div>
       </header>
 
-      <section className="border-b border-slate-200 pb-5 dark:border-slate-800">
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="text-base font-semibold text-slate-950 dark:text-white">
             Members
@@ -350,7 +350,7 @@ export default async function OrganizedProjectDetailPage({
         </div>
       </section>
 
-      <section className="pb-5">
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="text-base font-semibold text-slate-950 dark:text-white">
             Research Associated
