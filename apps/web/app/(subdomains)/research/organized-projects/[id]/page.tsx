@@ -432,6 +432,12 @@ export default async function OrganizedProjectDetailPage({
     title: researchProject.title,
     stage: researchProject.stage,
   }));
+  const mappedResearchOptions = researchOptions.map((research) => ({
+    id: research.id,
+    researchCode: research.researchCode ?? "",
+    title: research.title,
+    stage: research.stage,
+  }));
   const userOptions = users.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -598,7 +604,7 @@ export default async function OrganizedProjectDetailPage({
             info={projectInfo}
             members={memberDefaults}
             research={researchDefaults}
-            researchOptions={researchOptions}
+            researchOptions={mappedResearchOptions}
           />
         </div>
         <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
