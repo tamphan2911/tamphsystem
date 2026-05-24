@@ -4,6 +4,7 @@ import { auth } from "../../../../auth";
 import {
   NewTaskDialog,
   type TaskAssigneeOption,
+  type TaskOrganizedProjectOption,
   type TaskResearchOption,
   type TaskReviewOption,
   type TaskVenueOption,
@@ -31,7 +32,14 @@ export default async function ResearchTasksPage() {
     data: { status: ResearchTaskStatus.IN_PROGRESS },
   });
 
-  const [assigneeUsers, projects, journals, conferences, reviews] = isAdmin
+  const [
+    assigneeUsers,
+    projects,
+    journals,
+    conferences,
+    reviews,
+    organizedProjects,
+  ] = isAdmin
     ? await Promise.all([
         prisma.user.findMany({
           where: { activeSites: { has: "research" } },
@@ -66,8 +74,12 @@ export default async function ResearchTasksPage() {
           orderBy: [{ dueDate: "asc" }, { requestedAt: "desc" }],
           include: { journal: { select: { name: true, publisher: true } } },
         }),
+        prisma.organizedProject.findMany({
+          orderBy: [{ updatedAt: "desc" }],
+          select: { id: true, title: true, referenceCode: true, status: true },
+        }),
       ])
-    : [[], [], [], [], []];
+    : [[], [], [], [], [], []];
 
   const assignees: TaskAssigneeOption[] = assigneeUsers.map((user) => ({
     id: user.id,
@@ -105,6 +117,13 @@ export default async function ResearchTasksPage() {
     journal: review.journal.name,
     status: review.status,
   }));
+  const organizedProjectOptions: TaskOrganizedProjectOption[] =
+    organizedProjects.map((project) => ({
+      id: project.id,
+      title: project.title,
+      code: project.referenceCode ?? "",
+      status: project.status,
+    }));
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
@@ -117,6 +136,7 @@ export default async function ResearchTasksPage() {
               researchOptions={researchOptions}
               venueOptions={venueOptions}
               reviewOptions={reviewOptions}
+              organizedProjectOptions={organizedProjectOptions}
             />
           ) : null
         }

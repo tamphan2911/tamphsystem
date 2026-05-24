@@ -13,6 +13,7 @@ import {
   CircleDollarSign,
   CircleOff,
   Clock3,
+  ExternalLink,
   FileCheck2,
   FileClock,
   FileSearch,
@@ -26,13 +27,20 @@ import {
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { prisma } from "@repo/db";
-import { updateOrganizedProject } from "../../actions";
+import { prisma, Role } from "@repo/db";
+import { auth } from "../../../../../auth";
 import {
+  createResearchForOrganizedProject,
+  updateOrganizedProject,
+  updateOrganizedProjectProducts,
+} from "../../actions";
+import {
+  CreateProjectResearchDialog,
   ProjectInfoEditDialog,
   ProjectMembersEditDialog,
   ProjectResearchEditDialog,
 } from "./ProjectDetailEditDialogs";
+import { ProjectProductsForm } from "./ProjectProductsForm";
 
 export const dynamic = "force-dynamic";
 
@@ -349,12 +357,69 @@ function researchAuthorLine(project: {
   );
 }
 
+function acceptedVenueLine(project: {
+  submissions: {
+    status: string;
+    journal: { name: string; publisher: string | null; rank: string | null };
+  }[];
+  conferenceSubmissions: {
+    status: string;
+    conference: { name: string; organizer: string | null; type: string | null };
+  }[];
+}) {
+  const journal =
+    project.submissions.find((item) => item.status === "PUBLISHED") ??
+    project.submissions.find((item) => item.status === "ACCEPTED");
+  if (journal) {
+    return [
+      journal.journal.name,
+      journal.journal.publisher,
+      journal.journal.rank,
+    ]
+      .filter(Boolean)
+      .join(" - ");
+  }
+
+  const conference =
+    project.conferenceSubmissions.find((item) => item.status === "PUBLISHED") ??
+    project.conferenceSubmissions.find((item) => item.status === "ACCEPTED");
+  if (conference) {
+    return [
+      conference.conference.name,
+      conference.conference.organizer,
+      conference.conference.type,
+    ]
+      .filter(Boolean)
+      .join(" - ");
+  }
+
+  return "";
+}
+
+function stageRankLine(project: {
+  stage: string;
+  submissions: {
+    status: string;
+    journal: { rank: string | null };
+  }[];
+}) {
+  if (project.stage !== "ACCEPTED" && project.stage !== "PUBLISHED") return "";
+  const submission =
+    project.submissions.find((item) => item.status === "PUBLISHED") ??
+    project.submissions.find((item) => item.status === "ACCEPTED");
+  return submission?.journal.rank ?? "";
+}
+
 export default async function OrganizedProjectDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await auth();
+  const currentUserId = (session?.user as { id?: string } | undefined)?.id;
+  const currentRoles = ((session?.user as { roles?: Role[] } | undefined)
+    ?.roles ?? []) as Role[];
   const [project, users, researchOptions, fundingInstitutions] =
     await Promise.all([
       prisma.organizedProject.findUnique({
@@ -383,6 +448,22 @@ export default async function OrganizedProjectDetailPage({
                     },
                     orderBy: [{ position: "asc" }, { createdAt: "asc" }],
                   },
+                  submissions: {
+                    select: {
+                      status: true,
+                      journal: {
+                        select: { name: true, publisher: true, rank: true },
+                      },
+                    },
+                  },
+                  conferenceSubmissions: {
+                    select: {
+                      status: true,
+                      conference: {
+                        select: { name: true, organizer: true, type: true },
+                      },
+                    },
+                  },
                   _count: { select: { submissions: true, publications: true } },
                 },
               },
@@ -408,7 +489,24 @@ export default async function OrganizedProjectDetailPage({
 
   if (!project) notFound();
 
+  const assignedResearchEditTask = currentUserId
+    ? await prisma.researchTask.findFirst({
+        where: {
+          organizedProjectId: project.id,
+          taskType: "PROJECT_RESEARCH_ASSOCIATED",
+          status: "IN_PROGRESS",
+          assignments: { some: { userId: currentUserId } },
+        },
+        select: { id: true },
+      })
+    : null;
+
   const saveProject = updateOrganizedProject.bind(null, project.id);
+  const saveProducts = updateOrganizedProjectProducts.bind(null, project.id);
+  const createProjectResearch = createResearchForOrganizedProject.bind(
+    null,
+    project.id,
+  );
   const status = statusMeta(project.status);
   const StatusIcon = status.icon;
   const claim = claimMeta(project.financialClaimStatus);
@@ -427,6 +525,13 @@ export default async function OrganizedProjectDetailPage({
     title: researchProject.title,
     stage: researchProject.stage,
   }));
+  const canEditProject =
+    currentRoles.includes(Role.ADMIN) ||
+    project.members.some(
+      (member) => member.userId === currentUserId && member.isTeamLead,
+    );
+  const canEditResearchAssociated =
+    canEditProject || Boolean(assignedResearchEditTask);
   const mappedResearchOptions = researchOptions.map((research) => ({
     id: research.id,
     researchCode: research.researchCode ?? "",
@@ -460,6 +565,7 @@ export default async function OrganizedProjectDetailPage({
     financialClaimStatus: project.financialClaimStatus,
     startDate: dateInputValue(project.startDate),
     durationMonths: project.durationMonths ?? 1,
+    requiredProducts: project.requiredProducts,
     description: project.description ?? "",
     note: project.note ?? "",
   };
@@ -481,13 +587,15 @@ export default async function OrganizedProjectDetailPage({
               <p className="font-mono text-xs font-bold uppercase tracking-wide text-slate-400">
                 {project.referenceCode || project.id.slice(0, 8).toUpperCase()}
               </p>
-              <ProjectInfoEditDialog
-                action={saveProject}
-                info={projectInfo}
-                members={memberDefaults}
-                research={researchDefaults}
-                fundingInstitutions={fundingOptions}
-              />
+              {canEditProject && (
+                <ProjectInfoEditDialog
+                  action={saveProject}
+                  info={projectInfo}
+                  members={memberDefaults}
+                  research={researchDefaults}
+                  fundingInstitutions={fundingOptions}
+                />
+              )}
             </div>
             <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
               <h1 className="min-w-0 text-2xl font-medium leading-tight text-slate-950 dark:text-white">
@@ -538,69 +646,119 @@ export default async function OrganizedProjectDetailPage({
         </div>
       </header>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-            Members
-          </h2>
-          <ProjectMembersEditDialog
-            action={saveProject}
-            info={projectInfo}
-            members={memberDefaults}
-            research={researchDefaults}
-            users={userOptions}
-          />
-        </div>
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
-          {memberDefaults.map((member) => (
-            <div key={member.id} className="flex items-center gap-3 py-3">
-              <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-200 dark:ring-blue-900">
-                <UserRound className="h-4 w-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
-                    {memberName(member)}
+      <div className="grid gap-5 lg:grid-cols-2">
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+              Members
+            </h2>
+            {canEditProject && (
+              <ProjectMembersEditDialog
+                action={saveProject}
+                info={projectInfo}
+                members={memberDefaults}
+                research={researchDefaults}
+                users={userOptions}
+              />
+            )}
+          </div>
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {memberDefaults.map((member) => (
+              <div key={member.id} className="flex items-center gap-3 py-3">
+                <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-200 dark:ring-blue-900">
+                  <UserRound className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                      {memberName(member)}
+                    </p>
+                    {member.isTeamLead && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900">
+                        <Star className="h-3 w-3" />
+                        Team lead
+                      </span>
+                    )}
+                    {member.isInstructor && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 ring-1 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-200 dark:ring-violet-900">
+                        <GraduationCap className="h-3 w-3" />
+                        Instructor
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
+                    {member.email}
                   </p>
-                  {member.isTeamLead && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900">
-                      <Star className="h-3 w-3" />
-                      Team lead
-                    </span>
-                  )}
-                  {member.isInstructor && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 ring-1 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-200 dark:ring-violet-900">
-                      <GraduationCap className="h-3 w-3" />
-                      Instructor
-                    </span>
-                  )}
                 </div>
-                <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
-                  {member.email}
-                </p>
               </div>
+            ))}
+            {memberDefaults.length === 0 && (
+              <p className="py-5 text-sm text-slate-400 dark:text-slate-500">
+                No members assigned.
+              </p>
+            )}
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+              Important documents
+            </h2>
+            <ExternalLink className="h-4 w-4 text-slate-400" />
+          </div>
+          <div className="space-y-3">
+            <div className="rounded-lg border border-dashed border-slate-200 p-4 dark:border-slate-800">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Shared project folder
+              </p>
+              <p className="mt-1 text-xs leading-5 text-slate-400 dark:text-slate-500">
+                Add Drive, manuscript, grant, data, or shared reference links
+                here later.
+              </p>
             </div>
-          ))}
-          {memberDefaults.length === 0 && (
-            <p className="py-5 text-sm text-slate-400 dark:text-slate-500">
-              No members assigned.
-            </p>
-          )}
-        </div>
-      </section>
+            <div className="rounded-lg border border-dashed border-slate-200 p-4 dark:border-slate-800">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Key files and links
+              </p>
+              <p className="mt-1 text-xs leading-5 text-slate-400 dark:text-slate-500">
+                Use this space for contracts, approval documents, and evidence
+                files.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <ProjectProductsForm
+        requiredProducts={project.requiredProducts}
+        completedProducts={project.completedProducts}
+        action={saveProducts}
+      />
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-            Research Associated
-          </h2>
-          <ProjectResearchEditDialog
-            action={saveProject}
-            info={projectInfo}
-            members={memberDefaults}
-            research={researchDefaults}
-            researchOptions={mappedResearchOptions}
-          />
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+              Research Associated
+            </h2>
+            {canEditResearchAssociated && (
+              <CreateProjectResearchDialog
+                action={createProjectResearch}
+                users={userOptions}
+                members={memberDefaults}
+              />
+            )}
+          </div>
+          {canEditResearchAssociated && (
+            <ProjectResearchEditDialog
+              action={saveProject}
+              info={projectInfo}
+              members={memberDefaults}
+              research={researchDefaults}
+              researchOptions={mappedResearchOptions}
+            />
+          )}
         </div>
         <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
           <table className="w-full table-fixed text-left">
@@ -609,19 +767,13 @@ export default async function OrganizedProjectDetailPage({
                 <th className="w-[5.75rem] px-3 py-3">ID</th>
                 <th className="px-3 py-3">Research</th>
                 <th className="w-[4.5rem] px-3 py-3">Stage</th>
-                <th className="w-[4.5rem] px-3 py-3">Claim</th>
-                <th className="w-[12rem] px-3 py-3">Registration</th>
                 <th className="w-[5rem] px-3 py-3 text-center">Submit</th>
-                <th className="w-[5rem] px-3 py-3 text-center">Publish</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {project.research.map(({ researchProject }) => {
-                const registerName =
-                  researchProject.registrationUser?.name ||
-                  researchProject.registrationUser?.email ||
-                  researchProject.registrationName ||
-                  "";
+                const venueLine = acceptedVenueLine(researchProject);
+                const rankLine = stageRankLine(researchProject);
 
                 return (
                   <tr
@@ -646,6 +798,11 @@ export default async function OrganizedProjectDetailPage({
                         <p className="mt-1 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
                           {researchAuthorLine(researchProject)}
                         </p>
+                        {venueLine && (
+                          <p className="mt-0.5 line-clamp-1 text-xs text-slate-400 dark:text-slate-500">
+                            {venueLine}
+                          </p>
+                        )}
                       </Link>
                     </td>
                     <td className="px-3 py-3 align-top">
@@ -654,33 +811,16 @@ export default async function OrganizedProjectDetailPage({
                         label={researchStageLabel(researchProject.stage)}
                         className={researchStageClass(researchProject.stage)}
                       />
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      <StatusIconChip
-                        icon={researchClaimIcon(researchProject.claimStatus)}
-                        label={researchClaimLabel(researchProject.claimStatus)}
-                        className={researchClaimClass(
-                          researchProject.claimStatus,
-                        )}
-                      />
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      <RegistrationCell
-                        status={researchProject.registerStatus}
-                        registration={researchProject.universityRegistration}
-                        registerName={registerName}
-                      />
+                      {rankLine && (
+                        <p className="mt-1 text-center text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                          {rankLine}
+                        </p>
+                      )}
                     </td>
                     <td className="px-3 py-3 text-center align-top">
                       <ResearchCount
                         count={researchProject._count.submissions}
                         label="Submissions"
-                      />
-                    </td>
-                    <td className="px-3 py-3 text-center align-top">
-                      <ResearchCount
-                        count={researchProject._count.publications}
-                        label="Publications"
                       />
                     </td>
                   </tr>
@@ -689,7 +829,7 @@ export default async function OrganizedProjectDetailPage({
               {project.research.length === 0 && (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={4}
                     className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400"
                   >
                     No research associated.

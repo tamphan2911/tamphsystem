@@ -276,6 +276,18 @@ function orderedUniqueStrings(values: FormDataEntryValue[]) {
   });
 }
 
+function linesFromForm(value: FormDataEntryValue | null) {
+  if (typeof value !== "string") return [];
+  return Array.from(
+    new Set(
+      value
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
 function stageFromResearchState(
   completedProductionSteps: string[],
   submissionStatuses: SubmissionStatus[],
@@ -414,6 +426,32 @@ async function notifyUsers({
       entityId,
     })),
   });
+}
+
+async function adminUserIds() {
+  const admins = await prisma.user.findMany({
+    where: {
+      roles: { has: Role.ADMIN },
+      activeSites: { has: "research" },
+    },
+    select: { id: true },
+  });
+  return admins.map((admin) => admin.id);
+}
+
+async function organizedProjectNotificationUserIds(projectId: string) {
+  const [project, admins] = await Promise.all([
+    prisma.organizedProject.findUnique({
+      where: { id: projectId },
+      select: { members: { select: { userId: true } } },
+    }),
+    adminUserIds(),
+  ]);
+
+  return [
+    ...(project?.members.map((member) => member.userId) ?? []),
+    ...admins,
+  ];
 }
 
 async function researchAuthorUserIds(projectId: string) {
@@ -607,6 +645,8 @@ export async function createOrganizedProject(formData: FormData) {
           formData.get("financialClaimStatus"),
         ) ?? OrganizedProjectFinancialClaimStatus.NOT_ADVANCED,
       requiredResearchCount: null,
+      requiredProducts: linesFromForm(formData.get("requiredProducts")),
+      completedProducts: [],
       fundingInstitutionId,
       startDate,
       durationMonths,
@@ -630,7 +670,7 @@ export async function createOrganizedProject(formData: FormData) {
   });
 
   await notifyUsers({
-    userIds: memberUserIds,
+    userIds: [...memberUserIds, ...(await adminUserIds())],
     type: "PROJECT_CREATED",
     title: "Project created",
     summary: organizedProject.title,
@@ -649,7 +689,8 @@ export async function updateOrganizedProject(
   projectId: string,
   formData: FormData,
 ) {
-  await requireCurrentUser();
+  const user = await requireCurrentUser();
+  const updateScope = optionalString(formData.get("updateScope")) ?? "all";
   const previousProject = await prisma.organizedProject.findUnique({
     where: { id: projectId },
     include: {
@@ -659,6 +700,34 @@ export async function updateOrganizedProject(
       research: { select: { researchProjectId: true } },
     },
   });
+  if (!previousProject) return;
+
+  const isAdmin = user.roles.includes(Role.ADMIN);
+  const isTeamLead = previousProject.members.some(
+    (member) => member.userId === user.id && member.isTeamLead,
+  );
+  const canEditProject = isAdmin || isTeamLead;
+  let canEditResearchAssociated = canEditProject;
+  if (!canEditResearchAssociated && updateScope === "research") {
+    const assignedEditTask = await prisma.researchTask.findFirst({
+      where: {
+        organizedProjectId: projectId,
+        taskType: ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED,
+        status: ResearchTaskStatus.IN_PROGRESS,
+        assignments: { some: { userId: user.id } },
+      },
+      select: { id: true },
+    });
+    canEditResearchAssociated = Boolean(assignedEditTask);
+  }
+
+  if (
+    (updateScope === "research" && !canEditResearchAssociated) ||
+    (updateScope !== "research" && !canEditProject)
+  ) {
+    redirect("/401");
+  }
+
   const researchProjectIds = orderedUniqueStrings(
     formData.getAll("researchProjectIds"),
   );
@@ -713,6 +782,7 @@ export async function updateOrganizedProject(
           OrganizedProjectFinancialClaimStatus,
           formData.get("financialClaimStatus"),
         ) ?? OrganizedProjectFinancialClaimStatus.NOT_ADVANCED,
+      requiredProducts: linesFromForm(formData.get("requiredProducts")),
       fundingInstitutionId,
       startDate,
       durationMonths,
@@ -735,53 +805,218 @@ export async function updateOrganizedProject(
     },
   });
 
-  if (previousProject) {
-    const previousMembers = new Set(
-      previousProject.members.map((member) => member.userId),
-    );
-    const previousResearch = new Set(
-      previousProject.research.map((item) => item.researchProjectId),
-    );
-    const memberChanged =
-      memberUserIds.length !== previousProject.members.length ||
-      memberUserIds.some((memberId) => !previousMembers.has(memberId));
-    const researchChanged =
-      researchProjectIds.length !== previousProject.research.length ||
-      researchProjectIds.some(
-        (researchId) => !previousResearch.has(researchId),
-      );
-    const statusChanged =
-      previousProject.status !==
-      (enumValue(OrganizedProjectStatus, formData.get("status")) ??
-        OrganizedProjectStatus.PLANNED);
-    const durationChanged =
-      previousProject.durationMonths !== durationMonths ||
-      previousProject.startDate?.getTime() !== startDate.getTime();
+  const previousMembers = new Set(
+    previousProject.members.map((member) => member.userId),
+  );
+  const previousResearch = new Set(
+    previousProject.research.map((item) => item.researchProjectId),
+  );
+  const memberChanged =
+    memberUserIds.length !== previousProject.members.length ||
+    memberUserIds.some((memberId) => !previousMembers.has(memberId));
+  const researchChanged =
+    researchProjectIds.length !== previousProject.research.length ||
+    researchProjectIds.some((researchId) => !previousResearch.has(researchId));
+  const statusChanged =
+    previousProject.status !==
+    (enumValue(OrganizedProjectStatus, formData.get("status")) ??
+      OrganizedProjectStatus.PLANNED);
+  const durationChanged =
+    previousProject.durationMonths !== durationMonths ||
+    previousProject.startDate?.getTime() !== startDate.getTime();
 
-    const changedParts = [
-      statusChanged ? "status" : "",
-      memberChanged ? "members" : "",
-      researchChanged ? "associated research" : "",
-      durationChanged ? "duration" : "",
-    ].filter(Boolean);
+  const changedParts = [
+    statusChanged ? "status" : "",
+    memberChanged ? "members" : "",
+    researchChanged ? "associated research" : "",
+    durationChanged ? "duration" : "",
+  ].filter(Boolean);
 
-    if (changedParts.length > 0) {
-      await notifyUsers({
-        userIds: memberUserIds,
-        type: "PROJECT_UPDATED",
-        title: "Project updated",
-        summary: `${title} updated: ${changedParts.join(", ")}.`,
-        body: "Project status, members, associated research, or duration changed.",
-        href: `/organized-projects/${projectId}`,
-        entityType: "organizedProject",
-        entityId: projectId,
-      });
-    }
+  if (changedParts.length > 0) {
+    await notifyUsers({
+      userIds: [...memberUserIds, ...(await adminUserIds())],
+      type: researchChanged
+        ? "PROJECT_RESEARCH_ASSOCIATED_UPDATED"
+        : "PROJECT_UPDATED",
+      title: researchChanged
+        ? "Project research associated updated"
+        : "Project updated",
+      summary: `${title} updated: ${changedParts.join(", ")}.`,
+      body: researchChanged
+        ? "Research associated with this project was added or removed."
+        : "Project status, members, associated research, or duration changed.",
+      href: `/organized-projects/${projectId}`,
+      entityType: "organizedProject",
+      entityId: projectId,
+      excludeUserId: user.id,
+    });
   }
 
   revalidatePath("/organized-projects");
   revalidatePath("/funding-institutions");
   revalidatePath(`/organized-projects/${projectId}`);
+}
+
+export async function updateOrganizedProjectProducts(
+  projectId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  const project = await prisma.organizedProject.findUnique({
+    where: { id: projectId },
+    select: {
+      title: true,
+      requiredProducts: true,
+      members: { select: { userId: true, isTeamLead: true } },
+    },
+  });
+  if (!project) return;
+  const canEdit =
+    user.roles.includes(Role.ADMIN) ||
+    project.members.some(
+      (member) => member.userId === user.id && member.isTeamLead,
+    );
+  if (!canEdit) redirect("/401");
+
+  const completedProducts = orderedUniqueStrings(
+    formData.getAll("completedProducts"),
+  ).filter((product) => project.requiredProducts.includes(product));
+  const isComplete =
+    project.requiredProducts.length > 0 &&
+    project.requiredProducts.every((product) =>
+      completedProducts.includes(product),
+    );
+
+  await prisma.organizedProject.update({
+    where: { id: projectId },
+    data: {
+      completedProducts,
+      status: isComplete ? OrganizedProjectStatus.COMPLETED : undefined,
+    },
+  });
+
+  if (isComplete) {
+    await notifyUsers({
+      userIds: await organizedProjectNotificationUserIds(projectId),
+      type: "PROJECT_COMPLETED",
+      title: "Project completed",
+      summary: project.title,
+      body: "All required project products have been marked complete.",
+      href: `/organized-projects/${projectId}`,
+      entityType: "organizedProject",
+      entityId: projectId,
+      excludeUserId: user.id,
+    });
+  }
+
+  revalidatePath("/organized-projects");
+  revalidatePath(`/organized-projects/${projectId}`);
+}
+
+export async function createResearchForOrganizedProject(
+  organizedProjectId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  const organizedProject = await prisma.organizedProject.findUnique({
+    where: { id: organizedProjectId },
+    select: {
+      title: true,
+      members: { select: { userId: true, isTeamLead: true } },
+      research: { select: { researchProjectId: true } },
+    },
+  });
+  if (!organizedProject) return { ok: false, reason: "PROJECT_NOT_FOUND" };
+  const canEdit =
+    user.roles.includes(Role.ADMIN) ||
+    organizedProject.members.some(
+      (member) => member.userId === user.id && member.isTeamLead,
+    );
+  const assignedEditTask = canEdit
+    ? null
+    : await prisma.researchTask.findFirst({
+        where: {
+          organizedProjectId,
+          taskType: ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED,
+          status: ResearchTaskStatus.IN_PROGRESS,
+          assignments: { some: { userId: user.id } },
+        },
+        select: { id: true },
+      });
+  if (!canEdit && !assignedEditTask)
+    return { ok: false, reason: "UNAUTHORIZED" };
+
+  const title = optionalString(formData.get("title"));
+  const authorIds = orderedUniqueStrings(formData.getAll("authorUserIds"));
+  if (!title || authorIds.length === 0) {
+    return { ok: false, reason: "MISSING_FIELDS" };
+  }
+  const correspondingAuthorId =
+    optionalString(formData.get("correspondingAuthorId")) ?? authorIds[0];
+  const registrationUserId = optionalString(formData.get("registrationUserId"));
+
+  const createdProject = await prisma.$transaction(async (tx) => {
+    const research = await tx.researchProject.create({
+      data: {
+        title,
+        researchCode: await generateResearchCode(),
+        abstract: optionalString(formData.get("abstract")),
+        stage: ResearchStage.PRODUCTION,
+        universityRegistration: optionalString(
+          formData.get("universityRegistration"),
+        ),
+        registrationName: null,
+        registrationUserId,
+        registerStatus:
+          enumValue(RegistrationStatus, formData.get("registerStatus")) ??
+          RegistrationStatus.NOT_REGISTERED,
+        claimStatus:
+          enumValue(ClaimStatus, formData.get("claimStatus")) ??
+          ClaimStatus.CANNOT_CLAIM,
+        leadResearcherId: user.id,
+        authors: { connect: authorIds.map((id) => ({ id })) },
+        authorEntries: {
+          create: authorIds.map((id, index) => ({
+            userId: id,
+            position: index,
+            isCorresponding: id === correspondingAuthorId,
+          })),
+        },
+      },
+      select: { id: true, title: true },
+    });
+    await tx.organizedProjectResearch.create({
+      data: {
+        organizedProjectId,
+        researchProjectId: research.id,
+      },
+    });
+    return research;
+  });
+
+  await notifyResearchAuthors(createdProject.id, {
+    type: "RESEARCH_CREATED",
+    title: "Research created",
+    summary: createdProject.title,
+    body: "You were added as an author on this research record.",
+    excludeUserId: user.id,
+  });
+  await notifyUsers({
+    userIds: await organizedProjectNotificationUserIds(organizedProjectId),
+    type: "PROJECT_RESEARCH_ASSOCIATED_UPDATED",
+    title: "Project research associated updated",
+    summary: createdProject.title,
+    body: `A new research record was added to ${organizedProject.title}.`,
+    href: `/organized-projects/${organizedProjectId}`,
+    entityType: "organizedProject",
+    entityId: organizedProjectId,
+    excludeUserId: user.id,
+  });
+
+  revalidatePath("/organized-projects");
+  revalidatePath(`/organized-projects/${organizedProjectId}`);
+  revalidatePath("/projects");
+  return { ok: true, id: createdProject.id };
 }
 
 export async function updateResearchProject(
@@ -1348,6 +1583,7 @@ export async function createResearchTask(formData: FormData) {
 
   const taskType = taskTypeFromForm(formData.get("taskType"));
   const projectId = optionalString(formData.get("projectId"));
+  const organizedProjectId = optionalString(formData.get("organizedProjectId"));
   const journalId = optionalString(formData.get("journalId"));
   const conferenceId = optionalString(formData.get("conferenceId"));
   const reviewId = optionalString(formData.get("reviewId"));
@@ -1358,7 +1594,10 @@ export async function createResearchTask(formData: FormData) {
     (taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
       (!projectId || !conferenceId)) ||
     (taskType === ResearchTaskType.PRODUCTION && !projectId) ||
-    (taskType === ResearchTaskType.REVIEW && !reviewId)
+    (taskType === ResearchTaskType.REVIEW && !reviewId) ||
+    (taskType === ResearchTaskType.PROJECT_PRODUCTION && !organizedProjectId) ||
+    (taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED &&
+      !organizedProjectId)
   ) {
     return { ok: false, reason: "MISSING_ASSOCIATION" };
   }
@@ -1423,6 +1662,7 @@ export async function createResearchTask(formData: FormData) {
       taskType,
       status: ResearchTaskStatus.IN_PROGRESS,
       projectId,
+      organizedProjectId,
       journalId,
       conferenceId,
       reviewId,
@@ -1451,6 +1691,8 @@ export async function createResearchTask(formData: FormData) {
 
   revalidatePath("/tasks");
   if (projectId) revalidatePath(`/projects/${projectId}`);
+  if (organizedProjectId)
+    revalidatePath(`/organized-projects/${organizedProjectId}`);
   return { ok: true };
 }
 

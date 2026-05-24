@@ -65,7 +65,9 @@ export function NewOrganizedProjectDialog({
 
     if (!startDate || !durationMonths) {
       event.preventDefault();
-      setWarning("Start date and duration are required so the end date can be calculated.");
+      setWarning(
+        "Start date and duration are required so the end date can be calculated.",
+      );
       return;
     }
 
@@ -211,6 +213,15 @@ export function NewOrganizedProjectDialog({
                       />
                     </label>
                   </div>
+
+                  <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    Required products
+                    <textarea
+                      name="requiredProducts"
+                      placeholder="One required project output per line..."
+                      className="min-h-20 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    />
+                  </label>
 
                   <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                     Description

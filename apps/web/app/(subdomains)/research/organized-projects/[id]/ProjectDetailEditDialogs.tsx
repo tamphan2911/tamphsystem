@@ -7,12 +7,14 @@ import {
   FileText,
   Loader2,
   Pencil,
+  PlusCircle,
   Save,
   UsersRound,
   X,
 } from "lucide-react";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
 import { useResearchToast } from "../../components/ResearchToast";
+import { AuthorsPicker } from "../../projects/[id]/AuthorsPicker";
 import type {
   FundingInstitutionOption,
   ResearchResultOption,
@@ -32,6 +34,7 @@ type ProjectInfo = {
   financialClaimStatus: string;
   startDate: string;
   durationMonths: number;
+  requiredProducts: string[];
   description: string;
   note: string;
 };
@@ -71,6 +74,11 @@ function HiddenProjectInfo({ info }: { info: ProjectInfo }) {
         type="hidden"
         name="durationMonths"
         value={String(info.durationMonths || 1)}
+      />
+      <input
+        type="hidden"
+        name="requiredProducts"
+        value={info.requiredProducts.join("\n")}
       />
       <input type="hidden" name="description" value={info.description} />
       <input type="hidden" name="note" value={info.note} />
@@ -267,6 +275,7 @@ export function ProjectInfoEditDialog({
         >
           <HiddenMembers members={members} />
           <HiddenResearch research={research} />
+          <input type="hidden" name="updateScope" value="info" />
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_12rem]">
             <label className={labelClass}>
               Project name
@@ -350,6 +359,15 @@ export function ProjectInfoEditDialog({
 
           <div className="mt-4 grid gap-4">
             <label className={labelClass}>
+              Required products
+              <textarea
+                name="requiredProducts"
+                defaultValue={info.requiredProducts.join("\n")}
+                placeholder="One required project output per line..."
+                className="min-h-20 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              />
+            </label>
+            <label className={labelClass}>
               Description
               <textarea
                 name="description"
@@ -421,6 +439,7 @@ export function ProjectMembersEditDialog({
         >
           <HiddenProjectInfo info={info} />
           <HiddenResearch research={research} />
+          <input type="hidden" name="updateScope" value="members" />
           <ProjectMembersPicker users={users} defaultMembers={members} />
           <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
             <SubmitButton isPending={isPending} label="Save members" />
@@ -479,12 +498,141 @@ export function ProjectResearchEditDialog({
         >
           <HiddenProjectInfo info={info} />
           <HiddenMembers members={members} />
+          <input type="hidden" name="updateScope" value="research" />
           <ProjectResearchPicker
             researchOptions={researchOptions}
             defaultResearch={research}
           />
           <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
             <SubmitButton isPending={isPending} label="Save research" />
+          </div>
+        </form>
+      </DialogShell>
+    </>
+  );
+}
+
+export function CreateProjectResearchDialog({
+  action,
+  users,
+  members,
+}: {
+  action: (formData: FormData) => Promise<{ ok: boolean; reason?: string }>;
+  users: UserOption[];
+  members: SelectedProjectMember[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const toast = useResearchToast();
+  const defaultAuthors = members.map((member, index) => ({
+    id: member.id,
+    name: member.name,
+    email: member.email,
+    role: member.role,
+    isCorresponding: index === 0,
+  }));
+
+  return (
+    <>
+      <EditIconButton
+        label="Add research associated"
+        onClick={() => setOpen(true)}
+        className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200"
+      />
+      <DialogShell
+        open={open}
+        onClose={() => setOpen(false)}
+        icon={<PlusCircle className="h-5 w-5" />}
+        title="Add research associated"
+        detail="Create a research record and link it to this project."
+      >
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            startTransition(async () => {
+              const result = await action(formData);
+              if (!result?.ok) {
+                toast.showError({
+                  title: "Research was not added",
+                  detail:
+                    result?.reason === "UNAUTHORIZED"
+                      ? "Only admin or the project team lead can add research here."
+                      : "Add a title and at least one author, then try again.",
+                });
+                return;
+              }
+              setOpen(false);
+              toast.showSuccess({
+                title: "Research associated added",
+                detail:
+                  "The research record was created, linked with this project, and project members were notified.",
+              });
+            });
+          }}
+          className="max-h-[calc(90vh-6rem)] overflow-y-auto px-6 py-5"
+        >
+          <div className="grid gap-4">
+            <label className={labelClass}>
+              Title
+              <input
+                name="title"
+                required
+                placeholder="Research title"
+                className={fieldClass}
+              />
+            </label>
+            <AuthorsPicker users={users} defaultAuthors={defaultAuthors} />
+            <label className={labelClass}>
+              Note
+              <textarea
+                name="abstract"
+                placeholder="Optional working note for this research..."
+                className={textAreaClass}
+              />
+            </label>
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className={labelClass}>
+                University registration
+                <input
+                  name="universityRegistration"
+                  placeholder="Q1 2026"
+                  className={fieldClass}
+                />
+              </label>
+              <label className={labelClass}>
+                Register
+                <ResearchFormSelect
+                  name="registerStatus"
+                  defaultValue="NOT_REGISTERED"
+                  ariaLabel="Choose registration status"
+                  options={[
+                    { value: "NOT_REGISTERED", label: "Not registered" },
+                    { value: "PREPARING", label: "Plan" },
+                    { value: "SUBMITTED", label: "Submitted" },
+                    { value: "APPROVED", label: "Approved" },
+                  ]}
+                />
+              </label>
+              <label className={labelClass}>
+                Claim status
+                <ResearchFormSelect
+                  name="claimStatus"
+                  defaultValue="CANNOT_CLAIM"
+                  ariaLabel="Choose claim status"
+                  options={[
+                    { value: "CANNOT_CLAIM", label: "Cannot claim" },
+                    { value: "WAITING_PUBLISH", label: "Waiting publish" },
+                    { value: "MAKING_DOCUMENT", label: "Making document" },
+                    { value: "WAITING", label: "Waiting" },
+                    { value: "CLAIMED", label: "Claimed" },
+                  ]}
+                />
+              </label>
+            </div>
+          </div>
+          <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
+            <SubmitButton isPending={isPending} label="Add research" />
           </div>
         </form>
       </DialogShell>

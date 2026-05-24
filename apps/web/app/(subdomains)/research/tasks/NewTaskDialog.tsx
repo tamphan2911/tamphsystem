@@ -44,7 +44,15 @@ export type TaskReviewOption = {
   status: string;
 };
 
-type TaskMode = "submit" | "production" | "review" | "other";
+export type TaskOrganizedProjectOption = {
+  id: string;
+  title: string;
+  code: string;
+  status: string;
+};
+
+type TaskMode = "submit" | "production" | "review" | "project" | "other";
+type ProjectTaskSubtype = "PROJECT_PRODUCTION" | "PROJECT_RESEARCH_ASSOCIATED";
 
 const inputClass =
   "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
@@ -53,6 +61,7 @@ function modeLabel(mode: TaskMode) {
   if (mode === "submit") return "Submit";
   if (mode === "production") return "Production";
   if (mode === "review") return "Review";
+  if (mode === "project") return "Project";
   return "Other";
 }
 
@@ -61,18 +70,23 @@ export function NewTaskDialog({
   researchOptions,
   venueOptions,
   reviewOptions,
+  organizedProjectOptions,
 }: {
   assignees: TaskAssigneeOption[];
   researchOptions: TaskResearchOption[];
   venueOptions: TaskVenueOption[];
   reviewOptions: TaskReviewOption[];
+  organizedProjectOptions: TaskOrganizedProjectOption[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<TaskMode>("submit");
+  const [projectSubtype, setProjectSubtype] =
+    useState<ProjectTaskSubtype>("PROJECT_PRODUCTION");
   const [assigneeQuery, setAssigneeQuery] = useState("");
   const [researchQuery, setResearchQuery] = useState("");
   const [venueQuery, setVenueQuery] = useState("");
   const [reviewQuery, setReviewQuery] = useState("");
+  const [organizedProjectQuery, setOrganizedProjectQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedResearch, setSelectedResearch] =
     useState<TaskResearchOption | null>(null);
@@ -82,6 +96,8 @@ export function NewTaskDialog({
   const [selectedReview, setSelectedReview] = useState<TaskReviewOption | null>(
     null,
   );
+  const [selectedOrganizedProject, setSelectedOrganizedProject] =
+    useState<TaskOrganizedProjectOption | null>(null);
   const [isPending, startTransition] = useTransition();
   const { showSuccess, showError } = useResearchToast();
 
@@ -137,16 +153,32 @@ export function NewTaskDialog({
       .slice(0, 10);
   }, [reviewOptions, reviewQuery]);
 
+  const filteredOrganizedProjects = useMemo(() => {
+    const needle = organizedProjectQuery.trim().toLowerCase();
+    return organizedProjectOptions
+      .filter((project) => {
+        if (!needle) return true;
+        return [project.title, project.code, project.status, project.id]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle);
+      })
+      .slice(0, 10);
+  }, [organizedProjectOptions, organizedProjectQuery]);
+
   function reset() {
     setMode("submit");
+    setProjectSubtype("PROJECT_PRODUCTION");
     setAssigneeQuery("");
     setResearchQuery("");
     setVenueQuery("");
     setReviewQuery("");
+    setOrganizedProjectQuery("");
     setSelectedIds([]);
     setSelectedResearch(null);
     setSelectedVenue(null);
     setSelectedReview(null);
+    setSelectedOrganizedProject(null);
   }
 
   function toggleAssignee(id: string) {
@@ -167,7 +199,7 @@ export function NewTaskDialog({
             result?.reason === "PRODUCTION_INCOMPLETE"
               ? "Complete the production timeline before assigning a submission task."
               : result?.reason === "MISSING_ASSOCIATION"
-                ? "Choose the required research, venue, or review before creating this task."
+                ? "Choose the required research, venue, review, or project before creating this task."
                 : result?.reason === "INACTIVE_RESEARCH_ASSIGNEE"
                   ? "Choose only users who have activated their research-site account."
                   : result?.reason === "ACTIVE_SUBMISSION_TASK_EXISTS"
@@ -188,11 +220,13 @@ export function NewTaskDialog({
   const needsResearch = mode === "submit" || mode === "production";
   const needsVenue = mode === "submit";
   const needsReview = mode === "review";
+  const needsOrganizedProject = mode === "project";
   const canSubmit =
     selectedIds.length > 0 &&
     (!needsResearch || Boolean(selectedResearch)) &&
     (!needsVenue || Boolean(selectedVenue)) &&
-    (!needsReview || Boolean(selectedReview));
+    (!needsReview || Boolean(selectedReview)) &&
+    (!needsOrganizedProject || Boolean(selectedOrganizedProject));
 
   return (
     <>
@@ -300,6 +334,25 @@ export function NewTaskDialog({
                   />
                 </>
               )}
+              {mode === "project" && selectedOrganizedProject && (
+                <>
+                  <input type="hidden" name="taskType" value={projectSubtype} />
+                  <input
+                    type="hidden"
+                    name="organizedProjectId"
+                    value={selectedOrganizedProject.id}
+                  />
+                  <input
+                    type="hidden"
+                    name="category"
+                    value={
+                      projectSubtype === "PROJECT_PRODUCTION"
+                        ? "Production"
+                        : "Research production"
+                    }
+                  />
+                </>
+              )}
               {mode === "other" && (
                 <input type="hidden" name="taskType" value="OTHER" />
               )}
@@ -332,22 +385,28 @@ export function NewTaskDialog({
               </div>
 
               <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
-                {(["submit", "production", "review", "other"] as const).map(
-                  (item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setMode(item)}
-                      className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
-                        mode === item
-                          ? "bg-white text-violet-700 shadow-sm dark:bg-slate-800 dark:text-violet-300"
-                          : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
-                      }`}
-                    >
-                      {modeLabel(item)}
-                    </button>
-                  ),
-                )}
+                {(
+                  [
+                    "submit",
+                    "production",
+                    "review",
+                    "project",
+                    "other",
+                  ] as const
+                ).map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setMode(item)}
+                    className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
+                      mode === item
+                        ? "bg-white text-violet-700 shadow-sm dark:bg-slate-800 dark:text-violet-300"
+                        : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                    }`}
+                  >
+                    {modeLabel(item)}
+                  </button>
+                ))}
               </div>
 
               {needsResearch && (
@@ -412,6 +471,51 @@ export function NewTaskDialog({
                     },
                   }))}
                 />
+              )}
+
+              {needsOrganizedProject && (
+                <div className="grid gap-4">
+                  <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+                    {(
+                      [
+                        ["PROJECT_PRODUCTION", "Project Production"],
+                        ["PROJECT_RESEARCH_ASSOCIATED", "Research Associated"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setProjectSubtype(value)}
+                        className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
+                          projectSubtype === value
+                            ? "bg-white text-violet-700 shadow-sm dark:bg-slate-800 dark:text-violet-300"
+                            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <SearchPanel
+                    title="Project"
+                    query={organizedProjectQuery}
+                    setQuery={setOrganizedProjectQuery}
+                    placeholder="Search project by title, ID, or status..."
+                    items={filteredOrganizedProjects.map((project) => ({
+                      id: project.id,
+                      title: project.title,
+                      meta: [project.code, project.status]
+                        .filter(Boolean)
+                        .join(" - "),
+                      icon: <FileText className="h-4 w-4" />,
+                      selected: selectedOrganizedProject?.id === project.id,
+                      onClick: () => {
+                        setSelectedOrganizedProject(project);
+                        setOrganizedProjectQuery(project.title);
+                      },
+                    }))}
+                  />
+                </div>
               )}
 
               <label className="grid gap-1.5">
