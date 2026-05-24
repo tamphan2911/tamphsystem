@@ -811,7 +811,7 @@ export default async function ProjectDetailPage({
                   <h2 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
                     Registration and claim
                   </h2>
-                  <div className="grid items-end gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid items-end gap-4 md:grid-cols-2">
                     <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                       Registration period
                       <input
