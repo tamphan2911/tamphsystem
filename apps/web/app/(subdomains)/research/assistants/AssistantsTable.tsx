@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Crown, Pencil, ShieldCheck, Trash2, X } from "lucide-react";
+import { Crown, Pencil, ShieldCheck, Trash2, UserRound, X } from "lucide-react";
 import { assignResearchAssistant, removeResearchAssistantRole } from "../actions";
 import { FilterSelect, TablePagination, TableSearchInput, useTablePagination } from "../components/TableControls";
 import { useResearchToast } from "../components/ResearchToast";
@@ -98,7 +98,16 @@ export function AssistantsTable({ rows, canManage }: { rows: AssistantRow[]; can
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {pagination.pagedRows.map((user) => (
               <tr key={user.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-normal text-slate-700 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:text-slate-200 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">{user.name || "Unnamed user"}</td>
+                <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-purple-100 bg-purple-50 text-purple-600 shadow-sm dark:border-purple-900/70 dark:bg-purple-950/40 dark:text-purple-300">
+                      <UserRound className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 truncate text-sm font-medium text-slate-700 dark:text-slate-100">
+                      {user.name || "Unnamed user"}
+                    </span>
+                  </div>
+                </td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{user.email}</td>
                 <td className="px-4 py-3">
                   <RolePill role={user.assistantRole} />
