@@ -659,7 +659,7 @@ export function SubmissionsTable({
                 <button
                   type="button"
                   onClick={() => setDeleting(null)}
-                  className="cursor-pointer rounded-lg p-2 text-slate-500 transition hover:bg-white/70 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+                  className="cursor-pointer rounded-lg p-2 text-slate-500 transition hover:bg-white/80 hover:text-rose-700 hover:shadow-sm dark:text-rose-100 dark:hover:bg-rose-900/45 dark:hover:text-white dark:hover:ring-1 dark:hover:ring-rose-700/60"
                   aria-label="Close confirmation"
                 >
                   <X className="h-5 w-5" />
