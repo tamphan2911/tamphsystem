@@ -11,6 +11,7 @@ import {
   FileCheck2,
   FolderGit2,
   KeyRound,
+  Landmark,
   ShieldCheck,
 } from "lucide-react";
 
@@ -24,6 +25,7 @@ const icons = {
   tasks: ClipboardList,
   conferences: CalendarDays,
   organizedProjects: Building2,
+  fundingInstitutions: Landmark,
 };
 
 export function ActiveNavLink({

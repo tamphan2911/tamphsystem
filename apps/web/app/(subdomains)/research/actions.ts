@@ -12,6 +12,7 @@ import {
   RegistrationStatus,
   ResearchStage,
   OrganizedProjectStatus,
+  OrganizedProjectFinancialClaimStatus,
   ResearchAuthorNotificationType,
   ResearchTaskCategory,
   ResearchTaskStatus,
@@ -80,6 +81,19 @@ function taskTypeFromForm(value: FormDataEntryValue | null) {
 function dateFromForm(value: FormDataEntryValue | null) {
   const text = optionalString(value);
   return text ? new Date(text) : null;
+}
+
+function positiveIntFromForm(value: FormDataEntryValue | null) {
+  const text = optionalString(value);
+  if (!text) return null;
+  const number = Number(text);
+  return Number.isInteger(number) && number > 0 ? number : null;
+}
+
+function addMonths(date: Date, months: number) {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
 }
 
 function startOfDay(value: Date) {
@@ -387,31 +401,64 @@ export async function createOrganizedProject(formData: FormData) {
   const researchProjectIds = orderedUniqueStrings(
     formData.getAll("researchProjectIds"),
   );
-  const requiredResearchCountText = optionalString(
-    formData.get("requiredResearchCount"),
+  const memberUserIds = orderedUniqueStrings(formData.getAll("memberUserIds"));
+  const title = optionalString(formData.get("title"));
+  const referenceCode = optionalString(formData.get("referenceCode"));
+  const startDate = dateFromForm(formData.get("startDate"));
+  const durationMonths = positiveIntFromForm(formData.get("durationMonths"));
+  const teamLeadUserId = optionalString(formData.get("teamLeadUserId"));
+  const instructorUserIds = new Set(
+    orderedUniqueStrings(formData.getAll("instructorUserIds")),
   );
-  const requiredResearchCount = requiredResearchCountText
-    ? Number(requiredResearchCountText)
+  const selectedTeamLeadId =
+    teamLeadUserId && memberUserIds.includes(teamLeadUserId)
+      ? teamLeadUserId
+      : memberUserIds[0];
+
+  if (!title || !referenceCode || !startDate || !durationMonths || !selectedTeamLeadId) {
+    revalidatePath("/organized-projects");
+    return;
+  }
+
+  const fundingInstitutionId = optionalString(
+    formData.get("fundingInstitutionId"),
+  );
+  const fundingInstitution = fundingInstitutionId
+    ? await prisma.fundingInstitution.findUnique({
+        where: { id: fundingInstitutionId },
+        select: { name: true },
+      })
     : null;
 
   await prisma.organizedProject.create({
     data: {
-      title: optionalString(formData.get("title")) ?? "Untitled project",
-      organizer: optionalString(formData.get("organizer")),
-      referenceCode: optionalString(formData.get("referenceCode")),
+      title,
+      organizer: fundingInstitution?.name ?? null,
+      referenceCode,
       description: optionalString(formData.get("description")),
       note: optionalString(formData.get("note")),
       status:
         enumValue(OrganizedProjectStatus, formData.get("status")) ??
         OrganizedProjectStatus.PLANNED,
-      requiredResearchCount:
-        typeof requiredResearchCount === "number" &&
-        Number.isFinite(requiredResearchCount)
-          ? requiredResearchCount
-          : null,
-      startDate: dateFromForm(formData.get("startDate")),
-      endDate: dateFromForm(formData.get("endDate")),
+      financialClaimStatus:
+        enumValue(
+          OrganizedProjectFinancialClaimStatus,
+          formData.get("financialClaimStatus"),
+        ) ?? OrganizedProjectFinancialClaimStatus.NOT_ADVANCED,
+      requiredResearchCount: null,
+      fundingInstitutionId,
+      startDate,
+      durationMonths,
+      endDate: addMonths(startDate, durationMonths),
       createdById: user.id,
+      members: {
+        create: memberUserIds.map((userId, index) => ({
+          userId,
+          position: index,
+          isTeamLead: userId === selectedTeamLeadId,
+          isInstructor: instructorUserIds.has(userId),
+        })),
+      },
       research: {
         create: researchProjectIds.map((researchProjectId) => ({
           researchProjectId,
@@ -421,7 +468,88 @@ export async function createOrganizedProject(formData: FormData) {
   });
 
   revalidatePath("/organized-projects");
+  revalidatePath("/funding-institutions");
   redirect("/organized-projects");
+}
+
+export async function updateOrganizedProject(
+  projectId: string,
+  formData: FormData,
+) {
+  await requireCurrentUser();
+  const researchProjectIds = orderedUniqueStrings(
+    formData.getAll("researchProjectIds"),
+  );
+  const memberUserIds = orderedUniqueStrings(formData.getAll("memberUserIds"));
+  const title = optionalString(formData.get("title"));
+  const referenceCode = optionalString(formData.get("referenceCode"));
+  const startDate = dateFromForm(formData.get("startDate"));
+  const durationMonths = positiveIntFromForm(formData.get("durationMonths"));
+  const teamLeadUserId = optionalString(formData.get("teamLeadUserId"));
+  const instructorUserIds = new Set(
+    orderedUniqueStrings(formData.getAll("instructorUserIds")),
+  );
+  const selectedTeamLeadId =
+    teamLeadUserId && memberUserIds.includes(teamLeadUserId)
+      ? teamLeadUserId
+      : memberUserIds[0];
+
+  if (!title || !referenceCode || !startDate || !durationMonths || !selectedTeamLeadId) {
+    revalidatePath(`/organized-projects/${projectId}`);
+    return;
+  }
+
+  const fundingInstitutionId = optionalString(
+    formData.get("fundingInstitutionId"),
+  );
+  const fundingInstitution = fundingInstitutionId
+    ? await prisma.fundingInstitution.findUnique({
+        where: { id: fundingInstitutionId },
+        select: { name: true },
+      })
+    : null;
+
+  await prisma.organizedProject.update({
+    where: { id: projectId },
+    data: {
+      title,
+      organizer: fundingInstitution?.name ?? null,
+      referenceCode,
+      description: optionalString(formData.get("description")),
+      note: optionalString(formData.get("note")),
+      status:
+        enumValue(OrganizedProjectStatus, formData.get("status")) ??
+        OrganizedProjectStatus.PLANNED,
+      financialClaimStatus:
+        enumValue(
+          OrganizedProjectFinancialClaimStatus,
+          formData.get("financialClaimStatus"),
+        ) ?? OrganizedProjectFinancialClaimStatus.NOT_ADVANCED,
+      fundingInstitutionId,
+      startDate,
+      durationMonths,
+      endDate: addMonths(startDate, durationMonths),
+      members: {
+        deleteMany: {},
+        create: memberUserIds.map((userId, index) => ({
+          userId,
+          position: index,
+          isTeamLead: userId === selectedTeamLeadId,
+          isInstructor: instructorUserIds.has(userId),
+        })),
+      },
+      research: {
+        deleteMany: {},
+        create: researchProjectIds.map((researchProjectId) => ({
+          researchProjectId,
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/organized-projects");
+  revalidatePath("/funding-institutions");
+  revalidatePath(`/organized-projects/${projectId}`);
 }
 
 export async function updateResearchProject(

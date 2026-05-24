@@ -62,6 +62,7 @@ model User {
   suggestedConferences            SuggestedConference[]        @relation("SuggestedConferenceCreator")
   sentResearchAuthorNotifications ResearchAuthorNotification[] @relation("ResearchAuthorNotificationSender")
   createdOrganizedProjects        OrganizedProject[]           @relation("OrganizedProjectCreator")
+  organizedProjectMemberships     OrganizedProjectMember[]
 }
 
 // ---------------------------------------------
@@ -261,6 +262,13 @@ enum OrganizedProjectStatus {
   ARCHIVED
 }
 
+enum OrganizedProjectFinancialClaimStatus {
+  NOT_ADVANCED
+  ADVANCED
+  SETTLED
+  REFUND_ADVANCE
+}
+
 model ResearchProject {
   id           String        @id @default(uuid())
   researchCode String?       @unique
@@ -300,25 +308,67 @@ model ResearchProject {
 }
 
 model OrganizedProject {
-  id                    String                 @id @default(uuid())
-  title                 String
-  organizer             String?
-  referenceCode         String?
-  description           String?
-  status                OrganizedProjectStatus @default(PLANNED)
+  id                   String                              @id @default(uuid())
+  title                String
+  organizer            String?
+  referenceCode        String?
+  description          String?
+  status               OrganizedProjectStatus              @default(PLANNED)
+  financialClaimStatus OrganizedProjectFinancialClaimStatus @default(NOT_ADVANCED)
   requiredResearchCount Int?
-  startDate             DateTime?
-  endDate               DateTime?
-  note                  String?
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
+  startDate            DateTime?
+  durationMonths       Int?
+  endDate              DateTime?
+  note                 String?
+  createdAt            DateTime                            @default(now())
+  updatedAt            DateTime                            @updatedAt
 
   createdById String?
   createdBy   User?                      @relation("OrganizedProjectCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  research    OrganizedProjectResearch[]
+
+  fundingInstitutionId String?
+  fundingInstitution   FundingInstitution? @relation(fields: [fundingInstitutionId], references: [id], onDelete: SetNull)
+
+  members  OrganizedProjectMember[]
+  research OrganizedProjectResearch[]
 
   @@index([status])
   @@index([organizer])
+  @@index([financialClaimStatus])
+  @@index([fundingInstitutionId])
+}
+
+model FundingInstitution {
+  id        String   @id @default(uuid())
+  name      String
+  shortName String?
+  country   String?
+  website   String?
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizedProjects OrganizedProject[]
+
+  @@index([name])
+}
+
+model OrganizedProjectMember {
+  id                 String   @id @default(uuid())
+  organizedProjectId String
+  userId             String
+  position           Int
+  isTeamLead         Boolean  @default(false)
+  isInstructor       Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  organizedProject OrganizedProject @relation(fields: [organizedProjectId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizedProjectId, userId])
+  @@index([organizedProjectId, position])
+  @@index([userId])
 }
 
 model OrganizedProjectResearch {

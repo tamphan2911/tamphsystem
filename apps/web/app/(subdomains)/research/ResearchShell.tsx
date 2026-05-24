@@ -25,6 +25,11 @@ const navItems = [
     icon: "organizedProjects" as const,
   },
   {
+    href: "/funding-institutions",
+    label: "Funding",
+    icon: "fundingInstitutions" as const,
+  },
+  {
     href: "/tasks",
     label: "Tasks",
     icon: "tasks" as const,

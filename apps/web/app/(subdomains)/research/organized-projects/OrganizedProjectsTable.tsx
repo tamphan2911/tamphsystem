@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Building2, CheckCircle2, Clock3, FileText } from "lucide-react";
+import {
+  Banknote,
+  Building2,
+  CheckCircle2,
+  CircleDollarSign,
+  Clock3,
+  RotateCcw,
+  ShieldCheck,
+} from "lucide-react";
 import {
   FilterSelect,
   TablePagination,
@@ -18,6 +26,14 @@ export type OrganizedProjectResearchRow = {
   publications: number;
 };
 
+export type OrganizedProjectMemberRow = {
+  id: string;
+  name: string;
+  email: string;
+  isTeamLead: boolean;
+  isInstructor: boolean;
+};
+
 export type OrganizedProjectRow = {
   id: string;
   title: string;
@@ -25,10 +41,13 @@ export type OrganizedProjectRow = {
   referenceCode: string;
   description: string;
   status: string;
-  requiredResearchCount: number;
+  financialClaimStatus: string;
+  durationLabel: string;
   startDate: string;
   endDate: string;
   note: string;
+  members: OrganizedProjectMemberRow[];
+  researchCount: number;
   research: OrganizedProjectResearchRow[];
 };
 
@@ -53,14 +72,6 @@ function statusMeta(status: string) {
         "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900",
     };
   }
-  if (status === "ARCHIVED") {
-    return {
-      label: "Archived",
-      icon: FileText,
-      className:
-        "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
-    };
-  }
   return {
     label: "Planned",
     icon: Building2,
@@ -69,8 +80,41 @@ function statusMeta(status: string) {
   };
 }
 
-function shortDate(value: string) {
-  return value || "-";
+function financialClaimMeta(status: string) {
+  if (status === "ADVANCED") {
+    return {
+      label: "Advanced",
+      icon: Banknote,
+      className:
+        "bg-sky-50 text-sky-700 ring-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-900",
+    };
+  }
+  if (status === "SETTLED") {
+    return {
+      label: "Settled",
+      icon: ShieldCheck,
+      className:
+        "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+    };
+  }
+  if (status === "REFUND_ADVANCE") {
+    return {
+      label: "Refund advance",
+      icon: RotateCcw,
+      className:
+        "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
+    };
+  }
+  return {
+    label: "Not advanced",
+    icon: CircleDollarSign,
+    className:
+      "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+  };
+}
+
+function memberName(member: OrganizedProjectMemberRow) {
+  return member.name || member.email;
 }
 
 export function OrganizedProjectsTable({
@@ -84,33 +128,48 @@ export function OrganizedProjectsTable({
   const statusOptions = useMemo(
     () => [
       "ALL",
-      ...Array.from(new Set(rows.map((row) => row.status).filter(Boolean))).sort(),
+      ...Array.from(
+        new Set(
+          rows
+            .map((row) => row.status)
+            .filter((item) => item && item !== "ARCHIVED"),
+        ),
+      ).sort(),
     ],
     [rows],
   );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return rows.filter((row) => {
-      const matchesStatus = status === "ALL" || row.status === status;
-      const haystack = [
-        row.title,
-        row.organizer,
-        row.referenceCode,
-        row.description,
-        row.status,
-        row.note,
-        ...row.research.flatMap((research) => [
-          research.title,
-          research.stage,
-          String(research.submissions),
-          String(research.publications),
-        ]),
-      ]
-        .join(" ")
-        .toLowerCase();
-      return matchesStatus && (!needle || haystack.includes(needle));
-    });
+    return rows
+      .filter((row) => row.status !== "ARCHIVED")
+      .filter((row) => {
+        const matchesStatus = status === "ALL" || row.status === status;
+        const haystack = [
+          row.title,
+          row.organizer,
+          row.referenceCode,
+          row.description,
+          row.status,
+          row.financialClaimStatus,
+          row.note,
+          ...row.members.flatMap((member) => [
+            member.name,
+            member.email,
+            member.isTeamLead ? "team lead" : "",
+            member.isInstructor ? "instructor" : "",
+          ]),
+          ...row.research.flatMap((research) => [
+            research.title,
+            research.stage,
+            String(research.submissions),
+            String(research.publications),
+          ]),
+        ]
+          .join(" ")
+          .toLowerCase();
+        return matchesStatus && (!needle || haystack.includes(needle));
+      });
   }, [query, rows, status]);
 
   const pagination = useTablePagination(filtered, 10);
@@ -121,7 +180,7 @@ export function OrganizedProjectsTable({
         <TableSearchInput
           value={query}
           onChange={setQuery}
-          placeholder="Search project, organizer, research..."
+          placeholder="Search project, funding institution, member, research..."
         />
         <FilterSelect
           value={status}
@@ -138,22 +197,21 @@ export function OrganizedProjectsTable({
         <table className="w-full table-fixed text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="w-[8.5rem] px-3 py-3">Project ID</th>
+              <th className="w-[7.5rem] px-3 py-3">Project ID</th>
               <th className="px-3 py-3">Project</th>
-              <th className="w-[7.5rem] px-3 py-3">Status</th>
-              <th className="w-[12rem] px-3 py-3">Organizer</th>
-              <th className="w-[9rem] px-3 py-3">Time</th>
-              <th className="w-[18rem] px-3 py-3">Research results</th>
+              <th className="w-16 px-2 py-3 text-center">Status</th>
+              <th className="w-16 px-2 py-3 text-center">Claim</th>
+              <th className="w-[11rem] px-3 py-3">Funding</th>
+              <th className="w-[8.5rem] px-3 py-3">Dates</th>
+              <th className="w-[6rem] px-2 py-3 text-center">Results</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {pagination.pagedRows.map((project) => {
-              const meta = statusMeta(project.status);
-              const Icon = meta.icon;
-              const required = project.requiredResearchCount;
-              const linked = project.research.length;
-              const progress =
-                required > 0 ? `${linked}/${required}` : String(linked);
+              const status = statusMeta(project.status);
+              const StatusIcon = status.icon;
+              const claim = financialClaimMeta(project.financialClaimStatus);
+              const ClaimIcon = claim.icon;
 
               return (
                 <tr
@@ -166,63 +224,66 @@ export function OrganizedProjectsTable({
                     </span>
                   </td>
                   <td className="min-w-0 px-3 py-3 align-top">
-                    <p className="line-clamp-2 text-base font-normal text-slate-700 dark:text-slate-200">
-                      {project.title}
+                    <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                      <Link
+                        href={`/organized-projects/${project.id}`}
+                        className="line-clamp-2 text-base font-semibold text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
+                      >
+                        {project.title}
+                      </Link>
+                      {project.durationLabel && (
+                        <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+                          ({project.durationLabel})
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      {project.members.length > 0
+                        ? project.members.map(memberName).join(", ")
+                        : "No members"}
                     </p>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 line-clamp-1 text-xs leading-5 text-slate-400 dark:text-slate-500">
                       {project.description || project.note || "No description"}
                     </p>
                   </td>
-                  <td className="px-3 py-3 align-top">
+                  <td className="px-2 py-3 text-center align-top">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-bold ring-1 ${meta.className}`}
+                      className={`group/tooltip relative inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ${status.className}`}
                     >
-                      <Icon className="h-3.5 w-3.5" />
-                      {meta.label}
+                      <StatusIcon className="h-4 w-4" aria-hidden="true" />
+                      <span className="sr-only">{status.label}</span>
+                      <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-lg shadow-slate-900/10 group-hover/tooltip:block dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
+                        {status.label}
+                      </span>
+                    </span>
+                  </td>
+                  <td className="px-2 py-3 text-center align-top">
+                    <span
+                      className={`group/tooltip relative inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ${claim.className}`}
+                    >
+                      <ClaimIcon className="h-4 w-4" aria-hidden="true" />
+                      <span className="sr-only">{claim.label}</span>
+                      <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-lg shadow-slate-900/10 group-hover/tooltip:block dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
+                        {claim.label}
+                      </span>
                     </span>
                   </td>
                   <td className="px-3 py-3 align-top text-sm text-slate-600 dark:text-slate-300">
                     <span className="line-clamp-2">
-                      {project.organizer || "No organizer"}
+                      {project.organizer || "No funding institution"}
                     </span>
                   </td>
                   <td className="px-3 py-3 align-top">
                     <p className="whitespace-nowrap text-xs font-medium text-slate-500 dark:text-slate-400">
-                      start: {shortDate(project.startDate)}
+                      start: {project.startDate || "-"}
                     </p>
                     <p className="whitespace-nowrap text-xs font-medium text-slate-500 dark:text-slate-400">
-                      end: {shortDate(project.endDate)}
+                      end: {project.endDate || "-"}
                     </p>
                   </td>
-                  <td className="px-3 py-3 align-top">
-                    <div className="mb-2 inline-flex rounded-lg bg-slate-50 px-2 py-1 text-xs font-bold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
-                      {progress} results
-                    </div>
-                    <div className="grid gap-1.5">
-                      {project.research.slice(0, 2).map((research) => (
-                        <Link
-                          key={research.id}
-                          href={`/projects/${research.id}`}
-                          className="block rounded-lg border border-slate-200 px-2.5 py-2 transition hover:border-blue-300 hover:bg-blue-50/60 dark:border-slate-800 dark:hover:border-blue-800 dark:hover:bg-blue-950/30"
-                        >
-                          <p className="line-clamp-1 text-sm font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">
-                            {research.title}
-                          </p>
-                          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                            {research.stage} - {research.submissions} submissions - {research.publications} publications
-                          </p>
-                        </Link>
-                      ))}
-                      {project.research.length > 2 && (
-                        <p className="text-xs font-semibold text-slate-400 dark:text-slate-500">
-                          +{project.research.length - 2} more linked research
-                        </p>
-                      )}
-                      {project.research.length === 0 && (
-                        <p className="rounded-lg border border-dashed border-slate-200 px-2.5 py-3 text-center text-xs text-slate-500 dark:border-slate-800">
-                          No linked research
-                        </p>
-                      )}
+                  <td className="px-2 py-3 text-center align-top">
+                    <div className="inline-flex min-w-10 items-center justify-center rounded-lg bg-slate-50 px-2 py-1 text-sm font-black text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700">
+                      {project.researchCount}
                     </div>
                   </td>
                 </tr>
@@ -231,7 +292,7 @@ export function OrganizedProjectsTable({
             {pagination.total === 0 && (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                 >
                   No organized projects match the current filters.

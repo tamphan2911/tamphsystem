@@ -1,5 +1,9 @@
 import { Building2, CheckCircle2, Clock3, FileText } from "lucide-react";
-import { OrganizedProjectStatus, prisma } from "@repo/db";
+import {
+  OrganizedProjectFinancialClaimStatus,
+  OrganizedProjectStatus,
+  prisma,
+} from "@repo/db";
 import { NewOrganizedProjectDialog } from "./NewOrganizedProjectDialog";
 import {
   OrganizedProjectsTable,
@@ -9,8 +13,65 @@ import {
 export const dynamic = "force-dynamic";
 
 function shortDate(value: Date | null) {
-  return value ? value.toLocaleDateString() : "";
+  if (!value) return "";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  }).format(value);
 }
+
+function durationLabel(months: number | null) {
+  if (!months || months <= 0) return "";
+  const years = Math.floor(months / 12);
+  const remainingMonths = months % 12;
+  const parts = [];
+  if (years) parts.push(`${years} ${years === 1 ? "year" : "years"}`);
+  if (remainingMonths) {
+    parts.push(
+      `${remainingMonths} ${remainingMonths === 1 ? "month" : "months"}`,
+    );
+  }
+  return parts.join(" ");
+}
+
+const demoFundingInstitutions = [
+  {
+    name: "University of Economics Ho Chi Minh City",
+    shortName: "UEH",
+    country: "Vietnam",
+    website: "https://ueh.edu.vn",
+    note: "Demo institutional funding source for education and business research.",
+  },
+  {
+    name: "Green Growth Research Institute",
+    shortName: "GGRI",
+    country: "Vietnam",
+    website: "",
+    note: "Demo funding institution for sustainability and finance projects.",
+  },
+  {
+    name: "Tam Pham Research Lab",
+    shortName: "TPRL",
+    country: "Vietnam",
+    website: "https://research.tamph.com",
+    note: "Demo internal project sponsor.",
+  },
+  {
+    name: "Mekong Business School",
+    shortName: "MBS",
+    country: "Vietnam",
+    website: "",
+    note: "Demo academic institution for regional business data work.",
+  },
+  {
+    name: "International Digital Pedagogy Association",
+    shortName: "IDPA",
+    country: "International",
+    website: "",
+    note: "Demo project organizer for digital pedagogy research outputs.",
+  },
+];
 
 const demoOrganizedProjects = [
   {
@@ -20,9 +81,9 @@ const demoOrganizedProjects = [
     description:
       "Institutional project tracking classroom technology pilots and research outputs on digital learning outcomes.",
     status: OrganizedProjectStatus.ACTIVE,
-    requiredResearchCount: 2,
+    financialClaimStatus: OrganizedProjectFinancialClaimStatus.ADVANCED,
     startDate: new Date("2026-01-15"),
-    endDate: new Date("2026-12-15"),
+    durationMonths: 12,
     note: "Demo project for linking education research outputs.",
     linkCount: 2,
   },
@@ -33,9 +94,9 @@ const demoOrganizedProjects = [
     description:
       "Applied research program on ESG disclosure, banking risk, and capital market response.",
     status: OrganizedProjectStatus.ACTIVE,
-    requiredResearchCount: 3,
+    financialClaimStatus: OrganizedProjectFinancialClaimStatus.NOT_ADVANCED,
     startDate: new Date("2025-09-01"),
-    endDate: new Date("2026-08-31"),
+    durationMonths: 12,
     note: "Demo project with multiple expected research results.",
     linkCount: 3,
   },
@@ -46,9 +107,9 @@ const demoOrganizedProjects = [
     description:
       "Internal initiative for workflow automation, literature mapping, manuscript preparation, and submission support.",
     status: OrganizedProjectStatus.PLANNED,
-    requiredResearchCount: 1,
+    financialClaimStatus: OrganizedProjectFinancialClaimStatus.NOT_ADVANCED,
     startDate: new Date("2026-03-01"),
-    endDate: new Date("2026-11-30"),
+    durationMonths: 9,
     note: "Demo project connected to one research result.",
     linkCount: 1,
   },
@@ -59,9 +120,9 @@ const demoOrganizedProjects = [
     description:
       "Collaborative project for building business datasets and turning them into publishable empirical studies.",
     status: OrganizedProjectStatus.COMPLETED,
-    requiredResearchCount: 2,
+    financialClaimStatus: OrganizedProjectFinancialClaimStatus.SETTLED,
     startDate: new Date("2024-04-01"),
-    endDate: new Date("2025-04-30"),
+    durationMonths: 13,
     note: "Completed demo project with linked research outputs.",
     linkCount: 2,
   },
@@ -72,16 +133,35 @@ const demoOrganizedProjects = [
     description:
       "Organizer-led track for converting accepted conference work into journal-ready research outputs.",
     status: OrganizedProjectStatus.PLANNED,
-    requiredResearchCount: 1,
+    financialClaimStatus: OrganizedProjectFinancialClaimStatus.REFUND_ADVANCE,
     startDate: new Date("2026-06-01"),
-    endDate: new Date("2026-10-15"),
+    durationMonths: 5,
     note: "Demo project currently waiting for research assignment.",
     linkCount: 0,
   },
 ];
 
+async function ensureDemoFundingInstitutions() {
+  for (const institution of demoFundingInstitutions) {
+    const existing = await prisma.fundingInstitution.findFirst({
+      where: { name: institution.name },
+      select: { id: true },
+    });
+
+    if (existing) {
+      await prisma.fundingInstitution.update({
+        where: { id: existing.id },
+        data: institution,
+      });
+    } else {
+      await prisma.fundingInstitution.create({ data: institution });
+    }
+  }
+}
+
 async function ensureDemoOrganizedProjects() {
-  const [createdBy, researchProjects] = await Promise.all([
+  await ensureDemoFundingInstitutions();
+  const [createdBy, researchProjects, users] = await Promise.all([
     prisma.user.findFirst({
       where: { roles: { hasSome: ["ADMIN", "RESEARCHER", "LECTURER"] } },
       orderBy: [{ name: "asc" }, { email: "asc" }],
@@ -92,11 +172,23 @@ async function ensureDemoOrganizedProjects() {
       orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
       take: 8,
     }),
+    prisma.user.findMany({
+      select: { id: true },
+      orderBy: [{ name: "asc" }, { email: "asc" }],
+      take: 6,
+    }),
   ]);
 
   let researchOffset = 0;
 
-  for (const demo of demoOrganizedProjects) {
+  for (const [index, demo] of demoOrganizedProjects.entries()) {
+    const fundingInstitution = await prisma.fundingInstitution.findFirst({
+      where: { name: demo.organizer },
+      select: { id: true },
+    });
+    const endDate = new Date(demo.startDate);
+    endDate.setMonth(endDate.getMonth() + demo.durationMonths);
+
     const project =
       (await prisma.organizedProject.findFirst({
         where: { title: demo.title },
@@ -109,9 +201,12 @@ async function ensureDemoOrganizedProjects() {
           referenceCode: demo.referenceCode,
           description: demo.description,
           status: demo.status,
-          requiredResearchCount: demo.requiredResearchCount,
+          financialClaimStatus: demo.financialClaimStatus,
+          requiredResearchCount: null,
+          fundingInstitutionId: fundingInstitution?.id,
           startDate: demo.startDate,
-          endDate: demo.endDate,
+          durationMonths: demo.durationMonths,
+          endDate,
           note: demo.note,
           createdById: createdBy?.id,
         },
@@ -125,18 +220,40 @@ async function ensureDemoOrganizedProjects() {
         referenceCode: demo.referenceCode,
         description: demo.description,
         status: demo.status,
-        requiredResearchCount: demo.requiredResearchCount,
+        financialClaimStatus: demo.financialClaimStatus,
+        requiredResearchCount: null,
+        fundingInstitutionId: fundingInstitution?.id,
         startDate: demo.startDate,
-        endDate: demo.endDate,
+        durationMonths: demo.durationMonths,
+        endDate,
         note: demo.note,
       },
     });
+
+    const existingMembers = await prisma.organizedProjectMember.count({
+      where: { organizedProjectId: project.id },
+    });
+    if (existingMembers === 0 && users.length > 0) {
+      const selectedUsers = users.slice(index % users.length, index % users.length + 3);
+      const fallbackUsers = selectedUsers.length > 0 ? selectedUsers : users.slice(0, 2);
+      await prisma.organizedProjectMember.createMany({
+        data: fallbackUsers.map((member, position) => ({
+          organizedProjectId: project.id,
+          userId: member.id,
+          position,
+          isTeamLead: position === 0,
+          isInstructor: position === 1,
+        })),
+        skipDuplicates: true,
+      });
+    }
 
     const linkedResearch = researchProjects.slice(
       researchOffset,
       researchOffset + demo.linkCount,
     );
-    researchOffset = (researchOffset + demo.linkCount) % Math.max(1, researchProjects.length);
+    researchOffset =
+      (researchOffset + demo.linkCount) % Math.max(1, researchProjects.length);
 
     for (const researchProject of linkedResearch) {
       await prisma.organizedProjectResearch.upsert({
@@ -160,27 +277,43 @@ async function ensureDemoOrganizedProjects() {
 export default async function OrganizedProjectsPage() {
   await ensureDemoOrganizedProjects();
 
-  const [projects, researchOptions] = await Promise.all([
-    prisma.organizedProject.findMany({
-      include: {
-        research: {
-          include: {
-            researchProject: {
-              include: {
-                _count: { select: { submissions: true, publications: true } },
+  const [projects, researchOptions, users, fundingInstitutions] =
+    await Promise.all([
+      prisma.organizedProject.findMany({
+        include: {
+          fundingInstitution: true,
+          members: {
+            include: {
+              user: true,
+            },
+            orderBy: { position: "asc" },
+          },
+          research: {
+            include: {
+              researchProject: {
+                include: {
+                  _count: { select: { submissions: true, publications: true } },
+                },
               },
             },
+            orderBy: { createdAt: "desc" },
           },
-          orderBy: { createdAt: "desc" },
         },
-      },
-      orderBy: { updatedAt: "desc" },
-    }),
-    prisma.researchProject.findMany({
-      select: { id: true, title: true, stage: true },
-      orderBy: { updatedAt: "desc" },
-    }),
-  ]);
+        orderBy: { updatedAt: "desc" },
+      }),
+      prisma.researchProject.findMany({
+        select: { id: true, title: true, stage: true },
+        orderBy: { updatedAt: "desc" },
+      }),
+      prisma.user.findMany({
+        select: { id: true, name: true, email: true, roles: true },
+        orderBy: [{ name: "asc" }, { email: "asc" }],
+      }),
+      prisma.fundingInstitution.findMany({
+        select: { id: true, name: true, shortName: true, country: true },
+        orderBy: { name: "asc" },
+      }),
+    ]);
 
   const active = projects.filter((project) => project.status === "ACTIVE");
   const completed = projects.filter((project) => project.status === "COMPLETED");
@@ -197,14 +330,23 @@ export default async function OrganizedProjectsPage() {
   const rows: OrganizedProjectRow[] = projects.map((project) => ({
     id: project.id,
     title: project.title,
-    organizer: project.organizer ?? "",
+    organizer: project.fundingInstitution?.name ?? project.organizer ?? "",
     referenceCode: project.referenceCode ?? "",
     description: project.description ?? "",
     status: project.status,
-    requiredResearchCount: project.requiredResearchCount ?? 0,
+    financialClaimStatus: project.financialClaimStatus,
+    durationLabel: durationLabel(project.durationMonths),
     startDate: shortDate(project.startDate),
     endDate: shortDate(project.endDate),
     note: project.note ?? "",
+    members: project.members.map((member) => ({
+      id: member.user.id,
+      name: member.user.name ?? "",
+      email: member.user.email,
+      isTeamLead: member.isTeamLead,
+      isInstructor: member.isInstructor,
+    })),
+    researchCount: project.research.length,
     research: project.research.map(({ researchProject }) => ({
       id: researchProject.id,
       title: researchProject.title,
@@ -236,7 +378,21 @@ export default async function OrganizedProjectsPage() {
           ))}
         </div>
 
-        <NewOrganizedProjectDialog researchOptions={researchOptions} />
+        <NewOrganizedProjectDialog
+          researchOptions={researchOptions}
+          users={users.map((user) => ({
+            id: user.id,
+            name: user.name ?? "",
+            email: user.email,
+            role: user.roles.join(", "),
+          }))}
+          fundingInstitutions={fundingInstitutions.map((institution) => ({
+            id: institution.id,
+            name: institution.name,
+            shortName: institution.shortName ?? "",
+            country: institution.country ?? "",
+          }))}
+        />
       </div>
 
       <OrganizedProjectsTable rows={rows} />
