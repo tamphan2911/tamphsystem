@@ -914,7 +914,22 @@ export default async function ProjectDetailPage({
               name="claimStatus"
               value={project.claimStatus}
             />
-            <section className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50">
+            <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50">
+              <h2 className="text-sm font-bold text-slate-950 dark:text-white">
+                Research notes:
+              </h2>
+              <div className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-200">
+                {project.abstract?.trim() ? (
+                  <p className="whitespace-pre-wrap">{project.abstract}</p>
+                ) : (
+                  <p className="text-slate-400 dark:text-slate-500">
+                    No note recorded for this research.
+                  </p>
+                )}
+              </div>
+
+              <div className="my-5 border-t border-slate-200 dark:border-slate-800" />
+
               <div className="mb-3 flex items-center justify-between gap-3">
                 <h2 className="text-sm font-bold text-slate-950 dark:text-white">
                   Authors
@@ -968,15 +983,6 @@ export default async function ProjectDetailPage({
                 ))}
               </div>
             </section>
-            <div className="min-h-40 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-200">
-              {project.abstract?.trim() ? (
-                <p className="whitespace-pre-wrap">{project.abstract}</p>
-              ) : (
-                <p className="text-slate-400 dark:text-slate-500">
-                  No note recorded for this research.
-                </p>
-              )}
-            </div>
           </section>
 
           <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
