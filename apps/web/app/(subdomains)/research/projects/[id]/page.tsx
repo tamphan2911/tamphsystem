@@ -733,20 +733,6 @@ export default async function ProjectDetailPage({
               <StageIcon className="h-4 w-4 flex-none" />
               <span className="truncate">{stageStyle.label}</span>
             </div>
-            <button
-              type="submit"
-              form="research-detail-form"
-              disabled={researchContentLocked}
-              title={
-                researchContentLocked
-                  ? "Research content is locked after journal acceptance or publication"
-                  : "Save research changes"
-              }
-              className="inline-flex h-11 w-full shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-sm font-bold text-emerald-700 shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-md disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:hover:translate-y-0 disabled:hover:bg-slate-100 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-200 dark:shadow-black/20 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/60 dark:disabled:border-slate-800 dark:disabled:bg-slate-900 dark:disabled:text-slate-500 sm:w-[11.5rem]"
-            >
-              <Save className="h-4 w-4 flex-none" />
-              Save changes
-            </button>
           </div>
         </div>
         <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
