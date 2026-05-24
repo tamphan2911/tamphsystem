@@ -875,7 +875,7 @@ export default async function ProjectDetailPage({
               name="claimStatus"
               value={project.claimStatus}
             />
-            <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50">
+            <div>
               {project.organizedProjectLinks.length > 0 && (
                 <>
                   <h2 className="text-sm font-bold text-slate-950 dark:text-white">
@@ -974,7 +974,7 @@ export default async function ProjectDetailPage({
                   </div>
                 ))}
               </div>
-            </section>
+            </div>
           </section>
 
           <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
