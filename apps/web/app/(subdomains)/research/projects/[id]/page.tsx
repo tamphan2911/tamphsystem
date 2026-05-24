@@ -811,7 +811,7 @@ export default async function ProjectDetailPage({
                   <h2 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
                     Registration and claim
                   </h2>
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid items-end gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                       Registration period
                       <input
@@ -819,7 +819,7 @@ export default async function ProjectDetailPage({
                         defaultValue={project.universityRegistration ?? ""}
                         placeholder="Q1 2026"
                         disabled={researchContentLocked || !isAdmin}
-                        className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:disabled:bg-slate-900 dark:disabled:text-slate-400"
+                        className="h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:disabled:bg-slate-900 dark:disabled:text-slate-400"
                       />
                     </label>
                     <RegisterUserPicker

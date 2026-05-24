@@ -20,13 +20,13 @@ export function ResearchTitleField({
           <button
             type="button"
             onClick={() => setOpen(true)}
-            title="View abstract and working notes"
+            title="View notes"
             className="group relative inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 hover:shadow-md dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-800 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
-            aria-label="View abstract and working notes"
+            aria-label="View notes"
           >
             <FileText className="h-4 w-4" aria-hidden="true" />
             <span className="pointer-events-none absolute bottom-full right-0 z-30 mb-2 w-52 translate-y-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold leading-5 text-slate-700 opacity-0 shadow-xl shadow-slate-900/10 ring-1 ring-slate-100 transition duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800 dark:shadow-black/30">
-              View abstract and working notes
+              View notes
             </span>
           </button>
         </span>
@@ -43,7 +43,7 @@ export function ResearchTitleField({
             <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
               <div>
                 <h2 className="text-lg font-bold text-slate-950 dark:text-white">
-                  Abstract and working notes
+                  Notes
                 </h2>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   Read-only preview from this research record.
@@ -64,7 +64,7 @@ export function ResearchTitleField({
                   <p className="whitespace-pre-wrap">{notes}</p>
                 ) : (
                   <p className="text-slate-400 dark:text-slate-500">
-                    No abstract or working notes have been added yet.
+                    No notes have been added yet.
                   </p>
                 )}
               </div>

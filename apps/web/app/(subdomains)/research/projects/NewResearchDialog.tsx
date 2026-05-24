@@ -299,7 +299,7 @@ export function NewResearchDialog({
                   <h3 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
                     Registration
                   </h3>
-                  <div className="grid gap-4 lg:grid-cols-[14rem_1fr]">
+                  <div className="grid items-end gap-4 lg:grid-cols-[14rem_1fr]">
                     <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                       Register
                       <ResearchFormSelect
@@ -316,7 +316,7 @@ export function NewResearchDialog({
                       />
                     </label>
                     <div
-                      className={`grid gap-4 transition-all duration-300 ease-out md:grid-cols-[minmax(12rem,0.8fr)_minmax(22rem,1.2fr)] ${
+                      className={`grid items-end gap-4 transition-all duration-300 ease-out md:grid-cols-[minmax(12rem,0.8fr)_minmax(22rem,1.2fr)] ${
                         registerStatus === "NOT_REGISTERED"
                           ? "pointer-events-none max-h-0 -translate-y-1 overflow-hidden opacity-0"
                           : "max-h-40 translate-y-0 opacity-100"
@@ -329,7 +329,7 @@ export function NewResearchDialog({
                           name="universityRegistration"
                           placeholder="Q2 2026"
                           disabled={registerStatus === "NOT_REGISTERED"}
-                          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:disabled:bg-slate-900"
+                          className="h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:disabled:bg-slate-900"
                         />
                       </label>
                       <RegisterUserPicker
@@ -342,7 +342,7 @@ export function NewResearchDialog({
               )}
 
               <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                Abstract and working notes
+                Notes
                 <textarea
                   name="abstract"
                   placeholder="Idea, data, model, writing, humanizing, references..."
