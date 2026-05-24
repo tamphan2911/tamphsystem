@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { CheckCircle2, Clock3, ClipboardList, UsersRound } from "lucide-react";
 import {
   FilterSelect,
@@ -142,7 +143,13 @@ function derivedStatus(task: TaskRow) {
   return label.toUpperCase().replace(" ", "_");
 }
 
-export function TasksClient({ isAdmin }: { isAdmin: boolean }) {
+export function TasksClient({
+  isAdmin,
+  action,
+}: {
+  isAdmin: boolean;
+  action?: ReactNode;
+}) {
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("ALL");
@@ -248,23 +255,27 @@ export function TasksClient({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
-        {stats.map((item) => (
-          <div
-            key={item.label}
-            className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-          >
-            <item.icon className={`h-4 w-4 ${item.color}`} />
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                {item.label}
-              </p>
-              <p className="text-base font-black text-slate-950 dark:text-white">
-                {item.value}
-              </p>
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
+          {stats.map((item) => (
+            <div
+              key={item.label}
+              className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            >
+              <item.icon className={`h-4 w-4 ${item.color}`} />
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  {item.label}
+                </p>
+                <p className="text-base font-black text-slate-950 dark:text-white">
+                  {item.value}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        {action}
       </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">

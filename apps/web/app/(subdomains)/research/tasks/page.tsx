@@ -44,11 +44,10 @@ export default async function ResearchTasksPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="flex justify-end">
-        {isAdmin && <NewTaskDialog assistants={assistants} />}
-      </div>
-
-      <TasksClient isAdmin={isAdmin} />
+      <TasksClient
+        isAdmin={isAdmin}
+        action={isAdmin ? <NewTaskDialog assistants={assistants} /> : null}
+      />
     </div>
   );
 }

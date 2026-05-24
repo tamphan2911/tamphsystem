@@ -66,7 +66,7 @@ export function NewTaskDialog({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+        className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-bold text-violet-700 shadow-sm shadow-violet-900/5 transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-100 hover:shadow-md dark:border-violet-800/70 dark:bg-violet-950/50 dark:text-violet-200 dark:hover:border-violet-600 dark:hover:bg-violet-900/60"
       >
         <PlusCircle className="h-4 w-4" />
         New Task
