@@ -5,6 +5,7 @@ import { Landmark, Loader2, Pencil, Plus, Save, X } from "lucide-react";
 import { useResearchToast } from "../components/ResearchToast";
 
 export type FundingInstitutionValues = {
+  funderCode?: string | null;
   name?: string;
   shortName?: string | null;
   country?: string | null;
@@ -115,12 +116,24 @@ export function FundingInstitutionDialog({
                       Basic information
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Name, alias, and country used in the funder list.
+                      Funder ID, name, alias, and country used in the funder list.
                     </p>
                   </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
+                  <label className={labelClass}>
+                    Funder ID
+                    <input
+                      value={
+                        isEdit
+                          ? initialValues?.funderCode || "Missing ID"
+                          : "Generated after saving"
+                      }
+                      readOnly
+                      className={`${inputClass} cursor-not-allowed bg-slate-100 font-mono text-xs font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-900 dark:text-slate-400`}
+                    />
+                  </label>
                   <label className={`${labelClass} md:col-span-2`}>
                     Funder name
                     <input
