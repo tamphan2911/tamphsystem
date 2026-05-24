@@ -642,7 +642,7 @@ export async function createOrganizedProject(formData: FormData) {
 
   revalidatePath("/organized-projects");
   revalidatePath("/funding-institutions");
-  redirect("/organized-projects");
+  redirect("/organized-projects?created=project");
 }
 
 export async function updateOrganizedProject(

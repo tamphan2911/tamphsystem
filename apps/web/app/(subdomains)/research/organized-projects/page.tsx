@@ -9,6 +9,7 @@ import {
   OrganizedProjectsTable,
   type OrganizedProjectRow,
 } from "./OrganizedProjectsTable";
+import { ProjectToastFeedback } from "./ProjectToastFeedback";
 
 export const dynamic = "force-dynamic";
 
@@ -234,8 +235,12 @@ async function ensureDemoOrganizedProjects() {
       where: { organizedProjectId: project.id },
     });
     if (existingMembers === 0 && users.length > 0) {
-      const selectedUsers = users.slice(index % users.length, index % users.length + 3);
-      const fallbackUsers = selectedUsers.length > 0 ? selectedUsers : users.slice(0, 2);
+      const selectedUsers = users.slice(
+        index % users.length,
+        (index % users.length) + 3,
+      );
+      const fallbackUsers =
+        selectedUsers.length > 0 ? selectedUsers : users.slice(0, 2);
       await prisma.organizedProjectMember.createMany({
         data: fallbackUsers.map((member, position) => ({
           organizedProjectId: project.id,
@@ -316,16 +321,38 @@ export default async function OrganizedProjectsPage() {
     ]);
 
   const active = projects.filter((project) => project.status === "ACTIVE");
-  const completed = projects.filter((project) => project.status === "COMPLETED");
+  const completed = projects.filter(
+    (project) => project.status === "COMPLETED",
+  );
   const linkedResearch = projects.reduce(
     (sum, project) => sum + project.research.length,
     0,
   );
   const stats = [
-    { label: "Projects", value: projects.length, icon: Building2, color: "text-slate-600" },
-    { label: "Active", value: active.length, icon: Clock3, color: "text-blue-600" },
-    { label: "Completed", value: completed.length, icon: CheckCircle2, color: "text-emerald-600" },
-    { label: "Research results", value: linkedResearch, icon: FileText, color: "text-amber-600" },
+    {
+      label: "Projects",
+      value: projects.length,
+      icon: Building2,
+      color: "text-slate-600",
+    },
+    {
+      label: "Active",
+      value: active.length,
+      icon: Clock3,
+      color: "text-blue-600",
+    },
+    {
+      label: "Completed",
+      value: completed.length,
+      icon: CheckCircle2,
+      color: "text-emerald-600",
+    },
+    {
+      label: "Research results",
+      value: linkedResearch,
+      icon: FileText,
+      color: "text-amber-600",
+    },
   ];
   const rows: OrganizedProjectRow[] = projects.map((project) => ({
     id: project.id,
@@ -358,6 +385,7 @@ export default async function OrganizedProjectsPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
+      <ProjectToastFeedback />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
           {stats.map((item) => (

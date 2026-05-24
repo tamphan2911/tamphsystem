@@ -4,6 +4,7 @@ import { ArrowLeft, CalendarDays, Save } from "lucide-react";
 import { prisma } from "@repo/db";
 import { updateOrganizedProject } from "../../actions";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
+import { SaveForm } from "../../components/SaveForm";
 import {
   FundingInstitutionPicker,
   ProjectMembersPicker,
@@ -108,7 +109,9 @@ export default async function OrganizedProjectDetailPage({
               {project.title}
             </h1>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              {project.fundingInstitution?.name || project.organizer || "No funding institution"}
+              {project.fundingInstitution?.name ||
+                project.organizer ||
+                "No funding institution"}
             </p>
           </div>
           <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950">
@@ -125,8 +128,10 @@ export default async function OrganizedProjectDetailPage({
         </div>
       </div>
 
-      <form
+      <SaveForm
         action={saveProject}
+        successMessage="Project changes saved"
+        successDetail="Project information, members, duration, funding details, and linked research outputs are now updated."
         className="grid gap-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
       >
         <section className="grid gap-4 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
@@ -178,7 +183,9 @@ export default async function OrganizedProjectDetailPage({
               Status
               <ResearchFormSelect
                 name="status"
-                defaultValue={project.status === "ARCHIVED" ? "PLANNED" : project.status}
+                defaultValue={
+                  project.status === "ARCHIVED" ? "PLANNED" : project.status
+                }
                 ariaLabel="Choose project status"
                 options={[
                   { value: "PLANNED", label: "Planned" },
@@ -272,7 +279,7 @@ export default async function OrganizedProjectDetailPage({
             Save changes
           </button>
         </div>
-      </form>
+      </SaveForm>
     </div>
   );
 }
