@@ -649,7 +649,7 @@ export default async function ProjectDetailPage({
           className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-950 dark:hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to projects
+          Back to research
         </Link>
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <h1 className="min-w-0 text-xl font-bold leading-8 tracking-tight text-slate-950 dark:text-white">
