@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart3,
   BriefcaseBusiness,
@@ -61,6 +61,8 @@ const adminLinks = [
   { href: "https://admin.tamph.com", label: "Admin", icon: SlidersHorizontal },
 ];
 
+const sidebarStateKey = "research-sidebar-collapsed";
+
 export function ResearchShell({
   children,
   email,
@@ -74,7 +76,14 @@ export function ResearchShell({
   isAdmin: boolean;
   isAssistant: boolean;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(sidebarStateKey) === "true";
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(sidebarStateKey, String(collapsed));
+  }, [collapsed]);
   const visibleNavItems = navItems.filter((item) => {
     if ("adminOnly" in item && item.adminOnly) return isAdmin;
     if ("requiresTaskAccess" in item && item.requiresTaskAccess)
