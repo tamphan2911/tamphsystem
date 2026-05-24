@@ -59,7 +59,7 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md"
+        className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-violet-200 bg-violet-100/80 px-4 py-2.5 text-sm font-bold text-violet-800 shadow-sm shadow-violet-900/5 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-50 hover:shadow-md hover:shadow-violet-900/10 focus:outline-none focus:ring-4 focus:ring-violet-200/70 dark:border-violet-700/60 dark:bg-violet-900/35 dark:text-violet-100 dark:hover:border-violet-500/70 dark:hover:bg-violet-800/55 dark:hover:text-white dark:hover:shadow-black/25 dark:focus:ring-violet-700/35"
       >
         <PlusCircle className="h-4 w-4" />
         Add Assistant

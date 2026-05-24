@@ -22,7 +22,7 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+        className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-100/80 px-4 py-2.5 text-sm font-bold text-emerald-800 shadow-sm shadow-emerald-900/5 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50 hover:shadow-md hover:shadow-emerald-900/10 focus:outline-none focus:ring-4 focus:ring-emerald-200/70 dark:border-emerald-700/60 dark:bg-emerald-900/35 dark:text-emerald-100 dark:hover:border-emerald-500/70 dark:hover:bg-emerald-800/55 dark:hover:text-white dark:hover:shadow-black/25 dark:focus:ring-emerald-700/35"
       >
         <PlusCircle className="h-4 w-4" />
         New Review
