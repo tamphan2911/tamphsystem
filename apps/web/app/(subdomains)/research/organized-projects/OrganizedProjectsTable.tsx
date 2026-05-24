@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   Banknote,
-  Building2,
+  CalendarClock,
   CheckCircle2,
   CircleDollarSign,
   Clock3,
@@ -74,7 +74,7 @@ function statusMeta(status: string) {
   }
   return {
     label: "Planned",
-    icon: Building2,
+    icon: CalendarClock,
     className:
       "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900",
   };
