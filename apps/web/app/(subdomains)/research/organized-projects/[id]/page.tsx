@@ -2,19 +2,30 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
+  BadgeCheck,
   Banknote,
+  Ban,
+  BookOpenCheck,
+  CalendarCheck2,
   CalendarClock,
   CalendarDays,
   CheckCircle2,
   CircleDollarSign,
+  CircleOff,
   Clock3,
-  FileText,
+  FileCheck2,
+  FileClock,
+  FileSearch,
+  FlaskConical,
   GraduationCap,
   RotateCcw,
+  Send,
+  SendHorizontal,
   ShieldCheck,
   Star,
   UserRound,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { prisma } from "@repo/db";
 import { updateOrganizedProject } from "../../actions";
 import {
@@ -111,6 +122,94 @@ function claimMeta(status: string) {
   };
 }
 
+function researchStageLabel(stage: string) {
+  if (stage === "SUBMITTING") return "SUBMITTED";
+  if (stage === "REVIEW") return "REVIEW";
+  return stage;
+}
+
+function researchStageClass(stage: string) {
+  if (stage === "PUBLISHED" || stage === "ACCEPTED") {
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  }
+  if (stage === "REVIEW") {
+    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  }
+  if (stage === "SUBMITTING") {
+    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  }
+  return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+}
+
+function researchStageIcon(stage: string) {
+  if (stage === "PUBLISHED") return BookOpenCheck;
+  if (stage === "ACCEPTED") return BadgeCheck;
+  if (stage === "REVIEW") return FileSearch;
+  if (stage === "SUBMITTING") return Send;
+  return FlaskConical;
+}
+
+function researchClaimLabel(claim: string) {
+  if (claim === "CANNOT_CLAIM") return "Cannot claim";
+  if (claim === "WAITING_PUBLISH") return "Waiting publish";
+  if (claim === "MAKING_DOCUMENT") return "Making document";
+  if (claim === "WAITING") return "Waiting";
+  if (claim === "CLAIMED") return "Claimed";
+  return claim.replace("_", " ");
+}
+
+function researchClaimClass(claim: string) {
+  if (claim === "CLAIMED") {
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  }
+  if (claim === "WAITING") {
+    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  }
+  if (claim === "WAITING_PUBLISH") {
+    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
+  }
+  if (claim === "MAKING_DOCUMENT") {
+    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  }
+  return "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+}
+
+function researchClaimIcon(claim: string) {
+  if (claim === "CLAIMED") return CheckCircle2;
+  if (claim === "WAITING") return FileClock;
+  if (claim === "WAITING_PUBLISH") return FileSearch;
+  if (claim === "MAKING_DOCUMENT") return FileCheck2;
+  if (claim === "CANNOT_CLAIM") return Ban;
+  return CircleDollarSign;
+}
+
+function registrationLabel(status: string) {
+  if (status === "APPROVED") return "Approved";
+  if (status === "SUBMITTED") return "Submitted";
+  if (status === "PREPARING") return "Plan";
+  return "Not registered";
+}
+
+function registrationClass(status: string) {
+  if (status === "APPROVED") {
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  }
+  if (status === "SUBMITTED") {
+    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  }
+  if (status === "PREPARING") {
+    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  }
+  return "bg-rose-50 text-rose-600 ring-rose-100 dark:bg-rose-950/35 dark:text-rose-300 dark:ring-rose-900/70";
+}
+
+function registrationIcon(status: string) {
+  if (status === "APPROVED") return CalendarCheck2;
+  if (status === "SUBMITTED") return SendHorizontal;
+  if (status === "PREPARING") return FileClock;
+  return CircleOff;
+}
+
 function IconHint({
   label,
   children,
@@ -128,8 +227,132 @@ function IconHint({
   );
 }
 
+function StatusIconChip({
+  icon: Icon,
+  label,
+  className,
+}: {
+  icon: LucideIcon;
+  label: string;
+  className: string;
+}) {
+  return (
+    <IconHint label={label}>
+      <span
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+      >
+        <Icon className="h-4 w-4" aria-hidden="true" />
+        <span className="sr-only">{label}</span>
+      </span>
+    </IconHint>
+  );
+}
+
+function RegistrationCell({
+  status,
+  registration,
+  registerName,
+}: {
+  status: string;
+  registration: string | null;
+  registerName: string;
+}) {
+  const Icon = registrationIcon(status);
+  const label = registrationLabel(status);
+  const detail = registration?.trim() ?? "";
+  const showDetail = detail.length > 0;
+  const registerLine =
+    status !== "NOT_REGISTERED" && registerName.trim()
+      ? `${label} - ${registerName.trim()}`
+      : label;
+
+  return (
+    <div className="flex max-w-56 items-center gap-2">
+      <IconHint label={registerLine}>
+        <span
+          className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${registrationClass(status)}`}
+        >
+          <Icon className="h-4 w-4" aria-hidden="true" />
+        </span>
+      </IconHint>
+      <div
+        className={`min-w-0 ${showDetail ? "" : "flex min-h-8 items-center"}`}
+      >
+        {showDetail && (
+          <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+            {detail}
+          </p>
+        )}
+        <p
+          className={`${showDetail ? "mt-0.5" : ""} text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500`}
+        >
+          {registerLine}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ResearchCount({
+  count,
+  label,
+}: {
+  count: number;
+  label: string;
+}) {
+  const isZero = count === 0;
+  const className = isZero
+    ? "bg-rose-50 text-rose-500 ring-rose-100 dark:bg-rose-950/35 dark:text-rose-300 dark:ring-rose-900/70"
+    : "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700";
+
+  return (
+    <IconHint label={`${count} ${label.toLowerCase()}`}>
+      <span
+        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-semibold ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+      >
+        {count}
+        <span className="sr-only">
+          {count} {label.toLowerCase()}
+        </span>
+      </span>
+    </IconHint>
+  );
+}
+
 function memberName(member: { name: string; email: string }) {
   return member.name || member.email;
+}
+
+function researchAuthorLine(project: {
+  coAuthors: string | null;
+  leadResearcher: { name: string | null; email: string };
+  authors: { name: string | null; email: string }[];
+  authorEntries: {
+    isCorresponding: boolean;
+    user: { name: string | null; email: string };
+  }[];
+}) {
+  if (project.authorEntries.length > 0) {
+    return project.authorEntries
+      .map(
+        (entry) =>
+          `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
+      )
+      .join(", ");
+  }
+  if (project.authors.length > 0) {
+    return project.authors
+      .map(
+        (author, index) =>
+          `${author.name || author.email}${index === 0 ? "*" : ""}`,
+      )
+      .join(", ");
+  }
+  return (
+    project.coAuthors ||
+    project.leadResearcher.name ||
+    project.leadResearcher.email
+  );
 }
 
 export default async function OrganizedProjectDetailPage({
@@ -152,6 +375,20 @@ export default async function OrganizedProjectDetailPage({
             include: {
               researchProject: {
                 include: {
+                  leadResearcher: { select: { name: true, email: true } },
+                  registrationUser: {
+                    select: { name: true, email: true },
+                  },
+                  authors: {
+                    select: { name: true, email: true },
+                    orderBy: [{ name: "asc" }, { email: "asc" }],
+                  },
+                  authorEntries: {
+                    include: {
+                      user: { select: { name: true, email: true } },
+                    },
+                    orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+                  },
                   _count: { select: { submissions: true, publications: true } },
                 },
               },
@@ -364,33 +601,102 @@ export default async function OrganizedProjectDetailPage({
             researchOptions={researchOptions}
           />
         </div>
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
-          {project.research.map(({ researchProject }) => (
-            <div
-              key={researchProject.id}
-              className="grid gap-3 py-3 lg:grid-cols-[minmax(0,1fr)_8rem_8rem]"
-            >
-              <Link
-                href={`/projects/${researchProject.id}`}
-                className="min-w-0 text-sm font-medium text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
-              >
-                {researchProject.title}
-              </Link>
-              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                {researchProject.stage}
-              </p>
-              <p className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
-                <FileText className="h-3.5 w-3.5" />
-                {researchProject._count.submissions} submit /{" "}
-                {researchProject._count.publications} publish
-              </p>
-            </div>
-          ))}
-          {project.research.length === 0 && (
-            <p className="py-5 text-sm text-slate-400 dark:text-slate-500">
-              No research associated.
-            </p>
-          )}
+        <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+          <table className="w-full table-fixed text-left">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+              <tr>
+                <th className="w-[5.75rem] px-3 py-3">ID</th>
+                <th className="px-3 py-3">Research</th>
+                <th className="w-[4.5rem] px-3 py-3">Stage</th>
+                <th className="w-[4.5rem] px-3 py-3">Claim</th>
+                <th className="w-[12rem] px-3 py-3">Registration</th>
+                <th className="w-[5rem] px-3 py-3 text-center">Submit</th>
+                <th className="w-[5rem] px-3 py-3 text-center">Publish</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {project.research.map(({ researchProject }) => {
+                const registerName =
+                  researchProject.registrationUser?.name ||
+                  researchProject.registrationUser?.email ||
+                  researchProject.registrationName ||
+                  "";
+
+                return (
+                  <tr
+                    key={researchProject.id}
+                    className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                  >
+                    <td className="px-3 py-3 align-top">
+                      <Link href={`/projects/${researchProject.id}`}>
+                        <span className="font-mono text-xs font-bold text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300">
+                          {researchProject.researchCode || "-"}
+                        </span>
+                      </Link>
+                    </td>
+                    <td className="min-w-0 px-3 py-3 align-top">
+                      <Link
+                        href={`/projects/${researchProject.id}`}
+                        className="group"
+                      >
+                        <p className="line-clamp-2 text-base font-normal text-slate-700 transition group-hover:text-blue-600 dark:text-slate-200 dark:group-hover:text-blue-300">
+                          {researchProject.title}
+                        </p>
+                        <p className="mt-1 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
+                          {researchAuthorLine(researchProject)}
+                        </p>
+                      </Link>
+                    </td>
+                    <td className="px-3 py-3 align-top">
+                      <StatusIconChip
+                        icon={researchStageIcon(researchProject.stage)}
+                        label={researchStageLabel(researchProject.stage)}
+                        className={researchStageClass(researchProject.stage)}
+                      />
+                    </td>
+                    <td className="px-3 py-3 align-top">
+                      <StatusIconChip
+                        icon={researchClaimIcon(researchProject.claimStatus)}
+                        label={researchClaimLabel(researchProject.claimStatus)}
+                        className={researchClaimClass(
+                          researchProject.claimStatus,
+                        )}
+                      />
+                    </td>
+                    <td className="px-3 py-3 align-top">
+                      <RegistrationCell
+                        status={researchProject.registerStatus}
+                        registration={researchProject.universityRegistration}
+                        registerName={registerName}
+                      />
+                    </td>
+                    <td className="px-3 py-3 text-center align-top">
+                      <ResearchCount
+                        count={researchProject._count.submissions}
+                        label="Submissions"
+                      />
+                    </td>
+                    <td className="px-3 py-3 text-center align-top">
+                      <ResearchCount
+                        count={researchProject._count.publications}
+                        label="Publications"
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+              {project.research.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400"
+                  >
+                    No research associated.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
     </div>
