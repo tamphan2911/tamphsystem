@@ -122,8 +122,8 @@ function accountLine(
   if (!account) return "No account assigned";
   return [
     account.username || "No account id",
-    account.password || "No pass",
     account.email || "No email",
+    account.password || "No pass",
   ].join(" - ");
 }
 
@@ -226,7 +226,7 @@ export default async function TaskDetailPage({
               <ClipboardList className="h-4 w-4" />
               {task.category || "Task"}
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
+            <h1 className="text-lg font-normal tracking-tight text-slate-950 dark:text-white">
               {task.title}
             </h1>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -256,7 +256,7 @@ export default async function TaskDetailPage({
               </div>
               <Link
                 href={`/projects/${task.project.id}`}
-                className="mt-2 inline-flex text-sm font-semibold text-slate-950 transition hover:text-blue-600 dark:text-white dark:hover:text-blue-300"
+                className="mt-2 inline-flex text-sm font-normal text-slate-950 transition hover:text-blue-600 dark:text-white dark:hover:text-blue-300"
               >
                 {task.project.title}
               </Link>
@@ -275,7 +275,7 @@ export default async function TaskDetailPage({
               </div>
               <Link
                 href={`/journals/${task.journal.id}`}
-                className="mt-2 inline-flex text-sm font-semibold text-slate-950 transition hover:text-blue-600 dark:text-white dark:hover:text-blue-300"
+                className="mt-2 inline-flex text-sm font-normal text-slate-950 transition hover:text-blue-600 dark:text-white dark:hover:text-blue-300"
               >
                 {task.journal.name}
               </Link>
