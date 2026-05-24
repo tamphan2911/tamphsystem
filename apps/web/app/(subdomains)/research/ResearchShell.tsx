@@ -16,6 +16,7 @@ import { SidebarSupportCard } from "../../../components/SidebarSupportCard";
 import { ThemeToggle } from "../../../components/ThemeToggle";
 import { ResearchNotificationBell } from "./ResearchNotificationBell";
 import { ResearchToastProvider } from "./components/ResearchToast";
+import { ScrollToTopButton } from "./components/ScrollToTopButton";
 
 const navItems = [
   { href: "/projects", label: "Research", icon: "projects" as const },
@@ -192,6 +193,7 @@ export function ResearchShell({
             {children}
           </main>
         </div>
+        <ScrollToTopButton />
       </div>
     </ResearchToastProvider>
   );
