@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
   ArrowLeft,
-  Building2,
   ClipboardCheck,
   Save,
   Send,
@@ -831,32 +830,6 @@ export default async function ProjectDetailPage({
         </div>
       </div>
 
-      {project.organizedProjectLinks.length > 0 && (
-        <section className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 shadow-sm dark:border-blue-900/60 dark:bg-blue-950/20">
-          <h2 className="flex items-center gap-2 text-sm font-bold text-blue-900 dark:text-blue-100">
-            <Building2 className="h-4 w-4" />
-            Used as project result
-          </h2>
-          <div className="mt-3 grid gap-2 md:grid-cols-2">
-            {project.organizedProjectLinks.map(({ organizedProject }) => (
-              <Link
-                key={organizedProject.id}
-                href="/organized-projects"
-                className="rounded-lg border border-blue-100 bg-white/80 px-3 py-2 transition hover:border-blue-300 hover:bg-white dark:border-blue-900/60 dark:bg-slate-900/70 dark:hover:border-blue-700"
-              >
-                <p className="line-clamp-1 text-sm font-semibold text-slate-900 dark:text-white">
-                  {organizedProject.title}
-                </p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  {organizedProject.organizer || "No organizer"} -{" "}
-                  {organizedProject.status}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
       <SaveForm
         id="research-detail-form"
         action={updateAction}
@@ -915,6 +888,37 @@ export default async function ProjectDetailPage({
               value={project.claimStatus}
             />
             <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50">
+              {project.organizedProjectLinks.length > 0 && (
+                <>
+                  <h2 className="text-sm font-bold text-slate-950 dark:text-white">
+                    Associated project:
+                  </h2>
+                  <div className="mt-3 grid gap-2">
+                    {project.organizedProjectLinks.map(
+                      ({ organizedProject }) => (
+                        <p
+                          key={organizedProject.id}
+                          className="text-sm leading-6 text-slate-700 dark:text-slate-200"
+                        >
+                          <Link
+                            href={`/organized-projects/${organizedProject.id}`}
+                            className="font-semibold text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
+                          >
+                            {organizedProject.title}
+                          </Link>
+                          <span className="text-slate-500 dark:text-slate-400">
+                            {" "}
+                            - {organizedProject.organizer || "No funder"} -{" "}
+                            {organizedProject.status}
+                          </span>
+                        </p>
+                      ),
+                    )}
+                  </div>
+                  <div className="my-5 border-t border-slate-200 dark:border-slate-800" />
+                </>
+              )}
+
               <h2 className="text-sm font-bold text-slate-950 dark:text-white">
                 Research notes:
               </h2>
