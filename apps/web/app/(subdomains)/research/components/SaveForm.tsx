@@ -27,11 +27,15 @@ export function SaveForm({
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const submitter = (event.nativeEvent as SubmitEvent)
+      .submitter as HTMLElement | null;
+    const toastTitle = submitter?.dataset.successTitle ?? successMessage;
+    const toastDetail = submitter?.dataset.successDetail ?? successDetail;
     startTransition(async () => {
       await action(formData);
       showSuccess({
-        title: successMessage,
-        detail: successDetail,
+        title: toastTitle,
+        detail: toastDetail,
       });
     });
   }
