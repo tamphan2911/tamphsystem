@@ -16,7 +16,7 @@ export type FundingInstitutionValues = {
 const inputClass =
   "w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-emerald-500 dark:focus:bg-slate-900";
 const labelClass =
-  "grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400";
+  "grid gap-1.5 text-left text-sm font-semibold text-slate-700 dark:text-slate-300";
 
 export function FundingInstitutionDialog({
   mode,
@@ -121,20 +121,8 @@ export function FundingInstitutionDialog({
                   </div>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4">
                   <label className={labelClass}>
-                    Funder ID
-                    <input
-                      value={
-                        isEdit
-                          ? initialValues?.funderCode || "Missing ID"
-                          : "Generated after saving"
-                      }
-                      readOnly
-                      className={`${inputClass} cursor-not-allowed bg-slate-100 font-mono text-xs font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-900 dark:text-slate-400`}
-                    />
-                  </label>
-                  <label className={`${labelClass} md:col-span-2`}>
                     Funder name
                     <input
                       name="name"
@@ -144,24 +132,39 @@ export function FundingInstitutionDialog({
                       className={inputClass}
                     />
                   </label>
-                  <label className={labelClass}>
-                    Alias
-                    <input
-                      name="shortName"
-                      defaultValue={initialValues?.shortName ?? ""}
-                      placeholder="UEH, IDPA..."
-                      className={inputClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    Country
-                    <input
-                      name="country"
-                      defaultValue={initialValues?.country ?? ""}
-                      placeholder="Vietnam"
-                      className={inputClass}
-                    />
-                  </label>
+
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <label className={labelClass}>
+                      Funder ID
+                      <input
+                        value={
+                          isEdit
+                            ? initialValues?.funderCode || "Missing ID"
+                            : "Generated after saving"
+                        }
+                        readOnly
+                        className={`${inputClass} cursor-not-allowed bg-slate-100 font-mono text-xs font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-900 dark:text-slate-400`}
+                      />
+                    </label>
+                    <label className={labelClass}>
+                      Alias
+                      <input
+                        name="shortName"
+                        defaultValue={initialValues?.shortName ?? ""}
+                        placeholder="UEH, IDPA..."
+                        className={inputClass}
+                      />
+                    </label>
+                    <label className={labelClass}>
+                      Country
+                      <input
+                        name="country"
+                        defaultValue={initialValues?.country ?? ""}
+                        placeholder="Vietnam"
+                        className={inputClass}
+                      />
+                    </label>
+                  </div>
                 </div>
               </section>
 
