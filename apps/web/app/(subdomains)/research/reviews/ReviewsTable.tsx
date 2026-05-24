@@ -205,9 +205,12 @@ export function ReviewsTable({ rows }: { rows: ReviewRow[] }) {
                       />
                     </IconHint>
                     <div>
-                      <p className="text-sm font-normal text-slate-700 dark:text-slate-200">
+                      <Link
+                        href={`/reviews/${row.id}`}
+                        className="text-sm font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                      >
                         {row.manuscriptTitle}
-                      </p>
+                      </Link>
                       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                         {row.manuscriptId ||
                           row.reviewRound ||
