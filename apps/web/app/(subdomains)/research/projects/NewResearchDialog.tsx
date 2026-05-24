@@ -230,11 +230,9 @@ export function NewResearchDialog({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="group inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 shadow-sm shadow-blue-900/5 ring-1 ring-blue-100/80 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-blue-300 hover:bg-white hover:text-blue-800 hover:shadow-md hover:shadow-blue-900/10 dark:border-blue-800/70 dark:bg-blue-950/45 dark:text-blue-200 dark:ring-blue-900/50 dark:hover:border-blue-500/70 dark:hover:bg-blue-900/60 dark:hover:text-white dark:hover:shadow-black/30"
+        className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-100/80 px-4 py-2.5 text-sm font-bold text-sky-800 shadow-sm shadow-sky-900/5 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-md hover:shadow-sky-900/10 focus:outline-none focus:ring-4 focus:ring-sky-200/70 dark:border-sky-700/60 dark:bg-sky-900/35 dark:text-sky-100 dark:hover:border-sky-500/70 dark:hover:bg-sky-800/55 dark:hover:text-white dark:hover:shadow-black/25 dark:focus:ring-sky-700/35"
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-blue-600 shadow-sm ring-1 ring-blue-100 transition group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-900/80 dark:text-blue-100 dark:ring-blue-800 dark:group-hover:bg-blue-500">
-          <PlusCircle className="h-4 w-4" />
-        </span>
+        <PlusCircle className="h-4 w-4" />
         New Research
       </button>
 
