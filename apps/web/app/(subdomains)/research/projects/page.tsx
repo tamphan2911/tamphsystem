@@ -372,6 +372,11 @@ export default async function ProjectsDashboard() {
               .join(", ")
           : (project.coAuthors ?? ""),
     universityRegistration: project.universityRegistration ?? "",
+    registerName:
+      project.registrationUser?.name ||
+      project.registrationUser?.email ||
+      project.registrationName ||
+      "",
     canViewRegistrationClaim:
       isAdmin ||
       project.registrationUserId === userId ||

@@ -8,7 +8,8 @@ import {
   Hash,
   Send,
 } from "lucide-react";
-import { prisma } from "@repo/db";
+import { prisma, Role } from "@repo/db";
+import { auth } from "../../../../../auth";
 import { formatMoney } from "../../lib/currency";
 import {
   JournalDetailTabs,
@@ -34,13 +35,31 @@ export default async function JournalDetailPage({
   const { id } = await params;
   const { back } = await searchParams;
   const backHref = back?.startsWith("/journals") ? back : "/journals";
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  const registrationIdentityValues = [session?.user?.name, session?.user?.email]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .map((value) => value.trim().toLowerCase());
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+    []) as Role[];
+  const isAdmin = roles.includes(Role.ADMIN);
 
   const journal = await prisma.journal.findUnique({
     where: { id },
     include: {
       submissions: {
         include: {
-          project: { select: { id: true, title: true } },
+          project: {
+            include: {
+              leadResearcher: true,
+              registrationUser: true,
+              authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
+              authorEntries: {
+                include: { user: true },
+                orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+              },
+            },
+          },
           account: { select: { username: true } },
         },
         orderBy: { submittedAt: "desc" },
@@ -58,6 +77,31 @@ export default async function JournalDetailPage({
 
   const submissionRows: JournalSubmissionRow[] = journal.submissions.map(
     (submission) => {
+      const canViewRegistrationClaim =
+        isAdmin ||
+        Boolean(userId && submission.project.registrationUserId === userId) ||
+        Boolean(
+          submission.project.registrationName &&
+            registrationIdentityValues.includes(
+              submission.project.registrationName.trim().toLowerCase(),
+            ),
+        );
+      const authorNames =
+        submission.project.authorEntries.length > 0
+          ? submission.project.authorEntries.map(
+              (entry) =>
+                `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
+            )
+          : submission.project.authors.length > 0
+            ? submission.project.authors.map(
+                (author, index) =>
+                  `${author.name || author.email}${index === 0 ? "*" : ""}`,
+              )
+            : [
+                `${submission.project.leadResearcher.name || submission.project.leadResearcher.email}*`,
+                submission.project.coAuthors,
+              ].filter(Boolean);
+
       return {
         id: submission.id,
         code:
@@ -66,6 +110,19 @@ export default async function JournalDetailPage({
         venueId: journal.id,
         venueName: journal.name,
         metaLine: submission.project.title,
+        projectId: submission.project.id,
+        projectTitle: submission.project.title,
+        projectAuthors: authorNames.join(", "),
+        projectStage: submission.project.stage,
+        projectClaimStatus: submission.project.claimStatus,
+        projectRegisterStatus: submission.project.registerStatus,
+        projectRegistration: submission.project.universityRegistration ?? "",
+        projectRegisterName:
+          submission.project.registrationUser?.name ||
+          submission.project.registrationUser?.email ||
+          submission.project.registrationName ||
+          "",
+        canViewRegistrationClaim,
         apc: journal.apc ?? "",
         apcCurrency: journal.apcCurrency,
         submissionFee: journal.submissionFee ?? "",

@@ -61,6 +61,11 @@ export default async function ConferenceDetailPage({ params }: { params: Promise
           ? project.authors.map((author, index) => `${author.name || author.email}${index === 0 ? "*" : ""}`).join(", ")
         : project.coAuthors ?? "",
     universityRegistration: project.universityRegistration ?? "",
+    registerName:
+      project.registrationUser?.name ||
+      project.registrationUser?.email ||
+      project.registrationName ||
+      "",
     canViewRegistrationClaim:
       isAdmin || Boolean(userId && project.registrationUserId === userId),
     leadResearcher: project.leadResearcher.name || project.leadResearcher.email,

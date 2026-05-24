@@ -37,6 +37,7 @@ export type ResearchProjectRow = {
   canViewRegistrationClaim?: boolean;
   coAuthors: string;
   universityRegistration: string;
+  registerName: string;
   leadResearcher: string;
   submissions: number;
   publications: number;
@@ -153,18 +154,24 @@ function StatusIconChip({
 function RegistrationCell({
   status,
   registration,
+  registerName,
 }: {
   status: string;
   registration: string;
+  registerName: string;
 }) {
   const Icon = registrationIcon(status);
   const label = registrationLabel(status);
   const detail = registration.trim();
   const showDetail = detail.length > 0;
+  const registerLine =
+    status !== "NOT_REGISTERED" && registerName.trim()
+      ? `${label} - ${registerName.trim()}`
+      : label;
 
   return (
     <div className="flex max-w-56 items-center gap-2">
-      <IconHint label={label}>
+      <IconHint label={registerLine}>
         <span
           className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${registrationClass(status)}`}
         >
@@ -178,7 +185,7 @@ function RegistrationCell({
           </p>
         )}
         <p className={`${showDetail ? "mt-0.5" : ""} text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500`}>
-          {label}
+          {registerLine}
         </p>
       </div>
     </div>
@@ -239,6 +246,7 @@ export function ResearchProjectsTable({
         row.leadResearcher,
         row.stage,
         row.canViewRegistrationClaim ? row.universityRegistration : "",
+        row.canViewRegistrationClaim ? row.registerName : "",
         row.canViewRegistrationClaim ? row.claimStatus : "",
       ]
         .join(" ")
@@ -351,6 +359,7 @@ export function ResearchProjectsTable({
                         <RegistrationCell
                           status={row.registerStatus}
                           registration={row.universityRegistration}
+                          registerName={row.registerName}
                         />
                       ) : (
                         <span className="text-sm text-slate-400">-</span>

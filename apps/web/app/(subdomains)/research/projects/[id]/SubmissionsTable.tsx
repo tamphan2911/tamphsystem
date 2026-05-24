@@ -10,11 +10,22 @@ import {
   Check,
   CircleDollarSign,
   Edit3,
+  BadgeCheck,
+  Ban,
+  BookOpenCheck,
+  CalendarCheck2,
+  CheckCircle2,
+  CircleOff,
+  FileCheck2,
+  FileClock,
+  FileSearch,
+  FlaskConical,
   Landmark,
   Trash2,
   TriangleAlert,
   X,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { deleteSubmission, updateSubmissionStatus } from "../../actions";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
 import {
@@ -44,6 +55,15 @@ export type SubmissionRow = {
   acceptedAt: string;
   rejectedAt: string;
   publishedAt: string;
+  projectId?: string;
+  projectTitle?: string;
+  projectAuthors?: string;
+  projectStage?: string;
+  projectClaimStatus?: string;
+  projectRegisterStatus?: string;
+  projectRegistration?: string;
+  projectRegisterName?: string;
+  canViewRegistrationClaim?: boolean;
 };
 
 const statusOptions = [
@@ -169,19 +189,162 @@ function MoneyCell({ amount, currency }: { amount: string; currency: string }) {
   );
 }
 
+function stageLabel(stage: string) {
+  if (stage === "SUBMITTING") return "SUBMITTED";
+  if (stage === "REVIEW") return "REVIEW";
+  return stage;
+}
+
+function stageClass(stage: string) {
+  if (stage === "PUBLISHED")
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (stage === "ACCEPTED")
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (stage === "REVIEW")
+    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  if (stage === "SUBMITTING")
+    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+}
+
+function stageIcon(stage: string) {
+  if (stage === "PUBLISHED") return BookOpenCheck;
+  if (stage === "ACCEPTED") return BadgeCheck;
+  if (stage === "REVIEW") return FileSearch;
+  if (stage === "SUBMITTING") return Send;
+  return FlaskConical;
+}
+
+function claimLabel(claim: string) {
+  if (claim === "CANNOT_CLAIM") return "Cannot claim";
+  if (claim === "MAKING_DOCUMENT") return "Making document";
+  if (claim === "WAITING") return "Waiting";
+  if (claim === "CLAIMED") return "Claimed";
+  return claim.replace("_", " ");
+}
+
+function claimClass(claim: string) {
+  if (claim === "CLAIMED")
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (claim === "WAITING")
+    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  if (claim === "MAKING_DOCUMENT")
+    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  return "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+}
+
+function claimIcon(claim: string) {
+  if (claim === "CLAIMED") return CheckCircle2;
+  if (claim === "WAITING") return FileClock;
+  if (claim === "MAKING_DOCUMENT") return FileCheck2;
+  if (claim === "CANNOT_CLAIM") return Ban;
+  return CircleDollarSign;
+}
+
+function registrationLabel(status: string) {
+  if (status === "APPROVED") return "Approved";
+  if (status === "SUBMITTED") return "Submitted";
+  if (status === "PREPARING") return "Plan";
+  return "Not registered";
+}
+
+function registrationClass(status: string) {
+  if (status === "APPROVED")
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (status === "SUBMITTED")
+    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  if (status === "PREPARING")
+    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  return "bg-rose-50 text-rose-600 ring-rose-100 dark:bg-rose-950/35 dark:text-rose-300 dark:ring-rose-900/70";
+}
+
+function registrationIcon(status: string) {
+  if (status === "APPROVED") return CalendarCheck2;
+  if (status === "SUBMITTED") return Send;
+  if (status === "PREPARING") return FileClock;
+  return CircleOff;
+}
+
+function StatusIconChip({
+  icon: Icon,
+  label,
+  className,
+}: {
+  icon: LucideIcon;
+  label: string;
+  className: string;
+}) {
+  return (
+    <IconHint label={label}>
+      <span
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+      >
+        <Icon className="h-4 w-4" aria-hidden="true" />
+        <span className="sr-only">{label}</span>
+      </span>
+    </IconHint>
+  );
+}
+
+function RegistrationCell({
+  status,
+  registration,
+  registerName,
+}: {
+  status: string;
+  registration: string;
+  registerName: string;
+}) {
+  const Icon = registrationIcon(status);
+  const label = registrationLabel(status);
+  const detail = registration.trim();
+  const showDetail = detail.length > 0;
+  const registerLine =
+    status !== "NOT_REGISTERED" && registerName.trim()
+      ? `${label} - ${registerName.trim()}`
+      : label;
+
+  return (
+    <div className="flex max-w-60 items-center gap-2">
+      <IconHint label={registerLine}>
+        <span
+          className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${registrationClass(status)}`}
+        >
+          <Icon className="h-4 w-4" aria-hidden="true" />
+        </span>
+      </IconHint>
+      <div className={`min-w-0 ${showDetail ? "" : "flex min-h-8 items-center"}`}>
+        {showDetail && (
+          <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+            {detail}
+          </p>
+        )}
+        <p className={`${showDetail ? "mt-0.5" : ""} text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500`}>
+          {registerLine}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function SubmissionsTable({
   rows,
   isAdmin,
   disabled = false,
   actionMode = isAdmin ? "edit" : "none",
+  view = "venue",
 }: {
   rows: SubmissionRow[];
   isAdmin: boolean;
   disabled?: boolean;
   actionMode?: "none" | "edit" | "delete";
+  view?: "venue" | "research";
 }) {
   const router = useRouter();
   const hasAction = isAdmin && actionMode !== "none";
+  const isResearchView = view === "research";
+  const showRegistrationClaim =
+    !isResearchView || rows.some((row) => row.canViewRegistrationClaim);
   const showStatusEdit = isAdmin && actionMode === "edit";
   const showDelete = isAdmin && actionMode === "delete";
   const [query, setQuery] = useState("");
@@ -202,6 +365,13 @@ export function SubmissionsTable({
       const matchesKind = kind === "ALL" || row.kind === kind;
       const haystack = [
         row.venueName,
+        row.projectTitle,
+        row.projectAuthors,
+        row.projectStage,
+        row.canViewRegistrationClaim ? row.projectClaimStatus : "",
+        row.canViewRegistrationClaim ? row.projectRegisterStatus : "",
+        row.canViewRegistrationClaim ? row.projectRegistration : "",
+        row.canViewRegistrationClaim ? row.projectRegisterName : "",
         row.code,
         row.metaLine,
         row.apc,
@@ -295,7 +465,11 @@ export function SubmissionsTable({
           <TableSearchInput
             value={query}
             onChange={setQuery}
-            placeholder="Search journal, conference, publisher, account..."
+            placeholder={
+              isResearchView
+                ? "Search research, authors, status..."
+                : "Search journal, conference, publisher, account..."
+            }
           />
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
             <FilterSelect
@@ -311,16 +485,18 @@ export function SubmissionsTable({
                 { value: "PUBLISHED", label: "Published" },
               ]}
             />
-            <FilterSelect
-              value={kind}
-              onChange={setKind}
-              ariaLabel="Filter by venue type"
-              options={[
-                { value: "ALL", label: "All venues" },
-                { value: "journal", label: "Journals" },
-                { value: "conference", label: "Conferences" },
-              ]}
-            />
+            {!isResearchView && (
+              <FilterSelect
+                value={kind}
+                onChange={setKind}
+                ariaLabel="Filter by venue type"
+                options={[
+                  { value: "ALL", label: "All venues" },
+                  { value: "journal", label: "Journals" },
+                  { value: "conference", label: "Conferences" },
+                ]}
+              />
+            )}
           </div>
         </div>
 
@@ -328,14 +504,12 @@ export function SubmissionsTable({
           <table className="w-full table-fixed text-left">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
-                <th className="w-[7%] px-4 py-3">ID</th>
-                <th
-                  className={`${hasAction ? "w-[29%]" : "w-[33%]"} px-4 py-3`}
-                >
-                  Journal / Conference
+                <th className={`${isResearchView ? "w-[8%]" : "w-[7%]"} px-4 py-3`}>ID</th>
+                <th className={`${isResearchView ? "w-[35%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-4 py-3`}>
+                  {isResearchView ? "Research" : "Journal / Conference"}
                 </th>
                 <th
-                  className={`${hasAction ? "w-[18%]" : "w-[20%]"} px-4 py-3`}
+                  className={`${isResearchView ? "w-[15%]" : hasAction ? "w-[18%]" : "w-[20%]"} px-4 py-3`}
                 >
                   <span className="inline-flex items-center gap-2">
                     Status
@@ -349,13 +523,28 @@ export function SubmissionsTable({
                     )}
                   </span>
                 </th>
-                <th className="w-[11%] px-4 py-3">APC</th>
-                <th className="w-[12%] px-4 py-3">Submission fee</th>
-                <th
-                  className={`${hasAction ? "w-[16%]" : "w-[17%]"} px-4 py-3`}
-                >
-                  Account
-                </th>
+                {isResearchView ? (
+                  <>
+                    <th className="w-[8%] px-4 py-3">Stage</th>
+                    {showRegistrationClaim && (
+                      <>
+                        <th className="w-[8%] px-4 py-3">Claim</th>
+                        <th className="w-[18%] px-4 py-3">Registration</th>
+                      </>
+                    )}
+                    <th className="w-[8%] px-4 py-3">Account</th>
+                  </>
+                ) : (
+                  <>
+                    <th className="w-[11%] px-4 py-3">APC</th>
+                    <th className="w-[12%] px-4 py-3">Submission fee</th>
+                    <th
+                      className={`${hasAction ? "w-[16%]" : "w-[17%]"} px-4 py-3`}
+                    >
+                      Account
+                    </th>
+                  </>
+                )}
                 {hasAction && (
                   <th className="w-[7%] px-4 py-3 text-right">
                     {showDelete ? "Delete" : "Edit"}
@@ -375,29 +564,35 @@ export function SubmissionsTable({
                   <td className="px-4 py-3">
                     <Link
                       href={
-                        row.kind === "journal"
-                          ? `/journals/${row.venueId}`
-                          : `/conferences/${row.venueId}`
+                        isResearchView
+                          ? `/projects/${row.projectId}`
+                          : row.kind === "journal"
+                            ? `/journals/${row.venueId}`
+                            : `/conferences/${row.venueId}`
                       }
-                      className="flex min-w-0 items-start gap-3"
+                      className="group/link flex min-w-0 items-start gap-3"
                     >
-                      <IconHint
-                        label={
-                          row.kind === "journal" ? "Journal" : "Conference"
-                        }
-                      >
-                        {row.kind === "journal" ? (
-                          <BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" />
-                        ) : (
-                          <Landmark className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover:text-blue-600" />
-                        )}
-                      </IconHint>
+                      {!isResearchView && (
+                        <IconHint
+                          label={
+                            row.kind === "journal" ? "Journal" : "Conference"
+                          }
+                        >
+                          {row.kind === "journal" ? (
+                            <BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover/link:text-blue-600" />
+                          ) : (
+                            <Landmark className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover/link:text-blue-600" />
+                          )}
+                        </IconHint>
+                      )}
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold text-slate-700 group-hover:text-blue-600 dark:text-slate-100">
-                          {row.venueName}
+                        <span className={`${isResearchView ? "text-lg" : "text-sm"} block truncate font-normal text-slate-700 transition group-hover/link:text-blue-600 dark:text-slate-100 dark:group-hover/link:text-blue-300`}>
+                          {isResearchView ? row.projectTitle : row.venueName}
                         </span>
                         <span className="mt-1 block line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                          {row.metaLine || "-"}
+                          {isResearchView
+                            ? row.projectAuthors || "-"
+                            : row.metaLine || "-"}
                         </span>
                       </span>
                     </Link>
@@ -431,20 +626,65 @@ export function SubmissionsTable({
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                    <MoneyCell amount={row.apc} currency={row.apcCurrency} />
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                    <MoneyCell
-                      amount={row.submissionFee}
-                      currency={row.submissionFeeCurrency}
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                    {row.kind === "conference"
-                      ? "Email / website"
-                      : row.account || "Not recorded"}
-                  </td>
+                  {isResearchView ? (
+                    <>
+                      <td className="px-4 py-3">
+                        <StatusIconChip
+                          icon={stageIcon(row.projectStage || "")}
+                          label={stageLabel(row.projectStage || "")}
+                          className={stageClass(row.projectStage || "")}
+                        />
+                      </td>
+                      {showRegistrationClaim && (
+                        <>
+                          <td className="px-4 py-3">
+                            {row.canViewRegistrationClaim ? (
+                              <StatusIconChip
+                                icon={claimIcon(row.projectClaimStatus || "")}
+                                label={claimLabel(row.projectClaimStatus || "")}
+                                className={claimClass(row.projectClaimStatus || "")}
+                              />
+                            ) : (
+                              <span className="text-sm text-slate-400">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            {row.canViewRegistrationClaim ? (
+                              <RegistrationCell
+                                status={
+                                  row.projectRegisterStatus || "NOT_REGISTERED"
+                                }
+                                registration={row.projectRegistration || ""}
+                                registerName={row.projectRegisterName || ""}
+                              />
+                            ) : (
+                              <span className="text-sm text-slate-400">-</span>
+                            )}
+                          </td>
+                        </>
+                      )}
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        {row.account || "Not recorded"}
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        <MoneyCell amount={row.apc} currency={row.apcCurrency} />
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        <MoneyCell
+                          amount={row.submissionFee}
+                          currency={row.submissionFeeCurrency}
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        {row.kind === "conference"
+                          ? "Email / website"
+                          : row.account || "Not recorded"}
+                      </td>
+                    </>
+                  )}
                   {hasAction && (
                     <td className="px-4 py-3 text-right">
                       {showStatusEdit && (
@@ -482,7 +722,9 @@ export function SubmissionsTable({
               {pagination.total === 0 && (
                 <tr>
                   <td
-                    colSpan={hasAction ? 7 : 6}
+                    colSpan={
+                      hasAction ? 7 : isResearchView && showRegistrationClaim ? 7 : isResearchView ? 5 : 6
+                    }
                     className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                   >
                     No submissions match the current filters.

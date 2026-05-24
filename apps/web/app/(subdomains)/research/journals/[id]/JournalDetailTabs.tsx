@@ -169,7 +169,7 @@ export function JournalDetailTabs({
       </div>
 
       {activeTab === "submissions" && (
-        <SubmissionsTable rows={submissions} isAdmin={false} />
+        <SubmissionsTable rows={submissions} isAdmin={false} view="research" />
       )}
 
       {activeTab !== "submissions" && (
