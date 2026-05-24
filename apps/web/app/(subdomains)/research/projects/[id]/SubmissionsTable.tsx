@@ -49,6 +49,9 @@ export type SubmissionRow = {
   accountId?: string;
   account: string;
   accountEmail?: string;
+  submittedByName?: string;
+  submittedById?: string;
+  submittedByEmail?: string;
   status: string;
   submittedAt: string;
   acceptedAt: string;
@@ -306,12 +309,16 @@ export function SubmissionsTable({
   disabled = false,
   actionMode = isAdmin ? "edit" : "none",
   view = "venue",
+  linkVenue = true,
+  showSubmitter = false,
 }: {
   rows: SubmissionRow[];
   isAdmin: boolean;
   disabled?: boolean;
   actionMode?: "none" | "edit" | "delete";
   view?: "venue" | "research";
+  linkVenue?: boolean;
+  showSubmitter?: boolean;
 }) {
   const router = useRouter();
   const hasAction = isAdmin && actionMode !== "none";
@@ -350,6 +357,10 @@ export function SubmissionsTable({
         row.apc,
         row.submissionFee,
         row.account,
+        row.accountEmail,
+        row.submittedByName,
+        row.submittedByEmail,
+        row.submittedById,
         row.status,
         row.kind,
       ]
@@ -477,12 +488,12 @@ export function SubmissionsTable({
           <table className="w-full table-fixed text-left">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
-                <th className={`${isResearchView ? "w-[8%]" : "w-[7%]"} px-4 py-3`}>ID</th>
-                <th className={`${isResearchView ? "w-[42%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-4 py-3`}>
+                <th className={`${isResearchView ? "w-[8%]" : "w-[6%]"} px-4 py-3`}>ID</th>
+                <th className={`${isResearchView ? "w-[42%]" : showSubmitter ? "w-[31%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-4 py-3`}>
                   {isResearchView ? "Research Associated" : "Journal / Conference"}
                 </th>
                 <th
-                  className={`${isResearchView ? "w-[15%]" : hasAction ? "w-[18%]" : "w-[20%]"} px-4 py-3`}
+                  className={`${isResearchView ? "w-[15%]" : "w-[13%]"} px-4 py-3`}
                 >
                   <span className="inline-flex items-center gap-2">
                     Status
@@ -508,10 +519,13 @@ export function SubmissionsTable({
                   </>
                 ) : (
                   <>
-                    <th className="w-[11%] px-4 py-3">APC</th>
-                    <th className="w-[12%] px-4 py-3">Submission fee</th>
+                    {showSubmitter && (
+                      <th className="w-[13%] px-4 py-3">Submitted by</th>
+                    )}
+                    <th className="w-[8%] px-4 py-3">APC</th>
+                    <th className="w-[8%] px-4 py-3">Fee</th>
                     <th
-                      className={`${hasAction ? "w-[16%]" : "w-[17%]"} px-4 py-3`}
+                      className={`${hasAction ? "w-[12%]" : "w-[14%]"} px-4 py-3`}
                     >
                       Account
                     </th>
@@ -530,20 +544,47 @@ export function SubmissionsTable({
                   key={row.id}
                   className={`group align-top transition duration-200 ease-out ${rowClass(row.status)}`}
                 >
-                  <td className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <td className="px-4 py-3 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     {row.code}
                   </td>
                   <td className="px-4 py-3">
-                    <Link
-                      href={
-                        isResearchView
-                          ? `/projects/${row.projectId}`
-                          : row.kind === "journal"
-                            ? `/journals/${row.venueId}`
-                            : `/conferences/${row.venueId}`
-                      }
-                      className="group/link flex min-w-0 items-start gap-3"
-                    >
+                    {linkVenue ? (
+                      <Link
+                        href={
+                          isResearchView
+                            ? `/projects/${row.projectId}`
+                            : row.kind === "journal"
+                              ? `/journals/${row.venueId}`
+                              : `/conferences/${row.venueId}`
+                        }
+                        className="group/link flex min-w-0 items-start gap-3"
+                      >
+                        {!isResearchView && (
+                          <IconHint
+                            label={
+                              row.kind === "journal" ? "Journal" : "Conference"
+                            }
+                          >
+                            {row.kind === "journal" ? (
+                              <BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover/link:text-blue-600" />
+                            ) : (
+                              <Landmark className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover/link:text-blue-600" />
+                            )}
+                          </IconHint>
+                        )}
+                        <span className="min-w-0">
+                          <span className={`${isResearchView ? "text-lg" : "text-sm"} block truncate font-normal text-slate-700 transition group-hover/link:text-blue-600 dark:text-slate-100 dark:group-hover/link:text-blue-300`}>
+                            {isResearchView ? row.projectTitle : row.venueName}
+                          </span>
+                          <span className="mt-1 block line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                            {isResearchView
+                              ? row.projectAuthors || "-"
+                              : row.metaLine || "-"}
+                          </span>
+                        </span>
+                      </Link>
+                    ) : (
+                      <div className="flex min-w-0 items-start gap-3">
                       {!isResearchView && (
                         <IconHint
                           label={
@@ -567,7 +608,8 @@ export function SubmissionsTable({
                             : row.metaLine || "-"}
                         </span>
                       </span>
-                    </Link>
+                    </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="grid gap-1.5">
@@ -648,6 +690,19 @@ export function SubmissionsTable({
                     </>
                   ) : (
                     <>
+                      {showSubmitter && (
+                        <td className="px-4 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                          <p className="truncate text-slate-700 dark:text-slate-200">
+                            {row.submittedByName || "Not recorded"}
+                          </p>
+                          <p className="truncate font-mono">
+                            {row.submittedById || "-"}
+                          </p>
+                          <p className="truncate">
+                            {row.submittedByEmail || "-"}
+                          </p>
+                        </td>
+                      )}
                       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                         <MoneyCell amount={row.apc} currency={row.apcCurrency} />
                       </td>
@@ -657,10 +712,24 @@ export function SubmissionsTable({
                           currency={row.submissionFeeCurrency}
                         />
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                        {row.kind === "conference"
-                          ? "Email / website"
-                          : row.account || "Not recorded"}
+                      <td className="px-4 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                        {row.kind === "conference" ? (
+                          "Email / website"
+                        ) : row.accountId ? (
+                          <Link
+                            href={`/accounts/${row.accountId}`}
+                            className="group/account block min-w-0"
+                          >
+                            <span className="block truncate text-slate-700 transition group-hover/account:text-blue-600 dark:text-slate-200 dark:group-hover/account:text-blue-300">
+                              {row.account || "No login ID"}
+                            </span>
+                            <span className="mt-0.5 block truncate">
+                              {row.accountEmail || "No email"}
+                            </span>
+                          </Link>
+                        ) : (
+                          "Not recorded"
+                        )}
                       </td>
                     </>
                   )}
@@ -705,8 +774,8 @@ export function SubmissionsTable({
                       isResearchView
                         ? (showRegistrationClaim ? 6 : 4) + (hasAction ? 1 : 0)
                         : hasAction
-                          ? 7
-                          : 6
+                          ? 7 + (showSubmitter ? 1 : 0)
+                          : 6 + (showSubmitter ? 1 : 0)
                     }
                     className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                   >
