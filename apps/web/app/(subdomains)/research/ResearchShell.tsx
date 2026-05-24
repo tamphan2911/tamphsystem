@@ -26,7 +26,7 @@ const navItems = [
   },
   {
     href: "/funding-institutions",
-    label: "Funding",
+    label: "Funder",
     icon: "fundingInstitutions" as const,
   },
   {
