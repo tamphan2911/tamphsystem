@@ -37,7 +37,9 @@ export default async function AcademicReviewsPage() {
     note: review.note ?? "",
   }));
 
-  const active = reviews.filter((review) => !["SUBMITTED", "DECLINED"].includes(review.status)).length;
+  const active = reviews.filter(
+    (review) => !["SUBMITTED", "DECLINED", "CANCELLED"].includes(review.status),
+  ).length;
   const completed = reviews.filter((review) => review.status === "SUBMITTED").length;
   const journalsReviewed = new Set(reviews.map((review) => review.journalId)).size;
 

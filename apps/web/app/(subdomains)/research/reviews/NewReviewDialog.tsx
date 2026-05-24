@@ -1,8 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { ClipboardCheck, PlusCircle, X } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import {
+  Check,
+  ClipboardCheck,
+  Loader2,
+  PlusCircle,
+  Search,
+  X,
+} from "lucide-react";
 import { createAcademicReview } from "../actions";
+import { ResearchFormSelect } from "../components/ResearchFormSelect";
+import { useResearchToast } from "../components/ResearchToast";
 
 type JournalOption = {
   id: string;
@@ -10,12 +19,128 @@ type JournalOption = {
   publisher: string;
 };
 
-const inputClass = "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+const inputClass = "h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
 const labelClass = "grid gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200";
 const helperClass = "text-xs font-normal leading-5 text-slate-500 dark:text-slate-400";
+const reviewStatusOptions = [
+  { value: "INVITED", label: "Invited - not accepted yet" },
+  { value: "ACCEPTED", label: "Accepted - agreed to review" },
+  { value: "IN_PROGRESS", label: "In progress - reading/writing review" },
+  { value: "ON_HOLD", label: "On hold - waiting for information" },
+  { value: "SUBMITTED", label: "Submitted - review sent to journal" },
+  { value: "DECLINED", label: "Declined - refused the invitation" },
+  { value: "CANCELLED", label: "Cancelled - journal cancelled the request" },
+];
+
+function JournalPicker({
+  journals,
+  value,
+  onChange,
+}: {
+  journals: JournalOption[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedJournal = journals.find((journal) => journal.id === value);
+  const filteredJournals = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    const options = journals;
+    if (!needle) return options.slice(0, 8);
+    return options
+      .filter((journal) =>
+        [journal.name, journal.publisher]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 8);
+  }, [journals, query]);
+
+  return (
+    <div className={`${labelClass} relative`}>
+      Journal
+      <input type="hidden" name="journalId" value={value} />
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950">
+        {selectedJournal ? (
+          <div className="flex min-h-8 items-center gap-2">
+            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+              {selectedJournal.name}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                setQuery("");
+                setIsOpen(true);
+              }}
+              className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              aria-label="Clear journal"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <span className="flex min-h-8 items-center gap-2">
+            <Search className="h-4 w-4 text-slate-400" />
+            <input
+              value={query}
+              onFocus={() => setIsOpen(true)}
+              onBlur={() => window.setTimeout(() => setIsOpen(false), 120)}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search journal"
+              className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100"
+            />
+          </span>
+        )}
+      </div>
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-full z-40 mt-2 max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/30">
+          {filteredJournals.map((journal) => (
+            <button
+              key={journal.id}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                onChange(journal.id);
+                setQuery("");
+                setIsOpen(false);
+              }}
+              className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
+            >
+              <span className="min-w-0">
+                <span className="block truncate">{journal.name}</span>
+                <span className="mt-0.5 block truncate text-xs font-normal text-slate-400">
+                  {journal.publisher || "No publisher"}
+                </span>
+              </span>
+              {journal.id === value && (
+                <Check className="h-4 w-4 flex-none" aria-hidden="true" />
+              )}
+            </button>
+          ))}
+          {filteredJournals.length === 0 && (
+            <p className="px-3 py-3 text-sm font-medium text-slate-400 dark:text-slate-500">
+              No journal matches this search.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [selectedJournalId, setSelectedJournalId] = useState("");
+  const toast = useResearchToast();
+
+  const closeDialog = () => {
+    setSelectedJournalId("");
+    setIsOpen(false);
+  };
 
   return (
     <>
@@ -33,125 +158,161 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
           <div className="max-h-[90vh] w-full max-w-4xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <div className="border-b border-slate-200 bg-slate-50/80 px-6 py-5 dark:border-slate-800 dark:bg-slate-950/50">
               <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-600 shadow-sm dark:bg-emerald-950/40 dark:text-emerald-300">
-                  <ClipboardCheck className="h-5 w-5" />
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-600 shadow-sm dark:bg-emerald-950/40 dark:text-emerald-300">
+                    <ClipboardCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-950 dark:text-white">
+                      Add academic review
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      Track review invitations, deadlines, and private notes.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-bold text-slate-950 dark:text-white">Add Academic Review</h2>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Track peer-review invitations, deadlines, submitted recommendations, and private notes.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
+                <button
+                  type="button"
+                  onClick={closeDialog}
+                  className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
             </div>
 
-            <form action={createAcademicReview} className="grid max-h-[calc(90vh-6rem)] gap-5 overflow-y-auto px-6 py-5">
-              <section className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-                <div className="mb-4">
-                  <h3 className="text-sm font-black text-slate-950 dark:text-white">Journal and Manuscript</h3>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Identify which journal invited the review and which manuscript you are reviewing.</p>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                const formData = new FormData(event.currentTarget);
+                startTransition(async () => {
+                  await createAcademicReview(formData);
+                  closeDialog();
+                  toast.showSuccess({
+                    title: "Review added",
+                    detail: "The academic review record is ready to track.",
+                  });
+                });
+              }}
+              className="grid max-h-[calc(90vh-6rem)] gap-5 overflow-y-auto px-6 py-5"
+            >
+              <section className="grid gap-4">
+                <JournalPicker
+                  journals={journals}
+                  value={selectedJournalId}
+                  onChange={setSelectedJournalId}
+                />
+                <input
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  required
+                  readOnly
+                  value={selectedJournalId}
+                  className="pointer-events-none absolute h-px w-px opacity-0"
+                />
+                <div className="grid gap-4">
+                  <label className={labelClass}>
+                    Manuscript title
+                    <input
+                      name="manuscriptTitle"
+                      required
+                      placeholder="Title from the journal system"
+                      className={inputClass}
+                    />
+                  </label>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className={labelClass}>
-                    Journal
-                    <select name="journalId" required className={inputClass}>
-                      <option value="">Select journal</option>
-                      {journals.map((journal) => (
-                        <option key={journal.id} value={journal.id}>
-                          {journal.publisher ? `${journal.publisher} - ` : ""}{journal.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className={labelClass}>
-                    Manuscript title
-                    <input name="manuscriptTitle" required placeholder="Title from the journal system" className={inputClass} />
-                  </label>
-                  <label className={labelClass}>
                     Manuscript ID / tracking code
-                    <input name="manuscriptId" placeholder="Example: JBR-2026-0142" className={inputClass} />
-                    <span className={helperClass}>The code shown in the journal submission portal or email.</span>
+                    <input
+                      name="manuscriptId"
+                      placeholder="Example: JBR-2026-0142"
+                      className={inputClass}
+                    />
+                    <span className={helperClass}>
+                      The code shown in the journal submission portal or email.
+                    </span>
                   </label>
                   <label className={labelClass}>
                     Review round
-                    <input name="reviewRound" placeholder="Example: Round 1, R2, revision review" className={inputClass} />
-                    <span className={helperClass}>Use this when the same manuscript returns for another review cycle.</span>
+                    <input
+                      name="reviewRound"
+                      placeholder="Example: Round 1, R2, revision review"
+                      className={inputClass}
+                    />
+                    <span className={helperClass}>
+                      Use this when the same manuscript returns for another
+                      review cycle.
+                    </span>
                   </label>
                 </div>
               </section>
 
-              <section className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-                <div className="mb-4">
-                  <h3 className="text-sm font-black text-slate-950 dark:text-white">Timeline and Status</h3>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Track invitation date, deadline, completion date, and current state.</p>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
+              <section className="grid gap-4 border-t border-slate-200 pt-5 dark:border-slate-800">
+                <div className="grid gap-4 md:grid-cols-3">
                   <label className={labelClass}>
                     Current status
-                    <select name="status" defaultValue="INVITED" className={inputClass}>
-                      <option value="INVITED">Invited - not accepted yet</option>
-                      <option value="ACCEPTED">Accepted - agreed to review</option>
-                      <option value="IN_PROGRESS">In progress - reading/writing review</option>
-                      <option value="SUBMITTED">Submitted - review sent to journal</option>
-                      <option value="DECLINED">Declined - refused the invitation</option>
-                    </select>
+                    <ResearchFormSelect
+                      name="status"
+                      defaultValue="INVITED"
+                      ariaLabel="Review status"
+                      options={reviewStatusOptions}
+                    />
                   </label>
                   <label className={labelClass}>
                     Requested date
-                    <input name="requestedAt" type="date" className={inputClass} />
-                    <span className={helperClass}>Date the editor or journal invited you to review.</span>
+                    <input
+                      name="requestedAt"
+                      type="date"
+                      className={inputClass}
+                    />
+                    <span className={helperClass}>
+                      Date the editor or journal invited you to review.
+                    </span>
                   </label>
                   <label className={labelClass}>
                     Due date
                     <input name="dueDate" type="date" className={inputClass} />
-                    <span className={helperClass}>The deadline for submitting your review.</span>
-                  </label>
-                  <label className={labelClass}>
-                    Completed date
-                    <input name="completedAt" type="date" className={inputClass} />
-                    <span className={helperClass}>Fill this after you submit the review to the journal.</span>
+                    <span className={helperClass}>
+                      The deadline for submitting your review.
+                    </span>
                   </label>
                 </div>
               </section>
 
-              <section className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-                <div className="mb-4">
-                  <h3 className="text-sm font-black text-slate-950 dark:text-white">Review Outcome and Notes</h3>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Record your recommendation, editor contact, portal reminders, and private notes.</p>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
+              <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
+                <div className="grid gap-4">
                   <label className={labelClass}>
-                    Recommendation
-                    <input name="recommendation" placeholder="Example: accept, minor revision, reject" className={inputClass} />
-                    <span className={helperClass}>Your final recommendation to the editor, if already submitted.</span>
-                  </label>
-                  <label className={labelClass}>
-                    Editor name
-                    <input name="editorName" placeholder="Handling editor or contact person" className={inputClass} />
-                  </label>
-                  <label className={`${labelClass} md:col-span-2`}>
                     Private note
-                    <textarea name="note" rows={3} placeholder="Portal URL, login reminder, special instructions, conflicts, follow-up notes..." className={inputClass} />
+                    <textarea
+                      name="note"
+                      rows={3}
+                      placeholder="Portal URL, login reminder, special instructions, conflicts, follow-up notes..."
+                      className={`${inputClass} h-auto min-h-28 resize-y`}
+                    />
                   </label>
                 </div>
               </section>
 
               <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button type="button" onClick={() => setIsOpen(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                <button
+                  type="button"
+                  onClick={closeDialog}
+                  disabled={isPending}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
                   Cancel
                 </button>
-                <button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md dark:bg-blue-500 dark:hover:bg-blue-400">
-                  <PlusCircle className="h-4 w-4" />
+                <button
+                  disabled={isPending}
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none dark:bg-blue-500 dark:hover:bg-blue-400"
+                >
+                  {isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <PlusCircle className="h-4 w-4" />
+                  )}
                   Add Review
                 </button>
               </div>
