@@ -58,6 +58,7 @@ model User {
   registeredResearch              ResearchProject[]            @relation("ResearchRegistrationUser")
   createdResearchTasks            ResearchTask[]               @relation("ResearchTaskCreator")
   assignedResearchTasks           ResearchTaskAssignment[]     @relation("ResearchTaskAssignee")
+  researchNotifications           ResearchNotification[]
   suggestedJournals               SuggestedJournal[]           @relation("SuggestedJournalCreator")
   suggestedConferences            SuggestedConference[]        @relation("SuggestedConferenceCreator")
   sentResearchAuthorNotifications ResearchAuthorNotification[] @relation("ResearchAuthorNotificationSender")
@@ -399,6 +400,25 @@ model ResearchAuthorNotification {
 
   @@unique([projectId, type])
   @@index([projectId])
+}
+
+model ResearchNotification {
+  id         String    @id @default(uuid())
+  userId     String
+  type       String
+  title      String
+  summary    String
+  body       String?
+  href       String?
+  entityType String?
+  entityId   String?
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@index([entityType, entityId])
 }
 
 model ResearchProjectAuthor {

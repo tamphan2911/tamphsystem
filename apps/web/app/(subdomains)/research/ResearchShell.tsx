@@ -187,7 +187,7 @@ export function ResearchShell({
               )}
             </div>
             <div className="flex items-center gap-3">
-              <ResearchNotificationBell enabled={isAdmin || isAssistant} />
+              <ResearchNotificationBell enabled={Boolean(email)} />
               <ThemeToggle />
               <ProfileMenu
                 email={email}
