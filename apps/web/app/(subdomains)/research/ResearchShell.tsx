@@ -128,7 +128,7 @@ export function ResearchShell({
           </div>
 
           <nav
-            className={`flex-1 space-y-1 overflow-y-auto transition-all duration-300 ${collapsed ? "p-3" : "p-4"}`}
+            className={`flex-1 space-y-1 transition-all duration-300 ${collapsed ? "overflow-visible p-3" : "overflow-y-auto p-4"}`}
           >
             {visibleNavItems.map((item) => (
               <ActiveNavLink
