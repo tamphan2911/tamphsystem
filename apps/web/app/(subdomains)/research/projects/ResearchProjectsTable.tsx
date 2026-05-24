@@ -52,7 +52,14 @@ const stages = [
   "ACCEPTED",
   "PUBLISHED",
 ];
-const claims = ["ALL", "CANNOT_CLAIM", "MAKING_DOCUMENT", "WAITING", "CLAIMED"];
+const claims = [
+  "ALL",
+  "CANNOT_CLAIM",
+  "WAITING_PUBLISH",
+  "MAKING_DOCUMENT",
+  "WAITING",
+  "CLAIMED",
+];
 
 function stageLabel(stage: string) {
   if (stage === "SUBMITTING") return "SUBMITTED";
@@ -82,6 +89,7 @@ function stageIcon(stage: string) {
 
 function claimLabel(claim: string) {
   if (claim === "CANNOT_CLAIM") return "Cannot claim";
+  if (claim === "WAITING_PUBLISH") return "Waiting publish";
   if (claim === "MAKING_DOCUMENT") return "Making document";
   if (claim === "WAITING") return "Waiting";
   if (claim === "CLAIMED") return "Claimed";
@@ -93,6 +101,8 @@ function claimClass(claim: string) {
     return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
   if (claim === "WAITING")
     return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  if (claim === "WAITING_PUBLISH")
+    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
   if (claim === "MAKING_DOCUMENT")
     return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
   return "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
@@ -101,6 +111,7 @@ function claimClass(claim: string) {
 function claimIcon(claim: string) {
   if (claim === "CLAIMED") return CheckCircle2;
   if (claim === "WAITING") return FileClock;
+  if (claim === "WAITING_PUBLISH") return FileSearch;
   if (claim === "MAKING_DOCUMENT") return FileCheck2;
   if (claim === "CANNOT_CLAIM") return Ban;
   return CircleDollarSign;
@@ -178,13 +189,17 @@ function RegistrationCell({
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
       </IconHint>
-      <div className={`min-w-0 ${showDetail ? "" : "flex min-h-8 items-center"}`}>
+      <div
+        className={`min-w-0 ${showDetail ? "" : "flex min-h-8 items-center"}`}
+      >
         {showDetail && (
           <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
             {detail}
           </p>
         )}
-        <p className={`${showDetail ? "mt-0.5" : ""} text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500`}>
+        <p
+          className={`${showDetail ? "mt-0.5" : ""} text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500`}
+        >
           {registerLine}
         </p>
       </div>
@@ -235,9 +250,7 @@ export function ResearchProjectsTable({
     return rows.filter((row) => {
       const matchesStage = stage === "ALL" || row.stage === stage;
       const matchesClaim =
-        !showRegistrationClaim ||
-        claim === "ALL" ||
-        row.claimStatus === claim;
+        !showRegistrationClaim || claim === "ALL" || row.claimStatus === claim;
       const haystack = [
         row.title,
         row.researchCode,
@@ -295,12 +308,8 @@ export function ResearchProjectsTable({
         <table className="w-full table-fixed text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="w-[5.75rem] px-3 py-3">
-                ID
-              </th>
-              <th className="px-3 py-3">
-                Research
-              </th>
+              <th className="w-[5.75rem] px-3 py-3">ID</th>
+              <th className="px-3 py-3">Research</th>
               <th className="w-[4.5rem] px-3 py-3">Stage</th>
               {showRegistrationClaim && (
                 <>

@@ -343,6 +343,7 @@ export default async function ProjectsDashboard() {
   const published = projects.filter((project) => project.stage === "PUBLISHED");
   const claimQueue = projects.filter(
     (project) =>
+      project.claimStatus === "WAITING_PUBLISH" ||
       project.claimStatus === "MAKING_DOCUMENT" ||
       project.claimStatus === "WAITING",
   );

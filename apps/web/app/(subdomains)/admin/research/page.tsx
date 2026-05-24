@@ -85,6 +85,7 @@ export default async function AdminResearchPage() {
             className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           >
             <option value="CANNOT_CLAIM">Cannot claim</option>
+            <option value="WAITING_PUBLISH">Waiting publish</option>
             <option value="MAKING_DOCUMENT">Making document</option>
             <option value="WAITING">Waiting</option>
             <option value="CLAIMED">Claimed</option>

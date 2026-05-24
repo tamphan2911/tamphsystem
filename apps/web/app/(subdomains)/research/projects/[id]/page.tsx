@@ -23,20 +23,17 @@ import {
   type TaskAssigneeOption,
 } from "./SuggestedJournalsPanel";
 import { SaveForm } from "../../components/SaveForm";
-import { ResearchFormSelect } from "../../components/ResearchFormSelect";
-import {
-  AuthorsPicker,
-  type AuthorOption,
-  type SelectedAuthor,
-} from "./AuthorsPicker";
+import { type AuthorOption, type SelectedAuthor } from "./AuthorsPicker";
 import {
   CreateSubmissionTaskDialog,
   type SubmissionTaskVenueOption,
 } from "./CreateSubmissionTaskDialog";
 import { ResearchContentLockButton } from "./ResearchContentLockButton";
 import { AuthorNotificationActions } from "./AuthorNotificationActions";
-import { ResearchTitleField } from "./ResearchTitleField";
-import { RegisterUserPicker } from "../RegisterUserPicker";
+import {
+  ResearchAuthorsEditDialog,
+  ResearchBasicEditDialog,
+} from "./ResearchDetailEditDialogs";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +64,7 @@ const registerOptions = [
 
 const claimOptions = [
   { value: "CANNOT_CLAIM", label: "Cannot claim" },
+  { value: "WAITING_PUBLISH", label: "Waiting publish" },
   { value: "MAKING_DOCUMENT", label: "Making document" },
   { value: "WAITING", label: "Waiting response" },
   { value: "CLAIMED", label: "Claimed" },
@@ -205,6 +203,39 @@ function displayRole(roles: Role[]) {
       ?.replace("_", " ")
       .toLowerCase()
       .replace(/\b\w/g, (letter) => letter.toUpperCase()) || "User"
+  );
+}
+
+function registerLabel(status: string) {
+  if (status === "PREPARING") return "Plan";
+  if (status === "SUBMITTED") return "Submitted";
+  if (status === "APPROVED") return "Approved";
+  return "Not registered";
+}
+
+function claimLabel(status: string) {
+  if (status === "CANNOT_CLAIM") return "Cannot claim";
+  if (status === "WAITING_PUBLISH") return "Waiting publish";
+  if (status === "MAKING_DOCUMENT") return "Making document";
+  if (status === "WAITING") return "Waiting response";
+  if (status === "CLAIMED") return "Claimed";
+  return status.replaceAll("_", " ");
+}
+
+function IconHint({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className="group/icon relative inline-flex">
+      {children}
+      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
+        {label}
+      </span>
+    </span>
   );
 }
 
@@ -541,6 +572,28 @@ export default async function ProjectDetailPage({
               isCorresponding: true,
             },
           ];
+  const completedProductionStepValues = project.completedProductionSteps;
+  const researchBasicValues = {
+    title: project.title,
+    abstract: project.abstract ?? "",
+    universityRegistration: project.universityRegistration ?? "",
+    registrationName: project.registrationName ?? "",
+    registerStatus: project.registerStatus,
+    claimStatus: project.claimStatus,
+    registrationUser: defaultRegistrationUser,
+  };
+  const registrationParts =
+    project.registerStatus === "NOT_REGISTERED"
+      ? [registerLabel(project.registerStatus)]
+      : [
+          registerLabel(project.registerStatus),
+          project.universityRegistration,
+          project.registrationUser?.name ||
+            project.registrationUser?.email ||
+            project.registrationName,
+          claimLabel(project.claimStatus),
+        ].filter(Boolean);
+  const registrationLine = registrationParts.join(" - ");
   const authorNotificationSentTypes = project.authorNotifications
     .filter((notification) => {
       if (!Array.isArray(notification.results)) return false;
@@ -652,14 +705,28 @@ export default async function ProjectDetailPage({
           Back to research
         </Link>
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-          <h1 className="min-w-0 text-xl font-bold leading-8 tracking-tight text-slate-950 dark:text-white">
-            {project.title}
-            {project.researchCode && (
-              <span className="ml-2 align-baseline text-sm font-semibold text-slate-500 dark:text-slate-400">
-                (ID: {project.researchCode})
-              </span>
-            )}
-          </h1>
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              {project.researchCode && (
+                <span className="font-mono text-xs font-bold uppercase tracking-wide text-slate-400">
+                  ID: {project.researchCode}
+                </span>
+              )}
+              <ResearchBasicEditDialog
+                action={updateAction}
+                values={researchBasicValues}
+                authors={defaultAuthors}
+                completedProductionSteps={completedProductionStepValues}
+                users={authorOptions}
+                registerOptions={registerOptions}
+                claimOptions={claimOptions}
+                canEditRegistrationClaim={isAdmin}
+              />
+            </div>
+            <h1 className="mt-2 min-w-0 text-xl font-medium leading-8 tracking-tight text-slate-950 dark:text-white">
+              {project.title}
+            </h1>
+          </div>
           <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row xl:justify-end">
             <div
               className={`inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-bold shadow-sm transition sm:w-[11.5rem] ${stageStyle.className}`}
@@ -684,7 +751,35 @@ export default async function ProjectDetailPage({
           </div>
         </div>
         <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
-          <p>Authors: {authorsLine}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold text-slate-700 dark:text-slate-200">
+              Authors:
+            </span>
+            <span>{authorsLine}</span>
+            <ResearchAuthorsEditDialog
+              action={updateAction}
+              values={researchBasicValues}
+              authors={defaultAuthors}
+              completedProductionSteps={completedProductionStepValues}
+              users={authorOptions}
+              headerActions={
+                isAdmin ? (
+                  <AuthorNotificationActions
+                    projectId={project.id}
+                    sentTypes={authorNotificationSentTypes}
+                  />
+                ) : null
+              }
+              disabled={journalSuccessLocksResearch}
+            />
+            {canViewRegistrationClaim && (
+              <IconHint label={registrationLine}>
+                <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+                  {registrationLine}
+                </span>
+              </IconHint>
+            )}
+          </div>
           {highlightedJournalSubmission && highlightedJournalClass && (
             <div
               className={`flex items-center gap-3 rounded-xl border px-3 py-2 ${highlightedJournalClass.box}`}
@@ -785,83 +880,63 @@ export default async function ProjectDetailPage({
       >
         <fieldset disabled={researchContentLocked} className="contents">
           <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="grid gap-5">
-              <section className="grid gap-4">
-                <ResearchTitleField
-                  defaultValue={project.title}
-                  notes={project.abstract ?? ""}
-                />
-                <AuthorsPicker
-                  users={authorOptions}
-                  defaultAuthors={defaultAuthors}
-                  disabled={researchContentLocked}
-                  headerActions={
-                    isAdmin ? (
-                      <AuthorNotificationActions
-                        projectId={project.id}
-                        sentTypes={authorNotificationSentTypes}
-                      />
-                    ) : null
-                  }
-                />
-              </section>
-
-              {canViewRegistrationClaim && (
-                <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
-                  <h2 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
-                    Registration and claim
-                  </h2>
-                  <div className="grid items-end gap-4 md:grid-cols-2">
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                      Registration period
-                      <input
-                        name="universityRegistration"
-                        defaultValue={project.universityRegistration ?? ""}
-                        placeholder="Q1 2026"
-                        disabled={researchContentLocked || !isAdmin}
-                        className="h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:disabled:bg-slate-900 dark:disabled:text-slate-400"
-                      />
-                    </label>
-                    <RegisterUserPicker
-                      users={authorOptions}
-                      defaultUser={defaultRegistrationUser}
-                      disabled={researchContentLocked || !isAdmin}
-                    />
-                    {!defaultRegistrationUser && project.registrationName && (
-                      <input
-                        type="hidden"
-                        name="registrationName"
-                        value={project.registrationName}
-                      />
-                    )}
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                      Register
-                      <ResearchFormSelect
-                        name="registerStatus"
-                        defaultValue={project.registerStatus}
-                        options={registerOptions}
-                        ariaLabel="Registration status"
-                        disabled={researchContentLocked || !isAdmin}
-                      />
-                    </label>
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                      Claim status
-                      <ResearchFormSelect
-                        name="claimStatus"
-                        defaultValue={project.claimStatus}
-                        options={claimOptions}
-                        ariaLabel="Claim status"
-                        disabled={researchContentLocked || !isAdmin}
-                      />
-                    </label>
-                  </div>
-                  {!isAdmin && (
-                    <p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                      Registration and claim details are view-only for the
-                      registered user.
-                    </p>
-                  )}
-                </section>
+            <input type="hidden" name="title" value={project.title} />
+            <input
+              type="hidden"
+              name="abstract"
+              value={project.abstract ?? ""}
+            />
+            {defaultAuthors.map((author) => (
+              <input
+                key={author.id}
+                type="hidden"
+                name="authorUserIds"
+                value={author.id}
+              />
+            ))}
+            <input
+              type="hidden"
+              name="correspondingAuthorId"
+              value={
+                defaultAuthors.find((author) => author.isCorresponding)?.id ??
+                defaultAuthors[0]?.id ??
+                ""
+              }
+            />
+            <input
+              type="hidden"
+              name="universityRegistration"
+              value={project.universityRegistration ?? ""}
+            />
+            <input
+              type="hidden"
+              name="registrationUserId"
+              value={defaultRegistrationUser?.id ?? ""}
+            />
+            {!defaultRegistrationUser && project.registrationName && (
+              <input
+                type="hidden"
+                name="registrationName"
+                value={project.registrationName}
+              />
+            )}
+            <input
+              type="hidden"
+              name="registerStatus"
+              value={project.registerStatus}
+            />
+            <input
+              type="hidden"
+              name="claimStatus"
+              value={project.claimStatus}
+            />
+            <div className="min-h-40 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-200">
+              {project.abstract?.trim() ? (
+                <p className="whitespace-pre-wrap">{project.abstract}</p>
+              ) : (
+                <p className="text-slate-400 dark:text-slate-500">
+                  No note recorded for this research.
+                </p>
               )}
             </div>
           </section>

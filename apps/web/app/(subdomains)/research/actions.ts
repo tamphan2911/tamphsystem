@@ -806,8 +806,13 @@ export async function updateResearchProject(
       submission.status === SubmissionStatus.ACCEPTED ||
       submission.status === SubmissionStatus.PUBLISHED,
   );
+  const updateScope = optionalString(formData.get("updateScope"));
 
-  if (hasLockedJournalSubmission && !projectLock?.contentUnlocked) {
+  if (
+    hasLockedJournalSubmission &&
+    !projectLock?.contentUnlocked &&
+    updateScope !== "basic"
+  ) {
     revalidatePath(`/projects/${projectId}`);
     return;
   }

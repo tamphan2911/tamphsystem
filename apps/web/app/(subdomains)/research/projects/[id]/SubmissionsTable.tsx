@@ -16,6 +16,7 @@ import {
   CircleOff,
   FileCheck2,
   FileClock,
+  FileSearch,
   Landmark,
   Send,
   Trash2,
@@ -193,6 +194,7 @@ function MoneyCell({ amount, currency }: { amount: string; currency: string }) {
 
 function claimLabel(claim: string) {
   if (claim === "CANNOT_CLAIM") return "Cannot claim";
+  if (claim === "WAITING_PUBLISH") return "Waiting publish";
   if (claim === "MAKING_DOCUMENT") return "Making document";
   if (claim === "WAITING") return "Waiting";
   if (claim === "CLAIMED") return "Claimed";
@@ -204,6 +206,8 @@ function claimClass(claim: string) {
     return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
   if (claim === "WAITING")
     return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  if (claim === "WAITING_PUBLISH")
+    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
   if (claim === "MAKING_DOCUMENT")
     return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
   return "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
@@ -212,6 +216,7 @@ function claimClass(claim: string) {
 function claimIcon(claim: string) {
   if (claim === "CLAIMED") return CheckCircle2;
   if (claim === "WAITING") return FileClock;
+  if (claim === "WAITING_PUBLISH") return FileSearch;
   if (claim === "MAKING_DOCUMENT") return FileCheck2;
   if (claim === "CANNOT_CLAIM") return Ban;
   return CircleDollarSign;
@@ -289,13 +294,17 @@ function RegistrationCell({
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
       </IconHint>
-      <div className={`min-w-0 ${showDetail ? "" : "flex min-h-8 items-center"}`}>
+      <div
+        className={`min-w-0 ${showDetail ? "" : "flex min-h-8 items-center"}`}
+      >
         {showDetail && (
           <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
             {detail}
           </p>
         )}
-        <p className={`${showDetail ? "mt-0.5" : ""} text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500`}>
+        <p
+          className={`${showDetail ? "mt-0.5" : ""} text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500`}
+        >
           {registerLine}
         </p>
       </div>
@@ -488,9 +497,17 @@ export function SubmissionsTable({
           <table className="w-full table-fixed text-left">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
-                <th className={`${isResearchView ? "w-[8%]" : "w-[6%]"} px-4 py-3`}>ID</th>
-                <th className={`${isResearchView ? "w-[42%]" : showSubmitter ? "w-[31%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-4 py-3`}>
-                  {isResearchView ? "Research Associated" : "Journal / Conference"}
+                <th
+                  className={`${isResearchView ? "w-[8%]" : "w-[6%]"} px-4 py-3`}
+                >
+                  ID
+                </th>
+                <th
+                  className={`${isResearchView ? "w-[42%]" : showSubmitter ? "w-[31%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-4 py-3`}
+                >
+                  {isResearchView
+                    ? "Research Associated"
+                    : "Journal / Conference"}
                 </th>
                 <th
                   className={`${isResearchView ? "w-[15%]" : "w-[13%]"} px-4 py-3`}
@@ -573,7 +590,9 @@ export function SubmissionsTable({
                           </IconHint>
                         )}
                         <span className="min-w-0">
-                          <span className={`${isResearchView ? "text-lg" : "text-sm"} block truncate font-normal text-slate-700 transition group-hover/link:text-blue-600 dark:text-slate-100 dark:group-hover/link:text-blue-300`}>
+                          <span
+                            className={`${isResearchView ? "text-lg" : "text-sm"} block truncate font-normal text-slate-700 transition group-hover/link:text-blue-600 dark:text-slate-100 dark:group-hover/link:text-blue-300`}
+                          >
                             {isResearchView ? row.projectTitle : row.venueName}
                           </span>
                           <span className="mt-1 block line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
@@ -585,30 +604,32 @@ export function SubmissionsTable({
                       </Link>
                     ) : (
                       <div className="flex min-w-0 items-start gap-3">
-                      {!isResearchView && (
-                        <IconHint
-                          label={
-                            row.kind === "journal" ? "Journal" : "Conference"
-                          }
-                        >
-                          {row.kind === "journal" ? (
-                            <BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover/link:text-blue-600" />
-                          ) : (
-                            <Landmark className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover/link:text-blue-600" />
-                          )}
-                        </IconHint>
-                      )}
-                      <span className="min-w-0">
-                        <span className={`${isResearchView ? "text-lg" : "text-sm"} block truncate font-normal text-slate-700 transition group-hover/link:text-blue-600 dark:text-slate-100 dark:group-hover/link:text-blue-300`}>
-                          {isResearchView ? row.projectTitle : row.venueName}
+                        {!isResearchView && (
+                          <IconHint
+                            label={
+                              row.kind === "journal" ? "Journal" : "Conference"
+                            }
+                          >
+                            {row.kind === "journal" ? (
+                              <BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover/link:text-blue-600" />
+                            ) : (
+                              <Landmark className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover/link:text-blue-600" />
+                            )}
+                          </IconHint>
+                        )}
+                        <span className="min-w-0">
+                          <span
+                            className={`${isResearchView ? "text-lg" : "text-sm"} block truncate font-normal text-slate-700 transition group-hover/link:text-blue-600 dark:text-slate-100 dark:group-hover/link:text-blue-300`}
+                          >
+                            {isResearchView ? row.projectTitle : row.venueName}
+                          </span>
+                          <span className="mt-1 block line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                            {isResearchView
+                              ? row.projectAuthors || "-"
+                              : row.metaLine || "-"}
+                          </span>
                         </span>
-                        <span className="mt-1 block line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                          {isResearchView
-                            ? row.projectAuthors || "-"
-                            : row.metaLine || "-"}
-                        </span>
-                      </span>
-                    </div>
+                      </div>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -649,7 +670,9 @@ export function SubmissionsTable({
                               <StatusIconChip
                                 icon={claimIcon(row.projectClaimStatus || "")}
                                 label={claimLabel(row.projectClaimStatus || "")}
-                                className={claimClass(row.projectClaimStatus || "")}
+                                className={claimClass(
+                                  row.projectClaimStatus || "",
+                                )}
                               />
                             ) : (
                               <span className="text-sm text-slate-400">-</span>
@@ -704,7 +727,10 @@ export function SubmissionsTable({
                         </td>
                       )}
                       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                        <MoneyCell amount={row.apc} currency={row.apcCurrency} />
+                        <MoneyCell
+                          amount={row.apc}
+                          currency={row.apcCurrency}
+                        />
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                         <MoneyCell

@@ -197,6 +197,7 @@ enum ResearchStage {
 
 enum ClaimStatus {
   CANNOT_CLAIM
+  WAITING_PUBLISH
   MAKING_DOCUMENT
   WAITING
   CLAIMED
