@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import {
   ArrowLeft,
   ClipboardCheck,
-  Save,
   Send,
   CheckCircle2,
   FileText,
@@ -28,6 +27,7 @@ import {
   type SubmissionTaskVenueOption,
 } from "./CreateSubmissionTaskDialog";
 import { ResearchContentLockButton } from "./ResearchContentLockButton";
+import { ProductionTimelineActions } from "./ProductionTimelineActions";
 import { AuthorNotificationActions } from "./AuthorNotificationActions";
 import {
   ResearchAuthorsEditDialog,
@@ -411,6 +411,8 @@ export default async function ProjectDetailPage({
     (step) => !completedProductionSteps.has(step.label),
   );
   const productionComplete = unfinishedSteps.length === 0;
+  const productionTimelineLocked =
+    productionComplete && project.productionTimelineLocked;
   const successfulJournalSubmission = project.submissions.find(
     (submission) =>
       submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
@@ -981,21 +983,12 @@ export default async function ProjectDetailPage({
                 <ClipboardCheck className="h-4 w-4 text-emerald-500" />
                 Production timeline
               </h2>
-              <button
-                type="submit"
+              <ProductionTimelineActions
+                projectId={project.id}
+                locked={productionTimelineLocked}
                 disabled={researchContentLocked}
-                data-success-title="Production timeline saved"
-                data-success-detail="The production checklist is now updated for this research."
-                title={
-                  researchContentLocked
-                    ? "Research content is locked after journal acceptance or publication"
-                    : "Save production timeline"
-                }
-                aria-label="Save production timeline"
-                className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-md disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:hover:translate-y-0 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-200 dark:shadow-black/20 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/60 dark:disabled:border-slate-800 dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
-              >
-                <Save className="h-4 w-4" />
-              </button>
+                totalSteps={productionSteps.length}
+              />
             </div>
             <div className="relative space-y-1">
               <div className="absolute bottom-5 left-[0.78rem] top-5 w-px bg-slate-200 dark:bg-slate-700" />
@@ -1011,6 +1004,7 @@ export default async function ProjectDetailPage({
                       name="completedProductionSteps"
                       value={step.label}
                       defaultChecked={active}
+                      disabled={productionTimelineLocked}
                       className="z-10 mt-1 h-5 w-5 cursor-pointer rounded-full border-slate-300 bg-white text-emerald-600 accent-emerald-600 shadow-sm transition focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-900"
                     />
                     <span>

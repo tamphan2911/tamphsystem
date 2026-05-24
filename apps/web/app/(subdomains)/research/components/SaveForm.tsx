@@ -26,9 +26,11 @@ export function SaveForm({
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
-    const formData = new FormData(form);
     const submitter = (event.nativeEvent as SubmitEvent)
-      .submitter as HTMLElement | null;
+      .submitter as HTMLButtonElement | null;
+    const formData = submitter
+      ? new FormData(form, submitter)
+      : new FormData(form);
     const toastTitle = submitter?.dataset.successTitle ?? successMessage;
     const toastDetail = submitter?.dataset.successDetail ?? successDetail;
     startTransition(async () => {

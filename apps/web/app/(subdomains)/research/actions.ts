@@ -853,12 +853,20 @@ export async function updateResearchProject(
       ? { abstract: optionalString(formData.get("abstract")) }
       : {}),
   };
+  const productionIsComplete = productionStepLabels.every((step) =>
+    completedProductionSteps.includes(step),
+  );
+  const productionLockUpdate =
+    updateScope === "production"
+      ? { productionTimelineLocked: productionIsComplete }
+      : {};
 
   await prisma.$transaction(async (tx) => {
     await tx.researchProject.update({
       where: { id: projectId },
       data: {
         ...data,
+        ...productionLockUpdate,
         authors: {
           set: selectedAuthorIds.map((id) => ({ id })),
         },
@@ -885,9 +893,6 @@ export async function updateResearchProject(
   const productionWasComplete = productionStepLabels.every((step) =>
     projectLock?.completedProductionSteps.includes(step),
   );
-  const productionIsComplete = productionStepLabels.every((step) =>
-    completedProductionSteps.includes(step),
-  );
 
   if (!productionWasComplete && productionIsComplete) {
     await notifyResearchAuthors(projectId, {
@@ -912,6 +917,23 @@ export async function updateResearchProject(
       excludeUserId: user.id,
     });
   }
+
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function unlockProductionTimeline(projectId: string) {
+  await requireCurrentUser();
+
+  if (await researchContentIsLocked(projectId)) {
+    revalidatePath(`/projects/${projectId}`);
+    return;
+  }
+
+  await prisma.researchProject.update({
+    where: { id: projectId },
+    data: { productionTimelineLocked: false },
+  });
 
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
