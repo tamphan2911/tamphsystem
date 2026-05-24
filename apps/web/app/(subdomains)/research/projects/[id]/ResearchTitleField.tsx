@@ -25,7 +25,7 @@ export function ResearchTitleField({
             aria-label="View abstract and working notes"
           >
             <FileText className="h-4 w-4" aria-hidden="true" />
-            <span className="pointer-events-none absolute right-0 top-full z-30 mt-2 w-52 translate-y-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 opacity-0 shadow-xl transition group-hover:translate-y-0 group-hover:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
+            <span className="pointer-events-none absolute bottom-full right-0 z-30 mb-2 w-52 translate-y-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold leading-5 text-slate-700 opacity-0 shadow-xl shadow-slate-900/10 ring-1 ring-slate-100 transition duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800 dark:shadow-black/30">
               View abstract and working notes
             </span>
           </button>

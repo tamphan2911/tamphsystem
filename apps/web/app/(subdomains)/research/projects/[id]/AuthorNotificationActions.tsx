@@ -20,32 +20,43 @@ const actions: {
   type: NotificationType;
   label: string;
   sentLabel: string;
+  sentTooltip: string;
   icon: typeof FilePlus2;
   className: string;
+  sentClassName: string;
 }[] = [
   {
     type: "CREATED",
     label: "Notify authors that research is created",
     sentLabel: "Created notification already sent",
+    sentTooltip: "Created email already sent",
     icon: FilePlus2,
     className:
       "border-sky-200 bg-sky-50 text-sky-700 hover:border-sky-300 hover:bg-sky-100 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-300",
+    sentClassName:
+      "border-sky-100 bg-sky-50/60 text-sky-400 dark:border-sky-950 dark:bg-sky-950/20 dark:text-sky-600",
   },
   {
     type: "ACCEPTED",
     label: "Notify authors that research is accepted",
     sentLabel: "Accepted notification already sent",
+    sentTooltip: "Accepted email already sent",
     icon: BadgeCheck,
     className:
       "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300",
+    sentClassName:
+      "border-emerald-100 bg-emerald-50/60 text-emerald-400 dark:border-emerald-950 dark:bg-emerald-950/20 dark:text-emerald-600",
   },
   {
     type: "PUBLISHED",
     label: "Notify authors that research is published",
     sentLabel: "Published notification already sent",
+    sentTooltip: "Published email already sent",
     icon: Rocket,
     className:
       "border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300",
+    sentClassName:
+      "border-blue-100 bg-blue-50/60 text-blue-400 dark:border-blue-950 dark:bg-blue-950/20 dark:text-blue-600",
   },
 ];
 
@@ -89,17 +100,20 @@ export function AuthorNotificationActions({
         {actions.map((action) => {
           const Icon = action.icon;
           const sent = localSent.has(action.type);
+          const tooltip = sent ? action.sentTooltip : action.label;
           return (
             <button
               key={action.type}
               type="button"
               disabled={sent || isPending}
-              title={sent ? action.sentLabel : action.label}
               aria-label={sent ? action.sentLabel : action.label}
               onClick={() => setConfirmType(action.type)}
-              className={`inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:shadow-sm dark:disabled:border-slate-800 dark:disabled:bg-slate-900 dark:disabled:text-slate-500 ${action.className}`}
+              className={`group relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-80 disabled:hover:translate-y-0 disabled:hover:shadow-sm ${sent ? action.sentClassName : action.className}`}
             >
               <Icon className="h-4 w-4" />
+              <span className="pointer-events-none absolute bottom-full left-1/2 z-40 mb-2 w-56 -translate-x-1/2 translate-y-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold leading-5 text-slate-700 opacity-0 shadow-xl shadow-slate-900/10 ring-1 ring-slate-100 transition duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800 dark:shadow-black/30">
+                {tooltip}
+              </span>
             </button>
           );
         })}
