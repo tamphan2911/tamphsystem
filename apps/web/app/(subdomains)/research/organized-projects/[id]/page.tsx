@@ -41,6 +41,7 @@ import {
   ProjectResearchEditDialog,
 } from "./ProjectDetailEditDialogs";
 import { ProjectProductsForm } from "./ProjectProductsForm";
+import { formatCurrencyCodeMoney } from "../../lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +99,14 @@ function statusMeta(status: string) {
 }
 
 function claimMeta(status: string) {
+  if (status === "NONE") {
+    return {
+      label: "None",
+      icon: CircleOff,
+      className:
+        "bg-slate-50 text-slate-500 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+    };
+  }
   if (status === "ADVANCED") {
     return {
       label: "Advanced",
@@ -563,12 +572,18 @@ export default async function OrganizedProjectDetailPage({
       : null,
     status: project.status,
     financialClaimStatus: project.financialClaimStatus,
+    fundingAmount: project.fundingAmount?.toString() ?? "",
+    fundingCurrency: project.fundingCurrency,
     startDate: dateInputValue(project.startDate),
     durationMonths: project.durationMonths ?? 1,
     requiredProducts: project.requiredProducts,
     description: project.description ?? "",
     note: project.note ?? "",
   };
+  const fundingAmountLabel = formatCurrencyCodeMoney(
+    project.fundingAmount?.toString() ?? null,
+    project.fundingCurrency,
+  );
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
@@ -608,11 +623,18 @@ export default async function OrganizedProjectDetailPage({
                   <StatusIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
               </IconHint>
-              <IconHint label={`Financial claim: ${claim.label}`}>
-                <span
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-full ring-1 ${claim.className}`}
-                >
-                  <ClaimIcon className="h-4 w-4" aria-hidden="true" />
+              <IconHint label={`Financial: ${claim.label}`}>
+                <span className="inline-flex items-center gap-2">
+                  <span
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-full ring-1 ${claim.className}`}
+                  >
+                    <ClaimIcon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  {fundingAmountLabel && (
+                    <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                      ({fundingAmountLabel})
+                    </span>
+                  )}
                 </span>
               </IconHint>
             </div>

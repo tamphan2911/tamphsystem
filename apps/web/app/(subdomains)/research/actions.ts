@@ -90,6 +90,14 @@ function positiveIntFromForm(value: FormDataEntryValue | null) {
   return Number.isInteger(number) && number > 0 ? number : null;
 }
 
+function numericStringFromForm(value: FormDataEntryValue | null) {
+  const text = optionalString(value);
+  if (!text) return null;
+  const normalized = text.replaceAll(".", "").replace(",", ".");
+  const number = Number(normalized);
+  return Number.isFinite(number) && number >= 0 ? normalized : null;
+}
+
 function addMonths(date: Date, months: number) {
   const next = new Date(date);
   next.setMonth(next.getMonth() + months);
@@ -629,6 +637,12 @@ export async function createOrganizedProject(formData: FormData) {
       })
     : null;
 
+  const financialClaimStatus =
+    enumValue(
+      OrganizedProjectFinancialClaimStatus,
+      formData.get("financialClaimStatus"),
+    ) ?? OrganizedProjectFinancialClaimStatus.NONE;
+
   const organizedProject = await prisma.organizedProject.create({
     data: {
       title,
@@ -639,11 +653,14 @@ export async function createOrganizedProject(formData: FormData) {
       status:
         enumValue(OrganizedProjectStatus, formData.get("status")) ??
         OrganizedProjectStatus.PLANNED,
-      financialClaimStatus:
-        enumValue(
-          OrganizedProjectFinancialClaimStatus,
-          formData.get("financialClaimStatus"),
-        ) ?? OrganizedProjectFinancialClaimStatus.NOT_ADVANCED,
+      financialClaimStatus,
+      fundingAmount:
+        financialClaimStatus === OrganizedProjectFinancialClaimStatus.NONE
+          ? null
+          : numericStringFromForm(formData.get("fundingAmount")),
+      fundingCurrency:
+        enumValue(CurrencyCode, formData.get("fundingCurrency")) ??
+        CurrencyCode.VND,
       requiredResearchCount: null,
       requiredProducts: linesFromForm(formData.get("requiredProducts")),
       completedProducts: [],
@@ -765,6 +782,11 @@ export async function updateOrganizedProject(
         select: { name: true },
       })
     : null;
+  const financialClaimStatus =
+    enumValue(
+      OrganizedProjectFinancialClaimStatus,
+      formData.get("financialClaimStatus"),
+    ) ?? OrganizedProjectFinancialClaimStatus.NONE;
 
   await prisma.organizedProject.update({
     where: { id: projectId },
@@ -777,11 +799,14 @@ export async function updateOrganizedProject(
       status:
         enumValue(OrganizedProjectStatus, formData.get("status")) ??
         OrganizedProjectStatus.PLANNED,
-      financialClaimStatus:
-        enumValue(
-          OrganizedProjectFinancialClaimStatus,
-          formData.get("financialClaimStatus"),
-        ) ?? OrganizedProjectFinancialClaimStatus.NOT_ADVANCED,
+      financialClaimStatus,
+      fundingAmount:
+        financialClaimStatus === OrganizedProjectFinancialClaimStatus.NONE
+          ? null
+          : numericStringFromForm(formData.get("fundingAmount")),
+      fundingCurrency:
+        enumValue(CurrencyCode, formData.get("fundingCurrency")) ??
+        CurrencyCode.VND,
       requiredProducts: linesFromForm(formData.get("requiredProducts")),
       fundingInstitutionId,
       startDate,

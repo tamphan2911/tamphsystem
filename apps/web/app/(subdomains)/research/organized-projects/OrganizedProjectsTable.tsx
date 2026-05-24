@@ -7,10 +7,12 @@ import {
   CalendarClock,
   CheckCircle2,
   CircleDollarSign,
+  CircleOff,
   Clock3,
   RotateCcw,
   ShieldCheck,
 } from "lucide-react";
+import { formatCurrencyCodeMoney } from "../lib/currency";
 import {
   FilterSelect,
   TablePagination,
@@ -42,6 +44,8 @@ export type OrganizedProjectRow = {
   description: string;
   status: string;
   financialClaimStatus: string;
+  fundingAmount: string;
+  fundingCurrency: string;
   durationLabel: string;
   startDate: string;
   endDate: string;
@@ -81,6 +85,14 @@ function statusMeta(status: string) {
 }
 
 function financialClaimMeta(status: string) {
+  if (status === "NONE") {
+    return {
+      label: "None",
+      icon: CircleOff,
+      className:
+        "bg-slate-50 text-slate-500 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+    };
+  }
   if (status === "ADVANCED") {
     return {
       label: "Advanced",
@@ -200,7 +212,7 @@ export function OrganizedProjectsTable({
               <th className="w-[7.5rem] px-3 py-3">Project ID</th>
               <th className="px-3 py-3">Project</th>
               <th className="w-16 px-2 py-3 text-center">Status</th>
-              <th className="w-16 px-2 py-3 text-center">Claim</th>
+              <th className="w-16 px-2 py-3 text-center">Financial</th>
               <th className="w-[11rem] px-3 py-3">Funding</th>
               <th className="w-[8.5rem] px-3 py-3">Dates</th>
               <th className="w-[6rem] px-2 py-3 text-center">Results</th>
@@ -220,7 +232,8 @@ export function OrganizedProjectsTable({
                 >
                   <td className="px-3 py-3 align-top">
                     <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400">
-                      {project.referenceCode || project.id.slice(0, 8).toUpperCase()}
+                      {project.referenceCode ||
+                        project.id.slice(0, 8).toUpperCase()}
                     </span>
                   </td>
                   <td className="min-w-0 px-3 py-3 align-top">
@@ -272,6 +285,14 @@ export function OrganizedProjectsTable({
                     <span className="line-clamp-2">
                       {project.organizer || "No funding institution"}
                     </span>
+                    {project.fundingAmount && (
+                      <span className="mt-1 block text-xs font-semibold text-slate-400 dark:text-slate-500">
+                        {formatCurrencyCodeMoney(
+                          project.fundingAmount,
+                          project.fundingCurrency,
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-3 align-top">
                     <p className="whitespace-nowrap text-xs font-medium text-slate-500 dark:text-slate-400">

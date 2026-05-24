@@ -363,6 +363,8 @@ export default async function OrganizedProjectsPage() {
     description: project.description ?? "",
     status: project.status,
     financialClaimStatus: project.financialClaimStatus,
+    fundingAmount: project.fundingAmount?.toString() ?? "",
+    fundingCurrency: project.fundingCurrency,
     durationLabel: durationLabel(project.durationMonths),
     startDate: shortDate(project.startDate),
     endDate: shortDate(project.endDate),

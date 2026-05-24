@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
 import { useResearchToast } from "../../components/ResearchToast";
+import { currencyOptions } from "../../lib/currency";
 import { AuthorsPicker } from "../../projects/[id]/AuthorsPicker";
 import type {
   FundingInstitutionOption,
@@ -32,6 +33,8 @@ type ProjectInfo = {
   fundingInstitution: FundingInstitutionOption | null;
   status: string;
   financialClaimStatus: string;
+  fundingAmount: string;
+  fundingCurrency: string;
   startDate: string;
   durationMonths: number;
   requiredProducts: string[];
@@ -68,6 +71,12 @@ function HiddenProjectInfo({ info }: { info: ProjectInfo }) {
         type="hidden"
         name="financialClaimStatus"
         value={info.financialClaimStatus}
+      />
+      <input type="hidden" name="fundingAmount" value={info.fundingAmount} />
+      <input
+        type="hidden"
+        name="fundingCurrency"
+        value={info.fundingCurrency}
       />
       <input type="hidden" name="startDate" value={info.startDate} />
       <input
@@ -241,6 +250,7 @@ export function ProjectInfoEditDialog({
   fundingInstitutions: FundingInstitutionOption[];
 }) {
   const [open, setOpen] = useState(false);
+  const [financial, setFinancial] = useState(info.financialClaimStatus);
   const [isPending, startTransition] = useTransition();
   const toast = useResearchToast();
 
@@ -321,12 +331,14 @@ export function ProjectInfoEditDialog({
               />
             </label>
             <label className={labelClass}>
-              Financial claim
+              Financial
               <ResearchFormSelect
                 name="financialClaimStatus"
-                defaultValue={info.financialClaimStatus}
-                ariaLabel="Choose financial claim status"
+                defaultValue={financial}
+                ariaLabel="Choose financial status"
+                onValueChange={setFinancial}
                 options={[
+                  { value: "NONE", label: "None" },
                   { value: "NOT_ADVANCED", label: "Not advanced" },
                   { value: "ADVANCED", label: "Advanced" },
                   { value: "SETTLED", label: "Settled" },
@@ -356,6 +368,31 @@ export function ProjectInfoEditDialog({
               />
             </label>
           </div>
+
+          {financial !== "NONE" && (
+            <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_14rem]">
+              <label className={labelClass}>
+                Funding amount
+                <input
+                  name="fundingAmount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={info.fundingAmount}
+                  className={fieldClass}
+                />
+              </label>
+              <label className={labelClass}>
+                Currency
+                <ResearchFormSelect
+                  name="fundingCurrency"
+                  defaultValue={info.fundingCurrency || "VND"}
+                  ariaLabel="Funding currency"
+                  options={currencyOptions}
+                />
+              </label>
+            </div>
+          )}
 
           <div className="mt-4 grid gap-4">
             <label className={labelClass}>

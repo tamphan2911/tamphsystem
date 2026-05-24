@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import { AlertTriangle, Building2, PlusCircle, X } from "lucide-react";
 import { createOrganizedProject } from "../actions";
 import { ResearchFormSelect } from "../components/ResearchFormSelect";
+import { currencyOptions } from "../lib/currency";
 import type { AuthorOption } from "../projects/[id]/AuthorsPicker";
 import {
   FundingInstitutionPicker,
@@ -25,6 +26,7 @@ export function NewOrganizedProjectDialog({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [warning, setWarning] = useState("");
+  const [financial, setFinancial] = useState("NONE");
   const warningRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,6 +42,7 @@ export function NewOrganizedProjectDialog({
   function closeDialog() {
     setIsOpen(false);
     setWarning("");
+    setFinancial("NONE");
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -179,12 +182,14 @@ export function NewOrganizedProjectDialog({
                       />
                     </label>
                     <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                      Financial claim
+                      Financial
                       <ResearchFormSelect
                         name="financialClaimStatus"
-                        defaultValue="NOT_ADVANCED"
-                        ariaLabel="Choose financial claim status"
+                        defaultValue="NONE"
+                        ariaLabel="Choose financial status"
+                        onValueChange={setFinancial}
                         options={[
+                          { value: "NONE", label: "None" },
                           { value: "NOT_ADVANCED", label: "Not advanced" },
                           { value: "ADVANCED", label: "Advanced" },
                           { value: "SETTLED", label: "Settled" },
@@ -213,6 +218,31 @@ export function NewOrganizedProjectDialog({
                       />
                     </label>
                   </div>
+
+                  {financial !== "NONE" && (
+                    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_14rem]">
+                      <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        Funding amount
+                        <input
+                          name="fundingAmount"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="20000000"
+                          className="h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        />
+                      </label>
+                      <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        Currency
+                        <ResearchFormSelect
+                          name="fundingCurrency"
+                          defaultValue="VND"
+                          ariaLabel="Funding currency"
+                          options={currencyOptions}
+                        />
+                      </label>
+                    </div>
+                  )}
 
                   <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                     Required products

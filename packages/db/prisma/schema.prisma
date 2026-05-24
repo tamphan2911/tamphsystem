@@ -270,6 +270,7 @@ enum OrganizedProjectStatus {
 }
 
 enum OrganizedProjectFinancialClaimStatus {
+  NONE
   NOT_ADVANCED
   ADVANCED
   SETTLED
@@ -322,10 +323,12 @@ model OrganizedProject {
   referenceCode         String?
   description           String?
   status                OrganizedProjectStatus               @default(PLANNED)
-  financialClaimStatus  OrganizedProjectFinancialClaimStatus @default(NOT_ADVANCED)
+  financialClaimStatus  OrganizedProjectFinancialClaimStatus @default(NONE)
   requiredResearchCount Int?
   requiredProducts      String[]                             @default([])
   completedProducts     String[]                             @default([])
+  fundingAmount         Decimal?
+  fundingCurrency       CurrencyCode                         @default(VND)
   startDate             DateTime?
   durationMonths        Int?
   endDate               DateTime?
