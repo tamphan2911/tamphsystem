@@ -22,6 +22,7 @@ export type FundingInstitutionOption = {
 
 export type ResearchResultOption = {
   id: string;
+  researchCode?: string;
   title: string;
   stage: string;
 };
@@ -420,7 +421,7 @@ export function ProjectResearchPicker({
     return researchOptions
       .filter((research) => !selectedIds.has(research.id))
       .filter((research) =>
-        [research.id, research.title, research.stage]
+        [research.id, research.researchCode, research.title, research.stage]
           .join(" ")
           .toLowerCase()
           .includes(needle),
@@ -475,7 +476,9 @@ export function ProjectResearchPicker({
                           {research.title}
                         </span>
                         <span className="block truncate text-xs font-medium text-slate-400 dark:text-slate-500">
-                          {research.stage}
+                          {[research.researchCode, research.stage]
+                            .filter(Boolean)
+                            .join(" - ")}
                         </span>
                       </span>
                       <Check className="h-4 w-4 flex-none text-blue-500" />
@@ -497,7 +500,10 @@ export function ProjectResearchPicker({
               key={research.id}
               className="inline-flex max-w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
             >
-              <span className="truncate">{research.title}</span>
+              <span className="truncate">
+                {research.researchCode ? `${research.researchCode} - ` : ""}
+                {research.title}
+              </span>
               <button
                 type="button"
                 onClick={() =>

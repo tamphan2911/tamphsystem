@@ -165,7 +165,7 @@ export default async function OrganizedProjectDetailPage({
         orderBy: [{ name: "asc" }, { email: "asc" }],
       }),
       prisma.researchProject.findMany({
-        select: { id: true, title: true, stage: true },
+        select: { id: true, researchCode: true, title: true, stage: true },
         orderBy: { updatedAt: "desc" },
       }),
       prisma.fundingInstitution.findMany({
@@ -191,6 +191,7 @@ export default async function OrganizedProjectDetailPage({
   }));
   const researchDefaults = project.research.map(({ researchProject }) => ({
     id: researchProject.id,
+    researchCode: researchProject.researchCode ?? "",
     title: researchProject.title,
     stage: researchProject.stage,
   }));

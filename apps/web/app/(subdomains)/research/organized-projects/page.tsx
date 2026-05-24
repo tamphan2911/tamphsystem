@@ -307,7 +307,7 @@ export default async function OrganizedProjectsPage() {
         orderBy: { updatedAt: "desc" },
       }),
       prisma.researchProject.findMany({
-        select: { id: true, title: true, stage: true },
+        select: { id: true, researchCode: true, title: true, stage: true },
         orderBy: { updatedAt: "desc" },
       }),
       prisma.user.findMany({
