@@ -21,6 +21,7 @@ import {
   FileSearch,
   FlaskConical,
   Landmark,
+  Send,
   Trash2,
   TriangleAlert,
   X,
