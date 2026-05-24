@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Edit3, FileText, Loader2, Save, UserRound, X } from "lucide-react";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
 import { useResearchToast } from "../../components/ResearchToast";
@@ -44,9 +45,15 @@ function DialogShell({
   detail: string;
   children: ReactNode;
 }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   if (!open) return null;
 
-  return (
+  const dialog = (
     <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
       <div className="max-h-[90vh] w-full max-w-5xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
@@ -76,6 +83,8 @@ function DialogShell({
       </div>
     </div>
   );
+
+  return mounted ? createPortal(dialog, document.body) : dialog;
 }
 
 function EditIconButton({

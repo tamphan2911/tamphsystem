@@ -756,22 +756,6 @@ export default async function ProjectDetailPage({
               Authors:
             </span>
             <span>{authorsLine}</span>
-            <ResearchAuthorsEditDialog
-              action={updateAction}
-              values={researchBasicValues}
-              authors={defaultAuthors}
-              completedProductionSteps={completedProductionStepValues}
-              users={authorOptions}
-              headerActions={
-                isAdmin ? (
-                  <AuthorNotificationActions
-                    projectId={project.id}
-                    sentTypes={authorNotificationSentTypes}
-                  />
-                ) : null
-              }
-              disabled={journalSuccessLocksResearch}
-            />
             {canViewRegistrationClaim && (
               <IconHint label={registrationLine}>
                 <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
@@ -930,6 +914,60 @@ export default async function ProjectDetailPage({
               name="claimStatus"
               value={project.claimStatus}
             />
+            <section className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h2 className="text-sm font-bold text-slate-950 dark:text-white">
+                  Authors
+                </h2>
+                <ResearchAuthorsEditDialog
+                  action={updateAction}
+                  values={researchBasicValues}
+                  authors={defaultAuthors}
+                  completedProductionSteps={completedProductionStepValues}
+                  users={authorOptions}
+                  headerActions={
+                    isAdmin ? (
+                      <AuthorNotificationActions
+                        projectId={project.id}
+                        sentTypes={authorNotificationSentTypes}
+                      />
+                    ) : null
+                  }
+                  disabled={journalSuccessLocksResearch}
+                />
+              </div>
+              <div className="grid gap-2">
+                {defaultAuthors.map((author, index) => (
+                  <div
+                    key={author.id}
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-900"
+                  >
+                    <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900">
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                          {author.name || author.email}
+                          {index === 0 ? "*" : ""}
+                        </p>
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                          {index === 0 ? "First author" : "Author"}
+                        </span>
+                        {author.isCorresponding && (
+                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-900">
+                            Corresponding
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-0.5 truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+                        {author.email}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
             <div className="min-h-40 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-200">
               {project.abstract?.trim() ? (
                 <p className="whitespace-pre-wrap">{project.abstract}</p>
