@@ -36,7 +36,7 @@ function SubmitCount({ count }: { count: number }) {
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-semibold ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+        className={`inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-xs font-semibold ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
       >
         {count}
         <span className="sr-only">{label}</span>
@@ -80,10 +80,10 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[72rem] text-left">
+        <table className="w-full min-w-[76rem] text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Account login ID</th>
+              <th className="sticky left-0 z-20 w-56 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">Login ID</th>
               <th className="px-4 py-3">Password</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Journal</th>
@@ -96,19 +96,19 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
             {pagination.pagedRows.map((account) => (
               <tr key={account.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800">
-                  <div className="flex items-center gap-2 text-sm font-normal text-slate-700 dark:text-slate-200">
+                  <div className="flex min-w-0 items-center gap-2 text-xs font-normal text-slate-700 dark:text-slate-200">
                     <IconHint label="Account credential"><KeyRound className="h-4 w-4 text-slate-400" aria-hidden="true" /></IconHint>
                     <Link
                       href={`/accounts/${account.id}`}
-                      className="font-medium text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                      className="truncate whitespace-nowrap font-medium text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
                     >
                       {account.username}
                     </Link>
                   </div>
                 </td>
-                <td className="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">{account.password || "-"}</td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.email || "-"}</td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                <td className="px-4 py-3 font-mono text-xs text-slate-600 dark:text-slate-300">{account.password || "-"}</td>
+                <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">{account.email || "-"}</td>
+                <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
                   {account.journalId ? (
                     <Link href={`/journals/${account.journalId}`} className="font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">
                       {account.journalName}
@@ -117,11 +117,11 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
                     "Publisher-wide"
                   )}
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.publisher || "-"}</td>
+                <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">{account.publisher || "-"}</td>
                 <td className="px-4 py-3">
                   <SubmitCount count={account.submissions} />
                 </td>
-                <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.note || "-"}</td>
+                <td className="max-w-sm px-4 py-3 text-xs text-slate-600 dark:text-slate-300">{account.note || "-"}</td>
               </tr>
             ))}
             {pagination.total === 0 && (
