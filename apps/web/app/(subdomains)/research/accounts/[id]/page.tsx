@@ -3,27 +3,35 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   AtSign,
-  BookOpen,
   ClipboardList,
-  Hash,
   KeyRound,
   LockKeyhole,
   Send,
-  StickyNote,
+  ShieldCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { prisma } from "@repo/db";
+import {
+  SubmissionsTable,
+  type SubmissionRow,
+} from "../../projects/[id]/SubmissionsTable";
 
 export const dynamic = "force-dynamic";
 
-function shortDate(value: Date | null) {
-  if (!value) return "-";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "2-digit",
-  }).format(value);
-}
+type AuthorUser = {
+  name: string | null;
+  email: string;
+};
+
+type ProjectForAuthorLine = {
+  coAuthors: string | null;
+  leadResearcher: AuthorUser;
+  authors: AuthorUser[];
+  authorEntries: {
+    isCorresponding: boolean;
+    user: AuthorUser;
+  }[];
+};
 
 function InfoTile({
   icon: Icon,
@@ -35,16 +43,39 @@ function InfoTile({
   value: string;
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
-      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
-        <Icon className="h-3.5 w-3.5" />
-        {label}
+    <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700">
+          <Icon className="h-3.5 w-3.5" />
+        </span>
+        <span>{label}</span>
       </div>
-      <p className="mt-2 break-words text-sm font-semibold text-slate-800 dark:text-slate-100">
+      <p className="mt-2 break-words text-base font-black text-slate-900 dark:text-slate-100">
         {value || "-"}
       </p>
     </div>
   );
+}
+
+function authorLine(project: ProjectForAuthorLine) {
+  if (project.authorEntries.length > 0) {
+    return project.authorEntries
+      .map((entry) => `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`)
+      .join(", ");
+  }
+
+  if (project.authors.length > 0) {
+    return project.authors
+      .map((author, index) => `${author.name || author.email}${index === 0 ? "*" : ""}`)
+      .join(", ");
+  }
+
+  return [
+    `${project.leadResearcher.name || project.leadResearcher.email}*`,
+    project.coAuthors,
+  ]
+    .filter(Boolean)
+    .join(", ");
 }
 
 export default async function AccountDetailPage({
@@ -58,7 +89,18 @@ export default async function AccountDetailPage({
     include: {
       journal: true,
       submissions: {
-        include: { project: true },
+        include: {
+          project: {
+            include: {
+              leadResearcher: true,
+              authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
+              authorEntries: {
+                include: { user: true },
+                orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+              },
+            },
+          },
+        },
         orderBy: { submittedAt: "desc" },
       },
       tasks: {
@@ -69,6 +111,38 @@ export default async function AccountDetailPage({
   });
 
   if (!account) notFound();
+
+  const submissionRows: SubmissionRow[] = account.submissions.map(
+    (submission) => ({
+      id: submission.id,
+      code:
+        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
+      kind: "journal",
+      venueId: account.journalId ?? submission.journalId,
+      venueName: account.journal?.name ?? "Journal not recorded",
+      metaLine: account.journal?.publisher ?? "",
+      projectId: submission.project.id,
+      projectTitle: submission.project.title,
+      projectAuthors: authorLine(submission.project),
+      projectStage: submission.project.stage,
+      projectClaimStatus: submission.project.claimStatus,
+      projectRegisterStatus: submission.project.registerStatus,
+      projectRegistration: submission.project.universityRegistration ?? "",
+      canViewRegistrationClaim: false,
+      apc: account.journal?.apc ?? "",
+      apcCurrency: account.journal?.apcCurrency ?? "USD",
+      submissionFee: account.journal?.submissionFee ?? "",
+      submissionFeeCurrency: account.journal?.submissionFeeCurrency ?? "USD",
+      accountId: account.id,
+      account: account.username,
+      accountEmail: account.email ?? "",
+      status: submission.status,
+      submittedAt: submission.submittedAt.toISOString(),
+      acceptedAt: submission.acceptedAt?.toISOString() ?? "",
+      rejectedAt: submission.rejectedAt?.toISOString() ?? "",
+      publishedAt: submission.publishedAt?.toISOString() ?? "",
+    }),
+  );
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
@@ -90,95 +164,67 @@ export default async function AccountDetailPage({
               <KeyRound className="h-5 w-5 text-amber-500" />
               {account.username}
             </h1>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+              <span className="inline-flex items-center gap-1.5">
+                <LockKeyhole className="h-3.5 w-3.5 text-amber-500" />
+                <span className="font-mono">{account.password || "-"}</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <AtSign className="h-3.5 w-3.5 text-sky-500" />
+                {account.email || "No email"}
+              </span>
+            </p>
+            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
               {account.journal ? (
                 <Link
                   href={`/journals/${account.journal.id}`}
-                  className="font-semibold text-slate-600 transition hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-300"
+                  className="font-medium text-slate-600 transition hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-300"
                 >
                   {account.journal.name}
                 </Link>
               ) : (
                 "Publisher-wide account"
               )}
+              {account.journal && (
+                <>
+                  {" "}
+                  - {account.journal.publisher || "No publisher"} -{" "}
+                  {account.journal.rank || "No rank"}
+                </>
+              )}
+            </p>
+            <p className="mt-2 max-w-3xl text-xs leading-5 text-slate-500 dark:text-slate-400">
+              {account.note || "No note recorded."}
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="grid w-full grid-cols-3 gap-2 lg:w-[24rem]">
             <InfoTile icon={Send} label="Submissions" value={String(account.submissions.length)} />
             <InfoTile icon={ClipboardList} label="Tasks" value={String(account.tasks.length)} />
-            <InfoTile icon={BookOpen} label="Scope" value={account.journal ? "Journal" : "Publisher"} />
+            <InfoTile icon={ShieldCheck} label="Scope" value={account.journal ? "Journal" : "Publisher"} />
           </div>
         </div>
       </section>
 
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <InfoTile icon={Hash} label="Site ID" value={account.id} />
-        <InfoTile icon={KeyRound} label="Login ID" value={account.username} />
-        <InfoTile icon={LockKeyhole} label="Password" value={account.password} />
-        <InfoTile icon={AtSign} label="Email" value={account.email ?? ""} />
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center gap-2 text-sm font-black text-slate-950 dark:text-white">
-          <StickyNote className="h-4 w-4 text-slate-400" />
-          Notes
+      <section className="space-y-3">
+        <div className="flex items-center gap-2 px-1">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900">
+            <Send className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="text-sm font-black text-slate-950 dark:text-white">
+              Submissions
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Research records submitted with this account.
+            </p>
+          </div>
         </div>
-        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-slate-300">
-          {account.note || "No note recorded."}
-        </p>
-      </section>
-
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-          <h2 className="text-sm font-black text-slate-950 dark:text-white">
-            Submissions
-          </h2>
-        </div>
-        <table className="w-full table-fixed text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-            <tr>
-              <th className="px-4 py-3">Research</th>
-              <th className="w-36 px-3 py-3">Status</th>
-              <th className="w-32 px-3 py-3">Submitted</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {account.submissions.map((submission) => (
-              <tr
-                key={submission.id}
-                className="transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
-              >
-                <td className="px-4 py-3">
-                  <Link
-                    href={`/projects/${submission.project.id}`}
-                    className="line-clamp-1 font-semibold text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
-                  >
-                    {submission.project.title}
-                  </Link>
-                  <p className="mt-1 font-mono text-xs text-slate-400">
-                    {submission.submissionCode || submission.id.slice(0, 8).toUpperCase()}
-                  </p>
-                </td>
-                <td className="px-3 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                  {submission.status.replace("_", " ")}
-                </td>
-                <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
-                  {shortDate(submission.submittedAt)}
-                </td>
-              </tr>
-            ))}
-            {account.submissions.length === 0 && (
-              <tr>
-                <td
-                  colSpan={3}
-                  className="px-4 py-12 text-center text-sm text-slate-500 dark:text-slate-400"
-                >
-                  No submissions use this account yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <SubmissionsTable
+          rows={submissionRows}
+          isAdmin={false}
+          actionMode="none"
+          view="research"
+        />
       </section>
     </div>
   );

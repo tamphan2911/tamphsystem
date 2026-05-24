@@ -19,6 +19,32 @@ export type AccountRow = {
 
 const scopes = ["ALL", "PUBLISHER", "JOURNAL"];
 
+function SubmitCount({ count }: { count: number }) {
+  const isZero = count === 0;
+  const isHigh = count > 10;
+  const label = isZero
+    ? "No submissions yet"
+    : isHigh
+      ? `${count} submissions, high submission count`
+      : `${count} submissions`;
+  const className = isZero
+    ? "bg-rose-50 text-rose-500 ring-rose-100 dark:bg-rose-950/35 dark:text-rose-300 dark:ring-rose-900/70"
+    : isHigh
+      ? "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900"
+      : "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700";
+
+  return (
+    <IconHint label={label}>
+      <span
+        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-semibold ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+      >
+        {count}
+        <span className="sr-only">{label}</span>
+      </span>
+    </IconHint>
+  );
+}
+
 export function AccountsTable({ rows }: { rows: AccountRow[] }) {
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState("ALL");
@@ -74,20 +100,17 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
                     <IconHint label="Account credential"><KeyRound className="h-4 w-4 text-slate-400" aria-hidden="true" /></IconHint>
                     <Link
                       href={`/accounts/${account.id}`}
-                      className="font-semibold text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                      className="font-medium text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
                     >
                       {account.username}
                     </Link>
                   </div>
-                  <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                    {account.id.slice(0, 8)}
-                  </p>
                 </td>
                 <td className="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">{account.password || "-"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.email || "-"}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                   {account.journalId ? (
-                    <Link href={`/journals/${account.journalId}`} className="font-medium text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">
+                    <Link href={`/journals/${account.journalId}`} className="font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">
                       {account.journalName}
                     </Link>
                   ) : (
@@ -95,7 +118,9 @@ export function AccountsTable({ rows }: { rows: AccountRow[] }) {
                   )}
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.publisher || "-"}</td>
-                <td className="px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{account.submissions}</td>
+                <td className="px-4 py-3">
+                  <SubmitCount count={account.submissions} />
+                </td>
                 <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{account.note || "-"}</td>
               </tr>
             ))}
