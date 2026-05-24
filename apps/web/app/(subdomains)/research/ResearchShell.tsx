@@ -28,6 +28,7 @@ const navItems = [
     href: "/funding-institutions",
     label: "Funder",
     icon: "fundingInstitutions" as const,
+    adminOnly: true,
   },
   {
     href: "/tasks",
