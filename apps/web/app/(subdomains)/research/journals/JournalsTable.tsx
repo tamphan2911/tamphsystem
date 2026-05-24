@@ -118,11 +118,13 @@ function DeleteJournalButton({
                       title: "Journal deleted",
                       detail: `${journal.name} has been removed from the journal list.`,
                     });
-                  } catch {
+                  } catch (error) {
                     toast.showError({
                       title: "Could not delete journal",
                       detail:
-                        "The journal was not removed. Please refresh the page and try again.",
+                        error instanceof Error
+                          ? error.message
+                          : "The journal was not removed. Please refresh the page and try again.",
                     });
                   } finally {
                     setIsDeleting(false);

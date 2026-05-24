@@ -1027,11 +1027,57 @@ export async function deleteJournal(journalId: string) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
 
+  const journal = await prisma.journal.findUnique({
+    where: { id: journalId },
+    select: {
+      name: true,
+      _count: { select: { submissions: true, suggestions: true } },
+    },
+  });
+
+  if (!journal) return;
+
+  if (journal._count.submissions > 0 || journal._count.suggestions > 0) {
+    throw new Error(
+      "Delete the associated submissions and research links before deleting this journal.",
+    );
+  }
+
   await prisma.journal.delete({
     where: { id: journalId },
   });
 
   revalidatePath("/journals");
+}
+
+export async function deleteConference(conferenceId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const conference = await prisma.conference.findUnique({
+    where: { id: conferenceId },
+    select: {
+      name: true,
+      _count: { select: { submissions: true, suggestions: true } },
+    },
+  });
+
+  if (!conference) return;
+
+  if (
+    conference._count.submissions > 0 ||
+    conference._count.suggestions > 0
+  ) {
+    throw new Error(
+      "Delete the associated submissions and research links before deleting this conference.",
+    );
+  }
+
+  await prisma.conference.delete({
+    where: { id: conferenceId },
+  });
+
+  revalidatePath("/conferences");
 }
 
 export async function createPublisherAccount(formData: FormData) {
