@@ -217,6 +217,40 @@ async function generateSubmissionCode() {
   return crypto.randomUUID().replaceAll("-", "").slice(0, 10).toUpperCase();
 }
 
+function funderCodeBase(name: string, alias: string | null) {
+  const source = alias || name;
+  const words = source
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  const code =
+    words.length > 1
+      ? words.map((word) => word[0]).join("")
+      : words[0]?.slice(0, 6);
+
+  return (code && code.length >= 2 ? code : "FUND").slice(0, 8);
+}
+
+async function generateFunderCode(name: string, alias: string | null) {
+  const base = funderCodeBase(name, alias);
+
+  for (let index = 0; index < 100; index += 1) {
+    const code = index === 0 ? base : `${base}${index + 1}`;
+    const existing = await prisma.fundingInstitution.findUnique({
+      where: { funderCode: code },
+      select: { id: true },
+    });
+    if (!existing) return code;
+  }
+
+  return `${base}${crypto.randomUUID().replaceAll("-", "").slice(0, 4).toUpperCase()}`;
+}
+
 const productionStepLabels = [
   "Idea forming",
   "Data collection",
@@ -741,6 +775,50 @@ export async function createPublisherAccount(formData: FormData) {
   revalidatePath("/journals");
   const projectId = optionalString(formData.get("projectId"));
   if (projectId) revalidatePath(`/projects/${projectId}`);
+}
+
+export async function createFundingInstitution(formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const name = optionalString(formData.get("name")) ?? "Untitled funder";
+  const shortName = optionalString(formData.get("shortName"));
+
+  await prisma.fundingInstitution.create({
+    data: {
+      funderCode: await generateFunderCode(name, shortName),
+      name,
+      shortName,
+      country: optionalString(formData.get("country")),
+      website: optionalString(formData.get("website")),
+      note: optionalString(formData.get("note")),
+    },
+  });
+
+  revalidatePath("/funding-institutions");
+  revalidatePath("/organized-projects");
+}
+
+export async function updateFundingInstitution(
+  institutionId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.fundingInstitution.update({
+    where: { id: institutionId },
+    data: {
+      name: optionalString(formData.get("name")) ?? "Untitled funder",
+      shortName: optionalString(formData.get("shortName")),
+      country: optionalString(formData.get("country")),
+      website: optionalString(formData.get("website")),
+      note: optionalString(formData.get("note")),
+    },
+  });
+
+  revalidatePath("/funding-institutions");
+  revalidatePath("/organized-projects");
 }
 
 export async function createAcademicReview(formData: FormData) {

@@ -308,23 +308,23 @@ model ResearchProject {
 }
 
 model OrganizedProject {
-  id                   String                              @id @default(uuid())
-  title                String
-  organizer            String?
-  referenceCode        String?
-  description          String?
-  status               OrganizedProjectStatus              @default(PLANNED)
-  financialClaimStatus OrganizedProjectFinancialClaimStatus @default(NOT_ADVANCED)
+  id                    String                               @id @default(uuid())
+  title                 String
+  organizer             String?
+  referenceCode         String?
+  description           String?
+  status                OrganizedProjectStatus               @default(PLANNED)
+  financialClaimStatus  OrganizedProjectFinancialClaimStatus @default(NOT_ADVANCED)
   requiredResearchCount Int?
-  startDate            DateTime?
-  durationMonths       Int?
-  endDate              DateTime?
-  note                 String?
-  createdAt            DateTime                            @default(now())
-  updatedAt            DateTime                            @updatedAt
+  startDate             DateTime?
+  durationMonths        Int?
+  endDate               DateTime?
+  note                  String?
+  createdAt             DateTime                             @default(now())
+  updatedAt             DateTime                             @updatedAt
 
   createdById String?
-  createdBy   User?                      @relation("OrganizedProjectCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy   User?   @relation("OrganizedProjectCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   fundingInstitutionId String?
   fundingInstitution   FundingInstitution? @relation(fields: [fundingInstitutionId], references: [id], onDelete: SetNull)
@@ -339,14 +339,15 @@ model OrganizedProject {
 }
 
 model FundingInstitution {
-  id        String   @id @default(uuid())
-  name      String
-  shortName String?
-  country   String?
-  website   String?
-  note      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  funderCode String?  @unique
+  name       String
+  shortName  String?
+  country    String?
+  website    String?
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   organizedProjects OrganizedProject[]
 
