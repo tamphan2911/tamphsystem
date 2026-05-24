@@ -407,7 +407,12 @@ export default async function OrganizedProjectsPage() {
         </div>
 
         <NewOrganizedProjectDialog
-          researchOptions={researchOptions}
+          researchOptions={researchOptions.map((research) => ({
+            id: research.id,
+            researchCode: research.researchCode ?? "",
+            title: research.title,
+            stage: research.stage,
+          }))}
           users={users.map((user) => ({
             id: user.id,
             name: user.name ?? "",
