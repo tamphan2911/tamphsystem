@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Building2, CheckCircle2, Clock3, FileText, Landmark } from "lucide-react";
-import { prisma } from "@repo/db";
+import { OrganizedProjectStatus, prisma } from "@repo/db";
 import { NewOrganizedProjectDialog } from "./NewOrganizedProjectDialog";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,154 @@ function statusLabel(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
 }
 
+const demoOrganizedProjects = [
+  {
+    title: "Digital Teaching Innovation Grant",
+    organizer: "University of Economics Ho Chi Minh City",
+    referenceCode: "UEH-DTI-2026",
+    description:
+      "Institutional project tracking classroom technology pilots and research outputs on digital learning outcomes.",
+    status: OrganizedProjectStatus.ACTIVE,
+    requiredResearchCount: 2,
+    startDate: new Date("2026-01-15"),
+    endDate: new Date("2026-12-15"),
+    note: "Demo project for linking education research outputs.",
+    linkCount: 2,
+  },
+  {
+    title: "Sustainable Finance Research Program",
+    organizer: "Green Growth Research Institute",
+    referenceCode: "GGRI-SF-25",
+    description:
+      "Applied research program on ESG disclosure, banking risk, and capital market response.",
+    status: OrganizedProjectStatus.ACTIVE,
+    requiredResearchCount: 3,
+    startDate: new Date("2025-09-01"),
+    endDate: new Date("2026-08-31"),
+    note: "Demo project with multiple expected research results.",
+    linkCount: 3,
+  },
+  {
+    title: "AI for Academic Productivity Initiative",
+    organizer: "Tam Pham Research Lab",
+    referenceCode: "TAMPH-AI-2026",
+    description:
+      "Internal initiative for workflow automation, literature mapping, manuscript preparation, and submission support.",
+    status: OrganizedProjectStatus.PLANNED,
+    requiredResearchCount: 1,
+    startDate: new Date("2026-03-01"),
+    endDate: new Date("2026-11-30"),
+    note: "Demo project connected to one research result.",
+    linkCount: 1,
+  },
+  {
+    title: "Regional Business Data Partnership",
+    organizer: "Mekong Business School",
+    referenceCode: "MBS-DATA-24",
+    description:
+      "Collaborative project for building business datasets and turning them into publishable empirical studies.",
+    status: OrganizedProjectStatus.COMPLETED,
+    requiredResearchCount: 2,
+    startDate: new Date("2024-04-01"),
+    endDate: new Date("2025-04-30"),
+    note: "Completed demo project with linked research outputs.",
+    linkCount: 2,
+  },
+  {
+    title: "Conference Research Output Track",
+    organizer: "International Digital Pedagogy Association",
+    referenceCode: "IDPA-CROT-26",
+    description:
+      "Organizer-led track for converting accepted conference work into journal-ready research outputs.",
+    status: OrganizedProjectStatus.PLANNED,
+    requiredResearchCount: 1,
+    startDate: new Date("2026-06-01"),
+    endDate: new Date("2026-10-15"),
+    note: "Demo project currently waiting for research assignment.",
+    linkCount: 0,
+  },
+];
+
+async function ensureDemoOrganizedProjects() {
+  const [createdBy, researchProjects] = await Promise.all([
+    prisma.user.findFirst({
+      where: { roles: { hasSome: ["ADMIN", "RESEARCHER", "LECTURER"] } },
+      orderBy: [{ name: "asc" }, { email: "asc" }],
+      select: { id: true },
+    }),
+    prisma.researchProject.findMany({
+      select: { id: true },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      take: 8,
+    }),
+  ]);
+
+  let researchOffset = 0;
+
+  for (const demo of demoOrganizedProjects) {
+    const project =
+      (await prisma.organizedProject.findFirst({
+        where: { title: demo.title },
+        select: { id: true },
+      })) ??
+      (await prisma.organizedProject.create({
+        data: {
+          title: demo.title,
+          organizer: demo.organizer,
+          referenceCode: demo.referenceCode,
+          description: demo.description,
+          status: demo.status,
+          requiredResearchCount: demo.requiredResearchCount,
+          startDate: demo.startDate,
+          endDate: demo.endDate,
+          note: demo.note,
+          createdById: createdBy?.id,
+        },
+        select: { id: true },
+      }));
+
+    await prisma.organizedProject.update({
+      where: { id: project.id },
+      data: {
+        organizer: demo.organizer,
+        referenceCode: demo.referenceCode,
+        description: demo.description,
+        status: demo.status,
+        requiredResearchCount: demo.requiredResearchCount,
+        startDate: demo.startDate,
+        endDate: demo.endDate,
+        note: demo.note,
+      },
+    });
+
+    const linkedResearch = researchProjects.slice(
+      researchOffset,
+      researchOffset + demo.linkCount,
+    );
+    researchOffset = (researchOffset + demo.linkCount) % Math.max(1, researchProjects.length);
+
+    for (const researchProject of linkedResearch) {
+      await prisma.organizedProjectResearch.upsert({
+        where: {
+          organizedProjectId_researchProjectId: {
+            organizedProjectId: project.id,
+            researchProjectId: researchProject.id,
+          },
+        },
+        update: {},
+        create: {
+          organizedProjectId: project.id,
+          researchProjectId: researchProject.id,
+          resultNote: "Demo linked research result.",
+        },
+      });
+    }
+  }
+}
+
 export default async function OrganizedProjectsPage() {
+  await ensureDemoOrganizedProjects();
+
   const [projects, researchOptions] = await Promise.all([
     prisma.organizedProject.findMany({
       include: {
