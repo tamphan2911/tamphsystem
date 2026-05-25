@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Landmark, Loader2, Pencil, Plus, Save, X } from "lucide-react";
+import { Loader2, Pencil, Plus, Save, X } from "lucide-react";
 import { useResearchToast } from "../components/ResearchToast";
 
 export type FundingInstitutionValues = {
@@ -61,22 +61,17 @@ export function FundingInstitutionDialog({
       {open && (
         <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
           <div className="max-h-[90vh] w-full max-w-4xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="border-b border-slate-200 bg-gradient-to-r from-emerald-50 via-white to-sky-50 px-6 py-5 dark:border-slate-800 dark:from-emerald-950/30 dark:via-slate-900 dark:to-sky-950/20">
+            <div className="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
               <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-sm shadow-emerald-900/20 dark:bg-emerald-500 dark:text-emerald-950">
-                    <Landmark className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-black text-slate-950 dark:text-white">
-                      {isEdit ? "Edit funder" : "Add funder"}
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                      {isEdit
-                        ? "Update funder identity and reference details."
-                        : "Create a funding institution with an automatic immutable funder ID."}
-                    </p>
-                  </div>
+                <div className="text-left">
+                  <h2 className="text-lg font-black text-slate-950 dark:text-white">
+                    {isEdit ? "Edit funder" : "Add funder"}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    {isEdit
+                      ? "Update funder identity and reference details."
+                      : "Create a funding institution with an automatic immutable funder ID."}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -106,104 +101,74 @@ export function FundingInstitutionDialog({
               }}
               className="max-h-[calc(90vh-7rem)] space-y-5 overflow-y-auto px-6 py-5"
             >
-              <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/40">
-                <div className="mb-4 flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-900">
-                    <Landmark className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                      Basic information
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Funder ID, name, alias, and country used in the funder list.
-                    </p>
-                  </div>
-                </div>
+              <div className="grid gap-4">
+                <label className={labelClass}>
+                  Funder name
+                  <input
+                    name="name"
+                    defaultValue={initialValues?.name ?? ""}
+                    placeholder="Funding institution name"
+                    required
+                    className={inputClass}
+                  />
+                </label>
 
-                <div className="grid gap-4">
+                <div className="grid gap-4 md:grid-cols-3">
                   <label className={labelClass}>
-                    Funder name
+                    Funder ID
                     <input
-                      name="name"
-                      defaultValue={initialValues?.name ?? ""}
-                      placeholder="Funding institution name"
-                      required
-                      className={inputClass}
+                      value={
+                        isEdit
+                          ? initialValues?.funderCode || "Missing ID"
+                          : "Generated after saving"
+                      }
+                      readOnly
+                      className={`${inputClass} cursor-not-allowed bg-slate-100 font-mono text-xs font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-900 dark:text-slate-400`}
                     />
                   </label>
-
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <label className={labelClass}>
-                      Funder ID
-                      <input
-                        value={
-                          isEdit
-                            ? initialValues?.funderCode || "Missing ID"
-                            : "Generated after saving"
-                        }
-                        readOnly
-                        className={`${inputClass} cursor-not-allowed bg-slate-100 font-mono text-xs font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-900 dark:text-slate-400`}
-                      />
-                    </label>
-                    <label className={labelClass}>
-                      Alias
-                      <input
-                        name="shortName"
-                        defaultValue={initialValues?.shortName ?? ""}
-                        placeholder="UEH, IDPA..."
-                        className={inputClass}
-                      />
-                    </label>
-                    <label className={labelClass}>
-                      Country
-                      <input
-                        name="country"
-                        defaultValue={initialValues?.country ?? ""}
-                        placeholder="Vietnam"
-                        className={inputClass}
-                      />
-                    </label>
-                  </div>
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/40">
-                <div className="mb-4 flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 text-sky-600 ring-1 ring-sky-100 dark:bg-sky-950/50 dark:text-sky-300 dark:ring-sky-900">
-                    <Save className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                      Reference details
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Website and internal notes for project tracking.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid gap-4">
                   <label className={labelClass}>
-                    Website
+                    Alias
                     <input
-                      name="website"
-                      defaultValue={initialValues?.website ?? ""}
-                      placeholder="https://..."
+                      name="shortName"
+                      defaultValue={initialValues?.shortName ?? ""}
+                      placeholder="UEH, IDPA..."
                       className={inputClass}
                     />
                   </label>
                   <label className={labelClass}>
-                    Note
-                    <textarea
-                      name="note"
-                      defaultValue={initialValues?.note ?? ""}
-                      placeholder="Funding scope, rules, contact notes..."
-                      className={`${inputClass} min-h-32 resize-y`}
+                    Country
+                    <input
+                      name="country"
+                      defaultValue={initialValues?.country ?? ""}
+                      placeholder="Vietnam"
+                      className={inputClass}
                     />
                   </label>
                 </div>
-              </section>
+              </div>
+
+              <div className="border-t border-slate-200 dark:border-slate-800" />
+
+              <div className="grid gap-4">
+                <label className={labelClass}>
+                  Website
+                  <input
+                    name="website"
+                    defaultValue={initialValues?.website ?? ""}
+                    placeholder="https://..."
+                    className={inputClass}
+                  />
+                </label>
+                <label className={labelClass}>
+                  Note
+                  <textarea
+                    name="note"
+                    defaultValue={initialValues?.note ?? ""}
+                    placeholder="Funding scope, rules, contact notes..."
+                    className={`${inputClass} min-h-32 resize-y`}
+                  />
+                </label>
+              </div>
 
               <div className="flex justify-end border-t border-slate-200 pt-4 dark:border-slate-800">
                 <button
