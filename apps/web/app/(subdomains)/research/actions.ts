@@ -171,6 +171,65 @@ function createTransporter() {
   });
 }
 
+async function sendTaskEmail({
+  to,
+  subject,
+  heading,
+  intro,
+  taskTitle,
+  actionLabel,
+  taskId,
+  detail,
+}: {
+  to: string[];
+  subject: string;
+  heading: string;
+  intro: string;
+  taskTitle: string;
+  actionLabel?: string;
+  taskId: string;
+  detail?: string;
+}) {
+  const recipients = Array.from(new Set(to.filter(Boolean)));
+  if (recipients.length === 0) return;
+  const taskUrl = `${researchBaseUrl()}/tasks/${taskId}`;
+
+  if (!smtpConfigured()) {
+    console.info(
+      `[task email] ${subject}: ${recipients.join(", ")} ${taskUrl}`,
+    );
+    return;
+  }
+
+  await createTransporter().sendMail({
+    from: process.env.SMTP_FROM,
+    to: recipients,
+    subject,
+    text: `${heading}\n\n${intro}\n\nTask: ${taskTitle}${detail ? `\n\n${detail}` : ""}\n\nOpen task: ${taskUrl}`,
+    html: `
+      <div style="margin:0;padding:0;background:#f8fafc;font-family:Inter,Arial,sans-serif;color:#0f172a;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 16px;background:#f8fafc;">
+          <tr><td align="center">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
+              <tr><td style="padding:26px 30px;border-bottom:1px solid #e2e8f0;">
+                <div style="font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#059669;">Research Hub Task</div>
+                <h1 style="margin:10px 0 0;font-size:22px;line-height:1.3;color:#0f172a;">${escapeHtml(heading)}</h1>
+                <p style="margin:10px 0 0;font-size:14px;line-height:1.7;color:#475569;">${escapeHtml(intro)}</p>
+              </td></tr>
+              <tr><td style="padding:24px 30px;">
+                <p style="margin:0 0 8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#64748b;">Task</p>
+                <p style="margin:0 0 16px;font-size:15px;font-weight:700;line-height:1.6;color:#0f172a;">${escapeHtml(taskTitle)}</p>
+                ${detail ? `<p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#475569;">${escapeHtml(detail)}</p>` : ""}
+                <a href="${taskUrl}" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 18px;border-radius:12px;">${escapeHtml(actionLabel ?? "Open task")}</a>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </div>
+    `,
+  });
+}
+
 async function researchContentIsLocked(projectId: string) {
   const project = await prisma.researchProject.findUnique({
     where: { id: projectId },
@@ -1951,7 +2010,14 @@ export async function createResearchTask(formData: FormData) {
 
 export async function revokeResearchTask(taskId: string) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  const isAdmin = user.roles.includes(Role.ADMIN);
+
+  const currentTask = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: { createdById: true },
+  });
+  if (!currentTask) return;
+  if (!isAdmin && currentTask.createdById !== user.id) redirect("/401");
 
   const task = await prisma.researchTask.update({
     where: { id: taskId },
@@ -1964,7 +2030,9 @@ export async function revokeResearchTask(taskId: string) {
     select: {
       projectId: true,
       title: true,
-      assignments: { select: { userId: true } },
+      assignments: {
+        select: { userId: true, user: { select: { email: true } } },
+      },
     },
   });
 
@@ -1977,6 +2045,17 @@ export async function revokeResearchTask(taskId: string) {
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,
+  });
+
+  await sendTaskEmail({
+    to: task.assignments.map((assignment) => assignment.user.email),
+    subject: `Task revoked: ${task.title}`,
+    heading: "Task revoked",
+    intro:
+      "A task assigned to you has been revoked by the assigner. You do not need to continue this task unless a new task is assigned.",
+    taskTitle: task.title,
+    taskId,
+    actionLabel: "View task",
   });
 
   revalidatePath("/tasks");
@@ -2415,92 +2494,35 @@ export async function deleteSuggestedConference(
   revalidatePath(`/projects/${projectId}`);
 }
 
-export async function finishResearchTask(taskId: string, formData?: FormData) {
-  const user = await requireCurrentUser();
-  const isAdmin = user.roles.includes(Role.ADMIN);
+async function createSubmissionAfterTaskApproval(
+  task: {
+    id: string;
+    projectId: string | null;
+    journalId: string | null;
+    conferenceId: string | null;
+    accountId: string | null;
+    taskType: ResearchTaskType | null;
+    title: string;
+  },
+  formData?: FormData,
+) {
   const accountId = optionalString(formData?.get("accountId") ?? null);
   const submittedAt = dateFromForm(formData?.get("submissionDate") ?? null);
 
-  if (
-    !isAdmin &&
-    !user.roles.includes(Role.ASSISTANT) &&
-    !user.roles.includes(Role.CHIEF_ASSISTANT)
-  ) {
-    redirect("/401");
-  }
-
-  const task = await prisma.researchTask.findUnique({
-    where: { id: taskId },
-    select: {
-      id: true,
-      projectId: true,
-      journalId: true,
-      conferenceId: true,
-      accountId: true,
-      taskType: true,
-      status: true,
-      title: true,
-      createdById: true,
-      assignments: { select: { userId: true } },
-    },
-  });
-
-  if (!task) return;
-  if (
-    task.status === ResearchTaskStatus.COMPLETED ||
-    task.status === ResearchTaskStatus.REVOKED
-  )
-    return;
   if (
     (task.taskType === ResearchTaskType.SUBMIT_RESEARCH ||
       task.taskType === ResearchTaskType.SUBMIT_CONFERENCE) &&
     !submittedAt
   ) {
-    return;
+    return false;
   }
-
-  const completedAt = new Date();
-
-  if (!isAdmin) {
-    const assignment = await prisma.researchTaskAssignment.findUnique({
-      where: { taskId_userId: { taskId, userId: user.id } },
-    });
-
-    if (!assignment) redirect("/401");
-  }
-
-  await prisma.researchTask.update({
-    where: { id: taskId },
-    data: {
-      status: ResearchTaskStatus.COMPLETED,
-      completedAt,
-      revokedAt: null,
-      adminViewedAt: null,
-      project:
-        task.taskType === ResearchTaskType.SUBMIT_RESEARCH && task.projectId
-          ? { update: { completedProductionSteps: productionStepLabels } }
-          : undefined,
-      assignments: {
-        updateMany: {
-          where: { finishedAt: null },
-          data: { finishedAt: completedAt },
-        },
-      },
-    },
-  });
-
-  const completedTask = await prisma.researchTask.findUnique({
-    where: { id: taskId },
-    select: { status: true, completedAt: true },
-  });
 
   if (
-    completedTask?.status === ResearchTaskStatus.COMPLETED &&
     task.taskType === ResearchTaskType.SUBMIT_RESEARCH &&
     task.projectId &&
-    task.journalId
+    task.journalId &&
+    submittedAt
   ) {
-    if (!submittedAt) return;
     await prisma.researchSubmission.upsert({
       where: {
         researchProjectId_journalId: {
@@ -2531,7 +2553,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       type: "SUBMISSION_CREATED",
       title: "New journal submission",
       summary: project?.title ?? "A research submission was created.",
-      body: "A journal submission was created after a submission task was marked complete.",
+      body: "A journal submission was created after the assigner approved a submission task.",
     });
     await notifyOrganizedProjectMembersForResearch(task.projectId, {
       type: "PROJECT_RESEARCH_SUBMISSION",
@@ -2549,12 +2571,11 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
   }
 
   if (
-    completedTask?.status === ResearchTaskStatus.COMPLETED &&
     task.taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
     task.projectId &&
-    task.conferenceId
+    task.conferenceId &&
+    submittedAt
   ) {
-    if (!submittedAt) return;
     await prisma.conferenceSubmission.upsert({
       where: {
         conferenceId_researchProjectId: {
@@ -2562,9 +2583,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
           researchProjectId: task.projectId,
         },
       },
-      update: {
-        status: ConferenceSubmissionStatus.SUBMITTED,
-      },
+      update: { status: ConferenceSubmissionStatus.SUBMITTED },
       create: {
         submissionCode: await generateSubmissionCode(),
         conferenceId: task.conferenceId,
@@ -2582,7 +2601,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       type: "SUBMISSION_CREATED",
       title: "New conference submission",
       summary: project?.title ?? "A conference submission was created.",
-      body: "A conference submission was created after a submission task was marked complete.",
+      body: "A conference submission was created after the assigner approved a submission task.",
     });
     await notifyOrganizedProjectMembersForResearch(task.projectId, {
       type: "PROJECT_RESEARCH_SUBMISSION",
@@ -2599,6 +2618,149 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     revalidatePath(`/conferences/${task.conferenceId}`);
   }
 
+  return true;
+}
+
+export async function markResearchTaskReadyForCheck(taskId: string) {
+  const user = await requireCurrentUser();
+  const isAdmin = user.roles.includes(Role.ADMIN);
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      status: true,
+      title: true,
+      createdById: true,
+      createdBy: { select: { email: true } },
+      assignments: {
+        select: { userId: true, user: { select: { email: true } } },
+      },
+    },
+  });
+
+  if (!task) return;
+  if (
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    return;
+  }
+  if (!isAdmin) {
+    const isAssigned = task.assignments.some(
+      (assignment) => assignment.userId === user.id,
+    );
+    if (!isAssigned) redirect("/401");
+    if (task.createdById === user.id) return;
+  }
+
+  const finishedAt = new Date();
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: {
+      status: ResearchTaskStatus.CHECKING,
+      completedAt: null,
+      revokedAt: null,
+      adminViewedAt: null,
+      assignments: {
+        updateMany: {
+          where: isAdmin ? { finishedAt: null } : { userId: user.id },
+          data: { finishedAt },
+        },
+      },
+    },
+  });
+
+  await notifyUsers({
+    userIds: [task.createdById],
+    type: "TASK_READY_FOR_CHECK",
+    title: "Task ready for check",
+    summary: task.title,
+    body: "An assignee marked this task as finished and ready for your review.",
+    href: `/tasks/${taskId}`,
+    entityType: "task",
+    entityId: taskId,
+    excludeUserId: user.id,
+  });
+  await sendTaskEmail({
+    to: [task.createdBy.email],
+    subject: `Task ready for review: ${task.title}`,
+    heading: "Task ready for checking",
+    intro:
+      "An assignee has marked the assigned work as finished. Please review the work and either approve completion or send it back for revision.",
+    taskTitle: task.title,
+    taskId,
+    actionLabel: "Review task",
+  });
+
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+}
+
+export async function finishResearchTask(taskId: string, formData?: FormData) {
+  const user = await requireCurrentUser();
+  const isAdmin = user.roles.includes(Role.ADMIN);
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      projectId: true,
+      journalId: true,
+      conferenceId: true,
+      accountId: true,
+      taskType: true,
+      status: true,
+      title: true,
+      createdById: true,
+      assignments: {
+        select: { userId: true, user: { select: { email: true } } },
+      },
+    },
+  });
+
+  if (!task) return;
+  if (
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    return;
+  }
+
+  const isAssigned = task.assignments.some(
+    (assignment) => assignment.userId === user.id,
+  );
+  const selfAssigned = task.createdById === user.id && isAssigned;
+  if (!isAdmin && task.createdById !== user.id) redirect("/401");
+  if (
+    !selfAssigned &&
+    !isAdmin &&
+    task.status !== ResearchTaskStatus.CHECKING
+  ) {
+    return;
+  }
+
+  if (!(await createSubmissionAfterTaskApproval(task, formData))) return;
+
+  const completedAt = new Date();
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: {
+      status: ResearchTaskStatus.COMPLETED,
+      completedAt,
+      revokedAt: null,
+      adminViewedAt: null,
+      project:
+        task.taskType === ResearchTaskType.PRODUCTION && task.projectId
+          ? { update: { completedProductionSteps: productionStepLabels } }
+          : undefined,
+      assignments: {
+        updateMany: {
+          where: { finishedAt: null },
+          data: { finishedAt: completedAt },
+        },
+      },
+    },
+  });
+
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
 
@@ -2607,25 +2769,188 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     type: "TASK_COMPLETED",
     title: "Task completed",
     summary: task.title,
-    body: "A co-assigned task was marked complete.",
+    body: "The assigner reviewed and approved this task as complete.",
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,
     excludeUserId: user.id,
   });
+  await sendTaskEmail({
+    to: task.assignments.map((assignment) => assignment.user.email),
+    subject: `Task approved as complete: ${task.title}`,
+    heading: "Task approved as complete",
+    intro:
+      "The assigner reviewed the submitted work and marked the task as complete.",
+    taskTitle: task.title,
+    taskId,
+    actionLabel: "View task",
+  });
+}
 
-  if (task.createdById !== user.id) {
-    await notifyUsers({
-      userIds: [task.createdById],
-      type: "TASK_COMPLETED_BY_ASSIGNEE",
-      title: "Assigned task completed",
-      summary: task.title,
-      body: "A task you assigned was marked complete by an assignee.",
-      href: `/tasks/${taskId}`,
-      entityType: "task",
-      entityId: taskId,
-    });
+export async function requestTaskRedo(taskId: string, formData: FormData) {
+  const user = await requireCurrentUser();
+  const reason = optionalString(formData.get("reason"));
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      title: true,
+      createdById: true,
+      assignments: {
+        select: { userId: true, user: { select: { email: true } } },
+      },
+    },
+  });
+  if (!task) return;
+  if (!user.roles.includes(Role.ADMIN) && task.createdById !== user.id) {
+    redirect("/401");
   }
+
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: {
+      status: ResearchTaskStatus.IN_PROGRESS,
+      completedAt: null,
+      adminViewedAt: null,
+      assignments: { updateMany: { where: {}, data: { finishedAt: null } } },
+    },
+  });
+  await notifyUsers({
+    userIds: task.assignments.map((assignment) => assignment.userId),
+    type: "TASK_REDO_REQUIRED",
+    title: "Task needs revision",
+    summary: task.title,
+    body: reason ?? "The assigner requested revision before approval.",
+    href: `/tasks/${taskId}`,
+    entityType: "task",
+    entityId: taskId,
+    excludeUserId: user.id,
+  });
+  await sendTaskEmail({
+    to: task.assignments.map((assignment) => assignment.user.email),
+    subject: `Revision requested: ${task.title}`,
+    heading: "Task needs revision",
+    intro:
+      "The assigner reviewed the work and requested revision before the task can be completed.",
+    detail: reason ?? undefined,
+    taskTitle: task.title,
+    taskId,
+    actionLabel: "Open task",
+  });
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+}
+
+export async function requestTaskClarification(
+  taskId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  const question = optionalString(formData.get("question"));
+  if (!question) return;
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      title: true,
+      createdById: true,
+      createdBy: { select: { email: true } },
+      assignments: { select: { userId: true } },
+    },
+  });
+  if (!task) return;
+  if (!task.assignments.some((assignment) => assignment.userId === user.id)) {
+    redirect("/401");
+  }
+  if (task.createdById === user.id) return;
+
+  await prisma.researchTaskClarification.create({
+    data: { taskId, requestedById: user.id, question },
+  });
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: { status: ResearchTaskStatus.NEED_CLARIFY },
+  });
+  await notifyUsers({
+    userIds: [task.createdById],
+    type: "TASK_CLARIFICATION_REQUESTED",
+    title: "Clarification requested",
+    summary: task.title,
+    body: question,
+    href: `/tasks/${taskId}`,
+    entityType: "task",
+    entityId: taskId,
+    excludeUserId: user.id,
+  });
+  await sendTaskEmail({
+    to: [task.createdBy.email],
+    subject: `Clarification requested: ${task.title}`,
+    heading: "Clarification requested",
+    intro:
+      "An assignee requested clarification or additional instruction for this task.",
+    detail: question,
+    taskTitle: task.title,
+    taskId,
+    actionLabel: "Answer request",
+  });
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+}
+
+export async function answerTaskClarification(
+  taskId: string,
+  clarificationId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  const answer = optionalString(formData.get("answer"));
+  if (!answer) return;
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      title: true,
+      createdById: true,
+      assignments: {
+        select: { userId: true, user: { select: { email: true } } },
+      },
+    },
+  });
+  if (!task) return;
+  if (!user.roles.includes(Role.ADMIN) && task.createdById !== user.id) {
+    redirect("/401");
+  }
+
+  await prisma.researchTaskClarification.update({
+    where: { id: clarificationId },
+    data: { answer, answeredById: user.id, answeredAt: new Date() },
+  });
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: { status: ResearchTaskStatus.IN_PROGRESS },
+  });
+  await notifyUsers({
+    userIds: task.assignments.map((assignment) => assignment.userId),
+    type: "TASK_CLARIFICATION_ANSWERED",
+    title: "Clarification answered",
+    summary: task.title,
+    body: answer,
+    href: `/tasks/${taskId}`,
+    entityType: "task",
+    entityId: taskId,
+    excludeUserId: user.id,
+  });
+  await sendTaskEmail({
+    to: task.assignments.map((assignment) => assignment.user.email),
+    subject: `Clarification answered: ${task.title}`,
+    heading: "Clarification answered",
+    intro:
+      "The assigner has answered a clarification request for this task. Please review the answer and continue the work.",
+    detail: answer,
+    taskTitle: task.title,
+    taskId,
+    actionLabel: "Open task",
+  });
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
 }
 
 function notificationLabel(type: ResearchAuthorNotificationType) {

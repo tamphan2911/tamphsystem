@@ -1,0 +1,210 @@
+"use client";
+
+import { useRef, useState, useTransition } from "react";
+import {
+  HelpCircle,
+  Loader2,
+  MessageSquareReply,
+  RotateCcw,
+  X,
+} from "lucide-react";
+
+type TextModalFormProps = {
+  action: (formData: FormData) => void | Promise<void>;
+  buttonLabel: string;
+  title: string;
+  description: string;
+  fieldName: string;
+  fieldLabel: string;
+  placeholder: string;
+  confirmLabel: string;
+  tone: "amber" | "rose" | "blue";
+};
+
+const toneClasses = {
+  amber: {
+    button: "bg-amber-500 hover:bg-amber-600",
+    icon: "bg-amber-50 text-amber-600 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900",
+  },
+  rose: {
+    button: "bg-rose-600 hover:bg-rose-700",
+    icon: "bg-rose-50 text-rose-600 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
+  },
+  blue: {
+    button: "bg-blue-600 hover:bg-blue-700",
+    icon: "bg-blue-50 text-blue-600 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900",
+  },
+};
+
+function iconForTone(tone: TextModalFormProps["tone"]) {
+  if (tone === "rose") return RotateCcw;
+  if (tone === "blue") return MessageSquareReply;
+  return HelpCircle;
+}
+
+function TextModalForm({
+  action,
+  buttonLabel,
+  title,
+  description,
+  fieldName,
+  fieldLabel,
+  placeholder,
+  confirmLabel,
+  tone,
+}: TextModalFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const Icon = iconForTone(tone);
+  const colors = toneClasses[tone];
+
+  return (
+    <>
+      <form ref={formRef} action={action} className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${colors.button}`}
+        >
+          <Icon className="h-4 w-4" />
+          {buttonLabel}
+        </button>
+      </form>
+
+      {isOpen ? (
+        <div className="fixed inset-0 z-[90] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
+          <div className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-slate-50/80 px-5 py-4 dark:border-slate-800 dark:bg-slate-950/50">
+              <div className="flex items-start gap-3">
+                <span
+                  className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl ring-1 ${colors.icon}`}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-base font-black text-slate-950 dark:text-white">
+                    {title}
+                  </h2>
+                  <p className="mt-1 text-sm leading-5 text-slate-500 dark:text-slate-400">
+                    {description}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-white hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                aria-label="Close dialog"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="grid gap-4 px-5 py-4">
+              <label className="grid gap-1.5">
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {fieldLabel}
+                </span>
+                <textarea
+                  name={fieldName}
+                  required
+                  rows={5}
+                  placeholder={placeholder}
+                  className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+                />
+              </label>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => setIsOpen(false)}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => {
+                    startTransition(() => {
+                      formRef.current?.requestSubmit();
+                    });
+                  }}
+                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none ${colors.button}`}
+                >
+                  {isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Icon className="h-4 w-4" />
+                  )}
+                  {confirmLabel}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+export function RedoTaskForm({
+  action,
+}: {
+  action: (formData: FormData) => void | Promise<void>;
+}) {
+  return (
+    <TextModalForm
+      action={action}
+      buttonLabel="Request redo"
+      title="Send task back for revision?"
+      description="The task will return to In progress and assignees will be notified with your revision note."
+      fieldName="reason"
+      fieldLabel="Revision note"
+      placeholder="Explain what needs to be corrected before this task can be approved."
+      confirmLabel="Send redo request"
+      tone="rose"
+    />
+  );
+}
+
+export function ClarificationRequestForm({
+  action,
+}: {
+  action: (formData: FormData) => void | Promise<void>;
+}) {
+  return (
+    <TextModalForm
+      action={action}
+      buttonLabel="Need clarify"
+      title="Request clarification?"
+      description="The task will move to Need clarify until the assigner answers your request."
+      fieldName="question"
+      fieldLabel="Question or instruction request"
+      placeholder="Write what you need clarified, including any specific issue blocking the work."
+      confirmLabel="Send request"
+      tone="amber"
+    />
+  );
+}
+
+export function ClarificationAnswerForm({
+  action,
+}: {
+  action: (formData: FormData) => void | Promise<void>;
+}) {
+  return (
+    <TextModalForm
+      action={action}
+      buttonLabel="Answer"
+      title="Answer clarification request?"
+      description="The assignees will receive your answer and the task will return to In progress."
+      fieldName="answer"
+      fieldLabel="Answer"
+      placeholder="Give clear instruction so the assignees can continue the task."
+      confirmLabel="Send answer"
+      tone="blue"
+    />
+  );
+}

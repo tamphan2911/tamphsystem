@@ -80,6 +80,8 @@ model User {
   createdOrganizedProjects        OrganizedProject[]           @relation("OrganizedProjectCreator")
   organizedProjectMemberships     OrganizedProjectMember[]
   submittedProposals              Proposal[]                   @relation("ProposalSubmitter")
+  requestedTaskClarifications     ResearchTaskClarification[]  @relation("TaskClarificationRequester")
+  answeredTaskClarifications      ResearchTaskClarification[]  @relation("TaskClarificationAnswerer")
 }
 
 // ---------------------------------------------
@@ -255,6 +257,8 @@ enum CurrencyCode {
 enum ResearchTaskStatus {
   OPEN
   IN_PROGRESS
+  CHECKING
+  NEED_CLARIFY
   COMPLETED
   REVOKED
 }
@@ -640,7 +644,8 @@ model ResearchTask {
   review             AcademicReview?   @relation(fields: [reviewId], references: [id], onDelete: SetNull)
   account            PublisherAccount? @relation("ResearchTaskAccount", fields: [accountId], references: [id], onDelete: SetNull)
 
-  assignments ResearchTaskAssignment[]
+  assignments    ResearchTaskAssignment[]
+  clarifications ResearchTaskClarification[]
 }
 
 model ResearchTaskAssignment {
@@ -654,6 +659,24 @@ model ResearchTaskAssignment {
   user User         @relation("ResearchTaskAssignee", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, userId])
+}
+
+model ResearchTaskClarification {
+  id            String    @id @default(uuid())
+  taskId        String
+  requestedById String
+  answeredById  String?
+  question      String
+  answer        String?
+  answeredAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  task        ResearchTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  requestedBy User         @relation("TaskClarificationRequester", fields: [requestedById], references: [id], onDelete: Cascade)
+  answeredBy  User?        @relation("TaskClarificationAnswerer", fields: [answeredById], references: [id], onDelete: SetNull)
+
+  @@index([taskId, createdAt])
 }
 
 model PublisherAccount {

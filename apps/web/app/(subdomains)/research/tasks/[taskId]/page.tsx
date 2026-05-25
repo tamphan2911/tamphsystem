@@ -8,15 +8,28 @@ import {
   ExternalLink,
   FileText,
   Globe2,
+  HelpCircle,
   KeyRound,
   Send,
   UserRound,
 } from "lucide-react";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
-import { finishResearchTask, revokeResearchTask } from "../../actions";
+import {
+  answerTaskClarification,
+  finishResearchTask,
+  markResearchTaskReadyForCheck,
+  requestTaskClarification,
+  requestTaskRedo,
+  revokeResearchTask,
+} from "../../actions";
 import { FinishTaskForm } from "./FinishTaskForm";
 import { RevokeTaskForm } from "./RevokeTaskForm";
+import {
+  ClarificationAnswerForm,
+  ClarificationRequestForm,
+  RedoTaskForm,
+} from "./TaskWorkflowForms";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +102,22 @@ function statusMeta(task: {
     };
   }
 
+  if (task.status === "CHECKING") {
+    return {
+      label: "Checking",
+      detail: "Waiting for assigner review",
+      tone: "violet" as const,
+    };
+  }
+
+  if (task.status === "NEED_CLARIFY") {
+    return {
+      label: "Need clarify",
+      detail: "Waiting for assigner answer",
+      tone: "amber" as const,
+    };
+  }
+
   if (task.dueDate && now > task.dueDate) {
     return {
       label: "Overdue",
@@ -106,13 +135,19 @@ function statusMeta(task: {
   };
 }
 
-function toneClass(tone: "emerald" | "rose" | "blue" | "slate") {
+function toneClass(
+  tone: "emerald" | "rose" | "blue" | "slate" | "violet" | "amber",
+) {
   if (tone === "emerald")
     return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
   if (tone === "rose")
     return "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900";
   if (tone === "blue")
     return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  if (tone === "violet")
+    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
+  if (tone === "amber")
+    return "bg-amber-50 text-amber-800 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900";
   return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
 }
 
@@ -141,10 +176,6 @@ export default async function TaskDetailPage({
   if (!userId) redirect("/login");
 
   const isAdmin = roles.includes(Role.ADMIN);
-  const isAssistant =
-    roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
-  if (!isAdmin && !isAssistant) redirect("/401");
-
   await prisma.researchTask.updateMany({
     where: { status: ResearchTaskStatus.OPEN },
     data: { status: ResearchTaskStatus.IN_PROGRESS },
@@ -187,6 +218,13 @@ export default async function TaskDetailPage({
         },
         orderBy: { createdAt: "asc" },
       },
+      clarifications: {
+        include: {
+          requestedBy: { select: { name: true, email: true } },
+          answeredBy: { select: { name: true, email: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
@@ -194,17 +232,41 @@ export default async function TaskDetailPage({
   const myAssignment = task.assignments.find(
     (assignment) => assignment.userId === userId,
   );
-  if (!isAdmin && !myAssignment) notFound();
+  const isAssigner = task.createdById === userId;
+  const isAssignee = Boolean(myAssignment);
+  const selfAssigned = isAssigner && isAssignee;
+  if (!isAdmin && !isAssigner && !isAssignee) notFound();
 
   const meta = statusMeta(task);
   const finishAction = finishResearchTask.bind(null, task.id);
+  const readyAction = markResearchTaskReadyForCheck.bind(null, task.id);
+  const redoAction = requestTaskRedo.bind(null, task.id);
+  const clarificationAction = requestTaskClarification.bind(null, task.id);
   const revokeAction = revokeResearchTask.bind(null, task.id);
-  const canFinish =
-    task.status !== "COMPLETED" &&
-    task.status !== "REVOKED" &&
-    (isAdmin || Boolean(myAssignment));
-  const canRevoke =
-    isAdmin && task.status !== "COMPLETED" && task.status !== "REVOKED";
+  const isClosed =
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED;
+  const canMarkReady =
+    !isClosed &&
+    isAssignee &&
+    !selfAssigned &&
+    task.status !== ResearchTaskStatus.CHECKING &&
+    task.status !== ResearchTaskStatus.NEED_CLARIFY;
+  const canApprove =
+    !isClosed &&
+    (isAdmin || isAssigner) &&
+    (selfAssigned || isAdmin || task.status === ResearchTaskStatus.CHECKING);
+  const canRedo =
+    !isClosed &&
+    (isAdmin || isAssigner) &&
+    task.status === ResearchTaskStatus.CHECKING;
+  const canRequestClarification =
+    !isClosed &&
+    isAssignee &&
+    !selfAssigned &&
+    task.status !== ResearchTaskStatus.CHECKING &&
+    task.status !== ResearchTaskStatus.NEED_CLARIFY;
+  const canRevoke = !isClosed && (isAdmin || isAssigner);
   const journalSubmissionLink =
     task.journal?.submissionLink || firstUrl(task.journal?.note);
   const conferenceSubmissionLink = firstUrl(task.conference?.note);
@@ -220,13 +282,25 @@ export default async function TaskDetailPage({
           Back to tasks
         </Link>
 
-        {(canFinish || canRevoke) && (
+        {(canMarkReady ||
+          canApprove ||
+          canRedo ||
+          canRequestClarification ||
+          canRevoke) && (
           <div className="flex flex-col justify-end gap-2 sm:flex-row sm:items-center">
             {canRevoke && <RevokeTaskForm action={revokeAction} />}
-            {canFinish && (
+            {canRedo && <RedoTaskForm action={redoAction} />}
+            {canRequestClarification && (
+              <ClarificationRequestForm action={clarificationAction} />
+            )}
+            {canMarkReady && (
+              <FinishTaskForm action={readyAction} mode="ready" />
+            )}
+            {canApprove && (
               <FinishTaskForm
                 action={finishAction}
                 accountId={task.account?.id}
+                mode="approve"
                 requiresSubmissionDate={
                   task.taskType === "SUBMIT_RESEARCH" ||
                   task.taskType === "SUBMIT_CONFERENCE"
@@ -348,6 +422,63 @@ export default async function TaskDetailPage({
             {task.description || "No task note."}
           </p>
         </div>
+
+        {task.clarifications.length > 0 && (
+          <div className="mt-6 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <div className="flex items-center gap-2 text-sm font-bold text-slate-950 dark:text-white">
+              <HelpCircle className="h-4 w-4 text-amber-500" />
+              Clarification requests
+            </div>
+            <div className="mt-3 grid gap-3">
+              {task.clarifications.map((clarification) => {
+                const answerAction = answerTaskClarification.bind(
+                  null,
+                  task.id,
+                  clarification.id,
+                );
+                return (
+                  <div
+                    key={clarification.id}
+                    className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-950/50"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                          Asked by{" "}
+                          {clarification.requestedBy.name ||
+                            clarification.requestedBy.email}{" "}
+                          on {formatDate(clarification.createdAt)}
+                        </p>
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-200">
+                          {clarification.question}
+                        </p>
+                      </div>
+                      {!clarification.answer && (isAdmin || isAssigner) && (
+                        <ClarificationAnswerForm action={answerAction} />
+                      )}
+                    </div>
+                    {clarification.answer && (
+                      <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-3 dark:border-blue-900/60 dark:bg-blue-950/30">
+                        <p className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-300">
+                          Answered by{" "}
+                          {clarification.answeredBy?.name ||
+                            clarification.answeredBy?.email ||
+                            "Assigner"}{" "}
+                          {clarification.answeredAt
+                            ? `on ${formatDate(clarification.answeredAt)}`
+                            : ""}
+                        </p>
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-200">
+                          {clarification.answer}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 grid gap-3">
           <h2 className="text-sm font-bold text-slate-950 dark:text-white">

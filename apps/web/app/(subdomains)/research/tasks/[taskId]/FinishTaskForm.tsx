@@ -1,16 +1,24 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { CalendarDays, CheckCircle2, Loader2, X } from "lucide-react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Loader2,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 
 export function FinishTaskForm({
   action,
   accountId,
   requiresSubmissionDate = false,
+  mode = "approve",
 }: {
   action: (formData: FormData) => void | Promise<void>;
   accountId?: string | null;
   requiresSubmissionDate?: boolean;
+  mode?: "ready" | "approve";
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [submissionDate, setSubmissionDate] = useState(() =>
@@ -18,6 +26,15 @@ export function FinishTaskForm({
   );
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const isReadyMode = mode === "ready";
+  const Icon = isReadyMode ? CheckCircle2 : ShieldCheck;
+  const buttonLabel = isReadyMode ? "Ready for check" : "Approve complete";
+  const title = isReadyMode
+    ? "Mark work ready for check?"
+    : "Approve task completion?";
+  const description = isReadyMode
+    ? "This tells the assigner that your work is ready for review. The task will move to Checking, but it will not be completed yet."
+    : "This approves the work as complete. Related submission records will be created only after this approval when applicable.";
 
   return (
     <>
@@ -31,10 +48,14 @@ export function FinishTaskForm({
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md"
+          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+            isReadyMode
+              ? "bg-blue-600 hover:bg-blue-700"
+              : "bg-emerald-600 hover:bg-emerald-700"
+          }`}
         >
-          <CheckCircle2 className="h-4 w-4" />
-          Mark finished
+          <Icon className="h-4 w-4" />
+          {buttonLabel}
         </button>
       </form>
 
@@ -44,15 +65,14 @@ export function FinishTaskForm({
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-slate-50/80 px-5 py-4 dark:border-slate-800 dark:bg-slate-950/50">
               <div className="flex items-start gap-3">
                 <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900">
-                  <CheckCircle2 className="h-5 w-5" />
+                  <Icon className="h-5 w-5" />
                 </span>
                 <div>
                   <h2 className="text-base font-black text-slate-950 dark:text-white">
-                    Mark task finished?
+                    {title}
                   </h2>
                   <p className="mt-1 text-sm leading-5 text-slate-500 dark:text-slate-400">
-                    This will complete the task and update the related
-                    submission records when applicable.
+                    {description}
                   </p>
                   {requiresSubmissionDate ? (
                     <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium leading-5 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100">
@@ -109,12 +129,16 @@ export function FinishTaskForm({
                       formRef.current?.requestSubmit();
                     });
                   }}
-                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none"
+                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none ${
+                    isReadyMode
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : "bg-emerald-600 hover:bg-emerald-700"
+                  }`}
                 >
                   {isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <CheckCircle2 className="h-4 w-4" />
+                    <Icon className="h-4 w-4" />
                   )}
                   Confirm
                 </button>

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma, ResearchTaskStatus, Role } from "@repo/db";
+import { prisma, ResearchTaskStatus } from "@repo/db";
 import { auth } from "../../../../../../auth";
 
 export async function POST(
@@ -8,19 +8,8 @@ export async function POST(
 ) {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
-    []) as Role[];
-
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (
-    !roles.includes(Role.ASSISTANT) &&
-    !roles.includes(Role.CHIEF_ASSISTANT) &&
-    !roles.includes(Role.ADMIN)
-  ) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { taskId } = await params;
@@ -43,7 +32,7 @@ export async function POST(
 
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
-    select: { status: true },
+    select: { status: true, createdById: true },
   });
 
   if (
@@ -54,20 +43,24 @@ export async function POST(
     return NextResponse.json({ error: "Task is closed" }, { status: 409 });
   }
 
+  if (task.createdById === userId) {
+    return NextResponse.json(
+      { error: "Self-assigned tasks should be approved directly" },
+      { status: 409 },
+    );
+  }
+
   const completedAt = new Date();
 
   await prisma.researchTask.update({
     where: { id: taskId },
     data: {
-      status: ResearchTaskStatus.COMPLETED,
-      completedAt,
+      status: ResearchTaskStatus.CHECKING,
+      completedAt: null,
       revokedAt: null,
       adminViewedAt: null,
       assignments: {
-        updateMany: {
-          where: { finishedAt: null },
-          data: { finishedAt: completedAt },
-        },
+        updateMany: { where: { userId }, data: { finishedAt: completedAt } },
       },
     },
   });

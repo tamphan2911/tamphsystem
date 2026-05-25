@@ -147,6 +147,28 @@ function statusMeta(task: TaskRow) {
     };
   }
 
+  if (task.status === "CHECKING") {
+    return {
+      label: "Checking",
+      detail: "Waiting assigner check",
+      dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
+      className:
+        "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900",
+      detailClassName: "text-violet-600 dark:text-violet-300",
+    };
+  }
+
+  if (task.status === "NEED_CLARIFY") {
+    return {
+      label: "Need clarify",
+      detail: "Waiting assigner answer",
+      dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
+      className:
+        "bg-amber-50 text-amber-800 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900",
+      detailClassName: "text-amber-700 dark:text-amber-300",
+    };
+  }
+
   if (due && now > due) {
     return {
       label: "Overdue",
@@ -171,6 +193,9 @@ function statusMeta(task: TaskRow) {
 }
 
 function derivedStatus(task: TaskRow) {
+  if (task.status === "CHECKING" || task.status === "NEED_CLARIFY") {
+    return task.status;
+  }
   const label = statusMeta(task).label;
   if (label === "Complete") return "COMPLETED";
   if (label === "Revoked") return "REVOKED";
@@ -328,6 +353,8 @@ export function TasksClient({
               options={[
                 { value: "ALL", label: "All status" },
                 { value: "IN_PROGRESS", label: "In progress" },
+                { value: "CHECKING", label: "Checking" },
+                { value: "NEED_CLARIFY", label: "Need clarify" },
                 { value: "OVERDUE", label: "Overdue" },
                 { value: "COMPLETED", label: "Completed" },
                 { value: "REVOKED", label: "Revoked" },
