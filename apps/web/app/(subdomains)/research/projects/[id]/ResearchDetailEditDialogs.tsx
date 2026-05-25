@@ -6,6 +6,10 @@ import { createPortal } from "react-dom";
 import { Edit3, FileText, Loader2, Save, UserRound, X } from "lucide-react";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
 import { useResearchToast } from "../../components/ResearchToast";
+import {
+  FundingInstitutionPicker,
+  type FundingInstitutionOption,
+} from "../../organized-projects/ProjectFormControls";
 import { RegisterUserPicker } from "../RegisterUserPicker";
 import {
   AuthorsPicker,
@@ -21,6 +25,7 @@ type ResearchBasicValues = {
   registerStatus: string;
   claimStatus: string;
   registrationUser: AuthorOption | null;
+  fundingInstitution: FundingInstitutionOption | null;
 };
 
 const inputClass =
@@ -175,6 +180,11 @@ function HiddenBasic({ values }: { values: ResearchBasicValues }) {
         name="registrationUserId"
         value={values.registrationUser?.id ?? ""}
       />
+      <input
+        type="hidden"
+        name="fundingInstitutionId"
+        value={values.fundingInstitution?.id ?? ""}
+      />
       {!values.registrationUser && values.registrationName && (
         <input
           type="hidden"
@@ -213,6 +223,7 @@ export function ResearchBasicEditDialog({
   authors,
   completedProductionSteps,
   users,
+  fundingInstitutions,
   registerOptions,
   claimOptions,
   canEditRegistrationClaim,
@@ -223,6 +234,7 @@ export function ResearchBasicEditDialog({
   authors: SelectedAuthor[];
   completedProductionSteps: string[];
   users: AuthorOption[];
+  fundingInstitutions: FundingInstitutionOption[];
   registerOptions: { value: string; label: string }[];
   claimOptions: { value: string; label: string }[];
   canEditRegistrationClaim: boolean;
@@ -331,6 +343,11 @@ export function ResearchBasicEditDialog({
                 />
               </label>
             </div>
+            <FundingInstitutionPicker
+              institutions={fundingInstitutions}
+              defaultInstitution={values.fundingInstitution}
+              disabled={!canEditRegistrationClaim}
+            />
           </div>
 
           <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">

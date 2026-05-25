@@ -309,6 +309,8 @@ model ResearchProject {
   registrationName         String?
   registrationUserId       String?
   registrationUser         User?              @relation("ResearchRegistrationUser", fields: [registrationUserId], references: [id], onDelete: SetNull)
+  fundingInstitutionId     String?
+  fundingInstitution       FundingInstitution? @relation(fields: [fundingInstitutionId], references: [id], onDelete: SetNull)
   registerStatus           RegistrationStatus @default(NOT_REGISTERED)
   claimStatus              ClaimStatus        @default(CANNOT_CLAIM)
   completedProductionSteps String[]           @default([])
@@ -333,6 +335,7 @@ model ResearchProject {
   organizedProjectLinks OrganizedProjectResearch[]
 
   @@index([registrationUserId])
+  @@index([fundingInstitutionId])
 }
 
 model OrganizedProject {
@@ -383,6 +386,7 @@ model FundingInstitution {
   updatedAt  DateTime @updatedAt
 
   organizedProjects OrganizedProject[]
+  researchProjects  ResearchProject[]
 
   @@index([name])
 }

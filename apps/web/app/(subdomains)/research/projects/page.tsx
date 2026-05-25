@@ -309,38 +309,43 @@ export default async function ProjectsDashboard() {
         ],
       };
 
-  const [projects, authorUsers, currentUser] = await Promise.all([
-    prisma.researchProject.findMany({
-      where: projectWhere,
-      include: {
-        leadResearcher: { select: { name: true, email: true } },
-        registrationUser: {
-          select: { id: true, name: true, email: true, roles: true },
+  const [projects, authorUsers, fundingInstitutions, currentUser] =
+    await Promise.all([
+      prisma.researchProject.findMany({
+        where: projectWhere,
+        include: {
+          leadResearcher: { select: { name: true, email: true } },
+          registrationUser: {
+            select: { id: true, name: true, email: true, roles: true },
+          },
+          authors: {
+            select: { name: true, email: true },
+            orderBy: [{ name: "asc" }, { email: "asc" }],
+          },
+          authorEntries: {
+            include: { user: { select: { name: true, email: true } } },
+            orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          },
+          _count: {
+            select: { submissions: true, publications: true },
+          },
         },
-        authors: {
-          select: { name: true, email: true },
-          orderBy: [{ name: "asc" }, { email: "asc" }],
-        },
-        authorEntries: {
-          include: { user: { select: { name: true, email: true } } },
-          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-        },
-        _count: {
-          select: { submissions: true, publications: true },
-        },
-      },
-      orderBy: { updatedAt: "desc" },
-    }),
-    prisma.user.findMany({
-      where: { activeSites: { has: "research" } },
-      orderBy: [{ name: "asc" }, { email: "asc" }],
-      select: { id: true, name: true, email: true, roles: true },
-    }),
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { emailVerified: true },
-    }),
-  ]);
+        orderBy: { updatedAt: "desc" },
+      }),
+      prisma.user.findMany({
+        where: { activeSites: { has: "research" } },
+        orderBy: [{ name: "asc" }, { email: "asc" }],
+        select: { id: true, name: true, email: true, roles: true },
+      }),
+      prisma.fundingInstitution.findMany({
+        orderBy: [{ name: "asc" }],
+        select: { id: true, name: true, shortName: true, country: true },
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { emailVerified: true },
+      }),
+    ]);
   const authorOptions = authorUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -458,7 +463,16 @@ export default async function ProjectsDashboard() {
         )}
 
         {isAdmin ? (
-          <NewResearchDialog users={authorOptions} isAdmin={isAdmin} />
+          <NewResearchDialog
+            users={authorOptions}
+            isAdmin={isAdmin}
+            fundingInstitutions={fundingInstitutions.map((institution) => ({
+              id: institution.id,
+              name: institution.name,
+              shortName: institution.shortName ?? "",
+              country: institution.country ?? "",
+            }))}
+          />
         ) : (
           <ProposalDialog
             type="RESEARCH"

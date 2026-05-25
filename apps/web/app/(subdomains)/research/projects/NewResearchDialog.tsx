@@ -13,6 +13,10 @@ import {
 } from "lucide-react";
 import { createResearchProject } from "../actions";
 import { ResearchFormSelect } from "../components/ResearchFormSelect";
+import {
+  FundingInstitutionPicker,
+  type FundingInstitutionOption,
+} from "../organized-projects/ProjectFormControls";
 import type { AuthorOption } from "./[id]/AuthorsPicker";
 import { RegisterUserPicker } from "./RegisterUserPicker";
 
@@ -179,9 +183,11 @@ function NewResearchAuthorsPicker({
 export function NewResearchDialog({
   users,
   isAdmin,
+  fundingInstitutions,
 }: {
   users: AuthorOption[];
   isAdmin: boolean;
+  fundingInstitutions: FundingInstitutionOption[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [registerStatus, setRegisterStatus] = useState("NOT_REGISTERED");
@@ -337,6 +343,12 @@ export function NewResearchDialog({
                         disabled={registerStatus === "NOT_REGISTERED"}
                       />
                     </div>
+                  </div>
+                  <div className="mt-4">
+                    <FundingInstitutionPicker
+                      institutions={fundingInstitutions}
+                      defaultInstitution={null}
+                    />
                   </div>
                 </section>
               )}

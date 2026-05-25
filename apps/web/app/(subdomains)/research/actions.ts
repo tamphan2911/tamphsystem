@@ -745,6 +745,9 @@ export async function createResearchProject(formData: FormData) {
   const registrationUserId = isAdmin
     ? optionalString(formData.get("registrationUserId"))
     : null;
+  const fundingInstitutionId = isAdmin
+    ? optionalString(formData.get("fundingInstitutionId"))
+    : null;
 
   const createdProject = await prisma.researchProject.create({
     data: {
@@ -758,6 +761,7 @@ export async function createResearchProject(formData: FormData) {
         : null,
       registrationName: null,
       registrationUserId,
+      fundingInstitutionId,
       registerStatus: isAdmin
         ? (enumValue(RegistrationStatus, formData.get("registerStatus")) ??
           RegistrationStatus.NOT_REGISTERED)
@@ -1287,6 +1291,9 @@ export async function updateResearchProject(
     );
 
   const registrationUserId = optionalString(formData.get("registrationUserId"));
+  const fundingInstitutionId = optionalString(
+    formData.get("fundingInstitutionId"),
+  );
   const data = {
     title: optionalString(formData.get("title")) ?? "Untitled research",
     coAuthors: null,
@@ -1298,6 +1305,7 @@ export async function updateResearchProject(
           ),
           registrationName: null,
           registrationUserId,
+          fundingInstitutionId,
           registerStatus:
             enumValue(RegistrationStatus, formData.get("registerStatus")) ??
             RegistrationStatus.NOT_REGISTERED,

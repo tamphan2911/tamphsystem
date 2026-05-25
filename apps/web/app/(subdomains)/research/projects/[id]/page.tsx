@@ -257,7 +257,14 @@ export default async function ProjectDetailPage({
     isAdmin ||
     roles.includes(Role.ASSISTANT) ||
     roles.includes(Role.CHIEF_ASSISTANT);
-  const [project, journals, conferences, taskAssignees, authorUsers] =
+  const [
+    project,
+    journals,
+    conferences,
+    taskAssignees,
+    authorUsers,
+    fundingInstitutions,
+  ] =
     await Promise.all([
       prisma.researchProject.findUnique({
         where: { id },
@@ -276,6 +283,7 @@ export default async function ProjectDetailPage({
           },
           leadResearcher: true,
           registrationUser: true,
+          fundingInstitution: true,
           authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
           authorEntries: {
             include: { user: true },
@@ -335,6 +343,10 @@ export default async function ProjectDetailPage({
         where: { activeSites: { has: "research" } },
         orderBy: [{ name: "asc" }, { email: "asc" }],
         select: { id: true, name: true, email: true, roles: true },
+      }),
+      prisma.fundingInstitution.findMany({
+        orderBy: [{ name: "asc" }],
+        select: { id: true, name: true, shortName: true, country: true },
       }),
     ]);
 
@@ -544,6 +556,20 @@ export default async function ProjectDetailPage({
         role: displayRole(project.registrationUser.roles),
       }
     : null;
+  const fundingInstitutionOptions = fundingInstitutions.map((institution) => ({
+    id: institution.id,
+    name: institution.name,
+    shortName: institution.shortName ?? "",
+    country: institution.country ?? "",
+  }));
+  const defaultFundingInstitution = project.fundingInstitution
+    ? {
+        id: project.fundingInstitution.id,
+        name: project.fundingInstitution.name,
+        shortName: project.fundingInstitution.shortName ?? "",
+        country: project.fundingInstitution.country ?? "",
+      }
+    : null;
   const defaultAuthors: SelectedAuthor[] =
     project.authorEntries.length > 0
       ? project.authorEntries.map((entry) => ({
@@ -579,6 +605,7 @@ export default async function ProjectDetailPage({
     registerStatus: project.registerStatus,
     claimStatus: project.claimStatus,
     registrationUser: defaultRegistrationUser,
+    fundingInstitution: defaultFundingInstitution,
   };
   const registrationParts =
     project.registerStatus === "NOT_REGISTERED"
@@ -716,6 +743,7 @@ export default async function ProjectDetailPage({
                 authors={defaultAuthors}
                 completedProductionSteps={completedProductionStepValues}
                 users={authorOptions}
+                fundingInstitutions={fundingInstitutionOptions}
                 registerOptions={registerOptions}
                 claimOptions={claimOptions}
                 canEditRegistrationClaim={isAdmin}
@@ -724,6 +752,14 @@ export default async function ProjectDetailPage({
             <h1 className="mt-2 min-w-0 text-xl font-medium leading-8 tracking-tight text-slate-950 dark:text-white">
               {project.title}
             </h1>
+            {project.fundingInstitution && (
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                Funded by:{" "}
+                <span className="font-medium text-slate-700 dark:text-slate-200">
+                  {project.fundingInstitution.name}
+                </span>
+              </p>
+            )}
           </div>
           <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row xl:justify-end">
             <div
@@ -854,6 +890,11 @@ export default async function ProjectDetailPage({
               type="hidden"
               name="registrationUserId"
               value={defaultRegistrationUser?.id ?? ""}
+            />
+            <input
+              type="hidden"
+              name="fundingInstitutionId"
+              value={defaultFundingInstitution?.id ?? ""}
             />
             {!defaultRegistrationUser && project.registrationName && (
               <input

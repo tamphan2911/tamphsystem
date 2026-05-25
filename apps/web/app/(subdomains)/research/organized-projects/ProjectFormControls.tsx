@@ -39,9 +39,11 @@ function userName(user: AuthorOption) {
 export function FundingInstitutionPicker({
   institutions,
   defaultInstitution,
+  disabled = false,
 }: {
   institutions: FundingInstitutionOption[];
   defaultInstitution?: FundingInstitutionOption | null;
+  disabled?: boolean;
 }) {
   const [selected, setSelected] = useState<FundingInstitutionOption | null>(
     defaultInstitution ?? null,
@@ -77,7 +79,7 @@ export function FundingInstitutionPicker({
 
   return (
     <div className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-      Funding institution
+      Funder
       <input type="hidden" name="fundingInstitutionId" value={selected?.id ?? ""} />
       <div className="min-h-12 rounded-lg border border-slate-200 bg-slate-50 p-1 transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950">
         {selected ? (
@@ -96,6 +98,7 @@ export function FundingInstitutionPicker({
             <button
               type="button"
               onClick={() => setSelected(null)}
+              disabled={disabled}
               className="rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
               aria-label="Remove funding institution"
             >
@@ -113,8 +116,9 @@ export function FundingInstitutionPicker({
               onChange={(event) => setQuery(event.target.value)}
               onFocus={() => setFocused(true)}
               onBlur={() => window.setTimeout(() => setFocused(false), 120)}
+              disabled={disabled}
               placeholder="Search funding institution..."
-              className="h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              className="h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:disabled:bg-slate-900 dark:disabled:text-slate-400"
             />
 
             {focused && query.trim().length > 0 && (
