@@ -4,9 +4,11 @@ import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import {
   createFundingInstitution,
+  deleteFundingInstitution,
   updateFundingInstitution,
 } from "../actions";
 import { IconHint } from "../components/TableControls";
+import { DeleteFundingInstitutionButton } from "./DeleteFundingInstitutionButton";
 import { FundingInstitutionDialog } from "./FundingInstitutionDialog";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +57,9 @@ const demoFundingInstitutions = [
 ];
 
 async function ensureDemoFundingInstitutions() {
+  const count = await prisma.fundingInstitution.count();
+  if (count > 0) return;
+
   for (const institution of demoFundingInstitutions) {
     const existing = await prisma.fundingInstitution.findFirst({
       where: { name: institution.name },
@@ -135,7 +140,9 @@ export default async function FundingInstitutionsPage() {
   await ensureDemoFundingInstitutions();
   await ensureFunderCodes();
   const institutions = await prisma.fundingInstitution.findMany({
-    include: { _count: { select: { organizedProjects: true } } },
+    include: {
+      _count: { select: { organizedProjects: true, researchProjects: true } },
+    },
     orderBy: [{ name: "asc" }],
   });
 
@@ -177,6 +184,9 @@ export default async function FundingInstitutionsPage() {
               <th className="w-16 px-3 py-3 text-center">Web</th>
               {isAdmin && (
                 <th className="w-14 px-3 py-3 text-center">Edit</th>
+              )}
+              {isAdmin && (
+                <th className="w-14 px-3 py-3 text-center">Delete</th>
               )}
             </tr>
           </thead>
@@ -256,6 +266,19 @@ export default async function FundingInstitutionsPage() {
                         website: institution.website,
                         note: institution.note,
                       }}
+                    />
+                  </td>
+                )}
+                {isAdmin && (
+                  <td className="px-3 py-3 text-center">
+                    <DeleteFundingInstitutionButton
+                      funder={{
+                        id: institution.id,
+                        name: institution.name,
+                        organizedProjects: institution._count.organizedProjects,
+                        researchProjects: institution._count.researchProjects,
+                      }}
+                      deleteAction={deleteFundingInstitution}
                     />
                   </td>
                 )}

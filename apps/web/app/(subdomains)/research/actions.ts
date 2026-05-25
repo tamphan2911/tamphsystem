@@ -1695,6 +1695,19 @@ export async function updateFundingInstitution(
   revalidatePath("/organized-projects");
 }
 
+export async function deleteFundingInstitution(institutionId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.fundingInstitution.delete({
+    where: { id: institutionId },
+  });
+
+  revalidatePath("/funding-institutions");
+  revalidatePath("/organized-projects");
+  revalidatePath("/projects");
+}
+
 export async function createAcademicReview(formData: FormData) {
   await requireCurrentUser();
 
