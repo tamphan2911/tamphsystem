@@ -2,16 +2,32 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+} from "lucide-react";
 
 export type FilterOption = {
   value: string;
   label: string;
 };
 
-export function IconHint({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
+export function IconHint({
+  label,
+  children,
+  className = "",
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <span className={`group/icon relative inline-flex items-center justify-center align-middle ${className}`}>
+    <span
+      className={`group/icon relative inline-flex items-center justify-center align-middle ${className}`}
+    >
       {children}
       <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold normal-case tracking-normal text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
         {label}
@@ -35,7 +51,8 @@ export function FilterSelect({
 }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const selected = options.find((option) => option.value === value) ?? options[0];
+  const selected =
+    options.find((option) => option.value === value) ?? options[0];
 
   useEffect(() => {
     function closeOnOutsideClick(event: MouseEvent) {
@@ -71,12 +88,19 @@ export function FilterSelect({
         className="group inline-flex h-10 w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-800 shadow-sm shadow-slate-900/[0.03] outline-none transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:shadow-black/10 dark:hover:border-slate-600 dark:hover:bg-slate-900"
       >
         <span className="min-w-0 truncate text-left">{selected?.label}</span>
-        <ChevronDown className={`h-4 w-4 flex-none text-slate-400 transition group-hover:text-slate-600 dark:group-hover:text-slate-300 ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+        <ChevronDown
+          className={`h-4 w-4 flex-none text-slate-400 transition group-hover:text-slate-600 dark:group-hover:text-slate-300 ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1.5 w-full min-w-48 overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
-          <div className="max-h-64 overflow-y-auto" role="listbox" aria-label={ariaLabel}>
+        <div className="absolute right-0 top-full z-50 mt-2 w-max min-w-full max-w-[min(28rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-900/[0.03] dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35 dark:ring-white/[0.04]">
+          <div
+            className="max-h-72 overflow-y-auto pr-0.5"
+            role="listbox"
+            aria-label={ariaLabel}
+          >
             {options.map((option) => {
               const isSelected = option.value === value;
 
@@ -90,14 +114,21 @@ export function FilterSelect({
                     onChange(option.value);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm transition ${
+                  className={`flex w-full items-start justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm leading-5 transition ${
                     isSelected
-                      ? "bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-200"
-                      : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                      ? "bg-blue-50 font-semibold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-blue-700 dark:text-slate-200 dark:hover:bg-slate-800/80 dark:hover:text-blue-200"
                   }`}
                 >
-                  <span className="min-w-0 truncate">{option.label}</span>
-                  {isSelected && <Check className="h-4 w-4 flex-none" aria-hidden="true" />}
+                  <span className="min-w-0 flex-1 whitespace-normal break-words">
+                    {option.label}
+                  </span>
+                  {isSelected && (
+                    <Check
+                      className="mt-0.5 h-4 w-4 flex-none"
+                      aria-hidden="true"
+                    />
+                  )}
                 </button>
               );
             })}
@@ -119,7 +150,10 @@ export function TableSearchInput({
 }) {
   return (
     <div className="relative w-full min-w-0 flex-1 lg:max-w-md">
-      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" aria-hidden="true" />
+      <Search
+        className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+        aria-hidden="true"
+      />
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -130,7 +164,11 @@ export function TableSearchInput({
   );
 }
 
-export function useTablePagination<T>(rows: T[], pageSize = 10, initialPage = 1) {
+export function useTablePagination<T>(
+  rows: T[],
+  pageSize = 10,
+  initialPage = 1,
+) {
   const [page, setPage] = useState(initialPage);
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
 
@@ -165,8 +203,11 @@ export function TablePagination({
   return (
     <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50/70 px-4 py-3 transition dark:border-slate-800 dark:bg-slate-950/40 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-        Showing <span className="text-slate-900 dark:text-slate-100">{start}-{end}</span> of{" "}
-        <span className="text-slate-900 dark:text-slate-100">{total}</span>
+        Showing{" "}
+        <span className="text-slate-900 dark:text-slate-100">
+          {start}-{end}
+        </span>{" "}
+        of <span className="text-slate-900 dark:text-slate-100">{total}</span>
       </p>
       <div className="flex items-center gap-2">
         <button

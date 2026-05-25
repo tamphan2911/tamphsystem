@@ -71,9 +71,9 @@ export function ResearchFormSelect({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-full min-w-48 overflow-hidden rounded-xl border border-blue-100 bg-white p-2 shadow-2xl shadow-slate-900/15 ring-1 ring-blue-50 dark:border-blue-900/60 dark:bg-slate-950 dark:shadow-black/35 dark:ring-blue-950/50">
+        <div className="absolute right-0 top-full z-50 mt-2 w-max min-w-full max-w-[min(30rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-blue-100 bg-white p-2 shadow-2xl shadow-slate-900/15 ring-1 ring-blue-50 dark:border-blue-900/60 dark:bg-slate-950 dark:shadow-black/35 dark:ring-blue-950/50">
           <div
-            className="max-h-64 overflow-y-auto"
+            className="max-h-72 overflow-y-auto pr-0.5"
             role="listbox"
             aria-label={ariaLabel}
           >
@@ -91,15 +91,20 @@ export function ResearchFormSelect({
                     onValueChange?.(option.value);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm transition ${
+                  className={`flex w-full items-start justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm leading-5 transition ${
                     isSelected
                       ? "bg-blue-50 font-semibold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900"
                       : "text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
                   }`}
                 >
-                  <span className="min-w-0 truncate">{option.label}</span>
+                  <span className="min-w-0 flex-1 whitespace-normal break-words">
+                    {option.label}
+                  </span>
                   {isSelected && (
-                    <Check className="h-4 w-4 flex-none" aria-hidden="true" />
+                    <Check
+                      className="mt-0.5 h-4 w-4 flex-none"
+                      aria-hidden="true"
+                    />
                   )}
                 </button>
               );
