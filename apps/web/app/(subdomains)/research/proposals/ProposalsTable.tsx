@@ -2,7 +2,17 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Download, FileText } from "lucide-react";
+import {
+  CheckCircle2,
+  Download,
+  Eye,
+  FileQuestion,
+  Inbox,
+  Lightbulb,
+  Rocket,
+  XCircle,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   FilterSelect,
   IconHint,
@@ -47,6 +57,46 @@ function statusClass(status: string) {
     return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
   }
   return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+}
+
+function statusIcon(status: string) {
+  if (status === "ACCEPTED") return CheckCircle2;
+  if (status === "DECLINED") return XCircle;
+  if (status === "REVIEWING") return Eye;
+  return Inbox;
+}
+
+function typeIcon(type: string) {
+  if (type === "PROJECT") return Rocket;
+  return Lightbulb;
+}
+
+function typeClass(type: string) {
+  if (type === "PROJECT") {
+    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
+  }
+  return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+}
+
+function IconChip({
+  icon: Icon,
+  label,
+  className,
+}: {
+  icon: LucideIcon;
+  label: string;
+  className: string;
+}) {
+  return (
+    <IconHint label={label}>
+      <span
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+      >
+        <Icon className="h-4 w-4" aria-hidden="true" />
+        <span className="sr-only">{label}</span>
+      </span>
+    </IconHint>
+  );
 }
 
 export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
@@ -109,18 +159,16 @@ export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[78rem] text-left">
+        <table className="w-full min-w-[68rem] table-fixed text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="sticky left-0 z-20 w-[26rem] bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
-                Proposal
-              </th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Submitted by</th>
-              <th className="px-4 py-3">Contact</th>
-              <th className="px-4 py-3">File</th>
-              <th className="px-4 py-3">Date</th>
+              <th className="w-28 px-3 py-3">ID</th>
+              <th className="w-[36rem] px-4 py-3">Proposal</th>
+              <th className="w-16 px-2 py-3 text-center">Type</th>
+              <th className="w-16 px-2 py-3 text-center">Status</th>
+              <th className="w-44 px-3 py-3">Submitted by</th>
+              <th className="w-44 px-3 py-3">Contact</th>
+              <th className="w-16 px-2 py-3 text-center">File</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -129,64 +177,66 @@ export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
                 key={proposal.id}
                 className="group align-top transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
               >
-                <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
+                <td className="px-3 py-3 align-top">
+                  <Link href={`/proposals/${proposal.id}`}>
+                    <span className="font-mono text-xs font-semibold text-slate-400 transition hover:text-blue-600 dark:text-slate-500 dark:hover:text-blue-300">
+                      {proposal.id.slice(0, 8)}
+                    </span>
+                  </Link>
+                </td>
+                <td className="px-4 py-3 align-top">
                   <Link
                     href={`/proposals/${proposal.id}`}
-                    className="text-sm font-normal text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
+                    className="line-clamp-2 text-lg font-normal leading-snug text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
                   >
                     {proposal.title}
                   </Link>
-                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                    {proposal.description}
+                  <p className="mt-1 font-mono text-xs text-slate-400 dark:text-slate-500">
+                    {proposal.createdAt}
                   </p>
-                  {proposal.notes && (
-                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                      Notes: {proposal.notes}
-                    </p>
-                  )}
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                  {label(proposal.type)}
+                <td className="px-2 py-3 text-center align-top">
+                  <IconChip
+                    icon={typeIcon(proposal.type)}
+                    label={label(proposal.type)}
+                    className={typeClass(proposal.type)}
+                  />
                 </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${statusClass(proposal.status)}`}
-                  >
-                    {label(proposal.status)}
-                  </span>
+                <td className="px-2 py-3 text-center align-top">
+                  <IconChip
+                    icon={statusIcon(proposal.status)}
+                    label={label(proposal.status)}
+                    className={statusClass(proposal.status)}
+                  />
                 </td>
-                <td className="px-4 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                <td className="px-3 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
                   <span className="block text-slate-700 dark:text-slate-200">
                     {proposal.submittedBy}
                   </span>
-                  <span>{proposal.submittedByEmail}</span>
+                  <span className="line-clamp-1">
+                    {proposal.submittedByEmail}
+                  </span>
                 </td>
-                <td className="max-w-56 px-4 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                <td className="px-3 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
                   {proposal.contactInfo || "-"}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-3 text-center align-top">
                   {proposal.fileName ? (
                     <IconHint label="Download support file">
                       <a
                         href={`/api/research/proposals/${proposal.id}/file`}
-                        className="inline-flex max-w-48 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs font-semibold text-slate-600 transition hover:-translate-y-0.5 hover:bg-white hover:text-emerald-700 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-emerald-200"
+                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50 text-emerald-700 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-100 hover:shadow-md dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/50"
                       >
-                        <Download className="h-3.5 w-3.5 flex-none" />
-                        <span className="truncate">{proposal.fileName}</span>
-                        <span className="text-slate-400">
-                          {proposal.fileSize}
-                        </span>
+                        <Download className="h-4 w-4" />
                       </a>
                     </IconHint>
                   ) : (
-                    <span className="inline-flex items-center gap-2 text-xs text-slate-400">
-                      <FileText className="h-3.5 w-3.5" />
-                      No file
-                    </span>
+                    <IconHint label="No support file">
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-600">
+                        <FileQuestion className="h-4 w-4" />
+                      </span>
+                    </IconHint>
                   )}
-                </td>
-                <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                  {proposal.createdAt}
                 </td>
               </tr>
             ))}
