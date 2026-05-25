@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Download, FileText } from "lucide-react";
 import {
@@ -129,9 +130,12 @@ export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
                 className="group align-top transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
               >
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                  <p className="text-sm font-normal text-slate-800 dark:text-slate-100">
+                  <Link
+                    href={`/proposals/${proposal.id}`}
+                    className="text-sm font-normal text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
+                  >
                     {proposal.title}
-                  </p>
+                  </Link>
                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
                     {proposal.description}
                   </p>
