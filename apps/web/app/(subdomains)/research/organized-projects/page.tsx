@@ -3,7 +3,10 @@ import {
   OrganizedProjectFinancialClaimStatus,
   OrganizedProjectStatus,
   prisma,
+  Role,
 } from "@repo/db";
+import { auth } from "../../../../auth";
+import { ProposalDialog } from "../components/ProposalDialog";
 import { NewOrganizedProjectDialog } from "./NewOrganizedProjectDialog";
 import {
   OrganizedProjectsTable,
@@ -281,8 +284,13 @@ async function ensureDemoOrganizedProjects() {
 
 export default async function OrganizedProjectsPage() {
   await ensureDemoOrganizedProjects();
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+    []) as Role[];
+  const isAdmin = roles.includes(Role.ADMIN);
 
-  const [projects, researchOptions, users, fundingInstitutions] =
+  const [projects, researchOptions, users, fundingInstitutions, currentUser] =
     await Promise.all([
       prisma.organizedProject.findMany({
         include: {
@@ -319,6 +327,12 @@ export default async function OrganizedProjectsPage() {
         select: { id: true, name: true, shortName: true, country: true },
         orderBy: { name: "asc" },
       }),
+      userId
+        ? prisma.user.findUnique({
+            where: { id: userId },
+            select: { emailVerified: true },
+          })
+        : Promise.resolve(null),
     ]);
 
   const active = projects.filter((project) => project.status === "ACTIVE");
@@ -409,26 +423,34 @@ export default async function OrganizedProjectsPage() {
           ))}
         </div>
 
-        <NewOrganizedProjectDialog
-          researchOptions={researchOptions.map((research) => ({
-            id: research.id,
-            researchCode: research.researchCode ?? "",
-            title: research.title,
-            stage: research.stage,
-          }))}
-          users={users.map((user) => ({
-            id: user.id,
-            name: user.name ?? "",
-            email: user.email,
-            role: user.roles.join(", "),
-          }))}
-          fundingInstitutions={fundingInstitutions.map((institution) => ({
-            id: institution.id,
-            name: institution.name,
-            shortName: institution.shortName ?? "",
-            country: institution.country ?? "",
-          }))}
-        />
+        {isAdmin ? (
+          <NewOrganizedProjectDialog
+            researchOptions={researchOptions.map((research) => ({
+              id: research.id,
+              researchCode: research.researchCode ?? "",
+              title: research.title,
+              stage: research.stage,
+            }))}
+            users={users.map((user) => ({
+              id: user.id,
+              name: user.name ?? "",
+              email: user.email,
+              role: user.roles.join(", "),
+            }))}
+            fundingInstitutions={fundingInstitutions.map((institution) => ({
+              id: institution.id,
+              name: institution.name,
+              shortName: institution.shortName ?? "",
+              country: institution.country ?? "",
+            }))}
+          />
+        ) : (
+          <ProposalDialog
+            type="PROJECT"
+            isLoggedIn={Boolean(session)}
+            hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
+          />
+        )}
       </div>
 
       <OrganizedProjectsTable rows={rows} />

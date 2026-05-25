@@ -9,6 +9,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   FileCheck2,
+  Inbox,
   FolderGit2,
   KeyRound,
   Landmark,
@@ -26,6 +27,7 @@ const icons = {
   conferences: CalendarDays,
   organizedProjects: Building2,
   fundingInstitutions: Landmark,
+  proposals: Inbox,
 };
 
 export function ActiveNavLink({

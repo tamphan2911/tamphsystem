@@ -9,6 +9,7 @@ import {
   SubmissionStatus,
 } from "@repo/db";
 import { auth } from "../../../../auth";
+import { ProposalDialog } from "../components/ProposalDialog";
 import { NewResearchDialog } from "./NewResearchDialog";
 import {
   ResearchProjectsTable,
@@ -303,7 +304,7 @@ export default async function ProjectsDashboard() {
         ],
       };
 
-  const [projects, authorUsers] = await Promise.all([
+  const [projects, authorUsers, currentUser] = await Promise.all([
     prisma.researchProject.findMany({
       where: projectWhere,
       include: {
@@ -329,6 +330,10 @@ export default async function ProjectsDashboard() {
       where: { activeSites: { has: "research" } },
       orderBy: [{ name: "asc" }, { email: "asc" }],
       select: { id: true, name: true, email: true, roles: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { emailVerified: true },
     }),
   ]);
   const authorOptions = authorUsers.map((user) => ({
@@ -447,8 +452,14 @@ export default async function ProjectsDashboard() {
           <div />
         )}
 
-        {canManageResearch && (
+        {isAdmin ? (
           <NewResearchDialog users={authorOptions} isAdmin={isAdmin} />
+        ) : (
+          <ProposalDialog
+            type="RESEARCH"
+            isLoggedIn={Boolean(session)}
+            hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
+          />
         )}
       </div>
 

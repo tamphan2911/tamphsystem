@@ -30,6 +30,18 @@ enum ResearchAuthorNotificationType {
   PUBLISHED
 }
 
+enum ProposalType {
+  RESEARCH
+  PROJECT
+}
+
+enum ProposalStatus {
+  NEW
+  REVIEWING
+  ACCEPTED
+  DECLINED
+}
+
 enum RegistrationStatus {
   NOT_REGISTERED
   PREPARING
@@ -65,6 +77,7 @@ model User {
   sentResearchAuthorNotifications ResearchAuthorNotification[] @relation("ResearchAuthorNotificationSender")
   createdOrganizedProjects        OrganizedProject[]           @relation("OrganizedProjectCreator")
   organizedProjectMemberships     OrganizedProjectMember[]
+  submittedProposals              Proposal[]                   @relation("ProposalSubmitter")
 }
 
 // ---------------------------------------------
@@ -448,6 +461,28 @@ model ResearchProjectAuthor {
 
   @@unique([projectId, userId])
   @@index([projectId, position])
+}
+
+model Proposal {
+  id              String         @id @default(uuid())
+  type            ProposalType
+  status          ProposalStatus @default(NEW)
+  title           String
+  description     String
+  contactInfo     String?
+  notes           String?
+  supportFileName String?
+  supportFileType String?
+  supportFileSize Int?
+  supportFileData Bytes?
+  submittedById   String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  submittedBy User @relation("ProposalSubmitter", fields: [submittedById], references: [id], onDelete: Cascade)
+
+  @@index([type, status, createdAt])
+  @@index([submittedById, createdAt])
 }
 
 model Conference {

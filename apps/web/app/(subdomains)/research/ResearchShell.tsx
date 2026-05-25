@@ -32,6 +32,12 @@ const navItems = [
     adminOnly: true,
   },
   {
+    href: "/proposals",
+    label: "Proposals",
+    icon: "proposals" as const,
+    adminOnly: true,
+  },
+  {
     href: "/tasks",
     label: "Tasks",
     icon: "tasks" as const,

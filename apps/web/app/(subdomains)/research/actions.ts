@@ -14,6 +14,7 @@ import {
   ResearchStage,
   OrganizedProjectStatus,
   OrganizedProjectFinancialClaimStatus,
+  ProposalType,
   ResearchAuthorNotificationType,
   ResearchTaskCategory,
   ResearchTaskStatus,
@@ -98,6 +99,24 @@ function numericStringFromForm(value: FormDataEntryValue | null) {
   const number = Number(normalized);
   return Number.isFinite(number) && number >= 0 ? normalized : null;
 }
+
+const proposalFileTypes = new Map([
+  ["application/pdf", ".pdf"],
+  ["application/msword", ".doc"],
+  [
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".docx",
+  ],
+]);
+const proposalFileTypesByExtension = new Map([
+  ["pdf", "application/pdf"],
+  ["doc", "application/msword"],
+  [
+    "docx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ],
+]);
+const proposalMaxFileSize = 2 * 1024 * 1024;
 
 function addMonths(date: Date, months: number) {
   const next = new Date(date);
@@ -535,9 +554,126 @@ async function notifyOrganizedProjectMembersForResearch(
   });
 }
 
+export async function submitProposal(formData: FormData) {
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) {
+    return {
+      ok: false,
+      reason: "AUTH_REQUIRED",
+      title: "Login required",
+      detail: "Please log in before sending a proposal.",
+    };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, emailVerified: true, activeSites: true },
+  });
+  if (!user) {
+    return {
+      ok: false,
+      reason: "AUTH_REQUIRED",
+      title: "Login required",
+      detail: "Your session could not be verified. Please log in again.",
+    };
+  }
+  if (!user.emailVerified) {
+    return {
+      ok: false,
+      reason: "EMAIL_REQUIRED",
+      title: "Verify your email first",
+      detail:
+        "Your email must be verified before you can send a research or project proposal.",
+    };
+  }
+  if (!user.activeSites.includes("research")) {
+    return {
+      ok: false,
+      reason: "SITE_REQUIRED",
+      title: "Activate Research Hub first",
+      detail:
+        "Please activate your Research Hub account before sending a proposal.",
+    };
+  }
+
+  const type = enumValue(ProposalType, formData.get("type"));
+  const title = optionalString(formData.get("title"));
+  const description = optionalString(formData.get("description"));
+  const contactInfo = optionalString(formData.get("contactInfo"));
+  const notes = optionalString(formData.get("notes"));
+  const file = formData.get("supportFile");
+
+  if (!type || !title || !description) {
+    return {
+      ok: false,
+      reason: "MISSING_FIELDS",
+      title: "Proposal needs more detail",
+      detail: "Please add a title and proposal description before sending.",
+    };
+  }
+
+  let supportFile:
+    | {
+        supportFileName: string;
+        supportFileType: string;
+        supportFileSize: number;
+        supportFileData: Buffer;
+      }
+    | undefined;
+
+  if (file instanceof File && file.size > 0) {
+    const extension = file.name.toLowerCase().split(".").pop();
+    const allowedByMime = proposalFileTypes.has(file.type);
+    const allowedByExtension =
+      extension === "pdf" || extension === "doc" || extension === "docx";
+    if (!allowedByMime && !allowedByExtension) {
+      return {
+        ok: false,
+        reason: "BAD_FILE_TYPE",
+        title: "Support file rejected",
+        detail: "Upload only .doc, .docx, or .pdf files.",
+      };
+    }
+    if (file.size > proposalMaxFileSize) {
+      return {
+        ok: false,
+        reason: "FILE_TOO_LARGE",
+        title: "Support file is too large",
+        detail: "The support file must be 2 MB or smaller.",
+      };
+    }
+    supportFile = {
+      supportFileName: file.name,
+      supportFileType:
+        file.type || proposalFileTypesByExtension.get(extension ?? "") || "",
+      supportFileSize: file.size,
+      supportFileData: Buffer.from(await file.arrayBuffer()),
+    };
+  }
+
+  await prisma.proposal.create({
+    data: {
+      type,
+      title,
+      description,
+      contactInfo,
+      notes,
+      submittedById: user.id,
+      ...supportFile,
+    },
+  });
+
+  revalidatePath("/proposals");
+  revalidatePath(
+    type === ProposalType.PROJECT ? "/organized-projects" : "/projects",
+  );
+  return { ok: true };
+}
+
 export async function createResearchProject(formData: FormData) {
   const user = await requireCurrentUser();
-  if (!canManageResearch(user.roles)) {
+  if (!user.roles.includes(Role.ADMIN)) {
     redirect("/401");
   }
   const isAdmin = user.roles.includes(Role.ADMIN);
@@ -600,6 +736,7 @@ export async function createResearchProject(formData: FormData) {
 
 export async function createOrganizedProject(formData: FormData) {
   const user = await requireCurrentUser();
+  requireAdmin(user.roles);
   const researchProjectIds = orderedUniqueStrings(
     formData.getAll("researchProjectIds"),
   );
