@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { headers } from "next/headers";
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeProvider";
 
@@ -17,17 +18,27 @@ export const metadata: Metadata = {
   description: "A comprehensive platform for learning and research.",
 };
 
-export default function RootLayout({
+function isResearchHost(host: string | null) {
+  if (!host) return false;
+  return host.split(":")[0]?.toLowerCase().startsWith("research.") ?? false;
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const requestHeaders = await headers();
+  const host =
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  const defaultTheme = isResearchHost(host) ? "dark" : "light";
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 transition-colors duration-200`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme={defaultTheme}
           disableTransitionOnChange
         >
           {children}
