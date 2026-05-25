@@ -1,5 +1,7 @@
 import { BookOpen, CalendarClock, ClipboardCheck, CheckCircle2 } from "lucide-react";
-import { prisma } from "@repo/db";
+import { prisma, Role } from "@repo/db";
+import { auth } from "../../../../auth";
+import { deleteAcademicReview } from "../actions";
 import { NewReviewDialog } from "./NewReviewDialog";
 import { ReviewsTable, type ReviewRow } from "./ReviewsTable";
 
@@ -10,6 +12,11 @@ function dateText(value: Date | null) {
 }
 
 export default async function AcademicReviewsPage() {
+  const session = await auth();
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+    []) as Role[];
+  const isAdmin = roles.includes(Role.ADMIN);
+
   const [reviews, journals] = await Promise.all([
     prisma.academicReview.findMany({
       include: { journal: true },
@@ -74,7 +81,11 @@ export default async function AcademicReviewsPage() {
         <NewReviewDialog journals={journalOptions} />
       </div>
 
-      <ReviewsTable rows={rows} />
+      <ReviewsTable
+        rows={rows}
+        isAdmin={isAdmin}
+        deleteAction={deleteAcademicReview}
+      />
     </div>
   );
 }

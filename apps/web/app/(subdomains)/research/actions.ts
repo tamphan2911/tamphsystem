@@ -1662,6 +1662,19 @@ export async function createPublisherAccount(formData: FormData) {
   if (projectId) revalidatePath(`/projects/${projectId}`);
 }
 
+export async function deletePublisherAccount(accountId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.publisherAccount.delete({
+    where: { id: accountId },
+  });
+
+  revalidatePath("/accounts");
+  revalidatePath("/submissions");
+  revalidatePath("/journals");
+}
+
 export async function createFundingInstitution(formData: FormData) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
@@ -1747,6 +1760,18 @@ export async function createAcademicReview(formData: FormData) {
         ? new Date(optionalString(formData.get("completedAt")) as string)
         : null,
     },
+  });
+
+  revalidatePath("/reviews");
+  revalidatePath("/journals");
+}
+
+export async function deleteAcademicReview(reviewId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.academicReview.delete({
+    where: { id: reviewId },
   });
 
   revalidatePath("/reviews");

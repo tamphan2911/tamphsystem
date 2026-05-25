@@ -1,11 +1,18 @@
 import { Building2, KeyRound, Send, Users } from "lucide-react";
-import { prisma } from "@repo/db";
+import { prisma, Role } from "@repo/db";
+import { auth } from "../../../../auth";
+import { deletePublisherAccount } from "../actions";
 import { AccountsTable, type AccountRow } from "./AccountsTable";
 import { NewAccountDialog } from "./NewAccountDialog";
 
 export const dynamic = "force-dynamic";
 
 export default async function PublisherAccountsPage() {
+  const session = await auth();
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+    []) as Role[];
+  const isAdmin = roles.includes(Role.ADMIN);
+
   const [accounts, journals] = await Promise.all([
     prisma.publisherAccount.findMany({
       include: {
@@ -63,7 +70,11 @@ export default async function PublisherAccountsPage() {
         <NewAccountDialog journals={journalOptions} />
       </div>
 
-      <AccountsTable rows={rows} />
+      <AccountsTable
+        rows={rows}
+        isAdmin={isAdmin}
+        deleteAction={deletePublisherAccount}
+      />
     </div>
   );
 }
