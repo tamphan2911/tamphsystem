@@ -3,13 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   ArrowLeft,
-  CalendarDays,
   CheckCircle2,
   Clock3,
   Download,
   FileText,
   Inbox,
-  Mail,
   Phone,
   Rocket,
   UserRound,
@@ -19,15 +17,6 @@ import { prisma, ProposalStatus, ProposalType, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 
 export const dynamic = "force-dynamic";
-
-function shortDate(value: Date | null) {
-  if (!value) return "-";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "2-digit",
-  }).format(value);
-}
 
 function longDate(value: Date | null) {
   if (!value) return "-";
@@ -142,8 +131,6 @@ export default async function ProposalDetailPage({
           name: true,
           email: true,
           roles: true,
-          activeSites: true,
-          emailVerified: true,
         },
       },
     },
@@ -182,6 +169,9 @@ export default async function ProposalDetailPage({
               >
                 <StatusIcon className="h-3.5 w-3.5" />
                 {label(proposal.status)}
+              </span>
+              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                Submitted {longDate(proposal.createdAt)}
               </span>
             </div>
             <h1 className="mt-4 text-2xl font-normal leading-tight tracking-tight text-slate-950 dark:text-white">
@@ -254,22 +244,6 @@ export default async function ProposalDetailPage({
               value={proposal.contactInfo || "-"}
             />
             <DetailItem
-              icon={<Mail className="h-3.5 w-3.5" />}
-              label="Account"
-              value={
-                <span>
-                  <span className="block">
-                    Email verified:{" "}
-                    {proposal.submittedBy.emailVerified ? "Yes" : "No"}
-                  </span>
-                  <span className="block text-xs text-slate-500 dark:text-slate-400">
-                    Active sites:{" "}
-                    {proposal.submittedBy.activeSites.join(", ") || "-"}
-                  </span>
-                </span>
-              }
-            />
-            <DetailItem
               icon={<FileText className="h-3.5 w-3.5" />}
               label="Support file"
               value={
@@ -286,20 +260,6 @@ export default async function ProposalDetailPage({
                 ) : (
                   "No support file"
                 )
-              }
-            />
-            <DetailItem
-              icon={<CalendarDays className="h-3.5 w-3.5" />}
-              label="Timeline"
-              value={
-                <span>
-                  <span className="block">
-                    Submitted: {longDate(proposal.createdAt)}
-                  </span>
-                  <span className="block text-xs text-slate-500 dark:text-slate-400">
-                    Updated: {shortDate(proposal.updatedAt)}
-                  </span>
-                </span>
               }
             />
           </dl>
