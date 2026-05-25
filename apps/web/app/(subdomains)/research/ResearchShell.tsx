@@ -155,6 +155,7 @@ export function ResearchShell({
                 label={item.label}
                 icon={item.icon}
                 collapsed={collapsed}
+                adminOnly={"adminOnly" in item && item.adminOnly}
               />
             ))}
           </nav>
@@ -170,7 +171,11 @@ export function ResearchShell({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                  className={`whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold transition ${
+                    "adminOnly" in item && item.adminOnly
+                      ? "bg-violet-50 text-violet-800 ring-1 ring-violet-100 hover:bg-violet-100 dark:bg-violet-950/30 dark:text-violet-200 dark:ring-violet-800/50 dark:hover:bg-violet-900/40"
+                      : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                  }`}
                 >
                   {item.label}
                 </Link>
