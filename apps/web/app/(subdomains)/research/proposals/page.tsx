@@ -2,6 +2,7 @@ import { FileText, Inbox, Lightbulb, Rocket } from "lucide-react";
 import { redirect } from "next/navigation";
 import { ProposalType, prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
+import { ProposalDialog } from "../components/ProposalDialog";
 import { ProposalsTable, type ProposalRow } from "./ProposalsTable";
 
 export const dynamic = "force-dynamic";
@@ -23,16 +24,25 @@ function fileSizeLabel(value: number | null) {
 
 export default async function ProposalsPage() {
   const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   if (!roles.includes(Role.ADMIN)) redirect("/401");
 
-  const proposals = await prisma.proposal.findMany({
-    include: {
-      submittedBy: { select: { name: true, email: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const [proposals, currentUser] = await Promise.all([
+    prisma.proposal.findMany({
+      include: {
+        submittedBy: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    userId
+      ? prisma.user.findUnique({
+          where: { id: userId },
+          select: { emailVerified: true },
+        })
+      : null,
+  ]);
 
   const rows: ProposalRow[] = proposals.map((proposal) => ({
     id: proposal.id,
@@ -88,23 +98,38 @@ export default async function ProposalsPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
-        {stats.map((item) => (
-          <div
-            key={item.label}
-            className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-          >
-            <item.icon className={`h-4 w-4 ${item.color}`} />
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                {item.label}
-              </p>
-              <p className="text-base font-black text-slate-950 dark:text-white">
-                {item.value}
-              </p>
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
+          {stats.map((item) => (
+            <div
+              key={item.label}
+              className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            >
+              <item.icon className={`h-4 w-4 ${item.color}`} />
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  {item.label}
+                </p>
+                <p className="text-base font-black text-slate-950 dark:text-white">
+                  {item.value}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <ProposalDialog
+            type="RESEARCH"
+            isLoggedIn={Boolean(session)}
+            hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
+          />
+          <ProposalDialog
+            type="PROJECT"
+            isLoggedIn={Boolean(session)}
+            hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
+          />
+        </div>
       </div>
 
       <ProposalsTable rows={rows} />
