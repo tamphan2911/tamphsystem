@@ -18,9 +18,11 @@ export default auth((req) => {
 
   // 1. Shared Global Routes (do not prefix with subdomains)
   const isAuthRoute =
-    url.pathname.startsWith("/login") || url.pathname.startsWith("/register");
+    url.pathname.startsWith("/login") ||
+    url.pathname.startsWith("/register") ||
+    url.pathname.startsWith("/verify-email");
   if (isAuthRoute) {
-    if (isLoggedIn) {
+    if (isLoggedIn && !url.pathname.startsWith("/verify-email")) {
       return NextResponse.redirect(new URL("/", req.url));
     }
     return NextResponse.next();

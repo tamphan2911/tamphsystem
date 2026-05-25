@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { AlertTriangle, BarChart3, Loader2, UserPlus } from "lucide-react";
 import { registerUser } from "./actions";
 
 export default function RegisterPage() {
@@ -12,11 +14,48 @@ export default function RegisterPage() {
   );
 }
 
+function siteCopy() {
+  if (typeof window === "undefined") return defaultCopy;
+  const host = window.location.host;
+  if (host.startsWith("research.")) {
+    return {
+      title: "Create Research Hub account",
+      subtitle:
+        "Register with the shared TamphSystem account database. Email verification is required before login.",
+      accent: "emerald",
+    };
+  }
+  if (host.startsWith("learn.")) {
+    return {
+      title: "Create Learn account",
+      subtitle: "Register with the shared TamphSystem account database.",
+      accent: "blue",
+    };
+  }
+  return {
+    title: "Create account",
+    subtitle: "Register with the shared TamphSystem account database.",
+    accent: "blue",
+  };
+}
+
+const defaultCopy = {
+  title: "Create account",
+  subtitle: "Register with the shared TamphSystem account database.",
+  accent: "blue",
+};
+
 function RegisterContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [copy, setCopy] = useState(defaultCopy);
+  const isResearch = copy.accent === "emerald";
+
+  useEffect(() => {
+    setCopy(siteCopy());
+  }, []);
 
   const handleSubmit = async (formData: FormData) => {
     setIsLoading(true);
@@ -26,77 +65,109 @@ function RegisterContent() {
       setError(result.error);
       setIsLoading(false);
     }
-    // If successful, the action redirects, so we don't reset isLoading
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 transition-colors duration-200">
-      <div className="w-full max-w-md bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl p-8 shadow-xl dark:shadow-2xl">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Create an Account</h1>
-          <p className="text-slate-500 dark:text-slate-400">Join the TamphSystem learning platform</p>
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-950 transition-colors duration-200 dark:bg-slate-950 dark:text-white">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/30">
+        <div className="border-b border-slate-100 px-8 py-7 text-center dark:border-slate-800">
+          <div
+            className={`mx-auto flex h-12 w-12 items-center justify-center rounded-2xl ring-1 ${
+              isResearch
+                ? "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-900"
+                : "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:ring-blue-900"
+            }`}
+          >
+            {isResearch ? (
+              <BarChart3 className="h-6 w-6" />
+            ) : (
+              <UserPlus className="h-6 w-6" />
+            )}
+          </div>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight">
+            {copy.title}
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+            {copy.subtitle}
+          </p>
         </div>
 
-        <form action={handleSubmit} className="space-y-6">
-          {callbackUrl && <input type="hidden" name="callbackUrl" value={callbackUrl} />}
+        <form action={handleSubmit} className="space-y-5 px-8 py-7">
+          {callbackUrl && (
+            <input type="hidden" name="callbackUrl" value={callbackUrl} />
+          )}
 
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm border border-red-200 dark:border-red-800/30">
-              {error}
+            <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200">
+              <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
+              <span>{error}</span>
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Full Name
-            </label>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+            Full name
             <input
               type="text"
               name="name"
-              placeholder="John Doe"
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              placeholder="Your full name"
+              className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
               required
             />
-          </div>
+          </label>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Email Address
-            </label>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+            Email address
             <input
               type="email"
               name="email"
-              placeholder="john@example.com"
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              placeholder="you@example.com"
+              className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
               required
             />
-          </div>
+          </label>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Password
-            </label>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+            Password
             <input
               type="password"
               name="password"
-              placeholder="••••••••"
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              placeholder="At least 6 characters"
+              className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
               required
               minLength={6}
             />
-          </div>
+          </label>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-lg shadow-blue-500/20 disabled:opacity-50"
+            className={`inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 ${
+              isResearch
+                ? "border-emerald-600 bg-emerald-600 shadow-emerald-900/15 hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/30 dark:border-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400"
+                : "border-blue-600 bg-blue-600 shadow-blue-900/15 hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/30 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400"
+            }`}
           >
-            {isLoading ? "Creating Account..." : "Register"}
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <UserPlus className="h-4 w-4" />
+            )}
+            {isLoading ? "Creating account..." : "Register"}
           </button>
         </form>
-        
-        <div className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-          Already have an account? <a href="/login" className="text-blue-600 dark:text-blue-400 hover:underline">Sign in</a>
+
+        <div className="border-t border-slate-100 px-8 py-5 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+          Already have an account?{" "}
+          <Link
+            href={
+              callbackUrl
+                ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
+                : "/login"
+            }
+            className="font-semibold text-blue-600 transition hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+          >
+            Sign in
+          </Link>
         </div>
       </div>
     </div>

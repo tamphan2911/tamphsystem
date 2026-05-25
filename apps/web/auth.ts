@@ -27,13 +27,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!user) {
           return null;
         }
-        
+
+        if (!user.emailVerified) {
+          return null;
+        }
+
         // Check if the password matches the hash
-        const isMatch = await bcrypt.compare(credentials.password as string, user.passwordHash);
-        
+        const isMatch = await bcrypt.compare(
+          credentials.password as string,
+          user.passwordHash,
+        );
+
         // HACK: for our dummy seed data we will let the placeholder password pass if they type "password"
         // IN PRODUCTION: remove the fallback condition
-        if (isMatch || (user.passwordHash === 'hashed_password_placeholder' && credentials.password === 'password')) {
+        if (
+          isMatch ||
+          (user.passwordHash === "hashed_password_placeholder" &&
+            credentials.password === "password")
+        ) {
           return {
             id: user.id,
             email: user.email,

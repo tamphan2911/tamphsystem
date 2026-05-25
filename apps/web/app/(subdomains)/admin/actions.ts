@@ -37,6 +37,7 @@ export async function createUser(formData: FormData) {
       email,
       name: optionalString(formData.get("name")),
       passwordHash: await bcrypt.hash(password, 10),
+      emailVerified: new Date(),
       roles: roles.length > 0 ? roles : [Role.STUDENT],
       activeSites: ["admin"],
     },
