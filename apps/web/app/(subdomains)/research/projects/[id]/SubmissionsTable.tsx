@@ -870,13 +870,13 @@ export function SubmissionsTable({
                 <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Status date
                 </span>
-                <div className="group/date relative rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 via-slate-50 to-emerald-50 p-1.5 shadow-sm transition focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-blue-900/60 dark:from-blue-950/30 dark:via-slate-950 dark:to-emerald-950/20">
-                  <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-500 transition group-focus-within/date:text-blue-600 dark:text-blue-300" />
+                <div className="group/date relative rounded-xl border border-slate-200 bg-slate-50 p-1.5 shadow-sm transition hover:border-blue-200 hover:bg-blue-50/70 focus-within:border-blue-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-blue-800/80 dark:hover:bg-slate-900 dark:focus-within:border-blue-600 dark:focus-within:bg-slate-900 dark:focus-within:ring-blue-500/15">
+                  <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition group-hover/date:text-blue-500 group-focus-within/date:text-blue-600 dark:text-slate-500 dark:group-hover/date:text-blue-300 dark:group-focus-within/date:text-blue-300" />
                   <input
                     name="statusDate"
                     type="date"
                     defaultValue={dateInputValue(statusDate(editing))}
-                    className="w-full cursor-pointer rounded-lg border border-white/80 bg-white/85 py-2.5 pl-9 pr-3 text-sm font-semibold text-slate-800 outline-none transition [color-scheme:light] hover:bg-white dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-100 dark:[color-scheme:dark]"
+                    className="w-full cursor-pointer rounded-lg border border-transparent bg-white py-2.5 pl-9 pr-3 text-sm font-semibold text-slate-800 outline-none transition [color-scheme:light] hover:border-blue-100 hover:bg-white focus:border-blue-200 dark:bg-slate-950 dark:text-slate-100 dark:[color-scheme:dark] dark:hover:border-blue-900/70 dark:hover:bg-slate-950 dark:focus:border-blue-800"
                   />
                 </div>
               </label>
