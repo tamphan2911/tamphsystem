@@ -1,16 +1,19 @@
-import { LifeBuoy, Mail } from "lucide-react";
+import { LifeBuoy } from "lucide-react";
 
-export function SidebarSupportCard({ collapsed = false }: { collapsed?: boolean }) {
+export function SidebarSupportCard({
+  collapsed = false,
+}: {
+  collapsed?: boolean;
+}) {
   if (collapsed) {
     return (
-      <a
-        href="mailto:admin@tamph.com"
+      <div
         aria-label="Contact support"
         title="Contact support"
         className="mx-3 mb-4 flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition hover:bg-white hover:text-slate-950 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
       >
         <LifeBuoy className="h-5 w-5" />
-      </a>
+      </div>
     );
   }
 
@@ -21,19 +24,15 @@ export function SidebarSupportCard({ collapsed = false }: { collapsed?: boolean 
           <LifeBuoy className="h-4 w-4" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-slate-950 dark:text-white">Need support?</p>
+          <p className="text-sm font-bold text-slate-950 dark:text-white">
+            Need support?
+          </p>
           <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-300">
-            For account, access, or platform issues.
+            For account, access, or platform issues? Find me! Yes, you know who
+            to look for. If not, this place is not for you!
           </p>
         </div>
       </div>
-      <a
-        href="mailto:admin@tamph.com"
-        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
-      >
-        <Mail className="h-3.5 w-3.5" />
-        admin@tamph.com
-      </a>
     </div>
   );
 }

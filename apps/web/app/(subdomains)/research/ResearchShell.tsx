@@ -177,11 +177,8 @@ export function ResearchShell({
               ))}
             </div>
             <div className="hidden min-w-0 items-center gap-2 lg:flex">
-              <span className="text-sm text-slate-500 dark:text-slate-400">
-                Research operations
-              </span>
               {isAdmin && (
-                <div className="ml-3 flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800/80">
+                <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800/80">
                   {adminLinks.map((item) => (
                     <Link
                       key={item.href}
