@@ -175,6 +175,11 @@ function statusDate(row: SubmissionRow) {
   return row.submittedAt;
 }
 
+function isAcceptedOrPublished(row: SubmissionRow) {
+  const normalized = normalizedStatus(row.status);
+  return normalized === "ACCEPTED" || normalized === "PUBLISHED";
+}
+
 function MoneyCell({ amount, currency }: { amount: string; currency: string }) {
   if (!amount) return <span>-</span>;
   if (currency === "USD") {
@@ -762,20 +767,26 @@ export function SubmissionsTable({
                   {hasAction && (
                     <td className="px-4 py-3 text-right">
                       {showStatusEdit && (
-                        <button
-                          type="button"
-                          disabled={disabled}
-                          title={
-                            disabled
-                              ? "Research is locked. Unlock it before editing submission status."
-                              : "Edit submission status"
-                          }
-                          onClick={() => setEditing(row)}
-                          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:shadow-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40"
-                          aria-label={`Edit status for ${row.venueName}`}
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </button>
+                        (() => {
+                          const editDisabled =
+                            disabled && !isAcceptedOrPublished(row);
+                          return (
+                            <button
+                              type="button"
+                              disabled={editDisabled}
+                              title={
+                                editDisabled
+                                  ? "Research is locked. Only accepted or published submissions can still be updated."
+                                  : "Edit submission status"
+                              }
+                              onClick={() => setEditing(row)}
+                              className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:shadow-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40"
+                              aria-label={`Edit status for ${row.venueName}`}
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </button>
+                          );
+                        })()
                       )}
                       {showDelete && (
                         <button

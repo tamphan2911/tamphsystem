@@ -2378,10 +2378,19 @@ export async function updateSubmissionStatus(formData: FormData) {
     });
     if (!currentSubmission)
       return { ok: false, message: "Submission was not found." };
-    if (await researchContentIsLocked(currentSubmission.researchProjectId)) {
+    const canEditLockedSubmission =
+      (currentSubmission.status === SubmissionStatus.ACCEPTED ||
+        currentSubmission.status === SubmissionStatus.PUBLISHED) &&
+      (journalStatus === SubmissionStatus.ACCEPTED ||
+        journalStatus === SubmissionStatus.PUBLISHED);
+    if (
+      !canEditLockedSubmission &&
+      (await researchContentIsLocked(currentSubmission.researchProjectId))
+    ) {
       return {
         ok: false,
-        message: "Research is locked. Unlock it before editing submissions.",
+        message:
+          "Research is locked. Only accepted or published submissions can still be updated.",
       };
     }
     if (
@@ -2532,10 +2541,19 @@ export async function updateSubmissionStatus(formData: FormData) {
     });
     if (!currentSubmission)
       return { ok: false, message: "Submission was not found." };
-    if (await researchContentIsLocked(currentSubmission.researchProjectId)) {
+    const canEditLockedSubmission =
+      (currentSubmission.status === ConferenceSubmissionStatus.ACCEPTED ||
+        currentSubmission.status === ConferenceSubmissionStatus.PUBLISHED) &&
+      (conferenceStatus === ConferenceSubmissionStatus.ACCEPTED ||
+        conferenceStatus === ConferenceSubmissionStatus.PUBLISHED);
+    if (
+      !canEditLockedSubmission &&
+      (await researchContentIsLocked(currentSubmission.researchProjectId))
+    ) {
       return {
         ok: false,
-        message: "Research is locked. Unlock it before editing submissions.",
+        message:
+          "Research is locked. Only accepted or published submissions can still be updated.",
       };
     }
     if (
