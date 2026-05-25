@@ -2,6 +2,7 @@ import { Building2, FolderGit2, Inbox } from "lucide-react";
 import { redirect } from "next/navigation";
 import { ProposalStatus, ProposalType, prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
+import { deleteProposal } from "../actions";
 import { ProposalDialog } from "../components/ProposalDialog";
 import { ProposalsTable, type ProposalRow } from "./ProposalsTable";
 
@@ -137,7 +138,7 @@ export default async function ProposalsPage() {
         </div>
       </div>
 
-      <ProposalsTable rows={rows} />
+      <ProposalsTable rows={rows} isAdmin deleteAction={deleteProposal} />
     </div>
   );
 }

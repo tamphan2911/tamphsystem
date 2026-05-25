@@ -730,6 +730,17 @@ export async function submitProposal(formData: FormData) {
   return { ok: true };
 }
 
+export async function deleteProposal(proposalId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.proposal.delete({
+    where: { id: proposalId },
+  });
+
+  revalidatePath("/proposals");
+}
+
 export async function createResearchProject(formData: FormData) {
   const user = await requireCurrentUser();
   if (!user.roles.includes(Role.ADMIN)) {
