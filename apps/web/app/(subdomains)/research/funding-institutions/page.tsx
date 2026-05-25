@@ -192,7 +192,7 @@ export default async function FundingInstitutionsPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <p className="line-clamp-1 text-base font-semibold text-slate-800 dark:text-slate-100">
+                  <p className="line-clamp-1 text-base font-normal text-slate-800 dark:text-slate-100">
                     {institution.name}
                   </p>
                   <p className="mt-1 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">

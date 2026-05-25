@@ -240,7 +240,7 @@ export function OrganizedProjectsTable({
                     <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
                       <Link
                         href={`/organized-projects/${project.id}`}
-                        className="line-clamp-2 text-base font-semibold text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
+                        className="line-clamp-2 text-base font-normal text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
                       >
                         {project.title}
                       </Link>

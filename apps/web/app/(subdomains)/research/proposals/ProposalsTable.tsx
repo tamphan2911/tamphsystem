@@ -187,7 +187,7 @@ export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
                 <td className="px-4 py-3 align-top">
                   <Link
                     href={`/proposals/${proposal.id}`}
-                    className="line-clamp-2 text-lg font-normal leading-snug text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
+                    className="line-clamp-2 text-base font-normal leading-snug text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
                   >
                     {proposal.title}
                   </Link>

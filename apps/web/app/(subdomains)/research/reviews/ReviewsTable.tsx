@@ -222,7 +222,7 @@ export function ReviewsTable({ rows }: { rows: ReviewRow[] }) {
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                   <Link
                     href={`/journals/${row.journalId}`}
-                    className="font-semibold text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                    className="font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
                   >
                     {row.journalName}
                   </Link>

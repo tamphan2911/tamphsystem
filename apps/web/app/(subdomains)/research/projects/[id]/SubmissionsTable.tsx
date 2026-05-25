@@ -591,7 +591,7 @@ export function SubmissionsTable({
                         )}
                         <span className="min-w-0">
                           <span
-                            className={`${isResearchView ? "text-lg" : "text-sm"} block truncate font-normal text-slate-700 transition group-hover/link:text-blue-600 dark:text-slate-100 dark:group-hover/link:text-blue-300`}
+                            className={`${isResearchView ? "text-lg" : "text-base"} block truncate font-normal text-slate-700 transition group-hover/link:text-blue-600 dark:text-slate-100 dark:group-hover/link:text-blue-300`}
                           >
                             {isResearchView ? row.projectTitle : row.venueName}
                           </span>
@@ -619,7 +619,7 @@ export function SubmissionsTable({
                         )}
                         <span className="min-w-0">
                           <span
-                            className={`${isResearchView ? "text-lg" : "text-sm"} block truncate font-normal text-slate-700 transition group-hover/link:text-blue-600 dark:text-slate-100 dark:group-hover/link:text-blue-300`}
+                            className={`${isResearchView ? "text-lg" : "text-base"} block truncate font-normal text-slate-700 transition group-hover/link:text-blue-600 dark:text-slate-100 dark:group-hover/link:text-blue-300`}
                           >
                             {isResearchView ? row.projectTitle : row.venueName}
                           </span>
