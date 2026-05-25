@@ -2083,6 +2083,219 @@ export async function createResearchTask(formData: FormData) {
   return { ok: true };
 }
 
+export async function updateResearchTask(taskId: string, formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const currentTask = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      projectId: true,
+      organizedProjectId: true,
+      status: true,
+      assignments: { select: { userId: true } },
+    },
+  });
+  if (!currentTask) return { ok: false, reason: "NOT_FOUND" };
+  if (
+    currentTask.status === ResearchTaskStatus.COMPLETED ||
+    currentTask.status === ResearchTaskStatus.REVOKED
+  ) {
+    return { ok: false, reason: "TASK_CLOSED" };
+  }
+
+  const assigneeIds = Array.from(
+    new Set(
+      formData
+        .getAll("assigneeIds")
+        .filter(
+          (value): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        ),
+    ),
+  );
+
+  if (assigneeIds.length === 0) {
+    return { ok: false, reason: "NO_ASSIGNEE" };
+  }
+
+  const activeAssigneeCount = await prisma.user.count({
+    where: {
+      id: { in: assigneeIds },
+      activeSites: { has: "research" },
+    },
+  });
+  if (activeAssigneeCount !== assigneeIds.length) {
+    return { ok: false, reason: "INACTIVE_RESEARCH_ASSIGNEE" };
+  }
+
+  const taskType = taskTypeFromForm(formData.get("taskType"));
+  const projectId = optionalString(formData.get("projectId"));
+  const organizedProjectId = optionalString(formData.get("organizedProjectId"));
+  const journalId = optionalString(formData.get("journalId"));
+  const conferenceId = optionalString(formData.get("conferenceId"));
+  const reviewId = optionalString(formData.get("reviewId"));
+  const effectiveProjectId =
+    taskType === ResearchTaskType.SUBMIT_RESEARCH ||
+    taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
+    taskType === ResearchTaskType.PRODUCTION
+      ? projectId
+      : null;
+  const effectiveOrganizedProjectId =
+    taskType === ResearchTaskType.PROJECT_PRODUCTION ||
+    taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED
+      ? organizedProjectId
+      : null;
+
+  if (
+    (taskType === ResearchTaskType.SUBMIT_RESEARCH &&
+      (!effectiveProjectId || !journalId)) ||
+    (taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
+      (!effectiveProjectId || !conferenceId)) ||
+    (taskType === ResearchTaskType.PRODUCTION && !effectiveProjectId) ||
+    (taskType === ResearchTaskType.REVIEW && !reviewId) ||
+    (taskType === ResearchTaskType.PROJECT_PRODUCTION &&
+      !effectiveOrganizedProjectId) ||
+    (taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED &&
+      !effectiveOrganizedProjectId)
+  ) {
+    return { ok: false, reason: "MISSING_ASSOCIATION" };
+  }
+
+  if (effectiveProjectId && (await researchContentIsLocked(effectiveProjectId))) {
+    return { ok: false, reason: "RESEARCH_LOCKED" };
+  }
+
+  if (
+    effectiveProjectId &&
+    (taskType === ResearchTaskType.SUBMIT_RESEARCH ||
+      taskType === ResearchTaskType.SUBMIT_CONFERENCE) &&
+    !(await researchProductionIsComplete(effectiveProjectId))
+  ) {
+    return { ok: false, reason: "PRODUCTION_INCOMPLETE" };
+  }
+
+  if (
+    taskType === ResearchTaskType.SUBMIT_RESEARCH &&
+    effectiveProjectId &&
+    journalId
+  ) {
+    const existingTask = await prisma.researchTask.findFirst({
+      where: {
+        id: { not: taskId },
+        taskType,
+        projectId: effectiveProjectId,
+        journalId,
+        status: {
+          notIn: [ResearchTaskStatus.COMPLETED, ResearchTaskStatus.REVOKED],
+        },
+      },
+      select: { id: true },
+    });
+    if (existingTask) {
+      return { ok: false, reason: "ACTIVE_SUBMISSION_TASK_EXISTS" };
+    }
+  }
+
+  if (
+    taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
+    effectiveProjectId &&
+    conferenceId
+  ) {
+    const existingTask = await prisma.researchTask.findFirst({
+      where: {
+        id: { not: taskId },
+        taskType,
+        projectId: effectiveProjectId,
+        conferenceId,
+        status: {
+          notIn: [ResearchTaskStatus.COMPLETED, ResearchTaskStatus.REVOKED],
+        },
+      },
+      select: { id: true },
+    });
+    if (existingTask) {
+      return { ok: false, reason: "ACTIVE_SUBMISSION_TASK_EXISTS" };
+    }
+  }
+
+  const previousAssignees = new Set(
+    currentTask.assignments.map((assignment) => assignment.userId),
+  );
+  const nextAssignees = new Set(assigneeIds);
+  const removedAssignees = [...previousAssignees].filter(
+    (userId) => !nextAssignees.has(userId),
+  );
+  const addedAssignees = assigneeIds.filter(
+    (userId) => !previousAssignees.has(userId),
+  );
+
+  const task = await prisma.$transaction(async (tx) => {
+    const updatedTask = await tx.researchTask.update({
+      where: { id: taskId },
+      data: {
+        title: optionalString(formData.get("title")) ?? "Untitled task",
+        description: optionalString(formData.get("description")),
+        category: taskCategoryFromForm(formData.get("category")),
+        taskType,
+        projectId: effectiveProjectId,
+        organizedProjectId: effectiveOrganizedProjectId,
+        journalId:
+          taskType === ResearchTaskType.SUBMIT_RESEARCH ? journalId : null,
+        conferenceId:
+          taskType === ResearchTaskType.SUBMIT_CONFERENCE
+            ? conferenceId
+            : null,
+        reviewId: taskType === ResearchTaskType.REVIEW ? reviewId : null,
+        dueDate: optionalString(formData.get("dueDate"))
+          ? new Date(optionalString(formData.get("dueDate")) as string)
+          : null,
+      },
+      select: { id: true, title: true },
+    });
+
+    if (removedAssignees.length > 0) {
+      await tx.researchTaskAssignment.deleteMany({
+        where: { taskId, userId: { in: removedAssignees } },
+      });
+    }
+    if (addedAssignees.length > 0) {
+      await tx.researchTaskAssignment.createMany({
+        data: addedAssignees.map((userId) => ({ taskId, userId })),
+        skipDuplicates: true,
+      });
+    }
+
+    return updatedTask;
+  });
+
+  if (addedAssignees.length > 0) {
+    await notifyUsers({
+      userIds: addedAssignees,
+      type: "TASK_ASSIGNED",
+      title: "Task assigned",
+      summary: task.title,
+      body: "A research task was assigned to you.",
+      href: `/tasks/${task.id}`,
+      entityType: "task",
+      entityId: task.id,
+    });
+  }
+
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+  if (currentTask.projectId) revalidatePath(`/projects/${currentTask.projectId}`);
+  if (effectiveProjectId) revalidatePath(`/projects/${effectiveProjectId}`);
+  if (currentTask.organizedProjectId) {
+    revalidatePath(`/organized-projects/${currentTask.organizedProjectId}`);
+  }
+  if (effectiveOrganizedProjectId) {
+    revalidatePath(`/organized-projects/${effectiveOrganizedProjectId}`);
+  }
+  return { ok: true };
+}
+
 export async function revokeResearchTask(taskId: string) {
   const user = await requireCurrentUser();
   const isAdmin = user.roles.includes(Role.ADMIN);

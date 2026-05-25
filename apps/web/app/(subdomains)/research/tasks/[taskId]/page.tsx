@@ -30,8 +30,14 @@ import {
   ClarificationRequestForm,
   RedoTaskForm,
 } from "./TaskWorkflowForms";
+import { EditTaskDialog } from "./EditTaskDialog";
 
 export const dynamic = "force-dynamic";
+
+function dateInputValue(value: Date | null) {
+  if (!value) return "";
+  return value.toISOString().slice(0, 10);
+}
 
 function formatDate(value: Date | null) {
   if (!value) return "-";
@@ -267,9 +273,100 @@ export default async function TaskDetailPage({
     task.status !== ResearchTaskStatus.CHECKING &&
     task.status !== ResearchTaskStatus.NEED_CLARIFY;
   const canRevoke = !isClosed && (isAdmin || isAssigner);
+  const canEdit = !isClosed && isAdmin;
   const journalSubmissionLink =
     task.journal?.submissionLink || firstUrl(task.journal?.note);
   const conferenceSubmissionLink = firstUrl(task.conference?.note);
+  const [
+    assigneeUsers,
+    projects,
+    journals,
+    conferences,
+    reviews,
+    organizedProjects,
+  ] = canEdit
+    ? await Promise.all([
+        prisma.user.findMany({
+          where: { activeSites: { has: "research" } },
+          orderBy: [{ name: "asc" }, { email: "asc" }],
+          select: { id: true, name: true, email: true, roles: true },
+        }),
+        prisma.researchProject.findMany({
+          orderBy: [{ updatedAt: "desc" }],
+          select: { id: true, researchCode: true, title: true, stage: true },
+        }),
+        prisma.journal.findMany({
+          orderBy: [{ name: "asc" }],
+          select: {
+            id: true,
+            name: true,
+            publisher: true,
+            rank: true,
+            issn: true,
+          },
+        }),
+        prisma.conference.findMany({
+          orderBy: [{ startDate: "desc" }, { name: "asc" }],
+          select: {
+            id: true,
+            name: true,
+            organizer: true,
+            type: true,
+            location: true,
+          },
+        }),
+        prisma.academicReview.findMany({
+          orderBy: [{ dueDate: "asc" }, { requestedAt: "desc" }],
+          include: { journal: { select: { name: true } } },
+        }),
+        prisma.organizedProject.findMany({
+          orderBy: [{ updatedAt: "desc" }],
+          select: { id: true, title: true, referenceCode: true, status: true },
+        }),
+      ])
+    : [[], [], [], [], [], []];
+  const assignees = assigneeUsers.map((user) => ({
+    id: user.id,
+    name: user.name ?? "",
+    email: user.email,
+    roles: user.roles,
+  }));
+  const researchOptions = projects.map((project) => ({
+    id: project.id,
+    title: project.title,
+    code: project.researchCode ?? "",
+    stage: project.stage,
+  }));
+  const venueOptions = [
+    ...journals.map((journal) => ({
+      kind: "journal" as const,
+      id: journal.id,
+      name: journal.name,
+      meta: [journal.publisher, journal.rank, journal.issn]
+        .filter(Boolean)
+        .join(" - "),
+    })),
+    ...conferences.map((conference) => ({
+      kind: "conference" as const,
+      id: conference.id,
+      name: conference.name,
+      meta: [conference.organizer, conference.type, conference.location]
+        .filter(Boolean)
+        .join(" - "),
+    })),
+  ];
+  const reviewOptions = reviews.map((review) => ({
+    id: review.id,
+    title: review.manuscriptTitle,
+    journal: review.journal.name,
+    status: review.status,
+  }));
+  const organizedProjectOptions = organizedProjects.map((project) => ({
+    id: project.id,
+    title: project.title,
+    code: project.referenceCode ?? "",
+    status: project.status,
+  }));
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
@@ -318,9 +415,35 @@ export default async function TaskDetailPage({
               <ClipboardList className="h-4 w-4" />
               {task.category || "Task"}
             </div>
-            <h1 className="text-lg font-normal tracking-tight text-slate-950 dark:text-white">
-              {task.title}
-            </h1>
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="text-lg font-normal tracking-tight text-slate-950 dark:text-white">
+                {task.title}
+              </h1>
+              {canEdit && (
+                <EditTaskDialog
+                  task={{
+                    id: task.id,
+                    title: task.title,
+                    description: task.description ?? "",
+                    dueDate: dateInputValue(task.dueDate),
+                    taskType: task.taskType ?? "OTHER",
+                    projectId: task.projectId ?? "",
+                    journalId: task.journalId ?? "",
+                    conferenceId: task.conferenceId ?? "",
+                    reviewId: task.reviewId ?? "",
+                    organizedProjectId: task.organizedProjectId ?? "",
+                    assigneeIds: task.assignments.map(
+                      (assignment) => assignment.userId,
+                    ),
+                  }}
+                  assignees={assignees}
+                  researchOptions={researchOptions}
+                  venueOptions={venueOptions}
+                  reviewOptions={reviewOptions}
+                  organizedProjectOptions={organizedProjectOptions}
+                />
+              )}
+            </div>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               Created by {task.createdBy.name || task.createdBy.email}
             </p>
