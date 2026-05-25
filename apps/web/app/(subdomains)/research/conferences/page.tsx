@@ -1,6 +1,7 @@
 import { auth } from "../../../../auth";
 import { prisma, Role } from "@repo/db";
-import { deleteConference } from "../actions";
+import { createConference, deleteConference } from "../actions";
+import { ConferenceDialog } from "./ConferenceDialog";
 import { ConferencesTable, type ConferenceRow } from "./ConferencesTable";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,16 @@ function dateText(start: Date | null, end: Date | null) {
   return formatter.format((start ?? end) as Date);
 }
 
+function dateValue(value: Date | null) {
+  return value ? value.toISOString().slice(0, 10) : "";
+}
+
+function conferenceTypeLabel(value: string | null) {
+  if (value === "INTERNATIONAL") return "International";
+  if (value === "NATIONAL") return "National";
+  return "";
+}
+
 export default async function ConferencesPage() {
   const session = await auth();
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
@@ -29,8 +40,13 @@ export default async function ConferencesPage() {
   const rows: ConferenceRow[] = conferences.map((conference) => ({
     id: conference.id,
     name: conference.name,
-    type: conference.type ?? "",
+    type: conferenceTypeLabel(conference.type),
     time: dateText(conference.startDate, conference.endDate),
+    startDate: dateValue(conference.startDate),
+    endDate: dateValue(conference.endDate),
+    submissionDeadline: dateValue(conference.submissionDeadline),
+    acceptanceNotification: dateValue(conference.acceptanceNotification),
+    closeDate: dateValue(conference.closeDate),
     location: conference.location ?? "",
     organizer: conference.organizer ?? "",
     theme: conference.targetTheme || conference.themes || "",
@@ -40,9 +56,14 @@ export default async function ConferencesPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-          Conference List
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+            Conference List
+          </p>
+          {isAdmin && (
+            <ConferenceDialog mode="create" action={createConference} />
+          )}
+        </div>
       </div>
       <ConferencesTable
         rows={rows}

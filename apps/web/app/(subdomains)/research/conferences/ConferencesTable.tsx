@@ -18,6 +18,11 @@ export type ConferenceRow = {
   name: string;
   type: string;
   time: string;
+  startDate: string;
+  endDate: string;
+  submissionDeadline: string;
+  acceptanceNotification: string;
+  closeDate: string;
   location: string;
   organizer: string;
   theme: string;
@@ -25,6 +30,53 @@ export type ConferenceRow = {
 };
 
 const conferenceTypes = ["ALL", "International", "National"];
+
+function formatDate(value: string) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  }).format(new Date(`${value}T00:00:00`));
+}
+
+function conferenceStatus(conference: ConferenceRow) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const deadline = conference.submissionDeadline
+    ? new Date(`${conference.submissionDeadline}T00:00:00`)
+    : null;
+  const close = conference.closeDate
+    ? new Date(`${conference.closeDate}T00:00:00`)
+    : null;
+
+  if (deadline && deadline >= today) {
+    return {
+      label: "Submission Open",
+      detail: `Deadline ${formatDate(conference.submissionDeadline)}`,
+      className:
+        "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+      rowClass: "",
+    };
+  }
+  if (close && close < today) {
+    return {
+      label: "Closed",
+      detail: `Closed ${formatDate(conference.closeDate)}`,
+      className:
+        "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
+      rowClass:
+        "bg-rose-50/45 hover:bg-rose-50 dark:bg-rose-950/15 dark:hover:bg-rose-950/25",
+    };
+  }
+  return {
+    label: "Up coming",
+    detail: conference.time ? `Conference ${conference.time}` : "Date not set",
+    className:
+      "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900",
+    rowClass: "",
+  };
+}
 
 function DeleteConferenceButton({
   conference,
@@ -157,6 +209,9 @@ export function ConferencesTable({
         row.name,
         row.type,
         row.time,
+        row.submissionDeadline,
+        row.acceptanceNotification,
+        row.closeDate,
         row.location,
         row.organizer,
         row.theme,
@@ -199,6 +254,7 @@ export function ConferencesTable({
                 Conference
               </th>
               <th className="px-4 py-3">Type</th>
+              <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Themes</th>
               <th className="px-4 py-3">ISBN</th>
               {isAdmin && (
@@ -214,52 +270,71 @@ export function ConferencesTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {pagination.pagedRows.map((conference) => (
-              <tr
-                key={conference.id}
-                className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
-              >
-                <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                  <Link
-                    href={`/conferences/${conference.id}`}
-                    className="text-base font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+            {pagination.pagedRows.map((conference) => {
+              const status = conferenceStatus(conference);
+              const stickyClass = status.rowClass
+                ? "bg-rose-50/80 group-hover:bg-rose-50 dark:bg-rose-950/20 dark:group-hover:bg-rose-950/25"
+                : "bg-white group-hover:bg-slate-50 dark:bg-slate-900 dark:group-hover:bg-slate-800";
+
+              return (
+                <tr
+                  key={conference.id}
+                  className={`group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40 ${status.rowClass}`}
+                >
+                  <td
+                    className={`sticky left-0 z-10 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors dark:shadow-[1px_0_0_0_rgb(30,41,59)] ${stickyClass}`}
                   >
-                    {conference.name}
-                  </Link>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    {[conference.time, conference.location]
-                      .filter(Boolean)
-                      .join(" - ") || "Time/location not set"}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                    Organizer: {conference.organizer || "Not set"}
-                  </p>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="rounded-full bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
-                    {conference.type || "-"}
-                  </span>
-                </td>
-                <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                  {conference.theme || "-"}
-                </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                  {conference.isbn || "-"}
-                </td>
-                {isAdmin && (
-                  <td className="px-4 py-3 text-center">
-                    <DeleteConferenceButton
-                      conference={conference}
-                      deleteAction={deleteAction}
-                    />
+                    <Link
+                      href={`/conferences/${conference.id}`}
+                      className="text-base font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                    >
+                      {conference.name}
+                    </Link>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {[conference.time, conference.location]
+                        .filter(Boolean)
+                        .join(" - ") || "Time/location not set"}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                      Organizer: {conference.organizer || "Not set"}
+                    </p>
                   </td>
-                )}
-              </tr>
-            ))}
+                  <td className="px-4 py-3">
+                    <span className="rounded-full bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+                      {conference.type || "-"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${status.className}`}
+                    >
+                      {status.label}
+                    </span>
+                    <p className="mt-1 whitespace-nowrap text-xs text-slate-400 dark:text-slate-500">
+                      {status.detail}
+                    </p>
+                  </td>
+                  <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    {conference.theme || "-"}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    {conference.isbn || "-"}
+                  </td>
+                  {isAdmin && (
+                    <td className="px-4 py-3 text-center">
+                      <DeleteConferenceButton
+                        conference={conference}
+                        deleteAction={deleteAction}
+                      />
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
             {pagination.total === 0 && (
               <tr>
                 <td
-                  colSpan={isAdmin ? 5 : 4}
+                  colSpan={isAdmin ? 6 : 5}
                   className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                 >
                   No conferences match the current search.
@@ -279,4 +354,3 @@ export function ConferencesTable({
     </div>
   );
 }
-

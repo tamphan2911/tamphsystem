@@ -7,6 +7,7 @@ import { auth } from "../../../auth";
 import {
   prisma,
   ClaimStatus,
+  ConferenceType,
   ConferenceSubmissionStatus,
   CurrencyCode,
   RegistrationStatus,
@@ -1335,6 +1336,96 @@ export async function deleteConference(conferenceId: string) {
   });
 
   revalidatePath("/conferences");
+}
+
+function conferenceDataFromForm(formData: FormData) {
+  return {
+    name: optionalString(formData.get("name")) ?? "Untitled conference",
+    type: enumValue(ConferenceType, formData.get("type")),
+    themes: optionalString(formData.get("themes")),
+    targetTheme: optionalString(formData.get("targetTheme")),
+    isbn: optionalString(formData.get("isbn")),
+    organizer: optionalString(formData.get("organizer")),
+    location: optionalString(formData.get("location")),
+    startDate: dateFromForm(formData.get("startDate")),
+    endDate: dateFromForm(formData.get("endDate")),
+    submissionDeadline: dateFromForm(formData.get("submissionDeadline")),
+    acceptanceNotification: dateFromForm(
+      formData.get("acceptanceNotification"),
+    ),
+    closeDate: dateFromForm(formData.get("closeDate")),
+    apc: optionalString(formData.get("apc")),
+    apcCurrency:
+      enumValue(CurrencyCode, formData.get("apcCurrency")) ?? CurrencyCode.USD,
+    submissionFee: optionalString(formData.get("submissionFee")),
+    submissionFeeCurrency:
+      enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??
+      CurrencyCode.USD,
+    website: optionalString(formData.get("website")),
+    note: optionalString(formData.get("note")),
+  };
+}
+
+function dateHasPassed(value: Date | null) {
+  if (!value) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const date = new Date(value);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime() < today.getTime();
+}
+
+export async function createConference(formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.conference.create({
+    data: conferenceDataFromForm(formData),
+  });
+
+  revalidatePath("/conferences");
+}
+
+export async function updateConference(
+  conferenceId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const conference = await prisma.conference.findUnique({
+    where: { id: conferenceId },
+    select: { closeDate: true, editUnlocked: true },
+  });
+  if (!conference) return { ok: false, reason: "NOT_FOUND" };
+  const closed = dateHasPassed(conference.closeDate);
+  if (closed && !conference.editUnlocked) {
+    return { ok: false, reason: "LOCKED" };
+  }
+
+  await prisma.conference.update({
+    where: { id: conferenceId },
+    data: {
+      ...conferenceDataFromForm(formData),
+      editUnlocked: false,
+    },
+  });
+
+  revalidatePath("/conferences");
+  revalidatePath(`/conferences/${conferenceId}`);
+  return { ok: true };
+}
+
+export async function unlockConference(conferenceId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.conference.update({
+    where: { id: conferenceId },
+    data: { editUnlocked: true },
+  });
+
+  revalidatePath(`/conferences/${conferenceId}`);
 }
 
 export async function createPublisherAccount(formData: FormData) {

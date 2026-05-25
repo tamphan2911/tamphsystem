@@ -451,24 +451,28 @@ model ResearchProjectAuthor {
 }
 
 model Conference {
-  id                    String          @id @default(uuid())
-  name                  String
-  type                  ConferenceType?
-  themes                String?
-  targetTheme           String?
-  isbn                  String?
-  organizer             String?
-  location              String?
-  startDate             DateTime?
-  endDate               DateTime?
-  apc                   String?
-  apcCurrency           CurrencyCode    @default(USD)
-  submissionFee         String?
-  submissionFeeCurrency CurrencyCode    @default(USD)
-  website               String?
-  note                  String?
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  id                     String          @id @default(uuid())
+  name                   String
+  type                   ConferenceType?
+  themes                 String?
+  targetTheme            String?
+  isbn                   String?
+  organizer              String?
+  location               String?
+  startDate              DateTime?
+  endDate                DateTime?
+  submissionDeadline     DateTime?
+  acceptanceNotification DateTime?
+  closeDate              DateTime?
+  editUnlocked           Boolean         @default(false)
+  apc                    String?
+  apcCurrency            CurrencyCode    @default(USD)
+  submissionFee          String?
+  submissionFeeCurrency  CurrencyCode    @default(USD)
+  website                String?
+  note                   String?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
 
   submissions ConferenceSubmission[]
   suggestions SuggestedConference[]
