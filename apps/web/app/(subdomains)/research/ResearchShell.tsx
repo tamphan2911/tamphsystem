@@ -118,9 +118,12 @@ export function ResearchShell({
             <div
               className={`min-w-0 overflow-hidden transition-all duration-300 ${collapsed ? "w-0 opacity-0" : "w-44 opacity-100"}`}
             >
-              <p className="truncate text-lg font-bold text-slate-950 dark:text-white">
+              <Link
+                href="/"
+                className="block truncate text-lg font-bold text-slate-950 transition hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 dark:text-white dark:hover:text-emerald-200"
+              >
                 Research Hub
-              </p>
+              </Link>
               <p className="truncate text-xs text-slate-500 dark:text-slate-300">
                 Pipeline and journal control
               </p>
