@@ -3,13 +3,12 @@ import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   ArrowLeft,
+  Building2,
   CheckCircle2,
-  Clock3,
   Download,
   FileText,
-  Inbox,
+  FolderGit2,
   Phone,
-  Rocket,
   UserRound,
   XCircle,
 } from "lucide-react";
@@ -46,14 +45,14 @@ function label(value: string) {
 function typeMeta(type: ProposalType) {
   if (type === ProposalType.PROJECT) {
     return {
-      icon: Rocket,
+      icon: Building2,
       label: "Project proposal",
       className:
         "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900",
     };
   }
   return {
-    icon: FileText,
+    icon: FolderGit2,
     label: "Research proposal",
     className:
       "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900",
@@ -75,18 +74,15 @@ function statusMeta(status: ProposalStatus) {
         "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
     };
   }
-  if (status === ProposalStatus.REVIEWING) {
-    return {
-      icon: Clock3,
-      className:
-        "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900",
-    };
-  }
   return {
-    icon: Inbox,
+    icon: FolderGit2,
     className:
       "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900",
   };
+}
+
+function displayStatus(status: ProposalStatus) {
+  return status === ProposalStatus.REVIEWING ? ProposalStatus.NEW : status;
 }
 
 function DetailItem({
@@ -140,7 +136,8 @@ export default async function ProposalDetailPage({
 
   const type = typeMeta(proposal.type);
   const TypeIcon = type.icon;
-  const status = statusMeta(proposal.status);
+  const visibleStatus = displayStatus(proposal.status);
+  const status = statusMeta(visibleStatus);
   const StatusIcon = status.icon;
   const hasFile = Boolean(proposal.supportFileName);
 
@@ -168,7 +165,7 @@ export default async function ProposalDetailPage({
                 className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ring-1 ${status.className}`}
               >
                 <StatusIcon className="h-3.5 w-3.5" />
-                {label(proposal.status)}
+                {label(visibleStatus)}
               </span>
               <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
                 Submitted {longDate(proposal.createdAt)}

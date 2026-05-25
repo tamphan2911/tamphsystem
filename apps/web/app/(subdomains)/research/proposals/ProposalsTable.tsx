@@ -3,13 +3,11 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
+  Building2,
   CheckCircle2,
   Download,
-  Eye,
   FileQuestion,
-  Inbox,
-  Lightbulb,
-  Rocket,
+  FolderGit2,
   XCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -37,7 +35,7 @@ export type ProposalRow = {
 };
 
 const typeOptions = ["ALL", "RESEARCH", "PROJECT"];
-const statusOptions = ["ALL", "NEW", "REVIEWING", "ACCEPTED", "DECLINED"];
+const statusOptions = ["ALL", "NEW", "ACCEPTED", "DECLINED"];
 
 function label(value: string) {
   return value
@@ -53,22 +51,18 @@ function statusClass(status: string) {
   if (status === "DECLINED") {
     return "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900";
   }
-  if (status === "REVIEWING") {
-    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
-  }
   return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
 }
 
 function statusIcon(status: string) {
   if (status === "ACCEPTED") return CheckCircle2;
   if (status === "DECLINED") return XCircle;
-  if (status === "REVIEWING") return Eye;
-  return Inbox;
+  return FolderGit2;
 }
 
 function typeIcon(type: string) {
-  if (type === "PROJECT") return Rocket;
-  return Lightbulb;
+  if (type === "PROJECT") return Building2;
+  return FolderGit2;
 }
 
 function typeClass(type: string) {
@@ -107,8 +101,9 @@ export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
+      const rowStatus = row.status === "REVIEWING" ? "NEW" : row.status;
       const matchesType = type === "ALL" || row.type === type;
-      const matchesStatus = status === "ALL" || row.status === status;
+      const matchesStatus = status === "ALL" || rowStatus === status;
       const haystack = [
         row.title,
         row.description,
@@ -204,9 +199,15 @@ export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
                 </td>
                 <td className="px-2 py-3 text-center align-top">
                   <IconChip
-                    icon={statusIcon(proposal.status)}
-                    label={label(proposal.status)}
-                    className={statusClass(proposal.status)}
+                    icon={statusIcon(
+                      proposal.status === "REVIEWING" ? "NEW" : proposal.status,
+                    )}
+                    label={label(
+                      proposal.status === "REVIEWING" ? "NEW" : proposal.status,
+                    )}
+                    className={statusClass(
+                      proposal.status === "REVIEWING" ? "NEW" : proposal.status,
+                    )}
                   />
                 </td>
                 <td className="px-3 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
