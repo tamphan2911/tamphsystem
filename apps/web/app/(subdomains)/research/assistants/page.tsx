@@ -9,9 +9,34 @@ import {
 
 export const dynamic = "force-dynamic";
 
+async function ensureAssistantResearchAccess() {
+  const assistantUsers = await prisma.user.findMany({
+    where: { roles: { hasSome: [Role.ASSISTANT, Role.CHIEF_ASSISTANT] } },
+    select: { id: true, activeSites: true },
+  });
+  const updates = assistantUsers
+    .filter((user) => !user.activeSites.includes("research"))
+    .map((user) =>
+      prisma.user.update({
+        where: { id: user.id },
+        data: {
+          activeSites: {
+            set: Array.from(new Set([...user.activeSites, "research"])),
+          },
+        },
+      }),
+    );
+
+  if (updates.length > 0) {
+    await Promise.all(updates);
+  }
+}
+
 export default async function AssistantsPage() {
   const currentUser = await assertResearchManager();
   const canAssignAssistants = currentUser.roles.includes(Role.ADMIN);
+
+  await ensureAssistantResearchAccess();
 
   const users = await prisma.user.findMany({
     where: { activeSites: { has: "research" } },

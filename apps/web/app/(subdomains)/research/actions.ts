@@ -1861,11 +1861,24 @@ export async function updateResearchRoles(formData: FormData) {
   const selectedRoles = formData
     .getAll("roles")
     .filter((role): role is Role => Object.values(Role).includes(role as Role));
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { activeSites: true },
+  });
+  if (!target) return;
+  const activeSites = new Set(target.activeSites);
+  if (
+    selectedRoles.includes(Role.ASSISTANT) ||
+    selectedRoles.includes(Role.CHIEF_ASSISTANT)
+  ) {
+    activeSites.add("research");
+  }
 
   await prisma.user.update({
     where: { id: userId },
     data: {
       roles: selectedRoles.length > 0 ? selectedRoles : [Role.STUDENT],
+      activeSites: { set: Array.from(activeSites) },
     },
   });
 
@@ -1883,18 +1896,23 @@ export async function assignResearchAssistant(formData: FormData) {
 
   const target = await prisma.user.findUnique({
     where: { id: userId },
-    select: { roles: true },
+    select: { roles: true, activeSites: true },
   });
   if (!target) return;
 
   const roles = new Set(target.roles);
+  const activeSites = new Set(target.activeSites);
   roles.delete(Role.ASSISTANT);
   roles.delete(Role.CHIEF_ASSISTANT);
   roles.add(role);
+  activeSites.add("research");
 
   await prisma.user.update({
     where: { id: userId },
-    data: { roles: Array.from(roles) },
+    data: {
+      roles: Array.from(roles),
+      activeSites: { set: Array.from(activeSites) },
+    },
   });
 
   revalidatePath("/assistants");
