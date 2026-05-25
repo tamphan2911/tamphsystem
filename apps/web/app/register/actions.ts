@@ -132,12 +132,13 @@ export async function registerUser(formData: FormData) {
   const email = String(formData.get("email") ?? "")
     .trim()
     .toLowerCase();
+  const affiliation = String(formData.get("affiliation") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const callbackUrl = safeCallbackUrl(formData.get("callbackUrl"));
   const host = (await headers()).get("host");
   const activeSite = siteFromHost(host);
 
-  if (!name || !email || !password) {
+  if (!name || !email || !affiliation || !password) {
     return { error: "All fields are required." };
   }
   if (password.length < 6) {
@@ -162,6 +163,7 @@ export async function registerUser(formData: FormData) {
       data: {
         name,
         email,
+        affiliation,
         passwordHash,
         emailVerified: null,
         emailVerificationToken: token,

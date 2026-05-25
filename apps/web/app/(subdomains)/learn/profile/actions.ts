@@ -8,14 +8,16 @@ export async function updateProfile(formData: FormData) {
   const session = await auth();
   if (!session?.user?.email) return { error: "Unauthorized" };
 
-  const name = formData.get("name") as string;
+  const name = String(formData.get("name") ?? "").trim();
+  const affiliation = String(formData.get("affiliation") ?? "").trim();
   
   if (!name) return { error: "Name is required" };
+  if (!affiliation) return { error: "Affiliation is required" };
 
   try {
     await prisma.user.update({
       where: { email: session.user.email },
-      data: { name }
+      data: { name, affiliation }
     });
     revalidatePath("/profile");
     return { success: true };

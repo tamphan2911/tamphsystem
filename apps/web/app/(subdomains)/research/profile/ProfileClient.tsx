@@ -19,6 +19,7 @@ type ResearchProfileUser = {
   id: string;
   name: string | null;
   email: string;
+  affiliation: string;
   emailVerified: string | null;
   roles: string[];
   createdAt: string;
@@ -232,6 +233,17 @@ export function ProfileClient({ user }: { user: ResearchProfileUser }) {
               value={user.email}
               disabled
               className="cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400"
+            />
+          </label>
+          <label className="grid gap-2 lg:col-span-2">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Affiliation
+            </span>
+            <input
+              name="affiliation"
+              defaultValue={user.affiliation}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-300 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-emerald-700"
+              required
             />
           </label>
           <div className="lg:col-span-2">

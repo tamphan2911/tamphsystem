@@ -19,6 +19,7 @@ export type AuthorOption = {
   id: string;
   name: string;
   email: string;
+  affiliation?: string;
   role: string;
 };
 

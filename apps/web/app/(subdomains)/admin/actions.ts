@@ -25,6 +25,7 @@ export async function createUser(formData: FormData) {
   await requireAdmin();
 
   const email = optionalString(formData.get("email"));
+  const affiliation = optionalString(formData.get("affiliation"));
   const password = optionalString(formData.get("password")) ?? "password";
   const roles = formData
     .getAll("roles")
@@ -36,6 +37,7 @@ export async function createUser(formData: FormData) {
     data: {
       email,
       name: optionalString(formData.get("name")),
+      affiliation: affiliation ?? "Not set",
       passwordHash: await bcrypt.hash(password, 10),
       emailVerified: new Date(),
       roles: roles.length > 0 ? roles : [Role.STUDENT],

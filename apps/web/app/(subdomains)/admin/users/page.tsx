@@ -21,9 +21,10 @@ export default async function UsersManagementPage() {
 
       <form action={createUser} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
         <h2 className="mb-4 font-bold">Create user</h2>
-        <div className="grid gap-3 lg:grid-cols-4">
+        <div className="grid gap-3 lg:grid-cols-5">
           <input name="name" placeholder="Name" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
           <input name="email" type="email" required placeholder="Email" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
+          <input name="affiliation" required placeholder="Affiliation" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
           <input name="password" type="password" placeholder="Password (default: password)" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100" />
           <button className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md dark:bg-blue-500 dark:hover:bg-blue-400">Create</button>
         </div>
@@ -45,6 +46,7 @@ export default async function UsersManagementPage() {
               <div className="min-w-0">
                 <h2 className="font-bold">{user.name || "Unnamed user"}</h2>
                 <p className="text-sm text-slate-500">{user.email}</p>
+                <p className="text-sm text-slate-500">{user.affiliation}</p>
                 <p className="mt-1 text-xs text-slate-400">Joined {user.createdAt.toLocaleDateString()}</p>
               </div>
               <div className="flex flex-wrap gap-2">

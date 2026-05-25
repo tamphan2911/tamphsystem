@@ -3,9 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import {
   ArrowLeft,
   ClipboardCheck,
+  Building2,
   Send,
   CheckCircle2,
   FileText,
+  Mail,
   Rocket,
   SearchCheck,
 } from "lucide-react";
@@ -337,12 +339,12 @@ export default async function ProjectDetailPage({
       prisma.user.findMany({
         where: { activeSites: { has: "research" } },
         orderBy: [{ name: "asc" }, { email: "asc" }],
-        select: { id: true, name: true, email: true, roles: true },
+        select: { id: true, name: true, email: true, affiliation: true, roles: true },
       }),
       prisma.user.findMany({
         where: { activeSites: { has: "research" } },
         orderBy: [{ name: "asc" }, { email: "asc" }],
-        select: { id: true, name: true, email: true, roles: true },
+        select: { id: true, name: true, email: true, affiliation: true, roles: true },
       }),
       prisma.fundingInstitution.findMany({
         orderBy: [{ name: "asc" }],
@@ -546,6 +548,7 @@ export default async function ProjectDetailPage({
     id: user.id,
     name: user.name ?? "",
     email: user.email,
+    affiliation: user.affiliation,
     role: displayRole(user.roles),
   }));
   const defaultRegistrationUser: AuthorOption | null = project.registrationUser
@@ -553,6 +556,7 @@ export default async function ProjectDetailPage({
         id: project.registrationUser.id,
         name: project.registrationUser.name ?? "",
         email: project.registrationUser.email,
+        affiliation: project.registrationUser.affiliation,
         role: displayRole(project.registrationUser.roles),
       }
     : null;
@@ -576,6 +580,7 @@ export default async function ProjectDetailPage({
           id: entry.user.id,
           name: entry.user.name ?? "",
           email: entry.user.email,
+          affiliation: entry.user.affiliation,
           role: displayRole(entry.user.roles),
           isCorresponding: entry.isCorresponding,
         }))
@@ -584,6 +589,7 @@ export default async function ProjectDetailPage({
             id: author.id,
             name: author.name ?? "",
             email: author.email,
+            affiliation: author.affiliation,
             role: displayRole(author.roles),
             isCorresponding: index === 0,
           }))
@@ -592,6 +598,7 @@ export default async function ProjectDetailPage({
               id: project.leadResearcher.id,
               name: project.leadResearcher.name ?? "",
               email: project.leadResearcher.email,
+              affiliation: project.leadResearcher.affiliation,
               role: displayRole(project.leadResearcher.roles),
               isCorresponding: true,
             },
@@ -1005,8 +1012,15 @@ export default async function ProjectDetailPage({
                           </span>
                         )}
                       </div>
-                      <p className="mt-0.5 truncate text-xs font-medium text-slate-400 dark:text-slate-500">
-                        {author.email}
+                      <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+                        <Mail className="h-3 w-3 flex-none text-blue-400" aria-hidden="true" />
+                        <span className="truncate">{author.email}</span>
+                      </p>
+                      <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <Building2 className="h-3 w-3 flex-none text-emerald-500" aria-hidden="true" />
+                        <span className="truncate">
+                          {author.affiliation || "No affiliation recorded"}
+                        </span>
                       </p>
                     </div>
                   </div>

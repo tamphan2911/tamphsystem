@@ -127,6 +127,17 @@ function RegisterContent() {
           </label>
 
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+            Affiliation
+            <input
+              type="text"
+              name="affiliation"
+              placeholder="University, institution, or organization"
+              className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
+              required
+            />
+          </label>
+
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
             Password
             <input
               type="password"

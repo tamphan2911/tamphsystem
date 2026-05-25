@@ -6,6 +6,7 @@ import {
   Banknote,
   Ban,
   BookOpenCheck,
+  Building2,
   CalendarCheck2,
   CalendarClock,
   CalendarDays,
@@ -19,6 +20,7 @@ import {
   FileSearch,
   FlaskConical,
   GraduationCap,
+  Mail,
   RotateCcw,
   Send,
   SendHorizontal,
@@ -483,7 +485,7 @@ export default async function OrganizedProjectDetailPage({
       }),
       prisma.user.findMany({
         where: { activeSites: { has: "research" } },
-        select: { id: true, name: true, email: true, roles: true },
+        select: { id: true, name: true, email: true, affiliation: true, roles: true },
         orderBy: [{ name: "asc" }, { email: "asc" }],
       }),
       prisma.researchProject.findMany({
@@ -524,6 +526,7 @@ export default async function OrganizedProjectDetailPage({
     id: member.user.id,
     name: member.user.name ?? "",
     email: member.user.email,
+    affiliation: member.user.affiliation,
     role: member.user.roles.join(", "),
     isTeamLead: member.isTeamLead,
     isInstructor: member.isInstructor,
@@ -551,6 +554,7 @@ export default async function OrganizedProjectDetailPage({
     id: user.id,
     name: user.name ?? "",
     email: user.email,
+    affiliation: user.affiliation,
     role: user.roles.join(", "),
   }));
   const fundingOptions = fundingInstitutions.map((institution) => ({
@@ -708,8 +712,15 @@ export default async function OrganizedProjectDetailPage({
                       </span>
                     )}
                   </div>
-                  <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
-                    {member.email}
+                  <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-slate-400 dark:text-slate-500">
+                    <Mail className="h-3 w-3 flex-none text-blue-400" />
+                    <span className="truncate">{member.email}</span>
+                  </p>
+                  <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                    <Building2 className="h-3 w-3 flex-none text-emerald-500" />
+                    <span className="truncate">
+                      {member.affiliation || "No affiliation recorded"}
+                    </span>
                   </p>
                 </div>
               </div>

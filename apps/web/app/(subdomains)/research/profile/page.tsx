@@ -17,6 +17,7 @@ export default async function ResearchProfilePage() {
       id: true,
       name: true,
       email: true,
+      affiliation: true,
       emailVerified: true,
       roles: true,
       createdAt: true,

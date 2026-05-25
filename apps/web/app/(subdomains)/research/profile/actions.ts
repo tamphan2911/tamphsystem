@@ -11,11 +11,13 @@ export async function updateResearchProfile(formData: FormData) {
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { error: "Display name is required." };
+  const affiliation = String(formData.get("affiliation") ?? "").trim();
+  if (!affiliation) return { error: "Affiliation is required." };
 
   try {
     await prisma.user.update({
       where: { email },
-      data: { name },
+      data: { name, affiliation },
     });
     revalidatePath("/profile");
     revalidatePath("/research/profile");
