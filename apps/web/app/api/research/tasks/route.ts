@@ -80,6 +80,7 @@ export async function GET() {
       title: task.title,
       description: task.description ?? "",
       category: task.category ?? "",
+      taskType: task.taskType ?? "",
       status: task.status,
       dueDate: task.dueDate?.toISOString() ?? null,
       completedAt: task.completedAt?.toISOString() ?? null,

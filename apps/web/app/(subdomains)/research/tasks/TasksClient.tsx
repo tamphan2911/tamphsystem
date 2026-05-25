@@ -26,6 +26,7 @@ type TaskRow = {
   title: string;
   description: string;
   category: string;
+  taskType: string;
   status: string;
   dueDate: string | null;
   completedAt: string | null;
@@ -58,6 +59,39 @@ function displayTaskId(task: TaskRow) {
   return (
     task.taskCode || task.id.replaceAll("-", "").slice(0, 10).toUpperCase()
   );
+}
+
+function titleCase(value: string) {
+  return value
+    .toLowerCase()
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function taskTypeLines(task: TaskRow) {
+  const type = task.taskType;
+  if (!type) {
+    return {
+      typeLabel: task.category ? titleCase(task.category) : "Task",
+      subtypeLabel: "",
+    };
+  }
+
+  if (type === "SUBMIT_RESEARCH" || type === "SUBMIT_CONFERENCE") {
+    return {
+      typeLabel: "Submit",
+      subtypeLabel: type === "SUBMIT_CONFERENCE" ? "Conference" : "Journal",
+    };
+  }
+  if (type === "PROJECT_PRODUCTION") {
+    return { typeLabel: "Project", subtypeLabel: "Production" };
+  }
+  if (type === "PROJECT_RESEARCH_ASSOCIATED") {
+    return { typeLabel: "Project", subtypeLabel: "Research Associated" };
+  }
+
+  return { typeLabel: titleCase(type), subtypeLabel: "" };
 }
 
 function statusMeta(task: TaskRow) {
@@ -204,6 +238,7 @@ export function TasksClient({
         displayTaskId(task),
         task.title,
         task.description,
+        task.taskType,
         task.category,
         statusMeta(task).label,
         task.createdBy,
@@ -335,6 +370,14 @@ export function TasksClient({
                       <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400">
                         {displayTaskId(task)}
                       </span>
+                      <p className="mt-1 text-[11px] font-semibold leading-4 text-slate-500 dark:text-slate-400">
+                        {taskTypeLines(task).typeLabel}
+                      </p>
+                      {taskTypeLines(task).subtypeLabel && (
+                        <p className="text-[11px] leading-4 text-slate-400 dark:text-slate-500">
+                          {taskTypeLines(task).subtypeLabel}
+                        </p>
+                      )}
                     </td>
                     <td className="min-w-0 px-3 py-3 align-top">
                       <Link
