@@ -16,6 +16,7 @@ import {
   FlaskConical,
   Send,
   SendHorizontal,
+  ShieldCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -135,9 +136,9 @@ function registrationClass(status: string) {
 }
 
 function registrationIcon(status: string) {
-  if (status === "APPROVED") return CalendarCheck2;
+  if (status === "APPROVED") return ShieldCheck;
   if (status === "SUBMITTED") return SendHorizontal;
-  if (status === "PREPARING") return FileClock;
+  if (status === "PREPARING") return CalendarCheck2;
   return CircleOff;
 }
 

@@ -1,4 +1,9 @@
-import { Clock, FileText, Send, Trophy } from "lucide-react";
+import {
+  BookOpenCheck,
+  CircleDollarSign,
+  Files,
+  SendHorizontal,
+} from "lucide-react";
 import { redirect } from "next/navigation";
 import {
   ClaimStatus,
@@ -403,25 +408,25 @@ export default async function ProjectsDashboard() {
     {
       label: "Total",
       value: projects.length,
-      icon: FileText,
+      icon: Files,
       color: "text-slate-600",
     },
     {
       label: "Submitted",
       value: submitting.length,
-      icon: Send,
+      icon: SendHorizontal,
       color: "text-blue-600",
     },
     {
       label: "Published",
       value: published.length,
-      icon: Trophy,
+      icon: BookOpenCheck,
       color: "text-emerald-600",
     },
     {
       label: "Claims",
       value: claimQueue.length,
-      icon: Clock,
+      icon: CircleDollarSign,
       color: "text-amber-600",
     },
   ];
