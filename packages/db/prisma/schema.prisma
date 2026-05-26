@@ -58,6 +58,7 @@ model User {
   name                          String?
   affiliation                   String    @default("Not set")
   passwordHash                  String
+  adminVisiblePassword          String?
   avatarUrl                     String?
   createdAt                     DateTime  @default(now())
   updatedAt                     DateTime  @updatedAt

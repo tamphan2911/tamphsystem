@@ -1,5 +1,6 @@
 "use server";
 
+import bcrypt from "bcrypt";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import nodemailer from "nodemailer";
@@ -1949,6 +1950,7 @@ export async function assignResearchAssistant(formData: FormData) {
   requireAdmin(user.roles);
 
   const userId = optionalString(formData.get("userId"));
+  const password = optionalString(formData.get("password"));
   const role = formData.get("assistantRole");
   if (!userId || (role !== Role.ASSISTANT && role !== Role.CHIEF_ASSISTANT))
     return;
@@ -1971,6 +1973,12 @@ export async function assignResearchAssistant(formData: FormData) {
     data: {
       roles: Array.from(roles),
       activeSites: { set: Array.from(activeSites) },
+      ...(password
+        ? {
+            passwordHash: await bcrypt.hash(password, 10),
+            adminVisiblePassword: password,
+          }
+        : {}),
     },
   });
 

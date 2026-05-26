@@ -47,6 +47,11 @@ export async function createUser(formData: FormData) {
       name: optionalString(formData.get("name")),
       affiliation: affiliation ?? "Not set",
       passwordHash: await bcrypt.hash(password, 10),
+      adminVisiblePassword: roles.some(
+        (role) => role === Role.ASSISTANT || role === Role.CHIEF_ASSISTANT,
+      )
+        ? password
+        : null,
       emailVerified: new Date(),
       roles: roles.length > 0 ? roles : [Role.STUDENT],
       activeSites: ["admin"],

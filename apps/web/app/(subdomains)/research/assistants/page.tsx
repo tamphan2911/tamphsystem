@@ -53,6 +53,7 @@ export default async function AssistantsPage() {
     id: user.id,
     name: user.name ?? "",
     email: user.email,
+    password: user.adminVisiblePassword ?? "",
     assistantRole: user.roles.includes(Role.CHIEF_ASSISTANT)
       ? Role.CHIEF_ASSISTANT
       : Role.ASSISTANT,
