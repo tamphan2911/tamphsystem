@@ -53,6 +53,14 @@ export type TaskOrganizedProjectOption = {
 
 type TaskMode = "submit" | "production" | "review" | "project" | "other";
 type ProjectTaskSubtype = "PROJECT_PRODUCTION" | "PROJECT_RESEARCH_ASSOCIATED";
+type SearchPanelItem = {
+  id: string;
+  title: string;
+  meta: string;
+  icon: ReactNode;
+  selected: boolean;
+  onClick: () => void;
+};
 
 const inputClass =
   "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
@@ -103,9 +111,9 @@ export function NewTaskDialog({
 
   const filteredAssignees = useMemo(() => {
     const needle = assigneeQuery.trim().toLowerCase();
+    if (!needle) return [];
     return assignees
       .filter((user) => {
-        if (!needle) return true;
         return [user.name, user.email, user.id, ...user.roles]
           .join(" ")
           .toLowerCase()
@@ -116,9 +124,9 @@ export function NewTaskDialog({
 
   const filteredResearch = useMemo(() => {
     const needle = researchQuery.trim().toLowerCase();
+    if (!needle) return [];
     return researchOptions
       .filter((project) => {
-        if (!needle) return true;
         return [project.title, project.code, project.stage, project.id]
           .join(" ")
           .toLowerCase()
@@ -129,9 +137,9 @@ export function NewTaskDialog({
 
   const filteredVenues = useMemo(() => {
     const needle = venueQuery.trim().toLowerCase();
+    if (!needle) return [];
     return venueOptions
       .filter((venue) => {
-        if (!needle) return true;
         return [venue.name, venue.meta, venue.kind, venue.id]
           .join(" ")
           .toLowerCase()
@@ -142,9 +150,9 @@ export function NewTaskDialog({
 
   const filteredReviews = useMemo(() => {
     const needle = reviewQuery.trim().toLowerCase();
+    if (!needle) return [];
     return reviewOptions
       .filter((review) => {
-        if (!needle) return true;
         return [review.title, review.journal, review.status, review.id]
           .join(" ")
           .toLowerCase()
@@ -155,9 +163,9 @@ export function NewTaskDialog({
 
   const filteredOrganizedProjects = useMemo(() => {
     const needle = organizedProjectQuery.trim().toLowerCase();
+    if (!needle) return [];
     return organizedProjectOptions
       .filter((project) => {
-        if (!needle) return true;
         return [project.title, project.code, project.status, project.id]
           .join(" ")
           .toLowerCase()
@@ -227,6 +235,16 @@ export function NewTaskDialog({
     (!needsVenue || Boolean(selectedVenue)) &&
     (!needsReview || Boolean(selectedReview)) &&
     (!needsOrganizedProject || Boolean(selectedOrganizedProject));
+  const selectedAssigneeItems: SearchPanelItem[] = assignees
+    .filter((user) => selectedIds.includes(user.id))
+    .map((user) => ({
+      id: user.id,
+      title: user.name || user.email,
+      meta: `${user.email} - ${user.roles.join(", ")}`,
+      icon: <UserRound className="h-4 w-4" />,
+      selected: true,
+      onClick: () => toggleAssignee(user.id),
+    }));
 
   return (
     <>
@@ -415,6 +433,25 @@ export function NewTaskDialog({
                   query={researchQuery}
                   setQuery={setResearchQuery}
                   placeholder="Search research by title, ID, or stage..."
+                  selectedItems={
+                    selectedResearch
+                      ? [
+                          {
+                            id: selectedResearch.id,
+                            title: selectedResearch.title,
+                            meta: [selectedResearch.code, selectedResearch.stage]
+                              .filter(Boolean)
+                              .join(" - "),
+                            icon: <FileText className="h-4 w-4" />,
+                            selected: true,
+                            onClick: () => {
+                              setSelectedResearch(null);
+                              setResearchQuery("");
+                            },
+                          },
+                        ]
+                      : []
+                  }
                   items={filteredResearch.map((project) => ({
                     id: project.id,
                     title: project.title,
@@ -437,6 +474,23 @@ export function NewTaskDialog({
                   query={venueQuery}
                   setQuery={setVenueQuery}
                   placeholder="Search journal or conference..."
+                  selectedItems={
+                    selectedVenue
+                      ? [
+                          {
+                            id: `${selectedVenue.kind}-${selectedVenue.id}`,
+                            title: selectedVenue.name,
+                            meta: `${selectedVenue.kind} - ${selectedVenue.meta}`,
+                            icon: <Send className="h-4 w-4" />,
+                            selected: true,
+                            onClick: () => {
+                              setSelectedVenue(null);
+                              setVenueQuery("");
+                            },
+                          },
+                        ]
+                      : []
+                  }
                   items={filteredVenues.map((venue) => ({
                     id: `${venue.kind}-${venue.id}`,
                     title: venue.name,
@@ -459,6 +513,23 @@ export function NewTaskDialog({
                   query={reviewQuery}
                   setQuery={setReviewQuery}
                   placeholder="Search review by manuscript, journal, or status..."
+                  selectedItems={
+                    selectedReview
+                      ? [
+                          {
+                            id: selectedReview.id,
+                            title: selectedReview.title,
+                            meta: `${selectedReview.journal} - ${selectedReview.status}`,
+                            icon: <Star className="h-4 w-4" />,
+                            selected: true,
+                            onClick: () => {
+                              setSelectedReview(null);
+                              setReviewQuery("");
+                            },
+                          },
+                        ]
+                      : []
+                  }
                   items={filteredReviews.map((review) => ({
                     id: review.id,
                     title: review.title,
@@ -501,6 +572,28 @@ export function NewTaskDialog({
                     query={organizedProjectQuery}
                     setQuery={setOrganizedProjectQuery}
                     placeholder="Search project by title, ID, or status..."
+                    selectedItems={
+                      selectedOrganizedProject
+                        ? [
+                            {
+                              id: selectedOrganizedProject.id,
+                              title: selectedOrganizedProject.title,
+                              meta: [
+                                selectedOrganizedProject.code,
+                                selectedOrganizedProject.status,
+                              ]
+                                .filter(Boolean)
+                                .join(" - "),
+                              icon: <FileText className="h-4 w-4" />,
+                              selected: true,
+                              onClick: () => {
+                                setSelectedOrganizedProject(null);
+                                setOrganizedProjectQuery("");
+                              },
+                            },
+                          ]
+                        : []
+                    }
                     items={filteredOrganizedProjects.map((project) => ({
                       id: project.id,
                       title: project.title,
@@ -535,6 +628,7 @@ export function NewTaskDialog({
                 query={assigneeQuery}
                 setQuery={setAssigneeQuery}
                 placeholder="Search active research users by name, email, ID, or role..."
+                selectedItems={selectedAssigneeItems}
                 items={filteredAssignees.map((user) => ({
                   id: user.id,
                   title: user.name || user.email,
@@ -574,67 +668,102 @@ function SearchPanel({
   query,
   setQuery,
   placeholder,
+  selectedItems = [],
   items,
 }: {
   title: string;
   query: string;
   setQuery: (value: string) => void;
   placeholder: string;
-  items: {
-    id: string;
-    title: string;
-    meta: string;
-    icon: ReactNode;
-    selected: boolean;
-    onClick: () => void;
-  }[];
+  selectedItems?: SearchPanelItem[];
+  items: SearchPanelItem[];
 }) {
+  const [focused, setFocused] = useState(false);
+  const showDropdown = focused && query.trim().length > 0;
   return (
     <section className="grid gap-3">
       <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {title}
       </span>
-      <div className="relative">
+      {selectedItems.length > 0 && (
+        <div className="grid gap-2">
+          {selectedItems.map((item) => (
+            <SelectedSearchItem key={item.id} item={item} />
+          ))}
+        </div>
+      )}
+      <div className="relative z-30">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => window.setTimeout(() => setFocused(false), 120)}
           placeholder={placeholder}
           className={`${inputClass} w-full pl-9`}
         />
-      </div>
-      <div className="grid max-h-60 gap-2 overflow-y-auto rounded-xl border border-slate-200 p-2 dark:border-slate-800">
-        {items.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={item.onClick}
-            className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
-              item.selected
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
-                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800"
-            }`}
-          >
-            <span className="flex min-w-0 items-center gap-3">
-              <span className="flex-none text-slate-400">{item.icon}</span>
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-bold">
-                  {item.title}
+
+        {showDropdown && (
+          <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
+            {items.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={item.onClick}
+                className={`flex w-full cursor-pointer items-start justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
+                  item.selected
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800"
+                }`}
+              >
+                <span className="flex min-w-0 items-start gap-3">
+                  <span className="mt-0.5 flex-none text-slate-400">
+                    {item.icon}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold leading-5">
+                      {item.title}
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      {item.meta}
+                    </span>
+                  </span>
                 </span>
-                <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
-                  {item.meta}
-                </span>
-              </span>
-            </span>
-            {item.selected && <Check className="h-4 w-4 flex-none" />}
-          </button>
-        ))}
-        {items.length === 0 && (
-          <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-            No result matches this search.
+                {item.selected && <Check className="mt-0.5 h-4 w-4 flex-none" />}
+              </button>
+            ))}
+            {items.length === 0 && (
+              <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                No result matches this search.
+              </div>
+            )}
           </div>
         )}
       </div>
     </section>
+  );
+}
+
+function SelectedSearchItem({ item }: { item: SearchPanelItem }) {
+  return (
+    <button
+      type="button"
+      onClick={item.onClick}
+      className="flex cursor-pointer items-start justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-left text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+    >
+      <span className="flex min-w-0 items-start gap-3">
+        <span className="mt-0.5 flex-none text-emerald-500">{item.icon}</span>
+        <span className="min-w-0">
+          <span className="block text-sm font-bold leading-5">
+            {item.title}
+          </span>
+          <span className="mt-0.5 block text-xs leading-5 text-emerald-700/80 dark:text-emerald-200/80">
+            {item.meta}
+          </span>
+        </span>
+      </span>
+      <X className="mt-0.5 h-4 w-4 flex-none" />
+    </button>
   );
 }

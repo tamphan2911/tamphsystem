@@ -118,6 +118,25 @@ const proposalFileTypesByExtension = new Map([
   ],
 ]);
 const proposalMaxFileSize = 2 * 1024 * 1024;
+const taskReportFileTypes = new Map([
+  ["application/pdf", ".pdf"],
+  ["application/msword", ".doc"],
+  [
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".docx",
+  ],
+  ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx"],
+]);
+const taskReportFileTypesByExtension = new Map([
+  ["pdf", "application/pdf"],
+  ["doc", "application/msword"],
+  [
+    "docx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ],
+  ["xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+]);
+const taskReportMaxFileSize = 2 * 1024 * 1024;
 
 function addMonths(date: Date, months: number) {
   const next = new Date(date);
@@ -127,6 +146,15 @@ function addMonths(date: Date, months: number) {
 
 function startOfDay(value: Date) {
   return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+}
+
+function taskAllowsReportUpload(taskType: ResearchTaskType | null) {
+  return (
+    taskType === ResearchTaskType.PRODUCTION ||
+    taskType === ResearchTaskType.PROJECT_PRODUCTION ||
+    taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED ||
+    taskType === ResearchTaskType.OTHER
+  );
 }
 
 function dateIsBefore(left: Date, right: Date) {
@@ -2137,7 +2165,7 @@ export async function createResearchTask(formData: FormData) {
     type: "TASK_ASSIGNED",
     title: "Task assigned",
     summary: task.title,
-    body: "A research task was assigned to you.",
+    body: `You were assigned the task "${task.title}".`,
     href: `/tasks/${task.id}`,
     entityType: "task",
     entityId: task.id,
@@ -2344,7 +2372,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       type: "TASK_ASSIGNED",
       title: "Task assigned",
       summary: task.title,
-      body: "A research task was assigned to you.",
+      body: `You were assigned the task "${task.title}".`,
       href: `/tasks/${task.id}`,
       entityType: "task",
       entityId: task.id,
@@ -2398,7 +2426,7 @@ export async function revokeResearchTask(taskId: string) {
     type: "TASK_REVOKED",
     title: "Task revoked",
     summary: task.title,
-    body: "A task assigned to you was revoked.",
+    body: `The assigned task "${task.title}" was revoked.`,
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,
@@ -2555,7 +2583,11 @@ export async function updateSubmissionStatus(formData: FormData) {
             ? { update: { contentUnlocked: false } }
             : undefined,
       },
-      select: { researchProjectId: true, journalId: true },
+      select: {
+        researchProjectId: true,
+        journalId: true,
+        journal: { select: { name: true } },
+      },
     });
 
     await refreshResearchStage(submission.researchProjectId);
@@ -2569,19 +2601,19 @@ export async function updateSubmissionStatus(formData: FormData) {
         ? {
             type: "SUBMISSION_REVIEW",
             title: "Submission in review",
-            body: "A journal submission moved to review stage.",
+            body: `The submission of "${project?.title ?? "this research"}" to ${submission.journal.name} moved to review stage.`,
           }
         : journalStatus === SubmissionStatus.ACCEPTED
           ? {
               type: "RESEARCH_ACCEPTED",
               title: "Research accepted",
-              body: "A journal submission for this research was accepted.",
+              body: `The submission of "${project?.title ?? "this research"}" to ${submission.journal.name} was accepted.`,
             }
           : journalStatus === SubmissionStatus.PUBLISHED
             ? {
                 type: "RESEARCH_PUBLISHED",
                 title: "Research published",
-                body: "A journal submission for this research was published.",
+                body: `The submission of "${project?.title ?? "this research"}" to ${submission.journal.name} was published.`,
               }
             : null;
     if (normalizedNotification) {
@@ -2595,7 +2627,7 @@ export async function updateSubmissionStatus(formData: FormData) {
           type: `PROJECT_${normalizedNotification.type}`,
           title: normalizedNotification.title,
           summary: project?.title ?? normalizedNotification.title,
-          body: "A research associated with your project has an updated submission status.",
+          body: `${normalizedNotification.body} This research is associated with your project.`,
         },
       );
     }
@@ -2724,7 +2756,11 @@ export async function updateSubmissionStatus(formData: FormData) {
     const submission = await prisma.conferenceSubmission.update({
       where: { id: submissionId },
       data,
-      select: { researchProjectId: true, conferenceId: true },
+      select: {
+        researchProjectId: true,
+        conferenceId: true,
+        conference: { select: { name: true } },
+      },
     });
 
     const project = await prisma.researchProject.findUnique({
@@ -2736,19 +2772,19 @@ export async function updateSubmissionStatus(formData: FormData) {
         ? {
             type: "SUBMISSION_REVIEW",
             title: "Submission in review",
-            body: "A conference submission moved to review stage.",
+            body: `The submission of "${project?.title ?? "this research"}" to ${submission.conference.name} moved to review stage.`,
           }
         : conferenceStatus === ConferenceSubmissionStatus.ACCEPTED
           ? {
               type: "RESEARCH_ACCEPTED",
               title: "Research accepted",
-              body: "A conference submission for this research was accepted.",
+              body: `The submission of "${project?.title ?? "this research"}" to ${submission.conference.name} was accepted.`,
             }
           : conferenceStatus === ConferenceSubmissionStatus.PUBLISHED
             ? {
                 type: "RESEARCH_PUBLISHED",
                 title: "Research published",
-                body: "A conference submission for this research was published.",
+                body: `The submission of "${project?.title ?? "this research"}" to ${submission.conference.name} was published.`,
               }
             : null;
     if (normalizedNotification) {
@@ -2762,7 +2798,7 @@ export async function updateSubmissionStatus(formData: FormData) {
           type: `PROJECT_${normalizedNotification.type}`,
           title: normalizedNotification.title,
           summary: project?.title ?? normalizedNotification.title,
-          body: "A research associated with your project has an updated submission status.",
+          body: `${normalizedNotification.body} This research is associated with your project.`,
         },
       );
     }
@@ -2942,22 +2978,28 @@ async function createSubmissionAfterTaskApproval(
       },
     });
 
-    const project = await prisma.researchProject.findUnique({
-      where: { id: task.projectId },
-      select: { title: true },
-    });
+    const [project, journal] = await Promise.all([
+      prisma.researchProject.findUnique({
+        where: { id: task.projectId },
+        select: { title: true },
+      }),
+      prisma.journal.findUnique({
+        where: { id: task.journalId },
+        select: { name: true },
+      }),
+    ]);
     await notifyResearchAuthors(task.projectId, {
       type: "SUBMISSION_CREATED",
       title: "New journal submission",
       summary: project?.title ?? "A research submission was created.",
-      body: "A journal submission was created after the assigner approved a submission task.",
+      body: `"${project?.title ?? "This research"}" was submitted to ${journal?.name ?? "the selected journal"} after the assigner approved the submission task "${task.title}".`,
     });
     await notifyOrganizedProjectMembersForResearch(task.projectId, {
       type: "PROJECT_RESEARCH_SUBMISSION",
       title: "Project research submitted",
       summary:
         project?.title ?? "A project research record has a new submission.",
-      body: "A research associated with your project has a new journal submission.",
+      body: `"${project?.title ?? "A research associated with your project"}" was submitted to ${journal?.name ?? "the selected journal"}.`,
     });
 
     revalidatePath("/projects");
@@ -2990,15 +3032,21 @@ async function createSubmissionAfterTaskApproval(
       },
     });
 
-    const project = await prisma.researchProject.findUnique({
-      where: { id: task.projectId },
-      select: { title: true },
-    });
+    const [project, conference] = await Promise.all([
+      prisma.researchProject.findUnique({
+        where: { id: task.projectId },
+        select: { title: true },
+      }),
+      prisma.conference.findUnique({
+        where: { id: task.conferenceId },
+        select: { name: true },
+      }),
+    ]);
     await notifyResearchAuthors(task.projectId, {
       type: "SUBMISSION_CREATED",
       title: "New conference submission",
       summary: project?.title ?? "A conference submission was created.",
-      body: "A conference submission was created after the assigner approved a submission task.",
+      body: `"${project?.title ?? "This research"}" was submitted to ${conference?.name ?? "the selected conference"} after the assigner approved the submission task "${task.title}".`,
     });
     await notifyOrganizedProjectMembersForResearch(task.projectId, {
       type: "PROJECT_RESEARCH_SUBMISSION",
@@ -3006,7 +3054,7 @@ async function createSubmissionAfterTaskApproval(
       summary:
         project?.title ??
         "A project research record has a new conference submission.",
-      body: "A research associated with your project has a new conference submission.",
+      body: `"${project?.title ?? "A research associated with your project"}" was submitted to ${conference?.name ?? "the selected conference"}.`,
     });
 
     revalidatePath("/projects");
@@ -3072,7 +3120,7 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
     type: "TASK_READY_FOR_CHECK",
     title: "Task ready for check",
     summary: task.title,
-    body: "An assignee marked this task as finished and ready for your review.",
+    body: `An assignee marked "${task.title}" as finished and ready for your review.`,
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,
@@ -3091,6 +3139,116 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
 
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
+}
+
+export async function uploadResearchTaskReport(taskId: string, formData: FormData) {
+  const user = await requireCurrentUser();
+  const file = formData.get("reportFile");
+  if (!(file instanceof File) || file.size === 0) {
+    return {
+      ok: false,
+      title: "Report file required",
+      detail: "Choose one report file before uploading.",
+    };
+  }
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      title: true,
+      taskType: true,
+      status: true,
+      createdById: true,
+      assignments: { select: { userId: true } },
+    },
+  });
+  if (!task) {
+    return {
+      ok: false,
+      title: "Task not found",
+      detail: "This task could not be found.",
+    };
+  }
+  if (!taskAllowsReportUpload(task.taskType)) {
+    return {
+      ok: false,
+      title: "Report not available",
+      detail: "Reports are only used for project, production, and other tasks.",
+    };
+  }
+  if (
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    return {
+      ok: false,
+      title: "Task is closed",
+      detail: "Reports cannot be uploaded after a task is completed or revoked.",
+    };
+  }
+  const isAssignee = task.assignments.some(
+    (assignment) => assignment.userId === user.id,
+  );
+  if (!isAssignee || task.createdById === user.id) {
+    return {
+      ok: false,
+      title: "Upload not allowed",
+      detail: "Only assignees can upload a report for the assigner to check.",
+    };
+  }
+
+  const extension = file.name.toLowerCase().split(".").pop();
+  const allowedByMime = taskReportFileTypes.has(file.type);
+  const allowedByExtension =
+    Boolean(extension) && taskReportFileTypesByExtension.has(extension ?? "");
+  if (!allowedByMime && !allowedByExtension) {
+    return {
+      ok: false,
+      title: "Report file rejected",
+      detail: "Upload only .doc, .docx, .xlsx, or .pdf files.",
+    };
+  }
+  if (file.size > taskReportMaxFileSize) {
+    return {
+      ok: false,
+      title: "Report file is too large",
+      detail: "The report file must be 2 MB or smaller.",
+    };
+  }
+
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: {
+      reportFileName: file.name,
+      reportFileType:
+        file.type || taskReportFileTypesByExtension.get(extension ?? "") || "",
+      reportFileSize: file.size,
+      reportFileData: Buffer.from(await file.arrayBuffer()),
+      reportUploadedAt: new Date(),
+      reportUploadedById: user.id,
+    },
+  });
+
+  await notifyUsers({
+    userIds: [task.createdById],
+    type: "TASK_REPORT_UPLOADED",
+    title: "Task report uploaded",
+    summary: task.title,
+    body: `A report file "${file.name}" was uploaded for task "${task.title}".`,
+    href: `/tasks/${taskId}`,
+    entityType: "task",
+    entityId: taskId,
+    excludeUserId: user.id,
+  });
+
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+  return {
+    ok: true,
+    title: "Report uploaded",
+    detail: "The report file is ready for the assigner to check.",
+  };
 }
 
 export async function finishResearchTask(taskId: string, formData?: FormData) {
@@ -3166,7 +3324,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     type: "TASK_COMPLETED",
     title: "Task completed",
     summary: task.title,
-    body: "The assigner reviewed and approved this task as complete.",
+    body: `The assigner reviewed and approved "${task.title}" as complete.`,
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,
@@ -3217,7 +3375,9 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
     type: "TASK_REDO_REQUIRED",
     title: "Task needs revision",
     summary: task.title,
-    body: reason ?? "The assigner requested revision before approval.",
+    body: reason
+      ? `Revision requested for "${task.title}": ${reason}`
+      : `The assigner requested revision for "${task.title}" before approval.`,
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,

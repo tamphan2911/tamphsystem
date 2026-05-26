@@ -30,6 +30,7 @@ import {
   TaskClarificationPanel,
   type TaskClarificationItem,
 } from "./TaskClarificationPanel";
+import { TaskReportPanel } from "./TaskReportPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -167,6 +168,33 @@ function accountLine(
   ].join(" - ");
 }
 
+function taskAllowsReport(taskType: string | null) {
+  return (
+    taskType === "PRODUCTION" ||
+    taskType === "PROJECT_PRODUCTION" ||
+    taskType === "PROJECT_RESEARCH_ASSOCIATED" ||
+    taskType === "OTHER"
+  );
+}
+
+function researchAuthors(project: {
+  leadResearcher: { name: string | null; email: string };
+  authors: { name: string | null; email: string }[];
+  authorEntries: { user: { name: string | null; email: string } }[];
+  coAuthors: string | null;
+}) {
+  const names =
+    project.authorEntries.length > 0
+      ? project.authorEntries.map((entry) => entry.user.name || entry.user.email)
+      : project.authors.length > 0
+        ? project.authors.map((author) => author.name || author.email)
+        : [
+            project.leadResearcher.name || project.leadResearcher.email,
+            project.coAuthors,
+          ].filter(Boolean);
+  return names.join("; ");
+}
+
 export default async function TaskDetailPage({
   params,
 }: {
@@ -188,9 +216,46 @@ export default async function TaskDetailPage({
 
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
-    include: {
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      category: true,
+      status: true,
+      dueDate: true,
+      completedAt: true,
+      revokedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      createdById: true,
+      projectId: true,
+      organizedProjectId: true,
+      journalId: true,
+      conferenceId: true,
+      reviewId: true,
+      accountId: true,
+      taskType: true,
+      reportFileName: true,
+      reportFileSize: true,
+      reportUploadedAt: true,
+      reportUploadedById: true,
       createdBy: { select: { name: true, email: true } },
-      project: { select: { id: true, title: true } },
+      project: {
+        select: {
+          id: true,
+          title: true,
+          coAuthors: true,
+          leadResearcher: { select: { name: true, email: true } },
+          authors: {
+            select: { name: true, email: true },
+            orderBy: [{ name: "asc" }, { email: "asc" }],
+          },
+          authorEntries: {
+            include: { user: { select: { name: true, email: true } } },
+            orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          },
+        },
+      },
       journal: {
         select: {
           id: true,
@@ -332,6 +397,11 @@ export default async function TaskDetailPage({
   const canRevoke = !isClosed && (isAdmin || isAssigner);
   const canEdit = !isClosed && isAdmin;
   const canAnswerClarification = !isClosed && (isAdmin || isAssigner);
+  const reportEnabled = taskAllowsReport(task.taskType);
+  const canUploadReport =
+    reportEnabled && !isClosed && isAssignee && !isAssigner;
+  const canDownloadReport =
+    reportEnabled && Boolean(task.reportFileName) && (isAdmin || isAssigner);
   const journalSubmissionLink =
     task.journal?.submissionLink || firstUrl(task.journal?.note);
   const conferenceSubmissionLink = firstUrl(task.conference?.note);
@@ -446,7 +516,7 @@ export default async function TaskDetailPage({
   );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
+    <div className="mx-auto max-w-7xl space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href="/tasks"
@@ -552,6 +622,9 @@ export default async function TaskDetailPage({
               >
                 {task.project.title}
               </Link>
+              <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                {researchAuthors(task.project)}
+              </p>
             </div>
           )}
           {task.journal && (
@@ -614,7 +687,7 @@ export default async function TaskDetailPage({
           )}
         </div>
 
-        <div className="mt-6 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <div className="mt-6 min-h-44 rounded-xl border border-slate-200 p-5 dark:border-slate-800">
           <h2 className="text-sm font-bold text-slate-950 dark:text-white">
             Task content
           </h2>
@@ -622,6 +695,19 @@ export default async function TaskDetailPage({
             {task.description || "No task note."}
           </p>
         </div>
+
+        {reportEnabled && (
+          <TaskReportPanel
+            taskId={task.id}
+            canUpload={canUploadReport}
+            canDownload={canDownloadReport}
+            fileName={task.reportFileName}
+            fileSize={task.reportFileSize}
+            uploadedAt={
+              task.reportUploadedAt ? formatDate(task.reportUploadedAt) : null
+            }
+          />
+        )}
 
         <TaskClarificationPanel
           clarifications={clarificationItems}
