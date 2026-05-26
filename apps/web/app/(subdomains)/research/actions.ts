@@ -1555,7 +1555,7 @@ export async function deleteConference(conferenceId: string) {
 
 function conferenceDataFromForm(formData: FormData) {
   return {
-    name: optionalString(formData.get("name")) ?? "Untitled conference",
+    name: optionalString(formData.get("name")) ?? "",
     type: enumValue(ConferenceType, formData.get("type")),
     themes: optionalString(formData.get("themes")),
     targetTheme: optionalString(formData.get("targetTheme")),
@@ -1569,9 +1569,8 @@ function conferenceDataFromForm(formData: FormData) {
       formData.get("acceptanceNotification"),
     ),
     closeDate: dateFromForm(formData.get("closeDate")),
-    apc: optionalString(formData.get("apc")),
-    apcCurrency:
-      enumValue(CurrencyCode, formData.get("apcCurrency")) ?? CurrencyCode.USD,
+    apc: null,
+    apcCurrency: CurrencyCode.USD,
     submissionFee: optionalString(formData.get("submissionFee")),
     submissionFeeCurrency:
       enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??
@@ -1579,6 +1578,34 @@ function conferenceDataFromForm(formData: FormData) {
     website: optionalString(formData.get("website")),
     note: optionalString(formData.get("note")),
   };
+}
+
+function conferenceValidationMessage(
+  data: ReturnType<typeof conferenceDataFromForm>,
+) {
+  const missing: string[] = [];
+  if (!data.name) missing.push("conference name");
+  if (!data.type) missing.push("type");
+  if (!data.isbn) missing.push("ISBN");
+  if (!data.organizer) missing.push("organizer");
+  if (!data.location) missing.push("location");
+  if (!data.submissionDeadline) missing.push("submission deadline");
+  if (!data.acceptanceNotification) missing.push("acceptance notification");
+
+  if (missing.length === 0) return null;
+  return `Please complete the required field${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}.`;
+}
+
+async function conferenceIsbnExists(isbn: string, conferenceId?: string) {
+  const existing = await prisma.conference.findFirst({
+    where: {
+      isbn,
+      ...(conferenceId ? { id: { not: conferenceId } } : {}),
+    },
+    select: { id: true, name: true },
+  });
+
+  return existing;
 }
 
 function dateHasPassed(value: Date | null) {
@@ -1593,12 +1620,27 @@ function dateHasPassed(value: Date | null) {
 export async function createConference(formData: FormData) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
+  const data = conferenceDataFromForm(formData);
+  const validationMessage = conferenceValidationMessage(data);
+  if (validationMessage) {
+    return { ok: false, reason: "VALIDATION", message: validationMessage };
+  }
+
+  const existing = await conferenceIsbnExists(data.isbn as string);
+  if (existing) {
+    return {
+      ok: false,
+      reason: "DUPLICATE_ISBN",
+      message: `ISBN ${data.isbn} is already used by ${existing.name}. Each conference must have a unique ISBN.`,
+    };
+  }
 
   await prisma.conference.create({
-    data: conferenceDataFromForm(formData),
+    data,
   });
 
   revalidatePath("/conferences");
+  return { ok: true };
 }
 
 export async function updateConference(
@@ -1617,11 +1659,28 @@ export async function updateConference(
   if (closed && !conference.editUnlocked) {
     return { ok: false, reason: "LOCKED" };
   }
+  const data = conferenceDataFromForm(formData);
+  const validationMessage = conferenceValidationMessage(data);
+  if (validationMessage) {
+    return { ok: false, reason: "VALIDATION", message: validationMessage };
+  }
+
+  const existing = await conferenceIsbnExists(
+    data.isbn as string,
+    conferenceId,
+  );
+  if (existing) {
+    return {
+      ok: false,
+      reason: "DUPLICATE_ISBN",
+      message: `ISBN ${data.isbn} is already used by ${existing.name}. Each conference must have a unique ISBN.`,
+    };
+  }
 
   await prisma.conference.update({
     where: { id: conferenceId },
     data: {
-      ...conferenceDataFromForm(formData),
+      ...data,
       editUnlocked: false,
     },
   });
@@ -2163,7 +2222,10 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     return { ok: false, reason: "MISSING_ASSOCIATION" };
   }
 
-  if (effectiveProjectId && (await researchContentIsLocked(effectiveProjectId))) {
+  if (
+    effectiveProjectId &&
+    (await researchContentIsLocked(effectiveProjectId))
+  ) {
     return { ok: false, reason: "RESEARCH_LOCKED" };
   }
 
@@ -2244,9 +2306,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
         journalId:
           taskType === ResearchTaskType.SUBMIT_RESEARCH ? journalId : null,
         conferenceId:
-          taskType === ResearchTaskType.SUBMIT_CONFERENCE
-            ? conferenceId
-            : null,
+          taskType === ResearchTaskType.SUBMIT_CONFERENCE ? conferenceId : null,
         reviewId: taskType === ResearchTaskType.REVIEW ? reviewId : null,
         dueDate: optionalString(formData.get("dueDate"))
           ? new Date(optionalString(formData.get("dueDate")) as string)
@@ -2285,7 +2345,8 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
 
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
-  if (currentTask.projectId) revalidatePath(`/projects/${currentTask.projectId}`);
+  if (currentTask.projectId)
+    revalidatePath(`/projects/${currentTask.projectId}`);
   if (effectiveProjectId) revalidatePath(`/projects/${effectiveProjectId}`);
   if (currentTask.organizedProjectId) {
     revalidatePath(`/organized-projects/${currentTask.organizedProjectId}`);

@@ -61,8 +61,6 @@ export default async function SubmissionsPage() {
             location: true,
             startDate: true,
             endDate: true,
-            apc: true,
-            apcCurrency: true,
             submissionFee: true,
             submissionFeeCurrency: true,
           },
@@ -76,7 +74,10 @@ export default async function SubmissionsPage() {
     where: {
       status: ResearchTaskStatus.COMPLETED,
       taskType: {
-        in: [ResearchTaskType.SUBMIT_RESEARCH, ResearchTaskType.SUBMIT_CONFERENCE],
+        in: [
+          ResearchTaskType.SUBMIT_RESEARCH,
+          ResearchTaskType.SUBMIT_CONFERENCE,
+        ],
       },
     },
     include: {
@@ -109,7 +110,10 @@ export default async function SubmissionsPage() {
       task.projectId &&
       task.journalId
     ) {
-      submitterByVenue.set(`journal:${task.projectId}:${task.journalId}`, value);
+      submitterByVenue.set(
+        `journal:${task.projectId}:${task.journalId}`,
+        value,
+      );
     }
     if (
       task.taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
@@ -182,8 +186,8 @@ export default async function SubmissionsPage() {
       ]
         .filter(Boolean)
         .join(" - "),
-      apc: submission.conference.apc ?? "",
-      apcCurrency: submission.conference.apcCurrency,
+      apc: "",
+      apcCurrency: submission.conference.submissionFeeCurrency,
       submissionFee: submission.conference.submissionFee ?? "",
       submissionFeeCurrency: submission.conference.submissionFeeCurrency,
       account: "",

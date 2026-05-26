@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, Globe2, MapPin, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  Globe2,
+  MapPin,
+  Send,
+  Users,
+} from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { unlockConference, updateConference } from "../../actions";
@@ -145,8 +152,6 @@ export default async function ConferenceDetailPage({
     submissionDeadline: dateValue(conference.submissionDeadline),
     acceptanceNotification: dateValue(conference.acceptanceNotification),
     closeDate: dateValue(conference.closeDate),
-    apc: conference.apc,
-    apcCurrency: conference.apcCurrency,
     submissionFee: conference.submissionFee,
     submissionFeeCurrency: conference.submissionFeeCurrency,
     website: conference.website,
@@ -269,12 +274,6 @@ export default async function ConferenceDetailPage({
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">APC</dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
-              {formatMoney(conference.apc, conference.apcCurrency)}
-            </dd>
-          </div>
-          <div>
             <dt className="text-xs font-bold uppercase text-slate-400">
               Submission fee
             </dt>
@@ -299,12 +298,16 @@ export default async function ConferenceDetailPage({
       </section>
 
       <section className="space-y-3">
-        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-slate-950 dark:text-white">
+            <Send className="h-5 w-5 text-blue-500" />
             Research submitted to this conference
-          </p>
+          </h2>
         </div>
-        <ResearchProjectsTable rows={submittedResearch} />
+        <ResearchProjectsTable
+          rows={submittedResearch}
+          showClaimRegistration={false}
+        />
       </section>
     </div>
   );

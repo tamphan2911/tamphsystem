@@ -236,14 +236,16 @@ function SubmitCount({ count }: { count: number }) {
 
 export function ResearchProjectsTable({
   rows,
+  showClaimRegistration = true,
 }: {
   rows: ResearchProjectRow[];
+  showClaimRegistration?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("ALL");
   const [claim, setClaim] = useState("ALL");
   const showRegistrationClaim = rows.some(
-    (row) => row.canViewRegistrationClaim,
+    (row) => showClaimRegistration && row.canViewRegistrationClaim,
   );
 
   const filtered = useMemo(() => {
@@ -279,7 +281,11 @@ export function ResearchProjectsTable({
         <TableSearchInput
           value={query}
           onChange={setQuery}
-          placeholder="Search research, authors, registration..."
+          placeholder={
+            showRegistrationClaim
+              ? "Search research, authors, registration..."
+              : "Search research, authors..."
+          }
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
           <FilterSelect

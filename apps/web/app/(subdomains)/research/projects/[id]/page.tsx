@@ -266,91 +266,102 @@ export default async function ProjectDetailPage({
     taskAssignees,
     authorUsers,
     fundingInstitutions,
-  ] =
-    await Promise.all([
-      prisma.researchProject.findUnique({
-        where: { id },
-        include: {
-          submissions: {
-            include: { journal: true, account: true },
-            orderBy: { submittedAt: "desc" },
-          },
-          conferenceSubmissions: {
-            include: { conference: true },
-            orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
-          },
-          publications: { orderBy: { publishedDate: "desc" } },
-          authorNotifications: {
-            select: { type: true, results: true },
-          },
-          leadResearcher: true,
-          registrationUser: true,
-          fundingInstitution: true,
-          authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
-          authorEntries: {
-            include: { user: true },
-            orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-          },
-          suggestedJournals: {
-            include: {
-              journal: true,
-              createdBy: { select: { name: true, email: true, roles: true } },
-            },
-            orderBy: { createdAt: "desc" },
-          },
-          suggestedConferences: {
-            include: {
-              conference: true,
-              createdBy: { select: { name: true, email: true, roles: true } },
-            },
-            orderBy: { createdAt: "desc" },
-          },
-          organizedProjectLinks: {
-            include: { organizedProject: true },
-            orderBy: { createdAt: "desc" },
-          },
-          tasks: {
-            where: {
-              taskType: { in: ["SUBMIT_RESEARCH", "SUBMIT_CONFERENCE"] },
-            },
-            include: {
-              journal: true,
-              conference: true,
-              assignments: {
-                include: { user: true },
-                orderBy: { createdAt: "asc" },
-              },
-            },
-            orderBy: [
-              { status: "asc" },
-              { dueDate: "asc" },
-              { createdAt: "desc" },
-            ],
-          },
+  ] = await Promise.all([
+    prisma.researchProject.findUnique({
+      where: { id },
+      include: {
+        submissions: {
+          include: { journal: true, account: true },
+          orderBy: { submittedAt: "desc" },
         },
-      }),
-      prisma.journal.findMany({
-        include: { accounts: { orderBy: [{ username: "asc" }] } },
-        orderBy: [{ rank: "asc" }, { name: "asc" }],
-      }),
-      prisma.conference.findMany({
-        orderBy: [{ startDate: "desc" }, { name: "asc" }],
-      }),
-      prisma.user.findMany({
-        where: { activeSites: { has: "research" } },
-        orderBy: [{ name: "asc" }, { email: "asc" }],
-        select: { id: true, name: true, email: true, affiliation: true, roles: true },
-      }),
-      prisma.user.findMany({
-        where: { activeSites: { has: "research" } },
-        orderBy: [{ name: "asc" }, { email: "asc" }],
-        select: { id: true, name: true, email: true, affiliation: true, roles: true },
-      }),
-      prisma.fundingInstitution.findMany({
-        orderBy: [{ name: "asc" }],
-        select: { id: true, name: true, shortName: true, country: true },
-      }),
-    ]);
+        conferenceSubmissions: {
+          include: { conference: true },
+          orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
+        },
+        publications: { orderBy: { publishedDate: "desc" } },
+        authorNotifications: {
+          select: { type: true, results: true },
+        },
+        leadResearcher: true,
+        registrationUser: true,
+        fundingInstitution: true,
+        authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
+        authorEntries: {
+          include: { user: true },
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        },
+        suggestedJournals: {
+          include: {
+            journal: true,
+            createdBy: { select: { name: true, email: true, roles: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        suggestedConferences: {
+          include: {
+            conference: true,
+            createdBy: { select: { name: true, email: true, roles: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        organizedProjectLinks: {
+          include: { organizedProject: true },
+          orderBy: { createdAt: "desc" },
+        },
+        tasks: {
+          where: {
+            taskType: { in: ["SUBMIT_RESEARCH", "SUBMIT_CONFERENCE"] },
+          },
+          include: {
+            journal: true,
+            conference: true,
+            assignments: {
+              include: { user: true },
+              orderBy: { createdAt: "asc" },
+            },
+          },
+          orderBy: [
+            { status: "asc" },
+            { dueDate: "asc" },
+            { createdAt: "desc" },
+          ],
+        },
+      },
+    }),
+    prisma.journal.findMany({
+      include: { accounts: { orderBy: [{ username: "asc" }] } },
+      orderBy: [{ rank: "asc" }, { name: "asc" }],
+    }),
+    prisma.conference.findMany({
+      orderBy: [{ startDate: "desc" }, { name: "asc" }],
+    }),
+    prisma.user.findMany({
+      where: { activeSites: { has: "research" } },
+      orderBy: [{ name: "asc" }, { email: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        affiliation: true,
+        roles: true,
+      },
+    }),
+    prisma.user.findMany({
+      where: { activeSites: { has: "research" } },
+      orderBy: [{ name: "asc" }, { email: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        affiliation: true,
+        roles: true,
+      },
+    }),
+    prisma.fundingInstitution.findMany({
+      orderBy: [{ name: "asc" }],
+      select: { id: true, name: true, shortName: true, country: true },
+    }),
+  ]);
 
   if (!project) notFound();
   const isProjectAuthor =
@@ -711,8 +722,8 @@ export default async function ProjectDetailPage({
       ]
         .filter(Boolean)
         .join(" - "),
-      apc: submission.conference.apc ?? "",
-      apcCurrency: submission.conference.apcCurrency,
+      apc: "",
+      apcCurrency: submission.conference.submissionFeeCurrency,
       submissionFee: submission.conference.submissionFee ?? "",
       submissionFeeCurrency: submission.conference.submissionFeeCurrency,
       account: "",
@@ -1013,11 +1024,17 @@ export default async function ProjectDetailPage({
                         )}
                       </div>
                       <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-slate-400 dark:text-slate-500">
-                        <Mail className="h-3 w-3 flex-none text-blue-400" aria-hidden="true" />
+                        <Mail
+                          className="h-3 w-3 flex-none text-blue-400"
+                          aria-hidden="true"
+                        />
                         <span className="truncate">{author.email}</span>
                       </p>
                       <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-slate-500 dark:text-slate-400">
-                        <Building2 className="h-3 w-3 flex-none text-emerald-500" aria-hidden="true" />
+                        <Building2
+                          className="h-3 w-3 flex-none text-emerald-500"
+                          aria-hidden="true"
+                        />
                         <span className="truncate">
                           {author.affiliation || "No affiliation recorded"}
                         </span>

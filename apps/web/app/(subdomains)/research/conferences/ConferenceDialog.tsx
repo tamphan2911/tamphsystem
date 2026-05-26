@@ -19,8 +19,6 @@ export type ConferenceFormValues = {
   submissionDeadline?: string;
   acceptanceNotification?: string;
   closeDate?: string;
-  apc?: string | null;
-  apcCurrency?: string;
   submissionFee?: string | null;
   submissionFeeCurrency?: string;
   website?: string | null;
@@ -42,10 +40,11 @@ export function ConferenceDialog({
   mode: "create" | "edit";
   action: (
     formData: FormData,
-  ) => Promise<void | { ok: boolean; reason?: string }>;
+  ) => Promise<void | { ok: boolean; reason?: string; message?: string }>;
   initialValues?: ConferenceFormValues;
 }) {
   const [open, setOpen] = useState(false);
+  const [warning, setWarning] = useState("");
   const [isPending, startTransition] = useTransition();
   const toast = useResearchToast();
   const isEdit = mode === "edit";
@@ -54,7 +53,10 @@ export function ConferenceDialog({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setWarning("");
+          setOpen(true);
+        }}
         className={
           isEdit
             ? "inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-100 hover:shadow-md dark:border-blue-800/70 dark:bg-blue-950/40 dark:text-blue-200"
@@ -89,14 +91,17 @@ export function ConferenceDialog({
                     {isEdit ? "Edit conference" : "Add conference"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Track conference schedule, fees, deadlines, and submission
-                    notes.
+                    Track conference schedule, ISBN, submission fee, deadlines,
+                    and submission notes.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  setWarning("");
+                  setOpen(false);
+                }}
                 className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                 aria-label="Close"
               >
@@ -106,16 +111,20 @@ export function ConferenceDialog({
             <form
               onSubmit={(event) => {
                 event.preventDefault();
+                setWarning("");
                 const formData = new FormData(event.currentTarget);
                 startTransition(async () => {
                   const result = await action(formData);
                   if (result && "ok" in result && !result.ok) {
+                    const detail =
+                      result.message ??
+                      (result.reason === "LOCKED"
+                        ? "This conference is closed. Unlock it before editing."
+                        : "Please check the required conference information and try again.");
+                    setWarning(detail);
                     toast.showError({
                       title: "Conference was not saved",
-                      detail:
-                        result.reason === "LOCKED"
-                          ? "This conference is closed. Unlock it before editing."
-                          : "Please check the conference information and try again.",
+                      detail,
                     });
                     return;
                   }
@@ -131,18 +140,23 @@ export function ConferenceDialog({
               className="max-h-[calc(90vh-6rem)] overflow-y-auto px-6 py-5"
             >
               <div className="grid gap-4">
+                {warning && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900 shadow-sm dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100">
+                    <p className="font-bold">Conference needs attention</p>
+                    <p className="mt-0.5">{warning}</p>
+                  </div>
+                )}
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_14rem]">
                   <label className={labelClass}>
-                    Conference name
+                    Conference name *
                     <input
                       name="name"
-                      required
                       defaultValue={initialValues?.name ?? ""}
                       className={fieldClass}
                     />
                   </label>
                   <label className={labelClass}>
-                    Type
+                    Type *
                     <ResearchFormSelect
                       name="type"
                       defaultValue={initialValues?.type ?? "INTERNATIONAL"}
@@ -184,7 +198,7 @@ export function ConferenceDialog({
                     />
                   </label>
                   <label className={labelClass}>
-                    Submission deadline
+                    Submission deadline *
                     <input
                       name="submissionDeadline"
                       type="date"
@@ -193,7 +207,7 @@ export function ConferenceDialog({
                     />
                   </label>
                   <label className={labelClass}>
-                    Acceptance notification
+                    Acceptance notification *
                     <input
                       name="acceptanceNotification"
                       type="date"
@@ -202,7 +216,7 @@ export function ConferenceDialog({
                     />
                   </label>
                   <label className={labelClass}>
-                    Location
+                    Location *
                     <input
                       name="location"
                       defaultValue={initialValues?.location ?? ""}
@@ -213,7 +227,7 @@ export function ConferenceDialog({
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className={labelClass}>
-                    Organizer
+                    Organizer *
                     <input
                       name="organizer"
                       defaultValue={initialValues?.organizer ?? ""}
@@ -221,7 +235,7 @@ export function ConferenceDialog({
                     />
                   </label>
                   <label className={labelClass}>
-                    ISBN
+                    ISBN *
                     <input
                       name="isbn"
                       defaultValue={initialValues?.isbn ?? ""}
@@ -255,24 +269,7 @@ export function ConferenceDialog({
                   />
                 </label>
 
-                <div className="grid gap-4 md:grid-cols-4">
-                  <label className={labelClass}>
-                    APC
-                    <input
-                      name="apc"
-                      defaultValue={initialValues?.apc ?? ""}
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    APC currency
-                    <ResearchFormSelect
-                      name="apcCurrency"
-                      defaultValue={initialValues?.apcCurrency ?? "USD"}
-                      ariaLabel="APC currency"
-                      options={currencyOptions}
-                    />
-                  </label>
+                <div className="grid gap-4 md:grid-cols-2">
                   <label className={labelClass}>
                     Submission fee
                     <input
