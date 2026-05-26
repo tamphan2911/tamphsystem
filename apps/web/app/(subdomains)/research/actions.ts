@@ -2439,11 +2439,19 @@ export async function updateSubmissionStatus(formData: FormData) {
     });
     if (!currentSubmission)
       return { ok: false, message: "Submission was not found." };
+    if (currentSubmission.status === SubmissionStatus.WITHDRAWN) {
+      return {
+        ok: false,
+        message:
+          "This submission is withdrawn and locked. Its status cannot be changed again.",
+      };
+    }
     const canEditLockedSubmission =
       (currentSubmission.status === SubmissionStatus.ACCEPTED ||
         currentSubmission.status === SubmissionStatus.PUBLISHED) &&
       (journalStatus === SubmissionStatus.ACCEPTED ||
-        journalStatus === SubmissionStatus.PUBLISHED);
+        journalStatus === SubmissionStatus.PUBLISHED ||
+        journalStatus === SubmissionStatus.WITHDRAWN);
     if (
       !canEditLockedSubmission &&
       (await researchContentIsLocked(currentSubmission.researchProjectId))
@@ -2463,7 +2471,6 @@ export async function updateSubmissionStatus(formData: FormData) {
         SubmissionStatus.UNDER_REVIEW,
         SubmissionStatus.REVISION,
         SubmissionStatus.REJECTED,
-        SubmissionStatus.WITHDRAWN,
       ]);
       const lockedPastAccepted = lockedPastAcceptedStatuses.has(journalStatus);
       if (lockedPastAccepted)
@@ -2487,13 +2494,14 @@ export async function updateSubmissionStatus(formData: FormData) {
 
     if (
       (journalStatus === SubmissionStatus.ACCEPTED ||
-        journalStatus === SubmissionStatus.REJECTED) &&
+        journalStatus === SubmissionStatus.REJECTED ||
+        journalStatus === SubmissionStatus.WITHDRAWN) &&
       dateIsBefore(statusDate, currentSubmission.submittedAt)
     ) {
       return {
         ok: false,
         message:
-          "Rejected and accepted dates must be the same as or after the submission date.",
+          "Accepted, rejected, and withdrawn dates must be the same as or after the submission date.",
       };
     }
 
@@ -2514,6 +2522,7 @@ export async function updateSubmissionStatus(formData: FormData) {
       submittedAt?: Date;
       acceptedAt?: Date | null;
       rejectedAt?: Date | null;
+      withdrawnAt?: Date | null;
       publishedAt?: Date | null;
     } = { status: journalStatus };
 
@@ -2521,6 +2530,8 @@ export async function updateSubmissionStatus(formData: FormData) {
       data.acceptedAt = statusDate;
     if (journalStatus === SubmissionStatus.REJECTED)
       data.rejectedAt = statusDate;
+    if (journalStatus === SubmissionStatus.WITHDRAWN)
+      data.withdrawnAt = statusDate;
     if (journalStatus === SubmissionStatus.PUBLISHED) {
       data.publishedAt = statusDate;
       data.acceptedAt = currentSubmission?.acceptedAt ?? statusDate;
@@ -2602,11 +2613,19 @@ export async function updateSubmissionStatus(formData: FormData) {
     });
     if (!currentSubmission)
       return { ok: false, message: "Submission was not found." };
+    if (currentSubmission.status === ConferenceSubmissionStatus.WITHDRAWN) {
+      return {
+        ok: false,
+        message:
+          "This submission is withdrawn and locked. Its status cannot be changed again.",
+      };
+    }
     const canEditLockedSubmission =
       (currentSubmission.status === ConferenceSubmissionStatus.ACCEPTED ||
         currentSubmission.status === ConferenceSubmissionStatus.PUBLISHED) &&
       (conferenceStatus === ConferenceSubmissionStatus.ACCEPTED ||
-        conferenceStatus === ConferenceSubmissionStatus.PUBLISHED);
+        conferenceStatus === ConferenceSubmissionStatus.PUBLISHED ||
+        conferenceStatus === ConferenceSubmissionStatus.WITHDRAWN);
     if (
       !canEditLockedSubmission &&
       (await researchContentIsLocked(currentSubmission.researchProjectId))
@@ -2626,7 +2645,6 @@ export async function updateSubmissionStatus(formData: FormData) {
         ConferenceSubmissionStatus.SUBMITTED,
         ConferenceSubmissionStatus.REVIEWING,
         ConferenceSubmissionStatus.REJECTED,
-        ConferenceSubmissionStatus.WITHDRAWN,
       ]);
       const lockedPastAccepted =
         lockedPastAcceptedStatuses.has(conferenceStatus);
@@ -2651,14 +2669,15 @@ export async function updateSubmissionStatus(formData: FormData) {
 
     if (
       (conferenceStatus === ConferenceSubmissionStatus.ACCEPTED ||
-        conferenceStatus === ConferenceSubmissionStatus.REJECTED) &&
+        conferenceStatus === ConferenceSubmissionStatus.REJECTED ||
+        conferenceStatus === ConferenceSubmissionStatus.WITHDRAWN) &&
       currentSubmission.submittedAt &&
       dateIsBefore(statusDate, currentSubmission.submittedAt)
     ) {
       return {
         ok: false,
         message:
-          "Rejected and accepted dates must be the same as or after the submission date.",
+          "Accepted, rejected, and withdrawn dates must be the same as or after the submission date.",
       };
     }
 
@@ -2679,6 +2698,7 @@ export async function updateSubmissionStatus(formData: FormData) {
       submittedAt?: Date | null;
       acceptedAt?: Date | null;
       rejectedAt?: Date | null;
+      withdrawnAt?: Date | null;
       publishedAt?: Date | null;
     } = { status: conferenceStatus };
 
@@ -2686,6 +2706,8 @@ export async function updateSubmissionStatus(formData: FormData) {
       data.acceptedAt = statusDate;
     if (conferenceStatus === ConferenceSubmissionStatus.REJECTED)
       data.rejectedAt = statusDate;
+    if (conferenceStatus === ConferenceSubmissionStatus.WITHDRAWN)
+      data.withdrawnAt = statusDate;
     if (conferenceStatus === ConferenceSubmissionStatus.PUBLISHED) {
       data.publishedAt = statusDate;
       data.acceptedAt = currentSubmission?.acceptedAt ?? statusDate;

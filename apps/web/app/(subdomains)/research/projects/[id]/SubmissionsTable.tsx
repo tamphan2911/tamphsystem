@@ -57,6 +57,7 @@ export type SubmissionRow = {
   submittedAt: string;
   acceptedAt: string;
   rejectedAt: string;
+  withdrawnAt: string;
   publishedAt: string;
   projectId?: string;
   projectTitle?: string;
@@ -74,6 +75,7 @@ const statusOptions = [
   { value: "UNDER_REVIEW", label: "Reviewing" },
   { value: "REJECTED", label: "Rejected" },
   { value: "ACCEPTED", label: "Accepted" },
+  { value: "WITHDRAWN", label: "Withdraw" },
   { value: "PUBLISHED", label: "Published" },
 ];
 
@@ -82,6 +84,7 @@ const conferenceStatusOptions = [
   { value: "REVIEWING", label: "Reviewing" },
   { value: "REJECTED", label: "Rejected" },
   { value: "ACCEPTED", label: "Accepted" },
+  { value: "WITHDRAWN", label: "Withdraw" },
   { value: "PUBLISHED", label: "Published" },
 ];
 
@@ -96,6 +99,7 @@ function statusLabel(value: string) {
   const normalized = normalizedStatus(value);
   if (normalized === "SUBMITTED") return "Submitted";
   if (normalized === "REVIEWING") return "Reviewing";
+  if (normalized === "WITHDRAWN") return "Withdraw";
   return normalized
     .toLowerCase()
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -109,6 +113,8 @@ function badgeClass(value: string) {
     return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
   if (normalized === "REJECTED")
     return "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+  if (normalized === "WITHDRAWN")
+    return "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900";
   if (normalized === "REVIEWING")
     return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
   return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
@@ -122,6 +128,8 @@ function rowClass(value: string) {
     return "bg-emerald-50/70 hover:bg-emerald-50 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30";
   if (normalized === "PUBLISHED")
     return "bg-blue-50/70 hover:bg-blue-50 dark:bg-blue-950/20 dark:hover:bg-blue-950/30";
+  if (normalized === "WITHDRAWN")
+    return "bg-rose-50/65 hover:bg-rose-50 dark:bg-rose-950/20 dark:hover:bg-rose-950/30";
   return "hover:bg-slate-50 dark:hover:bg-slate-800/40";
 }
 
@@ -149,15 +157,25 @@ function editableStatusOptions(row: SubmissionRow) {
     row.kind === "journal" ? statusOptions : conferenceStatusOptions;
   const normalized = normalizedStatus(row.status);
 
+  if (normalized === "WITHDRAWN") {
+    return options.filter(
+      (option) => normalizedStatus(option.value) === "WITHDRAWN",
+    );
+  }
+
   if (normalized === "PUBLISHED") {
     return options.filter(
-      (option) => normalizedStatus(option.value) === "PUBLISHED",
+      (option) =>
+        normalizedStatus(option.value) === "PUBLISHED" ||
+        normalizedStatus(option.value) === "WITHDRAWN",
     );
   }
 
   if (normalized === "ACCEPTED") {
     return options.filter((option) =>
-      ["ACCEPTED", "PUBLISHED"].includes(normalizedStatus(option.value)),
+      ["ACCEPTED", "PUBLISHED", "WITHDRAWN"].includes(
+        normalizedStatus(option.value),
+      ),
     );
   }
 
@@ -172,12 +190,17 @@ function statusDate(row: SubmissionRow) {
     return row.publishedAt || row.acceptedAt || row.submittedAt;
   if (normalized === "ACCEPTED") return row.acceptedAt || row.submittedAt;
   if (normalized === "REJECTED") return row.rejectedAt || row.submittedAt;
+  if (normalized === "WITHDRAWN") return row.withdrawnAt || row.submittedAt;
   return row.submittedAt;
 }
 
-function isAcceptedOrPublished(row: SubmissionRow) {
+function canEditWhenResearchLocked(row: SubmissionRow) {
   const normalized = normalizedStatus(row.status);
   return normalized === "ACCEPTED" || normalized === "PUBLISHED";
+}
+
+function isWithdrawn(row: SubmissionRow) {
+  return normalizedStatus(row.status) === "WITHDRAWN";
 }
 
 function MoneyCell({ amount, currency }: { amount: string; currency: string }) {
@@ -348,6 +371,8 @@ export function SubmissionsTable({
   const [deleting, setDeleting] = useState<SubmissionRow | null>(null);
   const [acceptanceConfirmation, setAcceptanceConfirmation] =
     useState<FormData | null>(null);
+  const [withdrawalConfirmation, setWithdrawalConfirmation] =
+    useState<FormData | null>(null);
   const [isPending, startTransition] = useTransition();
   const { showSuccess, showError } = useResearchToast();
 
@@ -388,7 +413,10 @@ export function SubmissionsTable({
 
   const pagination = useTablePagination(filtered, 10);
 
-  function persistStatus(formData: FormData, accepted = false) {
+  function persistStatus(
+    formData: FormData,
+    tone: "default" | "accepted" | "withdrawn" = "default",
+  ) {
     startTransition(async () => {
       const result = await updateSubmissionStatus(formData);
       if (result && !result.ok) {
@@ -400,11 +428,20 @@ export function SubmissionsTable({
       }
       setEditing(null);
       setAcceptanceConfirmation(null);
+      setWithdrawalConfirmation(null);
       showSuccess({
-        title: accepted ? "Submission accepted" : "Submission status updated",
-        detail: accepted
-          ? "The research content is now locked to protect title, authors, and project details."
-          : "The status date and research stage signals have been refreshed.",
+        title:
+          tone === "accepted"
+            ? "Submission accepted"
+            : tone === "withdrawn"
+              ? "Submission withdrawn"
+              : "Submission status updated",
+        detail:
+          tone === "accepted"
+            ? "The research content is now locked to protect title, authors, and project details."
+            : tone === "withdrawn"
+              ? "This submission is now locked and its status cannot be changed again."
+              : "The status date and research stage signals have been refreshed.",
       });
       router.refresh();
     });
@@ -421,9 +458,17 @@ export function SubmissionsTable({
       normalizedStatus(nextStatus) === "ACCEPTED" &&
       normalizedStatus(editing.status) !== "ACCEPTED" &&
       normalizedStatus(editing.status) !== "PUBLISHED";
+    const movesToWithdrawn =
+      normalizedStatus(nextStatus) === "WITHDRAWN" &&
+      normalizedStatus(editing.status) !== "WITHDRAWN";
 
     if (movesToAccepted) {
       setAcceptanceConfirmation(formData);
+      return;
+    }
+
+    if (movesToWithdrawn) {
+      setWithdrawalConfirmation(formData);
       return;
     }
 
@@ -480,6 +525,7 @@ export function SubmissionsTable({
                 { value: "REVIEWING", label: "Reviewing" },
                 { value: "ACCEPTED", label: "Accepted" },
                 { value: "REJECTED", label: "Rejected" },
+                { value: "WITHDRAWN", label: "Withdraw" },
                 { value: "PUBLISHED", label: "Published" },
               ]}
             />
@@ -661,6 +707,11 @@ export function SubmissionsTable({
                             rejected: {shortDate(row.rejectedAt)}
                           </span>
                         )}
+                      {normalizedStatus(row.status) === "WITHDRAWN" && (
+                        <span className="text-[11px] font-medium text-rose-700/80 dark:text-rose-200/80">
+                          withdrawn: {shortDate(row.withdrawnAt) || "-"}
+                        </span>
+                      )}
                       <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                         submitted: {shortDate(row.submittedAt) || "-"}
                       </span>
@@ -766,18 +817,22 @@ export function SubmissionsTable({
                   )}
                   {hasAction && (
                     <td className="px-4 py-3 text-right">
-                      {showStatusEdit && (
+                      {showStatusEdit &&
                         (() => {
+                          const withdrawn = isWithdrawn(row);
                           const editDisabled =
-                            disabled && !isAcceptedOrPublished(row);
+                            withdrawn ||
+                            (disabled && !canEditWhenResearchLocked(row));
                           return (
                             <button
                               type="button"
                               disabled={editDisabled}
                               title={
-                                editDisabled
-                                  ? "Research is locked. Only accepted or published submissions can still be updated."
-                                  : "Edit submission status"
+                                withdrawn
+                                  ? "Withdrawn submissions are locked and cannot be changed."
+                                  : editDisabled
+                                    ? "Research is locked. Only accepted or published submissions can still be updated."
+                                    : "Edit submission status"
                               }
                               onClick={() => setEditing(row)}
                               className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:shadow-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40"
@@ -786,8 +841,7 @@ export function SubmissionsTable({
                               <Edit3 className="h-4 w-4" />
                             </button>
                           );
-                        })()
-                      )}
+                        })()}
                       {showDelete && (
                         <button
                           type="button"
@@ -957,11 +1011,71 @@ export function SubmissionsTable({
               <button
                 type="button"
                 disabled={isPending}
-                onClick={() => persistStatus(acceptanceConfirmation, true)}
+                onClick={() =>
+                  persistStatus(acceptanceConfirmation, "accepted")
+                }
                 className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-amber-700 disabled:cursor-wait disabled:opacity-70"
               >
                 <Check className="h-4 w-4" />
                 Accept and lock
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {withdrawalConfirmation && editing && (
+        <div className="fixed inset-0 z-[120] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/65 px-4 py-8 backdrop-blur-sm">
+          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-2xl border border-rose-200 bg-white shadow-2xl dark:border-rose-900/70 dark:bg-slate-900">
+            <div className="border-b border-rose-100 bg-rose-50/80 px-5 py-4 dark:border-rose-900/60 dark:bg-rose-950/25">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-bold text-slate-950 dark:text-white">
+                    Withdraw this submission?
+                  </h3>
+                  <p className="mt-1 text-sm leading-5 text-rose-900 dark:text-rose-100">
+                    Withdrawing this submission will permanently lock this
+                    submission status.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setWithdrawalConfirmation(null)}
+                  className="cursor-pointer rounded-lg p-2 text-slate-500 transition hover:bg-white/70 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+                  aria-label="Close withdrawal confirmation"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div className="grid gap-3 px-5 py-4 text-sm leading-5 text-slate-600 dark:text-slate-300">
+              <p>
+                Use this only when the journal or conference submission has been
+                formally withdrawn.
+              </p>
+              <p>
+                After the status becomes Withdraw, admins cannot change this
+                submission to another status from this screen.
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 border-t border-slate-200 px-5 py-4 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setWithdrawalConfirmation(null)}
+                className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() =>
+                  persistStatus(withdrawalConfirmation, "withdrawn")
+                }
+                className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-wait disabled:opacity-70"
+              >
+                <TriangleAlert className="h-4 w-4" />
+                Withdraw and lock
               </button>
             </div>
           </div>

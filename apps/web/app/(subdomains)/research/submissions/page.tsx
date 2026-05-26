@@ -163,6 +163,7 @@ export default async function SubmissionsPage() {
       submittedAt: isoDate(submission.submittedAt),
       acceptedAt: isoDate(submission.acceptedAt),
       rejectedAt: isoDate(submission.rejectedAt),
+      withdrawnAt: isoDate(submission.withdrawnAt),
       publishedAt: isoDate(submission.publishedAt),
     })),
     ...conferenceSubmissions.map((submission) => ({
@@ -207,6 +208,7 @@ export default async function SubmissionsPage() {
       submittedAt: isoDate(submission.submittedAt ?? submission.createdAt),
       acceptedAt: isoDate(submission.acceptedAt),
       rejectedAt: isoDate(submission.rejectedAt),
+      withdrawnAt: isoDate(submission.withdrawnAt),
       publishedAt: isoDate(submission.publishedAt),
     })),
   ].sort((left, right) =>

@@ -83,9 +83,9 @@ export default async function JournalDetailPage({
         Boolean(userId && submission.project.registrationUserId === userId) ||
         Boolean(
           submission.project.registrationName &&
-            registrationIdentityValues.includes(
-              submission.project.registrationName.trim().toLowerCase(),
-            ),
+          registrationIdentityValues.includes(
+            submission.project.registrationName.trim().toLowerCase(),
+          ),
         );
       const authorNames =
         submission.project.authorEntries.length > 0
@@ -135,6 +135,7 @@ export default async function JournalDetailPage({
         submittedAt: submission.submittedAt.toISOString(),
         acceptedAt: submission.acceptedAt?.toISOString() ?? "",
         rejectedAt: submission.rejectedAt?.toISOString() ?? "",
+        withdrawnAt: submission.withdrawnAt?.toISOString() ?? "",
         publishedAt: submission.publishedAt?.toISOString() ?? "",
       };
     },

@@ -57,6 +57,7 @@ export type SuggestedVenueState = {
     | "submitted"
     | "reviewing"
     | "rejected"
+    | "withdrawn"
     | "accepted"
     | "published"
     | "blocked";
@@ -814,7 +815,9 @@ function VenueCard({
   const canAssign =
     isAdmin &&
     !disabled &&
-    (state.state === "idle" || state.state === "rejected");
+    (state.state === "idle" ||
+      state.state === "rejected" ||
+      state.state === "withdrawn");
   const canDelete = isAdmin && !disabled && state.state === "idle";
   const showActions = canAssign || canDelete;
 
@@ -944,6 +947,17 @@ function venueStateMeta(state: SuggestedVenueState) {
       badgeClass: "",
       tooltip:
         "The submission to this venue is rejected. You could reassign another task to resubmit it.",
+    };
+  }
+  if (state.state === "withdrawn") {
+    return {
+      cardClass:
+        "border-rose-200 bg-rose-50/80 dark:border-rose-900/70 dark:bg-rose-950/25",
+      badge: "Withdraw",
+      badgeClass:
+        "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-950/70 dark:text-rose-200 dark:ring-rose-800",
+      tooltip:
+        "The submission to this venue was withdrawn. You could assign another venue or create a new submission path.",
     };
   }
   if (state.state === "blocked") {

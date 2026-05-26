@@ -549,6 +549,7 @@ model ConferenceSubmission {
   submittedAt       DateTime?
   acceptedAt        DateTime?
   rejectedAt        DateTime?
+  withdrawnAt       DateTime?
   publishedAt       DateTime?
   note              String?
   createdAt         DateTime                   @default(now())
@@ -708,6 +709,7 @@ model ResearchSubmission {
   submittedAt DateTime         @default(now())
   acceptedAt  DateTime?
   rejectedAt  DateTime?
+  withdrawnAt DateTime?
   publishedAt DateTime?
   status      SubmissionStatus @default(PENDING)
 

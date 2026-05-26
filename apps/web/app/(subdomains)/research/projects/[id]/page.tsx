@@ -140,6 +140,7 @@ function suggestedSubmissionState(
   if (status === "PUBLISHED") return "published";
   if (status === "ACCEPTED") return "accepted";
   if (status === "REJECTED") return "rejected";
+  if (status === "WITHDRAWN") return "withdrawn";
   if (
     status === "UNDER_REVIEW" ||
     status === "REVISION" ||
@@ -700,6 +701,7 @@ export default async function ProjectDetailPage({
       submittedAt: isoDate(submission.submittedAt),
       acceptedAt: isoDate(submission.acceptedAt),
       rejectedAt: isoDate(submission.rejectedAt),
+      withdrawnAt: isoDate(submission.withdrawnAt),
       publishedAt: isoDate(submission.publishedAt),
     })),
     ...project.conferenceSubmissions.map((submission) => ({
@@ -731,6 +733,7 @@ export default async function ProjectDetailPage({
       submittedAt: isoDate(submission.submittedAt ?? submission.createdAt),
       acceptedAt: isoDate(submission.acceptedAt),
       rejectedAt: isoDate(submission.rejectedAt),
+      withdrawnAt: isoDate(submission.withdrawnAt),
       publishedAt: isoDate(submission.publishedAt),
     })),
   ].sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || ""));

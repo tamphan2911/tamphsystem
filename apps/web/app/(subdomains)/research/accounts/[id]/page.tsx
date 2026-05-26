@@ -60,13 +60,19 @@ function InfoTile({
 function authorLine(project: ProjectForAuthorLine) {
   if (project.authorEntries.length > 0) {
     return project.authorEntries
-      .map((entry) => `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`)
+      .map(
+        (entry) =>
+          `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
+      )
       .join(", ");
   }
 
   if (project.authors.length > 0) {
     return project.authors
-      .map((author, index) => `${author.name || author.email}${index === 0 ? "*" : ""}`)
+      .map(
+        (author, index) =>
+          `${author.name || author.email}${index === 0 ? "*" : ""}`,
+      )
       .join(", ");
   }
 
@@ -140,6 +146,7 @@ export default async function AccountDetailPage({
       submittedAt: submission.submittedAt.toISOString(),
       acceptedAt: submission.acceptedAt?.toISOString() ?? "",
       rejectedAt: submission.rejectedAt?.toISOString() ?? "",
+      withdrawnAt: submission.withdrawnAt?.toISOString() ?? "",
       publishedAt: submission.publishedAt?.toISOString() ?? "",
     }),
   );
@@ -198,9 +205,21 @@ export default async function AccountDetailPage({
             </p>
           </div>
           <div className="grid w-full grid-cols-3 gap-2 lg:w-[24rem]">
-            <InfoTile icon={Send} label="Submissions" value={String(account.submissions.length)} />
-            <InfoTile icon={ClipboardList} label="Tasks" value={String(account.tasks.length)} />
-            <InfoTile icon={ShieldCheck} label="Scope" value={account.journal ? "Journal" : "Publisher"} />
+            <InfoTile
+              icon={Send}
+              label="Submissions"
+              value={String(account.submissions.length)}
+            />
+            <InfoTile
+              icon={ClipboardList}
+              label="Tasks"
+              value={String(account.tasks.length)}
+            />
+            <InfoTile
+              icon={ShieldCheck}
+              label="Scope"
+              value={account.journal ? "Journal" : "Publisher"}
+            />
           </div>
         </div>
       </section>
