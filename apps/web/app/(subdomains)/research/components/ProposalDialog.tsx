@@ -49,10 +49,12 @@ export function ProposalDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [warning, setWarning] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
   const toast = useResearchToast();
   const isProject = type === "PROJECT";
+  const uploadDisabled = isPending || isSubmitting;
 
   const openDialog = () => {
     if (!isLoggedIn) {
@@ -136,6 +138,7 @@ export function ProposalDialog({
               ref={formRef}
               onSubmit={(event) => {
                 event.preventDefault();
+                if (uploadDisabled) return;
                 setWarning("");
                 const form = event.currentTarget;
                 const file = form.supportFile.files?.[0] as File | undefined;
@@ -159,26 +162,31 @@ export function ProposalDialog({
 
                 const formData = new FormData(form);
                 formData.set("type", type);
+                setIsSubmitting(true);
                 startTransition(async () => {
-                  const result = await submitProposal(formData);
-                  if (!result.ok) {
-                    const detail =
-                      result.detail ??
-                      "Please check the proposal information and try again.";
-                    setWarning(detail);
-                    toast.showError({
-                      title: result.title ?? "Proposal was not sent",
-                      detail,
-                    });
-                    return;
+                  try {
+                    const result = await submitProposal(formData);
+                    if (!result.ok) {
+                      const detail =
+                        result.detail ??
+                        "Please check the proposal information and try again.";
+                      setWarning(detail);
+                      toast.showError({
+                        title: result.title ?? "Proposal was not sent",
+                        detail,
+                      });
+                      return;
+                    }
+                    formRef.current?.reset();
+                    setOpen(false);
+                    const message =
+                      successLines[
+                        Math.floor(Math.random() * successLines.length)
+                      ];
+                    toast.showSuccess(message);
+                  } finally {
+                    setIsSubmitting(false);
                   }
-                  formRef.current?.reset();
-                  setOpen(false);
-                  const message =
-                    successLines[
-                      Math.floor(Math.random() * successLines.length)
-                    ];
-                  toast.showSuccess(message);
                 });
               }}
               className="max-h-[calc(90vh-6rem)] overflow-y-auto px-6 py-5"
@@ -246,19 +254,19 @@ export function ProposalDialog({
 
               <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
                 <button
-                  disabled={isPending}
+                  disabled={uploadDisabled}
                   className={`inline-flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 ${
                     isProject
                       ? "border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 dark:border-violet-800/70 dark:bg-violet-950/40 dark:text-violet-200"
                       : "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200"
                   }`}
                 >
-                  {isPending ? (
+                  {uploadDisabled ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <Send className="h-4 w-4" />
                   )}
-                  Send proposal
+                  {uploadDisabled ? "Uploading..." : "Send proposal"}
                 </button>
               </div>
             </form>
