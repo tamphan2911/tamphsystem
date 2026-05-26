@@ -3250,8 +3250,14 @@ export async function requestTaskClarification(
     select: {
       title: true,
       createdById: true,
+      status: true,
       createdBy: { select: { email: true } },
       assignments: { select: { userId: true } },
+      clarifications: {
+        where: { requestedById: user.id, answer: null },
+        select: { id: true },
+        take: 1,
+      },
     },
   });
   if (!task) return;
@@ -3259,6 +3265,14 @@ export async function requestTaskClarification(
     redirect("/401");
   }
   if (task.createdById === user.id) return;
+  if (
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED ||
+    task.status === ResearchTaskStatus.CHECKING ||
+    task.clarifications.length > 0
+  ) {
+    return;
+  }
 
   await prisma.researchTaskClarification.create({
     data: { taskId, requestedById: user.id, question },
@@ -3295,17 +3309,18 @@ export async function requestTaskClarification(
 
 export async function answerTaskClarification(
   taskId: string,
-  clarificationId: string,
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
+  const clarificationId = optionalString(formData.get("clarificationId"));
   const answer = optionalString(formData.get("answer"));
-  if (!answer) return;
+  if (!clarificationId || !answer) return;
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
     select: {
       title: true,
       createdById: true,
+      status: true,
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
       },
@@ -3315,11 +3330,18 @@ export async function answerTaskClarification(
   if (!user.roles.includes(Role.ADMIN) && task.createdById !== user.id) {
     redirect("/401");
   }
+  if (
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    return;
+  }
 
-  await prisma.researchTaskClarification.update({
-    where: { id: clarificationId },
+  const updated = await prisma.researchTaskClarification.updateMany({
+    where: { id: clarificationId, taskId, answer: null },
     data: { answer, answeredById: user.id, answeredAt: new Date() },
   });
+  if (updated.count === 0) return;
   await prisma.researchTask.update({
     where: { id: taskId },
     data: { status: ResearchTaskStatus.IN_PROGRESS },

@@ -8,7 +8,6 @@ import {
   ExternalLink,
   FileText,
   Globe2,
-  HelpCircle,
   KeyRound,
   Send,
   UserRound,
@@ -25,12 +24,12 @@ import {
 } from "../../actions";
 import { FinishTaskForm } from "./FinishTaskForm";
 import { RevokeTaskForm } from "./RevokeTaskForm";
-import {
-  ClarificationAnswerForm,
-  ClarificationRequestForm,
-  RedoTaskForm,
-} from "./TaskWorkflowForms";
+import { ClarificationRequestForm, RedoTaskForm } from "./TaskWorkflowForms";
 import { EditTaskDialog } from "./EditTaskDialog";
+import {
+  TaskClarificationPanel,
+  type TaskClarificationItem,
+} from "./TaskClarificationPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -243,12 +242,69 @@ export default async function TaskDetailPage({
   const selfAssigned = isAssigner && isAssignee;
   if (!isAdmin && !isAssigner && !isAssignee) notFound();
 
+  let taskClarifications = task.clarifications;
+  const demoRequester = task.assignments.find(
+    (assignment) => assignment.userId !== task.createdById,
+  );
+  const hasDemoParticipant = [
+    task.title,
+    task.createdBy.name,
+    task.createdBy.email,
+    ...task.assignments.flatMap((assignment) => [
+      assignment.user.name,
+      assignment.user.email,
+    ]),
+  ].some((value) => value?.toLowerCase().includes("demo"));
+
+  if (taskClarifications.length === 0 && demoRequester && hasDemoParticipant) {
+    const now = new Date();
+    await prisma.researchTaskClarification.createMany({
+      data: [
+        {
+          taskId: task.id,
+          requestedById: demoRequester.userId,
+          answeredById: task.createdById,
+          question:
+            "Could you confirm whether the submission should use the journal template or the university template?",
+          answer:
+            "Use the journal template for the main manuscript and keep the university format only for the internal archive copy.",
+          createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 28),
+          answeredAt: new Date(now.getTime() - 1000 * 60 * 60 * 25),
+        },
+        {
+          taskId: task.id,
+          requestedById: demoRequester.userId,
+          answeredById: task.createdById,
+          question:
+            "The author list has two affiliations missing. Should I pause submission until they are updated?",
+          answer:
+            "Please continue preparing the submission package, but do not submit until the affiliations are added.",
+          createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 8),
+          answeredAt: new Date(now.getTime() - 1000 * 60 * 60 * 6),
+        },
+      ],
+    });
+    taskClarifications = await prisma.researchTaskClarification.findMany({
+      where: { taskId: task.id },
+      include: {
+        requestedBy: { select: { name: true, email: true } },
+        answeredBy: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   const meta = statusMeta(task);
   const finishAction = finishResearchTask.bind(null, task.id);
   const readyAction = markResearchTaskReadyForCheck.bind(null, task.id);
   const redoAction = requestTaskRedo.bind(null, task.id);
   const clarificationAction = requestTaskClarification.bind(null, task.id);
+  const clarificationAnswerAction = answerTaskClarification.bind(null, task.id);
   const revokeAction = revokeResearchTask.bind(null, task.id);
+  const hasOpenMyClarification = taskClarifications.some(
+    (clarification) =>
+      clarification.requestedById === userId && !clarification.answer,
+  );
   const isClosed =
     task.status === ResearchTaskStatus.COMPLETED ||
     task.status === ResearchTaskStatus.REVOKED;
@@ -271,9 +327,11 @@ export default async function TaskDetailPage({
     isAssignee &&
     !selfAssigned &&
     task.status !== ResearchTaskStatus.CHECKING &&
-    task.status !== ResearchTaskStatus.NEED_CLARIFY;
+    task.status !== ResearchTaskStatus.NEED_CLARIFY &&
+    !hasOpenMyClarification;
   const canRevoke = !isClosed && (isAdmin || isAssigner);
   const canEdit = !isClosed && isAdmin;
+  const canAnswerClarification = !isClosed && (isAdmin || isAssigner);
   const journalSubmissionLink =
     task.journal?.submissionLink || firstUrl(task.journal?.note);
   const conferenceSubmissionLink = firstUrl(task.conference?.note);
@@ -367,6 +425,25 @@ export default async function TaskDetailPage({
     code: project.referenceCode ?? "",
     status: project.status,
   }));
+  const clarificationItems: TaskClarificationItem[] = taskClarifications.map(
+    (clarification) => ({
+      id: clarification.id,
+      question: clarification.question,
+      answer: clarification.answer,
+      createdAt: clarification.createdAt.toISOString(),
+      answeredAt: clarification.answeredAt?.toISOString() ?? null,
+      requestedBy: {
+        name: clarification.requestedBy.name ?? "",
+        email: clarification.requestedBy.email,
+      },
+      answeredBy: clarification.answeredBy
+        ? {
+            name: clarification.answeredBy.name ?? "",
+            email: clarification.answeredBy.email,
+          }
+        : null,
+    }),
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
@@ -546,62 +623,11 @@ export default async function TaskDetailPage({
           </p>
         </div>
 
-        {task.clarifications.length > 0 && (
-          <div className="mt-6 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-950 dark:text-white">
-              <HelpCircle className="h-4 w-4 text-amber-500" />
-              Clarification requests
-            </div>
-            <div className="mt-3 grid gap-3">
-              {task.clarifications.map((clarification) => {
-                const answerAction = answerTaskClarification.bind(
-                  null,
-                  task.id,
-                  clarification.id,
-                );
-                return (
-                  <div
-                    key={clarification.id}
-                    className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-950/50"
-                  >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                          Asked by{" "}
-                          {clarification.requestedBy.name ||
-                            clarification.requestedBy.email}{" "}
-                          on {formatDate(clarification.createdAt)}
-                        </p>
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-200">
-                          {clarification.question}
-                        </p>
-                      </div>
-                      {!clarification.answer && (isAdmin || isAssigner) && (
-                        <ClarificationAnswerForm action={answerAction} />
-                      )}
-                    </div>
-                    {clarification.answer && (
-                      <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-3 dark:border-blue-900/60 dark:bg-blue-950/30">
-                        <p className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-300">
-                          Answered by{" "}
-                          {clarification.answeredBy?.name ||
-                            clarification.answeredBy?.email ||
-                            "Assigner"}{" "}
-                          {clarification.answeredAt
-                            ? `on ${formatDate(clarification.answeredAt)}`
-                            : ""}
-                        </p>
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-200">
-                          {clarification.answer}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        <TaskClarificationPanel
+          clarifications={clarificationItems}
+          canAnswer={canAnswerClarification}
+          answerAction={clarificationAnswerAction}
+        />
 
         <div className="mt-6 grid gap-3">
           <h2 className="text-sm font-bold text-slate-950 dark:text-white">
