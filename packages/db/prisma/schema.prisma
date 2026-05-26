@@ -129,6 +129,7 @@ model Session {
   title    String
   type     SessionType
   order    Int // Defines sequence within the module
+  year     Int?
   moduleId String
   module   Module      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 

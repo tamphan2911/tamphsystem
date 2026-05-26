@@ -32,12 +32,21 @@ export default async function SessionPage({
   if (!session || !course) notFound();
 
   const orderedSessions = course.modules.flatMap((module) => module.sessions);
-  const currentIndex = orderedSessions.findIndex((item) => item.id === session.id);
+  const currentIndex = orderedSessions.findIndex(
+    (item) => item.id === session.id,
+  );
   const nextSession = orderedSessions[currentIndex + 1];
-  const progressAfterThis = orderedSessions.length > 0
-    ? Math.round(((Math.max(currentIndex, 0) + 1) / orderedSessions.length) * 100)
-    : 100;
-  const completeAction = updateCourseProgress.bind(null, courseId, progressAfterThis);
+  const progressAfterThis =
+    orderedSessions.length > 0
+      ? Math.round(
+          ((Math.max(currentIndex, 0) + 1) / orderedSessions.length) * 100,
+        )
+      : 100;
+  const completeAction = updateCourseProgress.bind(
+    null,
+    courseId,
+    progressAfterThis,
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
@@ -47,8 +56,14 @@ export default async function SessionPage({
             <p className="text-xs font-bold uppercase tracking-wide text-blue-600">
               Session {currentIndex + 1} of {orderedSessions.length}
             </p>
-            <h1 className="mt-2 text-2xl font-extrabold tracking-tight">{session.title}</h1>
-            <p className="mt-1 text-sm text-slate-500">{session.type.replace("_", " ").toLowerCase()}</p>
+            <h1 className="mt-2 text-2xl font-extrabold tracking-tight">
+              {session.title}
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {[session.type.replace("_", " ").toLowerCase(), session.year]
+                .filter(Boolean)
+                .join(" • ")}
+            </p>
           </div>
           <form action={completeAction}>
             <button className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
@@ -82,7 +97,8 @@ export default async function SessionPage({
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <h2 className="font-bold">Instructions</h2>
             <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-slate-300">
-              {session.content || "Write your code in the editor below to solve the exercise."}
+              {session.content ||
+                "Write your code in the editor below to solve the exercise."}
             </div>
           </div>
           <CodingExercise
@@ -93,19 +109,29 @@ export default async function SessionPage({
         </div>
       )}
 
-      {session.type === "EXERCISE_QUIZ" && <QuizExercise title={session.title} />}
+      {session.type === "EXERCISE_QUIZ" && (
+        <QuizExercise title={session.title} />
+      )}
 
       <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <Link href={`/courses/${courseId}`} className="text-sm font-semibold text-slate-500 hover:text-slate-950 dark:hover:text-white">
+        <Link
+          href={`/courses/${courseId}`}
+          className="text-sm font-semibold text-slate-500 hover:text-slate-950 dark:hover:text-white"
+        >
           Back to course
         </Link>
         {nextSession ? (
-          <Link href={`/courses/${courseId}/sessions/${nextSession.id}`} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+          <Link
+            href={`/courses/${courseId}/sessions/${nextSession.id}`}
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          >
             Next session
             <ArrowRight className="h-4 w-4" />
           </Link>
         ) : (
-          <span className="text-sm font-semibold text-emerald-600">Final session</span>
+          <span className="text-sm font-semibold text-emerald-600">
+            Final session
+          </span>
         )}
       </div>
     </div>

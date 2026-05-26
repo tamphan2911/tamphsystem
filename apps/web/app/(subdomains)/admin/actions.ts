@@ -11,6 +11,14 @@ function optionalString(value: FormDataEntryValue | null) {
   return text.length > 0 ? text : null;
 }
 
+function optionalNumber(value: FormDataEntryValue | null) {
+  const text = optionalString(value);
+  if (!text) return null;
+
+  const number = Number(text);
+  return Number.isFinite(number) ? number : null;
+}
+
 async function requireAdmin() {
   const session = await auth();
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
@@ -93,6 +101,28 @@ export async function updateCoursePublishing(formData: FormData) {
   await prisma.course.update({
     where: { id: courseId },
     data: { isPublished: formData.get("isPublished") === "on" },
+  });
+
+  revalidatePath("/courses");
+}
+
+export async function updateAdminSessionContent(formData: FormData) {
+  await requireAdmin();
+
+  const sessionId = optionalString(formData.get("sessionId"));
+  if (!sessionId) return;
+
+  await prisma.session.update({
+    where: { id: sessionId },
+    data: {
+      title: optionalString(formData.get("title")) ?? "Untitled session",
+      year: optionalNumber(formData.get("year")),
+      content: optionalString(formData.get("content")),
+      videoUrl: optionalString(formData.get("videoUrl")),
+      codingLanguage: optionalString(formData.get("codingLanguage")),
+      initialCode: optionalString(formData.get("initialCode")),
+      expectedOutput: optionalString(formData.get("expectedOutput")),
+    },
   });
 
   revalidatePath("/courses");
