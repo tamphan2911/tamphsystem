@@ -134,15 +134,19 @@ export async function registerUser(formData: FormData) {
     .toLowerCase();
   const affiliation = String(formData.get("affiliation") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
   const callbackUrl = safeCallbackUrl(formData.get("callbackUrl"));
   const host = (await headers()).get("host");
   const activeSite = siteFromHost(host);
 
-  if (!name || !email || !affiliation || !password) {
+  if (!name || !email || !affiliation || !password || !confirmPassword) {
     return { error: "All fields are required." };
   }
   if (password.length < 6) {
     return { error: "Password must have at least 6 characters." };
+  }
+  if (password !== confirmPassword) {
+    return { error: "Confirm password does not match the password." };
   }
 
   try {
