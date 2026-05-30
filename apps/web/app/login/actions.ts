@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@repo/db";
 import { signIn } from "../../auth";
@@ -15,12 +16,21 @@ function loginUrl(params: Record<string, string>) {
   return `/login?${searchParams.toString()}`;
 }
 
+function isResearchHost(host: string | null) {
+  return Boolean(
+    host?.startsWith("research.") || host?.startsWith("research.localhost"),
+  );
+}
+
 export async function loginUser(formData: FormData) {
   const email = String(formData.get("email") ?? "")
     .trim()
     .toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const redirectTo = safeRedirectPath(formData.get("callbackUrl"));
+  const host = (await headers()).get("host");
+  const callbackPath = safeRedirectPath(formData.get("callbackUrl"));
+  const redirectTo =
+    isResearchHost(host) && callbackPath === "/" ? "/projects" : callbackPath;
 
   if (!email || !password) {
     redirect(
