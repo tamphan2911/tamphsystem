@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle, LockKeyhole, Mail } from "lucide-react";
+import { TurnstileField } from "../../components/TurnstileField";
 import { loginUser } from "./actions";
 
 function safeRedirectPath(value: string | undefined) {
@@ -23,6 +24,12 @@ function warningCopy(warning?: string, email?: string) {
       detail: "Enter both email and password to continue.",
     };
   }
+  if (warning === "security") {
+    return {
+      title: "Security check required",
+      detail: "Please complete the Cloudflare security check and try again.",
+    };
+  }
   return null;
 }
 
@@ -38,6 +45,7 @@ export default async function LoginPage({
 }) {
   const { callbackUrl, warning, email, error } = await searchParams;
   const redirectTo = safeRedirectPath(callbackUrl);
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
   const warningMessage =
     warningCopy(warning, email) ||
     (error
@@ -97,6 +105,8 @@ export default async function LoginPage({
               required
             />
           </label>
+
+          <TurnstileField siteKey={turnstileSiteKey} />
 
           <button
             type="submit"

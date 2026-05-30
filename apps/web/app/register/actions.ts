@@ -6,6 +6,7 @@ import nodemailer from "nodemailer";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@repo/db";
+import { requestIp, verifyTurnstileToken } from "../../lib/turnstile";
 
 function siteFromHost(host: string | null) {
   if (!host) return "portfolio";
@@ -136,7 +137,8 @@ export async function registerUser(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
   const callbackUrl = safeCallbackUrl(formData.get("callbackUrl"));
-  const host = (await headers()).get("host");
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("host");
   const activeSite = siteFromHost(host);
 
   if (!name || !email || !affiliation || !password || !confirmPassword) {
@@ -147,6 +149,13 @@ export async function registerUser(formData: FormData) {
   }
   if (password !== confirmPassword) {
     return { error: "Confirm password does not match the password." };
+  }
+  const turnstileOk = await verifyTurnstileToken(
+    formData.get("cf-turnstile-response"),
+    requestIp(requestHeaders),
+  );
+  if (!turnstileOk) {
+    return { error: "Please complete the security check and try again." };
   }
 
   try {

@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@repo/db";
 import { signIn } from "../../auth";
+import { requestIp, verifyTurnstileToken } from "../../lib/turnstile";
 
 function safeRedirectPath(value: FormDataEntryValue | null) {
   const text = typeof value === "string" ? value : "";
@@ -27,7 +28,8 @@ export async function loginUser(formData: FormData) {
     .trim()
     .toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const host = (await headers()).get("host");
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("host");
   const callbackPath = safeRedirectPath(formData.get("callbackUrl"));
   const redirectTo =
     isResearchHost(host) && callbackPath === "/" ? "/projects" : callbackPath;
@@ -36,6 +38,20 @@ export async function loginUser(formData: FormData) {
     redirect(
       loginUrl({
         warning: "missing",
+        callbackUrl: redirectTo,
+      }),
+    );
+  }
+
+  const turnstileOk = await verifyTurnstileToken(
+    formData.get("cf-turnstile-response"),
+    requestIp(requestHeaders),
+  );
+  if (!turnstileOk) {
+    redirect(
+      loginUrl({
+        warning: "security",
+        email,
         callbackUrl: redirectTo,
       }),
     );

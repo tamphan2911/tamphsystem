@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { AlertTriangle, BarChart3, Loader2, UserPlus } from "lucide-react";
+import { TurnstileField } from "../../components/TurnstileField";
 import { registerUser } from "./actions";
 
 export default function RegisterPage() {
@@ -51,7 +52,9 @@ function RegisterContent() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copy, setCopy] = useState(defaultCopy);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const isResearch = copy.accent === "emerald";
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
   useEffect(() => {
     setCopy(siteCopy());
@@ -64,6 +67,7 @@ function RegisterContent() {
     if (result?.error) {
       setError(result.error);
       setIsLoading(false);
+      setTurnstileResetKey((current) => current + 1);
     }
   };
 
@@ -160,6 +164,11 @@ function RegisterContent() {
               minLength={6}
             />
           </label>
+
+          <TurnstileField
+            siteKey={turnstileSiteKey}
+            resetKey={turnstileResetKey}
+          />
 
           <button
             type="submit"
