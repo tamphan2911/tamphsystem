@@ -61,7 +61,7 @@ const navItems = [
     href: "/accounts",
     label: "Accounts",
     icon: "accounts" as const,
-    requiresTaskAccess: true,
+    requiresAccountAccess: true,
   },
   {
     href: "/assistants",
@@ -91,12 +91,14 @@ export function ResearchShell({
   name,
   isAdmin,
   isAssistant,
+  canSeeAccounts,
 }: {
   children: React.ReactNode;
   email?: string | null;
   name?: string | null;
   isAdmin: boolean;
   isAssistant: boolean;
+  canSeeAccounts: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -110,6 +112,8 @@ export function ResearchShell({
     if ("adminOnly" in item && item.adminOnly) return isAdmin;
     if ("requiresTaskAccess" in item && item.requiresTaskAccess)
       return isAdmin || isAssistant;
+    if ("requiresAccountAccess" in item && item.requiresAccountAccess)
+      return canSeeAccounts;
     return true;
   });
 

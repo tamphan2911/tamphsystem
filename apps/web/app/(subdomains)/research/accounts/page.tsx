@@ -1,6 +1,6 @@
 import { Building2, KeyRound, Send, Users } from "lucide-react";
 import { redirect } from "next/navigation";
-import { prisma, Role } from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { deletePublisherAccount } from "../actions";
 import { AccountsTable, type AccountRow } from "./AccountsTable";
@@ -14,16 +14,25 @@ export default async function PublisherAccountsPage() {
     []) as Role[];
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const isAdmin = roles.includes(Role.ADMIN);
-  const isAssistant =
-    roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
   if (!userId) redirect("/login");
-  if (!isAdmin && !isAssistant) redirect("/401");
 
   const [accounts, journals] = await Promise.all([
     prisma.publisherAccount.findMany({
       where: isAdmin
         ? {}
-        : { tasks: { some: { assignments: { some: { userId } } } } },
+        : {
+            tasks: {
+              some: {
+                status: {
+                  notIn: [
+                    ResearchTaskStatus.COMPLETED,
+                    ResearchTaskStatus.REVOKED,
+                  ],
+                },
+                assignments: { some: { userId } },
+              },
+            },
+          },
       include: {
         journal: true,
         _count: { select: { submissions: true } },
@@ -34,6 +43,8 @@ export default async function PublisherAccountsPage() {
       orderBy: [{ publisher: "asc" }, { name: "asc" }],
     }),
   ]);
+
+  if (!isAdmin && accounts.length === 0) redirect("/401");
 
   const rows: AccountRow[] = accounts.map((account) => ({
     id: account.id,

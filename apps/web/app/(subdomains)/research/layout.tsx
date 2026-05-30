@@ -1,4 +1,4 @@
-import { Role } from "@repo/db";
+import { ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../auth";
 import { prisma } from "@repo/db";
 import { headers } from "next/headers";
@@ -14,18 +14,37 @@ export default async function ResearchLayout({
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
+  let canSeeAccounts = roles.includes(Role.ADMIN);
   if (userId) {
     const sitePathname = (await headers()).get("x-site-pathname") ?? "";
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { activeSites: true },
-    });
+    const [user, unfinishedAccountTaskCount] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { activeSites: true },
+      }),
+      roles.includes(Role.ADMIN)
+        ? Promise.resolve(0)
+        : prisma.researchTask.count({
+            where: {
+              accountId: { not: null },
+              status: {
+                notIn: [
+                  ResearchTaskStatus.COMPLETED,
+                  ResearchTaskStatus.REVOKED,
+                ],
+              },
+              assignments: { some: { userId } },
+            },
+          }),
+    ]);
     if (
       !user?.activeSites.includes("research") &&
       sitePathname !== "/activate"
     ) {
       redirect("/activate");
     }
+    canSeeAccounts =
+      roles.includes(Role.ADMIN) || unfinishedAccountTaskCount > 0;
   }
 
   return (
@@ -36,6 +55,7 @@ export default async function ResearchLayout({
       isAssistant={
         roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT)
       }
+      canSeeAccounts={canSeeAccounts}
     >
       {children}
     </ResearchShell>
