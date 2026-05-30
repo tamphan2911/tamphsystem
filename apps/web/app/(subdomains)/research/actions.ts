@@ -1039,14 +1039,18 @@ export async function reviewProposal(formData: FormData) {
 
   const accepted = status === ProposalStatus.ACCEPTED;
   const statusLabel = accepted ? "approved" : "declined";
+  const proposalType = proposal.type
+    .toLowerCase()
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const adminNote = comment ?? "No additional admin note was added.";
+  const decisionSummary = `Your ${proposalType.toLowerCase()} "${proposal.title}" was ${statusLabel}.`;
   await notifyUsers({
     userIds: [proposal.submittedById],
     type: accepted ? "PROPOSAL_ACCEPTED" : "PROPOSAL_DECLINED",
-    title: `Proposal ${statusLabel}`,
-    summary: `Your proposal "${proposal.title}" was ${statusLabel}.`,
-    body: comment
-      ? `Admin comment:\n${comment}`
-      : "No additional admin comment was added.",
+    title: `Proposal feedback: ${statusLabel}`,
+    summary: decisionSummary,
+    body: `Proposal type: ${proposalType}\nProposal: ${proposal.title}\n\nAdmin note:\n${adminNote}`,
     href: accepted ? createdHref : "/notifications",
     entityType: "proposal",
     entityId: reviewed.id,
@@ -1054,10 +1058,10 @@ export async function reviewProposal(formData: FormData) {
 
   await sendProposalEmail({
     to: [proposal.submittedBy.email],
-    subject: `Your Research Hub proposal was ${statusLabel}`,
+    subject: `Feedback on your Research Hub proposal`,
     heading: `Proposal ${statusLabel}`,
-    intro: `Your proposal "${proposal.title}" was ${statusLabel} by the Research Hub admin team.`,
-    detail: comment ? `Admin comment: ${comment}` : undefined,
+    intro: `${decisionSummary} Thank you for sharing this proposal with Research Hub.`,
+    detail: `Proposal type: ${proposalType}\nProposal description: ${proposal.description}\n\nAdmin note: ${adminNote}`,
     actionHref: `${researchBaseUrl()}${accepted ? createdHref : "/notifications"}`,
     actionLabel: accepted ? "View item" : "View notification",
   });

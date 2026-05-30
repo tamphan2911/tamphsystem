@@ -1,8 +1,8 @@
 import { Building2, FolderGit2, Inbox } from "lucide-react";
 import { redirect } from "next/navigation";
-import { ProposalStatus, ProposalType, prisma, Role } from "@repo/db";
+import { ProposalType, prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
-import { deleteProposal, reviewProposal } from "../actions";
+import { deleteProposal } from "../actions";
 import { ProposalDialog } from "../components/ProposalDialog";
 import { ProposalsTable, type ProposalRow } from "./ProposalsTable";
 
@@ -29,11 +29,6 @@ export default async function ProposalsPage() {
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   if (!roles.includes(Role.ADMIN)) redirect("/401");
-
-  await prisma.proposal.updateMany({
-    where: { status: ProposalStatus.REVIEWING },
-    data: { status: ProposalStatus.NEW },
-  });
 
   const [proposals, currentUser] = await Promise.all([
     prisma.proposal.findMany({
@@ -153,12 +148,7 @@ export default async function ProposalsPage() {
         </div>
       </div>
 
-      <ProposalsTable
-        rows={rows}
-        isAdmin
-        deleteAction={deleteProposal}
-        reviewAction={reviewProposal}
-      />
+      <ProposalsTable rows={rows} isAdmin deleteAction={deleteProposal} />
     </div>
   );
 }

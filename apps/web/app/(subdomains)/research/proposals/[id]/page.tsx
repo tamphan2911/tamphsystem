@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { prisma, ProposalStatus, ProposalType, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
+import { ProposalFeedbackButton } from "./ProposalFeedbackButton";
 
 export const dynamic = "force-dynamic";
 
@@ -100,7 +101,7 @@ function statusMeta(status: ProposalStatus) {
 }
 
 function displayStatus(status: ProposalStatus) {
-  return status === ProposalStatus.REVIEWING ? ProposalStatus.NEW : status;
+  return status;
 }
 
 function DetailItem({
@@ -151,10 +152,20 @@ export default async function ProposalDetailPage({
   });
 
   if (!proposal) notFound();
+  if (proposal.status === ProposalStatus.NEW) {
+    await prisma.proposal.update({
+      where: { id: proposal.id },
+      data: { status: ProposalStatus.REVIEWING },
+    });
+  }
 
   const type = typeMeta(proposal.type);
   const TypeIcon = type.icon;
-  const visibleStatus = displayStatus(proposal.status);
+  const effectiveStatus =
+    proposal.status === ProposalStatus.NEW
+      ? ProposalStatus.REVIEWING
+      : proposal.status;
+  const visibleStatus = displayStatus(effectiveStatus);
   const status = statusMeta(visibleStatus);
   const StatusIcon = status.icon;
   const hasFile = Boolean(proposal.supportFileName);
@@ -189,9 +200,19 @@ export default async function ProposalDetailPage({
                 Submitted {longDate(proposal.createdAt)}
               </span>
             </div>
-            <h1 className="mt-4 text-2xl font-normal leading-tight tracking-tight text-slate-950 dark:text-white">
-              {proposal.title}
-            </h1>
+            <div className="mt-4 flex items-start gap-3">
+              <h1 className="min-w-0 flex-1 text-2xl font-normal leading-tight tracking-tight text-slate-950 dark:text-white">
+                {proposal.title}
+              </h1>
+              <ProposalFeedbackButton
+                proposalId={proposal.id}
+                proposalTitle={proposal.title}
+                disabled={
+                  effectiveStatus === ProposalStatus.ACCEPTED ||
+                  effectiveStatus === ProposalStatus.DECLINED
+                }
+              />
+            </div>
             <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-500 dark:text-slate-400">
               Proposal ID:{" "}
               <span className="font-mono text-xs text-slate-400">

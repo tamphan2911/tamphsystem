@@ -92,6 +92,7 @@ export function ResearchShell({
   isAdmin,
   isAssistant,
   canSeeAccounts,
+  unopenedProposalCount,
 }: {
   children: React.ReactNode;
   email?: string | null;
@@ -99,6 +100,7 @@ export function ResearchShell({
   isAdmin: boolean;
   isAssistant: boolean;
   canSeeAccounts: boolean;
+  unopenedProposalCount: number;
 }) {
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -176,6 +178,9 @@ export function ResearchShell({
                 icon={item.icon}
                 collapsed={collapsed}
                 adminOnly={"adminOnly" in item && item.adminOnly}
+                badgeCount={
+                  item.href === "/proposals" ? unopenedProposalCount : 0
+                }
               />
             ))}
           </nav>
@@ -198,6 +203,13 @@ export function ResearchShell({
                   }`}
                 >
                   {item.label}
+                  {item.href === "/proposals" && unopenedProposalCount > 0 && (
+                    <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+                      {unopenedProposalCount > 99
+                        ? "99+"
+                        : unopenedProposalCount}
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>

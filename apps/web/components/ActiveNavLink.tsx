@@ -38,12 +38,14 @@ export function ActiveNavLink({
   icon,
   collapsed = false,
   adminOnly = false,
+  badgeCount = 0,
 }: {
   href: string;
   label: string;
   icon: keyof typeof icons;
   collapsed?: boolean;
   adminOnly?: boolean;
+  badgeCount?: number;
 }) {
   const pathname = usePathname();
   const isActive =
@@ -76,10 +78,20 @@ export function ActiveNavLink({
               : "text-slate-400 dark:text-slate-300"
         }`}
       />
-      {!collapsed && <span className="truncate">{label}</span>}
+      {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+      {badgeCount > 0 && (
+        <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-black leading-none text-white ring-2 ring-white dark:ring-slate-900">
+          {badgeCount > 99 ? "99+" : badgeCount}
+        </span>
+      )}
       {collapsed && (
         <span className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-50 -translate-y-1/2 -translate-x-1 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 opacity-0 shadow-xl shadow-slate-900/10 ring-1 ring-slate-900/[0.03] transition duration-200 ease-out group-hover/navlink:translate-x-0 group-hover/navlink:opacity-100 group-focus-visible/navlink:translate-x-0 group-focus-visible/navlink:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:shadow-black/30 dark:ring-white/[0.04]">
           {label}
+          {badgeCount > 0 && (
+            <span className="ml-2 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+              {badgeCount > 99 ? "99+" : badgeCount}
+            </span>
+          )}
           <span className="absolute right-full top-1/2 h-2.5 w-2.5 -translate-y-1/2 translate-x-1/2 rotate-45 border-b border-l border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950" />
         </span>
       )}

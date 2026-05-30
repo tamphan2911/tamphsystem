@@ -1,4 +1,4 @@
-import { ResearchTaskStatus, Role } from "@repo/db";
+import { ProposalStatus, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../auth";
 import { prisma } from "@repo/db";
 import { headers } from "next/headers";
@@ -15,6 +15,7 @@ export default async function ResearchLayout({
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   let canSeeAccounts = roles.includes(Role.ADMIN);
+  let unopenedProposalCount = 0;
   if (userId) {
     const sitePathname = (await headers()).get("x-site-pathname") ?? "";
     const [user, unfinishedAccountTaskCount] = await Promise.all([
@@ -45,6 +46,11 @@ export default async function ResearchLayout({
     }
     canSeeAccounts =
       roles.includes(Role.ADMIN) || unfinishedAccountTaskCount > 0;
+    if (roles.includes(Role.ADMIN)) {
+      unopenedProposalCount = await prisma.proposal.count({
+        where: { status: ProposalStatus.NEW },
+      });
+    }
   }
 
   return (
@@ -56,6 +62,7 @@ export default async function ResearchLayout({
         roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT)
       }
       canSeeAccounts={canSeeAccounts}
+      unopenedProposalCount={unopenedProposalCount}
     >
       {children}
     </ResearchShell>
