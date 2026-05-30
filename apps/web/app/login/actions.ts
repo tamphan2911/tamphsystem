@@ -43,14 +43,15 @@ export async function loginUser(formData: FormData) {
     );
   }
 
-  const turnstileOk = await verifyTurnstileToken(
+  const turnstileResult = await verifyTurnstileToken(
     formData.get("cf-turnstile-response"),
     requestIp(requestHeaders),
   );
-  if (!turnstileOk) {
+  if (!turnstileResult.ok) {
     redirect(
       loginUrl({
-        warning: "security",
+        warning:
+          turnstileResult.reason === "config" ? "security_config" : "security",
         email,
         callbackUrl: redirectTo,
       }),

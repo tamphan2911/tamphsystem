@@ -125,7 +125,10 @@ const taskReportFileTypes = new Map([
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ".docx",
   ],
-  ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx"],
+  [
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".xlsx",
+  ],
 ]);
 const taskReportFileTypesByExtension = new Map([
   ["pdf", "application/pdf"],
@@ -2038,6 +2041,83 @@ export async function removeResearchAssistantRole(formData: FormData) {
   revalidatePath("/assistants");
 }
 
+export async function updateResearchSiteUser(formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const userId = optionalString(formData.get("userId"));
+  const email = optionalString(formData.get("email"))?.toLowerCase();
+  const password = optionalString(formData.get("password"));
+  if (!userId || !email) {
+    return { ok: false, reason: "MISSING_REQUIRED" };
+  }
+
+  const roles = formData
+    .getAll("roles")
+    .filter((role): role is Role => Object.values(Role).includes(role as Role));
+  const existing = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { activeSites: true },
+  });
+  if (!existing?.activeSites.includes("research")) {
+    return { ok: false, reason: "NOT_RESEARCH_USER" };
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: optionalString(formData.get("name")),
+        email,
+        affiliation: optionalString(formData.get("affiliation")) ?? "Not set",
+        roles: roles.length > 0 ? roles : [Role.STUDENT],
+        activeSites: {
+          set: Array.from(new Set([...existing.activeSites, "research"])),
+        },
+        ...(password
+          ? {
+              passwordHash: await bcrypt.hash(password, 10),
+              adminVisiblePassword: password,
+            }
+          : {}),
+      },
+    });
+  } catch (error) {
+    console.error("[research users] update failed", error);
+    return { ok: false, reason: "UPDATE_FAILED" };
+  }
+
+  revalidatePath("/users");
+  return { ok: true };
+}
+
+export async function deleteResearchSiteUser(formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const userId = optionalString(formData.get("userId"));
+  if (!userId) return { ok: false, reason: "MISSING_REQUIRED" };
+  if (userId === user.id) return { ok: false, reason: "SELF_DELETE" };
+
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { activeSites: true },
+  });
+  if (!target?.activeSites.includes("research")) {
+    return { ok: false, reason: "NOT_RESEARCH_USER" };
+  }
+
+  try {
+    await prisma.user.delete({ where: { id: userId } });
+  } catch (error) {
+    console.error("[research users] delete failed", error);
+    return { ok: false, reason: "DELETE_FAILED" };
+  }
+
+  revalidatePath("/users");
+  return { ok: true };
+}
+
 export async function createResearchTask(formData: FormData) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
@@ -3141,7 +3221,10 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
   revalidatePath(`/tasks/${taskId}`);
 }
 
-export async function uploadResearchTaskReport(taskId: string, formData: FormData) {
+export async function uploadResearchTaskReport(
+  taskId: string,
+  formData: FormData,
+) {
   const user = await requireCurrentUser();
   const file = formData.get("reportFile");
   if (!(file instanceof File) || file.size === 0) {
@@ -3184,7 +3267,8 @@ export async function uploadResearchTaskReport(taskId: string, formData: FormDat
     return {
       ok: false,
       title: "Task is closed",
-      detail: "Reports cannot be uploaded after a task is completed or revoked.",
+      detail:
+        "Reports cannot be uploaded after a task is completed or revoked.",
     };
   }
   const isAssignee = task.assignments.some(

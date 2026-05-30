@@ -14,6 +14,7 @@ import {
   KeyRound,
   Landmark,
   ShieldCheck,
+  UsersRound,
 } from "lucide-react";
 
 const icons = {
@@ -28,6 +29,7 @@ const icons = {
   organizedProjects: Building2,
   fundingInstitutions: Landmark,
   proposals: Inbox,
+  users: UsersRound,
 };
 
 export function ActiveNavLink({

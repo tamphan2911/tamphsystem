@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, LockKeyhole, Mail } from "lucide-react";
 import { TurnstileField } from "../../components/TurnstileField";
+import { turnstileSiteKey } from "../../lib/turnstile";
 import { loginUser } from "./actions";
 
 function safeRedirectPath(value: string | undefined) {
@@ -27,7 +28,15 @@ function warningCopy(warning?: string, email?: string) {
   if (warning === "security") {
     return {
       title: "Security check required",
-      detail: "Please complete the Cloudflare security check and try again.",
+      detail:
+        "Cloudflare verification was not completed. Wait for the checkbox to load, complete it, then sign in again.",
+    };
+  }
+  if (warning === "security_config") {
+    return {
+      title: "Security check is not configured",
+      detail:
+        "The server has a Turnstile secret key but no public site key. Add NEXT_PUBLIC_TURNSTILE_SITE_KEY in Railway, redeploy, then try again.",
     };
   }
   return null;
@@ -45,7 +54,7 @@ export default async function LoginPage({
 }) {
   const { callbackUrl, warning, email, error } = await searchParams;
   const redirectTo = safeRedirectPath(callbackUrl);
-  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+  const siteKey = turnstileSiteKey();
   const warningMessage =
     warningCopy(warning, email) ||
     (error
@@ -106,7 +115,7 @@ export default async function LoginPage({
             />
           </label>
 
-          <TurnstileField siteKey={turnstileSiteKey} />
+          <TurnstileField siteKey={siteKey} />
 
           <button
             type="submit"

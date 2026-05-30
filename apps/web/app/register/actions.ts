@@ -150,12 +150,17 @@ export async function registerUser(formData: FormData) {
   if (password !== confirmPassword) {
     return { error: "Confirm password does not match the password." };
   }
-  const turnstileOk = await verifyTurnstileToken(
+  const turnstileResult = await verifyTurnstileToken(
     formData.get("cf-turnstile-response"),
     requestIp(requestHeaders),
   );
-  if (!turnstileOk) {
-    return { error: "Please complete the security check and try again." };
+  if (!turnstileResult.ok) {
+    return {
+      error:
+        turnstileResult.reason === "config"
+          ? "Cloudflare security check is not configured. Add NEXT_PUBLIC_TURNSTILE_SITE_KEY in Railway and redeploy."
+          : "Cloudflare verification was not completed. Wait for the checkbox to load, complete it, then register again.",
+    };
   }
 
   try {

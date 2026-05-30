@@ -54,7 +54,10 @@ function RegisterContent() {
   const [copy, setCopy] = useState(defaultCopy);
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const isResearch = copy.accent === "emerald";
-  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+  const siteKey =
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE ||
+    "";
 
   useEffect(() => {
     setCopy(siteCopy());
@@ -165,10 +168,7 @@ function RegisterContent() {
             />
           </label>
 
-          <TurnstileField
-            siteKey={turnstileSiteKey}
-            resetKey={turnstileResetKey}
-          />
+          <TurnstileField siteKey={siteKey} resetKey={turnstileResetKey} />
 
           <button
             type="submit"

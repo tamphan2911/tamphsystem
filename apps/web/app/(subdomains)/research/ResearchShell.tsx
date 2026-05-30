@@ -59,6 +59,12 @@ const navItems = [
     icon: "assistants" as const,
     adminOnly: true,
   },
+  {
+    href: "/users",
+    label: "Users",
+    icon: "users" as const,
+    adminOnly: true,
+  },
 ];
 
 const adminLinks = [
