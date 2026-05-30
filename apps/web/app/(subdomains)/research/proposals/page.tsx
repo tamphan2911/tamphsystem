@@ -2,7 +2,7 @@ import { Building2, FolderGit2, Inbox } from "lucide-react";
 import { redirect } from "next/navigation";
 import { ProposalStatus, ProposalType, prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
-import { deleteProposal } from "../actions";
+import { deleteProposal, reviewProposal } from "../actions";
 import { ProposalDialog } from "../components/ProposalDialog";
 import { ProposalsTable, type ProposalRow } from "./ProposalsTable";
 
@@ -58,6 +58,11 @@ export default async function ProposalsPage() {
     description: proposal.description,
     contactInfo: proposal.contactInfo ?? "",
     notes: proposal.notes ?? "",
+    identifier: proposal.identifier ?? "",
+    organization: proposal.organization ?? "",
+    location: proposal.location ?? "",
+    website: proposal.website ?? "",
+    decisionComment: proposal.decisionComment ?? "",
     fileName: proposal.supportFileName ?? "",
     fileSize: fileSizeLabel(proposal.supportFileSize),
     submittedBy: proposal.submittedBy.name ?? proposal.submittedBy.email,
@@ -135,10 +140,25 @@ export default async function ProposalsPage() {
             isLoggedIn={Boolean(session)}
             hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
           />
+          <ProposalDialog
+            type="CONFERENCE"
+            isLoggedIn={Boolean(session)}
+            hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
+          />
+          <ProposalDialog
+            type="JOURNAL"
+            isLoggedIn={Boolean(session)}
+            hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
+          />
         </div>
       </div>
 
-      <ProposalsTable rows={rows} isAdmin deleteAction={deleteProposal} />
+      <ProposalsTable
+        rows={rows}
+        isAdmin
+        deleteAction={deleteProposal}
+        reviewAction={reviewProposal}
+      />
     </div>
   );
 }

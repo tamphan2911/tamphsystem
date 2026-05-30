@@ -131,8 +131,10 @@ function memberName(member: OrganizedProjectMemberRow) {
 
 export function OrganizedProjectsTable({
   rows,
+  emptyMessage = "No organized projects match the current filters.",
 }: {
   rows: OrganizedProjectRow[];
+  emptyMessage?: string;
 }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("ALL");
@@ -316,7 +318,9 @@ export function OrganizedProjectsTable({
                   colSpan={7}
                   className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                 >
-                  No organized projects match the current filters.
+                  {rows.length === 0
+                    ? emptyMessage
+                    : "No organized projects match the current filters."}
                 </td>
               </tr>
             )}

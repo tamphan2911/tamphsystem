@@ -237,9 +237,11 @@ function SubmitCount({ count }: { count: number }) {
 export function ResearchProjectsTable({
   rows,
   showClaimRegistration = true,
+  emptyMessage = "No research matches the current search.",
 }: {
   rows: ResearchProjectRow[];
   showClaimRegistration?: boolean;
+  emptyMessage?: string;
 }) {
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("ALL");
@@ -394,7 +396,9 @@ export function ResearchProjectsTable({
                   colSpan={showRegistrationClaim ? 6 : 4}
                   className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                 >
-                  No research matches the current search.
+                  {rows.length === 0
+                    ? emptyMessage
+                    : "No research matches the current search."}
                 </td>
               </tr>
             )}

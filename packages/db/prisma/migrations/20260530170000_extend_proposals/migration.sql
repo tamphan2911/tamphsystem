@@ -1,0 +1,12 @@
+ALTER TYPE "ProposalType" ADD VALUE IF NOT EXISTS 'CONFERENCE';
+ALTER TYPE "ProposalType" ADD VALUE IF NOT EXISTS 'JOURNAL';
+
+ALTER TABLE "Proposal"
+ADD COLUMN "identifier" TEXT,
+ADD COLUMN "organization" TEXT,
+ADD COLUMN "location" TEXT,
+ADD COLUMN "website" TEXT,
+ADD COLUMN "venueType" TEXT,
+ADD COLUMN "decisionComment" TEXT,
+ADD COLUMN "decidedAt" TIMESTAMP(3),
+ADD COLUMN "decidedById" TEXT;

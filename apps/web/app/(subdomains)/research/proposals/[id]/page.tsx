@@ -3,7 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   ArrowLeft,
+  BookOpen,
   Building2,
+  CalendarDays,
   CheckCircle2,
   Download,
   FileText,
@@ -43,6 +45,22 @@ function label(value: string) {
 }
 
 function typeMeta(type: ProposalType) {
+  if (type === ProposalType.CONFERENCE) {
+    return {
+      icon: CalendarDays,
+      label: "Conference proposal",
+      className:
+        "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900",
+    };
+  }
+  if (type === ProposalType.JOURNAL) {
+    return {
+      icon: BookOpen,
+      label: "Journal proposal",
+      className:
+        "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+    };
+  }
   if (type === ProposalType.PROJECT) {
     return {
       icon: Building2,
@@ -240,6 +258,45 @@ export default async function ProposalDetailPage({
               label="Contact"
               value={proposal.contactInfo || "-"}
             />
+            {(proposal.identifier ||
+              proposal.organization ||
+              proposal.location ||
+              proposal.website) && (
+              <DetailItem
+                icon={<Building2 className="h-3.5 w-3.5" />}
+                label="Venue details"
+                value={
+                  <span>
+                    {proposal.identifier && (
+                      <span className="block">
+                        {proposal.type === ProposalType.CONFERENCE
+                          ? "ISBN"
+                          : "ISSN"}
+                        : {proposal.identifier}
+                      </span>
+                    )}
+                    {proposal.organization && (
+                      <span className="block">{proposal.organization}</span>
+                    )}
+                    {proposal.location && (
+                      <span className="block">{proposal.location}</span>
+                    )}
+                    {proposal.website && (
+                      <span className="block break-all">
+                        {proposal.website}
+                      </span>
+                    )}
+                  </span>
+                }
+              />
+            )}
+            {proposal.decisionComment && (
+              <DetailItem
+                icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+                label="Admin comment"
+                value={proposal.decisionComment}
+              />
+            )}
             <DetailItem
               icon={<FileText className="h-3.5 w-3.5" />}
               label="Support file"

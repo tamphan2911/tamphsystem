@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { prisma, Role } from "@repo/db";
+import { prisma } from "@repo/db";
 import { auth } from "../../../../auth";
 import {
   NotificationsCenter,
@@ -19,19 +19,14 @@ function notificationTypeLabel(type: string) {
 export default async function ResearchNotificationsPage() {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
-    []) as Role[];
 
   if (!userId) redirect("/login");
 
-  const canUseResearch =
-    roles.includes(Role.ADMIN) ||
-    roles.includes(Role.ASSISTANT) ||
-    roles.includes(Role.CHIEF_ASSISTANT) ||
-    roles.includes(Role.RESEARCHER) ||
-    roles.includes(Role.LECTURER);
-
-  if (!canUseResearch) redirect("/401");
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { activeSites: true },
+  });
+  if (!currentUser?.activeSites.includes("research")) redirect("/401");
 
   const notifications = await prisma.researchNotification.findMany({
     where: { userId },

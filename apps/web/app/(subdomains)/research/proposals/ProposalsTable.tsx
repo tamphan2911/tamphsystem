@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
+  BookOpen,
   Building2,
   CheckCircle2,
   Download,
   FileQuestion,
   FolderGit2,
+  MessageSquare,
   Trash2,
   X,
   XCircle,
@@ -32,6 +34,11 @@ export type ProposalRow = {
   description: string;
   contactInfo: string;
   notes: string;
+  identifier: string;
+  organization: string;
+  location: string;
+  website: string;
+  decisionComment: string;
   fileName: string;
   fileSize: string;
   submittedBy: string;
@@ -39,7 +46,7 @@ export type ProposalRow = {
   createdAt: string;
 };
 
-const typeOptions = ["ALL", "RESEARCH", "PROJECT"];
+const typeOptions = ["ALL", "RESEARCH", "PROJECT", "CONFERENCE", "JOURNAL"];
 const statusOptions = ["ALL", "NEW", "ACCEPTED", "DECLINED"];
 
 function label(value: string) {
@@ -66,6 +73,7 @@ function statusIcon(status: string) {
 }
 
 function typeIcon(type: string) {
+  if (type === "JOURNAL") return BookOpen;
   if (type === "PROJECT") return Building2;
   return FolderGit2;
 }
@@ -73,6 +81,12 @@ function typeIcon(type: string) {
 function typeClass(type: string) {
   if (type === "PROJECT") {
     return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
+  }
+  if (type === "CONFERENCE") {
+    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  }
+  if (type === "JOURNAL") {
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
   }
   return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
 }
@@ -95,6 +109,157 @@ function IconChip({
         <span className="sr-only">{label}</span>
       </span>
     </IconHint>
+  );
+}
+
+function ReviewProposalButton({
+  proposal,
+  reviewAction,
+}: {
+  proposal: ProposalRow;
+  reviewAction: (formData: FormData) => Promise<void>;
+}) {
+  const router = useRouter();
+  const toast = useResearchToast();
+  const [open, setOpen] = useState<"ACCEPTED" | "DECLINED" | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const disabled =
+    proposal.status === "ACCEPTED" || proposal.status === "DECLINED";
+
+  if (disabled) {
+    return (
+      <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-600">
+        <MessageSquare className="h-4 w-4" />
+      </span>
+    );
+  }
+
+  return (
+    <>
+      <div className="inline-flex items-center gap-1">
+        <IconHint label="Approve proposal">
+          <button
+            type="button"
+            onClick={() => setOpen("ACCEPTED")}
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50 text-emerald-700 transition hover:-translate-y-0.5 hover:bg-emerald-100 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300"
+          >
+            <CheckCircle2 className="h-4 w-4" />
+          </button>
+        </IconHint>
+        <IconHint label="Decline proposal">
+          <button
+            type="button"
+            onClick={() => setOpen("DECLINED")}
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-rose-100 bg-rose-50 text-rose-700 transition hover:-translate-y-0.5 hover:bg-rose-100 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-300"
+          >
+            <XCircle className="h-4 w-4" />
+          </button>
+        </IconHint>
+      </div>
+
+      {open && (
+        <div className="fixed inset-0 z-[90] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
+          <form
+            action={async (formData) => {
+              setIsSaving(true);
+              try {
+                await reviewAction(formData);
+                setOpen(null);
+                router.refresh();
+                toast.showSuccess({
+                  title:
+                    open === "ACCEPTED"
+                      ? "Proposal approved"
+                      : "Proposal declined",
+                  detail:
+                    open === "ACCEPTED"
+                      ? "The proposer was notified, and the venue was created when applicable."
+                      : "The proposer was notified with your comment.",
+                });
+              } catch (error) {
+                toast.showError({
+                  title: "Could not review proposal",
+                  detail:
+                    error instanceof Error
+                      ? error.message
+                      : "Please refresh the page and try again.",
+                });
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+            className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+          >
+            <input type="hidden" name="proposalId" value={proposal.id} />
+            <input type="hidden" name="status" value={open} />
+            <div className="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-black text-slate-950 dark:text-white">
+                    {open === "ACCEPTED"
+                      ? "Approve proposal?"
+                      : "Decline proposal?"}
+                  </h2>
+                  <p className="mt-1 text-sm leading-5 text-slate-500 dark:text-slate-400">
+                    Add a clear comment for the proposer. They will receive it
+                    in Research Hub and by email.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpen(null)}
+                  className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div className="space-y-4 px-6 py-5">
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {proposal.title}
+              </p>
+              <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                Admin comment
+                <textarea
+                  name="comment"
+                  className="min-h-28 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  placeholder={
+                    open === "ACCEPTED"
+                      ? "Example: Approved. This venue is now available in the list."
+                      : "Example: Declined because the venue is already covered by another listing."
+                  }
+                />
+              </label>
+            </div>
+            <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setOpen(null)}
+                disabled={isSaving}
+                className="inline-flex h-10 cursor-pointer items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isSaving}
+                className={`inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 ${
+                  open === "ACCEPTED"
+                    ? "bg-emerald-600 hover:bg-emerald-500"
+                    : "bg-rose-600 hover:bg-rose-500"
+                }`}
+              >
+                {isSaving
+                  ? "Saving..."
+                  : open === "ACCEPTED"
+                    ? "Approve"
+                    : "Decline"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -214,10 +379,12 @@ export function ProposalsTable({
   rows,
   isAdmin,
   deleteAction,
+  reviewAction,
 }: {
   rows: ProposalRow[];
   isAdmin: boolean;
   deleteAction: (proposalId: string) => Promise<void>;
+  reviewAction?: (formData: FormData) => Promise<void>;
 }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("ALL");
@@ -234,6 +401,10 @@ export function ProposalsTable({
         row.description,
         row.contactInfo,
         row.notes,
+        row.identifier,
+        row.organization,
+        row.location,
+        row.website,
         row.fileName,
         row.submittedBy,
         row.submittedByEmail,
@@ -290,7 +461,10 @@ export function ProposalsTable({
               <th className="w-28 px-3 py-3">Contact</th>
               <th className="w-12 px-2 py-3 text-center">File</th>
               {isAdmin && (
-                <th className="w-12 px-2 py-3 text-center">Delete</th>
+                <>
+                  <th className="w-20 px-2 py-3 text-center">Review</th>
+                  <th className="w-12 px-2 py-3 text-center">Delete</th>
+                </>
               )}
             </tr>
           </thead>
@@ -317,6 +491,13 @@ export function ProposalsTable({
                   <p className="mt-1 font-mono text-xs text-slate-400 dark:text-slate-500">
                     {proposal.createdAt}
                   </p>
+                  {(proposal.identifier || proposal.organization) && (
+                    <p className="mt-1 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
+                      {[proposal.identifier, proposal.organization]
+                        .filter(Boolean)
+                        .join(" - ")}
+                    </p>
+                  )}
                 </td>
                 <td className="px-2 py-3 text-center align-top">
                   <IconChip
@@ -347,7 +528,9 @@ export function ProposalsTable({
                   </span>
                 </td>
                 <td className="px-3 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                  <span className="line-clamp-2">{proposal.contactInfo || "-"}</span>
+                  <span className="line-clamp-2">
+                    {proposal.contactInfo || "-"}
+                  </span>
                 </td>
                 <td className="px-2 py-3 text-center align-top">
                   {proposal.fileName ? (
@@ -368,19 +551,29 @@ export function ProposalsTable({
                   )}
                 </td>
                 {isAdmin && (
-                  <td className="px-2 py-3 text-center align-top">
-                    <DeleteProposalButton
-                      proposal={proposal}
-                      deleteAction={deleteAction}
-                    />
-                  </td>
+                  <>
+                    <td className="px-2 py-3 text-center align-top">
+                      {reviewAction && (
+                        <ReviewProposalButton
+                          proposal={proposal}
+                          reviewAction={reviewAction}
+                        />
+                      )}
+                    </td>
+                    <td className="px-2 py-3 text-center align-top">
+                      <DeleteProposalButton
+                        proposal={proposal}
+                        deleteAction={deleteAction}
+                      />
+                    </td>
+                  </>
                 )}
               </tr>
             ))}
             {pagination.total === 0 && (
               <tr>
                 <td
-                  colSpan={isAdmin ? 8 : 7}
+                  colSpan={isAdmin ? 9 : 7}
                   className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                 >
                   No proposals match the current search.

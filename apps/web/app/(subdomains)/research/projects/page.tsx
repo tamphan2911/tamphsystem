@@ -305,6 +305,7 @@ export default async function ProjectsDashboard() {
           { authors: { some: { id: userId } } },
           { authorEntries: { some: { userId } } },
           { registrationUserId: userId },
+          { tasks: { some: { assignments: { some: { userId } } } } },
           ...registrationIdentityFilters,
         ],
       };
@@ -482,7 +483,10 @@ export default async function ProjectsDashboard() {
         )}
       </div>
 
-      <ResearchProjectsTable rows={rows} />
+      <ResearchProjectsTable
+        rows={rows}
+        emptyMessage="No research is connected to your account yet. When you join a study, author a paper, or receive a research task, it will appear here."
+      />
     </div>
   );
 }

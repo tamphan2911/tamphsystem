@@ -1,11 +1,21 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { FileUp, Lightbulb, Loader2, Rocket, Send, X } from "lucide-react";
+import {
+  BookOpen,
+  CalendarDays,
+  FileUp,
+  Lightbulb,
+  Loader2,
+  MapPin,
+  Rocket,
+  Send,
+  X,
+} from "lucide-react";
 import { submitProposal } from "../actions";
 import { useResearchToast } from "./ResearchToast";
 
-type ProposalKind = "RESEARCH" | "PROJECT";
+type ProposalKind = "RESEARCH" | "PROJECT" | "CONFERENCE" | "JOURNAL";
 
 const maxFileSize = 2 * 1024 * 1024;
 const allowedExtensions = [".doc", ".docx", ".pdf"];
@@ -54,7 +64,39 @@ export function ProposalDialog({
   const formRef = useRef<HTMLFormElement>(null);
   const toast = useResearchToast();
   const isProject = type === "PROJECT";
+  const isConference = type === "CONFERENCE";
+  const isJournal = type === "JOURNAL";
+  const isVenue = isConference || isJournal;
   const uploadDisabled = isPending || isSubmitting;
+  const typeLabel = isProject
+    ? "project"
+    : isConference
+      ? "conference"
+      : isJournal
+        ? "journal"
+        : "research";
+  const buttonLabel = `${typeLabel.charAt(0).toUpperCase()}${typeLabel.slice(1)} proposal`;
+  const Icon = isProject
+    ? Rocket
+    : isConference
+      ? CalendarDays
+      : isJournal
+        ? BookOpen
+        : Lightbulb;
+  const accentClass = isProject
+    ? "border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 dark:border-violet-800/70 dark:bg-violet-950/40 dark:text-violet-200"
+    : isConference
+      ? "border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 dark:border-blue-800/70 dark:bg-blue-950/40 dark:text-blue-200"
+      : isJournal
+        ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200"
+        : "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200";
+  const iconClass = isProject
+    ? "bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-200"
+    : isConference
+      ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200"
+      : isJournal
+        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200"
+        : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200";
 
   const openDialog = () => {
     if (!isLoggedIn) {
@@ -81,18 +123,10 @@ export function ProposalDialog({
       <button
         type="button"
         onClick={openDialog}
-        className={`inline-flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-          isProject
-            ? "border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 dark:border-violet-800/70 dark:bg-violet-950/40 dark:text-violet-200"
-            : "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200"
-        }`}
+        className={`inline-flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${accentClass}`}
       >
-        {isProject ? (
-          <Rocket className="h-4 w-4" />
-        ) : (
-          <Lightbulb className="h-4 w-4" />
-        )}
-        {isProject ? "Project proposal" : "Research proposal"}
+        <Icon className="h-4 w-4" />
+        {buttonLabel}
       </button>
 
       {open && (
@@ -101,26 +135,16 @@ export function ProposalDialog({
             <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
               <div className="flex items-start gap-3">
                 <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                    isProject
-                      ? "bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-200"
-                      : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
-                  }`}
+                  className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconClass}`}
                 >
-                  {isProject ? (
-                    <Rocket className="h-5 w-5" />
-                  ) : (
-                    <Lightbulb className="h-5 w-5" />
-                  )}
+                  <Icon className="h-5 w-5" />
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-slate-950 dark:text-white">
-                    {isProject
-                      ? "Send project proposal"
-                      : "Send research proposal"}
+                    Send {typeLabel} proposal
                   </h2>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Share the idea, support file, and best contact channel.
+                    Share the details, support file, and best contact channel.
                   </p>
                 </div>
               </div>
@@ -203,6 +227,60 @@ export function ProposalDialog({
                   <input name="title" required className={fieldClass} />
                 </label>
 
+                {isVenue && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className={labelClass}>
+                      {isConference ? "ISBN" : "ISSN"}
+                      <input
+                        name="identifier"
+                        required
+                        className={fieldClass}
+                        placeholder={
+                          isConference ? "Conference ISBN" : "Journal ISSN"
+                        }
+                      />
+                    </label>
+                    <label className={labelClass}>
+                      {isConference ? "Organizer" : "Publisher"}
+                      <input name="organization" className={fieldClass} />
+                    </label>
+                    {isConference && (
+                      <>
+                        <label className={labelClass}>
+                          Type
+                          <select
+                            name="venueType"
+                            className={`${fieldClass} cursor-pointer`}
+                            defaultValue="INTERNATIONAL"
+                          >
+                            <option value="INTERNATIONAL">International</option>
+                            <option value="NATIONAL">National</option>
+                          </select>
+                        </label>
+                        <label className={labelClass}>
+                          Location
+                          <span className="relative">
+                            <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <input
+                              name="location"
+                              className={`${fieldClass} w-full pl-9`}
+                            />
+                          </span>
+                        </label>
+                      </>
+                    )}
+                    <label className={`${labelClass} md:col-span-2`}>
+                      Website
+                      <input
+                        name="website"
+                        type="url"
+                        className={fieldClass}
+                        placeholder="https://"
+                      />
+                    </label>
+                  </div>
+                )}
+
                 <label className={labelClass}>
                   Proposal description
                   <textarea
@@ -212,7 +290,11 @@ export function ProposalDialog({
                     placeholder={
                       isProject
                         ? "Describe the project purpose, expected outputs, team, timeline, or funding context..."
-                        : "Describe the research question, data, methods, target outputs, or support you need..."
+                        : isConference
+                          ? "Describe the conference scope, important dates, theme, submission fee, or why it should be added..."
+                          : isJournal
+                            ? "Describe the journal scope, field, rank, fees, or why it should be added..."
+                            : "Describe the research question, data, methods, target outputs, or support you need..."
                     }
                   />
                 </label>
@@ -255,11 +337,7 @@ export function ProposalDialog({
               <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
                 <button
                   disabled={uploadDisabled}
-                  className={`inline-flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 ${
-                    isProject
-                      ? "border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 dark:border-violet-800/70 dark:bg-violet-950/40 dark:text-violet-200"
-                      : "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200"
-                  }`}
+                  className={`inline-flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 ${accentClass}`}
                 >
                   {uploadDisabled ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

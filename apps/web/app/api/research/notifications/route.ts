@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma, Role } from "@repo/db";
+import { prisma } from "@repo/db";
 import { auth } from "../../../../auth";
 
 function notificationTypeLabel(type: string) {
@@ -13,20 +13,16 @@ function notificationTypeLabel(type: string) {
 export async function GET(request: Request) {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
-    []) as Role[];
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (
-    !roles.includes(Role.ADMIN) &&
-    !roles.includes(Role.ASSISTANT) &&
-    !roles.includes(Role.CHIEF_ASSISTANT) &&
-    !roles.includes(Role.RESEARCHER) &&
-    !roles.includes(Role.LECTURER)
-  ) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { activeSites: true },
+  });
+  if (!user?.activeSites.includes("research")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

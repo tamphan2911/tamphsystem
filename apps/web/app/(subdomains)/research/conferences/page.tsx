@@ -1,6 +1,7 @@
 import { auth } from "../../../../auth";
 import { prisma, Role } from "@repo/db";
 import { createConference, deleteConference } from "../actions";
+import { ProposalDialog } from "../components/ProposalDialog";
 import { ConferenceDialog } from "./ConferenceDialog";
 import { ConferencesTable, type ConferenceRow } from "./ConferencesTable";
 
@@ -30,12 +31,21 @@ function conferenceTypeLabel(value: string | null) {
 
 export default async function ConferencesPage() {
   const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
-  const conferences = await prisma.conference.findMany({
-    orderBy: [{ startDate: "desc" }, { name: "asc" }],
-  });
+  const [conferences, currentUser] = await Promise.all([
+    prisma.conference.findMany({
+      orderBy: [{ startDate: "desc" }, { name: "asc" }],
+    }),
+    userId
+      ? prisma.user.findUnique({
+          where: { id: userId },
+          select: { emailVerified: true },
+        })
+      : Promise.resolve(null),
+  ]);
 
   const rows: ConferenceRow[] = conferences.map((conference) => ({
     id: conference.id,
@@ -60,8 +70,14 @@ export default async function ConferencesPage() {
           <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
             Conference List
           </p>
-          {isAdmin && (
+          {isAdmin ? (
             <ConferenceDialog mode="create" action={createConference} />
+          ) : (
+            <ProposalDialog
+              type="CONFERENCE"
+              isLoggedIn={Boolean(session)}
+              hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
+            />
           )}
         </div>
       </div>

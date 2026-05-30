@@ -1,4 +1,10 @@
-import { BookOpen, CalendarClock, ClipboardCheck, CheckCircle2 } from "lucide-react";
+import {
+  BookOpen,
+  CalendarClock,
+  ClipboardCheck,
+  CheckCircle2,
+} from "lucide-react";
+import { redirect } from "next/navigation";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { deleteAcademicReview } from "../actions";
@@ -15,10 +21,18 @@ export default async function AcademicReviewsPage() {
   const session = await auth();
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
+  const userId = (session?.user as { id?: string } | undefined)?.id;
   const isAdmin = roles.includes(Role.ADMIN);
+  const isAssistant =
+    roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
+  if (!userId) redirect("/login");
+  if (!isAdmin && !isAssistant) redirect("/401");
 
   const [reviews, journals] = await Promise.all([
     prisma.academicReview.findMany({
+      where: isAdmin
+        ? {}
+        : { tasks: { some: { assignments: { some: { userId } } } } },
       include: { journal: true },
       orderBy: [{ dueDate: "asc" }, { requestedAt: "desc" }],
     }),
@@ -47,14 +61,37 @@ export default async function AcademicReviewsPage() {
   const active = reviews.filter(
     (review) => !["SUBMITTED", "DECLINED", "CANCELLED"].includes(review.status),
   ).length;
-  const completed = reviews.filter((review) => review.status === "SUBMITTED").length;
-  const journalsReviewed = new Set(reviews.map((review) => review.journalId)).size;
+  const completed = reviews.filter(
+    (review) => review.status === "SUBMITTED",
+  ).length;
+  const journalsReviewed = new Set(reviews.map((review) => review.journalId))
+    .size;
 
   const stats = [
-    { label: "Reviews", value: reviews.length, icon: ClipboardCheck, color: "text-emerald-600" },
-    { label: "Active", value: active, icon: CalendarClock, color: "text-blue-600" },
-    { label: "Submitted", value: completed, icon: CheckCircle2, color: "text-purple-600" },
-    { label: "Journals", value: journalsReviewed, icon: BookOpen, color: "text-amber-600" },
+    {
+      label: "Reviews",
+      value: reviews.length,
+      icon: ClipboardCheck,
+      color: "text-emerald-600",
+    },
+    {
+      label: "Active",
+      value: active,
+      icon: CalendarClock,
+      color: "text-blue-600",
+    },
+    {
+      label: "Submitted",
+      value: completed,
+      icon: CheckCircle2,
+      color: "text-purple-600",
+    },
+    {
+      label: "Journals",
+      value: journalsReviewed,
+      icon: BookOpen,
+      color: "text-amber-600",
+    },
   ];
 
   const journalOptions = journals.map((journal) => ({
@@ -68,17 +105,24 @@ export default async function AcademicReviewsPage() {
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
           {stats.map((item) => (
-            <div key={item.label} className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div
+              key={item.label}
+              className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            >
               <item.icon className={`h-4 w-4 ${item.color}`} />
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.label}</p>
-                <p className="text-base font-black text-slate-950 dark:text-white">{item.value}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  {item.label}
+                </p>
+                <p className="text-base font-black text-slate-950 dark:text-white">
+                  {item.value}
+                </p>
               </div>
             </div>
           ))}
         </div>
 
-        <NewReviewDialog journals={journalOptions} />
+        {isAdmin && <NewReviewDialog journals={journalOptions} />}
       </div>
 
       <ReviewsTable

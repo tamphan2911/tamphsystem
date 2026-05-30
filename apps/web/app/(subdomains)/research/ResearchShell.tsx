@@ -51,8 +51,18 @@ const navItems = [
   },
   { href: "/journals", label: "Journals", icon: "journals" as const },
   { href: "/conferences", label: "Conferences", icon: "conferences" as const },
-  { href: "/reviews", label: "Reviews", icon: "reviews" as const },
-  { href: "/accounts", label: "Accounts", icon: "accounts" as const },
+  {
+    href: "/reviews",
+    label: "Reviews",
+    icon: "reviews" as const,
+    requiresTaskAccess: true,
+  },
+  {
+    href: "/accounts",
+    label: "Accounts",
+    icon: "accounts" as const,
+    requiresTaskAccess: true,
+  },
   {
     href: "/assistants",
     label: "Assistants",

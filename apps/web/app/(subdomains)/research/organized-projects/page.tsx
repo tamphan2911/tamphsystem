@@ -1,4 +1,5 @@
 import { Building2, CheckCircle2, Clock3, FileText } from "lucide-react";
+import { redirect } from "next/navigation";
 import {
   OrganizedProjectFinancialClaimStatus,
   OrganizedProjectStatus,
@@ -286,13 +287,23 @@ export default async function OrganizedProjectsPage() {
   await ensureDemoOrganizedProjects();
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!session || !userId) redirect("/login");
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
+  const projectWhere = isAdmin
+    ? {}
+    : {
+        OR: [
+          { members: { some: { userId } } },
+          { tasks: { some: { assignments: { some: { userId } } } } },
+        ],
+      };
 
   const [projects, researchOptions, users, fundingInstitutions, currentUser] =
     await Promise.all([
       prisma.organizedProject.findMany({
+        where: projectWhere,
         include: {
           fundingInstitution: true,
           members: {
@@ -453,7 +464,10 @@ export default async function OrganizedProjectsPage() {
         )}
       </div>
 
-      <OrganizedProjectsTable rows={rows} />
+      <OrganizedProjectsTable
+        rows={rows}
+        emptyMessage="No project is connected to your account yet. Projects will show here when you are added as a member or assigned a related task."
+      />
     </div>
   );
 }

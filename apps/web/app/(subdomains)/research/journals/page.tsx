@@ -1,6 +1,7 @@
 import { auth } from "../../../../auth";
 import { prisma, Role } from "@repo/db";
 import { deleteJournal } from "../actions";
+import { ProposalDialog } from "../components/ProposalDialog";
 import { JournalsTable, type JournalRow } from "./JournalsTable";
 import { NewJournalDialog } from "./NewJournalDialog";
 
@@ -8,16 +9,25 @@ export const dynamic = "force-dynamic";
 
 export default async function JournalsPage() {
   const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
-  const journals = await prisma.journal.findMany({
-    include: {
-      submissions: { select: { status: true } },
-      _count: { select: { accounts: true, reviews: true } },
-    },
-    orderBy: [{ rank: "asc" }, { name: "asc" }],
-  });
+  const [journals, currentUser] = await Promise.all([
+    prisma.journal.findMany({
+      include: {
+        submissions: { select: { status: true } },
+        _count: { select: { accounts: true, reviews: true } },
+      },
+      orderBy: [{ rank: "asc" }, { name: "asc" }],
+    }),
+    userId
+      ? prisma.user.findUnique({
+          where: { id: userId },
+          select: { emailVerified: true },
+        })
+      : Promise.resolve(null),
+  ]);
 
   const activeSubmissionStatuses = new Set([
     "PENDING",
@@ -61,7 +71,15 @@ export default async function JournalsPage() {
         <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
           Journal List
         </p>
-        <NewJournalDialog />
+        {isAdmin ? (
+          <NewJournalDialog />
+        ) : (
+          <ProposalDialog
+            type="JOURNAL"
+            isLoggedIn={Boolean(session)}
+            hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
+          />
+        )}
       </div>
 
       <JournalsTable

@@ -15,6 +15,7 @@ import {
   ResearchStage,
   OrganizedProjectStatus,
   OrganizedProjectFinancialClaimStatus,
+  ProposalStatus,
   ProposalType,
   ResearchAuthorNotificationType,
   ResearchTaskCategory,
@@ -253,6 +254,59 @@ async function sendTaskEmail({
                 <p style="margin:0 0 16px;font-size:15px;font-weight:700;line-height:1.6;color:#0f172a;">${escapeHtml(taskTitle)}</p>
                 ${detail ? `<p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#475569;">${escapeHtml(detail)}</p>` : ""}
                 <a href="${taskUrl}" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 18px;border-radius:12px;">${escapeHtml(actionLabel ?? "Open task")}</a>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </div>
+    `,
+  });
+}
+
+async function sendProposalEmail({
+  to,
+  subject,
+  heading,
+  intro,
+  detail,
+  actionHref,
+  actionLabel = "Open Research Hub",
+}: {
+  to: string[];
+  subject: string;
+  heading: string;
+  intro: string;
+  detail?: string;
+  actionHref?: string;
+  actionLabel?: string;
+}) {
+  const recipients = Array.from(new Set(to.filter(Boolean)));
+  if (recipients.length === 0) return;
+  const href = actionHref ?? researchBaseUrl();
+
+  if (!smtpConfigured()) {
+    console.info(`[proposal email] ${subject}: ${recipients.join(", ")}`);
+    return;
+  }
+
+  await createTransporter().sendMail({
+    from: process.env.SMTP_FROM,
+    to: recipients,
+    subject,
+    text: `${heading}\n\n${intro}${detail ? `\n\n${detail}` : ""}\n\n${actionLabel}: ${href}`,
+    html: `
+      <div style="margin:0;padding:0;background:#f8fafc;font-family:Inter,Arial,sans-serif;color:#0f172a;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 16px;background:#f8fafc;">
+          <tr><td align="center">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
+              <tr><td style="padding:26px 30px;border-bottom:1px solid #e2e8f0;">
+                <div style="font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#059669;">Research Hub</div>
+                <h1 style="margin:10px 0 0;font-size:22px;line-height:1.3;color:#0f172a;">${escapeHtml(heading)}</h1>
+                <p style="margin:10px 0 0;font-size:14px;line-height:1.7;color:#475569;">${escapeHtml(intro)}</p>
+              </td></tr>
+              <tr><td style="padding:24px 30px;">
+                ${detail ? `<p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#475569;">${escapeHtml(detail)}</p>` : ""}
+                <a href="${href}" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 18px;border-radius:12px;">${escapeHtml(actionLabel)}</a>
               </td></tr>
             </table>
           </td></tr>
@@ -645,6 +699,52 @@ async function notifyOrganizedProjectMembersForResearch(
   });
 }
 
+async function venueProposalDuplicateMessage({
+  type,
+  title,
+  identifier,
+}: {
+  type: ProposalType;
+  title: string;
+  identifier: string | null;
+}) {
+  if (type === ProposalType.CONFERENCE) {
+    const existing = await prisma.conference.findFirst({
+      where: {
+        OR: [
+          { name: { equals: title, mode: "insensitive" } },
+          ...(identifier ? [{ isbn: { equals: identifier } }] : []),
+        ],
+      },
+      select: { name: true, isbn: true },
+    });
+    if (existing) {
+      return existing.isbn === identifier
+        ? `A conference with ISBN ${identifier} already exists.`
+        : `A conference named "${existing.name}" already exists.`;
+    }
+  }
+
+  if (type === ProposalType.JOURNAL) {
+    const existing = await prisma.journal.findFirst({
+      where: {
+        OR: [
+          { name: { equals: title, mode: "insensitive" } },
+          ...(identifier ? [{ issn: { equals: identifier } }] : []),
+        ],
+      },
+      select: { name: true, issn: true },
+    });
+    if (existing) {
+      return existing.issn === identifier
+        ? `A journal with ISSN ${identifier} already exists.`
+        : `A journal named "${existing.name}" already exists.`;
+    }
+  }
+
+  return null;
+}
+
 export async function submitProposal(formData: FormData) {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
@@ -659,7 +759,13 @@ export async function submitProposal(formData: FormData) {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, emailVerified: true, activeSites: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      emailVerified: true,
+      activeSites: true,
+    },
   });
   if (!user) {
     return {
@@ -693,6 +799,11 @@ export async function submitProposal(formData: FormData) {
   const description = optionalString(formData.get("description"));
   const contactInfo = optionalString(formData.get("contactInfo"));
   const notes = optionalString(formData.get("notes"));
+  const identifier = optionalString(formData.get("identifier"));
+  const organization = optionalString(formData.get("organization"));
+  const location = optionalString(formData.get("location"));
+  const website = optionalString(formData.get("website"));
+  const venueType = optionalString(formData.get("venueType"));
   const file = formData.get("supportFile");
 
   if (!type || !title || !description) {
@@ -701,6 +812,36 @@ export async function submitProposal(formData: FormData) {
       reason: "MISSING_FIELDS",
       title: "Proposal needs more detail",
       detail: "Please add a title and proposal description before sending.",
+    };
+  }
+
+  if (
+    (type === ProposalType.CONFERENCE || type === ProposalType.JOURNAL) &&
+    !identifier
+  ) {
+    return {
+      ok: false,
+      reason: "MISSING_IDENTIFIER",
+      title:
+        type === ProposalType.CONFERENCE ? "ISBN required" : "ISSN required",
+      detail:
+        type === ProposalType.CONFERENCE
+          ? "Please add the conference ISBN before sending the proposal."
+          : "Please add the journal ISSN before sending the proposal.",
+    };
+  }
+
+  const duplicateMessage = await venueProposalDuplicateMessage({
+    type,
+    title,
+    identifier,
+  });
+  if (duplicateMessage) {
+    return {
+      ok: false,
+      reason: "DUPLICATE_VENUE",
+      title: "Already in the list",
+      detail: duplicateMessage,
     };
   }
 
@@ -743,22 +884,62 @@ export async function submitProposal(formData: FormData) {
     };
   }
 
-  await prisma.proposal.create({
+  const proposal = await prisma.proposal.create({
     data: {
       type,
       title,
       description,
       contactInfo,
       notes,
+      identifier,
+      organization,
+      location,
+      website,
+      venueType,
       submittedById: user.id,
       ...supportFile,
     },
   });
 
+  const admins = await prisma.user.findMany({
+    where: { roles: { has: Role.ADMIN }, activeSites: { has: "research" } },
+    select: { id: true },
+  });
+
+  await notifyUsers({
+    userIds: admins.map((admin) => admin.id),
+    type: "PROPOSAL_SUBMITTED",
+    title: "New proposal submitted",
+    summary: `${user.name || user.email} submitted ${title}.`,
+    body: `${title}\n\n${description}`,
+    href: `/proposals/${proposal.id}`,
+    entityType: "proposal",
+    entityId: proposal.id,
+    excludeUserId: user.id,
+  });
+
+  await sendProposalEmail({
+    to: [user.email],
+    subject: "We received your Research Hub proposal",
+    heading: "Thank you for your proposal",
+    intro:
+      "Your proposal has been received successfully and is now waiting for admin review.",
+    detail: `Proposal: ${title}. We will notify you after the review decision is made.`,
+    actionHref: `${researchBaseUrl()}/notifications`,
+    actionLabel: "View notifications",
+  });
+
   revalidatePath("/proposals");
   revalidatePath(
-    type === ProposalType.PROJECT ? "/organized-projects" : "/projects",
+    type === ProposalType.PROJECT
+      ? "/organized-projects"
+      : type === ProposalType.CONFERENCE
+        ? "/conferences"
+        : type === ProposalType.JOURNAL
+          ? "/journals"
+          : "/projects",
   );
+  revalidatePath("/notifications");
   return { ok: true };
 }
 
@@ -771,6 +952,121 @@ export async function deleteProposal(proposalId: string) {
   });
 
   revalidatePath("/proposals");
+}
+
+export async function reviewProposal(formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const proposalId = optionalString(formData.get("proposalId"));
+  const status = enumValue(ProposalStatus, formData.get("status"));
+  const comment = optionalString(formData.get("comment"));
+  if (
+    !proposalId ||
+    (status !== ProposalStatus.ACCEPTED && status !== ProposalStatus.DECLINED)
+  ) {
+    throw new Error("Choose approve or decline before submitting the review.");
+  }
+
+  const proposal = await prisma.proposal.findUnique({
+    where: { id: proposalId },
+    include: { submittedBy: { select: { id: true, name: true, email: true } } },
+  });
+  if (!proposal) throw new Error("Proposal not found.");
+  if (
+    proposal.status === ProposalStatus.ACCEPTED ||
+    proposal.status === ProposalStatus.DECLINED
+  ) {
+    throw new Error("This proposal has already been reviewed.");
+  }
+
+  let createdHref = `/proposals/${proposal.id}`;
+  if (status === ProposalStatus.ACCEPTED) {
+    if (proposal.type === ProposalType.CONFERENCE) {
+      const duplicateMessage = await venueProposalDuplicateMessage({
+        type: proposal.type,
+        title: proposal.title,
+        identifier: proposal.identifier,
+      });
+      if (duplicateMessage) throw new Error(duplicateMessage);
+      const conference = await prisma.conference.create({
+        data: {
+          name: proposal.title,
+          type: enumValue(ConferenceType, proposal.venueType),
+          isbn: proposal.identifier,
+          organizer: proposal.organization,
+          location: proposal.location,
+          website: proposal.website,
+          note: [proposal.description, proposal.notes]
+            .filter(Boolean)
+            .join("\n\n"),
+        },
+        select: { id: true },
+      });
+      createdHref = `/conferences/${conference.id}`;
+    } else if (proposal.type === ProposalType.JOURNAL) {
+      const duplicateMessage = await venueProposalDuplicateMessage({
+        type: proposal.type,
+        title: proposal.title,
+        identifier: proposal.identifier,
+      });
+      if (duplicateMessage) throw new Error(duplicateMessage);
+      const journal = await prisma.journal.create({
+        data: {
+          name: proposal.title,
+          issn: proposal.identifier,
+          publisher: proposal.organization,
+          homepageLink: proposal.website,
+          note: [proposal.description, proposal.notes]
+            .filter(Boolean)
+            .join("\n\n"),
+        },
+        select: { id: true },
+      });
+      createdHref = `/journals/${journal.id}`;
+    }
+  }
+
+  const reviewed = await prisma.proposal.update({
+    where: { id: proposal.id },
+    data: {
+      status,
+      decisionComment: comment,
+      decidedAt: new Date(),
+      decidedById: user.id,
+    },
+  });
+
+  const accepted = status === ProposalStatus.ACCEPTED;
+  const statusLabel = accepted ? "approved" : "declined";
+  await notifyUsers({
+    userIds: [proposal.submittedById],
+    type: accepted ? "PROPOSAL_ACCEPTED" : "PROPOSAL_DECLINED",
+    title: `Proposal ${statusLabel}`,
+    summary: `Your proposal "${proposal.title}" was ${statusLabel}.`,
+    body: comment
+      ? `Admin comment:\n${comment}`
+      : "No additional admin comment was added.",
+    href: accepted ? createdHref : "/notifications",
+    entityType: "proposal",
+    entityId: reviewed.id,
+  });
+
+  await sendProposalEmail({
+    to: [proposal.submittedBy.email],
+    subject: `Your Research Hub proposal was ${statusLabel}`,
+    heading: `Proposal ${statusLabel}`,
+    intro: `Your proposal "${proposal.title}" was ${statusLabel} by the Research Hub admin team.`,
+    detail: comment ? `Admin comment: ${comment}` : undefined,
+    actionHref: `${researchBaseUrl()}${accepted ? createdHref : "/notifications"}`,
+    actionLabel: accepted ? "View item" : "View notification",
+  });
+
+  revalidatePath("/proposals");
+  revalidatePath(`/proposals/${proposal.id}`);
+  revalidatePath("/notifications");
+  revalidatePath("/conferences");
+  revalidatePath("/journals");
 }
 
 export async function createResearchProject(formData: FormData) {
