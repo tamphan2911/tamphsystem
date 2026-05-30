@@ -84,6 +84,7 @@ export function SuggestedJournalsPanel({
   suggestedConferences,
   assistants,
   isAdmin,
+  canSuggestVenue,
   disabled = false,
   productionComplete = true,
 }: {
@@ -95,6 +96,7 @@ export function SuggestedJournalsPanel({
   suggestedConferences: SuggestedConferenceOption[];
   assistants: TaskAssigneeOption[];
   isAdmin: boolean;
+  canSuggestVenue: boolean;
   disabled?: boolean;
   productionComplete?: boolean;
 }) {
@@ -291,7 +293,7 @@ export function SuggestedJournalsPanel({
             Track journal and conference targets for this research.
           </p>
         </div>
-        {isAdmin && (
+        {canSuggestVenue && (
           <button
             type="button"
             disabled={disabled}

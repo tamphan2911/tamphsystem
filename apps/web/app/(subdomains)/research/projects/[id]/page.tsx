@@ -11,7 +11,7 @@ import {
   Rocket,
   SearchCheck,
 } from "lucide-react";
-import { prisma, Role } from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { updateResearchProject } from "../../actions";
 import { SubmissionsTable, type SubmissionRow } from "./SubmissionsTable";
@@ -310,9 +310,6 @@ export default async function ProjectDetailPage({
           orderBy: { createdAt: "desc" },
         },
         tasks: {
-          where: {
-            taskType: { in: ["SUBMIT_RESEARCH", "SUBMIT_CONFERENCE"] },
-          },
           include: {
             journal: true,
             conference: true,
@@ -365,10 +362,22 @@ export default async function ProjectDetailPage({
   ]);
 
   if (!project) notFound();
+  const hasUnfinishedAssignedResearchTask = project.tasks.some(
+    (task) =>
+      task.status !== ResearchTaskStatus.COMPLETED &&
+      task.status !== ResearchTaskStatus.REVOKED &&
+      task.assignments.some((assignment) => assignment.userId === userId),
+  );
   const isProjectAuthor =
     project.leadResearcherId === userId ||
     project.authors.some((author) => author.id === userId) ||
     project.authorEntries.some((entry) => entry.userId === userId);
+  const isCorrespondingAuthor =
+    project.authorEntries.length > 0
+      ? project.authorEntries.some(
+          (entry) => entry.userId === userId && entry.isCorresponding,
+        )
+      : project.leadResearcherId === userId;
   const isRegistrationUser =
     project.registrationUserId === userId ||
     Boolean(
@@ -377,10 +386,18 @@ export default async function ProjectDetailPage({
         project.registrationName.trim().toLowerCase(),
       ),
     );
-  if (!canManageResearch && !isProjectAuthor && !isRegistrationUser) {
+  if (
+    !canManageResearch &&
+    !isProjectAuthor &&
+    !isRegistrationUser &&
+    !hasUnfinishedAssignedResearchTask
+  ) {
     notFound();
   }
   const canViewRegistrationClaim = isAdmin || isRegistrationUser;
+  const canEditResearch = isAdmin || isCorrespondingAuthor;
+  const canSuggestVenue =
+    isAdmin || isProjectAuthor || hasUnfinishedAssignedResearchTask;
 
   const updateAction = updateResearchProject.bind(null, project.id);
   const hasJournalSubmissions = project.submissions.length > 0;
@@ -768,6 +785,7 @@ export default async function ProjectDetailPage({
                 registerOptions={registerOptions}
                 claimOptions={claimOptions}
                 canEditRegistrationClaim={isAdmin}
+                disabled={!canEditResearch}
               />
             </div>
             <h1 className="mt-2 min-w-0 text-xl font-medium leading-8 tracking-tight text-slate-950 dark:text-white">
@@ -877,7 +895,10 @@ export default async function ProjectDetailPage({
         action={updateAction}
         className="grid gap-6 xl:grid-cols-[1fr_22rem]"
       >
-        <fieldset disabled={researchContentLocked} className="contents">
+        <fieldset
+          disabled={!canEditResearch || researchContentLocked}
+          className="contents"
+        >
           <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <input type="hidden" name="title" value={project.title} />
             <input
@@ -999,7 +1020,7 @@ export default async function ProjectDetailPage({
                       />
                     ) : null
                   }
-                  disabled={journalSuccessLocksResearch}
+                  disabled={!canEditResearch || journalSuccessLocksResearch}
                 />
               </div>
               <div className="grid gap-2">
@@ -1058,7 +1079,7 @@ export default async function ProjectDetailPage({
               <ProductionTimelineActions
                 projectId={project.id}
                 locked={productionTimelineLocked}
-                disabled={researchContentLocked}
+                disabled={!canEditResearch || researchContentLocked}
                 totalSteps={productionSteps.length}
               />
             </div>
@@ -1137,6 +1158,7 @@ export default async function ProjectDetailPage({
         suggestedConferences={suggestedConferenceOptions}
         assistants={taskAssigneeOptions}
         isAdmin={isAdmin}
+        canSuggestVenue={canSuggestVenue}
         disabled={researchContentLocked}
         productionComplete={productionComplete}
       />

@@ -1597,9 +1597,21 @@ export async function updateResearchProject(
       stage: true,
       completedProductionSteps: true,
       contentUnlocked: true,
+      leadResearcherId: true,
+      authors: { select: { id: true } },
+      authorEntries: { select: { userId: true, isCorresponding: true } },
       submissions: { select: { status: true } },
     },
   });
+  if (!projectLock) return;
+
+  const isCorrespondingAuthor =
+    projectLock.authorEntries.length > 0
+      ? projectLock.authorEntries.some(
+          (entry) => entry.userId === user.id && entry.isCorresponding,
+        )
+      : projectLock.leadResearcherId === user.id;
+  if (!isAdmin && !isCorrespondingAuthor) redirect("/401");
 
   const hasLockedJournalSubmission = projectLock?.submissions.some(
     (submission) =>
@@ -3238,7 +3250,9 @@ export async function addSuggestedJournal(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  if (!(await canSuggestVenueForResearch(projectId, user.id, user.roles))) {
+    redirect("/401");
+  }
 
   const journalId = optionalString(formData.get("journalId"));
   if (!journalId) return;
@@ -3273,7 +3287,9 @@ export async function addSuggestedConference(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  if (!(await canSuggestVenueForResearch(projectId, user.id, user.roles))) {
+    redirect("/401");
+  }
 
   const conferenceId = optionalString(formData.get("conferenceId"));
   if (!conferenceId) return;
@@ -3286,6 +3302,39 @@ export async function addSuggestedConference(
   });
 
   revalidatePath(`/projects/${projectId}`);
+}
+
+async function canSuggestVenueForResearch(
+  projectId: string,
+  userId: string,
+  roles: Role[],
+) {
+  if (roles.includes(Role.ADMIN)) return true;
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: {
+      leadResearcherId: true,
+      authors: { select: { id: true } },
+      authorEntries: { select: { userId: true } },
+      tasks: {
+        where: {
+          status: {
+            notIn: [ResearchTaskStatus.COMPLETED, ResearchTaskStatus.REVOKED],
+          },
+          assignments: { some: { userId } },
+        },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  });
+  if (!project) return false;
+  return (
+    project.leadResearcherId === userId ||
+    project.authors.some((author) => author.id === userId) ||
+    project.authorEntries.some((entry) => entry.userId === userId) ||
+    project.tasks.length > 0
+  );
 }
 
 export async function deleteSuggestedConference(
