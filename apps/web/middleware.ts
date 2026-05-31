@@ -5,7 +5,7 @@ import { authConfig } from "./auth.config";
 const { auth } = NextAuth(authConfig);
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|fonts|images).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|fonts|images).*)"],
 };
 
 export default auth((req) => {
@@ -15,6 +15,10 @@ export default auth((req) => {
   let currentHost = hostname
     .replace(`.tamph.com`, "")
     .replace(`.localhost:3000`, "");
+
+  if (url.pathname === "/favicon.ico" && currentHost === "research") {
+    return NextResponse.rewrite(new URL("/research-favicon.svg", req.url));
+  }
 
   // 1. Shared Global Routes (do not prefix with subdomains)
   const isAuthRoute =
