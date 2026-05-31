@@ -93,6 +93,19 @@ export default auth((req) => {
   }
 
   if (currentHost === "research") {
+    const isPublicConstructionRoute =
+      url.pathname === "/portfolio" || url.pathname === "/learn";
+    if (isPublicConstructionRoute) {
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set("x-site-pathname", url.pathname);
+      return NextResponse.rewrite(
+        new URL(`/research${url.pathname}`, req.url),
+        {
+          request: { headers: requestHeaders },
+        },
+      );
+    }
+
     if (!isLoggedIn) {
       return NextResponse.redirect(
         new URL(

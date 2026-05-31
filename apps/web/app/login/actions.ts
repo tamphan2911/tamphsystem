@@ -75,8 +75,10 @@ export async function loginUser(formData: FormData) {
   const origin = originFromHeaders(requestHeaders, host);
   const callbackPath = safeRedirectPath(formData.get("callbackUrl"));
   const isResearch = isResearchHost(host);
-  const redirectPath = isResearch ? "/projects" : callbackPath;
-  const redirectTo = isResearch && origin ? `${origin}/projects` : redirectPath;
+  const redirectPath =
+    isResearch && callbackPath === "/" ? "/projects" : callbackPath;
+  const redirectTo =
+    isResearch && origin ? `${origin}${redirectPath}` : redirectPath;
 
   if (!email || !password) {
     redirect(
