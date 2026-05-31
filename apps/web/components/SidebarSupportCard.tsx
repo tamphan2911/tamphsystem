@@ -15,7 +15,7 @@ export function SidebarSupportCard({
       <div
         aria-label="Contact support"
         title="Contact support"
-        className="mx-3 mb-4 flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition hover:bg-white hover:text-slate-950 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+        className="mx-3 mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:text-emerald-700 hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-emerald-400/30 dark:hover:bg-slate-800 dark:hover:text-emerald-200"
       >
         <LifeBuoy className="h-5 w-5" />
       </div>
@@ -28,7 +28,7 @@ export function SidebarSupportCard({
       className="group m-4 cursor-pointer [perspective:900px]"
     >
       <div
-        className={`relative min-h-40 rounded-lg border border-slate-200 bg-slate-50 transition duration-[560ms] ease-out [transform-style:preserve-3d] group-hover:-translate-y-0.5 group-hover:shadow-md dark:border-slate-700 dark:bg-slate-800/70 ${
+        className={`relative min-h-40 rounded-xl border border-slate-200 bg-slate-50/90 shadow-sm transition duration-300 ease-out [transform-style:preserve-3d] group-hover:-translate-y-0.5 group-hover:border-emerald-200 group-hover:bg-white group-hover:shadow-md motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 dark:border-slate-700 dark:bg-slate-900/80 dark:group-hover:border-emerald-400/25 dark:group-hover:bg-slate-900 ${
           flipped ? "[transform:rotateY(180deg)]" : ""
         }`}
       >
@@ -42,7 +42,7 @@ export function SidebarSupportCard({
           </p>
         </div>
 
-        <div className="absolute inset-0 flex flex-col justify-center rounded-lg bg-white/80 p-4 [backface-visibility:hidden] [transform:rotateY(180deg)] dark:bg-slate-900/80">
+        <div className="absolute inset-0 flex flex-col justify-center rounded-xl bg-white/90 p-4 [backface-visibility:hidden] [transform:rotateY(180deg)] dark:bg-slate-950/90">
           <p className="text-sm font-bold text-slate-950 dark:text-white">
             Alright, you found me
           </p>

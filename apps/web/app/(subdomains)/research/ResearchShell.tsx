@@ -195,15 +195,15 @@ export function ResearchShell({
     <ResearchToastProvider>
       <div className="research-site-root min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
         <aside
-          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-slate-200 bg-white transition-[width] duration-300 ease-out lg:flex lg:flex-col dark:border-slate-700 dark:bg-slate-900 ${
+          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-slate-200/80 bg-white/95 shadow-[8px_0_30px_rgba(15,23,42,0.04)] backdrop-blur-xl transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none dark:border-slate-800 dark:bg-slate-950/95 dark:shadow-black/20 ${
             collapsed ? "w-20" : "w-72"
           }`}
         >
           <div
-            className={`flex h-20 items-center border-b border-slate-200 px-4 transition-all duration-300 dark:border-slate-800 ${collapsed ? "justify-center" : "gap-3"}`}
+            className={`flex h-20 items-center border-b border-slate-200/80 px-4 transition-all duration-300 motion-reduce:transition-none dark:border-slate-800 ${collapsed ? "justify-center" : "gap-3"}`}
           >
             <div
-              className={`flex h-11 w-11 flex-none items-center justify-center transition-all duration-300 ${
+              className={`flex h-11 w-11 flex-none items-center justify-center transition-all duration-300 motion-reduce:transition-none ${
                 collapsed ? "w-0 scale-75 opacity-0" : "opacity-100"
               }`}
             >
@@ -212,15 +212,15 @@ export function ResearchShell({
                 alt=""
                 width={40}
                 height={40}
-                className="h-10 w-10 rounded-full object-cover shadow-sm"
+                className="h-10 w-10 rounded-full object-cover shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-700"
               />
             </div>
             <div
-              className={`min-w-0 overflow-hidden transition-all duration-300 ${collapsed ? "w-0 opacity-0" : "w-44 opacity-100"}`}
+              className={`min-w-0 overflow-hidden transition-all duration-300 motion-reduce:transition-none ${collapsed ? "w-0 opacity-0" : "w-44 opacity-100"}`}
             >
               <Link
                 href="/"
-                className="block truncate text-lg font-bold text-slate-950 transition hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 dark:text-white dark:hover:text-emerald-200"
+                className="block truncate text-lg font-black text-slate-950 transition hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 dark:text-white dark:hover:text-emerald-200"
               >
                 Research Hub
               </Link>
@@ -231,7 +231,7 @@ export function ResearchShell({
             <button
               type="button"
               onClick={() => setCollapsed((value) => !value)}
-              className={`flex h-8 w-8 flex-none items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:shadow-none dark:hover:border-emerald-400/30 dark:hover:bg-slate-700 dark:hover:text-emerald-100 ${
+              className={`flex h-8 w-8 flex-none items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:text-slate-950 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:shadow-none dark:hover:border-emerald-400/30 dark:hover:bg-slate-800 dark:hover:text-emerald-100 ${
                 collapsed ? "absolute right-2 top-6" : "ml-auto"
               }`}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -246,7 +246,7 @@ export function ResearchShell({
           </div>
 
           <nav
-            className={`flex-1 space-y-1 transition-all duration-300 ${collapsed ? "overflow-visible p-3" : "overflow-y-auto p-4"}`}
+            className={`flex-1 space-y-1.5 transition-all duration-300 motion-reduce:transition-none ${collapsed ? "overflow-visible p-3" : "overflow-y-auto p-3.5"}`}
           >
             {visibleNavItems.map((item) => (
               <ActiveNavLink
@@ -299,7 +299,7 @@ export function ResearchShell({
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 hover:shadow-sm dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-emerald-100"
+                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 hover:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-emerald-100"
                     >
                       <item.icon className="h-3.5 w-3.5" />
                       {item.label}

@@ -51,42 +51,60 @@ export function ActiveNavLink({
   const isActive =
     pathname === href || (href !== "/" && pathname.startsWith(href));
   const Icon = icons[icon];
+  const baseClass =
+    "group/navlink relative flex items-center gap-3 overflow-visible rounded-xl px-3 py-2.5 text-sm font-semibold outline-none transition-[background-color,color,box-shadow,transform,border-color] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-emerald-300/70 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
+  const stateClass = isActive
+    ? "border border-emerald-200/70 bg-emerald-50 text-emerald-800 shadow-sm shadow-emerald-900/5 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-100 dark:shadow-black/20"
+    : adminOnly
+      ? "border border-violet-100/80 bg-violet-50/70 text-violet-800 shadow-sm shadow-violet-900/[0.03] hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-100/80 hover:text-violet-950 hover:shadow-md dark:border-violet-700/35 dark:bg-violet-950/25 dark:text-violet-200 dark:shadow-black/10 dark:hover:border-violet-500/45 dark:hover:bg-violet-900/35 dark:hover:text-violet-100"
+      : "border border-transparent text-slate-700 hover:-translate-y-0.5 hover:border-slate-200 hover:bg-slate-100/80 hover:text-slate-950 hover:shadow-sm dark:text-slate-200 dark:hover:border-slate-700 dark:hover:bg-slate-800/75 dark:hover:text-white";
+  const iconClass = isActive
+    ? "text-emerald-600 dark:text-emerald-200"
+    : adminOnly
+      ? "text-violet-500 dark:text-violet-300"
+      : "text-slate-400 transition-colors group-hover/navlink:text-slate-600 dark:text-slate-400 dark:group-hover/navlink:text-slate-200";
 
   return (
     <Link
       href={href}
       aria-label={collapsed ? label : undefined}
-      className={`group/navlink relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
+      className={`${baseClass} ${stateClass} ${
         collapsed ? "justify-center" : ""
-      } ${
-        isActive
-          ? "bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-200 dark:ring-emerald-400/20"
-          : adminOnly
-            ? "bg-violet-50/70 text-violet-800 ring-1 ring-violet-100 hover:bg-violet-100/80 hover:text-violet-950 dark:bg-violet-950/25 dark:text-violet-200 dark:ring-violet-800/50 dark:hover:bg-violet-900/35 dark:hover:text-violet-100"
-            : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-800/80 dark:hover:text-emerald-100"
       }`}
     >
       <span
-        className={`absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full transition ${isActive ? "bg-emerald-600 opacity-100 dark:bg-emerald-300" : "opacity-0"}`}
-      />
-      <Icon
-        className={`h-5 w-5 ${
+        className={`absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full transition-[height,opacity,background-color] duration-200 ease-out ${
           isActive
-            ? "text-emerald-600 dark:text-emerald-200"
+            ? "bg-emerald-600 opacity-100 dark:bg-emerald-300"
             : adminOnly
-              ? "text-violet-500 dark:text-violet-300"
-              : "text-slate-400 dark:text-slate-300"
+              ? "bg-violet-400/70 opacity-70 group-hover/navlink:h-7 dark:bg-violet-300/60"
+              : "opacity-0"
         }`}
       />
+      <Icon className={`h-5 w-5 flex-none ${iconClass}`} />
       {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+      {!collapsed && adminOnly && !isActive && (
+        <span className="rounded-full bg-white/70 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-violet-500 ring-1 ring-violet-100 dark:bg-violet-950/50 dark:text-violet-200 dark:ring-violet-700/40">
+          Admin
+        </span>
+      )}
       {badgeCount > 0 && (
-        <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-black leading-none text-white ring-2 ring-white dark:ring-slate-900">
+        <span
+          className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-black leading-none text-white ring-2 ring-white dark:ring-slate-900 ${
+            collapsed ? "absolute -right-1 -top-1" : "ml-auto"
+          }`}
+        >
           {badgeCount > 99 ? "99+" : badgeCount}
         </span>
       )}
       {collapsed && (
-        <span className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-50 -translate-y-1/2 -translate-x-1 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 opacity-0 shadow-xl shadow-slate-900/10 ring-1 ring-slate-900/[0.03] transition duration-200 ease-out group-hover/navlink:translate-x-0 group-hover/navlink:opacity-100 group-focus-visible/navlink:translate-x-0 group-focus-visible/navlink:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:shadow-black/30 dark:ring-white/[0.04]">
+        <span className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-50 -translate-y-1/2 -translate-x-1 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 opacity-0 shadow-xl shadow-slate-900/10 ring-1 ring-slate-900/[0.03] transition duration-200 ease-out group-hover/navlink:translate-x-0 group-hover/navlink:opacity-100 group-focus-visible/navlink:translate-x-0 group-focus-visible/navlink:opacity-100 motion-reduce:transition-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:shadow-black/30 dark:ring-white/[0.04]">
           {label}
+          {adminOnly && (
+            <span className="ml-2 rounded-full bg-violet-50 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-violet-600 ring-1 ring-violet-100 dark:bg-violet-950 dark:text-violet-200 dark:ring-violet-700/50">
+              Admin
+            </span>
+          )}
           {badgeCount > 0 && (
             <span className="ml-2 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-black text-white">
               {badgeCount > 99 ? "99+" : badgeCount}
