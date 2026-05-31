@@ -85,6 +85,29 @@ const adminLinks = [
 
 const sidebarStateKey = "research-sidebar-collapsed";
 
+function closeResearchModal(overlay: HTMLElement) {
+  const closeButton = overlay.querySelector<HTMLButtonElement>(
+    'button[aria-label="Close"], button[aria-label="Close modal"]',
+  );
+  if (closeButton) {
+    closeButton.click();
+    return;
+  }
+
+  const cancelButton = Array.from(
+    overlay.querySelectorAll<HTMLButtonElement>("button"),
+  ).find((button) => button.textContent?.trim().toLowerCase() === "cancel");
+  cancelButton?.click();
+}
+
+function isResearchModalOverlay(element: HTMLElement) {
+  return (
+    element.classList.contains("fixed") &&
+    element.classList.contains("inset-0") &&
+    element.className.includes("bg-slate-950")
+  );
+}
+
 export function ResearchShell({
   children,
   email,
@@ -112,6 +135,44 @@ export function ResearchShell({
   useEffect(() => {
     window.localStorage.setItem(sidebarStateKey, String(collapsed));
   }, [collapsed]);
+
+  useEffect(() => {
+    function visibleModalOverlays() {
+      return Array.from(
+        document.querySelectorAll<HTMLElement>(".fixed.inset-0"),
+      )
+        .filter(isResearchModalOverlay)
+        .sort((a, b) => {
+          const zA =
+            Number.parseInt(window.getComputedStyle(a).zIndex, 10) || 0;
+          const zB =
+            Number.parseInt(window.getComputedStyle(b).zIndex, 10) || 0;
+          return zB - zA;
+        });
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      const overlay = visibleModalOverlays()[0];
+      if (!overlay) return;
+      closeResearchModal(overlay);
+    }
+
+    function closeOnBackdrop(event: MouseEvent) {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (!isResearchModalOverlay(target)) return;
+      closeResearchModal(target);
+    }
+
+    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("mousedown", closeOnBackdrop);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("mousedown", closeOnBackdrop);
+    };
+  }, []);
+
   const visibleNavItems = navItems.filter((item) => {
     if ("adminOnly" in item && item.adminOnly) return isAdmin;
     if ("requiresTaskAccess" in item && item.requiresTaskAccess)
@@ -125,7 +186,7 @@ export function ResearchShell({
 
   return (
     <ResearchToastProvider>
-      <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+      <div className="research-site-root min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
         <aside
           className={`fixed inset-y-0 left-0 z-40 hidden border-r border-slate-200 bg-white transition-[width] duration-300 ease-out lg:flex lg:flex-col dark:border-slate-700 dark:bg-slate-900 ${
             collapsed ? "w-20" : "w-72"

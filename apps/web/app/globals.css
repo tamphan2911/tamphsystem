@@ -4,19 +4,36 @@
 
 @theme {
   --color-primary: #3b82f6; /* Tailwind Blue 500 */
-  
+
   --animate-blink: blink 1s step-end infinite;
   @keyframes blink {
-    0%, 100% { border-color: transparent; }
-    50% { border-color: inherit; }
+    0%,
+    100% {
+      border-color: transparent;
+    }
+    50% {
+      border-color: inherit;
+    }
   }
 }
 
 /* Base styles to ensure everything looks premium and modern */
-html, body {
+html,
+body {
   background-color: #f8fafc; /* Slate 50 */
   color: #0f172a; /* Slate 900 */
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    "Open Sans",
+    "Helvetica Neue",
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -65,7 +82,8 @@ select {
 button,
 a[href],
 [role="button"] {
-  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-property:
+    color, background-color, border-color, box-shadow, opacity, transform;
   transition-duration: 180ms;
   transition-timing-function: ease;
 }
@@ -77,4 +95,19 @@ select:focus-visible,
 textarea:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
+}
+
+.research-site-root
+  .fixed.inset-0
+  [class*="modalPanelIn_"][class*="overflow-hidden"] {
+  overflow: visible;
+}
+
+.research-site-root .fixed.inset-0 .absolute.top-full {
+  z-index: 130;
+}
+
+.research-site-root .fixed.inset-0 [class*="shadow-2xl"].absolute,
+.research-site-root .fixed.inset-0 [class*="shadow-xl"].absolute {
+  z-index: 130;
 }
