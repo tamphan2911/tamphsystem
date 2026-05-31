@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   ArrowRight,
   Atom,
@@ -150,13 +149,13 @@ export default function ResearchWelcomePage() {
           make the research galaxy behave.
         </p>
 
-        <Link
+        <a
           href="/projects"
           className="group mt-9 inline-flex h-12 items-center justify-center gap-3 rounded-full border border-cyan-200/45 bg-white/10 px-6 text-sm font-black text-cyan-50 shadow-2xl shadow-cyan-950/30 ring-1 ring-white/10 backdrop-blur transition hover:-translate-y-0.5 hover:border-cyan-100/70 hover:bg-cyan-100 hover:text-slate-950 hover:shadow-cyan-500/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300/30"
         >
           Blast into the research zone
           <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-        </Link>
+        </a>
       </section>
     </main>
   );
