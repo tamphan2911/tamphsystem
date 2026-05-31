@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { createResearchProject } from "../actions";
 import { ResearchFormSelect } from "../components/ResearchFormSelect";
+import { ResearchModal } from "../components/ResearchModal";
 import {
   FundingInstitutionPicker,
   type FundingInstitutionOption,
@@ -242,32 +243,18 @@ export function NewResearchDialog({
         New Research
       </button>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="w-full max-w-4xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
-              <div>
-                <h2 className="text-lg font-bold text-slate-950 dark:text-white">
-                  Add New Research
-                </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  Create a research record and place it in the pipeline.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={closeDialog}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      <ResearchModal
+        open={isOpen}
+        onClose={closeDialog}
+        title="Add New Research"
+        description="Create a research record and place it in the pipeline."
+        icon={<PlusCircle className="h-5 w-5" />}
+      >
 
             <form
               action={createResearchProject}
               onSubmit={handleSubmit}
-              className="grid max-h-[calc(90vh-6rem)] gap-5 overflow-y-auto px-6 py-5"
+              className="grid gap-5"
             >
               {warning && (
                 <div
@@ -376,9 +363,7 @@ export function NewResearchDialog({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </ResearchModal>
     </>
   );
 }

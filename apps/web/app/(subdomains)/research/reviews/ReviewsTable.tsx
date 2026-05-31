@@ -21,6 +21,7 @@ import {
   useTablePagination,
 } from "../components/TableControls";
 import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
+import { ResearchEmptyState } from "../components/ResearchState";
 import { useResearchToast } from "../components/ResearchToast";
 
 export type ReviewRow = {
@@ -330,9 +331,12 @@ export function ReviewsTable({
               <tr>
                 <td
                   colSpan={isAdmin ? 7 : 6}
-                  className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
+                  className="px-4 py-2"
                 >
-                  No academic reviews match the current filters.
+                  <ResearchEmptyState
+                    title="No academic reviews match the current filters."
+                    detail="Try another manuscript, journal, status, or date filter."
+                  />
                 </td>
               </tr>
             )}

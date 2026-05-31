@@ -29,6 +29,7 @@ import {
   useTablePagination,
 } from "../components/TableControls";
 import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
+import { ResearchEmptyState } from "../components/ResearchState";
 import { useResearchToast } from "../components/ResearchToast";
 
 export type ResearchProjectRow = {
@@ -488,11 +489,20 @@ export function ResearchProjectsTable({
                     (showRegistrationClaim ? 6 : 4) +
                     (isAdmin && deleteAction ? 1 : 0)
                   }
-                  className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
+                  className="px-4 py-2"
                 >
-                  {rows.length === 0
-                    ? emptyMessage
-                    : "No research matches the current search."}
+                  <ResearchEmptyState
+                    title={
+                      rows.length === 0
+                        ? emptyMessage
+                        : "No research matches the current search."
+                    }
+                    detail={
+                      rows.length === 0
+                        ? "Create a new research record or adjust access filters when relevant."
+                        : "Try another keyword, stage, or claim filter."
+                    }
+                  />
                 </td>
               </tr>
             )}

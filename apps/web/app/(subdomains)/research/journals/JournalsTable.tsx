@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BadgeCheck, Send, Star, Trash2 } from "lucide-react";
 import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
+import { ResearchEmptyState } from "../components/ResearchState";
 import {
   FilterSelect,
   IconHint,
@@ -357,9 +358,12 @@ export function JournalsTable({
               <tr>
                 <td
                   colSpan={isAdmin ? 9 : 8}
-                  className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
+                  className="px-4 py-2"
                 >
-                  No journals match the current search.
+                  <ResearchEmptyState
+                    title="No journals match the current search."
+                    detail="Try another journal name, ISSN, publisher, field, or country."
+                  />
                 </td>
               </tr>
             )}

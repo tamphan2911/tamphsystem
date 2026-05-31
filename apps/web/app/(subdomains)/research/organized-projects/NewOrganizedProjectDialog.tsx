@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { AlertTriangle, Building2, PlusCircle, X } from "lucide-react";
+import { AlertTriangle, Building2, PlusCircle } from "lucide-react";
 import { createOrganizedProject } from "../actions";
+import { ResearchModal } from "../components/ResearchModal";
 import { ResearchFormSelect } from "../components/ResearchFormSelect";
 import { currencyOptions } from "../lib/currency";
 import type { AuthorOption } from "../projects/[id]/AuthorsPicker";
@@ -94,37 +95,19 @@ export function NewOrganizedProjectDialog({
         Add Project
       </button>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-6xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300">
-                  <Building2 className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-slate-950 dark:text-white">
-                    Add Project
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Track an institutional project and connect research outputs.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={closeDialog}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      <ResearchModal
+        open={isOpen}
+        onClose={closeDialog}
+        title="Add Project"
+        description="Track an institutional project and connect research outputs."
+        icon={<Building2 className="h-5 w-5" />}
+        maxWidth="max-w-6xl"
+      >
 
             <form
               action={createOrganizedProject}
               onSubmit={handleSubmit}
-              className="max-h-[calc(90vh-5rem)] overflow-y-auto px-6 py-5"
+              className="grid gap-5"
             >
               <div className="grid gap-5">
                 {warning && (
@@ -302,9 +285,7 @@ export function NewOrganizedProjectDialog({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </ResearchModal>
     </>
   );
 }

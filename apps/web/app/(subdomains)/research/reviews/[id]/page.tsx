@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
+import { ResearchDetailSection } from "../../components/ResearchDetailSection";
 import { formatMoney } from "../../lib/currency";
 import { countryFlag, countryName } from "../../lib/countries";
 
@@ -209,10 +210,7 @@ export default async function ReviewDetailPage({
         </div>
       </header>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-          Review information
-        </h2>
+      <ResearchDetailSection title="Review information">
         <dl className="mt-4 grid gap-4 md:grid-cols-3">
           <DetailItem label="Status" value={statusLabel(review.status)} />
           <DetailItem
@@ -230,7 +228,7 @@ export default async function ReviewDetailPage({
             value={review.recommendation || "-"}
           />
         </dl>
-      </section>
+      </ResearchDetailSection>
 
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
@@ -314,12 +312,9 @@ export default async function ReviewDetailPage({
         </div>
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <ResearchDetailSection title="Journal">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-              Journal
-            </h2>
             <Link
               href={`/journals/${review.journal.id}`}
               className="mt-3 inline-flex text-base font-semibold text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
@@ -384,12 +379,9 @@ export default async function ReviewDetailPage({
           />
           <DetailItem label="Reviews" value={review.journal._count.reviews} />
         </dl>
-      </section>
+      </ResearchDetailSection>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-          Notes
-        </h2>
+      <ResearchDetailSection title="Notes">
         <div className="mt-4 space-y-4">
           <div>
             <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
@@ -411,7 +403,7 @@ export default async function ReviewDetailPage({
             </div>
           )}
         </div>
-      </section>
+      </ResearchDetailSection>
     </div>
   );
 }

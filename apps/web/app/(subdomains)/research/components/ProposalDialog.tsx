@@ -10,9 +10,9 @@ import {
   MapPin,
   Rocket,
   Send,
-  X,
 } from "lucide-react";
 import { submitProposal } from "../actions";
+import { ResearchModal } from "./ResearchModal";
 import { useResearchToast } from "./ResearchToast";
 
 type ProposalKind = "RESEARCH" | "PROJECT" | "CONFERENCE" | "JOURNAL";
@@ -85,14 +85,6 @@ export function ProposalDialog({
       : isJournal
         ? BookOpen
         : Lightbulb;
-  const iconClass = isProject
-    ? "bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-200"
-    : isConference
-      ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200"
-      : isJournal
-        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200"
-        : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200";
-
   const openDialog = () => {
     if (!isLoggedIn) {
       toast.showError({
@@ -124,38 +116,17 @@ export function ProposalDialog({
         {buttonLabel}
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-3xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
-              <div className="flex items-start gap-3">
-                <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconClass}`}
-                >
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-slate-950 dark:text-white">
-                    Send {typeLabel} proposal
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Share the details, support file, and best contact channel.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form
-              ref={formRef}
-              onSubmit={(event) => {
+      <ResearchModal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={`Send ${typeLabel} proposal`}
+        description="Share the details, support file, and best contact channel."
+        icon={<Icon className="h-5 w-5" />}
+        maxWidth="max-w-3xl"
+      >
+        <form
+          ref={formRef}
+          onSubmit={(event) => {
                 event.preventDefault();
                 if (uploadDisabled) return;
                 setWarning("");
@@ -207,9 +178,9 @@ export function ProposalDialog({
                     setIsSubmitting(false);
                   }
                 });
-              }}
-              className="max-h-[calc(90vh-6rem)] overflow-y-auto px-6 py-5"
-            >
+          }}
+          className="grid gap-4"
+        >
               {warning && (
                 <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200">
                   {warning}
@@ -342,10 +313,8 @@ export function ProposalDialog({
                   {uploadDisabled ? "Uploading..." : "Send proposal"}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+        </form>
+      </ResearchModal>
     </>
   );
 }

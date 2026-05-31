@@ -11,6 +11,10 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+import {
+  ResearchSearchPicker,
+  type ResearchSearchPickerOption,
+} from "../components/ResearchSearchPicker";
 import type { AuthorOption } from "../projects/[id]/AuthorsPicker";
 
 export type FundingInstitutionOption = {
@@ -49,7 +53,6 @@ export function FundingInstitutionPicker({
     defaultInstitution ?? null,
   );
   const [query, setQuery] = useState("");
-  const [focused, setFocused] = useState(false);
 
   const results = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -71,94 +74,91 @@ export function FundingInstitutionPicker({
       .slice(0, 8);
   }, [institutions, query, selected?.id]);
 
+  const options = useMemo<
+    ResearchSearchPickerOption<FundingInstitutionOption>[]
+  >(
+    () =>
+      results.map((institution) => ({
+        id: institution.id,
+        label: institution.name,
+        description: [institution.shortName, institution.country]
+          .filter(Boolean)
+          .join(" - "),
+        data: institution,
+      })),
+    [results],
+  );
+
   function chooseInstitution(institution: FundingInstitutionOption) {
     setSelected(institution);
     setQuery("");
-    setFocused(false);
   }
 
   return (
-    <div className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-      Funder
-      <input type="hidden" name="fundingInstitutionId" value={selected?.id ?? ""} />
-      <div className="min-h-12 rounded-lg border border-slate-200 bg-slate-50 p-1 transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950">
-        {selected ? (
-          <div className="flex min-h-10 items-center gap-2 rounded-md bg-white px-2.5 shadow-sm shadow-slate-900/[0.02] dark:bg-slate-900">
+    <ResearchSearchPicker
+      label="Funder"
+      name="fundingInstitutionId"
+      selected={
+        selected
+          ? {
+              id: selected.id,
+              label: selected.name,
+              description: [selected.shortName, selected.country]
+                .filter(Boolean)
+                .join(" - "),
+              data: selected,
+            }
+          : null
+      }
+      query={query}
+      onQueryChange={(value) => setQuery(value)}
+      onSelect={(option) =>
+        chooseInstitution(option.data as FundingInstitutionOption)
+      }
+      onClear={() => {
+        setSelected(null);
+        setQuery("");
+      }}
+      options={options}
+      placeholder="Search funding institution..."
+      emptyText="No funding institution matches this search."
+      disabled={disabled}
+      renderSelected={(option) => {
+        const institution = option.data as FundingInstitutionOption;
+        return (
+          <>
             <span className="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-200 dark:ring-emerald-900">
               <GraduationCap className="h-4 w-4" aria-hidden="true" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
-                {selected.name}
+                {institution.name}
               </span>
               <span className="block truncate text-xs font-medium text-slate-400 dark:text-slate-500">
-                {[selected.shortName, selected.country].filter(Boolean).join(" - ")}
+                {[institution.shortName, institution.country]
+                  .filter(Boolean)
+                  .join(" - ")}
               </span>
             </span>
-            <button
-              type="button"
-              onClick={() => setSelected(null)}
-              disabled={disabled}
-              className="rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
-              aria-label="Remove funding institution"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
-          </div>
-        ) : (
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-              aria-hidden="true"
-            />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              onFocus={() => setFocused(true)}
-              onBlur={() => window.setTimeout(() => setFocused(false), 120)}
-              disabled={disabled}
-              placeholder="Search funding institution..."
-              className="h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:disabled:bg-slate-900 dark:disabled:text-slate-400"
-            />
-
-            {focused && query.trim().length > 0 && (
-              <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-blue-100 bg-white p-2 shadow-2xl shadow-slate-900/15 ring-1 ring-blue-50 dark:border-blue-900/60 dark:bg-slate-950 dark:shadow-black/35 dark:ring-blue-950/50">
-                {results.length > 0 ? (
-                  results.map((institution) => (
-                    <button
-                      key={institution.id}
-                      type="button"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => chooseInstitution(institution)}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-blue-50 dark:hover:bg-blue-950/40"
-                    >
-                      <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-900">
-                        <GraduationCap className="h-4 w-4" aria-hidden="true" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
-                          {institution.name}
-                        </span>
-                        <span className="block truncate text-xs font-medium text-slate-400 dark:text-slate-500">
-                          {[institution.shortName, institution.country]
-                            .filter(Boolean)
-                            .join(" - ")}
-                        </span>
-                      </span>
-                      <Check className="h-4 w-4 flex-none text-blue-500" />
-                    </button>
-                  ))
-                ) : (
-                  <div className="px-3 py-6 text-center text-sm font-medium text-slate-400">
-                    No funding institution matches this search.
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+          </>
+        );
+      }}
+      renderOption={(option) => (
+        <>
+          <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-900">
+            <GraduationCap className="h-4 w-4" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-bold">
+              {option.label}
+            </span>
+            <span className="block truncate text-xs font-medium opacity-70">
+              {option.description}
+            </span>
+          </span>
+        </>
+      )}
+    />
   );
 }
 

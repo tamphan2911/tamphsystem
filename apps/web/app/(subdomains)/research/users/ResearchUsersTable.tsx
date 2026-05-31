@@ -19,6 +19,7 @@ import {
   TableSearchInput,
   useTablePagination,
 } from "../components/TableControls";
+import { ResearchEmptyState } from "../components/ResearchState";
 import { useResearchToast } from "../components/ResearchToast";
 
 export type ResearchUserRow = {
@@ -271,9 +272,12 @@ export function ResearchUsersTable({
               <tr>
                 <td
                   colSpan={7}
-                  className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
+                  className="px-4 py-2"
                 >
-                  No research users match the current filters.
+                  <ResearchEmptyState
+                    title="No research users match the current filters."
+                    detail="Try another name, email, role, or activation filter."
+                  />
                 </td>
               </tr>
             )}

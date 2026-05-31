@@ -22,6 +22,7 @@ import {
   useTablePagination,
 } from "../components/TableControls";
 import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
+import { ResearchEmptyState } from "../components/ResearchState";
 import { useResearchToast } from "../components/ResearchToast";
 
 export type ProposalRow = {
@@ -367,9 +368,12 @@ export function ProposalsTable({
               <tr>
                 <td
                   colSpan={isAdmin ? 8 : 7}
-                  className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
+                  className="px-4 py-2"
                 >
-                  No proposals match the current search.
+                  <ResearchEmptyState
+                    title="No proposals match the current search."
+                    detail="Try another proposal title, ID, type, status, or contact keyword."
+                  />
                 </td>
               </tr>
             )}

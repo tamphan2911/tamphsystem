@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CalendarPlus, Loader2, Pencil, Save, X } from "lucide-react";
+import { CalendarPlus, Loader2, Pencil, Save } from "lucide-react";
 import { ResearchFormSelect } from "../components/ResearchFormSelect";
+import { ResearchModal } from "../components/ResearchModal";
 import { useResearchToast } from "../components/ResearchToast";
 import { currencyOptions } from "../lib/currency";
 
@@ -74,40 +75,23 @@ export function ConferenceDialog({
         )}
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-5xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-200">
-                  {isEdit ? (
-                    <Pencil className="h-5 w-5" />
-                  ) : (
-                    <CalendarPlus className="h-5 w-5" />
-                  )}
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-slate-950 dark:text-white">
-                    {isEdit ? "Edit conference" : "Add conference"}
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Track conference schedule, ISBN, submission fee, deadlines,
-                    and submission notes.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setWarning("");
-                  setOpen(false);
-                }}
-                className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      <ResearchModal
+        open={open}
+        onClose={() => {
+          setWarning("");
+          setOpen(false);
+        }}
+        title={isEdit ? "Edit conference" : "Add conference"}
+        description="Track conference schedule, ISBN, submission fee, deadlines, and submission notes."
+        icon={
+          isEdit ? (
+            <Pencil className="h-5 w-5" />
+          ) : (
+            <CalendarPlus className="h-5 w-5" />
+          )
+        }
+        maxWidth="max-w-5xl"
+      >
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -137,7 +121,7 @@ export function ConferenceDialog({
                   });
                 });
               }}
-              className="max-h-[calc(90vh-6rem)] overflow-y-auto px-6 py-5"
+              className="grid gap-4"
             >
               <div className="grid gap-4">
                 {warning && (
@@ -314,9 +298,7 @@ export function ConferenceDialog({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </ResearchModal>
     </>
   );
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { KeyRound, Send, Trash2 } from "lucide-react";
 import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
+import { ResearchEmptyState } from "../components/ResearchState";
 import { FilterSelect, IconHint, TablePagination, TableSearchInput, useTablePagination } from "../components/TableControls";
 import { useResearchToast } from "../components/ResearchToast";
 
@@ -225,8 +226,11 @@ export function AccountsTable({
             ))}
             {pagination.total === 0 && (
               <tr>
-                <td colSpan={isAdmin ? 8 : 7} className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
-                  No accounts match the current search.
+                <td colSpan={isAdmin ? 8 : 7} className="px-4 py-2">
+                  <ResearchEmptyState
+                    title="No accounts match the current search."
+                    detail="Try another login ID, email, or journal keyword."
+                  />
                 </td>
               </tr>
             )}

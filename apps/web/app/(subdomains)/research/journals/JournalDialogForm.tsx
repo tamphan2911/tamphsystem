@@ -15,6 +15,11 @@ import { currencyOptions } from "../lib/currency";
 import { countryFlag, countryOptions } from "../lib/countries";
 import { useResearchToast } from "../components/ResearchToast";
 import { ResearchFormSelect } from "../components/ResearchFormSelect";
+import { ResearchModal } from "../components/ResearchModal";
+import {
+  ResearchSearchPicker,
+  type ResearchSearchPickerOption,
+} from "../components/ResearchSearchPicker";
 
 export type JournalFormValues = {
   name?: string;
@@ -76,7 +81,6 @@ function CountryPicker({
   onChange: (value: string) => void;
 }) {
   const [query, setQuery] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
   const selectedCountry = countryOptions.find(
     (country) => country.code === value,
   );
@@ -91,78 +95,69 @@ function CountryPicker({
       )
       .slice(0, 8);
   }, [query]);
+  const options = useMemo<ResearchSearchPickerOption<(typeof countryOptions)[number]>[]>(
+    () =>
+      filteredCountries.map((country) => ({
+        id: country.code,
+        label: country.name,
+        description: country.code,
+        data: country,
+      })),
+    [filteredCountries],
+  );
 
   return (
-    <div className={`${labelClass} relative`}>
-      Country
-      <input type="hidden" name="country" value={value} />
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950">
-        {selectedCountry ? (
-          <div className="flex min-h-8 items-center gap-2">
-            <span className="text-base" aria-hidden="true">
-              {countryFlag(selectedCountry.code)}
-            </span>
-            <span className="min-w-0 flex-1 truncate text-sm font-semibold normal-case tracking-normal text-slate-800 dark:text-slate-100">
-              {selectedCountry.name}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                onChange("");
-                setQuery("");
-                setIsOpen(true);
-              }}
-              className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-              aria-label="Clear country"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        ) : (
-          <span className="flex min-h-8 items-center gap-2">
-            <Search className="h-4 w-4 text-slate-400" />
-            <input
-              value={query}
-              onFocus={() => setIsOpen(true)}
-              onBlur={() => window.setTimeout(() => setIsOpen(false), 120)}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search country"
-              className="min-w-0 flex-1 bg-transparent text-sm font-medium normal-case tracking-normal text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100"
-            />
+    <ResearchSearchPicker
+      label="Country"
+      name="country"
+      selected={
+        selectedCountry
+          ? {
+              id: selectedCountry.code,
+              label: selectedCountry.name,
+              description: selectedCountry.code,
+              data: selectedCountry,
+            }
+          : null
+      }
+      query={query}
+      onQueryChange={(nextQuery) => {
+        setQuery(nextQuery);
+        onChange("");
+      }}
+      onSelect={(option) => {
+        onChange(option.id);
+        setQuery("");
+      }}
+      onClear={() => {
+        onChange("");
+        setQuery("");
+      }}
+      options={options}
+      placeholder="Search country"
+      emptyText="No country matches this search."
+      renderSelected={(option) => (
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="text-base" aria-hidden="true">
+            {countryFlag(option.id)}
           </span>
-        )}
-      </div>
-      {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 normal-case tracking-normal shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/30">
-          {filteredCountries.map((country) => (
-            <button
-              key={country.code}
-              type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => {
-                onChange(country.code);
-                setQuery("");
-                setIsOpen(false);
-              }}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
-            >
-              <span className="text-base" aria-hidden="true">
-                {countryFlag(country.code)}
-              </span>
-              <span className="min-w-0 flex-1 truncate">{country.name}</span>
-              <span className="font-mono text-[11px] font-bold text-slate-400">
-                {country.code}
-              </span>
-            </button>
-          ))}
-          {filteredCountries.length === 0 && (
-            <p className="px-3 py-3 text-sm font-medium text-slate-400 dark:text-slate-500">
-              No country matches this search.
-            </p>
-          )}
-        </div>
+          <span className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+            {option.label}
+          </span>
+        </span>
       )}
-    </div>
+      renderOption={(option) => (
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="text-base" aria-hidden="true">
+            {countryFlag(option.id)}
+          </span>
+          <span className="min-w-0 flex-1 truncate">{option.label}</span>
+          <span className="font-mono text-[11px] font-bold text-slate-400">
+            {option.id}
+          </span>
+        </span>
+      )}
+    />
   );
 }
 
@@ -238,34 +233,14 @@ export function JournalDialogForm({
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-4xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-        <div className="border-b border-slate-200 bg-slate-50/80 px-6 py-5 dark:border-slate-800 dark:bg-slate-950/50">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
-                <BookOpen className="h-6 w-6" />
-              </div>
-              <div>
-                <h2 className="text-lg font-black text-slate-950 dark:text-white">
-                  {title}
-                </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {detail}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={closeDialog}
-              className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-white hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-
+    <ResearchModal
+      open={isOpen}
+      onClose={closeDialog}
+      title={title}
+      description={detail}
+      icon={<BookOpen className="h-5 w-5" />}
+      maxWidth="max-w-4xl"
+    >
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -301,7 +276,7 @@ export function JournalDialogForm({
               });
             });
           }}
-          className="grid max-h-[calc(90vh-6rem)] gap-5 overflow-y-auto px-6 py-5"
+          className="grid gap-5"
         >
           {selectedFields.map((field) => (
             <input key={field} type="hidden" name="fields" value={field} />
@@ -576,7 +551,6 @@ export function JournalDialogForm({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </ResearchModal>
   );
 }

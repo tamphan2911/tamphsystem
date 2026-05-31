@@ -23,6 +23,7 @@ import {
   useTablePagination,
 } from "../components/TableControls";
 import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
+import { ResearchEmptyState } from "../components/ResearchState";
 import { useResearchToast } from "../components/ResearchToast";
 
 export type OrganizedProjectResearchRow = {
@@ -346,26 +347,24 @@ export function OrganizedProjectsTable({
                     </p>
                   </td>
                   <td className="px-2 py-3 text-center align-top">
-                    <span
-                      className={`group/tooltip relative inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ${status.className}`}
-                    >
-                      <StatusIcon className="h-4 w-4" aria-hidden="true" />
-                      <span className="sr-only">{status.label}</span>
-                      <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-lg shadow-slate-900/10 group-hover/tooltip:block dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
-                        {status.label}
+                    <IconHint label={status.label}>
+                      <span
+                        className={`inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ${status.className}`}
+                      >
+                        <StatusIcon className="h-4 w-4" aria-hidden="true" />
+                        <span className="sr-only">{status.label}</span>
                       </span>
-                    </span>
+                    </IconHint>
                   </td>
                   <td className="px-2 py-3 text-center align-top">
-                    <span
-                      className={`group/tooltip relative inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ${claim.className}`}
-                    >
-                      <ClaimIcon className="h-4 w-4" aria-hidden="true" />
-                      <span className="sr-only">{claim.label}</span>
-                      <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-lg shadow-slate-900/10 group-hover/tooltip:block dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
-                        {claim.label}
+                    <IconHint label={claim.label}>
+                      <span
+                        className={`inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ${claim.className}`}
+                      >
+                        <ClaimIcon className="h-4 w-4" aria-hidden="true" />
+                        <span className="sr-only">{claim.label}</span>
                       </span>
-                    </span>
+                    </IconHint>
                   </td>
                   <td className="px-3 py-3 align-top text-sm text-slate-600 dark:text-slate-300">
                     <span className="line-clamp-2">
@@ -408,11 +407,20 @@ export function OrganizedProjectsTable({
               <tr>
                 <td
                   colSpan={7 + (isAdmin && deleteAction ? 1 : 0)}
-                  className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
+                  className="px-4 py-2"
                 >
-                  {rows.length === 0
-                    ? emptyMessage
-                    : "No organized projects match the current filters."}
+                  <ResearchEmptyState
+                    title={
+                      rows.length === 0
+                        ? emptyMessage
+                        : "No organized projects match the current filters."
+                    }
+                    detail={
+                      rows.length === 0
+                        ? "Create a project to track members, funding, results, and dates."
+                        : "Try another keyword or project status."
+                    }
+                  />
                 </td>
               </tr>
             )}

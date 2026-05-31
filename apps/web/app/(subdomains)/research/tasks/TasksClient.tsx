@@ -20,6 +20,10 @@ import {
 } from "../components/TableControls";
 import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
 import { TableSkeletonRows } from "../components/ResearchSkeleton";
+import {
+  ResearchEmptyState,
+  ResearchErrorState,
+} from "../components/ResearchState";
 import { useResearchToast } from "../components/ResearchToast";
 
 type TaskAssignment = {
@@ -302,13 +306,26 @@ export function TasksClient({
   const [status, setStatus] = useState("ALL");
   const [assignee, setAssignee] = useState("ALL");
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const loadTasks = useCallback(async () => {
-    const response = await fetch("/api/research/tasks", { cache: "no-store" });
-    if (!response.ok) return;
-    const payload = (await response.json()) as { tasks: TaskRow[] };
-    setTasks(payload.tasks);
-    setIsLoading(false);
+    try {
+      const response = await fetch("/api/research/tasks", {
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        setLoadError(true);
+        setIsLoading(false);
+        return;
+      }
+      const payload = (await response.json()) as { tasks: TaskRow[] };
+      setTasks(payload.tasks);
+      setLoadError(false);
+      setIsLoading(false);
+    } catch {
+      setLoadError(true);
+      setIsLoading(false);
+    }
   }, []);
 
   const removeTaskFromList = useCallback((taskId: string) => {
@@ -558,13 +575,29 @@ export function TasksClient({
               })}
               {isLoading && pagination.total === 0 ? (
                 <TableSkeletonRows rows={7} columns={isAdmin ? 6 : 5} />
+              ) : loadError && pagination.total === 0 ? (
+                <tr>
+                  <td colSpan={isAdmin ? 6 : 5} className="px-4 py-2">
+                    <ResearchErrorState
+                      title="Tasks could not load"
+                      detail="Refresh the page or try again in a moment."
+                    />
+                  </td>
+                </tr>
               ) : pagination.total === 0 ? (
                 <tr>
                   <td
                     colSpan={isAdmin ? 6 : 5}
-                    className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
+                    className="px-4 py-2"
                   >
-                    No tasks match the current filters.
+                    <ResearchEmptyState
+                      title="No tasks match the current filters."
+                      detail={
+                        tasks.length === 0
+                          ? "Create a task to start tracking assigned work."
+                          : "Try another keyword, status, or assignee."
+                      }
+                    />
                   </td>
                 </tr>
               ) : null}
