@@ -592,7 +592,7 @@ model Journal {
   scopusLink            String?
   note                  String?
   createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
+  updatedAt             DateTime     @updatedAt @default(now())
 
   submissions ResearchSubmission[]
   accounts    PublisherAccount[]
@@ -713,7 +713,7 @@ model PublisherAccount {
   email     String?
   note      String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
   journalId String?
   journal   Journal? @relation(fields: [journalId], references: [id], onDelete: SetNull)
 
@@ -735,7 +735,7 @@ model ResearchSubmission {
   publishedAt DateTime?
   status      SubmissionStatus @default(PENDING)
   createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  updatedAt   DateTime         @updatedAt @default(now())
 
   project ResearchProject   @relation(fields: [researchProjectId], references: [id], onDelete: Cascade)
   journal Journal           @relation(fields: [journalId], references: [id], onDelete: Cascade)
