@@ -13,7 +13,7 @@ export default async function ResearchUsersPage() {
 
   const users = await prisma.user.findMany({
     where: { activeSites: { has: "research" } },
-    orderBy: [{ createdAt: "desc" }],
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     select: {
       id: true,
       name: true,

@@ -47,7 +47,7 @@ export default async function SubmissionsPage() {
         },
         account: { select: { id: true, username: true, email: true } },
       },
-      orderBy: { submittedAt: "desc" },
+      orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
     }),
     prisma.conferenceSubmission.findMany({
       include: {
@@ -66,7 +66,7 @@ export default async function SubmissionsPage() {
           },
         },
       },
-      orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
+      orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
     }),
   ]);
 

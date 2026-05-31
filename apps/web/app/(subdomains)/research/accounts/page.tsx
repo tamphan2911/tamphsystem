@@ -37,10 +37,10 @@ export default async function PublisherAccountsPage() {
         journal: true,
         _count: { select: { submissions: true } },
       },
-      orderBy: { username: "asc" },
+      orderBy: { updatedAt: "desc" },
     }),
     prisma.journal.findMany({
-      orderBy: [{ publisher: "asc" }, { name: "asc" }],
+      orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
     }),
   ]);
 

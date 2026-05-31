@@ -63,13 +63,13 @@ export default async function JournalDetailPage({
           },
           account: { select: { id: true, username: true, email: true } },
         },
-        orderBy: { submittedAt: "desc" },
+        orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
       },
       accounts: {
         include: { _count: { select: { submissions: true } } },
-        orderBy: [{ username: "asc" }],
+        orderBy: [{ updatedAt: "desc" }],
       },
-      reviews: { orderBy: [{ dueDate: "asc" }, { requestedAt: "desc" }] },
+      reviews: { orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }] },
       _count: { select: { submissions: true, accounts: true, reviews: true } },
     },
   });

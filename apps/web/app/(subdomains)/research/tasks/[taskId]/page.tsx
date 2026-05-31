@@ -438,11 +438,11 @@ export default async function TaskDetailPage({
         }),
         prisma.publisherAccount.findMany({
           where: { journalId: { not: null } },
-          orderBy: [{ username: "asc" }, { email: "asc" }],
+          orderBy: [{ updatedAt: "desc" }, { username: "asc" }],
           select: { id: true, journalId: true, username: true, email: true },
         }),
         prisma.conference.findMany({
-          orderBy: [{ startDate: "desc" }, { name: "asc" }],
+          orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
           select: {
             id: true,
             name: true,
@@ -452,7 +452,7 @@ export default async function TaskDetailPage({
           },
         }),
         prisma.academicReview.findMany({
-          orderBy: [{ dueDate: "asc" }, { requestedAt: "desc" }],
+          orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
           include: { journal: { select: { name: true } } },
         }),
         prisma.organizedProject.findMany({

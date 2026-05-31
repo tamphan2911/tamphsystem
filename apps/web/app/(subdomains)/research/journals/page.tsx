@@ -19,7 +19,7 @@ export default async function JournalsPage() {
         submissions: { select: { status: true } },
         _count: { select: { accounts: true, reviews: true } },
       },
-      orderBy: [{ rank: "asc" }, { name: "asc" }],
+      orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
     }),
     userId
       ? prisma.user.findUnique({

@@ -145,7 +145,7 @@ export default async function FundingInstitutionsPage() {
     include: {
       _count: { select: { organizedProjects: true, researchProjects: true } },
     },
-    orderBy: [{ name: "asc" }],
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
   });
 
   return (

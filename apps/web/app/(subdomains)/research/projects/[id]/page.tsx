@@ -273,11 +273,11 @@ export default async function ProjectDetailPage({
       include: {
         submissions: {
           include: { journal: true, account: true },
-          orderBy: { submittedAt: "desc" },
+          orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
         },
         conferenceSubmissions: {
           include: { conference: true },
-          orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
+          orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
         },
         publications: { orderBy: { publishedDate: "desc" } },
         authorNotifications: {
@@ -327,11 +327,11 @@ export default async function ProjectDetailPage({
       },
     }),
     prisma.journal.findMany({
-      include: { accounts: { orderBy: [{ username: "asc" }] } },
-      orderBy: [{ rank: "asc" }, { name: "asc" }],
+      include: { accounts: { orderBy: [{ updatedAt: "desc" }] } },
+      orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
     }),
     prisma.conference.findMany({
-      orderBy: [{ startDate: "desc" }, { name: "asc" }],
+      orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
     }),
     prisma.user.findMany({
       where: { activeSites: { has: "research" } },

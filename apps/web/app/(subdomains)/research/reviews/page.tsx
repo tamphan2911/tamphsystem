@@ -43,10 +43,10 @@ export default async function AcademicReviewsPage() {
             },
           },
       include: { journal: true },
-      orderBy: [{ dueDate: "asc" }, { requestedAt: "desc" }],
+      orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
     }),
     prisma.journal.findMany({
-      orderBy: [{ publisher: "asc" }, { name: "asc" }],
+      orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
     }),
   ]);
   if (!isAdmin && reviews.length === 0) redirect("/401");

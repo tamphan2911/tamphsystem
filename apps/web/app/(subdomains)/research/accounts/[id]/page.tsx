@@ -114,14 +114,14 @@ export default async function AccountDetailPage({
             },
           },
         },
-        orderBy: { submittedAt: "desc" },
+        orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
       },
       tasks: {
         include: {
           project: true,
           assignments: { select: { userId: true } },
         },
-        orderBy: [{ createdAt: "desc" }],
+        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
       },
     },
   });

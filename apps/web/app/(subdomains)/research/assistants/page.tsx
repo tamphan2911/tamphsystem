@@ -40,7 +40,7 @@ export default async function AssistantsPage() {
 
   const users = await prisma.user.findMany({
     where: { activeSites: { has: "research" } },
-    orderBy: [{ name: "asc" }, { email: "asc" }],
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
   });
 
   const assistantUsers = users.filter(

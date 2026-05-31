@@ -37,7 +37,7 @@ export default async function ConferencesPage() {
   const isAdmin = roles.includes(Role.ADMIN);
   const [conferences, currentUser] = await Promise.all([
     prisma.conference.findMany({
-      orderBy: [{ startDate: "desc" }, { name: "asc" }],
+      orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
     }),
     userId
       ? prisma.user.findUnique({

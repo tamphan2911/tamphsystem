@@ -84,7 +84,7 @@ export default async function ConferenceDetailPage({
             },
           },
         },
-        orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
+        orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
       },
     },
   });
