@@ -331,10 +331,8 @@ export default async function TaskDetailPage({
           taskId: task.id,
           requestedById: demoRequester.userId,
           answeredById: task.createdById,
-          question:
-            "Could you confirm whether the submission should use the journal template or the university template?",
-          answer:
-            "Use the journal template for the main manuscript and keep the university format only for the internal archive copy.",
+          question: `For "${task.title}", should I use the journal template or the university template?`,
+          answer: `For "${task.title}", use the journal template for the main manuscript and keep the university format only for the internal archive copy.`,
           createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 28),
           answeredAt: new Date(now.getTime() - 1000 * 60 * 60 * 25),
         },
@@ -342,10 +340,9 @@ export default async function TaskDetailPage({
           taskId: task.id,
           requestedById: demoRequester.userId,
           answeredById: task.createdById,
-          question:
-            "The author list has two affiliations missing. Should I pause submission until they are updated?",
+          question: `For "${task.title}", two affiliations are missing. Should I pause until they are updated?`,
           answer:
-            "Please continue preparing the submission package, but do not submit until the affiliations are added.",
+            "Please continue preparing the package, but do not submit until the affiliations are added.",
           createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 8),
           answeredAt: new Date(now.getTime() - 1000 * 60 * 60 * 6),
         },

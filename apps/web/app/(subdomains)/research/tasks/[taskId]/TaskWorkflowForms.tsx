@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import {
   HelpCircle,
@@ -8,6 +9,7 @@ import {
   RotateCcw,
   X,
 } from "lucide-react";
+import { useResearchToast } from "../../components/ResearchToast";
 
 type TextModalFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -56,12 +58,42 @@ function TextModalForm({
   const formRef = useRef<HTMLFormElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [content, setContent] = useState("");
+  const router = useRouter();
+  const toast = useResearchToast();
   const Icon = iconForTone(tone);
   const colors = toneClasses[tone];
 
+  function closeDialog(force = false) {
+    if (isPending && !force) return;
+    setIsOpen(false);
+    setContent("");
+  }
+
+  function successMessage() {
+    if (tone === "amber") {
+      return {
+        title: "Clarification request sent",
+        detail:
+          "The assigner has been notified and the request is now in this task conversation.",
+      };
+    }
+    if (tone === "blue") {
+      return {
+        title: "Feedback sent",
+        detail: "The assignees have been notified and can continue the task.",
+      };
+    }
+    return {
+      title: "Redo request sent",
+      detail:
+        "The revision note has been added to the task conversation and shared with assignees.",
+    };
+  }
+
   return (
     <>
-      <form ref={formRef} action={action} className="flex justify-end">
+      <div className="flex justify-end">
         <button
           type="button"
           onClick={() => setIsOpen(true)}
@@ -70,11 +102,29 @@ function TextModalForm({
           <Icon className="h-4 w-4" />
           {buttonLabel}
         </button>
-      </form>
+      </div>
 
       {isOpen ? (
         <div className="fixed inset-0 z-[90] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+          <form
+            ref={formRef}
+            action={async (formData) => {
+              const value = String(formData.get(fieldName) ?? "").trim();
+              if (!value) {
+                toast.showError({
+                  title: "Message required",
+                  detail:
+                    "Please write the request or feedback content before sending.",
+                });
+                return;
+              }
+              await action(formData);
+              closeDialog(true);
+              toast.showSuccess(successMessage());
+              router.refresh();
+            }}
+            className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+          >
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-slate-50/80 px-5 py-4 dark:border-slate-800 dark:bg-slate-950/50">
               <div className="flex items-start gap-3">
                 <span
@@ -93,7 +143,7 @@ function TextModalForm({
               </div>
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
+                onClick={() => closeDialog()}
                 className="rounded-lg p-2 text-slate-400 transition hover:bg-white hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                 aria-label="Close dialog"
               >
@@ -109,6 +159,8 @@ function TextModalForm({
                 <textarea
                   name={fieldName}
                   required
+                  value={content}
+                  onChange={(event) => setContent(event.target.value)}
                   rows={5}
                   placeholder={placeholder}
                   className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
@@ -118,14 +170,14 @@ function TextModalForm({
                 <button
                   type="button"
                   disabled={isPending}
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => closeDialog()}
                   className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  disabled={isPending}
+                  disabled={isPending || content.trim().length === 0}
                   onClick={() => {
                     startTransition(() => {
                       formRef.current?.requestSubmit();
@@ -142,7 +194,7 @@ function TextModalForm({
                 </button>
               </div>
             </div>
-          </div>
+          </form>
         </div>
       ) : null}
     </>

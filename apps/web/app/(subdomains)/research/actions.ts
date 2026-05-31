@@ -2207,6 +2207,13 @@ export async function createAcademicReview(formData: FormData) {
 
   const journalId = optionalString(formData.get("journalId"));
   if (!journalId) return;
+  const status = optionalString(formData.get("status")) ?? "ACCEPTED";
+  const allowedStatuses = new Set([
+    "ACCEPTED",
+    "IN_PROGRESS",
+    "SUBMITTED",
+    "CANCELLED",
+  ]);
 
   await prisma.academicReview.create({
     data: {
@@ -2215,7 +2222,7 @@ export async function createAcademicReview(formData: FormData) {
         optionalString(formData.get("manuscriptTitle")) ??
         "Untitled manuscript",
       manuscriptId: optionalString(formData.get("manuscriptId")),
-      status: optionalString(formData.get("status")) ?? "INVITED",
+      status: allowedStatuses.has(status) ? status : "ACCEPTED",
       recommendation: optionalString(formData.get("recommendation")),
       editorName: optionalString(formData.get("editorName")),
       reviewRound: optionalString(formData.get("reviewRound")),
@@ -2636,22 +2643,50 @@ export async function createResearchTask(formData: FormData) {
         create: assigneeIds.map((userId) => ({ userId })),
       },
     },
-    select: { id: true, title: true, createdById: true },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      createdById: true,
+      assignments: {
+        select: { user: { select: { email: true } } },
+      },
+    },
   });
+
+  if (taskType === ResearchTaskType.REVIEW && reviewId) {
+    await prisma.academicReview.update({
+      where: { id: reviewId },
+      data: { status: "IN_PROGRESS" },
+    });
+  }
 
   await notifyUsers({
     userIds: assigneeIds,
     type: "TASK_ASSIGNED",
     title: "Task assigned",
     summary: task.title,
-    body: `You were assigned the task "${task.title}".`,
+    body: task.description
+      ? `You were assigned "${task.title}". Task note: ${task.description}`
+      : `You were assigned the task "${task.title}".`,
     href: `/tasks/${task.id}`,
     entityType: "task",
     entityId: task.id,
   });
+  await sendTaskEmail({
+    to: task.assignments.map((assignment) => assignment.user.email),
+    subject: `Task assigned: ${task.title}`,
+    heading: "Task assigned",
+    intro: "A new research task has been assigned to you.",
+    detail: task.description ?? undefined,
+    taskTitle: task.title,
+    taskId: task.id,
+    actionLabel: "Open task",
+  });
 
   revalidatePath("/tasks");
   if (projectId) revalidatePath(`/projects/${projectId}`);
+  if (reviewId) revalidatePath(`/reviews/${reviewId}`);
   if (organizedProjectId)
     revalidatePath(`/organized-projects/${organizedProjectId}`);
   return { ok: true };
@@ -2667,6 +2702,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       id: true,
       projectId: true,
       organizedProjectId: true,
+      reviewId: true,
       status: true,
       assignments: { select: { userId: true } },
     },
@@ -2849,7 +2885,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
           ? new Date(optionalString(formData.get("dueDate")) as string)
           : null,
       },
-      select: { id: true, title: true },
+      select: { id: true, title: true, description: true },
     });
 
     if (removedAssignees.length > 0) {
@@ -2867,16 +2903,39 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     return updatedTask;
   });
 
+  if (taskType === ResearchTaskType.REVIEW && reviewId) {
+    await prisma.academicReview.update({
+      where: { id: reviewId },
+      data: { status: "IN_PROGRESS" },
+    });
+  }
+
   if (addedAssignees.length > 0) {
     await notifyUsers({
       userIds: addedAssignees,
       type: "TASK_ASSIGNED",
       title: "Task assigned",
       summary: task.title,
-      body: `You were assigned the task "${task.title}".`,
+      body: task.description
+        ? `You were assigned "${task.title}". Task note: ${task.description}`
+        : `You were assigned the task "${task.title}".`,
       href: `/tasks/${task.id}`,
       entityType: "task",
       entityId: task.id,
+    });
+    const addedUsers = await prisma.user.findMany({
+      where: { id: { in: addedAssignees } },
+      select: { email: true },
+    });
+    await sendTaskEmail({
+      to: addedUsers.map((user) => user.email),
+      subject: `Task assigned: ${task.title}`,
+      heading: "Task assigned",
+      intro: "You were added as an assignee for this research task.",
+      detail: task.description ?? undefined,
+      taskTitle: task.title,
+      taskId: task.id,
+      actionLabel: "Open task",
     });
   }
 
@@ -2885,6 +2944,8 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   if (currentTask.projectId)
     revalidatePath(`/projects/${currentTask.projectId}`);
   if (effectiveProjectId) revalidatePath(`/projects/${effectiveProjectId}`);
+  if (currentTask.reviewId) revalidatePath(`/reviews/${currentTask.reviewId}`);
+  if (reviewId) revalidatePath(`/reviews/${reviewId}`);
   if (currentTask.organizedProjectId) {
     revalidatePath(`/organized-projects/${currentTask.organizedProjectId}`);
   }
@@ -3804,6 +3865,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       journalId: true,
       conferenceId: true,
       accountId: true,
+      reviewId: true,
       taskType: true,
       status: true,
       title: true,
@@ -3855,11 +3917,21 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
           data: { finishedAt: completedAt },
         },
       },
+      review:
+        task.taskType === ResearchTaskType.REVIEW && task.reviewId
+          ? {
+              update: {
+                status: "SUBMITTED",
+                completedAt,
+              },
+            }
+          : undefined,
     },
   });
 
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
+  if (task.reviewId) revalidatePath(`/reviews/${task.reviewId}`);
 
   await notifyUsers({
     userIds: task.assignments.map((assignment) => assignment.userId),
@@ -3912,13 +3984,25 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
       assignments: { updateMany: { where: {}, data: { finishedAt: null } } },
     },
   });
+  if (reason) {
+    await prisma.researchTaskClarification.create({
+      data: {
+        taskId,
+        requestedById: user.id,
+        answeredById: user.id,
+        question: "Revision requested",
+        answer: reason,
+        answeredAt: new Date(),
+      },
+    });
+  }
   await notifyUsers({
     userIds: task.assignments.map((assignment) => assignment.userId),
     type: "TASK_REDO_REQUIRED",
     title: "Task needs revision",
     summary: task.title,
     body: reason
-      ? `Revision requested for "${task.title}": ${reason}`
+      ? `Revision requested for "${task.title}". Note: ${reason}`
       : `The assigner requested revision for "${task.title}" before approval.`,
     href: `/tasks/${taskId}`,
     entityType: "task",

@@ -19,16 +19,16 @@ type JournalOption = {
   publisher: string;
 };
 
-const inputClass = "h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
-const labelClass = "grid gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200";
-const helperClass = "text-xs font-normal leading-5 text-slate-500 dark:text-slate-400";
+const inputClass =
+  "h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+const labelClass =
+  "grid gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200";
+const helperClass =
+  "text-xs font-normal leading-5 text-slate-500 dark:text-slate-400";
 const reviewStatusOptions = [
-  { value: "INVITED", label: "Invited - not accepted yet" },
   { value: "ACCEPTED", label: "Accepted - agreed to review" },
   { value: "IN_PROGRESS", label: "In progress - reading/writing review" },
-  { value: "ON_HOLD", label: "On hold - waiting for information" },
   { value: "SUBMITTED", label: "Submitted - review sent to journal" },
-  { value: "DECLINED", label: "Declined - refused the invitation" },
   { value: "CANCELLED", label: "Cancelled - journal cancelled the request" },
 ];
 
@@ -250,15 +250,18 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
               </section>
 
               <section className="grid gap-4 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid items-start gap-4 md:grid-cols-3">
                   <label className={labelClass}>
                     Current status
                     <ResearchFormSelect
                       name="status"
-                      defaultValue="INVITED"
+                      defaultValue="ACCEPTED"
                       ariaLabel="Review status"
                       options={reviewStatusOptions}
                     />
+                    <span className={helperClass}>
+                      New review records start as accepted by default.
+                    </span>
                   </label>
                   <label className={labelClass}>
                     Requested date

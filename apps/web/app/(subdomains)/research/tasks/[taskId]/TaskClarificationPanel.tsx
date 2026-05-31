@@ -1,7 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { HelpCircle, Loader2, MessageSquareText, Send, X } from "lucide-react";
+import { useResearchToast } from "../../components/ResearchToast";
 
 export type TaskClarificationItem = {
   id: string;
@@ -64,7 +66,7 @@ export function TaskClarificationPanel({
             {latest ? (
               <>
                 <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Latest request from {personName(latest.requestedBy)} ·{" "}
+                  Latest update from {personName(latest.requestedBy)} ·{" "}
                   {formatDateTime(latest.createdAt)}
                 </p>
                 <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-700 dark:text-slate-200">
@@ -225,14 +227,39 @@ function AnswerForm({
   action: (formData: FormData) => void | Promise<void>;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const [answer, setAnswer] = useState("");
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const toast = useResearchToast();
 
   return (
-    <form ref={formRef} action={action} className="mt-3 grid gap-3">
+    <form
+      ref={formRef}
+      action={async (formData) => {
+        const value = String(formData.get("answer") ?? "").trim();
+        if (!value) {
+          toast.showError({
+            title: "Feedback required",
+            detail: "Please write feedback before sending it to assignees.",
+          });
+          return;
+        }
+        await action(formData);
+        setAnswer("");
+        toast.showSuccess({
+          title: "Feedback sent",
+          detail: "The task conversation has been updated.",
+        });
+        router.refresh();
+      }}
+      className="mt-3 grid gap-3"
+    >
       <input type="hidden" name="clarificationId" value={clarificationId} />
       <textarea
         name="answer"
         required
+        value={answer}
+        onChange={(event) => setAnswer(event.target.value)}
         rows={4}
         placeholder="Write feedback for this request."
         className="w-full resize-none rounded-lg border border-amber-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 dark:border-amber-900/70 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
@@ -240,7 +267,7 @@ function AnswerForm({
       <div className="flex justify-end">
         <button
           type="button"
-          disabled={isPending}
+          disabled={isPending || answer.trim().length === 0}
           onClick={() => {
             startTransition(() => {
               formRef.current?.requestSubmit();

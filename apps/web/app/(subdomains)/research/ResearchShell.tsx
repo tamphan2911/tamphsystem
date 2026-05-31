@@ -114,6 +114,7 @@ export function ResearchShell({
   name,
   isAdmin,
   isAssistant,
+  canSeeTasks,
   canSeeAccounts,
   canSeeReviews,
   unopenedProposalCount,
@@ -123,6 +124,7 @@ export function ResearchShell({
   name?: string | null;
   isAdmin: boolean;
   isAssistant: boolean;
+  canSeeTasks: boolean;
   canSeeAccounts: boolean;
   canSeeReviews: boolean;
   unopenedProposalCount: number;
@@ -176,7 +178,7 @@ export function ResearchShell({
   const visibleNavItems = navItems.filter((item) => {
     if ("adminOnly" in item && item.adminOnly) return isAdmin;
     if ("requiresTaskAccess" in item && item.requiresTaskAccess)
-      return isAdmin || isAssistant;
+      return canSeeTasks || isAssistant;
     if ("requiresReviewAccess" in item && item.requiresReviewAccess)
       return canSeeReviews;
     if ("requiresAccountAccess" in item && item.requiresAccountAccess)

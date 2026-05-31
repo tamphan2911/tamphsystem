@@ -69,7 +69,7 @@ export default async function AcademicReviewsPage() {
   }));
 
   const active = reviews.filter(
-    (review) => !["SUBMITTED", "DECLINED", "CANCELLED"].includes(review.status),
+    (review) => !["SUBMITTED", "CANCELLED"].includes(review.status),
   ).length;
   const completed = reviews.filter(
     (review) => review.status === "SUBMITTED",

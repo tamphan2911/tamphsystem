@@ -5,11 +5,9 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
-  Ban,
   CheckCircle2,
   ClipboardCheck,
   Mail,
-  PauseCircle,
   PencilLine,
   Send,
   Trash2,
@@ -43,20 +41,10 @@ export type ReviewRow = {
   note: string;
 };
 
-const statuses = [
-  "ALL",
-  "INVITED",
-  "ACCEPTED",
-  "IN_PROGRESS",
-  "ON_HOLD",
-  "SUBMITTED",
-  "DECLINED",
-  "CANCELLED",
-];
+const statuses = ["ALL", "ACCEPTED", "IN_PROGRESS", "SUBMITTED", "CANCELLED"];
 
 function statusLabel(status: string) {
   if (status === "IN_PROGRESS") return "In progress";
-  if (status === "ON_HOLD") return "On hold";
   return status
     .toLowerCase()
     .replace("_", " ")
@@ -70,10 +58,6 @@ function statusClass(status: string) {
     return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
   if (status === "ACCEPTED")
     return "bg-purple-50 text-purple-700 ring-purple-100 dark:bg-purple-950/40 dark:text-purple-300 dark:ring-purple-900";
-  if (status === "ON_HOLD")
-    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
-  if (status === "DECLINED")
-    return "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900";
   if (status === "CANCELLED")
     return "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
   return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
@@ -82,9 +66,7 @@ function statusClass(status: string) {
 function statusIcon(status: string) {
   if (status === "ACCEPTED") return CheckCircle2;
   if (status === "IN_PROGRESS") return PencilLine;
-  if (status === "ON_HOLD") return PauseCircle;
   if (status === "SUBMITTED") return Send;
-  if (status === "DECLINED") return Ban;
   if (status === "CANCELLED") return XCircle;
   return Mail;
 }
@@ -149,7 +131,8 @@ function DeleteReviewButton({
                       Delete this review?
                     </h2>
                     <p className="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-300">
-                      This will remove the academic review record from the system.
+                      This will remove the academic review record from the
+                      system.
                     </p>
                   </div>
                 </div>
@@ -263,7 +246,9 @@ export function ReviewsTable({
         row.editorName,
         row.reviewRound,
         row.note,
-      ].join(" ").toLowerCase();
+      ]
+        .join(" ")
+        .toLowerCase();
       return (
         matchesStatus &&
         matchesJournal &&
@@ -377,7 +362,10 @@ export function ReviewsTable({
                 </td>
                 {isAdmin && (
                   <td className="px-2 py-3 text-center">
-                    <DeleteReviewButton review={row} deleteAction={deleteAction} />
+                    <DeleteReviewButton
+                      review={row}
+                      deleteAction={deleteAction}
+                    />
                   </td>
                 )}
               </tr>

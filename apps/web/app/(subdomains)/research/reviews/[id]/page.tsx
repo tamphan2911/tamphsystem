@@ -3,13 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   ArrowLeft,
-  Ban,
   CalendarDays,
   CheckCircle2,
   ExternalLink,
   Hash,
   Mail,
-  PauseCircle,
   PencilLine,
   Send,
   XCircle,
@@ -32,7 +30,6 @@ function shortDate(value: Date | null) {
 
 function statusLabel(status: string) {
   if (status === "IN_PROGRESS") return "In progress";
-  if (status === "ON_HOLD") return "On hold";
   return status
     .toLowerCase()
     .replace("_", " ")
@@ -54,25 +51,11 @@ function statusMeta(status: string) {
         "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900",
     };
   }
-  if (status === "ON_HOLD") {
-    return {
-      icon: PauseCircle,
-      className:
-        "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900",
-    };
-  }
   if (status === "SUBMITTED") {
     return {
       icon: Send,
       className:
         "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
-    };
-  }
-  if (status === "DECLINED") {
-    return {
-      icon: Ban,
-      className:
-        "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
     };
   }
   if (status === "CANCELLED") {
@@ -87,6 +70,27 @@ function statusMeta(status: string) {
     className:
       "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
   };
+}
+
+function taskStatusLabel(status: string) {
+  if (status === "IN_PROGRESS") return "In progress";
+  if (status === "NEED_CLARIFY") return "Need clarify";
+  return status
+    .toLowerCase()
+    .replace("_", " ")
+    .replace(/^\w/, (letter) => letter.toUpperCase());
+}
+
+function taskStatusClass(status: string) {
+  if (status === "COMPLETED")
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (status === "CHECKING")
+    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
+  if (status === "NEED_CLARIFY")
+    return "bg-amber-50 text-amber-800 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900";
+  if (status === "REVOKED")
+    return "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+  return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
 }
 
 function DetailItem({ label, value }: { label: string; value: ReactNode }) {
@@ -123,13 +127,25 @@ export default async function ReviewDetailPage({
         },
       },
       tasks: {
-        where: {
-          status: {
-            notIn: [ResearchTaskStatus.COMPLETED, ResearchTaskStatus.REVOKED],
+        where: isAdmin
+          ? {}
+          : {
+              status: {
+                notIn: [
+                  ResearchTaskStatus.COMPLETED,
+                  ResearchTaskStatus.REVOKED,
+                ],
+              },
+              assignments: { some: { userId } },
+            },
+        include: {
+          createdBy: { select: { name: true, email: true } },
+          assignments: {
+            include: { user: { select: { name: true, email: true } } },
+            orderBy: { createdAt: "asc" },
           },
-          assignments: { some: { userId } },
         },
-        select: { id: true },
+        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
       },
     },
   });
@@ -214,6 +230,88 @@ export default async function ReviewDetailPage({
             value={review.recommendation || "-"}
           />
         </dl>
+      </section>
+
+      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+          <div>
+            <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+              Tasks for this review
+            </h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Work assigned for this review record.
+            </p>
+          </div>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            {review.tasks.length}
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+              <tr>
+                <th className="px-4 py-3">Task</th>
+                <th className="w-36 px-4 py-3">Status</th>
+                <th className="w-36 px-4 py-3">Due</th>
+                <th className="w-56 px-4 py-3">Assignees</th>
+                <th className="w-44 px-4 py-3">Assigner</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {review.tasks.map((task) => (
+                <tr
+                  key={task.id}
+                  className="align-top transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                >
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/tasks/${task.id}`}
+                      className="text-sm font-semibold text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
+                    >
+                      {task.title}
+                    </Link>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      {task.description || task.category || "No task note."}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${taskStatusClass(task.status)}`}
+                    >
+                      {taskStatusLabel(task.status)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    {shortDate(task.dueDate)}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    {task.assignments.length > 0
+                      ? task.assignments
+                          .map(
+                            (assignment) =>
+                              assignment.user.name || assignment.user.email,
+                          )
+                          .join(", ")
+                      : "-"}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    {task.createdBy.name || task.createdBy.email}
+                  </td>
+                </tr>
+              ))}
+              {review.tasks.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-4 py-12 text-center text-sm text-slate-500 dark:text-slate-400"
+                  >
+                    No task is linked to this review yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">

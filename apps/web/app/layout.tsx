@@ -15,6 +15,11 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Tamph LMS & Research Portal",
   description: "A comprehensive platform for learning and research.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
