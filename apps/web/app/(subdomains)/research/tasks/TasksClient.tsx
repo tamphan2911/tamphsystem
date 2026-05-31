@@ -19,6 +19,7 @@ import {
   useTablePagination,
 } from "../components/TableControls";
 import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
+import { TableSkeletonRows } from "../components/ResearchSkeleton";
 import { useResearchToast } from "../components/ResearchToast";
 
 type TaskAssignment = {
@@ -555,18 +556,18 @@ export function TasksClient({
                   </tr>
                 );
               })}
-              {pagination.total === 0 && (
+              {isLoading && pagination.total === 0 ? (
+                <TableSkeletonRows rows={7} columns={isAdmin ? 6 : 5} />
+              ) : pagination.total === 0 ? (
                 <tr>
                   <td
                     colSpan={isAdmin ? 6 : 5}
                     className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
                   >
-                    {isLoading
-                      ? "Loading tasks..."
-                      : "No tasks match the current filters."}
+                    No tasks match the current filters.
                   </td>
                 </tr>
-              )}
+              ) : null}
             </tbody>
           </table>
         </div>

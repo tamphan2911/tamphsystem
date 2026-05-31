@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Loader2, Pencil, Plus, Save, X } from "lucide-react";
+import { Landmark, Loader2, Pencil, Plus, Save } from "lucide-react";
+import { ResearchModal } from "../components/ResearchModal";
 import { useResearchToast } from "../components/ResearchToast";
 
 export type FundingInstitutionValues = {
@@ -58,32 +59,17 @@ export function FundingInstitutionDialog({
         </button>
       )}
 
-      {open && (
-        <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-4xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
-              <div className="flex items-start justify-between gap-4">
-                <div className="text-left">
-                  <h2 className="text-lg font-black text-slate-950 dark:text-white">
-                    {isEdit ? "Edit funder" : "Add funder"}
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {isEdit
-                      ? "Update funder identity and reference details."
-                      : "Create a funding institution with an automatic immutable funder ID."}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={closeDialog}
-                  className="cursor-pointer rounded-xl p-2 text-slate-400 transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-700 hover:shadow-sm dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                  aria-label="Close"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
+      <ResearchModal
+        open={open}
+        onClose={closeDialog}
+        title={isEdit ? "Edit funder" : "Add funder"}
+        description={
+          isEdit
+            ? "Update funder identity and reference details."
+            : "Create a funding institution with an automatic immutable funder ID."
+        }
+        icon={<Landmark className="h-5 w-5" />}
+      >
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -99,7 +85,7 @@ export function FundingInstitutionDialog({
                   });
                 });
               }}
-              className="max-h-[calc(90vh-7rem)] space-y-5 overflow-y-auto px-6 py-5"
+              className="space-y-5"
             >
               <div className="grid gap-4">
                 <label className={labelClass}>
@@ -187,9 +173,7 @@ export function FundingInstitutionDialog({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </ResearchModal>
     </>
   );
 }

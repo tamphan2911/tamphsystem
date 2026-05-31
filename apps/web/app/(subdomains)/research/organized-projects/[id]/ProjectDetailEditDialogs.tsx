@@ -10,9 +10,9 @@ import {
   PlusCircle,
   Save,
   UsersRound,
-  X,
 } from "lucide-react";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
+import { ResearchModal } from "../../components/ResearchModal";
 import { useResearchToast } from "../../components/ResearchToast";
 import { currencyOptions } from "../../lib/currency";
 import { AuthorsPicker } from "../../projects/[id]/AuthorsPicker";
@@ -154,37 +154,18 @@ function DialogShell({
   detail: string;
   children: ReactNode;
 }) {
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-5xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300">
-              {icon}
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-950 dark:text-white">
-                {title}
-              </h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {detail}
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:-translate-y-0.5 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
+    <ResearchModal
+      open={open}
+      onClose={onClose}
+      title={title}
+      description={detail}
+      icon={icon}
+      maxWidth="max-w-5xl"
+      bodyClassName="p-0"
+    >
+      {children}
+    </ResearchModal>
   );
 }
 

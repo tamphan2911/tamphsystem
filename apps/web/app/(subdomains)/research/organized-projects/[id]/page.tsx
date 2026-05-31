@@ -44,6 +44,7 @@ import {
 } from "./ProjectDetailEditDialogs";
 import { ProjectProductsForm } from "./ProjectProductsForm";
 import { formatCurrencyCodeMoney } from "../../lib/currency";
+import { ResearchDetailSection } from "../../components/ResearchDetailSection";
 
 export const dynamic = "force-dynamic";
 
@@ -673,12 +674,10 @@ export default async function OrganizedProjectDetailPage({
       </header>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-              Members
-            </h2>
-            {canEditProject && (
+        <ResearchDetailSection
+          title="Members"
+          action={
+            canEditProject ? (
               <ProjectMembersEditDialog
                 action={saveProject}
                 info={projectInfo}
@@ -686,8 +685,9 @@ export default async function OrganizedProjectDetailPage({
                 research={researchDefaults}
                 users={userOptions}
               />
-            )}
-          </div>
+            ) : null
+          }
+        >
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {memberDefaults.map((member) => (
               <div key={member.id} className="flex items-center gap-3 py-3">
@@ -731,15 +731,12 @@ export default async function OrganizedProjectDetailPage({
               </p>
             )}
           </div>
-        </section>
+        </ResearchDetailSection>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-              Important documents
-            </h2>
-            <ExternalLink className="h-4 w-4 text-slate-400" />
-          </div>
+        <ResearchDetailSection
+          title="Important documents"
+          action={<ExternalLink className="h-4 w-4 text-slate-400" />}
+        >
           <div className="space-y-3">
             <div className="rounded-lg border border-dashed border-slate-200 p-4 dark:border-slate-800">
               <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -760,7 +757,7 @@ export default async function OrganizedProjectDetailPage({
               </p>
             </div>
           </div>
-        </section>
+        </ResearchDetailSection>
       </div>
 
       <ProjectProductsForm
@@ -769,10 +766,10 @@ export default async function OrganizedProjectDetailPage({
         action={saveProducts}
       />
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="mb-3 flex items-center justify-between gap-3">
+      <ResearchDetailSection>
+        <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+            <h2 className="text-base font-black text-slate-950 dark:text-white">
               Research Associated
             </h2>
             {canEditResearchAssociated && (
@@ -872,7 +869,7 @@ export default async function OrganizedProjectDetailPage({
             </tbody>
           </table>
         </div>
-      </section>
+      </ResearchDetailSection>
     </div>
   );
 }
