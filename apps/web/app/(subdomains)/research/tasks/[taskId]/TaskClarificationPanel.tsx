@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { HelpCircle, Loader2, MessageSquareText, Send, X } from "lucide-react";
 import { useResearchToast } from "../../components/ResearchToast";
 
@@ -46,11 +46,22 @@ export function TaskClarificationPanel({
   answerAction: (formData: FormData) => void | Promise<void>;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const historyScrollRef = useRef<HTMLDivElement>(null);
   const latest = clarifications[0] ?? null;
   const timeline = useMemo(
     () => [...clarifications].reverse(),
     [clarifications],
   );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const frame = window.requestAnimationFrame(() => {
+      const scrollContainer = historyScrollRef.current;
+      if (!scrollContainer) return;
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isOpen, timeline.length]);
 
   return (
     <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40">
@@ -126,7 +137,10 @@ export function TaskClarificationPanel({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 py-5">
+            <div
+              ref={historyScrollRef}
+              className="flex-1 overflow-y-auto px-5 py-5"
+            >
               {timeline.length > 0 ? (
                 <div className="space-y-5">
                   {timeline.map((item) => (
@@ -211,7 +225,11 @@ function ChatBubble({
           }`}
         >
           <span>{label}</span>
-          {time ? <span>{time}</span> : null}
+          {time ? (
+            <span className="text-[10px] font-semibold normal-case tracking-normal opacity-80">
+              ({time})
+            </span>
+          ) : null}
         </div>
         <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{content}</p>
       </div>
