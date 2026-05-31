@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { headers } from "next/headers";
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeProvider";
 
@@ -12,15 +13,26 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
 });
 
-export const metadata: Metadata = {
-  title: "Tamph LMS & Research Portal",
-  description: "A comprehensive platform for learning and research.",
-  icons: {
-    icon: "/icon.svg",
-    shortcut: "/icon.svg",
-    apple: "/icon.svg",
-  },
-};
+const RESEARCH_FAVICON = "/research-favicon.svg?v=20260531";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const host = (await headers()).get("host") || "";
+  const isResearchHost =
+    host === "research.tamph.com" ||
+    host.startsWith("research.") ||
+    host.startsWith("research.localhost");
+  const icon = isResearchHost ? RESEARCH_FAVICON : "/icon.svg";
+
+  return {
+    title: "Tamph LMS & Research Portal",
+    description: "A comprehensive platform for learning and research.",
+    icons: {
+      icon,
+      shortcut: icon,
+      apple: icon,
+    },
+  };
+}
 
 export default function RootLayout({
   children,

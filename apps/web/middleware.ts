@@ -20,6 +20,10 @@ export default auth((req) => {
     return NextResponse.rewrite(new URL("/research-favicon.svg", req.url));
   }
 
+  if (url.pathname === "/research-favicon.svg" || url.pathname === "/icon.svg") {
+    return NextResponse.next();
+  }
+
   // 1. Shared Global Routes (do not prefix with subdomains)
   const isAuthRoute =
     url.pathname.startsWith("/login") ||
