@@ -256,7 +256,7 @@ export function ResearchShell({
               />
             ))}
           </nav>
-          <SidebarSupportCard collapsed={collapsed} />
+          {!isAdmin && <SidebarSupportCard collapsed={collapsed} />}
         </aside>
 
         <div

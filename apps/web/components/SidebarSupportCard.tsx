@@ -26,7 +26,6 @@ export function SidebarSupportCard({
     <div
       onDoubleClick={() => setFlipped((value) => !value)}
       className="group m-4 cursor-pointer [perspective:900px]"
-      title="Double click me"
     >
       <div
         className={`relative min-h-40 rounded-lg border border-slate-200 bg-slate-50 transition duration-[560ms] ease-out [transform-style:preserve-3d] group-hover:-translate-y-0.5 group-hover:shadow-md dark:border-slate-700 dark:bg-slate-800/70 ${
@@ -40,9 +39,6 @@ export function SidebarSupportCard({
           <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-300">
             Find me! Yes, you know who to look for. If not, this place is not
             for you!
-          </p>
-          <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-blue-500 dark:text-blue-300">
-            Double click
           </p>
         </div>
 
