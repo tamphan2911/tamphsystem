@@ -50,6 +50,13 @@ function storedAuthorEmailResults(value: unknown): ResearchAuthorEmailResult[] {
   );
 }
 
+function isSenderMailboxSkip(result: ResearchAuthorEmailResult) {
+  return (
+    result.status === "skipped" &&
+    result.reason === "Email matches the system sender address."
+  );
+}
+
 function optionalString(value: FormDataEntryValue | null) {
   const text = typeof value === "string" ? value.trim() : "";
   return text.length > 0 ? text : null;
@@ -204,6 +211,42 @@ function createTransporter() {
   });
 }
 
+function normalizeEmailAddress(value: string | null | undefined) {
+  return value?.trim().toLowerCase() ?? "";
+}
+
+function extractMailbox(value: string | null | undefined) {
+  const text = value?.trim();
+  if (!text) return "";
+  const match = text.match(/<([^<>@\s]+@[^<>@\s]+)>/);
+  return normalizeEmailAddress(match?.[1] ?? text);
+}
+
+function senderMailboxes() {
+  return new Set(
+    [process.env.SMTP_FROM, process.env.SMTP_USER]
+      .map(extractMailbox)
+      .filter(Boolean),
+  );
+}
+
+function emailRecipients(to: string[]) {
+  const senders = senderMailboxes();
+  const recipients = new Map<string, string>();
+
+  for (const address of to) {
+    const normalized = normalizeEmailAddress(address);
+    if (!normalized || senders.has(normalized)) continue;
+    recipients.set(normalized, address);
+  }
+
+  return Array.from(recipients.values());
+}
+
+function isSenderMailbox(email: string) {
+  return senderMailboxes().has(normalizeEmailAddress(email));
+}
+
 async function sendTaskEmail({
   to,
   subject,
@@ -223,7 +266,7 @@ async function sendTaskEmail({
   taskId: string;
   detail?: string;
 }) {
-  const recipients = Array.from(new Set(to.filter(Boolean)));
+  const recipients = emailRecipients(to);
   if (recipients.length === 0) return;
   const taskUrl = `${researchBaseUrl()}/tasks/${taskId}`;
 
@@ -290,7 +333,7 @@ async function sendProposalEmail({
   actionHref?: string;
   actionLabel?: string;
 }) {
-  const recipients = Array.from(new Set(to.filter(Boolean)));
+  const recipients = emailRecipients(to);
   if (recipients.length === 0) return;
   const href = actionHref ?? researchBaseUrl();
 
@@ -4514,12 +4557,33 @@ export async function sendResearchAuthorNotification(
       .filter((result) => result.status === "sent")
       .map((result) => result.email.toLowerCase()),
   );
+  const previouslySenderSkippedEmails = new Set(
+    previousResults
+      .filter(isSenderMailboxSkip)
+      .map((result) => result.email.toLowerCase()),
+  );
   const canSend = smtpConfigured();
   const transporter = canSend ? createTransporter() : null;
 
   for (const author of authors) {
     const authorName = author.name || author.email;
-    if (previouslySentEmails.has(author.email.toLowerCase())) continue;
+    const authorEmail = author.email.toLowerCase();
+    if (
+      previouslySentEmails.has(authorEmail) ||
+      previouslySenderSkippedEmails.has(authorEmail)
+    ) {
+      continue;
+    }
+
+    if (isSenderMailbox(author.email)) {
+      results.push({
+        authorName,
+        email: author.email,
+        status: "skipped",
+        reason: "Email matches the system sender address.",
+      });
+      continue;
+    }
 
     if (!author.emailVerified) {
       results.push({
@@ -4581,8 +4645,13 @@ export async function sendResearchAuthorNotification(
 
   const mergedResults = Array.from(mergedByEmail.values());
   const complete = authors.every(
-    (author) =>
-      mergedByEmail.get(author.email.toLowerCase())?.status === "sent",
+    (author) => {
+      const result = mergedByEmail.get(author.email.toLowerCase());
+      return (
+        result?.status === "sent" ||
+        Boolean(result && isSenderMailboxSkip(result))
+      );
+    },
   );
 
   if (existing) {
