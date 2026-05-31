@@ -1366,6 +1366,26 @@ export async function createOrganizedProject(formData: FormData) {
   redirect("/organized-projects?created=project");
 }
 
+export async function deleteOrganizedProject(projectId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const project = await prisma.organizedProject.findUnique({
+    where: { id: projectId },
+    select: { id: true },
+  });
+  if (!project) return;
+
+  await prisma.organizedProject.delete({
+    where: { id: projectId },
+  });
+
+  revalidatePath("/organized-projects");
+  revalidatePath(`/organized-projects/${projectId}`);
+  revalidatePath("/projects");
+  revalidatePath("/funding-institutions");
+}
+
 export async function updateOrganizedProject(
   projectId: string,
   formData: FormData,
@@ -1860,6 +1880,28 @@ export async function updateResearchProject(
 
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
+}
+
+export async function deleteResearchProject(projectId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: { id: true },
+  });
+  if (!project) return;
+
+  await prisma.researchProject.delete({
+    where: { id: projectId },
+  });
+
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/organized-projects");
+  revalidatePath("/journals");
+  revalidatePath("/conferences");
+  revalidatePath("/tasks");
 }
 
 export async function unlockProductionTimeline(projectId: string) {

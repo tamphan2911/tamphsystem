@@ -14,6 +14,7 @@ import {
   SubmissionStatus,
 } from "@repo/db";
 import { auth } from "../../../../auth";
+import { deleteResearchProject } from "../actions";
 import { ProposalDialog } from "../components/ProposalDialog";
 import { NewResearchDialog } from "./NewResearchDialog";
 import {
@@ -485,6 +486,8 @@ export default async function ProjectsDashboard() {
 
       <ResearchProjectsTable
         rows={rows}
+        isAdmin={isAdmin}
+        deleteAction={deleteResearchProject}
         emptyMessage="No research is connected to your account yet. When you join a study, author a paper, or receive a research task, it will appear here."
       />
     </div>

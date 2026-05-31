@@ -7,6 +7,7 @@ import {
   Role,
 } from "@repo/db";
 import { auth } from "../../../../auth";
+import { deleteOrganizedProject } from "../actions";
 import { ProposalDialog } from "../components/ProposalDialog";
 import { NewOrganizedProjectDialog } from "./NewOrganizedProjectDialog";
 import {
@@ -466,6 +467,8 @@ export default async function OrganizedProjectsPage() {
 
       <OrganizedProjectsTable
         rows={rows}
+        isAdmin={isAdmin}
+        deleteAction={deleteOrganizedProject}
         emptyMessage="No project is connected to your account yet. Projects will show here when you are added as a member or assigned a related task."
       />
     </div>
