@@ -22,9 +22,12 @@ export async function generateMetadata(): Promise<Metadata> {
     host.startsWith("research.") ||
     host.startsWith("research.localhost");
   const icon = isResearchHost ? RESEARCH_FAVICON : "/icon.svg";
+  const title = isResearchHost
+    ? "Tam's Research Hub"
+    : "Tamph LMS & Research Portal";
 
   return {
-    title: "Tamph LMS & Research Portal",
+    title,
     description: "A comprehensive platform for learning and research.",
     icons: {
       icon,
