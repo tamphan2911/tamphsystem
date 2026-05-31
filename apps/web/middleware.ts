@@ -40,7 +40,7 @@ export default auth((req) => {
   if (isAuthRoute) {
     if (isLoggedIn && !url.pathname.startsWith("/verify-email")) {
       return NextResponse.redirect(
-        new URL("/", req.url),
+        new URL(currentHost === "research" ? "/projects" : "/", req.url),
       );
     }
     return NextResponse.next();
