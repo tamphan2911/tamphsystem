@@ -13,7 +13,7 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
 });
 
-const RESEARCH_FAVICON = "/research-favicon.svg?v=20260531";
+const RESEARCH_FAVICON = "/research-favicon.svg?v=20260531r2";
 
 export async function generateMetadata(): Promise<Metadata> {
   const host = (await headers()).get("host") || "";

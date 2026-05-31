@@ -1,9 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Research Hub">
-  <rect width="64" height="64" rx="14" fill="#ffffff"/>
-  <path d="M11 15c0-3.3 2.7-6 6-6h30" fill="none" stroke="#ea4335" stroke-width="7" stroke-linecap="round"/>
-  <path d="M47 9c3.3 0 6 2.7 6 6v10" fill="none" stroke="#fbbc04" stroke-width="7" stroke-linecap="round"/>
-  <path d="M53 25v24c0 3.3-2.7 6-6 6h-9" fill="none" stroke="#34a853" stroke-width="7" stroke-linecap="round"/>
-  <path d="M38 55H17c-3.3 0-6-2.7-6-6V15" fill="none" stroke="#4285f4" stroke-width="7" stroke-linecap="round"/>
-  <path d="M24 46V18h14c7.1 0 11.5 4 11.5 10.2 0 4.3-2.3 7.5-6.1 9l7.3 8.8H41l-6.4-8h-3.1v8H24Z" fill="#1a73e8"/>
-  <path d="M31.5 25.6v6.2h5.9c2.5 0 4-1.2 4-3.1 0-2-1.5-3.1-4-3.1h-5.9Z" fill="#ffffff"/>
+  <path d="M16 56V10" fill="none" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/>
+  <path d="M16 10h23c7.7 0 13 5.1 13 12.2S46.7 34 39 34H16" fill="none" stroke="#38bdf8" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M35 34 52 56" fill="none" stroke="#10b981" stroke-width="10" stroke-linecap="round"/>
+  <path d="M16 34h19" fill="none" stroke="#0ea5e9" stroke-width="10" stroke-linecap="round"/>
 </svg>
