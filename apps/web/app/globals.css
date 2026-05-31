@@ -79,6 +79,45 @@ body {
   }
 }
 
+@keyframes galaxyDriftA {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-8deg);
+  }
+  35% {
+    transform: translate3d(2.8rem, -2.2rem, 0) rotate(12deg);
+  }
+  70% {
+    transform: translate3d(-2rem, 1.7rem, 0) rotate(-18deg);
+  }
+}
+
+@keyframes galaxyDriftB {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(10deg);
+  }
+  30% {
+    transform: translate3d(-2.6rem, 2.4rem, 0) rotate(-14deg);
+  }
+  72% {
+    transform: translate3d(2.4rem, 1rem, 0) rotate(20deg);
+  }
+}
+
+@keyframes galaxyDriftC {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(4deg);
+  }
+  42% {
+    transform: translate3d(1.4rem, 3rem, 0) rotate(22deg);
+  }
+  76% {
+    transform: translate3d(-3rem, -1.2rem, 0) rotate(-10deg);
+  }
+}
+
 button,
 [role="button"],
 summary,

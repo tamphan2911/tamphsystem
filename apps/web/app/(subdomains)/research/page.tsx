@@ -1,9 +1,13 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  Atom,
   BookOpenCheck,
+  BrainCircuit,
   ClipboardList,
+  FileSearch,
   Orbit,
+  Radar,
   Rocket,
   Satellite,
   Sparkles,
@@ -15,37 +19,71 @@ const floatingIcons = [
     icon: BookOpenCheck,
     className: "left-[9%] top-[18%] rotate-[-12deg]",
     color: "border-cyan-300/30 bg-cyan-300/10 text-cyan-100",
-    duration: "5.8s",
+    animation: "galaxyDriftA",
+    duration: "9.2s",
   },
   {
     icon: ClipboardList,
     className: "right-[13%] top-[17%] rotate-[10deg]",
     color: "border-emerald-300/30 bg-emerald-300/10 text-emerald-100",
-    duration: "6.4s",
+    animation: "galaxyDriftB",
+    duration: "10.4s",
   },
   {
     icon: Satellite,
     className: "left-[13%] bottom-[19%] rotate-[8deg]",
     color: "border-blue-300/30 bg-blue-300/10 text-blue-100",
-    duration: "6.9s",
+    animation: "galaxyDriftC",
+    duration: "11.1s",
   },
   {
     icon: Telescope,
     className: "right-[11%] bottom-[20%] rotate-[-9deg]",
     color: "border-amber-300/30 bg-amber-300/10 text-amber-100",
-    duration: "5.5s",
+    animation: "galaxyDriftA",
+    duration: "9.8s",
   },
   {
     icon: Rocket,
     className: "left-[28%] top-[12%] rotate-[14deg]",
     color: "border-fuchsia-300/30 bg-fuchsia-300/10 text-fuchsia-100",
-    duration: "7.2s",
+    animation: "galaxyDriftB",
+    duration: "12.2s",
   },
   {
     icon: Orbit,
     className: "right-[30%] bottom-[11%] rotate-[-16deg]",
     color: "border-indigo-300/30 bg-indigo-300/10 text-indigo-100",
-    duration: "6.1s",
+    animation: "galaxyDriftC",
+    duration: "10.7s",
+  },
+  {
+    icon: Atom,
+    className: "left-[42%] top-[8%] rotate-[9deg]",
+    color: "border-violet-300/25 bg-violet-300/10 text-violet-100",
+    animation: "galaxyDriftC",
+    duration: "13s",
+  },
+  {
+    icon: BrainCircuit,
+    className: "right-[42%] top-[24%] rotate-[-6deg]",
+    color: "border-teal-300/25 bg-teal-300/10 text-teal-100",
+    animation: "galaxyDriftA",
+    duration: "11.6s",
+  },
+  {
+    icon: FileSearch,
+    className: "left-[38%] bottom-[8%] rotate-[18deg]",
+    color: "border-sky-300/25 bg-sky-300/10 text-sky-100",
+    animation: "galaxyDriftB",
+    duration: "12.8s",
+  },
+  {
+    icon: Radar,
+    className: "right-[5%] top-[48%] rotate-[12deg]",
+    color: "border-rose-300/25 bg-rose-300/10 text-rose-100",
+    animation: "galaxyDriftC",
+    duration: "10.9s",
   },
 ];
 
@@ -54,22 +92,25 @@ const starPositions = [
   "left-[20%] top-[9%]",
   "left-[31%] bottom-[15%]",
   "left-[46%] top-[18%]",
+  "left-[58%] bottom-[34%]",
   "right-[26%] top-[10%]",
   "right-[34%] bottom-[24%]",
   "right-[7%] top-[47%]",
   "right-[19%] bottom-[9%]",
+  "right-[48%] top-[39%]",
 ];
 
 export default function ResearchWelcomePage() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#030712] px-5 text-white">
+    <main className="relative min-h-screen overflow-hidden bg-[#01030b] px-5 text-white">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_20%,rgba(34,211,238,0.28),transparent_26%),radial-gradient(circle_at_78%_24%,rgba(168,85,247,0.23),transparent_24%),radial-gradient(circle_at_50%_82%,rgba(16,185,129,0.18),transparent_28%),linear-gradient(135deg,#020617_0%,#090b2d_42%,#030712_100%)]" />
-        <div className="absolute inset-0 opacity-35 bg-[radial-gradient(circle,rgba(255,255,255,0.88)_1px,transparent_1.5px)] bg-[size:34px_34px]" />
-        <div className="absolute inset-x-[12%] top-[18%] h-px rotate-[-11deg] bg-cyan-200/30" />
-        <div className="absolute inset-x-[18%] bottom-[22%] h-px rotate-[8deg] bg-violet-200/25" />
-        <div className="absolute left-1/2 top-1/2 h-[36rem] w-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-200/10" />
-        <div className="absolute left-1/2 top-1/2 h-[26rem] w-[26rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-200/10" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(34,211,238,0.19),transparent_24%),radial-gradient(circle_at_82%_22%,rgba(168,85,247,0.18),transparent_24%),radial-gradient(circle_at_50%_84%,rgba(16,185,129,0.12),transparent_30%),linear-gradient(135deg,#01030b_0%,#05051f_48%,#01030b_100%)]" />
+        <div className="absolute inset-0 opacity-45 bg-[radial-gradient(circle,rgba(255,255,255,0.78)_1px,transparent_1.5px)] bg-[size:32px_32px]" />
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle,rgba(125,211,252,0.7)_1px,transparent_2px)] bg-[size:92px_92px]" />
+        <div className="absolute inset-x-[10%] top-[17%] h-px rotate-[-11deg] bg-cyan-200/22" />
+        <div className="absolute inset-x-[16%] bottom-[22%] h-px rotate-[8deg] bg-violet-200/18" />
+        <div className="absolute left-1/2 top-1/2 h-[42rem] w-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-200/8" />
+        <div className="absolute left-1/2 top-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-200/8" />
       </div>
 
       {starPositions.map((position) => (
@@ -84,8 +125,10 @@ export default function ResearchWelcomePage() {
         return (
           <div
             key={item.className}
-            className={`pointer-events-none absolute flex h-14 w-14 animate-[hubFloat_6s_ease-in-out_infinite] items-center justify-center rounded-2xl border shadow-2xl shadow-black/30 backdrop-blur ${item.className} ${item.color}`}
-            style={{ animationDuration: item.duration }}
+            className={`pointer-events-none absolute flex h-14 w-14 items-center justify-center rounded-2xl border shadow-2xl shadow-black/40 backdrop-blur ${item.className} ${item.color}`}
+            style={{
+              animation: `${item.animation} ${item.duration} ease-in-out infinite`,
+            }}
           >
             <Icon className="h-6 w-6" />
           </div>
@@ -109,7 +152,7 @@ export default function ResearchWelcomePage() {
 
         <Link
           href="/projects"
-          className="group mt-9 inline-flex h-12 items-center justify-center gap-3 rounded-2xl border border-cyan-200/60 bg-cyan-100 px-6 text-sm font-black text-slate-950 shadow-2xl shadow-cyan-950/20 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-cyan-500/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300/30"
+          className="group mt-9 inline-flex h-12 items-center justify-center gap-3 rounded-full border border-cyan-200/45 bg-white/10 px-6 text-sm font-black text-cyan-50 shadow-2xl shadow-cyan-950/30 ring-1 ring-white/10 backdrop-blur transition hover:-translate-y-0.5 hover:border-cyan-100/70 hover:bg-cyan-100 hover:text-slate-950 hover:shadow-cyan-500/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300/30"
         >
           Blast into the research zone
           <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
