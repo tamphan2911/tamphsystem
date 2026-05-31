@@ -3063,6 +3063,33 @@ export async function revokeResearchTask(taskId: string) {
   if (task.projectId) revalidatePath(`/projects/${task.projectId}`);
 }
 
+export async function deleteResearchTask(taskId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      projectId: true,
+      organizedProjectId: true,
+      reviewId: true,
+    },
+  });
+  if (!task) return;
+
+  await prisma.researchTask.delete({
+    where: { id: taskId },
+  });
+
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+  if (task.projectId) revalidatePath(`/projects/${task.projectId}`);
+  if (task.organizedProjectId) {
+    revalidatePath(`/organized-projects/${task.organizedProjectId}`);
+  }
+  if (task.reviewId) revalidatePath(`/reviews/${task.reviewId}`);
+}
+
 export async function updateSubmissionStatus(formData: FormData) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);

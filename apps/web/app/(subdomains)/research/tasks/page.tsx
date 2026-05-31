@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
+import { deleteResearchTask } from "../actions";
 import {
   NewTaskDialog,
   type TaskAssigneeOption,
@@ -139,6 +140,7 @@ export default async function ResearchTasksPage() {
     <div className="mx-auto max-w-7xl space-y-4">
       <TasksClient
         isAdmin={isAdmin}
+        deleteAction={deleteResearchTask}
         action={
           isAdmin ? (
             <NewTaskDialog
