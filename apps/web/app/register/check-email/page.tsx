@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { MailCheck } from "lucide-react";
+import { headers } from "next/headers";
+import { AuthDarkTheme } from "../../../components/AuthDarkTheme";
 
 export default async function CheckEmailPage({
   searchParams,
@@ -7,26 +9,32 @@ export default async function CheckEmailPage({
   searchParams: Promise<{ email?: string; callbackUrl?: string }>;
 }) {
   const { email, callbackUrl } = await searchParams;
+  const host = (await headers()).get("host") ?? "";
+  const isResearch = host.startsWith("research.");
   const loginHref = callbackUrl
     ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}&email=${encodeURIComponent(email ?? "")}`
     : `/login?email=${encodeURIComponent(email ?? "")}`;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-950 dark:bg-slate-950 dark:text-white">
+      <AuthDarkTheme />
       <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white text-center shadow-2xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/30">
         <div className="border-b border-slate-100 px-8 py-8 dark:border-slate-800">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-900">
             <MailCheck className="h-7 w-7" />
           </div>
           <h1 className="mt-5 text-2xl font-bold tracking-tight">
-            Check your email
+            {isResearch
+              ? "Check your email for Research Hub"
+              : "Check your email"}
           </h1>
           <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
             We sent an account verification link to{" "}
             <span className="font-semibold text-slate-800 dark:text-slate-200">
               {email || "your registered email"}
             </span>
-            . Open that email and verify the account before logging in.
+            . Open that email and verify the account before logging in
+            {isResearch ? " to Research Hub" : ""}.
           </p>
         </div>
         <div className="space-y-3 px-8 py-6">

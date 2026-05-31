@@ -11,7 +11,7 @@ export const config = {
 export default auth((req) => {
   const url = req.nextUrl;
   const hostname = req.headers.get("host") || "";
-  const isLoggedIn = !!req.auth;
+  const isLoggedIn = !!req.auth?.user;
   let currentHost = hostname
     .replace(`.tamph.com`, "")
     .replace(`.localhost:3000`, "");

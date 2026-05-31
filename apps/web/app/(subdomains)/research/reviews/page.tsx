@@ -5,7 +5,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { redirect } from "next/navigation";
-import { prisma, Role } from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { deleteAcademicReview } from "../actions";
 import { NewReviewDialog } from "./NewReviewDialog";
@@ -23,16 +23,25 @@ export default async function AcademicReviewsPage() {
     []) as Role[];
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const isAdmin = roles.includes(Role.ADMIN);
-  const isAssistant =
-    roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
   if (!userId) redirect("/login");
-  if (!isAdmin && !isAssistant) redirect("/401");
 
   const [reviews, journals] = await Promise.all([
     prisma.academicReview.findMany({
       where: isAdmin
         ? {}
-        : { tasks: { some: { assignments: { some: { userId } } } } },
+        : {
+            tasks: {
+              some: {
+                status: {
+                  notIn: [
+                    ResearchTaskStatus.COMPLETED,
+                    ResearchTaskStatus.REVOKED,
+                  ],
+                },
+                assignments: { some: { userId } },
+              },
+            },
+          },
       include: { journal: true },
       orderBy: [{ dueDate: "asc" }, { requestedAt: "desc" }],
     }),
@@ -40,6 +49,7 @@ export default async function AcademicReviewsPage() {
       orderBy: [{ publisher: "asc" }, { name: "asc" }],
     }),
   ]);
+  if (!isAdmin && reviews.length === 0) redirect("/401");
 
   const rows: ReviewRow[] = reviews.map((review) => ({
     id: review.id,

@@ -186,7 +186,7 @@ export async function registerUser(formData: FormData) {
         emailVerified: null,
         emailVerificationToken: token,
         emailVerificationTokenExpires: expiresAt,
-        roles: ["STUDENT"],
+        roles: activeSite === "research" ? ["USER"] : ["STUDENT"],
         activeSites: [activeSite],
       },
     });

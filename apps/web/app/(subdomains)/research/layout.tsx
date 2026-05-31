@@ -15,29 +15,45 @@ export default async function ResearchLayout({
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   let canSeeAccounts = roles.includes(Role.ADMIN);
+  let canSeeReviews = roles.includes(Role.ADMIN);
   let unopenedProposalCount = 0;
   if (userId) {
     const sitePathname = (await headers()).get("x-site-pathname") ?? "";
-    const [user, unfinishedAccountTaskCount] = await Promise.all([
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { activeSites: true },
-      }),
-      roles.includes(Role.ADMIN)
-        ? Promise.resolve(0)
-        : prisma.researchTask.count({
-            where: {
-              accountId: { not: null },
-              status: {
-                notIn: [
-                  ResearchTaskStatus.COMPLETED,
-                  ResearchTaskStatus.REVOKED,
-                ],
+    const [user, unfinishedAccountTaskCount, unfinishedReviewTaskCount] =
+      await Promise.all([
+        prisma.user.findUnique({
+          where: { id: userId },
+          select: { activeSites: true },
+        }),
+        roles.includes(Role.ADMIN)
+          ? Promise.resolve(0)
+          : prisma.researchTask.count({
+              where: {
+                accountId: { not: null },
+                status: {
+                  notIn: [
+                    ResearchTaskStatus.COMPLETED,
+                    ResearchTaskStatus.REVOKED,
+                  ],
+                },
+                assignments: { some: { userId } },
               },
-              assignments: { some: { userId } },
-            },
-          }),
-    ]);
+            }),
+        roles.includes(Role.ADMIN)
+          ? Promise.resolve(0)
+          : prisma.researchTask.count({
+              where: {
+                reviewId: { not: null },
+                status: {
+                  notIn: [
+                    ResearchTaskStatus.COMPLETED,
+                    ResearchTaskStatus.REVOKED,
+                  ],
+                },
+                assignments: { some: { userId } },
+              },
+            }),
+      ]);
     if (
       !user?.activeSites.includes("research") &&
       sitePathname !== "/activate"
@@ -46,6 +62,7 @@ export default async function ResearchLayout({
     }
     canSeeAccounts =
       roles.includes(Role.ADMIN) || unfinishedAccountTaskCount > 0;
+    canSeeReviews = roles.includes(Role.ADMIN) || unfinishedReviewTaskCount > 0;
     if (roles.includes(Role.ADMIN)) {
       unopenedProposalCount = await prisma.proposal.count({
         where: { status: ProposalStatus.NEW },
@@ -62,6 +79,7 @@ export default async function ResearchLayout({
         roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT)
       }
       canSeeAccounts={canSeeAccounts}
+      canSeeReviews={canSeeReviews}
       unopenedProposalCount={unopenedProposalCount}
     >
       {children}

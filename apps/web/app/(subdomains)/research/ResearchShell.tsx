@@ -55,7 +55,7 @@ const navItems = [
     href: "/reviews",
     label: "Reviews",
     icon: "reviews" as const,
-    requiresTaskAccess: true,
+    requiresReviewAccess: true,
   },
   {
     href: "/accounts",
@@ -92,6 +92,7 @@ export function ResearchShell({
   isAdmin,
   isAssistant,
   canSeeAccounts,
+  canSeeReviews,
   unopenedProposalCount,
 }: {
   children: React.ReactNode;
@@ -100,6 +101,7 @@ export function ResearchShell({
   isAdmin: boolean;
   isAssistant: boolean;
   canSeeAccounts: boolean;
+  canSeeReviews: boolean;
   unopenedProposalCount: number;
 }) {
   const [collapsed, setCollapsed] = useState(() => {
@@ -114,6 +116,8 @@ export function ResearchShell({
     if ("adminOnly" in item && item.adminOnly) return isAdmin;
     if ("requiresTaskAccess" in item && item.requiresTaskAccess)
       return isAdmin || isAssistant;
+    if ("requiresReviewAccess" in item && item.requiresReviewAccess)
+      return canSeeReviews;
     if ("requiresAccountAccess" in item && item.requiresAccountAccess)
       return canSeeAccounts;
     return true;

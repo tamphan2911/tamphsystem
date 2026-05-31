@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   ArrowLeft,
@@ -14,7 +14,8 @@ import {
   Send,
   XCircle,
 } from "lucide-react";
-import { prisma } from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
+import { auth } from "../../../../../auth";
 import { formatMoney } from "../../lib/currency";
 import { countryFlag, countryName } from "../../lib/countries";
 
@@ -88,13 +89,7 @@ function statusMeta(status: string) {
   };
 }
 
-function DetailItem({
-  label,
-  value,
-}: {
-  label: string;
-  value: ReactNode;
-}) {
+function DetailItem({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
       <dt className="text-xs font-bold uppercase tracking-wide text-slate-400">
@@ -113,6 +108,12 @@ export default async function ReviewDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+    []) as Role[];
+  if (!userId) redirect("/login");
+  const isAdmin = roles.includes(Role.ADMIN);
   const review = await prisma.academicReview.findUnique({
     where: { id },
     include: {
@@ -121,10 +122,20 @@ export default async function ReviewDetailPage({
           _count: { select: { submissions: true, reviews: true } },
         },
       },
+      tasks: {
+        where: {
+          status: {
+            notIn: [ResearchTaskStatus.COMPLETED, ResearchTaskStatus.REVOKED],
+          },
+          assignments: { some: { userId } },
+        },
+        select: { id: true },
+      },
     },
   });
 
   if (!review) notFound();
+  if (!isAdmin && review.tasks.length === 0) redirect("/401");
 
   const status = statusMeta(review.status);
   const StatusIcon = status.icon;

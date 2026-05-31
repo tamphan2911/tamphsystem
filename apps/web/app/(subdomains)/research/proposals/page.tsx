@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { ProposalType, prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { deleteProposal } from "../actions";
-import { ProposalDialog } from "../components/ProposalDialog";
 import { ProposalsTable, type ProposalRow } from "./ProposalsTable";
 
 export const dynamic = "force-dynamic";
@@ -25,25 +24,16 @@ function fileSizeLabel(value: number | null) {
 
 export default async function ProposalsPage() {
   const session = await auth();
-  const userId = (session?.user as { id?: string } | undefined)?.id;
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   if (!roles.includes(Role.ADMIN)) redirect("/401");
 
-  const [proposals, currentUser] = await Promise.all([
-    prisma.proposal.findMany({
-      include: {
-        submittedBy: { select: { name: true, email: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    }),
-    userId
-      ? prisma.user.findUnique({
-          where: { id: userId },
-          select: { emailVerified: true },
-        })
-      : null,
-  ]);
+  const proposals = await prisma.proposal.findMany({
+    include: {
+      submittedBy: { select: { name: true, email: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
 
   const rows: ProposalRow[] = proposals.map((proposal) => ({
     id: proposal.id,
@@ -124,28 +114,7 @@ export default async function ProposalsPage() {
           ))}
         </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <ProposalDialog
-            type="RESEARCH"
-            isLoggedIn={Boolean(session)}
-            hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
-          />
-          <ProposalDialog
-            type="PROJECT"
-            isLoggedIn={Boolean(session)}
-            hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
-          />
-          <ProposalDialog
-            type="CONFERENCE"
-            isLoggedIn={Boolean(session)}
-            hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
-          />
-          <ProposalDialog
-            type="JOURNAL"
-            isLoggedIn={Boolean(session)}
-            hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
-          />
-        </div>
+        <div />
       </div>
 
       <ProposalsTable rows={rows} isAdmin deleteAction={deleteProposal} />

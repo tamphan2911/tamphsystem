@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   ArrowLeft,
   AtSign,
@@ -10,7 +10,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { prisma } from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
+import { auth } from "../../../../../auth";
 import {
   SubmissionsTable,
   type SubmissionRow,
@@ -90,6 +91,12 @@ export default async function AccountDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+    []) as Role[];
+  if (!userId) redirect("/login");
+  const isAdmin = roles.includes(Role.ADMIN);
   const account = await prisma.publisherAccount.findUnique({
     where: { id },
     include: {
@@ -110,13 +117,23 @@ export default async function AccountDetailPage({
         orderBy: { submittedAt: "desc" },
       },
       tasks: {
-        include: { project: true },
+        include: {
+          project: true,
+          assignments: { select: { userId: true } },
+        },
         orderBy: [{ createdAt: "desc" }],
       },
     },
   });
 
   if (!account) notFound();
+  const hasUnfinishedAssignedTask = account.tasks.some(
+    (task) =>
+      task.status !== ResearchTaskStatus.COMPLETED &&
+      task.status !== ResearchTaskStatus.REVOKED &&
+      task.assignments.some((assignment) => assignment.userId === userId),
+  );
+  if (!isAdmin && !hasUnfinishedAssignedTask) redirect("/401");
 
   const submissionRows: SubmissionRow[] = account.submissions.map(
     (submission) => ({

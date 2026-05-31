@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ExternalLink, Globe2, Landmark, MapPin } from "lucide-react";
+import { redirect } from "next/navigation";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import {
@@ -136,6 +137,7 @@ export default async function FundingInstitutionsPage() {
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
+  if (!isAdmin) redirect("/401");
 
   await ensureDemoFundingInstitutions();
   await ensureFunderCodes();
@@ -182,9 +184,7 @@ export default async function FundingInstitutionsPage() {
               <th className="w-28 px-3 py-3">Country</th>
               <th className="w-20 px-3 py-3 text-center">Projects</th>
               <th className="w-16 px-3 py-3 text-center">Web</th>
-              {isAdmin && (
-                <th className="w-14 px-3 py-3 text-center">Edit</th>
-              )}
+              {isAdmin && <th className="w-14 px-3 py-3 text-center">Edit</th>}
               {isAdmin && (
                 <th className="w-14 px-3 py-3 text-center">Delete</th>
               )}

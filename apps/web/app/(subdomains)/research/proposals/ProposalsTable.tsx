@@ -315,7 +315,11 @@ export function ProposalsTable({
             {pagination.pagedRows.map((proposal) => (
               <tr
                 key={proposal.id}
-                className="group align-top transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                className={`group align-top transition ${
+                  proposal.status === "NEW"
+                    ? "bg-amber-50/70 ring-1 ring-inset ring-amber-100 hover:bg-amber-50 dark:bg-amber-950/20 dark:ring-amber-900/60 dark:hover:bg-amber-950/30"
+                    : "hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                }`}
               >
                 <td className="px-3 py-3 align-top">
                   <Link href={`/proposals/${proposal.id}`}>
