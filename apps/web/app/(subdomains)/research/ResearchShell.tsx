@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -112,43 +113,6 @@ function isResearchModalOverlay(element: HTMLElement) {
   );
 }
 
-function ResearchHubMark({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 64 64"
-      aria-hidden="true"
-      className={className}
-      fill="none"
-    >
-      <path
-        d="M15 56V9"
-        stroke="#1d4ed8"
-        strokeLinecap="round"
-        strokeWidth="12"
-      />
-      <path
-        d="M15 10h24c8.1 0 13.8 5.4 13.8 12.9S47.1 36 39 36H15"
-        stroke="#38bdf8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="9"
-      />
-      <path
-        d="M16 36h19"
-        stroke="#f59e0b"
-        strokeLinecap="round"
-        strokeWidth="9"
-      />
-      <path
-        d="M35 36 52 56"
-        stroke="#10b981"
-        strokeLinecap="round"
-        strokeWidth="10"
-      />
-    </svg>
-  );
-}
-
 export function ResearchShell({
   children,
   email,
@@ -243,7 +207,13 @@ export function ResearchShell({
                 collapsed ? "w-0 scale-75 opacity-0" : "opacity-100"
               }`}
             >
-              <ResearchHubMark className="h-10 w-10 drop-shadow-sm" />
+              <Image
+                src="/research-logo.png"
+                alt=""
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-full object-cover shadow-sm"
+              />
             </div>
             <div
               className={`min-w-0 overflow-hidden transition-all duration-300 ${collapsed ? "w-0 opacity-0" : "w-44 opacity-100"}`}

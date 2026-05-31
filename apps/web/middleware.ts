@@ -17,10 +17,15 @@ export default auth((req) => {
     .replace(`.localhost:3000`, "");
 
   if (url.pathname === "/favicon.ico" && currentHost === "research") {
-    return NextResponse.rewrite(new URL("/research-favicon.svg?v=20260531r3", req.url));
+    return NextResponse.rewrite(new URL("/research-favicon.png?v=20260531a1", req.url));
   }
 
-  if (url.pathname === "/research-favicon.svg" || url.pathname === "/icon.svg") {
+  if (
+    url.pathname === "/research-favicon.png" ||
+    url.pathname === "/research-logo.png" ||
+    url.pathname === "/research-favicon.svg" ||
+    url.pathname === "/icon.svg"
+  ) {
     return NextResponse.next();
   }
 
