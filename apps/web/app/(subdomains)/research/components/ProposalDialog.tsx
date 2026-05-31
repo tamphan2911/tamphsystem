@@ -47,6 +47,8 @@ const areaClass =
   "min-h-28 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
 const labelClass =
   "grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200";
+const proposalButtonClass =
+  "inline-flex cursor-pointer items-center gap-2 rounded-xl border border-sky-200 bg-sky-100/80 px-4 py-2.5 text-sm font-bold text-sky-800 shadow-sm shadow-sky-900/5 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-md hover:shadow-sky-900/10 focus:outline-none focus:ring-4 focus:ring-sky-200/70 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm dark:border-sky-700/60 dark:bg-sky-900/35 dark:text-sky-100 dark:hover:border-sky-500/70 dark:hover:bg-sky-800/55 dark:hover:text-white dark:hover:shadow-black/25 dark:focus:ring-sky-700/35";
 
 export function ProposalDialog({
   type,
@@ -83,13 +85,6 @@ export function ProposalDialog({
       : isJournal
         ? BookOpen
         : Lightbulb;
-  const accentClass = isProject
-    ? "border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100 dark:border-violet-800/70 dark:bg-violet-950/40 dark:text-violet-200"
-    : isConference
-      ? "border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 dark:border-blue-800/70 dark:bg-blue-950/40 dark:text-blue-200"
-      : isJournal
-        ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200"
-        : "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200";
   const iconClass = isProject
     ? "bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-200"
     : isConference
@@ -123,7 +118,7 @@ export function ProposalDialog({
       <button
         type="button"
         onClick={openDialog}
-        className={`inline-flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${accentClass}`}
+        className={proposalButtonClass}
       >
         <Icon className="h-4 w-4" />
         {buttonLabel}
@@ -337,7 +332,7 @@ export function ProposalDialog({
               <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
                 <button
                   disabled={uploadDisabled}
-                  className={`inline-flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 ${accentClass}`}
+                  className={proposalButtonClass}
                 >
                   {uploadDisabled ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
