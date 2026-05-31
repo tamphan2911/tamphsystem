@@ -77,10 +77,15 @@ const navItems = [
   },
 ];
 
-const adminLinks = [
-  { href: "https://tamph.com", label: "Portfolio", icon: BriefcaseBusiness },
-  { href: "https://learn.tamph.com", label: "Learn", icon: GraduationCap },
-  { href: "https://admin.tamph.com", label: "Admin", icon: SlidersHorizontal },
+const hubLinks = [
+  { href: "/portfolio", label: "Portfolio", icon: BriefcaseBusiness },
+  { href: "/learn", label: "Learn", icon: GraduationCap },
+  {
+    href: "https://admin.tamph.com",
+    label: "Admin",
+    icon: SlidersHorizontal,
+    adminOnly: true,
+  },
 ];
 
 const sidebarStateKey = "research-sidebar-collapsed";
@@ -281,9 +286,10 @@ export function ResearchShell({
               ))}
             </div>
             <div className="hidden min-w-0 items-center gap-2 lg:flex">
-              {isAdmin && (
-                <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800/80">
-                  {adminLinks.map((item) => (
+              <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800/80">
+                {hubLinks
+                  .filter((item) => !("adminOnly" in item) || isAdmin)
+                  .map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
@@ -293,8 +299,7 @@ export function ResearchShell({
                       {item.label}
                     </Link>
                   ))}
-                </div>
-              )}
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <ResearchNotificationBell enabled={Boolean(email)} />

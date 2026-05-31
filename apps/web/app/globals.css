@@ -69,6 +69,16 @@ body {
   }
 }
 
+@keyframes hubFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-1deg);
+  }
+  50% {
+    transform: translate3d(0, -1rem, 0) rotate(1deg);
+  }
+}
+
 button,
 [role="button"],
 summary,
