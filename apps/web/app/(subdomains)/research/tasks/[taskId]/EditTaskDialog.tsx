@@ -60,6 +60,9 @@ type SearchPanelItem = {
 
 const inputClass =
   "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+const finishedResearchStages = new Set(["ACCEPTED", "PUBLISHED"]);
+const closedReviewStatuses = new Set(["SUBMITTED", "DECLINED", "CANCELLED"]);
+const closedProjectStatuses = new Set(["COMPLETED"]);
 
 function modeFromTaskType(taskType: string): TaskMode {
   if (taskType === "SUBMIT_RESEARCH" || taskType === "SUBMIT_CONFERENCE") {
@@ -84,12 +87,30 @@ function modeLabel(mode: TaskMode) {
   return "Other";
 }
 
+function researchMatchesMode(project: TaskResearchOption, mode: TaskMode) {
+  if (mode === "submit") return !finishedResearchStages.has(project.stage);
+  if (mode === "production") return project.stage === "PRODUCTION";
+  return true;
+}
+
 function detailForFailure(reason?: string) {
   if (reason === "PRODUCTION_INCOMPLETE") {
     return "Complete the production timeline before assigning a submission task.";
   }
   if (reason === "MISSING_ASSOCIATION") {
     return "Choose the required research, venue, review, or project before saving this task.";
+  }
+  if (reason === "RESEARCH_ALREADY_FINISHED") {
+    return "Choose research that is not accepted or published yet.";
+  }
+  if (reason === "RESEARCH_PRODUCTION_COMPLETE") {
+    return "Choose research that has not finished the production timeline.";
+  }
+  if (reason === "REVIEW_CLOSED") {
+    return "Choose a review that is not submitted, declined, or cancelled.";
+  }
+  if (reason === "PROJECT_CLOSED") {
+    return "Choose a project that is not completed.";
   }
   if (reason === "INACTIVE_RESEARCH_ASSIGNEE") {
     return "Choose only users who have activated their research-site account.";
@@ -185,13 +206,14 @@ export function EditTaskDialog({
     if (!needle) return [];
     return researchOptions
       .filter((project) => {
+        if (!researchMatchesMode(project, mode)) return false;
         return [project.title, project.code, project.stage, project.id]
           .join(" ")
           .toLowerCase()
           .includes(needle);
       })
       .slice(0, 10);
-  }, [researchOptions, researchQuery]);
+  }, [mode, researchOptions, researchQuery]);
 
   const filteredVenues = useMemo(() => {
     const needle = venueQuery.trim().toLowerCase();
@@ -211,6 +233,7 @@ export function EditTaskDialog({
     if (!needle) return [];
     return reviewOptions
       .filter((review) => {
+        if (closedReviewStatuses.has(review.status)) return false;
         return [review.title, review.journal, review.status, review.id]
           .join(" ")
           .toLowerCase()
@@ -224,6 +247,7 @@ export function EditTaskDialog({
     if (!needle) return [];
     return organizedProjectOptions
       .filter((project) => {
+        if (closedProjectStatuses.has(project.status)) return false;
         return [project.title, project.code, project.status, project.id]
           .join(" ")
           .toLowerCase()
@@ -334,17 +358,28 @@ export function EditTaskDialog({
   }
 
   const needsResearch = mode === "submit" || mode === "production";
+  const selectedResearchMatchesMode =
+    !needsResearch ||
+    (selectedResearch ? researchMatchesMode(selectedResearch, mode) : false);
   const needsVenue = mode === "submit";
   const needsJournalAccount = selectedVenue?.kind === "journal";
   const needsReview = mode === "review";
+  const selectedReviewIsOpen =
+    !needsReview ||
+    (selectedReview ? !closedReviewStatuses.has(selectedReview.status) : false);
   const needsOrganizedProject = mode === "project";
+  const selectedOrganizedProjectIsOpen =
+    !needsOrganizedProject ||
+    (selectedOrganizedProject
+      ? !closedProjectStatuses.has(selectedOrganizedProject.status)
+      : false);
   const canSubmit =
     selectedIds.length > 0 &&
-    (!needsResearch || Boolean(selectedResearch)) &&
+    selectedResearchMatchesMode &&
     (!needsVenue || Boolean(selectedVenue)) &&
     (!needsJournalAccount || Boolean(selectedAccountId)) &&
-    (!needsReview || Boolean(selectedReview)) &&
-    (!needsOrganizedProject || Boolean(selectedOrganizedProject));
+    selectedReviewIsOpen &&
+    selectedOrganizedProjectIsOpen;
 
   return (
     <>

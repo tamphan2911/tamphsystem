@@ -348,6 +348,73 @@ async function researchProductionIsComplete(projectId: string) {
   );
 }
 
+async function taskAssociationIsSelectable({
+  taskType,
+  projectId,
+  reviewId,
+  organizedProjectId,
+}: {
+  taskType: ResearchTaskType;
+  projectId: string | null;
+  reviewId: string | null;
+  organizedProjectId: string | null;
+}) {
+  if (
+    (taskType === ResearchTaskType.SUBMIT_RESEARCH ||
+      taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
+      taskType === ResearchTaskType.PRODUCTION) &&
+    projectId
+  ) {
+    const project = await prisma.researchProject.findUnique({
+      where: { id: projectId },
+      select: { stage: true },
+    });
+    if (!project) return "MISSING_ASSOCIATION";
+    if (
+      taskType === ResearchTaskType.PRODUCTION &&
+      project.stage !== ResearchStage.PRODUCTION
+    ) {
+      return "RESEARCH_PRODUCTION_COMPLETE";
+    }
+    if (
+      (taskType === ResearchTaskType.SUBMIT_RESEARCH ||
+        taskType === ResearchTaskType.SUBMIT_CONFERENCE) &&
+      (project.stage === ResearchStage.ACCEPTED ||
+        project.stage === ResearchStage.PUBLISHED)
+    ) {
+      return "RESEARCH_ALREADY_FINISHED";
+    }
+  }
+
+  if (taskType === ResearchTaskType.REVIEW && reviewId) {
+    const review = await prisma.academicReview.findUnique({
+      where: { id: reviewId },
+      select: { status: true },
+    });
+    if (!review) return "MISSING_ASSOCIATION";
+    if (["SUBMITTED", "DECLINED", "CANCELLED"].includes(review.status)) {
+      return "REVIEW_CLOSED";
+    }
+  }
+
+  if (
+    (taskType === ResearchTaskType.PROJECT_PRODUCTION ||
+      taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED) &&
+    organizedProjectId
+  ) {
+    const project = await prisma.organizedProject.findUnique({
+      where: { id: organizedProjectId },
+      select: { status: true },
+    });
+    if (!project) return "MISSING_ASSOCIATION";
+    if (project.status === OrganizedProjectStatus.COMPLETED) {
+      return "PROJECT_CLOSED";
+    }
+  }
+
+  return null;
+}
+
 async function generateTaskCode() {
   const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
   for (let attempt = 0; attempt < 8; attempt += 1) {
@@ -2456,6 +2523,7 @@ export async function createResearchTask(formData: FormData) {
   }
 
   const taskType = taskTypeFromForm(formData.get("taskType"));
+  if (!taskType) return { ok: false, reason: "MISSING_ASSOCIATION" };
   const projectId = optionalString(formData.get("projectId"));
   const organizedProjectId = optionalString(formData.get("organizedProjectId"));
   const journalId = optionalString(formData.get("journalId"));
@@ -2479,6 +2547,16 @@ export async function createResearchTask(formData: FormData) {
 
   if (projectId && (await researchContentIsLocked(projectId))) {
     return { ok: false, reason: "RESEARCH_LOCKED" };
+  }
+
+  const associationBlockReason = await taskAssociationIsSelectable({
+    taskType,
+    projectId,
+    reviewId,
+    organizedProjectId,
+  });
+  if (associationBlockReason) {
+    return { ok: false, reason: associationBlockReason };
   }
 
   if (accountId && taskType === ResearchTaskType.SUBMIT_RESEARCH) {
@@ -2627,6 +2705,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   }
 
   const taskType = taskTypeFromForm(formData.get("taskType"));
+  if (!taskType) return { ok: false, reason: "MISSING_ASSOCIATION" };
   const projectId = optionalString(formData.get("projectId"));
   const organizedProjectId = optionalString(formData.get("organizedProjectId"));
   const journalId = optionalString(formData.get("journalId"));
@@ -2665,6 +2744,16 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     (await researchContentIsLocked(effectiveProjectId))
   ) {
     return { ok: false, reason: "RESEARCH_LOCKED" };
+  }
+
+  const associationBlockReason = await taskAssociationIsSelectable({
+    taskType,
+    projectId: effectiveProjectId,
+    reviewId,
+    organizedProjectId: effectiveOrganizedProjectId,
+  });
+  if (associationBlockReason) {
+    return { ok: false, reason: associationBlockReason };
   }
 
   if (accountId && taskType === ResearchTaskType.SUBMIT_RESEARCH) {

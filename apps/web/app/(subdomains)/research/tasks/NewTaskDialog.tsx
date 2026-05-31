@@ -77,6 +77,9 @@ type SearchPanelItem = {
 
 const inputClass =
   "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+const finishedResearchStages = new Set(["ACCEPTED", "PUBLISHED"]);
+const closedReviewStatuses = new Set(["SUBMITTED", "DECLINED", "CANCELLED"]);
+const closedProjectStatuses = new Set(["COMPLETED"]);
 
 function modeLabel(mode: TaskMode) {
   if (mode === "submit") return "Submit";
@@ -84,6 +87,12 @@ function modeLabel(mode: TaskMode) {
   if (mode === "review") return "Review";
   if (mode === "project") return "Project";
   return "Other";
+}
+
+function researchMatchesMode(project: TaskResearchOption, mode: TaskMode) {
+  if (mode === "submit") return !finishedResearchStages.has(project.stage);
+  if (mode === "production") return project.stage === "PRODUCTION";
+  return true;
 }
 
 export function NewTaskDialog({
@@ -144,13 +153,14 @@ export function NewTaskDialog({
     if (!needle) return [];
     return researchOptions
       .filter((project) => {
+        if (!researchMatchesMode(project, mode)) return false;
         return [project.title, project.code, project.stage, project.id]
           .join(" ")
           .toLowerCase()
           .includes(needle);
       })
       .slice(0, 10);
-  }, [researchOptions, researchQuery]);
+  }, [mode, researchOptions, researchQuery]);
 
   const filteredVenues = useMemo(() => {
     const needle = venueQuery.trim().toLowerCase();
@@ -216,6 +226,7 @@ export function NewTaskDialog({
     if (!needle) return [];
     return reviewOptions
       .filter((review) => {
+        if (closedReviewStatuses.has(review.status)) return false;
         return [review.title, review.journal, review.status, review.id]
           .join(" ")
           .toLowerCase()
@@ -229,6 +240,7 @@ export function NewTaskDialog({
     if (!needle) return [];
     return organizedProjectOptions
       .filter((project) => {
+        if (closedProjectStatuses.has(project.status)) return false;
         return [project.title, project.code, project.status, project.id]
           .join(" ")
           .toLowerCase()
@@ -301,13 +313,21 @@ export function NewTaskDialog({
               ? "Complete the production timeline before assigning a submission task."
               : result?.reason === "MISSING_ASSOCIATION"
                 ? "Choose the required research, venue, review, or project before creating this task."
-                : result?.reason === "INACTIVE_RESEARCH_ASSIGNEE"
-                  ? "Choose only users who have activated their research-site account."
-                  : result?.reason === "ACTIVE_SUBMISSION_TASK_EXISTS"
-                    ? "An active submission task already exists for this research and venue."
-                    : result?.reason === "ACCOUNT_NOT_FOR_JOURNAL"
-                      ? "Choose an account that belongs to the selected journal."
-                      : "Please check the task details and try again.",
+                : result?.reason === "RESEARCH_ALREADY_FINISHED"
+                  ? "Choose research that is not accepted or published yet."
+                  : result?.reason === "RESEARCH_PRODUCTION_COMPLETE"
+                    ? "Choose research that has not finished the production timeline."
+                    : result?.reason === "REVIEW_CLOSED"
+                      ? "Choose a review that is not submitted, declined, or cancelled."
+                      : result?.reason === "PROJECT_CLOSED"
+                        ? "Choose a project that is not completed."
+                        : result?.reason === "INACTIVE_RESEARCH_ASSIGNEE"
+                          ? "Choose only users who have activated their research-site account."
+                          : result?.reason === "ACTIVE_SUBMISSION_TASK_EXISTS"
+                            ? "An active submission task already exists for this research and venue."
+                            : result?.reason === "ACCOUNT_NOT_FOR_JOURNAL"
+                              ? "Choose an account that belongs to the selected journal."
+                              : "Please check the task details and try again.",
         });
         return;
       }
@@ -321,17 +341,28 @@ export function NewTaskDialog({
   }
 
   const needsResearch = mode === "submit" || mode === "production";
+  const selectedResearchMatchesMode =
+    !needsResearch ||
+    (selectedResearch ? researchMatchesMode(selectedResearch, mode) : false);
   const needsVenue = mode === "submit";
   const needsJournalAccount = selectedVenue?.kind === "journal";
   const needsReview = mode === "review";
+  const selectedReviewIsOpen =
+    !needsReview ||
+    (selectedReview ? !closedReviewStatuses.has(selectedReview.status) : false);
   const needsOrganizedProject = mode === "project";
+  const selectedOrganizedProjectIsOpen =
+    !needsOrganizedProject ||
+    (selectedOrganizedProject
+      ? !closedProjectStatuses.has(selectedOrganizedProject.status)
+      : false);
   const canSubmit =
     selectedIds.length > 0 &&
-    (!needsResearch || Boolean(selectedResearch)) &&
+    selectedResearchMatchesMode &&
     (!needsVenue || Boolean(selectedVenue)) &&
     (!needsJournalAccount || Boolean(selectedAccountId)) &&
-    (!needsReview || Boolean(selectedReview)) &&
-    (!needsOrganizedProject || Boolean(selectedOrganizedProject));
+    selectedReviewIsOpen &&
+    selectedOrganizedProjectIsOpen;
   const selectedAssigneeItems: SearchPanelItem[] = assignees
     .filter((user) => selectedIds.includes(user.id))
     .map((user) => ({
