@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Research Hub">
-  <path d="M16 56V10" fill="none" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/>
-  <path d="M16 10h23c7.7 0 13 5.1 13 12.2S46.7 34 39 34H16" fill="none" stroke="#38bdf8" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M35 34 52 56" fill="none" stroke="#10b981" stroke-width="10" stroke-linecap="round"/>
-  <path d="M16 34h19" fill="none" stroke="#0ea5e9" stroke-width="10" stroke-linecap="round"/>
+  <path d="M15 56V9" fill="none" stroke="#1d4ed8" stroke-width="12" stroke-linecap="round"/>
+  <path d="M15 10h24c8.1 0 13.8 5.4 13.8 12.9S47.1 36 39 36H15" fill="none" stroke="#38bdf8" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M16 36h19" fill="none" stroke="#f59e0b" stroke-width="9" stroke-linecap="round"/>
+  <path d="M35 36 52 56" fill="none" stroke="#10b981" stroke-width="10" stroke-linecap="round"/>
 </svg>

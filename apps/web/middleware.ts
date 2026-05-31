@@ -17,7 +17,7 @@ export default auth((req) => {
     .replace(`.localhost:3000`, "");
 
   if (url.pathname === "/favicon.ico" && currentHost === "research") {
-    return NextResponse.rewrite(new URL("/research-favicon.svg?v=20260531r2", req.url));
+    return NextResponse.rewrite(new URL("/research-favicon.svg?v=20260531r3", req.url));
   }
 
   if (url.pathname === "/research-favicon.svg" || url.pathname === "/icon.svg") {
