@@ -1892,8 +1892,30 @@ export async function deleteResearchProject(projectId: string) {
   });
   if (!project) return;
 
-  await prisma.researchProject.delete({
-    where: { id: projectId },
+  await prisma.$transaction(async (tx) => {
+    const taskIds = await tx.researchTask.findMany({
+      where: { projectId },
+      select: { id: true },
+    });
+    await tx.researchNotification.deleteMany({
+      where: { entityType: "research", entityId: projectId },
+    });
+    if (taskIds.length > 0) {
+      await tx.researchNotification.deleteMany({
+        where: {
+          entityType: "task",
+          entityId: { in: taskIds.map((task) => task.id) },
+        },
+      });
+    }
+    await tx.researchTask.deleteMany({ where: { projectId } });
+    await tx.researchProject.update({
+      where: { id: projectId },
+      data: { authors: { set: [] } },
+    });
+    await tx.researchProject.delete({
+      where: { id: projectId },
+    });
   });
 
   revalidatePath("/projects");
@@ -2013,20 +2035,36 @@ export async function deleteJournal(journalId: string) {
     where: { id: journalId },
     select: {
       name: true,
-      _count: { select: { submissions: true, suggestions: true } },
+      _count: {
+        select: { submissions: true, suggestions: true, reviews: true },
+      },
     },
   });
 
   if (!journal) return;
 
-  if (journal._count.submissions > 0 || journal._count.suggestions > 0) {
+  if (
+    journal._count.submissions > 0 ||
+    journal._count.suggestions > 0 ||
+    journal._count.reviews > 0
+  ) {
     throw new Error(
-      "Delete the associated submissions and research links before deleting this journal.",
+      "Delete the associated submissions, research links, and review records before deleting this journal.",
     );
   }
 
-  await prisma.journal.delete({
-    where: { id: journalId },
+  await prisma.$transaction(async (tx) => {
+    await tx.researchTask.updateMany({
+      where: { journalId },
+      data: { journalId: null },
+    });
+    await tx.publisherAccount.updateMany({
+      where: { journalId },
+      data: { journalId: null },
+    });
+    await tx.journal.delete({
+      where: { id: journalId },
+    });
   });
 
   revalidatePath("/journals");
@@ -2288,8 +2326,24 @@ export async function deleteFundingInstitution(institutionId: string) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
 
-  await prisma.fundingInstitution.delete({
+  const institution = await prisma.fundingInstitution.findUnique({
     where: { id: institutionId },
+    select: { id: true },
+  });
+  if (!institution) return;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.researchProject.updateMany({
+      where: { fundingInstitutionId: institutionId },
+      data: { fundingInstitutionId: null },
+    });
+    await tx.organizedProject.updateMany({
+      where: { fundingInstitutionId: institutionId },
+      data: { fundingInstitutionId: null },
+    });
+    await tx.fundingInstitution.delete({
+      where: { id: institutionId },
+    });
   });
 
   revalidatePath("/funding-institutions");

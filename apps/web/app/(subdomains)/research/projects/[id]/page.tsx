@@ -256,10 +256,6 @@ export default async function ProjectDetailPage({
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
-  const canManageResearch =
-    isAdmin ||
-    roles.includes(Role.ASSISTANT) ||
-    roles.includes(Role.CHIEF_ASSISTANT);
   const [
     project,
     journals,
@@ -362,6 +358,9 @@ export default async function ProjectDetailPage({
   ]);
 
   if (!project) notFound();
+  const hasAssignedResearchTask = project.tasks.some((task) =>
+    task.assignments.some((assignment) => assignment.userId === userId),
+  );
   const hasUnfinishedAssignedResearchTask = project.tasks.some(
     (task) =>
       task.status !== ResearchTaskStatus.COMPLETED &&
@@ -387,10 +386,10 @@ export default async function ProjectDetailPage({
       ),
     );
   if (
-    !canManageResearch &&
+    !isAdmin &&
     !isProjectAuthor &&
     !isRegistrationUser &&
-    !hasUnfinishedAssignedResearchTask
+    !hasAssignedResearchTask
   ) {
     notFound();
   }

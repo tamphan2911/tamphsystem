@@ -298,7 +298,7 @@ export default async function ProjectsDashboard() {
     isAdmin ||
     roles.includes(Role.ASSISTANT) ||
     roles.includes(Role.CHIEF_ASSISTANT);
-  const projectWhere = canManageResearch
+  const projectWhere = isAdmin
     ? {}
     : {
         OR: [

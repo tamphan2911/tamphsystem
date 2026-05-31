@@ -91,9 +91,9 @@ function DeleteJournalButton({
         }}
       >
         <p>
-          Submission records, reviews, and suggested venue links for this journal
-          will be deleted. Publisher accounts and tasks will stay in the system,
-          but they will no longer be linked to this journal.
+          This is only allowed when the journal has no submissions, reviews, or
+          suggested research links. Publisher accounts and tasks will stay in
+          the system, but they will no longer be linked to this journal.
         </p>
         <p className="font-semibold text-rose-700 dark:text-rose-300">
           This action cannot be undone from this screen.

@@ -14,6 +14,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+import { ResearchConfirmDialog } from "../../components/ResearchConfirmDialog";
 
 export type AuthorOption = {
   id: string;
@@ -312,42 +313,20 @@ export function AuthorsPicker({
         )}
       </div>
 
-      {warningOpen && (
-        <div className="fixed inset-0 z-[90] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-2xl dark:border-amber-900/70 dark:bg-slate-900">
-            <div className="flex items-start gap-3 border-b border-amber-100 px-5 py-4 dark:border-amber-900/50">
-              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300">
-                <ShieldAlert className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-base font-bold text-slate-950 dark:text-white">
-                  At least one author is required
-                </h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                  This research must keep one author in the author list. Add another author before removing this one.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setWarningOpen(false)}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                aria-label="Close author warning"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="flex justify-end px-5 py-4">
-              <button
-                type="button"
-                onClick={() => setWarningOpen(false)}
-                className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
-              >
-                Got it
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ResearchConfirmDialog
+        open={warningOpen}
+        tone="warning"
+        title="At least one author is required"
+        confirmLabel="Got it"
+        icon={<ShieldAlert className="h-5 w-5" aria-hidden="true" />}
+        onCancel={() => setWarningOpen(false)}
+        onConfirm={() => setWarningOpen(false)}
+      >
+        <p>
+          This research must keep one author in the author list. Add another
+          author before removing this one.
+        </p>
+      </ResearchConfirmDialog>
     </>
   );
 }

@@ -42,7 +42,7 @@ export function ResearchToastProvider({ children }: { children: ReactNode }) {
                   "The update is saved and visible in the current research workspace.",
               };
         setToasts((current) => [...current, { id, tone: "success", ...toast }]);
-        window.setTimeout(() => dismissToast(id), 3600);
+        window.setTimeout(() => dismissToast(id), 6000);
       },
       showError(message = "Update failed") {
         const id = Date.now();
@@ -59,7 +59,7 @@ export function ResearchToastProvider({ children }: { children: ReactNode }) {
                   "Please check the information and try again.",
               };
         setToasts((current) => [...current, { id, tone: "error", ...toast }]);
-        window.setTimeout(() => dismissToast(id), 4200);
+        window.setTimeout(() => dismissToast(id), 6000);
       },
     }),
     [],
