@@ -252,7 +252,7 @@ async function sendTaskEmail({
               <tr><td style="padding:24px 30px;">
                 <p style="margin:0 0 8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#64748b;">Task</p>
                 <p style="margin:0 0 16px;font-size:15px;font-weight:700;line-height:1.6;color:#0f172a;">${escapeHtml(taskTitle)}</p>
-                ${detail ? `<p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#475569;">${escapeHtml(detail)}</p>` : ""}
+                ${detail ? `<p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#475569;white-space:pre-line;">${escapeHtml(detail)}</p>` : ""}
                 <a href="${taskUrl}" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 18px;border-radius:12px;">${escapeHtml(actionLabel ?? "Open task")}</a>
               </td></tr>
             </table>
@@ -261,6 +261,16 @@ async function sendTaskEmail({
       </div>
     `,
   });
+}
+
+function taskStatusEmailLabel(status: ResearchTaskStatus) {
+  if (status === ResearchTaskStatus.IN_PROGRESS) return "In progress";
+  if (status === ResearchTaskStatus.NEED_CLARIFY) return "Need clarification";
+  if (status === ResearchTaskStatus.CHECKING)
+    return "Waiting for assigner check";
+  if (status === ResearchTaskStatus.COMPLETED) return "Completed";
+  if (status === ResearchTaskStatus.REVOKED) return "Revoked";
+  return "Open";
 }
 
 async function sendProposalEmail({
@@ -3954,6 +3964,142 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     taskId,
     actionLabel: "View task",
   });
+}
+
+export async function sendTaskReminderEmail(
+  taskId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  const requestedAssigneeIds = Array.from(
+    new Set(
+      formData
+        .getAll("assigneeIds")
+        .filter(
+          (value): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        ),
+    ),
+  );
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      status: true,
+      dueDate: true,
+      createdById: true,
+      createdBy: { select: { name: true, email: true } },
+      assignments: {
+        select: {
+          userId: true,
+          user: { select: { name: true, email: true } },
+        },
+      },
+    },
+  });
+
+  if (!task) {
+    return {
+      ok: false,
+      title: "Task not found",
+      detail: "This task could not be found. Refresh the page and try again.",
+    };
+  }
+
+  const isAdmin = user.roles.includes(Role.ADMIN);
+  const isAssigner = task.createdById === user.id;
+  if (!isAdmin && !isAssigner) redirect("/401");
+
+  if (task.status === ResearchTaskStatus.COMPLETED) {
+    return {
+      ok: false,
+      title: "Reminder not available",
+      detail:
+        "This task is already completed, so assignees do not need a finish reminder.",
+    };
+  }
+  if (task.status === ResearchTaskStatus.REVOKED) {
+    return {
+      ok: false,
+      title: "Reminder not available",
+      detail:
+        "This task has been revoked. Revoked tasks are no longer active work for assignees.",
+    };
+  }
+  if (task.status === ResearchTaskStatus.CHECKING) {
+    return {
+      ok: false,
+      title: "Reminder not available",
+      detail:
+        "Assignees have already sent this task for checking. The next action is for the assigner to review, approve, or request revision.",
+    };
+  }
+  if (task.status === ResearchTaskStatus.NEED_CLARIFY) {
+    return {
+      ok: false,
+      title: "Reminder not available",
+      detail:
+        "Assignees are waiting for clarification feedback from the assigner. Please answer the clarification request before sending finish reminders.",
+    };
+  }
+
+  const selectedAssignments = task.assignments.filter((assignment) =>
+    requestedAssigneeIds.includes(assignment.userId),
+  );
+
+  if (selectedAssignments.length === 0) {
+    return {
+      ok: false,
+      title: "Choose assignees",
+      detail:
+        "Select at least one assignee who should receive this task reminder email.",
+    };
+  }
+
+  const sender = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { name: true, email: true },
+  });
+  const senderName = sender?.name || sender?.email || "the assigner";
+  const dueLine = task.dueDate
+    ? new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }).format(task.dueDate)
+    : "No due date is set";
+  const detail = [
+    `Current status: ${taskStatusEmailLabel(task.status)}`,
+    `Due date: ${dueLine}`,
+    task.description ? `Task note: ${task.description}` : null,
+    "",
+    `Reminder from ${senderName}: please review the task details and finish the assigned work as soon as possible. If anything is blocking progress, open the task and send a clarification request so the assigner can respond with specific guidance.`,
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n");
+
+  await sendTaskEmail({
+    to: selectedAssignments.map((assignment) => assignment.user.email),
+    subject: `Reminder to finish task: ${task.title}`,
+    heading: "Task completion reminder",
+    intro:
+      "This is a professional reminder from the Research Hub about an active task assigned to you. Please complete the work or communicate any blocker through the task page.",
+    detail,
+    taskTitle: task.title,
+    taskId,
+    actionLabel: "Open task",
+  });
+
+  return {
+    ok: true,
+    title: "Reminder email sent",
+    detail: `Reminder sent to ${selectedAssignments.length} assignee${
+      selectedAssignments.length === 1 ? "" : "s"
+    }.`,
+  };
 }
 
 export async function requestTaskRedo(taskId: string, formData: FormData) {

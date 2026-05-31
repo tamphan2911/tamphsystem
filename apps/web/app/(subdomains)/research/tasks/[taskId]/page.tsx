@@ -21,6 +21,7 @@ import {
   requestTaskClarification,
   requestTaskRedo,
   revokeResearchTask,
+  sendTaskReminderEmail,
 } from "../../actions";
 import { FinishTaskForm } from "./FinishTaskForm";
 import { RevokeTaskForm } from "./RevokeTaskForm";
@@ -31,6 +32,7 @@ import {
   type TaskClarificationItem,
 } from "./TaskClarificationPanel";
 import { TaskReportPanel } from "./TaskReportPanel";
+import { TaskReminderButton } from "./TaskReminderButton";
 
 export const dynamic = "force-dynamic";
 
@@ -362,6 +364,7 @@ export default async function TaskDetailPage({
   const finishAction = finishResearchTask.bind(null, task.id);
   const readyAction = markResearchTaskReadyForCheck.bind(null, task.id);
   const redoAction = requestTaskRedo.bind(null, task.id);
+  const reminderAction = sendTaskReminderEmail.bind(null, task.id);
   const clarificationAction = requestTaskClarification.bind(null, task.id);
   const clarificationAnswerAction = answerTaskClarification.bind(null, task.id);
   const revokeAction = revokeResearchTask.bind(null, task.id);
@@ -395,6 +398,39 @@ export default async function TaskDetailPage({
     !hasOpenMyClarification;
   const canRevoke = !isClosed && (isAdmin || isAssigner);
   const canEdit = !isClosed && isAdmin;
+  const canUseReminder = isAdmin || isAssigner;
+  const reminderBlock =
+    task.assignments.length === 0
+      ? {
+          title: "Reminder not available",
+          detail:
+            "This task does not have any assignees, so there is no one to receive a finish reminder email.",
+        }
+      : task.status === ResearchTaskStatus.COMPLETED
+        ? {
+            title: "Reminder not available",
+            detail:
+              "This task is already completed. Assignees do not need a finish reminder for closed work.",
+          }
+        : task.status === ResearchTaskStatus.REVOKED
+          ? {
+              title: "Reminder not available",
+              detail:
+                "This task has been revoked. Revoked tasks are no longer active work for assignees.",
+            }
+          : task.status === ResearchTaskStatus.CHECKING
+            ? {
+                title: "Reminder not available",
+                detail:
+                  "This task is waiting for the assigner to check the submitted work. The next action belongs to the assigner, not the assignees.",
+              }
+            : task.status === ResearchTaskStatus.NEED_CLARIFY
+              ? {
+                  title: "Reminder not available",
+                  detail:
+                    "Assignees are waiting for clarification feedback from the assigner. Please answer the clarification request before sending finish reminders.",
+                }
+              : null;
   const canAnswerClarification = !isClosed && (isAdmin || isAssigner);
   const reportEnabled = taskAllowsReport(task.taskType);
   const canUploadReport =
@@ -579,31 +615,47 @@ export default async function TaskDetailPage({
               <h1 className="text-lg font-normal tracking-tight text-slate-950 dark:text-white">
                 {task.title}
               </h1>
-              {canEdit && (
-                <EditTaskDialog
-                  task={{
-                    id: task.id,
-                    title: task.title,
-                    description: task.description ?? "",
-                    dueDate: dateInputValue(task.dueDate),
-                    taskType: task.taskType ?? "OTHER",
-                    projectId: task.projectId ?? "",
-                    journalId: task.journalId ?? "",
-                    conferenceId: task.conferenceId ?? "",
-                    reviewId: task.reviewId ?? "",
-                    organizedProjectId: task.organizedProjectId ?? "",
-                    accountId: task.accountId ?? "",
-                    assigneeIds: task.assignments.map(
-                      (assignment) => assignment.userId,
-                    ),
-                  }}
-                  assignees={assignees}
-                  researchOptions={researchOptions}
-                  venueOptions={venueOptions}
-                  accountOptions={accountOptions}
-                  reviewOptions={reviewOptions}
-                  organizedProjectOptions={organizedProjectOptions}
-                />
+              {(canEdit || canUseReminder) && (
+                <span className="inline-flex items-center gap-2">
+                  {canEdit && (
+                    <EditTaskDialog
+                      task={{
+                        id: task.id,
+                        title: task.title,
+                        description: task.description ?? "",
+                        dueDate: dateInputValue(task.dueDate),
+                        taskType: task.taskType ?? "OTHER",
+                        projectId: task.projectId ?? "",
+                        journalId: task.journalId ?? "",
+                        conferenceId: task.conferenceId ?? "",
+                        reviewId: task.reviewId ?? "",
+                        organizedProjectId: task.organizedProjectId ?? "",
+                        accountId: task.accountId ?? "",
+                        assigneeIds: task.assignments.map(
+                          (assignment) => assignment.userId,
+                        ),
+                      }}
+                      assignees={assignees}
+                      researchOptions={researchOptions}
+                      venueOptions={venueOptions}
+                      accountOptions={accountOptions}
+                      reviewOptions={reviewOptions}
+                      organizedProjectOptions={organizedProjectOptions}
+                    />
+                  )}
+                  {canUseReminder && (
+                    <TaskReminderButton
+                      taskTitle={task.title}
+                      action={reminderAction}
+                      block={reminderBlock}
+                      assignees={task.assignments.map((assignment) => ({
+                        id: assignment.userId,
+                        name: assignment.user.name ?? "",
+                        email: assignment.user.email,
+                      }))}
+                    />
+                  )}
+                </span>
               )}
             </div>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
