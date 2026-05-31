@@ -15,6 +15,23 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+
+      try {
+        const target = new URL(url);
+        const allowedHost =
+          target.hostname === "tamph.com" ||
+          target.hostname.endsWith(".tamph.com") ||
+          target.hostname === "localhost" ||
+          target.hostname.endsWith(".localhost") ||
+          target.hostname === "127.0.0.1";
+
+        return allowedHost ? target.toString() : baseUrl;
+      } catch {
+        return baseUrl;
+      }
+    },
     async jwt({ token, user }) {
       if (user) {
         token.roles = (user as any).roles;

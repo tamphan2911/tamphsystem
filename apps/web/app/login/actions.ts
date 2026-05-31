@@ -17,6 +17,48 @@ function loginUrl(params: Record<string, string>) {
   return `/login?${searchParams.toString()}`;
 }
 
+function hostFromHeaders(requestHeaders: Headers) {
+  const forwardedHost = requestHeaders.get("x-forwarded-host");
+  if (forwardedHost) return forwardedHost.split(",")[0]?.trim() ?? null;
+
+  const host = requestHeaders.get("host");
+  if (host) return host;
+
+  const referer = requestHeaders.get("referer");
+  if (!referer) return null;
+
+  try {
+    return new URL(referer).host;
+  } catch {
+    return null;
+  }
+}
+
+function originFromHeaders(requestHeaders: Headers, host: string | null) {
+  const forwardedProto =
+    requestHeaders.get("x-forwarded-proto")?.split(",")[0]?.trim() || null;
+  const referer = requestHeaders.get("referer");
+
+  if (host) {
+    const protocol =
+      forwardedProto ||
+      (host.includes("localhost") || host.startsWith("127.0.0.1")
+        ? "http"
+        : "https");
+    return `${protocol}://${host}`;
+  }
+
+  if (referer) {
+    try {
+      return new URL(referer).origin;
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
 function isResearchHost(host: string | null) {
   return Boolean(
     host?.startsWith("research.") || host?.startsWith("research.localhost"),
@@ -29,15 +71,18 @@ export async function loginUser(formData: FormData) {
     .toLowerCase();
   const password = String(formData.get("password") ?? "");
   const requestHeaders = await headers();
-  const host = requestHeaders.get("host");
+  const host = hostFromHeaders(requestHeaders);
+  const origin = originFromHeaders(requestHeaders, host);
   const callbackPath = safeRedirectPath(formData.get("callbackUrl"));
-  const redirectTo = isResearchHost(host) ? "/projects" : callbackPath;
+  const isResearch = isResearchHost(host);
+  const redirectPath = isResearch ? "/projects" : callbackPath;
+  const redirectTo = isResearch && origin ? `${origin}/projects` : redirectPath;
 
   if (!email || !password) {
     redirect(
       loginUrl({
         warning: "missing",
-        callbackUrl: redirectTo,
+        callbackUrl: redirectPath,
       }),
     );
   }
@@ -52,7 +97,7 @@ export async function loginUser(formData: FormData) {
         warning:
           turnstileResult.reason === "config" ? "security_config" : "security",
         email,
-        callbackUrl: redirectTo,
+        callbackUrl: redirectPath,
       }),
     );
   }
@@ -67,7 +112,7 @@ export async function loginUser(formData: FormData) {
       loginUrl({
         warning: "unverified",
         email: user.email,
-        callbackUrl: redirectTo,
+        callbackUrl: redirectPath,
       }),
     );
   }

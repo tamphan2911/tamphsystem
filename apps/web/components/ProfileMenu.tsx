@@ -17,6 +17,12 @@ export function ProfileMenu({
   profileHref = "/profile",
   adminHref = "https://admin.tamph.com",
 }: ProfileMenuProps) {
+  function signOutToCurrentLogin() {
+    const origin =
+      typeof window === "undefined" ? "" : window.location.origin;
+    void signOut({ callbackUrl: `${origin}/login` });
+  }
+
   return (
     <div className="group relative">
       <button
@@ -50,7 +56,7 @@ export function ProfileMenu({
           </Link>
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={signOutToCurrentLogin}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
           >
             <LogOut className="h-4 w-4" />
