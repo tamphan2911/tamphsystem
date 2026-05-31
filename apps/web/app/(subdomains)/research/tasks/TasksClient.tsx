@@ -374,15 +374,15 @@ export function TasksClient({
           </div>
         </div>
 
-        <div className="overflow-hidden">
+        <div className="overflow-x-auto">
           <table className="w-full table-fixed text-left">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
-                <th className="w-[6.5rem] px-3 py-3">Task ID</th>
+                <th className="w-[6rem] px-3 py-3">Task ID</th>
                 <th className="px-3 py-3">Task</th>
-                <th className="w-[7.5rem] px-3 py-3">Status</th>
-                <th className="w-[10rem] px-3 py-3">Assignees</th>
-                <th className="w-[8.5rem] px-3 py-3">Time</th>
+                <th className="w-[7rem] px-3 py-3">Status</th>
+                <th className="w-[9.5rem] px-3 py-3">Assignees</th>
+                <th className="w-[11rem] px-3 py-3">Time</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -436,14 +436,14 @@ export function TasksClient({
                       {status.dateLines.map((line) => (
                         <p
                           key={line}
-                          className="whitespace-nowrap text-xs font-medium text-slate-500 dark:text-slate-400"
+                          className="break-words text-xs font-medium leading-5 text-slate-500 dark:text-slate-400"
                         >
                           {line}
                         </p>
                       ))}
                       {status.detail && (
                         <p
-                          className={`whitespace-nowrap text-xs font-semibold ${status.detailClassName}`}
+                          className={`max-w-full break-words text-xs font-semibold leading-5 ${status.detailClassName}`}
                         >
                           {status.detail}
                         </p>
