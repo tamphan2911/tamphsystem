@@ -10,10 +10,13 @@ export const config = {
 
 export default auth((req) => {
   const url = req.nextUrl;
-  const hostname = req.headers.get("host") || "";
+  const hostname =
+    req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
   const isLoggedIn = !!req.auth?.user;
-  let currentHost = hostname
+  const normalizedHostname = hostname.split(",")[0]?.trim().split(":")[0] ?? "";
+  let currentHost = normalizedHostname
     .replace(`.tamph.com`, "")
+    .replace(`.localhost`, "")
     .replace(`.localhost:3000`, "");
 
   if (url.pathname === "/favicon.ico" && currentHost === "research") {
@@ -44,7 +47,10 @@ export default auth((req) => {
   }
 
   // 2. Root Domain Routing
-  if (hostname === "tamph.com" || hostname === "localhost:3000") {
+  if (
+    normalizedHostname === "tamph.com" ||
+    normalizedHostname === "localhost"
+  ) {
     // Block direct access to subdomains from the root URL path
     if (
       url.pathname.startsWith("/admin") ||

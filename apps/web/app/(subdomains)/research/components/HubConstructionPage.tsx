@@ -1,6 +1,4 @@
-"use client";
-
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { ArrowLeft, Construction, Rocket } from "lucide-react";
 
@@ -38,11 +36,10 @@ export function HubConstructionPage({
   accent,
   icon: Icon,
 }: HubConstructionPageProps) {
-  const router = useRouter();
   const colors = accentClasses[accent];
 
   return (
-    <main className="relative min-h-[calc(100vh-5rem)] overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 px-5 py-10 text-white shadow-2xl shadow-slate-950/30 sm:px-8 lg:px-10">
+    <main className="relative min-h-screen overflow-hidden bg-slate-950 px-5 py-10 text-white sm:px-8 lg:px-10">
       <div className="pointer-events-none absolute inset-0 opacity-50">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.12)_1px,transparent_1px)] bg-[size:44px_44px]" />
         <div className="absolute left-[8%] top-[18%] h-px w-32 rotate-12 bg-slate-500/40" />
@@ -67,14 +64,13 @@ export function HubConstructionPage({
           <p className={`mt-4 max-w-2xl text-sm font-bold ${colors.glow}`}>
             {punchline}
           </p>
-          <button
-            type="button"
-            onClick={() => router.back()}
+          <Link
+            href="/"
             className={`mt-8 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-black shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl ${colors.button}`}
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to previous page
-          </button>
+            Back to Research Hub
+          </Link>
         </section>
 
         <aside className="relative min-h-80">

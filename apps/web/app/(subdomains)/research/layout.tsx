@@ -10,6 +10,11 @@ export default async function ResearchLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const sitePathname = (await headers()).get("x-site-pathname") ?? "";
+  if (sitePathname === "/learn" || sitePathname === "/portfolio") {
+    return <>{children}</>;
+  }
+
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
@@ -19,7 +24,6 @@ export default async function ResearchLayout({
   let canSeeTasks = roles.includes(Role.ADMIN);
   let unopenedProposalCount = 0;
   if (userId) {
-    const sitePathname = (await headers()).get("x-site-pathname") ?? "";
     const [
       user,
       assignedTaskCount,
