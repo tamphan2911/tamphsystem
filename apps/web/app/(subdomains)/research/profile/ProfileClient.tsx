@@ -1,11 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BadgeCheck,
   BriefcaseBusiness,
-  Camera,
   Check,
   ClipboardList,
   FileText,
@@ -15,7 +14,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { updateResearchAvatar, updateResearchProfile } from "./actions";
+import { updateResearchProfile } from "./actions";
 
 type ResearchProfileUser = {
   id: string;
@@ -41,15 +40,6 @@ function roleLabel(role: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function initials(name: string | null, email: string) {
-  return (name || email)
-    .split(/[.\s@_-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
-
 function shortDate(value: string) {
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
@@ -66,7 +56,6 @@ export function ProfileClient({ user }: { user: ResearchProfileUser }) {
     text: string;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   async function saveProfile(formData: FormData) {
     setIsSaving(true);
@@ -80,17 +69,6 @@ export function ProfileClient({ user }: { user: ResearchProfileUser }) {
     setEditOpen(false);
     router.refresh();
     setMessage({ type: "success", text: "Profile information updated." });
-  }
-
-  async function saveAvatar(formData: FormData) {
-    setMessage(null);
-    const result = await updateResearchAvatar(formData);
-    if (result.error) {
-      setMessage({ type: "error", text: result.error });
-      return;
-    }
-    router.refresh();
-    setMessage({ type: "success", text: "Avatar updated. Looking sharp." });
   }
 
   const stats = [
@@ -123,96 +101,58 @@ export function ProfileClient({ user }: { user: ResearchProfileUser }) {
       )}
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="grid gap-5 md:grid-cols-[10rem_minmax(0,1fr)]">
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 text-3xl font-black text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-              {user.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={user.avatarUrl}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                initials(user.name, user.email)
-              )}
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="truncate text-2xl font-black text-slate-950 dark:text-white">
+                  {user.name || "Research user"}
+                </h1>
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(true)}
+                  className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition hover:bg-white hover:text-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  aria-label="Edit profile information"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                <Mail className="h-4 w-4" />
+                {user.email}
+                {user.emailVerified && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Verified
+                  </span>
+                )}
+              </p>
             </div>
-            <form action={saveAvatar}>
-              <input
-                ref={avatarInputRef}
-                name="avatar"
-                type="file"
-                accept="image/png,image/jpeg"
-                className="hidden"
-                onChange={(event) => event.currentTarget.form?.requestSubmit()}
-              />
-              <button
-                type="button"
-                onClick={() => avatarInputRef.current?.click()}
-                className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 transition hover:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              >
-                <Camera className="h-3.5 w-3.5" />
-                Change avatar
-              </button>
-            </form>
+            <div className="text-right text-xs font-semibold text-slate-400">
+              Joined {shortDate(user.createdAt)}
+            </div>
           </div>
 
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h1 className="truncate text-2xl font-black text-slate-950 dark:text-white">
-                    {user.name || "Research user"}
-                  </h1>
-                  <button
-                    type="button"
-                    onClick={() => setEditOpen(true)}
-                    className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition hover:bg-white hover:text-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                    aria-label="Edit profile information"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                </div>
-                <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                  <Mail className="h-4 w-4" />
-                  {user.email}
-                  {user.emailVerified && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900">
-                      <ShieldCheck className="h-3.5 w-3.5" />
-                      Verified
-                    </span>
-                  )}
+          <dl className="mt-5 grid gap-3 md:grid-cols-2">
+            <Info label="Affiliation" value={user.affiliation} />
+            <Info label="Roles" value={user.roles.map(roleLabel).join(", ")} />
+          </dl>
+
+          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {stats.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/50"
+              >
+                <item.icon className="h-4 w-4 text-emerald-500" />
+                <p className="mt-2 text-xl font-black text-slate-950 dark:text-white">
+                  {item.value}
+                </p>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                  {item.label}
                 </p>
               </div>
-              <div className="text-right text-xs font-semibold text-slate-400">
-                Joined {shortDate(user.createdAt)}
-              </div>
-            </div>
-
-            <dl className="mt-5 grid gap-3 md:grid-cols-2">
-              <Info label="Affiliation" value={user.affiliation} />
-              <Info
-                label="Roles"
-                value={user.roles.map(roleLabel).join(", ")}
-              />
-            </dl>
-
-            <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {stats.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/50"
-                >
-                  <item.icon className="h-4 w-4 text-emerald-500" />
-                  <p className="mt-2 text-xl font-black text-slate-950 dark:text-white">
-                    {item.value}
-                  </p>
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                    {item.label}
-                  </p>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -229,7 +169,7 @@ export function ProfileClient({ user }: { user: ResearchProfileUser }) {
                   Edit profile
                 </h2>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  Avatar has its own button. Keep the rest clean here.
+                  Update your research display name and affiliation.
                 </p>
               </div>
               <button
