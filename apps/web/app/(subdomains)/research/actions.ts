@@ -2461,6 +2461,7 @@ export async function createResearchTask(formData: FormData) {
   const journalId = optionalString(formData.get("journalId"));
   const conferenceId = optionalString(formData.get("conferenceId"));
   const reviewId = optionalString(formData.get("reviewId"));
+  const accountId = optionalString(formData.get("accountId"));
 
   if (
     (taskType === ResearchTaskType.SUBMIT_RESEARCH &&
@@ -2478,6 +2479,14 @@ export async function createResearchTask(formData: FormData) {
 
   if (projectId && (await researchContentIsLocked(projectId))) {
     return { ok: false, reason: "RESEARCH_LOCKED" };
+  }
+
+  if (accountId && taskType === ResearchTaskType.SUBMIT_RESEARCH) {
+    const account = await prisma.publisherAccount.findFirst({
+      where: { id: accountId, journalId },
+      select: { id: true },
+    });
+    if (!account) return { ok: false, reason: "ACCOUNT_NOT_FOR_JOURNAL" };
   }
 
   if (
@@ -2540,7 +2549,7 @@ export async function createResearchTask(formData: FormData) {
       journalId,
       conferenceId,
       reviewId,
-      accountId: optionalString(formData.get("accountId")),
+      accountId,
       dueDate: optionalString(formData.get("dueDate"))
         ? new Date(optionalString(formData.get("dueDate")) as string)
         : null,
@@ -2623,6 +2632,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   const journalId = optionalString(formData.get("journalId"));
   const conferenceId = optionalString(formData.get("conferenceId"));
   const reviewId = optionalString(formData.get("reviewId"));
+  const accountId = optionalString(formData.get("accountId"));
   const effectiveProjectId =
     taskType === ResearchTaskType.SUBMIT_RESEARCH ||
     taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
@@ -2655,6 +2665,14 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     (await researchContentIsLocked(effectiveProjectId))
   ) {
     return { ok: false, reason: "RESEARCH_LOCKED" };
+  }
+
+  if (accountId && taskType === ResearchTaskType.SUBMIT_RESEARCH) {
+    const account = await prisma.publisherAccount.findFirst({
+      where: { id: accountId, journalId },
+      select: { id: true },
+    });
+    if (!account) return { ok: false, reason: "ACCOUNT_NOT_FOR_JOURNAL" };
   }
 
   if (
@@ -2733,6 +2751,8 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
         organizedProjectId: effectiveOrganizedProjectId,
         journalId:
           taskType === ResearchTaskType.SUBMIT_RESEARCH ? journalId : null,
+        accountId:
+          taskType === ResearchTaskType.SUBMIT_RESEARCH ? accountId : null,
         conferenceId:
           taskType === ResearchTaskType.SUBMIT_CONFERENCE ? conferenceId : null,
         reviewId: taskType === ResearchTaskType.REVIEW ? reviewId : null,

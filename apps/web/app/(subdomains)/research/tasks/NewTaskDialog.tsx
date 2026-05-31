@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useState, useTransition, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import {
   CalendarClock,
   Check,
@@ -35,6 +41,13 @@ export type TaskVenueOption = {
   id: string;
   name: string;
   meta: string;
+};
+
+export type TaskAccountOption = {
+  id: string;
+  journalId: string;
+  username: string;
+  email: string;
 };
 
 export type TaskReviewOption = {
@@ -77,12 +90,14 @@ export function NewTaskDialog({
   assignees,
   researchOptions,
   venueOptions,
+  accountOptions,
   reviewOptions,
   organizedProjectOptions,
 }: {
   assignees: TaskAssigneeOption[];
   researchOptions: TaskResearchOption[];
   venueOptions: TaskVenueOption[];
+  accountOptions: TaskAccountOption[];
   reviewOptions: TaskReviewOption[];
   organizedProjectOptions: TaskOrganizedProjectOption[];
 }) {
@@ -93,6 +108,7 @@ export function NewTaskDialog({
   const [assigneeQuery, setAssigneeQuery] = useState("");
   const [researchQuery, setResearchQuery] = useState("");
   const [venueQuery, setVenueQuery] = useState("");
+  const [accountQuery, setAccountQuery] = useState("");
   const [reviewQuery, setReviewQuery] = useState("");
   const [organizedProjectQuery, setOrganizedProjectQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -101,6 +117,7 @@ export function NewTaskDialog({
   const [selectedVenue, setSelectedVenue] = useState<TaskVenueOption | null>(
     null,
   );
+  const [selectedAccountId, setSelectedAccountId] = useState("");
   const [selectedReview, setSelectedReview] = useState<TaskReviewOption | null>(
     null,
   );
@@ -148,6 +165,52 @@ export function NewTaskDialog({
       .slice(0, 10);
   }, [venueOptions, venueQuery]);
 
+  const journalAccounts = useMemo(() => {
+    if (selectedVenue?.kind !== "journal") return [];
+    return accountOptions.filter(
+      (account) => account.journalId === selectedVenue.id,
+    );
+  }, [accountOptions, selectedVenue]);
+
+  const filteredAccounts = useMemo(() => {
+    const needle = accountQuery.trim().toLowerCase();
+    if (!needle) return [];
+    return journalAccounts
+      .filter((account) =>
+        [account.username, account.email, account.id]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 10);
+  }, [accountQuery, journalAccounts]);
+
+  const selectedAccount =
+    selectedVenue?.kind === "journal"
+      ? journalAccounts.find((account) => account.id === selectedAccountId)
+      : null;
+
+  useEffect(() => {
+    if (selectedVenue?.kind !== "journal") {
+      setSelectedAccountId("");
+      setAccountQuery("");
+      return;
+    }
+    const onlyAccount = journalAccounts[0];
+    if (journalAccounts.length === 1 && onlyAccount) {
+      setSelectedAccountId(onlyAccount.id);
+      setAccountQuery("");
+      return;
+    }
+    if (
+      selectedAccountId &&
+      !journalAccounts.some((account) => account.id === selectedAccountId)
+    ) {
+      setSelectedAccountId("");
+      setAccountQuery("");
+    }
+  }, [journalAccounts, selectedAccountId, selectedVenue]);
+
   const filteredReviews = useMemo(() => {
     const needle = reviewQuery.trim().toLowerCase();
     if (!needle) return [];
@@ -180,11 +243,13 @@ export function NewTaskDialog({
     setAssigneeQuery("");
     setResearchQuery("");
     setVenueQuery("");
+    setAccountQuery("");
     setReviewQuery("");
     setOrganizedProjectQuery("");
     setSelectedIds([]);
     setSelectedResearch(null);
     setSelectedVenue(null);
+    setSelectedAccountId("");
     setSelectedReview(null);
     setSelectedOrganizedProject(null);
   }
@@ -195,6 +260,34 @@ export function NewTaskDialog({
         ? current.filter((item) => item !== id)
         : [...current, id],
     );
+    setAssigneeQuery("");
+  }
+
+  function selectResearch(project: TaskResearchOption) {
+    setSelectedResearch(project);
+    setResearchQuery("");
+  }
+
+  function selectVenue(venue: TaskVenueOption) {
+    setSelectedVenue(venue);
+    setVenueQuery("");
+    setSelectedAccountId("");
+    setAccountQuery("");
+  }
+
+  function selectReview(review: TaskReviewOption) {
+    setSelectedReview(review);
+    setReviewQuery("");
+  }
+
+  function selectOrganizedProject(project: TaskOrganizedProjectOption) {
+    setSelectedOrganizedProject(project);
+    setOrganizedProjectQuery("");
+  }
+
+  function selectAccount(account: TaskAccountOption) {
+    setSelectedAccountId(account.id);
+    setAccountQuery("");
   }
 
   function submitTask(formData: FormData) {
@@ -212,7 +305,9 @@ export function NewTaskDialog({
                   ? "Choose only users who have activated their research-site account."
                   : result?.reason === "ACTIVE_SUBMISSION_TASK_EXISTS"
                     ? "An active submission task already exists for this research and venue."
-                    : "Please check the task details and try again.",
+                    : result?.reason === "ACCOUNT_NOT_FOR_JOURNAL"
+                      ? "Choose an account that belongs to the selected journal."
+                      : "Please check the task details and try again.",
         });
         return;
       }
@@ -227,12 +322,14 @@ export function NewTaskDialog({
 
   const needsResearch = mode === "submit" || mode === "production";
   const needsVenue = mode === "submit";
+  const needsJournalAccount = selectedVenue?.kind === "journal";
   const needsReview = mode === "review";
   const needsOrganizedProject = mode === "project";
   const canSubmit =
     selectedIds.length > 0 &&
     (!needsResearch || Boolean(selectedResearch)) &&
     (!needsVenue || Boolean(selectedVenue)) &&
+    (!needsJournalAccount || Boolean(selectedAccountId)) &&
     (!needsReview || Boolean(selectedReview)) &&
     (!needsOrganizedProject || Boolean(selectedOrganizedProject));
   const selectedAssigneeItems: SearchPanelItem[] = assignees
@@ -310,6 +407,13 @@ export function NewTaskDialog({
                     name="journalId"
                     value={selectedVenue.id}
                   />
+                  {selectedAccountId && (
+                    <input
+                      type="hidden"
+                      name="accountId"
+                      value={selectedAccountId}
+                    />
+                  )}
                   <input
                     type="hidden"
                     name="category"
@@ -439,7 +543,10 @@ export function NewTaskDialog({
                           {
                             id: selectedResearch.id,
                             title: selectedResearch.title,
-                            meta: [selectedResearch.code, selectedResearch.stage]
+                            meta: [
+                              selectedResearch.code,
+                              selectedResearch.stage,
+                            ]
                               .filter(Boolean)
                               .join(" - "),
                             icon: <FileText className="h-4 w-4" />,
@@ -460,10 +567,7 @@ export function NewTaskDialog({
                       .join(" - "),
                     icon: <FileText className="h-4 w-4" />,
                     selected: selectedResearch?.id === project.id,
-                    onClick: () => {
-                      setSelectedResearch(project);
-                      setResearchQuery(project.title);
-                    },
+                    onClick: () => selectResearch(project),
                   }))}
                 />
               )}
@@ -486,6 +590,8 @@ export function NewTaskDialog({
                             onClick: () => {
                               setSelectedVenue(null);
                               setVenueQuery("");
+                              setSelectedAccountId("");
+                              setAccountQuery("");
                             },
                           },
                         ]
@@ -499,11 +605,23 @@ export function NewTaskDialog({
                     selected:
                       selectedVenue?.kind === venue.kind &&
                       selectedVenue?.id === venue.id,
-                    onClick: () => {
-                      setSelectedVenue(venue);
-                      setVenueQuery(venue.name);
-                    },
+                    onClick: () => selectVenue(venue),
                   }))}
+                />
+              )}
+
+              {selectedVenue?.kind === "journal" && (
+                <JournalAccountField
+                  accounts={journalAccounts}
+                  query={accountQuery}
+                  setQuery={setAccountQuery}
+                  selectedAccount={selectedAccount}
+                  filteredAccounts={filteredAccounts}
+                  selectAccount={selectAccount}
+                  clearAccount={() => {
+                    setSelectedAccountId("");
+                    setAccountQuery("");
+                  }}
                 />
               )}
 
@@ -536,10 +654,7 @@ export function NewTaskDialog({
                     meta: `${review.journal} - ${review.status}`,
                     icon: <Star className="h-4 w-4" />,
                     selected: selectedReview?.id === review.id,
-                    onClick: () => {
-                      setSelectedReview(review);
-                      setReviewQuery(review.title);
-                    },
+                    onClick: () => selectReview(review),
                   }))}
                 />
               )}
@@ -602,10 +717,7 @@ export function NewTaskDialog({
                         .join(" - "),
                       icon: <FileText className="h-4 w-4" />,
                       selected: selectedOrganizedProject?.id === project.id,
-                      onClick: () => {
-                        setSelectedOrganizedProject(project);
-                        setOrganizedProjectQuery(project.title);
-                      },
+                      onClick: () => selectOrganizedProject(project),
                     }))}
                   />
                 </div>
@@ -660,6 +772,80 @@ export function NewTaskDialog({
         </div>
       )}
     </>
+  );
+}
+
+function JournalAccountField({
+  accounts,
+  query,
+  setQuery,
+  selectedAccount,
+  filteredAccounts,
+  selectAccount,
+  clearAccount,
+}: {
+  accounts: TaskAccountOption[];
+  query: string;
+  setQuery: (value: string) => void;
+  selectedAccount: TaskAccountOption | null | undefined;
+  filteredAccounts: TaskAccountOption[];
+  selectAccount: (account: TaskAccountOption) => void;
+  clearAccount: () => void;
+}) {
+  if (accounts.length === 0) {
+    return (
+      <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200">
+        No account is linked to this journal yet. Add a journal account before
+        assigning a journal submission task.
+      </section>
+    );
+  }
+
+  const onlyAccount = accounts[0];
+  if (accounts.length === 1 && onlyAccount) {
+    const account = onlyAccount;
+    return (
+      <section className="grid gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-200">
+        <span className="text-xs font-bold uppercase tracking-wide">
+          Account to submit
+        </span>
+        <span className="font-semibold">
+          {account.username}
+          {account.email ? ` - ${account.email}` : ""}
+        </span>
+      </section>
+    );
+  }
+
+  return (
+    <SearchPanel
+      title="Account to submit"
+      query={query}
+      setQuery={setQuery}
+      placeholder="Search accounts for this journal..."
+      selectedItems={
+        selectedAccount
+          ? [
+              {
+                id: selectedAccount.id,
+                title: selectedAccount.username,
+                meta: selectedAccount.email || "No email",
+                icon: <Send className="h-4 w-4" />,
+                selected: true,
+                onClick: clearAccount,
+              },
+            ]
+          : []
+      }
+      items={filteredAccounts.map((account) => ({
+        id: account.id,
+        title: account.username,
+        meta: account.email || "No email",
+        icon: <Send className="h-4 w-4" />,
+        selected: selectedAccount?.id === account.id,
+        onClick: () => selectAccount(account),
+      }))}
+    />
   );
 }
 
@@ -730,7 +916,9 @@ function SearchPanel({
                     </span>
                   </span>
                 </span>
-                {item.selected && <Check className="mt-0.5 h-4 w-4 flex-none" />}
+                {item.selected && (
+                  <Check className="mt-0.5 h-4 w-4 flex-none" />
+                )}
               </button>
             ))}
             {items.length === 0 && (

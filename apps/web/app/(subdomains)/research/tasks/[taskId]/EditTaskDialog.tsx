@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useState, useTransition, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import {
   CalendarClock,
   Check,
@@ -18,6 +24,7 @@ import { updateResearchTask } from "../../actions";
 import { useResearchToast } from "../../components/ResearchToast";
 import type {
   TaskAssigneeOption,
+  TaskAccountOption,
   TaskOrganizedProjectOption,
   TaskResearchOption,
   TaskReviewOption,
@@ -38,7 +45,17 @@ type EditableTask = {
   conferenceId: string;
   reviewId: string;
   organizedProjectId: string;
+  accountId: string;
   assigneeIds: string[];
+};
+
+type SearchPanelItem = {
+  id: string;
+  title: string;
+  meta: string;
+  icon: ReactNode;
+  selected: boolean;
+  onClick: () => void;
 };
 
 const inputClass =
@@ -80,6 +97,9 @@ function detailForFailure(reason?: string) {
   if (reason === "ACTIVE_SUBMISSION_TASK_EXISTS") {
     return "An active submission task already exists for this research and venue.";
   }
+  if (reason === "ACCOUNT_NOT_FOR_JOURNAL") {
+    return "Choose an account that belongs to the selected journal.";
+  }
   if (reason === "TASK_CLOSED") {
     return "Completed or revoked tasks cannot be edited.";
   }
@@ -91,6 +111,7 @@ export function EditTaskDialog({
   assignees,
   researchOptions,
   venueOptions,
+  accountOptions,
   reviewOptions,
   organizedProjectOptions,
 }: {
@@ -98,6 +119,7 @@ export function EditTaskDialog({
   assignees: TaskAssigneeOption[];
   researchOptions: TaskResearchOption[];
   venueOptions: TaskVenueOption[];
+  accountOptions: TaskAccountOption[];
   reviewOptions: TaskReviewOption[];
   organizedProjectOptions: TaskOrganizedProjectOption[];
 }) {
@@ -125,21 +147,21 @@ export function EditTaskDialog({
       : "PROJECT_PRODUCTION",
   );
   const [assigneeQuery, setAssigneeQuery] = useState("");
-  const [researchQuery, setResearchQuery] = useState(
-    initialResearch?.title ?? "",
-  );
-  const [venueQuery, setVenueQuery] = useState(initialVenue?.name ?? "");
-  const [reviewQuery, setReviewQuery] = useState(initialReview?.title ?? "");
-  const [organizedProjectQuery, setOrganizedProjectQuery] = useState(
-    initialOrganizedProject?.title ?? "",
-  );
+  const [researchQuery, setResearchQuery] = useState("");
+  const [venueQuery, setVenueQuery] = useState("");
+  const [accountQuery, setAccountQuery] = useState("");
+  const [reviewQuery, setReviewQuery] = useState("");
+  const [organizedProjectQuery, setOrganizedProjectQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>(task.assigneeIds);
   const [selectedResearch, setSelectedResearch] =
     useState<TaskResearchOption | null>(initialResearch);
-  const [selectedVenue, setSelectedVenue] =
-    useState<TaskVenueOption | null>(initialVenue);
-  const [selectedReview, setSelectedReview] =
-    useState<TaskReviewOption | null>(initialReview);
+  const [selectedVenue, setSelectedVenue] = useState<TaskVenueOption | null>(
+    initialVenue,
+  );
+  const [selectedAccountId, setSelectedAccountId] = useState(task.accountId);
+  const [selectedReview, setSelectedReview] = useState<TaskReviewOption | null>(
+    initialReview,
+  );
   const [selectedOrganizedProject, setSelectedOrganizedProject] =
     useState<TaskOrganizedProjectOption | null>(initialOrganizedProject);
   const [isPending, startTransition] = useTransition();
@@ -147,9 +169,9 @@ export function EditTaskDialog({
 
   const filteredAssignees = useMemo(() => {
     const needle = assigneeQuery.trim().toLowerCase();
+    if (!needle) return [];
     return assignees
       .filter((user) => {
-        if (!needle) return true;
         return [user.name, user.email, user.id, ...user.roles]
           .join(" ")
           .toLowerCase()
@@ -160,9 +182,9 @@ export function EditTaskDialog({
 
   const filteredResearch = useMemo(() => {
     const needle = researchQuery.trim().toLowerCase();
+    if (!needle) return [];
     return researchOptions
       .filter((project) => {
-        if (!needle) return true;
         return [project.title, project.code, project.stage, project.id]
           .join(" ")
           .toLowerCase()
@@ -173,9 +195,9 @@ export function EditTaskDialog({
 
   const filteredVenues = useMemo(() => {
     const needle = venueQuery.trim().toLowerCase();
+    if (!needle) return [];
     return venueOptions
       .filter((venue) => {
-        if (!needle) return true;
         return [venue.name, venue.meta, venue.kind, venue.id]
           .join(" ")
           .toLowerCase()
@@ -186,9 +208,9 @@ export function EditTaskDialog({
 
   const filteredReviews = useMemo(() => {
     const needle = reviewQuery.trim().toLowerCase();
+    if (!needle) return [];
     return reviewOptions
       .filter((review) => {
-        if (!needle) return true;
         return [review.title, review.journal, review.status, review.id]
           .join(" ")
           .toLowerCase()
@@ -199,9 +221,9 @@ export function EditTaskDialog({
 
   const filteredOrganizedProjects = useMemo(() => {
     const needle = organizedProjectQuery.trim().toLowerCase();
+    if (!needle) return [];
     return organizedProjectOptions
       .filter((project) => {
-        if (!needle) return true;
         return [project.title, project.code, project.status, project.id]
           .join(" ")
           .toLowerCase()
@@ -210,12 +232,86 @@ export function EditTaskDialog({
       .slice(0, 10);
   }, [organizedProjectOptions, organizedProjectQuery]);
 
+  const journalAccounts = useMemo(() => {
+    if (selectedVenue?.kind !== "journal") return [];
+    return accountOptions.filter(
+      (account) => account.journalId === selectedVenue.id,
+    );
+  }, [accountOptions, selectedVenue]);
+
+  const filteredAccounts = useMemo(() => {
+    const needle = accountQuery.trim().toLowerCase();
+    if (!needle) return [];
+    return journalAccounts
+      .filter((account) =>
+        [account.username, account.email, account.id]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 10);
+  }, [accountQuery, journalAccounts]);
+
+  const selectedAccount =
+    selectedVenue?.kind === "journal"
+      ? journalAccounts.find((account) => account.id === selectedAccountId)
+      : null;
+
+  useEffect(() => {
+    if (selectedVenue?.kind !== "journal") {
+      setSelectedAccountId("");
+      setAccountQuery("");
+      return;
+    }
+    const onlyAccount = journalAccounts[0];
+    if (journalAccounts.length === 1 && onlyAccount) {
+      setSelectedAccountId(onlyAccount.id);
+      setAccountQuery("");
+      return;
+    }
+    if (
+      selectedAccountId &&
+      !journalAccounts.some((account) => account.id === selectedAccountId)
+    ) {
+      setSelectedAccountId("");
+      setAccountQuery("");
+    }
+  }, [journalAccounts, selectedAccountId, selectedVenue]);
+
   function toggleAssignee(id: string) {
     setSelectedIds((current) =>
       current.includes(id)
         ? current.filter((item) => item !== id)
         : [...current, id],
     );
+    setAssigneeQuery("");
+  }
+
+  function selectResearch(project: TaskResearchOption) {
+    setSelectedResearch(project);
+    setResearchQuery("");
+  }
+
+  function selectVenue(venue: TaskVenueOption) {
+    setSelectedVenue(venue);
+    setVenueQuery("");
+    setSelectedAccountId("");
+    setAccountQuery("");
+  }
+
+  function selectReview(review: TaskReviewOption) {
+    setSelectedReview(review);
+    setReviewQuery("");
+  }
+
+  function selectOrganizedProject(project: TaskOrganizedProjectOption) {
+    setSelectedOrganizedProject(project);
+    setOrganizedProjectQuery("");
+  }
+
+  function selectAccount(account: TaskAccountOption) {
+    setSelectedAccountId(account.id);
+    setAccountQuery("");
   }
 
   function submitTask(formData: FormData) {
@@ -239,12 +335,14 @@ export function EditTaskDialog({
 
   const needsResearch = mode === "submit" || mode === "production";
   const needsVenue = mode === "submit";
+  const needsJournalAccount = selectedVenue?.kind === "journal";
   const needsReview = mode === "review";
   const needsOrganizedProject = mode === "project";
   const canSubmit =
     selectedIds.length > 0 &&
     (!needsResearch || Boolean(selectedResearch)) &&
     (!needsVenue || Boolean(selectedVenue)) &&
+    (!needsJournalAccount || Boolean(selectedAccountId)) &&
     (!needsReview || Boolean(selectedReview)) &&
     (!needsOrganizedProject || Boolean(selectedOrganizedProject));
 
@@ -305,9 +403,28 @@ export function EditTaskDialog({
               )}
               {selectedVenue?.kind === "journal" && (
                 <>
-                  <input type="hidden" name="taskType" value="SUBMIT_RESEARCH" />
-                  <input type="hidden" name="journalId" value={selectedVenue.id} />
-                  <input type="hidden" name="category" value="Submit research" />
+                  <input
+                    type="hidden"
+                    name="taskType"
+                    value="SUBMIT_RESEARCH"
+                  />
+                  <input
+                    type="hidden"
+                    name="journalId"
+                    value={selectedVenue.id}
+                  />
+                  {selectedAccountId && (
+                    <input
+                      type="hidden"
+                      name="accountId"
+                      value={selectedAccountId}
+                    />
+                  )}
+                  <input
+                    type="hidden"
+                    name="category"
+                    value="Submit research"
+                  />
                 </>
               )}
               {selectedVenue?.kind === "conference" && (
@@ -322,7 +439,11 @@ export function EditTaskDialog({
                     name="conferenceId"
                     value={selectedVenue.id}
                   />
-                  <input type="hidden" name="category" value="Submit research" />
+                  <input
+                    type="hidden"
+                    name="category"
+                    value="Submit research"
+                  />
                 </>
               )}
               {mode === "production" && (
@@ -334,7 +455,11 @@ export function EditTaskDialog({
               {mode === "review" && selectedReview && (
                 <>
                   <input type="hidden" name="taskType" value="REVIEW" />
-                  <input type="hidden" name="reviewId" value={selectedReview.id} />
+                  <input
+                    type="hidden"
+                    name="reviewId"
+                    value={selectedReview.id}
+                  />
                 </>
               )}
               {mode === "project" && selectedOrganizedProject && (
@@ -420,6 +545,28 @@ export function EditTaskDialog({
                   query={researchQuery}
                   setQuery={setResearchQuery}
                   placeholder="Search research by title, ID, or stage..."
+                  selectedItems={
+                    selectedResearch
+                      ? [
+                          {
+                            id: selectedResearch.id,
+                            title: selectedResearch.title,
+                            meta: [
+                              selectedResearch.code,
+                              selectedResearch.stage,
+                            ]
+                              .filter(Boolean)
+                              .join(" - "),
+                            icon: <FileText className="h-4 w-4" />,
+                            selected: true,
+                            onClick: () => {
+                              setSelectedResearch(null);
+                              setResearchQuery("");
+                            },
+                          },
+                        ]
+                      : []
+                  }
                   items={filteredResearch.map((project) => ({
                     id: project.id,
                     title: project.title,
@@ -428,10 +575,7 @@ export function EditTaskDialog({
                       .join(" - "),
                     icon: <FileText className="h-4 w-4" />,
                     selected: selectedResearch?.id === project.id,
-                    onClick: () => {
-                      setSelectedResearch(project);
-                      setResearchQuery(project.title);
-                    },
+                    onClick: () => selectResearch(project),
                   }))}
                 />
               )}
@@ -442,6 +586,25 @@ export function EditTaskDialog({
                   query={venueQuery}
                   setQuery={setVenueQuery}
                   placeholder="Search journal or conference..."
+                  selectedItems={
+                    selectedVenue
+                      ? [
+                          {
+                            id: `${selectedVenue.kind}-${selectedVenue.id}`,
+                            title: selectedVenue.name,
+                            meta: `${selectedVenue.kind} - ${selectedVenue.meta}`,
+                            icon: <Send className="h-4 w-4" />,
+                            selected: true,
+                            onClick: () => {
+                              setSelectedVenue(null);
+                              setVenueQuery("");
+                              setSelectedAccountId("");
+                              setAccountQuery("");
+                            },
+                          },
+                        ]
+                      : []
+                  }
                   items={filteredVenues.map((venue) => ({
                     id: `${venue.kind}-${venue.id}`,
                     title: venue.name,
@@ -450,11 +613,23 @@ export function EditTaskDialog({
                     selected:
                       selectedVenue?.kind === venue.kind &&
                       selectedVenue?.id === venue.id,
-                    onClick: () => {
-                      setSelectedVenue(venue);
-                      setVenueQuery(venue.name);
-                    },
+                    onClick: () => selectVenue(venue),
                   }))}
+                />
+              )}
+
+              {selectedVenue?.kind === "journal" && (
+                <JournalAccountField
+                  accounts={journalAccounts}
+                  query={accountQuery}
+                  setQuery={setAccountQuery}
+                  selectedAccount={selectedAccount}
+                  filteredAccounts={filteredAccounts}
+                  selectAccount={selectAccount}
+                  clearAccount={() => {
+                    setSelectedAccountId("");
+                    setAccountQuery("");
+                  }}
                 />
               )}
 
@@ -464,16 +639,30 @@ export function EditTaskDialog({
                   query={reviewQuery}
                   setQuery={setReviewQuery}
                   placeholder="Search review by manuscript, journal, or status..."
+                  selectedItems={
+                    selectedReview
+                      ? [
+                          {
+                            id: selectedReview.id,
+                            title: selectedReview.title,
+                            meta: `${selectedReview.journal} - ${selectedReview.status}`,
+                            icon: <Star className="h-4 w-4" />,
+                            selected: true,
+                            onClick: () => {
+                              setSelectedReview(null);
+                              setReviewQuery("");
+                            },
+                          },
+                        ]
+                      : []
+                  }
                   items={filteredReviews.map((review) => ({
                     id: review.id,
                     title: review.title,
                     meta: `${review.journal} - ${review.status}`,
                     icon: <Star className="h-4 w-4" />,
                     selected: selectedReview?.id === review.id,
-                    onClick: () => {
-                      setSelectedReview(review);
-                      setReviewQuery(review.title);
-                    },
+                    onClick: () => selectReview(review),
                   }))}
                 />
               )}
@@ -506,6 +695,28 @@ export function EditTaskDialog({
                     query={organizedProjectQuery}
                     setQuery={setOrganizedProjectQuery}
                     placeholder="Search project by title, ID, or status..."
+                    selectedItems={
+                      selectedOrganizedProject
+                        ? [
+                            {
+                              id: selectedOrganizedProject.id,
+                              title: selectedOrganizedProject.title,
+                              meta: [
+                                selectedOrganizedProject.code,
+                                selectedOrganizedProject.status,
+                              ]
+                                .filter(Boolean)
+                                .join(" - "),
+                              icon: <FileText className="h-4 w-4" />,
+                              selected: true,
+                              onClick: () => {
+                                setSelectedOrganizedProject(null);
+                                setOrganizedProjectQuery("");
+                              },
+                            },
+                          ]
+                        : []
+                    }
                     items={filteredOrganizedProjects.map((project) => ({
                       id: project.id,
                       title: project.title,
@@ -514,10 +725,7 @@ export function EditTaskDialog({
                         .join(" - "),
                       icon: <FileText className="h-4 w-4" />,
                       selected: selectedOrganizedProject?.id === project.id,
-                      onClick: () => {
-                        setSelectedOrganizedProject(project);
-                        setOrganizedProjectQuery(project.title);
-                      },
+                      onClick: () => selectOrganizedProject(project),
                     }))}
                   />
                 </div>
@@ -541,6 +749,16 @@ export function EditTaskDialog({
                 query={assigneeQuery}
                 setQuery={setAssigneeQuery}
                 placeholder="Search active research users by name, email, ID, or role..."
+                selectedItems={assignees
+                  .filter((user) => selectedIds.includes(user.id))
+                  .map((user) => ({
+                    id: user.id,
+                    title: user.name || user.email,
+                    meta: `${user.email} - ${user.roles.join(", ")}`,
+                    icon: <UserRound className="h-4 w-4" />,
+                    selected: true,
+                    onClick: () => toggleAssignee(user.id),
+                  }))}
                 items={filteredAssignees.map((user) => ({
                   id: user.id,
                   title: user.name || user.email,
@@ -575,72 +793,183 @@ export function EditTaskDialog({
   );
 }
 
+function JournalAccountField({
+  accounts,
+  query,
+  setQuery,
+  selectedAccount,
+  filteredAccounts,
+  selectAccount,
+  clearAccount,
+}: {
+  accounts: TaskAccountOption[];
+  query: string;
+  setQuery: (value: string) => void;
+  selectedAccount: TaskAccountOption | null | undefined;
+  filteredAccounts: TaskAccountOption[];
+  selectAccount: (account: TaskAccountOption) => void;
+  clearAccount: () => void;
+}) {
+  if (accounts.length === 0) {
+    return (
+      <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200">
+        No account is linked to this journal yet. Add a journal account before
+        assigning a journal submission task.
+      </section>
+    );
+  }
+
+  const onlyAccount = accounts[0];
+  if (accounts.length === 1 && onlyAccount) {
+    const account = onlyAccount;
+    return (
+      <section className="grid gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-200">
+        <span className="text-xs font-bold uppercase tracking-wide">
+          Account to submit
+        </span>
+        <span className="font-semibold">
+          {account.username}
+          {account.email ? ` - ${account.email}` : ""}
+        </span>
+      </section>
+    );
+  }
+
+  return (
+    <SearchPanel
+      title="Account to submit"
+      query={query}
+      setQuery={setQuery}
+      placeholder="Search accounts for this journal..."
+      selectedItems={
+        selectedAccount
+          ? [
+              {
+                id: selectedAccount.id,
+                title: selectedAccount.username,
+                meta: selectedAccount.email || "No email",
+                icon: <Send className="h-4 w-4" />,
+                selected: true,
+                onClick: clearAccount,
+              },
+            ]
+          : []
+      }
+      items={filteredAccounts.map((account) => ({
+        id: account.id,
+        title: account.username,
+        meta: account.email || "No email",
+        icon: <Send className="h-4 w-4" />,
+        selected: selectedAccount?.id === account.id,
+        onClick: () => selectAccount(account),
+      }))}
+    />
+  );
+}
+
 function SearchPanel({
   title,
   query,
   setQuery,
   placeholder,
+  selectedItems = [],
   items,
 }: {
   title: string;
   query: string;
   setQuery: (value: string) => void;
   placeholder: string;
-  items: {
-    id: string;
-    title: string;
-    meta: string;
-    icon: ReactNode;
-    selected: boolean;
-    onClick: () => void;
-  }[];
+  selectedItems?: SearchPanelItem[];
+  items: SearchPanelItem[];
 }) {
+  const [focused, setFocused] = useState(false);
+  const showDropdown = focused && query.trim().length > 0;
   return (
     <section className="grid gap-3">
       <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {title}
       </span>
-      <div className="relative">
+      {selectedItems.length > 0 && (
+        <div className="grid gap-2">
+          {selectedItems.map((item) => (
+            <SelectedSearchItem key={item.id} item={item} />
+          ))}
+        </div>
+      )}
+      <div className="relative z-30">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => window.setTimeout(() => setFocused(false), 120)}
           placeholder={placeholder}
           className={`${inputClass} w-full pl-9`}
         />
-      </div>
-      <div className="grid max-h-60 gap-2 overflow-y-auto rounded-xl border border-slate-200 p-2 dark:border-slate-800">
-        {items.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={item.onClick}
-            className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
-              item.selected
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
-                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800"
-            }`}
-          >
-            <span className="flex min-w-0 items-center gap-3">
-              <span className="flex-none text-slate-400">{item.icon}</span>
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-bold">
-                  {item.title}
+
+        {showDropdown && (
+          <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
+            {items.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={item.onClick}
+                className={`flex w-full cursor-pointer items-start justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
+                  item.selected
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800"
+                }`}
+              >
+                <span className="flex min-w-0 items-start gap-3">
+                  <span className="mt-0.5 flex-none text-slate-400">
+                    {item.icon}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold leading-5">
+                      {item.title}
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      {item.meta}
+                    </span>
+                  </span>
                 </span>
-                <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
-                  {item.meta}
-                </span>
-              </span>
-            </span>
-            {item.selected && <Check className="h-4 w-4 flex-none" />}
-          </button>
-        ))}
-        {items.length === 0 && (
-          <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-            No result matches this search.
+                {item.selected && (
+                  <Check className="mt-0.5 h-4 w-4 flex-none" />
+                )}
+              </button>
+            ))}
+            {items.length === 0 && (
+              <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                No result matches this search.
+              </div>
+            )}
           </div>
         )}
       </div>
     </section>
+  );
+}
+
+function SelectedSearchItem({ item }: { item: SearchPanelItem }) {
+  return (
+    <button
+      type="button"
+      onClick={item.onClick}
+      className="flex cursor-pointer items-start justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-left text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+    >
+      <span className="flex min-w-0 items-start gap-3">
+        <span className="mt-0.5 flex-none text-emerald-500">{item.icon}</span>
+        <span className="min-w-0">
+          <span className="block text-sm font-bold leading-5">
+            {item.title}
+          </span>
+          <span className="mt-0.5 block text-xs leading-5 text-emerald-700/80 dark:text-emerald-200/80">
+            {item.meta}
+          </span>
+        </span>
+      </span>
+      <X className="mt-0.5 h-4 w-4 flex-none" />
+    </button>
   );
 }

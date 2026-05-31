@@ -185,7 +185,9 @@ function researchAuthors(project: {
 }) {
   const names =
     project.authorEntries.length > 0
-      ? project.authorEntries.map((entry) => entry.user.name || entry.user.email)
+      ? project.authorEntries.map(
+          (entry) => entry.user.name || entry.user.email,
+        )
       : project.authors.length > 0
         ? project.authors.map((author) => author.name || author.email)
         : [
@@ -409,6 +411,7 @@ export default async function TaskDetailPage({
     assigneeUsers,
     projects,
     journals,
+    accounts,
     conferences,
     reviews,
     organizedProjects,
@@ -433,6 +436,11 @@ export default async function TaskDetailPage({
             issn: true,
           },
         }),
+        prisma.publisherAccount.findMany({
+          where: { journalId: { not: null } },
+          orderBy: [{ username: "asc" }, { email: "asc" }],
+          select: { id: true, journalId: true, username: true, email: true },
+        }),
         prisma.conference.findMany({
           orderBy: [{ startDate: "desc" }, { name: "asc" }],
           select: {
@@ -452,7 +460,7 @@ export default async function TaskDetailPage({
           select: { id: true, title: true, referenceCode: true, status: true },
         }),
       ])
-    : [[], [], [], [], [], []];
+    : [[], [], [], [], [], [], []];
   const assignees = assigneeUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -483,6 +491,14 @@ export default async function TaskDetailPage({
         .join(" - "),
     })),
   ];
+  const accountOptions = accounts
+    .filter((account) => Boolean(account.journalId))
+    .map((account) => ({
+      id: account.id,
+      journalId: account.journalId ?? "",
+      username: account.username,
+      email: account.email ?? "",
+    }));
   const reviewOptions = reviews.map((review) => ({
     id: review.id,
     title: review.manuscriptTitle,
@@ -579,6 +595,7 @@ export default async function TaskDetailPage({
                     conferenceId: task.conferenceId ?? "",
                     reviewId: task.reviewId ?? "",
                     organizedProjectId: task.organizedProjectId ?? "",
+                    accountId: task.accountId ?? "",
                     assigneeIds: task.assignments.map(
                       (assignment) => assignment.userId,
                     ),
@@ -586,6 +603,7 @@ export default async function TaskDetailPage({
                   assignees={assignees}
                   researchOptions={researchOptions}
                   venueOptions={venueOptions}
+                  accountOptions={accountOptions}
                   reviewOptions={reviewOptions}
                   organizedProjectOptions={organizedProjectOptions}
                 />

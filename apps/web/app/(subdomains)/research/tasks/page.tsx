@@ -4,6 +4,7 @@ import { auth } from "../../../../auth";
 import {
   NewTaskDialog,
   type TaskAssigneeOption,
+  type TaskAccountOption,
   type TaskOrganizedProjectOption,
   type TaskResearchOption,
   type TaskReviewOption,
@@ -31,6 +32,7 @@ export default async function ResearchTasksPage() {
     assigneeUsers,
     projects,
     journals,
+    accounts,
     conferences,
     reviews,
     organizedProjects,
@@ -55,6 +57,11 @@ export default async function ResearchTasksPage() {
             issn: true,
           },
         }),
+        prisma.publisherAccount.findMany({
+          where: { journalId: { not: null } },
+          orderBy: [{ username: "asc" }, { email: "asc" }],
+          select: { id: true, journalId: true, username: true, email: true },
+        }),
         prisma.conference.findMany({
           orderBy: [{ startDate: "desc" }, { name: "asc" }],
           select: {
@@ -74,7 +81,7 @@ export default async function ResearchTasksPage() {
           select: { id: true, title: true, referenceCode: true, status: true },
         }),
       ])
-    : [[], [], [], [], [], []];
+    : [[], [], [], [], [], [], []];
 
   const assignees: TaskAssigneeOption[] = assigneeUsers.map((user) => ({
     id: user.id,
@@ -106,6 +113,14 @@ export default async function ResearchTasksPage() {
         .join(" - "),
     })),
   ];
+  const accountOptions: TaskAccountOption[] = accounts
+    .filter((account) => Boolean(account.journalId))
+    .map((account) => ({
+      id: account.id,
+      journalId: account.journalId ?? "",
+      username: account.username,
+      email: account.email ?? "",
+    }));
   const reviewOptions: TaskReviewOption[] = reviews.map((review) => ({
     id: review.id,
     title: review.manuscriptTitle,
@@ -130,6 +145,7 @@ export default async function ResearchTasksPage() {
               assignees={assignees}
               researchOptions={researchOptions}
               venueOptions={venueOptions}
+              accountOptions={accountOptions}
               reviewOptions={reviewOptions}
               organizedProjectOptions={organizedProjectOptions}
             />
