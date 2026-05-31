@@ -99,6 +99,10 @@ export default auth((req) => {
   }
 
   if (currentHost === "research") {
+    if (url.pathname === "/" && !isLoggedIn) {
+      return NextResponse.redirect(new URL("/login?callbackUrl=%2F", req.url));
+    }
+
     const isPublicConstructionRoute =
       url.pathname === "/portfolio" || url.pathname === "/learn";
     if (isPublicConstructionRoute) {
