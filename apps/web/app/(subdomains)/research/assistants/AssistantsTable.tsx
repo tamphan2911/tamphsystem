@@ -153,17 +153,19 @@ export function AssistantsTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[48rem] text-left">
+      <div className="overflow-hidden">
+        <table className="w-full table-fixed text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
+              <th className="w-[32%] px-4 py-3">
                 Assistant
               </th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Password</th>
-              <th className="px-4 py-3">Role</th>
-              {canManage && <th className="px-4 py-3 text-right">Action</th>}
+              <th className="w-[28%] px-3 py-3">Email</th>
+              <th className="w-[20%] px-3 py-3">Password</th>
+              <th className="w-[12%] px-3 py-3">Role</th>
+              {canManage && (
+                <th className="w-[8%] px-2 py-3 text-right">Action</th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -172,7 +174,7 @@ export function AssistantsTable({
                 key={user.id}
                 className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
               >
-                <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
+                <td className="px-4 py-3">
                   <div className="flex min-w-0 items-center gap-3">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-purple-100 bg-purple-50 text-purple-600 shadow-sm dark:border-purple-900/70 dark:bg-purple-950/40 dark:text-purple-300">
                       <UserRound className="h-4 w-4" />
@@ -182,11 +184,11 @@ export function AssistantsTable({
                     </span>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                  {user.email}
+                <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                  <span className="block truncate">{user.email}</span>
                 </td>
-                <td className="px-4 py-3">
-                  <div className="inline-flex max-w-[15rem] items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                <td className="px-3 py-3">
+                  <div className="inline-flex max-w-full items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
                     <KeyRound className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
                     <span className="min-w-0 flex-1 truncate font-mono">
                       {visiblePasswords[user.id]
@@ -213,12 +215,12 @@ export function AssistantsTable({
                     </button>
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3">
                   <RolePill role={user.assistantRole} />
                 </td>
                 {canManage && (
-                  <td className="px-4 py-3 text-right">
-                    <div className="inline-flex gap-2">
+                  <td className="px-2 py-3 text-right">
+                    <div className="inline-flex gap-1.5">
                       <button
                         type="button"
                         onClick={() => openEdit(user)}

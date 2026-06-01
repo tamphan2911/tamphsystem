@@ -204,19 +204,19 @@ export function ConferencesTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[64rem] text-left">
+      <div className="overflow-hidden">
+        <table className="w-full table-fixed text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="sticky left-0 z-20 w-[28rem] bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
+              <th className={isAdmin ? "w-[38%] px-4 py-3" : "w-[42%] px-4 py-3"}>
                 Conference
               </th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Themes</th>
-              <th className="px-4 py-3">ISBN</th>
+              <th className="w-[10%] px-3 py-3">Type</th>
+              <th className="w-[18%] px-3 py-3">Status</th>
+              <th className="w-[22%] px-3 py-3">Theme</th>
+              <th className="w-[8%] px-3 py-3">ISBN</th>
               {isAdmin && (
-                <th className="w-20 px-4 py-3 text-center">
+                <th className="w-[4%] px-2 py-3 text-center">
                   <IconHint label="Delete conference">
                     <Trash2
                       className="mx-auto h-4 w-4 text-rose-500 dark:text-rose-300"
@@ -230,56 +230,55 @@ export function ConferencesTable({
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {pagination.pagedRows.map((conference) => {
               const status = conferenceStatus(conference);
-              const stickyClass = status.rowClass
-                ? "bg-rose-50/80 group-hover:bg-rose-50 dark:bg-rose-950/20 dark:group-hover:bg-rose-950/25"
-                : "bg-white group-hover:bg-slate-50 dark:bg-slate-900 dark:group-hover:bg-slate-800";
 
               return (
                 <tr
                   key={conference.id}
                   className={`group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40 ${status.rowClass}`}
                 >
-                  <td
-                    className={`sticky left-0 z-10 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors dark:shadow-[1px_0_0_0_rgb(30,41,59)] ${stickyClass}`}
-                  >
+                  <td className="px-4 py-3">
                     <Link
                       href={`/conferences/${conference.id}`}
-                      className="text-base font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                      className="line-clamp-2 text-base font-normal leading-6 text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
                     >
                       {conference.name}
                     </Link>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
                       {[conference.time, conference.location]
                         .filter(Boolean)
                         .join(" - ") || "Time/location not set"}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                    <p className="mt-1 truncate text-xs text-slate-400 dark:text-slate-500">
                       Organizer: {conference.organizer || "Not set"}
                     </p>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <span className="rounded-full bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
                       {conference.type || "-"}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <span
                       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${status.className}`}
                     >
                       {status.label}
                     </span>
-                    <p className="mt-1 whitespace-nowrap text-xs text-slate-400 dark:text-slate-500">
+                    <p className="mt-1 truncate text-xs text-slate-400 dark:text-slate-500">
                       {status.detail}
                     </p>
                   </td>
-                  <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                    {conference.theme || "-"}
+                  <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    <span className="line-clamp-2">
+                      {conference.theme || "-"}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                    {conference.isbn || "-"}
+                  <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    <span className="block truncate">
+                      {conference.isbn || "-"}
+                    </span>
                   </td>
                   {isAdmin && (
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-2 py-3 text-center">
                       <DeleteConferenceButton
                         conference={conference}
                         deleteAction={deleteAction}

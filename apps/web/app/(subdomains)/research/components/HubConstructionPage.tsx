@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ArrowLeft, Construction, Rocket } from "lucide-react";
+import { ArrowLeft, Construction } from "lucide-react";
 
 type HubConstructionPageProps = {
   title: string;
@@ -40,14 +40,11 @@ export function HubConstructionPage({
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-slate-950 px-5 py-10 text-white sm:px-8 lg:px-10">
-      <div className="pointer-events-none absolute inset-0 opacity-50">
+      <div className="pointer-events-none absolute inset-0 opacity-35">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.12)_1px,transparent_1px)] bg-[size:44px_44px]" />
-        <div className="absolute left-[8%] top-[18%] h-px w-32 rotate-12 bg-slate-500/40" />
-        <div className="absolute right-[10%] top-[30%] h-px w-40 -rotate-12 bg-slate-500/30" />
-        <div className="absolute bottom-[18%] left-[34%] h-px w-44 rotate-6 bg-slate-500/30" />
       </div>
 
-      <div className="relative mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1fr_24rem] lg:items-center">
+      <div className="relative mx-auto grid min-h-[calc(100vh-5rem)] max-w-5xl gap-8 lg:grid-cols-[1fr_18rem] lg:items-center">
         <section>
           <div
             className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-black uppercase tracking-wide shadow-lg ${colors.badge}`}
@@ -55,13 +52,13 @@ export function HubConstructionPage({
             <Construction className="h-3.5 w-3.5" />
             {eyebrow}
           </div>
-          <h1 className="mt-6 max-w-3xl text-4xl font-black leading-tight tracking-normal sm:text-5xl">
+          <h1 className="mt-6 max-w-2xl text-3xl font-black leading-tight tracking-normal sm:text-4xl">
             {title}
           </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300">
+          <p className="mt-5 max-w-xl text-sm leading-7 text-slate-300">
             {message}
           </p>
-          <p className={`mt-4 max-w-2xl text-sm font-bold ${colors.glow}`}>
+          <p className={`mt-4 max-w-xl text-sm font-semibold ${colors.glow}`}>
             {punchline}
           </p>
           <Link
@@ -73,21 +70,18 @@ export function HubConstructionPage({
           </Link>
         </section>
 
-        <aside className="relative min-h-80">
-          <div className="absolute left-8 top-4 h-20 w-20 animate-[hubFloat_5.6s_ease-in-out_infinite] rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-200 shadow-xl backdrop-blur">
-            <Rocket className="h-full w-full" />
-          </div>
+        <aside className="relative min-h-64">
           <div
-            className={`absolute right-4 top-24 flex h-44 w-44 animate-[hubFloat_6.4s_ease-in-out_infinite] items-center justify-center rounded-[2rem] border p-8 shadow-2xl backdrop-blur ${colors.panel}`}
+            className={`absolute right-8 top-10 flex h-36 w-36 animate-[hubFloat_6.4s_ease-in-out_infinite] items-center justify-center rounded-3xl border p-8 shadow-2xl backdrop-blur ${colors.panel}`}
           >
             <Icon className="h-20 w-20" />
           </div>
-          <div className="absolute bottom-8 left-2 max-w-64 animate-[hubFloat_7s_ease-in-out_infinite] rounded-2xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl shadow-black/30 backdrop-blur">
+          <div className="absolute bottom-8 left-2 max-w-60 animate-[hubFloat_7s_ease-in-out_infinite] rounded-2xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl shadow-black/30 backdrop-blur">
             <p className="text-xs font-black uppercase tracking-wide text-slate-400">
               Status
             </p>
             <p className="mt-2 text-sm font-bold text-white">
-              Under construction. Hard hats on. Swagger intact.
+              Under construction. Clean tools, calmer launch.
             </p>
           </div>
         </aside>

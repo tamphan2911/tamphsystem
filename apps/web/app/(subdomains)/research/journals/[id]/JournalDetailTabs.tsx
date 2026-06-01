@@ -196,31 +196,31 @@ export function JournalDetailTabs({
 
           {activeTab === "accounts" && (
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[70rem] text-left">
+              <div className="overflow-hidden">
+                <table className="w-full table-fixed text-left">
                   <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
                     <tr>
-                      <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
+                      <th className="w-[30%] px-4 py-3">
                         <IconHint label="Account login ID">
                           <KeyRound className="h-4 w-4" aria-hidden="true" />
                         </IconHint>
                       </th>
-                      <th className="px-4 py-3">
+                      <th className="w-[18%] px-3 py-3">
                         <IconHint label="Password">
                           <LockKeyhole className="h-4 w-4" aria-hidden="true" />
                         </IconHint>
                       </th>
-                      <th className="px-4 py-3">
+                      <th className="w-[22%] px-3 py-3">
                         <IconHint label="Email">
                           <AtSign className="h-4 w-4" aria-hidden="true" />
                         </IconHint>
                       </th>
-                      <th className="px-4 py-3">
+                      <th className="w-[8%] px-2 py-3 text-center">
                         <IconHint label="Submissions">
                           <Send className="h-4 w-4" aria-hidden="true" />
                         </IconHint>
                       </th>
-                      <th className="px-4 py-3">
+                      <th className="w-[22%] px-3 py-3">
                         <IconHint label="Note">
                           <StickyNote className="h-4 w-4" aria-hidden="true" />
                         </IconHint>
@@ -233,7 +233,7 @@ export function JournalDetailTabs({
                         key={account.id}
                         className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
                       >
-                        <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-normal text-slate-700 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
+                        <td className="px-4 py-3 text-sm font-normal text-slate-700 dark:text-slate-200">
                           <Link
                             href={`/accounts/${account.id}`}
                             className="font-semibold text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
@@ -244,17 +244,23 @@ export function JournalDetailTabs({
                             {account.id.slice(0, 8)}
                           </p>
                         </td>
-                        <td className="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">
-                          {account.password || "-"}
+                        <td className="px-3 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">
+                          <span className="block truncate">
+                            {account.password || "-"}
+                          </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                          {account.email || "-"}
+                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          <span className="block truncate">
+                            {account.email || "-"}
+                          </span>
                         </td>
-                        <td className="px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                        <td className="px-2 py-3 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">
                           {account.submissions}
                         </td>
-                        <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                          {account.note || "-"}
+                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          <span className="line-clamp-2">
+                            {account.note || "-"}
+                          </span>
                         </td>
                       </tr>
                     ))}
@@ -283,15 +289,15 @@ export function JournalDetailTabs({
 
           {activeTab === "reviews" && (
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[78rem] text-left">
+              <div className="overflow-hidden">
+                <table className="w-full table-fixed text-left">
                   <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
                     <tr>
-                      <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
+                      <th className="w-[34%] px-4 py-3">
                         Manuscript
                       </th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">
+                      <th className="w-[13%] px-3 py-3">Status</th>
+                      <th className="w-[10%] px-3 py-3">
                         <IconHint label="Due date">
                           <CalendarClock
                             className="h-4 w-4"
@@ -299,9 +305,9 @@ export function JournalDetailTabs({
                           />
                         </IconHint>
                       </th>
-                      <th className="px-4 py-3">Recommendation</th>
-                      <th className="px-4 py-3">Editor</th>
-                      <th className="px-4 py-3">
+                      <th className="w-[15%] px-3 py-3">Recommendation</th>
+                      <th className="w-[12%] px-3 py-3">Editor</th>
+                      <th className="w-[16%] px-3 py-3">
                         <IconHint label="Note">
                           <StickyNote className="h-4 w-4" aria-hidden="true" />
                         </IconHint>
@@ -314,8 +320,8 @@ export function JournalDetailTabs({
                         key={review.id}
                         className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
                       >
-                        <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                          <p className="text-sm font-normal text-slate-700 dark:text-slate-200">
+                        <td className="px-4 py-3">
+                          <p className="line-clamp-2 text-sm font-normal text-slate-700 dark:text-slate-200">
                             {review.manuscriptTitle}
                           </p>
                           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -324,24 +330,30 @@ export function JournalDetailTabs({
                               "No tracking code"}
                           </p>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3">
                           <span
                             className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(review.status)}`}
                           >
                             {review.status.replace("_", " ")}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
                           {review.dueDate || "-"}
                         </td>
-                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                          {review.recommendation || "-"}
+                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          <span className="line-clamp-2">
+                            {review.recommendation || "-"}
+                          </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                          {review.editorName || "-"}
+                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          <span className="block truncate">
+                            {review.editorName || "-"}
+                          </span>
                         </td>
-                        <td className="max-w-sm px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                          {review.note || "-"}
+                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          <span className="line-clamp-2">
+                            {review.note || "-"}
+                          </span>
                         </td>
                       </tr>
                     ))}

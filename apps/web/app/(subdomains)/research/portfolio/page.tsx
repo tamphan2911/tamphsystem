@@ -5,9 +5,9 @@ export default function PortfolioConstructionPage() {
   return (
     <HubConstructionPage
       eyebrow="Portfolio hub loading"
-      title="Portfolio is in the lab, getting dressed like it has a keynote at midnight."
-      message="The portfolio hub is still under construction. Projects, work stories, research flex, and the clean public profile are being tuned before they hit the street."
-      punchline="Come back later. The elevator music is temporary; the entrance will be sharp."
+      title="Portfolio hub is under construction."
+      message="Projects, work stories, research highlights, and the public profile are being tuned before this section opens."
+      punchline="Come back later. The entrance is being cleaned up."
       accent="blue"
       icon={BriefcaseBusiness}
     />

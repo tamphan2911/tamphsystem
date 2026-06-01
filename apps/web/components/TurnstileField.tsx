@@ -65,8 +65,8 @@ export function TurnstileField({ siteKey, resetKey = 0 }: TurnstileFieldProps) {
         strategy="afterInteractive"
         onLoad={() => setScriptReady(true)}
       />
-      <div className="flex justify-center py-1">
-        <div ref={containerRef} />
+      <div className="flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden py-0">
+        <div ref={containerRef} className="max-w-full" />
       </div>
     </>
   );

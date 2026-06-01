@@ -5,9 +5,9 @@ export default function LearnConstructionPage() {
   return (
     <HubConstructionPage
       eyebrow="Learn hub warming up"
-      title="Learn is cooking lessons, quizzes, and study sauce in the back room."
-      message="The learning hub is currently under construction. Courses, practice flows, and the student dashboard are being upgraded before the doors open properly."
-      punchline="Come back later. Class is not dismissed; it is just getting a better soundtrack."
+      title="Learn hub is under construction."
+      message="Courses, practice flows, and the student dashboard are being upgraded before the learning hub opens properly."
+      punchline="Come back later. The lesson engine is getting a cleaner launch."
       accent="emerald"
       icon={GraduationCap}
     />

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { AlertCircle, BellRing, CheckCircle2, Loader2, X } from "lucide-react";
+import { AlertCircle, BellRing, CheckCircle2, Loader2 } from "lucide-react";
+import { ResearchModal } from "../../components/ResearchModal";
 import { useResearchToast } from "../../components/ResearchToast";
 
 type ReminderAssignee = {
@@ -66,47 +67,27 @@ export function TaskReminderButton({
         </span>
       </button>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-[90] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="w-full max-w-xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-slate-50/80 px-5 py-4 dark:border-slate-800 dark:bg-slate-950/50">
-              <div className="flex items-start gap-3">
-                <span
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ${
-                    block
-                      ? "bg-amber-50 text-amber-600 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900"
-                      : "bg-emerald-50 text-emerald-600 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900"
-                  }`}
-                >
-                  {block ? (
-                    <AlertCircle className="h-5 w-5" />
-                  ) : (
-                    <BellRing className="h-5 w-5" />
-                  )}
-                </span>
-                <div>
-                  <h2 className="text-base font-black text-slate-950 dark:text-white">
-                    {block ? block.title : "Send task reminder"}
-                  </h2>
-                  <p className="mt-1 text-sm leading-5 text-slate-500 dark:text-slate-400">
-                    {block
-                      ? block.detail
-                      : `Choose assignees who should receive a professional reminder to finish "${taskTitle}".`}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-white hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                aria-label="Close reminder dialog"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {block ? (
-              <div className="px-5 py-5">
+      <ResearchModal
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+        title={block ? block.title : "Send task reminder"}
+        description={
+          block
+            ? block.detail
+            : `Choose assignees who should receive a professional reminder to finish "${taskTitle}".`
+        }
+        icon={
+          block ? (
+            <AlertCircle className="h-5 w-5" />
+          ) : (
+            <BellRing className="h-5 w-5" />
+          )
+        }
+        maxWidth="max-w-xl"
+        bodyClassName="px-5 py-5"
+      >
+        {block ? (
+          <div>
                 <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
                   This reminder button stays available so you can see why it is
                   not active for the current task state.
@@ -120,9 +101,9 @@ export function TaskReminderButton({
                     Got it
                   </button>
                 </div>
-              </div>
-            ) : (
-              <form
+          </div>
+        ) : (
+          <form
                 action={(formData) => {
                   startTransition(async () => {
                     const result = await action(formData);
@@ -140,8 +121,8 @@ export function TaskReminderButton({
                     });
                   });
                 }}
-                className="grid gap-4 px-5 py-5"
-              >
+            className="grid gap-4"
+          >
                 {selectedIds.map((id) => (
                   <input key={id} type="hidden" name="assigneeIds" value={id} />
                 ))}
@@ -222,11 +203,9 @@ export function TaskReminderButton({
                     Send email
                   </button>
                 </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+          </form>
+        )}
+      </ResearchModal>
     </>
   );
 }
