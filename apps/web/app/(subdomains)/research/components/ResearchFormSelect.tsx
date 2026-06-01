@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
+import { researchFieldClass } from "./ResearchPrimitives";
 
 export type ResearchFormSelectOption = {
   value: string;
@@ -61,7 +62,7 @@ export function ResearchFormSelect({
         aria-expanded={open}
         disabled={disabled}
         onClick={() => setOpen((current) => !current)}
-        className="group inline-flex h-12 w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 shadow-sm shadow-slate-900/[0.03] outline-none transition duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 motion-reduce:transition-none motion-reduce:hover:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 disabled:hover:translate-y-0 disabled:hover:shadow-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:shadow-black/10 dark:hover:border-slate-600 dark:hover:bg-slate-900 dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
+        className={`group inline-flex justify-between gap-3 text-left font-semibold ${researchFieldClass}`}
       >
         <span className="min-w-0 truncate text-left">{selected?.label}</span>
         <ChevronDown

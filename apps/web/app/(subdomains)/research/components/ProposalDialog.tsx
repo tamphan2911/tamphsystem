@@ -13,6 +13,12 @@ import {
 } from "lucide-react";
 import { submitProposal } from "../actions";
 import { ResearchModal } from "./ResearchModal";
+import {
+  ResearchButton,
+  researchFieldClass,
+  researchLabelClass,
+  researchTextareaClass,
+} from "./ResearchPrimitives";
 import { useResearchToast } from "./ResearchToast";
 
 type ProposalKind = "RESEARCH" | "PROJECT" | "CONFERENCE" | "JOURNAL";
@@ -41,14 +47,9 @@ const successLines = [
   },
 ];
 
-const fieldClass =
-  "h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
-const areaClass =
-  "min-h-28 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
-const labelClass =
-  "grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200";
-const proposalButtonClass =
-  "inline-flex cursor-pointer items-center gap-2 rounded-xl border border-sky-200 bg-sky-100/80 px-4 py-2.5 text-sm font-bold text-sky-800 shadow-sm shadow-sky-900/5 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-md hover:shadow-sky-900/10 focus:outline-none focus:ring-4 focus:ring-sky-200/70 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm dark:border-sky-700/60 dark:bg-sky-900/35 dark:text-sky-100 dark:hover:border-sky-500/70 dark:hover:bg-sky-800/55 dark:hover:text-white dark:hover:shadow-black/25 dark:focus:ring-sky-700/35";
+const fieldClass = researchFieldClass;
+const areaClass = researchTextareaClass;
+const labelClass = researchLabelClass;
 
 export function ProposalDialog({
   type,
@@ -107,14 +108,13 @@ export function ProposalDialog({
 
   return (
     <>
-      <button
+      <ResearchButton
         type="button"
         onClick={openDialog}
-        className={proposalButtonClass}
       >
         <Icon className="h-4 w-4" />
         {buttonLabel}
-      </button>
+      </ResearchButton>
 
       <ResearchModal
         open={open}
@@ -301,9 +301,8 @@ export function ProposalDialog({
               </div>
 
               <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button
+                <ResearchButton
                   disabled={uploadDisabled}
-                  className={proposalButtonClass}
                 >
                   {uploadDisabled ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -311,7 +310,7 @@ export function ProposalDialog({
                     <Send className="h-4 w-4" />
                   )}
                   {uploadDisabled ? "Uploading..." : "Send proposal"}
-                </button>
+                </ResearchButton>
               </div>
         </form>
       </ResearchModal>

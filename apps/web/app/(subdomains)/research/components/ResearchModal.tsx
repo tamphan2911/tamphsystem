@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
+import { ResearchIconButton } from "./ResearchPrimitives";
 
 export function ResearchModal({
   open,
@@ -49,14 +50,15 @@ export function ResearchModal({
               )}
             </div>
           </div>
-          <button
+          <ResearchIconButton
             type="button"
             onClick={onClose}
-            className="inline-flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-xl text-slate-400 transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-slate-100 hover:text-slate-700 hover:shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-            aria-label="Close"
+            label="Close"
+            tone="slate"
+            className="flex-none"
           >
             <X className="h-5 w-5" />
-          </button>
+          </ResearchIconButton>
         </div>
 
         <div className={`min-h-0 flex-1 overflow-y-auto ${bodyClassName}`}>

@@ -21,6 +21,11 @@ import {
 } from "lucide-react";
 import { createResearchTask } from "../actions";
 import { ResearchModal } from "../components/ResearchModal";
+import {
+  ResearchButton,
+  researchFieldClass,
+  researchTextareaClass,
+} from "../components/ResearchPrimitives";
 import { useResearchToast } from "../components/ResearchToast";
 
 export type TaskAssigneeOption = {
@@ -76,8 +81,7 @@ type SearchPanelItem = {
   onClick: () => void;
 };
 
-const inputClass =
-  "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+const inputClass = researchFieldClass;
 const finishedResearchStages = new Set(["ACCEPTED", "PUBLISHED"]);
 const closedReviewStatuses = new Set(["SUBMITTED", "DECLINED", "CANCELLED"]);
 const closedProjectStatuses = new Set(["COMPLETED"]);
@@ -377,14 +381,13 @@ export function NewTaskDialog({
 
   return (
     <>
-      <button
+      <ResearchButton
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-bold text-violet-700 shadow-sm shadow-violet-900/5 transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-100 hover:shadow-md dark:border-violet-800/70 dark:bg-violet-950/50 dark:text-violet-200 dark:hover:border-violet-600 dark:hover:bg-violet-900/60"
       >
         <PlusCircle className="h-4 w-4" />
         New Task
-      </button>
+      </ResearchButton>
 
       <ResearchModal
         open={isOpen}
@@ -745,7 +748,7 @@ export function NewTaskDialog({
                   name="description"
                   rows={3}
                   placeholder="Add instructions, expected output, files, or notes..."
-                  className={inputClass}
+                  className={researchTextareaClass}
                 />
               </label>
 
@@ -766,20 +769,19 @@ export function NewTaskDialog({
               />
 
               <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button
+                <ResearchButton
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  tone="secondary"
                 >
                   Cancel
-                </button>
-                <button
+                </ResearchButton>
+                <ResearchButton
                   disabled={!canSubmit || isPending}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0 disabled:hover:shadow-none"
                 >
                   <PlusCircle className="h-4 w-4" />
                   Assign Task
-                </button>
+                </ResearchButton>
               </div>
             </form>
       </ResearchModal>

@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { AlertTriangle, Trash2, X } from "lucide-react";
+import { ResearchButton, ResearchIconButton } from "./ResearchPrimitives";
 
 type ConfirmTone = "danger" | "warning" | "info";
 
@@ -15,7 +16,7 @@ function toneClasses(tone: ConfirmTone) {
       icon:
         "bg-amber-100 text-amber-700 ring-amber-200 dark:bg-amber-950/70 dark:text-amber-300 dark:ring-amber-800",
       confirm:
-        "bg-amber-600 hover:bg-amber-500 disabled:hover:bg-amber-600",
+        "border-amber-600 bg-amber-600 text-white hover:border-amber-500 hover:bg-amber-500 disabled:hover:bg-amber-600",
     };
   }
 
@@ -26,7 +27,8 @@ function toneClasses(tone: ConfirmTone) {
         "border-blue-100 bg-blue-50/80 dark:border-blue-900/60 dark:bg-blue-950/25",
       icon:
         "bg-blue-100 text-blue-700 ring-blue-200 dark:bg-blue-950/70 dark:text-blue-300 dark:ring-blue-800",
-      confirm: "bg-blue-600 hover:bg-blue-500 disabled:hover:bg-blue-600",
+      confirm:
+        "border-blue-600 bg-blue-600 text-white hover:border-blue-500 hover:bg-blue-500 disabled:hover:bg-blue-600",
     };
   }
 
@@ -36,7 +38,8 @@ function toneClasses(tone: ConfirmTone) {
       "border-rose-100 bg-rose-50/80 dark:border-rose-900/60 dark:bg-rose-950/25",
     icon:
       "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-950/70 dark:text-rose-300 dark:ring-rose-800",
-    confirm: "bg-rose-600 hover:bg-rose-500 disabled:hover:bg-rose-600",
+    confirm:
+      "border-rose-600 bg-rose-600 text-white hover:border-rose-500 hover:bg-rose-500 disabled:hover:bg-rose-600",
   };
 }
 
@@ -95,15 +98,15 @@ export function ResearchConfirmDialog({
                 )}
               </div>
             </div>
-            <button
+            <ResearchIconButton
               type="button"
               onClick={onCancel}
               disabled={isConfirming}
-              className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-white hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-              aria-label="Close"
+              label="Close"
+              tone="slate"
             >
               <X className="h-5 w-5" />
-            </button>
+            </ResearchIconButton>
           </div>
         </div>
 
@@ -114,24 +117,25 @@ export function ResearchConfirmDialog({
         )}
 
         <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-slate-800">
-          <button
+          <ResearchButton
             type="button"
             onClick={onCancel}
             disabled={isConfirming}
-            className="inline-flex h-10 cursor-pointer items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            tone="secondary"
           >
             {cancelLabel}
-          </button>
-          <button
+          </ResearchButton>
+          <ResearchButton
             type="button"
             disabled={isConfirming}
             onClick={onConfirm}
-            className={`inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 ${classes.confirm}`}
+            tone={tone === "danger" ? "danger" : tone === "warning" ? "secondary" : "primary"}
+            className={classes.confirm}
           >
             {confirmIcon ??
               (tone === "danger" ? <Trash2 className="h-4 w-4" /> : null)}
             {confirmLabel}
-          </button>
+          </ResearchButton>
         </div>
       </div>
     </div>

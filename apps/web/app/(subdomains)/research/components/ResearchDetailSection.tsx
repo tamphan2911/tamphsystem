@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cx, researchSectionClass } from "./ResearchPrimitives";
 
 export function ResearchDetailSection({
   title,
@@ -13,7 +14,7 @@ export function ResearchDetailSection({
 }) {
   return (
     <section
-      className={`rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 ${className}`}
+      className={cx(researchSectionClass, className)}
     >
       {(title || action) && (
         <div className="mb-4 flex items-center justify-between gap-3">

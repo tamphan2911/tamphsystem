@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Search, X } from "lucide-react";
+import { ResearchIconButton, researchFieldClass } from "./ResearchPrimitives";
 
 export type ResearchSearchPickerOption<T = unknown> = {
   id: string;
@@ -100,14 +101,15 @@ export function ResearchSearchPicker<T = unknown>({
               </span>
             )}
             {!disabled && (
-              <button
+              <ResearchIconButton
                 type="button"
                 onClick={onClear}
-                className="inline-flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
-                aria-label={`Remove ${label ?? "selection"}`}
+                label={`Remove ${label ?? "selection"}`}
+                tone="rose"
+                className="h-8 w-8 flex-none"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </ResearchIconButton>
             )}
           </div>
         ) : (
@@ -143,7 +145,7 @@ export function ResearchSearchPicker<T = unknown>({
                 }
               }}
               placeholder={placeholder}
-              className="h-10 w-full rounded-lg border border-transparent bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition placeholder:text-slate-400 disabled:bg-slate-100 disabled:text-slate-400 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:bg-slate-900/60"
+              className={`${researchFieldClass} h-10 border-transparent bg-white pl-9 dark:bg-slate-900`}
             />
           </div>
         )}

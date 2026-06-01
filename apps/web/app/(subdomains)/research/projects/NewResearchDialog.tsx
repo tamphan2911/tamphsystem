@@ -15,6 +15,13 @@ import { createResearchProject } from "../actions";
 import { ResearchFormSelect } from "../components/ResearchFormSelect";
 import { ResearchModal } from "../components/ResearchModal";
 import {
+  ResearchButton,
+  ResearchIconButton,
+  researchFieldClass,
+  researchLabelClass,
+  researchTextareaClass,
+} from "../components/ResearchPrimitives";
+import {
   FundingInstitutionPicker,
   type FundingInstitutionOption,
 } from "../organized-projects/ProjectFormControls";
@@ -94,7 +101,7 @@ function NewResearchAuthorsPicker({
             onFocus={() => setFocused(true)}
             onBlur={() => window.setTimeout(() => setFocused(false), 120)}
             placeholder="Search user by name, ID, or email..."
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            className={`${researchFieldClass} h-11 bg-white pl-9 dark:bg-slate-900`}
           />
 
           {focused && query.trim().length > 0 && (
@@ -160,14 +167,14 @@ function NewResearchAuthorsPicker({
                   {author.email}
                 </p>
               </div>
-              <button
+              <ResearchIconButton
                 type="button"
-                aria-label={`Remove ${authorName(author)}`}
                 onClick={() => removeAuthor(author.id)}
-                className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                label={`Remove ${authorName(author)}`}
+                tone="rose"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
-              </button>
+              </ResearchIconButton>
             </div>
           ))}
           {selectedAuthors.length === 0 && (
@@ -234,14 +241,13 @@ export function NewResearchDialog({
 
   return (
     <>
-      <button
+      <ResearchButton
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-100/80 px-4 py-2.5 text-sm font-bold text-sky-800 shadow-sm shadow-sky-900/5 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-md hover:shadow-sky-900/10 focus:outline-none focus:ring-4 focus:ring-sky-200/70 dark:border-sky-700/60 dark:bg-sky-900/35 dark:text-sky-100 dark:hover:border-sky-500/70 dark:hover:bg-sky-800/55 dark:hover:text-white dark:hover:shadow-black/25 dark:focus:ring-sky-700/35"
       >
         <PlusCircle className="h-4 w-4" />
         New Research
-      </button>
+      </ResearchButton>
 
       <ResearchModal
         open={isOpen}
@@ -267,12 +273,12 @@ export function NewResearchDialog({
               )}
 
               <section className="grid gap-4">
-                <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <label className={researchLabelClass}>
                   Title
                   <input
                     name="title"
                     placeholder="Research title"
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                    className={researchFieldClass}
                   />
                 </label>
                 <NewResearchAuthorsPicker
@@ -293,7 +299,7 @@ export function NewResearchDialog({
                     Registration
                   </h3>
                   <div className="grid items-end gap-4 lg:grid-cols-[14rem_1fr]">
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <label className={researchLabelClass}>
                       Register
                       <ResearchFormSelect
                         name="registerStatus"
@@ -316,13 +322,13 @@ export function NewResearchDialog({
                       }`}
                       aria-hidden={registerStatus === "NOT_REGISTERED"}
                     >
-                      <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      <label className={researchLabelClass}>
                         Registration period
                         <input
                           name="universityRegistration"
                           placeholder="Q2 2026"
                           disabled={registerStatus === "NOT_REGISTERED"}
-                          className="h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:disabled:bg-slate-900"
+                          className={researchFieldClass}
                         />
                       </label>
                       <RegisterUserPicker
@@ -340,27 +346,27 @@ export function NewResearchDialog({
                 </section>
               )}
 
-              <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <label className={researchLabelClass}>
                 Notes
                 <textarea
                   name="abstract"
                   placeholder="Idea, data, model, writing, humanizing, references..."
-                  className="min-h-28 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                  className={researchTextareaClass}
                 />
               </label>
 
               <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button
+                <ResearchButton
                   type="button"
                   onClick={closeDialog}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50"
+                  tone="secondary"
                 >
                   Cancel
-                </button>
-                <button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                </ResearchButton>
+                <ResearchButton>
                   <PlusCircle className="h-4 w-4" />
                   Add Research
-                </button>
+                </ResearchButton>
               </div>
             </form>
       </ResearchModal>

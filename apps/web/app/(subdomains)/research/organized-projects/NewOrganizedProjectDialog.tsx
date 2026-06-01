@@ -6,6 +6,12 @@ import { AlertTriangle, Building2, PlusCircle } from "lucide-react";
 import { createOrganizedProject } from "../actions";
 import { ResearchModal } from "../components/ResearchModal";
 import { ResearchFormSelect } from "../components/ResearchFormSelect";
+import {
+  ResearchButton,
+  researchFieldClass,
+  researchLabelClass,
+  researchTextareaClass,
+} from "../components/ResearchPrimitives";
 import { currencyOptions } from "../lib/currency";
 import type { AuthorOption } from "../projects/[id]/AuthorsPicker";
 import {
@@ -86,14 +92,13 @@ export function NewOrganizedProjectDialog({
 
   return (
     <>
-      <button
+      <ResearchButton
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-100/80 px-4 py-2.5 text-sm font-bold text-sky-800 shadow-sm shadow-sky-900/5 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-md hover:shadow-sky-900/10 focus:outline-none focus:ring-4 focus:ring-sky-200/70 dark:border-sky-700/60 dark:bg-sky-900/35 dark:text-sky-100 dark:hover:border-sky-500/70 dark:hover:bg-sky-800/55 dark:hover:text-white dark:hover:shadow-black/25 dark:focus:ring-sky-700/35"
       >
         <PlusCircle className="h-4 w-4" />
         Add Project
-      </button>
+      </ResearchButton>
 
       <ResearchModal
         open={isOpen}
@@ -120,27 +125,24 @@ export function NewOrganizedProjectDialog({
                   </div>
                 )}
 
-                <section className="grid gap-4 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-                  <h3 className="text-sm font-black text-slate-950 dark:text-white">
-                    Basic information
-                  </h3>
+                <section className="grid gap-4">
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_12rem]">
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <label className={researchLabelClass}>
                       Project name
                       <input
                         name="title"
                         required
                         placeholder="Institutional project title"
-                        className="h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        className={researchFieldClass}
                       />
                     </label>
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <label className={researchLabelClass}>
                       Project ID
                       <input
                         name="referenceCode"
                         required
                         placeholder="UEH-DTI-2026"
-                        className="h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        className={researchFieldClass}
                       />
                     </label>
                   </div>
@@ -151,7 +153,7 @@ export function NewOrganizedProjectDialog({
                   />
 
                   <div className="grid gap-4 md:grid-cols-4">
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <label className={researchLabelClass}>
                       Status
                       <ResearchFormSelect
                         name="status"
@@ -164,7 +166,7 @@ export function NewOrganizedProjectDialog({
                         ]}
                       />
                     </label>
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <label className={researchLabelClass}>
                       Financial
                       <ResearchFormSelect
                         name="financialClaimStatus"
@@ -180,16 +182,16 @@ export function NewOrganizedProjectDialog({
                         ]}
                       />
                     </label>
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <label className={researchLabelClass}>
                       Start date
                       <input
                         name="startDate"
                         type="date"
                         required
-                        className="h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        className={researchFieldClass}
                       />
                     </label>
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <label className={researchLabelClass}>
                       Duration months
                       <input
                         name="durationMonths"
@@ -197,14 +199,14 @@ export function NewOrganizedProjectDialog({
                         min="1"
                         required
                         placeholder="9"
-                        className="h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        className={researchFieldClass}
                       />
                     </label>
                   </div>
 
                   {financial !== "NONE" && (
                     <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_14rem]">
-                      <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      <label className={researchLabelClass}>
                         Funding amount
                         <input
                           name="fundingAmount"
@@ -212,10 +214,10 @@ export function NewOrganizedProjectDialog({
                           min="0"
                           step="0.01"
                           placeholder="20000000"
-                          className="h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                          className={researchFieldClass}
                         />
                       </label>
-                      <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      <label className={researchLabelClass}>
                         Currency
                         <ResearchFormSelect
                           name="fundingCurrency"
@@ -227,29 +229,26 @@ export function NewOrganizedProjectDialog({
                     </div>
                   )}
 
-                  <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  <label className={researchLabelClass}>
                     Required products
                     <textarea
                       name="requiredProducts"
                       placeholder="One required project output per line..."
-                      className="min-h-20 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      className={researchTextareaClass}
                     />
                   </label>
 
-                  <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  <label className={researchLabelClass}>
                     Description
                     <textarea
                       name="description"
                       placeholder="Scope, deliverables, funding notes, or institution requirements..."
-                      className="min-h-24 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      className={researchTextareaClass}
                     />
                   </label>
                 </section>
 
-                <section className="grid gap-4 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-                  <h3 className="text-sm font-black text-slate-950 dark:text-white">
-                    People and results
-                  </h3>
+                <section className="grid gap-4 border-t border-slate-200 pt-5 dark:border-slate-800">
                   <ProjectMembersPicker
                     users={users}
                     defaultMembers={[]}
@@ -261,28 +260,28 @@ export function NewOrganizedProjectDialog({
                   />
                 </section>
 
-                <label className="grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <label className={researchLabelClass}>
                   Notes
                   <textarea
                     name="note"
                     placeholder="Internal follow-up notes..."
-                    className="min-h-20 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    className={researchTextareaClass}
                   />
                 </label>
               </div>
 
               <div className="mt-5 flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button
+                <ResearchButton
                   type="button"
                   onClick={closeDialog}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  tone="secondary"
                 >
                   Cancel
-                </button>
-                <button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                </ResearchButton>
+                <ResearchButton>
                   <PlusCircle className="h-4 w-4" />
                   Add Project
-                </button>
+                </ResearchButton>
               </div>
             </form>
       </ResearchModal>
