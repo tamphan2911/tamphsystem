@@ -35,6 +35,8 @@ import {
   ResearchAuthorsEditDialog,
   ResearchBasicEditDialog,
 } from "./ResearchDetailEditDialogs";
+import { ResearchDetailSection } from "../../components/ResearchDetailSection";
+import { IconHint } from "../../components/ResearchPrimitives";
 
 export const dynamic = "force-dynamic";
 
@@ -222,23 +224,6 @@ function claimLabel(status: string) {
   if (status === "WAITING") return "Waiting response";
   if (status === "CLAIMED") return "Claimed";
   return status.replaceAll("_", " ");
-}
-
-function IconHint({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <span className="group/icon relative inline-flex">
-      {children}
-      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
-        {label}
-      </span>
-    </span>
-  );
 }
 
 export default async function ProjectDetailPage({
@@ -898,7 +883,7 @@ export default async function ProjectDetailPage({
           disabled={!canEditResearch || researchContentLocked}
           className="contents"
         >
-          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <ResearchDetailSection className="p-6">
             <input type="hidden" name="title" value={project.title} />
             <input
               type="hidden"
@@ -1067,9 +1052,9 @@ export default async function ProjectDetailPage({
                 ))}
               </div>
             </div>
-          </section>
+          </ResearchDetailSection>
 
-          <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <ResearchDetailSection>
             <div className="mb-5 flex items-center justify-between gap-3">
               <h2 className="flex items-center gap-2 text-base font-bold text-slate-950 dark:text-white">
                 <ClipboardCheck className="h-4 w-4 text-emerald-500" />
@@ -1111,7 +1096,7 @@ export default async function ProjectDetailPage({
                 );
               })}
             </div>
-          </aside>
+          </ResearchDetailSection>
         </fieldset>
       </SaveForm>
 

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BadgeCheck, Send, Star, Trash2 } from "lucide-react";
 import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
+import { ResearchIconButton } from "../components/ResearchPrimitives";
 import { ResearchEmptyState } from "../components/ResearchState";
 import {
   FilterSelect,
@@ -49,16 +50,14 @@ function DeleteJournalButton({
 
   return (
     <>
-      <IconHint label="Delete journal">
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-rose-100 bg-rose-50 text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:shadow-md dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/50"
-          aria-label={`Delete ${journal.name}`}
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </IconHint>
+      <ResearchIconButton
+        type="button"
+        onClick={() => setIsOpen(true)}
+        label={`Delete ${journal.name}`}
+        tone="rose"
+      >
+        <Trash2 className="h-4 w-4" />
+      </ResearchIconButton>
 
       <ResearchConfirmDialog
         open={isOpen}

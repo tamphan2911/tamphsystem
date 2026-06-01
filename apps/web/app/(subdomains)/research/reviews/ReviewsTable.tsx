@@ -21,6 +21,7 @@ import {
   useTablePagination,
 } from "../components/TableControls";
 import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
+import { ResearchIconButton } from "../components/ResearchPrimitives";
 import { ResearchEmptyState } from "../components/ResearchState";
 import { useResearchToast } from "../components/ResearchToast";
 
@@ -106,16 +107,15 @@ function DeleteReviewButton({
 
   return (
     <>
-      <IconHint label="Delete review">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-rose-100 bg-rose-50 text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:shadow-md dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/50"
-          aria-label={`Delete review for ${review.manuscriptTitle}`}
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </IconHint>
+      <ResearchIconButton
+        type="button"
+        onClick={() => setOpen(true)}
+        label={`Delete review for ${review.manuscriptTitle}`}
+        tone="rose"
+        className="h-8 w-8"
+      >
+        <Trash2 className="h-4 w-4" />
+      </ResearchIconButton>
 
       <ResearchConfirmDialog
         open={open}

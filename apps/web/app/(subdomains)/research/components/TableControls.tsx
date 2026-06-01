@@ -9,6 +9,11 @@ import {
   ChevronRight,
   Search,
 } from "lucide-react";
+import {
+  IconHint as PrimitiveIconHint,
+  ResearchIconButton,
+  researchFieldClass,
+} from "./ResearchPrimitives";
 
 export type FilterOption = {
   value: string;
@@ -25,14 +30,11 @@ export function IconHint({
   className?: string;
 }) {
   return (
-    <span
-      className={`group/icon relative inline-flex items-center justify-center align-middle ${className}`}
-    >
-      {children}
-      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold normal-case tracking-normal text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100 motion-reduce:transition-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
-        {label}
+    <PrimitiveIconHint label={label} position="bottom">
+      <span className={`inline-flex items-center justify-center align-middle ${className}`}>
+        {children}
       </span>
-    </span>
+    </PrimitiveIconHint>
   );
 }
 
@@ -85,7 +87,7 @@ export function FilterSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className="group inline-flex h-10 w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 shadow-sm shadow-slate-900/[0.03] outline-none transition duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:shadow-black/10 dark:hover:border-slate-600 dark:hover:bg-slate-900"
+        className={`group inline-flex h-10 justify-between gap-3 font-semibold ${researchFieldClass}`}
       >
         <span className="min-w-0 truncate text-left">{selected?.label}</span>
         <ChevronDown
@@ -158,7 +160,7 @@ export function TableSearchInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-10 pr-3 text-sm text-slate-900 shadow-sm shadow-slate-900/[0.03] outline-none transition duration-200 ease-out placeholder:text-slate-400 hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:shadow-black/10 dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:hover:bg-slate-900 dark:focus:bg-slate-900"
+        className={`${researchFieldClass} h-10 rounded-xl py-2 pl-10`}
       />
     </div>
   );
@@ -210,27 +212,27 @@ export function TablePagination({
         of <span className="text-slate-900 dark:text-slate-100">{total}</span>
       </p>
       <div className="flex items-center gap-2">
-        <button
+        <ResearchIconButton
           type="button"
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page <= 1}
-          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:border-blue-200 hover:text-slate-950 hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 disabled:hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-800 dark:hover:text-white"
-          aria-label="Previous page"
+          label="Previous page"
+          tone="slate"
         >
           <ChevronLeft className="h-4 w-4" />
-        </button>
+        </ResearchIconButton>
         <span className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
           {page} / {pageCount}
         </span>
-        <button
+        <ResearchIconButton
           type="button"
           onClick={() => onPageChange(Math.min(pageCount, page + 1))}
           disabled={page >= pageCount}
-          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:border-blue-200 hover:text-slate-950 hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 disabled:hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-800 dark:hover:text-white"
-          aria-label="Next page"
+          label="Next page"
+          tone="slate"
         >
           <ChevronRight className="h-4 w-4" />
-        </button>
+        </ResearchIconButton>
       </div>
     </div>
   );

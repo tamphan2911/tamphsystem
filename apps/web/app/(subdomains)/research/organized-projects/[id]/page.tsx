@@ -45,6 +45,7 @@ import {
 import { ProjectProductsForm } from "./ProjectProductsForm";
 import { formatCurrencyCodeMoney } from "../../lib/currency";
 import { ResearchDetailSection } from "../../components/ResearchDetailSection";
+import { IconHint } from "../../components/ResearchPrimitives";
 
 export const dynamic = "force-dynamic";
 
@@ -228,23 +229,6 @@ function registrationIcon(status: string) {
   if (status === "SUBMITTED") return SendHorizontal;
   if (status === "PREPARING") return FileClock;
   return CircleOff;
-}
-
-function IconHint({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <span className="group/icon relative inline-flex">
-      {children}
-      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
-        {label}
-      </span>
-    </span>
-  );
 }
 
 function StatusIconChip({
