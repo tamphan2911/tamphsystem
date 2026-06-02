@@ -12,7 +12,6 @@ import {
   Send,
   Trash2,
   UserRound,
-  X,
 } from "lucide-react";
 import {
   addSuggestedConference,
@@ -21,6 +20,15 @@ import {
   deleteSuggestedConference,
   deleteSuggestedJournal,
 } from "../../actions";
+import { ResearchConfirmDialog } from "../../components/ResearchConfirmDialog";
+import { ResearchDetailSection } from "../../components/ResearchDetailSection";
+import { ResearchModal } from "../../components/ResearchModal";
+import {
+  ResearchButton,
+  ResearchIconButton,
+  researchFieldClass,
+  researchTextareaClass,
+} from "../../components/ResearchPrimitives";
 import { useResearchToast } from "../../components/ResearchToast";
 
 export type SuggestedJournalOption = {
@@ -283,7 +291,7 @@ export function SuggestedJournalsPanel({
   const assignKind = assignVenue?.kind ?? "journal";
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <ResearchDetailSection>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-base font-bold text-slate-950 dark:text-white">
@@ -294,7 +302,7 @@ export function SuggestedJournalsPanel({
           </p>
         </div>
         {canSuggestVenue && (
-          <button
+          <ResearchButton
             type="button"
             disabled={disabled}
             title={
@@ -303,11 +311,11 @@ export function SuggestedJournalsPanel({
                 : "Add suggested venue"
             }
             onClick={() => setAddOpen(true)}
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:-translate-y-0.5 hover:bg-blue-100 hover:shadow-sm disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:hover:translate-y-0 disabled:hover:bg-slate-100 disabled:hover:shadow-none dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950/70 dark:disabled:border-slate-800 dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
+            size="sm"
           >
             <Plus className="h-4 w-4" />
             Add suggested venue
-          </button>
+          </ResearchButton>
         )}
       </div>
 
@@ -350,14 +358,16 @@ export function SuggestedJournalsPanel({
       </div>
 
       {addOpen && (
-        <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="w-full max-w-3xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <DialogHeader
-              title="Add suggested venue"
-              icon={<Plus className="h-5 w-5" />}
-              onClose={() => setAddOpen(false)}
-            />
-            <div className="grid gap-4 px-5 py-4">
+        <ResearchModal
+          open={addOpen}
+          onClose={() => setAddOpen(false)}
+          title="Add suggested venue"
+          description="Choose a journal or conference target for this research."
+          icon={<Plus className="h-5 w-5" />}
+          maxWidth="max-w-3xl"
+          bodyClassName="px-5 py-4"
+        >
+            <div className="grid gap-4">
               <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
                 {(["journal", "conference"] as const).map((tab) => (
                   <button
@@ -434,56 +444,34 @@ export function SuggestedJournalsPanel({
                 </>
               )}
             </div>
-          </div>
-        </div>
+        </ResearchModal>
       )}
 
       {deleteVenue && (
-        <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <DialogHeader
-              title="Remove suggestion"
-              icon={<Trash2 className="h-5 w-5" />}
-              onClose={() => setDeleteVenue(null)}
-            />
-            <div className="space-y-4 px-5 py-4">
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                Remove {deleteVenue.item.name} from suggested venues for this
-                research?
-              </p>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDeleteVenue(null)}
-                  className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={removeVenue}
-                  className="cursor-pointer rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-wait disabled:opacity-70"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ResearchConfirmDialog
+          open={Boolean(deleteVenue)}
+          title="Remove suggestion?"
+          description={`Remove ${deleteVenue.item.name} from suggested venues for this research?`}
+          confirmLabel="Remove suggestion"
+          isConfirming={isPending}
+          onCancel={() => setDeleteVenue(null)}
+          onConfirm={removeVenue}
+        />
       )}
 
       {assignVenue && (
-        <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-4xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <DialogHeader
-              title="Assign task"
-              icon={<ClipboardList className="h-5 w-5" />}
-              onClose={() => setAssignVenue(null)}
-            />
+        <ResearchModal
+          open={Boolean(assignVenue)}
+          onClose={() => setAssignVenue(null)}
+          title="Assign task"
+          description={`Create a task for ${assignName}.`}
+          icon={<ClipboardList className="h-5 w-5" />}
+          maxWidth="max-w-4xl"
+          bodyClassName="px-0 py-0"
+        >
             <form
               action={assignTask}
-              className="grid max-h-[calc(90vh-5rem)] gap-5 overflow-y-auto px-6 py-5"
+              className="grid gap-5 px-6 py-5"
             >
               {selectedAssistantIds.map((id) => (
                 <input key={id} type="hidden" name="assigneeIds" value={id} />
@@ -551,7 +539,7 @@ export function SuggestedJournalsPanel({
                         ? `Submit "${projectTitle}" to ${assignName}`
                         : `Task for "${projectTitle}"`
                     }
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    className={researchFieldClass}
                   />
                 </label>
                 <label className="grid gap-1.5">
@@ -563,7 +551,7 @@ export function SuggestedJournalsPanel({
                     <input
                       name="dueDate"
                       type="date"
-                      className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      className={`${researchFieldClass} pl-9`}
                     />
                   </div>
                 </label>
@@ -589,7 +577,7 @@ export function SuggestedJournalsPanel({
                       ? `Prepare and submit this manuscript to ${assignName}.`
                       : ""
                   }
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  className={researchTextareaClass}
                 />
               </label>
 
@@ -639,26 +627,24 @@ export function SuggestedJournalsPanel({
               </div>
 
               <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button
+                <ResearchButton
                   type="button"
                   onClick={() => setAssignVenue(null)}
-                  className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  tone="secondary"
                 >
                   Cancel
-                </button>
-                <button
+                </ResearchButton>
+                <ResearchButton
                   disabled={selectedAssistantIds.length === 0 || isPending}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0 disabled:hover:shadow-none"
                 >
                   <Plus className="h-4 w-4" />
                   Assign Task
-                </button>
+                </ResearchButton>
               </div>
             </form>
-          </div>
-        </div>
+        </ResearchModal>
       )}
-    </section>
+    </ResearchDetailSection>
   );
 }
 
@@ -835,7 +821,7 @@ function VenueCard({
       {showActions ? (
         <div className="absolute right-2 top-2 flex translate-y-1 gap-1 opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
           {canAssign && (
-            <button
+            <ResearchIconButton
               type="button"
               onClick={onAssign}
               title={
@@ -843,21 +829,23 @@ function VenueCard({
                   ? assignLabel
                   : "Research is still in production"
               }
-              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-blue-200 bg-white text-blue-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-50 dark:border-blue-900 dark:bg-slate-950 dark:text-blue-300 dark:hover:bg-blue-950/40"
-              aria-label={assignLabel}
+              label={assignLabel}
+              tone="blue"
+              className="h-8 w-8"
             >
               <Send className="h-4 w-4" />
-            </button>
+            </ResearchIconButton>
           )}
           {canDelete && (
-            <button
+            <ResearchIconButton
               type="button"
               onClick={onDelete}
-              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-rose-200 bg-white text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-rose-50 dark:border-rose-900 dark:bg-slate-950 dark:text-rose-300 dark:hover:bg-rose-950/40"
-              aria-label={deleteLabel}
+              label={deleteLabel}
+              tone="rose"
+              className="h-8 w-8"
             >
               <Trash2 className="h-4 w-4" />
-            </button>
+            </ResearchIconButton>
           )}
         </div>
       ) : meta.badge ? (
@@ -1004,37 +992,6 @@ function ResultList({
   );
 }
 
-function DialogHeader({
-  title,
-  icon,
-  onClose,
-}: {
-  title: string;
-  icon: ReactNode;
-  onClose: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-      <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300">
-          {icon}
-        </span>
-        <h3 className="text-base font-bold text-slate-950 dark:text-white">
-          {title}
-        </h3>
-      </div>
-      <button
-        type="button"
-        onClick={onClose}
-        className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-        aria-label="Close"
-      >
-        <X className="h-5 w-5" />
-      </button>
-    </div>
-  );
-}
-
 function SearchBox({
   value,
   onChange,
@@ -1051,7 +1008,7 @@ function SearchBox({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+        className={`${researchFieldClass} pl-9`}
       />
     </div>
   );
@@ -1066,7 +1023,7 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
       <input
         readOnly
         value={value}
-        className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+        className={`${researchFieldClass} bg-slate-100 text-slate-600 dark:text-slate-300`}
       />
     </label>
   );

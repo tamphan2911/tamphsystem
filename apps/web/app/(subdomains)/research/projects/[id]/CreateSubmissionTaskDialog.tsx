@@ -11,9 +11,15 @@ import {
   Plus,
   Search,
   UserRound,
-  X,
 } from "lucide-react";
 import { createPublisherAccount, createResearchTask } from "../../actions";
+import { ResearchModal } from "../../components/ResearchModal";
+import {
+  ResearchButton,
+  ResearchIconButton,
+  researchFieldClass,
+  researchTextareaClass,
+} from "../../components/ResearchPrimitives";
 import { useResearchToast } from "../../components/ResearchToast";
 
 export type SubmissionTaskAccountOption = {
@@ -51,8 +57,7 @@ export type SubmissionTaskAssigneeOption = {
   roles: string[];
 };
 
-const inputClass =
-  "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+const inputClass = researchFieldClass;
 
 export function CreateSubmissionTaskDialog({
   projectId,
@@ -220,7 +225,7 @@ export function CreateSubmissionTaskDialog({
 
   return (
     <>
-      <button
+      <ResearchButton
         type="button"
         disabled={disabled}
         title={
@@ -237,45 +242,27 @@ export function CreateSubmissionTaskDialog({
           }
           setIsOpen(true);
         }}
-        className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 px-4 py-2.5 text-sm font-bold text-indigo-700 shadow-sm shadow-indigo-900/5 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-900/10 disabled:cursor-not-allowed disabled:border-slate-200 disabled:from-slate-50 disabled:via-slate-50 disabled:to-slate-50 disabled:text-slate-400 disabled:hover:translate-y-0 disabled:hover:shadow-none dark:border-indigo-900/60 dark:from-indigo-950/60 dark:via-sky-950/50 dark:to-emerald-950/40 dark:text-indigo-200 dark:disabled:border-slate-800 dark:disabled:from-slate-900 dark:disabled:via-slate-900 dark:disabled:to-slate-900 dark:disabled:text-slate-500"
       >
         <ClipboardPlus className="h-4 w-4" />
         Create task
-      </button>
+      </ResearchButton>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[90] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="max-h-[92vh] w-full max-w-5xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
-              <div className="flex items-start gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300">
-                  <ClipboardPlus className="h-5 w-5" />
-                </span>
-                <div>
-                  <h2 className="text-lg font-black text-slate-950 dark:text-white">
-                    Create submission task
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Submission task is selected automatically for this research.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  reset();
-                  setIsOpen(false);
-                }}
-                className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
+        <ResearchModal
+          open={isOpen}
+          onClose={() => {
+            reset();
+            setIsOpen(false);
+          }}
+          title="Create submission task"
+          description="Submission task is selected automatically for this research."
+          icon={<ClipboardPlus className="h-5 w-5" />}
+          maxWidth="max-w-5xl"
+          bodyClassName="px-0 py-0"
+        >
             <form
               action={submitTask}
-              className="grid max-h-[calc(92vh-6rem)] gap-5 overflow-y-auto px-6 py-5"
+              className="grid gap-5 px-6 py-5"
             >
               <input type="hidden" name="projectId" value={projectId} />
               <input type="hidden" name="category" value="Submitting" />
@@ -411,14 +398,14 @@ export function CreateSubmissionTaskDialog({
                     <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       Account to submit
                     </span>
-                    <button
+                    <ResearchIconButton
                       type="button"
                       onClick={() => setAddAccountOpen(true)}
-                      className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-sm dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
-                      aria-label="Add account"
+                      label="Add account"
+                      tone="emerald"
                     >
                       <KeyRound className="h-4 w-4" />
-                    </button>
+                    </ResearchIconButton>
                   </div>
                   {selectedVenue.accounts.length > 0 ? (
                     <div className="relative">
@@ -489,7 +476,7 @@ export function CreateSubmissionTaskDialog({
                       ? `Prepare and submit this manuscript to ${selectedVenue.name}.`
                       : "Prepare and submit this manuscript."
                   }
-                  className={inputClass}
+                  className={researchTextareaClass}
                 />
               </label>
 
@@ -541,55 +528,42 @@ export function CreateSubmissionTaskDialog({
               </section>
 
               <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button
+                <ResearchButton
                   type="button"
                   onClick={() => {
                     reset();
                     setIsOpen(false);
                   }}
-                  className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  tone="secondary"
                 >
                   Cancel
-                </button>
-                <button
+                </ResearchButton>
+                <ResearchButton
                   disabled={
                     !selectedVenue ||
                     selectedAssistantIds.length === 0 ||
                     isPending
                   }
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0 disabled:hover:shadow-none"
                 >
                   <Plus className="h-4 w-4" />
                   Create task
-                </button>
+                </ResearchButton>
               </div>
             </form>
-          </div>
-        </div>
+        </ResearchModal>
       )}
 
       {addAccountOpen && selectedVenue?.kind === "journal" && (
-        <div className="fixed inset-0 z-[100] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300">
-                  <KeyRound className="h-5 w-5" />
-                </span>
-                <h3 className="text-base font-bold text-slate-950 dark:text-white">
-                  Add account
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAddAccountOpen(false)}
-                className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form action={submitAccount} className="grid gap-4 px-5 py-4">
+        <ResearchModal
+          open={addAccountOpen}
+          onClose={() => setAddAccountOpen(false)}
+          title="Add account"
+          description="Create a journal login account for this submission path."
+          icon={<KeyRound className="h-5 w-5" />}
+          maxWidth="max-w-lg"
+          bodyClassName="px-5 py-4"
+        >
+            <form action={submitAccount} className="grid gap-4">
               <input type="hidden" name="journalId" value={selectedVenue.id} />
               <input type="hidden" name="projectId" value={projectId} />
               <label className="grid gap-1.5">
@@ -599,7 +573,7 @@ export function CreateSubmissionTaskDialog({
                 <input
                   readOnly
                   value={selectedVenue.name}
-                  className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+                  className={`${inputClass} bg-slate-100 text-slate-600 dark:text-slate-300`}
                 />
               </label>
               <label className="grid gap-1.5">
@@ -627,24 +601,23 @@ export function CreateSubmissionTaskDialog({
                 <input name="note" className={inputClass} />
               </label>
               <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
-                <button
+                <ResearchButton
                   type="button"
                   onClick={() => setAddAccountOpen(false)}
-                  className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  tone="secondary"
                 >
                   Cancel
-                </button>
-                <button
+                </ResearchButton>
+                <ResearchButton
                   disabled={isPending}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-wait disabled:opacity-70"
+                  tone="success"
                 >
                   <Plus className="h-4 w-4" />
                   Add account
-                </button>
+                </ResearchButton>
               </div>
             </form>
-          </div>
-        </div>
+        </ResearchModal>
       )}
     </>
   );

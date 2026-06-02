@@ -21,11 +21,16 @@ import {
   Send,
   Trash2,
   TriangleAlert,
-  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { deleteSubmission, updateSubmissionStatus } from "../../actions";
 import { ResearchFormSelect } from "../../components/ResearchFormSelect";
+import { ResearchConfirmDialog } from "../../components/ResearchConfirmDialog";
+import { ResearchModal } from "../../components/ResearchModal";
+import {
+  ResearchButton,
+  researchFieldClass,
+} from "../../components/ResearchPrimitives";
 import {
   FilterSelect,
   IconHint,
@@ -887,257 +892,127 @@ export function SubmissionsTable({
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-[90] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300">
-                  <Edit3 className="h-5 w-5" />
-                </span>
-                <div>
-                  <h3 className="text-base font-bold text-slate-950 dark:text-white">
-                    Edit submission status
-                  </h3>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    {editing.venueName}
-                  </p>
-                </div>
+        <ResearchModal
+          open={Boolean(editing)}
+          onClose={() => setEditing(null)}
+          title="Edit submission status"
+          description={editing.venueName}
+          icon={<Edit3 className="h-5 w-5" />}
+          maxWidth="max-w-lg"
+          bodyClassName="px-5 py-4"
+        >
+          <form onSubmit={submitStatus} className="grid gap-4">
+            <input type="hidden" name="submissionId" value={editing.id} />
+            <input type="hidden" name="submissionKind" value={editing.kind} />
+            <label className="grid gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Status
+              </span>
+              <ResearchFormSelect
+                name="status"
+                defaultValue={
+                  editing.kind === "conference" && editing.status === "PLANNED"
+                    ? "SUBMITTED"
+                    : editing.status
+                }
+                options={editableStatusOptions(editing)}
+                ariaLabel="Submission status"
+              />
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Status date
+              </span>
+              <div className="relative">
+                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                <input
+                  name="statusDate"
+                  type="date"
+                  defaultValue={dateInputValue(statusDate(editing))}
+                  className={`${researchFieldClass} cursor-pointer pl-9 [color-scheme:light] dark:[color-scheme:dark]`}
+                />
               </div>
-              <button
+            </label>
+            <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
+              <ResearchButton
                 type="button"
                 onClick={() => setEditing(null)}
-                className="cursor-pointer rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                aria-label="Close"
+                tone="secondary"
               >
-                <X className="h-5 w-5" />
-              </button>
+                Cancel
+              </ResearchButton>
+              <ResearchButton disabled={isPending}>
+                <Check className="h-4 w-4" />
+                Save status
+              </ResearchButton>
             </div>
-            <form onSubmit={submitStatus} className="grid gap-4 px-5 py-4">
-              <input type="hidden" name="submissionId" value={editing.id} />
-              <input type="hidden" name="submissionKind" value={editing.kind} />
-              <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Status
-                </span>
-                <ResearchFormSelect
-                  name="status"
-                  defaultValue={
-                    editing.kind === "conference" &&
-                    editing.status === "PLANNED"
-                      ? "SUBMITTED"
-                      : editing.status
-                  }
-                  options={editableStatusOptions(editing)}
-                  ariaLabel="Submission status"
-                />
-              </label>
-              <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Status date
-                </span>
-                <div className="group/date relative rounded-xl border border-slate-200 bg-slate-50 p-1.5 shadow-sm transition hover:border-blue-200 hover:bg-blue-50/70 focus-within:border-blue-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-blue-800/80 dark:hover:bg-slate-900 dark:focus-within:border-blue-600 dark:focus-within:bg-slate-900 dark:focus-within:ring-blue-500/15">
-                  <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition group-hover/date:text-blue-500 group-focus-within/date:text-blue-600 dark:text-slate-500 dark:group-hover/date:text-blue-300 dark:group-focus-within/date:text-blue-300" />
-                  <input
-                    name="statusDate"
-                    type="date"
-                    defaultValue={dateInputValue(statusDate(editing))}
-                    className="w-full cursor-pointer rounded-lg border border-transparent bg-white py-2.5 pl-9 pr-3 text-sm font-semibold text-slate-800 outline-none transition [color-scheme:light] hover:border-blue-100 hover:bg-white focus:border-blue-200 dark:bg-slate-950 dark:text-slate-100 dark:[color-scheme:dark] dark:hover:border-blue-900/70 dark:hover:bg-slate-950 dark:focus:border-blue-800"
-                  />
-                </div>
-              </label>
-              <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setEditing(null)}
-                  className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  disabled={isPending}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-wait disabled:opacity-70"
-                >
-                  <Check className="h-4 w-4" />
-                  Save status
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </ResearchModal>
       )}
 
       {acceptanceConfirmation && editing && (
-        <div className="fixed inset-0 z-[120] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/65 px-4 py-8 backdrop-blur-sm">
-          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-2xl dark:border-amber-900/70 dark:bg-slate-900">
-            <div className="border-b border-amber-100 bg-amber-50/70 px-5 py-4 dark:border-amber-900/60 dark:bg-amber-950/20">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-base font-bold text-slate-950 dark:text-white">
-                    Accept this submission?
-                  </h3>
-                  <p className="mt-1 text-sm leading-5 text-amber-900 dark:text-amber-100">
-                    Accepting this journal submission will lock the research
-                    title, authors, and project details.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setAcceptanceConfirmation(null)}
-                  className="cursor-pointer rounded-lg p-2 text-slate-500 transition hover:bg-white/70 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
-                  aria-label="Close confirmation"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            <div className="grid gap-3 px-5 py-4 text-sm leading-5 text-slate-600 dark:text-slate-300">
-              <p>
-                After the status becomes accepted, it cannot be changed back to
-                submitted, reviewing, or rejected.
-              </p>
-              <p>
-                You can unlock the research content later from the lock icon in
-                the accepted/published information box.
-              </p>
-            </div>
-            <div className="flex justify-end gap-3 border-t border-slate-200 px-5 py-4 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setAcceptanceConfirmation(null)}
-                className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() =>
-                  persistStatus(acceptanceConfirmation, "accepted")
-                }
-                className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-amber-700 disabled:cursor-wait disabled:opacity-70"
-              >
-                <Check className="h-4 w-4" />
-                Accept and lock
-              </button>
-            </div>
-          </div>
-        </div>
+        <ResearchConfirmDialog
+          open={Boolean(acceptanceConfirmation)}
+          title="Accept this submission?"
+          description="Accepting this journal submission will lock the research title, authors, and project details."
+          tone="warning"
+          confirmLabel="Accept and lock"
+          confirmIcon={<Check className="h-4 w-4" />}
+          isConfirming={isPending}
+          onCancel={() => setAcceptanceConfirmation(null)}
+          onConfirm={() => persistStatus(acceptanceConfirmation, "accepted")}
+        >
+          <p>
+            After the status becomes accepted, it cannot be changed back to
+            submitted, reviewing, or rejected.
+          </p>
+          <p>
+            You can unlock the research content later from the lock icon in the
+            accepted/published information box.
+          </p>
+        </ResearchConfirmDialog>
       )}
 
       {withdrawalConfirmation && editing && (
-        <div className="fixed inset-0 z-[120] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/65 px-4 py-8 backdrop-blur-sm">
-          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-2xl border border-rose-200 bg-white shadow-2xl dark:border-rose-900/70 dark:bg-slate-900">
-            <div className="border-b border-rose-100 bg-rose-50/80 px-5 py-4 dark:border-rose-900/60 dark:bg-rose-950/25">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-base font-bold text-slate-950 dark:text-white">
-                    Withdraw this submission?
-                  </h3>
-                  <p className="mt-1 text-sm leading-5 text-rose-900 dark:text-rose-100">
-                    Withdrawing this submission will permanently lock this
-                    submission status.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setWithdrawalConfirmation(null)}
-                  className="cursor-pointer rounded-lg p-2 text-slate-500 transition hover:bg-white/70 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
-                  aria-label="Close withdrawal confirmation"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            <div className="grid gap-3 px-5 py-4 text-sm leading-5 text-slate-600 dark:text-slate-300">
-              <p>
-                Use this only when the journal or conference submission has been
-                formally withdrawn.
-              </p>
-              <p>
-                After the status becomes Withdraw, admins cannot change this
-                submission to another status from this screen.
-              </p>
-            </div>
-            <div className="flex justify-end gap-3 border-t border-slate-200 px-5 py-4 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setWithdrawalConfirmation(null)}
-                className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() =>
-                  persistStatus(withdrawalConfirmation, "withdrawn")
-                }
-                className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-wait disabled:opacity-70"
-              >
-                <TriangleAlert className="h-4 w-4" />
-                Withdraw and lock
-              </button>
-            </div>
-          </div>
-        </div>
+        <ResearchConfirmDialog
+          open={Boolean(withdrawalConfirmation)}
+          title="Withdraw this submission?"
+          description="Withdrawing this submission will permanently lock this submission status."
+          confirmLabel="Withdraw and lock"
+          confirmIcon={<TriangleAlert className="h-4 w-4" />}
+          isConfirming={isPending}
+          onCancel={() => setWithdrawalConfirmation(null)}
+          onConfirm={() =>
+            persistStatus(withdrawalConfirmation, "withdrawn")
+          }
+        >
+          <p>
+            Use this only when the journal or conference submission has been
+            formally withdrawn.
+          </p>
+          <p>
+            After the status becomes Withdraw, admins cannot change this
+            submission to another status from this screen.
+          </p>
+        </ResearchConfirmDialog>
       )}
 
       {deleting && (
-        <div className="fixed inset-0 z-[90] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
-          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-2xl border border-rose-200 bg-white shadow-2xl dark:border-rose-900/70 dark:bg-slate-900">
-            <div className="border-b border-rose-100 bg-rose-50/70 px-5 py-4 dark:border-rose-900/60 dark:bg-rose-950/20">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-200">
-                    <TriangleAlert className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <h3 className="text-base font-bold text-slate-950 dark:text-white">
-                      Delete this submission?
-                    </h3>
-                    <p className="mt-1 text-sm leading-5 text-rose-900 dark:text-rose-100">
-                      This will remove the submission record for{" "}
-                      {deleting.venueName}.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setDeleting(null)}
-                  className="cursor-pointer rounded-lg p-2 text-slate-500 transition hover:bg-white/80 hover:text-rose-700 hover:shadow-sm dark:text-rose-100 dark:hover:bg-rose-900/45 dark:hover:text-white dark:hover:ring-1 dark:hover:ring-rose-700/60"
-                  aria-label="Close confirmation"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            <div className="grid gap-2 px-5 py-4 text-sm leading-5 text-slate-600 dark:text-slate-300">
-              <p>
-                The submission ID, status history dates, and venue connection
-                will be deleted from the system.
-              </p>
-              <p>This action cannot be undone from this screen.</p>
-            </div>
-            <div className="flex justify-end gap-3 border-t border-slate-200 px-5 py-4 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setDeleting(null)}
-                className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={confirmDelete}
-                className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-wait disabled:opacity-70"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete submission
-              </button>
-            </div>
-          </div>
-        </div>
+        <ResearchConfirmDialog
+          open={Boolean(deleting)}
+          title="Delete this submission?"
+          description={`This will remove the submission record for ${deleting.venueName}.`}
+          confirmLabel="Delete submission"
+          isConfirming={isPending}
+          onCancel={() => setDeleting(null)}
+          onConfirm={confirmDelete}
+        >
+          <p>
+            The submission ID, status history dates, and venue connection will
+            be deleted from the system.
+          </p>
+          <p>This action cannot be undone from this screen.</p>
+        </ResearchConfirmDialog>
       )}
     </>
   );
