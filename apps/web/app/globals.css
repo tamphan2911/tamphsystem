@@ -806,6 +806,14 @@ textarea:focus-visible {
   --tw-ring-shadow: 0 0 #0000 !important;
 }
 
+.research-site-root aside nav {
+  padding-top: 0 !important;
+}
+
+.research-site-root aside nav > :first-child {
+  margin-top: 0 !important;
+}
+
 .dark .research-site-root {
   background: #2c2c2c;
 }
