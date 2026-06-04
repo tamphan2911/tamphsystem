@@ -205,11 +205,11 @@ export default async function LearnLandingPage() {
 
   return (
     <main className="min-h-screen bg-[#090611] font-[var(--font-geist-sans)] text-white">
-      <header className="sticky top-0 z-50 px-4 pt-3 sm:px-6 lg:px-10">
-        <nav className="mx-auto flex h-20 max-w-[95rem] items-center justify-between rounded-2xl border border-[#3a3345] bg-[#111019]/90 px-5 shadow-2xl shadow-black/30 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 px-4 pt-2 sm:px-6 lg:px-10">
+        <nav className="mx-auto flex h-16 max-w-[95rem] items-center justify-between rounded-2xl border border-[#3a3345] bg-[#111019]/90 px-4 shadow-2xl shadow-black/30 backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#51495d] bg-[#1f1a2a] text-[#ff7043]">
-              <Workflow className="h-6 w-6" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#51495d] bg-[#1f1a2a] text-[#ff7043]">
+              <Workflow className="h-5 w-5" />
             </span>
             <span className="text-2xl font-semibold tracking-tight">
               Tamph Learn
@@ -217,19 +217,19 @@ export default async function LearnLandingPage() {
           </Link>
 
           <div className="hidden items-center gap-9 text-xl text-[#c7c0cf] lg:flex">
-            <div className="group relative py-7">
+            <div className="group relative py-5">
               <button className="flex items-center gap-2 hover:text-white">
                 Product <ChevronDown className="h-5 w-5" />
               </button>
               <DropdownPanel items={productMenu} />
             </div>
-            <div className="group relative py-7">
+            <div className="group relative py-5">
               <button className="flex items-center gap-2 hover:text-white">
                 Use cases <ChevronDown className="h-5 w-5" />
               </button>
               <DropdownPanel items={useCaseMenu} wide />
             </div>
-            <div className="group relative py-7">
+            <div className="group relative py-5">
               <button className="flex items-center gap-2 hover:text-white">
                 Docs <ChevronDown className="h-5 w-5" />
               </button>
@@ -246,7 +246,7 @@ export default async function LearnLandingPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/courses"
-              className="hidden h-12 items-center gap-2 rounded-lg border border-[#575063] bg-[#312c3b] px-4 text-base font-medium text-white hover:bg-[#40394d] sm:inline-flex"
+              className="hidden h-10 items-center gap-2 rounded-lg border border-[#575063] bg-[#312c3b] px-3 text-base font-medium text-white hover:bg-[#40394d] sm:inline-flex"
             >
               <Star className="h-5 w-5" />
               {totalSessions || courses.length || "New"}
@@ -259,7 +259,7 @@ export default async function LearnLandingPage() {
             </Link>
             <Link
               href={session?.user ? "/profile" : "/login"}
-              className="inline-flex h-12 items-center rounded-lg bg-gradient-to-r from-[#ff8a3d] to-[#ff3f2e] px-5 text-lg font-semibold text-white shadow-lg shadow-[#ff4f31]/20 hover:-translate-y-0.5"
+              className="inline-flex h-10 items-center rounded-lg bg-gradient-to-r from-[#ff8a3d] to-[#ff3f2e] px-4 text-lg font-semibold text-white shadow-lg shadow-[#ff4f31]/20 hover:-translate-y-0.5"
             >
               Get Started
             </Link>
