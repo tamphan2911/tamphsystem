@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
-import { IconHint } from "../components/TableControls";
-import { useResearchToast } from "../components/ResearchToast";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { IconHint } from "@/sites/research/components/TableControls";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type DeleteFundingInstitutionRow = {
   id: string;

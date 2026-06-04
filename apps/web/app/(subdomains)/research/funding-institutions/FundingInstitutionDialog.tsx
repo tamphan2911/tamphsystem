@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { Landmark, Loader2, Pencil, Plus, Save } from "lucide-react";
-import { ResearchModal } from "../components/ResearchModal";
-import { useResearchToast } from "../components/ResearchToast";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type FundingInstitutionValues = {
   funderCode?: string | null;
@@ -70,109 +70,109 @@ export function FundingInstitutionDialog({
         }
         icon={<Landmark className="h-5 w-5" />}
       >
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                const formData = new FormData(event.currentTarget);
-                startTransition(async () => {
-                  await submitAction(formData);
-                  closeDialog();
-                  toast.showSuccess({
-                    title: isEdit ? "Funder updated" : "Funder added",
-                    detail: isEdit
-                      ? "Funding institution details were saved and updated across organized projects."
-                      : "Funding institution created with an automatic Funder ID and ready to link with projects.",
-                  });
-                });
-              }}
-              className="space-y-5"
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            startTransition(async () => {
+              await submitAction(formData);
+              closeDialog();
+              toast.showSuccess({
+                title: isEdit ? "Funder updated" : "Funder added",
+                detail: isEdit
+                  ? "Funding institution details were saved and updated across organized projects."
+                  : "Funding institution created with an automatic Funder ID and ready to link with projects.",
+              });
+            });
+          }}
+          className="space-y-5"
+        >
+          <div className="grid gap-4">
+            <label className={labelClass}>
+              Funder name
+              <input
+                name="name"
+                defaultValue={initialValues?.name ?? ""}
+                placeholder="Funding institution name"
+                required
+                className={inputClass}
+              />
+            </label>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className={labelClass}>
+                Funder ID
+                <input
+                  value={
+                    isEdit
+                      ? initialValues?.funderCode || "Missing ID"
+                      : "Generated after saving"
+                  }
+                  readOnly
+                  className={`${inputClass} cursor-not-allowed bg-slate-100 font-mono text-xs font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-900 dark:text-slate-400`}
+                />
+              </label>
+              <label className={labelClass}>
+                Alias
+                <input
+                  name="shortName"
+                  defaultValue={initialValues?.shortName ?? ""}
+                  placeholder="UEH, IDPA..."
+                  className={inputClass}
+                />
+              </label>
+              <label className={labelClass}>
+                Country
+                <input
+                  name="country"
+                  defaultValue={initialValues?.country ?? ""}
+                  placeholder="Vietnam"
+                  className={inputClass}
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-200 dark:border-slate-800" />
+
+          <div className="grid gap-4">
+            <label className={labelClass}>
+              Website
+              <input
+                name="website"
+                defaultValue={initialValues?.website ?? ""}
+                placeholder="https://..."
+                className={inputClass}
+              />
+            </label>
+            <label className={labelClass}>
+              Note
+              <textarea
+                name="note"
+                defaultValue={initialValues?.note ?? ""}
+                placeholder="Funding scope, rules, contact notes..."
+                className={`${inputClass} min-h-32 resize-y`}
+              />
+            </label>
+          </div>
+
+          <div className="flex justify-end border-t border-slate-200 pt-4 dark:border-slate-800">
+            <button
+              type="submit"
+              disabled={isPending}
+              className="inline-flex min-w-40 cursor-pointer items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-black text-emerald-700 shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-md disabled:cursor-wait disabled:opacity-70 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-200 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/60"
             >
-              <div className="grid gap-4">
-                <label className={labelClass}>
-                  Funder name
-                  <input
-                    name="name"
-                    defaultValue={initialValues?.name ?? ""}
-                    placeholder="Funding institution name"
-                    required
-                    className={inputClass}
-                  />
-                </label>
-
-                <div className="grid gap-4 md:grid-cols-3">
-                  <label className={labelClass}>
-                    Funder ID
-                    <input
-                      value={
-                        isEdit
-                          ? initialValues?.funderCode || "Missing ID"
-                          : "Generated after saving"
-                      }
-                      readOnly
-                      className={`${inputClass} cursor-not-allowed bg-slate-100 font-mono text-xs font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-900 dark:text-slate-400`}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    Alias
-                    <input
-                      name="shortName"
-                      defaultValue={initialValues?.shortName ?? ""}
-                      placeholder="UEH, IDPA..."
-                      className={inputClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    Country
-                    <input
-                      name="country"
-                      defaultValue={initialValues?.country ?? ""}
-                      placeholder="Vietnam"
-                      className={inputClass}
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="border-t border-slate-200 dark:border-slate-800" />
-
-              <div className="grid gap-4">
-                <label className={labelClass}>
-                  Website
-                  <input
-                    name="website"
-                    defaultValue={initialValues?.website ?? ""}
-                    placeholder="https://..."
-                    className={inputClass}
-                  />
-                </label>
-                <label className={labelClass}>
-                  Note
-                  <textarea
-                    name="note"
-                    defaultValue={initialValues?.note ?? ""}
-                    placeholder="Funding scope, rules, contact notes..."
-                    className={`${inputClass} min-h-32 resize-y`}
-                  />
-                </label>
-              </div>
-
-              <div className="flex justify-end border-t border-slate-200 pt-4 dark:border-slate-800">
-                <button
-                  type="submit"
-                  disabled={isPending}
-                  className="inline-flex min-w-40 cursor-pointer items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-black text-emerald-700 shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-md disabled:cursor-wait disabled:opacity-70 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-200 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/60"
-                >
-                  {isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : isEdit ? (
-                    <Save className="h-4 w-4" />
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )}
-                  {isEdit ? "Save changes" : "Add funder"}
-                </button>
-              </div>
-            </form>
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isEdit ? (
+                <Save className="h-4 w-4" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              {isEdit ? "Save changes" : "Add funder"}
+            </button>
+          </div>
+        </form>
       </ResearchModal>
     </>
   );

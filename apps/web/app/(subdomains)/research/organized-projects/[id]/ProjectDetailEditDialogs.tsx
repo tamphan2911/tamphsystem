@@ -11,10 +11,10 @@ import {
   Save,
   UsersRound,
 } from "lucide-react";
-import { ResearchFormSelect } from "../../components/ResearchFormSelect";
-import { ResearchModal } from "../../components/ResearchModal";
-import { useResearchToast } from "../../components/ResearchToast";
-import { currencyOptions } from "../../lib/currency";
+import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { currencyOptions } from "@/sites/research/lib/currency";
 import { AuthorsPicker } from "../../projects/[id]/AuthorsPicker";
 import type {
   FundingInstitutionOption,

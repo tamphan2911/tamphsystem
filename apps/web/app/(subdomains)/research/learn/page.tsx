@@ -1,5 +1,5 @@
 import { GraduationCap } from "lucide-react";
-import { HubConstructionPage } from "../components/HubConstructionPage";
+import { HubConstructionPage } from "@/sites/research/components/HubConstructionPage";
 
 export default function LearnConstructionPage() {
   return (

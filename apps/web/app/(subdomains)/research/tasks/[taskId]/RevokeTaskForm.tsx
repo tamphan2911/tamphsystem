@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { Loader2, RotateCcw } from "lucide-react";
-import { ResearchConfirmDialog } from "../../components/ResearchConfirmDialog";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 
 export function RevokeTaskForm({
   action,

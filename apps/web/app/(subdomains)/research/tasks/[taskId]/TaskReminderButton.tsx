@@ -2,8 +2,8 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { AlertCircle, BellRing, CheckCircle2, Loader2 } from "lucide-react";
-import { ResearchModal } from "../../components/ResearchModal";
-import { useResearchToast } from "../../components/ResearchToast";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 type ReminderAssignee = {
   id: string;
@@ -88,121 +88,121 @@ export function TaskReminderButton({
       >
         {block ? (
           <div>
-                <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
-                  This reminder button stays available so you can see why it is
-                  not active for the current task state.
-                </div>
-                <div className="mt-5 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setIsOpen(false)}
-                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
-                  >
-                    Got it
-                  </button>
-                </div>
+            <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+              This reminder button stays available so you can see why it is not
+              active for the current task state.
+            </div>
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+              >
+                Got it
+              </button>
+            </div>
           </div>
         ) : (
           <form
-                action={(formData) => {
-                  startTransition(async () => {
-                    const result = await action(formData);
-                    if (!result.ok) {
-                      toast.showError({
-                        title: result.title,
-                        detail: result.detail,
-                      });
-                      return;
-                    }
-                    setIsOpen(false);
-                    toast.showSuccess({
-                      title: result.title,
-                      detail: result.detail,
-                    });
+            action={(formData) => {
+              startTransition(async () => {
+                const result = await action(formData);
+                if (!result.ok) {
+                  toast.showError({
+                    title: result.title,
+                    detail: result.detail,
                   });
-                }}
+                  return;
+                }
+                setIsOpen(false);
+                toast.showSuccess({
+                  title: result.title,
+                  detail: result.detail,
+                });
+              });
+            }}
             className="grid gap-4"
           >
-                {selectedIds.map((id) => (
-                  <input key={id} type="hidden" name="assigneeIds" value={id} />
-                ))}
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      Recipients
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSelectedIds(
-                          selectedCount === assignees.length
-                            ? []
-                            : assignees.map((assignee) => assignee.id),
-                        )
-                      }
-                      className="text-xs font-bold text-blue-600 transition hover:text-blue-500 dark:text-blue-300"
+            {selectedIds.map((id) => (
+              <input key={id} type="hidden" name="assigneeIds" value={id} />
+            ))}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Recipients
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedIds(
+                      selectedCount === assignees.length
+                        ? []
+                        : assignees.map((assignee) => assignee.id),
+                    )
+                  }
+                  className="text-xs font-bold text-blue-600 transition hover:text-blue-500 dark:text-blue-300"
+                >
+                  {selectedCount === assignees.length
+                    ? "Clear all"
+                    : "Select all"}
+                </button>
+              </div>
+              <div className="mt-3 grid gap-2">
+                {assignees.map((assignee) => {
+                  const selected = selectedSet.has(assignee.id);
+                  return (
+                    <label
+                      key={assignee.id}
+                      className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 transition ${
+                        selected
+                          ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/70 dark:bg-emerald-950/30"
+                          : "border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800/70"
+                      }`}
                     >
-                      {selectedCount === assignees.length
-                        ? "Clear all"
-                        : "Select all"}
-                    </button>
-                  </div>
-                  <div className="mt-3 grid gap-2">
-                    {assignees.map((assignee) => {
-                      const selected = selectedSet.has(assignee.id);
-                      return (
-                        <label
-                          key={assignee.id}
-                          className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 transition ${
-                            selected
-                              ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/70 dark:bg-emerald-950/30"
-                              : "border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800/70"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selected}
-                            onChange={() => toggleAssignee(assignee.id)}
-                            className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                          />
-                          <span className="min-w-0">
-                            <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
-                              {assignee.name || assignee.email}
-                            </span>
-                            <span className="block text-xs text-slate-500 dark:text-slate-400">
-                              {assignee.email}
-                            </span>
-                          </span>
-                          {selected && (
-                            <CheckCircle2 className="ml-auto mt-0.5 h-4 w-4 flex-none text-emerald-600 dark:text-emerald-300" />
-                          )}
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => toggleAssignee(assignee.id)}
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
+                          {assignee.name || assignee.email}
+                        </span>
+                        <span className="block text-xs text-slate-500 dark:text-slate-400">
+                          {assignee.email}
+                        </span>
+                      </span>
+                      {selected && (
+                        <CheckCircle2 className="ml-auto mt-0.5 h-4 w-4 flex-none text-emerald-600 dark:text-emerald-300" />
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
 
-                <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => setIsOpen(false)}
-                    disabled={isPending}
-                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    disabled={isPending || selectedCount === 0}
-                    className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none"
-                  >
-                    {isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <BellRing className="h-4 w-4" />
-                    )}
-                    Send email
-                  </button>
-                </div>
+            <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                disabled={isPending}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isPending || selectedCount === 0}
+                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none"
+              >
+                {isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <BellRing className="h-4 w-4" />
+                )}
+                Send email
+              </button>
+            </div>
           </form>
         )}
       </ResearchModal>

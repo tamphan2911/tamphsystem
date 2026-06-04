@@ -4,10 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { KeyRound, Send, Trash2 } from "lucide-react";
-import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
-import { ResearchEmptyState } from "../components/ResearchState";
-import { FilterSelect, IconHint, TablePagination, TableSearchInput, useTablePagination } from "../components/TableControls";
-import { useResearchToast } from "../components/ResearchToast";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
+import {
+  FilterSelect,
+  IconHint,
+  TablePagination,
+  TableSearchInput,
+  useTablePagination,
+} from "@/sites/research/components/TableControls";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type AccountRow = {
   id: string;
@@ -136,8 +142,24 @@ export function AccountsTable({
   const [journal, setJournal] = useState("ALL");
   const [publisher, setPublisher] = useState("ALL");
 
-  const journalOptions = useMemo(() => ["ALL", ...Array.from(new Set(rows.map((row) => row.journalName).filter(Boolean))).sort()], [rows]);
-  const publisherOptions = useMemo(() => ["ALL", ...Array.from(new Set(rows.map((row) => row.publisher).filter(Boolean))).sort()], [rows]);
+  const journalOptions = useMemo(
+    () => [
+      "ALL",
+      ...Array.from(
+        new Set(rows.map((row) => row.journalName).filter(Boolean)),
+      ).sort(),
+    ],
+    [rows],
+  );
+  const publisherOptions = useMemo(
+    () => [
+      "ALL",
+      ...Array.from(
+        new Set(rows.map((row) => row.publisher).filter(Boolean)),
+      ).sort(),
+    ],
+    [rows],
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -145,9 +167,23 @@ export function AccountsTable({
       const rowScope = row.journalName ? "JOURNAL" : "PUBLISHER";
       const matchesScope = scope === "ALL" || rowScope === scope;
       const matchesJournal = journal === "ALL" || row.journalName === journal;
-      const matchesPublisher = publisher === "ALL" || row.publisher === publisher;
-      const haystack = [row.username, row.email, row.journalName, row.publisher, row.note].join(" ").toLowerCase();
-      return matchesScope && matchesJournal && matchesPublisher && (!needle || haystack.includes(needle));
+      const matchesPublisher =
+        publisher === "ALL" || row.publisher === publisher;
+      const haystack = [
+        row.username,
+        row.email,
+        row.journalName,
+        row.publisher,
+        row.note,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return (
+        matchesScope &&
+        matchesJournal &&
+        matchesPublisher &&
+        (!needle || haystack.includes(needle))
+      );
     });
   }, [journal, publisher, query, rows, scope]);
 
@@ -156,11 +192,44 @@ export function AccountsTable({
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
-        <TableSearchInput value={query} onChange={setQuery} placeholder="Search accounts, email, journal..." />
+        <TableSearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="Search accounts, email, journal..."
+        />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <FilterSelect value={scope} onChange={setScope} ariaLabel="Filter by scope" options={scopes.map((item) => ({ value: item, label: item === "ALL" ? "All scopes" : item === "PUBLISHER" ? "Publisher-wide" : "Journal-specific" }))} />
-          <FilterSelect value={journal} onChange={setJournal} ariaLabel="Filter by journal" options={journalOptions.map((item) => ({ value: item, label: item === "ALL" ? "All journals" : item }))} />
-          <FilterSelect value={publisher} onChange={setPublisher} ariaLabel="Filter by publisher" options={publisherOptions.map((item) => ({ value: item, label: item === "ALL" ? "All publishers" : item }))} />
+          <FilterSelect
+            value={scope}
+            onChange={setScope}
+            ariaLabel="Filter by scope"
+            options={scopes.map((item) => ({
+              value: item,
+              label:
+                item === "ALL"
+                  ? "All scopes"
+                  : item === "PUBLISHER"
+                    ? "Publisher-wide"
+                    : "Journal-specific",
+            }))}
+          />
+          <FilterSelect
+            value={journal}
+            onChange={setJournal}
+            ariaLabel="Filter by journal"
+            options={journalOptions.map((item) => ({
+              value: item,
+              label: item === "ALL" ? "All journals" : item,
+            }))}
+          />
+          <FilterSelect
+            value={publisher}
+            onChange={setPublisher}
+            ariaLabel="Filter by publisher"
+            options={publisherOptions.map((item) => ({
+              value: item,
+              label: item === "ALL" ? "All publishers" : item,
+            }))}
+          />
         </div>
       </div>
 
@@ -186,10 +255,18 @@ export function AccountsTable({
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {pagination.pagedRows.map((account) => (
-              <tr key={account.id} className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40">
+              <tr
+                key={account.id}
+                className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+              >
                 <td className="px-3 py-3">
                   <div className="flex min-w-0 items-center gap-2 text-sm font-normal text-slate-700 dark:text-slate-200">
-                    <IconHint label="Account credential"><KeyRound className="h-4 w-4 text-slate-400" aria-hidden="true" /></IconHint>
+                    <IconHint label="Account credential">
+                      <KeyRound
+                        className="h-4 w-4 text-slate-400"
+                        aria-hidden="true"
+                      />
+                    </IconHint>
                     <Link
                       href={`/accounts/${account.id}`}
                       className="truncate whitespace-nowrap font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
@@ -198,22 +275,37 @@ export function AccountsTable({
                     </Link>
                   </div>
                 </td>
-                <td className="px-3 py-3 font-mono text-sm text-slate-600 dark:text-slate-300"><span className="block truncate">{account.password || "-"}</span></td>
-                <td className="px-3 py-3 text-xs text-slate-600 dark:text-slate-300"><span className="block truncate">{account.email || "-"}</span></td>
+                <td className="px-3 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">
+                  <span className="block truncate">
+                    {account.password || "-"}
+                  </span>
+                </td>
+                <td className="px-3 py-3 text-xs text-slate-600 dark:text-slate-300">
+                  <span className="block truncate">{account.email || "-"}</span>
+                </td>
                 <td className="px-3 py-3 text-xs text-slate-600 dark:text-slate-300">
                   {account.journalId ? (
-                    <Link href={`/journals/${account.journalId}`} className="line-clamp-2 font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">
+                    <Link
+                      href={`/journals/${account.journalId}`}
+                      className="line-clamp-2 font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                    >
                       {account.journalName}
                     </Link>
                   ) : (
                     "Publisher-wide"
                   )}
                 </td>
-                <td className="px-3 py-3 text-xs text-slate-600 dark:text-slate-300"><span className="block truncate">{account.publisher || "-"}</span></td>
+                <td className="px-3 py-3 text-xs text-slate-600 dark:text-slate-300">
+                  <span className="block truncate">
+                    {account.publisher || "-"}
+                  </span>
+                </td>
                 <td className="px-2 py-3 text-center">
                   <SubmitCount count={account.submissions} />
                 </td>
-                <td className="px-3 py-3 text-xs text-slate-600 dark:text-slate-300"><span className="line-clamp-2">{account.note || "-"}</span></td>
+                <td className="px-3 py-3 text-xs text-slate-600 dark:text-slate-300">
+                  <span className="line-clamp-2">{account.note || "-"}</span>
+                </td>
                 {isAdmin && (
                   <td className="px-2 py-3 text-center">
                     <DeleteAccountButton
@@ -237,7 +329,13 @@ export function AccountsTable({
           </tbody>
         </table>
       </div>
-      <TablePagination page={pagination.page} pageCount={pagination.pageCount} total={pagination.total} pageSize={pagination.pageSize} onPageChange={pagination.setPage} />
+      <TablePagination
+        page={pagination.page}
+        pageCount={pagination.pageCount}
+        total={pagination.total}
+        pageSize={pagination.pageSize}
+        onPageChange={pagination.setPage}
+      />
     </div>
   );
 }

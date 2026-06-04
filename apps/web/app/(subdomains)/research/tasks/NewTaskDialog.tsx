@@ -20,13 +20,13 @@ import {
   X,
 } from "lucide-react";
 import { createResearchTask } from "../actions";
-import { ResearchModal } from "../components/ResearchModal";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   ResearchButton,
   researchFieldClass,
   researchTextareaClass,
-} from "../components/ResearchPrimitives";
-import { useResearchToast } from "../components/ResearchToast";
+} from "@/sites/research/components/ResearchPrimitives";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type TaskAssigneeOption = {
   id: string;
@@ -381,10 +381,7 @@ export function NewTaskDialog({
 
   return (
     <>
-      <ResearchButton
-        type="button"
-        onClick={() => setIsOpen(true)}
-      >
+      <ResearchButton type="button" onClick={() => setIsOpen(true)}>
         <PlusCircle className="h-4 w-4" />
         New Task
       </ResearchButton>
@@ -397,393 +394,348 @@ export function NewTaskDialog({
         icon={<ClipboardList className="h-5 w-5" />}
         maxWidth="max-w-5xl"
       >
-
-            <form
-              action={submitTask}
-              className="grid gap-5"
-            >
-              {selectedIds.map((id) => (
-                <input key={id} type="hidden" name="assigneeIds" value={id} />
-              ))}
-              {selectedResearch && (
+        <form action={submitTask} className="grid gap-5">
+          {selectedIds.map((id) => (
+            <input key={id} type="hidden" name="assigneeIds" value={id} />
+          ))}
+          {selectedResearch && (
+            <input type="hidden" name="projectId" value={selectedResearch.id} />
+          )}
+          {selectedVenue?.kind === "journal" && (
+            <>
+              <input type="hidden" name="taskType" value="SUBMIT_RESEARCH" />
+              <input type="hidden" name="journalId" value={selectedVenue.id} />
+              {selectedAccountId && (
                 <input
                   type="hidden"
-                  name="projectId"
-                  value={selectedResearch.id}
+                  name="accountId"
+                  value={selectedAccountId}
                 />
               )}
-              {selectedVenue?.kind === "journal" && (
-                <>
-                  <input
-                    type="hidden"
-                    name="taskType"
-                    value="SUBMIT_RESEARCH"
-                  />
-                  <input
-                    type="hidden"
-                    name="journalId"
-                    value={selectedVenue.id}
-                  />
-                  {selectedAccountId && (
-                    <input
-                      type="hidden"
-                      name="accountId"
-                      value={selectedAccountId}
-                    />
-                  )}
-                  <input
-                    type="hidden"
-                    name="category"
-                    value="Submit research"
-                  />
-                </>
-              )}
-              {selectedVenue?.kind === "conference" && (
-                <>
-                  <input
-                    type="hidden"
-                    name="taskType"
-                    value="SUBMIT_CONFERENCE"
-                  />
-                  <input
-                    type="hidden"
-                    name="conferenceId"
-                    value={selectedVenue.id}
-                  />
-                  <input
-                    type="hidden"
-                    name="category"
-                    value="Submit research"
-                  />
-                </>
-              )}
-              {mode === "production" && (
-                <>
-                  <input type="hidden" name="taskType" value="PRODUCTION" />
-                  <input type="hidden" name="category" value="Production" />
-                </>
-              )}
-              {mode === "review" && selectedReview && (
-                <>
-                  <input type="hidden" name="taskType" value="REVIEW" />
-                  <input
-                    type="hidden"
-                    name="reviewId"
-                    value={selectedReview.id}
-                  />
-                </>
-              )}
-              {mode === "project" && selectedOrganizedProject && (
-                <>
-                  <input type="hidden" name="taskType" value={projectSubtype} />
-                  <input
-                    type="hidden"
-                    name="organizedProjectId"
-                    value={selectedOrganizedProject.id}
-                  />
-                  <input
-                    type="hidden"
-                    name="category"
-                    value={
-                      projectSubtype === "PROJECT_PRODUCTION"
-                        ? "Production"
-                        : "Research production"
-                    }
-                  />
-                </>
-              )}
-              {mode === "other" && (
-                <input type="hidden" name="taskType" value="OTHER" />
-              )}
+              <input type="hidden" name="category" value="Submit research" />
+            </>
+          )}
+          {selectedVenue?.kind === "conference" && (
+            <>
+              <input type="hidden" name="taskType" value="SUBMIT_CONFERENCE" />
+              <input
+                type="hidden"
+                name="conferenceId"
+                value={selectedVenue.id}
+              />
+              <input type="hidden" name="category" value="Submit research" />
+            </>
+          )}
+          {mode === "production" && (
+            <>
+              <input type="hidden" name="taskType" value="PRODUCTION" />
+              <input type="hidden" name="category" value="Production" />
+            </>
+          )}
+          {mode === "review" && selectedReview && (
+            <>
+              <input type="hidden" name="taskType" value="REVIEW" />
+              <input type="hidden" name="reviewId" value={selectedReview.id} />
+            </>
+          )}
+          {mode === "project" && selectedOrganizedProject && (
+            <>
+              <input type="hidden" name="taskType" value={projectSubtype} />
+              <input
+                type="hidden"
+                name="organizedProjectId"
+                value={selectedOrganizedProject.id}
+              />
+              <input
+                type="hidden"
+                name="category"
+                value={
+                  projectSubtype === "PROJECT_PRODUCTION"
+                    ? "Production"
+                    : "Research production"
+                }
+              />
+            </>
+          )}
+          {mode === "other" && (
+            <input type="hidden" name="taskType" value="OTHER" />
+          )}
 
-              <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
-                <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Task title
-                  </span>
-                  <input
-                    name="title"
-                    required
-                    placeholder="Task title"
-                    className={inputClass}
-                  />
-                </label>
-                <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Due date
-                  </span>
-                  <div className="relative">
-                    <CalendarClock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      name="dueDate"
-                      type="date"
-                      className={`${inputClass} w-full pl-9`}
-                    />
-                  </div>
-                </label>
+          <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
+            <label className="grid gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Task title
+              </span>
+              <input
+                name="title"
+                required
+                placeholder="Task title"
+                className={inputClass}
+              />
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Due date
+              </span>
+              <div className="relative">
+                <CalendarClock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  name="dueDate"
+                  type="date"
+                  className={`${inputClass} w-full pl-9`}
+                />
               </div>
+            </label>
+          </div>
 
+          <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+            {(
+              ["submit", "production", "review", "project", "other"] as const
+            ).map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setMode(item)}
+                className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
+                  mode === item
+                    ? "bg-white text-violet-700 shadow-sm dark:bg-slate-800 dark:text-violet-300"
+                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                }`}
+              >
+                {modeLabel(item)}
+              </button>
+            ))}
+          </div>
+
+          {needsResearch && (
+            <SearchPanel
+              title="Research"
+              query={researchQuery}
+              setQuery={setResearchQuery}
+              placeholder="Search research by title, ID, or stage..."
+              selectedItems={
+                selectedResearch
+                  ? [
+                      {
+                        id: selectedResearch.id,
+                        title: selectedResearch.title,
+                        meta: [selectedResearch.code, selectedResearch.stage]
+                          .filter(Boolean)
+                          .join(" - "),
+                        icon: <FileText className="h-4 w-4" />,
+                        selected: true,
+                        onClick: () => {
+                          setSelectedResearch(null);
+                          setResearchQuery("");
+                        },
+                      },
+                    ]
+                  : []
+              }
+              items={filteredResearch.map((project) => ({
+                id: project.id,
+                title: project.title,
+                meta: [project.code, project.stage].filter(Boolean).join(" - "),
+                icon: <FileText className="h-4 w-4" />,
+                selected: selectedResearch?.id === project.id,
+                onClick: () => selectResearch(project),
+              }))}
+            />
+          )}
+
+          {needsVenue && (
+            <SearchPanel
+              title="Journal or conference"
+              query={venueQuery}
+              setQuery={setVenueQuery}
+              placeholder="Search journal or conference..."
+              selectedItems={
+                selectedVenue
+                  ? [
+                      {
+                        id: `${selectedVenue.kind}-${selectedVenue.id}`,
+                        title: selectedVenue.name,
+                        meta: `${selectedVenue.kind} - ${selectedVenue.meta}`,
+                        icon: <Send className="h-4 w-4" />,
+                        selected: true,
+                        onClick: () => {
+                          setSelectedVenue(null);
+                          setVenueQuery("");
+                          setSelectedAccountId("");
+                          setAccountQuery("");
+                        },
+                      },
+                    ]
+                  : []
+              }
+              items={filteredVenues.map((venue) => ({
+                id: `${venue.kind}-${venue.id}`,
+                title: venue.name,
+                meta: `${venue.kind} - ${venue.meta}`,
+                icon: <Send className="h-4 w-4" />,
+                selected:
+                  selectedVenue?.kind === venue.kind &&
+                  selectedVenue?.id === venue.id,
+                onClick: () => selectVenue(venue),
+              }))}
+            />
+          )}
+
+          {selectedVenue?.kind === "journal" && (
+            <JournalAccountField
+              accounts={journalAccounts}
+              query={accountQuery}
+              setQuery={setAccountQuery}
+              selectedAccount={selectedAccount}
+              filteredAccounts={filteredAccounts}
+              selectAccount={selectAccount}
+              clearAccount={() => {
+                setSelectedAccountId("");
+                setAccountQuery("");
+              }}
+            />
+          )}
+
+          {needsReview && (
+            <SearchPanel
+              title="Academic review"
+              query={reviewQuery}
+              setQuery={setReviewQuery}
+              placeholder="Search review by manuscript, journal, or status..."
+              selectedItems={
+                selectedReview
+                  ? [
+                      {
+                        id: selectedReview.id,
+                        title: selectedReview.title,
+                        meta: `${selectedReview.journal} - ${selectedReview.status}`,
+                        icon: <Star className="h-4 w-4" />,
+                        selected: true,
+                        onClick: () => {
+                          setSelectedReview(null);
+                          setReviewQuery("");
+                        },
+                      },
+                    ]
+                  : []
+              }
+              items={filteredReviews.map((review) => ({
+                id: review.id,
+                title: review.title,
+                meta: `${review.journal} - ${review.status}`,
+                icon: <Star className="h-4 w-4" />,
+                selected: selectedReview?.id === review.id,
+                onClick: () => selectReview(review),
+              }))}
+            />
+          )}
+
+          {needsOrganizedProject && (
+            <div className="grid gap-4">
               <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
                 {(
                   [
-                    "submit",
-                    "production",
-                    "review",
-                    "project",
-                    "other",
+                    ["PROJECT_PRODUCTION", "Project Production"],
+                    ["PROJECT_RESEARCH_ASSOCIATED", "Research Associated"],
                   ] as const
-                ).map((item) => (
+                ).map(([value, label]) => (
                   <button
-                    key={item}
+                    key={value}
                     type="button"
-                    onClick={() => setMode(item)}
+                    onClick={() => setProjectSubtype(value)}
                     className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
-                      mode === item
+                      projectSubtype === value
                         ? "bg-white text-violet-700 shadow-sm dark:bg-slate-800 dark:text-violet-300"
                         : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
                     }`}
                   >
-                    {modeLabel(item)}
+                    {label}
                   </button>
                 ))}
               </div>
-
-              {needsResearch && (
-                <SearchPanel
-                  title="Research"
-                  query={researchQuery}
-                  setQuery={setResearchQuery}
-                  placeholder="Search research by title, ID, or stage..."
-                  selectedItems={
-                    selectedResearch
-                      ? [
-                          {
-                            id: selectedResearch.id,
-                            title: selectedResearch.title,
-                            meta: [
-                              selectedResearch.code,
-                              selectedResearch.stage,
-                            ]
-                              .filter(Boolean)
-                              .join(" - "),
-                            icon: <FileText className="h-4 w-4" />,
-                            selected: true,
-                            onClick: () => {
-                              setSelectedResearch(null);
-                              setResearchQuery("");
-                            },
-                          },
-                        ]
-                      : []
-                  }
-                  items={filteredResearch.map((project) => ({
-                    id: project.id,
-                    title: project.title,
-                    meta: [project.code, project.stage]
-                      .filter(Boolean)
-                      .join(" - "),
-                    icon: <FileText className="h-4 w-4" />,
-                    selected: selectedResearch?.id === project.id,
-                    onClick: () => selectResearch(project),
-                  }))}
-                />
-              )}
-
-              {needsVenue && (
-                <SearchPanel
-                  title="Journal or conference"
-                  query={venueQuery}
-                  setQuery={setVenueQuery}
-                  placeholder="Search journal or conference..."
-                  selectedItems={
-                    selectedVenue
-                      ? [
-                          {
-                            id: `${selectedVenue.kind}-${selectedVenue.id}`,
-                            title: selectedVenue.name,
-                            meta: `${selectedVenue.kind} - ${selectedVenue.meta}`,
-                            icon: <Send className="h-4 w-4" />,
-                            selected: true,
-                            onClick: () => {
-                              setSelectedVenue(null);
-                              setVenueQuery("");
-                              setSelectedAccountId("");
-                              setAccountQuery("");
-                            },
-                          },
-                        ]
-                      : []
-                  }
-                  items={filteredVenues.map((venue) => ({
-                    id: `${venue.kind}-${venue.id}`,
-                    title: venue.name,
-                    meta: `${venue.kind} - ${venue.meta}`,
-                    icon: <Send className="h-4 w-4" />,
-                    selected:
-                      selectedVenue?.kind === venue.kind &&
-                      selectedVenue?.id === venue.id,
-                    onClick: () => selectVenue(venue),
-                  }))}
-                />
-              )}
-
-              {selectedVenue?.kind === "journal" && (
-                <JournalAccountField
-                  accounts={journalAccounts}
-                  query={accountQuery}
-                  setQuery={setAccountQuery}
-                  selectedAccount={selectedAccount}
-                  filteredAccounts={filteredAccounts}
-                  selectAccount={selectAccount}
-                  clearAccount={() => {
-                    setSelectedAccountId("");
-                    setAccountQuery("");
-                  }}
-                />
-              )}
-
-              {needsReview && (
-                <SearchPanel
-                  title="Academic review"
-                  query={reviewQuery}
-                  setQuery={setReviewQuery}
-                  placeholder="Search review by manuscript, journal, or status..."
-                  selectedItems={
-                    selectedReview
-                      ? [
-                          {
-                            id: selectedReview.id,
-                            title: selectedReview.title,
-                            meta: `${selectedReview.journal} - ${selectedReview.status}`,
-                            icon: <Star className="h-4 w-4" />,
-                            selected: true,
-                            onClick: () => {
-                              setSelectedReview(null);
-                              setReviewQuery("");
-                            },
-                          },
-                        ]
-                      : []
-                  }
-                  items={filteredReviews.map((review) => ({
-                    id: review.id,
-                    title: review.title,
-                    meta: `${review.journal} - ${review.status}`,
-                    icon: <Star className="h-4 w-4" />,
-                    selected: selectedReview?.id === review.id,
-                    onClick: () => selectReview(review),
-                  }))}
-                />
-              )}
-
-              {needsOrganizedProject && (
-                <div className="grid gap-4">
-                  <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
-                    {(
-                      [
-                        ["PROJECT_PRODUCTION", "Project Production"],
-                        ["PROJECT_RESEARCH_ASSOCIATED", "Research Associated"],
-                      ] as const
-                    ).map(([value, label]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setProjectSubtype(value)}
-                        className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
-                          projectSubtype === value
-                            ? "bg-white text-violet-700 shadow-sm dark:bg-slate-800 dark:text-violet-300"
-                            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  <SearchPanel
-                    title="Project"
-                    query={organizedProjectQuery}
-                    setQuery={setOrganizedProjectQuery}
-                    placeholder="Search project by title, ID, or status..."
-                    selectedItems={
-                      selectedOrganizedProject
-                        ? [
-                            {
-                              id: selectedOrganizedProject.id,
-                              title: selectedOrganizedProject.title,
-                              meta: [
-                                selectedOrganizedProject.code,
-                                selectedOrganizedProject.status,
-                              ]
-                                .filter(Boolean)
-                                .join(" - "),
-                              icon: <FileText className="h-4 w-4" />,
-                              selected: true,
-                              onClick: () => {
-                                setSelectedOrganizedProject(null);
-                                setOrganizedProjectQuery("");
-                              },
-                            },
-                          ]
-                        : []
-                    }
-                    items={filteredOrganizedProjects.map((project) => ({
-                      id: project.id,
-                      title: project.title,
-                      meta: [project.code, project.status]
-                        .filter(Boolean)
-                        .join(" - "),
-                      icon: <FileText className="h-4 w-4" />,
-                      selected: selectedOrganizedProject?.id === project.id,
-                      onClick: () => selectOrganizedProject(project),
-                    }))}
-                  />
-                </div>
-              )}
-
-              <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Description
-                </span>
-                <textarea
-                  name="description"
-                  rows={3}
-                  placeholder="Add instructions, expected output, files, or notes..."
-                  className={researchTextareaClass}
-                />
-              </label>
-
               <SearchPanel
-                title="Assign to"
-                query={assigneeQuery}
-                setQuery={setAssigneeQuery}
-                placeholder="Search active research users by name, email, ID, or role..."
-                selectedItems={selectedAssigneeItems}
-                items={filteredAssignees.map((user) => ({
-                  id: user.id,
-                  title: user.name || user.email,
-                  meta: `${user.email} - ${user.roles.join(", ")}`,
-                  icon: <UserRound className="h-4 w-4" />,
-                  selected: selectedIds.includes(user.id),
-                  onClick: () => toggleAssignee(user.id),
+                title="Project"
+                query={organizedProjectQuery}
+                setQuery={setOrganizedProjectQuery}
+                placeholder="Search project by title, ID, or status..."
+                selectedItems={
+                  selectedOrganizedProject
+                    ? [
+                        {
+                          id: selectedOrganizedProject.id,
+                          title: selectedOrganizedProject.title,
+                          meta: [
+                            selectedOrganizedProject.code,
+                            selectedOrganizedProject.status,
+                          ]
+                            .filter(Boolean)
+                            .join(" - "),
+                          icon: <FileText className="h-4 w-4" />,
+                          selected: true,
+                          onClick: () => {
+                            setSelectedOrganizedProject(null);
+                            setOrganizedProjectQuery("");
+                          },
+                        },
+                      ]
+                    : []
+                }
+                items={filteredOrganizedProjects.map((project) => ({
+                  id: project.id,
+                  title: project.title,
+                  meta: [project.code, project.status]
+                    .filter(Boolean)
+                    .join(" - "),
+                  icon: <FileText className="h-4 w-4" />,
+                  selected: selectedOrganizedProject?.id === project.id,
+                  onClick: () => selectOrganizedProject(project),
                 }))}
               />
+            </div>
+          )}
 
-              <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <ResearchButton
-                  type="button"
-                  onClick={() => setIsOpen(false)}
-                  tone="secondary"
-                >
-                  Cancel
-                </ResearchButton>
-                <ResearchButton
-                  disabled={!canSubmit || isPending}
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  Assign Task
-                </ResearchButton>
-              </div>
-            </form>
+          <label className="grid gap-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Description
+            </span>
+            <textarea
+              name="description"
+              rows={3}
+              placeholder="Add instructions, expected output, files, or notes..."
+              className={researchTextareaClass}
+            />
+          </label>
+
+          <SearchPanel
+            title="Assign to"
+            query={assigneeQuery}
+            setQuery={setAssigneeQuery}
+            placeholder="Search active research users by name, email, ID, or role..."
+            selectedItems={selectedAssigneeItems}
+            items={filteredAssignees.map((user) => ({
+              id: user.id,
+              title: user.name || user.email,
+              meta: `${user.email} - ${user.roles.join(", ")}`,
+              icon: <UserRound className="h-4 w-4" />,
+              selected: selectedIds.includes(user.id),
+              onClick: () => toggleAssignee(user.id),
+            }))}
+          />
+
+          <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
+            <ResearchButton
+              type="button"
+              onClick={() => setIsOpen(false)}
+              tone="secondary"
+            >
+              Cancel
+            </ResearchButton>
+            <ResearchButton disabled={!canSubmit || isPending}>
+              <PlusCircle className="h-4 w-4" />
+              Assign Task
+            </ResearchButton>
+          </div>
+        </form>
       </ResearchModal>
     </>
   );

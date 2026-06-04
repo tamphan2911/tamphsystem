@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { AlertTriangle, BarChart3, Loader2, UserPlus } from "lucide-react";
-import { TurnstileField } from "../../components/TurnstileField";
-import { AuthLightTheme } from "../../components/AuthLightTheme";
-import { LearnAuthHeader } from "../../components/LearnAuthHeader";
+import { TurnstileField } from "@/sites/shared/components/TurnstileField";
+import { AuthLightTheme } from "@/sites/shared/components/AuthLightTheme";
+import { LearnAuthHeader } from "@/sites/learn/components/LearnAuthHeader";
 import { registerUser } from "./actions";
 
 export default function RegisterPage() {

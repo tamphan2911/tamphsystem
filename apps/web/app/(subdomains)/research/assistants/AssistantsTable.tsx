@@ -23,9 +23,9 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
-} from "../components/TableControls";
-import { ResearchEmptyState } from "../components/ResearchState";
-import { useResearchToast } from "../components/ResearchToast";
+} from "@/sites/research/components/TableControls";
+import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type AssistantRow = {
   id: string;
@@ -157,9 +157,7 @@ export function AssistantsTable({
         <table className="w-full table-fixed text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className="w-[32%] px-4 py-3">
-                Assistant
-              </th>
+              <th className="w-[32%] px-4 py-3">Assistant</th>
               <th className="w-[28%] px-3 py-3">Email</th>
               <th className="w-[20%] px-3 py-3">Password</th>
               <th className="w-[12%] px-3 py-3">Role</th>
@@ -244,10 +242,7 @@ export function AssistantsTable({
             ))}
             {pagination.total === 0 && (
               <tr>
-                <td
-                  colSpan={canManage ? 5 : 4}
-                  className="px-4 py-2"
-                >
+                <td colSpan={canManage ? 5 : 4} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No assistants match the current search."
                     detail="Try another name, email, role, or active-site filter."

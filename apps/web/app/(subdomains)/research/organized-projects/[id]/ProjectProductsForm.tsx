@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { CheckSquare, Loader2, Save } from "lucide-react";
-import { useResearchToast } from "../../components/ResearchToast";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export function ProjectProductsForm({
   requiredProducts,

@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { LockKeyhole, Loader2, UnlockKeyhole } from "lucide-react";
-import { ResearchConfirmDialog } from "../../components/ResearchConfirmDialog";
-import { useResearchToast } from "../../components/ResearchToast";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export function ConferenceUnlockButton({
   conferenceName,

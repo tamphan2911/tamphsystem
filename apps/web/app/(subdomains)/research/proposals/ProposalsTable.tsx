@@ -20,10 +20,10 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
-} from "../components/TableControls";
-import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
-import { ResearchEmptyState } from "../components/ResearchState";
-import { useResearchToast } from "../components/ResearchToast";
+} from "@/sites/research/components/TableControls";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type ProposalRow = {
   id: string;
@@ -366,10 +366,7 @@ export function ProposalsTable({
             ))}
             {pagination.total === 0 && (
               <tr>
-                <td
-                  colSpan={isAdmin ? 8 : 7}
-                  className="px-4 py-2"
-                >
+                <td colSpan={isAdmin ? 8 : 7} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No proposals match the current search."
                     detail="Try another proposal title, ID, type, status, or contact keyword."

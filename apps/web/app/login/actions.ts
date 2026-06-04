@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@repo/db";
 import { signIn } from "../../auth";
-import { requestIp, verifyTurnstileToken } from "../../lib/turnstile";
+import { requestIp, verifyTurnstileToken } from "@/sites/shared/lib/turnstile";
 
 function safeRedirectPath(value: FormDataEntryValue | null) {
   const text = typeof value === "string" ? value : "";

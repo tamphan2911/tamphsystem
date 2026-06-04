@@ -18,8 +18,7 @@ export function ProfileMenu({
   adminHref = "https://admin.tamph.com",
 }: ProfileMenuProps) {
   function signOutToCurrentLogin() {
-    const origin =
-      typeof window === "undefined" ? "" : window.location.origin;
+    const origin = typeof window === "undefined" ? "" : window.location.origin;
     void signOut({ callbackUrl: `${origin}/login` });
   }
 
@@ -35,8 +34,12 @@ export function ProfileMenu({
 
       <div className="pointer-events-none absolute right-0 top-12 z-50 w-64 translate-y-2 rounded-xl border border-slate-200 bg-white p-2 opacity-0 shadow-xl ring-1 ring-slate-950/5 transition duration-200 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100 dark:border-slate-800 dark:bg-slate-900 dark:ring-white/10">
         <div className="border-b border-slate-100 px-3 py-3 dark:border-slate-800">
-          <p className="truncate text-sm font-bold text-slate-950 dark:text-white">{name || "Account"}</p>
-          <p className="truncate text-xs text-slate-500">{email || "Not signed in"}</p>
+          <p className="truncate text-sm font-bold text-slate-950 dark:text-white">
+            {name || "Account"}
+          </p>
+          <p className="truncate text-xs text-slate-500">
+            {email || "Not signed in"}
+          </p>
         </div>
 
         <div className="py-2">

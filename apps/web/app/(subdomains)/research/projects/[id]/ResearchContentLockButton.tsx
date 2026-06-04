@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import { Check, LockKeyhole, UnlockKeyhole } from "lucide-react";
 import { setResearchContentLock } from "../../actions";
-import { ResearchConfirmDialog } from "../../components/ResearchConfirmDialog";
-import { useResearchToast } from "../../components/ResearchToast";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export function ResearchContentLockButton({
   projectId,
@@ -55,7 +55,9 @@ export function ResearchContentLockButton({
       <ResearchConfirmDialog
         open={confirming}
         tone="info"
-        title={nextLocked ? "Lock research content?" : "Unlock research content?"}
+        title={
+          nextLocked ? "Lock research content?" : "Unlock research content?"
+        }
         confirmLabel={nextLocked ? "Lock" : "Unlock"}
         isConfirming={isPending}
         icon={<Icon className="h-5 w-5" />}

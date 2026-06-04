@@ -5,7 +5,7 @@ import { Mail, UserRound } from "lucide-react";
 import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
-} from "../components/ResearchSearchPicker";
+} from "@/sites/research/components/ResearchSearchPicker";
 import type { AuthorOption } from "./[id]/AuthorsPicker";
 
 function displayName(user: AuthorOption) {

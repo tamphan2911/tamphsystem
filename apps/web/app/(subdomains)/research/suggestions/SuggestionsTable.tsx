@@ -4,17 +4,17 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, CalendarDays, Trash2 } from "lucide-react";
-import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
-import { ResearchIconButton } from "../components/ResearchPrimitives";
-import { ResearchEmptyState } from "../components/ResearchState";
-import { useResearchToast } from "../components/ResearchToast";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { ResearchIconButton } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
   FilterSelect,
   IconHint,
   TablePagination,
   TableSearchInput,
   useTablePagination,
-} from "../components/TableControls";
+} from "@/sites/research/components/TableControls";
 
 export type SuggestionKind = "Journal" | "Conference";
 

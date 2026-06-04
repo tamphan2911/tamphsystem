@@ -2,10 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { CalendarPlus, Loader2, Pencil, Save } from "lucide-react";
-import { ResearchFormSelect } from "../components/ResearchFormSelect";
-import { ResearchModal } from "../components/ResearchModal";
-import { useResearchToast } from "../components/ResearchToast";
-import { currencyOptions } from "../lib/currency";
+import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { currencyOptions } from "@/sites/research/lib/currency";
 
 export type ConferenceFormValues = {
   name?: string;
@@ -92,212 +92,210 @@ export function ConferenceDialog({
         }
         maxWidth="max-w-5xl"
       >
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                setWarning("");
-                const formData = new FormData(event.currentTarget);
-                startTransition(async () => {
-                  const result = await action(formData);
-                  if (result && "ok" in result && !result.ok) {
-                    const detail =
-                      result.message ??
-                      (result.reason === "LOCKED"
-                        ? "This conference is closed. Unlock it before editing."
-                        : "Please check the required conference information and try again.");
-                    setWarning(detail);
-                    toast.showError({
-                      title: "Conference was not saved",
-                      detail,
-                    });
-                    return;
-                  }
-                  setOpen(false);
-                  toast.showSuccess({
-                    title: isEdit ? "Conference updated" : "Conference added",
-                    detail: isEdit
-                      ? "Conference information was saved and the record is locked again if it was closed."
-                      : "The conference is now available for submissions and research planning.",
-                  });
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            setWarning("");
+            const formData = new FormData(event.currentTarget);
+            startTransition(async () => {
+              const result = await action(formData);
+              if (result && "ok" in result && !result.ok) {
+                const detail =
+                  result.message ??
+                  (result.reason === "LOCKED"
+                    ? "This conference is closed. Unlock it before editing."
+                    : "Please check the required conference information and try again.");
+                setWarning(detail);
+                toast.showError({
+                  title: "Conference was not saved",
+                  detail,
                 });
-              }}
-              className="grid gap-4"
+                return;
+              }
+              setOpen(false);
+              toast.showSuccess({
+                title: isEdit ? "Conference updated" : "Conference added",
+                detail: isEdit
+                  ? "Conference information was saved and the record is locked again if it was closed."
+                  : "The conference is now available for submissions and research planning.",
+              });
+            });
+          }}
+          className="grid gap-4"
+        >
+          <div className="grid gap-4">
+            {warning && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900 shadow-sm dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100">
+                <p className="font-bold">Conference needs attention</p>
+                <p className="mt-0.5">{warning}</p>
+              </div>
+            )}
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_14rem]">
+              <label className={labelClass}>
+                Conference name *
+                <input
+                  name="name"
+                  defaultValue={initialValues?.name ?? ""}
+                  className={fieldClass}
+                />
+              </label>
+              <label className={labelClass}>
+                Type *
+                <ResearchFormSelect
+                  name="type"
+                  defaultValue={initialValues?.type ?? "INTERNATIONAL"}
+                  ariaLabel="Conference type"
+                  options={[
+                    { value: "INTERNATIONAL", label: "International" },
+                    { value: "NATIONAL", label: "National" },
+                  ]}
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className={labelClass}>
+                Start date
+                <input
+                  name="startDate"
+                  type="date"
+                  defaultValue={initialValues?.startDate ?? ""}
+                  className={fieldClass}
+                />
+              </label>
+              <label className={labelClass}>
+                End date
+                <input
+                  name="endDate"
+                  type="date"
+                  defaultValue={initialValues?.endDate ?? ""}
+                  className={fieldClass}
+                />
+              </label>
+              <label className={labelClass}>
+                Close date
+                <input
+                  name="closeDate"
+                  type="date"
+                  defaultValue={initialValues?.closeDate ?? ""}
+                  className={fieldClass}
+                />
+              </label>
+              <label className={labelClass}>
+                Submission deadline *
+                <input
+                  name="submissionDeadline"
+                  type="date"
+                  defaultValue={initialValues?.submissionDeadline ?? ""}
+                  className={fieldClass}
+                />
+              </label>
+              <label className={labelClass}>
+                Acceptance notification *
+                <input
+                  name="acceptanceNotification"
+                  type="date"
+                  defaultValue={initialValues?.acceptanceNotification ?? ""}
+                  className={fieldClass}
+                />
+              </label>
+              <label className={labelClass}>
+                Location *
+                <input
+                  name="location"
+                  defaultValue={initialValues?.location ?? ""}
+                  className={fieldClass}
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className={labelClass}>
+                Organizer *
+                <input
+                  name="organizer"
+                  defaultValue={initialValues?.organizer ?? ""}
+                  className={fieldClass}
+                />
+              </label>
+              <label className={labelClass}>
+                ISBN *
+                <input
+                  name="isbn"
+                  defaultValue={initialValues?.isbn ?? ""}
+                  className={fieldClass}
+                />
+              </label>
+              <label className={labelClass}>
+                Main theme
+                <input
+                  name="targetTheme"
+                  defaultValue={initialValues?.targetTheme ?? ""}
+                  className={fieldClass}
+                />
+              </label>
+              <label className={labelClass}>
+                Homepage
+                <input
+                  name="website"
+                  defaultValue={initialValues?.website ?? ""}
+                  className={fieldClass}
+                />
+              </label>
+            </div>
+
+            <label className={labelClass}>
+              Themes
+              <textarea
+                name="themes"
+                defaultValue={initialValues?.themes ?? ""}
+                className={areaClass}
+              />
+            </label>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className={labelClass}>
+                Submission fee
+                <input
+                  name="submissionFee"
+                  defaultValue={initialValues?.submissionFee ?? ""}
+                  className={fieldClass}
+                />
+              </label>
+              <label className={labelClass}>
+                Fee currency
+                <ResearchFormSelect
+                  name="submissionFeeCurrency"
+                  defaultValue={initialValues?.submissionFeeCurrency ?? "USD"}
+                  ariaLabel="Submission fee currency"
+                  options={currencyOptions}
+                />
+              </label>
+            </div>
+
+            <label className={labelClass}>
+              Notes
+              <textarea
+                name="note"
+                defaultValue={initialValues?.note ?? ""}
+                className={areaClass}
+              />
+            </label>
+          </div>
+          <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
+            <button
+              disabled={isPending}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-sm font-bold text-cyan-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-100 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 dark:border-cyan-800/70 dark:bg-cyan-950/40 dark:text-cyan-200"
             >
-              <div className="grid gap-4">
-                {warning && (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900 shadow-sm dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100">
-                    <p className="font-bold">Conference needs attention</p>
-                    <p className="mt-0.5">{warning}</p>
-                  </div>
-                )}
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_14rem]">
-                  <label className={labelClass}>
-                    Conference name *
-                    <input
-                      name="name"
-                      defaultValue={initialValues?.name ?? ""}
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    Type *
-                    <ResearchFormSelect
-                      name="type"
-                      defaultValue={initialValues?.type ?? "INTERNATIONAL"}
-                      ariaLabel="Conference type"
-                      options={[
-                        { value: "INTERNATIONAL", label: "International" },
-                        { value: "NATIONAL", label: "National" },
-                      ]}
-                    />
-                  </label>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-3">
-                  <label className={labelClass}>
-                    Start date
-                    <input
-                      name="startDate"
-                      type="date"
-                      defaultValue={initialValues?.startDate ?? ""}
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    End date
-                    <input
-                      name="endDate"
-                      type="date"
-                      defaultValue={initialValues?.endDate ?? ""}
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    Close date
-                    <input
-                      name="closeDate"
-                      type="date"
-                      defaultValue={initialValues?.closeDate ?? ""}
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    Submission deadline *
-                    <input
-                      name="submissionDeadline"
-                      type="date"
-                      defaultValue={initialValues?.submissionDeadline ?? ""}
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    Acceptance notification *
-                    <input
-                      name="acceptanceNotification"
-                      type="date"
-                      defaultValue={initialValues?.acceptanceNotification ?? ""}
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    Location *
-                    <input
-                      name="location"
-                      defaultValue={initialValues?.location ?? ""}
-                      className={fieldClass}
-                    />
-                  </label>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className={labelClass}>
-                    Organizer *
-                    <input
-                      name="organizer"
-                      defaultValue={initialValues?.organizer ?? ""}
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    ISBN *
-                    <input
-                      name="isbn"
-                      defaultValue={initialValues?.isbn ?? ""}
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    Main theme
-                    <input
-                      name="targetTheme"
-                      defaultValue={initialValues?.targetTheme ?? ""}
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    Homepage
-                    <input
-                      name="website"
-                      defaultValue={initialValues?.website ?? ""}
-                      className={fieldClass}
-                    />
-                  </label>
-                </div>
-
-                <label className={labelClass}>
-                  Themes
-                  <textarea
-                    name="themes"
-                    defaultValue={initialValues?.themes ?? ""}
-                    className={areaClass}
-                  />
-                </label>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className={labelClass}>
-                    Submission fee
-                    <input
-                      name="submissionFee"
-                      defaultValue={initialValues?.submissionFee ?? ""}
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className={labelClass}>
-                    Fee currency
-                    <ResearchFormSelect
-                      name="submissionFeeCurrency"
-                      defaultValue={
-                        initialValues?.submissionFeeCurrency ?? "USD"
-                      }
-                      ariaLabel="Submission fee currency"
-                      options={currencyOptions}
-                    />
-                  </label>
-                </div>
-
-                <label className={labelClass}>
-                  Notes
-                  <textarea
-                    name="note"
-                    defaultValue={initialValues?.note ?? ""}
-                    className={areaClass}
-                  />
-                </label>
-              </div>
-              <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button
-                  disabled={isPending}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-sm font-bold text-cyan-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-100 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 dark:border-cyan-800/70 dark:bg-cyan-950/40 dark:text-cyan-200"
-                >
-                  {isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  {isEdit ? "Save conference" : "Add conference"}
-                </button>
-              </div>
-            </form>
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {isEdit ? "Save conference" : "Add conference"}
+            </button>
+          </div>
+        </form>
       </ResearchModal>
     </>
   );

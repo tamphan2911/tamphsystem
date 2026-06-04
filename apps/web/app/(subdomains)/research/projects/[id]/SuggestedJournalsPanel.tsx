@@ -20,16 +20,16 @@ import {
   deleteSuggestedConference,
   deleteSuggestedJournal,
 } from "../../actions";
-import { ResearchConfirmDialog } from "../../components/ResearchConfirmDialog";
-import { ResearchDetailSection } from "../../components/ResearchDetailSection";
-import { ResearchModal } from "../../components/ResearchModal";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   ResearchButton,
   ResearchIconButton,
   researchFieldClass,
   researchTextareaClass,
-} from "../../components/ResearchPrimitives";
-import { useResearchToast } from "../../components/ResearchToast";
+} from "@/sites/research/components/ResearchPrimitives";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type SuggestedJournalOption = {
   id: string;
@@ -367,83 +367,83 @@ export function SuggestedJournalsPanel({
           maxWidth="max-w-3xl"
           bodyClassName="px-5 py-4"
         >
-            <div className="grid gap-4">
-              <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
-                {(["journal", "conference"] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setActiveAddTab(tab)}
-                    className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
-                      activeAddTab === tab
-                        ? "bg-white text-blue-700 shadow-sm dark:bg-slate-800 dark:text-blue-300"
-                        : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
-                    }`}
-                  >
-                    {tab === "journal" ? "Journals" : "Conferences"}
-                  </button>
-                ))}
-              </div>
-
-              {activeAddTab === "journal" ? (
-                <>
-                  <SearchBox
-                    value={journalQuery}
-                    onChange={setJournalQuery}
-                    placeholder="Search journal name, ISSN, field, rank, publisher..."
-                  />
-                  <ResultList emptyText="No journal matches this search.">
-                    {journalResults.map((journal) => (
-                      <button
-                        key={journal.id}
-                        type="button"
-                        disabled={isPending}
-                        onClick={() => addJournal(journal.id)}
-                        className={resultButtonClass}
-                      >
-                        <span className="block text-sm font-semibold text-slate-950 dark:text-white">
-                          {journal.name}
-                        </span>
-                        <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-                          {journal.issn || "No ISSN"} -{" "}
-                          {journal.field || "No field"} -{" "}
-                          {journal.rank || "No rank"} -{" "}
-                          {journal.publisher || "No publisher"}
-                        </span>
-                      </button>
-                    ))}
-                  </ResultList>
-                </>
-              ) : (
-                <>
-                  <SearchBox
-                    value={conferenceQuery}
-                    onChange={setConferenceQuery}
-                    placeholder="Search conference, organizer, theme, location..."
-                  />
-                  <ResultList emptyText="No conference matches this search.">
-                    {conferenceResults.map((conference) => (
-                      <button
-                        key={conference.id}
-                        type="button"
-                        disabled={isPending}
-                        onClick={() => addConference(conference.id)}
-                        className={resultButtonClass}
-                      >
-                        <span className="block text-sm font-semibold text-slate-950 dark:text-white">
-                          {conference.name}
-                        </span>
-                        <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-                          {conference.type || "No type"} -{" "}
-                          {conference.theme || "No theme"} -{" "}
-                          {conference.location || "No location"}
-                        </span>
-                      </button>
-                    ))}
-                  </ResultList>
-                </>
-              )}
+          <div className="grid gap-4">
+            <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+              {(["journal", "conference"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveAddTab(tab)}
+                  className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
+                    activeAddTab === tab
+                      ? "bg-white text-blue-700 shadow-sm dark:bg-slate-800 dark:text-blue-300"
+                      : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                  }`}
+                >
+                  {tab === "journal" ? "Journals" : "Conferences"}
+                </button>
+              ))}
             </div>
+
+            {activeAddTab === "journal" ? (
+              <>
+                <SearchBox
+                  value={journalQuery}
+                  onChange={setJournalQuery}
+                  placeholder="Search journal name, ISSN, field, rank, publisher..."
+                />
+                <ResultList emptyText="No journal matches this search.">
+                  {journalResults.map((journal) => (
+                    <button
+                      key={journal.id}
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => addJournal(journal.id)}
+                      className={resultButtonClass}
+                    >
+                      <span className="block text-sm font-semibold text-slate-950 dark:text-white">
+                        {journal.name}
+                      </span>
+                      <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                        {journal.issn || "No ISSN"} -{" "}
+                        {journal.field || "No field"} -{" "}
+                        {journal.rank || "No rank"} -{" "}
+                        {journal.publisher || "No publisher"}
+                      </span>
+                    </button>
+                  ))}
+                </ResultList>
+              </>
+            ) : (
+              <>
+                <SearchBox
+                  value={conferenceQuery}
+                  onChange={setConferenceQuery}
+                  placeholder="Search conference, organizer, theme, location..."
+                />
+                <ResultList emptyText="No conference matches this search.">
+                  {conferenceResults.map((conference) => (
+                    <button
+                      key={conference.id}
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => addConference(conference.id)}
+                      className={resultButtonClass}
+                    >
+                      <span className="block text-sm font-semibold text-slate-950 dark:text-white">
+                        {conference.name}
+                      </span>
+                      <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                        {conference.type || "No type"} -{" "}
+                        {conference.theme || "No theme"} -{" "}
+                        {conference.location || "No location"}
+                      </span>
+                    </button>
+                  ))}
+                </ResultList>
+              </>
+            )}
+          </div>
         </ResearchModal>
       )}
 
@@ -469,179 +469,172 @@ export function SuggestedJournalsPanel({
           maxWidth="max-w-4xl"
           bodyClassName="px-0 py-0"
         >
-            <form
-              action={assignTask}
-              className="grid gap-5 px-6 py-5"
-            >
-              {selectedAssistantIds.map((id) => (
-                <input key={id} type="hidden" name="assigneeIds" value={id} />
+          <form action={assignTask} className="grid gap-5 px-6 py-5">
+            {selectedAssistantIds.map((id) => (
+              <input key={id} type="hidden" name="assigneeIds" value={id} />
+            ))}
+            <input type="hidden" name="projectId" value={projectId} />
+            {assignKind === "journal" ? (
+              <input
+                type="hidden"
+                name="journalId"
+                value={assignVenue.item.id}
+              />
+            ) : (
+              <input
+                type="hidden"
+                name="conferenceId"
+                value={assignVenue.item.id}
+              />
+            )}
+            <input
+              type="hidden"
+              name="taskType"
+              value={
+                taskMode === "submit"
+                  ? assignKind === "journal"
+                    ? "SUBMIT_RESEARCH"
+                    : "SUBMIT_CONFERENCE"
+                  : "OTHER"
+              }
+            />
+            <input
+              type="hidden"
+              name="category"
+              value={taskMode === "submit" ? "Submitting" : "Production"}
+            />
+
+            <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+              {(["submit", "other"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setTaskMode(mode)}
+                  className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
+                    taskMode === mode
+                      ? "bg-white text-blue-700 shadow-sm dark:bg-slate-800 dark:text-blue-300"
+                      : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                  }`}
+                >
+                  {mode === "submit" ? `Submit to ${assignKind}` : "Other task"}
+                </button>
               ))}
-              <input type="hidden" name="projectId" value={projectId} />
-              {assignKind === "journal" ? (
-                <input
-                  type="hidden"
-                  name="journalId"
-                  value={assignVenue.item.id}
-                />
-              ) : (
-                <input
-                  type="hidden"
-                  name="conferenceId"
-                  value={assignVenue.item.id}
-                />
-              )}
-              <input
-                type="hidden"
-                name="taskType"
-                value={
-                  taskMode === "submit"
-                    ? assignKind === "journal"
-                      ? "SUBMIT_RESEARCH"
-                      : "SUBMIT_CONFERENCE"
-                    : "OTHER"
-                }
-              />
-              <input
-                type="hidden"
-                name="category"
-                value={taskMode === "submit" ? "Submitting" : "Production"}
-              />
+            </div>
 
-              <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
-                {(["submit", "other"] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setTaskMode(mode)}
-                    className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
-                      taskMode === mode
-                        ? "bg-white text-blue-700 shadow-sm dark:bg-slate-800 dark:text-blue-300"
-                        : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
-                    }`}
-                  >
-                    {mode === "submit"
-                      ? `Submit to ${assignKind}`
-                      : "Other task"}
-                  </button>
-                ))}
-              </div>
-
-              <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
-                <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Task title
-                  </span>
-                  <input
-                    name="title"
-                    required
-                    defaultValue={
-                      taskMode === "submit"
-                        ? `Submit "${projectTitle}" to ${assignName}`
-                        : `Task for "${projectTitle}"`
-                    }
-                    className={researchFieldClass}
-                  />
-                </label>
-                <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Due date
-                  </span>
-                  <div className="relative">
-                    <CalendarClock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      name="dueDate"
-                      type="date"
-                      className={`${researchFieldClass} pl-9`}
-                    />
-                  </div>
-                </label>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <ReadOnlyField label="Research" value={projectTitle} />
-                <ReadOnlyField
-                  label={assignKind === "journal" ? "Journal" : "Conference"}
-                  value={assignName}
-                />
-              </div>
-
+            <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
               <label className="grid gap-1.5">
                 <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Note
+                  Task title
                 </span>
-                <textarea
-                  name="description"
-                  rows={3}
+                <input
+                  name="title"
+                  required
                   defaultValue={
                     taskMode === "submit"
-                      ? `Prepare and submit this manuscript to ${assignName}.`
-                      : ""
+                      ? `Submit "${projectTitle}" to ${assignName}`
+                      : `Task for "${projectTitle}"`
                   }
-                  className={researchTextareaClass}
+                  className={researchFieldClass}
                 />
               </label>
+              <label className="grid gap-1.5">
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Due date
+                </span>
+                <div className="relative">
+                  <CalendarClock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    name="dueDate"
+                    type="date"
+                    className={`${researchFieldClass} pl-9`}
+                  />
+                </div>
+              </label>
+            </div>
 
-              <div className="grid gap-3">
-                <SearchBox
-                  value={assistantQuery}
-                  onChange={setAssistantQuery}
-                  placeholder="Search assistants or admin by name, email, ID, or role..."
-                />
-                <div className="grid max-h-72 gap-2 overflow-y-auto rounded-xl border border-slate-200 p-2 dark:border-slate-800">
-                  {assistantResults.map((assistant) => {
-                    const selected = selectedAssistantIds.includes(
-                      assistant.id,
-                    );
-                    return (
-                      <button
-                        key={assistant.id}
-                        type="button"
-                        onClick={() => toggleAssistant(assistant.id)}
-                        className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
-                          selected
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
-                            : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800"
-                        }`}
-                      >
-                        <span className="flex min-w-0 items-center gap-3">
-                          <UserRound className="h-4 w-4 flex-none text-slate-400" />
-                          <span className="min-w-0">
-                            <span className="block truncate text-sm font-bold">
-                              {assistant.name || assistant.email}
-                            </span>
-                            <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
-                              {assistant.email}
-                            </span>
+            <div className="grid gap-4 md:grid-cols-2">
+              <ReadOnlyField label="Research" value={projectTitle} />
+              <ReadOnlyField
+                label={assignKind === "journal" ? "Journal" : "Conference"}
+                value={assignName}
+              />
+            </div>
+
+            <label className="grid gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Note
+              </span>
+              <textarea
+                name="description"
+                rows={3}
+                defaultValue={
+                  taskMode === "submit"
+                    ? `Prepare and submit this manuscript to ${assignName}.`
+                    : ""
+                }
+                className={researchTextareaClass}
+              />
+            </label>
+
+            <div className="grid gap-3">
+              <SearchBox
+                value={assistantQuery}
+                onChange={setAssistantQuery}
+                placeholder="Search assistants or admin by name, email, ID, or role..."
+              />
+              <div className="grid max-h-72 gap-2 overflow-y-auto rounded-xl border border-slate-200 p-2 dark:border-slate-800">
+                {assistantResults.map((assistant) => {
+                  const selected = selectedAssistantIds.includes(assistant.id);
+                  return (
+                    <button
+                      key={assistant.id}
+                      type="button"
+                      onClick={() => toggleAssistant(assistant.id)}
+                      className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
+                        selected
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <span className="flex min-w-0 items-center gap-3">
+                        <UserRound className="h-4 w-4 flex-none text-slate-400" />
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-bold">
+                            {assistant.name || assistant.email}
+                          </span>
+                          <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+                            {assistant.email}
                           </span>
                         </span>
-                        {selected && <Check className="h-4 w-4 flex-none" />}
-                      </button>
-                    );
-                  })}
-                  {assistantResults.length === 0 && (
-                    <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-                      No user matches this search.
-                    </div>
-                  )}
-                </div>
+                      </span>
+                      {selected && <Check className="h-4 w-4 flex-none" />}
+                    </button>
+                  );
+                })}
+                {assistantResults.length === 0 && (
+                  <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                    No user matches this search.
+                  </div>
+                )}
               </div>
+            </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <ResearchButton
-                  type="button"
-                  onClick={() => setAssignVenue(null)}
-                  tone="secondary"
-                >
-                  Cancel
-                </ResearchButton>
-                <ResearchButton
-                  disabled={selectedAssistantIds.length === 0 || isPending}
-                >
-                  <Plus className="h-4 w-4" />
-                  Assign Task
-                </ResearchButton>
-              </div>
-            </form>
+            <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
+              <ResearchButton
+                type="button"
+                onClick={() => setAssignVenue(null)}
+                tone="secondary"
+              >
+                Cancel
+              </ResearchButton>
+              <ResearchButton
+                disabled={selectedAssistantIds.length === 0 || isPending}
+              >
+                <Plus className="h-4 w-4" />
+                Assign Task
+              </ResearchButton>
+            </div>
+          </form>
         </ResearchModal>
       )}
     </ResearchDetailSection>

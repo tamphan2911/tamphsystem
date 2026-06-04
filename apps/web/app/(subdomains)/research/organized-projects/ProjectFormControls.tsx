@@ -14,7 +14,7 @@ import {
 import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
-} from "../components/ResearchSearchPicker";
+} from "@/sites/research/components/ResearchSearchPicker";
 import type { AuthorOption } from "../projects/[id]/AuthorsPicker";
 
 export type FundingInstitutionOption = {
@@ -171,9 +171,8 @@ export function ProjectMembersPicker({
   defaultMembers: SelectedProjectMember[];
   onWarning?: (message: string) => void;
 }) {
-  const [members, setMembers] = useState<SelectedProjectMember[]>(
-    defaultMembers,
-  );
+  const [members, setMembers] =
+    useState<SelectedProjectMember[]>(defaultMembers);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [localWarning, setLocalWarning] = useState("");
@@ -224,7 +223,9 @@ export function ProjectMembersPicker({
 
     setLocalWarning("");
     setMembers((current) => {
-      const removedTeamLead = current.find((member) => member.id === userId)?.isTeamLead;
+      const removedTeamLead = current.find(
+        (member) => member.id === userId,
+      )?.isTeamLead;
       const next = current.filter((member) => member.id !== userId);
       if (removedTeamLead && next[0]) {
         next[0] = { ...next[0], isTeamLead: true };
@@ -262,7 +263,12 @@ export function ProjectMembersPicker({
         </div>
       )}
       {members.map((member) => (
-        <input key={member.id} type="hidden" name="memberUserIds" value={member.id} />
+        <input
+          key={member.id}
+          type="hidden"
+          name="memberUserIds"
+          value={member.id}
+        />
       ))}
       <input type="hidden" name="teamLeadUserId" value={teamLeadId} />
       {members
@@ -410,7 +416,8 @@ export function ProjectResearchPicker({
   researchOptions: ResearchResultOption[];
   defaultResearch: ResearchResultOption[];
 }) {
-  const [selected, setSelected] = useState<ResearchResultOption[]>(defaultResearch);
+  const [selected, setSelected] =
+    useState<ResearchResultOption[]>(defaultResearch);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const selectedIds = useMemo(

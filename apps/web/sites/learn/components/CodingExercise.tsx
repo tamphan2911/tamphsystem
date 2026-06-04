@@ -4,11 +4,11 @@ import { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import { Play, Loader2 } from "lucide-react";
 
-export function CodingExercise({ 
-  initialCode = "", 
+export function CodingExercise({
+  initialCode = "",
   language = "python",
-  expectedOutput = ""
-}: { 
+  expectedOutput = "",
+}: {
   initialCode?: string;
   language?: string;
   expectedOutput?: string;
@@ -25,13 +25,13 @@ export function CodingExercise({
 
     const initPyodide = async () => {
       setIsLoadingPyodide(true);
-      
-      if (!document.getElementById('pyodide-script')) {
-        const script = document.createElement('script');
-        script.id = 'pyodide-script';
-        script.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js';
+
+      if (!document.getElementById("pyodide-script")) {
+        const script = document.createElement("script");
+        script.id = "pyodide-script";
+        script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js";
         document.head.appendChild(script);
-        
+
         script.onload = async () => {
           try {
             // @ts-ignore
@@ -52,10 +52,12 @@ export function CodingExercise({
   const handleRunCode = async () => {
     setIsRunning(true);
     setOutput("Executing...\n");
-    
+
     if (language === "python") {
       if (!pyodide) {
-        setOutput("Error: Python runtime not fully loaded yet. Please wait a moment.");
+        setOutput(
+          "Error: Python runtime not fully loaded yet. Please wait a moment.",
+        );
         setIsRunning(false);
         return;
       }
@@ -75,17 +77,21 @@ export function CodingExercise({
           sys.stdout = JSLogger()
           sys.stderr = JSLogger()
         `);
-        
+
         // Clear bridge
-        const bridge = document.getElementById('python-stdout-bridge') as HTMLInputElement;
+        const bridge = document.getElementById(
+          "python-stdout-bridge",
+        ) as HTMLInputElement;
         if (bridge) bridge.value = "";
-        
+
         // Run user code
         await pyodide.runPythonAsync(code);
-        
+
         // Grab output from bridge
         if (bridge) {
-            setOutput(bridge.value || "Code executed successfully with no output.\n");
+          setOutput(
+            bridge.value || "Code executed successfully with no output.\n",
+          );
         }
       } catch (err: any) {
         // Grab error trace
@@ -104,7 +110,6 @@ export function CodingExercise({
 
   return (
     <div className="flex flex-col h-[calc(100vh-16rem)] min-h-[500px] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-      
       {/* Hidden input bridge for stdout */}
       <input type="hidden" id="python-stdout-bridge" />
 
@@ -120,12 +125,16 @@ export function CodingExercise({
             </span>
           )}
         </div>
-        <button 
+        <button
           onClick={handleRunCode}
           disabled={isRunning || isLoadingPyodide}
           className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors shadow-sm"
         >
-          {isRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
+          {isRunning ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Play className="w-4 h-4 fill-current" />
+          )}
           {isRunning ? "Running..." : "Run Code"}
         </button>
       </div>
@@ -151,10 +160,16 @@ export function CodingExercise({
       {/* Output Console */}
       <div className="h-48 bg-slate-950 border-t border-slate-800 flex flex-col">
         <div className="bg-slate-900 px-4 py-1.5 border-b border-slate-800">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Console Output</span>
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Console Output
+          </span>
         </div>
         <div className="flex-1 p-4 overflow-y-auto font-mono text-sm text-slate-300 whitespace-pre-wrap">
-          {output || <span className="text-slate-600 italic">Run your code to see output here...</span>}
+          {output || (
+            <span className="text-slate-600 italic">
+              Run your code to see output here...
+            </span>
+          )}
         </div>
       </div>
     </div>

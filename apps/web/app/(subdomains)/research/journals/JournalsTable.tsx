@@ -4,19 +4,19 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BadgeCheck, Send, Star, Trash2 } from "lucide-react";
-import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
-import { ResearchIconButton } from "../components/ResearchPrimitives";
-import { ResearchEmptyState } from "../components/ResearchState";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { ResearchIconButton } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import {
   FilterSelect,
   IconHint,
   TablePagination,
   TableSearchInput,
   useTablePagination,
-} from "../components/TableControls";
-import { useResearchToast } from "../components/ResearchToast";
-import { formatMoney } from "../lib/currency";
-import { countryFlag, countryName } from "../lib/countries";
+} from "@/sites/research/components/TableControls";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { formatMoney } from "@/sites/research/lib/currency";
+import { countryFlag, countryName } from "@/sites/research/lib/countries";
 
 export type JournalRow = {
   id: string;
@@ -220,16 +220,12 @@ export function JournalsTable({
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
               <th
-                className={
-                  isAdmin ? "w-[31%] px-4 py-3" : "w-[34%] px-4 py-3"
-                }
+                className={isAdmin ? "w-[31%] px-4 py-3" : "w-[34%] px-4 py-3"}
               >
                 Journal
               </th>
               <th
-                className={
-                  isAdmin ? "w-[18%] px-4 py-3" : "w-[20%] px-4 py-3"
-                }
+                className={isAdmin ? "w-[18%] px-4 py-3" : "w-[20%] px-4 py-3"}
               >
                 Field
               </th>
@@ -243,7 +239,10 @@ export function JournalsTable({
                 }
               >
                 <IconHint label="Ongoing submissions">
-                  <Send className="mx-auto h-4 w-4 text-blue-600 dark:text-blue-300" aria-hidden="true" />
+                  <Send
+                    className="mx-auto h-4 w-4 text-blue-600 dark:text-blue-300"
+                    aria-hidden="true"
+                  />
                 </IconHint>
               </th>
               <th
@@ -254,7 +253,10 @@ export function JournalsTable({
                 }
               >
                 <IconHint label="Accepted and published submissions">
-                  <BadgeCheck className="mx-auto h-4 w-4 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
+                  <BadgeCheck
+                    className="mx-auto h-4 w-4 text-emerald-600 dark:text-emerald-300"
+                    aria-hidden="true"
+                  />
                 </IconHint>
               </th>
               <th
@@ -265,12 +267,13 @@ export function JournalsTable({
                 }
               >
                 <IconHint label="Reviews">
-                  <Star className="mx-auto h-4 w-4 text-amber-500 dark:text-amber-300" aria-hidden="true" />
+                  <Star
+                    className="mx-auto h-4 w-4 text-amber-500 dark:text-amber-300"
+                    aria-hidden="true"
+                  />
                 </IconHint>
               </th>
-              <th
-                className={isAdmin ? "w-[9%] px-2 py-3" : "w-[8%] px-2 py-3"}
-              >
+              <th className={isAdmin ? "w-[9%] px-2 py-3" : "w-[8%] px-2 py-3"}>
                 Country
               </th>
               {isAdmin && (
@@ -355,10 +358,7 @@ export function JournalsTable({
             ))}
             {pagination.total === 0 && (
               <tr>
-                <td
-                  colSpan={isAdmin ? 9 : 8}
-                  className="px-4 py-2"
-                >
+                <td colSpan={isAdmin ? 9 : 8} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No journals match the current search."
                     detail="Try another journal name, ISSN, publisher, field, or country."

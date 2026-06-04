@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, KeyRound } from "lucide-react";
 import { prisma } from "@repo/db";
-import { AuthLightTheme } from "../../components/AuthLightTheme";
+import { AuthLightTheme } from "@/sites/shared/components/AuthLightTheme";
 import { resetPassword } from "./actions";
 
 function warningCopy(warning?: string) {
@@ -9,8 +9,10 @@ function warningCopy(warning?: string) {
   if (warning === "required") return "Enter and confirm your new password.";
   if (warning === "short") return "Password must have at least 6 characters.";
   if (warning === "mismatch") return "Confirm password does not match.";
-  if (warning === "invalid") return "This reset link is invalid or was already used.";
-  if (warning === "expired") return "This reset link has expired. Request a new one.";
+  if (warning === "invalid")
+    return "This reset link is invalid or was already used.";
+  if (warning === "expired")
+    return "This reset link has expired. Request a new one.";
   return null;
 }
 

@@ -43,9 +43,9 @@ import {
   ProjectResearchEditDialog,
 } from "./ProjectDetailEditDialogs";
 import { ProjectProductsForm } from "./ProjectProductsForm";
-import { formatCurrencyCodeMoney } from "../../lib/currency";
-import { ResearchDetailSection } from "../../components/ResearchDetailSection";
-import { IconHint } from "../../components/ResearchPrimitives";
+import { formatCurrencyCodeMoney } from "@/sites/research/lib/currency";
+import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
+import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 
 export const dynamic = "force-dynamic";
 
@@ -472,7 +472,13 @@ export default async function OrganizedProjectDetailPage({
       }),
       prisma.user.findMany({
         where: { activeSites: { has: "research" } },
-        select: { id: true, name: true, email: true, affiliation: true, roles: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          affiliation: true,
+          roles: true,
+        },
         orderBy: [{ name: "asc" }, { email: "asc" }],
       }),
       prisma.researchProject.findMany({

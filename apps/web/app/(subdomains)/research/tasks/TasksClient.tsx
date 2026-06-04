@@ -17,14 +17,14 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
-} from "../components/TableControls";
-import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
-import { TableSkeletonRows } from "../components/ResearchSkeleton";
+} from "@/sites/research/components/TableControls";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { TableSkeletonRows } from "@/sites/research/components/ResearchSkeleton";
 import {
   ResearchEmptyState,
   ResearchErrorState,
-} from "../components/ResearchState";
-import { useResearchToast } from "../components/ResearchToast";
+} from "@/sites/research/components/ResearchState";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 type TaskAssignment = {
   id: string;
@@ -586,10 +586,7 @@ export function TasksClient({
                 </tr>
               ) : pagination.total === 0 ? (
                 <tr>
-                  <td
-                    colSpan={isAdmin ? 6 : 5}
-                    className="px-4 py-2"
-                  >
+                  <td colSpan={isAdmin ? 6 : 5} className="px-4 py-2">
                     <ResearchEmptyState
                       title="No tasks match the current filters."
                       detail={

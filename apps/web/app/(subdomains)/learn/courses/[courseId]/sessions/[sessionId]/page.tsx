@@ -3,9 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { prisma } from "@repo/db";
 import { auth } from "../../../../../../../auth";
-import { CodingExercise } from "../../../../../../../components/CodingExercise";
-import { QuizExercise } from "../../../../../../../components/QuizExercise";
-import { GsapScrollToTop } from "../../../../../../../components/GsapScrollToTop";
+import { CodingExercise } from "@/sites/learn/components/CodingExercise";
+import { QuizExercise } from "@/sites/learn/components/QuizExercise";
+import { GsapScrollToTop } from "@/sites/learn/components/GsapScrollToTop";
 import { completeSession, submitQuizAttempt } from "../../../../actions";
 
 export const dynamic = "force-dynamic";
@@ -101,7 +101,9 @@ export default async function SessionPage({
           <form action={completeAction}>
             <button className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
               <CheckCircle2 className="h-4 w-4" />
-              {completion ? "Completed" : `Mark Complete (${progressAfterThis}%)`}
+              {completion
+                ? "Completed"
+                : `Mark Complete (${progressAfterThis}%)`}
             </button>
           </form>
         </div>

@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { HelpCircle, Loader2, MessageSquareText, Send } from "lucide-react";
-import { ResearchModal } from "../../components/ResearchModal";
-import { useResearchToast } from "../../components/ResearchToast";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type TaskClarificationItem = {
   id: string;

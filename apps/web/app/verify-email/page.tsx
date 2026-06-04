@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { prisma } from "@repo/db";
-import { AuthLightTheme } from "../../components/AuthLightTheme";
+import { AuthLightTheme } from "@/sites/shared/components/AuthLightTheme";
 
 async function verifyToken(token: string | undefined) {
   if (!token) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useResearchToast } from "../components/ResearchToast";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export function ProjectToastFeedback() {
   const toast = useResearchToast();

@@ -13,7 +13,7 @@ import { auth } from "../../../../../auth";
 import { unlockConference, updateConference } from "../../actions";
 import { ConferenceDialog } from "../ConferenceDialog";
 import { ConferenceUnlockButton } from "./ConferenceUnlockButton";
-import { formatMoney } from "../../lib/currency";
+import { formatMoney } from "@/sites/research/lib/currency";
 import {
   ResearchProjectsTable,
   type ResearchProjectRow,

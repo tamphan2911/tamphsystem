@@ -1,7 +1,7 @@
 import { auth } from "../../../../auth";
 import { prisma, Role } from "@repo/db";
 import { createConference, deleteConference } from "../actions";
-import { ProposalDialog } from "../components/ProposalDialog";
+import { ProposalDialog } from "@/sites/research/components/ProposalDialog";
 import { ConferenceDialog } from "./ConferenceDialog";
 import { ConferencesTable, type ConferenceRow } from "./ConferencesTable";
 

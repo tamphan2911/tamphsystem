@@ -1,7 +1,7 @@
 import { auth } from "../../../../auth";
 import { prisma, Role } from "@repo/db";
 import { deleteJournal } from "../actions";
-import { ProposalDialog } from "../components/ProposalDialog";
+import { ProposalDialog } from "@/sites/research/components/ProposalDialog";
 import { JournalsTable, type JournalRow } from "./JournalsTable";
 import { NewJournalDialog } from "./NewJournalDialog";
 

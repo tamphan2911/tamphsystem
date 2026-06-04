@@ -129,7 +129,10 @@ export function ResearchSearchPicker<T = unknown>({
                 if (event.key === "ArrowDown") {
                   event.preventDefault();
                   setActiveIndex((current) =>
-                    Math.min(current + 1, Math.max(enabledOptions.length - 1, 0)),
+                    Math.min(
+                      current + 1,
+                      Math.max(enabledOptions.length - 1, 0),
+                    ),
                   );
                 }
                 if (event.key === "ArrowUp") {

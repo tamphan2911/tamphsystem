@@ -19,11 +19,11 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
-} from "../components/TableControls";
-import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
-import { ResearchIconButton } from "../components/ResearchPrimitives";
-import { ResearchEmptyState } from "../components/ResearchState";
-import { useResearchToast } from "../components/ResearchToast";
+} from "@/sites/research/components/TableControls";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { ResearchIconButton } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type ReviewRow = {
   id: string;
@@ -329,10 +329,7 @@ export function ReviewsTable({
             ))}
             {pagination.total === 0 && (
               <tr>
-                <td
-                  colSpan={isAdmin ? 7 : 6}
-                  className="px-4 py-2"
-                >
+                <td colSpan={isAdmin ? 7 : 6} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No academic reviews match the current filters."
                     detail="Try another manuscript, journal, status, or date filter."

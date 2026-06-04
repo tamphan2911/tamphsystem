@@ -27,11 +27,11 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
-} from "../components/TableControls";
-import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
-import { ResearchIconButton } from "../components/ResearchPrimitives";
-import { ResearchEmptyState } from "../components/ResearchState";
-import { useResearchToast } from "../components/ResearchToast";
+} from "@/sites/research/components/TableControls";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { ResearchIconButton } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type ResearchProjectRow = {
   id: string;

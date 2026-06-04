@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { AlertTriangle, LockKeyhole, Mail } from "lucide-react";
 import { headers } from "next/headers";
-import { TurnstileField } from "../../components/TurnstileField";
-import { AuthLightTheme } from "../../components/AuthLightTheme";
-import { LearnAuthHeader } from "../../components/LearnAuthHeader";
-import { turnstileSiteKey } from "../../lib/turnstile";
+import { TurnstileField } from "@/sites/shared/components/TurnstileField";
+import { AuthLightTheme } from "@/sites/shared/components/AuthLightTheme";
+import { LearnAuthHeader } from "@/sites/learn/components/LearnAuthHeader";
+import { turnstileSiteKey } from "@/sites/shared/lib/turnstile";
 import { loginUser } from "./actions";
 
 function safeRedirectPath(value: string | undefined) {

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { AlertTriangle, Mail, RotateCcw } from "lucide-react";
-import { AuthLightTheme } from "../../components/AuthLightTheme";
-import { TurnstileField } from "../../components/TurnstileField";
-import { turnstileSiteKey } from "../../lib/turnstile";
+import { AuthLightTheme } from "@/sites/shared/components/AuthLightTheme";
+import { TurnstileField } from "@/sites/shared/components/TurnstileField";
+import { turnstileSiteKey } from "@/sites/shared/lib/turnstile";
 import { requestPasswordReset } from "./actions";
 
 function warningCopy(warning?: string) {

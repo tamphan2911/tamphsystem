@@ -4,9 +4,9 @@ import { useEffect, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Edit3, FileText, Loader2, Save, UserRound } from "lucide-react";
-import { ResearchFormSelect } from "../../components/ResearchFormSelect";
-import { ResearchModal } from "../../components/ResearchModal";
-import { useResearchToast } from "../../components/ResearchToast";
+import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
   FundingInstitutionPicker,
   type FundingInstitutionOption,

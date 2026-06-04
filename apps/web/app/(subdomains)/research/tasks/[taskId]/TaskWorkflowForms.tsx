@@ -8,8 +8,8 @@ import {
   MessageSquareReply,
   RotateCcw,
 } from "lucide-react";
-import { ResearchModal } from "../../components/ResearchModal";
-import { useResearchToast } from "../../components/ResearchToast";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 type TextModalFormProps = {
   action: (formData: FormData) => void | Promise<void>;

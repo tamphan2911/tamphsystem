@@ -22,7 +22,7 @@ import {
   type SuggestedVenueState,
   type TaskAssigneeOption,
 } from "./SuggestedJournalsPanel";
-import { SaveForm } from "../../components/SaveForm";
+import { SaveForm } from "@/sites/research/components/SaveForm";
 import { type AuthorOption, type SelectedAuthor } from "./AuthorsPicker";
 import {
   CreateSubmissionTaskDialog,
@@ -35,8 +35,8 @@ import {
   ResearchAuthorsEditDialog,
   ResearchBasicEditDialog,
 } from "./ResearchDetailEditDialogs";
-import { ResearchDetailSection } from "../../components/ResearchDetailSection";
-import { IconHint } from "../../components/ResearchPrimitives";
+import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
+import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 
 export const dynamic = "force-dynamic";
 

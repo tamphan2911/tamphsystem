@@ -8,7 +8,7 @@ import {
   deleteFundingInstitution,
   updateFundingInstitution,
 } from "../actions";
-import { IconHint } from "../components/TableControls";
+import { IconHint } from "@/sites/research/components/TableControls";
 import { DeleteFundingInstitutionButton } from "./DeleteFundingInstitutionButton";
 import { FundingInstitutionDialog } from "./FundingInstitutionDialog";
 

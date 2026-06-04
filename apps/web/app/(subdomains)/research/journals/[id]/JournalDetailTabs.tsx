@@ -17,7 +17,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
-} from "../../components/TableControls";
+} from "@/sites/research/components/TableControls";
 import {
   SubmissionsTable,
   type SubmissionRow,
@@ -293,9 +293,7 @@ export function JournalDetailTabs({
                 <table className="w-full table-fixed text-left">
                   <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
                     <tr>
-                      <th className="w-[34%] px-4 py-3">
-                        Manuscript
-                      </th>
+                      <th className="w-[34%] px-4 py-3">Manuscript</th>
                       <th className="w-[13%] px-3 py-3">Status</th>
                       <th className="w-[10%] px-3 py-3">
                         <IconHint label="Due date">

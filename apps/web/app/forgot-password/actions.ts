@@ -5,7 +5,7 @@ import nodemailer from "nodemailer";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@repo/db";
-import { requestIp, verifyTurnstileToken } from "../../lib/turnstile";
+import { requestIp, verifyTurnstileToken } from "@/sites/shared/lib/turnstile";
 
 function siteFromHost(host: string | null) {
   if (!host) return "portfolio";

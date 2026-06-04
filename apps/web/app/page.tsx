@@ -14,22 +14,25 @@ import {
   ShieldCheck,
   TrendingUp,
 } from "lucide-react";
-import { ThemeToggle } from "../components/ThemeToggle";
+import { ThemeToggle } from "@/sites/shared/components/ThemeToggle";
 
 const focusAreas = [
   {
     title: "Academic research",
-    description: "Banking, fintech, corporate finance, publication strategy, and research production workflows.",
+    description:
+      "Banking, fintech, corporate finance, publication strategy, and research production workflows.",
     icon: Library,
   },
   {
     title: "Learning systems",
-    description: "Course infrastructure, assessments, coding exercises, and operational tools for academic teams.",
+    description:
+      "Course infrastructure, assessments, coding exercises, and operational tools for academic teams.",
     icon: GraduationCap,
   },
   {
     title: "Fintech software",
-    description: "Data products, internal platforms, quantitative tooling, and workflow automation.",
+    description:
+      "Data products, internal platforms, quantitative tooling, and workflow automation.",
     icon: TrendingUp,
   },
 ];
@@ -38,19 +41,22 @@ const systems = [
   {
     name: "Learning platform",
     href: "https://learn.tamph.com",
-    description: "Courses, modules, sessions, coding exercises, and student learning flows.",
+    description:
+      "Courses, modules, sessions, coding exercises, and student learning flows.",
     meta: "LMS",
   },
   {
     name: "Research hub",
     href: "https://research.tamph.com",
-    description: "Pipeline tracking for research, journals, publisher accounts, submissions, and publications.",
+    description:
+      "Pipeline tracking for research, journals, publisher accounts, submissions, and publications.",
     meta: "Research operations",
   },
   {
     name: "Admin console",
     href: "https://admin.tamph.com",
-    description: "User, role, and platform management for the connected subdomains.",
+    description:
+      "User, role, and platform management for the connected subdomains.",
     meta: "System control",
   },
 ];
@@ -70,10 +76,30 @@ export default function PersonalPortfolio() {
             TAMPH<span className="text-blue-600">.</span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-300 md:flex">
-            <a href="#work" className="transition hover:text-slate-950 dark:hover:text-white">Work</a>
-            <a href="#systems" className="transition hover:text-slate-950 dark:hover:text-white">Systems</a>
-            <a href="#research" className="transition hover:text-slate-950 dark:hover:text-white">Research</a>
-            <a href="#contact" className="transition hover:text-slate-950 dark:hover:text-white">Contact</a>
+            <a
+              href="#work"
+              className="transition hover:text-slate-950 dark:hover:text-white"
+            >
+              Work
+            </a>
+            <a
+              href="#systems"
+              className="transition hover:text-slate-950 dark:hover:text-white"
+            >
+              Systems
+            </a>
+            <a
+              href="#research"
+              className="transition hover:text-slate-950 dark:hover:text-white"
+            >
+              Research
+            </a>
+            <a
+              href="#contact"
+              className="transition hover:text-slate-950 dark:hover:text-white"
+            >
+              Contact
+            </a>
           </nav>
           <div className="flex items-center gap-3">
             <ThemeToggle />
@@ -86,13 +112,22 @@ export default function PersonalPortfolio() {
                 <UserCircle className="h-5 w-5" />
               </button>
               <div className="pointer-events-none absolute right-0 top-12 z-50 w-56 translate-y-2 rounded-xl border border-slate-200 bg-white p-2 opacity-0 shadow-xl ring-1 ring-slate-950/5 transition duration-200 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                <Link href="https://learn.tamph.com/profile" className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <Link
+                  href="https://learn.tamph.com/profile"
+                  className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
                   Learning profile
                 </Link>
-                <Link href="https://admin.tamph.com" className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <Link
+                  href="https://admin.tamph.com"
+                  className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
                   Admin console
                 </Link>
-                <Link href="/login" className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <Link
+                  href="/login"
+                  className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
                   Sign in
                 </Link>
               </div>
@@ -110,11 +145,14 @@ export default function PersonalPortfolio() {
             </div>
 
             <h1 className="max-w-2xl text-3xl font-extrabold leading-tight tracking-normal text-slate-950 dark:text-white md:text-4xl">
-              I build academic and fintech systems around research, learning, and data-driven work.
+              I build academic and fintech systems around research, learning,
+              and data-driven work.
             </h1>
 
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
-              I work at the intersection of finance, software engineering, and academic research. This site is the front door to my courses, research operations, and internal tools.
+              I work at the intersection of finance, software engineering, and
+              academic research. This site is the front door to my courses,
+              research operations, and internal tools.
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
@@ -139,7 +177,9 @@ export default function PersonalPortfolio() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
               <div>
                 <p className="text-sm font-bold">Current focus</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Research and platform work</p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Research and platform work
+                </p>
               </div>
               <ShieldCheck className="h-5 w-5 text-emerald-600" />
             </div>
@@ -147,20 +187,30 @@ export default function PersonalPortfolio() {
               {notes.map((note) => (
                 <div key={note} className="flex gap-3">
                   <div className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-blue-600" />
-                  <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{note}</p>
+                  <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+                    {note}
+                  </p>
                 </div>
               ))}
             </div>
           </aside>
         </section>
 
-        <section id="work" className="border-y border-slate-200 bg-white py-14 dark:border-slate-800 dark:bg-slate-900/40">
+        <section
+          id="work"
+          className="border-y border-slate-200 bg-white py-14 dark:border-slate-800 dark:bg-slate-900/40"
+        >
           <div className="mx-auto max-w-6xl px-5">
             <div className="max-w-2xl">
-              <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Work</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-normal">What I spend time on</h2>
+              <p className="text-xs font-bold uppercase tracking-wide text-blue-600">
+                Work
+              </p>
+              <h2 className="mt-2 text-2xl font-bold tracking-normal">
+                What I spend time on
+              </h2>
               <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                My work combines research management, teaching infrastructure, and applied software systems.
+                My work combines research management, teaching infrastructure,
+                and applied software systems.
               </p>
             </div>
 
@@ -168,10 +218,15 @@ export default function PersonalPortfolio() {
               {focusAreas.map((area) => {
                 const Icon = area.icon;
                 return (
-                  <article key={area.title} className="rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-950">
+                  <article
+                    key={area.title}
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-950"
+                  >
                     <Icon className="h-5 w-5 text-blue-600" />
                     <h3 className="mt-4 text-base font-bold">{area.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{area.description}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                      {area.description}
+                    </p>
                   </article>
                 );
               })}
@@ -182,11 +237,16 @@ export default function PersonalPortfolio() {
         <section id="systems" className="mx-auto max-w-6xl px-5 py-14">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Systems</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-normal">Connected platforms</h2>
+              <p className="text-xs font-bold uppercase tracking-wide text-blue-600">
+                Systems
+              </p>
+              <h2 className="mt-2 text-2xl font-bold tracking-normal">
+                Connected platforms
+              </h2>
             </div>
             <p className="max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-              The main domain stays personal. Subdomains host the actual tools and workflows.
+              The main domain stays personal. Subdomains host the actual tools
+              and workflows.
             </p>
           </div>
 
@@ -197,10 +257,14 @@ export default function PersonalPortfolio() {
                 href={system.href}
                 className="group grid gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700 md:grid-cols-[10rem_1fr_auto] md:items-center"
               >
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{system.meta}</span>
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  {system.meta}
+                </span>
                 <div>
                   <h3 className="text-base font-bold">{system.name}</h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">{system.description}</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                    {system.description}
+                  </p>
                 </div>
                 <ArrowUpRight className="h-5 w-5 text-slate-400 transition group-hover:text-blue-600" />
               </Link>
@@ -208,26 +272,49 @@ export default function PersonalPortfolio() {
           </div>
         </section>
 
-        <section id="research" className="border-y border-slate-200 bg-white py-14 dark:border-slate-800 dark:bg-slate-900/40">
+        <section
+          id="research"
+          className="border-y border-slate-200 bg-white py-14 dark:border-slate-800 dark:bg-slate-900/40"
+        >
           <div className="mx-auto grid max-w-6xl gap-8 px-5 md:grid-cols-2">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Research</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-normal">Research operations, not just publication lists</h2>
+              <p className="text-xs font-bold uppercase tracking-wide text-blue-600">
+                Research
+              </p>
+              <h2 className="mt-2 text-2xl font-bold tracking-normal">
+                Research operations, not just publication lists
+              </h2>
               <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                I manage research as a pipeline: idea, data, model, writing, journal targeting, submission, revision, acceptance, publication, and claim documentation.
+                I manage research as a pipeline: idea, data, model, writing,
+                journal targeting, submission, revision, acceptance,
+                publication, and claim documentation.
               </p>
             </div>
             <div className="grid gap-3">
               {[
-                { icon: NotebookPen, text: "Production notes for data, modeling, writing, humanizing, and references." },
-                { icon: BookOpen, text: "Journal database with ranks, ISSN, publisher, APC, fees, and account records." },
-                { icon: Database, text: "Submission tracking with the journal and account used for each manuscript." },
+                {
+                  icon: NotebookPen,
+                  text: "Production notes for data, modeling, writing, humanizing, and references.",
+                },
+                {
+                  icon: BookOpen,
+                  text: "Journal database with ranks, ISSN, publisher, APC, fees, and account records.",
+                },
+                {
+                  icon: Database,
+                  text: "Submission tracking with the journal and account used for each manuscript.",
+                },
               ].map((item) => {
                 const Icon = item.icon;
                 return (
-                  <div key={item.text} className="flex gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                  <div
+                    key={item.text}
+                    className="flex gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950"
+                  >
                     <Icon className="mt-0.5 h-4 w-4 flex-none text-blue-600" />
-                    <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{item.text}</p>
+                    <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+                      {item.text}
+                    </p>
                   </div>
                 );
               })}
@@ -239,10 +326,16 @@ export default function PersonalPortfolio() {
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Contact</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-normal">For academic, research, or system work</h2>
+                <p className="text-xs font-bold uppercase tracking-wide text-blue-600">
+                  Contact
+                </p>
+                <h2 className="mt-2 text-2xl font-bold tracking-normal">
+                  For academic, research, or system work
+                </h2>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                  Use the connected systems for structured work. For direct conversation, reach out by email or through the appropriate platform.
+                  Use the connected systems for structured work. For direct
+                  conversation, reach out by email or through the appropriate
+                  platform.
                 </p>
               </div>
               <a
@@ -260,7 +353,9 @@ export default function PersonalPortfolio() {
       <footer className="border-t border-slate-200 py-8 dark:border-slate-800">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 text-sm text-slate-500 dark:text-slate-400 md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} Tamph.</p>
-          <p>Finance, research, learning systems, and software infrastructure.</p>
+          <p>
+            Finance, research, learning systems, and software infrastructure.
+          </p>
         </div>
       </footer>
     </div>

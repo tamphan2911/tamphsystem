@@ -14,9 +14,9 @@ import {
 } from "lucide-react";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
-import { ResearchDetailSection } from "../../components/ResearchDetailSection";
-import { formatMoney } from "../../lib/currency";
-import { countryFlag, countryName } from "../../lib/countries";
+import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
+import { formatMoney } from "@/sites/research/lib/currency";
+import { countryFlag, countryName } from "@/sites/research/lib/countries";
 
 export const dynamic = "force-dynamic";
 

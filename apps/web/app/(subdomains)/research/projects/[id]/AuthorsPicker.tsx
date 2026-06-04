@@ -14,7 +14,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { ResearchConfirmDialog } from "../../components/ResearchConfirmDialog";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 
 export type AuthorOption = {
   id: string;
@@ -308,7 +308,8 @@ export function AuthorsPicker({
         </div>
         {dirty && !disabled && (
           <p className="text-xs font-semibold text-amber-600 dark:text-amber-300">
-            Author changes are not saved yet. Click Save changes to keep the updated author list.
+            Author changes are not saved yet. Click Save changes to keep the
+            updated author list.
           </p>
         )}
       </div>

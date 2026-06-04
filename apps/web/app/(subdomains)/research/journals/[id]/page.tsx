@@ -10,8 +10,8 @@ import {
 } from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
-import { formatMoney } from "../../lib/currency";
-import { countryFlag, countryName } from "../../lib/countries";
+import { formatMoney } from "@/sites/research/lib/currency";
+import { countryFlag, countryName } from "@/sites/research/lib/countries";
 import {
   JournalDetailTabs,
   type JournalAccountRow,

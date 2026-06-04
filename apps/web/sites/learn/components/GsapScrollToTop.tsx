@@ -24,18 +24,32 @@ export function GsapScrollToTop() {
 
     const mainContent = document.getElementById("learn-main-content");
     const target = mainContent || window;
-    
+
     target.addEventListener("scroll", handleScroll);
     return () => target.removeEventListener("scroll", handleScroll);
   }, []);
 
   useGSAP(() => {
     if (isVisible) {
-      gsap.to(btnRef.current, { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.7)", display: "block" });
+      gsap.to(btnRef.current, {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        duration: 0.4,
+        ease: "back.out(1.7)",
+        display: "block",
+      });
     } else {
-      gsap.to(btnRef.current, { y: 20, opacity: 0, scale: 0.8, duration: 0.3, ease: "power2.in", onComplete: () => {
-        if (btnRef.current) btnRef.current.style.display = "none";
-      }});
+      gsap.to(btnRef.current, {
+        y: 20,
+        opacity: 0,
+        scale: 0.8,
+        duration: 0.3,
+        ease: "power2.in",
+        onComplete: () => {
+          if (btnRef.current) btnRef.current.style.display = "none";
+        },
+      });
     }
   }, [isVisible]);
 

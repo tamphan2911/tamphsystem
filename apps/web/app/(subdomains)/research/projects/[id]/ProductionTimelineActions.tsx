@@ -3,8 +3,8 @@
 import { useRef, useState, useTransition } from "react";
 import { Loader2, LockOpen, Save } from "lucide-react";
 import { unlockProductionTimeline } from "../../actions";
-import { ResearchConfirmDialog } from "../../components/ResearchConfirmDialog";
-import { useResearchToast } from "../../components/ResearchToast";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export function ProductionTimelineActions({
   projectId,

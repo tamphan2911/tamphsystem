@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MailCheck } from "lucide-react";
 import { headers } from "next/headers";
-import { AuthLightTheme } from "../../../components/AuthLightTheme";
+import { AuthLightTheme } from "@/sites/shared/components/AuthLightTheme";
 
 export default async function CheckEmailPage({
   searchParams,
@@ -39,7 +39,8 @@ export default async function CheckEmailPage({
               {email || "your registered email"}
             </span>
             . Open that email and verify the account before logging in
-            {isResearch ? " to Research Hub" : isLearn ? " to Tamph Learn" : ""}.
+            {isResearch ? " to Research Hub" : isLearn ? " to Tamph Learn" : ""}
+            .
           </p>
         </div>
         <div className="space-y-3 px-8 py-6">

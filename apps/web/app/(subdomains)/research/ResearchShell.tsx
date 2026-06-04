@@ -10,13 +10,13 @@ import {
   GraduationCap,
   SlidersHorizontal,
 } from "lucide-react";
-import { ActiveNavLink } from "../../../components/ActiveNavLink";
-import { ProfileMenu } from "../../../components/ProfileMenu";
-import { SidebarSupportCard } from "../../../components/SidebarSupportCard";
-import { ThemeToggle } from "../../../components/ThemeToggle";
+import { ActiveNavLink } from "@/sites/research/components/ActiveNavLink";
+import { ProfileMenu } from "@/sites/shared/components/ProfileMenu";
+import { SidebarSupportCard } from "@/sites/research/components/SidebarSupportCard";
+import { ThemeToggle } from "@/sites/shared/components/ThemeToggle";
 import { ResearchNotificationBell } from "./ResearchNotificationBell";
-import { ResearchToastProvider } from "./components/ResearchToast";
-import { ScrollToTopButton } from "./components/ScrollToTopButton";
+import { ResearchToastProvider } from "@/sites/research/components/ResearchToast";
+import { ScrollToTopButton } from "@/sites/research/components/ScrollToTopButton";
 
 const navItems = [
   { href: "/projects", label: "Research", icon: "projects" as const },

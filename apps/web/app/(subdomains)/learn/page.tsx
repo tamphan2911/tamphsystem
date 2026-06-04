@@ -24,8 +24,8 @@ import {
 } from "lucide-react";
 import { auth } from "../../../auth";
 import { prisma } from "@repo/db";
-import { LearnWorkflowTabs } from "../../../components/LearnWorkflowTabs";
-import { HeroSearchBox } from "../../../components/HeroSearchBox";
+import { LearnWorkflowTabs } from "@/sites/learn/components/LearnWorkflowTabs";
+import { HeroSearchBox } from "@/sites/learn/components/HeroSearchBox";
 
 export const dynamic = "force-dynamic";
 
@@ -243,10 +243,16 @@ export default async function LearnLandingPage() {
               </button>
               <DropdownPanel items={docsMenu} />
             </div>
-            <Link href="/courses" className="text-[15px] leading-5 hover:text-white">
+            <Link
+              href="/courses"
+              className="text-[15px] leading-5 hover:text-white"
+            >
               Courses
             </Link>
-            <Link href="/profile" className="text-[15px] leading-5 hover:text-white">
+            <Link
+              href="/profile"
+              className="text-[15px] leading-5 hover:text-white"
+            >
               Profile
             </Link>
           </div>

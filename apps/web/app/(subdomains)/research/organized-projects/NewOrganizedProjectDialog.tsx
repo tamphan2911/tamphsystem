@@ -4,15 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { AlertTriangle, Building2, PlusCircle } from "lucide-react";
 import { createOrganizedProject } from "../actions";
-import { ResearchModal } from "../components/ResearchModal";
-import { ResearchFormSelect } from "../components/ResearchFormSelect";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import {
   ResearchButton,
   researchFieldClass,
   researchLabelClass,
   researchTextareaClass,
-} from "../components/ResearchPrimitives";
-import { currencyOptions } from "../lib/currency";
+} from "@/sites/research/components/ResearchPrimitives";
+import { currencyOptions } from "@/sites/research/lib/currency";
 import type { AuthorOption } from "../projects/[id]/AuthorsPicker";
 import {
   FundingInstitutionPicker,
@@ -92,10 +92,7 @@ export function NewOrganizedProjectDialog({
 
   return (
     <>
-      <ResearchButton
-        type="button"
-        onClick={() => setIsOpen(true)}
-      >
+      <ResearchButton type="button" onClick={() => setIsOpen(true)}>
         <PlusCircle className="h-4 w-4" />
         Add Project
       </ResearchButton>
@@ -108,182 +105,181 @@ export function NewOrganizedProjectDialog({
         icon={<Building2 className="h-5 w-5" />}
         maxWidth="max-w-6xl"
       >
+        <form
+          action={createOrganizedProject}
+          onSubmit={handleSubmit}
+          className="grid gap-5"
+        >
+          <div className="grid gap-5">
+            {warning && (
+              <div
+                ref={warningRef}
+                className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200"
+              >
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
+                <span>{warning}</span>
+              </div>
+            )}
 
-            <form
-              action={createOrganizedProject}
-              onSubmit={handleSubmit}
-              className="grid gap-5"
-            >
-              <div className="grid gap-5">
-                {warning && (
-                  <div
-                    ref={warningRef}
-                    className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200"
-                  >
-                    <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
-                    <span>{warning}</span>
-                  </div>
-                )}
-
-                <section className="grid gap-4">
-                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_12rem]">
-                    <label className={researchLabelClass}>
-                      Project name
-                      <input
-                        name="title"
-                        required
-                        placeholder="Institutional project title"
-                        className={researchFieldClass}
-                      />
-                    </label>
-                    <label className={researchLabelClass}>
-                      Project ID
-                      <input
-                        name="referenceCode"
-                        required
-                        placeholder="UEH-DTI-2026"
-                        className={researchFieldClass}
-                      />
-                    </label>
-                  </div>
-
-                  <FundingInstitutionPicker
-                    institutions={fundingInstitutions}
-                    defaultInstitution={null}
-                  />
-
-                  <div className="grid gap-4 md:grid-cols-4">
-                    <label className={researchLabelClass}>
-                      Status
-                      <ResearchFormSelect
-                        name="status"
-                        defaultValue="PLANNED"
-                        ariaLabel="Choose project status"
-                        options={[
-                          { value: "PLANNED", label: "Planned" },
-                          { value: "ACTIVE", label: "Active" },
-                          { value: "COMPLETED", label: "Completed" },
-                        ]}
-                      />
-                    </label>
-                    <label className={researchLabelClass}>
-                      Financial
-                      <ResearchFormSelect
-                        name="financialClaimStatus"
-                        defaultValue="NONE"
-                        ariaLabel="Choose financial status"
-                        onValueChange={setFinancial}
-                        options={[
-                          { value: "NONE", label: "None" },
-                          { value: "NOT_ADVANCED", label: "Not advanced" },
-                          { value: "ADVANCED", label: "Advanced" },
-                          { value: "SETTLED", label: "Settled" },
-                          { value: "REFUND_ADVANCE", label: "Refund advance" },
-                        ]}
-                      />
-                    </label>
-                    <label className={researchLabelClass}>
-                      Start date
-                      <input
-                        name="startDate"
-                        type="date"
-                        required
-                        className={researchFieldClass}
-                      />
-                    </label>
-                    <label className={researchLabelClass}>
-                      Duration months
-                      <input
-                        name="durationMonths"
-                        type="number"
-                        min="1"
-                        required
-                        placeholder="9"
-                        className={researchFieldClass}
-                      />
-                    </label>
-                  </div>
-
-                  {financial !== "NONE" && (
-                    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_14rem]">
-                      <label className={researchLabelClass}>
-                        Funding amount
-                        <input
-                          name="fundingAmount"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          placeholder="20000000"
-                          className={researchFieldClass}
-                        />
-                      </label>
-                      <label className={researchLabelClass}>
-                        Currency
-                        <ResearchFormSelect
-                          name="fundingCurrency"
-                          defaultValue="VND"
-                          ariaLabel="Funding currency"
-                          options={currencyOptions}
-                        />
-                      </label>
-                    </div>
-                  )}
-
-                  <label className={researchLabelClass}>
-                    Required products
-                    <textarea
-                      name="requiredProducts"
-                      placeholder="One required project output per line..."
-                      className={researchTextareaClass}
-                    />
-                  </label>
-
-                  <label className={researchLabelClass}>
-                    Description
-                    <textarea
-                      name="description"
-                      placeholder="Scope, deliverables, funding notes, or institution requirements..."
-                      className={researchTextareaClass}
-                    />
-                  </label>
-                </section>
-
-                <section className="grid gap-4 border-t border-slate-200 pt-5 dark:border-slate-800">
-                  <ProjectMembersPicker
-                    users={users}
-                    defaultMembers={[]}
-                    onWarning={setWarning}
-                  />
-                  <ProjectResearchPicker
-                    researchOptions={researchOptions}
-                    defaultResearch={[]}
-                  />
-                </section>
-
+            <section className="grid gap-4">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_12rem]">
                 <label className={researchLabelClass}>
-                  Notes
-                  <textarea
-                    name="note"
-                    placeholder="Internal follow-up notes..."
-                    className={researchTextareaClass}
+                  Project name
+                  <input
+                    name="title"
+                    required
+                    placeholder="Institutional project title"
+                    className={researchFieldClass}
+                  />
+                </label>
+                <label className={researchLabelClass}>
+                  Project ID
+                  <input
+                    name="referenceCode"
+                    required
+                    placeholder="UEH-DTI-2026"
+                    className={researchFieldClass}
                   />
                 </label>
               </div>
 
-              <div className="mt-5 flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <ResearchButton
-                  type="button"
-                  onClick={closeDialog}
-                  tone="secondary"
-                >
-                  Cancel
-                </ResearchButton>
-                <ResearchButton>
-                  <PlusCircle className="h-4 w-4" />
-                  Add Project
-                </ResearchButton>
+              <FundingInstitutionPicker
+                institutions={fundingInstitutions}
+                defaultInstitution={null}
+              />
+
+              <div className="grid gap-4 md:grid-cols-4">
+                <label className={researchLabelClass}>
+                  Status
+                  <ResearchFormSelect
+                    name="status"
+                    defaultValue="PLANNED"
+                    ariaLabel="Choose project status"
+                    options={[
+                      { value: "PLANNED", label: "Planned" },
+                      { value: "ACTIVE", label: "Active" },
+                      { value: "COMPLETED", label: "Completed" },
+                    ]}
+                  />
+                </label>
+                <label className={researchLabelClass}>
+                  Financial
+                  <ResearchFormSelect
+                    name="financialClaimStatus"
+                    defaultValue="NONE"
+                    ariaLabel="Choose financial status"
+                    onValueChange={setFinancial}
+                    options={[
+                      { value: "NONE", label: "None" },
+                      { value: "NOT_ADVANCED", label: "Not advanced" },
+                      { value: "ADVANCED", label: "Advanced" },
+                      { value: "SETTLED", label: "Settled" },
+                      { value: "REFUND_ADVANCE", label: "Refund advance" },
+                    ]}
+                  />
+                </label>
+                <label className={researchLabelClass}>
+                  Start date
+                  <input
+                    name="startDate"
+                    type="date"
+                    required
+                    className={researchFieldClass}
+                  />
+                </label>
+                <label className={researchLabelClass}>
+                  Duration months
+                  <input
+                    name="durationMonths"
+                    type="number"
+                    min="1"
+                    required
+                    placeholder="9"
+                    className={researchFieldClass}
+                  />
+                </label>
               </div>
-            </form>
+
+              {financial !== "NONE" && (
+                <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_14rem]">
+                  <label className={researchLabelClass}>
+                    Funding amount
+                    <input
+                      name="fundingAmount"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="20000000"
+                      className={researchFieldClass}
+                    />
+                  </label>
+                  <label className={researchLabelClass}>
+                    Currency
+                    <ResearchFormSelect
+                      name="fundingCurrency"
+                      defaultValue="VND"
+                      ariaLabel="Funding currency"
+                      options={currencyOptions}
+                    />
+                  </label>
+                </div>
+              )}
+
+              <label className={researchLabelClass}>
+                Required products
+                <textarea
+                  name="requiredProducts"
+                  placeholder="One required project output per line..."
+                  className={researchTextareaClass}
+                />
+              </label>
+
+              <label className={researchLabelClass}>
+                Description
+                <textarea
+                  name="description"
+                  placeholder="Scope, deliverables, funding notes, or institution requirements..."
+                  className={researchTextareaClass}
+                />
+              </label>
+            </section>
+
+            <section className="grid gap-4 border-t border-slate-200 pt-5 dark:border-slate-800">
+              <ProjectMembersPicker
+                users={users}
+                defaultMembers={[]}
+                onWarning={setWarning}
+              />
+              <ProjectResearchPicker
+                researchOptions={researchOptions}
+                defaultResearch={[]}
+              />
+            </section>
+
+            <label className={researchLabelClass}>
+              Notes
+              <textarea
+                name="note"
+                placeholder="Internal follow-up notes..."
+                className={researchTextareaClass}
+              />
+            </label>
+          </div>
+
+          <div className="mt-5 flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
+            <ResearchButton
+              type="button"
+              onClick={closeDialog}
+              tone="secondary"
+            >
+              Cancel
+            </ResearchButton>
+            <ResearchButton>
+              <PlusCircle className="h-4 w-4" />
+              Add Project
+            </ResearchButton>
+          </div>
+        </form>
       </ResearchModal>
     </>
   );

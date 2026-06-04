@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { deleteOrganizedProject } from "../actions";
-import { ProposalDialog } from "../components/ProposalDialog";
+import { ProposalDialog } from "@/sites/research/components/ProposalDialog";
 import { NewOrganizedProjectDialog } from "./NewOrganizedProjectDialog";
 import {
   OrganizedProjectsTable,

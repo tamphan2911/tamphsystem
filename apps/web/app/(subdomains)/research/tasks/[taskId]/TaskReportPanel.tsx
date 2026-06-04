@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { Download, FileUp, Loader2, UploadCloud } from "lucide-react";
 import { uploadResearchTaskReport } from "../../actions";
-import { useResearchToast } from "../../components/ResearchToast";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 const maxFileSize = 2 * 1024 * 1024;
 const allowedExtensions = [".doc", ".docx", ".xlsx", ".pdf"];
@@ -43,9 +43,7 @@ export function TaskReportPanel({
       });
       return;
     }
-    const extension = file.name
-      .slice(file.name.lastIndexOf("."))
-      .toLowerCase();
+    const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
     if (!allowedExtensions.includes(extension)) {
       showError({
         title: "Report file rejected",
@@ -109,7 +107,10 @@ export function TaskReportPanel({
               {fileName}
             </p>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              {[fileSizeLabel(fileSize), uploadedAt ? `Uploaded ${uploadedAt}` : ""]
+              {[
+                fileSizeLabel(fileSize),
+                uploadedAt ? `Uploaded ${uploadedAt}` : "",
+              ]
                 .filter(Boolean)
                 .join(" - ")}
             </p>

@@ -8,8 +8,8 @@ import {
   SlidersHorizontal,
   UserCircle,
 } from "lucide-react";
-import { ThemeToggle } from "../../../components/ThemeToggle";
-import { ProfileMenu } from "../../../components/ProfileMenu";
+import { ThemeToggle } from "@/sites/shared/components/ThemeToggle";
+import { ProfileMenu } from "@/sites/shared/components/ProfileMenu";
 import { auth } from "../../../auth";
 import { prisma } from "@repo/db";
 import { headers } from "next/headers";

@@ -12,15 +12,15 @@ import {
   X,
 } from "lucide-react";
 import { createResearchProject } from "../actions";
-import { ResearchFormSelect } from "../components/ResearchFormSelect";
-import { ResearchModal } from "../components/ResearchModal";
+import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   ResearchButton,
   ResearchIconButton,
   researchFieldClass,
   researchLabelClass,
   researchTextareaClass,
-} from "../components/ResearchPrimitives";
+} from "@/sites/research/components/ResearchPrimitives";
 import {
   FundingInstitutionPicker,
   type FundingInstitutionOption,
@@ -241,10 +241,7 @@ export function NewResearchDialog({
 
   return (
     <>
-      <ResearchButton
-        type="button"
-        onClick={() => setIsOpen(true)}
-      >
+      <ResearchButton type="button" onClick={() => setIsOpen(true)}>
         <PlusCircle className="h-4 w-4" />
         New Research
       </ResearchButton>
@@ -256,119 +253,118 @@ export function NewResearchDialog({
         description="Create a research record and place it in the pipeline."
         icon={<PlusCircle className="h-5 w-5" />}
       >
-
-            <form
-              action={createResearchProject}
-              onSubmit={handleSubmit}
-              className="grid gap-5"
+        <form
+          action={createResearchProject}
+          onSubmit={handleSubmit}
+          className="grid gap-5"
+        >
+          {warning && (
+            <div
+              ref={warningRef}
+              className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-200"
             >
-              {warning && (
-                <div
-                  ref={warningRef}
-                  className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-200"
-                >
-                  <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
-                  {warning}
-                </div>
-              )}
+              <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
+              {warning}
+            </div>
+          )}
 
-              <section className="grid gap-4">
+          <section className="grid gap-4">
+            <label className={researchLabelClass}>
+              Title
+              <input
+                name="title"
+                placeholder="Research title"
+                className={researchFieldClass}
+              />
+            </label>
+            <NewResearchAuthorsPicker
+              users={users}
+              selectedAuthors={selectedAuthors}
+              onChange={(authors) => {
+                setSelectedAuthors(authors);
+                if (authors.length > 0 && warning.includes("author")) {
+                  setWarning("");
+                }
+              }}
+            />
+          </section>
+
+          {isAdmin && (
+            <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
+              <h3 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
+                Registration
+              </h3>
+              <div className="grid items-end gap-4 lg:grid-cols-[14rem_1fr]">
                 <label className={researchLabelClass}>
-                  Title
-                  <input
-                    name="title"
-                    placeholder="Research title"
-                    className={researchFieldClass}
+                  Register
+                  <ResearchFormSelect
+                    name="registerStatus"
+                    defaultValue={registerStatus}
+                    onValueChange={setRegisterStatus}
+                    ariaLabel="Registration status"
+                    options={[
+                      { value: "NOT_REGISTERED", label: "Not registered" },
+                      { value: "PREPARING", label: "Plan" },
+                      { value: "SUBMITTED", label: "Submitted" },
+                      { value: "APPROVED", label: "Approved" },
+                    ]}
                   />
                 </label>
-                <NewResearchAuthorsPicker
-                  users={users}
-                  selectedAuthors={selectedAuthors}
-                  onChange={(authors) => {
-                    setSelectedAuthors(authors);
-                    if (authors.length > 0 && warning.includes("author")) {
-                      setWarning("");
-                    }
-                  }}
-                />
-              </section>
-
-              {isAdmin && (
-                <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
-                  <h3 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
-                    Registration
-                  </h3>
-                  <div className="grid items-end gap-4 lg:grid-cols-[14rem_1fr]">
-                    <label className={researchLabelClass}>
-                      Register
-                      <ResearchFormSelect
-                        name="registerStatus"
-                        defaultValue={registerStatus}
-                        onValueChange={setRegisterStatus}
-                        ariaLabel="Registration status"
-                        options={[
-                          { value: "NOT_REGISTERED", label: "Not registered" },
-                          { value: "PREPARING", label: "Plan" },
-                          { value: "SUBMITTED", label: "Submitted" },
-                          { value: "APPROVED", label: "Approved" },
-                        ]}
-                      />
-                    </label>
-                    <div
-                      className={`grid items-end gap-4 transition-all duration-300 ease-out md:grid-cols-[minmax(12rem,0.8fr)_minmax(22rem,1.2fr)] ${
-                        registerStatus === "NOT_REGISTERED"
-                          ? "pointer-events-none max-h-0 -translate-y-1 overflow-hidden opacity-0"
-                          : "max-h-40 translate-y-0 opacity-100"
-                      }`}
-                      aria-hidden={registerStatus === "NOT_REGISTERED"}
-                    >
-                      <label className={researchLabelClass}>
-                        Registration period
-                        <input
-                          name="universityRegistration"
-                          placeholder="Q2 2026"
-                          disabled={registerStatus === "NOT_REGISTERED"}
-                          className={researchFieldClass}
-                        />
-                      </label>
-                      <RegisterUserPicker
-                        users={users}
-                        disabled={registerStatus === "NOT_REGISTERED"}
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <FundingInstitutionPicker
-                      institutions={fundingInstitutions}
-                      defaultInstitution={null}
-                    />
-                  </div>
-                </section>
-              )}
-
-              <label className={researchLabelClass}>
-                Notes
-                <textarea
-                  name="abstract"
-                  placeholder="Idea, data, model, writing, humanizing, references..."
-                  className={researchTextareaClass}
-                />
-              </label>
-
-              <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <ResearchButton
-                  type="button"
-                  onClick={closeDialog}
-                  tone="secondary"
+                <div
+                  className={`grid items-end gap-4 transition-all duration-300 ease-out md:grid-cols-[minmax(12rem,0.8fr)_minmax(22rem,1.2fr)] ${
+                    registerStatus === "NOT_REGISTERED"
+                      ? "pointer-events-none max-h-0 -translate-y-1 overflow-hidden opacity-0"
+                      : "max-h-40 translate-y-0 opacity-100"
+                  }`}
+                  aria-hidden={registerStatus === "NOT_REGISTERED"}
                 >
-                  Cancel
-                </ResearchButton>
-                <ResearchButton>
-                  <PlusCircle className="h-4 w-4" />
-                  Add Research
-                </ResearchButton>
+                  <label className={researchLabelClass}>
+                    Registration period
+                    <input
+                      name="universityRegistration"
+                      placeholder="Q2 2026"
+                      disabled={registerStatus === "NOT_REGISTERED"}
+                      className={researchFieldClass}
+                    />
+                  </label>
+                  <RegisterUserPicker
+                    users={users}
+                    disabled={registerStatus === "NOT_REGISTERED"}
+                  />
+                </div>
               </div>
-            </form>
+              <div className="mt-4">
+                <FundingInstitutionPicker
+                  institutions={fundingInstitutions}
+                  defaultInstitution={null}
+                />
+              </div>
+            </section>
+          )}
+
+          <label className={researchLabelClass}>
+            Notes
+            <textarea
+              name="abstract"
+              placeholder="Idea, data, model, writing, humanizing, references..."
+              className={researchTextareaClass}
+            />
+          </label>
+
+          <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
+            <ResearchButton
+              type="button"
+              onClick={closeDialog}
+              tone="secondary"
+            >
+              Cancel
+            </ResearchButton>
+            <ResearchButton>
+              <PlusCircle className="h-4 w-4" />
+              Add Research
+            </ResearchButton>
+          </div>
+        </form>
       </ResearchModal>
     </>
   );

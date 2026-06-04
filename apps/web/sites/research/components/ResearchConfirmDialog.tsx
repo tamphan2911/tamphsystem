@@ -9,12 +9,10 @@ type ConfirmTone = "danger" | "warning" | "info";
 function toneClasses(tone: ConfirmTone) {
   if (tone === "warning") {
     return {
-      panel:
-        "border-amber-200 dark:border-amber-900/70 dark:bg-slate-900",
+      panel: "border-amber-200 dark:border-amber-900/70 dark:bg-slate-900",
       header:
         "border-amber-100 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/25",
-      icon:
-        "bg-amber-100 text-amber-700 ring-amber-200 dark:bg-amber-950/70 dark:text-amber-300 dark:ring-amber-800",
+      icon: "bg-amber-100 text-amber-700 ring-amber-200 dark:bg-amber-950/70 dark:text-amber-300 dark:ring-amber-800",
       confirm:
         "border-amber-600 bg-amber-600 text-white hover:border-amber-500 hover:bg-amber-500 disabled:hover:bg-amber-600",
     };
@@ -25,8 +23,7 @@ function toneClasses(tone: ConfirmTone) {
       panel: "border-blue-200 dark:border-blue-900/70 dark:bg-slate-900",
       header:
         "border-blue-100 bg-blue-50/80 dark:border-blue-900/60 dark:bg-blue-950/25",
-      icon:
-        "bg-blue-100 text-blue-700 ring-blue-200 dark:bg-blue-950/70 dark:text-blue-300 dark:ring-blue-800",
+      icon: "bg-blue-100 text-blue-700 ring-blue-200 dark:bg-blue-950/70 dark:text-blue-300 dark:ring-blue-800",
       confirm:
         "border-blue-600 bg-blue-600 text-white hover:border-blue-500 hover:bg-blue-500 disabled:hover:bg-blue-600",
     };
@@ -36,8 +33,7 @@ function toneClasses(tone: ConfirmTone) {
     panel: "border-rose-200 dark:border-rose-900/70 dark:bg-slate-900",
     header:
       "border-rose-100 bg-rose-50/80 dark:border-rose-900/60 dark:bg-rose-950/25",
-    icon:
-      "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-950/70 dark:text-rose-300 dark:ring-rose-800",
+    icon: "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-950/70 dark:text-rose-300 dark:ring-rose-800",
     confirm:
       "border-rose-600 bg-rose-600 text-white hover:border-rose-500 hover:bg-rose-500 disabled:hover:bg-rose-600",
   };
@@ -129,7 +125,13 @@ export function ResearchConfirmDialog({
             type="button"
             disabled={isConfirming}
             onClick={onConfirm}
-            tone={tone === "danger" ? "danger" : tone === "warning" ? "secondary" : "primary"}
+            tone={
+              tone === "danger"
+                ? "danger"
+                : tone === "warning"
+                  ? "secondary"
+                  : "primary"
+            }
             className={classes.confirm}
           >
             {confirmIcon ??

@@ -3,13 +3,13 @@
 import { useMemo, useState, useTransition } from "react";
 import { ClipboardCheck, Loader2, PlusCircle } from "lucide-react";
 import { createAcademicReview } from "../actions";
-import { ResearchFormSelect } from "../components/ResearchFormSelect";
-import { ResearchModal } from "../components/ResearchModal";
+import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
-} from "../components/ResearchSearchPicker";
-import { useResearchToast } from "../components/ResearchToast";
+} from "@/sites/research/components/ResearchSearchPicker";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 type JournalOption = {
   id: string;
@@ -128,145 +128,140 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
         description="Track review invitations, deadlines, and private notes."
         icon={<ClipboardCheck className="h-5 w-5" />}
       >
-
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                const formData = new FormData(event.currentTarget);
-                startTransition(async () => {
-                  await createAcademicReview(formData);
-                  closeDialog();
-                  toast.showSuccess({
-                    title: "Review added",
-                    detail: "The academic review record is ready to track.",
-                  });
-                });
-              }}
-              className="grid gap-5"
-            >
-              <section className="grid gap-4">
-                <JournalPicker
-                  journals={journals}
-                  value={selectedJournalId}
-                  onChange={setSelectedJournalId}
-                />
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            startTransition(async () => {
+              await createAcademicReview(formData);
+              closeDialog();
+              toast.showSuccess({
+                title: "Review added",
+                detail: "The academic review record is ready to track.",
+              });
+            });
+          }}
+          className="grid gap-5"
+        >
+          <section className="grid gap-4">
+            <JournalPicker
+              journals={journals}
+              value={selectedJournalId}
+              onChange={setSelectedJournalId}
+            />
+            <input
+              tabIndex={-1}
+              aria-hidden="true"
+              required
+              readOnly
+              value={selectedJournalId}
+              className="pointer-events-none absolute h-px w-px opacity-0"
+            />
+            <div className="grid gap-4">
+              <label className={labelClass}>
+                Manuscript title
                 <input
-                  tabIndex={-1}
-                  aria-hidden="true"
+                  name="manuscriptTitle"
                   required
-                  readOnly
-                  value={selectedJournalId}
-                  className="pointer-events-none absolute h-px w-px opacity-0"
+                  placeholder="Title from the journal system"
+                  className={inputClass}
                 />
-                <div className="grid gap-4">
-                  <label className={labelClass}>
-                    Manuscript title
-                    <input
-                      name="manuscriptTitle"
-                      required
-                      placeholder="Title from the journal system"
-                      className={inputClass}
-                    />
-                  </label>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className={labelClass}>
-                    Manuscript ID / tracking code
-                    <input
-                      name="manuscriptId"
-                      placeholder="Example: JBR-2026-0142"
-                      className={inputClass}
-                    />
-                    <span className={helperClass}>
-                      The code shown in the journal submission portal or email.
-                    </span>
-                  </label>
-                  <label className={labelClass}>
-                    Review round
-                    <input
-                      name="reviewRound"
-                      placeholder="Example: Round 1, R2, revision review"
-                      className={inputClass}
-                    />
-                    <span className={helperClass}>
-                      Use this when the same manuscript returns for another
-                      review cycle.
-                    </span>
-                  </label>
-                </div>
-              </section>
+              </label>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className={labelClass}>
+                Manuscript ID / tracking code
+                <input
+                  name="manuscriptId"
+                  placeholder="Example: JBR-2026-0142"
+                  className={inputClass}
+                />
+                <span className={helperClass}>
+                  The code shown in the journal submission portal or email.
+                </span>
+              </label>
+              <label className={labelClass}>
+                Review round
+                <input
+                  name="reviewRound"
+                  placeholder="Example: Round 1, R2, revision review"
+                  className={inputClass}
+                />
+                <span className={helperClass}>
+                  Use this when the same manuscript returns for another review
+                  cycle.
+                </span>
+              </label>
+            </div>
+          </section>
 
-              <section className="grid gap-4 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <div className="grid items-start gap-4 md:grid-cols-3">
-                  <label className={labelClass}>
-                    Current status
-                    <ResearchFormSelect
-                      name="status"
-                      defaultValue="ACCEPTED"
-                      ariaLabel="Review status"
-                      options={reviewStatusOptions}
-                    />
-                    <span className={helperClass}>
-                      New review records start as accepted by default.
-                    </span>
-                  </label>
-                  <label className={labelClass}>
-                    Requested date
-                    <input
-                      name="requestedAt"
-                      type="date"
-                      className={inputClass}
-                    />
-                    <span className={helperClass}>
-                      Date the editor or journal invited you to review.
-                    </span>
-                  </label>
-                  <label className={labelClass}>
-                    Due date
-                    <input name="dueDate" type="date" className={inputClass} />
-                    <span className={helperClass}>
-                      The deadline for submitting your review.
-                    </span>
-                  </label>
-                </div>
-              </section>
+          <section className="grid gap-4 border-t border-slate-200 pt-5 dark:border-slate-800">
+            <div className="grid items-start gap-4 md:grid-cols-3">
+              <label className={labelClass}>
+                Current status
+                <ResearchFormSelect
+                  name="status"
+                  defaultValue="ACCEPTED"
+                  ariaLabel="Review status"
+                  options={reviewStatusOptions}
+                />
+                <span className={helperClass}>
+                  New review records start as accepted by default.
+                </span>
+              </label>
+              <label className={labelClass}>
+                Requested date
+                <input name="requestedAt" type="date" className={inputClass} />
+                <span className={helperClass}>
+                  Date the editor or journal invited you to review.
+                </span>
+              </label>
+              <label className={labelClass}>
+                Due date
+                <input name="dueDate" type="date" className={inputClass} />
+                <span className={helperClass}>
+                  The deadline for submitting your review.
+                </span>
+              </label>
+            </div>
+          </section>
 
-              <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
-                <div className="grid gap-4">
-                  <label className={labelClass}>
-                    Private note
-                    <textarea
-                      name="note"
-                      rows={3}
-                      placeholder="Portal URL, login reminder, special instructions, conflicts, follow-up notes..."
-                      className={`${inputClass} h-auto min-h-28 resize-y`}
-                    />
-                  </label>
-                </div>
-              </section>
+          <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
+            <div className="grid gap-4">
+              <label className={labelClass}>
+                Private note
+                <textarea
+                  name="note"
+                  rows={3}
+                  placeholder="Portal URL, login reminder, special instructions, conflicts, follow-up notes..."
+                  className={`${inputClass} h-auto min-h-28 resize-y`}
+                />
+              </label>
+            </div>
+          </section>
 
-              <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={closeDialog}
-                  disabled={isPending}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  disabled={isPending}
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none dark:bg-blue-500 dark:hover:bg-blue-400"
-                >
-                  {isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <PlusCircle className="h-4 w-4" />
-                  )}
-                  Add Review
-                </button>
-              </div>
-            </form>
+          <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={closeDialog}
+              disabled={isPending}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={isPending}
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none dark:bg-blue-500 dark:hover:bg-blue-400"
+            >
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <PlusCircle className="h-4 w-4" />
+              )}
+              Add Review
+            </button>
+          </div>
+        </form>
       </ResearchModal>
     </>
   );

@@ -5,12 +5,12 @@ import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Crown, Mail, PlusCircle, ShieldCheck, UserRound } from "lucide-react";
 import { assignResearchAssistant } from "../actions";
-import { ResearchModal } from "../components/ResearchModal";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
-} from "../components/ResearchSearchPicker";
-import { useResearchToast } from "../components/ResearchToast";
+} from "@/sites/research/components/ResearchSearchPicker";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type AssistantCandidate = {
   id: string;
@@ -92,72 +92,75 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
         icon={<ShieldCheck className="h-5 w-5" />}
         maxWidth="max-w-3xl"
       >
-        <form action={handleSubmit} className="flex min-h-0 flex-1 flex-col gap-5">
+        <form
+          action={handleSubmit}
+          className="flex min-h-0 flex-1 flex-col gap-5"
+        >
           <input type="hidden" name="userId" value={selectedUserId} />
           <input type="hidden" name="assistantRole" value={assistantRole} />
 
           <ResearchSearchPicker
-                label="Assistant account"
-                selected={
-                  selectedUser
-                    ? {
-                        id: selectedUser.id,
-                        label: selectedUser.name || selectedUser.email,
-                        description: `${selectedUser.email} - ${selectedUser.roles.join(", ") || "No role"}`,
-                        data: selectedUser,
-                      }
-                    : null
-                }
-                query={query}
-                onQueryChange={(value) => {
-                  setQuery(value);
-                  setSelectedUserId("");
-                }}
-                onSelect={(option) => {
-                  setSelectedUserId(option.id);
-                  setQuery("");
-                }}
-                onClear={() => {
-                  setSelectedUserId("");
-                  setQuery("");
-                }}
-                options={options}
-                placeholder="Search by email, user ID, name, or role..."
-                emptyText="No user account matches this search."
-                renderSelected={(option) => {
-                  const user = option.data as AssistantCandidate;
-                  return (
-                    <>
-                      <UserRound className="h-4 w-4 flex-none text-slate-400" />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold text-slate-900 dark:text-white">
-                          {user.name || "Unnamed user"}
-                        </span>
-                        <span className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
-                          <Mail className="h-3.5 w-3.5 flex-none" />
-                          {user.email}
-                        </span>
-                      </span>
-                    </>
-                  );
-                }}
+            label="Assistant account"
+            selected={
+              selectedUser
+                ? {
+                    id: selectedUser.id,
+                    label: selectedUser.name || selectedUser.email,
+                    description: `${selectedUser.email} - ${selectedUser.roles.join(", ") || "No role"}`,
+                    data: selectedUser,
+                  }
+                : null
+            }
+            query={query}
+            onQueryChange={(value) => {
+              setQuery(value);
+              setSelectedUserId("");
+            }}
+            onSelect={(option) => {
+              setSelectedUserId(option.id);
+              setQuery("");
+            }}
+            onClear={() => {
+              setSelectedUserId("");
+              setQuery("");
+            }}
+            options={options}
+            placeholder="Search by email, user ID, name, or role..."
+            emptyText="No user account matches this search."
+            renderSelected={(option) => {
+              const user = option.data as AssistantCandidate;
+              return (
+                <>
+                  <UserRound className="h-4 w-4 flex-none text-slate-400" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold text-slate-900 dark:text-white">
+                      {user.name || "Unnamed user"}
+                    </span>
+                    <span className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                      <Mail className="h-3.5 w-3.5 flex-none" />
+                      {user.email}
+                    </span>
+                  </span>
+                </>
+              );
+            }}
           />
 
           <div className="grid gap-3 sm:grid-cols-2">
-                <RoleButton
-                  active={assistantRole === "ASSISTANT"}
-                  icon={<ShieldCheck className="h-5 w-5" />}
-                  title="Assistant"
-                  description="Submission and task support"
-                  onClick={() => setAssistantRole("ASSISTANT")}
-                />
-                <RoleButton
-                  active={assistantRole === "CHIEF_ASSISTANT"}
-                  icon={<Crown className="h-5 w-5" />}
-                  title="Chief Assistant"
-                  description="Can coordinate research operations"
-                  onClick={() => setAssistantRole("CHIEF_ASSISTANT")}
-                />
+            <RoleButton
+              active={assistantRole === "ASSISTANT"}
+              icon={<ShieldCheck className="h-5 w-5" />}
+              title="Assistant"
+              description="Submission and task support"
+              onClick={() => setAssistantRole("ASSISTANT")}
+            />
+            <RoleButton
+              active={assistantRole === "CHIEF_ASSISTANT"}
+              icon={<Crown className="h-5 w-5" />}
+              title="Chief Assistant"
+              description="Can coordinate research operations"
+              onClick={() => setAssistantRole("CHIEF_ASSISTANT")}
+            />
           </div>
 
           <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
@@ -208,7 +211,9 @@ function RoleButton({
       {icon}
       <span>
         <span className="block text-sm font-bold">{title}</span>
-        <span className="block text-xs text-slate-500 dark:text-slate-400">{description}</span>
+        <span className="block text-xs text-slate-500 dark:text-slate-400">
+          {description}
+        </span>
       </span>
     </button>
   );

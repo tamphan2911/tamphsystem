@@ -10,7 +10,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { reviewProposal } from "../../actions";
-import { useResearchToast } from "../../components/ResearchToast";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export function ProposalFeedbackButton({
   proposalId,

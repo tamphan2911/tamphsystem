@@ -10,7 +10,10 @@ import {
   MailOpen,
   Sparkles,
 } from "lucide-react";
-import { FilterSelect, TableSearchInput } from "../components/TableControls";
+import {
+  FilterSelect,
+  TableSearchInput,
+} from "@/sites/research/components/TableControls";
 
 export type NotificationCenterItem = {
   id: string;

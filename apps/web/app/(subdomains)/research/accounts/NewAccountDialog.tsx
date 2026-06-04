@@ -3,11 +3,11 @@
 import { useMemo, useState } from "react";
 import { KeyRound, PlusCircle } from "lucide-react";
 import { createPublisherAccount } from "../actions";
-import { ResearchModal } from "../components/ResearchModal";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
-} from "../components/ResearchSearchPicker";
+} from "@/sites/research/components/ResearchSearchPicker";
 
 type JournalOption = {
   id: string;
@@ -66,79 +66,76 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
         icon={<KeyRound className="h-5 w-5" />}
         maxWidth="max-w-2xl"
       >
-            <form
-              action={createPublisherAccount}
-              className="grid gap-4"
-            >
-              <div className="grid gap-4 md:grid-cols-2">
-                <input
-                  name="username"
-                  required
-                  placeholder="ID / username"
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                />
-                <input
-                  name="password"
-                  placeholder="Password"
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                />
-                <input
-                  name="email"
-                  placeholder="Email"
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                />
-                <ResearchSearchPicker
-                  label="Journal"
-                  name="journalId"
-                  selected={
-                    selectedJournal
-                      ? {
-                          id: selectedJournal.id,
-                          label: selectedJournal.name,
-                          description: selectedJournal.publisher,
-                          data: selectedJournal,
-                        }
-                      : null
-                  }
-                  query={journalQuery}
-                  onQueryChange={(value) => {
-                    setJournalQuery(value);
-                    setSelectedJournal(null);
-                  }}
-                  onSelect={(option) => {
-                    const journal = option.data as JournalOption;
-                    setSelectedJournal(journal);
-                    setJournalQuery("");
-                  }}
-                  onClear={() => {
-                    setSelectedJournal(null);
-                    setJournalQuery("");
-                  }}
-                  options={journalOptions}
-                  placeholder="Search journal"
-                  emptyText="No journal matches this search."
-                />
-                <input
-                  name="note"
-                  placeholder="Login URL, recovery note, account scope"
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 md:col-span-2"
-                />
-              </div>
+        <form action={createPublisherAccount} className="grid gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <input
+              name="username"
+              required
+              placeholder="ID / username"
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            />
+            <input
+              name="password"
+              placeholder="Password"
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            />
+            <input
+              name="email"
+              placeholder="Email"
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            />
+            <ResearchSearchPicker
+              label="Journal"
+              name="journalId"
+              selected={
+                selectedJournal
+                  ? {
+                      id: selectedJournal.id,
+                      label: selectedJournal.name,
+                      description: selectedJournal.publisher,
+                      data: selectedJournal,
+                    }
+                  : null
+              }
+              query={journalQuery}
+              onQueryChange={(value) => {
+                setJournalQuery(value);
+                setSelectedJournal(null);
+              }}
+              onSelect={(option) => {
+                const journal = option.data as JournalOption;
+                setSelectedJournal(journal);
+                setJournalQuery("");
+              }}
+              onClear={() => {
+                setSelectedJournal(null);
+                setJournalQuery("");
+              }}
+              options={journalOptions}
+              placeholder="Search journal"
+              emptyText="No journal matches this search."
+            />
+            <input
+              name="note"
+              placeholder="Login URL, recovery note, account scope"
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 md:col-span-2"
+            />
+          </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={closeDialog}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-200"
-                >
-                  Cancel
-                </button>
-                <button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md">
-                  <PlusCircle className="h-4 w-4" />
-                  Add Account
-                </button>
-              </div>
-            </form>
+          <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={closeDialog}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-200"
+            >
+              Cancel
+            </button>
+            <button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md">
+              <PlusCircle className="h-4 w-4" />
+              Add Account
+            </button>
+          </div>
+        </form>
       </ResearchModal>
     </>
   );

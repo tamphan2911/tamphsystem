@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { headers } from "next/headers";
 import "./globals.css";
-import { ThemeProvider } from "../components/ThemeProvider";
+import { ThemeProvider } from "@/sites/shared/components/ThemeProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
     ? "Tam's Research Hub"
     : isLearnHost
       ? "TamphSystem Learn"
-    : "Tamph LMS & Research Portal";
+      : "Tamph LMS & Research Portal";
 
   return {
     title,

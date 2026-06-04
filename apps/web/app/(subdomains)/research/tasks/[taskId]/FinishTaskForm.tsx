@@ -1,13 +1,8 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import {
-  CalendarDays,
-  CheckCircle2,
-  Loader2,
-  ShieldCheck,
-} from "lucide-react";
-import { ResearchModal } from "../../components/ResearchModal";
+import { CalendarDays, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
 
 export function FinishTaskForm({
   action,
@@ -101,33 +96,31 @@ export function FinishTaskForm({
           </div>
         }
       >
-            <div className="grid gap-4">
-              {requiresSubmissionDate ? (
-                <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium leading-5 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100">
-                  Choose the actual submission date carefully. This date is
-                  permanent after the submission is created.
-                </p>
-              ) : null}
-              {requiresSubmissionDate ? (
-                <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Submission date
-                  </span>
-                  <div className="group/date relative rounded-xl border border-slate-200 bg-slate-50 p-1.5 shadow-sm transition hover:border-blue-200 hover:bg-blue-50/70 focus-within:border-blue-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-blue-800/80 dark:hover:bg-slate-900 dark:focus-within:border-blue-600 dark:focus-within:bg-slate-900 dark:focus-within:ring-blue-500/15">
-                    <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition group-hover/date:text-blue-500 group-focus-within/date:text-blue-600 dark:text-slate-500 dark:group-hover/date:text-blue-300 dark:group-focus-within/date:text-blue-300" />
-                    <input
-                      type="date"
-                      required
-                      value={submissionDate}
-                      onChange={(event) =>
-                        setSubmissionDate(event.target.value)
-                      }
-                      className="w-full cursor-pointer rounded-lg border border-transparent bg-white py-2.5 pl-9 pr-3 text-sm font-semibold text-slate-800 outline-none transition [color-scheme:light] hover:border-blue-100 hover:bg-white focus:border-blue-200 dark:bg-slate-950 dark:text-slate-100 dark:[color-scheme:dark] dark:hover:border-blue-900/70 dark:hover:bg-slate-950 dark:focus:border-blue-800"
-                    />
-                  </div>
-                </label>
-              ) : null}
-            </div>
+        <div className="grid gap-4">
+          {requiresSubmissionDate ? (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium leading-5 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100">
+              Choose the actual submission date carefully. This date is
+              permanent after the submission is created.
+            </p>
+          ) : null}
+          {requiresSubmissionDate ? (
+            <label className="grid gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Submission date
+              </span>
+              <div className="group/date relative rounded-xl border border-slate-200 bg-slate-50 p-1.5 shadow-sm transition hover:border-blue-200 hover:bg-blue-50/70 focus-within:border-blue-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-blue-800/80 dark:hover:bg-slate-900 dark:focus-within:border-blue-600 dark:focus-within:bg-slate-900 dark:focus-within:ring-blue-500/15">
+                <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition group-hover/date:text-blue-500 group-focus-within/date:text-blue-600 dark:text-slate-500 dark:group-hover/date:text-blue-300 dark:group-focus-within/date:text-blue-300" />
+                <input
+                  type="date"
+                  required
+                  value={submissionDate}
+                  onChange={(event) => setSubmissionDate(event.target.value)}
+                  className="w-full cursor-pointer rounded-lg border border-transparent bg-white py-2.5 pl-9 pr-3 text-sm font-semibold text-slate-800 outline-none transition [color-scheme:light] hover:border-blue-100 hover:bg-white focus:border-blue-200 dark:bg-slate-950 dark:text-slate-100 dark:[color-scheme:dark] dark:hover:border-blue-900/70 dark:hover:bg-slate-950 dark:focus:border-blue-800"
+                />
+              </div>
+            </label>
+          ) : null}
+        </div>
       </ResearchModal>
     </>
   );

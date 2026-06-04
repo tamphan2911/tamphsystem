@@ -24,22 +24,22 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { deleteSubmission, updateSubmissionStatus } from "../../actions";
-import { ResearchFormSelect } from "../../components/ResearchFormSelect";
-import { ResearchConfirmDialog } from "../../components/ResearchConfirmDialog";
-import { ResearchModal } from "../../components/ResearchModal";
+import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   ResearchButton,
   researchFieldClass,
-} from "../../components/ResearchPrimitives";
+} from "@/sites/research/components/ResearchPrimitives";
 import {
   FilterSelect,
   IconHint,
   TablePagination,
   TableSearchInput,
   useTablePagination,
-} from "../../components/TableControls";
-import { useResearchToast } from "../../components/ResearchToast";
-import { currencySymbol } from "../../lib/currency";
+} from "@/sites/research/components/TableControls";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { currencySymbol } from "@/sites/research/lib/currency";
 
 export type SubmissionRow = {
   id: string;
@@ -982,9 +982,7 @@ export function SubmissionsTable({
           confirmIcon={<TriangleAlert className="h-4 w-4" />}
           isConfirming={isPending}
           onCancel={() => setWithdrawalConfirmation(null)}
-          onConfirm={() =>
-            persistStatus(withdrawalConfirmation, "withdrawn")
-          }
+          onConfirm={() => persistStatus(withdrawalConfirmation, "withdrawn")}
         >
           <p>
             Use this only when the journal or conference submission has been

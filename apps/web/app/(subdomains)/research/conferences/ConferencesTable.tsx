@@ -4,17 +4,17 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
-import { ResearchIconButton } from "../components/ResearchPrimitives";
-import { ResearchEmptyState } from "../components/ResearchState";
+import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { ResearchIconButton } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import {
   FilterSelect,
   IconHint,
   TablePagination,
   TableSearchInput,
   useTablePagination,
-} from "../components/TableControls";
-import { useResearchToast } from "../components/ResearchToast";
+} from "@/sites/research/components/TableControls";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type ConferenceRow = {
   id: string;
@@ -207,7 +207,9 @@ export function ConferencesTable({
         <table className="w-full table-fixed text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
-              <th className={isAdmin ? "w-[38%] px-4 py-3" : "w-[42%] px-4 py-3"}>
+              <th
+                className={isAdmin ? "w-[38%] px-4 py-3" : "w-[42%] px-4 py-3"}
+              >
                 Conference
               </th>
               <th className="w-[10%] px-3 py-3">Type</th>
@@ -289,10 +291,7 @@ export function ConferencesTable({
             })}
             {pagination.total === 0 && (
               <tr>
-                <td
-                  colSpan={isAdmin ? 6 : 5}
-                  className="px-4 py-2"
-                >
+                <td colSpan={isAdmin ? 6 : 5} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No conferences match the current search."
                     detail="Try another conference, organizer, theme, location, or ISBN."
