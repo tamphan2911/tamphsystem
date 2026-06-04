@@ -76,10 +76,10 @@ function stageLabel(stage: string) {
 
 function statusClass(stage: string) {
   if (stage === "PUBLISHED" || stage === "ACCEPTED")
-    return "bg-[#3A3A3A] text-[#E4E4E4] ring-[#A8DADC]";
+    return "text-[#A8DADC]";
   if (stage === "REVIEW" || stage === "SUBMITTING")
-    return "bg-[#202020] text-[#E4E4E4] ring-[#666666]";
-  return "bg-[#383838] text-[#B0B0B0] ring-[#444444]";
+    return "text-[#B39CD0]";
+  return "text-[#B0B0B0]";
 }
 
 function stageIcon(stage: string) {
@@ -100,12 +100,11 @@ function claimLabel(claim: string) {
 }
 
 function claimClass(claim: string) {
-  if (claim === "CLAIMED") return "bg-[#3A3A3A] text-[#E4E4E4] ring-[#A8DADC]";
+  if (claim === "CLAIMED") return "text-[#A8DADC]";
   if (claim === "WAITING" || claim === "WAITING_PUBLISH")
-    return "bg-[#202020] text-[#E4E4E4] ring-[#666666]";
-  if (claim === "MAKING_DOCUMENT")
-    return "bg-[#202020] text-[#B0B0B0] ring-[#666666]";
-  return "bg-[#383838] text-[#B0B0B0] ring-[#444444]";
+    return "text-[#FFC1CC]";
+  if (claim === "MAKING_DOCUMENT") return "text-[#B39CD0]";
+  return "text-[#B0B0B0]";
 }
 
 function claimIcon(claim: string) {
@@ -126,10 +125,9 @@ function registrationLabel(status: string) {
 
 function registrationClass(status: string) {
   if (status === "APPROVED" || status === "SUBMITTED")
-    return "bg-[#3A3A3A] text-[#E4E4E4] ring-[#A8DADC]";
-  if (status === "PREPARING")
-    return "bg-[#202020] text-[#E4E4E4] ring-[#666666]";
-  return "bg-[#383838] text-[#B0B0B0] ring-[#444444]";
+    return status === "APPROVED" ? "text-[#A8DADC]" : "text-[#B39CD0]";
+  if (status === "PREPARING") return "text-[#FFC1CC]";
+  return "text-[#B0B0B0]";
 }
 
 function registrationIcon(status: string) {
@@ -151,7 +149,7 @@ function StatusIconChip({
   return (
     <IconHint label={label}>
       <span
-          className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 transition-colors duration-150 ${className}`}
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-none transition-colors duration-150 ${className}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
@@ -182,7 +180,7 @@ function RegistrationCell({
     <div className="grid max-w-56 grid-cols-[2rem_minmax(0,1fr)] items-start gap-2">
       <IconHint label={registerLine}>
         <span
-          className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-none ring-1 transition-colors duration-150 ${registrationClass(status)}`}
+          className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-none transition-colors duration-150 ${registrationClass(status)}`}
         >
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>

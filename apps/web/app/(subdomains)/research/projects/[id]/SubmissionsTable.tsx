@@ -235,15 +235,11 @@ function claimLabel(claim: string) {
 }
 
 function claimClass(claim: string) {
-  if (claim === "CLAIMED")
-    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
-  if (claim === "WAITING")
-    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
-  if (claim === "WAITING_PUBLISH")
-    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
-  if (claim === "MAKING_DOCUMENT")
-    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
-  return "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+  if (claim === "CLAIMED") return "text-[#A8DADC]";
+  if (claim === "WAITING" || claim === "WAITING_PUBLISH")
+    return "text-[#FFC1CC]";
+  if (claim === "MAKING_DOCUMENT") return "text-[#B39CD0]";
+  return "text-[#B0B0B0]";
 }
 
 function claimIcon(claim: string) {
@@ -263,13 +259,10 @@ function registrationLabel(status: string) {
 }
 
 function registrationClass(status: string) {
-  if (status === "APPROVED")
-    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
-  if (status === "SUBMITTED")
-    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
-  if (status === "PREPARING")
-    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
-  return "bg-rose-50 text-rose-600 ring-rose-100 dark:bg-rose-950/35 dark:text-rose-300 dark:ring-rose-900/70";
+  if (status === "APPROVED") return "text-[#A8DADC]";
+  if (status === "SUBMITTED") return "text-[#B39CD0]";
+  if (status === "PREPARING") return "text-[#FFC1CC]";
+  return "text-[#B0B0B0]";
 }
 
 function registrationIcon(status: string) {
@@ -291,7 +284,7 @@ function StatusIconChip({
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+        className={`inline-flex h-8 w-8 items-center justify-center transition-colors duration-150 ${className}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
@@ -322,7 +315,7 @@ function RegistrationCell({
     <div className="flex max-w-60 items-center gap-2">
       <IconHint label={registerLine}>
         <span
-          className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${registrationClass(status)}`}
+          className={`inline-flex h-8 w-8 flex-none items-center justify-center transition-colors duration-150 ${registrationClass(status)}`}
         >
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>

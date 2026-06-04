@@ -71,23 +71,20 @@ function statusMeta(status: string) {
     return {
       label: "Completed",
       icon: CheckCircle2,
-      className:
-        "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+      className: "text-[#A8DADC]",
     };
   }
   if (status === "ACTIVE") {
     return {
       label: "Active",
       icon: Clock3,
-      className:
-        "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900",
+      className: "text-[#B39CD0]",
     };
   }
   return {
     label: "Planned",
     icon: CalendarClock,
-    className:
-      "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900",
+    className: "text-[#FFC1CC]",
   };
 }
 
@@ -96,39 +93,34 @@ function financialClaimMeta(status: string) {
     return {
       label: "None",
       icon: CircleOff,
-      className:
-        "bg-slate-50 text-slate-500 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+      className: "text-[#B0B0B0]",
     };
   }
   if (status === "ADVANCED") {
     return {
       label: "Advanced",
       icon: Banknote,
-      className:
-        "bg-sky-50 text-sky-700 ring-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-900",
+      className: "text-[#B39CD0]",
     };
   }
   if (status === "SETTLED") {
     return {
       label: "Settled",
       icon: ShieldCheck,
-      className:
-        "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+      className: "text-[#A8DADC]",
     };
   }
   if (status === "REFUND_ADVANCE") {
     return {
       label: "Refund advance",
       icon: RotateCcw,
-      className:
-        "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
+      className: "text-[#FFC1CC]",
     };
   }
   return {
     label: "Not advanced",
     icon: CircleDollarSign,
-    className:
-      "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+    className: "text-[#B0B0B0]",
   };
 }
 
@@ -349,7 +341,7 @@ export function OrganizedProjectsTable({
                   <td className="px-2 py-3 text-center align-top">
                     <IconHint label={status.label}>
                       <span
-                        className={`inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ${status.className}`}
+                        className={`inline-flex h-9 w-9 items-center justify-center ${status.className}`}
                       >
                         <StatusIcon className="h-4 w-4" aria-hidden="true" />
                         <span className="sr-only">{status.label}</span>
@@ -359,7 +351,7 @@ export function OrganizedProjectsTable({
                   <td className="px-2 py-3 text-center align-top">
                     <IconHint label={claim.label}>
                       <span
-                        className={`inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ${claim.className}`}
+                        className={`inline-flex h-9 w-9 items-center justify-center ${claim.className}`}
                       >
                         <ClaimIcon className="h-4 w-4" aria-hidden="true" />
                         <span className="sr-only">{claim.label}</span>

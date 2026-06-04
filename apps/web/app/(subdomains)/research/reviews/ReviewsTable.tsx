@@ -53,15 +53,11 @@ function statusLabel(status: string) {
 }
 
 function statusClass(status: string) {
-  if (status === "SUBMITTED")
-    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
-  if (status === "IN_PROGRESS")
-    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
-  if (status === "ACCEPTED")
-    return "bg-purple-50 text-purple-700 ring-purple-100 dark:bg-purple-950/40 dark:text-purple-300 dark:ring-purple-900";
-  if (status === "CANCELLED")
-    return "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
-  return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+  if (status === "SUBMITTED") return "text-[#A8DADC]";
+  if (status === "IN_PROGRESS") return "text-[#B39CD0]";
+  if (status === "ACCEPTED") return "text-[#FFC1CC]";
+  if (status === "CANCELLED") return "text-[#B0B0B0]";
+  return "text-[#B0B0B0]";
 }
 
 function statusIcon(status: string) {
@@ -84,7 +80,7 @@ function StatusIconChip({
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+        className={`inline-flex h-8 w-8 items-center justify-center transition-colors duration-150 ${className}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
