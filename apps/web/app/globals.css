@@ -841,6 +841,27 @@ textarea:focus-visible {
   will-change: transform, opacity;
 }
 
+.research-site-root
+  :where(
+    .group\/icon,
+    .group\/link,
+    .group\/note,
+    .group\/edit,
+    .group\/date,
+    .group
+  )
+  > .pointer-events-none.absolute[class*="opacity-0"] {
+  z-index: 9999 !important;
+}
+
+.research-site-root
+  :where(
+    span,
+    div
+  )[class*="pointer-events-none"][class*="absolute"][class*="opacity-0"][class*="group-hover"] {
+  z-index: 9999 !important;
+}
+
 .research-site-root table {
   border-collapse: separate;
   border-spacing: 0;

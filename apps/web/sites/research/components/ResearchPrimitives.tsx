@@ -119,7 +119,7 @@ export function IconHint({
       {children}
       <span
         className={cx(
-          "pointer-events-none absolute left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-none border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-[11px] font-normal text-[#E4E4E4] opacity-0 shadow-lg shadow-black/30 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100",
+          "pointer-events-none absolute left-1/2 z-[9999] -translate-x-1/2 whitespace-nowrap rounded-none border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-[11px] font-normal text-[#E4E4E4] opacity-0 shadow-lg shadow-black/30 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100",
           position === "top"
             ? "bottom-full mb-2 translate-y-1"
             : "top-full mt-2 -translate-y-1",
