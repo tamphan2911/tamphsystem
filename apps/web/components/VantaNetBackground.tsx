@@ -19,13 +19,13 @@ export function VantaNetBackground({
   useEffect(() => {
     let effect: any;
     let cancelled = false;
-    const backgroundColor = resolvedTheme === "dark" ? 0x050313 : 0xf6f4ef;
+    const color = resolvedTheme === "dark" ? 0x111827 : 0xdbeafe;
 
     if (vantaRef.current) {
-      import("vanta/dist/vanta.net.min").then((vantaModule) => {
+      import("vanta/dist/vanta.waves.min").then((vantaModule) => {
         if (cancelled || !vantaRef.current) return;
-        const NET = vantaModule.default || vantaModule;
-        effect = NET({
+        const WAVES = vantaModule.default || vantaModule;
+        effect = WAVES({
           el: vantaRef.current,
           THREE,
           mouseControls: true,
@@ -35,12 +35,8 @@ export function VantaNetBackground({
           minWidth: 200.00,
           scale: 1.00,
           scaleMobile: 1.00,
-          color: 0xff3fbb,
-          backgroundColor: backgroundColor,
-          points: 20.00,
-          maxDistance: 17.00,
-          spacing: 16.00,
-          showDots: true
+          color,
+          waveHeight: 30.50,
         });
         setVantaEffect(effect);
       });
