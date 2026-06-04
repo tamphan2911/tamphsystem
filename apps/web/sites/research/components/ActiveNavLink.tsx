@@ -56,17 +56,17 @@ export function ActiveNavLink({
     pathname === href || (href !== "/" && pathname.startsWith(href));
   const Icon = icons[icon];
   const baseClass =
-    "group/navlink relative flex items-center gap-3 overflow-visible rounded-none border-y border-transparent px-5 py-3 text-sm font-normal capitalize outline-none transition-[background-color,color,border-color] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#888888]/45 motion-reduce:transition-none";
+    "group/navlink relative flex items-center gap-3 overflow-visible rounded-none border-y border-transparent px-5 py-3 text-sm font-normal capitalize outline-none transition-[background-color,color,border-color] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#A8DADC]/45 motion-reduce:transition-none";
   const stateClass = isActive
-    ? "border-[#444444] bg-[#2a2a2a] text-[#E0E0E0]"
+    ? "border-[#444444] bg-[#383838] text-[#E4E4E4]"
     : adminOnly
-      ? "text-[#B0B0B0] hover:border-[#444444] hover:bg-[#242424] hover:text-[#E0E0E0]"
-      : "text-[#B0B0B0] hover:border-[#444444] hover:bg-[#242424] hover:text-[#E0E0E0]";
+      ? "text-[#B0B0B0] hover:border-[#444444] hover:bg-[#383838] hover:text-[#FFC1CC]"
+      : "text-[#B0B0B0] hover:border-[#444444] hover:bg-[#383838] hover:text-[#A8DADC]";
   const iconClass = isActive
-    ? "text-[#E0E0E0]"
+    ? "text-[#A8DADC]"
     : adminOnly
-      ? "text-[#888888] transition-colors group-hover/navlink:text-[#E0E0E0]"
-      : "text-[#888888] transition-colors group-hover/navlink:text-[#E0E0E0]";
+      ? "text-[#FFC1CC] transition-colors group-hover/navlink:text-[#FFC1CC]"
+      : "text-[#A8DADC] transition-colors group-hover/navlink:text-[#A8DADC]";
 
   return (
     <Link
@@ -78,13 +78,13 @@ export function ActiveNavLink({
     >
       <span
         className={`absolute left-0 top-0 h-full w-1 transition-opacity duration-150 ${
-          isActive ? "bg-[#888888] opacity-100" : "opacity-0"
+          isActive ? "bg-[#B39CD0] opacity-100" : "opacity-0"
         }`}
       />
       {collapsed && <Icon className={`h-5 w-5 flex-none ${iconClass}`} />}
       {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
       {!collapsed && adminOnly && !isActive && (
-        <span className="border border-[#444444] px-1.5 py-0.5 text-[9px] font-normal uppercase tracking-wide text-[#B0B0B0]">
+        <span className="border border-[#444444] px-1.5 py-0.5 text-[9px] font-normal uppercase tracking-wide text-[#FFC1CC]">
           Admin
         </span>
       )}
@@ -98,10 +98,10 @@ export function ActiveNavLink({
         </span>
       )}
       {collapsed && (
-        <span className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-50 -translate-y-1/2 -translate-x-1 whitespace-nowrap border border-[#444444] bg-[#121212] px-3 py-2 text-xs font-normal capitalize text-[#E0E0E0] opacity-0 shadow-xl shadow-black/30 transition duration-200 ease-out group-hover/navlink:translate-x-0 group-hover/navlink:opacity-100 group-focus-visible/navlink:translate-x-0 group-focus-visible/navlink:opacity-100 motion-reduce:transition-none">
+        <span className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-50 -translate-y-1/2 -translate-x-1 whitespace-nowrap border border-[#444444] bg-[#2C2C2C] px-3 py-2 text-xs font-normal capitalize text-[#E4E4E4] opacity-0 shadow-xl shadow-black/30 transition duration-200 ease-out group-hover/navlink:translate-x-0 group-hover/navlink:opacity-100 group-focus-visible/navlink:translate-x-0 group-focus-visible/navlink:opacity-100 motion-reduce:transition-none">
           {label}
           {adminOnly && (
-            <span className="ml-2 border border-[#444444] px-1.5 py-0.5 text-[9px] font-normal uppercase tracking-wide text-[#B0B0B0]">
+            <span className="ml-2 border border-[#444444] px-1.5 py-0.5 text-[9px] font-normal uppercase tracking-wide text-[#FFC1CC]">
               Admin
             </span>
           )}
@@ -110,7 +110,7 @@ export function ActiveNavLink({
               {badgeCount > 99 ? "99+" : badgeCount}
             </span>
           )}
-          <span className="absolute right-full top-1/2 h-2.5 w-2.5 -translate-y-1/2 translate-x-1/2 rotate-45 border-b border-l border-[#444444] bg-[#121212]" />
+          <span className="absolute right-full top-1/2 h-2.5 w-2.5 -translate-y-1/2 translate-x-1/2 rotate-45 border-b border-l border-[#444444] bg-[#2C2C2C]" />
         </span>
       )}
     </Link>

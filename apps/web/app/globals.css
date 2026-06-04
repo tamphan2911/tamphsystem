@@ -787,18 +787,18 @@ textarea:focus-visible {
 }
 
 .research-site-root {
-  --research-ink: #121212;
-  --research-panel: #121212;
-  --research-panel-2: #181818;
-  --research-panel-3: #242424;
+  --research-ink: #2C2C2C;
+  --research-panel: #2C2C2C;
+  --research-panel-2: #383838;
+  --research-panel-3: #383838;
   --research-border: #444444;
-  --research-muted: #b0b0b0;
-  --research-accent: #888888;
-  background: #121212;
+  --research-muted: #B0B0B0;
+  --research-accent: #A8DADC;
+  background: #2C2C2C;
 }
 
 .dark .research-site-root {
-  background: #121212;
+  background: #2C2C2C;
 }
 
 .research-site-root main > :where(div, section):first-child {
@@ -851,16 +851,16 @@ textarea:focus-visible {
 }
 
 .research-site-root :where(th) {
-  color: #b0b0b0;
+  color: #B0B0B0;
   font-weight: 400;
 }
 
 .research-site-root :where(td) {
-  color: #e0e0e0;
+  color: #E4E4E4;
 }
 
 .research-site-root tbody tr {
-  --research-row-bg: #121212;
+  --research-row-bg: #2C2C2C;
   --research-row-line: #444444;
   background-color: var(--research-row-bg);
   transition:
@@ -870,7 +870,7 @@ textarea:focus-visible {
 }
 
 .research-site-root tbody tr:nth-child(even) {
-  --research-row-bg: #181818;
+  --research-row-bg: #383838;
 }
 
 .research-site-root tbody tr > :where(td) {
@@ -883,12 +883,12 @@ textarea:focus-visible {
 }
 
 .research-site-root tbody tr[class*="bg-rose"] {
-  --research-row-bg: #181818;
+  --research-row-bg: #383838;
   --research-row-line: #444444;
 }
 
 .research-site-root tbody tr:hover {
-  box-shadow: inset 3px 0 0 #888888;
+  box-shadow: inset 3px 0 0 #A8DADC;
 }
 
 .research-site-root thead {
@@ -904,8 +904,8 @@ textarea:focus-visible {
 .research-site-root [role="button"]:focus-visible {
   outline: none;
   box-shadow:
-    0 0 0 2px #121212,
-    0 0 0 5px rgba(136, 136, 136, 0.34);
+    0 0 0 2px #2C2C2C,
+    0 0 0 5px rgba(168, 218, 220, 0.34);
 }
 
 .research-site-root button:disabled,
@@ -921,62 +921,62 @@ textarea:focus-visible {
 
 .research-site-root button[class*="bg-blue-600"],
 .research-site-root button[class*="bg-blue-500"] {
-  border: 1px solid #888888;
-  background: #e0e0e0;
-  color: #121212;
+  border: 1px solid #B39CD0;
+  background: #B39CD0;
+  color: #2C2C2C;
   box-shadow: none;
 }
 
 .research-site-root button[class*="bg-blue-600"]:hover,
 .research-site-root button[class*="bg-blue-500"]:hover {
-  border-color: #e0e0e0;
-  background: #ffffff;
+  border-color: #C8B6E2;
+  background: #C8B6E2;
   box-shadow: none;
 }
 
 .research-site-root button[class*="bg-emerald-600"],
 .research-site-root button[class*="bg-emerald-500"] {
-  border: 1px solid #888888;
-  background: #242424;
-  color: #e0e0e0;
+  border: 1px solid #A8DADC;
+  background: #383838;
+  color: #E4E4E4;
   box-shadow: none;
 }
 
 .research-site-root button[class*="bg-emerald-600"]:hover,
 .research-site-root button[class*="bg-emerald-500"]:hover {
-  border-color: #888888;
-  background: #2a2a2a;
+  border-color: #A8DADC;
+  background: #3A3A3A;
   box-shadow: none;
 }
 
 .research-site-root button[class*="bg-rose-600"],
 .research-site-root button[class*="bg-rose-500"] {
-  border: 1px solid #888888;
-  background: #242424;
-  color: #e0e0e0;
+  border: 1px solid #FFC1CC;
+  background: #383838;
+  color: #E4E4E4;
   box-shadow: none;
 }
 
 .research-site-root button[class*="bg-rose-600"]:hover,
 .research-site-root button[class*="bg-rose-500"]:hover {
-  border-color: #888888;
-  background: #2a2a2a;
+  border-color: #FFC1CC;
+  background: #3A3A3A;
   box-shadow: none;
 }
 
 .research-site-root button[class*="border-slate-300"],
 .research-site-root button[class*="border-slate-200"][class*="text-slate"] {
-  background-color: #121212;
+  background-color: #2C2C2C;
   border-color: #444444;
-  color: #e0e0e0;
+  color: #E4E4E4;
   box-shadow: none;
 }
 
 .research-site-root button[class*="border-slate-300"]:hover,
 .research-site-root
   button[class*="border-slate-200"][class*="text-slate"]:hover {
-  background-color: #242424;
-  border-color: #888888;
+  background-color: #383838;
+  border-color: #A8DADC;
   color: #ffffff;
   box-shadow: none;
 }
@@ -987,16 +987,16 @@ textarea:focus-visible {
 
 .research-site-root button[class*="p-2"][class*="text-slate-400"]:hover {
   border-color: #444444;
-  background-color: #242424;
-  color: #e0e0e0;
+  background-color: #383838;
+  color: #E4E4E4;
   box-shadow: none;
 }
 
 .research-site-root button:disabled,
 .research-site-root button:disabled:hover {
   border-color: #444444;
-  background: #181818;
-  color: #888888;
+  background: #383838;
+  color: #A8DADC;
   box-shadow: none;
   cursor: not-allowed;
   opacity: 0.68;

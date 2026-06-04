@@ -93,21 +93,21 @@ export function FilterSelect({
         className={cx(
           "group inline-flex h-10 w-full cursor-pointer items-center justify-between gap-3 rounded-none border px-3 text-sm font-semibold outline-none transition-colors duration-150 focus:ring-2 motion-reduce:transition-none",
           open
-            ? "border-[#888888] bg-[#242424] text-[#E0E0E0] ring-[#888888]/25"
-            : "border-[#444444] bg-[#121212] text-[#E0E0E0] hover:border-[#888888] hover:bg-[#242424] hover:text-white focus:border-[#888888] focus:ring-[#888888]/25",
+            ? "border-[#A8DADC] bg-[#383838] text-[#E4E4E4] ring-[#A8DADC]/25"
+            : "border-[#444444] bg-[#2C2C2C] text-[#E4E4E4] hover:border-[#A8DADC] hover:bg-[#383838] hover:text-white focus:border-[#A8DADC] focus:ring-[#A8DADC]/25",
         )}
       >
         <span className="min-w-0 truncate text-left leading-5">
           {selected?.label}
         </span>
         <ChevronDown
-          className={`h-4 w-4 flex-none text-[#888888] transition duration-200 ease-out group-hover:text-[#E0E0E0] motion-reduce:transition-none ${open ? "rotate-180 text-[#E0E0E0]" : ""}`}
+          className={`h-4 w-4 flex-none text-[#B0B0B0] transition duration-200 ease-out group-hover:text-[#A8DADC] motion-reduce:transition-none ${open ? "rotate-180 text-[#A8DADC]" : ""}`}
           aria-hidden="true"
         />
       </button>
 
       {open && (
-        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-1.5 w-max min-w-full max-w-[min(36rem,calc(100vw-2rem))] overflow-hidden rounded-none border border-[#888888] bg-[#121212] p-1 shadow-xl shadow-black/40">
+        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-1.5 w-max min-w-full max-w-[min(36rem,calc(100vw-2rem))] overflow-hidden rounded-none border border-[#A8DADC] bg-[#2C2C2C] p-1 shadow-xl shadow-black/40">
           <div
             className="max-h-80 overflow-y-auto pr-0.5"
             role="listbox"
@@ -128,7 +128,7 @@ export function FilterSelect({
                   }}
                   className={`flex w-full items-start justify-between gap-3 rounded-none px-3 py-2.5 text-left text-sm leading-5 transition-colors duration-150 motion-reduce:transition-none ${
                     isSelected
-                      ? "bg-[#2a2a2a] font-normal text-[#E0E0E0] ring-1 ring-[#888888]"
+                      ? "bg-[#383838] font-normal text-[#E4E4E4] ring-1 ring-[#A8DADC]"
                       : "text-[#B0B0B0] hover:bg-[#444444] hover:text-white"
                   }`}
                 >
@@ -213,15 +213,15 @@ export function TablePagination({
   const end = Math.min(total, page * pageSize);
 
   return (
-    <div className="flex flex-col gap-3 border-t border-[#444444] bg-[#121212] px-4 py-3 transition sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 border-t border-[#444444] bg-[#2C2C2C] px-4 py-3 transition sm:flex-row sm:items-center sm:justify-between">
       <p className="text-xs font-normal text-[#B0B0B0]">
         Showing{" "}
-        <span className="text-[#E0E0E0]">
+        <span className="text-[#E4E4E4]">
           {start}-{end}
         </span>{" "}
-        of <span className="text-[#E0E0E0]">{total}</span>
+        of <span className="text-[#E4E4E4]">{total}</span>
       </p>
-      <div className="flex overflow-hidden border border-[#444444] bg-[#121212]">
+      <div className="flex overflow-hidden border border-[#444444] bg-[#2C2C2C]">
         <ResearchIconButton
           type="button"
           onClick={() => onPageChange(Math.max(1, page - 1))}
@@ -232,7 +232,7 @@ export function TablePagination({
         >
           <ChevronLeft className="h-4 w-4" />
         </ResearchIconButton>
-        <span className="border-x border-[#444444] px-3 py-2 text-xs font-normal text-[#E0E0E0]">
+        <span className="border-x border-[#444444] px-3 py-2 text-xs font-normal text-[#E4E4E4]">
           {page} / {pageCount}
         </span>
         <ResearchIconButton

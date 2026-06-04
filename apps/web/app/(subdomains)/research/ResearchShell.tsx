@@ -12,7 +12,6 @@ import {
 import { ActiveNavLink } from "@/sites/research/components/ActiveNavLink";
 import { ProfileMenu } from "@/sites/shared/components/ProfileMenu";
 import { SidebarSupportCard } from "@/sites/research/components/SidebarSupportCard";
-import { ThemeToggle } from "@/sites/shared/components/ThemeToggle";
 import { ResearchNotificationBell } from "./ResearchNotificationBell";
 import { ResearchToastProvider } from "@/sites/research/components/ResearchToast";
 import { ScrollToTopButton } from "@/sites/research/components/ScrollToTopButton";
@@ -151,6 +150,10 @@ export function ResearchShell({
   });
 
   useEffect(() => {
+    document.documentElement.classList.add("dark");
+  }, []);
+
+  useEffect(() => {
     window.localStorage.setItem(sidebarStateKey, String(collapsed));
   }, [collapsed]);
 
@@ -204,9 +207,9 @@ export function ResearchShell({
 
   return (
     <ResearchToastProvider>
-      <div className="research-site-root relative min-h-screen overflow-x-hidden bg-[#121212] text-[#E0E0E0]">
+      <div className="research-site-root relative min-h-screen overflow-x-hidden bg-[#2C2C2C] text-[#E4E4E4]">
         <aside
-          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#444444] bg-[#121212] transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none ${
+          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#444444] bg-[#2C2C2C] transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none ${
             collapsed ? "w-20" : "w-72"
           }`}
         >
@@ -218,7 +221,7 @@ export function ResearchShell({
             >
               <Link
                 href="/"
-                className="block truncate text-lg font-normal text-[#E0E0E0] capitalize transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#888888]/45"
+                className="block truncate text-lg font-normal text-[#E4E4E4] capitalize transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8DADC]/45"
               >
                 Research Hub
               </Link>
@@ -229,7 +232,7 @@ export function ResearchShell({
             <button
               type="button"
               onClick={() => setCollapsed((value) => !value)}
-              className={`flex h-8 w-8 flex-none items-center justify-center border border-[#444444] bg-[#121212] text-[#B0B0B0] transition duration-150 ease-out hover:bg-[#242424] hover:text-[#E0E0E0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#888888]/45 motion-reduce:transition-none ${
+              className={`flex h-8 w-8 flex-none items-center justify-center border border-[#444444] bg-[#2C2C2C] text-[#B0B0B0] transition duration-150 ease-out hover:bg-[#383838] hover:text-[#E4E4E4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8DADC]/45 motion-reduce:transition-none ${
                 collapsed ? "absolute right-2 top-6" : "ml-auto"
               }`}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -266,7 +269,7 @@ export function ResearchShell({
         <div
           className={`relative z-10 transition-[padding] duration-300 ease-out ${collapsed ? "lg:pl-20" : "lg:pl-72"}`}
         >
-          <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#444444] bg-[#121212]/90 px-4 backdrop-blur-xl sm:px-8">
+          <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#444444] bg-[#2C2C2C]/92 px-4 backdrop-blur-xl sm:px-8">
             <div className="flex min-w-0 items-center gap-2 overflow-x-auto lg:hidden">
               {visibleNavItems.map((item) => (
                 <Link
@@ -290,14 +293,14 @@ export function ResearchShell({
               ))}
             </div>
             <div className="hidden min-w-0 items-center gap-2 lg:flex">
-              <div className="flex items-center gap-1 rounded-lg border border-[#d6cfc4] bg-[#f1eee8] p-1 shadow-sm dark:border-[#403849] dark:bg-[#211c2d]">
+              <div className="flex items-center gap-1 border border-[#444444] bg-[#2C2C2C] p-1">
                 {hubLinks
                   .filter((item) => !("adminOnly" in item) || isAdmin)
                   .map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-[#655d6d] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-white hover:text-[#17131d] hover:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:text-[#d7d1df] dark:hover:bg-[#312c3b] dark:hover:text-[#ffb38a]"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-normal text-[#B0B0B0] transition duration-150 ease-out hover:bg-[#383838] hover:text-[#A8DADC] motion-reduce:transition-none"
                     >
                       <item.icon className="h-3.5 w-3.5" />
                       {item.label}
@@ -307,7 +310,6 @@ export function ResearchShell({
             </div>
             <div className="flex items-center gap-3">
               <ResearchNotificationBell enabled={Boolean(email)} />
-              <ThemeToggle />
               <ProfileMenu
                 email={email}
                 name={name}

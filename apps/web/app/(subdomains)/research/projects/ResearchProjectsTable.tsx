@@ -76,10 +76,10 @@ function stageLabel(stage: string) {
 
 function statusClass(stage: string) {
   if (stage === "PUBLISHED" || stage === "ACCEPTED")
-    return "bg-[#2a2a2a] text-[#E0E0E0] ring-[#888888]";
+    return "bg-[#3A3A3A] text-[#E4E4E4] ring-[#A8DADC]";
   if (stage === "REVIEW" || stage === "SUBMITTING")
-    return "bg-[#202020] text-[#E0E0E0] ring-[#666666]";
-  return "bg-[#181818] text-[#B0B0B0] ring-[#444444]";
+    return "bg-[#202020] text-[#E4E4E4] ring-[#666666]";
+  return "bg-[#383838] text-[#B0B0B0] ring-[#444444]";
 }
 
 function stageIcon(stage: string) {
@@ -100,12 +100,12 @@ function claimLabel(claim: string) {
 }
 
 function claimClass(claim: string) {
-  if (claim === "CLAIMED") return "bg-[#2a2a2a] text-[#E0E0E0] ring-[#888888]";
+  if (claim === "CLAIMED") return "bg-[#3A3A3A] text-[#E4E4E4] ring-[#A8DADC]";
   if (claim === "WAITING" || claim === "WAITING_PUBLISH")
-    return "bg-[#202020] text-[#E0E0E0] ring-[#666666]";
+    return "bg-[#202020] text-[#E4E4E4] ring-[#666666]";
   if (claim === "MAKING_DOCUMENT")
     return "bg-[#202020] text-[#B0B0B0] ring-[#666666]";
-  return "bg-[#181818] text-[#B0B0B0] ring-[#444444]";
+  return "bg-[#383838] text-[#B0B0B0] ring-[#444444]";
 }
 
 function claimIcon(claim: string) {
@@ -126,10 +126,10 @@ function registrationLabel(status: string) {
 
 function registrationClass(status: string) {
   if (status === "APPROVED" || status === "SUBMITTED")
-    return "bg-[#2a2a2a] text-[#E0E0E0] ring-[#888888]";
+    return "bg-[#3A3A3A] text-[#E4E4E4] ring-[#A8DADC]";
   if (status === "PREPARING")
-    return "bg-[#202020] text-[#E0E0E0] ring-[#666666]";
-  return "bg-[#181818] text-[#B0B0B0] ring-[#444444]";
+    return "bg-[#202020] text-[#E4E4E4] ring-[#666666]";
+  return "bg-[#383838] text-[#B0B0B0] ring-[#444444]";
 }
 
 function registrationIcon(status: string) {
@@ -151,7 +151,7 @@ function StatusIconChip({
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 w-8 items-center justify-center rounded-[2px] ring-1 transition-colors duration-150 ${className}`}
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 transition-colors duration-150 ${className}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
@@ -182,7 +182,7 @@ function RegistrationCell({
     <div className="grid max-w-56 grid-cols-[2rem_minmax(0,1fr)] items-start gap-2">
       <IconHint label={registerLine}>
         <span
-          className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-[2px] ring-1 transition-colors duration-150 ${registrationClass(status)}`}
+          className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-none ring-1 transition-colors duration-150 ${registrationClass(status)}`}
         >
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
@@ -191,7 +191,7 @@ function RegistrationCell({
         className={`min-w-0 ${showDetail ? "" : "flex min-h-8 items-center"}`}
       >
         {showDetail && (
-          <p className="truncate text-sm font-normal text-[#E0E0E0]">
+          <p className="truncate text-sm font-normal text-[#E4E4E4]">
             {detail}
           </p>
         )}
@@ -214,10 +214,10 @@ function SubmitCount({ count }: { count: number }) {
       ? `${count} submissions, high submission count`
       : `${count} submissions`;
   const className = isZero
-    ? "bg-[#181818] text-[#888888] ring-[#444444]"
+    ? "bg-[#383838] text-[#A8DADC] ring-[#444444]"
     : isHigh
-      ? "bg-[#2a2a2a] text-[#E0E0E0] ring-[#888888]"
-      : "bg-[#202020] text-[#E0E0E0] ring-[#666666]";
+      ? "bg-[#3A3A3A] text-[#E4E4E4] ring-[#A8DADC]"
+      : "bg-[#202020] text-[#E4E4E4] ring-[#666666]";
 
   return (
     <IconHint label={label}>
@@ -350,8 +350,8 @@ export function ResearchProjectsTable({
   const pagination = useTablePagination(filtered, 10);
 
   return (
-    <div className="overflow-hidden border border-[#444444] bg-[#121212]">
-      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#121212] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -387,7 +387,7 @@ export function ResearchProjectsTable({
 
       <div className="overflow-hidden">
         <table className="w-full table-fixed text-left">
-          <thead className="border-b border-[#444444] bg-[#181818] text-xs uppercase tracking-wide text-[#B0B0B0]">
+          <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="w-[5.75rem] px-3 py-3">ID</th>
               <th className="px-3 py-3">Research</th>
@@ -408,18 +408,18 @@ export function ResearchProjectsTable({
             {pagination.pagedRows.map((row) => (
               <tr
                 key={row.id}
-                className="group align-top transition-colors duration-150 hover:bg-[#242424]"
+                className="group align-top transition-colors duration-150 hover:bg-[#383838]"
               >
                 <td className="px-3 py-3 align-top">
                   <Link href={`/projects/${row.id}`}>
-                    <span className="font-mono text-xs font-normal text-[#B0B0B0] transition hover:text-[#E0E0E0]">
+                    <span className="font-mono text-xs font-normal text-[#B0B0B0] transition hover:text-[#E4E4E4]">
                       {row.researchCode || "-"}
                     </span>
                   </Link>
                 </td>
                 <td className="min-w-0 px-3 py-3 align-top">
                   <Link href={`/projects/${row.id}`} className="group">
-                    <p className="line-clamp-2 text-base font-normal text-[#E0E0E0] transition group-hover:text-white">
+                    <p className="line-clamp-2 text-base font-normal text-[#E4E4E4] transition group-hover:text-white">
                       {row.title}
                     </p>
                     <p className="mt-1 line-clamp-1 text-xs text-[#B0B0B0]">

@@ -215,31 +215,31 @@ export default async function ProjectsDashboard() {
       label: "Total",
       value: projects.length,
       icon: Files,
-      color: "text-[#888888]",
+      color: "text-[#A8DADC]",
     },
     {
       label: "Submitted",
       value: submitting.length,
       icon: SendHorizontal,
-      color: "text-[#888888]",
+      color: "text-[#A8DADC]",
     },
     {
       label: "Published",
       value: published.length,
       icon: BookOpenCheck,
-      color: "text-[#888888]",
+      color: "text-[#A8DADC]",
     },
     {
       label: "Claims",
       value: claimQueue.length,
       icon: CircleDollarSign,
-      color: "text-[#888888]",
+      color: "text-[#A8DADC]",
     },
   ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="overflow-hidden border border-[#444444] bg-[#121212]">
+      <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
         <div className="flex flex-col xl:flex-row xl:items-stretch xl:justify-between">
           {canManageResearch ? (
             <div className="grid flex-1 grid-cols-2 divide-x divide-y divide-[#444444] sm:grid-cols-4 sm:divide-y-0">
@@ -253,7 +253,7 @@ export default async function ProjectsDashboard() {
                     <p className="text-[11px] font-normal uppercase tracking-wide text-[#B0B0B0]">
                       {item.label}
                     </p>
-                    <p className="text-base font-normal text-[#E0E0E0]">
+                    <p className="text-base font-normal text-[#E4E4E4]">
                       {item.value}
                     </p>
                   </div>
