@@ -5,7 +5,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3000",
-    "prebuild": "node ../../scripts/sync-prisma-if-configured.mjs ../../packages/db/prisma/schema.prisma",
     "build": "next build",
     "prestart": "node ../../scripts/sync-prisma-if-configured.mjs ../../packages/db/prisma/schema.prisma",
     "start": "next start",
