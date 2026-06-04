@@ -12,6 +12,7 @@ import {
 import {
   IconHint as PrimitiveIconHint,
   ResearchIconButton,
+  cx,
   researchFieldClass,
 } from "./ResearchPrimitives";
 
@@ -81,7 +82,7 @@ export function FilterSelect({
   }, []);
 
   return (
-    <div ref={wrapperRef} className="relative w-full sm:w-44">
+    <div ref={wrapperRef} className="relative w-full sm:w-52 lg:w-56">
       <span className="sr-only">{label ?? ariaLabel}</span>
       <button
         type="button"
@@ -89,19 +90,26 @@ export function FilterSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className={`group inline-flex h-10 justify-between gap-3 font-semibold ${researchFieldClass}`}
+        className={cx(
+          "group inline-flex h-11 w-full cursor-pointer items-center justify-between gap-3 rounded-xl border px-3.5 text-sm font-semibold shadow-sm outline-none transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md focus:ring-4 motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+          open
+            ? "border-[#89c7b7] bg-[#f2fffb] text-[#11604f] shadow-[#11604f]/10 ring-4 ring-[#89c7b7]/20 dark:border-[#4fb59d] dark:bg-[#12241f] dark:text-[#b7f3e2] dark:shadow-black/25 dark:ring-[#4fb59d]/18"
+            : "border-[#ded8cf] bg-[linear-gradient(180deg,#fffdfa_0%,#f4f0e8_100%)] text-[#423b49] hover:border-[#b9d5cb] hover:bg-[linear-gradient(180deg,#ffffff_0%,#eef8f4_100%)] hover:text-[#11604f] focus:border-[#89c7b7] focus:ring-[#89c7b7]/20 dark:border-[#403849] dark:bg-[linear-gradient(180deg,#1c1726_0%,#14101d_100%)] dark:text-[#eee8f5] dark:hover:border-[#4fb59d] dark:hover:bg-[linear-gradient(180deg,#211c2d_0%,#14201d_100%)] dark:hover:text-[#b7f3e2] dark:focus:border-[#4fb59d] dark:focus:ring-[#4fb59d]/18",
+        )}
       >
-        <span className="min-w-0 truncate text-left">{selected?.label}</span>
+        <span className="min-w-0 truncate text-left leading-5">
+          {selected?.label}
+        </span>
         <ChevronDown
-          className={`h-4 w-4 flex-none text-[#8b8392] transition duration-200 ease-out group-hover:text-[#ff6d3a] motion-reduce:transition-none dark:group-hover:text-[#ffb38a] ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 flex-none text-[#8b8392] transition duration-200 ease-out group-hover:text-[#2e9b83] motion-reduce:transition-none dark:group-hover:text-[#b7f3e2] ${open ? "rotate-180 text-[#2e9b83] dark:text-[#b7f3e2]" : ""}`}
           aria-hidden="true"
         />
       </button>
 
       {open && (
-        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-2 w-max min-w-full max-w-[min(28rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-[#d8d1c8] bg-white p-1.5 shadow-2xl shadow-[#201c25]/15 ring-1 ring-[#201c25]/[0.03] dark:border-[#403849] dark:bg-[#14101d] dark:shadow-black/35 dark:ring-white/[0.04]">
+        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-2 w-max min-w-full max-w-[min(36rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-[#d8d1c8] bg-[#fffdfa] p-1.5 shadow-2xl shadow-[#201c25]/16 ring-1 ring-white/70 dark:border-[#403849] dark:bg-[#14101d] dark:shadow-black/45 dark:ring-white/[0.05]">
           <div
-            className="max-h-72 overflow-y-auto pr-0.5"
+            className="max-h-80 overflow-y-auto pr-0.5"
             role="listbox"
             aria-label={ariaLabel}
           >
@@ -120,8 +128,8 @@ export function FilterSelect({
                   }}
                   className={`flex w-full items-start justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm leading-5 transition duration-150 ease-out motion-reduce:transition-none ${
                     isSelected
-                      ? "bg-[#fff1e9] font-semibold text-[#9f3f16] ring-1 ring-[#ffceb5] dark:bg-[#2a1812] dark:text-[#ffb38a] dark:ring-[#7a3c25]"
-                      : "text-[#423b49] hover:translate-x-0.5 hover:bg-[#f7f3ed] hover:text-[#ff6d3a] motion-reduce:hover:translate-x-0 dark:text-[#d7d1df] dark:hover:bg-[#211c2d] dark:hover:text-[#ffb38a]"
+                      ? "bg-[#eaf8f3] font-semibold text-[#11604f] ring-1 ring-[#b9d5cb] dark:bg-[#12241f] dark:text-[#b7f3e2] dark:ring-[#2f6e60]"
+                      : "text-[#423b49] hover:translate-x-0.5 hover:bg-[#f4f0e8] hover:text-[#11604f] motion-reduce:hover:translate-x-0 dark:text-[#d7d1df] dark:hover:bg-[#211c2d] dark:hover:text-[#b7f3e2]"
                   }`}
                 >
                   <span className="min-w-0 flex-1 whitespace-normal break-words">
