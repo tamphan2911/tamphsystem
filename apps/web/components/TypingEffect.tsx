@@ -44,7 +44,7 @@ export function TypingEffect() {
   }, [text, isDeleting, loopNum]);
 
   return (
-    <span className="animate-[blink_1s_step-end_infinite] border-r-2 border-[#ff4f31] pr-1 font-semibold text-[#ff4f31]">
+    <span className="animate-[blink_1s_step-end_infinite] border-r-2 border-slate-950 pr-1 font-semibold text-slate-950 dark:border-white dark:text-white">
       {text}
     </span>
   );
