@@ -46,11 +46,11 @@ export default async function LearnLayout({
   }
 
   if (isHomepage) {
-    return children;
+    return <div className="learn-site-root">{children}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
+    <div className="learn-site-root min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-3">

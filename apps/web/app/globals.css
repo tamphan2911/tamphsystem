@@ -155,6 +155,205 @@ body {
   animation: learnLogoMarqueeReverse 38s linear infinite;
 }
 
+.learn-site-root :where(.text-xs) {
+  font-size: 0.6875rem !important;
+  line-height: 0.95rem !important;
+}
+
+.learn-site-root :where(.text-sm) {
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+}
+
+.learn-site-root :where(.text-base) {
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+.learn-site-root :where(.text-lg) {
+  font-size: 1rem !important;
+  line-height: 1.5rem !important;
+}
+
+.learn-site-root :where(.text-xl) {
+  font-size: 1.125rem !important;
+  line-height: 1.75rem !important;
+}
+
+.learn-site-root :where(.text-2xl) {
+  font-size: 1.25rem !important;
+  line-height: 1.75rem !important;
+}
+
+.learn-site-root :where(.text-3xl) {
+  font-size: 1.5rem !important;
+  line-height: 2rem !important;
+}
+
+.learn-site-root :where(.text-4xl) {
+  font-size: 1.875rem !important;
+  line-height: 2.25rem !important;
+}
+
+.learn-site-root :where(.text-5xl) {
+  font-size: 2.25rem !important;
+  line-height: 2.5rem !important;
+}
+
+.learn-site-root :where(.text-6xl) {
+  font-size: 3rem !important;
+  line-height: 1 !important;
+}
+
+.learn-site-root :where(.text-7xl) {
+  font-size: 3.75rem !important;
+  line-height: 1 !important;
+}
+
+.learn-site-root :where(.text-8xl) {
+  font-size: 4.5rem !important;
+  line-height: 1 !important;
+}
+
+.learn-site-root :where(.text-9xl) {
+  font-size: 6rem !important;
+  line-height: 1 !important;
+}
+
+@media (min-width: 640px) {
+  .learn-site-root :where(.sm\:text-xs) {
+    font-size: 0.6875rem !important;
+    line-height: 0.95rem !important;
+  }
+
+  .learn-site-root :where(.sm\:text-sm) {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+  }
+
+  .learn-site-root :where(.sm\:text-base) {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  .learn-site-root :where(.sm\:text-lg) {
+    font-size: 1rem !important;
+    line-height: 1.5rem !important;
+  }
+
+  .learn-site-root :where(.sm\:text-xl) {
+    font-size: 1.125rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  .learn-site-root :where(.sm\:text-2xl) {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  .learn-site-root :where(.sm\:text-3xl) {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+
+  .learn-site-root :where(.sm\:text-4xl) {
+    font-size: 1.875rem !important;
+    line-height: 2.25rem !important;
+  }
+
+  .learn-site-root :where(.sm\:text-5xl) {
+    font-size: 2.25rem !important;
+    line-height: 2.5rem !important;
+  }
+
+  .learn-site-root :where(.sm\:text-6xl) {
+    font-size: 3rem !important;
+    line-height: 1 !important;
+  }
+
+  .learn-site-root :where(.sm\:text-7xl) {
+    font-size: 3.75rem !important;
+    line-height: 1 !important;
+  }
+
+  .learn-site-root :where(.sm\:text-8xl) {
+    font-size: 4.5rem !important;
+    line-height: 1 !important;
+  }
+
+  .learn-site-root :where(.sm\:text-9xl) {
+    font-size: 6rem !important;
+    line-height: 1 !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .learn-site-root :where(.lg\:text-xs) {
+    font-size: 0.6875rem !important;
+    line-height: 0.95rem !important;
+  }
+
+  .learn-site-root :where(.lg\:text-sm) {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+  }
+
+  .learn-site-root :where(.lg\:text-base) {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  .learn-site-root :where(.lg\:text-lg) {
+    font-size: 1rem !important;
+    line-height: 1.5rem !important;
+  }
+
+  .learn-site-root :where(.lg\:text-xl) {
+    font-size: 1.125rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  .learn-site-root :where(.lg\:text-2xl) {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  .learn-site-root :where(.lg\:text-3xl) {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+
+  .learn-site-root :where(.lg\:text-4xl) {
+    font-size: 1.875rem !important;
+    line-height: 2.25rem !important;
+  }
+
+  .learn-site-root :where(.lg\:text-5xl) {
+    font-size: 2.25rem !important;
+    line-height: 2.5rem !important;
+  }
+
+  .learn-site-root :where(.lg\:text-6xl) {
+    font-size: 3rem !important;
+    line-height: 1 !important;
+  }
+
+  .learn-site-root :where(.lg\:text-7xl) {
+    font-size: 3.75rem !important;
+    line-height: 1 !important;
+  }
+
+  .learn-site-root :where(.lg\:text-8xl) {
+    font-size: 4.5rem !important;
+    line-height: 1 !important;
+  }
+
+  .learn-site-root :where(.lg\:text-9xl) {
+    font-size: 6rem !important;
+    line-height: 1 !important;
+  }
+}
+
 button,
 [role="button"],
 summary,
