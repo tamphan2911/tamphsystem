@@ -208,7 +208,7 @@ export default async function LearnLandingPage() {
       <header className="sticky top-0 z-50 px-4 pt-[14px] sm:px-6 lg:px-10">
         <nav className="mx-auto flex h-[56px] max-w-[95rem] items-center justify-between rounded-2xl border border-[#3a3345] bg-[#111019]/90 px-4 shadow-2xl shadow-black/30 backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-3">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#51495d] bg-[#1f1a2a] text-[#38bdf8]">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#51495d] bg-[#1f1a2a] text-[#ff8a3d]">
               <Workflow className="h-4 w-4" />
             </span>
             <span className="text-2xl font-semibold tracking-tight">
@@ -259,7 +259,7 @@ export default async function LearnLandingPage() {
             </Link>
             <Link
               href={session?.user ? "/profile" : "/login"}
-              className="inline-flex h-8 items-center rounded-lg bg-gradient-to-r from-[#38bdf8] to-[#2563eb] px-4 text-lg font-semibold text-white shadow-lg shadow-[#38bdf8]/20 hover:-translate-y-0.5"
+              className="inline-flex h-8 items-center rounded-lg bg-gradient-to-r from-[#ff8a3d] to-[#ff3f2e] px-4 text-lg font-semibold text-white shadow-lg shadow-[#ff8a3d]/20 hover:-translate-y-0.5"
             >
               Get Started
             </Link>
@@ -267,9 +267,9 @@ export default async function LearnLandingPage() {
         </nav>
       </header>
 
-      <section className="relative min-h-[calc(100vh-6rem)] overflow-hidden px-4 pb-12 pt-16 sm:px-6 lg:px-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_28%,rgba(59,130,246,0.24),transparent_26%),radial-gradient(circle_at_72%_78%,rgba(34,211,238,0.24),transparent_24%)]" />
-        <div className="absolute right-0 top-0 h-full w-[56%] bg-[linear-gradient(115deg,transparent_0%,rgba(14,165,233,0.1)_38%,rgba(79,70,229,0.18)_100%)]" />
+      <section className="relative min-h-screen overflow-hidden px-4 pb-12 pt-16 sm:px-6 lg:px-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_28%,rgba(86,65,255,0.22),transparent_26%),radial-gradient(circle_at_72%_78%,rgba(255,84,45,0.28),transparent_24%)]" />
+        <div className="absolute right-0 top-0 h-full w-[56%] bg-[linear-gradient(115deg,transparent_0%,rgba(255,117,57,0.08)_38%,rgba(74,60,120,0.18)_100%)]" />
 
         <div className="relative mx-auto grid max-w-[87rem] gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
           <div className="pt-16 lg:pt-24">
@@ -287,7 +287,7 @@ export default async function LearnLandingPage() {
             <div className="mt-12 flex flex-wrap gap-5">
               <Link
                 href="/courses"
-                className="inline-flex h-16 items-center rounded-lg bg-gradient-to-r from-[#38bdf8] to-[#2563eb] px-8 text-xl font-semibold text-white shadow-xl shadow-[#38bdf8]/20 hover:-translate-y-0.5"
+                className="inline-flex h-16 items-center rounded-lg bg-gradient-to-r from-[#ff8a3d] to-[#ff3f2e] px-8 text-xl font-semibold text-white shadow-xl shadow-[#ff8a3d]/20 hover:-translate-y-0.5"
               >
                 Browse courses
               </Link>
@@ -301,14 +301,14 @@ export default async function LearnLandingPage() {
           </div>
 
           <div className="relative min-h-[42rem] lg:min-h-[52rem]">
-            <div className="absolute right-[-8rem] top-8 h-[44rem] w-[34rem] rotate-12 rounded-[5rem] border border-[#53607d] bg-[linear-gradient(135deg,rgba(20,28,58,0.92),rgba(14,165,233,0.5),rgba(10,7,17,0.92))] shadow-[0_0_140px_rgba(56,189,248,0.28)]" />
-            <div className="absolute right-20 top-24 h-[38rem] w-60 rotate-12 rounded-[3rem] bg-[linear-gradient(180deg,rgba(255,255,255,0.24),rgba(96,165,250,0.82),rgba(58,43,120,0.34))] blur-[1px]" />
+            <div className="absolute right-[-8rem] top-8 h-[44rem] w-[34rem] rotate-12 rounded-[5rem] border border-[#6e647d] bg-[linear-gradient(135deg,rgba(39,34,52,0.92),rgba(255,110,58,0.56),rgba(10,7,17,0.92))] shadow-[0_0_140px_rgba(255,93,50,0.32)]" />
+            <div className="absolute right-20 top-24 h-[38rem] w-60 rotate-12 rounded-[3rem] bg-[linear-gradient(180deg,rgba(255,255,255,0.24),rgba(255,112,67,0.88),rgba(58,43,74,0.34))] blur-[1px]" />
             <div className="absolute right-32 top-32 text-[28rem] font-black leading-none text-white/10">
               L
             </div>
             <div className="absolute left-8 top-44 rounded-lg border border-[#4d4659] bg-[#171320]/90 p-6 shadow-2xl shadow-black/40 backdrop-blur">
               <div className="flex items-center gap-3">
-                <Bot className="h-7 w-7 text-[#38bdf8]" />
+                <Bot className="h-7 w-7 text-[#ff8a3d]" />
                 <span className="text-2xl font-semibold">AI study agent</span>
               </div>
               <p className="mt-3 max-w-sm text-lg leading-7 text-[#aca6b7]">
@@ -320,7 +320,7 @@ export default async function LearnLandingPage() {
               {[BookOpen, Code2, CheckCircle2].map((Icon, index) => (
                 <div
                   key={index}
-                  className="flex h-24 w-24 items-center justify-center rounded-lg border border-[#4d4659] bg-[#211c2d]/90 text-[#38bdf8] shadow-xl shadow-black/30"
+                  className="flex h-24 w-24 items-center justify-center rounded-lg border border-[#4d4659] bg-[#211c2d]/90 text-[#ff8a3d] shadow-xl shadow-black/30"
                 >
                   <Icon className="h-9 w-9" />
                 </div>
@@ -332,8 +332,8 @@ export default async function LearnLandingPage() {
 
       <LearnWorkflowTabs />
 
-      <section className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+      <section className="flex min-h-screen items-center px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-7xl">
           <div className="grid gap-4 md:grid-cols-3">
             {[
               {
@@ -351,9 +351,9 @@ export default async function LearnLandingPage() {
             ].map((item) => (
               <div
                 key={item.title}
-                className="rounded-lg border border-[#334155] bg-[linear-gradient(135deg,#201827,#172554)] p-6"
+                className="rounded-lg border border-[#573a35] bg-[linear-gradient(135deg,#201827,#612b22)] p-6"
               >
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-[#0f2338] text-[#38bdf8]">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-[#0f2338] text-[#ff8a3d]">
                   <Workflow className="h-7 w-7" />
                 </div>
                 <p className="text-2xl leading-9 text-[#d9d4df]">
@@ -392,8 +392,8 @@ export default async function LearnLandingPage() {
         </div>
       </section>
 
-      <section className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+      <section className="flex min-h-screen items-center px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-7xl">
           <div className="mb-10 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
             <h2 className="text-5xl font-light leading-tight text-white">
               Build your path with the short feedback loops learners need.
@@ -412,7 +412,7 @@ export default async function LearnLandingPage() {
                   key={card.title}
                   className="rounded-lg border border-[#3d3648] bg-[#15111e] p-6"
                 >
-                  <Icon className="h-8 w-8 text-[#38bdf8]" />
+                  <Icon className="h-8 w-8 text-[#ff8a3d]" />
                   <h3 className="mt-8 text-2xl font-semibold text-white">
                     {card.title}
                   </h3>
@@ -426,12 +426,12 @@ export default async function LearnLandingPage() {
         </div>
       </section>
 
-      <footer className="bg-[linear-gradient(180deg,#1e3a8a_0%,#090611_18%)] px-4 pb-12 pt-20 sm:px-6 lg:px-10">
-        <div className="mx-auto rounded-3xl border border-[#334155] bg-[linear-gradient(180deg,#172554_0%,#080b1a_100%)] p-8 shadow-2xl shadow-black/40 lg:p-12">
+      <footer className="flex min-h-screen items-center bg-[linear-gradient(180deg,#8d3d25_0%,#090611_18%)] px-4 py-20 sm:px-6 lg:px-10">
+        <div className="mx-auto w-full rounded-3xl border border-[#573a35] bg-[linear-gradient(180deg,#612b22_0%,#160c18_100%)] p-8 shadow-2xl shadow-black/40 lg:p-12">
           <div className="grid gap-10 border-b border-white/15 pb-16 lg:grid-cols-4">
             <div>
               <div className="flex items-center gap-3 text-2xl font-semibold">
-                <Workflow className="h-8 w-8 text-[#67e8f9]" />
+                <Workflow className="h-8 w-8 text-[#ff7293]" />
                 Tamph Learn
               </div>
               <p className="mt-8 text-2xl font-semibold">
