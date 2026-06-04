@@ -5,19 +5,46 @@ import { redirect } from "next/navigation";
 import { auth } from "../../../auth";
 import { prisma } from "@repo/db";
 
-async function requireUserId() {
+function safeRedirectPath(
+  value: FormDataEntryValue | null | undefined,
+  fallback = "/",
+) {
+  if (
+    typeof value !== "string" ||
+    !value.startsWith("/") ||
+    value.startsWith("//")
+  ) {
+    return fallback;
+  }
+
+  return value;
+}
+
+async function requireUserId(callbackUrl?: string) {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
 
   if (!userId) {
-    redirect("/login");
+    redirect(`/login?callbackUrl=${encodeURIComponent(callbackUrl ?? "/")}`);
   }
 
   return userId;
 }
 
-export async function enrollInCourse(courseId: string) {
-  const userId = await requireUserId();
+export async function enrollInCourse(courseId: string, formData?: FormData) {
+  const userId = await requireUserId(
+    safeRedirectPath(formData?.get("callbackUrl"), `/courses/${courseId}`),
+  );
+
+  await prisma.user.updateMany({
+    where: {
+      id: userId,
+      NOT: { activeSites: { has: "learn" } },
+    },
+    data: {
+      activeSites: { push: "learn" },
+    },
+  });
 
   await prisma.enrollment.upsert({
     where: {
@@ -38,7 +65,10 @@ export async function enrollInCourse(courseId: string) {
   revalidatePath(`/courses/${courseId}`);
 }
 
-export async function updateCourseProgress(courseId: string, progressPercentage: number) {
+export async function updateCourseProgress(
+  courseId: string,
+  progressPercentage: number,
+) {
   const userId = await requireUserId();
   const progress = Math.min(100, Math.max(0, progressPercentage));
 

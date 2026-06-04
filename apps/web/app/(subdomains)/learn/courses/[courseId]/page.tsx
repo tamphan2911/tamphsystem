@@ -120,6 +120,11 @@ export default async function CourseDetailPage({
                 </Link>
               ) : (
                 <form action={enrollAction}>
+                  <input
+                    type="hidden"
+                    name="callbackUrl"
+                    value={`/courses/${course.id}`}
+                  />
                   <button className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                     Enroll in Course
                   </button>

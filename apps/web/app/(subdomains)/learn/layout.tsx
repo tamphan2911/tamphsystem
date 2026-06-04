@@ -25,15 +25,28 @@ export default async function LearnLayout({
 }) {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
+  const sitePathname = (await headers()).get("x-site-pathname") ?? "";
+  const isHomepage = sitePathname === "/";
+  const isPublicCourseRoute =
+    sitePathname === "/courses" || /^\/courses\/[^/]+$/.test(sitePathname);
+
   if (userId) {
-    const sitePathname = (await headers()).get("x-site-pathname") ?? "";
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { activeSites: true },
     });
-    if (!user?.activeSites.includes("learn") && sitePathname !== "/activate") {
+    if (
+      !user?.activeSites.includes("learn") &&
+      sitePathname !== "/activate" &&
+      !isHomepage &&
+      !isPublicCourseRoute
+    ) {
       redirect("/activate");
     }
+  }
+
+  if (isHomepage) {
+    return children;
   }
 
   return (

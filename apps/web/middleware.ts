@@ -88,8 +88,12 @@ export default auth((req) => {
   }
 
   if (currentHost === "learn") {
-    // Protect LMS
-    if (!isLoggedIn) {
+    const isPublicLearnRoute =
+      url.pathname === "/" ||
+      url.pathname === "/courses" ||
+      /^\/courses\/[^/]+$/.test(url.pathname);
+
+    if (!isLoggedIn && !isPublicLearnRoute) {
       return NextResponse.redirect(
         new URL(
           `/login?callbackUrl=${encodeURIComponent(url.pathname + url.search)}`,
@@ -97,6 +101,7 @@ export default auth((req) => {
         ),
       );
     }
+
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set("x-site-pathname", url.pathname);
     return NextResponse.rewrite(new URL(`/learn${url.pathname}`, req.url), {
