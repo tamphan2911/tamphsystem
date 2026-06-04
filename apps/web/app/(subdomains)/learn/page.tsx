@@ -121,26 +121,26 @@ function DropdownPanel({
 }) {
   return (
     <div
-      className={`invisible absolute left-1/2 top-full z-50 mt-5 -translate-x-1/2 rounded-lg border border-[#3d3648] bg-[#14101d]/95 p-7 opacity-0 shadow-2xl shadow-black/50 backdrop-blur-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 ${
-        wide ? "w-[42rem]" : "w-[26rem]"
+      className={`invisible absolute left-1/2 top-full z-50 mt-5 -translate-x-1/2 rounded-lg border border-[#3d3648] bg-[#14101d]/95 p-6 opacity-0 shadow-2xl shadow-black/50 backdrop-blur-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 ${
+        wide ? "w-[36rem]" : "w-[22rem]"
       }`}
     >
-      <div className={wide ? "grid grid-cols-2 gap-7" : "space-y-8"}>
+      <div className={wide ? "grid grid-cols-2 gap-5" : "space-y-5"}>
         {items.map((item) => {
           const Icon = item.icon;
           return (
             <Link
               href="/courses"
               key={item.title}
-              className="flex gap-5 rounded-lg p-2 text-left hover:bg-white/5"
+              className="flex gap-3 rounded-lg p-2 text-left hover:bg-white/5"
             >
-              <Icon className="mt-1 h-6 w-6 flex-none text-white" />
+              <Icon className="mt-0.5 h-4 w-4 flex-none text-white" />
               <span>
-                <span className="block text-2xl font-medium leading-7 text-white">
+                <span className="block text-xl leading-7 text-white">
                   {item.title}
                 </span>
                 {item.description && (
-                  <span className="mt-2 block text-xl leading-7 text-[#aaa4b5]">
+                  <span className="mt-1 block text-lg leading-6 text-[#aaa4b5]">
                     {item.description}
                   </span>
                 )}
