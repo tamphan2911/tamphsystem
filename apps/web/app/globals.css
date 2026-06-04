@@ -797,6 +797,10 @@ textarea:focus-visible {
   background: #2c2c2c;
 }
 
+.research-site-root :where(input, select, textarea):focus-visible {
+  outline: none;
+}
+
 .dark .research-site-root {
   background: #2c2c2c;
 }
@@ -979,7 +983,7 @@ textarea:focus-visible {
 }
 
 .research-site-root tbody tr:nth-child(even) {
-  --research-row-bg: #383838;
+  --research-row-bg: #343434;
 }
 
 .research-site-root tbody tr > :where(td) {

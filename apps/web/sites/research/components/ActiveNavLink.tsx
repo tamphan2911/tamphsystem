@@ -82,7 +82,7 @@ export function ActiveNavLink({
           isActive ? "bg-[#B39CD0] opacity-100" : "opacity-0"
         }`}
       />
-      {collapsed && <Icon className={`h-5 w-5 flex-none ${iconClass}`} />}
+      <Icon className={`h-5 w-5 flex-none ${iconClass}`} />
       {!collapsed && (
         <span className="min-w-0 flex-1 truncate">{displayLabel}</span>
       )}
