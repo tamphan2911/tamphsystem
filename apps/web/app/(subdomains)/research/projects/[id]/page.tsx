@@ -264,12 +264,10 @@ export default async function ProjectDetailPage({
         authorNotifications: {
           select: { type: true, results: true },
         },
-        leadResearcher: true,
         registrationUser: true,
         fundingInstitution: true,
         authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
         authorEntries: {
-          include: { user: true },
           orderBy: [{ position: "asc" }, { createdAt: "asc" }],
         },
         suggestedJournals: {
@@ -295,7 +293,6 @@ export default async function ProjectDetailPage({
             journal: true,
             conference: true,
             assignments: {
-              include: { user: true },
               orderBy: { createdAt: "asc" },
             },
           },
@@ -343,6 +340,33 @@ export default async function ProjectDetailPage({
   ]);
 
   if (!project) notFound();
+  const linkedAuthorUsers = await prisma.user.findMany({
+    where: {
+      id: {
+        in: Array.from(
+          new Set([
+            project.leadResearcherId,
+            ...project.authorEntries.map((entry) => entry.userId),
+          ]),
+        ),
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      affiliation: true,
+      roles: true,
+    },
+  });
+  const linkedAuthorUserById = new Map(
+    linkedAuthorUsers.map((linkedUser) => [linkedUser.id, linkedUser]),
+  );
+  const leadResearcher = linkedAuthorUserById.get(project.leadResearcherId);
+  const hydratedAuthorEntries = project.authorEntries.flatMap((entry) => {
+    const entryUser = linkedAuthorUserById.get(entry.userId);
+    return entryUser ? [{ ...entry, user: entryUser }] : [];
+  });
   const hasAssignedResearchTask = project.tasks.some((task) =>
     task.assignments.some((assignment) => assignment.userId === userId),
   );
@@ -415,8 +439,8 @@ export default async function ProjectDetailPage({
   const researchContentLocked =
     journalSuccessLocksResearch && !project.contentUnlocked;
   const authorNames =
-    project.authorEntries.length > 0
-      ? project.authorEntries.map(
+    hydratedAuthorEntries.length > 0
+      ? hydratedAuthorEntries.map(
           (entry) =>
             `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
         )
@@ -426,7 +450,7 @@ export default async function ProjectDetailPage({
               `${author.name || author.email}${index === 0 ? "*" : ""}`,
           )
         : [
-            `${project.leadResearcher.name || project.leadResearcher.email}*`,
+            `${leadResearcher?.name || leadResearcher?.email || "Deleted lead researcher"}*`,
             project.coAuthors,
           ].filter(Boolean);
   const authorsLine = authorNames.join(", ");
@@ -588,8 +612,8 @@ export default async function ProjectDetailPage({
       }
     : null;
   const defaultAuthors: SelectedAuthor[] =
-    project.authorEntries.length > 0
-      ? project.authorEntries.map((entry) => ({
+    hydratedAuthorEntries.length > 0
+      ? hydratedAuthorEntries.map((entry) => ({
           id: entry.user.id,
           name: entry.user.name ?? "",
           email: entry.user.email,
@@ -606,16 +630,18 @@ export default async function ProjectDetailPage({
             role: displayRole(author.roles),
             isCorresponding: index === 0,
           }))
-        : [
-            {
-              id: project.leadResearcher.id,
-              name: project.leadResearcher.name ?? "",
-              email: project.leadResearcher.email,
-              affiliation: project.leadResearcher.affiliation,
-              role: displayRole(project.leadResearcher.roles),
-              isCorresponding: true,
-            },
-          ];
+        : leadResearcher
+          ? [
+              {
+                id: leadResearcher.id,
+                name: leadResearcher.name ?? "",
+                email: leadResearcher.email,
+                affiliation: leadResearcher.affiliation,
+                role: displayRole(leadResearcher.roles),
+                isCorresponding: true,
+              },
+            ]
+          : [];
   const completedProductionStepValues = project.completedProductionSteps;
   const researchBasicValues = {
     title: project.title,
