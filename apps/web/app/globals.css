@@ -797,8 +797,13 @@ textarea:focus-visible {
   background: #2c2c2c;
 }
 
+.research-site-root :where(input, select, textarea):focus,
 .research-site-root :where(input, select, textarea):focus-visible {
-  outline: none;
+  outline: none !important;
+  box-shadow: none !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
 }
 
 .dark .research-site-root {
