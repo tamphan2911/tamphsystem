@@ -881,6 +881,11 @@ textarea:focus-visible {
   border-bottom-width: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.research-site-root :where(.overflow-hidden):has(table) {
+  overflow: visible !important;
 }
 
 .research-site-root :where(table tr > :first-child) {
