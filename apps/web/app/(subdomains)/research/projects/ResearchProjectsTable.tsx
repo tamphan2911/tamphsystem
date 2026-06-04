@@ -396,7 +396,7 @@ export function ResearchProjectsTable({
               )}
               <th className="w-[5rem] px-3 py-3 text-center">Submit</th>
               {isAdmin && deleteAction && (
-                <th className="w-12 px-2 py-3 text-center">Delete</th>
+                <th className="w-14 px-3 py-3 text-center">Delete</th>
               )}
             </tr>
           </thead>
@@ -460,7 +460,7 @@ export function ResearchProjectsTable({
                   <SubmitCount count={row.submissions} />
                 </td>
                 {isAdmin && deleteAction && (
-                  <td className="px-2 py-3 text-center align-top">
+                  <td className="px-3 py-3 text-center align-top">
                     <DeleteResearchButton
                       row={row}
                       deleteAction={deleteAction}
