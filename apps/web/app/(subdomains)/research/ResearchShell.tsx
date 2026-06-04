@@ -55,6 +55,12 @@ const navItems = [
     icon: "suggestions" as const,
     adminOnly: true,
   },
+  {
+    href: "/notifications",
+    label: "Notifications",
+    icon: "notifications" as const,
+    adminOnly: true,
+  },
   { href: "/journals", label: "Journals", icon: "journals" as const },
   { href: "/conferences", label: "Conferences", icon: "conferences" as const },
   {

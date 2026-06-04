@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   BookOpen,
   Building2,
+  BellRing,
   CalendarDays,
   ClipboardCheck,
   ClipboardList,
@@ -31,6 +32,7 @@ const icons = {
   fundingInstitutions: Landmark,
   proposals: Inbox,
   suggestions: Lightbulb,
+  notifications: BellRing,
   users: UsersRound,
 };
 
