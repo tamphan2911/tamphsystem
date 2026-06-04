@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { AlertTriangle, BarChart3, Loader2, UserPlus } from "lucide-react";
 import { TurnstileField } from "../../components/TurnstileField";
-import { AuthDarkTheme } from "../../components/AuthDarkTheme";
+import { AuthLightTheme } from "../../components/AuthLightTheme";
 import { registerUser } from "./actions";
 
 export default function RegisterPage() {
@@ -77,7 +77,7 @@ function RegisterContent() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-950 transition-colors duration-200 dark:bg-slate-950 dark:text-white">
-      <AuthDarkTheme />
+      <AuthLightTheme />
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/30">
         <div className="border-b border-slate-100 px-8 py-7 text-center dark:border-slate-800">
           <div

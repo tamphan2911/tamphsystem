@@ -14,13 +14,18 @@ export default auth((req) => {
     req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
   const isLoggedIn = !!req.auth?.user;
   const normalizedHostname = hostname.split(",")[0]?.trim().split(":")[0] ?? "";
-  let currentHost = normalizedHostname
+  const currentHost = normalizedHostname
     .replace(`.tamph.com`, "")
     .replace(`.localhost`, "")
     .replace(`.localhost:3000`, "");
 
-  if (url.pathname === "/favicon.ico" && currentHost === "research") {
-    return NextResponse.rewrite(new URL("/research-favicon.png?v=20260531a1", req.url));
+  if (
+    url.pathname === "/favicon.ico" &&
+    (currentHost === "research" || currentHost === "learn")
+  ) {
+    return NextResponse.rewrite(
+      new URL("/research-favicon.png?v=20260531a1", req.url),
+    );
   }
 
   if (
@@ -73,7 +78,8 @@ export default auth((req) => {
         ),
       );
     }
-    const roles = (req.auth?.user as any)?.roles || [];
+    const roles =
+      (req.auth?.user as { roles?: string[] } | undefined)?.roles ?? [];
     if (!roles.includes("ADMIN") && !roles.includes("MODERATOR")) {
       // If logged in but not an admin/moderator, send them to unauthorized page
       return NextResponse.redirect(new URL("https://tamph.com/401", req.url));

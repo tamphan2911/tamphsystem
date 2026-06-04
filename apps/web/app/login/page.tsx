@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, LockKeyhole, Mail } from "lucide-react";
 import { TurnstileField } from "../../components/TurnstileField";
-import { AuthDarkTheme } from "../../components/AuthDarkTheme";
+import { AuthLightTheme } from "../../components/AuthLightTheme";
 import { turnstileSiteKey } from "../../lib/turnstile";
 import { loginUser } from "./actions";
 
@@ -68,7 +68,7 @@ export default async function LoginPage({
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-950 transition-colors duration-200 dark:bg-slate-950 dark:text-white">
-      <AuthDarkTheme />
+      <AuthLightTheme />
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/30">
         <div className="border-b border-slate-100 px-8 py-7 text-center dark:border-slate-800">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:ring-blue-900">

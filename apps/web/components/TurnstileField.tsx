@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 type TurnstileFieldProps = {
   siteKey?: string;
   resetKey?: number;
+  theme?: "auto" | "light" | "dark";
 };
 
 declare global {
@@ -20,10 +21,20 @@ declare global {
   }
 }
 
-export function TurnstileField({ siteKey, resetKey = 0 }: TurnstileFieldProps) {
+export function TurnstileField({
+  siteKey,
+  resetKey = 0,
+  theme = "light",
+}: TurnstileFieldProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const [scriptReady, setScriptReady] = useState(false);
+
+  useEffect(() => {
+    if (window.turnstile) {
+      setScriptReady(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (
@@ -42,7 +53,7 @@ export function TurnstileField({ siteKey, resetKey = 0 }: TurnstileFieldProps) {
 
     widgetIdRef.current = window.turnstile.render(containerRef.current, {
       sitekey: siteKey,
-      theme: "auto",
+      theme,
       "response-field": true,
       "response-field-name": "cf-turnstile-response",
     });
@@ -53,7 +64,7 @@ export function TurnstileField({ siteKey, resetKey = 0 }: TurnstileFieldProps) {
         widgetIdRef.current = null;
       }
     };
-  }, [siteKey, scriptReady, resetKey]);
+  }, [siteKey, scriptReady, resetKey, theme]);
 
   if (!siteKey) return null;
 
@@ -64,6 +75,7 @@ export function TurnstileField({ siteKey, resetKey = 0 }: TurnstileFieldProps) {
         src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
         strategy="afterInteractive"
         onLoad={() => setScriptReady(true)}
+        onReady={() => setScriptReady(true)}
       />
       <div className="flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden py-0">
         <div ref={containerRef} className="max-w-full" />

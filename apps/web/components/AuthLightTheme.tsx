@@ -3,11 +3,11 @@
 import { useEffect } from "react";
 import { useTheme } from "next-themes";
 
-export function AuthDarkTheme() {
+export function AuthLightTheme() {
   const { setTheme } = useTheme();
 
   useEffect(() => {
-    setTheme("dark");
+    setTheme("light");
   }, [setTheme]);
 
   return null;

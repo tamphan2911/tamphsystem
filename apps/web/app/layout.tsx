@@ -13,7 +13,7 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
 });
 
-const RESEARCH_FAVICON = "/research-favicon.png?v=20260531a1";
+const SHARED_SITE_FAVICON = "/research-favicon.png?v=20260531a1";
 
 export async function generateMetadata(): Promise<Metadata> {
   const host = (await headers()).get("host") || "";
@@ -21,9 +21,16 @@ export async function generateMetadata(): Promise<Metadata> {
     host === "research.tamph.com" ||
     host.startsWith("research.") ||
     host.startsWith("research.localhost");
-  const icon = isResearchHost ? RESEARCH_FAVICON : "/icon.svg";
+  const isLearnHost =
+    host === "learn.tamph.com" ||
+    host.startsWith("learn.") ||
+    host.startsWith("learn.localhost");
+  const icon =
+    isResearchHost || isLearnHost ? SHARED_SITE_FAVICON : "/icon.svg";
   const title = isResearchHost
     ? "Tam's Research Hub"
+    : isLearnHost
+      ? "TamphSystem Learn"
     : "Tamph LMS & Research Portal";
 
   return {
@@ -49,7 +56,7 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
         >

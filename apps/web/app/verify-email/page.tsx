@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { prisma } from "@repo/db";
+import { AuthLightTheme } from "../../components/AuthLightTheme";
 
 async function verifyToken(token: string | undefined) {
   if (!token) {
@@ -76,6 +77,7 @@ export default async function VerifyEmailPage({
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-950 dark:bg-slate-950 dark:text-white">
+      <AuthLightTheme />
       <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white text-center shadow-2xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/30">
         <div className="border-b border-slate-100 px-8 py-8 dark:border-slate-800">
           <div
