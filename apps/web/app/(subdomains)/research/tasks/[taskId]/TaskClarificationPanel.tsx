@@ -90,7 +90,7 @@ export function TaskClarificationPanel({
                   </p>
                 ) : (
                   <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">
-                    Waiting for assigner feedback.
+                    Waiting for assigner or admin feedback.
                   </p>
                 )}
               </>
@@ -115,62 +115,63 @@ export function TaskClarificationPanel({
         open={isOpen}
         onClose={() => setIsOpen(false)}
         title="Request and feedback history"
-        description="Track each assignee request and assigner feedback in order."
+        description="Track each assignee request and assigner or admin feedback in order."
         icon={<MessageSquareText className="h-5 w-5" />}
         maxWidth="max-w-3xl"
         bodyClassName="px-5 py-5"
       >
-            <div ref={historyScrollRef} className="max-h-[62vh] overflow-y-auto">
-              {timeline.length > 0 ? (
-                <div className="space-y-5">
-                  {timeline.map((item) => (
-                    <div key={item.id} className="space-y-3">
-                      <ChatBubble
-                        align="left"
-                        label={personName(item.requestedBy)}
-                        time={formatDateTime(item.createdAt)}
-                        content={item.question}
-                      />
-                      {item.answer ? (
-                        <ChatBubble
-                          align="right"
-                          label={
-                            item.answeredBy
-                              ? personName(item.answeredBy)
-                              : "Assigner"
-                          }
-                          time={formatDateTime(item.answeredAt)}
-                          content={item.answer}
+        <div ref={historyScrollRef} className="max-h-[62vh] overflow-y-auto">
+          {timeline.length > 0 ? (
+            <div className="space-y-5">
+              {timeline.map((item) => (
+                <div key={item.id} className="space-y-3">
+                  <ChatBubble
+                    align="left"
+                    label={personName(item.requestedBy)}
+                    time={formatDateTime(item.createdAt)}
+                    content={item.question}
+                  />
+                  {item.answer ? (
+                    <ChatBubble
+                      align="right"
+                      label={
+                        item.answeredBy
+                          ? personName(item.answeredBy)
+                          : "Assigner"
+                      }
+                      time={formatDateTime(item.answeredAt)}
+                      content={item.answer}
+                    />
+                  ) : (
+                    <div className="ml-auto max-w-[88%] rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 dark:border-amber-900/60 dark:bg-amber-950/30 sm:max-w-[76%]">
+                      <p className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                        Pending feedback
+                      </p>
+                      {canAnswer ? (
+                        <AnswerForm
+                          clarificationId={item.id}
+                          action={answerAction}
                         />
                       ) : (
-                        <div className="ml-auto max-w-[88%] rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 dark:border-amber-900/60 dark:bg-amber-950/30 sm:max-w-[76%]">
-                          <p className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-                            Pending feedback
-                          </p>
-                          {canAnswer ? (
-                            <AnswerForm
-                              clarificationId={item.id}
-                              action={answerAction}
-                            />
-                          ) : (
-                            <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                              The assigner has not replied to this request yet.
-                            </p>
-                          )}
-                        </div>
+                        <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                          The assigner or an admin has not replied to this
+                          request yet.
+                        </p>
                       )}
                     </div>
-                  ))}
+                  )}
                 </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
-                  <HelpCircle className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
-                  <p className="mt-3 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                    No request history yet.
-                  </p>
-                </div>
-              )}
+              ))}
             </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
+              <HelpCircle className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
+              <p className="mt-3 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                No request history yet.
+              </p>
+            </div>
+          )}
+        </div>
       </ResearchModal>
     </div>
   );

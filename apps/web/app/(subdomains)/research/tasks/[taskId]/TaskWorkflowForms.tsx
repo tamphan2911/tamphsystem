@@ -21,6 +21,7 @@ type TextModalFormProps = {
   placeholder: string;
   confirmLabel: string;
   tone: "amber" | "rose" | "blue";
+  helperText?: string;
 };
 
 const toneClasses = {
@@ -54,6 +55,7 @@ function TextModalForm({
   placeholder,
   confirmLabel,
   tone,
+  helperText,
 }: TextModalFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -160,20 +162,25 @@ function TextModalForm({
           }}
           className="grid gap-4"
         >
-              <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {fieldLabel}
-                </span>
-                <textarea
-                  name={fieldName}
-                  required
-                  value={content}
-                  onChange={(event) => setContent(event.target.value)}
-                  rows={5}
-                  placeholder={placeholder}
-                  className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
-                />
-              </label>
+          <label className="grid gap-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {fieldLabel}
+            </span>
+            <textarea
+              name={fieldName}
+              required
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+              rows={5}
+              placeholder={placeholder}
+              className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+            />
+          </label>
+          {helperText ? (
+            <p className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+              {helperText}
+            </p>
+          ) : null}
         </form>
       </ResearchModal>
     </>
@@ -216,6 +223,7 @@ export function ClarificationRequestForm({
       placeholder="Write what you need clarified, including any specific issue blocking the work."
       confirmLabel="Send request"
       tone="amber"
+      helperText="After sending this request, the task will pause in Need clarify. Please wait for the assigner to give feedback before continuing the task."
     />
   );
 }

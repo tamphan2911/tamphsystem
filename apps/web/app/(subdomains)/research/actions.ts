@@ -4460,7 +4460,7 @@ export async function answerTaskClarification(
     subject: `Clarification answered: ${task.title}`,
     heading: "Clarification answered",
     intro:
-      "The assigner has answered a clarification request for this task. Please review the answer and continue the work.",
+      "The assigner or an admin has answered a clarification request for this task. Please review the answer and continue the work.",
     detail: answer,
     taskTitle: task.title,
     taskId,
