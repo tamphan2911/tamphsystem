@@ -38,6 +38,14 @@ export default async function ConferencesPage() {
   const [conferences, currentUser] = await Promise.all([
     prisma.conference.findMany({
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
+      include: {
+        _count: {
+          select: {
+            submissions: true,
+            suggestions: true,
+          },
+        },
+      },
     }),
     userId
       ? prisma.user.findUnique({
@@ -61,6 +69,8 @@ export default async function ConferencesPage() {
     organizer: conference.organizer ?? "",
     theme: conference.targetTheme || conference.themes || "",
     isbn: conference.isbn ?? "",
+    submissionCount: conference._count.submissions,
+    suggestionCount: conference._count.suggestions,
   }));
 
   return (

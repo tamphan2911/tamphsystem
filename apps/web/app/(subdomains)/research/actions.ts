@@ -2084,9 +2084,24 @@ export async function deleteConference(conferenceId: string) {
 
   if (!conference) return;
 
-  if (conference._count.submissions > 0 || conference._count.suggestions > 0) {
+  const blockers = [
+    conference._count.submissions > 0
+      ? `${conference._count.submissions} submission${
+          conference._count.submissions === 1 ? "" : "s"
+        }`
+      : "",
+    conference._count.suggestions > 0
+      ? `${conference._count.suggestions} suggested research link${
+          conference._count.suggestions === 1 ? "" : "s"
+        }`
+      : "",
+  ].filter(Boolean);
+
+  if (blockers.length > 0) {
     throw new Error(
-      "Delete the associated submissions and research links before deleting this conference.",
+      `Cannot delete ${conference.name}. Remove ${blockers.join(
+        " and ",
+      )} first, then delete the conference.`,
     );
   }
 
@@ -2095,6 +2110,8 @@ export async function deleteConference(conferenceId: string) {
   });
 
   revalidatePath("/conferences");
+  revalidatePath("/submissions");
+  revalidatePath("/suggestions");
 }
 
 function conferenceDataFromForm(formData: FormData) {

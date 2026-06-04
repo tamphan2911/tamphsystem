@@ -30,6 +30,8 @@ export type ConferenceRow = {
   organizer: string;
   theme: string;
   isbn: string;
+  submissionCount: number;
+  suggestionCount: number;
 };
 
 const conferenceTypes = ["ALL", "International", "National"];
@@ -92,6 +94,19 @@ function DeleteConferenceButton({
   const toast = useResearchToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const blockers = [
+    conference.submissionCount > 0
+      ? `${conference.submissionCount} submission${
+          conference.submissionCount === 1 ? "" : "s"
+        }`
+      : "",
+    conference.suggestionCount > 0
+      ? `${conference.suggestionCount} suggested research link${
+          conference.suggestionCount === 1 ? "" : "s"
+        }`
+      : "",
+  ].filter(Boolean);
+  const blockerText = blockers.join(" and ");
 
   return (
     <>
@@ -107,7 +122,11 @@ function DeleteConferenceButton({
       <ResearchConfirmDialog
         open={isOpen}
         title="Delete this conference?"
-        description={`This will remove ${conference.name} from the conference list.`}
+        description={
+          blockerText
+            ? `${conference.name} is still linked to ${blockerText}.`
+            : `This will remove ${conference.name} from the conference list.`
+        }
         confirmLabel={isDeleting ? "Deleting..." : "Delete conference"}
         isConfirming={isDeleting}
         onCancel={() => setIsOpen(false)}
@@ -134,10 +153,17 @@ function DeleteConferenceButton({
           }
         }}
       >
-        <p>
-          Conferences with linked submissions or associated research cannot be
-          deleted. Delete those linked records first, then return here.
-        </p>
+        {blockerText ? (
+          <p>
+            Remove the linked submissions or suggested research links first,
+            then return here to delete this conference.
+          </p>
+        ) : (
+          <p>
+            This conference has no linked submissions or suggested research
+            links, so it can be removed now.
+          </p>
+        )}
         <p className="font-semibold text-rose-700 dark:text-rose-300">
           This action cannot be undone from this screen.
         </p>
@@ -231,6 +257,20 @@ export function ConferencesTable({
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {pagination.pagedRows.map((conference) => {
               const status = conferenceStatus(conference);
+              const linkedSummary = [
+                conference.submissionCount > 0
+                  ? `${conference.submissionCount} submission${
+                      conference.submissionCount === 1 ? "" : "s"
+                    }`
+                  : "",
+                conference.suggestionCount > 0
+                  ? `${conference.suggestionCount} suggested link${
+                      conference.suggestionCount === 1 ? "" : "s"
+                    }`
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" / ");
 
               return (
                 <tr
@@ -252,6 +292,11 @@ export function ConferencesTable({
                     <p className="mt-1 truncate text-xs text-slate-400 dark:text-slate-500">
                       Organizer: {conference.organizer || "Not set"}
                     </p>
+                    {linkedSummary ? (
+                      <p className="mt-1 truncate text-xs text-amber-600 dark:text-amber-300">
+                        Linked: {linkedSummary}
+                      </p>
+                    ) : null}
                   </td>
                   <td className="px-3 py-3">
                     <span className="rounded-full bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
