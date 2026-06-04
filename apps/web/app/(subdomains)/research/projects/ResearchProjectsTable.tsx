@@ -75,10 +75,8 @@ function stageLabel(stage: string) {
 }
 
 function statusClass(stage: string) {
-  if (stage === "PUBLISHED" || stage === "ACCEPTED")
-    return "text-[#A8DADC]";
-  if (stage === "REVIEW" || stage === "SUBMITTING")
-    return "text-[#B39CD0]";
+  if (stage === "PUBLISHED" || stage === "ACCEPTED") return "text-[#A8DADC]";
+  if (stage === "REVIEW" || stage === "SUBMITTING") return "text-[#B39CD0]";
   return "text-[#B0B0B0]";
 }
 
@@ -349,7 +347,7 @@ export function ResearchProjectsTable({
 
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
-      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
