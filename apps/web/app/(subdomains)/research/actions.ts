@@ -3615,6 +3615,7 @@ export async function addSuggestedJournal(
   });
 
   revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/suggestions");
 }
 
 export async function deleteSuggestedJournal(
@@ -3630,6 +3631,7 @@ export async function deleteSuggestedJournal(
   });
 
   revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/suggestions");
 }
 
 export async function addSuggestedConference(
@@ -3652,6 +3654,7 @@ export async function addSuggestedConference(
   });
 
   revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/suggestions");
 }
 
 async function canSuggestVenueForResearch(
@@ -3700,6 +3703,7 @@ export async function deleteSuggestedConference(
   });
 
   revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/suggestions");
 }
 
 async function createSubmissionAfterTaskApproval(

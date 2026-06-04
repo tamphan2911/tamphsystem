@@ -13,6 +13,7 @@ import {
   FolderGit2,
   KeyRound,
   Landmark,
+  Lightbulb,
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
@@ -29,6 +30,7 @@ const icons = {
   organizedProjects: Building2,
   fundingInstitutions: Landmark,
   proposals: Inbox,
+  suggestions: Lightbulb,
   users: UsersRound,
 };
 
