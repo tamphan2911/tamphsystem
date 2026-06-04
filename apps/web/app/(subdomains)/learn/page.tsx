@@ -120,36 +120,43 @@ function DropdownPanel({
   wide?: boolean;
 }) {
   return (
-    <div
-      className={`invisible absolute left-1/2 top-full z-50 mt-5 -translate-x-1/2 rounded-lg border border-[#3d3648] bg-[#14101d]/95 p-6 opacity-0 shadow-2xl shadow-black/50 backdrop-blur-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 ${
-        wide ? "w-[36rem]" : "w-[22rem]"
-      }`}
-    >
-      <div className={wide ? "grid grid-cols-2 gap-5" : "space-y-5"}>
-        {items.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              href="/courses"
-              key={item.title}
-              className="flex gap-3 rounded-lg p-2 text-left hover:bg-white/5"
-            >
-              <Icon className="mt-0.5 h-4 w-4 flex-none text-white" />
-              <span>
-                <span className="block text-xl leading-7 text-white">
-                  {item.title}
-                </span>
-                {item.description && (
-                  <span className="mt-1 block text-lg leading-6 text-[#aaa4b5]">
-                    {item.description}
+    <>
+      <div
+        className={`invisible absolute left-1/2 top-full z-40 h-[15px] -translate-x-1/2 group-hover:visible ${
+          wide ? "w-[68rem]" : "w-[32rem]"
+        }`}
+      />
+      <div
+        className={`invisible absolute left-1/2 top-full z-50 mt-[15px] -translate-x-1/2 rounded-2xl border border-[#494152] bg-[linear-gradient(135deg,rgba(21,17,30,0.98),rgba(25,20,35,0.96))] p-4 opacity-0 shadow-2xl shadow-black/50 backdrop-blur-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 ${
+          wide ? "w-[68rem]" : "w-[32rem]"
+        }`}
+      >
+        <div className={wide ? "grid grid-cols-2 gap-4" : "space-y-3"}>
+          {items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                href="/courses"
+                key={item.title}
+                className="group/item flex min-h-20 gap-5 rounded-lg border border-transparent p-5 text-left text-[#c7c0cf] transition duration-200 hover:border-[#5a4050] hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,70,76,0.16))] hover:text-white"
+              >
+                <Icon className="mt-1 h-5 w-5 flex-none text-[#d8d2df] transition group-hover/item:text-white" />
+                <span>
+                  <span className="block text-xl font-normal leading-7">
+                    {item.title}
                   </span>
-                )}
-              </span>
-            </Link>
-          );
-        })}
+                  {item.description && (
+                    <span className="mt-1 block text-lg font-normal leading-6 text-[#aaa4b5] group-hover/item:text-[#cfc8d8]">
+                      {item.description}
+                    </span>
+                  )}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -206,7 +213,7 @@ export default async function LearnLandingPage() {
 
   return (
     <main className="min-h-screen bg-[#090611] font-[var(--font-geist-sans)] text-white">
-      <header className="sticky top-0 z-50 px-4 pt-3 sm:px-6 lg:px-10">
+      <header className="sticky top-0 z-50 px-4 pt-[9px] sm:px-6 lg:px-10">
         <nav className="mx-auto flex h-[56px] max-w-[95rem] items-center justify-between rounded-2xl border border-[#3a3345] bg-[#111019]/90 px-4 shadow-2xl shadow-black/30 backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-3">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#51495d] bg-[#1f1a2a] text-[#ff8a3d]">
