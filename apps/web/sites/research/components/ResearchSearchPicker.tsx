@@ -83,18 +83,18 @@ export function ResearchSearchPicker<T = unknown>({
     >
       {label}
       {name && <input type="hidden" name={name} value={selected?.id ?? ""} />}
-      <div className="relative rounded-xl border border-slate-200 bg-slate-50 p-1 transition duration-200 ease-out focus-within:border-blue-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:focus-within:bg-slate-900">
+      <div className="relative rounded-none border border-[#D1D5DB] bg-[#2C2C2C] p-1 transition duration-150 ease-out hover:border-[#E5E7EB] hover:bg-[#383838] focus-within:border-[#E5E7EB] focus-within:bg-[#383838] focus-within:ring-2 focus-within:ring-[#E5E7EB]/20">
         {selected ? (
-          <div className="flex min-h-10 items-center gap-2 rounded-lg bg-white px-2.5 shadow-sm shadow-slate-900/[0.02] dark:bg-slate-900">
+          <div className="flex min-h-10 items-center gap-2 rounded-none bg-[#383838] px-2.5 shadow-sm shadow-black/10">
             {renderSelected ? (
               renderSelected(selected)
             ) : (
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                <span className="block truncate text-sm font-bold text-[#E4E4E4]">
                   {selected.label}
                 </span>
                 {(selected.description || selected.meta) && (
-                  <span className="block truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+                  <span className="block truncate text-xs font-medium text-[#B0B0B0]">
                     {selected.description || selected.meta}
                   </span>
                 )}
@@ -148,13 +148,13 @@ export function ResearchSearchPicker<T = unknown>({
                 }
               }}
               placeholder={placeholder}
-              className={`${researchFieldClass} h-10 border-transparent bg-white pl-9 dark:bg-slate-900`}
+              className={`${researchFieldClass} h-10 border-transparent bg-[#2C2C2C] pl-9 hover:bg-[#383838] focus:bg-[#383838]`}
             />
           </div>
         )}
 
         {showDropdown && (
-          <div className="research-dropdown-panel absolute left-0 right-0 top-full z-[160] mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-900/[0.03] dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35 dark:ring-white/[0.04]">
+          <div className="research-dropdown-panel absolute left-0 right-0 top-full z-[160] mt-2 overflow-hidden rounded-none border border-[#D1D5DB] bg-[#2C2C2C] p-2 shadow-2xl shadow-black/35">
             <div className="max-h-72 overflow-y-auto pr-0.5" role="listbox">
               {options.length > 0 ? (
                 options.map((option, index) => {
@@ -170,10 +170,10 @@ export function ResearchSearchPicker<T = unknown>({
                       disabled={option.disabled}
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => choose(option)}
-                      className={`flex w-full items-start justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none ${
+                      className={`flex w-full items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-left transition duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none ${
                         isActive || isSelected
-                          ? "border-blue-100 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/45 dark:text-blue-200"
-                          : "border-transparent text-slate-700 hover:translate-x-0.5 hover:bg-slate-50 hover:text-blue-700 motion-reduce:hover:translate-x-0 dark:text-slate-200 dark:hover:bg-slate-800/80 dark:hover:text-blue-200"
+                          ? "border-[#E5E7EB] bg-[#383838] text-[#E4E4E4]"
+                          : "border-transparent text-[#B0B0B0] hover:bg-[#444444] hover:text-white"
                       }`}
                     >
                       {renderOption ? (
