@@ -205,18 +205,18 @@ export default async function LearnLandingPage() {
 
   return (
     <main className="min-h-screen bg-[#090611] font-[var(--font-geist-sans)] text-white">
-      <header className="sticky top-0 z-50 px-4 pt-1 sm:px-6 lg:px-10">
-        <nav className="mx-auto flex h-[3.2rem] max-w-[95rem] items-center justify-between rounded-2xl border border-[#3a3345] bg-[#111019]/90 px-4 shadow-2xl shadow-black/30 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 px-4 pt-[14px] sm:px-6 lg:px-10">
+        <nav className="mx-auto flex h-[56px] max-w-[95rem] items-center justify-between rounded-2xl border border-[#3a3345] bg-[#111019]/90 px-4 shadow-2xl shadow-black/30 backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-3">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#51495d] bg-[#1f1a2a] text-[#38bdf8]">
               <Workflow className="h-4 w-4" />
             </span>
-            <span className="text-3xl font-semibold tracking-tight">
+            <span className="text-2xl font-semibold tracking-tight">
               Tamph Learn
             </span>
           </Link>
 
-          <div className="hidden items-center gap-9 text-2xl text-[#c7c0cf] lg:flex">
+          <div className="hidden items-center gap-9 text-xl text-[#c7c0cf] lg:flex">
             <div className="group relative py-4">
               <button className="flex items-center gap-2 hover:text-white">
                 Product <ChevronDown className="h-5 w-5" />
@@ -246,20 +246,20 @@ export default async function LearnLandingPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/courses"
-              className="hidden h-8 items-center gap-2 rounded-lg border border-[#575063] bg-[#312c3b] px-3 text-lg font-medium text-white hover:bg-[#40394d] sm:inline-flex"
+              className="hidden h-8 items-center gap-2 rounded-lg border border-[#575063] bg-[#312c3b] px-3 text-base font-medium text-white hover:bg-[#40394d] sm:inline-flex"
             >
               <Star className="h-4 w-4" />
               {totalSessions || courses.length || "New"}
             </Link>
             <Link
               href="/login"
-              className="hidden text-xl font-medium text-[#d7d1df] hover:text-white sm:block"
+              className="hidden text-lg font-medium text-[#d7d1df] hover:text-white sm:block"
             >
               Sign in
             </Link>
             <Link
               href={session?.user ? "/profile" : "/login"}
-              className="inline-flex h-8 items-center rounded-lg bg-gradient-to-r from-[#38bdf8] to-[#2563eb] px-4 text-xl font-semibold text-white shadow-lg shadow-[#38bdf8]/20 hover:-translate-y-0.5"
+              className="inline-flex h-8 items-center rounded-lg bg-gradient-to-r from-[#38bdf8] to-[#2563eb] px-4 text-lg font-semibold text-white shadow-lg shadow-[#38bdf8]/20 hover:-translate-y-0.5"
             >
               Get Started
             </Link>
