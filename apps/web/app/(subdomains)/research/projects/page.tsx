@@ -239,48 +239,52 @@ export default async function ProjectsDashboard() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        {canManageResearch ? (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
-            {stats.map((item) => (
-              <div
-                key={item.label}
-                className="flex min-w-32 items-center gap-3 rounded-[2px] border border-[#d7d2ca] bg-[#fbfaf7] px-3 py-2 dark:border-[#3d3648] dark:bg-[#14101d]"
-              >
-                <item.icon className={`h-4 w-4 ${item.color}`} />
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7280] dark:text-[#aaa4b5]">
-                    {item.label}
-                  </p>
-                  <p className="text-base font-black text-[#17131d] dark:text-white">
-                    {item.value}
-                  </p>
+      <div className="overflow-hidden border border-[#d7d2ca] bg-[#fbfaf7] dark:border-[#3d3648] dark:bg-[#14101d]">
+        <div className="flex flex-col xl:flex-row xl:items-stretch xl:justify-between">
+          {canManageResearch ? (
+            <div className="grid flex-1 grid-cols-2 divide-x divide-y divide-[#d7d2ca] dark:divide-[#3d3648] sm:grid-cols-4 sm:divide-y-0">
+              {stats.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex min-h-16 items-center gap-3 px-4 py-3"
+                >
+                  <item.icon className={`h-4 w-4 ${item.color}`} />
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7280] dark:text-[#aaa4b5]">
+                      {item.label}
+                    </p>
+                    <p className="text-base font-black text-[#17131d] dark:text-white">
+                      {item.value}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div />
-        )}
+              ))}
+            </div>
+          ) : (
+            <div className="flex-1" />
+          )}
 
-        {isAdmin ? (
-          <NewResearchDialog
-            users={authorOptions}
-            isAdmin={isAdmin}
-            fundingInstitutions={fundingInstitutions.map((institution) => ({
-              id: institution.id,
-              name: institution.name,
-              shortName: institution.shortName ?? "",
-              country: institution.country ?? "",
-            }))}
-          />
-        ) : (
-          <ProposalDialog
-            type="RESEARCH"
-            isLoggedIn={Boolean(session)}
-            hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
-          />
-        )}
+          <div className="flex items-center justify-end border-t border-[#d7d2ca] px-4 py-3 dark:border-[#3d3648] xl:border-l xl:border-t-0">
+            {isAdmin ? (
+              <NewResearchDialog
+                users={authorOptions}
+                isAdmin={isAdmin}
+                fundingInstitutions={fundingInstitutions.map((institution) => ({
+                  id: institution.id,
+                  name: institution.name,
+                  shortName: institution.shortName ?? "",
+                  country: institution.country ?? "",
+                }))}
+              />
+            ) : (
+              <ProposalDialog
+                type="RESEARCH"
+                isLoggedIn={Boolean(session)}
+                hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
+              />
+            )}
+          </div>
+        </div>
       </div>
 
       <ResearchProjectsTable
