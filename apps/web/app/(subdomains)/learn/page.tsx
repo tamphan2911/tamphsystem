@@ -25,6 +25,7 @@ import {
 import { auth } from "../../../auth";
 import { prisma } from "@repo/db";
 import { LearnWorkflowTabs } from "../../../components/LearnWorkflowTabs";
+import { HeroSearchBox } from "../../../components/HeroSearchBox";
 
 export const dynamic = "force-dynamic";
 
@@ -300,31 +301,57 @@ export default async function LearnLandingPage() {
             </div>
           </div>
 
-          <div className="relative min-h-[42rem] lg:min-h-[52rem]">
-            <div className="absolute right-[-8rem] top-8 h-[44rem] w-[34rem] rotate-12 rounded-[5rem] border border-[#6e647d] bg-[linear-gradient(135deg,rgba(39,34,52,0.92),rgba(255,110,58,0.56),rgba(10,7,17,0.92))] shadow-[0_0_140px_rgba(255,93,50,0.32)]" />
-            <div className="absolute right-20 top-24 h-[38rem] w-60 rotate-12 rounded-[3rem] bg-[linear-gradient(180deg,rgba(255,255,255,0.24),rgba(255,112,67,0.88),rgba(58,43,74,0.34))] blur-[1px]" />
-            <div className="absolute right-32 top-32 text-[28rem] font-black leading-none text-white/10">
-              L
-            </div>
-            <div className="absolute left-8 top-44 rounded-lg border border-[#4d4659] bg-[#171320]/90 p-6 shadow-2xl shadow-black/40 backdrop-blur">
-              <div className="flex items-center gap-3">
-                <Bot className="h-7 w-7 text-[#ff8a3d]" />
-                <span className="text-2xl font-semibold">AI study agent</span>
-              </div>
-              <p className="mt-3 max-w-sm text-lg leading-7 text-[#aca6b7]">
-                Suggests courses, explains modules, and keeps learning steps
-                visible.
-              </p>
-            </div>
-            <div className="absolute bottom-16 left-20 grid grid-cols-3 gap-3">
-              {[BookOpen, Code2, CheckCircle2].map((Icon, index) => (
-                <div
-                  key={index}
-                  className="flex h-24 w-24 items-center justify-center rounded-lg border border-[#4d4659] bg-[#211c2d]/90 text-[#ff8a3d] shadow-xl shadow-black/30"
-                >
-                  <Icon className="h-9 w-9" />
+          <div className="relative flex min-h-[42rem] items-center lg:min-h-[52rem]">
+            <div className="absolute inset-0 rounded-[4rem] bg-[radial-gradient(circle_at_70%_20%,rgba(255,138,61,0.35),transparent_34%),radial-gradient(circle_at_28%_76%,rgba(86,65,255,0.24),transparent_30%)] blur-2xl" />
+            <div className="relative w-full rounded-3xl border border-[#4d4659] bg-[#120d1b]/90 p-6 shadow-[0_0_120px_rgba(255,93,50,0.24)] backdrop-blur-xl sm:p-8">
+              <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-5">
+                <div>
+                  <p className="text-sm font-semibold uppercase text-[#ff8a3d]">
+                    Find a course
+                  </p>
+                  <h2 className="mt-2 text-4xl font-light text-white">
+                    Search the Learn catalog
+                  </h2>
                 </div>
-              ))}
+                <div className="hidden h-14 w-14 items-center justify-center rounded-lg border border-[#4d4659] bg-[#211c2d] text-[#ff8a3d] sm:flex">
+                  <Search className="h-7 w-7" />
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <HeroSearchBox variant="dark" />
+              </div>
+
+              <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                {[
+                  { label: "Python", icon: Code2 },
+                  { label: "Research", icon: BookOpen },
+                  { label: "Progress", icon: CheckCircle2 },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.label}
+                      href={`/courses?q=${encodeURIComponent(item.label)}`}
+                      className="flex items-center gap-3 rounded-lg border border-[#3d3648] bg-[#211c2d]/80 px-4 py-4 text-lg font-semibold text-[#d9d4df] hover:border-[#ff8a3d] hover:text-white"
+                    >
+                      <Icon className="h-5 w-5 text-[#ff8a3d]" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              <div className="mt-8 rounded-lg border border-[#3d3648] bg-[#171320] p-5">
+                <div className="flex items-center gap-3">
+                  <Bot className="h-6 w-6 text-[#ff8a3d]" />
+                  <span className="text-2xl font-semibold">AI study agent</span>
+                </div>
+                <p className="mt-3 text-lg leading-7 text-[#aca6b7]">
+                  Search a topic, preview the course path, then enroll when you
+                  are ready to save progress.
+                </p>
+              </div>
             </div>
           </div>
         </div>
