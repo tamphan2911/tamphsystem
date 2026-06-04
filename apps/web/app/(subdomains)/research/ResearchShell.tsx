@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -205,45 +204,32 @@ export function ResearchShell({
 
   return (
     <ResearchToastProvider>
-      <div className="research-site-root relative min-h-screen overflow-x-hidden bg-[#f6f4ef] text-[#201c25] dark:bg-[#090611] dark:text-white">
+      <div className="research-site-root relative min-h-screen overflow-x-hidden bg-[#121212] text-[#E0E0E0]">
         <aside
-          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#ded8cf] bg-[#fbfaf7]/90 shadow-[10px_0_34px_rgba(32,28,37,0.07)] backdrop-blur-xl transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none dark:border-[#2f2938] dark:bg-[#111019]/90 dark:shadow-black/35 ${
+          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#444444] bg-[#121212] transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none ${
             collapsed ? "w-20" : "w-72"
           }`}
         >
           <div
-            className={`flex h-20 items-center border-b border-[#ded8cf] px-4 transition-all duration-300 motion-reduce:transition-none dark:border-[#332c3d] ${collapsed ? "justify-center" : "gap-3"}`}
+            className={`flex h-20 items-center border-b border-[#444444] px-4 transition-all duration-300 motion-reduce:transition-none ${collapsed ? "justify-center" : "gap-3"}`}
           >
-            <div
-              className={`flex h-11 w-11 flex-none items-center justify-center transition-all duration-300 motion-reduce:transition-none ${
-                collapsed ? "w-0 scale-75 opacity-0" : "opacity-100"
-              }`}
-            >
-              <Image
-                src="/research-logo.png"
-                alt=""
-                width={40}
-                height={40}
-                className="h-10 w-10 rounded-lg object-cover shadow-sm ring-1 ring-[#d6cfc4] dark:ring-[#51495d]"
-              />
-            </div>
             <div
               className={`min-w-0 overflow-hidden transition-all duration-300 motion-reduce:transition-none ${collapsed ? "w-0 opacity-0" : "w-44 opacity-100"}`}
             >
               <Link
                 href="/"
-                className="block truncate text-lg font-black text-[#17131d] transition hover:text-[#ff6d3a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff8a3d]/45 dark:text-white dark:hover:text-[#ffb38a]"
+                className="block truncate text-lg font-normal text-[#E0E0E0] capitalize transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#888888]/45"
               >
                 Research Hub
               </Link>
-              <p className="truncate text-xs text-[#786f7f] dark:text-[#aaa4b5]">
+              <p className="truncate text-xs text-[#B0B0B0]">
                 Pipeline and journal control
               </p>
             </div>
             <button
               type="button"
               onClick={() => setCollapsed((value) => !value)}
-              className={`flex h-8 w-8 flex-none items-center justify-center rounded-lg border border-[#d6cfc4] bg-[#f1eee8] text-[#655d6d] shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:border-[#ffb38a] hover:bg-white hover:text-[#17131d] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff8a3d]/45 motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:border-[#51495d] dark:bg-[#1b1724] dark:text-[#d7d1df] dark:shadow-none dark:hover:border-[#ff8a3d]/55 dark:hover:bg-[#282231] dark:hover:text-[#ffb38a] ${
+              className={`flex h-8 w-8 flex-none items-center justify-center border border-[#444444] bg-[#121212] text-[#B0B0B0] transition duration-150 ease-out hover:bg-[#242424] hover:text-[#E0E0E0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#888888]/45 motion-reduce:transition-none ${
                 collapsed ? "absolute right-2 top-6" : "ml-auto"
               }`}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -258,7 +244,7 @@ export function ResearchShell({
           </div>
 
           <nav
-            className={`flex-1 space-y-1.5 transition-all duration-300 motion-reduce:transition-none ${collapsed ? "overflow-visible p-3" : "overflow-y-auto p-3.5"}`}
+            className={`flex-1 transition-all duration-300 motion-reduce:transition-none ${collapsed ? "overflow-visible py-3" : "overflow-y-auto py-3"}`}
           >
             {visibleNavItems.map((item) => (
               <ActiveNavLink
@@ -280,7 +266,7 @@ export function ResearchShell({
         <div
           className={`relative z-10 transition-[padding] duration-300 ease-out ${collapsed ? "lg:pl-20" : "lg:pl-72"}`}
         >
-          <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#ded8cf] bg-[#fbfaf7]/82 px-4 backdrop-blur-xl dark:border-[#332c3d] dark:bg-[#111019]/82 sm:px-8">
+          <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#444444] bg-[#121212]/90 px-4 backdrop-blur-xl sm:px-8">
             <div className="flex min-w-0 items-center gap-2 overflow-x-auto lg:hidden">
               {visibleNavItems.map((item) => (
                 <Link

@@ -215,34 +215,34 @@ export default async function ProjectsDashboard() {
       label: "Total",
       value: projects.length,
       icon: Files,
-      color: "text-slate-600",
+      color: "text-[#888888]",
     },
     {
       label: "Submitted",
       value: submitting.length,
       icon: SendHorizontal,
-      color: "text-blue-600",
+      color: "text-[#888888]",
     },
     {
       label: "Published",
       value: published.length,
       icon: BookOpenCheck,
-      color: "text-emerald-600",
+      color: "text-[#888888]",
     },
     {
       label: "Claims",
       value: claimQueue.length,
       icon: CircleDollarSign,
-      color: "text-amber-600",
+      color: "text-[#888888]",
     },
   ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="overflow-hidden border border-[#d7d2ca] bg-[#fbfaf7] dark:border-[#3d3648] dark:bg-[#14101d]">
+      <div className="overflow-hidden border border-[#444444] bg-[#121212]">
         <div className="flex flex-col xl:flex-row xl:items-stretch xl:justify-between">
           {canManageResearch ? (
-            <div className="grid flex-1 grid-cols-2 divide-x divide-y divide-[#d7d2ca] dark:divide-[#3d3648] sm:grid-cols-4 sm:divide-y-0">
+            <div className="grid flex-1 grid-cols-2 divide-x divide-y divide-[#444444] sm:grid-cols-4 sm:divide-y-0">
               {stats.map((item) => (
                 <div
                   key={item.label}
@@ -250,10 +250,10 @@ export default async function ProjectsDashboard() {
                 >
                   <item.icon className={`h-4 w-4 ${item.color}`} />
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7280] dark:text-[#aaa4b5]">
+                    <p className="text-[11px] font-normal uppercase tracking-wide text-[#B0B0B0]">
                       {item.label}
                     </p>
-                    <p className="text-base font-black text-[#17131d] dark:text-white">
+                    <p className="text-base font-normal text-[#E0E0E0]">
                       {item.value}
                     </p>
                   </div>
@@ -264,7 +264,7 @@ export default async function ProjectsDashboard() {
             <div className="flex-1" />
           )}
 
-          <div className="flex items-center justify-end border-t border-[#d7d2ca] px-4 py-3 dark:border-[#3d3648] xl:border-l xl:border-t-0">
+          <div className="flex items-center justify-end border-t border-[#444444] px-4 py-3 xl:border-l xl:border-t-0">
             {isAdmin ? (
               <NewResearchDialog
                 users={authorOptions}
