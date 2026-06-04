@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   ArrowLeft,
   BadgeCheck,
@@ -414,6 +414,7 @@ export default async function OrganizedProjectDetailPage({
   const { id } = await params;
   const session = await auth();
   const currentUserId = (session?.user as { id?: string } | undefined)?.id;
+  if (!session || !currentUserId) redirect("/login");
   const currentRoles = ((session?.user as { roles?: Role[] } | undefined)
     ?.roles ?? []) as Role[];
   const [project, users, researchOptions, fundingInstitutions] =
@@ -421,6 +422,7 @@ export default async function OrganizedProjectDetailPage({
       prisma.organizedProject.findUnique({
         where: { id },
         include: {
+          createdBy: { select: { id: true } },
           fundingInstitution: true,
           members: {
             include: { user: true },
@@ -527,6 +529,12 @@ export default async function OrganizedProjectDetailPage({
     project.members.some(
       (member) => member.userId === currentUserId && member.isTeamLead,
     );
+  const canViewProject =
+    currentRoles.includes(Role.ADMIN) ||
+    project.createdBy?.id === currentUserId ||
+    project.members.some((member) => member.userId === currentUserId) ||
+    Boolean(assignedResearchEditTask);
+  if (!canViewProject) notFound();
   const canEditResearchAssociated =
     canEditProject || Boolean(assignedResearchEditTask);
   const mappedResearchOptions = researchOptions.map((research) => ({

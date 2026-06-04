@@ -14,6 +14,7 @@ import { ActiveNavLink } from "../../../components/ActiveNavLink";
 import { ProfileMenu } from "../../../components/ProfileMenu";
 import { SidebarSupportCard } from "../../../components/SidebarSupportCard";
 import { ThemeToggle } from "../../../components/ThemeToggle";
+import { VantaNetBackgroundClient } from "../../../components/VantaNetBackgroundClient";
 import { ResearchNotificationBell } from "./ResearchNotificationBell";
 import { ResearchToastProvider } from "./components/ResearchToast";
 import { ScrollToTopButton } from "./components/ScrollToTopButton";
@@ -193,9 +194,11 @@ export function ResearchShell({
 
   return (
     <ResearchToastProvider>
-      <div className="research-site-root min-h-screen bg-[#f6f4ef] text-[#201c25] dark:bg-[#090611] dark:text-white">
+      <div className="research-site-root relative min-h-screen overflow-x-hidden bg-[#f6f4ef] text-[#201c25] dark:bg-[#090611] dark:text-white">
+        <VantaNetBackgroundClient className="pointer-events-none fixed inset-0 z-0 opacity-45 dark:opacity-55" />
+        <div className="pointer-events-none fixed inset-0 z-0 bg-[#f6f4ef]/72 dark:bg-[#050313]/70" />
         <aside
-          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#ded8cf] bg-[#fbfaf7]/94 shadow-[10px_0_34px_rgba(32,28,37,0.07)] backdrop-blur-xl transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none dark:border-[#2f2938] dark:bg-[#111019]/96 dark:shadow-black/35 ${
+          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#ded8cf] bg-[#fbfaf7]/90 shadow-[10px_0_34px_rgba(32,28,37,0.07)] backdrop-blur-xl transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none dark:border-[#2f2938] dark:bg-[#111019]/90 dark:shadow-black/35 ${
             collapsed ? "w-20" : "w-72"
           }`}
         >
@@ -266,7 +269,7 @@ export function ResearchShell({
         </aside>
 
         <div
-          className={`transition-[padding] duration-300 ease-out ${collapsed ? "lg:pl-20" : "lg:pl-72"}`}
+          className={`relative z-10 transition-[padding] duration-300 ease-out ${collapsed ? "lg:pl-20" : "lg:pl-72"}`}
         >
           <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#ded8cf] bg-[#fbfaf7]/82 px-4 backdrop-blur-xl dark:border-[#332c3d] dark:bg-[#111019]/82 sm:px-8">
             <div className="flex min-w-0 items-center gap-2 overflow-x-auto lg:hidden">

@@ -110,7 +110,7 @@ export default auth((req) => {
   }
 
   if (currentHost === "research") {
-    if (url.pathname === "/" && !isLoggedIn) {
+    if (url.pathname === "/") {
       return NextResponse.redirect(new URL("/login?callbackUrl=%2F", req.url));
     }
 
