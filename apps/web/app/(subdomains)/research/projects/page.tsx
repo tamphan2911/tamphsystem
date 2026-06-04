@@ -225,48 +225,48 @@ export default async function ProjectsDashboard() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
-        <div className="flex flex-col xl:flex-row xl:items-stretch xl:justify-between">
-          {canManageResearch ? (
-            <div className="flex flex-1 flex-wrap items-center gap-2 p-3">
-              {stats.map((item) => (
-                <div
-                  key={item.label}
-                  className="min-w-28 border border-[#444444] bg-[#383838] px-3 py-2 text-sm text-[#E4E4E4]"
-                >
-                  <span className="font-normal text-[#B0B0B0]">
-                    {item.label}:{" "}
-                  </span>
-                  <span className="font-normal text-[#E4E4E4]">
-                    {item.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex-1" />
-          )}
-
-          <div className="flex items-center justify-end border-t border-[#444444] px-4 py-3 xl:border-l xl:border-t-0">
-            {isAdmin ? (
-              <NewResearchDialog
-                users={authorOptions}
-                isAdmin={isAdmin}
-                fundingInstitutions={fundingInstitutions.map((institution) => ({
-                  id: institution.id,
-                  name: institution.name,
-                  shortName: institution.shortName ?? "",
-                  country: institution.country ?? "",
-                }))}
-              />
-            ) : (
-              <ProposalDialog
-                type="RESEARCH"
-                isLoggedIn={Boolean(session)}
-                hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
-              />
-            )}
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        {canManageResearch ? (
+          <div className="grid w-full border border-[#444444] bg-[#2C2C2C] sm:w-auto sm:grid-cols-4">
+            {stats.map((item, index) => (
+              <div
+                key={item.label}
+                className={`px-3 py-2 text-sm text-[#E4E4E4] ${
+                  index > 0
+                    ? "border-t border-[#444444] sm:border-l sm:border-t-0"
+                    : ""
+                }`}
+              >
+                <span className="font-normal text-[#B0B0B0]">
+                  {item.label}:{" "}
+                </span>
+                <span className="font-normal text-[#E4E4E4]">{item.value}</span>
+              </div>
+            ))}
           </div>
+        ) : (
+          <div className="flex-1" />
+        )}
+
+        <div className="flex items-center justify-end">
+          {isAdmin ? (
+            <NewResearchDialog
+              users={authorOptions}
+              isAdmin={isAdmin}
+              fundingInstitutions={fundingInstitutions.map((institution) => ({
+                id: institution.id,
+                name: institution.name,
+                shortName: institution.shortName ?? "",
+                country: institution.country ?? "",
+              }))}
+            />
+          ) : (
+            <ProposalDialog
+              type="RESEARCH"
+              isLoggedIn={Boolean(session)}
+              hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
+            />
+          )}
         </div>
       </div>
 
