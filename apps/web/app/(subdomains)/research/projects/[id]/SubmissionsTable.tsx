@@ -239,7 +239,8 @@ function claimClass(claim: string) {
   if (claim === "WAITING" || claim === "WAITING_PUBLISH")
     return "text-[#FFC1CC]";
   if (claim === "MAKING_DOCUMENT") return "text-[#B39CD0]";
-  return "text-[#B0B0B0]";
+  if (claim === "CANNOT_CLAIM") return "text-rose-300";
+  return "text-[#FFC1CC]";
 }
 
 function claimIcon(claim: string) {
@@ -262,7 +263,7 @@ function registrationClass(status: string) {
   if (status === "APPROVED") return "text-[#A8DADC]";
   if (status === "SUBMITTED") return "text-[#B39CD0]";
   if (status === "PREPARING") return "text-[#FFC1CC]";
-  return "text-[#B0B0B0]";
+  return "text-rose-300";
 }
 
 function registrationIcon(status: string) {

@@ -93,7 +93,7 @@ function financialClaimMeta(status: string) {
     return {
       label: "None",
       icon: CircleOff,
-      className: "text-[#B0B0B0]",
+      className: "text-rose-300",
     };
   }
   if (status === "ADVANCED") {
@@ -120,7 +120,7 @@ function financialClaimMeta(status: string) {
   return {
     label: "Not advanced",
     icon: CircleDollarSign,
-    className: "text-[#B0B0B0]",
+    className: "text-[#FFC1CC]",
   };
 }
 

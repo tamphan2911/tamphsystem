@@ -56,8 +56,8 @@ function statusClass(status: string) {
   if (status === "SUBMITTED") return "text-[#A8DADC]";
   if (status === "IN_PROGRESS") return "text-[#B39CD0]";
   if (status === "ACCEPTED") return "text-[#FFC1CC]";
-  if (status === "CANCELLED") return "text-[#B0B0B0]";
-  return "text-[#B0B0B0]";
+  if (status === "CANCELLED") return "text-rose-300";
+  return "text-[#FFC1CC]";
 }
 
 function statusIcon(status: string) {

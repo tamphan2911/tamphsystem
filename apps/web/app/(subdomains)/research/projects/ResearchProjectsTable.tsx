@@ -77,7 +77,7 @@ function stageLabel(stage: string) {
 function statusClass(stage: string) {
   if (stage === "PUBLISHED" || stage === "ACCEPTED") return "text-[#A8DADC]";
   if (stage === "REVIEW" || stage === "SUBMITTING") return "text-[#B39CD0]";
-  return "text-[#B0B0B0]";
+  return "text-[#FFC1CC]";
 }
 
 function stageIcon(stage: string) {
@@ -102,7 +102,8 @@ function claimClass(claim: string) {
   if (claim === "WAITING" || claim === "WAITING_PUBLISH")
     return "text-[#FFC1CC]";
   if (claim === "MAKING_DOCUMENT") return "text-[#B39CD0]";
-  return "text-[#B0B0B0]";
+  if (claim === "CANNOT_CLAIM") return "text-rose-300";
+  return "text-[#FFC1CC]";
 }
 
 function claimIcon(claim: string) {
@@ -125,7 +126,7 @@ function registrationClass(status: string) {
   if (status === "APPROVED" || status === "SUBMITTED")
     return status === "APPROVED" ? "text-[#A8DADC]" : "text-[#B39CD0]";
   if (status === "PREPARING") return "text-[#FFC1CC]";
-  return "text-[#B0B0B0]";
+  return "text-rose-300";
 }
 
 function registrationIcon(status: string) {
