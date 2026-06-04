@@ -11,10 +11,10 @@ export function cx(...classes: Array<string | false | null | undefined>) {
 }
 
 export const researchFieldClass =
-  "h-12 w-full rounded-none border border-[#D1D5DB] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#B0B0B0] hover:border-[#E5E7EB] hover:bg-[#383838] focus:border-[#E5E7EB] focus:bg-[#383838] focus:ring-2 focus:ring-[#E5E7EB]/20 disabled:cursor-not-allowed disabled:border-[#6B7280] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
+  "h-12 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#5A5A5A] focus:bg-[#383838] focus:ring-2 focus:ring-[#5A5A5A]/25 disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
 
 export const researchTextareaClass =
-  "min-h-28 w-full rounded-none border border-[#D1D5DB] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#B0B0B0] hover:border-[#E5E7EB] hover:bg-[#383838] focus:border-[#E5E7EB] focus:bg-[#383838] focus:ring-2 focus:ring-[#E5E7EB]/20 disabled:cursor-not-allowed disabled:border-[#6B7280] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
+  "min-h-28 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#5A5A5A] focus:bg-[#383838] focus:ring-2 focus:ring-[#5A5A5A]/25 disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
 
 export const researchLabelClass =
   "grid gap-1.5 text-sm font-normal text-[#E4E4E4]";

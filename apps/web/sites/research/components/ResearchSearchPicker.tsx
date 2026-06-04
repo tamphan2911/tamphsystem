@@ -83,7 +83,7 @@ export function ResearchSearchPicker<T = unknown>({
     >
       {label}
       {name && <input type="hidden" name={name} value={selected?.id ?? ""} />}
-      <div className="relative rounded-none border border-[#D1D5DB] bg-[#2C2C2C] p-1 transition duration-150 ease-out hover:border-[#E5E7EB] hover:bg-[#383838] focus-within:border-[#E5E7EB] focus-within:bg-[#383838] focus-within:ring-2 focus-within:ring-[#E5E7EB]/20">
+      <div className="relative rounded-none border border-[#444444] bg-[#2C2C2C] p-1 transition duration-150 ease-out hover:border-[#5A5A5A] hover:bg-[#383838] focus-within:border-[#5A5A5A] focus-within:bg-[#383838] focus-within:ring-2 focus-within:ring-[#5A5A5A]/25">
         {selected ? (
           <div className="flex min-h-10 items-center gap-2 rounded-none bg-[#383838] px-2.5 shadow-sm shadow-black/10">
             {renderSelected ? (
@@ -154,7 +154,7 @@ export function ResearchSearchPicker<T = unknown>({
         )}
 
         {showDropdown && (
-          <div className="research-dropdown-panel absolute left-0 right-0 top-full z-[160] mt-2 overflow-hidden rounded-none border border-[#D1D5DB] bg-[#2C2C2C] p-2 shadow-2xl shadow-black/35">
+          <div className="research-dropdown-panel absolute left-0 right-0 top-full z-[160] mt-2 overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] p-2 shadow-2xl shadow-black/35">
             <div className="max-h-72 overflow-y-auto pr-0.5" role="listbox">
               {options.length > 0 ? (
                 options.map((option, index) => {
@@ -172,7 +172,7 @@ export function ResearchSearchPicker<T = unknown>({
                       onClick={() => choose(option)}
                       className={`flex w-full items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-left transition duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none ${
                         isActive || isSelected
-                          ? "border-[#E5E7EB] bg-[#383838] text-[#E4E4E4]"
+                          ? "border-[#5A5A5A] bg-[#383838] text-[#E4E4E4]"
                           : "border-transparent text-[#B0B0B0] hover:bg-[#444444] hover:text-white"
                       }`}
                     >

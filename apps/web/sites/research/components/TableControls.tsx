@@ -93,8 +93,8 @@ export function FilterSelect({
         className={cx(
           "group inline-flex h-10 w-full cursor-pointer items-center justify-between gap-3 rounded-none border px-3 text-sm font-semibold outline-none transition-colors duration-150 focus:ring-2 motion-reduce:transition-none",
           open
-            ? "border-[#E5E7EB] bg-[#383838] text-[#E4E4E4] ring-[#E5E7EB]/20"
-            : "border-[#D1D5DB] bg-[#2C2C2C] text-[#E4E4E4] hover:border-[#E5E7EB] hover:bg-[#383838] hover:text-white focus:border-[#E5E7EB] focus:ring-[#E5E7EB]/20",
+            ? "border-[#5A5A5A] bg-[#383838] text-[#E4E4E4] ring-[#5A5A5A]/25"
+            : "border-[#444444] bg-[#2C2C2C] text-[#E4E4E4] hover:border-[#5A5A5A] hover:bg-[#383838] hover:text-white focus:border-[#5A5A5A] focus:ring-[#5A5A5A]/25",
         )}
       >
         <span className="min-w-0 truncate text-left leading-5">
@@ -107,7 +107,7 @@ export function FilterSelect({
       </button>
 
       {open && (
-        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-1.5 w-max min-w-full max-w-[min(36rem,calc(100vw-2rem))] overflow-hidden rounded-none border border-[#D1D5DB] bg-[#2C2C2C] p-1 shadow-xl shadow-black/40">
+        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-1.5 w-max min-w-full max-w-[min(36rem,calc(100vw-2rem))] overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] p-1 shadow-xl shadow-black/40">
           <div
             className="max-h-80 overflow-y-auto pr-0.5"
             role="listbox"
@@ -128,7 +128,7 @@ export function FilterSelect({
                   }}
                   className={`flex w-full items-start justify-between gap-3 rounded-none px-3 py-2.5 text-left text-sm leading-5 transition-colors duration-150 motion-reduce:transition-none ${
                     isSelected
-                      ? "bg-[#383838] font-normal text-[#E4E4E4] ring-1 ring-[#E5E7EB]"
+                      ? "bg-[#383838] font-normal text-[#E4E4E4] ring-1 ring-[#5A5A5A]"
                       : "text-[#B0B0B0] hover:bg-[#444444] hover:text-white"
                   }`}
                 >

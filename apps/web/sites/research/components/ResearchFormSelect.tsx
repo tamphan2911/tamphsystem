@@ -66,13 +66,13 @@ export function ResearchFormSelect({
       >
         <span className="min-w-0 truncate text-left">{selected?.label}</span>
         <ChevronDown
-          className={`h-4 w-4 flex-none text-[#B0B0B0] transition duration-200 ease-out group-hover:text-[#E5E7EB] motion-reduce:transition-none ${open ? "rotate-180 text-[#E5E7EB]" : ""}`}
+          className={`h-4 w-4 flex-none text-[#B0B0B0] transition duration-200 ease-out group-hover:text-[#E4E4E4] motion-reduce:transition-none ${open ? "rotate-180 text-[#E4E4E4]" : ""}`}
           aria-hidden="true"
         />
       </button>
 
       {open && (
-        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-2 w-max min-w-full max-w-[min(30rem,calc(100vw-2rem))] overflow-hidden rounded-none border border-[#D1D5DB] bg-[#2C2C2C] p-2 shadow-2xl shadow-black/35">
+        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-2 w-max min-w-full max-w-[min(30rem,calc(100vw-2rem))] overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] p-2 shadow-2xl shadow-black/35">
           <div
             className="max-h-72 overflow-y-auto pr-0.5"
             role="listbox"
@@ -94,7 +94,7 @@ export function ResearchFormSelect({
                   }}
                   className={`flex w-full items-start justify-between gap-3 rounded-none px-3 py-2.5 text-left text-sm leading-5 transition duration-150 ease-out motion-reduce:transition-none ${
                     isSelected
-                      ? "bg-[#383838] font-normal text-[#E4E4E4] ring-1 ring-[#E5E7EB]"
+                      ? "bg-[#383838] font-normal text-[#E4E4E4] ring-1 ring-[#5A5A5A]"
                       : "text-[#B0B0B0] hover:bg-[#444444] hover:text-white"
                   }`}
                 >
