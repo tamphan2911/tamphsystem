@@ -882,10 +882,45 @@ textarea:focus-visible {
 }
 
 .research-site-root tbody tr {
+  --research-row-bg: rgba(255, 255, 255, 0.46);
+  --research-row-line: rgba(203, 213, 225, 0.72);
+  background-color: var(--research-row-bg);
   transition:
     background-color 180ms ease,
     box-shadow 180ms ease,
     transform 180ms ease;
+}
+
+.research-site-root tbody tr:nth-child(even) {
+  --research-row-bg: rgba(248, 250, 252, 0.78);
+}
+
+.dark .research-site-root tbody tr {
+  --research-row-bg: rgba(15, 23, 42, 0.32);
+  --research-row-line: rgba(71, 85, 105, 0.56);
+}
+
+.dark .research-site-root tbody tr:nth-child(even) {
+  --research-row-bg: rgba(30, 41, 59, 0.34);
+}
+
+.research-site-root tbody tr > :where(td) {
+  background-color: var(--research-row-bg);
+  border-top: 1px solid var(--research-row-line);
+}
+
+.research-site-root tbody tr:first-child > :where(td) {
+  border-top-color: transparent;
+}
+
+.research-site-root tbody tr[class*="bg-rose"] {
+  --research-row-bg: rgba(255, 241, 242, 0.82);
+  --research-row-line: rgba(254, 205, 211, 0.82);
+}
+
+.dark .research-site-root tbody tr[class*="bg-rose"] {
+  --research-row-bg: rgba(76, 5, 25, 0.26);
+  --research-row-line: rgba(159, 18, 57, 0.38);
 }
 
 .research-site-root tbody tr:hover {
