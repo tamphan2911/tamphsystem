@@ -23,31 +23,19 @@ export function HeroSearchBox({
     return (
       <form onSubmit={handleSearch} className="relative w-full">
         <div className="group relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5 sm:pl-6">
-            <Search className="h-5 w-5 text-[#bdb7c7] transition-colors duration-300 group-focus-within:text-[#ff8a3d]" />
-          </div>
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search courses, skills, or topics"
-            className="block h-16 w-full rounded-lg border border-[#4d4659] bg-[#100b19]/95 py-4 pl-12 pr-16 text-base text-white shadow-2xl shadow-black/35 outline-none transition-all duration-300 placeholder:text-[#7f778c] focus:border-[#ff8a3d] focus:ring-4 focus:ring-[#ff8a3d]/15 sm:h-18 sm:pr-40 sm:text-lg"
+            placeholder="Search courses, skills, topics..."
+            className="block h-16 w-full rounded-lg border border-[#5a4050] bg-[#4a2d3f]/85 py-4 pl-6 pr-16 text-lg text-white shadow-2xl shadow-black/25 outline-none transition-all duration-300 placeholder:text-[#b5a9b4] focus:border-[#7a5364] focus:bg-[#573244]/90 focus:ring-4 focus:ring-[#ff8a3d]/10"
           />
-          <div className="absolute inset-y-2 right-2 hidden sm:block">
-            <button
-              type="submit"
-              className="inline-flex h-full items-center gap-2 rounded-lg bg-gradient-to-r from-[#ff8a3d] to-[#ff3f2e] px-7 text-sm font-bold text-white shadow-md shadow-[#ff8a3d]/20 transition hover:-translate-y-0.5"
-            >
-              Search
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
           <button
             type="submit"
-            className="absolute right-2 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-lg bg-gradient-to-r from-[#ff8a3d] to-[#ff3f2e] text-white shadow-md shadow-[#ff8a3d]/20 transition hover:-translate-y-0.5 sm:hidden"
+            className="absolute right-5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-[#c9bec8] transition hover:text-white"
             aria-label="Search courses"
           >
-            <ArrowRight className="h-5 w-5" />
+            <Search className="h-7 w-7" />
           </button>
         </div>
       </form>
