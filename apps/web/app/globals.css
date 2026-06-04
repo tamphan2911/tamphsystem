@@ -810,7 +810,10 @@ textarea:focus-visible {
 }
 
 .research-site-root .fixed.inset-0 [class*="modalPanelIn_"] {
+  background: #2c2c2c !important;
+  border-color: #444444 !important;
   border-radius: 0;
+  color: #e4e4e4;
   box-shadow:
     0 24px 70px rgba(0, 0, 0, 0.38),
     0 1px 0 rgba(255, 255, 255, 0.05) inset;
@@ -818,9 +821,27 @@ textarea:focus-visible {
 }
 
 .dark .research-site-root .fixed.inset-0 [class*="modalPanelIn_"] {
+  background: #2c2c2c !important;
+  border-color: #444444 !important;
   box-shadow:
     0 28px 82px rgba(0, 0, 0, 0.58),
     0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+.research-site-root .fixed.inset-0 [class*="modalPanelIn_"] :where(h2, h3) {
+  color: #e4e4e4 !important;
+  font-weight: 400 !important;
+}
+
+.research-site-root .fixed.inset-0 [class*="modalPanelIn_"] :where(p, label) {
+  color: #b0b0b0;
+}
+
+.research-site-root
+  .fixed.inset-0
+  [class*="modalPanelIn_"]
+  :where([class*="border-slate"], [class*="border-b"], [class*="border-t"]) {
+  border-color: #444444 !important;
 }
 
 .research-site-root .fixed.inset-0 .absolute.top-full {
