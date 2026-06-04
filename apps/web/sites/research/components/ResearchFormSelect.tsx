@@ -66,13 +66,13 @@ export function ResearchFormSelect({
       >
         <span className="min-w-0 truncate text-left">{selected?.label}</span>
         <ChevronDown
-          className={`h-4 w-4 flex-none text-[#B0B0B0] transition duration-200 ease-out group-hover:text-[#A8DADC] motion-reduce:transition-none ${open ? "rotate-180 text-[#A8DADC]" : ""}`}
+          className={`h-4 w-4 flex-none text-slate-400 transition duration-200 ease-out group-hover:text-slate-600 motion-reduce:transition-none dark:group-hover:text-slate-300 ${open ? "rotate-180" : ""}`}
           aria-hidden="true"
         />
       </button>
 
       {open && (
-        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-2 w-max min-w-full max-w-[min(30rem,calc(100vw-2rem))] overflow-hidden rounded-none border border-[#A8DADC] bg-[#2C2C2C] p-2 shadow-2xl shadow-black/35">
+        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-2 w-max min-w-full max-w-[min(30rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-900/[0.03] dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35 dark:ring-white/[0.04]">
           <div
             className="max-h-72 overflow-y-auto pr-0.5"
             role="listbox"
@@ -92,10 +92,10 @@ export function ResearchFormSelect({
                     onValueChange?.(option.value);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-start justify-between gap-3 rounded-none px-3 py-2.5 text-left text-sm leading-5 transition duration-150 ease-out motion-reduce:transition-none ${
+                  className={`flex w-full items-start justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm leading-5 transition duration-150 ease-out motion-reduce:transition-none ${
                     isSelected
-                      ? "bg-[#383838] font-normal text-[#E4E4E4] ring-1 ring-[#A8DADC]"
-                      : "text-[#B0B0B0] hover:bg-[#444444] hover:text-white"
+                      ? "bg-blue-50 font-semibold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900"
+                      : "text-slate-700 hover:translate-x-0.5 hover:bg-slate-50 hover:text-blue-700 motion-reduce:hover:translate-x-0 dark:text-slate-200 dark:hover:bg-slate-800/80 dark:hover:text-blue-200"
                   }`}
                 >
                   <span className="min-w-0 flex-1 whitespace-normal break-words">

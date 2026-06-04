@@ -75,11 +75,15 @@ function stageLabel(stage: string) {
 }
 
 function statusClass(stage: string) {
-  if (stage === "PUBLISHED" || stage === "ACCEPTED")
-    return "bg-[#3A3A3A] text-[#E4E4E4] ring-[#A8DADC]";
-  if (stage === "REVIEW" || stage === "SUBMITTING")
-    return "bg-[#202020] text-[#E4E4E4] ring-[#666666]";
-  return "bg-[#383838] text-[#B0B0B0] ring-[#444444]";
+  if (stage === "PUBLISHED")
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (stage === "ACCEPTED")
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (stage === "REVIEW")
+    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  if (stage === "SUBMITTING")
+    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
 }
 
 function stageIcon(stage: string) {
@@ -100,12 +104,15 @@ function claimLabel(claim: string) {
 }
 
 function claimClass(claim: string) {
-  if (claim === "CLAIMED") return "bg-[#3A3A3A] text-[#E4E4E4] ring-[#A8DADC]";
-  if (claim === "WAITING" || claim === "WAITING_PUBLISH")
-    return "bg-[#202020] text-[#E4E4E4] ring-[#666666]";
+  if (claim === "CLAIMED")
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (claim === "WAITING")
+    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  if (claim === "WAITING_PUBLISH")
+    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
   if (claim === "MAKING_DOCUMENT")
-    return "bg-[#202020] text-[#B0B0B0] ring-[#666666]";
-  return "bg-[#383838] text-[#B0B0B0] ring-[#444444]";
+    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  return "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
 }
 
 function claimIcon(claim: string) {
@@ -125,11 +132,13 @@ function registrationLabel(status: string) {
 }
 
 function registrationClass(status: string) {
-  if (status === "APPROVED" || status === "SUBMITTED")
-    return "bg-[#3A3A3A] text-[#E4E4E4] ring-[#A8DADC]";
+  if (status === "APPROVED")
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  if (status === "SUBMITTED")
+    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
   if (status === "PREPARING")
-    return "bg-[#202020] text-[#E4E4E4] ring-[#666666]";
-  return "bg-[#383838] text-[#B0B0B0] ring-[#444444]";
+    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  return "bg-rose-50 text-rose-600 ring-rose-100 dark:bg-rose-950/35 dark:text-rose-300 dark:ring-rose-900/70";
 }
 
 function registrationIcon(status: string) {
@@ -151,7 +160,7 @@ function StatusIconChip({
   return (
     <IconHint label={label}>
       <span
-          className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 transition-colors duration-150 ${className}`}
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-[2px] ring-1 transition-colors duration-150 ${className}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
@@ -182,7 +191,7 @@ function RegistrationCell({
     <div className="grid max-w-56 grid-cols-[2rem_minmax(0,1fr)] items-start gap-2">
       <IconHint label={registerLine}>
         <span
-          className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-none ring-1 transition-colors duration-150 ${registrationClass(status)}`}
+          className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-[2px] ring-1 transition-colors duration-150 ${registrationClass(status)}`}
         >
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
@@ -191,12 +200,12 @@ function RegistrationCell({
         className={`min-w-0 ${showDetail ? "" : "flex min-h-8 items-center"}`}
       >
         {showDetail && (
-          <p className="truncate text-sm font-normal text-[#E4E4E4]">
+          <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
             {detail}
           </p>
         )}
         <p
-          className={`${showDetail ? "mt-0.5" : ""} text-[11px] font-normal uppercase tracking-wide text-[#B0B0B0]`}
+          className={`${showDetail ? "mt-0.5" : ""} text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500`}
         >
           {registerLine}
         </p>
@@ -214,15 +223,15 @@ function SubmitCount({ count }: { count: number }) {
       ? `${count} submissions, high submission count`
       : `${count} submissions`;
   const className = isZero
-    ? "bg-[#383838] text-[#A8DADC] ring-[#444444]"
+    ? "bg-rose-50 text-rose-500 ring-rose-100 dark:bg-rose-950/35 dark:text-rose-300 dark:ring-rose-900/70"
     : isHigh
-      ? "bg-[#3A3A3A] text-[#E4E4E4] ring-[#A8DADC]"
-      : "bg-[#202020] text-[#E4E4E4] ring-[#666666]";
+      ? "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900"
+      : "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700";
 
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-none px-2 text-sm font-normal ring-1 transition-colors duration-150 ${className}`}
+        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-[2px] px-2 text-sm font-semibold ring-1 transition-colors duration-150 ${className}`}
       >
         {count}
         <span className="sr-only">{label}</span>
@@ -350,8 +359,8 @@ export function ResearchProjectsTable({
   const pagination = useTablePagination(filtered, 10);
 
   return (
-    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
-      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+    <div className="overflow-hidden rounded-[2px] border border-[#d7d2ca] bg-[#fbfaf7] dark:border-[#3d3648] dark:bg-[#111019]">
+      <div className="flex flex-col gap-3 border-b border-[#d7d2ca] bg-[#f1eee8] p-3 dark:border-[#3d3648] dark:bg-[#14101d] lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -387,7 +396,7 @@ export function ResearchProjectsTable({
 
       <div className="overflow-hidden">
         <table className="w-full table-fixed text-left">
-          <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
+          <thead className="border-b border-[#d7d2ca] bg-[#e8e2d8] text-xs uppercase tracking-wide text-[#5d5665] dark:border-[#3d3648] dark:bg-[#1b1724] dark:text-[#aaa4b5]">
             <tr>
               <th className="w-[5.75rem] px-3 py-3">ID</th>
               <th className="px-3 py-3">Research</th>
@@ -404,25 +413,25 @@ export function ResearchProjectsTable({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#444444]">
+          <tbody className="divide-y divide-[#e4ded5] dark:divide-[#2f2938]">
             {pagination.pagedRows.map((row) => (
               <tr
                 key={row.id}
-                className="group align-top transition-colors duration-150 hover:bg-[#383838]"
+                className="group align-top transition-colors duration-150 hover:bg-[#f4f0e8] dark:hover:bg-[#17131d]"
               >
                 <td className="px-3 py-3 align-top">
                   <Link href={`/projects/${row.id}`}>
-                    <span className="font-mono text-xs font-normal text-[#B0B0B0] transition hover:text-[#E4E4E4]">
+                    <span className="font-mono text-xs font-bold text-[#655d6d] transition hover:text-[#11604f] dark:text-[#aaa4b5] dark:hover:text-[#b7f3e2]">
                       {row.researchCode || "-"}
                     </span>
                   </Link>
                 </td>
                 <td className="min-w-0 px-3 py-3 align-top">
                   <Link href={`/projects/${row.id}`} className="group">
-                    <p className="line-clamp-2 text-base font-normal text-[#E4E4E4] transition group-hover:text-white">
+                    <p className="line-clamp-2 text-base font-normal text-[#2d2833] transition group-hover:text-[#11604f] dark:text-[#eee8f5] dark:group-hover:text-[#b7f3e2]">
                       {row.title}
                     </p>
-                    <p className="mt-1 line-clamp-1 text-xs text-[#B0B0B0]">
+                    <p className="mt-1 line-clamp-1 text-xs text-[#655d6d] dark:text-[#aaa4b5]">
                       {row.coAuthors || row.abstract || "No notes"}
                     </p>
                   </Link>
