@@ -2,14 +2,19 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   BellRing,
   CheckCircle2,
   ExternalLink,
   Mail,
   MailOpen,
+  Trash2,
 } from "lucide-react";
+import { ResearchConfirmDialog } from "../components/ResearchConfirmDialog";
+import { ResearchIconButton } from "../components/ResearchPrimitives";
 import { ResearchEmptyState } from "../components/ResearchState";
+import { useResearchToast } from "../components/ResearchToast";
 import {
   FilterSelect,
   TablePagination,
@@ -58,10 +63,78 @@ function typeClass(type: string) {
   return "bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
 }
 
+function DeleteNotificationButton({
+  notification,
+  deleteNotificationAction,
+}: {
+  notification: NotificationManagementRow;
+  deleteNotificationAction: (notificationId: string) => Promise<void>;
+}) {
+  const router = useRouter();
+  const toast = useResearchToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  return (
+    <>
+      <ResearchIconButton
+        type="button"
+        onClick={() => setIsOpen(true)}
+        label={`Delete notification: ${notification.title}`}
+        tone="rose"
+      >
+        <Trash2 className="h-4 w-4" />
+      </ResearchIconButton>
+
+      <ResearchConfirmDialog
+        open={isOpen}
+        title="Delete this notification?"
+        description={`This will remove the notification for ${notification.recipientName || notification.recipientEmail}.`}
+        confirmLabel={isDeleting ? "Deleting..." : "Delete notification"}
+        isConfirming={isDeleting}
+        onCancel={() => setIsOpen(false)}
+        onConfirm={async () => {
+          setIsDeleting(true);
+          try {
+            await deleteNotificationAction(notification.id);
+            setIsOpen(false);
+            router.refresh();
+            toast.showSuccess({
+              title: "Notification deleted",
+              detail: `"${notification.title}" was removed from ${notification.recipientName || notification.recipientEmail}'s notification list.`,
+            });
+          } catch (error) {
+            toast.showError({
+              title: "Could not delete notification",
+              detail:
+                error instanceof Error
+                  ? error.message
+                  : "The notification was not removed. Please refresh the page and try again.",
+            });
+          } finally {
+            setIsDeleting(false);
+          }
+        }}
+      >
+        <p>
+          This deletes only the notification record. It does not delete the
+          related task, research, project, submission, or account data.
+        </p>
+        <p>
+          The recipient will no longer see this item in the notification center
+          or unread notification list.
+        </p>
+      </ResearchConfirmDialog>
+    </>
+  );
+}
+
 export function NotificationsTable({
   rows,
+  deleteNotificationAction,
 }: {
   rows: NotificationManagementRow[];
+  deleteNotificationAction: (notificationId: string) => Promise<void>;
 }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("ALL");
@@ -175,7 +248,7 @@ export function NotificationsTable({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[82rem] text-left">
+        <table className="w-full min-w-[88rem] text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <tr>
               <th className="sticky left-0 z-20 w-[25rem] bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
@@ -187,6 +260,7 @@ export function NotificationsTable({
               <th className="w-[12rem] px-3 py-3">Entity</th>
               <th className="w-[8rem] px-3 py-3">Date</th>
               <th className="w-[5rem] px-2 py-3 text-center">Link</th>
+              <th className="w-[5rem] px-2 py-3 text-center">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -268,11 +342,17 @@ export function NotificationsTable({
                     <CheckCircle2 className="mx-auto h-4 w-4 text-slate-300 dark:text-slate-600" />
                   )}
                 </td>
+                <td className="px-2 py-3 text-center">
+                  <DeleteNotificationButton
+                    notification={notification}
+                    deleteNotificationAction={deleteNotificationAction}
+                  />
+                </td>
               </tr>
             ))}
             {pagination.total === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-2">
+                <td colSpan={8} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No notifications match the current search."
                     detail="Try another recipient, notification type, entity, or read status."

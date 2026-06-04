@@ -10,6 +10,7 @@ import {
   NotificationsTable,
   type NotificationManagementRow,
 } from "./NotificationsTable";
+import { deleteResearchNotification } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -126,6 +127,7 @@ export default async function ResearchNotificationsPage() {
 
         <NotificationsTable
           rows={rows.sort((a, b) => b.createdAtSort - a.createdAtSort)}
+          deleteNotificationAction={deleteResearchNotification}
         />
       </div>
     );

@@ -3186,6 +3186,17 @@ export async function deleteResearchTask(taskId: string) {
   if (task.reviewId) revalidatePath(`/reviews/${task.reviewId}`);
 }
 
+export async function deleteResearchNotification(notificationId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.researchNotification.delete({
+    where: { id: notificationId },
+  });
+
+  revalidatePath("/notifications");
+}
+
 export async function updateSubmissionStatus(formData: FormData) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
@@ -4771,15 +4782,13 @@ export async function sendResearchAuthorNotification(
   }
 
   const mergedResults = Array.from(mergedByEmail.values());
-  const complete = authors.every(
-    (author) => {
-      const result = mergedByEmail.get(author.email.toLowerCase());
-      return (
-        result?.status === "sent" ||
-        Boolean(result && isSenderMailboxSkip(result))
-      );
-    },
-  );
+  const complete = authors.every((author) => {
+    const result = mergedByEmail.get(author.email.toLowerCase());
+    return (
+      result?.status === "sent" ||
+      Boolean(result && isSenderMailboxSkip(result))
+    );
+  });
 
   if (existing) {
     await prisma.researchAuthorNotification.update({
