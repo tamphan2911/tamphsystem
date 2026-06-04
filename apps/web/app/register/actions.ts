@@ -31,6 +31,38 @@ function appBaseUrl(host: string | null) {
   return process.env.NEXT_PUBLIC_APP_URL || "https://tamph.com";
 }
 
+function hostFromHeaders(requestHeaders: Headers) {
+  const forwardedHost = requestHeaders.get("x-forwarded-host");
+  if (forwardedHost) return forwardedHost.split(",")[0]?.trim() ?? null;
+
+  const host = requestHeaders.get("host");
+  if (host) return host;
+
+  const referer = requestHeaders.get("referer");
+  if (!referer) return null;
+
+  try {
+    return new URL(referer).host;
+  } catch {
+    return null;
+  }
+}
+
+function baseUrlFromHeaders(requestHeaders: Headers) {
+  const host = hostFromHeaders(requestHeaders);
+  const forwardedProto =
+    requestHeaders.get("x-forwarded-proto")?.split(",")[0]?.trim() || null;
+
+  if (!host) return appBaseUrl(null);
+
+  const protocol =
+    forwardedProto ||
+    (host.includes("localhost") || host.startsWith("127.0.0.1")
+      ? "http"
+      : "https");
+  return `${protocol}://${host}`;
+}
+
 function smtpConfigured() {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_FROM);
 }
@@ -138,7 +170,7 @@ export async function registerUser(formData: FormData) {
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
   const callbackUrl = safeCallbackUrl(formData.get("callbackUrl"));
   const requestHeaders = await headers();
-  const host = requestHeaders.get("host");
+  const host = hostFromHeaders(requestHeaders);
   const activeSite = siteFromHost(host);
 
   if (!name || !email || !affiliation || !password || !confirmPassword) {
@@ -191,7 +223,7 @@ export async function registerUser(formData: FormData) {
       },
     });
 
-    const verifyUrl = `${appBaseUrl(host)}/verify-email?token=${token}`;
+    const verifyUrl = `${baseUrlFromHeaders(requestHeaders)}/verify-email?token=${token}`;
     await sendVerificationEmail({
       name,
       email,

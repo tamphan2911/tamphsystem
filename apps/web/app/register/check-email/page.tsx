@@ -9,8 +9,11 @@ export default async function CheckEmailPage({
   searchParams: Promise<{ email?: string; callbackUrl?: string }>;
 }) {
   const { email, callbackUrl } = await searchParams;
-  const host = (await headers()).get("host") ?? "";
+  const requestHeaders = await headers();
+  const host =
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
   const isResearch = host.startsWith("research.");
+  const isLearn = host.startsWith("learn.");
   const loginHref = callbackUrl
     ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}&email=${encodeURIComponent(email ?? "")}`
     : `/login?email=${encodeURIComponent(email ?? "")}`;
@@ -26,7 +29,9 @@ export default async function CheckEmailPage({
           <h1 className="mt-5 text-2xl font-bold tracking-tight">
             {isResearch
               ? "Check your email for Research Hub"
-              : "Check your email"}
+              : isLearn
+                ? "Check your email for Tamph Learn"
+                : "Check your email"}
           </h1>
           <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
             We sent an account verification link to{" "}
@@ -34,7 +39,7 @@ export default async function CheckEmailPage({
               {email || "your registered email"}
             </span>
             . Open that email and verify the account before logging in
-            {isResearch ? " to Research Hub" : ""}.
+            {isResearch ? " to Research Hub" : isLearn ? " to Tamph Learn" : ""}.
           </p>
         </div>
         <div className="space-y-3 px-8 py-6">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 type Question = {
@@ -35,14 +35,17 @@ export function QuizExercise({
       ],
       correctOptionId: "o4"
     }
-  ]
+  ],
+  onSubmit,
 }: { 
   title?: string;
   questions?: Question[];
+  onSubmit?: (selectedAnswerIds: string[]) => Promise<void>;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
+  const [isPending, startTransition] = useTransition();
 
   const handleSelect = (questionId: string, optionId: string) => {
     if (isSubmitted) return;
@@ -58,6 +61,12 @@ export function QuizExercise({
     });
     setScore(currentScore);
     setIsSubmitted(true);
+
+    if (onSubmit) {
+      startTransition(async () => {
+        await onSubmit(Object.values(answers));
+      });
+    }
   };
 
   const handleRetry = () => {
@@ -154,10 +163,10 @@ export function QuizExercise({
         {!isSubmitted ? (
           <button
             onClick={handleSubmit}
-            disabled={Object.keys(answers).length !== questions.length}
+            disabled={Object.keys(answers).length !== questions.length || isPending}
             className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium px-8 py-3 rounded-full transition-colors shadow-md"
           >
-            Submit Answers
+            {isPending ? "Saving..." : "Submit Answers"}
           </button>
         ) : (
           <button

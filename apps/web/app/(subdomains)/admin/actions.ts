@@ -4,7 +4,14 @@ import bcrypt from "bcrypt";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "../../../auth";
-import { prisma, ClaimStatus, ResearchStage, Role } from "@repo/db";
+import {
+  prisma,
+  ClaimStatus,
+  QuestionType,
+  ResearchStage,
+  Role,
+  SessionType,
+} from "@repo/db";
 
 function optionalString(value: FormDataEntryValue | null) {
   const text = typeof value === "string" ? value.trim() : "";
@@ -97,6 +104,73 @@ export async function createCourse(formData: FormData) {
   revalidatePath("/courses");
 }
 
+export async function createModule(formData: FormData) {
+  await requireAdmin();
+
+  const courseId = optionalString(formData.get("courseId"));
+  if (!courseId) return;
+
+  const moduleCount = await prisma.module.count({ where: { courseId } });
+
+  await prisma.module.create({
+    data: {
+      courseId,
+      title: optionalString(formData.get("title")) ?? "Untitled module",
+      order: optionalNumber(formData.get("order")) ?? moduleCount + 1,
+    },
+  });
+
+  revalidatePath("/courses");
+  revalidatePath(`/courses/${courseId}`);
+}
+
+export async function createSession(formData: FormData) {
+  await requireAdmin();
+
+  const moduleId = optionalString(formData.get("moduleId"));
+  if (!moduleId) return;
+
+  const courseModule = await prisma.module.findUnique({
+    where: { id: moduleId },
+    select: { courseId: true },
+  });
+  if (!courseModule) return;
+
+  const sessionCount = await prisma.session.count({ where: { moduleId } });
+  const type =
+    (formData.get("type") as SessionType | null) ?? SessionType.LESSON_TEXT;
+
+  const session = await prisma.session.create({
+    data: {
+      moduleId,
+      title: optionalString(formData.get("title")) ?? "Untitled session",
+      type: Object.values(SessionType).includes(type)
+        ? type
+        : SessionType.LESSON_TEXT,
+      order: optionalNumber(formData.get("order")) ?? sessionCount + 1,
+      year: optionalNumber(formData.get("year")),
+      content: optionalString(formData.get("content")),
+      videoUrl: optionalString(formData.get("videoUrl")),
+      codingLanguage: optionalString(formData.get("codingLanguage")),
+      initialCode: optionalString(formData.get("initialCode")),
+      expectedOutput: optionalString(formData.get("expectedOutput")),
+    },
+  });
+
+  if (session.type === SessionType.EXERCISE_QUIZ) {
+    await prisma.quiz.create({
+      data: {
+        title: session.title,
+        moduleId,
+        sessionId: session.id,
+      },
+    });
+  }
+
+  revalidatePath("/courses");
+  revalidatePath(`/courses/${courseModule.courseId}`);
+}
+
 export async function updateCoursePublishing(formData: FormData) {
   await requireAdmin();
 
@@ -117,10 +191,15 @@ export async function updateAdminSessionContent(formData: FormData) {
   const sessionId = optionalString(formData.get("sessionId"));
   if (!sessionId) return;
 
-  await prisma.session.update({
+  const type = formData.get("type") as SessionType | null;
+  const session = await prisma.session.update({
     where: { id: sessionId },
     data: {
       title: optionalString(formData.get("title")) ?? "Untitled session",
+      type:
+        type && Object.values(SessionType).includes(type)
+          ? type
+          : undefined,
       year: optionalNumber(formData.get("year")),
       content: optionalString(formData.get("content")),
       videoUrl: optionalString(formData.get("videoUrl")),
@@ -128,9 +207,74 @@ export async function updateAdminSessionContent(formData: FormData) {
       initialCode: optionalString(formData.get("initialCode")),
       expectedOutput: optionalString(formData.get("expectedOutput")),
     },
+    select: { id: true, title: true, type: true, moduleId: true },
+  });
+
+  if (session.type === SessionType.EXERCISE_QUIZ) {
+    await prisma.quiz.upsert({
+      where: { sessionId: session.id },
+      update: { title: session.title, moduleId: session.moduleId },
+      create: {
+        title: session.title,
+        moduleId: session.moduleId,
+        sessionId: session.id,
+      },
+    });
+  }
+
+  revalidatePath("/courses");
+}
+
+export async function createQuizQuestion(formData: FormData) {
+  await requireAdmin();
+
+  const sessionId = optionalString(formData.get("sessionId"));
+  if (!sessionId) return;
+
+  const session = await prisma.session.findUnique({
+    where: { id: sessionId },
+    select: {
+      id: true,
+      title: true,
+      moduleId: true,
+      module: { select: { courseId: true } },
+    },
+  });
+  if (!session) return;
+
+  const quiz = await prisma.quiz.upsert({
+    where: { sessionId },
+    update: { title: session.title, moduleId: session.moduleId },
+    create: {
+      title: session.title,
+      moduleId: session.moduleId,
+      sessionId,
+    },
+  });
+
+  const optionTexts = ["answerA", "answerB", "answerC", "answerD"]
+    .map((name) => optionalString(formData.get(name)))
+    .filter((text): text is string => Boolean(text));
+  const correctIndex = Number(formData.get("correctIndex") ?? 0);
+
+  if (!optionalString(formData.get("text")) || optionTexts.length < 2) return;
+
+  await prisma.question.create({
+    data: {
+      quizId: quiz.id,
+      text: optionalString(formData.get("text")) ?? "Untitled question",
+      type: QuestionType.MULTIPLE_CHOICE,
+      answers: {
+        create: optionTexts.map((text, index) => ({
+          text,
+          isCorrect: index === correctIndex,
+        })),
+      },
+    },
   });
 
   revalidatePath("/courses");
+  revalidatePath(`/courses/${session.module.courseId}/sessions/${sessionId}`);
 }
 
 export async function createAdminResearchProject(formData: FormData) {

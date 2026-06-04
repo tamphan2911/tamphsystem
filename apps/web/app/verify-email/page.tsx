@@ -55,7 +55,7 @@ async function verifyToken(token: string | undefined) {
   return {
     ok: true,
     title: "Email verified",
-    detail: `${user.email} is now verified. You can log in to Research Hub and the rest of TamphSystem.`,
+    detail: `${user.email} is now verified. You can log in to TamphSystem.`,
     email: user.email,
   };
 }

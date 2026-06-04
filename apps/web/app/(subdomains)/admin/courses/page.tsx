@@ -3,10 +3,21 @@ import Link from "next/link";
 import { ExternalLink, GraduationCap, PlusCircle } from "lucide-react";
 import { prisma } from "@repo/db";
 import {
+  createModule,
+  createQuizQuestion,
   createCourse,
+  createSession,
   updateAdminSessionContent,
   updateCoursePublishing,
 } from "../actions";
+
+const sessionTypes = [
+  "LESSON_TEXT",
+  "LESSON_VIDEO",
+  "EXERCISE_QUIZ",
+  "EXERCISE_ESSAY",
+  "EXERCISE_CODING",
+];
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +29,16 @@ export default async function AdminCoursesPage() {
         modules: {
           orderBy: { order: "asc" },
           include: {
-            sessions: { orderBy: { order: "asc" } },
+            sessions: {
+              orderBy: { order: "asc" },
+              include: {
+                quiz: {
+                  include: {
+                    questions: { include: { answers: true } },
+                  },
+                },
+              },
+            },
           },
         },
         _count: { select: { modules: true, enrollments: true } },
@@ -159,11 +179,98 @@ export default async function AdminCoursesPage() {
                       className="bg-slate-50/70 px-5 py-4 dark:bg-slate-950/40"
                     >
                       <div className="space-y-4">
-                        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                          Session content
-                        </p>
-                        {course.modules.flatMap((module) =>
-                          module.sessions.map((session) => (
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                              Course builder
+                            </p>
+                            <p className="mt-1 text-sm text-slate-500">
+                              Add modules, sessions, lesson content, exercises,
+                              and quiz questions.
+                            </p>
+                          </div>
+                          <form
+                            action={createModule}
+                            className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:grid-cols-[1fr_5rem_auto]"
+                          >
+                            <input
+                              type="hidden"
+                              name="courseId"
+                              value={course.id}
+                            />
+                            <input
+                              name="title"
+                              required
+                              placeholder="New module title"
+                              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                            />
+                            <input
+                              name="order"
+                              type="number"
+                              min="1"
+                              placeholder="Order"
+                              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                            />
+                            <button className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                              Add module
+                            </button>
+                          </form>
+                        </div>
+
+                        {course.modules.map((module) => (
+                          <div
+                            key={module.id}
+                            className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40"
+                          >
+                            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                              <div>
+                                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                                  Module {module.order}
+                                </p>
+                                <h3 className="font-semibold">
+                                  {module.title}
+                                </h3>
+                              </div>
+                              <form
+                                action={createSession}
+                                className="grid gap-2 lg:grid-cols-[1fr_10rem_5rem_auto]"
+                              >
+                                <input
+                                  type="hidden"
+                                  name="moduleId"
+                                  value={module.id}
+                                />
+                                <input
+                                  name="title"
+                                  required
+                                  placeholder="New session title"
+                                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                                />
+                                <select
+                                  name="type"
+                                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                                >
+                                  {sessionTypes.map((type) => (
+                                    <option key={type} value={type}>
+                                      {type.replaceAll("_", " ").toLowerCase()}
+                                    </option>
+                                  ))}
+                                </select>
+                                <input
+                                  name="order"
+                                  type="number"
+                                  min="1"
+                                  placeholder="Order"
+                                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                                />
+                                <button className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                                  Add session
+                                </button>
+                              </form>
+                            </div>
+
+                            <div className="mt-4 space-y-3">
+                              {module.sessions.map((session) => (
                             <form
                               key={session.id}
                               action={updateAdminSessionContent}
@@ -174,7 +281,7 @@ export default async function AdminCoursesPage() {
                                 name="sessionId"
                                 value={session.id}
                               />
-                              <div className="grid gap-3 md:grid-cols-[1fr_8rem]">
+                              <div className="grid gap-3 md:grid-cols-[1fr_11rem_8rem]">
                                 <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
                                   Title
                                   <input
@@ -182,6 +289,22 @@ export default async function AdminCoursesPage() {
                                     defaultValue={session.title}
                                     className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm normal-case tracking-normal text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
                                   />
+                                </label>
+                                <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                  Type
+                                  <select
+                                    name="type"
+                                    defaultValue={session.type}
+                                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm normal-case tracking-normal text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                                  >
+                                    {sessionTypes.map((type) => (
+                                      <option key={type} value={type}>
+                                        {type
+                                          .replaceAll("_", " ")
+                                          .toLowerCase()}
+                                      </option>
+                                    ))}
+                                  </select>
                                 </label>
                                 <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
                                   Year
@@ -260,13 +383,84 @@ export default async function AdminCoursesPage() {
                                 </button>
                               </div>
                             </form>
-                          )),
-                        )}
-                        {course.modules.every(
-                          (module) => module.sessions.length === 0,
-                        ) && (
+                              ))}
+
+                              {module.sessions
+                                .filter(
+                                  (session) =>
+                                    session.type === "EXERCISE_QUIZ",
+                                )
+                                .map((session) => (
+                                  <form
+                                    key={`${session.id}-question`}
+                                    action={createQuizQuestion}
+                                    className="grid gap-3 rounded-lg border border-dashed border-purple-200 bg-purple-50/40 p-4 dark:border-purple-900/60 dark:bg-purple-950/20"
+                                  >
+                                    <input
+                                      type="hidden"
+                                      name="sessionId"
+                                      value={session.id}
+                                    />
+                                    <div>
+                                      <p className="text-xs font-bold uppercase tracking-wide text-purple-700 dark:text-purple-300">
+                                        Quiz questions for {session.title}
+                                      </p>
+                                      <p className="mt-1 text-xs text-slate-500">
+                                        Existing questions:{" "}
+                                        {session.quiz?.questions.length ?? 0}
+                                      </p>
+                                    </div>
+                                    <input
+                                      name="text"
+                                      required
+                                      placeholder="Question"
+                                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                                    />
+                                    <div className="grid gap-2 md:grid-cols-2">
+                                      {["answerA", "answerB", "answerC", "answerD"].map(
+                                        (name, index) => (
+                                          <input
+                                            key={name}
+                                            name={name}
+                                            required={index < 2}
+                                            placeholder={`Answer ${index + 1}`}
+                                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                                          />
+                                        ),
+                                      )}
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                      <label className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                                        Correct answer
+                                      </label>
+                                      <select
+                                        name="correctIndex"
+                                        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                                      >
+                                        <option value="0">Answer 1</option>
+                                        <option value="1">Answer 2</option>
+                                        <option value="2">Answer 3</option>
+                                        <option value="3">Answer 4</option>
+                                      </select>
+                                      <button className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-700">
+                                        Add question
+                                      </button>
+                                    </div>
+                                  </form>
+                                ))}
+
+                              {module.sessions.length === 0 && (
+                                <p className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">
+                                  No sessions in this module yet.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                        {course.modules.length === 0 && (
                           <p className="rounded-lg border border-dashed border-slate-300 px-4 py-3 text-sm text-slate-500 dark:border-slate-700">
-                            No sessions in this course yet.
+                            No modules in this course yet.
                           </p>
                         )}
                       </div>

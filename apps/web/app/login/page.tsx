@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle, LockKeyhole, Mail } from "lucide-react";
+import { headers } from "next/headers";
 import { TurnstileField } from "../../components/TurnstileField";
 import { AuthLightTheme } from "../../components/AuthLightTheme";
 import { LearnAuthHeader } from "../../components/LearnAuthHeader";
@@ -44,6 +45,25 @@ function warningCopy(warning?: string, email?: string) {
   return null;
 }
 
+function siteCopy(host: string) {
+  if (host.startsWith("research.")) {
+    return {
+      registerPrompt: "Need a research account?",
+      registerLabel: "Register here",
+    };
+  }
+  if (host.startsWith("learn.")) {
+    return {
+      registerPrompt: "Need a Learn account?",
+      registerLabel: "Register here",
+    };
+  }
+  return {
+    registerPrompt: "Need an account?",
+    registerLabel: "Register here",
+  };
+}
+
 export default async function LoginPage({
   searchParams,
 }: {
@@ -52,11 +72,16 @@ export default async function LoginPage({
     warning?: string;
     email?: string;
     error?: string;
+    reset?: string;
   }>;
 }) {
   const { callbackUrl, warning, email, error } = await searchParams;
+  const requestHeaders = await headers();
+  const host =
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
   const redirectTo = safeRedirectPath(callbackUrl);
   const siteKey = turnstileSiteKey();
+  const copy = siteCopy(host);
   const warningMessage =
     warningCopy(warning, email) ||
     (error
@@ -86,7 +111,6 @@ export default async function LoginPage({
 
           <form action={loginUser} className="space-y-5 px-8 py-7">
             <input type="hidden" name="callbackUrl" value={redirectTo} />
-
             {warningMessage && (
               <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-100">
                 <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
@@ -132,12 +156,12 @@ export default async function LoginPage({
           </form>
 
           <div className="border-t border-slate-100 px-8 py-5 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
-            Need a research account?{" "}
+            {copy.registerPrompt}{" "}
             <Link
               href={`/register?callbackUrl=${encodeURIComponent(redirectTo)}`}
               className="font-semibold text-blue-600 transition hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
             >
-              Register here
+              {copy.registerLabel}
             </Link>
           </div>
         </div>

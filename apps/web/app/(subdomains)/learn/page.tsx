@@ -123,30 +123,30 @@ function DropdownPanel({
     <>
       <div
         className={`invisible absolute left-1/2 top-full z-40 h-[15px] -translate-x-1/2 group-hover:visible ${
-          wide ? "w-[68rem]" : "w-[32rem]"
+          wide ? "w-[520px]" : "w-[320px]"
         }`}
       />
       <div
-        className={`invisible absolute left-1/2 top-full z-50 mt-[15px] -translate-x-1/2 rounded-2xl border border-[#494152] bg-[linear-gradient(135deg,rgba(21,17,30,0.98),rgba(25,20,35,0.96))] p-4 opacity-0 shadow-2xl shadow-black/50 backdrop-blur-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 ${
-          wide ? "w-[68rem]" : "w-[32rem]"
+        className={`invisible absolute left-1/2 top-full z-50 mt-[15px] -translate-x-1/2 rounded-2xl border border-[#494152] bg-[linear-gradient(135deg,rgba(21,17,30,0.98),rgba(25,20,35,0.96))] p-2 opacity-0 shadow-2xl shadow-black/50 backdrop-blur-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 ${
+          wide ? "w-[520px]" : "w-[320px]"
         }`}
       >
-        <div className={wide ? "grid grid-cols-2 gap-4" : "space-y-3"}>
+        <div className={wide ? "grid grid-cols-2 gap-1.5" : "grid gap-1.5"}>
           {items.map((item) => {
             const Icon = item.icon;
             return (
               <Link
                 href="/courses"
                 key={item.title}
-                className="group/item flex min-h-20 gap-5 rounded-lg border border-transparent p-5 text-left text-[#c7c0cf] transition duration-200 hover:border-[#5a4050] hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,70,76,0.16))] hover:text-white"
+                className="group/item flex min-h-[44px] items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-left text-[15px] leading-5 text-[#c7c0cf] transition duration-200 hover:border-[#5a4050] hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,70,76,0.16))] hover:text-white"
               >
-                <Icon className="mt-1 h-5 w-5 flex-none text-[#d8d2df] transition group-hover/item:text-white" />
-                <span>
-                  <span className="block text-xl font-normal leading-7">
+                <Icon className="mt-0.5 h-4 w-4 flex-none text-[#d8d2df] transition group-hover/item:text-white" />
+                <span className="min-w-0">
+                  <span className="block text-[15px] font-medium leading-5">
                     {item.title}
                   </span>
                   {item.description && (
-                    <span className="mt-1 block text-lg font-normal leading-6 text-[#aaa4b5] group-hover/item:text-[#cfc8d8]">
+                    <span className="mt-0.5 block text-[12px] font-normal leading-4 text-[#aaa4b5] group-hover/item:text-[#cfc8d8]">
                       {item.description}
                     </span>
                   )}
@@ -214,39 +214,39 @@ export default async function LearnLandingPage() {
   return (
     <main className="min-h-screen bg-[#090611] font-[var(--font-geist-sans)] text-white">
       <header className="sticky top-0 z-50 px-4 pt-[9px] sm:px-6 lg:px-10">
-        <nav className="mx-auto flex h-[56px] max-w-[95rem] items-center justify-between rounded-2xl border border-[#3a3345] bg-[#111019]/90 px-4 shadow-2xl shadow-black/30 backdrop-blur-xl">
-          <Link href="/" className="flex items-center gap-3">
+        <nav className="mx-auto box-border flex h-[58px] max-h-[58px] min-h-[58px] w-full max-w-[1360px] items-center justify-between overflow-visible rounded-2xl border border-[#3a3345] bg-[#111019]/90 px-4 text-[15px] leading-5 shadow-2xl shadow-black/30 backdrop-blur-xl [&_a]:text-[15px] [&_button]:text-[15px]">
+          <Link href="/" className="flex items-center gap-2.5">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#51495d] bg-[#1f1a2a] text-[#ff8a3d]">
               <Workflow className="h-4 w-4" />
             </span>
-            <span className="text-2xl font-semibold tracking-tight">
+            <span className="text-[15px] font-semibold tracking-tight">
               Tamph Learn
             </span>
           </Link>
 
-          <div className="hidden items-center gap-9 text-xl text-[#c7c0cf] lg:flex">
-            <div className="group relative py-4">
-              <button className="flex items-center gap-2 hover:text-white">
-                Product <ChevronDown className="h-5 w-5" />
+          <div className="hidden items-center gap-6 text-[15px] text-[#c7c0cf] lg:flex">
+            <div className="group relative py-[18px]">
+              <button className="flex items-center gap-1.5 text-[15px] leading-5 hover:text-white">
+                Product <ChevronDown className="h-3.5 w-3.5" />
               </button>
               <DropdownPanel items={productMenu} />
             </div>
-            <div className="group relative py-4">
-              <button className="flex items-center gap-2 hover:text-white">
-                Use cases <ChevronDown className="h-5 w-5" />
+            <div className="group relative py-[18px]">
+              <button className="flex items-center gap-1.5 text-[15px] leading-5 hover:text-white">
+                Use cases <ChevronDown className="h-3.5 w-3.5" />
               </button>
               <DropdownPanel items={useCaseMenu} wide />
             </div>
-            <div className="group relative py-4">
-              <button className="flex items-center gap-2 hover:text-white">
-                Docs <ChevronDown className="h-5 w-5" />
+            <div className="group relative py-[18px]">
+              <button className="flex items-center gap-1.5 text-[15px] leading-5 hover:text-white">
+                Docs <ChevronDown className="h-3.5 w-3.5" />
               </button>
               <DropdownPanel items={docsMenu} />
             </div>
-            <Link href="/courses" className="hover:text-white">
+            <Link href="/courses" className="text-[15px] leading-5 hover:text-white">
               Courses
             </Link>
-            <Link href="/profile" className="hover:text-white">
+            <Link href="/profile" className="text-[15px] leading-5 hover:text-white">
               Profile
             </Link>
           </div>
@@ -254,20 +254,20 @@ export default async function LearnLandingPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/courses"
-              className="hidden h-8 items-center gap-2 rounded-lg border border-[#575063] bg-[#312c3b] px-3 text-base font-medium text-white hover:bg-[#40394d] sm:inline-flex"
+              className="hidden h-8 items-center gap-2 rounded-lg border border-[#575063] bg-[#312c3b] px-3 text-[15px] font-medium text-white hover:bg-[#40394d] sm:inline-flex"
             >
               <Star className="h-4 w-4" />
               {totalSessions || courses.length || "New"}
             </Link>
             <Link
               href="/login"
-              className="hidden text-lg font-medium text-[#d7d1df] hover:text-white sm:block"
+              className="hidden text-[15px] font-medium text-[#d7d1df] hover:text-white sm:block"
             >
               Sign in
             </Link>
             <Link
               href={session?.user ? "/profile" : "/login"}
-              className="inline-flex h-8 items-center rounded-lg bg-gradient-to-r from-[#ff8a3d] to-[#ff3f2e] px-4 text-lg font-semibold text-white shadow-lg shadow-[#ff8a3d]/20 hover:-translate-y-0.5"
+              className="inline-flex h-8 items-center rounded-lg bg-gradient-to-r from-[#ff8a3d] to-[#ff3f2e] px-4 text-[15px] font-semibold text-white shadow-lg shadow-[#ff8a3d]/20 hover:-translate-y-0.5"
             >
               Get Started
             </Link>
@@ -279,7 +279,7 @@ export default async function LearnLandingPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_28%,rgba(86,65,255,0.22),transparent_26%),radial-gradient(circle_at_72%_78%,rgba(255,84,45,0.28),transparent_24%)]" />
         <div className="absolute right-0 top-0 h-full w-[56%] bg-[linear-gradient(115deg,transparent_0%,rgba(255,117,57,0.08)_38%,rgba(74,60,120,0.18)_100%)]" />
 
-        <div className="relative mx-auto grid max-w-[87rem] gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+        <div className="relative mx-auto grid max-w-[1360px] gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
           <div className="pt-16 lg:pt-24">
             <h1 className="max-w-3xl text-6xl font-light leading-[0.98] tracking-tight text-[#bdb7c7] sm:text-7xl lg:text-8xl">
               Courses and practice paths
@@ -357,7 +357,7 @@ export default async function LearnLandingPage() {
       <LearnWorkflowTabs />
 
       <section className="flex min-h-screen items-center px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-7xl">
+        <div className="mx-auto w-full max-w-[1360px]">
           <div className="grid gap-4 md:grid-cols-3">
             {[
               {
@@ -417,7 +417,7 @@ export default async function LearnLandingPage() {
       </section>
 
       <section className="flex min-h-screen items-center px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-7xl">
+        <div className="mx-auto w-full max-w-[1360px]">
           <div className="mb-10 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
             <h2 className="text-5xl font-light leading-tight text-white">
               Build your path with the short feedback loops learners need.
@@ -451,7 +451,7 @@ export default async function LearnLandingPage() {
       </section>
 
       <footer className="flex min-h-screen items-center bg-[linear-gradient(180deg,#8d3d25_0%,#090611_18%)] px-4 py-20 sm:px-6 lg:px-10">
-        <div className="mx-auto w-full rounded-3xl border border-[#573a35] bg-[linear-gradient(180deg,#612b22_0%,#160c18_100%)] p-8 shadow-2xl shadow-black/40 lg:p-12">
+        <div className="mx-auto w-full max-w-[1360px] rounded-3xl border border-[#573a35] bg-[linear-gradient(180deg,#612b22_0%,#160c18_100%)] p-8 shadow-2xl shadow-black/40 lg:p-12">
           <div className="grid gap-10 border-b border-white/15 pb-16 lg:grid-cols-4">
             <div>
               <div className="flex items-center gap-3 text-2xl font-semibold">

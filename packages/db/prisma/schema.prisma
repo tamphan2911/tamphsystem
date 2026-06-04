@@ -58,6 +58,8 @@ model User {
   emailVerified                 DateTime?
   emailVerificationToken        String?   @unique
   emailVerificationTokenExpires DateTime?
+  passwordResetToken            String?   @unique
+  passwordResetTokenExpires     DateTime?
   name                          String?
   affiliation                   String    @default("Not set")
   passwordHash                  String
@@ -71,6 +73,7 @@ model User {
   // Relations
   authoredCourses                 Course[]                     @relation("CourseAuthor")
   enrollments                     Enrollment[]
+  sessionCompletions              SessionCompletion[]
   quizAttempts                    QuizAttempt[]
   researchProjects                ResearchProject[]            @relation("LeadResearcher")
   authoredResearch                ResearchProject[]            @relation("ResearchAuthors")
@@ -107,6 +110,7 @@ model Course {
 
   modules     Module[]
   enrollments Enrollment[]
+  completions SessionCompletion[]
 }
 
 model Module {
@@ -143,6 +147,24 @@ model Session {
   codingLanguage String? // "python" or "r"
   initialCode    String? // Starter code for exercises
   expectedOutput String? // Expected string output for basic validation
+
+  quiz        Quiz?
+  completions SessionCompletion[]
+}
+
+model SessionCompletion {
+  id          String   @id @default(uuid())
+  userId      String
+  sessionId   String
+  courseId    String
+  completedAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sessionId])
+  @@index([userId, courseId])
 }
 
 model Enrollment {
@@ -169,10 +191,12 @@ enum QuestionType {
 }
 
 model Quiz {
-  id       String @id @default(uuid())
-  title    String
-  moduleId String
-  module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  title     String
+  moduleId  String
+  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  sessionId String?  @unique
+  session   Session? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   questions Question[]
   attempts  QuizAttempt[]
