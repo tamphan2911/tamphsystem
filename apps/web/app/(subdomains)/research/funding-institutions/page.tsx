@@ -14,70 +14,6 @@ import { FundingInstitutionDialog } from "./FundingInstitutionDialog";
 
 export const dynamic = "force-dynamic";
 
-const demoFundingInstitutions = [
-  {
-    funderCode: "UEH",
-    name: "University of Economics Ho Chi Minh City",
-    shortName: "UEH",
-    country: "Vietnam",
-    website: "https://ueh.edu.vn",
-    note: "Demo institutional funding source for education and business research.",
-  },
-  {
-    funderCode: "GGRI",
-    name: "Green Growth Research Institute",
-    shortName: "GGRI",
-    country: "Vietnam",
-    website: "",
-    note: "Demo funding institution for sustainability and finance projects.",
-  },
-  {
-    funderCode: "TPRL",
-    name: "Tam Pham Research Lab",
-    shortName: "TPRL",
-    country: "Vietnam",
-    website: "https://research.tamph.com",
-    note: "Demo internal project sponsor.",
-  },
-  {
-    funderCode: "MBS",
-    name: "Mekong Business School",
-    shortName: "MBS",
-    country: "Vietnam",
-    website: "",
-    note: "Demo academic institution for regional business data work.",
-  },
-  {
-    funderCode: "IDPA",
-    name: "International Digital Pedagogy Association",
-    shortName: "IDPA",
-    country: "International",
-    website: "",
-    note: "Demo project organizer for digital pedagogy research outputs.",
-  },
-];
-
-async function ensureDemoFundingInstitutions() {
-  const count = await prisma.fundingInstitution.count();
-  if (count > 0) return;
-
-  for (const institution of demoFundingInstitutions) {
-    const existing = await prisma.fundingInstitution.findFirst({
-      where: { name: institution.name },
-      select: { id: true },
-    });
-
-    if (existing) {
-      await prisma.fundingInstitution.update({
-        where: { id: existing.id },
-        data: institution,
-      });
-    } else {
-      await prisma.fundingInstitution.create({ data: institution });
-    }
-  }
-}
-
 function funderCodeBase(name: string, alias: string | null) {
   const source = alias || name;
   const words = source
@@ -139,7 +75,6 @@ export default async function FundingInstitutionsPage() {
   const isAdmin = roles.includes(Role.ADMIN);
   if (!isAdmin) redirect("/401");
 
-  await ensureDemoFundingInstitutions();
   await ensureFunderCodes();
   const institutions = await prisma.fundingInstitution.findMany({
     include: {
