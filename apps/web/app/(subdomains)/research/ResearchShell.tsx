@@ -193,14 +193,14 @@ export function ResearchShell({
 
   return (
     <ResearchToastProvider>
-      <div className="research-site-root min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+      <div className="research-site-root min-h-screen bg-[#f6f4ef] text-[#201c25] dark:bg-[#090611] dark:text-white">
         <aside
-          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-slate-200/80 bg-white/95 shadow-[8px_0_30px_rgba(15,23,42,0.04)] backdrop-blur-xl transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none dark:border-slate-800 dark:bg-slate-950/95 dark:shadow-black/20 ${
+          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#ded8cf] bg-[#fbfaf7]/94 shadow-[10px_0_34px_rgba(32,28,37,0.07)] backdrop-blur-xl transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none dark:border-[#2f2938] dark:bg-[#111019]/96 dark:shadow-black/35 ${
             collapsed ? "w-20" : "w-72"
           }`}
         >
           <div
-            className={`flex h-20 items-center border-b border-slate-200/80 px-4 transition-all duration-300 motion-reduce:transition-none dark:border-slate-800 ${collapsed ? "justify-center" : "gap-3"}`}
+            className={`flex h-20 items-center border-b border-[#ded8cf] px-4 transition-all duration-300 motion-reduce:transition-none dark:border-[#332c3d] ${collapsed ? "justify-center" : "gap-3"}`}
           >
             <div
               className={`flex h-11 w-11 flex-none items-center justify-center transition-all duration-300 motion-reduce:transition-none ${
@@ -212,7 +212,7 @@ export function ResearchShell({
                 alt=""
                 width={40}
                 height={40}
-                className="h-10 w-10 rounded-full object-cover shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-700"
+                className="h-10 w-10 rounded-lg object-cover shadow-sm ring-1 ring-[#d6cfc4] dark:ring-[#51495d]"
               />
             </div>
             <div
@@ -220,18 +220,18 @@ export function ResearchShell({
             >
               <Link
                 href="/"
-                className="block truncate text-lg font-black text-slate-950 transition hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 dark:text-white dark:hover:text-emerald-200"
+                className="block truncate text-lg font-black text-[#17131d] transition hover:text-[#ff6d3a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff8a3d]/45 dark:text-white dark:hover:text-[#ffb38a]"
               >
                 Research Hub
               </Link>
-              <p className="truncate text-xs text-slate-500 dark:text-slate-300">
+              <p className="truncate text-xs text-[#786f7f] dark:text-[#aaa4b5]">
                 Pipeline and journal control
               </p>
             </div>
             <button
               type="button"
               onClick={() => setCollapsed((value) => !value)}
-              className={`flex h-8 w-8 flex-none items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:text-slate-950 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:shadow-none dark:hover:border-emerald-400/30 dark:hover:bg-slate-800 dark:hover:text-emerald-100 ${
+              className={`flex h-8 w-8 flex-none items-center justify-center rounded-lg border border-[#d6cfc4] bg-[#f1eee8] text-[#655d6d] shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:border-[#ffb38a] hover:bg-white hover:text-[#17131d] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff8a3d]/45 motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:border-[#51495d] dark:bg-[#1b1724] dark:text-[#d7d1df] dark:shadow-none dark:hover:border-[#ff8a3d]/55 dark:hover:bg-[#282231] dark:hover:text-[#ffb38a] ${
                 collapsed ? "absolute right-2 top-6" : "ml-auto"
               }`}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -268,7 +268,7 @@ export function ResearchShell({
         <div
           className={`transition-[padding] duration-300 ease-out ${collapsed ? "lg:pl-20" : "lg:pl-72"}`}
         >
-          <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-slate-200 bg-white/85 px-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/85 sm:px-8">
+          <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#ded8cf] bg-[#fbfaf7]/82 px-4 backdrop-blur-xl dark:border-[#332c3d] dark:bg-[#111019]/82 sm:px-8">
             <div className="flex min-w-0 items-center gap-2 overflow-x-auto lg:hidden">
               {visibleNavItems.map((item) => (
                 <Link
@@ -276,8 +276,8 @@ export function ResearchShell({
                   href={item.href}
                   className={`whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold transition ${
                     "adminOnly" in item && item.adminOnly
-                      ? "bg-violet-50 text-violet-800 ring-1 ring-violet-100 hover:bg-violet-100 dark:bg-violet-950/30 dark:text-violet-200 dark:ring-violet-800/50 dark:hover:bg-violet-900/40"
-                      : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                      ? "bg-[#fff1e9] text-[#9f3f16] ring-1 ring-[#ffd7c2] hover:bg-[#ffe6d8] dark:bg-[#2a1812] dark:text-[#ffb38a] dark:ring-[#7a3c25] dark:hover:bg-[#3a2119]"
+                      : "text-[#655d6d] hover:bg-[#ece7df] dark:text-[#d7d1df] dark:hover:bg-[#211c2d]"
                   }`}
                 >
                   {item.label}
@@ -292,14 +292,14 @@ export function ResearchShell({
               ))}
             </div>
             <div className="hidden min-w-0 items-center gap-2 lg:flex">
-              <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800/80">
+              <div className="flex items-center gap-1 rounded-lg border border-[#d6cfc4] bg-[#f1eee8] p-1 shadow-sm dark:border-[#403849] dark:bg-[#211c2d]">
                 {hubLinks
                   .filter((item) => !("adminOnly" in item) || isAdmin)
                   .map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 hover:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-emerald-100"
+                      className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-[#655d6d] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-white hover:text-[#17131d] hover:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:text-[#d7d1df] dark:hover:bg-[#312c3b] dark:hover:text-[#ffb38a]"
                     >
                       <item.icon className="h-3.5 w-3.5" />
                       {item.label}

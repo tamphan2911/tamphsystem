@@ -31,7 +31,9 @@ export function IconHint({
 }) {
   return (
     <PrimitiveIconHint label={label} position="bottom">
-      <span className={`inline-flex items-center justify-center align-middle ${className}`}>
+      <span
+        className={`inline-flex items-center justify-center align-middle ${className}`}
+      >
         {children}
       </span>
     </PrimitiveIconHint>
@@ -91,13 +93,13 @@ export function FilterSelect({
       >
         <span className="min-w-0 truncate text-left">{selected?.label}</span>
         <ChevronDown
-          className={`h-4 w-4 flex-none text-slate-400 transition duration-200 ease-out group-hover:text-slate-600 motion-reduce:transition-none dark:group-hover:text-slate-300 ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 flex-none text-[#8b8392] transition duration-200 ease-out group-hover:text-[#ff6d3a] motion-reduce:transition-none dark:group-hover:text-[#ffb38a] ${open ? "rotate-180" : ""}`}
           aria-hidden="true"
         />
       </button>
 
       {open && (
-        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-2 w-max min-w-full max-w-[min(28rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-900/[0.03] dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35 dark:ring-white/[0.04]">
+        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-2 w-max min-w-full max-w-[min(28rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-[#d8d1c8] bg-white p-1.5 shadow-2xl shadow-[#201c25]/15 ring-1 ring-[#201c25]/[0.03] dark:border-[#403849] dark:bg-[#14101d] dark:shadow-black/35 dark:ring-white/[0.04]">
           <div
             className="max-h-72 overflow-y-auto pr-0.5"
             role="listbox"
@@ -118,8 +120,8 @@ export function FilterSelect({
                   }}
                   className={`flex w-full items-start justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm leading-5 transition duration-150 ease-out motion-reduce:transition-none ${
                     isSelected
-                      ? "bg-blue-50 font-semibold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900"
-                      : "text-slate-700 hover:translate-x-0.5 hover:bg-slate-50 hover:text-blue-700 motion-reduce:hover:translate-x-0 dark:text-slate-200 dark:hover:bg-slate-800/80 dark:hover:text-blue-200"
+                      ? "bg-[#fff1e9] font-semibold text-[#9f3f16] ring-1 ring-[#ffceb5] dark:bg-[#2a1812] dark:text-[#ffb38a] dark:ring-[#7a3c25]"
+                      : "text-[#423b49] hover:translate-x-0.5 hover:bg-[#f7f3ed] hover:text-[#ff6d3a] motion-reduce:hover:translate-x-0 dark:text-[#d7d1df] dark:hover:bg-[#211c2d] dark:hover:text-[#ffb38a]"
                   }`}
                 >
                   <span className="min-w-0 flex-1 whitespace-normal break-words">
@@ -153,7 +155,7 @@ export function TableSearchInput({
   return (
     <div className="relative w-full min-w-0 flex-1 lg:max-w-md">
       <Search
-        className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+        className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8b8392] dark:text-[#766f80]"
         aria-hidden="true"
       />
       <input
@@ -203,13 +205,13 @@ export function TablePagination({
   const end = Math.min(total, page * pageSize);
 
   return (
-    <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50/70 px-4 py-3 transition dark:border-slate-800 dark:bg-slate-950/40 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+    <div className="flex flex-col gap-3 border-t border-[#ded8cf] bg-[#f1eee8]/70 px-4 py-3 transition dark:border-[#332c3d] dark:bg-[#0d0915]/55 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-xs font-semibold text-[#655d6d] dark:text-[#aaa4b5]">
         Showing{" "}
-        <span className="text-slate-900 dark:text-slate-100">
+        <span className="text-[#201c25] dark:text-white">
           {start}-{end}
         </span>{" "}
-        of <span className="text-slate-900 dark:text-slate-100">{total}</span>
+        of <span className="text-[#201c25] dark:text-white">{total}</span>
       </p>
       <div className="flex items-center gap-2">
         <ResearchIconButton
@@ -221,7 +223,7 @@ export function TablePagination({
         >
           <ChevronLeft className="h-4 w-4" />
         </ResearchIconButton>
-        <span className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+        <span className="rounded-lg border border-[#d8d1c8] bg-white px-3 py-2 text-xs font-black text-[#423b49] shadow-sm dark:border-[#403849] dark:bg-[#17131d] dark:text-[#d7d1df]">
           {page} / {pageCount}
         </span>
         <ResearchIconButton

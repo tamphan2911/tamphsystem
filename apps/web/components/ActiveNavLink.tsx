@@ -52,17 +52,17 @@ export function ActiveNavLink({
     pathname === href || (href !== "/" && pathname.startsWith(href));
   const Icon = icons[icon];
   const baseClass =
-    "group/navlink relative flex items-center gap-3 overflow-visible rounded-xl px-3 py-2.5 text-sm font-semibold outline-none transition-[background-color,color,box-shadow,transform,border-color] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-emerald-300/70 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
+    "group/navlink relative flex items-center gap-3 overflow-visible rounded-lg px-3 py-2.5 text-sm font-semibold outline-none transition-[background-color,color,box-shadow,transform,border-color] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-[#ff8a3d]/45 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
   const stateClass = isActive
-    ? "border border-emerald-200/70 bg-emerald-50 text-emerald-800 shadow-sm shadow-emerald-900/5 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-100 dark:shadow-black/20"
+    ? "border border-[#ffceb5] bg-[#fff1e9] text-[#9f3f16] shadow-sm shadow-[#9f3f16]/5 dark:border-[#ff8a3d]/35 dark:bg-[#2a1812] dark:text-[#ffb38a] dark:shadow-black/20"
     : adminOnly
-      ? "border border-violet-100/80 bg-violet-50/70 text-violet-800 shadow-sm shadow-violet-900/[0.03] hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-100/80 hover:text-violet-950 hover:shadow-md dark:border-violet-700/35 dark:bg-violet-950/25 dark:text-violet-200 dark:shadow-black/10 dark:hover:border-violet-500/45 dark:hover:bg-violet-900/35 dark:hover:text-violet-100"
-      : "border border-transparent text-slate-700 hover:-translate-y-0.5 hover:border-slate-200 hover:bg-slate-100/80 hover:text-slate-950 hover:shadow-sm dark:text-slate-200 dark:hover:border-slate-700 dark:hover:bg-slate-800/75 dark:hover:text-white";
+      ? "border border-[#e6d7ff] bg-[#f6f0ff]/75 text-[#6f45a6] shadow-sm shadow-[#6f45a6]/[0.03] hover:-translate-y-0.5 hover:border-[#d8c1ff] hover:bg-[#efe4ff] hover:text-[#4f2f7a] hover:shadow-md dark:border-[#6d5c86]/45 dark:bg-[#211633]/35 dark:text-[#d8c7ff] dark:shadow-black/10 dark:hover:border-[#9f83d8]/55 dark:hover:bg-[#2a1c40] dark:hover:text-white"
+      : "border border-transparent text-[#5f5968] hover:-translate-y-0.5 hover:border-[#ded8cf] hover:bg-[#ece7df]/80 hover:text-[#17131d] hover:shadow-sm dark:text-[#d7d1df] dark:hover:border-[#403849] dark:hover:bg-[#211c2d] dark:hover:text-white";
   const iconClass = isActive
-    ? "text-emerald-600 dark:text-emerald-200"
+    ? "text-[#ff6d3a] dark:text-[#ffb38a]"
     : adminOnly
-      ? "text-violet-500 dark:text-violet-300"
-      : "text-slate-400 transition-colors group-hover/navlink:text-slate-600 dark:text-slate-400 dark:group-hover/navlink:text-slate-200";
+      ? "text-[#8b61c6] dark:text-[#c5a7ff]"
+      : "text-[#8b8392] transition-colors group-hover/navlink:text-[#5f5968] dark:text-[#8f8799] dark:group-hover/navlink:text-[#d7d1df]";
 
   return (
     <Link
@@ -75,16 +75,16 @@ export function ActiveNavLink({
       <span
         className={`absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full transition-[height,opacity,background-color] duration-200 ease-out ${
           isActive
-            ? "bg-emerald-600 opacity-100 dark:bg-emerald-300"
+            ? "bg-[#ff6d3a] opacity-100 dark:bg-[#ffb38a]"
             : adminOnly
-              ? "bg-violet-400/70 opacity-70 group-hover/navlink:h-7 dark:bg-violet-300/60"
+              ? "bg-[#9f83d8]/70 opacity-70 group-hover/navlink:h-7 dark:bg-[#c5a7ff]/60"
               : "opacity-0"
         }`}
       />
       <Icon className={`h-5 w-5 flex-none ${iconClass}`} />
       {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
       {!collapsed && adminOnly && !isActive && (
-        <span className="rounded-full bg-white/70 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-violet-500 ring-1 ring-violet-100 dark:bg-violet-950/50 dark:text-violet-200 dark:ring-violet-700/40">
+        <span className="rounded-full bg-white/75 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#8b61c6] ring-1 ring-[#e6d7ff] dark:bg-[#211633]/65 dark:text-[#d8c7ff] dark:ring-[#6d5c86]/45">
           Admin
         </span>
       )}
@@ -98,10 +98,10 @@ export function ActiveNavLink({
         </span>
       )}
       {collapsed && (
-        <span className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-50 -translate-y-1/2 -translate-x-1 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 opacity-0 shadow-xl shadow-slate-900/10 ring-1 ring-slate-900/[0.03] transition duration-200 ease-out group-hover/navlink:translate-x-0 group-hover/navlink:opacity-100 group-focus-visible/navlink:translate-x-0 group-focus-visible/navlink:opacity-100 motion-reduce:transition-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:shadow-black/30 dark:ring-white/[0.04]">
+        <span className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-50 -translate-y-1/2 -translate-x-1 whitespace-nowrap rounded-lg border border-[#ded8cf] bg-white px-3 py-2 text-xs font-semibold text-[#5f5968] opacity-0 shadow-xl shadow-[#201c25]/10 ring-1 ring-[#201c25]/[0.03] transition duration-200 ease-out group-hover/navlink:translate-x-0 group-hover/navlink:opacity-100 group-focus-visible/navlink:translate-x-0 group-focus-visible/navlink:opacity-100 motion-reduce:transition-none dark:border-[#403849] dark:bg-[#14101d] dark:text-[#d7d1df] dark:shadow-black/30 dark:ring-white/[0.04]">
           {label}
           {adminOnly && (
-            <span className="ml-2 rounded-full bg-violet-50 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-violet-600 ring-1 ring-violet-100 dark:bg-violet-950 dark:text-violet-200 dark:ring-violet-700/50">
+            <span className="ml-2 rounded-full bg-[#f6f0ff] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#8b61c6] ring-1 ring-[#e6d7ff] dark:bg-[#211633] dark:text-[#d8c7ff] dark:ring-[#6d5c86]/50">
               Admin
             </span>
           )}
@@ -110,7 +110,7 @@ export function ActiveNavLink({
               {badgeCount > 99 ? "99+" : badgeCount}
             </span>
           )}
-          <span className="absolute right-full top-1/2 h-2.5 w-2.5 -translate-y-1/2 translate-x-1/2 rotate-45 border-b border-l border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950" />
+          <span className="absolute right-full top-1/2 h-2.5 w-2.5 -translate-y-1/2 translate-x-1/2 rotate-45 border-b border-l border-[#ded8cf] bg-white dark:border-[#403849] dark:bg-[#14101d]" />
         </span>
       )}
     </Link>
