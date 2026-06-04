@@ -1,18 +1,185 @@
 import Link from "next/link";
+import type { ElementType } from "react";
 import {
-  ArrowRight,
   BookOpen,
+  Bot,
+  Boxes,
+  Braces,
   CheckCircle2,
-  Clock,
+  ChevronDown,
+  Code2,
+  Database,
+  FileText,
   GraduationCap,
+  LibraryBig,
+  MessageSquareText,
+  PlayCircle,
+  Search,
+  ShieldCheck,
   Sparkles,
+  Star,
+  UsersRound,
+  Workflow,
+  Zap,
 } from "lucide-react";
 import { auth } from "../../../auth";
 import { prisma } from "@repo/db";
-import { HeroSearchBox } from "../../../components/HeroSearchBox";
-import { TypingEffect } from "../../../components/TypingEffect";
+import { LearnWorkflowTabs } from "../../../components/LearnWorkflowTabs";
 
 export const dynamic = "force-dynamic";
+
+const productMenu = [
+  {
+    title: "Course overview",
+    description: "Browse learning paths without signing in",
+    icon: Boxes,
+  },
+  {
+    title: "Catalog",
+    description: "Search practical courses and inspect modules",
+    icon: LibraryBig,
+  },
+  {
+    title: "Practice sessions",
+    description: "Lessons, coding exercises, and quizzes",
+    icon: Workflow,
+  },
+  {
+    title: "AI learning",
+    description: "Guided academic and technical workflows",
+    icon: Sparkles,
+  },
+];
+
+const useCaseMenu = [
+  { title: "Data analysis", icon: Database },
+  { title: "Research writing", icon: FileText },
+  { title: "Python practice", icon: Code2 },
+  { title: "Academic AI", icon: Bot },
+  { title: "Finance modeling", icon: Braces },
+  { title: "Course previews", icon: Search },
+  { title: "Progress tracking", icon: CheckCircle2 },
+  { title: "Learner support", icon: ShieldCheck },
+];
+
+const docsMenu = [
+  { title: "How Learn works", icon: BookOpen },
+  { title: "Course guide", icon: GraduationCap },
+  { title: "Release notes", icon: Zap },
+  { title: "Support", icon: MessageSquareText },
+];
+
+const logoItems = [
+  "Python",
+  "R",
+  "Excel",
+  "Research",
+  "Finance",
+  "AI",
+  "Writing",
+  "Data",
+  "Web",
+  "Stats",
+  "Methods",
+  "Projects",
+];
+
+const featureCards = [
+  {
+    title: "Browse before login",
+    description:
+      "Guests can inspect courses, sessions, and modules before creating an account.",
+    icon: Search,
+  },
+  {
+    title: "Enroll when ready",
+    description:
+      "Login is requested only when a learner wants to enroll and save progress.",
+    icon: GraduationCap,
+  },
+  {
+    title: "Practice-rich paths",
+    description:
+      "Each course can combine reading, video, code, quizzes, and applied tasks.",
+    icon: PlayCircle,
+  },
+  {
+    title: "Track momentum",
+    description:
+      "Learners continue from their profile with course progress and next steps.",
+    icon: CheckCircle2,
+  },
+];
+
+function DropdownPanel({
+  items,
+  wide = false,
+}: {
+  items: { title: string; description?: string; icon: ElementType }[];
+  wide?: boolean;
+}) {
+  return (
+    <div
+      className={`invisible absolute left-1/2 top-full z-50 mt-5 -translate-x-1/2 rounded-lg border border-[#3d3648] bg-[#14101d]/95 p-7 opacity-0 shadow-2xl shadow-black/50 backdrop-blur-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 ${
+        wide ? "w-[42rem]" : "w-[26rem]"
+      }`}
+    >
+      <div className={wide ? "grid grid-cols-2 gap-7" : "space-y-8"}>
+        {items.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              href="/courses"
+              key={item.title}
+              className="flex gap-5 rounded-lg p-2 text-left hover:bg-white/5"
+            >
+              <Icon className="mt-1 h-6 w-6 flex-none text-white" />
+              <span>
+                <span className="block text-2xl font-medium leading-7 text-white">
+                  {item.title}
+                </span>
+                {item.description && (
+                  <span className="mt-2 block text-xl leading-7 text-[#aaa4b5]">
+                    {item.description}
+                  </span>
+                )}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function LogoRow({
+  reverse = false,
+  items,
+}: {
+  reverse?: boolean;
+  items: string[];
+}) {
+  const row = [...items, ...items];
+
+  return (
+    <div className="overflow-hidden">
+      <div
+        className={`flex w-max gap-6 ${
+          reverse ? "learn-logo-marquee-reverse" : "learn-logo-marquee"
+        }`}
+      >
+        {row.map((item, index) => (
+          <div
+            key={`${item}-${index}`}
+            className="flex h-24 w-24 items-center justify-center rounded-lg border border-[#403849] bg-[#211c2d] text-sm font-bold text-[#d7d1df] shadow-lg shadow-black/20"
+          >
+            {item}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default async function LearnLandingPage() {
   const session = await auth();
@@ -22,7 +189,7 @@ export default async function LearnLandingPage() {
       author: true,
       modules: { include: { sessions: true } },
     },
-    take: 3,
+    take: 4,
     orderBy: { updatedAt: "desc" },
   });
 
@@ -37,137 +204,302 @@ export default async function LearnLandingPage() {
   );
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f7fbff] text-slate-950">
-      <section className="relative flex min-h-screen items-center px-4 py-10 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(34,211,238,0.22),transparent_30%),radial-gradient(circle_at_85%_18%,rgba(16,185,129,0.16),transparent_28%),linear-gradient(180deg,#ffffff_0%,#eef8ff_55%,#f7fbff_100%)]" />
-        <div className="absolute left-6 top-6 hidden h-24 w-24 rounded-full border border-cyan-200/80 md:block" />
-        <div className="absolute bottom-10 right-8 hidden h-36 w-36 rounded-full border border-emerald-200/80 lg:block" />
+    <main className="min-h-screen bg-[#090611] font-[var(--font-geist-sans)] text-white">
+      <header className="sticky top-0 z-50 px-4 pt-3 sm:px-6 lg:px-10">
+        <nav className="mx-auto flex h-20 max-w-[95rem] items-center justify-between rounded-2xl border border-[#3a3345] bg-[#111019]/90 px-5 shadow-2xl shadow-black/30 backdrop-blur-xl">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#51495d] bg-[#1f1a2a] text-[#ff7043]">
+              <Workflow className="h-6 w-6" />
+            </span>
+            <span className="text-2xl font-semibold tracking-tight">
+              Tamph Learn
+            </span>
+          </Link>
 
-        <div className="relative mx-auto w-full max-w-7xl">
-          <div className="mx-auto max-w-5xl text-center">
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/80 px-4 py-2 text-sm font-bold text-cyan-800 shadow-sm">
-              <Sparkles className="h-4 w-4" />
-              TamphSystem Learn
+          <div className="hidden items-center gap-9 text-xl text-[#c7c0cf] lg:flex">
+            <div className="group relative py-7">
+              <button className="flex items-center gap-2 hover:text-white">
+                Product <ChevronDown className="h-5 w-5" />
+              </button>
+              <DropdownPanel items={productMenu} />
             </div>
+            <div className="group relative py-7">
+              <button className="flex items-center gap-2 hover:text-white">
+                Use cases <ChevronDown className="h-5 w-5" />
+              </button>
+              <DropdownPanel items={useCaseMenu} wide />
+            </div>
+            <div className="group relative py-7">
+              <button className="flex items-center gap-2 hover:text-white">
+                Docs <ChevronDown className="h-5 w-5" />
+              </button>
+              <DropdownPanel items={docsMenu} />
+            </div>
+            <Link href="/courses" className="hover:text-white">
+              Courses
+            </Link>
+            <Link href="/profile" className="hover:text-white">
+              Profile
+            </Link>
+          </div>
 
-            <p className="mt-8 text-lg font-semibold text-slate-500">
-              Find your next course in
-            </p>
-            <h1 className="mt-3 min-h-[7rem] text-balance text-5xl font-black leading-none tracking-tight sm:min-h-[8.5rem] sm:text-7xl lg:text-8xl">
-              <TypingEffect />
+          <div className="flex items-center gap-3">
+            <Link
+              href="/courses"
+              className="hidden h-12 items-center gap-2 rounded-lg border border-[#575063] bg-[#312c3b] px-4 text-base font-medium text-white hover:bg-[#40394d] sm:inline-flex"
+            >
+              <Star className="h-5 w-5" />
+              {totalSessions || courses.length || "New"}
+            </Link>
+            <Link
+              href="/login"
+              className="hidden text-lg font-medium text-[#d7d1df] hover:text-white sm:block"
+            >
+              Sign in
+            </Link>
+            <Link
+              href={session?.user ? "/profile" : "/login"}
+              className="inline-flex h-12 items-center rounded-lg bg-gradient-to-r from-[#ff8a3d] to-[#ff3f2e] px-5 text-lg font-semibold text-white shadow-lg shadow-[#ff4f31]/20 hover:-translate-y-0.5"
+            >
+              Get Started
+            </Link>
+          </div>
+        </nav>
+      </header>
+
+      <section className="relative min-h-[calc(100vh-6rem)] overflow-hidden px-4 pb-12 pt-16 sm:px-6 lg:px-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_28%,rgba(86,65,255,0.22),transparent_26%),radial-gradient(circle_at_72%_78%,rgba(255,84,45,0.28),transparent_24%)]" />
+        <div className="absolute right-0 top-0 h-full w-[56%] bg-[linear-gradient(115deg,transparent_0%,rgba(255,117,57,0.08)_38%,rgba(74,60,120,0.18)_100%)]" />
+
+        <div className="relative mx-auto grid max-w-[87rem] gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+          <div className="pt-16 lg:pt-24">
+            <h1 className="max-w-3xl text-6xl font-light leading-[0.98] tracking-tight text-[#bdb7c7] sm:text-7xl lg:text-8xl">
+              Courses and practice paths
+              <span className="block font-normal text-white">
+                you can see and control
+              </span>
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              Browse practical courses, inspect the curriculum, and start
-              learning when you are ready. Guests can explore the catalog;
-              enrollment starts with a TamphSystem account.
+            <p className="mt-12 max-w-2xl text-2xl leading-9 text-[#b9b3c2]">
+              Build visually, go deep with practice, and connect every lesson to
+              a clear learning path. Guests can browse; enrollment starts when
+              you are ready to save progress.
             </p>
-
-            <HeroSearchBox />
-
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <div className="mt-12 flex flex-wrap gap-5">
               <Link
                 href="/courses"
-                className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-bold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:text-cyan-800"
+                className="inline-flex h-16 items-center rounded-lg bg-gradient-to-r from-[#ff8a3d] to-[#ff3f2e] px-8 text-xl font-semibold text-white shadow-xl shadow-[#ff4f31]/20 hover:-translate-y-0.5"
               >
-                <BookOpen className="h-4 w-4" />
-                Browse all courses
+                Browse courses
               </Link>
-              {session?.user ? (
-                <Link
-                  href="/profile"
-                  className="inline-flex h-11 items-center gap-2 rounded-full bg-cyan-700 px-5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-800"
-                >
-                  My learning profile
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              ) : (
-                <Link
-                  href="/login"
-                  className="inline-flex h-11 items-center gap-2 rounded-full bg-cyan-700 px-5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-800"
-                >
-                  Log in to enroll
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              )}
+              <Link
+                href={session?.user ? "/profile" : "/login"}
+                className="inline-flex h-16 items-center rounded-lg bg-[#2f2b38] px-8 text-xl font-semibold text-[#ece8f3] hover:-translate-y-0.5 hover:bg-[#40394d]"
+              >
+                {session?.user ? "Open profile" : "Log in to enroll"}
+              </Link>
             </div>
           </div>
 
-          <div className="mt-14 grid gap-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
-            <div className="grid grid-cols-3 gap-3 rounded-lg border border-white bg-white/70 p-3 shadow-xl shadow-cyan-900/10 backdrop-blur">
-              {[
-                { label: "Courses", value: courses.length || "New" },
-                { label: "Sessions", value: totalSessions || "Live" },
-                { label: "Access", value: "Guest" },
-              ].map((item) => (
+          <div className="relative min-h-[42rem] lg:min-h-[52rem]">
+            <div className="absolute right-[-8rem] top-8 h-[44rem] w-[34rem] rotate-12 rounded-[5rem] border border-[#6e647d] bg-[linear-gradient(135deg,rgba(39,34,52,0.92),rgba(255,110,58,0.56),rgba(10,7,17,0.92))] shadow-[0_0_140px_rgba(255,93,50,0.32)]" />
+            <div className="absolute right-20 top-24 h-[38rem] w-60 rotate-12 rounded-[3rem] bg-[linear-gradient(180deg,rgba(255,255,255,0.26),rgba(255,112,67,0.88),rgba(58,43,74,0.34))] blur-[1px]" />
+            <div className="absolute right-32 top-32 text-[28rem] font-black leading-none text-white/10">
+              L
+            </div>
+            <div className="absolute left-8 top-44 rounded-lg border border-[#4d4659] bg-[#171320]/90 p-6 shadow-2xl shadow-black/40 backdrop-blur">
+              <div className="flex items-center gap-3">
+                <Bot className="h-7 w-7 text-[#ff8a3d]" />
+                <span className="text-2xl font-semibold">AI study agent</span>
+              </div>
+              <p className="mt-3 max-w-sm text-lg leading-7 text-[#aca6b7]">
+                Suggests courses, explains modules, and keeps learning steps
+                visible.
+              </p>
+            </div>
+            <div className="absolute bottom-16 left-20 grid grid-cols-3 gap-3">
+              {[BookOpen, Code2, CheckCircle2].map((Icon, index) => (
                 <div
-                  key={item.label}
-                  className="rounded-lg bg-white px-3 py-4 text-center shadow-sm"
+                  key={index}
+                  className="flex h-24 w-24 items-center justify-center rounded-lg border border-[#4d4659] bg-[#211c2d]/90 text-[#ff8a3d] shadow-xl shadow-black/30"
                 >
-                  <p className="text-2xl font-black text-slate-950">
-                    {item.value}
-                  </p>
-                  <p className="mt-1 text-xs font-bold uppercase text-slate-400">
-                    {item.label}
-                  </p>
+                  <Icon className="h-9 w-9" />
                 </div>
               ))}
             </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              {courses.map((course) => {
-                const sessions = course.modules.reduce(
-                  (sum, module) => sum + module.sessions.length,
-                  0,
-                );
-                return (
-                  <Link
-                    key={course.id}
-                    href={`/courses/${course.id}`}
-                    className="group rounded-lg border border-slate-200 bg-white p-5 shadow-lg shadow-slate-900/5 transition hover:-translate-y-1 hover:border-cyan-300 hover:shadow-xl"
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700">
-                      <GraduationCap className="h-5 w-5" />
-                    </div>
-                    <h2 className="mt-5 line-clamp-2 text-base font-black leading-6">
-                      {course.title}
-                    </h2>
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
-                      {course.description || "Explore this course curriculum."}
-                    </p>
-                    <div className="mt-5 flex items-center justify-between text-xs font-bold text-slate-400">
-                      <span>{sessions} sessions</span>
-                      <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1 group-hover:text-cyan-700" />
-                    </div>
-                  </Link>
-                );
-              })}
-
-              {courses.length === 0 && (
-                <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center md:col-span-3">
-                  <Clock className="mx-auto h-8 w-8 text-slate-400" />
-                  <h2 className="mt-3 font-black">Courses are coming soon</h2>
-                  <p className="mt-2 text-sm text-slate-500">
-                    Published courses from admin will appear here.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="mx-auto mt-8 flex max-w-3xl flex-wrap justify-center gap-3 text-sm font-semibold text-slate-500">
-            {[
-              "Explore before signing in",
-              "Enroll after login",
-              "Track progress in your profile",
-            ].map((text) => (
-              <span key={text} className="inline-flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                {text}
-              </span>
-            ))}
           </div>
         </div>
       </section>
+
+      <LearnWorkflowTabs />
+
+      <section className="px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                title: "Open catalog.",
+                text: "Guests can browse all published courses before signing in.",
+              },
+              {
+                title: "Progress saved.",
+                text: "Enrollment turns the path into a personal workspace.",
+              },
+              {
+                title: "Practice-first.",
+                text: "Lessons, coding, quizzes, and applied tasks sit together.",
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="rounded-lg border border-[#493a50] bg-[linear-gradient(135deg,#201827,#3a1e27)] p-6"
+              >
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-[#0f2338] text-[#ff8a3d]">
+                  <Workflow className="h-7 w-7" />
+                </div>
+                <p className="text-2xl leading-9 text-[#d9d4df]">
+                  <strong className="font-semibold text-white">
+                    {item.title}
+                  </strong>{" "}
+                  {item.text}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="py-28 text-center">
+            <h2 className="mx-auto max-w-4xl text-6xl font-light leading-tight text-[#beb8c8]">
+              Plug learning into your goals &
+              <span className="block text-white">every practical skill</span>
+            </h2>
+            <p className="mt-7 text-2xl text-[#aca6b7]">
+              Use curated paths for common topics. Search for everything else.
+            </p>
+          </div>
+
+          <div className="space-y-8">
+            <LogoRow items={logoItems} />
+            <LogoRow reverse items={[...logoItems].reverse()} />
+          </div>
+
+          <div className="mt-20 text-center">
+            <Link
+              href="/courses"
+              className="inline-flex h-14 items-center rounded-lg bg-gradient-to-r from-[#4397ff] to-[#7147ff] px-7 text-xl font-semibold text-white shadow-xl shadow-blue-950/20"
+            >
+              Browse all courses
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-10 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+            <h2 className="text-5xl font-light leading-tight text-white">
+              Build your path with the short feedback loops learners need.
+            </h2>
+            <p className="text-2xl leading-9 text-[#aca6b7]">
+              Courses are structured as visible paths: preview, enroll, learn,
+              practice, and continue from profile.
+            </p>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+            {featureCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <div
+                  key={card.title}
+                  className="rounded-lg border border-[#3d3648] bg-[#15111e] p-6"
+                >
+                  <Icon className="h-8 w-8 text-[#ff8a3d]" />
+                  <h3 className="mt-8 text-2xl font-semibold text-white">
+                    {card.title}
+                  </h3>
+                  <p className="mt-4 text-lg leading-7 text-[#aca6b7]">
+                    {card.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <footer className="bg-[linear-gradient(180deg,#8d3d25_0%,#090611_18%)] px-4 pb-12 pt-20 sm:px-6 lg:px-10">
+        <div className="mx-auto rounded-3xl border border-[#573a35] bg-[linear-gradient(180deg,#612b22_0%,#160c18_100%)] p-8 shadow-2xl shadow-black/40 lg:p-12">
+          <div className="grid gap-10 border-b border-white/15 pb-16 lg:grid-cols-4">
+            <div>
+              <div className="flex items-center gap-3 text-2xl font-semibold">
+                <Workflow className="h-8 w-8 text-[#ff7293]" />
+                Tamph Learn
+              </div>
+              <p className="mt-8 text-2xl font-semibold">
+                Learn without limits
+              </p>
+              <div className="mt-8 flex gap-4 text-[#cfc6d4]">
+                {[UsersRound, Star, MessageSquareText, BookOpen].map(
+                  (Icon, index) => (
+                    <Icon key={index} className="h-7 w-7" />
+                  ),
+                )}
+              </div>
+            </div>
+
+            {[
+              ["Courses", "Catalog", "Practice paths", "Student profile"],
+              [
+                "Resources",
+                "Research writing",
+                "Data analysis",
+                "AI workflows",
+              ],
+              ["Platform", "Admin", "Research Hub", "Portfolio"],
+            ].map((column) => (
+              <div key={column[0]}>
+                <h3 className="text-2xl font-semibold text-white">
+                  {column[0]}
+                </h3>
+                <div className="mt-6 space-y-4 text-xl text-[#b8afbd]">
+                  {column.slice(1).map((item) => (
+                    <Link key={item} href="/courses" className="block">
+                      {item}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid gap-8 pt-12 md:grid-cols-5">
+            {[
+              ["Popular topics", "Python", "Finance", "Research", "Writing"],
+              [
+                "Combinations",
+                "AI and data",
+                "Excel and finance",
+                "Code and stats",
+              ],
+              ["Categories", "Development", "Academic", "Data", "Business"],
+              ["Templates", "Quick start", "Course preview", "Quiz practice"],
+              ["Guides", "How to enroll", "Track progress", "Learn workflow"],
+            ].map((column) => (
+              <div key={column[0]}>
+                <h3 className="text-xl font-semibold text-white">
+                  {column[0]}
+                </h3>
+                <div className="mt-5 space-y-3 text-lg text-[#a89fab]">
+                  {column.slice(1).map((item) => (
+                    <Link key={item} href="/courses" className="block">
+                      {item}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }

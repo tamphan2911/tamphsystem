@@ -129,6 +129,32 @@ body {
   }
 }
 
+@keyframes learnLogoMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes learnLogoMarqueeReverse {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.learn-logo-marquee {
+  animation: learnLogoMarquee 34s linear infinite;
+}
+
+.learn-logo-marquee-reverse {
+  animation: learnLogoMarqueeReverse 38s linear infinite;
+}
+
 button,
 [role="button"],
 summary,
@@ -321,7 +347,8 @@ textarea:focus-visible {
 }
 
 .research-site-root button[class*="border-slate-300"]:hover,
-.research-site-root button[class*="border-slate-200"][class*="text-slate"]:hover {
+.research-site-root
+  button[class*="border-slate-200"][class*="text-slate"]:hover {
   background-color: #ffffff;
   border-color: rgba(148, 163, 184, 0.95);
   color: #0f172a;
@@ -397,8 +424,10 @@ textarea:focus-visible {
 
   .research-site-root .research-dropdown-panel,
   .research-site-root .fixed.inset-0 .absolute.top-full,
-  .research-site-root [class*="absolute"][class*="top-full"][class*="shadow-2xl"],
-  .research-site-root [class*="absolute"][class*="top-full"][class*="shadow-xl"] {
+  .research-site-root
+    [class*="absolute"][class*="top-full"][class*="shadow-2xl"],
+  .research-site-root
+    [class*="absolute"][class*="top-full"][class*="shadow-xl"] {
     animation: none;
   }
 }
