@@ -90,10 +90,10 @@ export function LearnWorkflowTabs() {
               }`}
             >
               {isActive && (
-                <span className="absolute -left-px top-0 h-full w-1 rounded-full bg-gradient-to-b from-[#ff8a3d] to-[#ff3f2e]" />
+                <span className="absolute -left-px top-0 h-full w-1 rounded-full bg-gradient-to-b from-[#38bdf8] to-[#2563eb]" />
               )}
               <span className="flex items-center gap-3 text-2xl font-semibold leading-tight text-white">
-                <Icon className="h-5 w-5 text-[#ff8a3d]" />
+                <Icon className="h-5 w-5 text-[#38bdf8]" />
                 {tab.label}
               </span>
               <span className="mt-2 block text-xl leading-8 text-[#aca6b7]">
@@ -112,7 +112,7 @@ export function LearnWorkflowTabs() {
 
         <div className="relative z-10 p-7">
           <div className="inline-flex items-center gap-2 rounded-lg border border-[#4b4358] bg-[#211b2a] px-4 py-3 text-sm font-semibold text-[#d7d1df]">
-            <ActiveIcon className="h-5 w-5 text-[#ff8a3d]" />
+            <ActiveIcon className="h-5 w-5 text-[#38bdf8]" />
             {active.description}
           </div>
 
@@ -126,7 +126,7 @@ export function LearnWorkflowTabs() {
                     index === 1 ? "lg:mt-20" : ""
                   } ${index === 2 ? "lg:mt-4" : ""}`}
                 >
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg border border-[#736b80] bg-[#312b3b] text-[#ff8a3d]">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg border border-[#736b80] bg-[#312b3b] text-[#38bdf8]">
                     <Icon className="h-7 w-7" />
                   </div>
                   <h3 className="mt-4 text-lg font-semibold text-white">
