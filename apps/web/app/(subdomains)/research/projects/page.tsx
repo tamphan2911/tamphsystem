@@ -215,72 +215,76 @@ export default async function ProjectsDashboard() {
       label: "Total",
       value: projects.length,
       icon: Files,
-      color: "text-slate-600",
+      color: "text-[#A8DADC]",
     },
     {
       label: "Submitted",
       value: submitting.length,
       icon: SendHorizontal,
-      color: "text-blue-600",
+      color: "text-[#A8DADC]",
     },
     {
       label: "Published",
       value: published.length,
       icon: BookOpenCheck,
-      color: "text-emerald-600",
+      color: "text-[#A8DADC]",
     },
     {
       label: "Claims",
       value: claimQueue.length,
       icon: CircleDollarSign,
-      color: "text-amber-600",
+      color: "text-[#A8DADC]",
     },
   ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        {canManageResearch ? (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
-            {stats.map((item) => (
-              <div
-                key={item.label}
-                className="flex min-w-32 items-center gap-3 rounded-[2px] border border-[#d7d2ca] bg-[#fbfaf7] px-3 py-2 dark:border-[#3d3648] dark:bg-[#14101d]"
-              >
-                <item.icon className={`h-4 w-4 ${item.color}`} />
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7280] dark:text-[#aaa4b5]">
-                    {item.label}
-                  </p>
-                  <p className="text-base font-black text-[#17131d] dark:text-white">
-                    {item.value}
-                  </p>
+      <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
+        <div className="flex flex-col xl:flex-row xl:items-stretch xl:justify-between">
+          {canManageResearch ? (
+            <div className="grid flex-1 grid-cols-2 divide-x divide-y divide-[#444444] sm:grid-cols-4 sm:divide-y-0">
+              {stats.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex min-h-16 items-center gap-3 px-4 py-3"
+                >
+                  <item.icon className={`h-4 w-4 ${item.color}`} />
+                  <div>
+                    <p className="text-[11px] font-normal uppercase tracking-wide text-[#B0B0B0]">
+                      {item.label}
+                    </p>
+                    <p className="text-base font-normal text-[#E4E4E4]">
+                      {item.value}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div />
-        )}
+              ))}
+            </div>
+          ) : (
+            <div className="flex-1" />
+          )}
 
-        {isAdmin ? (
-          <NewResearchDialog
-            users={authorOptions}
-            isAdmin={isAdmin}
-            fundingInstitutions={fundingInstitutions.map((institution) => ({
-              id: institution.id,
-              name: institution.name,
-              shortName: institution.shortName ?? "",
-              country: institution.country ?? "",
-            }))}
-          />
-        ) : (
-          <ProposalDialog
-            type="RESEARCH"
-            isLoggedIn={Boolean(session)}
-            hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
-          />
-        )}
+          <div className="flex items-center justify-end border-t border-[#444444] px-4 py-3 xl:border-l xl:border-t-0">
+            {isAdmin ? (
+              <NewResearchDialog
+                users={authorOptions}
+                isAdmin={isAdmin}
+                fundingInstitutions={fundingInstitutions.map((institution) => ({
+                  id: institution.id,
+                  name: institution.name,
+                  shortName: institution.shortName ?? "",
+                  country: institution.country ?? "",
+                }))}
+              />
+            ) : (
+              <ProposalDialog
+                type="RESEARCH"
+                isLoggedIn={Boolean(session)}
+                hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
+              />
+            )}
+          </div>
+        </div>
       </div>
 
       <ResearchProjectsTable
