@@ -1,9 +1,3 @@
-import {
-  BookOpenCheck,
-  CircleDollarSign,
-  Files,
-  SendHorizontal,
-} from "lucide-react";
 import { redirect } from "next/navigation";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
@@ -214,26 +208,18 @@ export default async function ProjectsDashboard() {
     {
       label: "Total",
       value: projects.length,
-      icon: Files,
-      color: "text-[#A8DADC]",
     },
     {
       label: "Submitted",
       value: submitting.length,
-      icon: SendHorizontal,
-      color: "text-[#A8DADC]",
     },
     {
       label: "Published",
       value: published.length,
-      icon: BookOpenCheck,
-      color: "text-[#A8DADC]",
     },
     {
       label: "Claims",
       value: claimQueue.length,
-      icon: CircleDollarSign,
-      color: "text-[#A8DADC]",
     },
   ];
 
@@ -242,21 +228,18 @@ export default async function ProjectsDashboard() {
       <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
         <div className="flex flex-col xl:flex-row xl:items-stretch xl:justify-between">
           {canManageResearch ? (
-            <div className="grid flex-1 grid-cols-2 divide-x divide-y divide-[#444444] sm:grid-cols-4 sm:divide-y-0">
+            <div className="flex flex-1 flex-wrap items-center gap-2 p-3">
               {stats.map((item) => (
                 <div
                   key={item.label}
-                  className="flex min-h-16 items-center gap-3 px-4 py-3"
+                  className="min-w-28 border border-[#444444] bg-[#383838] px-3 py-2 text-sm text-[#E4E4E4]"
                 >
-                  <item.icon className={`h-4 w-4 ${item.color}`} />
-                  <div>
-                    <p className="text-[11px] font-normal uppercase tracking-wide text-[#B0B0B0]">
-                      {item.label}
-                    </p>
-                    <p className="text-base font-normal text-[#E4E4E4]">
-                      {item.value}
-                    </p>
-                  </div>
+                  <span className="font-normal text-[#B0B0B0]">
+                    {item.label}:{" "}
+                  </span>
+                  <span className="font-normal text-[#E4E4E4]">
+                    {item.value}
+                  </span>
                 </div>
               ))}
             </div>

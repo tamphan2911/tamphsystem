@@ -100,6 +100,17 @@ const hubLinks = [
 
 const sidebarStateKey = "research-sidebar-collapsed";
 
+function titleCaseLabel(label: string) {
+  return label
+    .split(" ")
+    .map((word) =>
+      word
+        ? `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`
+        : word,
+    )
+    .join(" ");
+}
+
 function closeResearchModal(overlay: HTMLElement) {
   const closeButton = overlay.querySelector<HTMLButtonElement>(
     'button[aria-label="Close"], button[aria-label="Close modal"]',
@@ -281,7 +292,7 @@ export function ResearchShell({
                       : "text-[#655d6d] hover:bg-[#ece7df] dark:text-[#d7d1df] dark:hover:bg-[#211c2d]"
                   }`}
                 >
-                  {item.label}
+                  {titleCaseLabel(item.label)}
                   {item.href === "/proposals" && unopenedProposalCount > 0 && (
                     <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-black text-white">
                       {unopenedProposalCount > 99
@@ -303,7 +314,7 @@ export function ResearchShell({
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-normal text-[#B0B0B0] transition duration-150 ease-out hover:bg-[#383838] hover:text-[#A8DADC] motion-reduce:transition-none"
                     >
                       <item.icon className="h-3.5 w-3.5" />
-                      {item.label}
+                      {titleCaseLabel(item.label)}
                     </Link>
                   ))}
               </div>

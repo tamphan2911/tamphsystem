@@ -55,6 +55,14 @@ export function ActiveNavLink({
   const isActive =
     pathname === href || (href !== "/" && pathname.startsWith(href));
   const Icon = icons[icon];
+  const displayLabel = label
+    .split(" ")
+    .map((word) =>
+      word
+        ? `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`
+        : word,
+    )
+    .join(" ");
   const baseClass =
     "group/navlink relative flex items-center gap-3 overflow-visible rounded-none border-y border-transparent px-5 py-3 text-sm font-normal capitalize outline-none transition-[background-color,color,border-color] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#A8DADC]/45 motion-reduce:transition-none";
   const stateClass = isActive
@@ -71,7 +79,7 @@ export function ActiveNavLink({
   return (
     <Link
       href={href}
-      aria-label={collapsed ? label : undefined}
+      aria-label={collapsed ? displayLabel : undefined}
       className={`${baseClass} ${stateClass} ${
         collapsed ? "justify-center" : ""
       }`}
@@ -82,7 +90,9 @@ export function ActiveNavLink({
         }`}
       />
       {collapsed && <Icon className={`h-5 w-5 flex-none ${iconClass}`} />}
-      {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+      {!collapsed && (
+        <span className="min-w-0 flex-1 truncate">{displayLabel}</span>
+      )}
       {!collapsed && adminOnly && !isActive && (
         <span className="border border-[#444444] px-1.5 py-0.5 text-[9px] font-normal uppercase tracking-wide text-[#FFC1CC]">
           Admin
@@ -99,7 +109,7 @@ export function ActiveNavLink({
       )}
       {collapsed && (
         <span className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-50 -translate-y-1/2 -translate-x-1 whitespace-nowrap border border-[#444444] bg-[#2C2C2C] px-3 py-2 text-xs font-normal capitalize text-[#E4E4E4] opacity-0 shadow-xl shadow-black/30 transition duration-200 ease-out group-hover/navlink:translate-x-0 group-hover/navlink:opacity-100 group-focus-visible/navlink:translate-x-0 group-focus-visible/navlink:opacity-100 motion-reduce:transition-none">
-          {label}
+          {displayLabel}
           {adminOnly && (
             <span className="ml-2 border border-[#444444] px-1.5 py-0.5 text-[9px] font-normal uppercase tracking-wide text-[#FFC1CC]">
               Admin
