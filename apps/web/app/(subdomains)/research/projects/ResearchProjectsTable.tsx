@@ -160,7 +160,7 @@ function StatusIconChip({
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-[2px] ring-1 transition-colors duration-150 ${className}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
@@ -191,7 +191,7 @@ function RegistrationCell({
     <div className="grid max-w-56 grid-cols-[2rem_minmax(0,1fr)] items-start gap-2">
       <IconHint label={registerLine}>
         <span
-          className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${registrationClass(status)}`}
+          className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-[2px] ring-1 transition-colors duration-150 ${registrationClass(status)}`}
         >
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
@@ -231,7 +231,7 @@ function SubmitCount({ count }: { count: number }) {
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-semibold ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-[2px] px-2 text-sm font-semibold ring-1 transition-colors duration-150 ${className}`}
       >
         {count}
         <span className="sr-only">{label}</span>
@@ -259,7 +259,7 @@ function DeleteResearchButton({
         onClick={() => setOpen(true)}
         label={`Delete ${row.title}`}
         tone="rose"
-        className="h-8 w-8"
+        className="h-8 w-8 rounded-[2px]"
       >
         <Trash2 className="h-4 w-4" />
       </ResearchIconButton>
@@ -359,8 +359,8 @@ export function ResearchProjectsTable({
   const pagination = useTablePagination(filtered, 10);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+    <div className="overflow-hidden rounded-[2px] border border-[#d7d2ca] bg-[#fbfaf7] dark:border-[#3d3648] dark:bg-[#111019]">
+      <div className="flex flex-col gap-3 border-b border-[#d7d2ca] bg-[#f1eee8] p-3 dark:border-[#3d3648] dark:bg-[#14101d] lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -396,7 +396,7 @@ export function ResearchProjectsTable({
 
       <div className="overflow-hidden">
         <table className="w-full table-fixed text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+          <thead className="border-b border-[#d7d2ca] bg-[#e8e2d8] text-xs uppercase tracking-wide text-[#5d5665] dark:border-[#3d3648] dark:bg-[#1b1724] dark:text-[#aaa4b5]">
             <tr>
               <th className="w-[5.75rem] px-3 py-3">ID</th>
               <th className="px-3 py-3">Research</th>
@@ -413,25 +413,25 @@ export function ResearchProjectsTable({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-[#e4ded5] dark:divide-[#2f2938]">
             {pagination.pagedRows.map((row) => (
               <tr
                 key={row.id}
-                className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                className="group align-top transition-colors duration-150 hover:bg-[#f4f0e8] dark:hover:bg-[#17131d]"
               >
                 <td className="px-3 py-3 align-top">
                   <Link href={`/projects/${row.id}`}>
-                    <span className="font-mono text-xs font-bold text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300">
+                    <span className="font-mono text-xs font-bold text-[#655d6d] transition hover:text-[#11604f] dark:text-[#aaa4b5] dark:hover:text-[#b7f3e2]">
                       {row.researchCode || "-"}
                     </span>
                   </Link>
                 </td>
                 <td className="min-w-0 px-3 py-3 align-top">
                   <Link href={`/projects/${row.id}`} className="group">
-                    <p className="line-clamp-2 text-base font-normal text-slate-700 transition group-hover:text-blue-600 dark:text-slate-200 dark:group-hover:text-blue-300">
+                    <p className="line-clamp-2 text-base font-normal text-[#2d2833] transition group-hover:text-[#11604f] dark:text-[#eee8f5] dark:group-hover:text-[#b7f3e2]">
                       {row.title}
                     </p>
-                    <p className="mt-1 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 line-clamp-1 text-xs text-[#655d6d] dark:text-[#aaa4b5]">
                       {row.coAuthors || row.abstract || "No notes"}
                     </p>
                   </Link>
@@ -453,7 +453,7 @@ export function ResearchProjectsTable({
                           className={claimClass(row.claimStatus)}
                         />
                       ) : (
-                        <span className="text-sm text-slate-400">-</span>
+                        <span className="text-sm text-[#8b8392]">-</span>
                       )}
                     </td>
                     <td className="px-3 py-3 align-top">
@@ -464,7 +464,7 @@ export function ResearchProjectsTable({
                           registerName={row.registerName}
                         />
                       ) : (
-                        <span className="text-sm text-slate-400">-</span>
+                        <span className="text-sm text-[#8b8392]">-</span>
                       )}
                     </td>
                   </>

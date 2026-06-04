@@ -91,10 +91,10 @@ export function FilterSelect({
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
         className={cx(
-          "group inline-flex h-11 w-full cursor-pointer items-center justify-between gap-3 rounded-xl border px-3.5 text-sm font-semibold shadow-sm outline-none transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md focus:ring-4 motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+          "group inline-flex h-10 w-full cursor-pointer items-center justify-between gap-3 rounded-[2px] border px-3 text-sm font-semibold outline-none transition-colors duration-150 focus:ring-2 motion-reduce:transition-none",
           open
-            ? "border-[#89c7b7] bg-[#f2fffb] text-[#11604f] shadow-[#11604f]/10 ring-4 ring-[#89c7b7]/20 dark:border-[#4fb59d] dark:bg-[#12241f] dark:text-[#b7f3e2] dark:shadow-black/25 dark:ring-[#4fb59d]/18"
-            : "border-[#ded8cf] bg-[linear-gradient(180deg,#fffdfa_0%,#f4f0e8_100%)] text-[#423b49] hover:border-[#b9d5cb] hover:bg-[linear-gradient(180deg,#ffffff_0%,#eef8f4_100%)] hover:text-[#11604f] focus:border-[#89c7b7] focus:ring-[#89c7b7]/20 dark:border-[#403849] dark:bg-[linear-gradient(180deg,#1c1726_0%,#14101d_100%)] dark:text-[#eee8f5] dark:hover:border-[#4fb59d] dark:hover:bg-[linear-gradient(180deg,#211c2d_0%,#14201d_100%)] dark:hover:text-[#b7f3e2] dark:focus:border-[#4fb59d] dark:focus:ring-[#4fb59d]/18",
+            ? "border-[#11604f] bg-[#eaf8f3] text-[#11604f] ring-[#89c7b7]/25 dark:border-[#4fb59d] dark:bg-[#12241f] dark:text-[#b7f3e2] dark:ring-[#4fb59d]/20"
+            : "border-[#d7d2ca] bg-[#fbfaf7] text-[#423b49] hover:border-[#a9bfb6] hover:bg-[#f4f0e8] hover:text-[#11604f] focus:border-[#89c7b7] focus:ring-[#89c7b7]/20 dark:border-[#3d3648] dark:bg-[#14101d] dark:text-[#eee8f5] dark:hover:border-[#4fb59d] dark:hover:bg-[#1b1724] dark:hover:text-[#b7f3e2] dark:focus:border-[#4fb59d] dark:focus:ring-[#4fb59d]/18",
         )}
       >
         <span className="min-w-0 truncate text-left leading-5">
@@ -107,7 +107,7 @@ export function FilterSelect({
       </button>
 
       {open && (
-        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-2 w-max min-w-full max-w-[min(36rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-[#d8d1c8] bg-[#fffdfa] p-1.5 shadow-2xl shadow-[#201c25]/16 ring-1 ring-white/70 dark:border-[#403849] dark:bg-[#14101d] dark:shadow-black/45 dark:ring-white/[0.05]">
+        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-1.5 w-max min-w-full max-w-[min(36rem,calc(100vw-2rem))] overflow-hidden rounded-[2px] border border-[#d7d2ca] bg-[#fbfaf7] p-1 shadow-xl shadow-[#201c25]/14 dark:border-[#3d3648] dark:bg-[#14101d] dark:shadow-black/40">
           <div
             className="max-h-80 overflow-y-auto pr-0.5"
             role="listbox"
@@ -126,10 +126,10 @@ export function FilterSelect({
                     onChange(option.value);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-start justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm leading-5 transition duration-150 ease-out motion-reduce:transition-none ${
+                  className={`flex w-full items-start justify-between gap-3 rounded-[2px] px-3 py-2.5 text-left text-sm leading-5 transition-colors duration-150 motion-reduce:transition-none ${
                     isSelected
                       ? "bg-[#eaf8f3] font-semibold text-[#11604f] ring-1 ring-[#b9d5cb] dark:bg-[#12241f] dark:text-[#b7f3e2] dark:ring-[#2f6e60]"
-                      : "text-[#423b49] hover:translate-x-0.5 hover:bg-[#f4f0e8] hover:text-[#11604f] motion-reduce:hover:translate-x-0 dark:text-[#d7d1df] dark:hover:bg-[#211c2d] dark:hover:text-[#b7f3e2]"
+                      : "text-[#423b49] hover:bg-[#f4f0e8] hover:text-[#11604f] dark:text-[#d7d1df] dark:hover:bg-[#211c2d] dark:hover:text-[#b7f3e2]"
                   }`}
                 >
                   <span className="min-w-0 flex-1 whitespace-normal break-words">
@@ -170,7 +170,7 @@ export function TableSearchInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className={`${researchFieldClass} h-10 rounded-xl py-2 pl-10`}
+        className={`${researchFieldClass} h-10 rounded-[2px] py-2 pl-10`}
       />
     </div>
   );
@@ -213,7 +213,7 @@ export function TablePagination({
   const end = Math.min(total, page * pageSize);
 
   return (
-    <div className="flex flex-col gap-3 border-t border-[#ded8cf] bg-[#f1eee8]/70 px-4 py-3 transition dark:border-[#332c3d] dark:bg-[#0d0915]/55 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 border-t border-[#d7d2ca] bg-[#f1eee8] px-4 py-3 transition dark:border-[#3d3648] dark:bg-[#0d0915] sm:flex-row sm:items-center sm:justify-between">
       <p className="text-xs font-semibold text-[#655d6d] dark:text-[#aaa4b5]">
         Showing{" "}
         <span className="text-[#201c25] dark:text-white">
@@ -231,7 +231,7 @@ export function TablePagination({
         >
           <ChevronLeft className="h-4 w-4" />
         </ResearchIconButton>
-        <span className="rounded-lg border border-[#d8d1c8] bg-white px-3 py-2 text-xs font-black text-[#423b49] shadow-sm dark:border-[#403849] dark:bg-[#17131d] dark:text-[#d7d1df]">
+        <span className="rounded-[2px] border border-[#d8d1c8] bg-white px-3 py-2 text-xs font-black text-[#423b49] dark:border-[#403849] dark:bg-[#17131d] dark:text-[#d7d1df]">
           {page} / {pageCount}
         </span>
         <ResearchIconButton
