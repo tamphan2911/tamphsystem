@@ -25,6 +25,12 @@ import { updateResearchTask } from "../../actions";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
+import {
+  researchDropdownItemActiveClass,
+  researchDropdownItemClass,
+  researchDropdownItemIdleClass,
+  researchDropdownPanelClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import type {
   TaskAssigneeOption,
   TaskAccountOption,
@@ -888,25 +894,25 @@ function SearchPanel({
           open={showDropdown}
           maxWidth={640}
         >
-          <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto rounded-none border border-slate-200 bg-white shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
+          <div className={`${researchDropdownPanelClass} max-h-[var(--research-dropdown-max-height)] overflow-y-auto`}>
             {items.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={item.onClick}
-                className={`flex w-full cursor-pointer items-start justify-between gap-3 rounded-none border-y px-3 py-2.5 text-left transition ${
+                className={`${researchDropdownItemClass} cursor-pointer ${
                   item.selected
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
-                    : "border-transparent bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                    ? researchDropdownItemActiveClass
+                    : researchDropdownItemIdleClass
                 }`}
               >
-                <span className="flex min-w-0 items-start gap-3">
+                <span className="flex min-w-0 items-start gap-3 px-3">
                   <span className="mt-0.5 flex-none text-slate-400">
                     {item.icon}
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-bold leading-5">
+                    <span className="block text-sm font-normal leading-5">
                       {item.title}
                     </span>
                     <span className="mt-0.5 block text-xs leading-5 text-[#B0B0B0]">
@@ -915,7 +921,7 @@ function SearchPanel({
                   </span>
                 </span>
                 {item.selected && (
-                  <Check className="mt-0.5 h-4 w-4 flex-none" />
+                  <Check className="mr-3 mt-0.5 h-4 w-4 flex-none" />
                 )}
               </button>
             ))}

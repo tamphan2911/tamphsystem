@@ -17,7 +17,13 @@ import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   ResearchButton,
   ResearchIconButton,
+  cx,
+  researchDropdownItemActiveClass,
+  researchDropdownItemClass,
+  researchDropdownItemIdleClass,
+  researchDropdownPanelClass,
   researchFieldClass,
+  researchSelectTriggerClass,
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
@@ -344,7 +350,7 @@ export function CreateSubmissionTaskDialog({
                   className={`${inputClass} w-full pl-9`}
                 />
               </div>
-              <div className="grid max-h-72 overflow-y-auto rounded-none border border-slate-200 bg-white shadow-inner dark:border-slate-800 dark:bg-slate-950">
+              <div className={`${researchDropdownPanelClass} grid max-h-72 overflow-y-auto`}>
                 {venueResults.map((venue) => {
                   const selected =
                     selectedVenue?.kind === venue.kind &&
@@ -354,15 +360,15 @@ export function CreateSubmissionTaskDialog({
                       key={`${venue.kind}-${venue.id}`}
                       type="button"
                       onClick={() => selectVenue(venue)}
-                      className={`cursor-pointer rounded-none border-y px-3 py-2 text-left transition ${
+                      className={`${researchDropdownItemClass} cursor-pointer ${
                         selected
-                          ? "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-200"
-                          : "border-transparent bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/30"
+                          ? researchDropdownItemActiveClass
+                          : researchDropdownItemIdleClass
                       }`}
                     >
-                      <span className="flex items-start justify-between gap-3">
+                      <span className="flex min-w-0 flex-1 items-start justify-between gap-3 px-3">
                         <span>
-                          <span className="block text-sm font-bold">
+                          <span className="block text-sm font-normal">
                             {venue.name}
                           </span>
                           <span className="mt-1 block text-xs text-[#B0B0B0]">
@@ -411,7 +417,12 @@ export function CreateSubmissionTaskDialog({
                     <button
                       type="button"
                       onClick={() => setAccountOpen((current) => !current)}
-                      className="flex w-full cursor-pointer items-center justify-between gap-3 border border-[#444444] bg-slate-50 px-3 py-2.5 text-left text-sm text-slate-800 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      className={cx(
+                        "flex cursor-pointer items-center justify-between gap-3 text-left",
+                        researchSelectTriggerClass,
+                        accountOpen &&
+                          "border-[#A8DADC] bg-[#383838] ring-1 ring-[#A8DADC]/25",
+                      )}
                     >
                       <span className="min-w-0 truncate">
                         {selectedAccount
@@ -419,7 +430,7 @@ export function CreateSubmissionTaskDialog({
                           : "Choose an account"}
                       </span>
                       <ChevronDown
-                        className={`h-4 w-4 flex-none text-slate-400 transition ${accountOpen ? "rotate-180" : ""}`}
+                        className={`h-4 w-4 flex-none text-[#B0B0B0] transition ${accountOpen ? "rotate-180 text-[#A8DADC]" : ""}`}
                       />
                     </button>
                     <FloatingDropdownPortal
@@ -427,7 +438,7 @@ export function CreateSubmissionTaskDialog({
                       open={accountOpen}
                       maxWidth={560}
                     >
-                      <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto rounded-none border border-slate-200 bg-white shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-950">
+                      <div className={`${researchDropdownPanelClass} max-h-[var(--research-dropdown-max-height)] overflow-y-auto`}>
                         {selectedVenue.accounts.map((account) => (
                           <button
                             key={account.id}
@@ -436,10 +447,14 @@ export function CreateSubmissionTaskDialog({
                               setSelectedAccountId(account.id);
                               setAccountOpen(false);
                             }}
-                            className="flex w-full items-center justify-between gap-3 rounded-none border-y border-transparent px-3 py-2 text-left text-sm text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 dark:text-slate-200 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                            className={`${researchDropdownItemClass} ${
+                              selectedAccountId === account.id
+                                ? researchDropdownItemActiveClass
+                                : researchDropdownItemIdleClass
+                            }`}
                           >
-                            <span>
-                              <span className="block font-semibold">
+                            <span className="min-w-0 px-3">
+                              <span className="block truncate font-normal">
                                 {account.username}
                               </span>
                               <span className="block text-xs text-[#B0B0B0]">
@@ -447,7 +462,7 @@ export function CreateSubmissionTaskDialog({
                               </span>
                             </span>
                             {selectedAccountId === account.id && (
-                              <Check className="h-4 w-4 text-emerald-600" />
+                              <Check className="mr-3 h-4 w-4 text-[#A8DADC]" />
                             )}
                           </button>
                         ))}
@@ -491,7 +506,7 @@ export function CreateSubmissionTaskDialog({
                   className={`${inputClass} w-full pl-9`}
                 />
               </div>
-              <div className="grid max-h-64 overflow-y-auto rounded-none border border-slate-200 dark:border-slate-800">
+              <div className={`${researchDropdownPanelClass} grid max-h-64 overflow-y-auto`}>
                 {assistantResults.map((assistant) => {
                   const selected = selectedAssistantIds.includes(assistant.id);
                   return (
@@ -499,16 +514,16 @@ export function CreateSubmissionTaskDialog({
                       key={assistant.id}
                       type="button"
                       onClick={() => toggleAssistant(assistant.id)}
-                      className={`flex cursor-pointer items-center justify-between gap-3 rounded-none border-y px-3 py-2 text-left transition ${
+                      className={`${researchDropdownItemClass} cursor-pointer ${
                         selected
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
-                          : "border-transparent bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                          ? researchDropdownItemActiveClass
+                          : researchDropdownItemIdleClass
                       }`}
                     >
-                      <span className="flex min-w-0 items-center gap-3">
+                      <span className="flex min-w-0 items-center gap-3 px-3">
                         <UserRound className="h-4 w-4 flex-none text-slate-400" />
                         <span className="min-w-0">
-                          <span className="block truncate text-sm font-bold">
+                          <span className="block truncate text-sm font-normal">
                             {assistant.name || assistant.email}
                           </span>
                           <span className="block truncate text-xs text-[#B0B0B0]">

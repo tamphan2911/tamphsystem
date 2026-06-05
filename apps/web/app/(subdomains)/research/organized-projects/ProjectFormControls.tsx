@@ -16,6 +16,11 @@ import {
   type ResearchSearchPickerOption,
 } from "@/sites/research/components/ResearchSearchPicker";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
+import {
+  researchDropdownItemClass,
+  researchDropdownItemIdleClass,
+  researchDropdownPanelClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import type { AuthorOption } from "../projects/[id]/AuthorsPicker";
 
 export type FundingInstitutionOption = {
@@ -303,7 +308,7 @@ export function ProjectMembersPicker({
             open={focused && query.trim().length > 0}
             maxWidth={640}
           >
-            <div className="overflow-hidden rounded-none border border-slate-200 bg-white shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
+            <div className={researchDropdownPanelClass}>
               <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
                 {results.length > 0 ? (
                   results.map((user) => (
@@ -312,20 +317,20 @@ export function ProjectMembersPicker({
                       type="button"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => addMember(user)}
-                      className="flex w-full cursor-pointer items-center gap-3 rounded-none border-y border-transparent px-3 py-2 text-left transition hover:border-blue-100 hover:bg-blue-50 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40"
+                      className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
                     >
-                      <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-none bg-slate-50 text-slate-400 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+                      <span className="ml-3 inline-flex h-8 w-8 flex-none items-center justify-center rounded-none text-[#B0B0B0]">
                         <UserRound className="h-4 w-4" aria-hidden="true" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold text-[#E4E4E4]">
+                        <span className="block truncate text-sm font-normal text-[#E4E4E4]">
                           {userName(user)}
                         </span>
                         <span className="block truncate text-xs font-medium text-[#777777]">
                           {user.role} - {user.email} - {user.id.slice(0, 8)}
                         </span>
                       </span>
-                      <Check className="h-4 w-4 flex-none text-blue-500" />
+                      <Check className="mr-3 h-4 w-4 flex-none text-[#A8DADC]" />
                     </button>
                   ))
                 ) : (
@@ -478,7 +483,7 @@ export function ProjectResearchPicker({
             open={focused && query.trim().length > 0}
             maxWidth={720}
           >
-            <div className="overflow-hidden rounded-none border border-slate-200 bg-white shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
+            <div className={researchDropdownPanelClass}>
               <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
                 {results.length > 0 ? (
                   results.map((research) => (
@@ -491,10 +496,10 @@ export function ProjectResearchPicker({
                         setQuery("");
                         setFocused(false);
                       }}
-                      className="flex w-full cursor-pointer items-center gap-3 rounded-none border-y border-transparent px-3 py-2 text-left transition hover:border-blue-100 hover:bg-blue-50 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40"
+                      className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
                     >
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold text-[#E4E4E4]">
+                      <span className="min-w-0 flex-1 px-3">
+                        <span className="block truncate text-sm font-normal text-[#E4E4E4]">
                           {research.title}
                         </span>
                         <span className="block truncate text-xs font-medium text-[#777777]">
@@ -503,7 +508,7 @@ export function ProjectResearchPicker({
                             .join(" - ")}
                         </span>
                       </span>
-                      <Check className="h-4 w-4 flex-none text-blue-500" />
+                      <Check className="mr-3 h-4 w-4 flex-none text-[#A8DADC]" />
                     </button>
                   ))
                 ) : (

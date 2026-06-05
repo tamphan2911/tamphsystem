@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { submitProposal } from "../../../app/(subdomains)/research/actions";
 import { ResearchModal } from "./ResearchModal";
+import { ResearchFormSelect } from "./ResearchFormSelect";
 import {
   ResearchButton,
   researchFieldClass,
@@ -209,14 +210,15 @@ export function ProposalDialog({
                   <>
                     <label className={labelClass}>
                       Type
-                      <select
+                      <ResearchFormSelect
                         name="venueType"
-                        className={`${fieldClass} cursor-pointer`}
                         defaultValue="INTERNATIONAL"
-                      >
-                        <option value="INTERNATIONAL">International</option>
-                        <option value="NATIONAL">National</option>
-                      </select>
+                        ariaLabel="Conference type"
+                        options={[
+                          { value: "INTERNATIONAL", label: "International" },
+                          { value: "NATIONAL", label: "National" },
+                        ]}
+                      />
                     </label>
                     <label className={labelClass}>
                       Location

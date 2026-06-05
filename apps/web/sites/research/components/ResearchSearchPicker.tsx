@@ -3,7 +3,14 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Search, X } from "lucide-react";
-import { ResearchIconButton, researchFieldClass } from "./ResearchPrimitives";
+import {
+  ResearchIconButton,
+  researchDropdownItemActiveClass,
+  researchDropdownItemClass,
+  researchDropdownItemIdleClass,
+  researchDropdownPanelClass,
+  researchFieldClass,
+} from "./ResearchPrimitives";
 import { FloatingDropdownPortal } from "./FloatingDropdownPortal";
 
 export type ResearchSearchPickerOption<T = unknown> = {
@@ -159,7 +166,7 @@ export function ResearchSearchPicker<T = unknown>({
           open={showDropdown}
           maxWidth={640}
         >
-          <div className="research-dropdown-panel overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] shadow-2xl shadow-black/35">
+          <div className={researchDropdownPanelClass}>
             <div
               className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto"
               role="listbox"
@@ -178,28 +185,30 @@ export function ResearchSearchPicker<T = unknown>({
                       disabled={option.disabled}
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => choose(option)}
-                      className={`flex w-full items-start justify-between gap-3 rounded-none border-y px-3 py-2.5 text-left transition duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none ${
+                      className={`${researchDropdownItemClass} disabled:cursor-not-allowed disabled:opacity-50 ${
                         isActive || isSelected
-                          ? "border-[#5A5A5A] bg-[#383838] text-[#E4E4E4]"
-                          : "border-transparent text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#444444] hover:text-white"
+                          ? researchDropdownItemActiveClass
+                          : researchDropdownItemIdleClass
                       }`}
                     >
-                      {renderOption ? (
-                        renderOption(option, isActive)
-                      ) : (
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-bold">
-                            {option.label}
-                          </span>
-                          {(option.description || option.meta) && (
-                            <span className="block truncate text-xs font-medium opacity-70">
-                              {option.description || option.meta}
+                      <span className="min-w-0 flex-1 px-3">
+                        {renderOption ? (
+                          renderOption(option, isActive)
+                        ) : (
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-normal">
+                              {option.label}
                             </span>
-                          )}
-                        </span>
-                      )}
+                            {(option.description || option.meta) && (
+                              <span className="block truncate text-xs font-medium opacity-70">
+                                {option.description || option.meta}
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </span>
                       {(isActive || isSelected) && (
-                        <Check className="mt-0.5 h-4 w-4 flex-none" />
+                        <Check className="mr-3 mt-0.5 h-4 w-4 flex-none" />
                       )}
                     </button>
                   );

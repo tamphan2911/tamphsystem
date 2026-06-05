@@ -18,6 +18,9 @@ import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDrop
 import {
   ResearchButton,
   ResearchIconButton,
+  researchDropdownItemClass,
+  researchDropdownItemIdleClass,
+  researchDropdownPanelClass,
   researchFieldClass,
   researchLabelClass,
   researchTextareaClass,
@@ -111,7 +114,7 @@ function NewResearchAuthorsPicker({
             open={focused && query.trim().length > 0}
             maxWidth={640}
           >
-            <div className="overflow-hidden rounded-none border border-blue-100 bg-white shadow-2xl shadow-slate-900/15 ring-1 ring-blue-50 dark:border-blue-900/60 dark:bg-slate-950 dark:shadow-black/35 dark:ring-blue-950/50">
+            <div className={researchDropdownPanelClass}>
               <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
                 {results.length > 0 ? (
                   results.map((user) => (
@@ -120,13 +123,13 @@ function NewResearchAuthorsPicker({
                       type="button"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => addAuthor(user)}
-                      className="flex w-full cursor-pointer items-center gap-3 rounded-none border-y border-transparent px-3 py-2.5 text-left transition hover:border-blue-100 hover:bg-blue-50 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40"
+                      className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
                     >
-                      <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-none bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900">
+                      <span className="ml-3 inline-flex h-8 w-8 flex-none items-center justify-center rounded-none text-[#B0B0B0]">
                         <UserRound className="h-4 w-4" aria-hidden="true" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold text-[#E4E4E4]">
+                        <span className="block truncate text-sm font-normal text-[#E4E4E4]">
                           {authorName(user)}
                         </span>
                         <span className="block truncate text-xs font-medium text-[#777777]">
@@ -134,7 +137,7 @@ function NewResearchAuthorsPicker({
                         </span>
                       </span>
                       <Check
-                        className="h-4 w-4 flex-none text-blue-500"
+                        className="mr-3 h-4 w-4 flex-none text-[#A8DADC]"
                         aria-hidden="true"
                       />
                     </button>

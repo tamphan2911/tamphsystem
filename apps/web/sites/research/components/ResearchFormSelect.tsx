@@ -2,7 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
-import { researchFieldClass } from "./ResearchPrimitives";
+import {
+  cx,
+  researchDropdownItemActiveClass,
+  researchDropdownItemClass,
+  researchDropdownItemIdleClass,
+  researchDropdownPanelClass,
+  researchSelectTriggerClass,
+} from "./ResearchPrimitives";
 import { FloatingDropdownPortal } from "./FloatingDropdownPortal";
 
 export type ResearchFormSelectOption = {
@@ -67,17 +74,21 @@ export function ResearchFormSelect({
         aria-expanded={open}
         disabled={disabled}
         onClick={() => setOpen((current) => !current)}
-        className={`group inline-flex justify-between gap-3 text-left font-semibold ${researchFieldClass}`}
+        className={cx(
+          "group inline-flex cursor-pointer items-center justify-between gap-3 text-left",
+          researchSelectTriggerClass,
+          open && "border-[#A8DADC] bg-[#383838] ring-1 ring-[#A8DADC]/25",
+        )}
       >
         <span className="min-w-0 truncate text-left">{selected?.label}</span>
         <ChevronDown
-          className={`h-4 w-4 flex-none text-[#B0B0B0] transition duration-200 ease-out group-hover:text-[#E4E4E4] motion-reduce:transition-none ${open ? "rotate-180 text-[#E4E4E4]" : ""}`}
+          className={`h-4 w-4 flex-none text-[#B0B0B0] transition duration-200 ease-out group-hover:text-[#A8DADC] motion-reduce:transition-none ${open ? "rotate-180 text-[#A8DADC]" : ""}`}
           aria-hidden="true"
         />
       </button>
 
       <FloatingDropdownPortal anchorRef={wrapperRef} open={open} maxWidth={480}>
-        <div className="research-dropdown-panel w-max min-w-full overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] shadow-2xl shadow-black/35">
+        <div className={`${researchDropdownPanelClass} w-max min-w-full`}>
           <div
             className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto"
             role="listbox"
@@ -97,18 +108,18 @@ export function ResearchFormSelect({
                     onValueChange?.(option.value);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-start justify-between gap-3 rounded-none border-y px-3 py-2.5 text-left text-sm leading-5 transition duration-150 ease-out motion-reduce:transition-none ${
+                  className={`${researchDropdownItemClass} ${
                     isSelected
-                      ? "border-[#5A5A5A] bg-[#383838] font-normal text-[#E4E4E4]"
-                      : "border-transparent text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#444444] hover:text-white"
+                      ? researchDropdownItemActiveClass
+                      : researchDropdownItemIdleClass
                   }`}
                 >
-                  <span className="min-w-0 flex-1 whitespace-normal break-words">
+                  <span className="min-w-0 flex-1 whitespace-normal break-words px-3">
                     {option.label}
                   </span>
                   {isSelected && (
                     <Check
-                      className="mt-0.5 h-4 w-4 flex-none"
+                      className="mr-3 mt-0.5 h-4 w-4 flex-none"
                       aria-hidden="true"
                     />
                   )}

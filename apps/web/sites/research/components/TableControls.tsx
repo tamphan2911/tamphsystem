@@ -13,6 +13,10 @@ import {
   IconHint as PrimitiveIconHint,
   ResearchIconButton,
   cx,
+  researchDropdownItemActiveClass,
+  researchDropdownItemClass,
+  researchDropdownItemIdleClass,
+  researchDropdownPanelClass,
   researchFieldClass,
 } from "./ResearchPrimitives";
 import { FloatingDropdownPortal } from "./FloatingDropdownPortal";
@@ -112,7 +116,7 @@ export function FilterSelect({
       </button>
 
       <FloatingDropdownPortal anchorRef={wrapperRef} open={open} maxWidth={576}>
-        <div className="research-dropdown-panel w-full overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] shadow-xl shadow-black/40">
+        <div className={`${researchDropdownPanelClass} w-full`}>
           <div
             className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto"
             role="listbox"
@@ -131,18 +135,18 @@ export function FilterSelect({
                     onChange(option.value);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-start justify-between gap-3 rounded-none border-y px-3 py-2.5 text-left text-sm leading-5 transition-colors duration-150 motion-reduce:transition-none ${
+                  className={`${researchDropdownItemClass} ${
                     isSelected
-                      ? "border-[#5A5A5A] bg-[#383838] font-normal text-[#E4E4E4]"
-                      : "border-transparent text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#444444] hover:text-white"
+                      ? researchDropdownItemActiveClass
+                      : researchDropdownItemIdleClass
                   }`}
                 >
-                  <span className="min-w-0 flex-1 whitespace-normal break-words">
+                  <span className="min-w-0 flex-1 whitespace-normal break-words px-3">
                     {option.label}
                   </span>
                   {isSelected && (
                     <Check
-                      className="mt-0.5 h-4 w-4 flex-none"
+                      className="mr-3 mt-0.5 h-4 w-4 flex-none"
                       aria-hidden="true"
                     />
                   )}

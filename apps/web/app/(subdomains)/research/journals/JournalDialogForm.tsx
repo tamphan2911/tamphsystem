@@ -21,6 +21,12 @@ import {
   type ResearchSearchPickerOption,
 } from "@/sites/research/components/ResearchSearchPicker";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
+import {
+  researchDropdownItemActiveClass,
+  researchDropdownItemClass,
+  researchDropdownItemIdleClass,
+  researchDropdownPanelClass,
+} from "@/sites/research/components/ResearchPrimitives";
 
 export type JournalFormValues = {
   name?: string;
@@ -404,7 +410,7 @@ export function JournalDialogForm({
                 }
                 maxWidth={640}
               >
-                <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto rounded-none border border-slate-200 bg-white normal-case tracking-normal shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/30">
+                <div className={`${researchDropdownPanelClass} max-h-[var(--research-dropdown-max-height)] overflow-y-auto normal-case tracking-normal`}>
                   <>
                     {filteredFieldOptions.map((field) => (
                       <button
@@ -412,10 +418,14 @@ export function JournalDialogForm({
                         type="button"
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => addField(field)}
-                        className="flex w-full items-center justify-between rounded-none border-y border-transparent px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:border-blue-100 hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
+                        className={`${researchDropdownItemClass} ${
+                          selectedFields.includes(field)
+                            ? researchDropdownItemActiveClass
+                            : researchDropdownItemIdleClass
+                        }`}
                       >
-                        {field}
-                        <span className="flex h-6 w-6 items-center justify-center rounded-none bg-blue-50 text-blue-500 dark:bg-blue-950/60 dark:text-blue-300">
+                        <span className="min-w-0 px-3">{field}</span>
+                        <span className="mr-3 flex h-6 w-6 items-center justify-center rounded-none text-[#A8DADC]">
                           <Check className="h-3.5 w-3.5" />
                         </span>
                       </button>
@@ -430,10 +440,12 @@ export function JournalDialogForm({
                         type="button"
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => addField(fieldQuery)}
-                        className="flex w-full items-center gap-2 rounded-none border-y border-slate-100 px-3 py-2.5 text-left text-sm font-semibold text-blue-700 transition hover:border-blue-100 hover:bg-blue-50 dark:border-slate-800 dark:text-blue-300 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40"
+                        className={`${researchDropdownItemClass} ${researchDropdownItemIdleClass}`}
                       >
-                        <PlusCircle className="h-4 w-4" />
-                        Add &quot;{fieldQuery.trim()}&quot;
+                        <span className="flex items-center gap-2 px-3">
+                          <PlusCircle className="h-4 w-4 text-[#A8DADC]" />
+                          Add &quot;{fieldQuery.trim()}&quot;
+                        </span>
                       </button>
                     ) : null}
                   </>
