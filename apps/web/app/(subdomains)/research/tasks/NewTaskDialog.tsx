@@ -29,6 +29,7 @@ import {
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
   researchFieldClass,
+  researchSearchFieldClass,
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
@@ -859,7 +860,7 @@ function SearchPanel({
           onFocus={() => setFocused(true)}
           onBlur={() => window.setTimeout(() => setFocused(false), 120)}
           placeholder={placeholder}
-          className={`${inputClass} w-full pl-9`}
+          className={`${researchSearchFieldClass} pl-9`}
         />
 
         <FloatingDropdownPortal

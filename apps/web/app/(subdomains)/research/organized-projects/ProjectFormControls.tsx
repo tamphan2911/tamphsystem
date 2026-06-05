@@ -20,6 +20,7 @@ import {
   researchDropdownItemClass,
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
+  researchSearchFieldClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import type { AuthorOption } from "../projects/[id]/AuthorsPicker";
 
@@ -300,7 +301,7 @@ export function ProjectMembersPicker({
             onFocus={() => setFocused(true)}
             onBlur={() => window.setTimeout(() => setFocused(false), 120)}
             placeholder="Search user by name, ID, or email..."
-            className="h-11 w-full border border-[#444444] bg-[#2C2C2C] pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            className={`${researchSearchFieldClass} pl-9`}
           />
 
           <FloatingDropdownPortal
@@ -475,7 +476,7 @@ export function ProjectResearchPicker({
             onFocus={() => setFocused(true)}
             onBlur={() => window.setTimeout(() => setFocused(false), 120)}
             placeholder="Search research title, ID, or stage..."
-            className="h-11 w-full border border-[#444444] bg-[#2C2C2C] pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            className={`${researchSearchFieldClass} pl-9`}
           />
 
           <FloatingDropdownPortal

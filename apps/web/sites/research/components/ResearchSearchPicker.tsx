@@ -10,6 +10,7 @@ import {
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
   researchFieldClass,
+  researchSearchFieldClass,
 } from "./ResearchPrimitives";
 import { FloatingDropdownPortal } from "./FloatingDropdownPortal";
 
@@ -156,7 +157,7 @@ export function ResearchSearchPicker<T = unknown>({
                 }
               }}
               placeholder={placeholder}
-              className={`${researchFieldClass} h-10 border-transparent bg-[#2C2C2C] pl-9 hover:bg-[#383838] focus:bg-[#383838]`}
+              className={`${researchSearchFieldClass} h-10 pl-9`}
             />
           </div>
         )}

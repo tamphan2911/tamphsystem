@@ -30,6 +30,7 @@ import {
   researchDropdownItemClass,
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
+  researchSearchFieldClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import type {
   TaskAssigneeOption,
@@ -886,7 +887,7 @@ function SearchPanel({
           onFocus={() => setFocused(true)}
           onBlur={() => window.setTimeout(() => setFocused(false), 120)}
           placeholder={placeholder}
-          className={`${inputClass} w-full pl-9`}
+          className={`${researchSearchFieldClass} pl-9`}
         />
 
         <FloatingDropdownPortal

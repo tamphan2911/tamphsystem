@@ -23,6 +23,7 @@ import {
   researchDropdownPanelClass,
   researchFieldClass,
   researchLabelClass,
+  researchSearchFieldClass,
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import {
@@ -106,7 +107,7 @@ function NewResearchAuthorsPicker({
             onFocus={() => setFocused(true)}
             onBlur={() => window.setTimeout(() => setFocused(false), 120)}
             placeholder="Search user by name, ID, or email..."
-            className={`${researchFieldClass} h-11 bg-white pl-9 dark:bg-slate-900`}
+            className={`${researchSearchFieldClass} pl-9`}
           />
 
           <FloatingDropdownPortal

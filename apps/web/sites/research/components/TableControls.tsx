@@ -18,6 +18,7 @@ import {
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
   researchFieldClass,
+  researchSearchFieldClass,
 } from "./ResearchPrimitives";
 import { FloatingDropdownPortal } from "./FloatingDropdownPortal";
 
@@ -179,7 +180,7 @@ export function TableSearchInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className={`${researchFieldClass} h-10 !rounded-none py-2 pl-10`}
+        className={`${researchSearchFieldClass} h-10 py-2 pl-10`}
       />
     </div>
   );

@@ -23,6 +23,7 @@ import {
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
   researchFieldClass,
+  researchSearchFieldClass,
   researchSelectTriggerClass,
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
@@ -347,7 +348,7 @@ export function CreateSubmissionTaskDialog({
                     setSelectedVenue(null);
                   }}
                   placeholder="Search journal name, ISSN, conference name, ISBN..."
-                  className={`${inputClass} w-full pl-9`}
+                  className={`${researchSearchFieldClass} pl-9`}
                 />
               </div>
               <div className={`${researchDropdownPanelClass} grid max-h-72 overflow-y-auto`}>
@@ -503,7 +504,7 @@ export function CreateSubmissionTaskDialog({
                   value={assistantQuery}
                   onChange={(event) => setAssistantQuery(event.target.value)}
                   placeholder="Search assistant or admin..."
-                  className={`${inputClass} w-full pl-9`}
+                  className={`${researchSearchFieldClass} pl-9`}
                 />
               </div>
               <div className={`${researchDropdownPanelClass} grid max-h-64 overflow-y-auto`}>

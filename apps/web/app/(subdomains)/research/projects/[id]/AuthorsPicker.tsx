@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
-import { researchFieldClass } from "@/sites/research/components/ResearchPrimitives";
+import { researchSearchFieldClass } from "@/sites/research/components/ResearchPrimitives";
 
 export type AuthorOption = {
   id: string;
@@ -180,7 +180,7 @@ export function AuthorsPicker({
               onBlur={() => window.setTimeout(() => setFocused(false), 120)}
               placeholder="Search user by name, ID, or email..."
               disabled={disabled}
-              className={`${researchFieldClass} h-10 pl-9`}
+              className={`${researchSearchFieldClass} h-10 pl-9`}
             />
 
             <FloatingDropdownPortal

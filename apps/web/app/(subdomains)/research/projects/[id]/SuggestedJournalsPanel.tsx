@@ -27,6 +27,7 @@ import {
   IconHint,
   ResearchButton,
   researchFieldClass,
+  researchSearchFieldClass,
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
@@ -978,7 +979,7 @@ function SearchBox({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className={`${researchFieldClass} pl-9`}
+        className={`${researchSearchFieldClass} pl-9`}
       />
     </div>
   );
