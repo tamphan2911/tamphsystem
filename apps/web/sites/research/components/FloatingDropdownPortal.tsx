@@ -14,12 +14,14 @@ export function FloatingDropdownPortal({
   children,
   offset = 8,
   maxWidth = 480,
+  matchAnchorWidth = true,
 }: {
   anchorRef: RefObject<HTMLElement | null>;
   open: boolean;
   children: ReactNode;
   offset?: number;
   maxWidth?: number;
+  matchAnchorWidth?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   const [style, setStyle] = useState<FloatingDropdownStyle | null>(null);
@@ -51,13 +53,15 @@ export function FloatingDropdownPortal({
         ),
       );
       const minWidth = Math.ceil(rect.width);
-      const panelWidth = Math.min(
-        Math.max(
-          minWidth,
-          Math.min(maxWidth, window.innerWidth - viewportPadding * 2),
-        ),
-        window.innerWidth - viewportPadding * 2,
-      );
+      const panelWidth = matchAnchorWidth
+        ? Math.min(minWidth, window.innerWidth - viewportPadding * 2)
+        : Math.min(
+            Math.max(
+              minWidth,
+              Math.min(maxWidth, window.innerWidth - viewportPadding * 2),
+            ),
+            window.innerWidth - viewportPadding * 2,
+          );
       const left = Math.min(
         Math.max(viewportPadding, rect.left),
         window.innerWidth - viewportPadding - panelWidth,
@@ -65,6 +69,7 @@ export function FloatingDropdownPortal({
 
       setStyle({
         left,
+        width: panelWidth,
         minWidth,
         maxWidth: Math.min(maxWidth, window.innerWidth - viewportPadding * 2),
         top: placeAbove ? undefined : rect.bottom + offset,
@@ -81,7 +86,7 @@ export function FloatingDropdownPortal({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [anchorRef, maxWidth, offset, open]);
+  }, [anchorRef, matchAnchorWidth, maxWidth, offset, open]);
 
   if (!mounted || !open || !style) return null;
 

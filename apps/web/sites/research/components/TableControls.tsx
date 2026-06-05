@@ -112,7 +112,7 @@ export function FilterSelect({
       </button>
 
       <FloatingDropdownPortal anchorRef={wrapperRef} open={open} maxWidth={576}>
-        <div className="research-dropdown-panel w-max min-w-full overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] shadow-xl shadow-black/40">
+        <div className="research-dropdown-panel w-full overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] shadow-xl shadow-black/40">
           <div
             className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto"
             role="listbox"

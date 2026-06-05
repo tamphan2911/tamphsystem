@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import {
-  BriefcaseBusiness,
-  ChevronLeft,
-  ChevronRight,
-  GraduationCap,
-  SlidersHorizontal,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ActiveNavLink } from "@/sites/research/components/ActiveNavLink";
 import { ProfileMenu } from "@/sites/shared/components/ProfileMenu";
 import { SidebarSupportCard } from "@/sites/research/components/SidebarSupportCard";
@@ -83,17 +77,6 @@ const navItems = [
     href: "/users",
     label: "Users",
     icon: "users" as const,
-    adminOnly: true,
-  },
-];
-
-const hubLinks = [
-  { href: "/portfolio", label: "Portfolio", icon: BriefcaseBusiness },
-  { href: "/learn", label: "Learn", icon: GraduationCap },
-  {
-    href: "https://admin.tamph.com",
-    label: "Admin",
-    icon: SlidersHorizontal,
     adminOnly: true,
   },
 ];
@@ -283,8 +266,8 @@ export function ResearchShell({
         <div
           className={`relative z-10 transition-[padding] duration-300 ease-out ${collapsed ? "lg:pl-20" : "lg:pl-72"}`}
         >
-          <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#444444] bg-[#2C2C2C]/92 px-4 backdrop-blur-xl sm:px-8">
-            <div className="flex min-w-0 items-center gap-2 overflow-x-auto lg:hidden">
+          <header className="sticky top-0 z-30 flex h-20 items-center gap-3 border-b border-[#444444] bg-[#2C2C2C]/92 px-4 backdrop-blur-xl sm:px-8">
+            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto lg:hidden">
               {visibleNavItems.map((item) => (
                 <Link
                   key={item.href}
@@ -306,22 +289,10 @@ export function ResearchShell({
                 </Link>
               ))}
             </div>
-            <div className="hidden min-w-0 items-center gap-2 lg:flex">
-              <div className="flex items-center gap-1 border border-[#444444] bg-[#2C2C2C] p-1">
-                {hubLinks
-                  .filter((item) => !("adminOnly" in item) || isAdmin)
-                  .map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-normal text-[#B0B0B0] transition duration-150 ease-out hover:bg-[#383838] hover:text-[#A8DADC] motion-reduce:transition-none"
-                    >
-                      <item.icon className="h-3.5 w-3.5" />
-                      {titleCaseLabel(item.label)}
-                    </Link>
-                  ))}
-              </div>
-            </div>
+            <div
+              id="research-page-header"
+              className="hidden min-w-0 flex-1 items-center lg:flex"
+            />
             <div className="flex items-center gap-3">
               <ResearchNotificationBell enabled={Boolean(email)} />
               <ProfileMenu
