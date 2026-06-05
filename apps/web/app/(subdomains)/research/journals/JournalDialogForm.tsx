@@ -20,6 +20,7 @@ import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
 } from "@/sites/research/components/ResearchSearchPicker";
+import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 
 export type JournalFormValues = {
   name?: string;
@@ -182,6 +183,7 @@ export function JournalDialogForm({
   const [isFieldPickerOpen, setIsFieldPickerOpen] = useState(false);
   const [warning, setWarning] = useState("");
   const warningRef = useRef<HTMLDivElement>(null);
+  const fieldPickerRef = useRef<HTMLDivElement>(null);
   const [selectedFields, setSelectedFields] = useState<string[]>(() =>
     initialFields(initialValues),
   );
@@ -346,7 +348,7 @@ export function JournalDialogForm({
                 />
               </label>
             </div>
-            <div className={`${labelClass} relative`}>
+            <div ref={fieldPickerRef} className={`${labelClass} relative`}>
               Field
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950">
                 <div className="flex min-h-9 flex-wrap items-center gap-1.5">
@@ -394,9 +396,16 @@ export function JournalDialogForm({
                   </span>
                 </div>
               </div>
-              {isFieldPickerOpen &&
-                (fieldQuery.trim() || filteredFieldOptions.length > 0) && (
-                  <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-2 normal-case tracking-normal shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/30">
+              <FloatingDropdownPortal
+                anchorRef={fieldPickerRef}
+                open={
+                  isFieldPickerOpen &&
+                  Boolean(fieldQuery.trim() || filteredFieldOptions.length > 0)
+                }
+                maxWidth={640}
+              >
+                <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto rounded-none border border-slate-200 bg-white p-2 normal-case tracking-normal shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/30">
+                  <>
                     {filteredFieldOptions.map((field) => (
                       <button
                         key={field}
@@ -427,8 +436,9 @@ export function JournalDialogForm({
                         Add "{fieldQuery.trim()}"
                       </button>
                     ) : null}
-                  </div>
-                )}
+                  </>
+                </div>
+              </FloatingDropdownPortal>
             </div>
           </div>
         </section>

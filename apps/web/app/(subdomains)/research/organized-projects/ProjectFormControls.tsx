@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   Check,
@@ -15,6 +15,7 @@ import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
 } from "@/sites/research/components/ResearchSearchPicker";
+import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 import type { AuthorOption } from "../projects/[id]/AuthorsPicker";
 
 export type FundingInstitutionOption = {
@@ -175,6 +176,7 @@ export function ProjectMembersPicker({
     useState<SelectedProjectMember[]>(defaultMembers);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const [localWarning, setLocalWarning] = useState("");
   const selectedIds = useMemo(
     () => new Set(members.map((member) => member.id)),
@@ -282,7 +284,7 @@ export function ProjectMembersPicker({
           />
         ))}
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-950">
-        <div className="relative">
+        <div ref={searchRef} className="relative">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
             aria-hidden="true"
@@ -296,9 +298,13 @@ export function ProjectMembersPicker({
             className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
           />
 
-          {focused && query.trim().length > 0 && (
-            <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
-              <div className="max-h-72 overflow-y-auto">
+          <FloatingDropdownPortal
+            anchorRef={searchRef}
+            open={focused && query.trim().length > 0}
+            maxWidth={640}
+          >
+            <div className="overflow-hidden rounded-none border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
+              <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
                 {results.length > 0 ? (
                   results.map((user) => (
                     <button
@@ -329,7 +335,7 @@ export function ProjectMembersPicker({
                 )}
               </div>
             </div>
-          )}
+          </FloatingDropdownPortal>
         </div>
 
         <div className="mt-3 grid gap-2">
@@ -420,6 +426,7 @@ export function ProjectResearchPicker({
     useState<ResearchResultOption[]>(defaultResearch);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
+  const researchSearchRef = useRef<HTMLDivElement>(null);
   const selectedIds = useMemo(
     () => new Set(selected.map((research) => research.id)),
     [selected],
@@ -452,7 +459,7 @@ export function ProjectResearchPicker({
         />
       ))}
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-950">
-        <div className="relative">
+        <div ref={researchSearchRef} className="relative">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
             aria-hidden="true"
@@ -466,9 +473,13 @@ export function ProjectResearchPicker({
             className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
           />
 
-          {focused && query.trim().length > 0 && (
-            <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
-              <div className="max-h-72 overflow-y-auto">
+          <FloatingDropdownPortal
+            anchorRef={researchSearchRef}
+            open={focused && query.trim().length > 0}
+            maxWidth={720}
+          >
+            <div className="overflow-hidden rounded-none border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
+              <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
                 {results.length > 0 ? (
                   results.map((research) => (
                     <button
@@ -502,7 +513,7 @@ export function ProjectResearchPicker({
                 )}
               </div>
             </div>
-          )}
+          </FloatingDropdownPortal>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">

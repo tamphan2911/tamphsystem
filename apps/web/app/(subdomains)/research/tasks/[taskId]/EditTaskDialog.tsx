@@ -3,6 +3,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   useTransition,
   type ReactNode,
@@ -23,6 +24,7 @@ import {
 import { updateResearchTask } from "../../actions";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 import type {
   TaskAssigneeOption,
   TaskAccountOption,
@@ -856,6 +858,7 @@ function SearchPanel({
   items: SearchPanelItem[];
 }) {
   const [focused, setFocused] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const showDropdown = focused && query.trim().length > 0;
   return (
     <section className="grid gap-3">
@@ -869,7 +872,7 @@ function SearchPanel({
           ))}
         </div>
       )}
-      <div className="relative z-30">
+      <div ref={wrapperRef} className="relative z-30">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           value={query}
@@ -880,8 +883,12 @@ function SearchPanel({
           className={`${inputClass} w-full pl-9`}
         />
 
-        {showDropdown && (
-          <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
+        <FloatingDropdownPortal
+          anchorRef={wrapperRef}
+          open={showDropdown}
+          maxWidth={640}
+        >
+          <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto rounded-none border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
             {items.map((item) => (
               <button
                 key={item.id}
@@ -918,7 +925,7 @@ function SearchPanel({
               </div>
             )}
           </div>
-        )}
+        </FloatingDropdownPortal>
       </div>
     </section>
   );

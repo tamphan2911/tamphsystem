@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   ArrowDown,
@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 
 export type AuthorOption = {
   id: string;
@@ -49,6 +50,7 @@ export function AuthorsPicker({
       : users.slice(0, 1).map((user) => ({ ...user, isCorresponding: true }));
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const [authors, setAuthors] = useState<SelectedAuthor[]>(initialAuthors);
   const [dirty, setDirty] = useState(false);
   const [warningOpen, setWarningOpen] = useState(false);
@@ -169,7 +171,7 @@ export function AuthorsPicker({
         />
 
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-950">
-          <div className="relative">
+          <div ref={searchRef} className="relative">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
               aria-hidden="true"
@@ -184,9 +186,13 @@ export function AuthorsPicker({
               className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
             />
 
-            {!disabled && focused && query.trim().length > 0 && (
-              <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
-                <div className="max-h-72 overflow-y-auto">
+            <FloatingDropdownPortal
+              anchorRef={searchRef}
+              open={!disabled && focused && query.trim().length > 0}
+              maxWidth={640}
+            >
+              <div className="overflow-hidden rounded-none border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/12 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/35">
+                <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
                   {results.length > 0 ? (
                     results.map((user) => (
                       <button
@@ -220,7 +226,7 @@ export function AuthorsPicker({
                   )}
                 </div>
               </div>
-            )}
+            </FloatingDropdownPortal>
           </div>
 
           <div className="mt-3 grid gap-2">

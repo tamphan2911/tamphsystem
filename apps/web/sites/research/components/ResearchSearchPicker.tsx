@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Search, X } from "lucide-react";
 import { ResearchIconButton, researchFieldClass } from "./ResearchPrimitives";
+import { FloatingDropdownPortal } from "./FloatingDropdownPortal";
 
 export type ResearchSearchPickerOption<T = unknown> = {
   id: string;
@@ -153,9 +154,16 @@ export function ResearchSearchPicker<T = unknown>({
           </div>
         )}
 
-        {showDropdown && (
-          <div className="research-dropdown-panel absolute left-0 right-0 top-full z-[160] mt-2 overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] p-2 shadow-2xl shadow-black/35">
-            <div className="max-h-72 overflow-y-auto pr-0.5" role="listbox">
+        <FloatingDropdownPortal
+          anchorRef={wrapperRef}
+          open={showDropdown}
+          maxWidth={640}
+        >
+          <div className="research-dropdown-panel overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] p-2 shadow-2xl shadow-black/35">
+            <div
+              className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto pr-0.5"
+              role="listbox"
+            >
               {options.length > 0 ? (
                 options.map((option, index) => {
                   const isActive = index === activeIndex;
@@ -203,7 +211,7 @@ export function ResearchSearchPicker<T = unknown>({
               )}
             </div>
           </div>
-        )}
+        </FloatingDropdownPortal>
       </div>
     </div>
   );

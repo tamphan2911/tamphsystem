@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   CalendarClock,
@@ -21,6 +21,7 @@ import {
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 
 export type SubmissionTaskAccountOption = {
   id: string;
@@ -85,6 +86,7 @@ export function CreateSubmissionTaskDialog({
   );
   const [accountOpen, setAccountOpen] = useState(false);
   const [addAccountOpen, setAddAccountOpen] = useState(false);
+  const accountDropdownRef = useRef<HTMLDivElement>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { showSuccess } = useResearchToast();
@@ -401,7 +403,7 @@ export function CreateSubmissionTaskDialog({
                   </ResearchIconButton>
                 </div>
                 {selectedVenue.accounts.length > 0 ? (
-                  <div className="relative">
+                  <div ref={accountDropdownRef} className="relative">
                     <input
                       type="hidden"
                       name="accountId"
@@ -421,8 +423,12 @@ export function CreateSubmissionTaskDialog({
                         className={`h-4 w-4 flex-none text-slate-400 transition ${accountOpen ? "rotate-180" : ""}`}
                       />
                     </button>
-                    {accountOpen && (
-                      <div className="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-950">
+                    <FloatingDropdownPortal
+                      anchorRef={accountDropdownRef}
+                      open={accountOpen}
+                      maxWidth={560}
+                    >
+                      <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto rounded-none border border-slate-200 bg-white p-1 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-950">
                         {selectedVenue.accounts.map((account) => (
                           <button
                             key={account.id}
@@ -447,7 +453,7 @@ export function CreateSubmissionTaskDialog({
                           </button>
                         ))}
                       </div>
-                    )}
+                    </FloatingDropdownPortal>
                   </div>
                 ) : (
                   <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">

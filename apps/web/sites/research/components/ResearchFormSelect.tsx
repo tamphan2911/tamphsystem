@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { researchFieldClass } from "./ResearchPrimitives";
+import { FloatingDropdownPortal } from "./FloatingDropdownPortal";
 
 export type ResearchFormSelectOption = {
   value: string;
@@ -32,7 +33,11 @@ export function ResearchFormSelect({
 
   useEffect(() => {
     function closeOnOutsideClick(event: MouseEvent) {
-      if (!wrapperRef.current?.contains(event.target as Node)) {
+      const target = event.target as Element;
+      if (
+        !wrapperRef.current?.contains(event.target as Node) &&
+        !target.closest(".research-dropdown-floating-panel")
+      ) {
         setOpen(false);
       }
     }
@@ -71,10 +76,10 @@ export function ResearchFormSelect({
         />
       </button>
 
-      {open && (
-        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-2 w-max min-w-full max-w-[min(30rem,calc(100vw-2rem))] overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] p-2 shadow-2xl shadow-black/35">
+      <FloatingDropdownPortal anchorRef={wrapperRef} open={open} maxWidth={480}>
+        <div className="research-dropdown-panel w-max min-w-full overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] p-2 shadow-2xl shadow-black/35">
           <div
-            className="max-h-72 overflow-y-auto pr-0.5"
+            className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto pr-0.5"
             role="listbox"
             aria-label={ariaLabel}
           >
@@ -112,7 +117,7 @@ export function ResearchFormSelect({
             })}
           </div>
         </div>
-      )}
+      </FloatingDropdownPortal>
     </div>
   );
 }

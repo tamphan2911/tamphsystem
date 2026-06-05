@@ -14,6 +14,7 @@ import {
 import { createResearchProject } from "../actions";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 import {
   ResearchButton,
   ResearchIconButton,
@@ -43,6 +44,7 @@ function NewResearchAuthorsPicker({
 }) {
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const selectedIds = useMemo(
     () => new Set(selectedAuthors.map((author) => author.id)),
     [selectedAuthors],
@@ -90,7 +92,7 @@ function NewResearchAuthorsPicker({
         value={selectedAuthors[0]?.id ?? ""}
       />
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-950">
-        <div className="relative">
+        <div ref={searchRef} className="relative">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
             aria-hidden="true"
@@ -104,9 +106,13 @@ function NewResearchAuthorsPicker({
             className={`${researchFieldClass} h-11 bg-white pl-9 dark:bg-slate-900`}
           />
 
-          {focused && query.trim().length > 0 && (
-            <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-xl border border-blue-100 bg-white p-2 shadow-2xl shadow-slate-900/15 ring-1 ring-blue-50 dark:border-blue-900/60 dark:bg-slate-950 dark:shadow-black/35 dark:ring-blue-950/50">
-              <div className="max-h-72 overflow-y-auto">
+          <FloatingDropdownPortal
+            anchorRef={searchRef}
+            open={focused && query.trim().length > 0}
+            maxWidth={640}
+          >
+            <div className="overflow-hidden rounded-none border border-blue-100 bg-white p-2 shadow-2xl shadow-slate-900/15 ring-1 ring-blue-50 dark:border-blue-900/60 dark:bg-slate-950 dark:shadow-black/35 dark:ring-blue-950/50">
+              <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
                 {results.length > 0 ? (
                   results.map((user) => (
                     <button
@@ -140,7 +146,7 @@ function NewResearchAuthorsPicker({
                 )}
               </div>
             </div>
-          )}
+          </FloatingDropdownPortal>
         </div>
 
         <div className="mt-3 grid gap-2">

@@ -15,6 +15,7 @@ import {
   cx,
   researchFieldClass,
 } from "./ResearchPrimitives";
+import { FloatingDropdownPortal } from "./FloatingDropdownPortal";
 
 export type FilterOption = {
   value: string;
@@ -61,7 +62,11 @@ export function FilterSelect({
 
   useEffect(() => {
     function closeOnOutsideClick(event: MouseEvent) {
-      if (!wrapperRef.current?.contains(event.target as Node)) {
+      const target = event.target as Element;
+      if (
+        !wrapperRef.current?.contains(event.target as Node) &&
+        !target.closest(".research-dropdown-floating-panel")
+      ) {
         setOpen(false);
       }
     }
@@ -106,10 +111,10 @@ export function FilterSelect({
         />
       </button>
 
-      {open && (
-        <div className="research-dropdown-panel absolute right-0 top-full z-50 mt-1.5 w-max min-w-full max-w-[min(36rem,calc(100vw-2rem))] overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] p-1 shadow-xl shadow-black/40">
+      <FloatingDropdownPortal anchorRef={wrapperRef} open={open} maxWidth={576}>
+        <div className="research-dropdown-panel w-max min-w-full overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] p-1 shadow-xl shadow-black/40">
           <div
-            className="max-h-80 overflow-y-auto pr-0.5"
+            className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto pr-0.5"
             role="listbox"
             aria-label={ariaLabel}
           >
@@ -146,7 +151,7 @@ export function FilterSelect({
             })}
           </div>
         </div>
-      )}
+      </FloatingDropdownPortal>
     </div>
   );
 }
