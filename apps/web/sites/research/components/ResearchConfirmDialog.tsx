@@ -64,6 +64,9 @@ export function ResearchConfirmDialog({
   return (
     <div
       data-research-modal-overlay="true"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !isConfirming) onCancel();
+      }}
       className="fixed inset-0 z-[1010] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
     >
       <div className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] text-[#E4E4E4] shadow-2xl">

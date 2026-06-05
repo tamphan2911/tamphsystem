@@ -158,7 +158,10 @@ export function ProfileClient({ user }: { user: ResearchProfileUser }) {
       </section>
 
       {editOpen && (
-        <div className="fixed inset-0 z-[1010] flex overflow-y-auto items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
+        <div
+          data-research-modal-overlay="true"
+          className="fixed inset-0 z-[1010] flex overflow-y-auto items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
+        >
           <form
             action={saveProfile}
             className="w-full max-w-lg overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"

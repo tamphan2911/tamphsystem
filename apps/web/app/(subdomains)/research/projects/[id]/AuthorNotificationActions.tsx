@@ -113,7 +113,10 @@ export function AuthorNotificationActions({
       </span>
 
       {selected && (
-        <div className="fixed inset-0 z-[1010] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm">
+        <div
+          data-research-modal-overlay="true"
+          className="fixed inset-0 z-[1010] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
+        >
           <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] shadow-2xl shadow-black/40">
             <div className="flex items-start justify-between gap-4 border-b border-[#444444] px-5 py-4">
               <div className="flex items-start gap-3">
@@ -162,7 +165,10 @@ export function AuthorNotificationActions({
       )}
 
       {results && (
-        <div className="fixed inset-0 z-[1010] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm">
+        <div
+          data-research-modal-overlay="true"
+          className="fixed inset-0 z-[1010] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
+        >
           <div className="w-full max-w-2xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] shadow-2xl shadow-black/40">
             <div className="flex items-start justify-between gap-4 border-b border-[#444444] px-5 py-4">
               <div>

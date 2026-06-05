@@ -45,7 +45,10 @@ export function ProposalFeedbackButton({
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[1010] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm">
+        <div
+          data-research-modal-overlay="true"
+          className="fixed inset-0 z-[1010] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
+        >
           <form
             action={async (formData) => {
               setIsSaving(true);
