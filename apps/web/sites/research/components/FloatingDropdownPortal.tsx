@@ -92,7 +92,7 @@ export function FloatingDropdownPortal({
 
   return createPortal(
     <div
-      className="research-dropdown-floating-panel fixed z-[220]"
+      className="research-dropdown-floating-panel fixed z-[1100]"
       style={style}
     >
       {children}

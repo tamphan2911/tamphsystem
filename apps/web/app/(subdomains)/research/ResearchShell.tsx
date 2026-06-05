@@ -191,6 +191,30 @@ export function ResearchShell({
     };
   }, []);
 
+  useEffect(() => {
+    function hasVisibleModalOverlay() {
+      return Array.from(
+        document.querySelectorAll<HTMLElement>(".fixed.inset-0"),
+      ).some(isResearchModalOverlay);
+    }
+
+    function collapseForModal() {
+      if (collapsed || !hasVisibleModalOverlay()) return;
+      setCollapsed(true);
+    }
+
+    collapseForModal();
+    const observer = new MutationObserver(collapseForModal);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "style", "data-research-modal-overlay"],
+    });
+
+    return () => observer.disconnect();
+  }, [collapsed]);
+
   const visibleNavItems = navItems.filter((item) => {
     if ("adminOnly" in item && item.adminOnly) return isAdmin;
     if ("requiresTaskAccess" in item && item.requiresTaskAccess)
