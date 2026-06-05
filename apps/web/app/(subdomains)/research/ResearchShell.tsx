@@ -113,7 +113,7 @@ function titleCaseLabel(label: string) {
 
 function closeResearchModal(overlay: HTMLElement) {
   const closeButton = overlay.querySelector<HTMLButtonElement>(
-    'button[aria-label="Close"], button[aria-label="Close modal"]',
+    'button[aria-label^="Close"], button[aria-label="Close modal"]',
   );
   if (closeButton) {
     closeButton.click();
@@ -127,10 +127,13 @@ function closeResearchModal(overlay: HTMLElement) {
 }
 
 function isResearchModalOverlay(element: HTMLElement) {
+  if (element.dataset.researchModalOverlay === "true") return true;
+
   return (
     element.classList.contains("fixed") &&
     element.classList.contains("inset-0") &&
-    element.className.includes("bg-slate-950")
+    (element.className.includes("bg-slate-950") ||
+      element.className.includes("bg-black"))
   );
 }
 

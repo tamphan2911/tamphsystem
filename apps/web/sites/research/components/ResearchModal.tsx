@@ -28,7 +28,10 @@ export function ResearchModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm">
+    <div
+      data-research-modal-overlay="true"
+      className="fixed inset-0 z-[80] flex animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
+    >
       <div
         className={`flex max-h-[90vh] w-full ${maxWidth} animate-[modalPanelIn_220ms_ease-out] flex-col overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] shadow-2xl`}
       >
@@ -40,9 +43,7 @@ export function ResearchModal({
               </div>
             )}
             <div className="min-w-0">
-              <h2 className="text-lg font-normal text-[#E4E4E4]">
-                {title}
-              </h2>
+              <h2 className="text-lg font-normal text-[#E4E4E4]">{title}</h2>
               {description && (
                 <p className="mt-1 text-sm leading-5 text-[#B0B0B0]">
                   {description}
@@ -66,9 +67,7 @@ export function ResearchModal({
         </div>
 
         {footer && (
-          <div className="border-t border-[#444444] px-6 py-4">
-            {footer}
-          </div>
+          <div className="border-t border-[#444444] px-6 py-4">{footer}</div>
         )}
       </div>
     </div>
