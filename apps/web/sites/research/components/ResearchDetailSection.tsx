@@ -5,7 +5,7 @@ function cx(...classes: Array<string | false | null | undefined>) {
 }
 
 const researchSectionClass =
-  "rounded-lg border border-[#ded8cf] bg-[#fbfaf7] p-5 shadow-sm shadow-[#201c25]/[0.04] dark:border-[#332c3d] dark:bg-[#111019] dark:shadow-black/20";
+  "border border-[#444444] bg-[#2C2C2C] p-5 shadow-none";
 
 export function ResearchDetailSection({
   title,
@@ -23,7 +23,7 @@ export function ResearchDetailSection({
       {(title || action) && (
         <div className="mb-4 flex items-center justify-between gap-3">
           {title ? (
-            <h2 className="text-base font-black text-slate-950 dark:text-white">
+            <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
               {title}
             </h2>
           ) : (

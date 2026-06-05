@@ -77,32 +77,27 @@ const stageStyles = {
   PRODUCTION: {
     label: "Production",
     icon: FileText,
-    className:
-      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200",
+    className: "border-[#444444] bg-[#202020] text-[#FFC1CC]",
   },
   SUBMITTING: {
     label: "Submitting",
     icon: Send,
-    className:
-      "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-900/70 dark:bg-indigo-950/40 dark:text-indigo-200",
+    className: "border-[#444444] bg-[#202020] text-[#B39CD0]",
   },
   REVIEW: {
     label: "Review",
     icon: SearchCheck,
-    className:
-      "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-200",
+    className: "border-[#444444] bg-[#202020] text-[#B39CD0]",
   },
   ACCEPTED: {
     label: "Accepted",
     icon: CheckCircle2,
-    className:
-      "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200",
+    className: "border-[#444444] bg-[#202020] text-[#A8DADC]",
   },
   PUBLISHED: {
     label: "Published",
     icon: Rocket,
-    className:
-      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-200",
+    className: "border-[#444444] bg-[#202020] text-[#A8DADC]",
   },
 };
 
@@ -185,14 +180,14 @@ function stageFromConferenceSubmissions(
 function highlightedSubmissionBoxClass(status: string) {
   if (status === "PUBLISHED") {
     return {
-      box: "border-blue-100 bg-blue-50/60 text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/20 dark:text-blue-100",
-      meta: "text-blue-700/80 dark:text-blue-200/80",
+      box: "border-[#444444] bg-[#2C2C2C] text-[#E4E4E4]",
+      meta: "text-[#B0B0B0]",
     };
   }
 
   return {
-    box: "border-emerald-100 bg-emerald-50/50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-100",
-    meta: "text-emerald-700/80 dark:text-emerald-200/80",
+    box: "border-[#444444] bg-[#2C2C2C] text-[#E4E4E4]",
+    meta: "text-[#B0B0B0]",
   };
 }
 
@@ -768,11 +763,11 @@ export default async function ProjectDetailPage({
   const StageIcon = stageStyle.icon;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8">
+    <div className="mx-auto max-w-7xl space-y-6">
       <div className="min-w-0">
         <Link
           href="/projects"
-          className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-950 dark:hover:text-white"
+          className="mb-4 inline-flex items-center gap-2 text-sm font-normal text-[#B0B0B0] transition hover:text-[#A8DADC]"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to research
@@ -781,7 +776,7 @@ export default async function ProjectDetailPage({
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               {project.researchCode && (
-                <span className="font-mono text-xs font-bold uppercase tracking-wide text-slate-400">
+                <span className="font-mono text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
                   ID: {project.researchCode}
                 </span>
               )}
@@ -798,13 +793,13 @@ export default async function ProjectDetailPage({
                 disabled={!canEditResearch}
               />
             </div>
-            <h1 className="mt-2 min-w-0 text-xl font-medium leading-8 tracking-tight text-slate-950 dark:text-white">
+            <h1 className="mt-2 min-w-0 text-xl font-normal leading-8 tracking-tight text-[#E4E4E4]">
               {project.title}
             </h1>
             {project.fundingInstitution && (
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-2 text-sm text-[#B0B0B0]">
                 Funded by:{" "}
-                <span className="font-normal text-slate-700 dark:text-slate-200">
+                <span className="font-normal text-[#E4E4E4]">
                   {project.fundingInstitution.name}
                 </span>
               </p>
@@ -812,22 +807,20 @@ export default async function ProjectDetailPage({
           </div>
           <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row xl:justify-end">
             <div
-              className={`inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-bold shadow-sm transition sm:w-[11.5rem] ${stageStyle.className}`}
+              className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 border px-3 text-sm font-normal shadow-none transition sm:w-[11.5rem] ${stageStyle.className}`}
             >
               <StageIcon className="h-4 w-4 flex-none" />
               <span className="truncate">{stageStyle.label}</span>
             </div>
           </div>
         </div>
-        <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+        <div className="mt-3 space-y-2 text-sm text-[#B0B0B0]">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-slate-700 dark:text-slate-200">
-              Authors:
-            </span>
-            <span>{authorsLine}</span>
+            <span className="font-normal text-[#E4E4E4]">Authors:</span>
+            <span className="text-[#E4E4E4]">{authorsLine}</span>
             {canViewRegistrationClaim && (
               <IconHint label={registrationLine}>
-                <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+                <span className="inline-flex items-center border border-[#444444] bg-[#202020] px-2.5 py-1 text-xs font-normal text-[#B0B0B0]">
                   {registrationLine}
                 </span>
               </IconHint>
@@ -835,7 +828,7 @@ export default async function ProjectDetailPage({
           </div>
           {highlightedJournalSubmission && highlightedJournalClass && (
             <div
-              className={`flex items-center gap-3 rounded-xl border px-3 py-2 ${highlightedJournalClass.box}`}
+              className={`flex items-center gap-3 border px-3 py-2 ${highlightedJournalClass.box}`}
             >
               <div className="min-w-0 flex-1 space-y-1">
                 <p>
@@ -866,7 +859,7 @@ export default async function ProjectDetailPage({
           )}
           {highlightedConferenceSubmission && highlightedConferenceClass && (
             <div
-              className={`space-y-1 rounded-xl border px-3 py-2 ${highlightedConferenceClass.box}`}
+              className={`space-y-1 border px-3 py-2 ${highlightedConferenceClass.box}`}
             >
               <p>
                 {highlightedConferenceSubmission.conference.name} -{" "}
@@ -909,7 +902,7 @@ export default async function ProjectDetailPage({
           disabled={!canEditResearch || researchContentLocked}
           className="contents"
         >
-          <ResearchDetailSection className="p-6">
+          <ResearchDetailSection>
             <input type="hidden" name="title" value={project.title} />
             <input
               type="hidden"
@@ -968,7 +961,7 @@ export default async function ProjectDetailPage({
             <div>
               {project.organizedProjectLinks.length > 0 && (
                 <>
-                  <h2 className="text-sm font-bold text-slate-950 dark:text-white">
+                  <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
                     Associated project:
                   </h2>
                   <div className="mt-3 grid gap-2">
@@ -976,15 +969,15 @@ export default async function ProjectDetailPage({
                       ({ organizedProject }) => (
                         <p
                           key={organizedProject.id}
-                          className="text-sm leading-6 text-slate-700 dark:text-slate-200"
+                          className="text-sm leading-6 text-[#E4E4E4]"
                         >
                           <Link
                             href={`/organized-projects/${organizedProject.id}`}
-                            className="font-semibold text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
+                            className="font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
                           >
                             {organizedProject.title}
                           </Link>
-                          <span className="text-slate-500 dark:text-slate-400">
+                          <span className="text-[#B0B0B0]">
                             {" "}
                             - {organizedProject.organizer || "No funder"} -{" "}
                             {organizedProject.status}
@@ -993,27 +986,27 @@ export default async function ProjectDetailPage({
                       ),
                     )}
                   </div>
-                  <div className="my-5 border-t border-slate-200 dark:border-slate-800" />
+                  <div className="my-5 border-t border-[#444444]" />
                 </>
               )}
 
-              <h2 className="text-sm font-bold text-slate-950 dark:text-white">
+              <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
                 Research notes:
               </h2>
-              <div className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-200">
+              <div className="mt-3 text-sm leading-6 text-[#E4E4E4]">
                 {project.abstract?.trim() ? (
                   <p className="whitespace-pre-wrap">{project.abstract}</p>
                 ) : (
-                  <p className="text-slate-400 dark:text-slate-500">
+                  <p className="text-[#B0B0B0]">
                     No note recorded for this research.
                   </p>
                 )}
               </div>
 
-              <div className="my-5 border-t border-slate-200 dark:border-slate-800" />
+              <div className="my-5 border-t border-[#444444]" />
 
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-sm font-bold text-slate-950 dark:text-white">
+                <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
                   Authors
                 </h2>
                 <ResearchAuthorsEditDialog
@@ -1037,36 +1030,36 @@ export default async function ProjectDetailPage({
                 {defaultAuthors.map((author, index) => (
                   <div
                     key={author.id}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-900"
+                    className="flex items-center gap-3 border border-[#444444] bg-[#303030] px-3 py-2 shadow-none transition hover:bg-[#383838]"
                   >
-                    <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900">
+                    <span className="inline-flex h-9 w-9 flex-none items-center justify-center border border-[#444444] bg-[#202020] text-[#A8DADC]">
                       {index + 1}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                        <p className="truncate text-sm font-normal text-[#E4E4E4]">
                           {author.name || author.email}
                           {index === 0 ? "*" : ""}
                         </p>
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                        <span className="border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#B0B0B0]">
                           {index === 0 ? "First author" : "Author"}
                         </span>
                         {author.isCorresponding && (
-                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-900">
+                          <span className="border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#A8DADC]">
                             Corresponding
                           </span>
                         )}
                       </div>
-                      <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+                      <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#B0B0B0]">
                         <Mail
-                          className="h-3 w-3 flex-none text-blue-400"
+                          className="h-3 w-3 flex-none text-[#A8DADC]"
                           aria-hidden="true"
                         />
                         <span className="truncate">{author.email}</span>
                       </p>
-                      <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#B0B0B0]">
                         <Building2
-                          className="h-3 w-3 flex-none text-emerald-500"
+                          className="h-3 w-3 flex-none text-[#B39CD0]"
                           aria-hidden="true"
                         />
                         <span className="truncate">
@@ -1082,8 +1075,8 @@ export default async function ProjectDetailPage({
 
           <ResearchDetailSection>
             <div className="mb-5 flex items-center justify-between gap-3">
-              <h2 className="flex items-center gap-2 text-base font-bold text-slate-950 dark:text-white">
-                <ClipboardCheck className="h-4 w-4 text-emerald-500" />
+              <h2 className="flex items-center gap-2 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+                <ClipboardCheck className="h-4 w-4 text-[#A8DADC]" />
                 Production timeline
               </h2>
               <ProductionTimelineActions
@@ -1094,13 +1087,13 @@ export default async function ProjectDetailPage({
               />
             </div>
             <div className="relative space-y-1">
-              <div className="absolute bottom-5 left-[0.78rem] top-5 w-px bg-slate-200 dark:bg-slate-700" />
+              <div className="absolute bottom-5 left-[0.78rem] top-5 w-px bg-[#444444]" />
               {productionSteps.map((step) => {
                 const active = completedProductionSteps.has(step.label);
                 return (
                   <label
                     key={step.label}
-                    className="relative flex cursor-pointer gap-3 pb-4 last:pb-0"
+                    className="relative flex cursor-pointer gap-3 border-b border-[#444444]/70 pb-4 last:border-b-0 last:pb-0"
                   >
                     <input
                       type="checkbox"
@@ -1108,13 +1101,13 @@ export default async function ProjectDetailPage({
                       value={step.label}
                       defaultChecked={active}
                       disabled={productionTimelineLocked}
-                      className="z-10 mt-1 h-5 w-5 cursor-pointer rounded-full border-slate-300 bg-white text-emerald-600 accent-emerald-600 shadow-sm transition focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-900"
+                      className="z-10 mt-1 h-5 w-5 cursor-pointer rounded-none border-[#444444] bg-[#202020] text-[#A8DADC] accent-[#A8DADC] shadow-none transition focus:ring-4 focus:ring-[#A8DADC]/10"
                     />
                     <span>
-                      <span className="block text-sm font-bold text-slate-800 dark:text-slate-100">
+                      <span className="block text-sm font-normal text-[#E4E4E4]">
                         {step.label}
                       </span>
-                      <span className="mt-0.5 block text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      <span className="mt-0.5 block text-xs leading-5 text-[#B0B0B0]">
                         {step.detail}
                       </span>
                     </span>
@@ -1128,8 +1121,8 @@ export default async function ProjectDetailPage({
 
       <section className="space-y-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-slate-950 dark:text-white">
-            <Send className="h-5 w-5 text-blue-500" />
+          <h2 className="flex items-center gap-2 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+            <Send className="h-5 w-5 text-[#A8DADC]" />
             Submissions
           </h2>
           {isAdmin ? (
@@ -1142,11 +1135,11 @@ export default async function ProjectDetailPage({
               productionComplete={productionComplete}
             />
           ) : (
-            <div className="rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-3 text-sm text-blue-900 shadow-sm dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
-              <p className="font-semibold">
+            <div className="border border-[#444444] bg-[#2C2C2C] px-4 py-3 text-sm text-[#E4E4E4] shadow-none">
+              <p className="font-normal">
                 Submissions are updated from assigned tasks.
               </p>
-              <p className="mt-1 text-blue-800/80 dark:text-blue-200/80">
+              <p className="mt-1 text-[#B0B0B0]">
                 When an assigned submission task is marked finished, this table
                 and related journal/account views update automatically.
               </p>

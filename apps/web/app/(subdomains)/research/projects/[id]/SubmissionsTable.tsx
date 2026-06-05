@@ -112,30 +112,26 @@ function statusLabel(value: string) {
 
 function badgeClass(value: string) {
   const normalized = normalizedStatus(value);
-  if (normalized === "ACCEPTED")
-    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
-  if (normalized === "PUBLISHED")
-    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
-  if (normalized === "REJECTED")
-    return "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
-  if (normalized === "WITHDRAWN")
-    return "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900";
-  if (normalized === "REVIEWING")
-    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
-  return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  if (normalized === "ACCEPTED") return "text-[#A8DADC]";
+  if (normalized === "PUBLISHED") return "text-[#A8DADC]";
+  if (normalized === "REJECTED") return "text-[#B0B0B0]";
+  if (normalized === "WITHDRAWN") return "text-rose-300";
+  if (normalized === "REVIEWING") return "text-[#B39CD0]";
+  return "text-[#FFC1CC]";
 }
 
-function rowClass(value: string) {
+function statusIcon(value: string) {
   const normalized = normalizedStatus(value);
-  if (normalized === "REJECTED")
-    return "bg-slate-200/95 hover:bg-slate-200 dark:bg-slate-700/70 dark:hover:bg-slate-700/80";
-  if (normalized === "ACCEPTED")
-    return "bg-emerald-50/70 hover:bg-emerald-50 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30";
-  if (normalized === "PUBLISHED")
-    return "bg-blue-50/70 hover:bg-blue-50 dark:bg-blue-950/20 dark:hover:bg-blue-950/30";
-  if (normalized === "WITHDRAWN")
-    return "bg-rose-50/65 hover:bg-rose-50 dark:bg-rose-950/20 dark:hover:bg-rose-950/30";
-  return "hover:bg-slate-50 dark:hover:bg-slate-800/40";
+  if (normalized === "ACCEPTED") return CheckCircle2;
+  if (normalized === "PUBLISHED") return BookOpen;
+  if (normalized === "REJECTED") return Ban;
+  if (normalized === "WITHDRAWN") return TriangleAlert;
+  if (normalized === "REVIEWING") return FileSearch;
+  return Send;
+}
+
+function rowClass(_value: string) {
+  return "odd:bg-[#2C2C2C] even:bg-[#303030] hover:bg-[#383838]";
 }
 
 function shortDate(value: string) {
@@ -209,11 +205,11 @@ function isWithdrawn(row: SubmissionRow) {
 }
 
 function MoneyCell({ amount, currency }: { amount: string; currency: string }) {
-  if (!amount) return <span>-</span>;
+  if (!amount) return <span className="text-[#B0B0B0]">-</span>;
   if (currency === "USD") {
     return (
       <span className="inline-flex items-center gap-1.5">
-        <CircleDollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+        <CircleDollarSign className="h-4 w-4 text-[#A8DADC]" />
         {amount}
       </span>
     );
@@ -285,7 +281,7 @@ function StatusIconChip({
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 w-8 items-center justify-center transition-colors duration-150 ${className}`}
+        className={`inline-flex h-8 w-8 items-center justify-center border border-[#444444] bg-[#202020] transition-colors duration-150 group-hover:border-[#666666] ${className}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
@@ -313,10 +309,10 @@ function RegistrationCell({
       : label;
 
   return (
-    <div className="flex max-w-60 items-center gap-2">
+    <div className="grid max-w-60 grid-cols-[2rem_minmax(0,1fr)] items-center gap-2">
       <IconHint label={registerLine}>
         <span
-          className={`inline-flex h-8 w-8 flex-none items-center justify-center transition-colors duration-150 ${registrationClass(status)}`}
+          className={`inline-flex h-8 w-8 flex-none items-center justify-center border border-[#444444] bg-[#202020] transition-colors duration-150 group-hover:border-[#666666] ${registrationClass(status)}`}
         >
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
@@ -325,12 +321,12 @@ function RegistrationCell({
         className={`min-w-0 ${showDetail ? "" : "flex min-h-8 items-center"}`}
       >
         {showDetail && (
-          <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+          <p className="truncate text-sm font-normal text-[#E4E4E4]">
             {detail}
           </p>
         )}
         <p
-          className={`${showDetail ? "mt-0.5" : ""} text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500`}
+          className={`${showDetail ? "mt-0.5" : ""} text-[11px] font-normal uppercase tracking-wide text-[#B0B0B0]`}
         >
           {registerLine}
         </p>
@@ -502,8 +498,8 @@ export function SubmissionsTable({
 
   return (
     <>
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+      <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
+        <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] px-3 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
           <TableSearchInput
             value={query}
             onChange={setQuery}
@@ -545,29 +541,29 @@ export function SubmissionsTable({
 
         <div className="overflow-hidden">
           <table className="w-full table-fixed text-left">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+            <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
               <tr>
                 <th
-                  className={`${isResearchView ? "w-[8%]" : "w-[6%]"} px-4 py-3`}
+                  className={`${isResearchView ? "w-[8%]" : "w-[6%]"} px-3 py-3`}
                 >
                   ID
                 </th>
                 <th
-                  className={`${isResearchView ? "w-[42%]" : showSubmitter ? "w-[31%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-4 py-3`}
+                  className={`${isResearchView ? "w-[42%]" : showSubmitter ? "w-[31%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-3 py-3`}
                 >
                   {isResearchView
                     ? "Research Associated"
                     : "Journal / Conference"}
                 </th>
                 <th
-                  className={`${isResearchView ? "w-[15%]" : "w-[13%]"} px-4 py-3`}
+                  className={`${isResearchView ? "w-[15%]" : "w-[13%]"} px-3 py-3`}
                 >
                   <span className="inline-flex items-center gap-2">
                     Status
                     {showStatusEdit && (
                       <IconHint label="Edit status from a row">
                         <Edit3
-                          className="h-3.5 w-3.5 text-slate-400"
+                          className="h-3.5 w-3.5 text-[#B0B0B0]"
                           aria-hidden="true"
                         />
                       </IconHint>
@@ -578,43 +574,45 @@ export function SubmissionsTable({
                   <>
                     {showRegistrationClaim && (
                       <>
-                        <th className="w-[10%] px-4 py-3">Research claim</th>
-                        <th className="w-[18%] px-4 py-3">Registration</th>
+                        <th className="w-[10%] px-3 py-3">Research claim</th>
+                        <th className="w-[18%] px-3 py-3">Registration</th>
                       </>
                     )}
-                    <th className="w-[12%] px-4 py-3">Account</th>
+                    <th className="w-[12%] px-3 py-3">Account</th>
                   </>
                 ) : (
                   <>
                     {showSubmitter && (
-                      <th className="w-[13%] px-4 py-3">Submitted by</th>
+                      <th className="w-[13%] px-3 py-3">Submitted by</th>
                     )}
-                    <th className="w-[8%] px-4 py-3">APC</th>
-                    <th className="w-[8%] px-4 py-3">Fee</th>
+                    <th className="w-[8%] px-3 py-3">APC</th>
+                    <th className="w-[8%] px-3 py-3">Fee</th>
                     <th
-                      className={`${hasAction ? "w-[12%]" : "w-[14%]"} px-4 py-3`}
+                      className={`${hasAction ? "w-[12%]" : "w-[14%]"} px-3 py-3`}
                     >
                       Account
                     </th>
                   </>
                 )}
                 {hasAction && (
-                  <th className="w-[7%] px-4 py-3 text-right">
-                    {showDelete ? "Delete" : "Edit"}
+                  <th className="w-[7%] px-3 py-3 text-right">
+                    <span className="sr-only">
+                      {showDelete ? "Delete" : "Edit"}
+                    </span>
                   </th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-[#444444]">
               {pagination.pagedRows.map((row) => (
                 <tr
                   key={row.id}
                   className={`group align-top transition duration-200 ease-out ${rowClass(row.status)}`}
                 >
-                  <td className="px-4 py-3 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <td className="px-3 py-3 text-[11px] font-normal uppercase tracking-wide text-[#B0B0B0]">
                     {row.code}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     {linkVenue ? (
                       <Link
                         href={
@@ -633,19 +631,19 @@ export function SubmissionsTable({
                             }
                           >
                             {row.kind === "journal" ? (
-                              <BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover/link:text-blue-600" />
+                              <BookOpen className="mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] group-hover/link:text-[#A8DADC]" />
                             ) : (
-                              <Landmark className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover/link:text-blue-600" />
+                              <Landmark className="mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] group-hover/link:text-[#A8DADC]" />
                             )}
                           </IconHint>
                         )}
                         <span className="min-w-0">
                           <span
-                            className={`${isResearchView ? "text-lg" : "text-base"} block truncate font-normal text-slate-700 transition group-hover/link:text-blue-600 dark:text-slate-100 dark:group-hover/link:text-blue-300`}
+                            className={`${isResearchView ? "text-sm" : "text-sm"} block truncate font-normal text-[#E4E4E4] transition group-hover/link:text-[#A8DADC]`}
                           >
                             {isResearchView ? row.projectTitle : row.venueName}
                           </span>
-                          <span className="mt-1 block line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                          <span className="mt-1 block line-clamp-2 text-xs leading-5 text-[#B0B0B0]">
                             {isResearchView
                               ? row.projectAuthors || "-"
                               : row.metaLine || "-"}
@@ -661,19 +659,19 @@ export function SubmissionsTable({
                             }
                           >
                             {row.kind === "journal" ? (
-                              <BookOpen className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover/link:text-blue-600" />
+                              <BookOpen className="mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] group-hover/link:text-[#A8DADC]" />
                             ) : (
-                              <Landmark className="mt-0.5 h-4 w-4 flex-none text-slate-400 group-hover/link:text-blue-600" />
+                              <Landmark className="mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] group-hover/link:text-[#A8DADC]" />
                             )}
                           </IconHint>
                         )}
                         <span className="min-w-0">
                           <span
-                            className={`${isResearchView ? "text-lg" : "text-base"} block truncate font-normal text-slate-700 transition group-hover/link:text-blue-600 dark:text-slate-100 dark:group-hover/link:text-blue-300`}
+                            className={`${isResearchView ? "text-sm" : "text-sm"} block truncate font-normal text-[#E4E4E4] transition group-hover/link:text-[#A8DADC]`}
                           >
                             {isResearchView ? row.projectTitle : row.venueName}
                           </span>
-                          <span className="mt-1 block line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                          <span className="mt-1 block line-clamp-2 text-xs leading-5 text-[#B0B0B0]">
                             {isResearchView
                               ? row.projectAuthors || "-"
                               : row.metaLine || "-"}
@@ -682,36 +680,36 @@ export function SubmissionsTable({
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <div className="grid gap-1.5">
-                      <span
-                        className={`w-fit rounded-full px-2 py-1 text-xs font-bold ring-1 ${badgeClass(row.status)}`}
-                      >
-                        {statusLabel(row.status)}
-                      </span>
+                      <StatusIconChip
+                        icon={statusIcon(row.status)}
+                        label={statusLabel(row.status)}
+                        className={badgeClass(row.status)}
+                      />
                       {normalizedStatus(row.status) === "PUBLISHED" && (
-                        <span className="text-[11px] font-medium text-blue-700/80 dark:text-blue-200/80">
+                        <span className="text-[11px] font-normal text-[#B0B0B0]">
                           published: {shortDate(row.publishedAt) || "-"}
                         </span>
                       )}
                       {(normalizedStatus(row.status) === "PUBLISHED" ||
                         normalizedStatus(row.status) === "ACCEPTED") && (
-                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                        <span className="text-[11px] font-normal text-[#B0B0B0]">
                           accepted: {shortDate(row.acceptedAt) || "-"}
                         </span>
                       )}
                       {normalizedStatus(row.status) === "REJECTED" &&
                         row.rejectedAt && (
-                          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                          <span className="text-[11px] font-normal text-[#B0B0B0]">
                             rejected: {shortDate(row.rejectedAt)}
                           </span>
                         )}
                       {normalizedStatus(row.status) === "WITHDRAWN" && (
-                        <span className="text-[11px] font-medium text-rose-700/80 dark:text-rose-200/80">
+                        <span className="text-[11px] font-normal text-rose-300">
                           withdrawn: {shortDate(row.withdrawnAt) || "-"}
                         </span>
                       )}
-                      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                      <span className="text-[11px] font-normal text-[#B0B0B0]">
                         submitted: {shortDate(row.submittedAt) || "-"}
                       </span>
                     </div>
@@ -720,7 +718,7 @@ export function SubmissionsTable({
                     <>
                       {showRegistrationClaim && (
                         <>
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-3">
                             {row.canViewRegistrationClaim ? (
                               <StatusIconChip
                                 icon={claimIcon(row.projectClaimStatus || "")}
@@ -730,10 +728,10 @@ export function SubmissionsTable({
                                 )}
                               />
                             ) : (
-                              <span className="text-sm text-slate-400">-</span>
+                              <span className="text-sm text-[#B0B0B0]">-</span>
                             )}
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-3">
                             {row.canViewRegistrationClaim ? (
                               <RegistrationCell
                                 status={
@@ -743,21 +741,21 @@ export function SubmissionsTable({
                                 registerName={row.projectRegisterName || ""}
                               />
                             ) : (
-                              <span className="text-sm text-slate-400">-</span>
+                              <span className="text-sm text-[#B0B0B0]">-</span>
                             )}
                           </td>
                         </>
                       )}
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                      <td className="px-3 py-3 text-sm text-[#E4E4E4]">
                         {row.accountId ? (
                           <Link
                             href={`/accounts/${row.accountId}`}
                             className="group/account block min-w-0"
                           >
-                            <span className="block truncate font-semibold text-slate-700 transition group-hover/account:text-blue-600 dark:text-slate-200 dark:group-hover/account:text-blue-300">
+                            <span className="block truncate font-normal text-[#E4E4E4] transition group-hover/account:text-[#A8DADC]">
                               {row.account || "No login ID"}
                             </span>
-                            <span className="mt-0.5 block truncate text-xs text-slate-500 dark:text-slate-400">
+                            <span className="mt-0.5 block truncate text-xs text-[#B0B0B0]">
                               {row.accountEmail || "No email"}
                             </span>
                           </Link>
@@ -769,8 +767,8 @@ export function SubmissionsTable({
                   ) : (
                     <>
                       {showSubmitter && (
-                        <td className="px-4 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                          <p className="truncate text-slate-700 dark:text-slate-200">
+                        <td className="px-3 py-3 text-xs leading-5 text-[#B0B0B0]">
+                          <p className="truncate text-[#E4E4E4]">
                             {row.submittedByName || "Not recorded"}
                           </p>
                           <p className="truncate font-mono">
@@ -781,19 +779,19 @@ export function SubmissionsTable({
                           </p>
                         </td>
                       )}
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                      <td className="px-3 py-3 text-sm text-[#E4E4E4]">
                         <MoneyCell
                           amount={row.apc}
                           currency={row.apcCurrency}
                         />
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                      <td className="px-3 py-3 text-sm text-[#E4E4E4]">
                         <MoneyCell
                           amount={row.submissionFee}
                           currency={row.submissionFeeCurrency}
                         />
                       </td>
-                      <td className="px-4 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      <td className="px-3 py-3 text-xs leading-5 text-[#B0B0B0]">
                         {row.kind === "conference" ? (
                           "Email / website"
                         ) : row.accountId ? (
@@ -801,7 +799,7 @@ export function SubmissionsTable({
                             href={`/accounts/${row.accountId}`}
                             className="group/account block min-w-0"
                           >
-                            <span className="block truncate text-slate-700 transition group-hover/account:text-blue-600 dark:text-slate-200 dark:group-hover/account:text-blue-300">
+                            <span className="block truncate text-[#E4E4E4] transition group-hover/account:text-[#A8DADC]">
                               {row.account || "No login ID"}
                             </span>
                             <span className="mt-0.5 block truncate">
@@ -815,7 +813,7 @@ export function SubmissionsTable({
                     </>
                   )}
                   {hasAction && (
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-3 py-3 text-right">
                       {showStatusEdit &&
                         (() => {
                           const withdrawn = isWithdrawn(row);
@@ -834,7 +832,7 @@ export function SubmissionsTable({
                                     : "Edit submission status"
                               }
                               onClick={() => setEditing(row)}
-                              className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:shadow-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40"
+                              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-[#444444] bg-[#202020] text-[#B0B0B0] transition hover:-translate-y-0.5 hover:border-[#A8DADC] hover:text-[#A8DADC] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:border-[#444444] disabled:hover:text-[#B0B0B0] disabled:hover:shadow-none"
                               aria-label={`Edit status for ${row.venueName}`}
                             >
                               <Edit3 className="h-4 w-4" />
@@ -847,7 +845,7 @@ export function SubmissionsTable({
                           disabled={disabled}
                           title="Delete submission"
                           onClick={() => setDeleting(row)}
-                          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-rose-100 bg-rose-50 text-rose-600 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:text-rose-700 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50"
+                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-[#444444] bg-[#202020] text-rose-300 transition hover:-translate-y-0.5 hover:border-rose-300 hover:text-rose-200 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
                           aria-label={`Delete submission for ${row.venueName}`}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -867,7 +865,7 @@ export function SubmissionsTable({
                           ? 7 + (showSubmitter ? 1 : 0)
                           : 6 + (showSubmitter ? 1 : 0)
                     }
-                    className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
+                    className="px-3 py-14 text-center text-sm text-[#B0B0B0]"
                   >
                     No submissions match the current filters.
                   </td>

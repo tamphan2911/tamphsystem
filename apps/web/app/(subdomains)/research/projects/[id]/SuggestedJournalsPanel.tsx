@@ -294,10 +294,10 @@ export function SuggestedJournalsPanel({
     <ResearchDetailSection>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-base font-bold text-slate-950 dark:text-white">
+          <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
             Suggested venues
           </h2>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs text-[#B0B0B0]">
             Track journal and conference targets for this research.
           </p>
         </div>
@@ -368,16 +368,16 @@ export function SuggestedJournalsPanel({
           bodyClassName="px-5 py-4"
         >
           <div className="grid gap-4">
-            <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+            <div className="inline-flex w-fit border border-[#444444] bg-[#202020] p-1">
               {(["journal", "conference"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setActiveAddTab(tab)}
-                  className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
+                  className={`cursor-pointer px-3 py-2 text-xs font-normal transition ${
                     activeAddTab === tab
-                      ? "bg-white text-blue-700 shadow-sm dark:bg-slate-800 dark:text-blue-300"
-                      : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                      ? "bg-[#383838] text-[#A8DADC] shadow-none"
+                      : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
                   }`}
                 >
                   {tab === "journal" ? "Journals" : "Conferences"}
@@ -401,10 +401,10 @@ export function SuggestedJournalsPanel({
                       onClick={() => addJournal(journal.id)}
                       className={resultButtonClass}
                     >
-                      <span className="block text-sm font-semibold text-slate-950 dark:text-white">
+                      <span className="block text-sm font-normal text-[#E4E4E4]">
                         {journal.name}
                       </span>
-                      <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                      <span className="mt-1 block text-xs text-[#B0B0B0]">
                         {journal.issn || "No ISSN"} -{" "}
                         {journal.field || "No field"} -{" "}
                         {journal.rank || "No rank"} -{" "}
@@ -430,10 +430,10 @@ export function SuggestedJournalsPanel({
                       onClick={() => addConference(conference.id)}
                       className={resultButtonClass}
                     >
-                      <span className="block text-sm font-semibold text-slate-950 dark:text-white">
+                      <span className="block text-sm font-normal text-[#E4E4E4]">
                         {conference.name}
                       </span>
-                      <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                      <span className="mt-1 block text-xs text-[#B0B0B0]">
                         {conference.type || "No type"} -{" "}
                         {conference.theme || "No theme"} -{" "}
                         {conference.location || "No location"}
@@ -504,16 +504,16 @@ export function SuggestedJournalsPanel({
               value={taskMode === "submit" ? "Submitting" : "Production"}
             />
 
-            <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+            <div className="inline-flex w-fit border border-[#444444] bg-[#202020] p-1">
               {(["submit", "other"] as const).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => setTaskMode(mode)}
-                  className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
+                  className={`cursor-pointer px-3 py-2 text-xs font-normal transition ${
                     taskMode === mode
-                      ? "bg-white text-blue-700 shadow-sm dark:bg-slate-800 dark:text-blue-300"
-                      : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                      ? "bg-[#383838] text-[#A8DADC] shadow-none"
+                      : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
                   }`}
                 >
                   {mode === "submit" ? `Submit to ${assignKind}` : "Other task"}
@@ -523,7 +523,7 @@ export function SuggestedJournalsPanel({
 
             <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
                   Task title
                 </span>
                 <input
@@ -538,11 +538,11 @@ export function SuggestedJournalsPanel({
                 />
               </label>
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
                   Due date
                 </span>
                 <div className="relative">
-                  <CalendarClock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <CalendarClock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#B0B0B0]" />
                   <input
                     name="dueDate"
                     type="date"
@@ -561,7 +561,7 @@ export function SuggestedJournalsPanel({
             </div>
 
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
                 Note
               </span>
               <textarea
@@ -582,7 +582,7 @@ export function SuggestedJournalsPanel({
                 onChange={setAssistantQuery}
                 placeholder="Search assistants or admin by name, email, ID, or role..."
               />
-              <div className="grid max-h-72 gap-2 overflow-y-auto rounded-xl border border-slate-200 p-2 dark:border-slate-800">
+              <div className="grid max-h-72 gap-2 overflow-y-auto border border-[#444444] p-2">
                 {assistantResults.map((assistant) => {
                   const selected = selectedAssistantIds.includes(assistant.id);
                   return (
@@ -590,19 +590,19 @@ export function SuggestedJournalsPanel({
                       key={assistant.id}
                       type="button"
                       onClick={() => toggleAssistant(assistant.id)}
-                      className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
+                      className={`flex cursor-pointer items-center justify-between gap-3 border px-3 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
                         selected
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
-                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800"
+                          ? "border-[#A8DADC] bg-[#303030] text-[#A8DADC]"
+                          : "border-[#444444] bg-[#202020] text-[#E4E4E4] hover:border-[#666666] hover:bg-[#303030]"
                       }`}
                     >
                       <span className="flex min-w-0 items-center gap-3">
-                        <UserRound className="h-4 w-4 flex-none text-slate-400" />
+                        <UserRound className="h-4 w-4 flex-none text-[#B0B0B0]" />
                         <span className="min-w-0">
-                          <span className="block truncate text-sm font-bold">
+                          <span className="block truncate text-sm font-normal">
                             {assistant.name || assistant.email}
                           </span>
-                          <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+                          <span className="block truncate text-xs text-[#B0B0B0]">
                             {assistant.email}
                           </span>
                         </span>
@@ -612,14 +612,14 @@ export function SuggestedJournalsPanel({
                   );
                 })}
                 {assistantResults.length === 0 && (
-                  <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                  <div className="py-10 text-center text-sm text-[#B0B0B0]">
                     No user matches this search.
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
+            <div className="flex items-center justify-end gap-3 border-t border-[#444444] pt-5">
               <ResearchButton
                 type="button"
                 onClick={() => setAssignVenue(null)}
@@ -642,7 +642,7 @@ export function SuggestedJournalsPanel({
 }
 
 const resultButtonClass =
-  "cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm disabled:cursor-wait dark:border-slate-800 dark:bg-slate-950 dark:hover:border-blue-900 dark:hover:bg-blue-950/30";
+  "cursor-pointer border border-[#444444] bg-[#202020] px-3 py-2 text-left transition hover:-translate-y-0.5 hover:border-[#A8DADC] hover:bg-[#303030] hover:shadow-sm disabled:cursor-wait";
 
 function VenueSection({
   title,
@@ -658,7 +658,7 @@ function VenueSection({
 
   return (
     <div>
-      <h3 className="mb-3 text-sm font-bold text-slate-700 dark:text-slate-200">
+      <h3 className="mb-3 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
         {title}
       </h3>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{children}</div>
@@ -692,15 +692,13 @@ function JournalCard({
       assignLabel="Assign journal submission task"
       deleteLabel="Delete suggested journal"
     >
-      <p className="pr-16 font-semibold text-slate-950 dark:text-white">
-        {journal.name}
-      </p>
-      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+      <p className="pr-16 font-normal text-[#E4E4E4]">{journal.name}</p>
+      <p className="mt-1 text-xs text-[#B0B0B0]">
         {journal.field || "No field"} - {journal.rank || "No rank"} -{" "}
         {journal.publisher || "No publisher"}
       </p>
       {journal.apc && (
-        <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-xs font-normal text-[#B0B0B0]">
           APC: {journal.apc}
         </p>
       )}
@@ -738,13 +736,11 @@ function ConferenceCard({
       assignLabel="Assign conference submission task"
       deleteLabel="Delete suggested conference"
     >
-      <p className="pr-16 font-semibold text-slate-950 dark:text-white">
-        {conference.name}
-      </p>
-      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+      <p className="pr-16 font-normal text-[#E4E4E4]">{conference.name}</p>
+      <p className="mt-1 text-xs text-[#B0B0B0]">
         {conference.type || "No type"} - {conference.theme || "No theme"}
       </p>
-      <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+      <p className="mt-2 text-xs font-normal text-[#B0B0B0]">
         {[conference.time, conference.location].filter(Boolean).join(" - ") ||
           "Time/location not set"}
       </p>
@@ -758,15 +754,12 @@ function ConferenceCard({
 
 function SuggestedByLine({ name, role }: { name?: string; role?: string }) {
   return (
-    <p className="mt-3 border-t border-slate-100 pt-2 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+    <p className="mt-3 border-t border-[#444444] pt-2 text-xs text-[#B0B0B0]">
       Suggested by{" "}
-      <span className="font-semibold text-slate-700 dark:text-slate-200">
+      <span className="font-normal text-[#E4E4E4]">
         {name || "Unknown user"}
       </span>
-      <span className="text-slate-400 dark:text-slate-500">
-        {" "}
-        · {role || "Unknown role"}
-      </span>
+      <span className="text-[#B0B0B0]"> · {role || "Unknown role"}</span>
     </p>
   );
 }
@@ -804,10 +797,10 @@ function VenueCard({
 
   return (
     <div
-      className={`group relative cursor-default rounded-lg border p-3 text-sm transition hover:-translate-y-0.5 hover:shadow-md ${meta.cardClass}`}
+      className={`group relative cursor-default border p-3 text-sm transition hover:-translate-y-0.5 hover:shadow-md ${meta.cardClass}`}
     >
       {meta.tooltip && (
-        <span className="pointer-events-none absolute left-4 top-full z-40 mt-2 max-w-72 translate-y-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium leading-5 text-slate-700 opacity-0 shadow-xl shadow-slate-900/10 transition duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
+        <span className="pointer-events-none absolute left-4 top-full z-40 mt-2 max-w-72 translate-y-1 border border-[#444444] bg-[#202020] px-3 py-2 text-xs font-normal leading-5 text-[#E4E4E4] opacity-0 shadow-xl shadow-black/30 transition duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100">
           {meta.tooltip}
         </span>
       )}
@@ -844,7 +837,7 @@ function VenueCard({
       ) : meta.badge ? (
         <div className="absolute right-2 top-2">
           <span
-            className={`inline-flex flex-col rounded-lg px-2.5 py-1 text-center text-[11px] font-black uppercase tracking-wide ring-1 ${meta.badgeClass}`}
+            className={`inline-flex flex-col border px-2.5 py-1 text-center text-[11px] font-normal uppercase tracking-wide ring-0 ${meta.badgeClass}`}
           >
             {meta.badge}
             {state.state === "published" && state.publishedAt ? (
@@ -873,59 +866,48 @@ function shortDate(value: string) {
 function venueStateMeta(state: SuggestedVenueState) {
   if (state.state === "published") {
     return {
-      cardClass:
-        "border-blue-200 bg-blue-50/80 dark:border-blue-900/70 dark:bg-blue-950/30",
+      cardClass: "border-[#444444] bg-[#303030]",
       badge: "Published",
-      badgeClass:
-        "bg-blue-100 text-blue-700 ring-blue-200 dark:bg-blue-950/70 dark:text-blue-200 dark:ring-blue-800",
+      badgeClass: "border-[#444444] bg-[#202020] text-[#A8DADC]",
       tooltip: "This venue has a published submission. Congratulations.",
     };
   }
   if (state.state === "accepted") {
     return {
-      cardClass:
-        "border-emerald-200 bg-emerald-50/80 dark:border-emerald-900/70 dark:bg-emerald-950/30",
+      cardClass: "border-[#444444] bg-[#303030]",
       badge: "Accepted",
-      badgeClass:
-        "bg-emerald-100 text-emerald-700 ring-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-200 dark:ring-emerald-800",
+      badgeClass: "border-[#444444] bg-[#202020] text-[#A8DADC]",
       tooltip: "This venue has an accepted submission. Congratulations.",
     };
   }
   if (state.state === "reviewing") {
     return {
-      cardClass:
-        "border-amber-200 bg-amber-50/80 dark:border-amber-900/70 dark:bg-amber-950/25",
+      cardClass: "border-[#444444] bg-[#303030]",
       badge: "Reviewing",
-      badgeClass:
-        "bg-amber-100 text-amber-700 ring-amber-200 dark:bg-amber-950/70 dark:text-amber-200 dark:ring-amber-800",
+      badgeClass: "border-[#444444] bg-[#202020] text-[#B39CD0]",
       tooltip: "This venue has a submission in reviewing process, let wait.",
     };
   }
   if (state.state === "submitted") {
     return {
-      cardClass:
-        "border-amber-200 bg-amber-50/80 dark:border-amber-900/70 dark:bg-amber-950/25",
+      cardClass: "border-[#444444] bg-[#303030]",
       badge: "Submitted",
-      badgeClass:
-        "bg-amber-100 text-amber-700 ring-amber-200 dark:bg-amber-950/70 dark:text-amber-200 dark:ring-amber-800",
+      badgeClass: "border-[#444444] bg-[#202020] text-[#FFC1CC]",
       tooltip: "This venue already has a submission, please wait.",
     };
   }
   if (state.state === "assigned") {
     return {
-      cardClass:
-        "border-amber-200 bg-amber-50/80 dark:border-amber-900/70 dark:bg-amber-950/25",
+      cardClass: "border-[#444444] bg-[#303030]",
       badge: "Assigned",
-      badgeClass:
-        "bg-amber-100 text-amber-700 ring-amber-200 dark:bg-amber-950/70 dark:text-amber-200 dark:ring-amber-800",
+      badgeClass: "border-[#444444] bg-[#202020] text-[#FFC1CC]",
       tooltip:
         "This venue already has an assigned task to submit, please wait.",
     };
   }
   if (state.state === "rejected") {
     return {
-      cardClass:
-        "border-slate-200 bg-slate-100/80 dark:border-slate-700 dark:bg-slate-800/50",
+      cardClass: "border-[#444444] bg-[#303030]",
       badge: null,
       badgeClass: "",
       tooltip:
@@ -934,19 +916,16 @@ function venueStateMeta(state: SuggestedVenueState) {
   }
   if (state.state === "withdrawn") {
     return {
-      cardClass:
-        "border-rose-200 bg-rose-50/80 dark:border-rose-900/70 dark:bg-rose-950/25",
+      cardClass: "border-[#444444] bg-[#303030]",
       badge: "Withdraw",
-      badgeClass:
-        "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-950/70 dark:text-rose-200 dark:ring-rose-800",
+      badgeClass: "border-[#444444] bg-[#202020] text-rose-300",
       tooltip:
         "The submission to this venue was withdrawn. You could assign another venue or create a new submission path.",
     };
   }
   if (state.state === "blocked") {
     return {
-      cardClass:
-        "border-slate-200 bg-slate-100/80 dark:border-slate-700 dark:bg-slate-800/50",
+      cardClass: "border-[#444444] bg-[#303030]",
       badge: null,
       badgeClass: "",
       tooltip:
@@ -954,8 +933,7 @@ function venueStateMeta(state: SuggestedVenueState) {
     };
   }
   return {
-    cardClass:
-      "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900",
+    cardClass: "border-[#444444] bg-[#2C2C2C] hover:bg-[#383838]",
     badge: null,
     badgeClass: "",
     tooltip: "",
@@ -973,11 +951,11 @@ function ResultList({
     ? children.length > 0
     : Boolean(children);
   return (
-    <div className="grid max-h-96 gap-2 overflow-y-auto rounded-xl border border-slate-200 p-2 dark:border-slate-800">
+    <div className="grid max-h-96 gap-2 overflow-y-auto border border-[#444444] p-2">
       {hasChildren ? (
         children
       ) : (
-        <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+        <div className="py-10 text-center text-sm text-[#B0B0B0]">
           {emptyText}
         </div>
       )}
@@ -996,7 +974,7 @@ function SearchBox({
 }) {
   return (
     <div className="relative">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#B0B0B0]" />
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -1010,13 +988,13 @@ function SearchBox({
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <label className="grid gap-1.5">
-      <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
         {label}
       </span>
       <input
         readOnly
         value={value}
-        className={`${researchFieldClass} bg-slate-100 text-slate-600 dark:text-slate-300`}
+        className={`${researchFieldClass} bg-[#202020] text-[#B0B0B0]`}
       />
     </label>
   );
