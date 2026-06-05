@@ -226,16 +226,13 @@ export function AuthorsPicker({
             </FloatingDropdownPortal>
           </div>
 
-          <div className="mt-3 grid gap-2">
+          <div className="mt-3 divide-y divide-[#444444] border-y border-[#444444]">
             {authors.map((author, index) => {
               const roleLabel = index === 0 ? "First author" : "Author";
               const corresponding = author.isCorresponding;
 
               return (
-                <div
-                  key={author.id}
-                  className="flex items-center gap-3 border border-[#444444] bg-[#303030] px-3 py-2 transition hover:bg-[#383838]"
-                >
+                <div key={author.id} className="flex items-center gap-4 py-3">
                   <div className="flex flex-col gap-1">
                     <button
                       type="button"
@@ -257,7 +254,7 @@ export function AuthorsPicker({
                     </button>
                   </div>
 
-                  <span className="inline-flex h-10 w-10 flex-none items-center justify-center border border-[#444444] bg-[#202020] text-[#A8DADC]">
+                  <span className="inline-flex h-10 w-8 flex-none items-center justify-center text-[#A8DADC]">
                     <UserRound className="h-4 w-4" aria-hidden="true" />
                   </span>
 

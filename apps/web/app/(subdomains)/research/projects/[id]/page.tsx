@@ -1026,13 +1026,10 @@ export default async function ProjectDetailPage({
                   )}
                 </div>
               </div>
-              <div className="grid gap-2">
+              <div className="divide-y divide-[#444444] border-y border-[#444444]">
                 {defaultAuthors.map((author, index) => (
-                  <div
-                    key={author.id}
-                    className="flex items-center gap-3 border border-[#444444] bg-[#303030] px-3 py-2 shadow-none transition hover:bg-[#383838]"
-                  >
-                    <span className="inline-flex h-9 w-9 flex-none items-center justify-center border border-[#444444] bg-[#202020] text-[#A8DADC]">
+                  <div key={author.id} className="flex items-center gap-4 py-3">
+                    <span className="inline-flex w-8 flex-none justify-center font-mono text-sm text-[#A8DADC]">
                       {index + 1}
                     </span>
                     <div className="min-w-0 flex-1">
