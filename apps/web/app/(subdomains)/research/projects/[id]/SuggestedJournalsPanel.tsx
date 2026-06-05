@@ -92,9 +92,9 @@ export function SuggestedJournalsPanel({
   suggestedConferences,
   assistants,
   isAdmin,
+  canAssignTask,
   canSuggestVenue,
   disabled = false,
-  productionComplete = true,
 }: {
   projectId: string;
   projectTitle: string;
@@ -104,9 +104,9 @@ export function SuggestedJournalsPanel({
   suggestedConferences: SuggestedConferenceOption[];
   assistants: TaskAssigneeOption[];
   isAdmin: boolean;
+  canAssignTask: boolean;
   canSuggestVenue: boolean;
   disabled?: boolean;
-  productionComplete?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -259,6 +259,12 @@ export function SuggestedJournalsPanel({
             detail:
               "Unlock the research before creating submission tasks from this page.",
           });
+        } else if (result?.reason === "UNAUTHORIZED") {
+          showSuccess({
+            title: "Task was not created",
+            detail:
+              "Only admin, first author, or corresponding author can create this task for the research.",
+          });
         } else {
           showSuccess({
             title: "Submission task already exists",
@@ -279,10 +285,6 @@ export function SuggestedJournalsPanel({
 
   function openSubmitTask(venue: Venue) {
     if (disabled) return;
-    if (!productionComplete) {
-      showProductionIncomplete();
-      return;
-    }
     setTaskMode("submit");
     setAssignVenue(venue);
   }
@@ -326,8 +328,8 @@ export function SuggestedJournalsPanel({
               key={journal.id}
               journal={journal}
               isAdmin={isAdmin}
+              canAssignTask={canAssignTask}
               disabled={disabled}
-              productionComplete={productionComplete}
               onAssign={() =>
                 openSubmitTask({ kind: "journal", item: journal })
               }
@@ -344,8 +346,8 @@ export function SuggestedJournalsPanel({
               key={conference.id}
               conference={conference}
               isAdmin={isAdmin}
+              canAssignTask={canAssignTask}
               disabled={disabled}
-              productionComplete={productionComplete}
               onAssign={() =>
                 openSubmitTask({ kind: "conference", item: conference })
               }
@@ -669,23 +671,23 @@ function VenueSection({
 function JournalCard({
   journal,
   isAdmin,
+  canAssignTask,
   disabled,
-  productionComplete,
   onAssign,
   onDelete,
 }: {
   journal: SuggestedJournalOption;
   isAdmin: boolean;
+  canAssignTask: boolean;
   disabled: boolean;
-  productionComplete: boolean;
   onAssign: () => void;
   onDelete: () => void;
 }) {
   return (
     <VenueCard
       isAdmin={isAdmin}
+      canAssignTask={canAssignTask}
       disabled={disabled}
-      productionComplete={productionComplete}
       state={journal.venueState ?? { state: "idle" }}
       onAssign={onAssign}
       onDelete={onDelete}
@@ -713,23 +715,23 @@ function JournalCard({
 function ConferenceCard({
   conference,
   isAdmin,
+  canAssignTask,
   disabled,
-  productionComplete,
   onAssign,
   onDelete,
 }: {
   conference: SuggestedConferenceOption;
   isAdmin: boolean;
+  canAssignTask: boolean;
   disabled: boolean;
-  productionComplete: boolean;
   onAssign: () => void;
   onDelete: () => void;
 }) {
   return (
     <VenueCard
       isAdmin={isAdmin}
+      canAssignTask={canAssignTask}
       disabled={disabled}
-      productionComplete={productionComplete}
       state={conference.venueState ?? { state: "idle" }}
       onAssign={onAssign}
       onDelete={onDelete}
@@ -766,8 +768,8 @@ function SuggestedByLine({ name, role }: { name?: string; role?: string }) {
 
 function VenueCard({
   isAdmin,
+  canAssignTask,
   disabled,
-  productionComplete,
   state,
   onAssign,
   onDelete,
@@ -776,8 +778,8 @@ function VenueCard({
   children,
 }: {
   isAdmin: boolean;
+  canAssignTask: boolean;
   disabled: boolean;
-  productionComplete: boolean;
   state: SuggestedVenueState;
   onAssign: () => void;
   onDelete: () => void;
@@ -787,7 +789,7 @@ function VenueCard({
 }) {
   const meta = venueStateMeta(state);
   const canAssign =
-    isAdmin &&
+    canAssignTask &&
     !disabled &&
     (state.state === "idle" ||
       state.state === "rejected" ||
@@ -807,13 +809,7 @@ function VenueCard({
       {showActions ? (
         <div className="absolute right-2 top-2 flex translate-y-1 gap-1 opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
           {canAssign && (
-            <IconHint
-              label={
-                productionComplete
-                  ? assignLabel
-                  : "Research is still in production"
-              }
-            >
+            <IconHint label={assignLabel}>
               <button
                 type="button"
                 onClick={onAssign}

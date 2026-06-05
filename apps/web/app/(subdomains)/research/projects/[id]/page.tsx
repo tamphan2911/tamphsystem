@@ -381,6 +381,10 @@ export default async function ProjectDetailPage({
           (entry) => entry.userId === userId && entry.isCorresponding,
         )
       : project.leadResearcherId === userId;
+  const isFirstAuthor =
+    project.authorEntries.length > 0
+      ? project.authorEntries[0]?.userId === userId
+      : project.leadResearcherId === userId;
   const isRegistrationUser =
     project.registrationUserId === userId ||
     Boolean(
@@ -399,6 +403,8 @@ export default async function ProjectDetailPage({
   }
   const canViewRegistrationClaim = isAdmin || isRegistrationUser;
   const canEditResearch = isAdmin || isCorrespondingAuthor;
+  const canCreateSubmitOrOtherTask =
+    isAdmin || isFirstAuthor || isCorrespondingAuthor;
   const canSuggestVenue =
     isAdmin || isProjectAuthor || hasUnfinishedAssignedResearchTask;
 
@@ -1135,14 +1141,13 @@ export default async function ProjectDetailPage({
             <Send className="h-5 w-5 text-[#A8DADC]" />
             Submissions
           </h2>
-          {isAdmin ? (
+          {canCreateSubmitOrOtherTask ? (
             <CreateSubmissionTaskDialog
               projectId={project.id}
               projectTitle={project.title}
               venues={venueOptions}
               assistants={taskAssigneeOptions}
               disabled={researchContentLocked}
-              productionComplete={productionComplete}
             />
           ) : (
             <div className="border border-[#444444] bg-[#2C2C2C] px-4 py-3 text-sm text-[#E4E4E4] shadow-none">
@@ -1171,9 +1176,9 @@ export default async function ProjectDetailPage({
         suggestedConferences={suggestedConferenceOptions}
         assistants={taskAssigneeOptions}
         isAdmin={isAdmin}
+        canAssignTask={canCreateSubmitOrOtherTask}
         canSuggestVenue={canSuggestVenue}
         disabled={researchContentLocked}
-        productionComplete={productionComplete}
       />
     </div>
   );

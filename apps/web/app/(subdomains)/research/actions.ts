@@ -401,6 +401,52 @@ async function researchProductionIsComplete(projectId: string) {
   );
 }
 
+function taskTypeCanBeCreatedByResearchAuthor(taskType: ResearchTaskType) {
+  return (
+    taskType === ResearchTaskType.SUBMIT_RESEARCH ||
+    taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
+    taskType === ResearchTaskType.OTHER
+  );
+}
+
+async function canCreateResearchTaskForProject({
+  user,
+  projectId,
+  taskType,
+}: {
+  user: { id: string; roles: Role[] };
+  projectId: string | null;
+  taskType: ResearchTaskType;
+}) {
+  if (user.roles.includes(Role.ADMIN)) return true;
+  if (!projectId || !taskTypeCanBeCreatedByResearchAuthor(taskType)) {
+    return false;
+  }
+
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: {
+      leadResearcherId: true,
+      authorEntries: {
+        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        select: { userId: true, isCorresponding: true },
+      },
+    },
+  });
+
+  if (!project) return false;
+  if (project.authorEntries.length === 0) {
+    return project.leadResearcherId === user.id;
+  }
+
+  return (
+    project.authorEntries[0]?.userId === user.id ||
+    project.authorEntries.some(
+      (entry) => entry.userId === user.id && entry.isCorresponding,
+    )
+  );
+}
+
 async function taskAssociationIsSelectable({
   taskType,
   projectId,
@@ -2672,7 +2718,6 @@ export async function deleteResearchSiteUser(formData: FormData) {
 
 export async function createResearchTask(formData: FormData) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
 
   const assigneeIds = formData
     .getAll("assigneeIds")
@@ -2703,6 +2748,16 @@ export async function createResearchTask(formData: FormData) {
   const conferenceId = optionalString(formData.get("conferenceId"));
   const reviewId = optionalString(formData.get("reviewId"));
   const accountId = optionalString(formData.get("accountId"));
+
+  if (
+    !(await canCreateResearchTaskForProject({
+      user,
+      projectId,
+      taskType,
+    }))
+  ) {
+    return { ok: false, reason: "UNAUTHORIZED" };
+  }
 
   if (
     (taskType === ResearchTaskType.SUBMIT_RESEARCH &&
@@ -2744,7 +2799,8 @@ export async function createResearchTask(formData: FormData) {
     projectId &&
     (taskType === ResearchTaskType.SUBMIT_RESEARCH ||
       taskType === ResearchTaskType.SUBMIT_CONFERENCE) &&
-    !(await researchProductionIsComplete(projectId))
+    !(await researchProductionIsComplete(projectId)) &&
+    !(await canCreateResearchTaskForProject({ user, projectId, taskType }))
   ) {
     return { ok: false, reason: "PRODUCTION_INCOMPLETE" };
   }

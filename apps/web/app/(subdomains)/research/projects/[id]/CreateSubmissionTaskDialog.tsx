@@ -66,14 +66,12 @@ export function CreateSubmissionTaskDialog({
   venues,
   assistants,
   disabled = false,
-  productionComplete = true,
 }: {
   projectId: string;
   projectTitle: string;
   venues: SubmissionTaskVenueOption[];
   assistants: SubmissionTaskAssigneeOption[];
   disabled?: boolean;
-  productionComplete?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [venueQuery, setVenueQuery] = useState("");
@@ -95,7 +93,7 @@ export function CreateSubmissionTaskDialog({
     showSuccess({
       title: "Research is still in production",
       detail:
-        "Complete every production timeline checkbox before submitting this research anywhere.",
+        "Only admin, first author, or corresponding author can create submit tasks before production is complete.",
     });
   }
 
@@ -194,6 +192,15 @@ export function CreateSubmissionTaskDialog({
           setIsOpen(false);
           return;
         }
+        if (result?.reason === "UNAUTHORIZED") {
+          showSuccess({
+            title: "Task was not created",
+            detail:
+              "Only admin, first author, or corresponding author can create this task for the research.",
+          });
+          setIsOpen(false);
+          return;
+        }
         showSuccess({
           title: "Submission task already exists",
           detail:
@@ -233,17 +240,9 @@ export function CreateSubmissionTaskDialog({
         title={
           disabled
             ? "Research is locked. Unlock it before creating a task."
-            : !productionComplete
-              ? "Research is still in production"
-              : "Create task"
+            : "Create task"
         }
-        onClick={() => {
-          if (!productionComplete) {
-            showProductionIncomplete();
-            return;
-          }
-          setIsOpen(true);
-        }}
+        onClick={() => setIsOpen(true)}
       >
         <ClipboardPlus className="h-4 w-4" />
         Create task
