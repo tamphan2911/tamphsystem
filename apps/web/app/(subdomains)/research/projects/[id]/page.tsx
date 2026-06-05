@@ -1086,14 +1086,14 @@ export default async function ProjectDetailPage({
                 totalSteps={productionSteps.length}
               />
             </div>
-            <div className="relative space-y-1">
-              <div className="absolute bottom-5 left-[0.78rem] top-5 w-px bg-[#444444]" />
-              {productionSteps.map((step) => {
+            <div className="relative">
+              <div className="absolute bottom-7 left-[1.06rem] top-7 w-px bg-[#444444]" />
+              {productionSteps.map((step, index) => {
                 const active = completedProductionSteps.has(step.label);
                 return (
                   <label
                     key={step.label}
-                    className="relative flex cursor-pointer gap-3 border-b border-[#444444]/70 pb-4 last:border-b-0 last:pb-0"
+                    className={`group/timeline relative grid cursor-pointer grid-cols-[2.125rem_minmax(0,1fr)] gap-4 border-b border-[#444444]/70 py-4 transition duration-150 last:border-b-0 ${productionTimelineLocked ? "cursor-default" : "hover:bg-[#303030]"}`}
                   >
                     <input
                       type="checkbox"
@@ -1101,13 +1101,26 @@ export default async function ProjectDetailPage({
                       value={step.label}
                       defaultChecked={active}
                       disabled={productionTimelineLocked}
-                      className="z-10 mt-1 h-5 w-5 cursor-pointer rounded-none border-[#444444] bg-[#202020] text-[#A8DADC] accent-[#A8DADC] shadow-none transition focus:ring-4 focus:ring-[#A8DADC]/10"
+                      className="peer sr-only"
                     />
-                    <span>
-                      <span className="block text-sm font-normal text-[#E4E4E4]">
-                        {step.label}
+                    <span className="relative z-10 mt-0.5 flex h-8 w-8 items-center justify-center border border-[#444444] bg-[#202020] text-[#666666] transition duration-150 peer-checked:border-[#A8DADC] peer-checked:bg-[#263636] peer-checked:text-[#A8DADC] peer-focus-visible:ring-4 peer-focus-visible:ring-[#A8DADC]/10 group-hover/timeline:border-[#666666] peer-checked:group-hover/timeline:border-[#A8DADC] peer-checked:[&_.timeline-check]:opacity-100 peer-checked:[&_.timeline-dot]:opacity-0">
+                      <span className="absolute left-1/2 top-full h-4 w-px -translate-x-1/2 bg-[#444444] group-last/timeline:hidden" />
+                      <CheckCircle2
+                        className="timeline-check h-4 w-4 opacity-0 transition duration-150"
+                        aria-hidden="true"
+                      />
+                      <span className="timeline-dot absolute h-2 w-2 bg-current opacity-100 transition duration-150" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="flex min-w-0 items-center justify-between gap-3">
+                        <span className="block truncate text-sm font-normal text-[#E4E4E4]">
+                          {step.label}
+                        </span>
+                        <span className="hidden border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#B0B0B0] sm:inline-flex">
+                          Step {String(index + 1).padStart(2, "0")}
+                        </span>
                       </span>
-                      <span className="mt-0.5 block text-xs leading-5 text-[#B0B0B0]">
+                      <span className="mt-1 block text-xs leading-5 text-[#B0B0B0]">
                         {step.detail}
                       </span>
                     </span>
