@@ -26,10 +26,10 @@ export function ProfileMenu({
     <div className="group relative">
       <button
         type="button"
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-700 dark:hover:text-blue-300"
+        className="flex h-10 w-10 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#E4E4E4] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
         aria-label="Open profile menu"
       >
-        <UserCircle className="h-5 w-5" />
+        <UserCircle className="h-6 w-6" />
       </button>
 
       <div className="pointer-events-none absolute right-0 top-12 z-50 w-64 translate-y-2 overflow-hidden rounded-none border border-slate-200 bg-white opacity-0 shadow-xl ring-1 ring-slate-950/5 transition duration-200 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100 dark:border-slate-800 dark:bg-slate-900 dark:ring-white/10">
