@@ -206,12 +206,12 @@ export function ResearchShell({
     <ResearchToastProvider>
       <div className="research-site-root relative min-h-screen overflow-x-hidden bg-[#2C2C2C] text-[#E4E4E4]">
         <aside
-          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#444444] bg-[#2C2C2C] transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none ${
+          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#3D3D3D] bg-[#272727] transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none ${
             collapsed ? "w-20" : "w-72"
           }`}
         >
           <div
-            className={`flex h-20 items-center border-b border-[#444444] px-4 transition-all duration-300 motion-reduce:transition-none ${collapsed ? "justify-center" : "gap-3"}`}
+            className={`flex h-20 items-center border-b border-[#3A3A3A] bg-[#232323] px-4 transition-all duration-300 motion-reduce:transition-none ${collapsed ? "justify-center" : "gap-3"}`}
           >
             <div
               className={`min-w-0 overflow-hidden transition-all duration-300 motion-reduce:transition-none ${collapsed ? "w-0 opacity-0" : "w-44 opacity-100"}`}
@@ -229,7 +229,7 @@ export function ResearchShell({
             <button
               type="button"
               onClick={() => setCollapsed((value) => !value)}
-              className={`flex h-8 w-8 flex-none items-center justify-center border border-[#444444] bg-[#2C2C2C] text-[#B0B0B0] transition duration-150 ease-out hover:bg-[#383838] hover:text-[#E4E4E4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8DADC]/45 motion-reduce:transition-none ${
+              className={`flex h-8 w-8 flex-none items-center justify-center border border-[#3D3D3D] bg-[#272727] text-[#B0B0B0] transition duration-150 ease-out hover:bg-[#343434] hover:text-[#E4E4E4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8DADC]/45 motion-reduce:transition-none ${
                 collapsed ? "absolute right-2 top-6" : "ml-auto"
               }`}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
