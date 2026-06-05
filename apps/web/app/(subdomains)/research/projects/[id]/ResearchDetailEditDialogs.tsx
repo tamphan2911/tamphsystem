@@ -13,6 +13,12 @@ import {
 } from "../../organized-projects/ProjectFormControls";
 import { RegisterUserPicker } from "../RegisterUserPicker";
 import {
+  IconHint,
+  researchFieldClass,
+  researchLabelClass,
+  researchTextareaClass,
+} from "@/sites/research/components/ResearchPrimitives";
+import {
   AuthorsPicker,
   type AuthorOption,
   type SelectedAuthor,
@@ -29,12 +35,9 @@ type ResearchBasicValues = {
   fundingInstitution: FundingInstitutionOption | null;
 };
 
-const inputClass =
-  "h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:disabled:bg-slate-900 dark:disabled:text-slate-400";
-const textareaClass =
-  "min-h-28 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:disabled:bg-slate-900 dark:disabled:text-slate-400";
-const labelClass =
-  "grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200";
+const inputClass = researchFieldClass;
+const textareaClass = researchTextareaClass;
+const labelClass = researchLabelClass;
 
 function DialogShell({
   open,
@@ -86,20 +89,17 @@ function EditIconButton({
   disabled?: boolean;
 }) {
   return (
-    <span className="group/icon relative inline-flex">
+    <IconHint label={label}>
       <button
         type="button"
         onClick={onClick}
         disabled={disabled}
         aria-label={label}
-        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 disabled:hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-800 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
+        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 disabled:cursor-not-allowed disabled:opacity-45"
       >
         <Edit3 className="h-3.5 w-3.5" />
       </button>
-      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
-        {label}
-      </span>
-    </span>
+    </IconHint>
   );
 }
 
@@ -113,7 +113,7 @@ function SubmitButton({
   return (
     <button
       disabled={isPending}
-      className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/50"
+      className="inline-flex cursor-pointer items-center gap-2 rounded-none border border-[#5A5A5A] bg-[#383838] px-4 py-2.5 text-sm font-normal text-[#E4E4E4] transition hover:border-[#A8DADC] hover:text-[#A8DADC] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {isPending ? (
         <Loader2 className="h-4 w-4 animate-spin" />
@@ -334,7 +334,7 @@ export function ResearchBasicEditDialog({
             />
           </div>
 
-          <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
+          <div className="mt-5 flex justify-end border-t border-[#444444] pt-5">
             <SubmitButton isPending={isPending} label="Save information" />
           </div>
         </form>
@@ -349,7 +349,6 @@ export function ResearchAuthorsEditDialog({
   authors,
   completedProductionSteps,
   users,
-  headerActions,
   disabled = false,
 }: {
   action: (formData: FormData) => Promise<void>;
@@ -357,7 +356,6 @@ export function ResearchAuthorsEditDialog({
   authors: SelectedAuthor[];
   completedProductionSteps: string[];
   users: AuthorOption[];
-  headerActions?: ReactNode;
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -401,12 +399,8 @@ export function ResearchAuthorsEditDialog({
           <input type="hidden" name="updateScope" value="authors" />
           <HiddenBasic values={values} />
           <HiddenProduction steps={completedProductionSteps} />
-          <AuthorsPicker
-            users={users}
-            defaultAuthors={authors}
-            headerActions={headerActions}
-          />
-          <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
+          <AuthorsPicker users={users} defaultAuthors={authors} />
+          <div className="mt-5 flex justify-end border-t border-[#444444] pt-5">
             <SubmitButton isPending={isPending} label="Save authors" />
           </div>
         </form>

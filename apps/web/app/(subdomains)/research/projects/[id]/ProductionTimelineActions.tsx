@@ -5,6 +5,7 @@ import { Loader2, LockOpen, Save } from "lucide-react";
 import { unlockProductionTimeline } from "../../actions";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 
 export function ProductionTimelineActions({
   projectId,
@@ -71,37 +72,41 @@ export function ProductionTimelineActions({
     <>
       <div className="flex items-center gap-2">
         {locked && (
-          <button
-            type="button"
-            onClick={() => setConfirmUnlock(true)}
-            disabled={disabled || isPending}
-            title="Unlock production timeline"
-            aria-label="Unlock production timeline"
-            className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-700 shadow-sm shadow-amber-900/5 transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-100 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 dark:border-amber-800/70 dark:bg-amber-950/50 dark:text-amber-200 dark:hover:border-amber-600 dark:hover:bg-amber-900/60"
-          >
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <LockOpen className="h-4 w-4" />
-            )}
-          </button>
+          <IconHint label="Unlock production timeline">
+            <button
+              type="button"
+              onClick={() => setConfirmUnlock(true)}
+              disabled={disabled || isPending}
+              aria-label="Unlock production timeline"
+              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-amber-300 outline-none transition hover:text-amber-200 focus-visible:ring-2 focus-visible:ring-amber-300/35 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <LockOpen className="h-4 w-4" />
+              )}
+            </button>
+          </IconHint>
         )}
-        <button
-          type="button"
-          onClick={handleSaveClick}
-          disabled={disabled || locked}
-          title={
+        <IconHint
+          label={
             locked
               ? "Unlock the production timeline before editing"
               : disabled
                 ? "Research content is locked after journal acceptance or publication"
                 : "Save production timeline"
           }
-          aria-label="Save production timeline"
-          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-md disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:hover:translate-y-0 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-200 dark:shadow-black/20 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/60 dark:disabled:border-slate-800 dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
         >
-          <Save className="h-4 w-4" />
-        </button>
+          <button
+            type="button"
+            onClick={handleSaveClick}
+            disabled={disabled || locked}
+            aria-label="Save production timeline"
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 disabled:cursor-not-allowed disabled:text-[#666666]"
+          >
+            <Save className="h-4 w-4" />
+          </button>
+        </IconHint>
         <button
           ref={submitRef}
           type="submit"

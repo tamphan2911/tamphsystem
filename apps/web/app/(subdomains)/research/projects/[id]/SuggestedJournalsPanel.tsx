@@ -24,8 +24,8 @@ import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfi
 import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
+  IconHint,
   ResearchButton,
-  ResearchIconButton,
   researchFieldClass,
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
@@ -807,31 +807,34 @@ function VenueCard({
       {showActions ? (
         <div className="absolute right-2 top-2 flex translate-y-1 gap-1 opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
           {canAssign && (
-            <ResearchIconButton
-              type="button"
-              onClick={onAssign}
-              title={
+            <IconHint
+              label={
                 productionComplete
                   ? assignLabel
                   : "Research is still in production"
               }
-              label={assignLabel}
-              tone="blue"
-              className="h-8 w-8"
             >
-              <Send className="h-4 w-4" />
-            </ResearchIconButton>
+              <button
+                type="button"
+                onClick={onAssign}
+                aria-label={assignLabel}
+                className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </IconHint>
           )}
           {canDelete && (
-            <ResearchIconButton
-              type="button"
-              onClick={onDelete}
-              label={deleteLabel}
-              tone="rose"
-              className="h-8 w-8"
-            >
-              <Trash2 className="h-4 w-4" />
-            </ResearchIconButton>
+            <IconHint label={deleteLabel}>
+              <button
+                type="button"
+                onClick={onDelete}
+                aria-label={deleteLabel}
+                className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-rose-300 focus-visible:ring-2 focus-visible:ring-rose-300/35"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </IconHint>
           )}
         </div>
       ) : meta.badge ? (

@@ -1009,22 +1009,22 @@ export default async function ProjectDetailPage({
                 <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
                   Authors
                 </h2>
-                <ResearchAuthorsEditDialog
-                  action={updateAction}
-                  values={researchBasicValues}
-                  authors={defaultAuthors}
-                  completedProductionSteps={completedProductionStepValues}
-                  users={authorOptions}
-                  headerActions={
-                    isAdmin ? (
-                      <AuthorNotificationActions
-                        projectId={project.id}
-                        sentTypes={authorNotificationSentTypes}
-                      />
-                    ) : null
-                  }
-                  disabled={!canEditResearch || journalSuccessLocksResearch}
-                />
+                <div className="flex items-center gap-1">
+                  <ResearchAuthorsEditDialog
+                    action={updateAction}
+                    values={researchBasicValues}
+                    authors={defaultAuthors}
+                    completedProductionSteps={completedProductionStepValues}
+                    users={authorOptions}
+                    disabled={!canEditResearch || journalSuccessLocksResearch}
+                  />
+                  {isAdmin && (
+                    <AuthorNotificationActions
+                      projectId={project.id}
+                      sentTypes={authorNotificationSentTypes}
+                    />
+                  )}
+                </div>
               </div>
               <div className="grid gap-2">
                 {defaultAuthors.map((author, index) => (
