@@ -112,9 +112,9 @@ export function FilterSelect({
       </button>
 
       <FloatingDropdownPortal anchorRef={wrapperRef} open={open} maxWidth={576}>
-        <div className="research-dropdown-panel w-max min-w-full overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] p-1 shadow-xl shadow-black/40">
+        <div className="research-dropdown-panel w-max min-w-full overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] shadow-xl shadow-black/40">
           <div
-            className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto pr-0.5"
+            className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto"
             role="listbox"
             aria-label={ariaLabel}
           >
@@ -131,10 +131,10 @@ export function FilterSelect({
                     onChange(option.value);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-start justify-between gap-3 rounded-none px-3 py-2.5 text-left text-sm leading-5 transition-colors duration-150 motion-reduce:transition-none ${
+                  className={`flex w-full items-start justify-between gap-3 rounded-none border-y px-3 py-2.5 text-left text-sm leading-5 transition-colors duration-150 motion-reduce:transition-none ${
                     isSelected
-                      ? "bg-[#383838] font-normal text-[#E4E4E4] ring-1 ring-[#5A5A5A]"
-                      : "text-[#B0B0B0] hover:bg-[#444444] hover:text-white"
+                      ? "border-[#5A5A5A] bg-[#383838] font-normal text-[#E4E4E4]"
+                      : "border-transparent text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#444444] hover:text-white"
                   }`}
                 >
                   <span className="min-w-0 flex-1 whitespace-normal break-words">

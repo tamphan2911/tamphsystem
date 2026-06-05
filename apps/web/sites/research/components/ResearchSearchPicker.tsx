@@ -159,9 +159,9 @@ export function ResearchSearchPicker<T = unknown>({
           open={showDropdown}
           maxWidth={640}
         >
-          <div className="research-dropdown-panel overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] p-2 shadow-2xl shadow-black/35">
+          <div className="research-dropdown-panel overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] shadow-2xl shadow-black/35">
             <div
-              className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto pr-0.5"
+              className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto"
               role="listbox"
             >
               {options.length > 0 ? (
@@ -178,10 +178,10 @@ export function ResearchSearchPicker<T = unknown>({
                       disabled={option.disabled}
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => choose(option)}
-                      className={`flex w-full items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-left transition duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none ${
+                      className={`flex w-full items-start justify-between gap-3 rounded-none border-y px-3 py-2.5 text-left transition duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none ${
                         isActive || isSelected
                           ? "border-[#5A5A5A] bg-[#383838] text-[#E4E4E4]"
-                          : "border-transparent text-[#B0B0B0] hover:bg-[#444444] hover:text-white"
+                          : "border-transparent text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#444444] hover:text-white"
                       }`}
                     >
                       {renderOption ? (

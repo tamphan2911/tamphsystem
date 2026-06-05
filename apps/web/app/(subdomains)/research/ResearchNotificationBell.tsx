@@ -111,7 +111,7 @@ export function ResearchNotificationBell({ enabled }: { enabled: boolean }) {
               {count} unread notification{count === 1 ? "" : "s"}
             </p>
           </div>
-          <div className="max-h-96 overflow-y-auto p-2">
+          <div className="max-h-96 overflow-y-auto">
             {notifications.length > 0 ? (
               notifications.map((notification) => (
                 <Link
@@ -121,7 +121,7 @@ export function ResearchNotificationBell({ enabled }: { enabled: boolean }) {
                     setOpen(false);
                     markRead(notification.id);
                   }}
-                  className="group block rounded-xl px-3 py-2.5 transition hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                  className="group block border-y border-transparent px-3 py-2.5 transition hover:border-emerald-100 hover:bg-emerald-50 dark:hover:border-emerald-900/60 dark:hover:bg-emerald-950/30"
                 >
                   <span className="flex items-start justify-between gap-3">
                     <span className="min-w-0">

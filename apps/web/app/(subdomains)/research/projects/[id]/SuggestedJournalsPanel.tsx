@@ -582,7 +582,7 @@ export function SuggestedJournalsPanel({
                 onChange={setAssistantQuery}
                 placeholder="Search assistants or admin by name, email, ID, or role..."
               />
-              <div className="grid max-h-72 gap-2 overflow-y-auto border border-[#444444] p-2">
+              <div className="grid max-h-72 overflow-y-auto border border-[#444444]">
                 {assistantResults.map((assistant) => {
                   const selected = selectedAssistantIds.includes(assistant.id);
                   return (
@@ -590,10 +590,10 @@ export function SuggestedJournalsPanel({
                       key={assistant.id}
                       type="button"
                       onClick={() => toggleAssistant(assistant.id)}
-                      className={`flex cursor-pointer items-center justify-between gap-3 border px-3 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
+                      className={`flex cursor-pointer items-center justify-between gap-3 border-y px-3 py-2 text-left transition ${
                         selected
                           ? "border-[#A8DADC] bg-[#303030] text-[#A8DADC]"
-                          : "border-[#444444] bg-[#202020] text-[#E4E4E4] hover:border-[#666666] hover:bg-[#303030]"
+                          : "border-transparent bg-[#202020] text-[#E4E4E4] hover:border-[#666666] hover:bg-[#303030]"
                       }`}
                     >
                       <span className="flex min-w-0 items-center gap-3">
@@ -642,7 +642,7 @@ export function SuggestedJournalsPanel({
 }
 
 const resultButtonClass =
-  "cursor-pointer border border-[#444444] bg-[#202020] px-3 py-2 text-left transition hover:-translate-y-0.5 hover:border-[#A8DADC] hover:bg-[#303030] hover:shadow-sm disabled:cursor-wait";
+  "cursor-pointer border-y border-transparent bg-[#202020] px-3 py-2 text-left transition hover:border-[#A8DADC] hover:bg-[#303030] disabled:cursor-wait";
 
 function VenueSection({
   title,
@@ -951,7 +951,7 @@ function ResultList({
     ? children.length > 0
     : Boolean(children);
   return (
-    <div className="grid max-h-96 gap-2 overflow-y-auto border border-[#444444] p-2">
+    <div className="grid max-h-96 overflow-y-auto border border-[#444444]">
       {hasChildren ? (
         children
       ) : (

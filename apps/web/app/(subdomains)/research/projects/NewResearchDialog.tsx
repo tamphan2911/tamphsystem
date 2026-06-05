@@ -111,7 +111,7 @@ function NewResearchAuthorsPicker({
             open={focused && query.trim().length > 0}
             maxWidth={640}
           >
-            <div className="overflow-hidden rounded-none border border-blue-100 bg-white p-2 shadow-2xl shadow-slate-900/15 ring-1 ring-blue-50 dark:border-blue-900/60 dark:bg-slate-950 dark:shadow-black/35 dark:ring-blue-950/50">
+            <div className="overflow-hidden rounded-none border border-blue-100 bg-white shadow-2xl shadow-slate-900/15 ring-1 ring-blue-50 dark:border-blue-900/60 dark:bg-slate-950 dark:shadow-black/35 dark:ring-blue-950/50">
               <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
                 {results.length > 0 ? (
                   results.map((user) => (
@@ -120,7 +120,7 @@ function NewResearchAuthorsPicker({
                       type="button"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => addAuthor(user)}
-                      className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                      className="flex w-full cursor-pointer items-center gap-3 rounded-none border-y border-transparent px-3 py-2.5 text-left transition hover:border-blue-100 hover:bg-blue-50 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40"
                     >
                       <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900">
                         <UserRound className="h-4 w-4" aria-hidden="true" />

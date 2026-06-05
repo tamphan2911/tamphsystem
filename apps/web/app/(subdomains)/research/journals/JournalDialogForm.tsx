@@ -404,7 +404,7 @@ export function JournalDialogForm({
                 }
                 maxWidth={640}
               >
-                <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto rounded-none border border-slate-200 bg-white p-2 normal-case tracking-normal shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/30">
+                <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto rounded-none border border-slate-200 bg-white normal-case tracking-normal shadow-2xl shadow-slate-900/15 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/30">
                   <>
                     {filteredFieldOptions.map((field) => (
                       <button
@@ -412,7 +412,7 @@ export function JournalDialogForm({
                         type="button"
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => addField(field)}
-                        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
+                        className="flex w-full items-center justify-between rounded-none border-y border-transparent px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:border-blue-100 hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
                       >
                         {field}
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-500 dark:bg-blue-950/60 dark:text-blue-300">
@@ -430,7 +430,7 @@ export function JournalDialogForm({
                         type="button"
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => addField(fieldQuery)}
-                        className="mt-1 flex w-full items-center gap-2 rounded-lg border-t border-slate-100 px-3 py-2.5 text-left text-sm font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-slate-800 dark:text-blue-300 dark:hover:bg-blue-950/40"
+                        className="flex w-full items-center gap-2 rounded-none border-y border-slate-100 px-3 py-2.5 text-left text-sm font-semibold text-blue-700 transition hover:border-blue-100 hover:bg-blue-50 dark:border-slate-800 dark:text-blue-300 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40"
                       >
                         <PlusCircle className="h-4 w-4" />
                         Add "{fieldQuery.trim()}"
