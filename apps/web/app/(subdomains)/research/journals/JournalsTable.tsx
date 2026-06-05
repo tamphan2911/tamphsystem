@@ -23,7 +23,10 @@ export type JournalRow = {
   name: string;
   issn: string;
   fields: string[];
+  type: string;
   rank: string;
+  localRank: string;
+  issuesPerYear: number | null;
   publisher: string;
   country: string;
   apc: string;
@@ -102,6 +105,12 @@ function DeleteJournalButton({
   );
 }
 
+function rankLabel(journal: JournalRow) {
+  return journal.type === "LOCAL"
+    ? journal.localRank || "No local rank"
+    : journal.rank || "No rank";
+}
+
 export function JournalsTable({
   rows,
   isAdmin,
@@ -149,7 +158,9 @@ export function JournalsTable({
         row.name,
         row.issn,
         row.fields.join(" "),
-        row.rank,
+        row.type,
+        rankLabel(row),
+        row.issuesPerYear ? `${row.issuesPerYear} issues per year` : "",
         row.publisher,
         countryName(row.country),
         row.apc,
@@ -305,8 +316,14 @@ export function JournalsTable({
                     {[
                       journal.publisher || "No publisher",
                       journal.issn ? `ISSN ${journal.issn}` : "No ISSN",
-                      journal.rank || "No rank",
-                    ].join(" - ")}
+                      journal.type === "LOCAL" ? "Local" : "International",
+                      rankLabel(journal),
+                      journal.issuesPerYear
+                        ? `${journal.issuesPerYear} issues/year`
+                        : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" - ")}
                   </p>
                 </td>
                 <td className="px-4 py-3 text-xs leading-5 text-[#B0B0B0]">

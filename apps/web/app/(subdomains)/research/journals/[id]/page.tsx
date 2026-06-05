@@ -199,6 +199,12 @@ export default async function JournalDetailPage({
             .map((field) => field.trim())
             .filter(Boolean)
         : [];
+  const journalRank =
+    journal.type === "LOCAL"
+      ? journal.localRank || "No local rank"
+      : journal.rank || "No rank";
+  const journalTypeLabel =
+    journal.type === "LOCAL" ? "Local" : "International";
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
@@ -240,7 +246,10 @@ export default async function JournalDetailPage({
                     issn: journal.issn,
                     fields: journalFields,
                     field: journal.field,
+                    type: journal.type,
                     rank: journal.rank,
+                    localRank: journal.localRank,
+                    issuesPerYear: journal.issuesPerYear,
                     publisher: journal.publisher,
                     country: journal.country,
                     apc: journal.apc,
@@ -258,7 +267,10 @@ export default async function JournalDetailPage({
             </div>
             <p className="mt-2 text-sm font-medium text-[#B0B0B0]">
               ISSN {journal.issn || "-"} - {journal.publisher || "No publisher"}{" "}
-              - {journal.rank || "No rank"}
+              - {journalTypeLabel} - {journalRank}
+              {journal.issuesPerYear
+                ? ` - ${journal.issuesPerYear} issues/year`
+                : ""}
             </p>
           </div>
         </div>
@@ -268,6 +280,26 @@ export default async function JournalDetailPage({
             <dt className="text-xs font-bold uppercase text-slate-400">Area</dt>
             <dd className="mt-1 text-slate-700 dark:text-slate-300">
               {journalFields.length > 0 ? journalFields.join("; ") : "-"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-bold uppercase text-slate-400">Type</dt>
+            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+              {journalTypeLabel}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-bold uppercase text-slate-400">Rank</dt>
+            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+              {journalRank}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-bold uppercase text-slate-400">
+              Issues/year
+            </dt>
+            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+              {journal.issuesPerYear || "-"}
             </dd>
           </div>
           <div>

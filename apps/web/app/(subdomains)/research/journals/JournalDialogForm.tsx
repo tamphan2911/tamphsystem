@@ -26,6 +26,7 @@ import {
   researchDropdownItemClass,
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
+  researchFieldClass,
 } from "@/sites/research/components/ResearchPrimitives";
 
 export type JournalFormValues = {
@@ -33,7 +34,10 @@ export type JournalFormValues = {
   issn?: string | null;
   fields?: string[];
   field?: string | null;
+  type?: string | null;
   rank?: string | null;
+  localRank?: string | null;
+  issuesPerYear?: number | string | null;
   publisher?: string | null;
   country?: string | null;
   apc?: string | null;
@@ -47,8 +51,7 @@ export type JournalFormValues = {
   note?: string | null;
 };
 
-const inputClass =
-  "border border-[#444444] bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+const inputClass = researchFieldClass;
 const labelClass =
   "grid gap-1.5 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]";
 const journalFieldOptions = [
@@ -196,6 +199,9 @@ export function JournalDialogForm({
   const [selectedCountry, setSelectedCountry] = useState(
     initialValues?.country ?? "",
   );
+  const [journalType, setJournalType] = useState(
+    initialValues?.type === "LOCAL" ? "LOCAL" : "INTERNATIONAL",
+  );
 
   useEffect(() => {
     if (!warning) return;
@@ -337,37 +343,76 @@ export function JournalDialogForm({
                 />
               </label>
               <label className={labelClass}>
-                Rank
-                <ResearchFormSelect
-                  name="rank"
-                  defaultValue={initialValues?.rank ?? ""}
-                  ariaLabel="Journal rank"
-                  options={[
-                    { value: "", label: "Rank" },
-                    { value: "Q1", label: "Q1" },
-                    { value: "Q2", label: "Q2" },
-                    { value: "Q3", label: "Q3" },
-                    { value: "Q4", label: "Q4" },
-                    { value: "Scopus", label: "Scopus" },
-                    { value: "ISI", label: "ISI" },
-                  ]}
+                Issues per year
+                <input
+                  name="issuesPerYear"
+                  type="number"
+                  min="1"
+                  step="1"
+                  defaultValue={initialValues?.issuesPerYear ?? ""}
+                  placeholder="4"
+                  className={inputClass}
                 />
               </label>
             </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className={labelClass}>
+                Journal type
+                <ResearchFormSelect
+                  name="type"
+                  defaultValue={journalType}
+                  ariaLabel="Journal type"
+                  onValueChange={setJournalType}
+                  options={[
+                    { value: "INTERNATIONAL", label: "International" },
+                    { value: "LOCAL", label: "Local" },
+                  ]}
+                />
+              </label>
+              {journalType === "INTERNATIONAL" ? (
+                <label className={labelClass}>
+                  Rank
+                  <ResearchFormSelect
+                    name="rank"
+                    defaultValue={initialValues?.rank ?? ""}
+                    ariaLabel="Journal rank"
+                    options={[
+                      { value: "", label: "Rank" },
+                      { value: "Q1", label: "Q1" },
+                      { value: "Q2", label: "Q2" },
+                      { value: "Q3", label: "Q3" },
+                      { value: "Q4", label: "Q4" },
+                      { value: "Scopus", label: "Scopus" },
+                      { value: "ISI", label: "ISI" },
+                    ]}
+                  />
+                </label>
+              ) : (
+                <label className={labelClass}>
+                  Local rank
+                  <input
+                    name="localRank"
+                    defaultValue={initialValues?.localRank ?? ""}
+                    placeholder="Enter local ranking or category"
+                    className={inputClass}
+                  />
+                </label>
+              )}
+            </div>
             <div ref={fieldPickerRef} className={`${labelClass} relative`}>
               Field
-              <div className="border border-[#444444] bg-slate-50 p-2 transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950">
+              <div className="border border-[#444444] bg-[#2C2C2C] p-2 transition focus-within:border-[#A8DADC] focus-within:bg-[#383838] focus-within:ring-1 focus-within:ring-[#A8DADC]/25">
                 <div className="flex min-h-9 flex-wrap items-center gap-1.5">
                   {selectedFields.map((field) => (
                     <span
                       key={field}
-                      className="inline-flex items-center gap-1 rounded-none bg-blue-50 px-2.5 py-1 text-xs font-semibold normal-case tracking-normal text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-200 dark:ring-blue-900"
+                      className="inline-flex items-center gap-1 rounded-none border border-[#5A5A5A] bg-[#383838] px-2.5 py-1 text-xs font-normal normal-case tracking-normal text-[#E4E4E4]"
                     >
                       {field}
                       <button
                         type="button"
                         onClick={() => removeField(field)}
-                        className="rounded-none p-0.5 text-blue-500 transition hover:bg-blue-100 hover:text-blue-800 dark:hover:bg-blue-900/60 dark:hover:text-blue-100"
+                        className="rounded-none p-0.5 text-[#B0B0B0] transition hover:bg-[#444444] hover:text-[#E4E4E4]"
                         aria-label={`Remove ${field}`}
                       >
                         <X className="h-3 w-3" />
@@ -375,7 +420,7 @@ export function JournalDialogForm({
                     </span>
                   ))}
                   <span className="flex min-w-[9rem] flex-1 items-center gap-2">
-                    <Search className="h-4 w-4 text-slate-400" />
+                    <Search className="h-4 w-4 text-[#B0B0B0]" />
                     <input
                       value={fieldQuery}
                       onFocus={() => setIsFieldPickerOpen(true)}
@@ -397,7 +442,7 @@ export function JournalDialogForm({
                           ? "Search field"
                           : "Search or add field"
                       }
-                      className="min-w-0 flex-1 bg-transparent text-sm font-medium normal-case tracking-normal text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100"
+                      className="min-w-0 flex-1 bg-transparent text-sm font-normal normal-case tracking-normal text-[#E4E4E4] outline-none placeholder:text-[#B0B0B0]"
                     />
                   </span>
                 </div>

@@ -48,7 +48,10 @@ export default async function JournalsPage() {
               .map((field) => field.trim())
               .filter(Boolean)
           : [],
+    type: journal.type,
     rank: journal.rank ?? "",
+    localRank: journal.localRank ?? "",
+    issuesPerYear: journal.issuesPerYear,
     publisher: journal.publisher ?? "",
     country: journal.country ?? "",
     apc: journal.apc ?? "",

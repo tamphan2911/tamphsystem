@@ -4,6 +4,7 @@ import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { deleteOrganizedProject } from "../actions";
 import { ProposalDialog } from "@/sites/research/components/ProposalDialog";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { NewOrganizedProjectDialog } from "./NewOrganizedProjectDialog";
 import {
   OrganizedProjectsTable,
@@ -166,28 +167,28 @@ export default async function OrganizedProjectsPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <ProjectToastFeedback />
-      <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
-        <div className="flex flex-col xl:flex-row xl:items-stretch xl:justify-between">
-          <div className="grid flex-1 grid-cols-2 divide-x divide-y divide-[#444444] sm:grid-cols-4 sm:divide-y-0">
-            {stats.map((item) => (
+      <ResearchPageHeaderPortal>
+        <div className="flex w-full min-w-0 items-center justify-between gap-4">
+          <div className="grid min-w-0 border border-[#444444] bg-[#2C2C2C] sm:grid-cols-4">
+            {stats.map((item, index) => (
               <div
                 key={item.label}
-                className="flex min-h-16 items-center gap-3 px-4 py-3"
+                className={`flex items-center gap-2 whitespace-nowrap px-3 py-2 text-sm text-[#E4E4E4] ${
+                  index > 0 ? "border-l border-[#444444]" : ""
+                }`}
               >
-                <item.icon className={`h-4 w-4 ${item.color}`} />
-                <div>
-                  <p className="text-[11px] font-normal uppercase tracking-wide text-[#B0B0B0]">
-                    {item.label}
-                  </p>
-                  <p className="text-base font-normal text-[#E4E4E4]">
-                    {item.value}
-                  </p>
-                </div>
+                <item.icon className={`h-4 w-4 flex-none ${item.color}`} />
+                <span className="font-normal text-[#B0B0B0]">
+                  {item.label}:{" "}
+                </span>
+                <span className="font-normal text-[#E4E4E4]">
+                  {item.value}
+                </span>
               </div>
             ))}
           </div>
 
-          <div className="flex items-center justify-end border-t border-[#444444] px-4 py-3 xl:border-l xl:border-t-0">
+          <div className="flex flex-none items-center">
             {isAdmin ? (
               <NewOrganizedProjectDialog
                 researchOptions={researchOptions.map((research) => ({
@@ -218,7 +219,7 @@ export default async function OrganizedProjectsPage() {
             )}
           </div>
         </div>
-      </div>
+      </ResearchPageHeaderPortal>
 
       <OrganizedProjectsTable
         rows={rows}

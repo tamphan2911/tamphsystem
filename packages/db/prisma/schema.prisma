@@ -52,6 +52,11 @@ enum RegistrationStatus {
   APPROVED
 }
 
+enum JournalType {
+  INTERNATIONAL
+  LOCAL
+}
+
 model User {
   id                            String    @id @default(uuid())
   email                         String    @unique
@@ -603,7 +608,10 @@ model Journal {
   issn                  String?
   field                 String?
   fields                String[]     @default([])
+  type                  JournalType  @default(INTERNATIONAL)
   rank                  String? // Q1, Q2, Q3, Q4
+  localRank             String?
+  issuesPerYear         Int?
   publisher             String?
   country               String?
   apc                   String?

@@ -11,6 +11,7 @@ import {
   ConferenceType,
   ConferenceSubmissionStatus,
   CurrencyCode,
+  JournalType,
   RegistrationStatus,
   ResearchStage,
   OrganizedProjectStatus,
@@ -2009,6 +2010,8 @@ export async function createJournal(formData: FormData) {
   await requireCurrentUser();
   const fields = orderedUniqueStrings(formData.getAll("fields"));
   const legacyField = optionalString(formData.get("field"));
+  const journalType =
+    enumValue(JournalType, formData.get("type")) ?? JournalType.INTERNATIONAL;
 
   await prisma.journal.create({
     data: {
@@ -2016,7 +2019,16 @@ export async function createJournal(formData: FormData) {
       issn: optionalString(formData.get("issn")),
       field: fields.length > 0 ? fields.join("; ") : legacyField,
       fields,
-      rank: optionalString(formData.get("rank")),
+      type: journalType,
+      rank:
+        journalType === JournalType.INTERNATIONAL
+          ? optionalString(formData.get("rank"))
+          : null,
+      localRank:
+        journalType === JournalType.LOCAL
+          ? optionalString(formData.get("localRank"))
+          : null,
+      issuesPerYear: positiveIntFromForm(formData.get("issuesPerYear")),
       publisher: optionalString(formData.get("publisher")),
       country: optionalString(formData.get("country")),
       apc: optionalString(formData.get("apc")),
@@ -2042,6 +2054,8 @@ export async function updateJournal(journalId: string, formData: FormData) {
   await requireCurrentUser();
   const fields = orderedUniqueStrings(formData.getAll("fields"));
   const legacyField = optionalString(formData.get("field"));
+  const journalType =
+    enumValue(JournalType, formData.get("type")) ?? JournalType.INTERNATIONAL;
 
   await prisma.journal.update({
     where: { id: journalId },
@@ -2050,7 +2064,16 @@ export async function updateJournal(journalId: string, formData: FormData) {
       issn: optionalString(formData.get("issn")),
       field: fields.length > 0 ? fields.join("; ") : legacyField,
       fields,
-      rank: optionalString(formData.get("rank")),
+      type: journalType,
+      rank:
+        journalType === JournalType.INTERNATIONAL
+          ? optionalString(formData.get("rank"))
+          : null,
+      localRank:
+        journalType === JournalType.LOCAL
+          ? optionalString(formData.get("localRank"))
+          : null,
+      issuesPerYear: positiveIntFromForm(formData.get("issuesPerYear")),
       publisher: optionalString(formData.get("publisher")),
       country: optionalString(formData.get("country")),
       apc: optionalString(formData.get("apc")),
