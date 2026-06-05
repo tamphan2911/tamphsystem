@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
+import { createPortal } from "react-dom";
 import { ResearchIconButton } from "./ResearchPrimitives";
 
 export function ResearchModal({
@@ -25,9 +26,9 @@ export function ResearchModal({
   maxWidth?: string;
   bodyClassName?: string;
 }) {
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       data-research-modal-overlay="true"
       onMouseDown={(event) => {
@@ -73,6 +74,7 @@ export function ResearchModal({
           <div className="border-t border-[#444444] px-6 py-4">{footer}</div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

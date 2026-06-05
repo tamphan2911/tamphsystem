@@ -343,6 +343,7 @@ export function SubmissionsTable({
   view = "venue",
   linkVenue = true,
   showSubmitter = false,
+  flushControls = false,
 }: {
   rows: SubmissionRow[];
   isAdmin: boolean;
@@ -351,6 +352,7 @@ export function SubmissionsTable({
   view?: "venue" | "research";
   linkVenue?: boolean;
   showSubmitter?: boolean;
+  flushControls?: boolean;
 }) {
   const router = useRouter();
   const hasAction = isAdmin && actionMode !== "none";
@@ -499,7 +501,11 @@ export function SubmissionsTable({
   return (
     <>
       <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
-        <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] px-3 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+        <div
+          className={`flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4 ${
+            flushControls ? "px-0" : "px-3"
+          }`}
+        >
           <TableSearchInput
             value={query}
             onChange={setQuery}

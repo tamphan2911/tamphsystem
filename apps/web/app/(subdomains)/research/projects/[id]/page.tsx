@@ -1135,7 +1135,7 @@ export default async function ProjectDetailPage({
         </fieldset>
       </SaveForm>
 
-      <section className="space-y-4">
+      <section className="space-y-4 border-t border-[#444444] pt-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <h2 className="flex items-center gap-2 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
             <Send className="h-5 w-5 text-[#A8DADC]" />
@@ -1165,6 +1165,7 @@ export default async function ProjectDetailPage({
           rows={submissionRows}
           isAdmin={isAdmin}
           disabled={researchContentLocked}
+          flushControls
         />
       </section>
       <SuggestedJournalsPanel
