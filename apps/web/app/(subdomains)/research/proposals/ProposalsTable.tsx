@@ -264,7 +264,9 @@ export function ProposalsTable({
               <th className="w-28 px-3 py-3">Contact</th>
               <th className="w-12 px-2 py-3 text-center">File</th>
               {isAdmin && (
-                <th className="w-12 px-2 py-3 text-center">Delete</th>
+                <th className="w-12 px-2 py-3 text-center">
+                  <span className="sr-only">Delete</span>
+                </th>
               )}
             </tr>
           </thead>

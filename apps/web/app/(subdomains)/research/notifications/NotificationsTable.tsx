@@ -260,7 +260,9 @@ export function NotificationsTable({
               <th className="w-[12rem] px-3 py-3">Entity</th>
               <th className="w-[8rem] px-3 py-3">Date</th>
               <th className="w-[5rem] px-2 py-3 text-center">Link</th>
-              <th className="w-[5rem] px-2 py-3 text-center">Action</th>
+              <th className="w-[5rem] px-2 py-3 text-center">
+                <span className="sr-only">Action</span>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">

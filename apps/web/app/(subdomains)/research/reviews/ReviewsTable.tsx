@@ -253,7 +253,9 @@ export function ReviewsTable({
               <th className="w-32 px-3 py-3">Recommendation</th>
               <th className="w-40 px-3 py-3">Note</th>
               {isAdmin && (
-                <th className="w-14 px-2 py-3 text-center">Delete</th>
+                <th className="w-14 px-2 py-3 text-center">
+                  <span className="sr-only">Delete</span>
+                </th>
               )}
             </tr>
           </thead>

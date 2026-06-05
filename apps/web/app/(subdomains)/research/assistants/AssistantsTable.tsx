@@ -162,7 +162,9 @@ export function AssistantsTable({
               <th className="w-[20%] px-3 py-3">Password</th>
               <th className="w-[12%] px-3 py-3">Role</th>
               {canManage && (
-                <th className="w-[8%] px-2 py-3 text-right">Action</th>
+                <th className="w-[8%] px-2 py-3 text-right">
+                  <span className="sr-only">Action</span>
+                </th>
               )}
             </tr>
           </thead>

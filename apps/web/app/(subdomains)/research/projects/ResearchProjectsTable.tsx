@@ -397,7 +397,9 @@ export function ResearchProjectsTable({
               )}
               <th className="w-[5rem] px-3 py-3 text-center">Submit</th>
               {isAdmin && deleteAction && (
-                <th className="w-14 px-3 py-3 text-center">Delete</th>
+                <th className="w-14 px-3 py-3 text-center">
+                  <span className="sr-only">Delete</span>
+                </th>
               )}
             </tr>
           </thead>

@@ -493,7 +493,9 @@ export function TasksClient({
                 <th className="w-[9.5rem] px-3 py-3">Assignees</th>
                 <th className="w-[11rem] px-3 py-3">Time</th>
                 {isAdmin && (
-                  <th className="w-12 px-2 py-3 text-center">Delete</th>
+                  <th className="w-12 px-2 py-3 text-center">
+                    <span className="sr-only">Delete</span>
+                  </th>
                 )}
               </tr>
             </thead>

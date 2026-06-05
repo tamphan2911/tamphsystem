@@ -161,7 +161,9 @@ export function ResearchUsersTable({
               <th className="w-[14%] px-3 py-3">Password</th>
               <th className="w-[9%] px-3 py-3">Email</th>
               <th className="w-[8%] px-3 py-3">Joined</th>
-              <th className="w-[8%] px-2 py-3 text-right">Action</th>
+              <th className="w-[8%] px-2 py-3 text-right">
+                <span className="sr-only">Action</span>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">

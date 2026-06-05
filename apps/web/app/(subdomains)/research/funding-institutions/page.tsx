@@ -121,7 +121,9 @@ export default async function FundingInstitutionsPage() {
               <th className="w-16 px-3 py-3 text-center">Web</th>
               {isAdmin && <th className="w-14 px-3 py-3 text-center">Edit</th>}
               {isAdmin && (
-                <th className="w-14 px-3 py-3 text-center">Delete</th>
+                <th className="w-14 px-3 py-3 text-center">
+                  <span className="sr-only">Delete</span>
+                </th>
               )}
             </tr>
           </thead>

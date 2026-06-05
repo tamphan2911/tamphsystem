@@ -249,7 +249,9 @@ export function AccountsTable({
               </th>
               <th className="w-36 px-3 py-3">Note</th>
               {isAdmin && (
-                <th className="w-12 px-2 py-3 text-center">Delete</th>
+                <th className="w-12 px-2 py-3 text-center">
+                  <span className="sr-only">Delete</span>
+                </th>
               )}
             </tr>
           </thead>

@@ -293,7 +293,9 @@ export function OrganizedProjectsTable({
               <th className="w-[8.5rem] px-3 py-3">Dates</th>
               <th className="w-[6rem] px-2 py-3 text-center">Results</th>
               {isAdmin && deleteAction && (
-                <th className="w-12 px-2 py-3 text-center">Delete</th>
+                <th className="w-12 px-2 py-3 text-center">
+                  <span className="sr-only">Delete</span>
+                </th>
               )}
             </tr>
           </thead>
