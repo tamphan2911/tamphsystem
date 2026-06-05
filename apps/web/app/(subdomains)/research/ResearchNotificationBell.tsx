@@ -95,7 +95,7 @@ export function ResearchNotificationBell({ enabled }: { enabled: boolean }) {
       >
         <Bell className="h-5 w-5" />
         {count > 0 && (
-          <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-normal leading-none text-white">
+          <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-none bg-red-600 px-1 text-[10px] font-normal leading-none text-white">
             {count > 99 ? "99+" : count}
           </span>
         )}
@@ -104,10 +104,10 @@ export function ResearchNotificationBell({ enabled }: { enabled: boolean }) {
       {open && (
         <div className="absolute right-0 top-full z-50 mt-3 w-[22rem] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/15 ring-1 ring-slate-900/[0.03] animate-[modalPanelIn_180ms_ease-out] dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/40 dark:ring-white/[0.04]">
           <div className="border-b border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/70">
-            <p className="text-sm font-black text-slate-950 dark:text-white">
+            <p className="text-sm font-black text-[#E4E4E4]">
               New notifications
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-[#B0B0B0]">
               {count} unread notification{count === 1 ? "" : "s"}
             </p>
           </div>
@@ -128,20 +128,20 @@ export function ResearchNotificationBell({ enabled }: { enabled: boolean }) {
                       <span className="block truncate text-sm font-semibold text-slate-800 group-hover:text-emerald-700 dark:text-slate-100 dark:group-hover:text-emerald-200">
                         {notification.title}
                       </span>
-                      <span className="mt-1 block line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      <span className="mt-1 block line-clamp-2 text-xs leading-5 text-[#B0B0B0]">
                         {notification.summary}
                       </span>
                     </span>
                     <ExternalLink className="mt-0.5 h-3.5 w-3.5 flex-none text-slate-300 transition group-hover:text-emerald-500" />
                   </span>
-                  <span className="mt-2 flex items-center justify-between gap-2 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                  <span className="mt-2 flex items-center justify-between gap-2 text-[11px] font-semibold text-[#777777]">
                     <span>{notification.typeLabel}</span>
                     <span>{timeLabel(notification.createdAt)}</span>
                   </span>
                 </Link>
               ))
             ) : (
-              <div className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+              <div className="px-4 py-10 text-center text-sm text-[#B0B0B0]">
                 No unread notifications.
               </div>
             )}

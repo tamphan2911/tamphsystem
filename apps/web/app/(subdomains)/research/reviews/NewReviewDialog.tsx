@@ -18,11 +18,9 @@ type JournalOption = {
 };
 
 const inputClass =
-  "h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
-const labelClass =
-  "grid gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200";
-const helperClass =
-  "text-xs font-normal leading-5 text-slate-500 dark:text-slate-400";
+  "h-12 border border-[#444444] bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+const labelClass = "grid gap-1.5 text-sm font-semibold text-[#E4E4E4]";
+const helperClass = "text-xs font-normal leading-5 text-[#B0B0B0]";
 const reviewStatusOptions = [
   { value: "ACCEPTED", label: "Accepted - agreed to review" },
   { value: "IN_PROGRESS", label: "In progress - reading/writing review" },
@@ -115,7 +113,7 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-100/80 px-4 py-2.5 text-sm font-bold text-emerald-800 shadow-sm shadow-emerald-900/5 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50 hover:shadow-md hover:shadow-emerald-900/10 focus:outline-none focus:ring-4 focus:ring-emerald-200/70 dark:border-emerald-700/60 dark:bg-emerald-900/35 dark:text-emerald-100 dark:hover:border-emerald-500/70 dark:hover:bg-emerald-800/55 dark:hover:text-white dark:hover:shadow-black/25 dark:focus:ring-emerald-700/35"
+        className="inline-flex cursor-pointer items-center gap-2 rounded-none border border-emerald-200 bg-emerald-100/80 px-4 py-2.5 text-sm font-bold text-emerald-800 shadow-sm shadow-emerald-900/5 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50 hover:shadow-md hover:shadow-emerald-900/10 focus:outline-none focus:ring-4 focus:ring-emerald-200/70 dark:border-emerald-700/60 dark:bg-emerald-900/35 dark:text-emerald-100 dark:hover:border-emerald-500/70 dark:hover:bg-emerald-800/55 dark:hover:text-white dark:hover:shadow-black/25 dark:focus:ring-emerald-700/35"
       >
         <PlusCircle className="h-4 w-4" />
         New Review
@@ -245,13 +243,13 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
               type="button"
               onClick={closeDialog}
               disabled={isPending}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               Cancel
             </button>
             <button
               disabled={isPending}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none dark:bg-blue-500 dark:hover:bg-blue-400"
+              className="inline-flex items-center gap-2 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none dark:bg-blue-500 dark:hover:bg-blue-400"
             >
               {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

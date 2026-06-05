@@ -152,7 +152,7 @@ export function JournalDetailTabs({
               setStatus("ALL");
               setQuery("");
             }}
-            className={`cursor-pointer rounded-lg border px-3 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
+            className={`cursor-pointer rounded-none border px-3 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
               activeTab === tab.key
                 ? "border-blue-200 bg-blue-50 text-blue-700 shadow-sm dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300"
                 : "border-slate-200 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
@@ -174,8 +174,8 @@ export function JournalDetailTabs({
       )}
 
       {activeTab !== "submissions" && (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+        <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
+          <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
             <TableSearchInput
               value={query}
               onChange={setQuery}
@@ -198,7 +198,7 @@ export function JournalDetailTabs({
             <>
               <div className="overflow-hidden">
                 <table className="w-full table-fixed text-left">
-                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                  <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
                     <tr>
                       <th className="w-[30%] px-4 py-3">
                         <IconHint label="Account login ID">
@@ -227,16 +227,16 @@ export function JournalDetailTabs({
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y divide-[#444444]">
                     {accountPagination.pagedRows.map((account) => (
                       <tr
                         key={account.id}
-                        className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                        className="group align-top transition-colors duration-150 hover:bg-[#383838]"
                       >
-                        <td className="px-4 py-3 text-sm font-normal text-slate-700 dark:text-slate-200">
+                        <td className="px-4 py-3 text-sm font-normal text-[#E4E4E4]">
                           <Link
                             href={`/accounts/${account.id}`}
-                            className="font-semibold text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                            className="font-semibold text-[#E4E4E4] transition hover:text-[#A8DADC]"
                           >
                             {account.username}
                           </Link>
@@ -244,20 +244,20 @@ export function JournalDetailTabs({
                             {account.id.slice(0, 8)}
                           </p>
                         </td>
-                        <td className="px-3 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">
+                        <td className="px-3 py-3 font-mono text-sm text-[#B0B0B0]">
                           <span className="block truncate">
                             {account.password || "-"}
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                           <span className="block truncate">
                             {account.email || "-"}
                           </span>
                         </td>
-                        <td className="px-2 py-3 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">
+                        <td className="px-2 py-3 text-center text-sm font-semibold text-[#B0B0B0]">
                           {account.submissions}
                         </td>
-                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                           <span className="line-clamp-2">
                             {account.note || "-"}
                           </span>
@@ -268,7 +268,7 @@ export function JournalDetailTabs({
                       <tr>
                         <td
                           colSpan={5}
-                          className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
+                          className="px-4 py-14 text-center text-sm text-[#B0B0B0]"
                         >
                           No accounts match the current search.
                         </td>
@@ -291,7 +291,7 @@ export function JournalDetailTabs({
             <>
               <div className="overflow-hidden">
                 <table className="w-full table-fixed text-left">
-                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                  <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
                     <tr>
                       <th className="w-[34%] px-4 py-3">Manuscript</th>
                       <th className="w-[13%] px-3 py-3">Status</th>
@@ -312,17 +312,17 @@ export function JournalDetailTabs({
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y divide-[#444444]">
                     {reviewPagination.pagedRows.map((review) => (
                       <tr
                         key={review.id}
-                        className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                        className="group align-top transition-colors duration-150 hover:bg-[#383838]"
                       >
                         <td className="px-4 py-3">
-                          <p className="line-clamp-2 text-sm font-normal text-slate-700 dark:text-slate-200">
+                          <p className="line-clamp-2 text-sm font-normal text-[#E4E4E4]">
                             {review.manuscriptTitle}
                           </p>
-                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          <p className="mt-1 text-xs text-[#B0B0B0]">
                             {review.manuscriptId ||
                               review.reviewRound ||
                               "No tracking code"}
@@ -330,25 +330,25 @@ export function JournalDetailTabs({
                         </td>
                         <td className="px-3 py-3">
                           <span
-                            className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${statusClass(review.status)}`}
+                            className={`border px-2 py-1 text-xs font-normal ${statusClass(review.status)}`}
                           >
                             {review.status.replace("_", " ")}
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                           {review.dueDate || "-"}
                         </td>
-                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                           <span className="line-clamp-2">
                             {review.recommendation || "-"}
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                           <span className="block truncate">
                             {review.editorName || "-"}
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                           <span className="line-clamp-2">
                             {review.note || "-"}
                           </span>
@@ -359,7 +359,7 @@ export function JournalDetailTabs({
                       <tr>
                         <td
                           colSpan={6}
-                          className="px-4 py-14 text-center text-sm text-slate-500 dark:text-slate-400"
+                          className="px-4 py-14 text-center text-sm text-[#B0B0B0]"
                         >
                           No reviews match the current filters.
                         </td>

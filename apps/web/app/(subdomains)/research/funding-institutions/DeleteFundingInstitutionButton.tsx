@@ -33,7 +33,7 @@ export function DeleteFundingInstitutionButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-rose-100 bg-rose-50 text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:shadow-md dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/50"
+          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border border-rose-100 bg-rose-50 text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:shadow-md dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/50"
           aria-label={`Delete ${funder.name}`}
         >
           <Trash2 className="h-4 w-4" />

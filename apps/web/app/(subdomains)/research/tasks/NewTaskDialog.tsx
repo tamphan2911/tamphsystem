@@ -465,7 +465,7 @@ export function NewTaskDialog({
 
           <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Task title
               </span>
               <input
@@ -476,7 +476,7 @@ export function NewTaskDialog({
               />
             </label>
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Due date
               </span>
               <div className="relative">
@@ -490,7 +490,7 @@ export function NewTaskDialog({
             </label>
           </div>
 
-          <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+          <div className="inline-flex w-fit border border-[#444444] bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
             {(
               ["submit", "production", "review", "project", "other"] as const
             ).map((item) => (
@@ -498,7 +498,7 @@ export function NewTaskDialog({
                 key={item}
                 type="button"
                 onClick={() => setMode(item)}
-                className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
+                className={`cursor-pointer rounded-none px-3 py-2 text-xs font-bold transition ${
                   mode === item
                     ? "bg-white text-violet-700 shadow-sm dark:bg-slate-800 dark:text-violet-300"
                     : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
@@ -634,7 +634,7 @@ export function NewTaskDialog({
 
           {needsOrganizedProject && (
             <div className="grid gap-4">
-              <div className="inline-flex w-fit rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+              <div className="inline-flex w-fit border border-[#444444] bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
                 {(
                   [
                     ["PROJECT_PRODUCTION", "Project Production"],
@@ -645,7 +645,7 @@ export function NewTaskDialog({
                     key={value}
                     type="button"
                     onClick={() => setProjectSubtype(value)}
-                    className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-bold transition ${
+                    className={`cursor-pointer rounded-none px-3 py-2 text-xs font-bold transition ${
                       projectSubtype === value
                         ? "bg-white text-violet-700 shadow-sm dark:bg-slate-800 dark:text-violet-300"
                         : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
@@ -697,7 +697,7 @@ export function NewTaskDialog({
           )}
 
           <label className="grid gap-1.5">
-            <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
               Description
             </span>
             <textarea
@@ -762,7 +762,7 @@ function JournalAccountField({
 }) {
   if (accounts.length === 0) {
     return (
-      <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200">
+      <section className="rounded-none border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200">
         No account is linked to this journal yet. Add a journal account before
         assigning a journal submission task.
       </section>
@@ -773,7 +773,7 @@ function JournalAccountField({
   if (accounts.length === 1 && onlyAccount) {
     const account = onlyAccount;
     return (
-      <section className="grid gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-200">
+      <section className="grid gap-2 rounded-none border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-200">
         <span className="text-xs font-bold uppercase tracking-wide">
           Account to submit
         </span>
@@ -837,7 +837,7 @@ function SearchPanel({
   const showDropdown = focused && query.trim().length > 0;
   return (
     <section className="grid gap-3">
-      <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
         {title}
       </span>
       {selectedItems.length > 0 && (
@@ -884,7 +884,7 @@ function SearchPanel({
                     <span className="block text-sm font-bold leading-5">
                       {item.title}
                     </span>
-                    <span className="mt-0.5 block text-xs leading-5 text-slate-500 dark:text-slate-400">
+                    <span className="mt-0.5 block text-xs leading-5 text-[#B0B0B0]">
                       {item.meta}
                     </span>
                   </span>
@@ -895,7 +895,7 @@ function SearchPanel({
               </button>
             ))}
             {items.length === 0 && (
-              <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+              <div className="py-8 text-center text-sm text-[#B0B0B0]">
                 No result matches this search.
               </div>
             )}
@@ -911,7 +911,7 @@ function SelectedSearchItem({ item }: { item: SearchPanelItem }) {
     <button
       type="button"
       onClick={item.onClick}
-      className="flex cursor-pointer items-start justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-left text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+      className="flex cursor-pointer items-start justify-between gap-3 rounded-none border border-emerald-200 bg-emerald-50 px-3 py-2 text-left text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
     >
       <span className="flex min-w-0 items-start gap-3">
         <span className="mt-0.5 flex-none text-emerald-500">{item.icon}</span>

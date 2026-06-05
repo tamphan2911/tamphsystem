@@ -131,8 +131,8 @@ export function ResearchUsersTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -153,7 +153,7 @@ export function ResearchUsersTable({
 
       <div className="overflow-hidden">
         <table className="w-full table-fixed text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+          <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="w-[27%] px-4 py-3">User</th>
               <th className="w-[18%] px-3 py-3">Affiliation</th>
@@ -166,30 +166,30 @@ export function ResearchUsersTable({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((user) => {
               const passwordVisible = visiblePasswordId === user.id;
               return (
                 <tr
                   key={user.id}
-                  className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                  className="group align-top transition-colors duration-150 hover:bg-[#383838]"
                 >
                   <td className="px-4 py-3">
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50 text-emerald-600 shadow-sm dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-[#444444] bg-[#202020] text-[#A8DADC] shadow-none">
                         <UserRound className="h-4 w-4" />
                       </span>
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        <span className="block truncate text-sm font-semibold text-[#E4E4E4]">
                           {user.name || "Unnamed user"}
                         </span>
-                        <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+                        <span className="block truncate text-xs text-[#B0B0B0]">
                           {user.email}
                         </span>
                       </span>
                     </div>
                   </td>
-                  <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                  <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                     <span className="line-clamp-2">
                       {user.affiliation || "-"}
                     </span>
@@ -199,7 +199,7 @@ export function ResearchUsersTable({
                       {user.roles.map((item) => (
                         <span
                           key={item}
-                          className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700"
+                          className="border border-[#444444] bg-[#202020] px-2 py-1 text-[11px] font-normal text-[#B0B0B0]"
                         >
                           {item}
                         </span>
@@ -207,7 +207,7 @@ export function ResearchUsersTable({
                     </div>
                   </td>
                   <td className="px-3 py-3">
-                    <div className="inline-flex max-w-full items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                    <div className="inline-flex max-w-full items-center gap-2 border border-[#444444] bg-slate-50 px-2.5 py-1.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
                       <span className="min-w-0 flex-1 truncate font-mono">
                         {passwordVisible
                           ? user.password || "Not stored"
@@ -220,7 +220,7 @@ export function ResearchUsersTable({
                         onClick={() =>
                           setVisiblePasswordId(passwordVisible ? null : user.id)
                         }
-                        className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-slate-400 transition hover:bg-white hover:text-blue-600 dark:hover:bg-slate-900 dark:hover:text-blue-300"
+                        className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-none text-slate-400 transition hover:bg-white hover:text-blue-600 dark:hover:bg-slate-900 dark:hover:text-blue-300"
                         aria-label={
                           passwordVisible ? "Hide password" : "Show password"
                         }
@@ -235,7 +235,7 @@ export function ResearchUsersTable({
                   </td>
                   <td className="px-3 py-3 text-sm">
                     <span
-                      className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${
+                      className={`border px-2 py-1 text-xs font-normal ${
                         user.emailVerified
                           ? "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900"
                           : "bg-amber-50 text-amber-800 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900"
@@ -244,7 +244,7 @@ export function ResearchUsersTable({
                       {user.emailVerified ? "Verified" : "Pending"}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                  <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                     {formatDate(user.createdAt)}
                   </td>
                   <td className="px-2 py-3 text-right">
@@ -252,7 +252,7 @@ export function ResearchUsersTable({
                       <button
                         type="button"
                         onClick={() => setEditing(user)}
-                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
+                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-[#444444] bg-[#2C2C2C] text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
                         aria-label="Edit user"
                       >
                         <Pencil className="h-4 w-4" />
@@ -260,7 +260,7 @@ export function ResearchUsersTable({
                       <button
                         type="button"
                         onClick={() => setDeleting(user)}
-                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-rose-900 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-[#444444] bg-[#2C2C2C] text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-rose-900 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
                         aria-label="Delete user"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -297,7 +297,7 @@ export function ResearchUsersTable({
           data-research-modal-overlay="true"
           className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
         >
-          <div className="w-full max-w-2xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+          <div className="w-full max-w-2xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <DialogHeader
               title="Edit research user"
               onClose={() => setEditing(null)}
@@ -326,14 +326,14 @@ export function ResearchUsersTable({
                 />
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                   Roles
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {roleOptions.map((item) => (
                     <label
                       key={item}
-                      className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200"
+                      className="flex items-center gap-2 border border-[#444444] px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200"
                     >
                       <input
                         type="checkbox"
@@ -350,13 +350,13 @@ export function ResearchUsersTable({
                 <button
                   type="button"
                   onClick={() => setEditing(null)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
                 <button
                   disabled={isPending}
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
+                  className="inline-flex items-center gap-2 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
                 >
                   <Save className="h-4 w-4" />
                   Save user
@@ -372,14 +372,14 @@ export function ResearchUsersTable({
           data-research-modal-overlay="true"
           className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
         >
-          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <DialogHeader
               title="Delete research user"
               onClose={() => setDeleting(null)}
             />
             <form action={confirmDelete} className="space-y-4 px-5 py-5">
               <input type="hidden" name="userId" value={deleting.id} />
-              <div className="flex gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-900/70 dark:bg-rose-950/30 dark:text-rose-200">
+              <div className="flex gap-3 rounded-none border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-900/70 dark:bg-rose-950/30 dark:text-rose-200">
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
                 <p className="text-sm leading-6">
                   Delete{" "}
@@ -394,13 +394,13 @@ export function ResearchUsersTable({
                 <button
                   type="button"
                   onClick={() => setDeleting(null)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
                 <button
                   disabled={isPending}
-                  className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-rose-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
+                  className="inline-flex items-center gap-2 rounded-none bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-rose-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
                 >
                   <Trash2 className="h-4 w-4" />
                   Delete user
@@ -431,7 +431,7 @@ function Field({
 }) {
   return (
     <label className="grid gap-2">
-      <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
         {label}
       </span>
       <input
@@ -440,7 +440,7 @@ function Field({
         defaultValue={defaultValue}
         placeholder={placeholder}
         required={required}
-        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+        className="w-full border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
       />
     </label>
   );
@@ -455,13 +455,11 @@ function DialogHeader({
 }) {
   return (
     <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-      <h3 className="text-base font-bold text-slate-950 dark:text-white">
-        {title}
-      </h3>
+      <h3 className="text-base font-bold text-[#E4E4E4]">{title}</h3>
       <button
         type="button"
         onClick={onClose}
-        className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+        className="rounded-none p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
         aria-label="Close"
       >
         <X className="h-5 w-5" />

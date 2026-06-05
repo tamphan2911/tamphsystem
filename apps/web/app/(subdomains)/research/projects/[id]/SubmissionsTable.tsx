@@ -130,7 +130,7 @@ function statusIcon(value: string) {
   return Send;
 }
 
-function rowClass(_value: string) {
+function rowClass() {
   return "odd:bg-[#2C2C2C] even:bg-[#303030] hover:bg-[#383838]";
 }
 
@@ -607,7 +607,7 @@ export function SubmissionsTable({
               {pagination.pagedRows.map((row) => (
                 <tr
                   key={row.id}
-                  className={`group align-top transition duration-200 ease-out ${rowClass(row.status)}`}
+                  className={`group align-top transition duration-200 ease-out ${rowClass()}`}
                 >
                   <td className="px-3 py-3 text-[11px] font-normal uppercase tracking-wide text-[#B0B0B0]">
                     {row.code}
@@ -897,7 +897,7 @@ export function SubmissionsTable({
             <input type="hidden" name="submissionId" value={editing.id} />
             <input type="hidden" name="submissionKind" value={editing.kind} />
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Status
               </span>
               <ResearchFormSelect
@@ -912,11 +912,11 @@ export function SubmissionsTable({
               />
             </label>
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Status date
               </span>
               <div className="relative">
-                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#777777]" />
                 <input
                   name="statusDate"
                   type="date"

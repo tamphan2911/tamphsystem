@@ -99,7 +99,7 @@ function TextModalForm({
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${colors.button}`}
+          className={`inline-flex cursor-pointer items-center gap-2 rounded-none px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${colors.button}`}
         >
           <Icon className="h-4 w-4" />
           {buttonLabel}
@@ -119,7 +119,7 @@ function TextModalForm({
               type="button"
               disabled={isPending}
               onClick={() => closeDialog()}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               Cancel
             </button>
@@ -131,7 +131,7 @@ function TextModalForm({
                   formRef.current?.requestSubmit();
                 });
               }}
-              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none ${colors.button}`}
+              className={`inline-flex items-center gap-2 rounded-none px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none ${colors.button}`}
             >
               {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -163,7 +163,7 @@ function TextModalForm({
           className="grid gap-4"
         >
           <label className="grid gap-1.5">
-            <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
               {fieldLabel}
             </span>
             <textarea
@@ -173,11 +173,11 @@ function TextModalForm({
               onChange={(event) => setContent(event.target.value)}
               rows={5}
               placeholder={placeholder}
-              className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+              className="w-full resize-none border border-[#444444] bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
             />
           </label>
           {helperText ? (
-            <p className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+            <p className="rounded-none border border-amber-100 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
               {helperText}
             </p>
           ) : null}

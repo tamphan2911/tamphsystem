@@ -4,10 +4,8 @@ import {
   ArrowLeft,
   BadgeCheck,
   Banknote,
-  Ban,
   BookOpenCheck,
   Building2,
-  CalendarCheck2,
   CalendarClock,
   CalendarDays,
   CheckCircle2,
@@ -15,15 +13,12 @@ import {
   CircleOff,
   Clock3,
   ExternalLink,
-  FileCheck2,
-  FileClock,
   FileSearch,
   FlaskConical,
   GraduationCap,
   Mail,
   RotateCcw,
   Send,
-  SendHorizontal,
   ShieldCheck,
   Star,
   UserRound,
@@ -170,67 +165,6 @@ function researchStageIcon(stage: string) {
   return FlaskConical;
 }
 
-function researchClaimLabel(claim: string) {
-  if (claim === "CANNOT_CLAIM") return "Cannot claim";
-  if (claim === "WAITING_PUBLISH") return "Waiting publish";
-  if (claim === "MAKING_DOCUMENT") return "Making document";
-  if (claim === "WAITING") return "Waiting";
-  if (claim === "CLAIMED") return "Claimed";
-  return claim.replace("_", " ");
-}
-
-function researchClaimClass(claim: string) {
-  if (claim === "CLAIMED") {
-    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
-  }
-  if (claim === "WAITING") {
-    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
-  }
-  if (claim === "WAITING_PUBLISH") {
-    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
-  }
-  if (claim === "MAKING_DOCUMENT") {
-    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
-  }
-  return "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
-}
-
-function researchClaimIcon(claim: string) {
-  if (claim === "CLAIMED") return CheckCircle2;
-  if (claim === "WAITING") return FileClock;
-  if (claim === "WAITING_PUBLISH") return FileSearch;
-  if (claim === "MAKING_DOCUMENT") return FileCheck2;
-  if (claim === "CANNOT_CLAIM") return Ban;
-  return CircleDollarSign;
-}
-
-function registrationLabel(status: string) {
-  if (status === "APPROVED") return "Approved";
-  if (status === "SUBMITTED") return "Submitted";
-  if (status === "PREPARING") return "Plan";
-  return "Not registered";
-}
-
-function registrationClass(status: string) {
-  if (status === "APPROVED") {
-    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
-  }
-  if (status === "SUBMITTED") {
-    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
-  }
-  if (status === "PREPARING") {
-    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
-  }
-  return "bg-rose-50 text-rose-600 ring-rose-100 dark:bg-rose-950/35 dark:text-rose-300 dark:ring-rose-900/70";
-}
-
-function registrationIcon(status: string) {
-  if (status === "APPROVED") return CalendarCheck2;
-  if (status === "SUBMITTED") return SendHorizontal;
-  if (status === "PREPARING") return FileClock;
-  return CircleOff;
-}
-
 function StatusIconChip({
   icon: Icon,
   label,
@@ -243,57 +177,12 @@ function StatusIconChip({
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
       </span>
     </IconHint>
-  );
-}
-
-function RegistrationCell({
-  status,
-  registration,
-  registerName,
-}: {
-  status: string;
-  registration: string | null;
-  registerName: string;
-}) {
-  const Icon = registrationIcon(status);
-  const label = registrationLabel(status);
-  const detail = registration?.trim() ?? "";
-  const showDetail = detail.length > 0;
-  const registerLine =
-    status !== "NOT_REGISTERED" && registerName.trim()
-      ? `${label} - ${registerName.trim()}`
-      : label;
-
-  return (
-    <div className="flex max-w-56 items-center gap-2">
-      <IconHint label={registerLine}>
-        <span
-          className={`inline-flex h-8 w-8 flex-none items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${registrationClass(status)}`}
-        >
-          <Icon className="h-4 w-4" aria-hidden="true" />
-        </span>
-      </IconHint>
-      <div
-        className={`min-w-0 ${showDetail ? "" : "flex min-h-8 items-center"}`}
-      >
-        {showDetail && (
-          <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
-            {detail}
-          </p>
-        )}
-        <p
-          className={`${showDetail ? "mt-0.5" : ""} text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500`}
-        >
-          {registerLine}
-        </p>
-      </div>
-    </div>
   );
 }
 
@@ -306,7 +195,7 @@ function ResearchCount({ count, label }: { count: number; label: string }) {
   return (
     <IconHint label={`${count} ${label.toLowerCase()}`}>
       <span
-        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-semibold ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-none px-2 text-sm font-semibold ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
       >
         {count}
         <span className="sr-only">
@@ -598,7 +487,7 @@ export default async function OrganizedProjectDetailPage({
         Projects
       </Link>
 
-      <header className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <header className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -616,12 +505,12 @@ export default async function OrganizedProjectDetailPage({
               )}
             </div>
             <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
-              <h1 className="min-w-0 text-2xl font-medium leading-tight text-slate-950 dark:text-white">
+              <h1 className="min-w-0 text-2xl font-medium leading-tight text-[#E4E4E4]">
                 {project.title}
               </h1>
               <IconHint label={`Status: ${status.label}`}>
                 <span
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-full ring-1 ${status.className}`}
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 ${status.className}`}
                 >
                   <StatusIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
@@ -629,41 +518,41 @@ export default async function OrganizedProjectDetailPage({
               <IconHint label={`Financial: ${claim.label}`}>
                 <span className="inline-flex items-center gap-2">
                   <span
-                    className={`inline-flex h-8 w-8 items-center justify-center rounded-full ring-1 ${claim.className}`}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 ${claim.className}`}
                   >
                     <ClaimIcon className="h-4 w-4" aria-hidden="true" />
                   </span>
                   {fundingAmountLabel && (
-                    <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                    <span className="text-sm font-semibold text-[#B0B0B0]">
                       ({fundingAmountLabel})
                     </span>
                   )}
                 </span>
               </IconHint>
             </div>
-            <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
+            <p className="mt-3 text-sm font-medium text-[#B0B0B0]">
               {project.fundingInstitution?.name ||
                 project.organizer ||
                 "No funding institution"}
             </p>
             {project.description && (
-              <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500 dark:text-slate-400">
+              <p className="mt-1 max-w-4xl text-sm leading-6 text-[#B0B0B0]">
                 {project.description}
               </p>
             )}
             {project.note && (
-              <p className="mt-1 max-w-4xl text-xs leading-5 text-slate-400 dark:text-slate-500">
+              <p className="mt-1 max-w-4xl text-xs leading-5 text-[#777777]">
                 {project.note}
               </p>
             )}
           </div>
-          <div className="flex flex-none items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+          <div className="flex flex-none items-center gap-2 text-sm text-[#B0B0B0]">
             <CalendarDays className="h-4 w-4 text-blue-500" />
             <span>
               {shortDate(project.startDate)} - {shortDate(project.endDate)}
             </span>
             {durationLabel(project.durationMonths) && (
-              <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+              <span className="text-xs font-semibold text-[#777777]">
                 ({durationLabel(project.durationMonths)})
               </span>
             )}
@@ -686,35 +575,35 @@ export default async function OrganizedProjectDetailPage({
             ) : null
           }
         >
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="divide-y divide-[#444444]">
             {memberDefaults.map((member) => (
               <div key={member.id} className="flex items-center gap-3 py-3">
-                <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-200 dark:ring-blue-900">
+                <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-none bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-200 dark:ring-blue-900">
                   <UserRound className="h-4 w-4" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                    <p className="truncate text-sm font-medium text-[#E4E4E4]">
                       {memberName(member)}
                     </p>
                     {member.isTeamLead && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900">
+                      <span className="inline-flex items-center gap-1 rounded-none bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900">
                         <Star className="h-3 w-3" />
                         Team lead
                       </span>
                     )}
                     {member.isInstructor && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 ring-1 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-200 dark:ring-violet-900">
+                      <span className="inline-flex items-center gap-1 rounded-none bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 ring-1 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-200 dark:ring-violet-900">
                         <GraduationCap className="h-3 w-3" />
                         Instructor
                       </span>
                     )}
                   </div>
-                  <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-slate-400 dark:text-slate-500">
+                  <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#777777]">
                     <Mail className="h-3 w-3 flex-none text-blue-400" />
                     <span className="truncate">{member.email}</span>
                   </p>
-                  <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#B0B0B0]">
                     <Building2 className="h-3 w-3 flex-none text-emerald-500" />
                     <span className="truncate">
                       {member.affiliation || "No affiliation recorded"}
@@ -724,7 +613,7 @@ export default async function OrganizedProjectDetailPage({
               </div>
             ))}
             {memberDefaults.length === 0 && (
-              <p className="py-5 text-sm text-slate-400 dark:text-slate-500">
+              <p className="py-5 text-sm text-[#777777]">
                 No members assigned.
               </p>
             )}
@@ -736,20 +625,20 @@ export default async function OrganizedProjectDetailPage({
           action={<ExternalLink className="h-4 w-4 text-slate-400" />}
         >
           <div className="space-y-3">
-            <div className="rounded-lg border border-dashed border-slate-200 p-4 dark:border-slate-800">
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            <div className="rounded-none border border-dashed border-slate-200 p-4 dark:border-slate-800">
+              <p className="text-sm font-medium text-[#E4E4E4]">
                 Shared project folder
               </p>
-              <p className="mt-1 text-xs leading-5 text-slate-400 dark:text-slate-500">
+              <p className="mt-1 text-xs leading-5 text-[#777777]">
                 Add Drive, manuscript, grant, data, or shared reference links
                 here later.
               </p>
             </div>
-            <div className="rounded-lg border border-dashed border-slate-200 p-4 dark:border-slate-800">
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            <div className="rounded-none border border-dashed border-slate-200 p-4 dark:border-slate-800">
+              <p className="text-sm font-medium text-[#E4E4E4]">
                 Key files and links
               </p>
-              <p className="mt-1 text-xs leading-5 text-slate-400 dark:text-slate-500">
+              <p className="mt-1 text-xs leading-5 text-[#777777]">
                 Use this space for contracts, approval documents, and evidence
                 files.
               </p>
@@ -767,7 +656,7 @@ export default async function OrganizedProjectDetailPage({
       <ResearchDetailSection>
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-black text-slate-950 dark:text-white">
+            <h2 className="text-base font-black text-[#E4E4E4]">
               Research Associated
             </h2>
             {canEditResearchAssociated && (
@@ -788,9 +677,9 @@ export default async function OrganizedProjectDetailPage({
             />
           )}
         </div>
-        <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+        <div className="overflow-hidden border border-[#444444] dark:border-slate-800">
           <table className="w-full table-fixed text-left">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+            <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
               <tr>
                 <th className="w-[5.75rem] px-3 py-3">ID</th>
                 <th className="px-3 py-3">Research</th>
@@ -798,7 +687,7 @@ export default async function OrganizedProjectDetailPage({
                 <th className="w-[5rem] px-3 py-3 text-center">Submit</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-[#444444]">
               {project.research.map(({ researchProject }) => {
                 const venueLine = acceptedVenueLine(researchProject);
                 const rankLine = stageRankLine(researchProject);
@@ -806,7 +695,7 @@ export default async function OrganizedProjectDetailPage({
                 return (
                   <tr
                     key={researchProject.id}
-                    className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                    className="group align-top transition-colors duration-150 hover:bg-[#383838]"
                   >
                     <td className="px-3 py-3 align-top">
                       <Link href={`/projects/${researchProject.id}`}>
@@ -823,11 +712,11 @@ export default async function OrganizedProjectDetailPage({
                         <p className="line-clamp-2 text-base font-normal text-slate-700 transition group-hover:text-blue-600 dark:text-slate-200 dark:group-hover:text-blue-300">
                           {researchProject.title}
                         </p>
-                        <p className="mt-1 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 line-clamp-1 text-xs text-[#B0B0B0]">
                           {researchAuthorLine(researchProject)}
                         </p>
                         {venueLine && (
-                          <p className="mt-0.5 line-clamp-1 text-xs text-slate-400 dark:text-slate-500">
+                          <p className="mt-0.5 line-clamp-1 text-xs text-[#777777]">
                             {venueLine}
                           </p>
                         )}
@@ -840,7 +729,7 @@ export default async function OrganizedProjectDetailPage({
                         className={researchStageClass(researchProject.stage)}
                       />
                       {rankLine && (
-                        <p className="mt-1 text-center text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                        <p className="mt-1 text-center text-[11px] font-semibold text-[#777777]">
                           {rankLine}
                         </p>
                       )}
@@ -858,7 +747,7 @@ export default async function OrganizedProjectDetailPage({
                 <tr>
                   <td
                     colSpan={4}
-                    className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400"
+                    className="px-4 py-10 text-center text-sm text-[#B0B0B0]"
                   >
                     No research associated.
                   </td>

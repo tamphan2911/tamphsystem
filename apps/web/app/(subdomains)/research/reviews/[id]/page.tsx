@@ -182,7 +182,7 @@ export default async function ReviewDetailPage({
         Reviews
       </Link>
 
-      <header className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <header className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -190,20 +190,20 @@ export default async function ReviewDetailPage({
                 {review.manuscriptId || review.id.slice(0, 8).toUpperCase()}
               </p>
               <span
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 ${status.className}`}
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 ${status.className}`}
               >
                 <StatusIcon className="h-4 w-4" aria-hidden="true" />
               </span>
             </div>
-            <h1 className="mt-3 text-2xl font-medium leading-tight text-slate-950 dark:text-white">
+            <h1 className="mt-3 text-2xl font-medium leading-tight text-[#E4E4E4]">
               {review.manuscriptTitle}
             </h1>
-            <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+            <p className="mt-2 text-sm font-medium text-[#B0B0B0]">
               {statusLabel(review.status)}
               {review.reviewRound ? ` - ${review.reviewRound}` : ""}
             </p>
           </div>
-          <div className="flex flex-none items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+          <div className="flex flex-none items-center gap-2 text-sm text-[#B0B0B0]">
             <CalendarDays className="h-4 w-4 text-blue-500" />
             <span>Due {shortDate(review.dueDate)}</span>
           </div>
@@ -230,23 +230,23 @@ export default async function ReviewDetailPage({
         </dl>
       </ResearchDetailSection>
 
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <section className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
           <div>
-            <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+            <h2 className="text-base font-semibold text-[#E4E4E4]">
               Tasks for this review
             </h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-sm text-[#B0B0B0]">
               Work assigned for this review record.
             </p>
           </div>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <span className="rounded-none bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             {review.tasks.length}
           </span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+            <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
               <tr>
                 <th className="px-4 py-3">Task</th>
                 <th className="w-36 px-4 py-3">Status</th>
@@ -255,7 +255,7 @@ export default async function ReviewDetailPage({
                 <th className="w-44 px-4 py-3">Assigner</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-[#444444]">
               {review.tasks.map((task) => (
                 <tr
                   key={task.id}
@@ -268,21 +268,21 @@ export default async function ReviewDetailPage({
                     >
                       {task.title}
                     </Link>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#B0B0B0]">
                       {task.description || task.category || "No task note."}
                     </p>
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${taskStatusClass(task.status)}`}
+                      className={`inline-flex border px-2.5 py-1 text-xs font-normal ${taskStatusClass(task.status)}`}
                     >
                       {taskStatusLabel(task.status)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                  <td className="px-4 py-3 text-sm text-[#B0B0B0]">
                     {shortDate(task.dueDate)}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                  <td className="px-4 py-3 text-sm text-[#B0B0B0]">
                     {task.assignments.length > 0
                       ? task.assignments
                           .map(
@@ -292,7 +292,7 @@ export default async function ReviewDetailPage({
                           .join(", ")
                       : "-"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                  <td className="px-4 py-3 text-sm text-[#B0B0B0]">
                     {task.createdBy.name || task.createdBy.email}
                   </td>
                 </tr>
@@ -301,7 +301,7 @@ export default async function ReviewDetailPage({
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-4 py-12 text-center text-sm text-slate-500 dark:text-slate-400"
+                    className="px-4 py-12 text-center text-sm text-[#B0B0B0]"
                   >
                     No task is linked to this review yet.
                   </td>
@@ -321,7 +321,7 @@ export default async function ReviewDetailPage({
             >
               {review.journal.name}
             </Link>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-sm text-[#B0B0B0]">
               {review.journal.publisher || "No publisher"}
             </p>
           </div>
@@ -332,7 +332,7 @@ export default async function ReviewDetailPage({
                 href={item.href as string}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-9 items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 text-xs font-semibold text-blue-600 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-100 hover:shadow-md dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50"
+                className="inline-flex h-9 items-center gap-2 rounded-none border border-blue-100 bg-blue-50 px-3 text-xs font-semibold text-blue-600 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-100 hover:shadow-md dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 {item.label}

@@ -44,9 +44,9 @@ function InfoTile({
   value: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
-      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700">
+    <div className="border border-[#444444] bg-slate-50/80 px-3 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-[#777777]">
+        <span className="flex h-7 w-7 items-center justify-center rounded-none bg-white text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700">
           <Icon className="h-3.5 w-3.5" />
         </span>
         <span>{label}</span>
@@ -178,17 +178,17 @@ export default async function AccountDetailPage({
         Accounts
       </Link>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <p className="font-mono text-xs font-bold uppercase tracking-wide text-slate-400">
               Site ID: {account.id}
             </p>
-            <h1 className="mt-1 flex items-center gap-2 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+            <h1 className="mt-1 flex items-center gap-2 text-2xl font-black tracking-tight text-[#E4E4E4]">
               <KeyRound className="h-5 w-5 text-amber-500" />
               {account.username}
             </h1>
-            <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#B0B0B0]">
               <span className="inline-flex items-center gap-1.5">
                 <LockKeyhole className="h-3.5 w-3.5 text-amber-500" />
                 <span className="font-mono">{account.password || "-"}</span>
@@ -198,7 +198,7 @@ export default async function AccountDetailPage({
                 {account.email || "No email"}
               </span>
             </p>
-            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-3 text-sm text-[#B0B0B0]">
               {account.journal ? (
                 <Link
                   href={`/journals/${account.journal.id}`}
@@ -217,7 +217,7 @@ export default async function AccountDetailPage({
                 </>
               )}
             </p>
-            <p className="mt-2 max-w-3xl text-xs leading-5 text-slate-500 dark:text-slate-400">
+            <p className="mt-2 max-w-3xl text-xs leading-5 text-[#B0B0B0]">
               {account.note || "No note recorded."}
             </p>
           </div>
@@ -243,14 +243,12 @@ export default async function AccountDetailPage({
 
       <section className="space-y-3">
         <div className="flex items-center gap-2 px-1">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900">
+          <span className="flex h-9 w-9 items-center justify-center rounded-none bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900">
             <Send className="h-4 w-4" />
           </span>
           <div>
-            <h2 className="text-sm font-black text-slate-950 dark:text-white">
-              Submissions
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <h2 className="text-sm font-black text-[#E4E4E4]">Submissions</h2>
+            <p className="text-xs text-[#B0B0B0]">
               Research records submitted with this account.
             </p>
           </div>

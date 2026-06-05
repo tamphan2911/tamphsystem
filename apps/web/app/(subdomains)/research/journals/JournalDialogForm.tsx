@@ -42,9 +42,9 @@ export type JournalFormValues = {
 };
 
 const inputClass =
-  "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+  "border border-[#444444] bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
 const labelClass =
-  "grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400";
+  "grid gap-1.5 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]";
 const journalFieldOptions = [
   "Accounting",
   "Business",
@@ -144,7 +144,7 @@ function CountryPicker({
           <span className="text-base" aria-hidden="true">
             {countryFlag(option.id)}
           </span>
-          <span className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+          <span className="truncate text-sm font-semibold text-[#E4E4E4]">
             {option.label}
           </span>
         </span>
@@ -290,7 +290,7 @@ export function JournalDialogForm({
             {warning ? (
               <div
                 ref={warningRef}
-                className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200"
+                className="flex items-start gap-2 rounded-none border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200"
               >
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{warning}</span>
@@ -350,18 +350,18 @@ export function JournalDialogForm({
             </div>
             <div ref={fieldPickerRef} className={`${labelClass} relative`}>
               Field
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950">
+              <div className="border border-[#444444] bg-slate-50 p-2 transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950">
                 <div className="flex min-h-9 flex-wrap items-center gap-1.5">
                   {selectedFields.map((field) => (
                     <span
                       key={field}
-                      className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold normal-case tracking-normal text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-200 dark:ring-blue-900"
+                      className="inline-flex items-center gap-1 rounded-none bg-blue-50 px-2.5 py-1 text-xs font-semibold normal-case tracking-normal text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-200 dark:ring-blue-900"
                     >
                       {field}
                       <button
                         type="button"
                         onClick={() => removeField(field)}
-                        className="rounded-full p-0.5 text-blue-500 transition hover:bg-blue-100 hover:text-blue-800 dark:hover:bg-blue-900/60 dark:hover:text-blue-100"
+                        className="rounded-none p-0.5 text-blue-500 transition hover:bg-blue-100 hover:text-blue-800 dark:hover:bg-blue-900/60 dark:hover:text-blue-100"
                         aria-label={`Remove ${field}`}
                       >
                         <X className="h-3 w-3" />
@@ -415,7 +415,7 @@ export function JournalDialogForm({
                         className="flex w-full items-center justify-between rounded-none border-y border-transparent px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:border-blue-100 hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
                       >
                         {field}
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-500 dark:bg-blue-950/60 dark:text-blue-300">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-none bg-blue-50 text-blue-500 dark:bg-blue-950/60 dark:text-blue-300">
                           <Check className="h-3.5 w-3.5" />
                         </span>
                       </button>
@@ -433,7 +433,7 @@ export function JournalDialogForm({
                         className="flex w-full items-center gap-2 rounded-none border-y border-slate-100 px-3 py-2.5 text-left text-sm font-semibold text-blue-700 transition hover:border-blue-100 hover:bg-blue-50 dark:border-slate-800 dark:text-blue-300 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40"
                       >
                         <PlusCircle className="h-4 w-4" />
-                        Add "{fieldQuery.trim()}"
+                        Add &quot;{fieldQuery.trim()}&quot;
                       </button>
                     ) : null}
                   </>
@@ -543,13 +543,13 @@ export function JournalDialogForm({
             type="button"
             disabled={isPending}
             onClick={closeDialog}
-            className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="cursor-pointer rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             Cancel
           </button>
           <button
             disabled={isPending}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none"
           >
             {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />

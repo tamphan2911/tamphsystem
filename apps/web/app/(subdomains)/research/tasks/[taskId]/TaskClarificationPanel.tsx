@@ -65,14 +65,14 @@ export function TaskClarificationPanel({
   }, [isOpen, timeline.length]);
 
   return (
-    <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+    <div className="mt-6 border border-[#444444] bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none bg-amber-50 text-amber-600 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900">
             <HelpCircle className="h-5 w-5" />
           </span>
           <div>
-            <h2 className="text-sm font-bold text-slate-950 dark:text-white">
+            <h2 className="text-sm font-bold text-[#E4E4E4]">
               Request and feedback
             </h2>
             {latest ? (
@@ -81,11 +81,11 @@ export function TaskClarificationPanel({
                   Latest update from {personName(latest.requestedBy)} ·{" "}
                   {formatDateTime(latest.createdAt)}
                 </p>
-                <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-700 dark:text-slate-200">
+                <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#E4E4E4]">
                   {latest.question}
                 </p>
                 {latest.answer ? (
-                  <p className="mt-2 line-clamp-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm leading-6 text-slate-700 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-slate-200">
+                  <p className="mt-2 line-clamp-2 rounded-none border border-blue-100 bg-blue-50 px-3 py-2 text-sm leading-6 text-slate-700 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-slate-200">
                     {latest.answer}
                   </p>
                 ) : (
@@ -95,7 +95,7 @@ export function TaskClarificationPanel({
                 )}
               </>
             ) : (
-              <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm leading-6 text-[#B0B0B0]">
                 No request has been sent for this task yet.
               </p>
             )}
@@ -104,7 +104,7 @@ export function TaskClarificationPanel({
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
+          className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center border border-[#444444] bg-[#2C2C2C] text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
           aria-label="Open request and feedback history"
         >
           <MessageSquareText className="h-4 w-4" />
@@ -143,7 +143,7 @@ export function TaskClarificationPanel({
                       content={item.answer}
                     />
                   ) : (
-                    <div className="ml-auto max-w-[88%] rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 dark:border-amber-900/60 dark:bg-amber-950/30 sm:max-w-[76%]">
+                    <div className="ml-auto max-w-[88%] rounded-none border border-amber-100 bg-amber-50 px-4 py-3 dark:border-amber-900/60 dark:bg-amber-950/30 sm:max-w-[76%]">
                       <p className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
                         Pending feedback
                       </p>
@@ -153,7 +153,7 @@ export function TaskClarificationPanel({
                           action={answerAction}
                         />
                       ) : (
-                        <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                        <p className="mt-1 text-sm leading-6 text-[#B0B0B0]">
                           The assigner or an admin has not replied to this
                           request yet.
                         </p>
@@ -164,9 +164,9 @@ export function TaskClarificationPanel({
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
+            <div className="rounded-none border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
               <HelpCircle className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
-              <p className="mt-3 text-sm font-semibold text-slate-600 dark:text-slate-300">
+              <p className="mt-3 text-sm font-semibold text-[#B0B0B0]">
                 No request history yet.
               </p>
             </div>
@@ -192,7 +192,7 @@ function ChatBubble({
   return (
     <div className={`flex ${isRight ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[88%] rounded-xl px-4 py-3 sm:max-w-[76%] ${
+        className={`max-w-[88%] rounded-none px-4 py-3 sm:max-w-[76%] ${
           isRight
             ? "bg-blue-600 text-white shadow-sm"
             : "border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
@@ -259,7 +259,7 @@ function AnswerForm({
         onChange={(event) => setAnswer(event.target.value)}
         rows={4}
         placeholder="Write feedback for this request."
-        className="w-full resize-none rounded-lg border border-amber-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 dark:border-amber-900/70 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+        className="w-full resize-none rounded-none border border-amber-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 dark:border-amber-900/70 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
       />
       <div className="flex justify-end">
         <button
@@ -270,7 +270,7 @@ function AnswerForm({
               formRef.current?.requestSubmit();
             });
           }}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none"
+          className="inline-flex items-center gap-2 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none"
         >
           {isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />

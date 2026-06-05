@@ -84,14 +84,14 @@ export function RegisterUserPicker({
         const user = option.data as AuthorOption;
         return (
           <>
-            <span className="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900">
+            <span className="flex h-8 w-8 flex-none items-center justify-center rounded-none bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900">
               <UserRound className="h-4 w-4" aria-hidden="true" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+              <span className="block truncate text-sm font-bold text-[#E4E4E4]">
                 {displayName(user)}
               </span>
-              <span className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+              <span className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-[#777777]">
                 <Mail className="h-3 w-3 flex-none" aria-hidden="true" />
                 {user.email} - {user.id.slice(0, 8)}
               </span>
@@ -101,7 +101,7 @@ export function RegisterUserPicker({
       }}
       renderOption={(option) => (
         <>
-          <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900">
+          <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-none bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900">
             <UserRound className="h-4 w-4" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">

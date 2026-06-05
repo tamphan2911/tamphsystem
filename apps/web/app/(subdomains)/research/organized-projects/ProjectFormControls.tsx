@@ -128,14 +128,14 @@ export function FundingInstitutionPicker({
         const institution = option.data as FundingInstitutionOption;
         return (
           <>
-            <span className="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-200 dark:ring-emerald-900">
+            <span className="flex h-8 w-8 flex-none items-center justify-center rounded-none bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-200 dark:ring-emerald-900">
               <GraduationCap className="h-4 w-4" aria-hidden="true" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+              <span className="block truncate text-sm font-bold text-[#E4E4E4]">
                 {institution.name}
               </span>
-              <span className="block truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+              <span className="block truncate text-xs font-medium text-[#777777]">
                 {[institution.shortName, institution.country]
                   .filter(Boolean)
                   .join(" - ")}
@@ -146,7 +146,7 @@ export function FundingInstitutionPicker({
       }}
       renderOption={(option) => (
         <>
-          <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-900">
+          <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-none bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-900">
             <GraduationCap className="h-4 w-4" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
@@ -256,10 +256,10 @@ export function ProjectMembersPicker({
   }
 
   return (
-    <div className="grid gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+    <div className="grid gap-2 text-sm font-semibold text-[#E4E4E4]">
       <span>Members</span>
       {localWarning && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200">
+        <div className="flex items-start gap-2 rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-none" />
           <span>{localWarning}</span>
         </div>
@@ -283,7 +283,7 @@ export function ProjectMembersPicker({
             value={member.id}
           />
         ))}
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-950">
+      <div className="border border-[#444444] bg-[#2C2C2C] p-3 shadow-none">
         <div ref={searchRef} className="relative">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
@@ -295,7 +295,7 @@ export function ProjectMembersPicker({
             onFocus={() => setFocused(true)}
             onBlur={() => window.setTimeout(() => setFocused(false), 120)}
             placeholder="Search user by name, ID, or email..."
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            className="h-11 w-full border border-[#444444] bg-[#2C2C2C] pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
           />
 
           <FloatingDropdownPortal
@@ -314,14 +314,14 @@ export function ProjectMembersPicker({
                       onClick={() => addMember(user)}
                       className="flex w-full cursor-pointer items-center gap-3 rounded-none border-y border-transparent px-3 py-2 text-left transition hover:border-blue-100 hover:bg-blue-50 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40"
                     >
-                      <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-slate-50 text-slate-400 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+                      <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-none bg-slate-50 text-slate-400 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
                         <UserRound className="h-4 w-4" aria-hidden="true" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                        <span className="block truncate text-sm font-bold text-[#E4E4E4]">
                           {userName(user)}
                         </span>
-                        <span className="block truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+                        <span className="block truncate text-xs font-medium text-[#777777]">
                           {user.role} - {user.email} - {user.id.slice(0, 8)}
                         </span>
                       </span>
@@ -342,28 +342,28 @@ export function ProjectMembersPicker({
           {members.map((member) => (
             <div
               key={member.id}
-              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-900"
+              className="flex items-center gap-3 border border-[#444444] bg-white px-3 py-2 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-900"
             >
-              <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900">
+              <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-none bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900">
                 <UserRound className="h-4 w-4" aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                  <p className="truncate text-sm font-bold text-[#E4E4E4]">
                     {userName(member)}
                   </p>
                   {member.isTeamLead && (
-                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900">
+                    <span className="rounded-none bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900">
                       Team lead
                     </span>
                   )}
                   {member.isInstructor && (
-                    <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 ring-1 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-200 dark:ring-violet-900">
+                    <span className="rounded-none bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 ring-1 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-200 dark:ring-violet-900">
                       Instructor
                     </span>
                   )}
                 </div>
-                <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+                <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-[#777777]">
                   <Mail className="h-3 w-3 flex-none" aria-hidden="true" />
                   {member.email}
                 </p>
@@ -373,7 +373,7 @@ export function ProjectMembersPicker({
                 aria-label={`Set ${userName(member)} as team lead`}
                 title="Set as team lead"
                 onClick={() => setTeamLead(member.id)}
-                className={`rounded-lg p-2 transition ${
+                className={`rounded-none p-2 transition ${
                   member.isTeamLead
                     ? "bg-amber-50 text-amber-600 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900"
                     : "text-slate-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-950/40 dark:hover:text-amber-200"
@@ -386,7 +386,7 @@ export function ProjectMembersPicker({
                 aria-label={`Toggle instructor for ${userName(member)}`}
                 title="Toggle instructor"
                 onClick={() => toggleInstructor(member.id)}
-                className={`rounded-lg p-2 transition ${
+                className={`rounded-none p-2 transition ${
                   member.isInstructor
                     ? "bg-violet-50 text-violet-600 ring-1 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-200 dark:ring-violet-900"
                     : "text-slate-400 hover:bg-violet-50 hover:text-violet-600 dark:hover:bg-violet-950/40 dark:hover:text-violet-200"
@@ -398,14 +398,14 @@ export function ProjectMembersPicker({
                 type="button"
                 aria-label={`Remove ${userName(member)}`}
                 onClick={() => removeMember(member.id)}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                className="rounded-none p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
           ))}
           {members.length === 0 && (
-            <div className="rounded-xl border border-dashed border-slate-300 px-3 py-5 text-center text-sm font-medium text-slate-400 dark:border-slate-700">
+            <div className="rounded-none border border-dashed border-slate-300 px-3 py-5 text-center text-sm font-medium text-slate-400 dark:border-slate-700">
               Search and choose at least one member.
             </div>
           )}
@@ -448,7 +448,7 @@ export function ProjectResearchPicker({
   }, [query, researchOptions, selectedIds]);
 
   return (
-    <div className="grid gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+    <div className="grid gap-2 text-sm font-semibold text-[#E4E4E4]">
       Research used as project results
       {selected.map((research) => (
         <input
@@ -458,7 +458,7 @@ export function ProjectResearchPicker({
           value={research.id}
         />
       ))}
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-950">
+      <div className="border border-[#444444] bg-[#2C2C2C] p-3 shadow-none">
         <div ref={researchSearchRef} className="relative">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
@@ -470,7 +470,7 @@ export function ProjectResearchPicker({
             onFocus={() => setFocused(true)}
             onBlur={() => window.setTimeout(() => setFocused(false), 120)}
             placeholder="Search research title, ID, or stage..."
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            className="h-11 w-full border border-[#444444] bg-[#2C2C2C] pl-9 pr-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
           />
 
           <FloatingDropdownPortal
@@ -494,10 +494,10 @@ export function ProjectResearchPicker({
                       className="flex w-full cursor-pointer items-center gap-3 rounded-none border-y border-transparent px-3 py-2 text-left transition hover:border-blue-100 hover:bg-blue-50 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40"
                     >
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                        <span className="block truncate text-sm font-bold text-[#E4E4E4]">
                           {research.title}
                         </span>
-                        <span className="block truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+                        <span className="block truncate text-xs font-medium text-[#777777]">
                           {[research.researchCode, research.stage]
                             .filter(Boolean)
                             .join(" - ")}
@@ -520,7 +520,7 @@ export function ProjectResearchPicker({
           {selected.map((research) => (
             <span
               key={research.id}
-              className="inline-flex max-w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+              className="inline-flex max-w-full items-center gap-2 border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
             >
               <span className="truncate">
                 {research.researchCode ? `${research.researchCode} - ` : ""}
@@ -533,7 +533,7 @@ export function ProjectResearchPicker({
                     current.filter((item) => item.id !== research.id),
                   )
                 }
-                className="rounded-md p-0.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                className="rounded-none p-0.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
                 aria-label={`Remove ${research.title}`}
               >
                 <X className="h-3.5 w-3.5" aria-hidden="true" />
@@ -541,7 +541,7 @@ export function ProjectResearchPicker({
             </span>
           ))}
           {selected.length === 0 && (
-            <span className="inline-flex items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-semibold text-slate-400 dark:border-slate-700">
+            <span className="inline-flex items-center gap-2 rounded-none border border-dashed border-slate-300 px-3 py-2 text-xs font-semibold text-slate-400 dark:border-slate-700">
               <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
               No research selected
             </span>

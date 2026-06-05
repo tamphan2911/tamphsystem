@@ -108,8 +108,8 @@ export default function ResearchWelcomePage() {
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle,rgba(125,211,252,0.7)_1px,transparent_2px)] bg-[size:92px_92px]" />
         <div className="absolute inset-x-[10%] top-[17%] h-px rotate-[-11deg] bg-cyan-200/22" />
         <div className="absolute inset-x-[16%] bottom-[22%] h-px rotate-[8deg] bg-violet-200/18" />
-        <div className="absolute left-1/2 top-1/2 h-[42rem] w-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-200/8" />
-        <div className="absolute left-1/2 top-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-200/8" />
+        <div className="absolute left-1/2 top-1/2 h-[42rem] w-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-none border border-cyan-200/8" />
+        <div className="absolute left-1/2 top-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-none border border-violet-200/8" />
       </div>
 
       {starPositions.map((position) => (
@@ -135,7 +135,7 @@ export default function ResearchWelcomePage() {
       })}
 
       <section className="relative z-10 mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center py-16 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-wide text-cyan-100 shadow-lg shadow-cyan-950/20 backdrop-blur">
+        <div className="inline-flex items-center gap-2 rounded-none border border-cyan-300/25 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-wide text-cyan-100 shadow-lg shadow-cyan-950/20 backdrop-blur">
           <Rocket className="h-4 w-4" />
           Welcome aboard
         </div>
@@ -151,7 +151,7 @@ export default function ResearchWelcomePage() {
 
         <a
           href="/projects"
-          className="group mt-9 inline-flex h-12 items-center justify-center gap-3 rounded-full border border-cyan-200/45 bg-white/10 px-6 text-sm font-black text-cyan-50 shadow-2xl shadow-cyan-950/30 ring-1 ring-white/10 backdrop-blur transition hover:-translate-y-0.5 hover:border-cyan-100/70 hover:bg-cyan-100 hover:text-slate-950 hover:shadow-cyan-500/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300/30"
+          className="group mt-9 inline-flex h-12 items-center justify-center gap-3 rounded-none border border-cyan-200/45 bg-white/10 px-6 text-sm font-black text-cyan-50 shadow-2xl shadow-cyan-950/30 ring-1 ring-white/10 backdrop-blur transition hover:-translate-y-0.5 hover:border-cyan-100/70 hover:bg-cyan-100 hover:text-slate-950 hover:shadow-cyan-500/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300/30"
         >
           Blast into the research zone
           <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />

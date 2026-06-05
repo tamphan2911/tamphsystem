@@ -296,7 +296,7 @@ export function ResearchShell({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold transition ${
+                  className={`whitespace-nowrap rounded-none px-2 py-1 text-xs font-semibold transition ${
                     "adminOnly" in item && item.adminOnly
                       ? "bg-[#fff1e9] text-[#9f3f16] ring-1 ring-[#ffd7c2] hover:bg-[#ffe6d8] dark:bg-[#2a1812] dark:text-[#ffb38a] dark:ring-[#7a3c25] dark:hover:bg-[#3a2119]"
                       : "text-[#655d6d] hover:bg-[#ece7df] dark:text-[#d7d1df] dark:hover:bg-[#211c2d]"
@@ -304,7 +304,7 @@ export function ResearchShell({
                 >
                   {titleCaseLabel(item.label)}
                   {item.href === "/proposals" && unopenedProposalCount > 0 && (
-                    <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+                    <span className="ml-1 rounded-none bg-red-600 px-1.5 py-0.5 text-[10px] font-black text-white">
                       {unopenedProposalCount > 99
                         ? "99+"
                         : unopenedProposalCount}

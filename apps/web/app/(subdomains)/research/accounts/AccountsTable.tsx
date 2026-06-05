@@ -46,7 +46,7 @@ function SubmitCount({ count }: { count: number }) {
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-xs font-semibold ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+        className={`inline-flex h-7 min-w-7 items-center justify-center rounded-none px-2 text-xs font-semibold ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
       >
         {count}
         <span className="sr-only">{label}</span>
@@ -73,7 +73,7 @@ function DeleteAccountButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-rose-100 bg-rose-50 text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:shadow-md dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/50"
+          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-none border border-rose-100 bg-rose-50 text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:shadow-md dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/50"
           aria-label={`Delete ${account.username}`}
         >
           <Trash2 className="h-4 w-4" />
@@ -112,11 +112,11 @@ function DeleteAccountButton({
       >
         <p>
           Account:{" "}
-          <span className="font-semibold text-slate-950 dark:text-white">
+          <span className="font-semibold text-[#E4E4E4]">
             {account.username}
           </span>
         </p>
-        <p className="text-slate-500 dark:text-slate-400">
+        <p className="text-[#B0B0B0]">
           Existing submissions and tasks will stay in the system, but they will
           no longer point to this account.
         </p>
@@ -190,8 +190,8 @@ export function AccountsTable({
   const pagination = useTablePagination(filtered, 10);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -235,7 +235,7 @@ export function AccountsTable({
 
       <div className="overflow-hidden">
         <table className="w-full table-fixed text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+          <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="w-40 px-3 py-3">Login ID</th>
               <th className="w-28 px-3 py-3">Password</th>
@@ -255,14 +255,14 @@ export function AccountsTable({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((account) => (
               <tr
                 key={account.id}
-                className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                className="group align-top transition-colors duration-150 hover:bg-[#383838]"
               >
                 <td className="px-3 py-3">
-                  <div className="flex min-w-0 items-center gap-2 text-sm font-normal text-slate-700 dark:text-slate-200">
+                  <div className="flex min-w-0 items-center gap-2 text-sm font-normal text-[#E4E4E4]">
                     <IconHint label="Account credential">
                       <KeyRound
                         className="h-4 w-4 text-slate-400"
@@ -271,25 +271,25 @@ export function AccountsTable({
                     </IconHint>
                     <Link
                       href={`/accounts/${account.id}`}
-                      className="truncate whitespace-nowrap font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                      className="truncate whitespace-nowrap font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
                     >
                       {account.username}
                     </Link>
                   </div>
                 </td>
-                <td className="px-3 py-3 font-mono text-sm text-slate-600 dark:text-slate-300">
+                <td className="px-3 py-3 font-mono text-sm text-[#B0B0B0]">
                   <span className="block truncate">
                     {account.password || "-"}
                   </span>
                 </td>
-                <td className="px-3 py-3 text-xs text-slate-600 dark:text-slate-300">
+                <td className="px-3 py-3 text-xs text-[#B0B0B0]">
                   <span className="block truncate">{account.email || "-"}</span>
                 </td>
-                <td className="px-3 py-3 text-xs text-slate-600 dark:text-slate-300">
+                <td className="px-3 py-3 text-xs text-[#B0B0B0]">
                   {account.journalId ? (
                     <Link
                       href={`/journals/${account.journalId}`}
-                      className="line-clamp-2 font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                      className="line-clamp-2 font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
                     >
                       {account.journalName}
                     </Link>
@@ -297,7 +297,7 @@ export function AccountsTable({
                     "Publisher-wide"
                   )}
                 </td>
-                <td className="px-3 py-3 text-xs text-slate-600 dark:text-slate-300">
+                <td className="px-3 py-3 text-xs text-[#B0B0B0]">
                   <span className="block truncate">
                     {account.publisher || "-"}
                   </span>
@@ -305,7 +305,7 @@ export function AccountsTable({
                 <td className="px-2 py-3 text-center">
                   <SubmitCount count={account.submissions} />
                 </td>
-                <td className="px-3 py-3 text-xs text-slate-600 dark:text-slate-300">
+                <td className="px-3 py-3 text-xs text-[#B0B0B0]">
                   <span className="line-clamp-2">{account.note || "-"}</span>
                 </td>
                 {isAdmin && (

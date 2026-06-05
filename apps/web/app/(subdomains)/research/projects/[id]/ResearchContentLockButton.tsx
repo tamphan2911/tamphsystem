@@ -47,7 +47,7 @@ export function ResearchContentLockButton({
             ? "Unlock research content for editing"
             : "Lock research content again"
         }
-        className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-white/70 bg-white/80 text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-blue-600 hover:shadow-md dark:border-slate-700/70 dark:bg-slate-950/70 dark:text-slate-200 dark:hover:text-blue-300"
+        className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-none border border-white/70 bg-white/80 text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-blue-600 hover:shadow-md dark:border-slate-700/70 dark:bg-slate-950/70 dark:text-slate-200 dark:hover:text-blue-300"
       >
         <Icon className="h-4 w-4" />
       </button>

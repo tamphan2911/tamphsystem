@@ -184,11 +184,9 @@ function DeleteProjectButton({
       >
         <p>
           Project:{" "}
-          <span className="font-semibold text-slate-950 dark:text-white">
-            {project.title}
-          </span>
+          <span className="font-semibold text-[#E4E4E4]">{project.title}</span>
         </p>
-        <p className="text-slate-500 dark:text-slate-400">
+        <p className="text-[#B0B0B0]">
           Project ID: {project.referenceCode || project.id.slice(0, 8)}
         </p>
         <p className="font-semibold text-rose-700 dark:text-rose-300">
@@ -263,8 +261,8 @@ export function OrganizedProjectsTable({
   const pagination = useTablePagination(filtered, 10);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -283,7 +281,7 @@ export function OrganizedProjectsTable({
 
       <div className="overflow-hidden">
         <table className="w-full table-fixed text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+          <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="w-[7.5rem] px-3 py-3">Project ID</th>
               <th className="px-3 py-3">Project</th>
@@ -299,7 +297,7 @@ export function OrganizedProjectsTable({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((project) => {
               const status = statusMeta(project.status);
               const StatusIcon = status.icon;
@@ -309,10 +307,10 @@ export function OrganizedProjectsTable({
               return (
                 <tr
                   key={project.id}
-                  className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                  className="group align-top transition-colors duration-150 hover:bg-[#383838]"
                 >
                   <td className="px-3 py-3 align-top">
-                    <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400">
+                    <span className="font-mono text-xs font-bold text-[#B0B0B0]">
                       {project.referenceCode ||
                         project.id.slice(0, 8).toUpperCase()}
                     </span>
@@ -326,17 +324,17 @@ export function OrganizedProjectsTable({
                         {project.title}
                       </Link>
                       {project.durationLabel && (
-                        <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+                        <span className="text-xs font-semibold text-[#777777]">
                           ({project.durationLabel})
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-[#B0B0B0]">
                       {project.members.length > 0
                         ? project.members.map(memberName).join(", ")
                         : "No members"}
                     </p>
-                    <p className="mt-0.5 line-clamp-1 text-xs leading-5 text-slate-400 dark:text-slate-500">
+                    <p className="mt-0.5 line-clamp-1 text-xs leading-5 text-[#777777]">
                       {project.description || project.note || "No description"}
                     </p>
                   </td>
@@ -360,12 +358,12 @@ export function OrganizedProjectsTable({
                       </span>
                     </IconHint>
                   </td>
-                  <td className="px-3 py-3 align-top text-sm text-slate-600 dark:text-slate-300">
+                  <td className="px-3 py-3 align-top text-sm text-[#B0B0B0]">
                     <span className="line-clamp-2">
                       {project.organizer || "No funding institution"}
                     </span>
                     {project.fundingAmount && (
-                      <span className="mt-1 block text-xs font-semibold text-slate-400 dark:text-slate-500">
+                      <span className="mt-1 block text-xs font-semibold text-[#777777]">
                         {formatCurrencyCodeMoney(
                           project.fundingAmount,
                           project.fundingCurrency,
@@ -374,15 +372,15 @@ export function OrganizedProjectsTable({
                     )}
                   </td>
                   <td className="px-3 py-3 align-top">
-                    <p className="whitespace-nowrap text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <p className="whitespace-nowrap text-xs font-medium text-[#B0B0B0]">
                       start: {project.startDate || "-"}
                     </p>
-                    <p className="whitespace-nowrap text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <p className="whitespace-nowrap text-xs font-medium text-[#B0B0B0]">
                       end: {project.endDate || "-"}
                     </p>
                   </td>
                   <td className="px-2 py-3 text-center align-top">
-                    <div className="inline-flex min-w-10 items-center justify-center rounded-lg bg-slate-50 px-2 py-1 text-sm font-black text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700">
+                    <div className="inline-flex min-w-10 items-center justify-center rounded-none bg-slate-50 px-2 py-1 text-sm font-black text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700">
                       {project.researchCount}
                     </div>
                   </td>

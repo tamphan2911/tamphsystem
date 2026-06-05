@@ -201,8 +201,8 @@ export function SuggestionsTable({
   const pagination = useTablePagination(filtered, 10);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -242,7 +242,7 @@ export function SuggestionsTable({
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[74rem] text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+          <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="sticky left-0 z-20 w-[25rem] bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
                 Research
@@ -262,7 +262,7 @@ export function SuggestionsTable({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((suggestion) => {
               const TypeIcon =
                 suggestion.kind === "Journal" ? BookOpen : CalendarDays;
@@ -270,7 +270,7 @@ export function SuggestionsTable({
               return (
                 <tr
                   key={suggestion.id}
-                  className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                  className="group align-top transition-colors duration-150 hover:bg-[#383838]"
                 >
                   <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
                     <Link
@@ -279,7 +279,7 @@ export function SuggestionsTable({
                     >
                       {suggestion.projectTitle}
                     </Link>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-xs text-[#B0B0B0]">
                       {suggestion.projectCode || "No research code"}
                     </p>
                   </td>
@@ -290,30 +290,30 @@ export function SuggestionsTable({
                     >
                       {suggestion.venueName}
                     </Link>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#B0B0B0]">
                       {suggestion.venueMeta || "-"}
                     </p>
                   </td>
                   <td className="px-3 py-3">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${typeClass(suggestion.kind)}`}
+                      className={`inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-xs font-bold ring-1 ${typeClass(suggestion.kind)}`}
                     >
                       <TypeIcon className="h-3.5 w-3.5" />
                       {suggestion.kind}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                  <td className="px-3 py-3 text-xs leading-5 text-[#B0B0B0]">
                     <span className="line-clamp-3">
                       {suggestion.scope || "-"}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                    <span className="block text-slate-700 dark:text-slate-200">
+                  <td className="px-3 py-3 text-xs leading-5 text-[#B0B0B0]">
+                    <span className="block text-[#E4E4E4]">
                       {suggestion.suggestedBy}
                     </span>
                     <span>{suggestion.suggestedByMeta}</span>
                   </td>
-                  <td className="px-3 py-3 text-xs text-slate-500 dark:text-slate-400">
+                  <td className="px-3 py-3 text-xs text-[#B0B0B0]">
                     {suggestion.createdAt}
                   </td>
                   <td className="px-2 py-3 text-center">

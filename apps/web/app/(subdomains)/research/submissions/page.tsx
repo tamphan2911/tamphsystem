@@ -221,7 +221,7 @@ export default async function SubmissionsPage() {
       label: "Submits",
       value: rows.length,
       icon: Send,
-      color: "text-slate-600 dark:text-slate-300",
+      color: "text-[#B0B0B0]",
     },
     {
       label: "Journals",
@@ -250,21 +250,21 @@ export default async function SubmissionsPage() {
           {stats.map((item) => (
             <div
               key={item.label}
-              className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              className="flex min-w-32 items-center gap-3 border border-[#444444] bg-[#2C2C2C] px-3 py-2 shadow-none"
             >
               <item.icon className={`h-4 w-4 ${item.color}`} />
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                   {item.label}
                 </p>
-                <p className="text-base font-black text-slate-950 dark:text-white">
+                <p className="text-base font-black text-[#E4E4E4]">
                   {item.value}
                 </p>
               </div>
             </div>
           ))}
         </div>
-        <div className="inline-flex w-fit items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-bold uppercase tracking-wide text-blue-700 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300">
+        <div className="inline-flex w-fit items-center gap-2 rounded-none border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-bold uppercase tracking-wide text-blue-700 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300">
           <FileCheck2 className="h-3.5 w-3.5" />
           Admin
         </div>

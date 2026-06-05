@@ -76,7 +76,7 @@ function NewResearchAuthorsPicker({
   }
 
   return (
-    <div className="grid gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+    <div className="grid gap-2 text-sm font-semibold text-[#E4E4E4]">
       <span>Authors</span>
       {selectedAuthors.map((author) => (
         <input
@@ -91,7 +91,7 @@ function NewResearchAuthorsPicker({
         name="correspondingAuthorId"
         value={selectedAuthors[0]?.id ?? ""}
       />
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-950">
+      <div className="border border-[#444444] bg-[#2C2C2C] p-3 shadow-none">
         <div ref={searchRef} className="relative">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
@@ -122,14 +122,14 @@ function NewResearchAuthorsPicker({
                       onClick={() => addAuthor(user)}
                       className="flex w-full cursor-pointer items-center gap-3 rounded-none border-y border-transparent px-3 py-2.5 text-left transition hover:border-blue-100 hover:bg-blue-50 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40"
                     >
-                      <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900">
+                      <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-none bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900">
                         <UserRound className="h-4 w-4" aria-hidden="true" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                        <span className="block truncate text-sm font-bold text-[#E4E4E4]">
                           {authorName(user)}
                         </span>
-                        <span className="block truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+                        <span className="block truncate text-xs font-medium text-[#777777]">
                           {user.role} - {user.email} - {user.id.slice(0, 8)}
                         </span>
                       </span>
@@ -153,22 +153,22 @@ function NewResearchAuthorsPicker({
           {selectedAuthors.map((author, index) => (
             <div
               key={author.id}
-              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-900"
+              className="flex items-center gap-3 border border-[#444444] bg-white px-3 py-2 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-900"
             >
-              <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900">
+              <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-none bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900">
                 <UserRound className="h-4 w-4" aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                  <p className="truncate text-sm font-bold text-[#E4E4E4]">
                     {authorName(author)}
                     {index === 0 ? "*" : ""}
                   </p>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  <span className="rounded-none bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                     {index === 0 ? "First author" : "Author"}
                   </span>
                 </div>
-                <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+                <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-[#777777]">
                   <Mail className="h-3 w-3 flex-none" aria-hidden="true" />
                   {author.email}
                 </p>
@@ -184,7 +184,7 @@ function NewResearchAuthorsPicker({
             </div>
           ))}
           {selectedAuthors.length === 0 && (
-            <div className="rounded-xl border border-dashed border-slate-300 px-3 py-5 text-center text-sm font-medium text-slate-400 dark:border-slate-700">
+            <div className="rounded-none border border-dashed border-slate-300 px-3 py-5 text-center text-sm font-medium text-slate-400 dark:border-slate-700">
               Search and choose at least one author.
             </div>
           )}
@@ -267,7 +267,7 @@ export function NewResearchDialog({
           {warning && (
             <div
               ref={warningRef}
-              className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-200"
+              className="flex items-start gap-3 rounded-none border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-200"
             >
               <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
               {warning}
@@ -297,7 +297,7 @@ export function NewResearchDialog({
 
           {isAdmin && (
             <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
-              <h3 className="mb-4 text-base font-bold text-slate-950 dark:text-white">
+              <h3 className="mb-4 text-base font-bold text-[#E4E4E4]">
                 Registration
               </h3>
               <div className="grid items-end gap-4 lg:grid-cols-[14rem_1fr]">

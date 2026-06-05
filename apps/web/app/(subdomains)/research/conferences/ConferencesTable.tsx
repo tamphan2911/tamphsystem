@@ -209,8 +209,8 @@ export function ConferencesTable({
   const pagination = useTablePagination(filtered, 10);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -231,7 +231,7 @@ export function ConferencesTable({
 
       <div className="overflow-hidden">
         <table className="w-full table-fixed text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+          <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th
                 className={isAdmin ? "w-[38%] px-4 py-3" : "w-[42%] px-4 py-3"}
@@ -254,7 +254,7 @@ export function ConferencesTable({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((conference) => {
               const status = conferenceStatus(conference);
               const linkedSummary = [
@@ -275,21 +275,21 @@ export function ConferencesTable({
               return (
                 <tr
                   key={conference.id}
-                  className={`group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40 ${status.rowClass}`}
+                  className={`group align-top transition-colors duration-150 hover:bg-[#383838] ${status.rowClass}`}
                 >
                   <td className="px-4 py-3">
                     <Link
                       href={`/conferences/${conference.id}`}
-                      className="line-clamp-2 text-base font-normal leading-6 text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                      className="line-clamp-2 text-base font-normal leading-6 text-[#E4E4E4] transition hover:text-[#A8DADC]"
                     >
                       {conference.name}
                     </Link>
-                    <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 truncate text-xs text-[#B0B0B0]">
                       {[conference.time, conference.location]
                         .filter(Boolean)
                         .join(" - ") || "Time/location not set"}
                     </p>
-                    <p className="mt-1 truncate text-xs text-slate-400 dark:text-slate-500">
+                    <p className="mt-1 truncate text-xs text-[#777777]">
                       Organizer: {conference.organizer || "Not set"}
                     </p>
                     {linkedSummary ? (
@@ -299,26 +299,26 @@ export function ConferencesTable({
                     ) : null}
                   </td>
                   <td className="px-3 py-3">
-                    <span className="rounded-full bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+                    <span className="border border-[#444444] bg-[#202020] px-2 py-1 text-xs font-normal text-[#B0B0B0]">
                       {conference.type || "-"}
                     </span>
                   </td>
                   <td className="px-3 py-3">
                     <span
-                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${status.className}`}
+                      className={`inline-flex border px-2.5 py-1 text-xs font-normal ${status.className}`}
                     >
                       {status.label}
                     </span>
-                    <p className="mt-1 truncate text-xs text-slate-400 dark:text-slate-500">
+                    <p className="mt-1 truncate text-xs text-[#777777]">
                       {status.detail}
                     </p>
                   </td>
-                  <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                  <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                     <span className="line-clamp-2">
                       {conference.theme || "-"}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                  <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                     <span className="block truncate">
                       {conference.isbn || "-"}
                     </span>

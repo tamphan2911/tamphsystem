@@ -102,7 +102,7 @@ function IconChip({
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
@@ -129,7 +129,7 @@ function DeleteProposalButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-rose-100 bg-rose-50 text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:shadow-md dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/50"
+          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-none border border-rose-100 bg-rose-50 text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:shadow-md dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/50"
           aria-label={`Delete ${proposal.title}`}
         >
           <Trash2 className="h-4 w-4" />
@@ -168,9 +168,7 @@ function DeleteProposalButton({
       >
         <p>
           Proposal:{" "}
-          <span className="font-semibold text-slate-950 dark:text-white">
-            {proposal.title}
-          </span>
+          <span className="font-semibold text-[#E4E4E4]">{proposal.title}</span>
         </p>
         <p className="font-semibold text-rose-700 dark:text-rose-300">
           This action cannot be undone from this screen.
@@ -223,8 +221,8 @@ export function ProposalsTable({
   const pagination = useTablePagination(filtered, 10);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -254,7 +252,7 @@ export function ProposalsTable({
 
       <div className="overflow-hidden">
         <table className="w-full table-fixed text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+          <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="w-20 px-3 py-3">ID</th>
               <th className="px-3 py-3">Proposal</th>
@@ -270,7 +268,7 @@ export function ProposalsTable({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((proposal) => (
               <tr
                 key={proposal.id}
@@ -294,11 +292,11 @@ export function ProposalsTable({
                   >
                     {proposal.title}
                   </Link>
-                  <p className="mt-1 font-mono text-xs text-slate-400 dark:text-slate-500">
+                  <p className="mt-1 font-mono text-xs text-[#777777]">
                     {proposal.createdAt}
                   </p>
                   {(proposal.identifier || proposal.organization) && (
-                    <p className="mt-1 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 line-clamp-1 text-xs text-[#B0B0B0]">
                       {[proposal.identifier, proposal.organization]
                         .filter(Boolean)
                         .join(" - ")}
@@ -325,15 +323,15 @@ export function ProposalsTable({
                     )}
                   />
                 </td>
-                <td className="px-3 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                  <span className="block text-slate-700 dark:text-slate-200">
+                <td className="px-3 py-3 text-xs leading-5 text-[#B0B0B0]">
+                  <span className="block text-[#E4E4E4]">
                     {proposal.submittedBy}
                   </span>
                   <span className="line-clamp-1">
                     {proposal.submittedByEmail}
                   </span>
                 </td>
-                <td className="px-3 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                <td className="px-3 py-3 text-xs leading-5 text-[#B0B0B0]">
                   <span className="line-clamp-2">
                     {proposal.contactInfo || "-"}
                   </span>
@@ -343,14 +341,14 @@ export function ProposalsTable({
                     <IconHint label="Download support file">
                       <a
                         href={`/api/research/proposals/${proposal.id}/file`}
-                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50 text-emerald-700 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-100 hover:shadow-md dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/50"
+                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-none border border-emerald-100 bg-emerald-50 text-emerald-700 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-100 hover:shadow-md dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/50"
                       >
                         <Download className="h-4 w-4" />
                       </a>
                     </IconHint>
                   ) : (
                     <IconHint label="No support file">
-                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-600">
+                      <span className="inline-flex h-8 w-8 items-center justify-center border border-[#444444] bg-slate-50 text-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-600">
                         <FileQuestion className="h-4 w-4" />
                       </span>
                     </IconHint>

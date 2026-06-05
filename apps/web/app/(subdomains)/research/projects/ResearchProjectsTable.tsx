@@ -284,11 +284,9 @@ function DeleteResearchButton({
       >
         <p>
           Research:{" "}
-          <span className="font-semibold text-slate-950 dark:text-white">
-            {row.title}
-          </span>
+          <span className="font-semibold text-[#E4E4E4]">{row.title}</span>
         </p>
-        <p className="text-slate-500 dark:text-slate-400">
+        <p className="text-[#B0B0B0]">
           Research ID: {row.researchCode || row.id.slice(0, 8)}
         </p>
         <p className="font-semibold text-rose-700 dark:text-rose-300">

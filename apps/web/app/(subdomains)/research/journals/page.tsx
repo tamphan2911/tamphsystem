@@ -67,10 +67,8 @@ export default async function JournalsPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-          Journal List
-        </p>
+      <div className="flex flex-col gap-3 border border-[#444444] bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm font-semibold text-[#B0B0B0]">Journal List</p>
         {isAdmin ? (
           <NewJournalDialog />
         ) : (

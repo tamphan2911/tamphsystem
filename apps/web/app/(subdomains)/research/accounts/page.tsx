@@ -102,14 +102,14 @@ export default async function PublisherAccountsPage() {
           {stats.map((item) => (
             <div
               key={item.label}
-              className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              className="flex min-w-32 items-center gap-3 border border-[#444444] bg-[#2C2C2C] px-3 py-2 shadow-none"
             >
               <item.icon className={`h-4 w-4 ${item.color}`} />
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                   {item.label}
                 </p>
-                <p className="text-base font-black text-slate-950 dark:text-white">
+                <p className="text-base font-black text-[#E4E4E4]">
                   {item.value}
                 </p>
               </div>

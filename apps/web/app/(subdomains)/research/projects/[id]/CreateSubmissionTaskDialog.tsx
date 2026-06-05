@@ -287,18 +287,18 @@ export function CreateSubmissionTaskDialog({
               <input key={id} type="hidden" name="assigneeIds" value={id} />
             ))}
 
-            <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 dark:border-indigo-900/60 dark:bg-indigo-950/20">
+            <div className="rounded-none border border-indigo-100 bg-indigo-50/60 p-4 dark:border-indigo-900/60 dark:bg-indigo-950/20">
               <p className="text-xs font-bold uppercase tracking-wide text-indigo-500 dark:text-indigo-300">
                 Research
               </p>
-              <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
+              <p className="mt-1 text-sm font-semibold text-[#E4E4E4]">
                 {projectTitle}
               </p>
             </div>
 
             <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                   Task title
                 </span>
                 <input
@@ -314,7 +314,7 @@ export function CreateSubmissionTaskDialog({
                 />
               </label>
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                   Due date
                 </span>
                 <div className="relative">
@@ -329,7 +329,7 @@ export function CreateSubmissionTaskDialog({
             </div>
 
             <section className="grid gap-3">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Journal or conference
               </span>
               <div className="relative">
@@ -365,13 +365,13 @@ export function CreateSubmissionTaskDialog({
                           <span className="block text-sm font-bold">
                             {venue.name}
                           </span>
-                          <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                          <span className="mt-1 block text-xs text-[#B0B0B0]">
                             {venue.kind === "journal"
                               ? `${venue.issn || "No ISSN"} - ${venue.publisher || "No publisher"} - ${venue.rank || "No rank"}`
                               : `${venue.isbn || "No ISBN"} - ${venue.organizer || "No organizer"} - ${venue.type || "No type"}`}
                           </span>
                         </span>
-                        <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-bold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                        <span className="rounded-none bg-slate-100 px-2 py-1 text-[11px] font-bold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                           {venue.kind}
                         </span>
                       </span>
@@ -379,7 +379,7 @@ export function CreateSubmissionTaskDialog({
                   );
                 })}
                 {venueResults.length === 0 && (
-                  <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                  <p className="py-10 text-center text-sm text-[#B0B0B0]">
                     No venue matches this search.
                   </p>
                 )}
@@ -387,9 +387,9 @@ export function CreateSubmissionTaskDialog({
             </section>
 
             {selectedVenue?.kind === "journal" && (
-              <section className="grid gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+              <section className="grid gap-3 border border-[#444444] p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                     Account to submit
                   </span>
                   <ResearchIconButton
@@ -411,7 +411,7 @@ export function CreateSubmissionTaskDialog({
                     <button
                       type="button"
                       onClick={() => setAccountOpen((current) => !current)}
-                      className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-left text-sm text-slate-800 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      className="flex w-full cursor-pointer items-center justify-between gap-3 border border-[#444444] bg-slate-50 px-3 py-2.5 text-left text-sm text-slate-800 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                     >
                       <span className="min-w-0 truncate">
                         {selectedAccount
@@ -442,7 +442,7 @@ export function CreateSubmissionTaskDialog({
                               <span className="block font-semibold">
                                 {account.username}
                               </span>
-                              <span className="block text-xs text-slate-500 dark:text-slate-400">
+                              <span className="block text-xs text-[#B0B0B0]">
                                 {account.email || "No email"}
                               </span>
                             </span>
@@ -455,7 +455,7 @@ export function CreateSubmissionTaskDialog({
                     </FloatingDropdownPortal>
                   </div>
                 ) : (
-                  <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                  <p className="rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
                     This journal does not have any account yet.
                   </p>
                 )}
@@ -463,7 +463,7 @@ export function CreateSubmissionTaskDialog({
             )}
 
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Note
               </span>
               <textarea
@@ -479,7 +479,7 @@ export function CreateSubmissionTaskDialog({
             </label>
 
             <section className="grid gap-3">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Assign to
               </span>
               <div className="relative">
@@ -511,7 +511,7 @@ export function CreateSubmissionTaskDialog({
                           <span className="block truncate text-sm font-bold">
                             {assistant.name || assistant.email}
                           </span>
-                          <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+                          <span className="block truncate text-xs text-[#B0B0B0]">
                             {assistant.email}
                           </span>
                         </span>
@@ -563,35 +563,35 @@ export function CreateSubmissionTaskDialog({
             <input type="hidden" name="journalId" value={selectedVenue.id} />
             <input type="hidden" name="projectId" value={projectId} />
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Journal
               </span>
               <input
                 readOnly
                 value={selectedVenue.name}
-                className={`${inputClass} bg-slate-100 text-slate-600 dark:text-slate-300`}
+                className={`${inputClass} bg-slate-100 text-[#B0B0B0]`}
               />
             </label>
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Username
               </span>
               <input name="username" required className={inputClass} />
             </label>
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Password
               </span>
               <input name="password" className={inputClass} />
             </label>
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Email
               </span>
               <input name="email" type="email" className={inputClass} />
             </label>
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Note
               </span>
               <input name="note" className={inputClass} />

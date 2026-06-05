@@ -168,22 +168,20 @@ export default async function ConferenceDetailPage({
         Conferences
       </Link>
 
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <section className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
         <div className="border-b border-slate-100 p-5 dark:border-slate-800">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+                <h1 className="text-2xl font-black tracking-tight text-[#E4E4E4]">
                   {conference.name}
                 </h1>
-                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900">
+                <span className="rounded-none bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900">
                   {conferenceTypeLabel(conference.type) || "Type not set"}
                 </span>
               </div>
               {theme && (
-                <p className="mt-3 max-w-4xl text-sm text-slate-600 dark:text-slate-300">
-                  {theme}
-                </p>
+                <p className="mt-3 max-w-4xl text-sm text-[#B0B0B0]">{theme}</p>
               )}
             </div>
             {conference.website && (
@@ -191,7 +189,7 @@ export default async function ConferenceDetailPage({
                 href={conference.website}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:text-blue-600 hover:shadow-sm dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
+                className="inline-flex items-center justify-center gap-2 border border-[#444444] px-3 py-2 text-sm font-semibold text-slate-600 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:text-blue-600 hover:shadow-sm dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
               >
                 <Globe2 className="h-4 w-4" />
                 Website
@@ -299,7 +297,7 @@ export default async function ConferenceDetailPage({
 
       <section className="space-y-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-slate-950 dark:text-white">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-[#E4E4E4]">
             <Send className="h-5 w-5 text-blue-500" />
             Research submitted to this conference
           </h2>

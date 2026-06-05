@@ -78,7 +78,7 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-violet-200 bg-violet-100/80 px-4 py-2.5 text-sm font-bold text-violet-800 shadow-sm shadow-violet-900/5 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-50 hover:shadow-md hover:shadow-violet-900/10 focus:outline-none focus:ring-4 focus:ring-violet-200/70 dark:border-violet-700/60 dark:bg-violet-900/35 dark:text-violet-100 dark:hover:border-violet-500/70 dark:hover:bg-violet-800/55 dark:hover:text-white dark:hover:shadow-black/25 dark:focus:ring-violet-700/35"
+        className="inline-flex cursor-pointer items-center gap-2 rounded-none border border-violet-200 bg-violet-100/80 px-4 py-2.5 text-sm font-bold text-violet-800 shadow-sm shadow-violet-900/5 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-50 hover:shadow-md hover:shadow-violet-900/10 focus:outline-none focus:ring-4 focus:ring-violet-200/70 dark:border-violet-700/60 dark:bg-violet-900/35 dark:text-violet-100 dark:hover:border-violet-500/70 dark:hover:bg-violet-800/55 dark:hover:text-white dark:hover:shadow-black/25 dark:focus:ring-violet-700/35"
       >
         <PlusCircle className="h-4 w-4" />
         Add Assistant
@@ -136,7 +136,7 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
                     <span className="block truncate text-sm font-bold text-slate-900 dark:text-white">
                       {user.name || "Unnamed user"}
                     </span>
-                    <span className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                    <span className="mt-0.5 flex items-center gap-1 truncate text-xs text-[#B0B0B0]">
                       <Mail className="h-3.5 w-3.5 flex-none" />
                       {user.email}
                     </span>
@@ -167,13 +167,13 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
             <button
               type="button"
               onClick={closeDialog}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               Cancel
             </button>
             <button
               disabled={!selectedUserId || isPending}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+              className="inline-flex items-center gap-2 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0 disabled:hover:shadow-none"
             >
               <PlusCircle className="h-4 w-4" />
               Assign Role
@@ -202,7 +202,7 @@ function RoleButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
+      className={`flex items-center gap-3 rounded-none border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
         active
           ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300"
           : "border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
@@ -211,9 +211,7 @@ function RoleButton({
       {icon}
       <span>
         <span className="block text-sm font-bold">{title}</span>
-        <span className="block text-xs text-slate-500 dark:text-slate-400">
-          {description}
-        </span>
+        <span className="block text-xs text-[#B0B0B0]">{description}</span>
       </span>
     </button>
   );

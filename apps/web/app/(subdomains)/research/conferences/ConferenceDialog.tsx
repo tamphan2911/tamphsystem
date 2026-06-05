@@ -27,11 +27,10 @@ export type ConferenceFormValues = {
 };
 
 const fieldClass =
-  "h-12 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+  "h-12 border border-[#444444] bg-slate-50 px-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
 const areaClass =
-  "min-h-24 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
-const labelClass =
-  "grid gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200";
+  "min-h-24 border border-[#444444] bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+const labelClass = "grid gap-1 text-sm font-semibold text-[#E4E4E4]";
 
 export function ConferenceDialog({
   mode,
@@ -60,8 +59,8 @@ export function ConferenceDialog({
         }}
         className={
           isEdit
-            ? "inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-100 hover:shadow-md dark:border-blue-800/70 dark:bg-blue-950/40 dark:text-blue-200"
-            : "inline-flex cursor-pointer items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-sm font-bold text-cyan-800 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-100 hover:shadow-md dark:border-cyan-800/70 dark:bg-cyan-950/40 dark:text-cyan-200"
+            ? "inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border border-blue-200 bg-blue-50 text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-100 hover:shadow-md dark:border-blue-800/70 dark:bg-blue-950/40 dark:text-blue-200"
+            : "inline-flex cursor-pointer items-center gap-2 rounded-none border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-sm font-bold text-cyan-800 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-100 hover:shadow-md dark:border-cyan-800/70 dark:bg-cyan-950/40 dark:text-cyan-200"
         }
         aria-label={isEdit ? "Edit conference" : "Add conference"}
       >
@@ -125,7 +124,7 @@ export function ConferenceDialog({
         >
           <div className="grid gap-4">
             {warning && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900 shadow-sm dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100">
+              <div className="rounded-none border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900 shadow-sm dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100">
                 <p className="font-bold">Conference needs attention</p>
                 <p className="mt-0.5">{warning}</p>
               </div>
@@ -285,7 +284,7 @@ export function ConferenceDialog({
           <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
             <button
               disabled={isPending}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-sm font-bold text-cyan-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-100 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 dark:border-cyan-800/70 dark:bg-cyan-950/40 dark:text-cyan-200"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-none border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-sm font-bold text-cyan-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-100 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 dark:border-cyan-800/70 dark:bg-cyan-950/40 dark:text-cyan-200"
             >
               {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

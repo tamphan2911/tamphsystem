@@ -145,11 +145,11 @@ function DeleteReviewButton({
       >
         <p>
           Manuscript:{" "}
-          <span className="font-semibold text-slate-950 dark:text-white">
+          <span className="font-semibold text-[#E4E4E4]">
             {review.manuscriptTitle}
           </span>
         </p>
-        <p className="text-slate-500 dark:text-slate-400">
+        <p className="text-[#B0B0B0]">
           Linked tasks will stay in the system, but they will no longer point to
           this review.
         </p>
@@ -213,8 +213,8 @@ export function ReviewsTable({
   const pagination = useTablePagination(filtered, 10);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -244,7 +244,7 @@ export function ReviewsTable({
 
       <div className="overflow-hidden">
         <table className="w-full table-fixed text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+          <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="px-3 py-3">Manuscript</th>
               <th className="w-48 px-3 py-3">Journal</th>
@@ -259,11 +259,11 @@ export function ReviewsTable({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((row) => (
               <tr
                 key={row.id}
-                className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                className="group align-top transition-colors duration-150 hover:bg-[#383838]"
               >
                 <td className="px-3 py-3">
                   <div className="flex items-start gap-3">
@@ -276,11 +276,11 @@ export function ReviewsTable({
                     <div>
                       <Link
                         href={`/reviews/${row.id}`}
-                        className="text-sm font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                        className="text-sm font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
                       >
                         {row.manuscriptTitle}
                       </Link>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-xs text-[#B0B0B0]">
                         {row.manuscriptId ||
                           row.reviewRound ||
                           "No tracking code"}
@@ -288,10 +288,10 @@ export function ReviewsTable({
                     </div>
                   </div>
                 </td>
-                <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                   <Link
                     href={`/journals/${row.journalId}`}
-                    className="line-clamp-2 font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                    className="line-clamp-2 font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
                   >
                     {row.journalName}
                   </Link>
@@ -306,13 +306,13 @@ export function ReviewsTable({
                     className={statusClass(row.status)}
                   />
                 </td>
-                <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                   {row.dueDate || "-"}
                 </td>
-                <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                   {row.recommendation || "-"}
                 </td>
-                <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                   <span className="line-clamp-2">{row.note || "-"}</span>
                 </td>
                 {isAdmin && (

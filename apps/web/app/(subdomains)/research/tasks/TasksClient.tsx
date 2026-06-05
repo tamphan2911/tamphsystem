@@ -125,7 +125,7 @@ function statusMeta(task: TaskRow) {
       ],
       className:
         "bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
-      detailClassName: "text-slate-500 dark:text-slate-400",
+      detailClassName: "text-[#B0B0B0]",
     };
   }
 
@@ -203,7 +203,7 @@ function statusMeta(task: TaskRow) {
     dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
     className:
       "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900",
-    detailClassName: "text-slate-500 dark:text-slate-400",
+    detailClassName: "text-[#B0B0B0]",
   };
 }
 
@@ -237,7 +237,7 @@ function DeleteTaskButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-rose-100 bg-rose-50 text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:shadow-md dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/50"
+          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-none border border-rose-100 bg-rose-50 text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:shadow-md dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/50"
           aria-label={`Delete ${task.title}`}
         >
           <Trash2 className="h-4 w-4" />
@@ -277,13 +277,9 @@ function DeleteTaskButton({
       >
         <p>
           Task:{" "}
-          <span className="font-semibold text-slate-950 dark:text-white">
-            {task.title}
-          </span>
+          <span className="font-semibold text-[#E4E4E4]">{task.title}</span>
         </p>
-        <p className="text-slate-500 dark:text-slate-400">
-          Task ID: {displayTaskId(task)}
-        </p>
+        <p className="text-[#B0B0B0]">Task ID: {displayTaskId(task)}</p>
         <p className="font-semibold text-rose-700 dark:text-rose-300">
           This action cannot be undone from this screen.
         </p>
@@ -398,7 +394,7 @@ export function TasksClient({
       label: "Tasks",
       value: tasks.length,
       icon: ClipboardList,
-      color: "text-slate-600 dark:text-slate-300",
+      color: "text-[#B0B0B0]",
     },
     {
       label: "Active",
@@ -429,14 +425,14 @@ export function TasksClient({
           {stats.map((item) => (
             <div
               key={item.label}
-              className="flex min-w-32 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              className="flex min-w-32 items-center gap-3 border border-[#444444] bg-[#2C2C2C] px-3 py-2 shadow-none"
             >
               <item.icon className={`h-4 w-4 ${item.color}`} />
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                   {item.label}
                 </p>
-                <p className="text-base font-black text-slate-950 dark:text-white">
+                <p className="text-base font-black text-[#E4E4E4]">
                   {item.value}
                 </p>
               </div>
@@ -447,8 +443,8 @@ export function TasksClient({
         {action}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+      <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
+        <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
           <TableSearchInput
             value={query}
             onChange={setQuery}
@@ -485,7 +481,7 @@ export function TasksClient({
 
         <div className="overflow-x-auto">
           <table className="w-full table-fixed text-left">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+            <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
               <tr>
                 <th className="w-[6rem] px-3 py-3">Task ID</th>
                 <th className="px-3 py-3">Task</th>
@@ -499,23 +495,23 @@ export function TasksClient({
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-[#444444]">
               {pagination.pagedRows.map((task) => {
                 const status = statusMeta(task);
                 return (
                   <tr
                     key={task.id}
-                    className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                    className="group align-top transition-colors duration-150 hover:bg-[#383838]"
                   >
                     <td className="px-3 py-3 align-top">
-                      <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400">
+                      <span className="font-mono text-xs font-bold text-[#B0B0B0]">
                         {displayTaskId(task)}
                       </span>
-                      <p className="mt-1 text-[11px] font-semibold leading-4 text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-[11px] font-semibold leading-4 text-[#B0B0B0]">
                         {taskTypeLines(task).typeLabel}
                       </p>
                       {taskTypeLines(task).subtypeLabel && (
-                        <p className="text-[11px] leading-4 text-slate-400 dark:text-slate-500">
+                        <p className="text-[11px] leading-4 text-[#777777]">
                           {taskTypeLines(task).subtypeLabel}
                         </p>
                       )}
@@ -523,22 +519,22 @@ export function TasksClient({
                     <td className="min-w-0 px-3 py-3 align-top">
                       <Link
                         href={`/tasks/${task.id}`}
-                        className="text-base font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                        className="text-base font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
                       >
                         {task.title}
                       </Link>
-                      <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 line-clamp-2 text-xs text-[#B0B0B0]">
                         {task.description || "No description"}
                       </p>
                     </td>
                     <td className="px-3 py-3 align-top">
                       <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ring-1 ${status.className}`}
+                        className={`inline-flex border px-2 py-1 text-xs font-normal ${status.className}`}
                       >
                         {status.label}
                       </span>
                     </td>
-                    <td className="px-3 py-3 align-top text-xs leading-5 text-slate-600 dark:text-slate-300">
+                    <td className="px-3 py-3 align-top text-xs leading-5 text-[#B0B0B0]">
                       {task.assignments.map((assignment, index) => (
                         <div key={assignment.id} title={assignment.userEmail}>
                           {assignment.userName}
@@ -550,7 +546,7 @@ export function TasksClient({
                       {status.dateLines.map((line) => (
                         <p
                           key={line}
-                          className="break-words text-xs font-medium leading-5 text-slate-500 dark:text-slate-400"
+                          className="break-words text-xs font-medium leading-5 text-[#B0B0B0]"
                         >
                           {line}
                         </p>

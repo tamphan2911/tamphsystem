@@ -604,15 +604,15 @@ export default async function TaskDetailPage({
         )}
       </div>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-none bg-blue-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
               <ClipboardList className="h-4 w-4" />
               {task.category || "Task"}
             </div>
             <div className="flex min-w-0 items-center gap-2">
-              <h1 className="text-lg font-normal tracking-tight text-slate-950 dark:text-white">
+              <h1 className="text-lg font-normal tracking-tight text-[#E4E4E4]">
                 {task.title}
               </h1>
               {(canEdit || canUseReminder) && (
@@ -658,20 +658,20 @@ export default async function TaskDetailPage({
                 </span>
               )}
             </div>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-2 text-sm text-[#B0B0B0]">
               Created by {task.createdBy.name || task.createdBy.email}
             </p>
           </div>
-          <div className="min-w-44 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+          <div className="min-w-44 border border-[#444444] bg-[#202020] p-4">
             <span
-              className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ring-1 ${toneClass(meta.tone)}`}
+              className={`inline-flex border px-2 py-1 text-xs font-normal ${toneClass(meta.tone)}`}
             >
               {meta.label}
             </span>
-            <p className="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <p className="mt-2 text-sm font-semibold text-[#E4E4E4]">
               {meta.detail}
             </p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-xs text-[#B0B0B0]">
               Due {formatDate(task.dueDate)}
             </p>
           </div>
@@ -679,7 +679,7 @@ export default async function TaskDetailPage({
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {task.project && (
-            <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <div className="border border-[#444444] p-4">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
                 <FileText className="h-4 w-4" /> Research
               </div>
@@ -689,13 +689,13 @@ export default async function TaskDetailPage({
               >
                 {task.project.title}
               </Link>
-              <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-xs leading-5 text-[#B0B0B0]">
                 {researchAuthors(task.project)}
               </p>
             </div>
           )}
           {task.journal && (
-            <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <div className="border border-[#444444] p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
                   <Send className="h-4 w-4" /> Journal
@@ -711,18 +711,18 @@ export default async function TaskDetailPage({
               >
                 {task.journal.name}
               </Link>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-xs text-[#B0B0B0]">
                 {task.journal.publisher || "No publisher"} -{" "}
                 {task.journal.rank || "No rank"}
               </p>
-              <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
                 <KeyRound className="h-3.5 w-3.5 text-amber-500" />
                 {accountLine(task.account)}
               </p>
             </div>
           )}
           {task.conference && (
-            <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <div className="border border-[#444444] p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
                   <Send className="h-4 w-4" /> Conference
@@ -738,7 +738,7 @@ export default async function TaskDetailPage({
               >
                 {task.conference.name}
               </Link>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-xs text-[#B0B0B0]">
                 {task.conference.type || "No type"} -{" "}
                 {task.conference.location || "No location"} -{" "}
                 {conferenceTime(
@@ -746,7 +746,7 @@ export default async function TaskDetailPage({
                   task.conference.endDate,
                 )}
               </p>
-              <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
                 <KeyRound className="h-3.5 w-3.5 text-amber-500" />
                 {accountLine(task.account)}
               </p>
@@ -754,11 +754,9 @@ export default async function TaskDetailPage({
           )}
         </div>
 
-        <div className="mt-6 min-h-44 rounded-xl border border-slate-200 p-5 dark:border-slate-800">
-          <h2 className="text-sm font-bold text-slate-950 dark:text-white">
-            Task content
-          </h2>
-          <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-slate-300">
+        <div className="mt-6 min-h-44 border border-[#444444] p-5">
+          <h2 className="text-sm font-bold text-[#E4E4E4]">Task content</h2>
+          <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#B0B0B0]">
             {task.description || "No task note."}
           </p>
         </div>
@@ -783,22 +781,17 @@ export default async function TaskDetailPage({
         />
 
         <div className="mt-6 grid gap-3">
-          <h2 className="text-sm font-bold text-slate-950 dark:text-white">
-            Assignees
-          </h2>
+          <h2 className="text-sm font-bold text-[#E4E4E4]">Assignees</h2>
           <div className="grid max-w-2xl gap-2 sm:grid-cols-2">
             {task.assignments.map((assignment) => (
-              <div
-                key={assignment.id}
-                className="rounded-xl border border-slate-200 p-3 dark:border-slate-800"
-              >
+              <div key={assignment.id} className="border border-[#444444] p-3">
                 <span className="flex min-w-0 items-start gap-3">
                   <UserRound className="mt-0.5 h-4 w-4 flex-none text-slate-400" />
                   <span className="min-w-0 leading-tight">
-                    <span className="block truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    <span className="block truncate text-sm font-semibold text-[#E4E4E4]">
                       {assignment.user.name || assignment.user.email}
                     </span>
-                    <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+                    <span className="block truncate text-xs text-[#B0B0B0]">
                       {assignment.user.email}
                     </span>
                   </span>
@@ -868,7 +861,7 @@ function ExternalVenueLink({
   className: string;
   children: ReactNode;
 }) {
-  const baseClass = `group/link relative inline-flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${className}`;
+  const baseClass = `group/link relative inline-flex h-9 w-9 items-center justify-center rounded-none border shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${className}`;
 
   if (!href) {
     return (
@@ -890,7 +883,7 @@ function ExternalVenueLink({
       aria-label={label}
     >
       {children}
-      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/link:translate-y-0 group-hover/link:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
+      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/link:translate-y-0 group-hover/link:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
         {label}
       </span>
     </a>
@@ -907,14 +900,12 @@ function MetaItem({
   value: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+    <div className="border border-[#444444] p-3">
       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
         {icon}
         {label}
       </div>
-      <p className="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-        {value}
-      </p>
+      <p className="mt-2 text-sm font-semibold text-[#E4E4E4]">{value}</p>
     </div>
   );
 }

@@ -186,8 +186,8 @@ export function JournalsTable({
   }, [currentListPath, router]);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -217,7 +217,7 @@ export function JournalsTable({
 
       <div className="overflow-hidden">
         <table className="w-full table-fixed text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+          <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th
                 className={isAdmin ? "w-[31%] px-4 py-3" : "w-[34%] px-4 py-3"}
@@ -288,20 +288,20 @@ export function JournalsTable({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((journal) => (
               <tr
                 key={journal.id}
-                className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                className="group align-top transition-colors duration-150 hover:bg-[#383838]"
               >
                 <td className="px-4 py-3">
                   <Link
                     href={`/journals/${journal.id}?back=${encodeURIComponent(currentListPath)}`}
-                    className="text-base font-normal text-slate-700 transition hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300"
+                    className="text-base font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
                   >
                     {journal.name}
                   </Link>
-                  <p className="mt-1 line-clamp-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 line-clamp-1 text-xs font-medium text-[#B0B0B0]">
                     {[
                       journal.publisher || "No publisher",
                       journal.issn ? `ISSN ${journal.issn}` : "No ISSN",
@@ -309,30 +309,30 @@ export function JournalsTable({
                     ].join(" - ")}
                   </p>
                 </td>
-                <td className="px-4 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                <td className="px-4 py-3 text-xs leading-5 text-[#B0B0B0]">
                   {journal.fields.length > 0 ? journal.fields.join("; ") : "-"}
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                <td className="px-4 py-3 text-sm text-[#B0B0B0]">
                   {formatMoney(journal.apc, journal.apcCurrency)}
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                <td className="px-4 py-3 text-sm text-[#B0B0B0]">
                   {formatMoney(
                     journal.submissionFee,
                     journal.submissionFeeCurrency,
                   )}
                 </td>
-                <td className="px-2 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <td className="px-2 py-3 text-center text-sm font-semibold text-[#E4E4E4]">
                   {journal.ongoingSubmissions}
                 </td>
                 <td className="px-2 py-3 text-center text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                   {journal.publishedSubmissions}
                 </td>
-                <td className="px-2 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <td className="px-2 py-3 text-center text-sm font-semibold text-[#E4E4E4]">
                   {journal.reviews}
                 </td>
                 <td className="px-2 py-3">
                   {journal.country ? (
-                    <span className="inline-flex max-w-full items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <span className="inline-flex max-w-full items-center gap-1.5 text-xs font-medium text-[#B0B0B0]">
                       <span aria-hidden="true">
                         {countryFlag(journal.country)}
                       </span>
@@ -341,9 +341,7 @@ export function JournalsTable({
                       </span>
                     </span>
                   ) : (
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
-                      -
-                    </span>
+                    <span className="text-xs text-[#777777]">-</span>
                   )}
                 </td>
                 {isAdmin && (

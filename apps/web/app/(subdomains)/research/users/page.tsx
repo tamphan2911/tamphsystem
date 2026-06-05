@@ -45,15 +45,15 @@ export default async function ResearchUsersPage() {
     <div className="mx-auto max-w-7xl space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+          <h1 className="text-2xl font-black tracking-tight text-[#E4E4E4]">
             Research users
           </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-[#B0B0B0]">
             Accounts activated for Research Hub or registered from the research
             site.
           </p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+        <div className="border border-[#444444] bg-[#2C2C2C] px-3 py-2 text-sm font-semibold text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
           {rows.length} users
         </div>
       </div>

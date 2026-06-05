@@ -133,8 +133,8 @@ export function AssistantsTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -156,7 +156,7 @@ export function AssistantsTable({
 
       <div className="overflow-hidden">
         <table className="w-full table-fixed text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+          <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="w-[32%] px-4 py-3">Assistant</th>
               <th className="w-[28%] px-3 py-3">Email</th>
@@ -169,15 +169,15 @@ export function AssistantsTable({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((user) => (
               <tr
                 key={user.id}
-                className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                className="group align-top transition-colors duration-150 hover:bg-[#383838]"
               >
                 <td className="px-4 py-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-purple-100 bg-purple-50 text-purple-600 shadow-sm dark:border-purple-900/70 dark:bg-purple-950/40 dark:text-purple-300">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-[#444444] bg-[#202020] text-[#B39CD0] shadow-none">
                       <UserRound className="h-4 w-4" />
                     </span>
                     <span className="min-w-0 truncate text-sm font-medium text-slate-700 dark:text-slate-100">
@@ -185,12 +185,12 @@ export function AssistantsTable({
                     </span>
                   </div>
                 </td>
-                <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                   <span className="block truncate">{user.email}</span>
                 </td>
                 <td className="px-3 py-3">
-                  <div className="inline-flex max-w-full items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
-                    <KeyRound className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
+                  <div className="inline-flex max-w-full items-center gap-2 border border-[#444444] bg-slate-50 px-2.5 py-1.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                    <KeyRound className="h-4 w-4 shrink-0 text-[#777777]" />
                     <span className="min-w-0 flex-1 truncate font-mono">
                       {visiblePasswords[user.id]
                         ? user.password || "Not stored"
@@ -201,7 +201,7 @@ export function AssistantsTable({
                     <button
                       type="button"
                       onClick={() => togglePassword(user.id)}
-                      className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-slate-400 transition hover:bg-white hover:text-blue-600 dark:hover:bg-slate-900 dark:hover:text-blue-300"
+                      className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-none text-slate-400 transition hover:bg-white hover:text-blue-600 dark:hover:bg-slate-900 dark:hover:text-blue-300"
                       aria-label={
                         visiblePasswords[user.id]
                           ? "Hide assistant password"
@@ -225,7 +225,7 @@ export function AssistantsTable({
                       <button
                         type="button"
                         onClick={() => openEdit(user)}
-                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
+                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-[#444444] bg-[#2C2C2C] text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
                         aria-label="Edit assistant role"
                       >
                         <Pencil className="h-4 w-4" />
@@ -233,7 +233,7 @@ export function AssistantsTable({
                       <button
                         type="button"
                         onClick={() => setDeleting(user)}
-                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-rose-900 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-[#444444] bg-[#2C2C2C] text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-rose-900 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
                         aria-label="Remove assistant role"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -269,7 +269,7 @@ export function AssistantsTable({
           data-research-modal-overlay="true"
           className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
         >
-          <div className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+          <div className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <DialogHeader
               title="Edit assistant role"
               onClose={() => setEditing(null)}
@@ -277,13 +277,11 @@ export function AssistantsTable({
             <form action={submitEdit} className="grid gap-5 px-5 py-5">
               <input type="hidden" name="userId" value={editing.id} />
               <input type="hidden" name="assistantRole" value={editRole} />
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                <p className="text-sm font-bold text-slate-950 dark:text-white">
+              <div className="border border-[#444444] bg-[#202020] p-4">
+                <p className="text-sm font-bold text-[#E4E4E4]">
                   {editing.name || "Unnamed user"}
                 </p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  {editing.email}
-                </p>
+                <p className="mt-1 text-xs text-[#B0B0B0]">{editing.email}</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <RoleChoice
@@ -300,20 +298,20 @@ export function AssistantsTable({
                 />
               </div>
               <label className="grid gap-2">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                   Login password
                 </span>
                 <div className="relative">
-                  <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                  <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#777777]" />
                   <input
                     name="password"
                     type="text"
                     autoComplete="new-password"
                     placeholder="Leave blank to keep current password"
-                    className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+                    className="w-full border border-[#444444] bg-[#2C2C2C] py-2.5 pl-10 pr-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
                   />
                 </div>
-                <span className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                <span className="text-xs leading-5 text-[#B0B0B0]">
                   Set a new value here to update the assistant login password
                   and the password shown in this table.
                 </span>
@@ -322,13 +320,13 @@ export function AssistantsTable({
                 <button
                   type="button"
                   onClick={() => setEditing(null)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
                 <button
                   disabled={isPending}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
+                  className="rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
                 >
                   Save change
                 </button>
@@ -343,16 +341,16 @@ export function AssistantsTable({
           data-research-modal-overlay="true"
           className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
         >
-          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <DialogHeader
               title="Remove assistant role"
               onClose={() => setDeleting(null)}
             />
             <form action={confirmDelete} className="space-y-4 px-5 py-5">
               <input type="hidden" name="userId" value={deleting.id} />
-              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+              <p className="text-sm leading-6 text-[#B0B0B0]">
                 Remove the assistant role from{" "}
-                <span className="font-semibold text-slate-950 dark:text-white">
+                <span className="font-semibold text-[#E4E4E4]">
                   {deleting.name || deleting.email}
                 </span>
                 ? This does not delete the user account.
@@ -361,13 +359,13 @@ export function AssistantsTable({
                 <button
                   type="button"
                   onClick={() => setDeleting(null)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
                 <button
                   disabled={isPending}
-                  className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-rose-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
+                  className="rounded-none bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-rose-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
                 >
                   Remove role
                 </button>
@@ -384,7 +382,7 @@ function RolePill({ role }: { role: string }) {
   const chief = role === "CHIEF_ASSISTANT";
   return (
     <span
-      className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ring-1 ${
+      className={`inline-flex border px-2 py-1 text-xs font-normal ${
         chief
           ? "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900"
           : "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900"
@@ -410,7 +408,7 @@ function RoleChoice({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
+      className={`flex items-center gap-3 rounded-none border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
         active
           ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300"
           : "border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
@@ -431,13 +429,11 @@ function DialogHeader({
 }) {
   return (
     <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-      <h3 className="text-base font-bold text-slate-950 dark:text-white">
-        {title}
-      </h3>
+      <h3 className="text-base font-bold text-[#E4E4E4]">{title}</h3>
       <button
         type="button"
         onClick={onClose}
-        className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+        className="rounded-none p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
         aria-label="Close"
       >
         <X className="h-5 w-5" />

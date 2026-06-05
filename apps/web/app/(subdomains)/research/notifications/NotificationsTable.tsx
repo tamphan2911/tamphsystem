@@ -211,8 +211,8 @@ export function NotificationsTable({
   const pagination = useTablePagination(filtered, 10);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-3 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -249,7 +249,7 @@ export function NotificationsTable({
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[88rem] text-left">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+          <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="sticky left-0 z-20 w-[25rem] bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
                 Notification
@@ -265,37 +265,37 @@ export function NotificationsTable({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((notification) => (
               <tr
                 key={notification.id}
-                className="group align-top transition duration-200 ease-out hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                className="group align-top transition-colors duration-150 hover:bg-[#383838]"
               >
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                  <p className="line-clamp-2 text-sm font-normal leading-5 text-slate-800 dark:text-slate-100">
+                  <p className="line-clamp-2 text-sm font-normal leading-5 text-[#E4E4E4]">
                     {notification.title}
                   </p>
-                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#B0B0B0]">
                     {notification.summary}
                   </p>
                   {notification.body ? (
-                    <p className="mt-1 line-clamp-1 text-xs text-slate-400 dark:text-slate-500">
+                    <p className="mt-1 line-clamp-1 text-xs text-[#777777]">
                       {notification.body}
                     </p>
                   ) : null}
                 </td>
-                <td className="px-4 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                  <span className="block text-slate-700 dark:text-slate-200">
+                <td className="px-4 py-3 text-xs leading-5 text-[#B0B0B0]">
+                  <span className="block text-[#E4E4E4]">
                     {notification.recipientName || "No name"}
                   </span>
                   <span>{notification.recipientEmail}</span>
-                  <span className="block text-slate-400 dark:text-slate-500">
+                  <span className="block text-[#777777]">
                     {notification.recipientRoles || "No roles"}
                   </span>
                 </td>
                 <td className="px-3 py-3">
                   <span
-                    className={`inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${typeClass(notification.type)}`}
+                    className={`inline-flex max-w-full items-center gap-1.5 rounded-none px-2.5 py-1 text-xs font-bold ring-1 ${typeClass(notification.type)}`}
                   >
                     <BellRing className="h-3.5 w-3.5 flex-none" />
                     <span className="truncate">{notification.typeLabel}</span>
@@ -303,7 +303,7 @@ export function NotificationsTable({
                 </td>
                 <td className="px-3 py-3">
                   <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${statusClass(notification.readAt)}`}
+                    className={`inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-xs font-bold ring-1 ${statusClass(notification.readAt)}`}
                   >
                     {notification.readAt ? (
                       <MailOpen className="h-3.5 w-3.5" />
@@ -313,13 +313,13 @@ export function NotificationsTable({
                     {notification.readAt ? "Read" : "Unread"}
                   </span>
                   {notification.readAt ? (
-                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                    <p className="mt-1 text-xs text-[#777777]">
                       {notification.readAt}
                     </p>
                   ) : null}
                 </td>
-                <td className="px-3 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                  <span className="block text-slate-700 dark:text-slate-200">
+                <td className="px-3 py-3 text-xs leading-5 text-[#B0B0B0]">
+                  <span className="block text-[#E4E4E4]">
                     {notification.entityType || "Notification"}
                   </span>
                   {notification.entityId ? (
@@ -328,14 +328,14 @@ export function NotificationsTable({
                     </span>
                   ) : null}
                 </td>
-                <td className="px-3 py-3 text-xs text-slate-500 dark:text-slate-400">
+                <td className="px-3 py-3 text-xs text-[#B0B0B0]">
                   {notification.createdAt}
                 </td>
                 <td className="px-2 py-3 text-center">
                   {notification.href ? (
                     <Link
                       href={notification.href}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition hover:-translate-y-0.5 hover:bg-white hover:text-blue-600 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-blue-300"
+                      className="inline-flex h-9 w-9 items-center justify-center border border-[#444444] bg-slate-50 text-slate-500 transition hover:-translate-y-0.5 hover:bg-white hover:text-blue-600 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-blue-300"
                       aria-label="Open related page"
                     >
                       <ExternalLink className="h-4 w-4" />
