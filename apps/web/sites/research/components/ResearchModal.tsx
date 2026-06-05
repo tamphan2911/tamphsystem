@@ -41,7 +41,7 @@ export function ResearchModal({
         <div className="flex items-start justify-between gap-4 border-b border-[#444444] px-6 py-5">
           <div className="flex min-w-0 items-start gap-3 text-left">
             {icon && (
-              <div className="flex h-10 w-10 flex-none items-center justify-center rounded-none bg-[#383838] text-[#B39CD0] ring-1 ring-[#444444]">
+              <div className="flex h-10 w-6 flex-none items-center justify-center text-[#B39CD0]">
                 {icon}
               </div>
             )}

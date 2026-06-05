@@ -120,7 +120,7 @@ export function AuthorNotificationActions({
           <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] shadow-2xl shadow-black/40">
             <div className="flex items-start justify-between gap-4 border-b border-[#444444] px-5 py-4">
               <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 items-center justify-center border border-[#444444] bg-[#202020] text-[#A8DADC]">
+                <span className="flex h-10 w-6 items-center justify-center text-[#A8DADC]">
                   <MailCheck className="h-5 w-5" />
                 </span>
                 <div>

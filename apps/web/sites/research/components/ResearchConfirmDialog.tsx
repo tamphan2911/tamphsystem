@@ -9,7 +9,7 @@ type ConfirmTone = "danger" | "warning" | "info";
 function toneClasses(tone: ConfirmTone) {
   if (tone === "warning") {
     return {
-      icon: "bg-[#383838] text-amber-300 ring-[#5A5A5A]",
+      icon: "text-amber-300",
       confirm:
         "border-amber-600 bg-amber-600 text-white hover:border-amber-500 hover:bg-amber-500 disabled:hover:bg-amber-600",
     };
@@ -17,14 +17,14 @@ function toneClasses(tone: ConfirmTone) {
 
   if (tone === "info") {
     return {
-      icon: "bg-[#383838] text-[#A8DADC] ring-[#5A5A5A]",
+      icon: "text-[#A8DADC]",
       confirm:
         "border-blue-600 bg-blue-600 text-white hover:border-blue-500 hover:bg-blue-500 disabled:hover:bg-blue-600",
     };
   }
 
   return {
-    icon: "bg-[#383838] text-rose-300 ring-[#5A5A5A]",
+    icon: "text-rose-300",
     confirm:
       "border-rose-600 bg-rose-600 text-white hover:border-rose-500 hover:bg-rose-500 disabled:hover:bg-rose-600",
   };
@@ -74,7 +74,7 @@ export function ResearchConfirmDialog({
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4">
               <span
-                className={`flex h-11 w-11 flex-none items-center justify-center rounded-none ring-1 ${classes.icon}`}
+                className={`flex h-11 w-6 flex-none items-center justify-center ${classes.icon}`}
               >
                 {icon ?? <AlertTriangle className="h-5 w-5" />}
               </span>
