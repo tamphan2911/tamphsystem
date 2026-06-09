@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { BookOpen, FileCheck2, Landmark, Send, Trophy } from "lucide-react";
 import { prisma, ResearchTaskStatus, ResearchTaskType, Role } from "@repo/db";
 import { auth } from "../../../../auth";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import {
   SubmissionsTable,
   type SubmissionRow,
@@ -218,57 +218,44 @@ export default async function SubmissionsPage() {
   const publishedRows = rows.filter((row) => row.status === "PUBLISHED");
   const stats = [
     {
-      label: "Submits",
+      label: "Submit",
       value: rows.length,
-      icon: Send,
-      color: "text-[#B0B0B0]",
     },
     {
       label: "Journals",
       value: journalSubmissions.length,
-      icon: BookOpen,
-      color: "text-blue-600",
     },
     {
       label: "Conferences",
       value: conferenceSubmissions.length,
-      icon: Landmark,
-      color: "text-violet-600",
     },
     {
       label: "Published",
       value: publishedRows.length,
-      icon: Trophy,
-      color: "text-emerald-600",
     },
   ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
-          {stats.map((item) => (
-            <div
-              key={item.label}
-              className="flex min-w-32 items-center gap-3 border border-[#444444] bg-[#2C2C2C] px-3 py-2 shadow-none"
-            >
-              <item.icon className={`h-4 w-4 ${item.color}`} />
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                  {item.label}
-                </p>
-                <p className="text-base font-black text-[#E4E4E4]">
-                  {item.value}
-                </p>
+      <ResearchPageHeaderPortal>
+        <div className="flex w-full min-w-0 items-center justify-between gap-4">
+          <div className="grid min-w-0 border border-[#444444] bg-[#2C2C2C] sm:grid-cols-4">
+            {stats.map((item, index) => (
+              <div
+                key={item.label}
+                className={`whitespace-nowrap px-3 py-2 text-sm text-[#E4E4E4] ${
+                  index > 0 ? "border-l border-[#444444]" : ""
+                }`}
+              >
+                <span className="font-normal text-[#B0B0B0]">
+                  {item.label}:{" "}
+                </span>
+                <span className="font-normal text-[#E4E4E4]">{item.value}</span>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-        <div className="inline-flex w-fit items-center gap-2 rounded-none border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-bold uppercase tracking-wide text-blue-700 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300">
-          <FileCheck2 className="h-3.5 w-3.5" />
-          Admin
-        </div>
-      </div>
+      </ResearchPageHeaderPortal>
 
       <SubmissionsTable
         rows={rows}
@@ -276,6 +263,7 @@ export default async function SubmissionsPage() {
         actionMode="delete"
         linkVenue={false}
         showSubmitter
+        flushControls
       />
     </div>
   );
