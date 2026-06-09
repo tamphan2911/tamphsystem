@@ -102,16 +102,17 @@ export function ResearchNotificationBell({ enabled }: { enabled: boolean }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-3 w-[22rem] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/15 ring-1 ring-slate-900/[0.03] animate-[modalPanelIn_180ms_ease-out] dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/40 dark:ring-white/[0.04]">
-          <div className="border-b border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/70">
-            <p className="text-sm font-black text-[#E4E4E4]">
+        <div className="absolute right-0 top-full z-50 mt-3 w-[22rem] animate-[modalPanelIn_180ms_ease-out] overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] shadow-[0_22px_60px_rgba(0,0,0,0.42)] ring-1 ring-[#A8DADC]/10">
+          <span className="absolute right-4 top-0 h-2.5 w-2.5 -translate-y-1/2 rotate-45 border-l border-t border-[#444444] bg-[#2C2C2C]" />
+          <div className="border-b border-[#444444] bg-[#242424] px-4 py-3">
+            <p className="text-sm font-semibold text-[#E4E4E4]">
               New notifications
             </p>
             <p className="text-xs text-[#B0B0B0]">
               {count} unread notification{count === 1 ? "" : "s"}
             </p>
           </div>
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-96 overflow-y-auto bg-[#2C2C2C]">
             {notifications.length > 0 ? (
               notifications.map((notification) => (
                 <Link
@@ -121,20 +122,20 @@ export function ResearchNotificationBell({ enabled }: { enabled: boolean }) {
                     setOpen(false);
                     markRead(notification.id);
                   }}
-                  className="group block border-y border-transparent px-3 py-2.5 transition first:border-t-transparent last:border-b-transparent hover:border-emerald-100 first:hover:border-t-transparent last:hover:border-b-transparent hover:bg-emerald-50 dark:hover:border-emerald-900/60 dark:hover:bg-emerald-950/30"
+                  className="group block border-b border-[#3A3A3A] px-4 py-3 transition-[background-color,border-color,transform] duration-180 ease-out last:border-b-0 hover:border-[#444444] hover:bg-[#383838] hover:shadow-[inset_3px_0_0_#A8DADC] active:scale-[0.99] motion-reduce:transition-none"
                 >
                   <span className="flex items-start justify-between gap-3">
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-slate-800 group-hover:text-emerald-700 dark:text-slate-100 dark:group-hover:text-emerald-200">
+                      <span className="block truncate text-sm font-semibold text-[#E4E4E4] transition-colors group-hover:text-[#A8DADC]">
                         {notification.title}
                       </span>
                       <span className="mt-1 block line-clamp-2 text-xs leading-5 text-[#B0B0B0]">
                         {notification.summary}
                       </span>
                     </span>
-                    <ExternalLink className="mt-0.5 h-3.5 w-3.5 flex-none text-slate-300 transition group-hover:text-emerald-500" />
+                    <ExternalLink className="mt-0.5 h-3.5 w-3.5 flex-none text-[#777777] transition-[color,transform] duration-180 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#A8DADC]" />
                   </span>
-                  <span className="mt-2 flex items-center justify-between gap-2 text-[11px] font-semibold text-[#777777]">
+                  <span className="mt-2 flex items-center justify-between gap-2 text-[11px] font-normal text-[#777777]">
                     <span>{notification.typeLabel}</span>
                     <span>{timeLabel(notification.createdAt)}</span>
                   </span>
@@ -149,7 +150,7 @@ export function ResearchNotificationBell({ enabled }: { enabled: boolean }) {
           <Link
             href="/notifications"
             onClick={() => setOpen(false)}
-            className="block border-t border-slate-200 bg-slate-50/80 px-4 py-3 text-center text-sm font-bold text-emerald-700 transition hover:bg-emerald-50 dark:border-slate-800 dark:bg-slate-900/70 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
+            className="block border-t border-[#444444] bg-[#242424] px-4 py-3 text-center text-sm font-semibold text-[#A8DADC] transition-[background-color,color] duration-180 hover:bg-[#303030] hover:text-[#C9F0F2]"
           >
             Open notification center
           </Link>
