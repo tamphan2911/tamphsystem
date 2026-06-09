@@ -3,7 +3,6 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-  CalendarClock,
   Check,
   ChevronDown,
   ClipboardPlus,
@@ -13,6 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { createPublisherAccount, createResearchTask } from "../../actions";
+import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   ResearchButton,
@@ -339,14 +339,7 @@ export function CreateSubmissionTaskDialog({
                 <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                   Due date
                 </span>
-                <div className="relative">
-                  <CalendarClock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    name="dueDate"
-                    type="date"
-                    className={`${inputClass} w-full pl-9`}
-                  />
-                </div>
+                <ResearchDatePicker name="dueDate" className={inputClass} />
               </label>
             </div>
 
@@ -366,7 +359,9 @@ export function CreateSubmissionTaskDialog({
                   className={`${researchSearchFieldClass} pl-9`}
                 />
               </div>
-              <div className={`${researchDropdownPanelClass} grid max-h-72 overflow-y-auto`}>
+              <div
+                className={`${researchDropdownPanelClass} grid max-h-72 overflow-y-auto`}
+              >
                 {venueResults.map((venue) => {
                   const selected =
                     selectedVenue?.kind === venue.kind &&
@@ -436,8 +431,7 @@ export function CreateSubmissionTaskDialog({
                       className={cx(
                         "flex cursor-pointer items-center justify-between gap-3 text-left",
                         researchSelectTriggerClass,
-                        accountOpen &&
-                          "border-[#A8DADC] bg-[#383838]",
+                        accountOpen && "border-[#A8DADC] bg-[#383838]",
                       )}
                     >
                       <span className="min-w-0 truncate">
@@ -454,7 +448,9 @@ export function CreateSubmissionTaskDialog({
                       open={accountOpen}
                       maxWidth={560}
                     >
-                      <div className={`${researchDropdownPanelClass} max-h-[var(--research-dropdown-max-height)] overflow-y-auto`}>
+                      <div
+                        className={`${researchDropdownPanelClass} max-h-[var(--research-dropdown-max-height)] overflow-y-auto`}
+                      >
                         {selectedVenue.accounts.map((account) => (
                           <button
                             key={account.id}
@@ -522,7 +518,9 @@ export function CreateSubmissionTaskDialog({
                   className={`${researchSearchFieldClass} pl-9`}
                 />
               </div>
-              <div className={`${researchDropdownPanelClass} grid max-h-64 overflow-y-auto`}>
+              <div
+                className={`${researchDropdownPanelClass} grid max-h-64 overflow-y-auto`}
+              >
                 {assistantResults.map((assistant) => {
                   const selected = selectedAssistantIds.includes(assistant.id);
                   return (

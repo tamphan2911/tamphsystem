@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { ClipboardCheck, Loader2, PlusCircle } from "lucide-react";
 import { createAcademicReview } from "../actions";
+import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
@@ -221,14 +222,14 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
               </label>
               <label className={labelClass}>
                 Requested date
-                <input name="requestedAt" type="date" className={inputClass} />
+                <ResearchDatePicker name="requestedAt" className={inputClass} />
                 <span className={helperClass}>
                   Date the editor or journal invited you to review.
                 </span>
               </label>
               <label className={labelClass}>
                 Due date
-                <input name="dueDate" type="date" className={inputClass} />
+                <ResearchDatePicker name="dueDate" className={inputClass} />
                 <span className={helperClass}>
                   The deadline for submitting your review.
                 </span>

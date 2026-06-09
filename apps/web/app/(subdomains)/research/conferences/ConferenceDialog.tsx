@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { CalendarPlus, Loader2, Pencil, Save } from "lucide-react";
+import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
@@ -167,45 +168,42 @@ export function ConferenceDialog({
             <div className="grid gap-4 md:grid-cols-3">
               <label className={labelClass}>
                 Start date
-                <input
+                <ResearchDatePicker
                   name="startDate"
-                  type="date"
                   defaultValue={initialValues?.startDate ?? ""}
                   className={fieldClass}
                 />
               </label>
               <label className={labelClass}>
                 End date
-                <input
+                <ResearchDatePicker
                   name="endDate"
-                  type="date"
                   defaultValue={initialValues?.endDate ?? ""}
                   className={fieldClass}
                 />
               </label>
               <label className={labelClass}>
                 Close date
-                <input
+                <ResearchDatePicker
                   name="closeDate"
-                  type="date"
                   defaultValue={initialValues?.closeDate ?? ""}
                   className={fieldClass}
                 />
               </label>
               <label className={labelClass}>
                 Submission deadline *
-                <input
+                <ResearchDatePicker
                   name="submissionDeadline"
-                  type="date"
+                  required
                   defaultValue={initialValues?.submissionDeadline ?? ""}
                   className={fieldClass}
                 />
               </label>
               <label className={labelClass}>
                 Acceptance notification *
-                <input
+                <ResearchDatePicker
                   name="acceptanceNotification"
-                  type="date"
+                  required
                   defaultValue={initialValues?.acceptanceNotification ?? ""}
                   className={fieldClass}
                 />

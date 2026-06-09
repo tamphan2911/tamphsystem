@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from "react";
 import {
-  CalendarClock,
   Check,
   ClipboardList,
   Edit3,
@@ -22,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { updateResearchTask } from "../../actions";
+import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
@@ -507,15 +507,11 @@ export function EditTaskDialog({
               <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Due date
               </span>
-              <div className="relative">
-                <CalendarClock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  name="dueDate"
-                  type="date"
-                  defaultValue={task.dueDate}
-                  className={`${inputClass} w-full pl-9`}
-                />
-              </div>
+              <ResearchDatePicker
+                name="dueDate"
+                defaultValue={task.dueDate}
+                className={inputClass}
+              />
             </label>
           </div>
 

@@ -11,6 +11,7 @@ import {
   Save,
   UsersRound,
 } from "lucide-react";
+import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
@@ -360,9 +361,8 @@ export function ProjectInfoEditDialog({
             </label>
             <label className={labelClass}>
               Start date
-              <input
+              <ResearchDatePicker
                 name="startDate"
-                type="date"
                 required
                 defaultValue={info.startDate}
                 className={compactFieldClass}

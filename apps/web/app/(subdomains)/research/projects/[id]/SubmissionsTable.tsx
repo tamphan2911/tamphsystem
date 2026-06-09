@@ -6,7 +6,6 @@ import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   BookOpen,
-  CalendarDays,
   Check,
   CircleDollarSign,
   Edit3,
@@ -24,6 +23,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { deleteSubmission, updateSubmissionStatus } from "../../actions";
+import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
@@ -931,15 +931,10 @@ export function SubmissionsTable({
               <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Status date
               </span>
-              <div className="relative">
-                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#777777]" />
-                <input
-                  name="statusDate"
-                  type="date"
-                  defaultValue={dateInputValue(statusDate(editing))}
-                  className={`${researchFieldClass} cursor-pointer pl-9 [color-scheme:light] dark:[color-scheme:dark]`}
-                />
-              </div>
+              <ResearchDatePicker
+                name="statusDate"
+                defaultValue={dateInputValue(statusDate(editing))}
+              />
             </label>
           </form>
         </ResearchModal>

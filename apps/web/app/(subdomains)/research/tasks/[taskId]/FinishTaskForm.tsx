@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { CalendarDays, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 
@@ -95,16 +96,12 @@ export function FinishTaskForm({
               <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Submission date
               </span>
-              <div className="group/date relative border border-[#444444] bg-[#2C2C2C] p-1.5 shadow-sm transition hover:border-[#5A5A5A] hover:bg-[#383838] focus-within:border-[#A8DADC] focus-within:bg-[#383838]">
-                <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#B0B0B0] transition group-hover/date:text-[#A8DADC] group-focus-within/date:text-[#A8DADC]" />
-                <input
-                  type="date"
-                  required
-                  value={submissionDate}
-                  onChange={(event) => setSubmissionDate(event.target.value)}
-                  className="w-full cursor-pointer rounded-none border border-transparent bg-[#2C2C2C] py-2.5 pl-9 pr-3 text-sm font-normal text-[#E4E4E4] outline-none transition [color-scheme:dark] hover:bg-[#383838] focus:border-transparent focus:bg-[#383838]"
-                />
-              </div>
+              <ResearchDatePicker
+                name="submissionDatePreview"
+                value={submissionDate}
+                onChange={setSubmissionDate}
+                required
+              />
             </label>
           ) : null}
         </div>

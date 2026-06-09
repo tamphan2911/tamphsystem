@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { AlertTriangle, Building2, PlusCircle } from "lucide-react";
 import { createOrganizedProject } from "../actions";
+import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import {
@@ -206,9 +207,8 @@ export function NewOrganizedProjectDialog({
                 </label>
                 <label className={researchLabelClass}>
                   Start date
-                  <input
+                  <ResearchDatePicker
                     name="startDate"
-                    type="date"
                     required
                     className={researchSearchFieldClass}
                   />
