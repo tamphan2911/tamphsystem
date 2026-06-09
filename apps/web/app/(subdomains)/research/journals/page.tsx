@@ -76,7 +76,7 @@ export default async function JournalsPage() {
       <ResearchPageHeaderPortal>
         <div className="flex w-full min-w-0 items-center justify-between gap-4">
           <p className="min-w-0 truncate text-sm font-normal text-[#B0B0B0]">
-            Journal List
+            JOURNAL LIST
           </p>
           <div className="flex flex-none items-center">
             {isAdmin ? (

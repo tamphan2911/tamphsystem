@@ -5,8 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   BadgeCheck,
+  BadgeDollarSign,
   BookmarkCheck,
   ClipboardCheck,
+  CircleOff,
   Send,
   Star,
   Trash2,
@@ -25,7 +27,10 @@ import {
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
-import { formatMoney } from "@/sites/research/lib/currency";
+import {
+  currencySymbol,
+  formatResearchNumber,
+} from "@/sites/research/lib/currency";
 import { countryFlag, countryName } from "@/sites/research/lib/countries";
 
 export type JournalRow = {
@@ -121,6 +126,49 @@ function rankLabel(journal: JournalRow) {
   return journal.type === "LOCAL"
     ? journal.localRank || "No local rank"
     : journal.rank || "No rank";
+}
+
+function isFreeAmount(amount: string) {
+  const normalized = amount.trim().replaceAll(",", "").replaceAll(" ", "");
+  return !normalized || Number(normalized) === 0;
+}
+
+function MoneyIndicator({
+  amount,
+  currency,
+  label,
+}: {
+  amount: string;
+  currency: string;
+  label: string;
+}) {
+  const isFree = isFreeAmount(amount);
+  const detail = isFree
+    ? `${label}: free or not provided`
+    : `${label}: ${currencySymbol(currency)} ${formatResearchNumber(amount)}`;
+
+  return (
+    <IconHint label={detail}>
+      <span
+        className={`inline-flex cursor-help items-center gap-1.5 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-105 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
+          isFree
+            ? "text-[#8FCFD1] hover:text-[#C9F0F2]"
+            : "text-[#F4D47A] hover:text-[#FFE7A3]"
+        }`}
+      >
+        {isFree ? (
+          <CircleOff className="h-4 w-4 flex-none" aria-hidden="true" />
+        ) : (
+          <BadgeDollarSign className="h-4 w-4 flex-none" aria-hidden="true" />
+        )}
+        <span className="min-w-0 truncate text-sm">
+          {isFree
+            ? "Free"
+            : `${currencySymbol(currency)} ${formatResearchNumber(amount)}`}
+        </span>
+      </span>
+    </IconHint>
+  );
 }
 
 export function JournalsTable({
@@ -339,15 +387,13 @@ export function JournalsTable({
                   <span className="ml-2 inline-flex translate-y-0.5 items-center gap-1">
                     <IconHint
                       label={
-                        journal.isFavorite
-                          ? "Favorite journal"
-                          : "Not favorite"
+                        journal.isFavorite ? "Favorite journal" : "Not favorite"
                       }
                     >
                       <Star
                         className={`h-3.5 w-3.5 transition duration-150 ease-out ${
                           journal.isFavorite
-                            ? "fill-amber-200 text-amber-400"
+                            ? "text-amber-400"
                             : "text-[#666666] group-hover:text-[#B0B0B0]"
                         }`}
                         aria-hidden="true"
@@ -363,7 +409,7 @@ export function JournalsTable({
                       <BookmarkCheck
                         className={`h-3.5 w-3.5 transition duration-150 ease-out ${
                           journal.isInterest
-                            ? "fill-sky-200 text-sky-400"
+                            ? "text-sky-400"
                             : "text-[#666666] group-hover:text-[#B0B0B0]"
                         }`}
                         aria-hidden="true"
@@ -388,13 +434,18 @@ export function JournalsTable({
                   {journal.fields.length > 0 ? journal.fields.join("; ") : "-"}
                 </td>
                 <td className="px-4 py-3 text-sm text-[#B0B0B0]">
-                  {formatMoney(journal.apc, journal.apcCurrency)}
+                  <MoneyIndicator
+                    amount={journal.apc}
+                    currency={journal.apcCurrency}
+                    label="APC"
+                  />
                 </td>
                 <td className="px-4 py-3 text-sm text-[#B0B0B0]">
-                  {formatMoney(
-                    journal.submissionFee,
-                    journal.submissionFeeCurrency,
-                  )}
+                  <MoneyIndicator
+                    amount={journal.submissionFee}
+                    currency={journal.submissionFeeCurrency}
+                    label="Submission fee"
+                  />
                 </td>
                 <td className="px-2 py-3 text-center text-sm font-semibold text-[#E4E4E4]">
                   {journal.ongoingSubmissions}
@@ -407,14 +458,14 @@ export function JournalsTable({
                 </td>
                 <td className="px-2 py-3">
                   {journal.country ? (
-                    <span className="inline-flex max-w-full items-center gap-1.5 text-xs font-medium text-[#B0B0B0]">
-                      <span aria-hidden="true">
+                    <IconHint label={countryName(journal.country)}>
+                      <span className="inline-flex cursor-help items-center text-lg leading-none transition-[filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)]">
                         {countryFlag(journal.country)}
+                        <span className="sr-only">
+                          {countryName(journal.country)}
+                        </span>
                       </span>
-                      <span className="truncate">
-                        {countryName(journal.country)}
-                      </span>
-                    </span>
+                    </IconHint>
                   ) : (
                     <span className="text-xs text-[#777777]">-</span>
                   )}
