@@ -720,7 +720,7 @@ export function SuggestedJournalsPanel({
 }
 
 function resultButtonClass(selected: boolean) {
-  return `cursor-pointer border-y px-3 py-2 text-left transition first:border-t-transparent last:border-b-transparent first:hover:border-t-transparent last:hover:border-b-transparent disabled:cursor-wait ${
+  return `cursor-pointer border-t px-3 py-2 text-left transition first:border-t-transparent first:hover:border-t-transparent disabled:cursor-wait ${
     selected
       ? "border-[#444444] bg-[#303030]"
       : "border-transparent bg-[#202020] hover:border-[#444444] hover:bg-[#303030]"
