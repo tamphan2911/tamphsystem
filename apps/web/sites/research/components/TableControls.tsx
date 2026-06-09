@@ -223,7 +223,7 @@ export function TablePagination({
   const end = Math.min(total, page * pageSize);
 
   return (
-    <div className="flex flex-col gap-3 border-t border-[#444444] bg-[#2C2C2C] px-0 py-3 transition sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 border-t border-[#333333] bg-[#242424] px-0 py-3 transition sm:flex-row sm:items-center sm:justify-between">
       <p className="text-xs font-normal text-[#B0B0B0]">
         Showing{" "}
         <span className="text-[#E4E4E4]">
