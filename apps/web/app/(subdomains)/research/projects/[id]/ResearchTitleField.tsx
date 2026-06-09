@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FileText, X } from "lucide-react";
+import { researchFieldClass } from "@/sites/research/components/ResearchPrimitives";
 
 export function ResearchTitleField({
   defaultValue,
@@ -33,7 +34,7 @@ export function ResearchTitleField({
         <input
           name="title"
           defaultValue={defaultValue}
-          className="w-full border border-[#444444] bg-slate-50 px-3 py-2 font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+          className={researchFieldClass}
         />
       </label>
 

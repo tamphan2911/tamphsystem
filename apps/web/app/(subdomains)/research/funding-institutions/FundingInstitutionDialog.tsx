@@ -15,7 +15,7 @@ export type FundingInstitutionValues = {
 };
 
 const inputClass =
-  "w-full border border-[#444444] bg-slate-50 px-3.5 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-emerald-500 dark:focus:bg-slate-900";
+  "w-full border border-[#444444] bg-[#2C2C2C] px-3.5 py-3 text-sm text-[#E4E4E4] outline-none transition placeholder:text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]";
 const labelClass =
   "grid gap-1.5 text-left text-sm font-semibold text-slate-700 dark:text-slate-300";
 

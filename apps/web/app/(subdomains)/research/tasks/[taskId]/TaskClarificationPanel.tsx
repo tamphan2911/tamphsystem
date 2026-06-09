@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { HelpCircle, Loader2, MessageSquareText, Send } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { researchTextareaClass } from "@/sites/research/components/ResearchPrimitives";
 
 export type TaskClarificationItem = {
   id: string;
@@ -259,7 +260,7 @@ function AnswerForm({
         onChange={(event) => setAnswer(event.target.value)}
         rows={4}
         placeholder="Write feedback for this request."
-        className="w-full resize-none rounded-none border border-amber-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 dark:border-amber-900/70 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+        className={`${researchTextareaClass} resize-none`}
       />
       <div className="flex justify-end">
         <button

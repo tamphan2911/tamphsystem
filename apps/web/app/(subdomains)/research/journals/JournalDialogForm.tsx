@@ -401,7 +401,7 @@ export function JournalDialogForm({
             </div>
             <div ref={fieldPickerRef} className={`${labelClass} relative`}>
               Field
-              <div className="border border-[#444444] bg-[#2C2C2C] p-2 transition focus-within:border-[#A8DADC] focus-within:bg-[#383838] focus-within:ring-1 focus-within:ring-[#A8DADC]/25">
+              <div className="border border-[#444444] bg-[#2C2C2C] p-2 transition focus-within:border-[#A8DADC] focus-within:bg-[#383838]">
                 <div className="flex min-h-9 flex-wrap items-center gap-1.5">
                   {selectedFields.map((field) => (
                     <span

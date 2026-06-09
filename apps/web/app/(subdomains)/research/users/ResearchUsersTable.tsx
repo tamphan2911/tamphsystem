@@ -21,6 +21,7 @@ import {
 } from "@/sites/research/components/TableControls";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { researchFieldClass } from "@/sites/research/components/ResearchPrimitives";
 
 export type ResearchUserRow = {
   id: string;
@@ -440,7 +441,7 @@ function Field({
         defaultValue={defaultValue}
         placeholder={placeholder}
         required={required}
-        className="w-full border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+        className={researchFieldClass}
       />
     </label>
   );

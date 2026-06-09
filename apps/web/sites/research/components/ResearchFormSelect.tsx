@@ -77,7 +77,7 @@ export function ResearchFormSelect({
         className={cx(
           "group inline-flex cursor-pointer items-center justify-between gap-3 text-left",
           researchSelectTriggerClass,
-          open && "border-[#A8DADC] bg-[#383838] ring-1 ring-[#A8DADC]/25",
+          open && "border-[#A8DADC] bg-[#383838]",
         )}
       >
         <span className="min-w-0 truncate text-left">{selected?.label}</span>

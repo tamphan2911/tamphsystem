@@ -50,9 +50,9 @@ type UserOption = {
 };
 
 const fieldClass =
-  "h-12 border border-[#444444] bg-slate-50 px-3 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+  "h-12 border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition placeholder:text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]";
 const textAreaClass =
-  "min-h-24 border border-[#444444] bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
+  "min-h-24 border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-[#E4E4E4] outline-none transition placeholder:text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]";
 const labelClass = "grid gap-1 text-sm font-semibold text-[#E4E4E4]";
 
 function HiddenProjectInfo({ info }: { info: ProjectInfo }) {
@@ -381,7 +381,7 @@ export function ProjectInfoEditDialog({
                 name="requiredProducts"
                 defaultValue={info.requiredProducts.join("\n")}
                 placeholder="One required project output per line..."
-                className="min-h-20 border border-[#444444] bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                className="min-h-20 border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-[#E4E4E4] outline-none transition placeholder:text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]"
               />
             </label>
             <label className={labelClass}>

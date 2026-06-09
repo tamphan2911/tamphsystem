@@ -422,7 +422,7 @@ export function CreateSubmissionTaskDialog({
                         "flex cursor-pointer items-center justify-between gap-3 text-left",
                         researchSelectTriggerClass,
                         accountOpen &&
-                          "border-[#A8DADC] bg-[#383838] ring-1 ring-[#A8DADC]/25",
+                          "border-[#A8DADC] bg-[#383838]",
                       )}
                     >
                       <span className="min-w-0 truncate">

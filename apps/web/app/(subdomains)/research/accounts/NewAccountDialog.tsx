@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { KeyRound, PlusCircle } from "lucide-react";
 import { createPublisherAccount } from "../actions";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { researchFieldClass } from "@/sites/research/components/ResearchPrimitives";
 import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
@@ -72,17 +73,17 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
               name="username"
               required
               placeholder="ID / username"
-              className="border border-[#444444] bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              className={researchFieldClass}
             />
             <input
               name="password"
               placeholder="Password"
-              className="border border-[#444444] bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              className={researchFieldClass}
             />
             <input
               name="email"
               placeholder="Email"
-              className="border border-[#444444] bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              className={researchFieldClass}
             />
             <ResearchSearchPicker
               label="Journal"
@@ -118,7 +119,7 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
             <input
               name="note"
               placeholder="Login URL, recovery note, account scope"
-              className="border border-[#444444] bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 md:col-span-2"
+              className={`${researchFieldClass} md:col-span-2`}
             />
           </div>
 

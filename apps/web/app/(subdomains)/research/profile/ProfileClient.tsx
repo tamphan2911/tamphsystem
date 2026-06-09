@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { updateResearchProfile } from "./actions";
+import { researchFieldClass } from "@/sites/research/components/ResearchPrimitives";
 
 type ResearchProfileUser = {
   id: string;
@@ -190,7 +191,7 @@ export function ProfileClient({ user }: { user: ResearchProfileUser }) {
                   name="name"
                   defaultValue={user.name ?? ""}
                   required
-                  className="h-11 border border-[#444444] bg-slate-50 px-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                  className={researchFieldClass}
                 />
               </label>
               <label className="grid gap-1 text-sm font-semibold text-[#E4E4E4]">
@@ -199,7 +200,7 @@ export function ProfileClient({ user }: { user: ResearchProfileUser }) {
                   name="affiliation"
                   defaultValue={user.affiliation}
                   required
-                  className="h-11 border border-[#444444] bg-slate-50 px-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                  className={researchFieldClass}
                 />
               </label>
             </div>

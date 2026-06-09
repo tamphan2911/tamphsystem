@@ -108,14 +108,14 @@ export function FinishTaskForm({
               <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Submission date
               </span>
-              <div className="group/date relative border border-[#444444] bg-slate-50 p-1.5 shadow-sm transition hover:border-blue-200 hover:bg-blue-50/70 focus-within:border-blue-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-blue-800/80 dark:hover:bg-slate-900 dark:focus-within:border-blue-600 dark:focus-within:bg-slate-900 dark:focus-within:ring-blue-500/15">
-                <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition group-hover/date:text-blue-500 group-focus-within/date:text-blue-600 dark:text-slate-500 dark:group-hover/date:text-blue-300 dark:group-focus-within/date:text-blue-300" />
+              <div className="group/date relative border border-[#444444] bg-[#2C2C2C] p-1.5 shadow-sm transition hover:border-[#5A5A5A] hover:bg-[#383838] focus-within:border-[#A8DADC] focus-within:bg-[#383838]">
+                <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#B0B0B0] transition group-hover/date:text-[#A8DADC] group-focus-within/date:text-[#A8DADC]" />
                 <input
                   type="date"
                   required
                   value={submissionDate}
                   onChange={(event) => setSubmissionDate(event.target.value)}
-                  className="w-full cursor-pointer rounded-none border border-transparent bg-white py-2.5 pl-9 pr-3 text-sm font-semibold text-slate-800 outline-none transition [color-scheme:light] hover:border-blue-100 hover:bg-white focus:border-blue-200 dark:bg-slate-950 dark:text-slate-100 dark:[color-scheme:dark] dark:hover:border-blue-900/70 dark:hover:bg-slate-950 dark:focus:border-blue-800"
+                  className="w-full cursor-pointer rounded-none border border-transparent bg-[#2C2C2C] py-2.5 pl-9 pr-3 text-sm font-normal text-[#E4E4E4] outline-none transition [color-scheme:dark] hover:bg-[#383838] focus:border-transparent focus:bg-[#383838]"
                 />
               </div>
             </label>

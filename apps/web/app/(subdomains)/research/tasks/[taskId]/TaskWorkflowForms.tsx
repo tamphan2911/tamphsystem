@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { researchTextareaClass } from "@/sites/research/components/ResearchPrimitives";
 
 type TextModalFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -173,7 +174,7 @@ function TextModalForm({
               onChange={(event) => setContent(event.target.value)}
               rows={5}
               placeholder={placeholder}
-              className="w-full resize-none border border-[#444444] bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+              className={`${researchTextareaClass} resize-none`}
             />
           </label>
           {helperText ? (

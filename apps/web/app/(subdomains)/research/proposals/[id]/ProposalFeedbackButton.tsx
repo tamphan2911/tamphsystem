@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { reviewProposal } from "../../actions";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { researchTextareaClass } from "@/sites/research/components/ResearchPrimitives";
 
 export function ProposalFeedbackButton({
   proposalId,
@@ -138,7 +139,7 @@ export function ProposalFeedbackButton({
                 <textarea
                   name="comment"
                   required
-                  className="min-h-32 border border-[#444444] bg-slate-50 px-3 py-2.5 text-sm font-normal text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  className={`${researchTextareaClass} min-h-32`}
                   placeholder={
                     decision === "ACCEPTED"
                       ? "Example: Approved. Thank you for the complete venue information; it is now available for the research team."
