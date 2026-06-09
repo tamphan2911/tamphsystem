@@ -133,32 +133,25 @@ export function AuthorNotificationActions({
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setConfirmType(null)}
-                className="cursor-pointer border-0 bg-transparent p-2 text-[#B0B0B0] transition hover:text-[#E4E4E4]"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="flex justify-end gap-3 px-5 py-4">
-              <button
-                type="button"
-                onClick={() => setConfirmType(null)}
-                className="cursor-pointer rounded-none border border-[#444444] px-4 py-2 text-sm font-normal text-[#E4E4E4] transition hover:border-[#5A5A5A] hover:bg-[#383838]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => send(selected.type)}
-                className="inline-flex cursor-pointer items-center gap-2 rounded-none border border-[#A8DADC] bg-[#263636] px-4 py-2 text-sm font-normal text-[#A8DADC] transition hover:bg-[#303F3F] disabled:cursor-wait disabled:opacity-70"
-              >
-                <Check className="h-4 w-4" />
-                Send email
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => send(selected.type)}
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-none border border-[#A8DADC] bg-[#263636] px-4 py-2 text-sm font-normal text-[#A8DADC] transition hover:bg-[#303F3F] disabled:cursor-wait disabled:opacity-70"
+                >
+                  <Check className="h-4 w-4" />
+                  Send email
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmType(null)}
+                  className="cursor-pointer border-0 bg-transparent p-2 text-[#B0B0B0] transition hover:text-[#E4E4E4]"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>

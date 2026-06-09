@@ -11,6 +11,7 @@ export function ResearchModal({
   title,
   description,
   icon,
+  headerActions,
   children,
   footer,
   maxWidth = "max-w-4xl",
@@ -21,6 +22,7 @@ export function ResearchModal({
   title: string;
   description?: string;
   icon?: ReactNode;
+  headerActions?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
   maxWidth?: string;
@@ -55,15 +57,18 @@ export function ResearchModal({
               )}
             </div>
           </div>
-          <ResearchIconButton
-            type="button"
-            onClick={onClose}
-            label="Close"
-            tone="slate"
-            className="flex-none"
-          >
-            <X className="h-5 w-5" />
-          </ResearchIconButton>
+          <div className="flex flex-none items-center gap-2">
+            {headerActions}
+            <ResearchIconButton
+              type="button"
+              onClick={onClose}
+              label="Close"
+              tone="slate"
+              className="flex-none"
+            >
+              <X className="h-5 w-5" />
+            </ResearchIconButton>
+          </div>
         </div>
 
         <div className={`min-h-0 flex-1 overflow-y-auto ${bodyClassName}`}>

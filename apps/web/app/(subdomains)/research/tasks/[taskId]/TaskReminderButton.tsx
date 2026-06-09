@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { AlertCircle, BellRing, CheckCircle2, Loader2 } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 type ReminderAssignee = {
@@ -85,6 +86,22 @@ export function TaskReminderButton({
         }
         maxWidth="max-w-xl"
         bodyClassName="px-5 py-5"
+        headerActions={
+          block ? null : (
+            <ResearchButton
+              form="task-reminder-form"
+              disabled={isPending || selectedCount === 0}
+              tone="success"
+            >
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <BellRing className="h-4 w-4" />
+              )}
+              Send email
+            </ResearchButton>
+          )
+        }
       >
         {block ? (
           <div>
@@ -92,18 +109,10 @@ export function TaskReminderButton({
               This reminder button stays available so you can see why it is not
               active for the current task state.
             </div>
-            <div className="mt-5 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="rounded-none bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
-              >
-                Got it
-              </button>
-            </div>
           </div>
         ) : (
           <form
+            id="task-reminder-form"
             action={(formData) => {
               startTransition(async () => {
                 const result = await action(formData);
@@ -180,28 +189,6 @@ export function TaskReminderButton({
                   );
                 })}
               </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                disabled={isPending}
-                className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                Cancel
-              </button>
-              <button
-                disabled={isPending || selectedCount === 0}
-                className="inline-flex items-center gap-2 rounded-none bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none"
-              >
-                {isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <BellRing className="h-4 w-4" />
-                )}
-                Send email
-              </button>
             </div>
           </form>
         )}

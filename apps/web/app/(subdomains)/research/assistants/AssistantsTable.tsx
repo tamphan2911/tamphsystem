@@ -26,7 +26,10 @@ import {
 } from "@/sites/research/components/TableControls";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
-import { researchFieldClass } from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchButton,
+  researchFieldClass,
+} from "@/sites/research/components/ResearchPrimitives";
 
 export type AssistantRow = {
   id: string;
@@ -274,8 +277,20 @@ export function AssistantsTable({
             <DialogHeader
               title="Edit assistant role"
               onClose={() => setEditing(null)}
+              actions={
+                <ResearchButton
+                  form="edit-assistant-form"
+                  disabled={isPending}
+                >
+                  Save change
+                </ResearchButton>
+              }
             />
-            <form action={submitEdit} className="grid gap-5 px-5 py-5">
+            <form
+              id="edit-assistant-form"
+              action={submitEdit}
+              className="grid gap-5 px-5 py-5"
+            >
               <input type="hidden" name="userId" value={editing.id} />
               <input type="hidden" name="assistantRole" value={editRole} />
               <div className="border border-[#444444] bg-[#202020] p-4">
@@ -317,21 +332,6 @@ export function AssistantsTable({
                   and the password shown in this table.
                 </span>
               </label>
-              <div className="flex justify-end gap-2 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setEditing(null)}
-                  className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  disabled={isPending}
-                  className="rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
-                >
-                  Save change
-                </button>
-              </div>
             </form>
           </div>
         </div>
@@ -346,8 +346,21 @@ export function AssistantsTable({
             <DialogHeader
               title="Remove assistant role"
               onClose={() => setDeleting(null)}
+              actions={
+                <ResearchButton
+                  form="delete-assistant-role-form"
+                  disabled={isPending}
+                  tone="danger"
+                >
+                  Remove role
+                </ResearchButton>
+              }
             />
-            <form action={confirmDelete} className="space-y-4 px-5 py-5">
+            <form
+              id="delete-assistant-role-form"
+              action={confirmDelete}
+              className="space-y-4 px-5 py-5"
+            >
               <input type="hidden" name="userId" value={deleting.id} />
               <p className="text-sm leading-6 text-[#B0B0B0]">
                 Remove the assistant role from{" "}
@@ -356,21 +369,6 @@ export function AssistantsTable({
                 </span>
                 ? This does not delete the user account.
               </p>
-              <div className="flex justify-end gap-2 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setDeleting(null)}
-                  className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  disabled={isPending}
-                  className="rounded-none bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-rose-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
-                >
-                  Remove role
-                </button>
-              </div>
             </form>
           </div>
         </div>
@@ -424,21 +422,26 @@ function RoleChoice({
 function DialogHeader({
   title,
   onClose,
+  actions,
 }: {
   title: string;
   onClose: () => void;
+  actions?: ReactNode;
 }) {
   return (
     <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
       <h3 className="text-base font-bold text-[#E4E4E4]">{title}</h3>
-      <button
-        type="button"
-        onClick={onClose}
-        className="rounded-none p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-        aria-label="Close"
-      >
-        <X className="h-5 w-5" />
-      </button>
+      <div className="flex items-center gap-2">
+        {actions}
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-none p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          aria-label="Close"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
     </div>
   );
 }

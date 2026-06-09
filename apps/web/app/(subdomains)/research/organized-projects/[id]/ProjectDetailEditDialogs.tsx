@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { currencyOptions } from "@/sites/research/lib/currency";
 import { AuthorsPicker } from "../../projects/[id]/AuthorsPicker";
@@ -144,6 +145,7 @@ function DialogShell({
   icon,
   title,
   detail,
+  headerActions,
   children,
 }: {
   open: boolean;
@@ -151,6 +153,7 @@ function DialogShell({
   icon: ReactNode;
   title: string;
   detail: string;
+  headerActions?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -160,6 +163,7 @@ function DialogShell({
       title={title}
       description={detail}
       icon={icon}
+      headerActions={headerActions}
       maxWidth="max-w-5xl"
       bodyClassName="p-0"
     >
@@ -197,14 +201,16 @@ function EditIconButton({
 function SubmitButton({
   isPending,
   label,
+  form,
 }: {
   isPending: boolean;
   label: string;
+  form: string;
 }) {
   return (
-    <button
+    <ResearchButton
+      form={form}
       disabled={isPending}
-      className="inline-flex cursor-pointer items-center gap-2 rounded-none border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-100 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 dark:border-blue-800/70 dark:bg-blue-950/40 dark:text-blue-200 dark:hover:border-blue-700 dark:hover:bg-blue-900/50"
     >
       {isPending ? (
         <Loader2 className="h-4 w-4 animate-spin" />
@@ -212,7 +218,7 @@ function SubmitButton({
         <Save className="h-4 w-4" />
       )}
       {label}
-    </button>
+    </ResearchButton>
   );
 }
 
@@ -246,8 +252,16 @@ export function ProjectInfoEditDialog({
         icon={<Building2 className="h-5 w-5" />}
         title="Edit project information"
         detail="Update project identity, funding, duration, status, and internal notes."
+        headerActions={
+          <SubmitButton
+            form="project-info-edit-form"
+            isPending={isPending}
+            label="Save information"
+          />
+        }
       >
         <form
+          id="project-info-edit-form"
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
@@ -401,10 +415,6 @@ export function ProjectInfoEditDialog({
               />
             </label>
           </div>
-
-          <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
-            <SubmitButton isPending={isPending} label="Save information" />
-          </div>
         </form>
       </DialogShell>
     </>
@@ -437,8 +447,16 @@ export function ProjectMembersEditDialog({
         icon={<UsersRound className="h-5 w-5" />}
         title="Edit members"
         detail="Update project members, choose team lead, and mark instructors."
+        headerActions={
+          <SubmitButton
+            form="project-members-edit-form"
+            isPending={isPending}
+            label="Save members"
+          />
+        }
       >
         <form
+          id="project-members-edit-form"
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
@@ -458,9 +476,6 @@ export function ProjectMembersEditDialog({
           <HiddenResearch research={research} />
           <input type="hidden" name="updateScope" value="members" />
           <ProjectMembersPicker users={users} defaultMembers={members} />
-          <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
-            <SubmitButton isPending={isPending} label="Save members" />
-          </div>
         </form>
       </DialogShell>
     </>
@@ -496,8 +511,16 @@ export function ProjectResearchEditDialog({
         icon={<FileText className="h-5 w-5" />}
         title="Edit associated research"
         detail="Connect or remove research records associated with this project."
+        headerActions={
+          <SubmitButton
+            form="project-research-edit-form"
+            isPending={isPending}
+            label="Save research"
+          />
+        }
       >
         <form
+          id="project-research-edit-form"
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
@@ -520,9 +543,6 @@ export function ProjectResearchEditDialog({
             researchOptions={researchOptions}
             defaultResearch={research}
           />
-          <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
-            <SubmitButton isPending={isPending} label="Save research" />
-          </div>
         </form>
       </DialogShell>
     </>
@@ -562,8 +582,16 @@ export function CreateProjectResearchDialog({
         icon={<PlusCircle className="h-5 w-5" />}
         title="Add research associated"
         detail="Create a research record and link it to this project."
+        headerActions={
+          <SubmitButton
+            form="project-create-research-form"
+            isPending={isPending}
+            label="Add research"
+          />
+        }
       >
         <form
+          id="project-create-research-form"
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
@@ -647,9 +675,6 @@ export function CreateProjectResearchDialog({
                 />
               </label>
             </div>
-          </div>
-          <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
-            <SubmitButton isPending={isPending} label="Add research" />
           </div>
         </form>
       </DialogShell>

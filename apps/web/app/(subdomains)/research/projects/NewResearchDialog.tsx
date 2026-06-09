@@ -262,8 +262,15 @@ export function NewResearchDialog({
         title="Add New Research"
         description="Create a research record and place it in the pipeline."
         icon={<PlusCircle className="h-5 w-5" />}
+        headerActions={
+          <ResearchButton form="new-research-form">
+            <PlusCircle className="h-4 w-4" />
+            Add Research
+          </ResearchButton>
+        }
       >
         <form
+          id="new-research-form"
           action={createResearchProject}
           onSubmit={handleSubmit}
           className="grid gap-5"
@@ -360,20 +367,6 @@ export function NewResearchDialog({
               className={researchTextareaClass}
             />
           </label>
-
-          <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-            <ResearchButton
-              type="button"
-              onClick={closeDialog}
-              tone="secondary"
-            >
-              Cancel
-            </ResearchButton>
-            <ResearchButton>
-              <PlusCircle className="h-4 w-4" />
-              Add Research
-            </ResearchButton>
-          </div>
         </form>
       </ResearchModal>
     </>

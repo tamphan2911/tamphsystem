@@ -14,6 +14,7 @@ import {
 import { RegisterUserPicker } from "../RegisterUserPicker";
 import {
   IconHint,
+  ResearchButton,
   researchFieldClass,
   researchLabelClass,
   researchTextareaClass,
@@ -45,6 +46,7 @@ function DialogShell({
   icon,
   title,
   detail,
+  headerActions,
   children,
 }: {
   open: boolean;
@@ -52,6 +54,7 @@ function DialogShell({
   icon: ReactNode;
   title: string;
   detail: string;
+  headerActions?: ReactNode;
   children: ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
@@ -69,6 +72,7 @@ function DialogShell({
       title={title}
       description={detail}
       icon={icon}
+      headerActions={headerActions}
       maxWidth="max-w-5xl"
       bodyClassName="p-0"
     >
@@ -106,14 +110,16 @@ function EditIconButton({
 function SubmitButton({
   isPending,
   label,
+  form,
 }: {
   isPending: boolean;
   label: string;
+  form: string;
 }) {
   return (
-    <button
+    <ResearchButton
+      form={form}
       disabled={isPending}
-      className="inline-flex cursor-pointer items-center gap-2 rounded-none border border-[#5A5A5A] bg-[#383838] px-4 py-2.5 text-sm font-normal text-[#E4E4E4] transition hover:border-[#A8DADC] hover:text-[#A8DADC] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {isPending ? (
         <Loader2 className="h-4 w-4 animate-spin" />
@@ -121,7 +127,7 @@ function SubmitButton({
         <Save className="h-4 w-4" />
       )}
       {label}
-    </button>
+    </ResearchButton>
   );
 }
 
@@ -241,8 +247,16 @@ export function ResearchBasicEditDialog({
         icon={<FileText className="h-5 w-5" />}
         title="Edit research information"
         detail="Update title, notes, registration, and claim information."
+        headerActions={
+          <SubmitButton
+            form="research-basic-edit-form"
+            isPending={isPending}
+            label="Save information"
+          />
+        }
       >
         <form
+          id="research-basic-edit-form"
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
@@ -333,10 +347,6 @@ export function ResearchBasicEditDialog({
               disabled={!canEditRegistrationClaim}
             />
           </div>
-
-          <div className="mt-5 flex justify-end border-t border-[#444444] pt-5">
-            <SubmitButton isPending={isPending} label="Save information" />
-          </div>
         </form>
       </DialogShell>
     </>
@@ -379,8 +389,16 @@ export function ResearchAuthorsEditDialog({
         icon={<UserRound className="h-5 w-5" />}
         title="Edit authors"
         detail="Search users, order authors, and choose the corresponding author."
+        headerActions={
+          <SubmitButton
+            form="research-authors-edit-form"
+            isPending={isPending}
+            label="Save authors"
+          />
+        }
       >
         <form
+          id="research-authors-edit-form"
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
@@ -400,9 +418,6 @@ export function ResearchAuthorsEditDialog({
           <HiddenBasic values={values} />
           <HiddenProduction steps={completedProductionSteps} />
           <AuthorsPicker users={users} defaultAuthors={authors} />
-          <div className="mt-5 flex justify-end border-t border-[#444444] pt-5">
-            <SubmitButton isPending={isPending} label="Save authors" />
-          </div>
         </form>
       </DialogShell>
     </>

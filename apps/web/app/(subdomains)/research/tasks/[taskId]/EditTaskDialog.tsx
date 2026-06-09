@@ -26,6 +26,7 @@ import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 import {
+  ResearchButton,
   researchDropdownItemActiveClass,
   researchDropdownItemClass,
   researchDropdownItemIdleClass,
@@ -412,8 +413,17 @@ export function EditTaskDialog({
         description="Update task details, association, due date, and assignees."
         icon={<ClipboardList className="h-5 w-5" />}
         maxWidth="max-w-5xl"
+        headerActions={
+          <ResearchButton
+            form="edit-task-form"
+            disabled={!canSubmit || isPending}
+          >
+            <Save className="h-4 w-4" />
+            {isPending ? "Saving..." : "Save changes"}
+          </ResearchButton>
+        }
       >
-        <form action={submitTask} className="grid gap-5">
+        <form id="edit-task-form" action={submitTask} className="grid gap-5">
           {selectedIds.map((id) => (
             <input key={id} type="hidden" name="assigneeIds" value={id} />
           ))}
@@ -752,23 +762,6 @@ export function EditTaskDialog({
               onClick: () => toggleAssignee(user.id),
             }))}
           />
-
-          <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="cursor-pointer rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              Cancel
-            </button>
-            <button
-              disabled={!canSubmit || isPending}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0 disabled:hover:shadow-none dark:disabled:bg-slate-700"
-            >
-              <Save className="h-4 w-4" />
-              {isPending ? "Saving..." : "Save changes"}
-            </button>
-          </div>
         </form>
       </ResearchModal>
     </>

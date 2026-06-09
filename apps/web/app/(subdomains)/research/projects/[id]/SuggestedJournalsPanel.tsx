@@ -471,8 +471,21 @@ export function SuggestedJournalsPanel({
           icon={<ClipboardList className="h-5 w-5" />}
           maxWidth="max-w-4xl"
           bodyClassName="px-0 py-0"
+          headerActions={
+            <ResearchButton
+              form="suggested-venue-task-form"
+              disabled={selectedAssistantIds.length === 0 || isPending}
+            >
+              <Plus className="h-4 w-4" />
+              Assign Task
+            </ResearchButton>
+          }
         >
-          <form action={assignTask} className="grid gap-5 px-6 py-5">
+          <form
+            id="suggested-venue-task-form"
+            action={assignTask}
+            className="grid gap-5 px-6 py-5"
+          >
             {selectedAssistantIds.map((id) => (
               <input key={id} type="hidden" name="assigneeIds" value={id} />
             ))}
@@ -620,22 +633,6 @@ export function SuggestedJournalsPanel({
                   </div>
                 )}
               </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 border-t border-[#444444] pt-5">
-              <ResearchButton
-                type="button"
-                onClick={() => setAssignVenue(null)}
-                tone="secondary"
-              >
-                Cancel
-              </ResearchButton>
-              <ResearchButton
-                disabled={selectedAssistantIds.length === 0 || isPending}
-              >
-                <Plus className="h-4 w-4" />
-                Assign Task
-              </ResearchButton>
             </div>
           </form>
         </ResearchModal>

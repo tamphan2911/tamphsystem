@@ -267,8 +267,23 @@ export function CreateSubmissionTaskDialog({
           icon={<ClipboardPlus className="h-5 w-5" />}
           maxWidth="max-w-5xl"
           bodyClassName="px-0 py-0"
+          headerActions={
+            <ResearchButton
+              form="create-submission-task-form"
+              disabled={
+                !selectedVenue || selectedAssistantIds.length === 0 || isPending
+              }
+            >
+              <Plus className="h-4 w-4" />
+              Create task
+            </ResearchButton>
+          }
         >
-          <form action={submitTask} className="grid gap-5 px-6 py-5">
+          <form
+            id="create-submission-task-form"
+            action={submitTask}
+            className="grid gap-5 px-6 py-5"
+          >
             <input type="hidden" name="projectId" value={projectId} />
             <input type="hidden" name="category" value="Submitting" />
             <input
@@ -538,29 +553,6 @@ export function CreateSubmissionTaskDialog({
                 })}
               </div>
             </section>
-
-            <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-              <ResearchButton
-                type="button"
-                onClick={() => {
-                  reset();
-                  setIsOpen(false);
-                }}
-                tone="secondary"
-              >
-                Cancel
-              </ResearchButton>
-              <ResearchButton
-                disabled={
-                  !selectedVenue ||
-                  selectedAssistantIds.length === 0 ||
-                  isPending
-                }
-              >
-                <Plus className="h-4 w-4" />
-                Create task
-              </ResearchButton>
-            </div>
           </form>
         </ResearchModal>
       )}
@@ -574,8 +566,18 @@ export function CreateSubmissionTaskDialog({
           icon={<KeyRound className="h-5 w-5" />}
           maxWidth="max-w-lg"
           bodyClassName="px-5 py-4"
+          headerActions={
+            <ResearchButton form="submission-account-form" disabled={isPending}>
+              <Plus className="h-4 w-4" />
+              Add account
+            </ResearchButton>
+          }
         >
-          <form action={submitAccount} className="grid gap-4">
+          <form
+            id="submission-account-form"
+            action={submitAccount}
+            className="grid gap-4"
+          >
             <input type="hidden" name="journalId" value={selectedVenue.id} />
             <input type="hidden" name="projectId" value={projectId} />
             <label className="grid gap-1.5">
@@ -612,19 +614,6 @@ export function CreateSubmissionTaskDialog({
               </span>
               <input name="note" className={inputClass} />
             </label>
-            <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
-              <ResearchButton
-                type="button"
-                onClick={() => setAddAccountOpen(false)}
-                tone="secondary"
-              >
-                Cancel
-              </ResearchButton>
-              <ResearchButton disabled={isPending} tone="success">
-                <Plus className="h-4 w-4" />
-                Add account
-              </ResearchButton>
-            </div>
           </form>
         </ResearchModal>
       )}

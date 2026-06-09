@@ -15,7 +15,10 @@ import {
   X,
 } from "lucide-react";
 import { updateResearchProfile } from "./actions";
-import { researchFieldClass } from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchButton,
+  researchFieldClass,
+} from "@/sites/research/components/ResearchPrimitives";
 
 type ResearchProfileUser = {
   id: string;
@@ -164,6 +167,7 @@ export function ProfileClient({ user }: { user: ResearchProfileUser }) {
           className="fixed inset-0 z-[1010] flex overflow-y-auto items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
         >
           <form
+            id="profile-edit-form"
             action={saveProfile}
             className="w-full max-w-lg overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
           >
@@ -176,13 +180,23 @@ export function ProfileClient({ user }: { user: ResearchProfileUser }) {
                   Update your research display name and affiliation.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setEditOpen(false)}
-                className="rounded-none p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <ResearchButton form="profile-edit-form" disabled={isSaving}>
+                  {isSaving ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <UserRound className="h-4 w-4" />
+                  )}
+                  {isSaving ? "Saving..." : "Save changes"}
+                </ResearchButton>
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(false)}
+                  className="rounded-none p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="grid gap-4 px-5 py-4">
               <label className="grid gap-1 text-sm font-semibold text-[#E4E4E4]">
@@ -203,26 +217,6 @@ export function ProfileClient({ user }: { user: ResearchProfileUser }) {
                   className={researchFieldClass}
                 />
               </label>
-            </div>
-            <div className="flex justify-end gap-3 border-t border-slate-200 px-5 py-4 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setEditOpen(false)}
-                className="border border-[#444444] px-4 py-2 text-sm font-semibold text-slate-600 dark:border-slate-700 dark:text-slate-300"
-              >
-                Cancel
-              </button>
-              <button
-                disabled={isSaving}
-                className="inline-flex items-center gap-2 rounded-none bg-emerald-600 px-4 py-2 text-sm font-black text-white disabled:opacity-60"
-              >
-                {isSaving ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <UserRound className="h-4 w-4" />
-                )}
-                {isSaving ? "Saving..." : "Save changes"}
-              </button>
             </div>
           </form>
         </div>

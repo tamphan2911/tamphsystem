@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Landmark, Loader2, Pencil, Plus, Save } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type FundingInstitutionValues = {
@@ -69,8 +70,21 @@ export function FundingInstitutionDialog({
             : "Create a funding institution with an automatic immutable funder ID."
         }
         icon={<Landmark className="h-5 w-5" />}
+        headerActions={
+          <ResearchButton form="funder-form" disabled={isPending}>
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isEdit ? (
+              <Save className="h-4 w-4" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
+            {isEdit ? "Save changes" : "Add funder"}
+          </ResearchButton>
+        }
       >
         <form
+          id="funder-form"
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
@@ -154,23 +168,6 @@ export function FundingInstitutionDialog({
                 className={`${inputClass} min-h-32 resize-y`}
               />
             </label>
-          </div>
-
-          <div className="flex justify-end border-t border-slate-200 pt-4 dark:border-slate-800">
-            <button
-              type="submit"
-              disabled={isPending}
-              className="inline-flex min-w-40 cursor-pointer items-center justify-center gap-2 rounded-none border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-black text-emerald-700 shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-md disabled:cursor-wait disabled:opacity-70 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-200 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/60"
-            >
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : isEdit ? (
-                <Save className="h-4 w-4" />
-              ) : (
-                <Plus className="h-4 w-4" />
-              )}
-              {isEdit ? "Save changes" : "Add funder"}
-            </button>
           </div>
         </form>
       </ResearchModal>

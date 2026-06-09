@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { CalendarPlus, Loader2, Pencil, Save } from "lucide-react";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { currencyOptions } from "@/sites/research/lib/currency";
 
@@ -90,8 +91,19 @@ export function ConferenceDialog({
           )
         }
         maxWidth="max-w-5xl"
+        headerActions={
+          <ResearchButton form="conference-form" disabled={isPending}>
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            {isEdit ? "Save conference" : "Add conference"}
+          </ResearchButton>
+        }
       >
         <form
+          id="conference-form"
           onSubmit={(event) => {
             event.preventDefault();
             setWarning("");
@@ -280,19 +292,6 @@ export function ConferenceDialog({
                 className={areaClass}
               />
             </label>
-          </div>
-          <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
-            <button
-              disabled={isPending}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-none border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-sm font-bold text-cyan-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-100 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 dark:border-cyan-800/70 dark:bg-cyan-950/40 dark:text-cyan-200"
-            >
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              {isEdit ? "Save conference" : "Add conference"}
-            </button>
           </div>
         </form>
       </ResearchModal>

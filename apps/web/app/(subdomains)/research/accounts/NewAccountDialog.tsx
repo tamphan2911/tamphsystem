@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 import { KeyRound, PlusCircle } from "lucide-react";
 import { createPublisherAccount } from "../actions";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
-import { researchFieldClass } from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchButton,
+  researchFieldClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
@@ -66,8 +69,18 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
         description="Track credentials and link them to a journal when needed."
         icon={<KeyRound className="h-5 w-5" />}
         maxWidth="max-w-2xl"
+        headerActions={
+          <ResearchButton form="new-account-form">
+            <PlusCircle className="h-4 w-4" />
+            Add Account
+          </ResearchButton>
+        }
       >
-        <form action={createPublisherAccount} className="grid gap-4">
+        <form
+          id="new-account-form"
+          action={createPublisherAccount}
+          className="grid gap-4"
+        >
           <div className="grid gap-4 md:grid-cols-2">
             <input
               name="username"
@@ -121,20 +134,6 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
               placeholder="Login URL, recovery note, account scope"
               className={`${researchFieldClass} md:col-span-2`}
             />
-          </div>
-
-          <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={closeDialog}
-              className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-200"
-            >
-              Cancel
-            </button>
-            <button className="inline-flex items-center gap-2 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md">
-              <PlusCircle className="h-4 w-4" />
-              Add Account
-            </button>
           </div>
         </form>
       </ResearchModal>

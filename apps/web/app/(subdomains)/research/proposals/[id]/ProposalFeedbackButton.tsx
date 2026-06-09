@@ -92,14 +92,29 @@ export function ProposalFeedbackButton({
                     the proposer.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="cursor-pointer rounded-none p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                  aria-label="Close"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={isSaving}
+                    className={`inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-none px-4 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 ${
+                      decision === "ACCEPTED"
+                        ? "bg-emerald-600 hover:bg-emerald-500"
+                        : "bg-rose-600 hover:bg-rose-500"
+                    }`}
+                  >
+                    {isSaving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : null}
+                    {isSaving ? "Sending..." : "Send feedback"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="cursor-pointer rounded-none p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    aria-label="Close"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -147,28 +162,6 @@ export function ProposalFeedbackButton({
                   }
                 />
               </label>
-            </div>
-
-            <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                disabled={isSaving}
-                className="inline-flex h-10 cursor-pointer items-center justify-center border border-[#444444] px-4 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-              >
-                Cancel
-              </button>
-              <button
-                disabled={isSaving}
-                className={`inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-none px-4 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 ${
-                  decision === "ACCEPTED"
-                    ? "bg-emerald-600 hover:bg-emerald-500"
-                    : "bg-rose-600 hover:bg-rose-500"
-                }`}
-              >
-                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {isSaving ? "Sending..." : "Send feedback"}
-              </button>
             </div>
           </form>
         </div>

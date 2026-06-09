@@ -898,8 +898,18 @@ export function SubmissionsTable({
           icon={<Edit3 className="h-5 w-5" />}
           maxWidth="max-w-lg"
           bodyClassName="px-5 py-4"
+          headerActions={
+            <ResearchButton form="submission-status-form" disabled={isPending}>
+              <Check className="h-4 w-4" />
+              Save status
+            </ResearchButton>
+          }
         >
-          <form onSubmit={submitStatus} className="grid gap-4">
+          <form
+            id="submission-status-form"
+            onSubmit={submitStatus}
+            className="grid gap-4"
+          >
             <input type="hidden" name="submissionId" value={editing.id} />
             <input type="hidden" name="submissionKind" value={editing.kind} />
             <label className="grid gap-1.5">
@@ -931,19 +941,6 @@ export function SubmissionsTable({
                 />
               </div>
             </label>
-            <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
-              <ResearchButton
-                type="button"
-                onClick={() => setEditing(null)}
-                tone="secondary"
-              >
-                Cancel
-              </ResearchButton>
-              <ResearchButton disabled={isPending}>
-                <Check className="h-4 w-4" />
-                Save status
-              </ResearchButton>
-            </div>
           </form>
         </ResearchModal>
       )}

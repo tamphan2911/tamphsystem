@@ -121,8 +121,19 @@ export function ProposalDialog({
         description="Share the details, support file, and best contact channel."
         icon={<Icon className="h-5 w-5" />}
         maxWidth="max-w-3xl"
+        headerActions={
+          <ResearchButton form="proposal-form" disabled={uploadDisabled}>
+            {uploadDisabled ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            {uploadDisabled ? "Uploading..." : "Send proposal"}
+          </ResearchButton>
+        }
       >
         <form
+          id="proposal-form"
           ref={formRef}
           onSubmit={(event) => {
             event.preventDefault();
@@ -295,17 +306,6 @@ export function ProposalDialog({
                 placeholder="Anything else I should know before I contact you"
               />
             </label>
-          </div>
-
-          <div className="mt-5 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800">
-            <ResearchButton disabled={uploadDisabled}>
-              {uploadDisabled ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-              {uploadDisabled ? "Uploading..." : "Send proposal"}
-            </ResearchButton>
           </div>
         </form>
       </ResearchModal>

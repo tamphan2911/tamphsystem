@@ -5,6 +5,7 @@ import { ClipboardCheck, Loader2, PlusCircle } from "lucide-react";
 import { createAcademicReview } from "../actions";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
@@ -125,8 +126,19 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
         title="Add academic review"
         description="Track review invitations, deadlines, and private notes."
         icon={<ClipboardCheck className="h-5 w-5" />}
+        headerActions={
+          <ResearchButton form="new-review-form" disabled={isPending}>
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <PlusCircle className="h-4 w-4" />
+            )}
+            Add Review
+          </ResearchButton>
+        }
       >
         <form
+          id="new-review-form"
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
@@ -237,28 +249,6 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
               </label>
             </div>
           </section>
-
-          <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={closeDialog}
-              disabled={isPending}
-              className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              Cancel
-            </button>
-            <button
-              disabled={isPending}
-              className="inline-flex items-center gap-2 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none dark:bg-blue-500 dark:hover:bg-blue-400"
-            >
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <PlusCircle className="h-4 w-4" />
-              )}
-              Add Review
-            </button>
-          </div>
         </form>
       </ResearchModal>
     </>

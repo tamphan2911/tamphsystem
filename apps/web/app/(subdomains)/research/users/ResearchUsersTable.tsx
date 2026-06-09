@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -21,7 +22,10 @@ import {
 } from "@/sites/research/components/TableControls";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
-import { researchFieldClass } from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchButton,
+  researchFieldClass,
+} from "@/sites/research/components/ResearchPrimitives";
 
 export type ResearchUserRow = {
   id: string;
@@ -302,8 +306,21 @@ export function ResearchUsersTable({
             <DialogHeader
               title="Edit research user"
               onClose={() => setEditing(null)}
+              actions={
+                <ResearchButton
+                  form="edit-research-user-form"
+                  disabled={isPending}
+                >
+                  <Save className="h-4 w-4" />
+                  Save user
+                </ResearchButton>
+              }
             />
-            <form action={submitEdit} className="grid gap-4 px-5 py-5">
+            <form
+              id="edit-research-user-form"
+              action={submitEdit}
+              className="grid gap-4 px-5 py-5"
+            >
               <input type="hidden" name="userId" value={editing.id} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Name" name="name" defaultValue={editing.name} />
@@ -347,22 +364,6 @@ export function ResearchUsersTable({
                   ))}
                 </div>
               </div>
-              <div className="flex justify-end gap-2 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setEditing(null)}
-                  className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  disabled={isPending}
-                  className="inline-flex items-center gap-2 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
-                >
-                  <Save className="h-4 w-4" />
-                  Save user
-                </button>
-              </div>
             </form>
           </div>
         </div>
@@ -377,8 +378,22 @@ export function ResearchUsersTable({
             <DialogHeader
               title="Delete research user"
               onClose={() => setDeleting(null)}
+              actions={
+                <ResearchButton
+                  form="delete-research-user-form"
+                  disabled={isPending}
+                  tone="danger"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete user
+                </ResearchButton>
+              }
             />
-            <form action={confirmDelete} className="space-y-4 px-5 py-5">
+            <form
+              id="delete-research-user-form"
+              action={confirmDelete}
+              className="space-y-4 px-5 py-5"
+            >
               <input type="hidden" name="userId" value={deleting.id} />
               <div className="flex gap-3 rounded-none border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-900/70 dark:bg-rose-950/30 dark:text-rose-200">
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
@@ -390,22 +405,6 @@ export function ResearchUsersTable({
                   ? This removes the user account. If the user is linked to
                   research records or tasks, deletion may be blocked.
                 </p>
-              </div>
-              <div className="flex justify-end gap-2 border-t border-slate-200 pt-5 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setDeleting(null)}
-                  className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  disabled={isPending}
-                  className="inline-flex items-center gap-2 rounded-none bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-rose-700 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete user
-                </button>
               </div>
             </form>
           </div>
@@ -450,21 +449,26 @@ function Field({
 function DialogHeader({
   title,
   onClose,
+  actions,
 }: {
   title: string;
   onClose: () => void;
+  actions?: ReactNode;
 }) {
   return (
     <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
       <h3 className="text-base font-bold text-[#E4E4E4]">{title}</h3>
-      <button
-        type="button"
-        onClick={onClose}
-        className="rounded-none p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-        aria-label="Close"
-      >
-        <X className="h-5 w-5" />
-      </button>
+      <div className="flex items-center gap-2">
+        {actions}
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-none p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          aria-label="Close"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
     </div>
   );
 }

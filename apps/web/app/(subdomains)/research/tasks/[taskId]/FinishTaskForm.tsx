@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { CalendarDays, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 
 export function FinishTaskForm({
   action,
@@ -62,38 +63,24 @@ export function FinishTaskForm({
         icon={<Icon className="h-5 w-5" />}
         maxWidth="max-w-md"
         bodyClassName="px-5 py-4"
-        footer={
-          <div className="flex items-center justify-end gap-3">
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={() => setIsOpen(false)}
-              className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={() => {
-                startTransition(() => {
-                  formRef.current?.requestSubmit();
-                });
-              }}
-              className={`inline-flex items-center gap-2 rounded-none px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none ${
-                isReadyMode
-                  ? "bg-blue-600 hover:bg-blue-700"
-                  : "bg-emerald-600 hover:bg-emerald-700"
-              }`}
-            >
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Icon className="h-4 w-4" />
-              )}
-              Confirm
-            </button>
-          </div>
+        headerActions={
+          <ResearchButton
+            type="button"
+            disabled={isPending}
+            tone={isReadyMode ? "primary" : "success"}
+            onClick={() => {
+              startTransition(() => {
+                formRef.current?.requestSubmit();
+              });
+            }}
+          >
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Icon className="h-4 w-4" />
+            )}
+            Confirm
+          </ResearchButton>
         }
       >
         <div className="grid gap-4">

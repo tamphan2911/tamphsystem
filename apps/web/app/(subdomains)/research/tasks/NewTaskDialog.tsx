@@ -400,8 +400,17 @@ export function NewTaskDialog({
         description="Create submit, production, review, or general research work."
         icon={<ClipboardList className="h-5 w-5" />}
         maxWidth="max-w-5xl"
+        headerActions={
+          <ResearchButton
+            form="new-task-form"
+            disabled={!canSubmit || isPending}
+          >
+            <PlusCircle className="h-4 w-4" />
+            Assign Task
+          </ResearchButton>
+        }
       >
-        <form action={submitTask} className="grid gap-5">
+        <form id="new-task-form" action={submitTask} className="grid gap-5">
           {selectedIds.map((id) => (
             <input key={id} type="hidden" name="assigneeIds" value={id} />
           ))}
@@ -728,20 +737,6 @@ export function NewTaskDialog({
               onClick: () => toggleAssignee(user.id),
             }))}
           />
-
-          <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-            <ResearchButton
-              type="button"
-              onClick={() => setIsOpen(false)}
-              tone="secondary"
-            >
-              Cancel
-            </ResearchButton>
-            <ResearchButton disabled={!canSubmit || isPending}>
-              <PlusCircle className="h-4 w-4" />
-              Assign Task
-            </ResearchButton>
-          </div>
         </form>
       </ResearchModal>
     </>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Crown, Mail, PlusCircle, ShieldCheck, UserRound } from "lucide-react";
 import { assignResearchAssistant } from "../actions";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
@@ -91,8 +92,18 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
         description="Search one account, choose assistant level, then assign jurisdiction."
         icon={<ShieldCheck className="h-5 w-5" />}
         maxWidth="max-w-3xl"
+        headerActions={
+          <ResearchButton
+            form="add-assistant-form"
+            disabled={!selectedUserId || isPending}
+          >
+            <PlusCircle className="h-4 w-4" />
+            Assign Role
+          </ResearchButton>
+        }
       >
         <form
+          id="add-assistant-form"
           action={handleSubmit}
           className="flex min-h-0 flex-1 flex-col gap-5"
         >
@@ -161,23 +172,6 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
               description="Can coordinate research operations"
               onClick={() => setAssistantRole("CHIEF_ASSISTANT")}
             />
-          </div>
-
-          <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={closeDialog}
-              className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              Cancel
-            </button>
-            <button
-              disabled={!selectedUserId || isPending}
-              className="inline-flex items-center gap-2 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-            >
-              <PlusCircle className="h-4 w-4" />
-              Assign Role
-            </button>
           </div>
         </form>
       </ResearchModal>

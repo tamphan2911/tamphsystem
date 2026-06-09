@@ -27,6 +27,7 @@ import {
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
   researchFieldClass,
+  ResearchButton,
 } from "@/sites/research/components/ResearchPrimitives";
 
 export type JournalFormValues = {
@@ -256,8 +257,21 @@ export function JournalDialogForm({
       description={detail}
       icon={<BookOpen className="h-5 w-5" />}
       maxWidth="max-w-4xl"
+      headerActions={
+        <ResearchButton form="journal-form" disabled={isPending}>
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isEdit ? (
+            <Save className="h-4 w-4" />
+          ) : (
+            <PlusCircle className="h-4 w-4" />
+          )}
+          {isEdit ? "Save changes" : "Add Journal"}
+        </ResearchButton>
+      }
     >
       <form
+        id="journal-form"
         onSubmit={(event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
@@ -594,30 +608,6 @@ export function JournalDialogForm({
             </label>
           </div>
         </section>
-
-        <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={closeDialog}
-            className="cursor-pointer rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            Cancel
-          </button>
-          <button
-            disabled={isPending}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none"
-          >
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : isEdit ? (
-              <Save className="h-4 w-4" />
-            ) : (
-              <PlusCircle className="h-4 w-4" />
-            )}
-            {isEdit ? "Save changes" : "Add Journal"}
-          </button>
-        </div>
       </form>
     </ResearchModal>
   );

@@ -9,6 +9,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { researchTextareaClass } from "@/sites/research/components/ResearchPrimitives";
 
@@ -114,34 +115,24 @@ function TextModalForm({
         description={description}
         icon={<Icon className="h-5 w-5" />}
         maxWidth="max-w-lg"
-        footer={
-          <div className="flex items-center justify-end gap-3">
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={() => closeDialog()}
-              className="rounded-none border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={isPending || content.trim().length === 0}
-              onClick={() => {
-                startTransition(() => {
-                  formRef.current?.requestSubmit();
-                });
-              }}
-              className={`inline-flex items-center gap-2 rounded-none px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none ${colors.button}`}
-            >
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Icon className="h-4 w-4" />
-              )}
-              {confirmLabel}
-            </button>
-          </div>
+        headerActions={
+          <ResearchButton
+            type="button"
+            disabled={isPending || content.trim().length === 0}
+            tone={tone === "rose" ? "danger" : tone === "amber" ? "secondary" : "primary"}
+            onClick={() => {
+              startTransition(() => {
+                formRef.current?.requestSubmit();
+              });
+            }}
+          >
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Icon className="h-4 w-4" />
+            )}
+            {confirmLabel}
+          </ResearchButton>
         }
       >
         <form
