@@ -3,7 +3,13 @@
 import { useState, useTransition } from "react";
 import { Landmark, Loader2, Pencil, Plus, Save } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
-import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchButton,
+  ResearchIconButton,
+  researchFieldClass,
+  researchLabelClass,
+  researchTextareaClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type FundingInstitutionValues = {
@@ -14,11 +20,6 @@ export type FundingInstitutionValues = {
   website?: string | null;
   note?: string | null;
 };
-
-const inputClass =
-  "w-full border border-[#444444] bg-[#2C2C2C] px-3.5 py-3 text-sm text-[#E4E4E4] outline-none transition placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]";
-const labelClass =
-  "grid gap-1.5 text-left text-sm font-semibold text-slate-700 dark:text-slate-300";
 
 export function FundingInstitutionDialog({
   mode,
@@ -41,23 +42,23 @@ export function FundingInstitutionDialog({
   return (
     <>
       {isEdit ? (
-        <button
+        <ResearchIconButton
           type="button"
           onClick={() => setOpen(true)}
-          aria-label="Edit funder"
-          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-[#444444] bg-[#2C2C2C] text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-emerald-800 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300"
+          label="Edit funder"
+          tone="emerald"
         >
           <Pencil className="h-4 w-4" />
-        </button>
+        </ResearchIconButton>
       ) : (
-        <button
+        <ResearchButton
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-none border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-md dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-200 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/60"
+          tone="success"
         >
           <Plus className="h-4 w-4" />
           New Funder
-        </button>
+        </ResearchButton>
       )}
 
       <ResearchModal
@@ -102,19 +103,19 @@ export function FundingInstitutionDialog({
           className="space-y-5"
         >
           <div className="grid gap-4">
-            <label className={labelClass}>
+            <label className={researchLabelClass}>
               Funder name
               <input
                 name="name"
                 defaultValue={initialValues?.name ?? ""}
                 placeholder="Funding institution name"
                 required
-                className={inputClass}
+                className={researchFieldClass}
               />
             </label>
 
             <div className="grid gap-4 md:grid-cols-3">
-              <label className={labelClass}>
+              <label className={researchLabelClass}>
                 Funder ID
                 <input
                   value={
@@ -123,25 +124,25 @@ export function FundingInstitutionDialog({
                       : "Generated after saving"
                   }
                   readOnly
-                  className={`${inputClass} cursor-not-allowed bg-slate-100 font-mono text-xs font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-900 dark:text-slate-400`}
+                  className={`${researchFieldClass} cursor-not-allowed font-mono text-xs uppercase tracking-wide`}
                 />
               </label>
-              <label className={labelClass}>
+              <label className={researchLabelClass}>
                 Alias
                 <input
                   name="shortName"
                   defaultValue={initialValues?.shortName ?? ""}
                   placeholder="UEH, IDPA..."
-                  className={inputClass}
+                  className={researchFieldClass}
                 />
               </label>
-              <label className={labelClass}>
+              <label className={researchLabelClass}>
                 Country
                 <input
                   name="country"
                   defaultValue={initialValues?.country ?? ""}
                   placeholder="Vietnam"
-                  className={inputClass}
+                  className={researchFieldClass}
                 />
               </label>
             </div>
@@ -150,22 +151,22 @@ export function FundingInstitutionDialog({
           <div className="border-t border-slate-200 dark:border-slate-800" />
 
           <div className="grid gap-4">
-            <label className={labelClass}>
+            <label className={researchLabelClass}>
               Website
               <input
                 name="website"
                 defaultValue={initialValues?.website ?? ""}
                 placeholder="https://..."
-                className={inputClass}
+                className={researchFieldClass}
               />
             </label>
-            <label className={labelClass}>
+            <label className={researchLabelClass}>
               Note
               <textarea
                 name="note"
                 defaultValue={initialValues?.note ?? ""}
                 placeholder="Funding scope, rules, contact notes..."
-                className={`${inputClass} min-h-32 resize-y`}
+                className={`${researchTextareaClass} min-h-32 resize-y`}
               />
             </label>
           </div>
