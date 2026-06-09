@@ -176,7 +176,7 @@ export function JournalDetailTabs({
 
       {activeTab !== "submissions" && (
         <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
-          <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+          <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
             <TableSearchInput
               value={query}
               onChange={setQuery}

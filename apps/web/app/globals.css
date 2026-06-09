@@ -1028,7 +1028,9 @@ textarea:focus-visible {
   :where(div, section):has(> table)
   > :where(div:first-child:not(:has(table))) {
   background-color: #242424 !important;
-  border-bottom-color: #333333 !important;
+  border-bottom-color: #3a3a3a !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
 .research-site-root :where(table tr > :first-child) {
@@ -1092,7 +1094,7 @@ textarea:focus-visible {
 .research-site-root tbody tr {
   --research-row-bg: #242424;
   --research-row-hover-bg: #303030;
-  --research-row-line: #333333;
+  --research-row-line: #3a3a3a;
   background-color: var(--research-row-bg);
   transition:
     background-color 180ms ease,
@@ -1101,7 +1103,7 @@ textarea:focus-visible {
 }
 
 .research-site-root tbody tr:nth-child(even) {
-  --research-row-bg: #343434;
+  --research-row-bg: #2c2c2c;
 }
 
 .research-site-root tbody tr > :where(td) {
@@ -1118,12 +1120,12 @@ textarea:focus-visible {
 
 .research-site-root tbody tr[class*="bg-rose"] {
   --research-row-bg: #2d2828;
-  --research-row-line: #333333;
+  --research-row-line: #3a3a3a;
 }
 
 .research-site-root tbody tr:hover {
   --research-row-bg: var(--research-row-hover-bg);
-  --research-row-line: #3a3a3a;
+  --research-row-line: #404040;
   box-shadow: inset 3px 0 0 #a8dadc;
 }
 
@@ -1139,7 +1141,7 @@ textarea:focus-visible {
 .research-site-root thead > tr,
 .research-site-root thead > tr > th {
   background-color: #202020 !important;
-  border-bottom-color: #333333 !important;
+  border-bottom-color: #444444 !important;
 }
 
 .research-site-root button,
