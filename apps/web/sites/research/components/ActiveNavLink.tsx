@@ -67,6 +67,7 @@ export function ActiveNavLink({
   return (
     <Link
       href={href}
+      data-active={isActive ? "true" : "false"}
       aria-label={collapsed ? displayLabel : undefined}
       className={`${baseClass} ${stateClass} ${
         collapsed ? "justify-center" : ""

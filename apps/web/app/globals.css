@@ -820,12 +820,25 @@ textarea:focus-visible {
   padding-top: 0 !important;
 }
 
-.research-site-root aside nav > :first-child {
+.research-site-root aside nav > :first-child:not([data-active="true"]) {
   margin-top: 0 !important;
   border-top-color: transparent !important;
 }
 
-.research-site-root aside nav > :last-child {
+.research-site-root aside nav > :last-child:not([data-active="true"]) {
+  border-bottom-color: transparent !important;
+}
+
+.research-site-root aside nav > [data-active="true"] {
+  border-top-color: #444444 !important;
+  border-bottom-color: #444444 !important;
+}
+
+.research-site-root aside nav > [data-active="true"] + :hover {
+  border-top-color: transparent !important;
+}
+
+.research-site-root aside nav > :has(+ [data-active="true"]):hover {
   border-bottom-color: transparent !important;
 }
 
