@@ -12,6 +12,7 @@ import {
   Send,
   Trash2,
   UserRound,
+  X,
 } from "lucide-react";
 import {
   addSuggestedConference,
@@ -117,6 +118,7 @@ export function SuggestedJournalsPanel({
   const [addOpen, setAddOpen] = useState(false);
   const [assignVenue, setAssignVenue] = useState<Venue | null>(null);
   const [deleteVenue, setDeleteVenue] = useState<Venue | null>(null);
+  const [selectedAddVenue, setSelectedAddVenue] = useState<Venue | null>(null);
   const [journalQuery, setJournalQuery] = useState("");
   const [conferenceQuery, setConferenceQuery] = useState("");
   const [assistantQuery, setAssistantQuery] = useState("");
@@ -145,10 +147,10 @@ export function SuggestedJournalsPanel({
 
   const journalResults = useMemo(() => {
     const needle = journalQuery.trim().toLowerCase();
+    if (!needle) return [];
     return journals
       .filter((journal) => !suggestedJournalIds.has(journal.id))
       .filter((journal) => {
-        if (!needle) return true;
         return [
           journal.name,
           journal.issn,
@@ -165,10 +167,10 @@ export function SuggestedJournalsPanel({
 
   const conferenceResults = useMemo(() => {
     const needle = conferenceQuery.trim().toLowerCase();
+    if (!needle) return [];
     return conferences
       .filter((conference) => !suggestedConferenceIds.has(conference.id))
       .filter((conference) => {
-        if (!needle) return true;
         return [
           conference.name,
           conference.type,
@@ -185,9 +187,9 @@ export function SuggestedJournalsPanel({
 
   const assistantResults = useMemo(() => {
     const needle = assistantQuery.trim().toLowerCase();
+    if (!needle) return [];
     return assistants
       .filter((assistant) => {
-        if (!needle) return true;
         return [
           assistant.name,
           assistant.email,
@@ -209,14 +211,24 @@ export function SuggestedJournalsPanel({
     );
   }
 
+  function closeAddVenue() {
+    setAddOpen(false);
+    setJournalQuery("");
+    setConferenceQuery("");
+    setSelectedAddVenue(null);
+  }
+
   function addJournal(journalId: string) {
     if (disabled) return;
     const formData = new FormData();
     formData.set("journalId", journalId);
     startTransition(async () => {
       await addSuggestedJournal(projectId, formData);
-      setAddOpen(false);
-      setJournalQuery("");
+      closeAddVenue();
+      showSuccess({
+        title: "Suggested venue added",
+        detail: "The journal was added to this research suggested venues.",
+      });
       router.refresh();
     });
   }
@@ -227,10 +239,22 @@ export function SuggestedJournalsPanel({
     formData.set("conferenceId", conferenceId);
     startTransition(async () => {
       await addSuggestedConference(projectId, formData);
-      setAddOpen(false);
-      setConferenceQuery("");
+      closeAddVenue();
+      showSuccess({
+        title: "Suggested venue added",
+        detail: "The conference was added to this research suggested venues.",
+      });
       router.refresh();
     });
+  }
+
+  function addSelectedVenue() {
+    if (!selectedAddVenue || isPending) return;
+    if (selectedAddVenue.kind === "journal") {
+      addJournal(selectedAddVenue.item.id);
+    } else {
+      addConference(selectedAddVenue.item.id);
+    }
   }
 
   function removeVenue() {
@@ -363,23 +387,35 @@ export function SuggestedJournalsPanel({
       {addOpen && (
         <ResearchModal
           open={addOpen}
-          onClose={() => setAddOpen(false)}
+          onClose={closeAddVenue}
           title="Add suggested venue"
-          description="Choose a journal or conference target for this research."
           icon={<Plus className="h-5 w-5" />}
           maxWidth="max-w-3xl"
           bodyClassName="px-5 py-4"
+          headerActions={
+            <ResearchButton
+              type="button"
+              onClick={addSelectedVenue}
+              disabled={!selectedAddVenue || isPending}
+            >
+              <Plus className="h-4 w-4" />
+              Add venue
+            </ResearchButton>
+          }
         >
           <div className="grid gap-4">
-            <div className="inline-flex w-fit border border-[#444444] bg-[#202020] p-1">
+            <div className="inline-flex w-fit border border-[#444444] bg-[#202020]">
               {(["journal", "conference"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
-                  onClick={() => setActiveAddTab(tab)}
-                  className={`cursor-pointer px-3 py-2 text-xs font-normal transition ${
+                  onClick={() => {
+                    setActiveAddTab(tab);
+                    setSelectedAddVenue(null);
+                  }}
+                  className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-xs font-normal transition last:border-r-0 hover:border-[#444444] ${
                     activeAddTab === tab
-                      ? "bg-[#383838] text-[#A8DADC] shadow-none"
+                      ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
                       : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
                   }`}
                 >
@@ -392,17 +428,33 @@ export function SuggestedJournalsPanel({
               <>
                 <SearchBox
                   value={journalQuery}
-                  onChange={setJournalQuery}
+                  onChange={(value) => {
+                    setJournalQuery(value);
+                    setSelectedAddVenue(null);
+                  }}
                   placeholder="Search journal name, ISSN, field, rank, publisher..."
                 />
-                <ResultList emptyText="No journal matches this search.">
+                <SelectedVenuePill
+                  venue={selectedAddVenue}
+                  onClear={() => setSelectedAddVenue(null)}
+                />
+                <ResultList
+                  query={journalQuery}
+                  idleText="Search and select one journal."
+                  emptyText="No journal matches this search."
+                >
                   {journalResults.map((journal) => (
                     <button
                       key={journal.id}
                       type="button"
                       disabled={isPending}
-                      onClick={() => addJournal(journal.id)}
-                      className={resultButtonClass}
+                      onClick={() =>
+                        setSelectedAddVenue({ kind: "journal", item: journal })
+                      }
+                      className={resultButtonClass(
+                        selectedAddVenue?.kind === "journal" &&
+                          selectedAddVenue.item.id === journal.id,
+                      )}
                     >
                       <span className="block text-sm font-normal text-[#E4E4E4]">
                         {journal.name}
@@ -421,17 +473,36 @@ export function SuggestedJournalsPanel({
               <>
                 <SearchBox
                   value={conferenceQuery}
-                  onChange={setConferenceQuery}
+                  onChange={(value) => {
+                    setConferenceQuery(value);
+                    setSelectedAddVenue(null);
+                  }}
                   placeholder="Search conference, organizer, theme, location..."
                 />
-                <ResultList emptyText="No conference matches this search.">
+                <SelectedVenuePill
+                  venue={selectedAddVenue}
+                  onClear={() => setSelectedAddVenue(null)}
+                />
+                <ResultList
+                  query={conferenceQuery}
+                  idleText="Search and select one conference."
+                  emptyText="No conference matches this search."
+                >
                   {conferenceResults.map((conference) => (
                     <button
                       key={conference.id}
                       type="button"
                       disabled={isPending}
-                      onClick={() => addConference(conference.id)}
-                      className={resultButtonClass}
+                      onClick={() =>
+                        setSelectedAddVenue({
+                          kind: "conference",
+                          item: conference,
+                        })
+                      }
+                      className={resultButtonClass(
+                        selectedAddVenue?.kind === "conference" &&
+                          selectedAddVenue.item.id === conference.id,
+                      )}
                     >
                       <span className="block text-sm font-normal text-[#E4E4E4]">
                         {conference.name}
@@ -520,15 +591,15 @@ export function SuggestedJournalsPanel({
               value={taskMode === "submit" ? "Submitting" : "Production"}
             />
 
-            <div className="inline-flex w-fit border border-[#444444] bg-[#202020] p-1">
+            <div className="inline-flex w-fit border border-[#444444] bg-[#202020]">
               {(["submit", "other"] as const).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => setTaskMode(mode)}
-                  className={`cursor-pointer px-3 py-2 text-xs font-normal transition ${
+                  className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-xs font-normal transition last:border-r-0 hover:border-[#444444] ${
                     taskMode === mode
-                      ? "bg-[#383838] text-[#A8DADC] shadow-none"
+                      ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
                       : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
                   }`}
                 >
@@ -608,8 +679,8 @@ export function SuggestedJournalsPanel({
                       onClick={() => toggleAssistant(assistant.id)}
                       className={`flex cursor-pointer items-center justify-between gap-3 border-y px-3 py-2 text-left transition first:border-t-transparent last:border-b-transparent first:hover:border-t-transparent last:hover:border-b-transparent ${
                         selected
-                          ? "border-[#A8DADC] bg-[#303030] text-[#A8DADC]"
-                          : "border-transparent bg-[#202020] text-[#E4E4E4] hover:border-[#666666] hover:bg-[#303030]"
+                          ? "border-[#444444] bg-[#303030] text-[#A8DADC]"
+                          : "border-transparent bg-[#202020] text-[#E4E4E4] hover:border-[#444444] hover:bg-[#303030]"
                       }`}
                     >
                       <span className="flex min-w-0 items-center gap-3">
@@ -629,7 +700,9 @@ export function SuggestedJournalsPanel({
                 })}
                 {assistantResults.length === 0 && (
                   <div className="py-10 text-center text-sm text-[#B0B0B0]">
-                    No user matches this search.
+                    {assistantQuery.trim()
+                      ? "No user matches this search."
+                      : "Search and choose assignees."}
                   </div>
                 )}
               </div>
@@ -641,8 +714,46 @@ export function SuggestedJournalsPanel({
   );
 }
 
-const resultButtonClass =
-  "cursor-pointer border-y border-transparent bg-[#202020] px-3 py-2 text-left transition first:border-t-transparent last:border-b-transparent hover:border-[#A8DADC] first:hover:border-t-transparent last:hover:border-b-transparent hover:bg-[#303030] disabled:cursor-wait";
+function resultButtonClass(selected: boolean) {
+  return `cursor-pointer border-y px-3 py-2 text-left transition first:border-t-transparent last:border-b-transparent first:hover:border-t-transparent last:hover:border-b-transparent disabled:cursor-wait ${
+    selected
+      ? "border-[#444444] bg-[#303030]"
+      : "border-transparent bg-[#202020] hover:border-[#444444] hover:bg-[#303030]"
+  }`;
+}
+
+function SelectedVenuePill({
+  venue,
+  onClear,
+}: {
+  venue: Venue | null;
+  onClear: () => void;
+}) {
+  if (!venue) return null;
+
+  return (
+    <div className="flex items-center justify-between gap-3 border border-[#444444] bg-[#202020] px-3 py-2">
+      <span className="min-w-0">
+        <span className="block truncate text-sm font-normal text-[#E4E4E4]">
+          {venue.item.name}
+        </span>
+        <span className="block truncate text-xs text-[#B0B0B0]">
+          Selected {venue.kind}
+        </span>
+      </span>
+      <IconHint label="Clear selection">
+        <button
+          type="button"
+          onClick={onClear}
+          aria-label="Clear selected venue"
+          className="inline-flex h-8 w-8 flex-none cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] transition hover:text-[#A8DADC]"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </IconHint>
+    </div>
+  );
+}
 
 function VenueSection({
   title,
@@ -938,22 +1049,28 @@ function venueStateMeta(state: SuggestedVenueState) {
 }
 
 function ResultList({
+  query,
+  idleText,
   emptyText,
   children,
 }: {
+  query: string;
+  idleText: string;
   emptyText: string;
   children: ReactNode;
 }) {
   const hasChildren = Array.isArray(children)
     ? children.length > 0
     : Boolean(children);
+  const isSearching = query.trim().length > 0;
+
   return (
     <div className="grid max-h-96 overflow-y-auto border border-[#444444]">
       {hasChildren ? (
         children
       ) : (
         <div className="py-10 text-center text-sm text-[#B0B0B0]">
-          {emptyText}
+          {isSearching ? emptyText : idleText}
         </div>
       )}
     </div>

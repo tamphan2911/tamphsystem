@@ -504,7 +504,7 @@ export function NewTaskDialog({
             </label>
           </div>
 
-          <div className="inline-flex w-fit border border-[#444444] bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+          <div className="inline-flex w-fit border border-[#444444] bg-[#202020]">
             {(
               ["submit", "production", "review", "project", "other"] as const
             ).map((item) => (
@@ -512,10 +512,10 @@ export function NewTaskDialog({
                 key={item}
                 type="button"
                 onClick={() => setMode(item)}
-                className={`cursor-pointer rounded-none px-3 py-2 text-xs font-bold transition ${
+                className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-xs font-normal transition last:border-r-0 hover:border-[#444444] ${
                   mode === item
-                    ? "bg-white text-violet-700 shadow-sm dark:bg-slate-800 dark:text-violet-300"
-                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                    ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
+                    : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
                 }`}
               >
                 {modeLabel(item)}
@@ -648,7 +648,7 @@ export function NewTaskDialog({
 
           {needsOrganizedProject && (
             <div className="grid gap-4">
-              <div className="inline-flex w-fit border border-[#444444] bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+              <div className="inline-flex w-fit border border-[#444444] bg-[#202020]">
                 {(
                   [
                     ["PROJECT_PRODUCTION", "Project Production"],
@@ -659,10 +659,10 @@ export function NewTaskDialog({
                     key={value}
                     type="button"
                     onClick={() => setProjectSubtype(value)}
-                    className={`cursor-pointer rounded-none px-3 py-2 text-xs font-bold transition ${
+                    className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-xs font-normal transition last:border-r-0 hover:border-[#444444] ${
                       projectSubtype === value
-                        ? "bg-white text-violet-700 shadow-sm dark:bg-slate-800 dark:text-violet-300"
-                        : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                        ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
+                        : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
                     }`}
                   >
                     {label}
@@ -863,7 +863,9 @@ function SearchPanel({
           open={showDropdown}
           maxWidth={640}
         >
-          <div className={`${researchDropdownPanelClass} max-h-[var(--research-dropdown-max-height)] overflow-y-auto`}>
+          <div
+            className={`${researchDropdownPanelClass} max-h-[var(--research-dropdown-max-height)] overflow-y-auto`}
+          >
             {items.map((item) => (
               <button
                 key={item.id}

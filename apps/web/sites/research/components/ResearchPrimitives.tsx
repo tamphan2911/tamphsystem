@@ -28,10 +28,10 @@ export const researchDropdownItemClass =
   "flex w-full items-start justify-between gap-3 rounded-none border-y px-0 py-2.5 text-left text-sm leading-5 transition duration-150 ease-out first:border-t-transparent last:border-b-transparent first:hover:border-t-transparent last:hover:border-b-transparent motion-reduce:transition-none";
 
 export const researchDropdownItemIdleClass =
-  "border-transparent text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#444444] hover:text-white";
+  "border-transparent text-[#B0B0B0] hover:border-[#444444] hover:bg-[#303030] hover:text-white";
 
 export const researchDropdownItemActiveClass =
-  "border-[#5A5A5A] bg-[#383838] font-normal text-[#E4E4E4]";
+  "border-[#444444] bg-[#383838] font-normal text-[#E4E4E4]";
 
 export const researchTextareaClass =
   "min-h-28 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
