@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, LockKeyhole, Mail } from "lucide-react";
+import { AlertTriangle, LogIn } from "lucide-react";
 import { headers } from "next/headers";
 import { TurnstileField } from "@/sites/shared/components/TurnstileField";
 import {
@@ -18,7 +18,6 @@ import {
   researchAuthLinkClass,
   researchAuthPageClass,
   researchAuthPrimaryButtonClass,
-  researchAuthSubtitleClass,
   researchAuthTitleClass,
   researchAuthWarningClass,
 } from "@/sites/research/lib/authStyles";
@@ -136,35 +135,27 @@ export default async function LoginPage({
                 : "border-b border-slate-100 px-8 py-7 text-center dark:border-slate-800"
             }
           >
-            <div
-              className={
-                isResearch
-                  ? researchAuthIconClass
-                  : "mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:ring-blue-900"
-              }
-            >
-              <LockKeyhole className="h-6 w-6" />
-            </div>
-            <h1
-              className={
-                isResearch
-                  ? researchAuthTitleClass
-                  : "mt-4 text-2xl font-bold tracking-tight"
-              }
-            >
-              Sign in
-            </h1>
-            <p
-              className={
-                isResearch
-                  ? researchAuthSubtitleClass
-                  : "mt-2 text-sm text-slate-500 dark:text-slate-400"
-              }
-            >
-              {isResearch
-                ? "Access your research pipeline, tasks, submissions, and notifications."
-                : "Use your TamphSystem account across portfolio, learn, admin, and research."}
-            </p>
+            {isResearch ? (
+              <h1 className="inline-flex items-center justify-center gap-2">
+                <span className={researchAuthIconClass}>
+                  <LogIn className="h-6 w-6" />
+                </span>
+                <span className={researchAuthTitleClass}>Sign in</span>
+              </h1>
+            ) : (
+              <>
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:ring-blue-900">
+                  <LogIn className="h-6 w-6" />
+                </div>
+                <h1 className="mt-4 text-2xl font-bold tracking-tight">
+                  Sign in
+                </h1>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  Use your TamphSystem account across portfolio, learn, admin,
+                  and research.
+                </p>
+              </>
+            )}
           </div>
 
           <form
@@ -233,7 +224,10 @@ export default async function LoginPage({
               />
             </label>
 
-            <TurnstileField siteKey={siteKey} />
+            <TurnstileField
+              siteKey={siteKey}
+              theme={isResearch ? "dark" : "light"}
+            />
 
             <button
               type="submit"
@@ -243,7 +237,7 @@ export default async function LoginPage({
                   : "inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-blue-600 bg-blue-600 px-4 text-sm font-bold text-white shadow-lg shadow-blue-900/15 transition hover:-translate-y-0.5 hover:bg-blue-500 hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/30 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400"
               }
             >
-              <Mail className="h-4 w-4" />
+              <LogIn className="h-4 w-4" />
               Sign in
             </button>
           </form>

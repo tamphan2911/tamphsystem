@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { AlertTriangle, BarChart3, Loader2, UserPlus } from "lucide-react";
+import { AlertTriangle, Loader2, UserPlus } from "lucide-react";
 import { TurnstileField } from "@/sites/shared/components/TurnstileField";
 import {
   AuthDarkTheme,
@@ -22,7 +22,6 @@ import {
   researchAuthLinkClass,
   researchAuthPageClass,
   researchAuthPrimaryButtonClass,
-  researchAuthSubtitleClass,
   researchAuthTitleClass,
 } from "@/sites/research/lib/authStyles";
 import { registerUser } from "./actions";
@@ -40,9 +39,8 @@ function siteCopy() {
   const host = window.location.host;
   if (host.startsWith("research.")) {
     return {
-      title: "Create Research Hub account",
-      subtitle:
-        "Register with the shared TamphSystem account database. Email verification is required before login.",
+      title: "Create your Research Account",
+      subtitle: "",
       accent: "emerald",
     };
   }
@@ -119,37 +117,26 @@ function RegisterContent() {
                 : "border-b border-slate-100 px-8 py-7 text-center dark:border-slate-800"
             }
           >
-            <div
-              className={
-                isResearch
-                  ? researchAuthIconClass
-                  : "mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:ring-blue-900"
-              }
-            >
-              {isResearch ? (
-                <BarChart3 className="h-6 w-6" />
-              ) : (
-                <UserPlus className="h-6 w-6" />
-              )}
-            </div>
-            <h1
-              className={
-                isResearch
-                  ? researchAuthTitleClass
-                  : "mt-4 text-2xl font-bold tracking-tight"
-              }
-            >
-              {copy.title}
-            </h1>
-            <p
-              className={
-                isResearch
-                  ? researchAuthSubtitleClass
-                  : "mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400"
-              }
-            >
-              {copy.subtitle}
-            </p>
+            {isResearch ? (
+              <h1 className="inline-flex items-center justify-center gap-2">
+                <span className={researchAuthIconClass}>
+                  <UserPlus className="h-6 w-6" />
+                </span>
+                <span className={researchAuthTitleClass}>{copy.title}</span>
+              </h1>
+            ) : (
+              <>
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:ring-blue-900">
+                  <UserPlus className="h-6 w-6" />
+                </div>
+                <h1 className="mt-4 text-2xl font-bold tracking-tight">
+                  {copy.title}
+                </h1>
+                <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                  {copy.subtitle}
+                </p>
+              </>
+            )}
           </div>
 
           <form
@@ -282,7 +269,11 @@ function RegisterContent() {
               />
             </label>
 
-            <TurnstileField siteKey={siteKey} resetKey={turnstileResetKey} />
+            <TurnstileField
+              siteKey={siteKey}
+              resetKey={turnstileResetKey}
+              theme={isResearch ? "dark" : "light"}
+            />
 
             <button
               type="submit"
