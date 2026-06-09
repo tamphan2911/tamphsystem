@@ -40,9 +40,9 @@ export type SuggestionRow = {
 
 function typeClass(kind: SuggestionKind) {
   if (kind === "Journal") {
-    return "border-[#3A5360] bg-[#24343A] text-[#A8DADC]";
+    return "text-[#8FCFD1] hover:text-[#C9F0F2]";
   }
-  return "border-[#5A4C66] bg-[#332D3A] text-[#D8C3EF]";
+  return "text-[#CDB6E8] hover:text-[#E7D8F7]";
 }
 
 function DeleteSuggestionButton({
@@ -247,22 +247,16 @@ export function SuggestionsTable({
         <table className="w-full table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
-              <th className="w-[25%] px-3 py-3">
-                Research
-              </th>
+              <th className="w-[25%] px-3 py-3">Research</th>
               <th className="w-[27%] px-3 py-3">Suggested venue</th>
               <th className="w-[10%] px-3 py-3">Type</th>
               <th className="w-[18%] px-3 py-3">Scope</th>
               <th className="w-[12%] px-3 py-3">Suggested by</th>
               <th className="w-[5%] px-3 py-3">Date</th>
-              <th className="w-[3%] px-3 py-3 text-center">
-                <IconHint label="Delete suggestion">
-                  <Trash2
-                    className="mx-auto h-4 w-4 text-rose-500 dark:text-rose-300"
-                    aria-hidden="true"
-                  />
-                </IconHint>
-              </th>
+              <th
+                className="w-[3%] px-3 py-3 text-center"
+                aria-label="Delete"
+              />
             </tr>
           </thead>
           <tbody className="divide-y divide-[#444444]">
@@ -297,13 +291,15 @@ export function SuggestionsTable({
                       {suggestion.venueMeta || "-"}
                     </p>
                   </td>
-                  <td className="px-3 py-3">
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-none border px-2 py-1 text-xs font-normal ${typeClass(suggestion.kind)}`}
-                    >
-                      <TypeIcon className="h-3.5 w-3.5" />
-                      {suggestion.kind}
-                    </span>
+                  <td className="px-3 py-3 align-top">
+                    <IconHint label={suggestion.kind}>
+                      <span
+                        className={`inline-flex cursor-help items-center transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${typeClass(suggestion.kind)}`}
+                      >
+                        <TypeIcon className="h-4 w-4" aria-hidden="true" />
+                        <span className="sr-only">{suggestion.kind}</span>
+                      </span>
+                    </IconHint>
                   </td>
                   <td className="px-3 py-3 text-xs leading-5 text-[#B0B0B0]">
                     <span className="line-clamp-3">
@@ -319,7 +315,7 @@ export function SuggestionsTable({
                   <td className="px-3 py-3 text-xs text-[#B0B0B0]">
                     {suggestion.createdAt}
                   </td>
-                  <td className="px-3 py-3 text-center">
+                  <td className="px-3 py-3 text-center align-top">
                     <DeleteSuggestionButton
                       suggestion={suggestion}
                       deleteJournalAction={deleteJournalAction}
