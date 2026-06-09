@@ -78,7 +78,7 @@ export function ProductionTimelineActions({
               onClick={() => setConfirmUnlock(true)}
               disabled={disabled || isPending}
               aria-label="Unlock production timeline"
-              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-amber-300 outline-none transition hover:text-amber-200 focus-visible:ring-2 focus-visible:ring-amber-300/35 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 disabled:cursor-not-allowed disabled:text-[#666666]"
             >
               {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
