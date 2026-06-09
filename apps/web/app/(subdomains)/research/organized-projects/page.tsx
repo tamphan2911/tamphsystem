@@ -1,4 +1,3 @@
-import { Building2, CheckCircle2, Clock3, FileText } from "lucide-react";
 import { redirect } from "next/navigation";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
@@ -111,26 +110,18 @@ export default async function OrganizedProjectsPage() {
     {
       label: "Projects",
       value: projects.length,
-      icon: Building2,
-      color: "text-[#A8DADC]",
     },
     {
       label: "Active",
       value: active.length,
-      icon: Clock3,
-      color: "text-[#A8DADC]",
     },
     {
       label: "Completed",
       value: completed.length,
-      icon: CheckCircle2,
-      color: "text-[#FFC1CC]",
     },
     {
       label: "Research results",
       value: linkedResearch,
-      icon: FileText,
-      color: "text-[#B39CD0]",
     },
   ];
   const rows: OrganizedProjectRow[] = projects.map((project) => ({
@@ -173,11 +164,10 @@ export default async function OrganizedProjectsPage() {
             {stats.map((item, index) => (
               <div
                 key={item.label}
-                className={`flex items-center gap-2 whitespace-nowrap px-3 py-2 text-sm text-[#E4E4E4] ${
+                className={`whitespace-nowrap px-3 py-2 text-sm text-[#E4E4E4] ${
                   index > 0 ? "border-l border-[#444444]" : ""
                 }`}
               >
-                <item.icon className={`h-4 w-4 flex-none ${item.color}`} />
                 <span className="font-normal text-[#B0B0B0]">
                   {item.label}:{" "}
                 </span>
