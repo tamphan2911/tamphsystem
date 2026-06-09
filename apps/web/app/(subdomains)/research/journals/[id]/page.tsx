@@ -3,16 +3,21 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   BarChart3,
+  BookmarkCheck,
   Database,
   Globe2,
   Hash,
   Send,
+  Star,
 } from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { formatMoney } from "@/sites/research/lib/currency";
 import { countryFlag, countryName } from "@/sites/research/lib/countries";
-import { researchMutedLinkClass } from "@/sites/research/components/ResearchPrimitives";
+import {
+  IconHint,
+  researchMutedLinkClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import {
   JournalDetailTabs,
   type JournalAccountRow,
@@ -224,6 +229,40 @@ export default async function JournalDetailPage({
               <h1 className="text-2xl font-black tracking-tight text-[#E4E4E4]">
                 {journal.name}
               </h1>
+              <div className="flex items-center gap-2">
+                <IconHint
+                  label={
+                    journal.isFavorite
+                      ? "Favorite journal"
+                      : "Not favorite"
+                  }
+                >
+                  <Star
+                    className={`h-5 w-5 transition duration-150 ease-out hover:text-[#A8DADC] ${
+                      journal.isFavorite
+                        ? "fill-amber-200 text-amber-400"
+                        : "text-[#777777]"
+                    }`}
+                    aria-hidden="true"
+                  />
+                </IconHint>
+                <IconHint
+                  label={
+                    journal.isInterest
+                      ? "Journal of interest"
+                      : "Not marked as interest"
+                  }
+                >
+                  <BookmarkCheck
+                    className={`h-5 w-5 transition duration-150 ease-out hover:text-[#A8DADC] ${
+                      journal.isInterest
+                        ? "fill-sky-200 text-sky-400"
+                        : "text-[#777777]"
+                    }`}
+                    aria-hidden="true"
+                  />
+                </IconHint>
+              </div>
               <div className="flex items-center gap-1">
                 {externalLinks.map((item) => (
                   <a
@@ -251,6 +290,8 @@ export default async function JournalDetailPage({
                     rank: journal.rank,
                     localRank: journal.localRank,
                     issuesPerYear: journal.issuesPerYear,
+                    isFavorite: journal.isFavorite,
+                    isInterest: journal.isInterest,
                     publisher: journal.publisher,
                     country: journal.country,
                     apc: journal.apc,

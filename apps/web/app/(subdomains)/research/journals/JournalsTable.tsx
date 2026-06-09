@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { BadgeCheck, Send, Star, Trash2 } from "lucide-react";
+import {
+  BadgeCheck,
+  BookmarkCheck,
+  ClipboardCheck,
+  Send,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import {
   ResearchIconButton,
@@ -30,6 +37,8 @@ export type JournalRow = {
   rank: string;
   localRank: string;
   issuesPerYear: number | null;
+  isFavorite: boolean;
+  isInterest: boolean;
   publisher: string;
   country: string;
   apc: string;
@@ -128,8 +137,11 @@ export function JournalsTable({
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
   const [field, setField] = useState(() => searchParams.get("field") ?? "ALL");
-  const [publisher, setPublisher] = useState(
-    () => searchParams.get("publisher") ?? "ALL",
+  const [favorite, setFavorite] = useState(
+    () => searchParams.get("favorite") ?? "ALL",
+  );
+  const [interest, setInterest] = useState(
+    () => searchParams.get("interest") ?? "ALL",
   );
 
   const fieldOptions = useMemo(
@@ -141,22 +153,16 @@ export function JournalsTable({
     ],
     [rows],
   );
-  const publisherOptions = useMemo(
-    () => [
-      "ALL",
-      ...Array.from(
-        new Set(rows.map((row) => row.publisher).filter(Boolean)),
-      ).sort(),
-    ],
-    [rows],
-  );
-
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const matchesField = field === "ALL" || row.fields.includes(field);
-      const matchesPublisher =
-        publisher === "ALL" || row.publisher === publisher;
+      const matchesFavorite =
+        favorite === "ALL" ||
+        (favorite === "YES" ? row.isFavorite : !row.isFavorite);
+      const matchesInterest =
+        interest === "ALL" ||
+        (interest === "YES" ? row.isInterest : !row.isInterest);
       const haystack = [
         row.name,
         row.issn,
@@ -164,6 +170,8 @@ export function JournalsTable({
         row.type,
         rankLabel(row),
         row.issuesPerYear ? `${row.issuesPerYear} issues per year` : "",
+        row.isFavorite ? "favorite" : "not favorite",
+        row.isInterest ? "interest interested" : "not interest",
         row.publisher,
         countryName(row.country),
         row.apc,
@@ -174,11 +182,12 @@ export function JournalsTable({
         .toLowerCase();
       return (
         matchesField &&
-        matchesPublisher &&
+        matchesFavorite &&
+        matchesInterest &&
         (!needle || haystack.includes(needle))
       );
     });
-  }, [field, publisher, query, rows]);
+  }, [favorite, field, interest, query, rows]);
 
   const initialPage = Number(searchParams.get("page") ?? "1");
   const pagination = useTablePagination(
@@ -190,10 +199,11 @@ export function JournalsTable({
     const params = new URLSearchParams();
     if (query.trim()) params.set("q", query.trim());
     if (field !== "ALL") params.set("field", field);
-    if (publisher !== "ALL") params.set("publisher", publisher);
+    if (favorite !== "ALL") params.set("favorite", favorite);
+    if (interest !== "ALL") params.set("interest", interest);
     if (pagination.page > 1) params.set("page", String(pagination.page));
     return params.toString() ? `${pathname}?${params.toString()}` : pathname;
-  }, [field, pagination.page, pathname, publisher, query]);
+  }, [favorite, field, interest, pagination.page, pathname, query]);
 
   useEffect(() => {
     router.replace(currentListPath, { scroll: false });
@@ -218,13 +228,24 @@ export function JournalsTable({
             }))}
           />
           <FilterSelect
-            value={publisher}
-            onChange={setPublisher}
-            ariaLabel="Filter by publisher"
-            options={publisherOptions.map((item) => ({
-              value: item,
-              label: item === "ALL" ? "All publishers" : item,
-            }))}
+            value={favorite}
+            onChange={setFavorite}
+            ariaLabel="Filter by favorite"
+            options={[
+              { value: "ALL", label: "All favorite status" },
+              { value: "YES", label: "Favorite" },
+              { value: "NO", label: "Not favorite" },
+            ]}
+          />
+          <FilterSelect
+            value={interest}
+            onChange={setInterest}
+            ariaLabel="Filter by interest"
+            options={[
+              { value: "ALL", label: "All interest status" },
+              { value: "YES", label: "Interested" },
+              { value: "NO", label: "Not interested" },
+            ]}
           />
         </div>
       </div>
@@ -281,7 +302,7 @@ export function JournalsTable({
                 }
               >
                 <IconHint label="Reviews">
-                  <Star
+                  <ClipboardCheck
                     className="mx-auto h-4 w-4 text-amber-500 dark:text-amber-300"
                     aria-hidden="true"
                   />
@@ -315,6 +336,40 @@ export function JournalsTable({
                   >
                     {journal.name}
                   </Link>
+                  <span className="ml-2 inline-flex translate-y-0.5 items-center gap-1">
+                    <IconHint
+                      label={
+                        journal.isFavorite
+                          ? "Favorite journal"
+                          : "Not favorite"
+                      }
+                    >
+                      <Star
+                        className={`h-3.5 w-3.5 transition duration-150 ease-out ${
+                          journal.isFavorite
+                            ? "fill-amber-200 text-amber-400"
+                            : "text-[#666666] group-hover:text-[#B0B0B0]"
+                        }`}
+                        aria-hidden="true"
+                      />
+                    </IconHint>
+                    <IconHint
+                      label={
+                        journal.isInterest
+                          ? "Journal of interest"
+                          : "Not marked as interest"
+                      }
+                    >
+                      <BookmarkCheck
+                        className={`h-3.5 w-3.5 transition duration-150 ease-out ${
+                          journal.isInterest
+                            ? "fill-sky-200 text-sky-400"
+                            : "text-[#666666] group-hover:text-[#B0B0B0]"
+                        }`}
+                        aria-hidden="true"
+                      />
+                    </IconHint>
+                  </span>
                   <p className="mt-1 line-clamp-1 text-xs font-medium text-[#B0B0B0]">
                     {[
                       journal.publisher || "No publisher",
@@ -379,7 +434,7 @@ export function JournalsTable({
                 <td colSpan={isAdmin ? 9 : 8} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No journals match the current search."
-                    detail="Try another journal name, ISSN, publisher, field, or country."
+                    detail="Try another journal name, ISSN, favorite status, interest status, field, or country."
                   />
                 </td>
               </tr>

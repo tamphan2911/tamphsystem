@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import type { ReactNode } from "react";
 import {
   AlertTriangle,
+  BookmarkCheck,
   BookOpen,
   Check,
   Loader2,
   PlusCircle,
   Save,
   Search,
+  Star,
   X,
 } from "lucide-react";
 import { currencyOptions } from "@/sites/research/lib/currency";
@@ -39,6 +42,8 @@ export type JournalFormValues = {
   rank?: string | null;
   localRank?: string | null;
   issuesPerYear?: number | string | null;
+  isFavorite?: boolean | null;
+  isInterest?: boolean | null;
   publisher?: string | null;
   country?: string | null;
   apc?: string | null;
@@ -171,6 +176,46 @@ function CountryPicker({
         </span>
       )}
     />
+  );
+}
+
+function JournalFlagCheckbox({
+  name,
+  defaultChecked,
+  icon,
+  title,
+  detail,
+  checkedClass,
+}: {
+  name: string;
+  defaultChecked?: boolean | null;
+  icon: ReactNode;
+  title: string;
+  detail: string;
+  checkedClass: string;
+}) {
+  return (
+    <label className="group flex cursor-pointer items-center gap-3 border border-[#444444] bg-[#2C2C2C] p-3 transition duration-150 ease-out hover:border-[#5A5A5A] hover:bg-[#383838]">
+      <input
+        type="checkbox"
+        name={name}
+        defaultChecked={Boolean(defaultChecked)}
+        className="peer sr-only"
+      />
+      <span
+        className={`flex h-9 w-9 items-center justify-center text-[#777777] transition duration-150 ease-out group-hover:text-[#B0B0B0] ${checkedClass}`}
+      >
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold normal-case tracking-normal text-[#E4E4E4]">
+          {title}
+        </span>
+        <span className="block text-xs font-normal normal-case tracking-normal text-[#B0B0B0]">
+          {detail}
+        </span>
+      </span>
+    </label>
   );
 }
 
@@ -368,6 +413,24 @@ export function JournalDialogForm({
                   className={inputClass}
                 />
               </label>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <JournalFlagCheckbox
+                name="isFavorite"
+                defaultChecked={initialValues?.isFavorite}
+                icon={<Star className="h-5 w-5" />}
+                title="Favorite journal"
+                detail="Mark this as a preferred venue."
+                checkedClass="peer-checked:text-amber-400"
+              />
+              <JournalFlagCheckbox
+                name="isInterest"
+                defaultChecked={initialValues?.isInterest}
+                icon={<BookmarkCheck className="h-5 w-5" />}
+                title="Journal of interest"
+                detail="Track this journal for future submissions."
+                checkedClass="peer-checked:text-sky-400"
+              />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <label className={labelClass}>

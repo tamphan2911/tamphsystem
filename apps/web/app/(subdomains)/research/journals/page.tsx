@@ -53,6 +53,8 @@ export default async function JournalsPage() {
     rank: journal.rank ?? "",
     localRank: journal.localRank ?? "",
     issuesPerYear: journal.issuesPerYear,
+    isFavorite: journal.isFavorite,
+    isInterest: journal.isInterest,
     publisher: journal.publisher ?? "",
     country: journal.country ?? "",
     apc: journal.apc ?? "",

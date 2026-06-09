@@ -612,6 +612,8 @@ model Journal {
   rank                  String? // Q1, Q2, Q3, Q4
   localRank             String?
   issuesPerYear         Int?
+  isFavorite            Boolean      @default(false)
+  isInterest            Boolean      @default(false)
   publisher             String?
   country               String?
   apc                   String?

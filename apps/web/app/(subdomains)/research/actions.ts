@@ -2029,6 +2029,8 @@ export async function createJournal(formData: FormData) {
           ? optionalString(formData.get("localRank"))
           : null,
       issuesPerYear: positiveIntFromForm(formData.get("issuesPerYear")),
+      isFavorite: formData.get("isFavorite") === "on",
+      isInterest: formData.get("isInterest") === "on",
       publisher: optionalString(formData.get("publisher")),
       country: optionalString(formData.get("country")),
       apc: optionalString(formData.get("apc")),
@@ -2074,6 +2076,8 @@ export async function updateJournal(journalId: string, formData: FormData) {
           ? optionalString(formData.get("localRank"))
           : null,
       issuesPerYear: positiveIntFromForm(formData.get("issuesPerYear")),
+      isFavorite: formData.get("isFavorite") === "on",
+      isInterest: formData.get("isInterest") === "on",
       publisher: optionalString(formData.get("publisher")),
       country: optionalString(formData.get("country")),
       apc: optionalString(formData.get("apc")),
