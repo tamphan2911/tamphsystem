@@ -57,7 +57,7 @@ export function ActiveNavLink({
   const Icon = icons[icon];
   const displayLabel = label.toUpperCase();
   const baseClass =
-    "group/navlink relative flex items-center gap-3 overflow-visible rounded-none border-y border-transparent px-5 py-3 text-sm font-normal outline-none transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.985] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/45 motion-reduce:transform-none motion-reduce:transition-none";
+    "group/navlink relative flex items-center gap-3 overflow-visible rounded-none border-y border-transparent px-5 py-3 text-sm font-normal outline-none transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease-out active:scale-[0.985] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/45 motion-reduce:transform-none motion-reduce:transition-none";
   const stateClass = isActive
     ? "border-[#444444] bg-[#383838] text-[#E4E4E4] shadow-[inset_0_0_0_1px_rgba(168,218,220,0.08),0_10px_24px_rgba(0,0,0,0.18)]"
     : adminOnly
