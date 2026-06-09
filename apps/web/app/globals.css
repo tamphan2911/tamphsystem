@@ -840,6 +840,32 @@ textarea:focus-visible {
   background: #242424;
 }
 
+.research-site-root :where(a:not([aria-disabled="true"])),
+[data-research-modal-overlay="true"] :where(a:not([aria-disabled="true"])) {
+  transform-origin: center;
+  transition:
+    color 180ms ease-out,
+    background-color 180ms ease-out,
+    border-color 180ms ease-out,
+    text-shadow 180ms ease-out,
+    filter 180ms ease-out,
+    transform 180ms ease-out,
+    box-shadow 180ms ease-out;
+}
+
+.research-site-root :where(a:not([aria-disabled="true"]):not(:has(svg))):hover,
+[data-research-modal-overlay="true"]
+  :where(a:not([aria-disabled="true"]):not(:has(svg))):hover {
+  text-shadow: 0 0 0.65rem rgba(168, 218, 220, 0.2);
+}
+
+.research-site-root :where(a:not([aria-disabled="true"])):active,
+[data-research-modal-overlay="true"]
+  :where(a:not([aria-disabled="true"])):active {
+  filter: brightness(1.1);
+  transform: scale(0.985);
+}
+
 .research-site-root :where(input, select, textarea):focus,
 .research-site-root :where(input, select, textarea):focus-visible {
   outline: none !important;

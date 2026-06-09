@@ -37,10 +37,10 @@ export const researchTextareaClass =
   "min-h-28 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
 
 export const researchLinkClass =
-  "font-normal text-[#E4E4E4] transition duration-150 ease-out hover:text-[#A8DADC]";
+  "font-normal text-[#E4E4E4] transition-[color,text-shadow,filter,transform] duration-180 ease-out hover:text-[#A8DADC] hover:[text-shadow:0_0_0.65rem_rgba(168,218,220,0.22)] active:[transform:scale(0.985)] active:brightness-110 motion-reduce:transform-none motion-reduce:transition-none";
 
 export const researchMutedLinkClass =
-  "font-normal text-[#B0B0B0] transition duration-150 ease-out hover:text-[#A8DADC]";
+  "font-normal text-[#B0B0B0] transition-[color,text-shadow,filter,transform] duration-180 ease-out hover:text-[#A8DADC] hover:[text-shadow:0_0_0.65rem_rgba(168,218,220,0.2)] active:[transform:scale(0.985)] active:brightness-110 motion-reduce:transform-none motion-reduce:transition-none";
 
 export const researchLabelClass =
   "grid gap-1.5 text-sm font-normal text-[#E4E4E4]";
