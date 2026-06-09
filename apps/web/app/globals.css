@@ -995,8 +995,8 @@ textarea:focus-visible {
 }
 
 .research-site-root tbody tr {
-  --research-row-bg: #2c2c2c;
-  --research-row-hover-bg: #424242;
+  --research-row-bg: #242424;
+  --research-row-hover-bg: #303030;
   --research-row-line: #444444;
   background-color: var(--research-row-bg);
   transition:
@@ -1006,7 +1006,7 @@ textarea:focus-visible {
 }
 
 .research-site-root tbody tr:nth-child(even) {
-  --research-row-bg: #343434;
+  --research-row-bg: #282828;
 }
 
 .research-site-root tbody tr > :where(td) {
@@ -1022,14 +1022,18 @@ textarea:focus-visible {
 }
 
 .research-site-root tbody tr[class*="bg-rose"] {
-  --research-row-bg: #383838;
+  --research-row-bg: #2d2828;
   --research-row-line: #444444;
 }
 
 .research-site-root tbody tr:hover {
   --research-row-bg: var(--research-row-hover-bg);
-  --research-row-line: #555555;
+  --research-row-line: #4a4a4a;
   box-shadow: inset 3px 0 0 #a8dadc;
+}
+
+.research-site-root tbody tr:hover > :where(td) {
+  background-color: var(--research-row-hover-bg) !important;
 }
 
 .research-site-root thead {
