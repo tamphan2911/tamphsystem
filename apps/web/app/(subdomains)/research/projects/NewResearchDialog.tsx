@@ -260,7 +260,6 @@ export function NewResearchDialog({
         open={isOpen}
         onClose={closeDialog}
         title="Add New Research"
-        description="Create a research record and place it in the pipeline."
         icon={<PlusCircle className="h-5 w-5" />}
         headerActions={
           <ResearchButton form="new-research-form">
@@ -311,7 +310,7 @@ export function NewResearchDialog({
               <h3 className="mb-4 text-base font-bold text-[#E4E4E4]">
                 Registration
               </h3>
-              <div className="grid items-end gap-4 lg:grid-cols-[14rem_1fr]">
+              <div className="grid items-end gap-4 lg:grid-cols-3">
                 <label className={researchLabelClass}>
                   Register
                   <ResearchFormSelect
@@ -327,28 +326,19 @@ export function NewResearchDialog({
                     ]}
                   />
                 </label>
-                <div
-                  className={`grid items-end gap-4 transition-all duration-300 ease-out md:grid-cols-[minmax(12rem,0.8fr)_minmax(22rem,1.2fr)] ${
-                    registerStatus === "NOT_REGISTERED"
-                      ? "pointer-events-none max-h-0 -translate-y-1 overflow-hidden opacity-0"
-                      : "max-h-40 translate-y-0 opacity-100"
-                  }`}
-                  aria-hidden={registerStatus === "NOT_REGISTERED"}
-                >
-                  <label className={researchLabelClass}>
-                    Registration period
-                    <input
-                      name="universityRegistration"
-                      placeholder="Q2 2026"
-                      disabled={registerStatus === "NOT_REGISTERED"}
-                      className={researchFieldClass}
-                    />
-                  </label>
-                  <RegisterUserPicker
-                    users={users}
-                    disabled={registerStatus === "NOT_REGISTERED"}
-                  />
-                </div>
+                {registerStatus !== "NOT_REGISTERED" && (
+                  <>
+                    <label className={researchLabelClass}>
+                      Registration period
+                      <input
+                        name="universityRegistration"
+                        placeholder="Q2 2026"
+                        className={researchSearchFieldClass}
+                      />
+                    </label>
+                    <RegisterUserPicker users={users} />
+                  </>
+                )}
               </div>
               <div className="mt-4">
                 <FundingInstitutionPicker

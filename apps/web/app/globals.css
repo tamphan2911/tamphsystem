@@ -806,6 +806,16 @@ textarea:focus-visible {
   --tw-ring-shadow: 0 0 #0000 !important;
 }
 
+[data-research-modal-overlay="true"] :where(input, select, textarea):focus,
+[data-research-modal-overlay="true"]
+  :where(input, select, textarea):focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+}
+
 .research-site-root aside nav {
   padding-top: 0 !important;
 }

@@ -9,7 +9,6 @@ import {
   researchDropdownItemClass,
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
-  researchFieldClass,
   researchSearchFieldClass,
 } from "./ResearchPrimitives";
 import { FloatingDropdownPortal } from "./FloatingDropdownPortal";
@@ -92,9 +91,11 @@ export function ResearchSearchPicker<T = unknown>({
     >
       {label}
       {name && <input type="hidden" name={name} value={selected?.id ?? ""} />}
-      <div className="relative rounded-none border border-[#444444] bg-[#2C2C2C] p-1 transition duration-150 ease-out hover:border-[#5A5A5A] hover:bg-[#383838] focus-within:border-[#5A5A5A] focus-within:bg-[#383838]">
+      <div className="relative">
         {selected ? (
-          <div className="flex min-h-10 items-center gap-2 rounded-none bg-[#383838] px-2.5 shadow-sm shadow-black/10">
+          <div
+            className={`${researchSearchFieldClass} flex h-auto min-h-11 items-center gap-2 px-2.5 py-1.5`}
+          >
             {renderSelected ? (
               renderSelected(selected)
             ) : (
@@ -158,7 +159,7 @@ export function ResearchSearchPicker<T = unknown>({
                 }
               }}
               placeholder={placeholder}
-              className={`${researchSearchFieldClass} h-10 pl-9`}
+              className={`${researchSearchFieldClass} h-11 pl-9`}
             />
           </div>
         )}
