@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Search, X } from "lucide-react";
 import {
-  ResearchIconButton,
+  IconHint,
   researchDropdownItemActiveClass,
   researchDropdownItemClass,
   researchDropdownItemIdleClass,
@@ -110,15 +110,16 @@ export function ResearchSearchPicker<T = unknown>({
               </span>
             )}
             {!disabled && (
-              <ResearchIconButton
-                type="button"
-                onClick={onClear}
-                label={`Remove ${label ?? "selection"}`}
-                tone="rose"
-                className="h-8 w-8 flex-none"
-              >
-                <X className="h-4 w-4" />
-              </ResearchIconButton>
+              <IconHint label={`Remove ${label ?? "selection"}`}>
+                <button
+                  type="button"
+                  onClick={onClear}
+                  aria-label={`Remove ${label ?? "selection"}`}
+                  className="inline-flex h-8 w-8 flex-none cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition duration-150 ease-out hover:text-[#A8DADC] focus-visible:text-[#A8DADC] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </IconHint>
             )}
           </div>
         ) : (
