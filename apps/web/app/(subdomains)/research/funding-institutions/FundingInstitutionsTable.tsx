@@ -97,12 +97,12 @@ export function FundingInstitutionsTable({
                 key={institution.id}
                 className="group align-top transition-colors duration-150 hover:bg-[#383838]"
               >
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 align-top">
                   <span className="font-mono text-xs font-normal uppercase tracking-wide text-[#777777]">
                     {institution.funderCode || institution.id.slice(0, 8)}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 align-top">
                   <p className="line-clamp-1 text-base font-normal text-[#E4E4E4]">
                     {institution.name}
                   </p>
@@ -110,10 +110,10 @@ export function FundingInstitutionsTable({
                     {institution.note || "No note"}
                   </p>
                 </td>
-                <td className="px-3 py-3 text-center text-sm font-normal text-[#B0B0B0]">
+                <td className="px-3 py-3 text-center align-top text-sm font-normal text-[#B0B0B0]">
                   {institution.shortName || "-"}
                 </td>
-                <td className="px-3 py-3 text-center">
+                <td className="px-3 py-3 text-center align-top">
                   {institution.country ? (
                     <IconHint label={institution.country}>
                       <span className="inline-flex h-8 max-w-full items-center justify-center text-xl leading-none">
@@ -129,10 +129,10 @@ export function FundingInstitutionsTable({
                     </IconHint>
                   )}
                 </td>
-                <td className="px-3 py-3 text-center text-sm font-normal text-[#E4E4E4]">
+                <td className="px-3 py-3 text-center align-top text-sm font-normal text-[#E4E4E4]">
                   {institution.organizedProjects + institution.researchProjects}
                 </td>
-                <td className="px-3 py-3 text-center">
+                <td className="px-3 py-3 text-center align-top">
                   {institution.website ? (
                     <IconHint label="Open website">
                       <Link
@@ -153,7 +153,7 @@ export function FundingInstitutionsTable({
                     </IconHint>
                   )}
                 </td>
-                <td className="px-3 py-3 text-center">
+                <td className="px-3 py-3 text-center align-top">
                   <FundingInstitutionDialog
                     mode="edit"
                     submitAction={updateAction.bind(null, institution.id)}
@@ -167,7 +167,7 @@ export function FundingInstitutionsTable({
                     }}
                   />
                 </td>
-                <td className="px-3 py-3 text-center">
+                <td className="px-3 py-3 text-center align-top">
                   <DeleteFundingInstitutionButton
                     funder={{
                       id: institution.id,

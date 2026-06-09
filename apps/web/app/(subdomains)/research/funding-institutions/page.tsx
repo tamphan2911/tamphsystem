@@ -99,8 +99,8 @@ export default async function FundingInstitutionsPage() {
     <div className="mx-auto max-w-7xl space-y-4">
       <ResearchPageHeaderPortal>
         <div className="flex w-full min-w-0 items-center justify-between gap-4">
-          <p className="min-w-0 truncate text-sm font-normal capitalize text-[#E4E4E4]">
-            Funding Institutions
+          <p className="min-w-0 truncate text-sm font-normal uppercase tracking-wide text-[#E4E4E4]">
+            FUNDING INSTITUTIONS
           </p>
           <div className="flex flex-none items-center">
             <FundingInstitutionDialog
