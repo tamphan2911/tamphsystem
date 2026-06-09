@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, LogIn } from "lucide-react";
+import { AlertTriangle, LockKeyhole, LogIn, Mail } from "lucide-react";
 import { headers } from "next/headers";
 import { TurnstileField } from "@/sites/shared/components/TurnstileField";
 import {
@@ -13,7 +13,6 @@ import {
   researchAuthFormClass,
   researchAuthHeaderClass,
   researchAuthIconClass,
-  researchAuthInputClass,
   researchAuthLabelClass,
   researchAuthLinkClass,
   researchAuthPageClass,
@@ -189,18 +188,31 @@ export default async function LoginPage({
               }
             >
               Email address
-              <input
-                type="email"
-                name="email"
-                defaultValue={email ?? ""}
-                placeholder="you@example.com"
-                className={
-                  isResearch
-                    ? researchAuthInputClass
-                    : "mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
-                }
-                required
-              />
+              {isResearch ? (
+                <span className="group relative mt-2 flex h-12 w-full items-center border border-[#444444] bg-transparent px-4 pr-12 text-left transition duration-300 ease-out hover:border-[#5A5A5A] focus-within:border-[#A8DADC]">
+                  <input
+                    type="email"
+                    name="email"
+                    defaultValue={email ?? ""}
+                    placeholder="you@example.com"
+                    className="h-full w-full border-0 bg-transparent p-0 text-sm font-normal text-[#E4E4E4] outline-none placeholder:text-[#5A5A5A]"
+                    required
+                  />
+                  <Mail
+                    className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#B0B0B0] transition duration-300 ease-out group-hover:text-[#E4E4E4] group-focus-within:text-[#A8DADC]"
+                    aria-hidden="true"
+                  />
+                </span>
+              ) : (
+                <input
+                  type="email"
+                  name="email"
+                  defaultValue={email ?? ""}
+                  placeholder="you@example.com"
+                  className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
+                  required
+                />
+              )}
             </label>
 
             <label
@@ -211,17 +223,29 @@ export default async function LoginPage({
               }
             >
               Password
-              <input
-                type="password"
-                name="password"
-                placeholder="Your password"
-                className={
-                  isResearch
-                    ? researchAuthInputClass
-                    : "mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
-                }
-                required
-              />
+              {isResearch ? (
+                <span className="group relative mt-2 flex h-12 w-full items-center border border-[#444444] bg-transparent px-4 pr-12 text-left transition duration-300 ease-out hover:border-[#5A5A5A] focus-within:border-[#A8DADC]">
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder="Your password"
+                    className="h-full w-full border-0 bg-transparent p-0 text-sm font-normal text-[#E4E4E4] outline-none placeholder:text-[#5A5A5A]"
+                    required
+                  />
+                  <LockKeyhole
+                    className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#B0B0B0] transition duration-300 ease-out group-hover:text-[#E4E4E4] group-focus-within:text-[#A8DADC]"
+                    aria-hidden="true"
+                  />
+                </span>
+              ) : (
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Your password"
+                  className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
+                  required
+                />
+              )}
             </label>
 
             <TurnstileField
