@@ -829,9 +829,17 @@ textarea:focus-visible {
   border-bottom-color: transparent !important;
 }
 
+.research-site-root aside nav > :last-child:not([data-active="true"]):hover {
+  border-bottom-color: #444444 !important;
+}
+
 .research-site-root aside nav > [data-active="true"] {
   border-top-color: #444444 !important;
   border-bottom-color: #444444 !important;
+}
+
+.research-site-root aside nav > :first-child[data-active="true"] {
+  border-top-color: transparent !important;
 }
 
 .research-site-root aside nav > [data-active="true"] + :hover {
