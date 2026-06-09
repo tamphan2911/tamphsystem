@@ -885,6 +885,21 @@ textarea:focus-visible {
   --tw-ring-shadow: 0 0 #0000 !important;
 }
 
+.turnstile-field-dark {
+  background: transparent;
+  border: 0;
+}
+
+.turnstile-field-dark :where(iframe) {
+  border: 1px solid #444444 !important;
+  background: #242424 !important;
+  color-scheme: dark;
+}
+
+.turnstile-field-dark :where(iframe):hover {
+  border-color: #5a5a5a !important;
+}
+
 .research-site-root aside nav {
   padding-top: 0 !important;
 }
