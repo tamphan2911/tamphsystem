@@ -397,7 +397,6 @@ export function NewTaskDialog({
         open={isOpen}
         onClose={() => setIsOpen(false)}
         title="Assign Task"
-        description="Create submit, production, review, or general research work."
         icon={<ClipboardList className="h-5 w-5" />}
         maxWidth="max-w-5xl"
         headerActions={
@@ -773,11 +772,11 @@ function JournalAccountField({
   if (accounts.length === 1 && onlyAccount) {
     const account = onlyAccount;
     return (
-      <section className="grid gap-2 rounded-none border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-200">
-        <span className="text-xs font-bold uppercase tracking-wide">
+      <section className="grid gap-2 rounded-none border border-[#444444] bg-[#202020] px-3 py-2 text-sm text-[#E4E4E4]">
+        <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
           Account to submit
         </span>
-        <span className="font-semibold">
+        <span className="font-normal text-[#E4E4E4]">
           {account.username}
           {account.email ? ` - ${account.email}` : ""}
         </span>
@@ -913,20 +912,20 @@ function SelectedSearchItem({ item }: { item: SearchPanelItem }) {
     <button
       type="button"
       onClick={item.onClick}
-      className="flex cursor-pointer items-start justify-between gap-3 rounded-none border border-emerald-200 bg-emerald-50 px-3 py-2 text-left text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+      className="group flex cursor-pointer items-start justify-between gap-3 rounded-none border border-[#444444] bg-[#202020] px-3 py-2 text-left text-[#E4E4E4] transition hover:border-[#5A5A5A] hover:bg-[#303030]"
     >
       <span className="flex min-w-0 items-start gap-3">
-        <span className="mt-0.5 flex-none text-emerald-500">{item.icon}</span>
+        <span className="mt-0.5 flex-none text-[#A8DADC]">{item.icon}</span>
         <span className="min-w-0">
-          <span className="block text-sm font-bold leading-5">
+          <span className="block text-sm font-normal leading-5 text-[#E4E4E4]">
             {item.title}
           </span>
-          <span className="mt-0.5 block text-xs leading-5 text-emerald-700/80 dark:text-emerald-200/80">
+          <span className="mt-0.5 block text-xs leading-5 text-[#B0B0B0]">
             {item.meta}
           </span>
         </span>
       </span>
-      <X className="mt-0.5 h-4 w-4 flex-none" />
+      <X className="mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] transition group-hover:text-[#A8DADC]" />
     </button>
   );
 }

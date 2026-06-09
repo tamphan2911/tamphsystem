@@ -4,13 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import {
-  CheckCircle2,
-  Clock3,
-  ClipboardList,
-  Trash2,
-  UsersRound,
-} from "lucide-react";
+import { Trash2 } from "lucide-react";
 import {
   FilterSelect,
   IconHint,
@@ -26,6 +20,7 @@ import {
   ResearchErrorState,
 } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 
 type TaskAssignment = {
   id: string;
@@ -394,58 +389,48 @@ export function TasksClient({
     {
       label: "Tasks",
       value: tasks.length,
-      icon: ClipboardList,
-      color: "text-[#B0B0B0]",
     },
     {
       label: "Active",
       value: tasks.filter(
         (task) => task.status !== "COMPLETED" && task.status !== "REVOKED",
       ).length,
-      icon: Clock3,
-      color: "text-blue-600",
     },
     {
       label: "Done",
       value: tasks.filter((task) => task.status === "COMPLETED").length,
-      icon: CheckCircle2,
-      color: "text-emerald-600",
     },
     {
       label: "People",
       value: assigneeOptions.length - 1,
-      icon: UsersRound,
-      color: "text-purple-600",
     },
   ];
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
-          {stats.map((item) => (
-            <div
-              key={item.label}
-              className="flex min-w-32 items-center gap-3 border border-[#444444] bg-[#2C2C2C] px-3 py-2 shadow-none"
-            >
-              <item.icon className={`h-4 w-4 ${item.color}`} />
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                  {item.label}
-                </p>
-                <p className="text-base font-black text-[#E4E4E4]">
-                  {item.value}
-                </p>
+      <ResearchPageHeaderPortal>
+        <div className="flex w-full min-w-0 items-center justify-between gap-4">
+          <div className="grid min-w-0 border border-[#444444] bg-[#2C2C2C] sm:grid-cols-4">
+            {stats.map((item, index) => (
+              <div
+                key={item.label}
+                className={`whitespace-nowrap px-3 py-2 text-sm text-[#E4E4E4] ${
+                  index > 0 ? "border-l border-[#444444]" : ""
+                }`}
+              >
+                <span className="font-normal text-[#B0B0B0]">
+                  {item.label}:{" "}
+                </span>
+                <span className="font-normal text-[#E4E4E4]">{item.value}</span>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className="flex flex-none items-center">{action}</div>
         </div>
-
-        {action}
-      </div>
+      </ResearchPageHeaderPortal>
 
       <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
-        <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+        <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
           <TableSearchInput
             value={query}
             onChange={setQuery}
