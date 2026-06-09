@@ -260,6 +260,7 @@ export function SuggestedJournalsPanel({
   function removeVenue() {
     if (disabled) return;
     if (!deleteVenue) return;
+    const removedVenueName = deleteVenue.item.name;
     startTransition(async () => {
       if (deleteVenue.kind === "journal") {
         await deleteSuggestedJournal(projectId, deleteVenue.item.id);
@@ -267,6 +268,10 @@ export function SuggestedJournalsPanel({
         await deleteSuggestedConference(projectId, deleteVenue.item.id);
       }
       setDeleteVenue(null);
+      showSuccess({
+        title: "Suggested venue removed",
+        detail: `${removedVenueName} was removed from this research suggested venues.`,
+      });
       router.refresh();
     });
   }
