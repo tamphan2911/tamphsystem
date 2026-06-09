@@ -2,6 +2,7 @@ import { auth } from "../../../../auth";
 import { prisma, Role } from "@repo/db";
 import { createConference, deleteConference } from "../actions";
 import { ProposalDialog } from "@/sites/research/components/ProposalDialog";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { ConferenceDialog } from "./ConferenceDialog";
 import { ConferencesTable, type ConferenceRow } from "./ConferencesTable";
 
@@ -75,22 +76,24 @@ export default async function ConferencesPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="border border-[#444444] bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-semibold text-[#B0B0B0]">
-            Conference List
+      <ResearchPageHeaderPortal>
+        <div className="flex w-full min-w-0 items-center justify-between gap-4">
+          <p className="min-w-0 truncate text-sm font-normal text-[#B0B0B0]">
+            CONFERENCE LIST
           </p>
-          {isAdmin ? (
-            <ConferenceDialog mode="create" action={createConference} />
-          ) : (
-            <ProposalDialog
-              type="CONFERENCE"
-              isLoggedIn={Boolean(session)}
-              hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
-            />
-          )}
+          <div className="flex flex-none items-center">
+            {isAdmin ? (
+              <ConferenceDialog mode="create" action={createConference} />
+            ) : (
+              <ProposalDialog
+                type="CONFERENCE"
+                isLoggedIn={Boolean(session)}
+                hasVerifiedEmail={Boolean(currentUser?.emailVerified)}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      </ResearchPageHeaderPortal>
       <ConferencesTable
         rows={rows}
         isAdmin={isAdmin}

@@ -1,6 +1,6 @@
-import { UserRound } from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { assertResearchManager } from "../actions";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { AssistantsTable, type AssistantRow } from "./AssistantsTable";
 import {
   AddAssistantDialog,
@@ -70,35 +70,31 @@ export default async function AssistantsPage() {
     {
       label: "Assistants",
       value: assistantUsers.length,
-      icon: UserRound,
-      color: "text-purple-600",
     },
   ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:flex xl:flex-wrap">
-          {stats.map((item) => (
-            <div
-              key={item.label}
-              className="flex min-w-32 items-center gap-3 border border-[#444444] bg-[#2C2C2C] px-3 py-2 shadow-none"
-            >
-              <item.icon className={`h-4 w-4 ${item.color}`} />
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                  {item.label}
-                </p>
-                <p className="text-base font-black text-[#E4E4E4]">
-                  {item.value}
-                </p>
+      <ResearchPageHeaderPortal>
+        <div className="flex w-full min-w-0 items-center justify-between gap-4">
+          <div className="grid min-w-0 border border-[#444444] bg-[#2C2C2C]">
+            {stats.map((item) => (
+              <div
+                key={item.label}
+                className="whitespace-nowrap px-3 py-2 text-sm text-[#E4E4E4]"
+              >
+                <span className="font-normal text-[#B0B0B0]">
+                  {item.label}:{" "}
+                </span>
+                <span className="font-normal text-[#E4E4E4]">{item.value}</span>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className="flex flex-none items-center">
+            {canAssignAssistants && <AddAssistantDialog users={candidates} />}
+          </div>
         </div>
-
-        {canAssignAssistants && <AddAssistantDialog users={candidates} />}
-      </div>
+      </ResearchPageHeaderPortal>
 
       <AssistantsTable rows={rows} canManage={canAssignAssistants} />
     </div>

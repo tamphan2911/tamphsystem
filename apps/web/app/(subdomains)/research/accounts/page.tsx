@@ -1,7 +1,7 @@
-import { Building2, KeyRound, Send, Users } from "lucide-react";
 import { redirect } from "next/navigation";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { deletePublisherAccount } from "../actions";
 import { AccountsTable, type AccountRow } from "./AccountsTable";
 import { NewAccountDialog } from "./NewAccountDialog";
@@ -69,20 +69,14 @@ export default async function PublisherAccountsPage() {
     {
       label: "Accounts",
       value: accounts.length,
-      icon: KeyRound,
-      color: "text-amber-600",
     },
     {
       label: "Publisher",
       value: publisherWide,
-      icon: Building2,
-      color: "text-purple-600",
     },
     {
       label: "Journal",
       value: accounts.length - publisherWide,
-      icon: Users,
-      color: "text-blue-600",
     },
     {
       label: "Submits",
@@ -90,35 +84,33 @@ export default async function PublisherAccountsPage() {
         (sum, account) => sum + account._count.submissions,
         0,
       ),
-      icon: Send,
-      color: "text-emerald-600",
     },
   ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
-          {stats.map((item) => (
-            <div
-              key={item.label}
-              className="flex min-w-32 items-center gap-3 border border-[#444444] bg-[#2C2C2C] px-3 py-2 shadow-none"
-            >
-              <item.icon className={`h-4 w-4 ${item.color}`} />
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                  {item.label}
-                </p>
-                <p className="text-base font-black text-[#E4E4E4]">
-                  {item.value}
-                </p>
+      <ResearchPageHeaderPortal>
+        <div className="flex w-full min-w-0 items-center justify-between gap-4">
+          <div className="grid min-w-0 border border-[#444444] bg-[#2C2C2C] sm:grid-cols-4">
+            {stats.map((item, index) => (
+              <div
+                key={item.label}
+                className={`whitespace-nowrap px-3 py-2 text-sm text-[#E4E4E4] ${
+                  index > 0 ? "border-l border-[#444444]" : ""
+                }`}
+              >
+                <span className="font-normal text-[#B0B0B0]">
+                  {item.label}:{" "}
+                </span>
+                <span className="font-normal text-[#E4E4E4]">{item.value}</span>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className="flex flex-none items-center">
+            {isAdmin && <NewAccountDialog journals={journalOptions} />}
+          </div>
         </div>
-
-        {isAdmin && <NewAccountDialog journals={journalOptions} />}
-      </div>
+      </ResearchPageHeaderPortal>
 
       <AccountsTable
         rows={rows}
