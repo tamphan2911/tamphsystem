@@ -57,12 +57,12 @@ export function ActiveNavLink({
   const Icon = icons[icon];
   const displayLabel = label.toUpperCase();
   const baseClass =
-    "group/navlink relative flex items-center gap-3 overflow-visible rounded-none border-y border-transparent px-5 py-3 text-sm font-normal outline-none transition-[background-color,color,border-color] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#A8DADC]/45 motion-reduce:transition-none";
+    "group/navlink relative flex items-center gap-3 overflow-visible rounded-none border-y border-transparent px-5 py-3 text-sm font-normal outline-none transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.985] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/45 motion-reduce:transform-none motion-reduce:transition-none";
   const stateClass = isActive
-    ? "border-[#444444] bg-[#383838] text-[#E4E4E4]"
+    ? "border-[#444444] bg-[#383838] text-[#E4E4E4] shadow-[inset_0_0_0_1px_rgba(168,218,220,0.08),0_10px_24px_rgba(0,0,0,0.18)]"
     : adminOnly
-      ? "text-[#B0B0B0] hover:border-[#444444] hover:bg-[#383838] hover:text-[#FFC1CC]"
-      : "text-[#B0B0B0] hover:border-[#444444] hover:bg-[#383838] hover:text-[#A8DADC]";
+      ? "text-[#B0B0B0] hover:border-[#444444] hover:bg-[#383838] hover:text-[#FFC1CC] hover:shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
+      : "text-[#B0B0B0] hover:border-[#444444] hover:bg-[#383838] hover:text-[#A8DADC] hover:shadow-[0_10px_24px_rgba(0,0,0,0.16)]";
 
   return (
     <Link
@@ -74,16 +74,20 @@ export function ActiveNavLink({
       }`}
     >
       <span
-        className={`absolute left-0 top-0 h-full w-1 transition-opacity duration-150 ${
-          isActive ? "bg-[#B39CD0] opacity-100" : "opacity-0"
+        className={`absolute left-0 top-0 h-full w-1 origin-center transition-[opacity,transform,background-color] duration-200 ease-out group-hover/navlink:scale-y-100 ${
+          isActive
+            ? "scale-y-100 bg-[#B39CD0] opacity-100"
+            : "scale-y-50 bg-[#A8DADC] opacity-0 group-hover/navlink:opacity-70"
         }`}
       />
       <Icon
-        className="h-4 w-4 flex-none text-current transition-colors duration-150"
+        className="h-4 w-4 flex-none text-current transition-[color,transform] duration-200 ease-out group-hover/navlink:translate-x-0.5 group-hover/navlink:scale-110 group-active/navlink:scale-95 motion-reduce:transform-none"
         strokeWidth={1.75}
       />
       {!collapsed && (
-        <span className="min-w-0 flex-1 truncate">{displayLabel}</span>
+        <span className="min-w-0 flex-1 truncate transition-transform duration-200 ease-out group-hover/navlink:translate-x-0.5 group-active/navlink:translate-x-0 motion-reduce:transform-none">
+          {displayLabel}
+        </span>
       )}
       {!collapsed && adminOnly && !isActive && (
         <span className="border border-[#444444] px-1.5 py-0.5 text-[9px] font-normal uppercase tracking-wide text-[#FFC1CC]">
