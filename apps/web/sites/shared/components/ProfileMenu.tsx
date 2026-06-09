@@ -69,7 +69,7 @@ export function ProfileMenu({
         <div>
           <Link
             href={profileHref}
-            className={`flex items-center gap-3 border-y border-transparent px-4 py-3 text-sm font-normal transition ${
+            className={`research-profile-menu-item flex items-center gap-3 border-y border-transparent px-4 py-3 text-sm font-normal transition ${
               isResearch
                 ? "text-[#E4E4E4] hover:border-[#444444] hover:bg-[#383838] hover:text-[#A8DADC]"
                 : "text-slate-700 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
@@ -84,7 +84,7 @@ export function ProfileMenu({
           </Link>
           <Link
             href={adminHref}
-            className={`flex items-center gap-3 border-y border-transparent px-4 py-3 text-sm font-normal transition ${
+            className={`research-profile-menu-item flex items-center gap-3 border-y border-transparent px-4 py-3 text-sm font-normal transition ${
               isResearch
                 ? "text-[#E4E4E4] hover:border-[#444444] hover:bg-[#383838] hover:text-[#A8DADC]"
                 : "text-slate-700 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
@@ -100,7 +100,7 @@ export function ProfileMenu({
           <button
             type="button"
             onClick={signOutToCurrentLogin}
-            className={`flex w-full items-center gap-3 border-y border-transparent px-4 py-3 text-left text-sm font-normal transition ${
+            className={`research-profile-menu-item flex w-full items-center gap-3 border-y border-transparent px-4 py-3 text-left text-sm font-normal transition ${
               isResearch
                 ? "text-[#F2A0AC] hover:border-[#444444] hover:bg-[#383838] hover:text-[#FFD0D6]"
                 : "text-red-600 hover:border-red-100 hover:bg-red-50 dark:text-red-400 dark:hover:border-red-900/60 dark:hover:bg-red-950/40"

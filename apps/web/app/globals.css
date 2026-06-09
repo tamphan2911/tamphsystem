@@ -822,6 +822,19 @@ textarea:focus-visible {
 
 .research-site-root aside nav > :first-child {
   margin-top: 0 !important;
+  border-top-color: transparent !important;
+}
+
+.research-site-root aside nav > :last-child {
+  border-bottom-color: transparent !important;
+}
+
+.research-site-root .research-profile-menu-item:first-child {
+  border-top-color: transparent !important;
+}
+
+.research-site-root .research-profile-menu-item:last-child {
+  border-bottom-color: transparent !important;
 }
 
 .dark .research-site-root {
