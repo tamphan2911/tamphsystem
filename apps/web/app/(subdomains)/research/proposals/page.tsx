@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ProposalType, prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { deleteProposal } from "../actions";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { ProposalsTable, type ProposalRow } from "./ProposalsTable";
 
 export const dynamic = "force-dynamic";
@@ -94,28 +95,28 @@ export default async function ProposalsPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:flex-wrap">
-          {stats.map((item) => (
-            <div
-              key={item.label}
-              className="flex min-w-32 items-center gap-3 border border-[#444444] bg-[#2C2C2C] px-3 py-2 shadow-none"
-            >
-              <item.icon className={`h-4 w-4 ${item.color}`} />
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                  {item.label}
-                </p>
-                <p className="text-base font-black text-[#E4E4E4]">
-                  {item.value}
-                </p>
+      <ResearchPageHeaderPortal>
+        <div className="flex w-full min-w-0 items-center justify-between gap-4">
+          <div className="grid min-w-0 border border-[#444444] bg-[#2C2C2C] sm:grid-cols-4">
+            {stats.map((item) => (
+              <div
+                key={item.label}
+                className="flex min-w-32 items-center gap-3 border-[#444444] px-3 py-2 text-sm text-[#E4E4E4] sm:border-l first:sm:border-l-0"
+              >
+                <item.icon className={`h-4 w-4 ${item.color}`} />
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    {item.label}
+                  </p>
+                  <p className="text-base font-black text-[#E4E4E4]">
+                    {item.value}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-
-        <div />
-      </div>
+      </ResearchPageHeaderPortal>
 
       <ProposalsTable rows={rows} isAdmin deleteAction={deleteProposal} />
     </div>
