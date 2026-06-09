@@ -5,8 +5,10 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BellRing,
-  CheckCircle2,
+  ClipboardList,
   ExternalLink,
+  FileCheck2,
+  FolderGit2,
   Mail,
   MailOpen,
   Trash2,
@@ -17,6 +19,7 @@ import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
   FilterSelect,
+  IconHint,
   TablePagination,
   TableSearchInput,
   useTablePagination,
@@ -42,25 +45,32 @@ export type NotificationManagementRow = {
 
 function statusClass(readAt: string) {
   if (readAt) {
-    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+    return "text-[#8FCFD1] hover:text-[#C9F0F2]";
   }
-  return "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900";
+  return "text-[#F0A6B5] hover:text-[#FFC1CC]";
 }
 
 function typeClass(type: string) {
   if (type.includes("TASK")) {
-    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+    return "text-[#8FCFD1] hover:text-[#C9F0F2]";
   }
   if (type.includes("SUBMISSION")) {
-    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
+    return "text-[#CDB6E8] hover:text-[#E7D8F7]";
   }
   if (type.includes("PROJECT")) {
-    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+    return "text-[#F4D47A] hover:text-[#FFE7A3]";
   }
   if (type.includes("PUBLISHED") || type.includes("ACCEPTED")) {
-    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+    return "text-[#9CE6C7] hover:text-[#C9F0F2]";
   }
-  return "bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+  return "text-[#B0B0B0] hover:text-[#E4E4E4]";
+}
+
+function TypeIcon({ type }: { type: string }) {
+  if (type.includes("TASK")) return ClipboardList;
+  if (type.includes("SUBMISSION")) return FileCheck2;
+  if (type.includes("PROJECT")) return FolderGit2;
+  return BellRing;
 }
 
 function DeleteNotificationButton({
@@ -216,7 +226,7 @@ export function NotificationsTable({
         <TableSearchInput
           value={query}
           onChange={setQuery}
-          placeholder="Search notifications, users, entity..."
+          placeholder="Search notifications, users, type..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
           <FilterSelect
@@ -247,117 +257,121 @@ export function NotificationsTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[88rem] text-left">
+      <div className="overflow-hidden">
+        <table className="w-full table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
-              <th className="sticky left-0 z-20 w-[25rem] bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
-                Notification
-              </th>
-              <th className="w-[16rem] px-4 py-3">Recipient</th>
-              <th className="w-[12rem] px-3 py-3">Type</th>
-              <th className="w-[8rem] px-3 py-3">Status</th>
-              <th className="w-[12rem] px-3 py-3">Entity</th>
-              <th className="w-[8rem] px-3 py-3">Date</th>
-              <th className="w-[5rem] px-2 py-3 text-center">Link</th>
-              <th className="w-[5rem] px-2 py-3 text-center">
+              <th className="w-[45%] px-4 py-3">Notification</th>
+              <th className="w-[22%] px-4 py-3">Recipient</th>
+              <th className="w-[6%] px-3 py-3 text-center">Type</th>
+              <th className="w-[7%] px-3 py-3 text-center">Status</th>
+              <th className="w-[9%] px-3 py-3">Date</th>
+              <th className="w-[5%] px-2 py-3 text-center">Link</th>
+              <th className="w-[6%] px-2 py-3 text-center">
                 <span className="sr-only">Action</span>
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#444444]">
-            {pagination.pagedRows.map((notification) => (
-              <tr
-                key={notification.id}
-                className="group align-top transition-colors duration-150 hover:bg-[#383838]"
-              >
-                <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
-                  <p className="line-clamp-2 text-sm font-normal leading-5 text-[#E4E4E4]">
-                    {notification.title}
-                  </p>
-                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#B0B0B0]">
-                    {notification.summary}
-                  </p>
-                  {notification.body ? (
-                    <p className="mt-1 line-clamp-1 text-xs text-[#777777]">
-                      {notification.body}
+            {pagination.pagedRows.map((notification) => {
+              const NotificationTypeIcon = TypeIcon({
+                type: notification.type,
+              });
+              const StatusIcon = notification.readAt ? MailOpen : Mail;
+
+              return (
+                <tr
+                  key={notification.id}
+                  className="group align-top transition-colors duration-150 hover:bg-[#383838]"
+                >
+                  <td className="px-4 py-3">
+                    <p className="text-sm font-normal leading-5 text-[#E4E4E4]">
+                      {notification.title}
                     </p>
-                  ) : null}
-                </td>
-                <td className="px-4 py-3 text-xs leading-5 text-[#B0B0B0]">
-                  <span className="block text-[#E4E4E4]">
-                    {notification.recipientName || "No name"}
-                  </span>
-                  <span>{notification.recipientEmail}</span>
-                  <span className="block text-[#777777]">
-                    {notification.recipientRoles || "No roles"}
-                  </span>
-                </td>
-                <td className="px-3 py-3">
-                  <span
-                    className={`inline-flex max-w-full items-center gap-1.5 rounded-none px-2.5 py-1 text-xs font-bold ring-1 ${typeClass(notification.type)}`}
-                  >
-                    <BellRing className="h-3.5 w-3.5 flex-none" />
-                    <span className="truncate">{notification.typeLabel}</span>
-                  </span>
-                </td>
-                <td className="px-3 py-3">
-                  <span
-                    className={`inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-xs font-bold ring-1 ${statusClass(notification.readAt)}`}
-                  >
-                    {notification.readAt ? (
-                      <MailOpen className="h-3.5 w-3.5" />
-                    ) : (
-                      <Mail className="h-3.5 w-3.5" />
-                    )}
-                    {notification.readAt ? "Read" : "Unread"}
-                  </span>
-                  {notification.readAt ? (
-                    <p className="mt-1 text-xs text-[#777777]">
-                      {notification.readAt}
+                    <p className="mt-1 text-xs leading-5 text-[#B0B0B0]">
+                      {notification.summary}
                     </p>
-                  ) : null}
-                </td>
-                <td className="px-3 py-3 text-xs leading-5 text-[#B0B0B0]">
-                  <span className="block text-[#E4E4E4]">
-                    {notification.entityType || "Notification"}
-                  </span>
-                  {notification.entityId ? (
-                    <span className="block truncate font-mono">
-                      {notification.entityId}
+                    {notification.body ? (
+                      <p className="mt-1 text-xs leading-5 text-[#777777]">
+                        {notification.body}
+                      </p>
+                    ) : null}
+                  </td>
+                  <td className="px-4 py-3 text-xs leading-5 text-[#B0B0B0]">
+                    <span className="block text-[#E4E4E4]">
+                      {notification.recipientName || "No name"}
                     </span>
-                  ) : null}
-                </td>
-                <td className="px-3 py-3 text-xs text-[#B0B0B0]">
-                  {notification.createdAt}
-                </td>
-                <td className="px-2 py-3 text-center">
-                  {notification.href ? (
-                    <Link
-                      href={notification.href}
-                      className="inline-flex h-9 w-9 items-center justify-center border border-[#444444] bg-slate-50 text-slate-500 transition hover:-translate-y-0.5 hover:bg-white hover:text-blue-600 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-blue-300"
-                      aria-label="Open related page"
+                    <span className="break-words">
+                      {notification.recipientEmail}
+                    </span>
+                    <span className="block text-[#777777]">
+                      {notification.recipientRoles || "No roles"}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 text-center align-top">
+                    <IconHint label={notification.typeLabel}>
+                      <span
+                        className={`inline-flex cursor-help items-center transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${typeClass(notification.type)}`}
+                      >
+                        <NotificationTypeIcon
+                          className="h-4 w-4"
+                          aria-hidden="true"
+                        />
+                        <span className="sr-only">
+                          {notification.typeLabel}
+                        </span>
+                      </span>
+                    </IconHint>
+                  </td>
+                  <td className="px-3 py-3 text-center align-top">
+                    <IconHint
+                      label={
+                        notification.readAt
+                          ? `Read ${notification.readAt}`
+                          : "Unread"
+                      }
                     >
-                      <ExternalLink className="h-4 w-4" />
-                    </Link>
-                  ) : (
-                    <CheckCircle2 className="mx-auto h-4 w-4 text-slate-300 dark:text-slate-600" />
-                  )}
-                </td>
-                <td className="px-2 py-3 text-center">
-                  <DeleteNotificationButton
-                    notification={notification}
-                    deleteNotificationAction={deleteNotificationAction}
-                  />
-                </td>
-              </tr>
-            ))}
+                      <span
+                        className={`inline-flex cursor-help items-center transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${statusClass(notification.readAt)}`}
+                      >
+                        <StatusIcon className="h-4 w-4" aria-hidden="true" />
+                        <span className="sr-only">
+                          {notification.readAt ? "Read" : "Unread"}
+                        </span>
+                      </span>
+                    </IconHint>
+                  </td>
+                  <td className="px-3 py-3 text-xs text-[#B0B0B0]">
+                    {notification.createdAt}
+                  </td>
+                  <td className="px-2 py-3 text-center align-top">
+                    {notification.href ? (
+                      <Link
+                        href={notification.href}
+                        className="inline-flex h-9 w-9 items-center justify-center border border-[#444444] bg-transparent text-[#B0B0B0] transition hover:-translate-y-0.5 hover:bg-[#383838] hover:text-[#A8DADC] hover:shadow-sm"
+                        aria-label="Open related page"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    ) : (
+                      <span className="text-[#555555]">-</span>
+                    )}
+                  </td>
+                  <td className="px-2 py-3 text-center align-top">
+                    <DeleteNotificationButton
+                      notification={notification}
+                      deleteNotificationAction={deleteNotificationAction}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
             {pagination.total === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-2">
+                <td colSpan={7} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No notifications match the current search."
-                    detail="Try another recipient, notification type, entity, or read status."
+                    detail="Try another recipient, notification type, or read status."
                   />
                 </td>
               </tr>
