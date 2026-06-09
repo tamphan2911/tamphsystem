@@ -253,7 +253,11 @@ export function NewResearchDialog({
 
   return (
     <>
-      <ResearchButton type="button" onClick={() => setIsOpen(true)}>
+      <ResearchButton
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="research-new-button"
+      >
         <PlusCircle className="h-4 w-4" />
         New Research
       </ResearchButton>
