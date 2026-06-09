@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { AlertTriangle, Trash2, X } from "lucide-react";
-import { ResearchButton, ResearchIconButton } from "./ResearchPrimitives";
+import { ResearchButton } from "./ResearchPrimitives";
 
 type ConfirmTone = "danger" | "warning" | "info";
 
@@ -33,7 +33,6 @@ function toneClasses(tone: ConfirmTone) {
 export function ResearchConfirmDialog({
   open,
   title,
-  description,
   children,
   confirmLabel,
   cancelLabel = "Cancel",
@@ -71,31 +70,26 @@ export function ResearchConfirmDialog({
     >
       <div className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] text-[#E4E4E4] shadow-2xl">
         <div className="border-b border-[#444444] px-6 py-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
               <span
-                className={`flex h-11 w-6 flex-none items-center justify-center ${classes.icon}`}
+                className={`flex h-6 w-6 flex-none items-center justify-center ${classes.icon}`}
               >
                 {icon ?? <AlertTriangle className="h-5 w-5" />}
               </span>
               <div>
                 <h2 className="text-lg font-normal text-[#E4E4E4]">{title}</h2>
-                {description && (
-                  <p className="mt-1 text-sm leading-5 text-[#B0B0B0]">
-                    {description}
-                  </p>
-                )}
               </div>
             </div>
-            <ResearchIconButton
+            <button
               type="button"
               onClick={onCancel}
               disabled={isConfirming}
-              label="Close"
-              tone="slate"
+              aria-label="Close"
+              className="inline-flex h-8 w-8 flex-none cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] transition hover:text-[#E4E4E4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <X className="h-5 w-5" />
-            </ResearchIconButton>
+            </button>
           </div>
         </div>
 

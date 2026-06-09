@@ -909,6 +909,42 @@ textarea:focus-visible {
   font-weight: 400 !important;
 }
 
+.research-site-root
+  .fixed.inset-0
+  [class*="modalPanelIn_"]
+  > :where(div:first-child, header:first-child) {
+  align-items: center !important;
+}
+
+.research-site-root
+  .fixed.inset-0
+  [class*="modalPanelIn_"]
+  > :where(div:first-child, header:first-child)
+  :where(p[class*="text-sm"], p[class*="leading"]) {
+  display: none !important;
+}
+
+.research-site-root
+  .fixed.inset-0
+  [class*="modalPanelIn_"]
+  > :where(div:first-child, header:first-child)
+  button[aria-label="Close"] {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #b0b0b0 !important;
+}
+
+.research-site-root
+  .fixed.inset-0
+  [class*="modalPanelIn_"]
+  > :where(div:first-child, header:first-child)
+  button[aria-label="Close"]:hover {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: #e4e4e4 !important;
+}
+
 .research-site-root .fixed.inset-0 [class*="modalPanelIn_"] :where(p, label) {
   color: #b0b0b0;
 }
