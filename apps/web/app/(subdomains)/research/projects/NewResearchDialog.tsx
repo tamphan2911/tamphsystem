@@ -17,7 +17,6 @@ import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 import {
   ResearchButton,
-  ResearchIconButton,
   researchDropdownItemClass,
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
@@ -153,42 +152,45 @@ function NewResearchAuthorsPicker({
           </FloatingDropdownPortal>
         </div>
 
-        <div className="mt-3 grid gap-2">
+        <div className="mt-3 divide-y divide-[#444444] border-y border-[#444444]">
           {selectedAuthors.map((author, index) => (
             <div
               key={author.id}
-              className="flex items-center gap-3 border border-[#444444] bg-white px-3 py-2 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-900"
+              className="flex items-center gap-4 py-3"
             >
-              <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-none bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900">
+              <span className="inline-flex h-10 w-8 flex-none items-center justify-center text-[#A8DADC]">
                 <UserRound className="h-4 w-4" aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <p className="truncate text-sm font-bold text-[#E4E4E4]">
+                  <p className="truncate text-sm font-normal text-[#E4E4E4]">
                     {authorName(author)}
                     {index === 0 ? "*" : ""}
                   </p>
-                  <span className="rounded-none bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  <span className="border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#B0B0B0]">
                     {index === 0 ? "First author" : "Author"}
                   </span>
                 </div>
-                <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-[#777777]">
-                  <Mail className="h-3 w-3 flex-none" aria-hidden="true" />
+                <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#B0B0B0]">
+                  <Mail
+                    className="h-3 w-3 flex-none text-[#A8DADC]"
+                    aria-hidden="true"
+                  />
                   {author.email}
                 </p>
               </div>
-              <ResearchIconButton
+              <button
                 type="button"
                 onClick={() => removeAuthor(author.id)}
-                label={`Remove ${authorName(author)}`}
-                tone="rose"
+                aria-label={`Remove ${authorName(author)}`}
+                className="cursor-pointer border-0 bg-transparent p-2 text-[#B0B0B0] transition hover:text-rose-300"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
-              </ResearchIconButton>
+              </button>
             </div>
           ))}
           {selectedAuthors.length === 0 && (
-            <div className="rounded-none border border-dashed border-slate-300 px-3 py-5 text-center text-sm font-medium text-slate-400 dark:border-slate-700">
+            <div className="px-3 py-5 text-center text-sm font-normal text-[#B0B0B0]">
               Search and choose at least one author.
             </div>
           )}
