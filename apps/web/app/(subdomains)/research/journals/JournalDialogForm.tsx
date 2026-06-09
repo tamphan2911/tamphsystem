@@ -519,7 +519,7 @@ export function JournalDialogForm({
                           ? "Search field"
                           : "Search or add field"
                       }
-                      className="min-w-0 flex-1 bg-transparent text-sm font-normal normal-case tracking-normal text-[#E4E4E4] outline-none placeholder:text-[#B0B0B0]"
+                      className="min-w-0 flex-1 bg-transparent text-sm font-normal normal-case tracking-normal text-[#E4E4E4] outline-none placeholder:text-[#777777]"
                     />
                   </span>
                 </div>

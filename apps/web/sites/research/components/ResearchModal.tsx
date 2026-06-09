@@ -39,7 +39,7 @@ export function ResearchModal({
       className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
     >
       <div
-        className={`flex max-h-[90vh] w-full ${maxWidth} animate-[modalPanelIn_220ms_ease-out] flex-col overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] shadow-2xl`}
+        className={`flex max-h-[90vh] w-full ${maxWidth} animate-[modalPanelIn_220ms_ease-out] flex-col overflow-visible rounded-none border border-[#444444] bg-[#2C2C2C] shadow-2xl`}
       >
         <div className="flex items-start justify-between gap-4 border-b border-[#444444] px-6 py-5">
           <div className="flex min-w-0 items-start gap-3 text-left">

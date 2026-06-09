@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { KeyRound, PlusCircle } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import { KeyRound, Loader2, PlusCircle } from "lucide-react";
 import { createPublisherAccount } from "../actions";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   ResearchButton,
   researchFieldClass,
 } from "@/sites/research/components/ResearchPrimitives";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
@@ -21,6 +22,8 @@ type JournalOption = {
 
 export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const toast = useResearchToast();
   const [journalQuery, setJournalQuery] = useState("");
   const [selectedJournal, setSelectedJournal] = useState<JournalOption | null>(
     null,
@@ -66,19 +69,49 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
         open={isOpen}
         onClose={closeDialog}
         title="Add Account"
-        description="Track credentials and link them to a journal when needed."
         icon={<KeyRound className="h-5 w-5" />}
-        maxWidth="max-w-2xl"
+        maxWidth="max-w-3xl"
         headerActions={
-          <ResearchButton form="new-account-form">
-            <PlusCircle className="h-4 w-4" />
+          <ResearchButton form="new-account-form" disabled={isPending}>
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <PlusCircle className="h-4 w-4" />
+            )}
             Add Account
           </ResearchButton>
         }
       >
         <form
           id="new-account-form"
-          action={createPublisherAccount}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            const loginId =
+              typeof formData.get("username") === "string"
+                ? String(formData.get("username")).trim()
+                : "";
+            startTransition(async () => {
+              try {
+                await createPublisherAccount(formData);
+                closeDialog();
+                toast.showSuccess({
+                  title: "Account added",
+                  detail: loginId
+                    ? `${loginId} is saved and ready for journal submissions.`
+                    : "The publisher account is saved and ready for journal submissions.",
+                });
+              } catch (error) {
+                toast.showError({
+                  title: "Could not add account",
+                  detail:
+                    error instanceof Error
+                      ? error.message
+                      : "The account was not saved. Please check the details and try again.",
+                });
+              }
+            });
+          }}
           className="grid gap-4"
         >
           <div className="grid gap-4 md:grid-cols-2">
@@ -99,7 +132,6 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
               className={researchFieldClass}
             />
             <ResearchSearchPicker
-              label="Journal"
               name="journalId"
               selected={
                 selectedJournal

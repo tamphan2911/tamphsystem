@@ -1,6 +1,8 @@
 "use client";
 
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { LucideIcon } from "lucide-react";
 
 type Tone = "blue" | "emerald" | "amber" | "rose" | "violet" | "slate" | "cyan";
@@ -11,10 +13,10 @@ export function cx(...classes: Array<string | false | null | undefined>) {
 }
 
 export const researchFieldClass =
-  "h-12 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
+  "h-12 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#777777] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
 
 export const researchSearchFieldClass =
-  "h-11 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
+  "h-11 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#777777] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
 
 export const researchSelectTriggerClass =
   "h-11 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
@@ -32,7 +34,7 @@ export const researchDropdownItemActiveClass =
   "border-[#5A5A5A] bg-[#383838] font-normal text-[#E4E4E4]";
 
 export const researchTextareaClass =
-  "min-h-28 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
+  "min-h-28 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#777777] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
 
 export const researchLinkClass =
   "font-normal text-[#E4E4E4] transition duration-150 ease-out hover:text-[#A8DADC]";
@@ -138,19 +140,77 @@ export function IconHint({
   position?: "top" | "bottom";
   children: ReactNode;
 }) {
+  const triggerRef = useRef<HTMLSpanElement>(null);
+  const tooltipRef = useRef<HTMLSpanElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [coords, setCoords] = useState({ left: 0, top: 0 });
+
+  function showHint() {
+    const trigger = triggerRef.current;
+    if (trigger) {
+      const rect = trigger.getBoundingClientRect();
+      setCoords({
+        left: rect.left + rect.width / 2,
+        top: position === "top" ? rect.top - 8 : rect.bottom + 8,
+      });
+    }
+    setVisible(true);
+  }
+
+  useEffect(() => {
+    if (!visible) return;
+
+    function updatePosition() {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const tooltipWidth = tooltipRef.current?.offsetWidth ?? 0;
+      const viewportPadding = 12;
+      const rawLeft = rect.left + rect.width / 2;
+      const minLeft = tooltipWidth / 2 + viewportPadding;
+      const maxLeft = window.innerWidth - tooltipWidth / 2 - viewportPadding;
+      setCoords({
+        left: Math.min(Math.max(rawLeft, minLeft), Math.max(minLeft, maxLeft)),
+        top: position === "top" ? rect.top - 8 : rect.bottom + 8,
+      });
+    }
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [position, visible]);
+
   return (
-    <span className="group/icon relative inline-flex">
+    <span
+      ref={triggerRef}
+      className="relative inline-flex"
+      onMouseEnter={showHint}
+      onMouseLeave={() => setVisible(false)}
+      onFocus={showHint}
+      onBlur={() => setVisible(false)}
+    >
       {children}
-      <span
-        className={cx(
-          "pointer-events-none absolute left-1/2 z-[9999] -translate-x-1/2 whitespace-nowrap rounded-none border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-[11px] font-normal text-[#E4E4E4] opacity-0 shadow-lg shadow-black/30 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100",
-          position === "top"
-            ? "bottom-full mb-2 translate-y-1"
-            : "top-full mt-2 -translate-y-1",
-        )}
-      >
-        {label}
-      </span>
+      {visible && typeof document !== "undefined"
+        ? createPortal(
+            <span
+              ref={tooltipRef}
+              style={{ left: coords.left, top: coords.top }}
+              className={cx(
+                "pointer-events-none fixed z-[9999] max-w-[calc(100vw-1.5rem)] whitespace-nowrap rounded-none border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-[11px] font-normal text-[#E4E4E4] opacity-100 shadow-lg shadow-black/30 transition duration-150 ease-out",
+                position === "top"
+                  ? "-translate-x-1/2 -translate-y-full"
+                  : "-translate-x-1/2",
+              )}
+            >
+              {label}
+            </span>,
+            document.body,
+          )
+        : null}
     </span>
   );
 }
