@@ -850,6 +850,21 @@ textarea:focus-visible {
   border-bottom-color: transparent !important;
 }
 
+.research-dropdown-panel :where([role="option"][aria-selected="true"]) {
+  border-top-color: #444444 !important;
+  border-bottom-color: #444444 !important;
+}
+
+.research-dropdown-panel
+  :where([role="option"][aria-selected="true"] + [role="option"]:hover) {
+  border-top-color: transparent !important;
+}
+
+.research-dropdown-panel
+  :where([role="option"]:has(+ [role="option"][aria-selected="true"]):hover) {
+  border-bottom-color: transparent !important;
+}
+
 .dark .research-site-root {
   background: #242424;
 }
