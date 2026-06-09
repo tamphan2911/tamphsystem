@@ -3,6 +3,7 @@
 import type { CSSProperties, ReactNode, RefObject } from "react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { AnimatedResize } from "./AnimatedResize";
 
 type FloatingDropdownStyle = CSSProperties & {
   "--research-dropdown-max-height"?: string;
@@ -107,7 +108,7 @@ export function FloatingDropdownPortal({
       className="research-dropdown-floating-panel fixed z-[1100]"
       style={style}
     >
-      {children}
+      <AnimatedResize className="overflow-hidden">{children}</AnimatedResize>
     </div>,
     document.body,
   );
