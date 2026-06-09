@@ -324,6 +324,7 @@ export function ResearchShell({
                 name={name}
                 profileHref="/profile"
                 adminHref="https://admin.tamph.com"
+                variant="research"
               />
             </div>
           </header>
