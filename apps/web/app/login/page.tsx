@@ -140,7 +140,7 @@ export default async function LoginPage({
                 <span className={researchAuthIconClass}>
                   <LogIn className="h-6 w-6" />
                 </span>
-                <span className={researchAuthTitleClass}>Sign in</span>
+                <span className={researchAuthTitleClass}>SIGN IN</span>
               </h1>
             ) : (
               <>
@@ -238,7 +238,7 @@ export default async function LoginPage({
               }
             >
               <LogIn className="h-4 w-4" />
-              Sign in
+              {isResearch ? "SIGN IN" : "Sign in"}
             </button>
           </form>
 

@@ -39,7 +39,7 @@ function siteCopy() {
   const host = window.location.host;
   if (host.startsWith("research.")) {
     return {
-      title: "Create your Research Account",
+      title: "REGISTER",
       subtitle: "",
       accent: "emerald",
     };

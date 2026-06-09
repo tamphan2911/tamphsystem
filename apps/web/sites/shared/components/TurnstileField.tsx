@@ -77,7 +77,13 @@ export function TurnstileField({
         onLoad={() => setScriptReady(true)}
         onReady={() => setScriptReady(true)}
       />
-      <div className="flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden py-0">
+      <div
+        className={
+          theme === "dark"
+            ? "flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden border border-[#444444] bg-[#242424] px-3 py-2"
+            : "flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden py-0"
+        }
+      >
         <div ref={containerRef} className="max-w-full" />
       </div>
     </>
