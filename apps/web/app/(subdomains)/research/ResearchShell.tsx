@@ -228,14 +228,14 @@ export function ResearchShell({
 
   return (
     <ResearchToastProvider>
-      <div className="research-site-root relative min-h-screen overflow-x-hidden bg-[#2C2C2C] text-[#E4E4E4]">
+      <div className="research-site-root relative min-h-screen overflow-x-hidden bg-[#242424] text-[#E4E4E4]">
         <aside
-          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#3D3D3D] bg-[#272727] transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none ${
+          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#3D3D3D] bg-[#2C2C2C] transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none ${
             collapsed ? "w-20" : "w-72"
           }`}
         >
           <div
-            className={`flex h-20 items-center border-b border-[#3A3A3A] bg-[#232323] px-4 transition-all duration-300 motion-reduce:transition-none ${collapsed ? "justify-center" : "gap-3"}`}
+            className={`flex h-20 items-center border-b border-[#3A3A3A] bg-[#303030] px-4 transition-all duration-300 motion-reduce:transition-none ${collapsed ? "justify-center" : "gap-3"}`}
           >
             <div
               className={`min-w-0 overflow-hidden transition-all duration-300 motion-reduce:transition-none ${collapsed ? "w-0 opacity-0" : "w-44 opacity-100"}`}
@@ -290,7 +290,7 @@ export function ResearchShell({
         <div
           className={`relative z-10 transition-[padding] duration-300 ease-out ${collapsed ? "lg:pl-20" : "lg:pl-72"}`}
         >
-          <header className="sticky top-0 z-30 flex h-20 items-center gap-3 border-b border-[#444444] bg-[#2C2C2C]/92 px-4 backdrop-blur-xl sm:px-8">
+          <header className="sticky top-0 z-30 flex h-20 items-center gap-3 border-b border-[#444444] bg-[#242424]/92 px-4 backdrop-blur-xl sm:px-8">
             <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto lg:hidden">
               {visibleNavItems.map((item) => (
                 <Link

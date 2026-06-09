@@ -787,14 +787,14 @@ textarea:focus-visible {
 }
 
 .research-site-root {
-  --research-ink: #2c2c2c;
+  --research-ink: #242424;
   --research-panel: #2c2c2c;
   --research-panel-2: #383838;
   --research-panel-3: #383838;
   --research-border: #444444;
   --research-muted: #b0b0b0;
   --research-accent: #a8dadc;
-  background: #2c2c2c;
+  background: #242424;
 }
 
 .research-site-root :where(input, select, textarea):focus,
@@ -825,7 +825,7 @@ textarea:focus-visible {
 }
 
 .dark .research-site-root {
-  background: #2c2c2c;
+  background: #242424;
 }
 
 .research-site-root main > :where(div, section):first-child {
