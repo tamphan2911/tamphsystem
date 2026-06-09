@@ -1,4 +1,3 @@
-import { Building2, FolderGit2, Inbox } from "lucide-react";
 import { redirect } from "next/navigation";
 import { ProposalType, prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
@@ -70,26 +69,18 @@ export default async function ProposalsPage() {
     {
       label: "Total",
       value: proposals.length,
-      icon: Inbox,
-      color: "text-slate-600",
     },
     {
       label: "Research",
       value: researchCount,
-      icon: FolderGit2,
-      color: "text-amber-600",
     },
     {
       label: "Project",
       value: projectCount,
-      icon: Building2,
-      color: "text-violet-600",
     },
     {
       label: "New",
       value: newCount,
-      icon: FolderGit2,
-      color: "text-emerald-600",
     },
   ];
 
@@ -98,20 +89,17 @@ export default async function ProposalsPage() {
       <ResearchPageHeaderPortal>
         <div className="flex w-full min-w-0 items-center justify-between gap-4">
           <div className="grid min-w-0 border border-[#444444] bg-[#2C2C2C] sm:grid-cols-4">
-            {stats.map((item) => (
+            {stats.map((item, index) => (
               <div
                 key={item.label}
-                className="flex min-w-32 items-center gap-3 border-[#444444] px-3 py-2 text-sm text-[#E4E4E4] sm:border-l first:sm:border-l-0"
+                className={`whitespace-nowrap px-3 py-2 text-sm text-[#E4E4E4] ${
+                  index > 0 ? "border-l border-[#444444]" : ""
+                }`}
               >
-                <item.icon className={`h-4 w-4 ${item.color}`} />
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                    {item.label}
-                  </p>
-                  <p className="text-base font-black text-[#E4E4E4]">
-                    {item.value}
-                  </p>
-                </div>
+                <span className="font-normal text-[#B0B0B0]">
+                  {item.label}:{" "}
+                </span>
+                <span className="font-normal text-[#E4E4E4]">{item.value}</span>
               </div>
             ))}
           </div>
