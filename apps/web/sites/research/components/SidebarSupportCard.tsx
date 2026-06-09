@@ -17,7 +17,7 @@ export function SidebarSupportCard({
         title="Contact support"
         className="mx-3 mb-4 flex h-11 w-11 items-center justify-center rounded-none border border-[#444444] bg-[#2C2C2C] text-[#B0B0B0] transition duration-150 ease-out hover:border-[#A8DADC] hover:bg-[#383838] hover:text-[#A8DADC]"
       >
-        <LifeBuoy className="h-5 w-5" />
+        <LifeBuoy className="h-4 w-4" strokeWidth={1.75} />
       </div>
     );
   }

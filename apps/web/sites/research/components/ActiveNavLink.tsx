@@ -63,11 +63,6 @@ export function ActiveNavLink({
     : adminOnly
       ? "text-[#B0B0B0] hover:border-[#444444] hover:bg-[#383838] hover:text-[#FFC1CC]"
       : "text-[#B0B0B0] hover:border-[#444444] hover:bg-[#383838] hover:text-[#A8DADC]";
-  const iconClass = isActive
-    ? "text-[#A8DADC]"
-    : adminOnly
-      ? "text-[#FFC1CC] transition-colors group-hover/navlink:text-[#FFC1CC]"
-      : "text-[#A8DADC] transition-colors group-hover/navlink:text-[#A8DADC]";
 
   return (
     <Link
@@ -82,7 +77,10 @@ export function ActiveNavLink({
           isActive ? "bg-[#B39CD0] opacity-100" : "opacity-0"
         }`}
       />
-      <Icon className={`h-5 w-5 flex-none ${iconClass}`} />
+      <Icon
+        className="h-4 w-4 flex-none text-current transition-colors duration-150"
+        strokeWidth={1.75}
+      />
       {!collapsed && (
         <span className="min-w-0 flex-1 truncate">{displayLabel}</span>
       )}

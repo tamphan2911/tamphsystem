@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { ActiveNavLink } from "@/sites/research/components/ActiveNavLink";
 import { ProfileMenu } from "@/sites/shared/components/ProfileMenu";
 import { SidebarSupportCard } from "@/sites/research/components/SidebarSupportCard";
@@ -253,16 +253,16 @@ export function ResearchShell({
             <button
               type="button"
               onClick={() => setCollapsed((value) => !value)}
-              className={`flex h-8 w-8 flex-none items-center justify-center border border-[#3D3D3D] bg-[#272727] text-[#B0B0B0] transition duration-150 ease-out hover:bg-[#343434] hover:text-[#E4E4E4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8DADC]/45 motion-reduce:transition-none ${
-                collapsed ? "absolute right-2 top-6" : "ml-auto"
+              className={`flex h-9 w-9 flex-none cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] transition duration-150 ease-out hover:text-[#E4E4E4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8DADC]/45 motion-reduce:transition-none ${
+                collapsed ? "" : "ml-auto"
               }`}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {collapsed ? (
-                <ChevronRight className="h-4 w-4" />
+                <PanelLeftOpen className="h-4 w-4" strokeWidth={1.75} />
               ) : (
-                <ChevronLeft className="h-4 w-4" />
+                <PanelLeftClose className="h-4 w-4" strokeWidth={1.75} />
               )}
             </button>
           </div>
