@@ -1109,6 +1109,31 @@ textarea:focus-visible {
 .research-site-root button,
 .research-site-root [role="button"] {
   letter-spacing: 0;
+  transform: translateY(0) scale(1);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease,
+    box-shadow 160ms ease,
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+
+.research-site-root button:not(:disabled):hover,
+.research-site-root [role="button"]:not([aria-disabled="true"]):hover {
+  transform: translateY(-1px) scale(1.01);
+}
+
+.research-site-root button:not(:disabled):hover :where(svg),
+.research-site-root [role="button"]:not([aria-disabled="true"]):hover
+  :where(svg) {
+  transform: translateY(-0.5px) scale(1.06);
+}
+
+.research-site-root button :where(svg),
+.research-site-root [role="button"] :where(svg) {
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .research-site-root button:focus-visible,
@@ -1127,7 +1152,8 @@ textarea:focus-visible {
 
 .research-site-root button:not(:disabled):active,
 .research-site-root [role="button"]:not([aria-disabled="true"]):active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.97);
+  transition-duration: 90ms;
 }
 
 .research-site-root button[class*="bg-blue-600"],
