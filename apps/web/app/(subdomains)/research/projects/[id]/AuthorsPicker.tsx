@@ -197,7 +197,7 @@ export function AuthorsPicker({
                         type="button"
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => addAuthor(user)}
-                        className="flex w-full cursor-pointer items-center gap-3 rounded-none border-y border-transparent px-3 py-2 text-left transition hover:border-[#5A5A5A] hover:bg-[#383838]"
+                        className="flex w-full cursor-pointer items-center gap-3 rounded-none border-y border-transparent px-3 py-2 text-left transition first:border-t-transparent last:border-b-transparent hover:border-[#5A5A5A] first:hover:border-t-transparent last:hover:border-b-transparent hover:bg-[#383838]"
                       >
                         <span className="inline-flex h-9 w-9 flex-none items-center justify-center border border-[#444444] bg-[#202020] text-[#A8DADC]">
                           <UserRound className="h-4 w-4" aria-hidden="true" />

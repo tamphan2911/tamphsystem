@@ -23,7 +23,7 @@ export const researchDropdownPanelClass =
   "research-dropdown-panel overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] shadow-2xl shadow-black/35";
 
 export const researchDropdownItemClass =
-  "flex w-full items-start justify-between gap-3 rounded-none border-y px-0 py-2.5 text-left text-sm leading-5 transition duration-150 ease-out motion-reduce:transition-none";
+  "flex w-full items-start justify-between gap-3 rounded-none border-y px-0 py-2.5 text-left text-sm leading-5 transition duration-150 ease-out first:border-t-transparent last:border-b-transparent first:hover:border-t-transparent last:hover:border-b-transparent motion-reduce:transition-none";
 
 export const researchDropdownItemIdleClass =
   "border-transparent text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#444444] hover:text-white";

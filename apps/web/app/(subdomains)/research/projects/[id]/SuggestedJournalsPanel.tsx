@@ -593,7 +593,7 @@ export function SuggestedJournalsPanel({
                       key={assistant.id}
                       type="button"
                       onClick={() => toggleAssistant(assistant.id)}
-                      className={`flex cursor-pointer items-center justify-between gap-3 border-y px-3 py-2 text-left transition ${
+                      className={`flex cursor-pointer items-center justify-between gap-3 border-y px-3 py-2 text-left transition first:border-t-transparent last:border-b-transparent first:hover:border-t-transparent last:hover:border-b-transparent ${
                         selected
                           ? "border-[#A8DADC] bg-[#303030] text-[#A8DADC]"
                           : "border-transparent bg-[#202020] text-[#E4E4E4] hover:border-[#666666] hover:bg-[#303030]"
@@ -645,7 +645,7 @@ export function SuggestedJournalsPanel({
 }
 
 const resultButtonClass =
-  "cursor-pointer border-y border-transparent bg-[#202020] px-3 py-2 text-left transition hover:border-[#A8DADC] hover:bg-[#303030] disabled:cursor-wait";
+  "cursor-pointer border-y border-transparent bg-[#202020] px-3 py-2 text-left transition first:border-t-transparent last:border-b-transparent hover:border-[#A8DADC] first:hover:border-t-transparent last:hover:border-b-transparent hover:bg-[#303030] disabled:cursor-wait";
 
 function VenueSection({
   title,
