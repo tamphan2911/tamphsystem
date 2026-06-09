@@ -36,7 +36,10 @@ import {
   ResearchBasicEditDialog,
 } from "./ResearchDetailEditDialogs";
 import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
-import { IconHint } from "@/sites/research/components/ResearchPrimitives";
+import {
+  IconHint,
+  researchLinkClass,
+} from "@/sites/research/components/ResearchPrimitives";
 
 export const dynamic = "force-dynamic";
 
@@ -979,7 +982,7 @@ export default async function ProjectDetailPage({
                         >
                           <Link
                             href={`/organized-projects/${organizedProject.id}`}
-                            className="font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
+                            className={researchLinkClass}
                           >
                             {organizedProject.title}
                           </Link>

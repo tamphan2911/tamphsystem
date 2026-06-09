@@ -29,7 +29,11 @@ import {
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import { ResearchIconButton } from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchIconButton,
+  researchLinkClass,
+  researchMutedLinkClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
@@ -409,14 +413,14 @@ export function ResearchProjectsTable({
               >
                 <td className="px-3 py-3 align-top">
                   <Link href={`/projects/${row.id}`}>
-                    <span className="font-mono text-xs font-normal text-[#B0B0B0] transition hover:text-[#E4E4E4]">
+                    <span className={`font-mono text-xs ${researchMutedLinkClass}`}>
                       {row.researchCode || "-"}
                     </span>
                   </Link>
                 </td>
                 <td className="min-w-0 px-3 py-3 align-top">
                   <Link href={`/projects/${row.id}`} className="group">
-                    <p className="line-clamp-2 text-base font-normal text-[#E4E4E4] transition group-hover:text-white">
+                    <p className={`line-clamp-2 text-base group-hover:text-[#A8DADC] ${researchLinkClass}`}>
                       {row.title}
                     </p>
                     <p className="mt-1 line-clamp-1 text-xs text-[#B0B0B0]">

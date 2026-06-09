@@ -22,6 +22,7 @@ import {
   SubmissionsTable,
   type SubmissionRow,
 } from "../../projects/[id]/SubmissionsTable";
+import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
 
 export type JournalSubmissionRow = SubmissionRow;
 
@@ -236,7 +237,7 @@ export function JournalDetailTabs({
                         <td className="px-4 py-3 text-sm font-normal text-[#E4E4E4]">
                           <Link
                             href={`/accounts/${account.id}`}
-                            className="font-semibold text-[#E4E4E4] transition hover:text-[#A8DADC]"
+                            className={researchLinkClass}
                           >
                             {account.username}
                           </Link>

@@ -23,6 +23,10 @@ import {
   revokeResearchTask,
   sendTaskReminderEmail,
 } from "../../actions";
+import {
+  researchLinkClass,
+  researchMutedLinkClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import { FinishTaskForm } from "./FinishTaskForm";
 import { RevokeTaskForm } from "./RevokeTaskForm";
 import { ClarificationRequestForm, RedoTaskForm } from "./TaskWorkflowForms";
@@ -569,7 +573,7 @@ export default async function TaskDetailPage({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href="/tasks"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+          className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
         >
           <ArrowLeft className="h-4 w-4" />
           Back to tasks
@@ -685,7 +689,7 @@ export default async function TaskDetailPage({
               </div>
               <Link
                 href={`/projects/${task.project.id}`}
-                className="mt-2 inline-flex text-sm font-normal text-slate-950 transition hover:text-blue-600 dark:text-white dark:hover:text-blue-300"
+                className={`mt-2 inline-flex text-sm ${researchLinkClass}`}
               >
                 {task.project.title}
               </Link>
@@ -707,7 +711,7 @@ export default async function TaskDetailPage({
               </div>
               <Link
                 href={`/journals/${task.journal.id}`}
-                className="mt-2 inline-flex text-sm font-normal text-slate-950 transition hover:text-blue-600 dark:text-white dark:hover:text-blue-300"
+                className={`mt-2 inline-flex text-sm ${researchLinkClass}`}
               >
                 {task.journal.name}
               </Link>
@@ -734,7 +738,7 @@ export default async function TaskDetailPage({
               </div>
               <Link
                 href={`/conferences/${task.conference.id}`}
-                className="mt-2 inline-flex text-sm font-semibold text-slate-950 transition hover:text-blue-600 dark:text-white dark:hover:text-blue-300"
+                className={`mt-2 inline-flex text-sm ${researchLinkClass}`}
               >
                 {task.conference.name}
               </Link>

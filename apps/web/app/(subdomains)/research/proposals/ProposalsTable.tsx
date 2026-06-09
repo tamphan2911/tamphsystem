@@ -22,6 +22,10 @@ import {
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import {
+  researchLinkClass,
+  researchMutedLinkClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
@@ -280,7 +284,7 @@ export function ProposalsTable({
               >
                 <td className="px-3 py-3 align-top">
                   <Link href={`/proposals/${proposal.id}`}>
-                    <span className="font-mono text-xs font-semibold text-slate-400 transition hover:text-blue-600 dark:text-slate-500 dark:hover:text-blue-300">
+                    <span className={`font-mono text-xs ${researchMutedLinkClass}`}>
                       {proposal.id.slice(0, 8)}
                     </span>
                   </Link>
@@ -288,7 +292,7 @@ export function ProposalsTable({
                 <td className="px-4 py-3 align-top">
                   <Link
                     href={`/proposals/${proposal.id}`}
-                    className="line-clamp-2 text-base font-normal leading-snug text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
+                    className={`line-clamp-2 text-base leading-snug ${researchLinkClass}`}
                   >
                     {proposal.title}
                   </Link>

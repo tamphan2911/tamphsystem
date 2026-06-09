@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { KeyRound, Send, Trash2 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import {
   FilterSelect,
@@ -271,7 +272,7 @@ export function AccountsTable({
                     </IconHint>
                     <Link
                       href={`/accounts/${account.id}`}
-                      className="truncate whitespace-nowrap font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
+                      className={`truncate whitespace-nowrap ${researchLinkClass}`}
                     >
                       {account.username}
                     </Link>
@@ -289,7 +290,7 @@ export function AccountsTable({
                   {account.journalId ? (
                     <Link
                       href={`/journals/${account.journalId}`}
-                      className="line-clamp-2 font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
+                      className={`line-clamp-2 ${researchLinkClass}`}
                     >
                       {account.journalName}
                     </Link>

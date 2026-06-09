@@ -19,6 +19,7 @@ import {
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
 import { TableSkeletonRows } from "@/sites/research/components/ResearchSkeleton";
 import {
   ResearchEmptyState,
@@ -519,7 +520,7 @@ export function TasksClient({
                     <td className="min-w-0 px-3 py-3 align-top">
                       <Link
                         href={`/tasks/${task.id}`}
-                        className="text-base font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
+                        className={`text-base ${researchLinkClass}`}
                       >
                         {task.title}
                       </Link>

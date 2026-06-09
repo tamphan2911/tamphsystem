@@ -5,7 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BadgeCheck, Send, Star, Trash2 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import { ResearchIconButton } from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchIconButton,
+  researchLinkClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import {
   FilterSelect,
@@ -308,7 +311,7 @@ export function JournalsTable({
                 <td className="px-4 py-3">
                   <Link
                     href={`/journals/${journal.id}?back=${encodeURIComponent(currentListPath)}`}
-                    className="text-base font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
+                    className={`text-base ${researchLinkClass}`}
                   >
                     {journal.name}
                   </Link>

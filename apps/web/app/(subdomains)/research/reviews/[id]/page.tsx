@@ -15,6 +15,10 @@ import {
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
+import {
+  researchLinkClass,
+  researchMutedLinkClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import { formatMoney } from "@/sites/research/lib/currency";
 import { countryFlag, countryName } from "@/sites/research/lib/countries";
 
@@ -176,7 +180,7 @@ export default async function ReviewDetailPage({
     <div className="mx-auto max-w-6xl space-y-5">
       <Link
         href="/reviews"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300"
+        className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
       >
         <ArrowLeft className="h-4 w-4" />
         Reviews
@@ -264,7 +268,7 @@ export default async function ReviewDetailPage({
                   <td className="px-4 py-3">
                     <Link
                       href={`/tasks/${task.id}`}
-                      className="text-sm font-semibold text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
+                      className={`text-sm ${researchLinkClass}`}
                     >
                       {task.title}
                     </Link>
@@ -317,7 +321,7 @@ export default async function ReviewDetailPage({
           <div>
             <Link
               href={`/journals/${review.journal.id}`}
-              className="mt-3 inline-flex text-base font-semibold text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
+              className={`mt-3 inline-flex text-base ${researchLinkClass}`}
             >
               {review.journal.name}
             </Link>

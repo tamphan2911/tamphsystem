@@ -34,6 +34,12 @@ export const researchDropdownItemActiveClass =
 export const researchTextareaClass =
   "min-h-28 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#B0B0B0] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
 
+export const researchLinkClass =
+  "font-normal text-[#E4E4E4] transition duration-150 ease-out hover:text-[#A8DADC]";
+
+export const researchMutedLinkClass =
+  "font-normal text-[#B0B0B0] transition duration-150 ease-out hover:text-[#A8DADC]";
+
 export const researchLabelClass =
   "grid gap-1.5 text-sm font-normal text-[#E4E4E4]";
 

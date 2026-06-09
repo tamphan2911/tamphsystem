@@ -17,6 +17,7 @@ import {
 import { prisma, ProposalStatus, ProposalType, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { ProposalFeedbackButton } from "./ProposalFeedbackButton";
+import { researchMutedLinkClass } from "@/sites/research/components/ResearchPrimitives";
 
 export const dynamic = "force-dynamic";
 
@@ -174,7 +175,7 @@ export default async function ProposalDetailPage({
     <div className="mx-auto max-w-6xl space-y-5">
       <Link
         href="/proposals"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300"
+        className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
       >
         <ArrowLeft className="h-4 w-4" />
         Proposals

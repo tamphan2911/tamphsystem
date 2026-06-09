@@ -16,6 +16,10 @@ import {
   SubmissionsTable,
   type SubmissionRow,
 } from "../../projects/[id]/SubmissionsTable";
+import {
+  researchLinkClass,
+  researchMutedLinkClass,
+} from "@/sites/research/components/ResearchPrimitives";
 
 export const dynamic = "force-dynamic";
 
@@ -172,7 +176,7 @@ export default async function AccountDetailPage({
     <div className="mx-auto max-w-6xl space-y-4">
       <Link
         href="/accounts"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+        className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
       >
         <ArrowLeft className="h-4 w-4" />
         Accounts
@@ -202,7 +206,7 @@ export default async function AccountDetailPage({
               {account.journal ? (
                 <Link
                   href={`/journals/${account.journal.id}`}
-                  className="font-medium text-slate-600 transition hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-300"
+                  className={researchLinkClass}
                 >
                   {account.journal.name}
                 </Link>

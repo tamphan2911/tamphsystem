@@ -5,7 +5,10 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import { ResearchIconButton } from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchIconButton,
+  researchLinkClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import {
   FilterSelect,
@@ -280,7 +283,7 @@ export function ConferencesTable({
                   <td className="px-4 py-3">
                     <Link
                       href={`/conferences/${conference.id}`}
-                      className="line-clamp-2 text-base font-normal leading-6 text-[#E4E4E4] transition hover:text-[#A8DADC]"
+                      className={`line-clamp-2 text-base leading-6 ${researchLinkClass}`}
                     >
                       {conference.name}
                     </Link>

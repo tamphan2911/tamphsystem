@@ -5,7 +5,10 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, CalendarDays, Trash2 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import { ResearchIconButton } from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchIconButton,
+  researchLinkClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
@@ -275,7 +278,7 @@ export function SuggestionsTable({
                   <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
                     <Link
                       href={`/projects/${suggestion.projectId}`}
-                      className="line-clamp-2 text-sm font-normal leading-5 text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
+                      className={`line-clamp-2 text-sm leading-5 ${researchLinkClass}`}
                     >
                       {suggestion.projectTitle}
                     </Link>
@@ -286,7 +289,7 @@ export function SuggestionsTable({
                   <td className="px-4 py-3">
                     <Link
                       href={suggestion.venueHref}
-                      className="line-clamp-2 text-sm font-normal leading-5 text-slate-800 transition hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-300"
+                      className={`line-clamp-2 text-sm leading-5 ${researchLinkClass}`}
                     >
                       {suggestion.venueName}
                     </Link>

@@ -14,6 +14,7 @@ import { unlockConference, updateConference } from "../../actions";
 import { ConferenceDialog } from "../ConferenceDialog";
 import { ConferenceUnlockButton } from "./ConferenceUnlockButton";
 import { formatMoney } from "@/sites/research/lib/currency";
+import { researchMutedLinkClass } from "@/sites/research/components/ResearchPrimitives";
 import {
   ResearchProjectsTable,
   type ResearchProjectRow,
@@ -162,7 +163,7 @@ export default async function ConferenceDetailPage({
     <div className="mx-auto max-w-7xl space-y-5">
       <Link
         href="/conferences"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+        className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
       >
         <ArrowLeft className="h-4 w-4" />
         Conferences

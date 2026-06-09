@@ -21,7 +21,10 @@ import {
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import { ResearchIconButton } from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchIconButton,
+  researchLinkClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
@@ -276,7 +279,7 @@ export function ReviewsTable({
                     <div>
                       <Link
                         href={`/reviews/${row.id}`}
-                        className="text-sm font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
+                        className={`text-sm ${researchLinkClass}`}
                       >
                         {row.manuscriptTitle}
                       </Link>
@@ -291,7 +294,7 @@ export function ReviewsTable({
                 <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                   <Link
                     href={`/journals/${row.journalId}`}
-                    className="line-clamp-2 font-normal text-[#E4E4E4] transition hover:text-[#A8DADC]"
+                    className={`line-clamp-2 ${researchLinkClass}`}
                   >
                     {row.journalName}
                   </Link>

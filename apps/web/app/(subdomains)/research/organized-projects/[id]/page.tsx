@@ -27,6 +27,10 @@ import type { LucideIcon } from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import {
+  researchLinkClass,
+  researchMutedLinkClass,
+} from "@/sites/research/components/ResearchPrimitives";
+import {
   createResearchForOrganizedProject,
   updateOrganizedProject,
   updateOrganizedProjectProducts,
@@ -481,7 +485,7 @@ export default async function OrganizedProjectDetailPage({
     <div className="mx-auto max-w-6xl space-y-5">
       <Link
         href="/organized-projects"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300"
+        className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
       >
         <ArrowLeft className="h-4 w-4" />
         Projects
@@ -699,7 +703,7 @@ export default async function OrganizedProjectDetailPage({
                   >
                     <td className="px-3 py-3 align-top">
                       <Link href={`/projects/${researchProject.id}`}>
-                        <span className="font-mono text-xs font-bold text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300">
+                        <span className={`font-mono text-xs ${researchMutedLinkClass}`}>
                           {researchProject.researchCode || "-"}
                         </span>
                       </Link>
@@ -709,7 +713,7 @@ export default async function OrganizedProjectDetailPage({
                         href={`/projects/${researchProject.id}`}
                         className="group"
                       >
-                        <p className="line-clamp-2 text-base font-normal text-slate-700 transition group-hover:text-blue-600 dark:text-slate-200 dark:group-hover:text-blue-300">
+                        <p className={`line-clamp-2 text-base group-hover:text-[#A8DADC] ${researchLinkClass}`}>
                           {researchProject.title}
                         </p>
                         <p className="mt-1 line-clamp-1 text-xs text-[#B0B0B0]">

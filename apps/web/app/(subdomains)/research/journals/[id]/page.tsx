@@ -12,6 +12,7 @@ import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { formatMoney } from "@/sites/research/lib/currency";
 import { countryFlag, countryName } from "@/sites/research/lib/countries";
+import { researchMutedLinkClass } from "@/sites/research/components/ResearchPrimitives";
 import {
   JournalDetailTabs,
   type JournalAccountRow,
@@ -210,7 +211,7 @@ export default async function JournalDetailPage({
     <div className="mx-auto max-w-7xl space-y-5">
       <Link
         href={backHref}
-        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+        className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
       >
         <ArrowLeft className="h-4 w-4" />
         Journals
