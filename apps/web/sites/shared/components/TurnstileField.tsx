@@ -80,7 +80,7 @@ export function TurnstileField({
       <div
         className={
           theme === "dark"
-            ? "flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden border border-[#444444] bg-[#242424] px-3 py-2"
+            ? "flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden"
             : "flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden py-0"
         }
       >
