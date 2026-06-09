@@ -22,7 +22,7 @@ export function EditJournalDialog({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="group/edit relative inline-flex h-8 w-8 items-center justify-center rounded-none border border-amber-100 bg-amber-50 text-amber-600 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-100 hover:text-amber-700 hover:shadow-md dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50"
+        className="group/edit relative inline-flex h-8 w-8 items-center justify-center rounded-none border-0 bg-transparent text-[#F4D47A] shadow-none transition hover:-translate-y-0.5 hover:text-[#FFE7A3] hover:drop-shadow-[0_0_0.45rem_rgba(244,212,122,0.22)]"
         aria-label="Edit journal details"
       >
         <Pencil className="h-4 w-4" />

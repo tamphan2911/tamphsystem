@@ -143,7 +143,7 @@ export function JournalDetailTabs({
 
   return (
     <section className="space-y-3">
-      <div className="grid grid-cols-3 gap-2 text-center">
+      <div className="grid w-full grid-cols-3 border border-[#444444] bg-[#242424] text-center">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -153,13 +153,19 @@ export function JournalDetailTabs({
               setStatus("ALL");
               setQuery("");
             }}
-            className={`cursor-pointer rounded-none border px-3 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
+            className={`cursor-pointer rounded-none border-0 px-4 py-3 text-left transition-[background-color,color,transform] duration-200 ease-out hover:-translate-y-0.5 ${
               activeTab === tab.key
-                ? "border-blue-200 bg-blue-50 text-blue-700 shadow-sm dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300"
-                : "border-slate-200 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                ? "bg-[#383838] text-[#A8DADC] shadow-[inset_0_-2px_0_#A8DADC]"
+                : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
             }`}
           >
-            <span className="flex items-center justify-between gap-2">
+            <span
+              className={`flex items-center justify-between gap-2 ${
+                tab.key !== "submissions"
+                  ? "border-l border-[#444444] pl-4"
+                  : ""
+              }`}
+            >
               <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide">
                 <tab.icon className="h-3.5 w-3.5" />
                 {tab.label}

@@ -6,7 +6,6 @@ import {
   BookmarkCheck,
   Database,
   Globe2,
-  Hash,
   Send,
   Star,
 } from "lucide-react";
@@ -209,8 +208,7 @@ export default async function JournalDetailPage({
     journal.type === "LOCAL"
       ? journal.localRank || "No local rank"
       : journal.rank || "No rank";
-  const journalTypeLabel =
-    journal.type === "LOCAL" ? "Local" : "International";
+  const journalTypeLabel = journal.type === "LOCAL" ? "Local" : "International";
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
@@ -222,26 +220,22 @@ export default async function JournalDetailPage({
         Journals
       </Link>
 
-      <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
+      <section className="space-y-5 px-1">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-black tracking-tight text-[#E4E4E4]">
+              <h1 className="text-2xl font-normal tracking-tight text-[#E4E4E4]">
                 {journal.name}
               </h1>
               <div className="flex items-center gap-2">
                 <IconHint
                   label={
-                    journal.isFavorite
-                      ? "Favorite journal"
-                      : "Not favorite"
+                    journal.isFavorite ? "Favorite journal" : "Not favorite"
                   }
                 >
                   <Star
-                    className={`h-5 w-5 transition duration-150 ease-out hover:text-[#A8DADC] ${
-                      journal.isFavorite
-                        ? "fill-amber-200 text-amber-400"
-                        : "text-[#777777]"
+                    className={`h-5 w-5 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
+                      journal.isFavorite ? "text-amber-400" : "text-[#777777]"
                     }`}
                     aria-hidden="true"
                   />
@@ -254,10 +248,8 @@ export default async function JournalDetailPage({
                   }
                 >
                   <BookmarkCheck
-                    className={`h-5 w-5 transition duration-150 ease-out hover:text-[#A8DADC] ${
-                      journal.isInterest
-                        ? "fill-sky-200 text-sky-400"
-                        : "text-[#777777]"
+                    className={`h-5 w-5 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
+                      journal.isInterest ? "text-sky-400" : "text-[#777777]"
                     }`}
                     aria-hidden="true"
                   />
@@ -270,7 +262,7 @@ export default async function JournalDetailPage({
                     href={item.href as string}
                     target="_blank"
                     rel="noreferrer"
-                    className={`group/icon relative inline-flex h-9 w-9 items-center justify-center rounded-none border shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${item.tone}`}
+                    className="group/icon relative inline-flex h-9 w-9 items-center justify-center rounded-none border-0 bg-transparent text-[#B0B0B0] shadow-none transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)]"
                     aria-label={item.label}
                   >
                     <item.icon className="h-4 w-4" />
@@ -313,40 +305,34 @@ export default async function JournalDetailPage({
               {journal.issuesPerYear
                 ? ` - ${journal.issuesPerYear} issues/year`
                 : ""}
+              {journal.country ? (
+                <>
+                  {" "}
+                  -{" "}
+                  <IconHint label={countryName(journal.country)}>
+                    <span className="inline-flex cursor-help items-center text-base leading-none transition-[filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)]">
+                      {countryFlag(journal.country)}
+                      <span className="sr-only">
+                        {countryName(journal.country)}
+                      </span>
+                    </span>
+                  </IconHint>
+                </>
+              ) : null}
             </p>
           </div>
         </div>
 
-        <dl className="mt-5 grid gap-3 text-sm md:grid-cols-5">
-          <div className="md:col-span-2">
+        <dl className="grid gap-4 border-t border-[#3A3A3A] pt-4 text-sm md:grid-cols-3">
+          <div>
             <dt className="text-xs font-bold uppercase text-slate-400">Area</dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+            <dd className="mt-1 text-sm leading-5 text-[#B0B0B0]">
               {journalFields.length > 0 ? journalFields.join("; ") : "-"}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">Type</dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
-              {journalTypeLabel}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">Rank</dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
-              {journalRank}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">
-              Issues/year
-            </dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
-              {journal.issuesPerYear || "-"}
-            </dd>
-          </div>
-          <div>
             <dt className="text-xs font-bold uppercase text-slate-400">APC</dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+            <dd className="mt-1 text-base font-normal text-[#A8DADC]">
               {formatMoney(journal.apc, journal.apcCurrency)}
             </dd>
           </div>
@@ -354,44 +340,17 @@ export default async function JournalDetailPage({
             <dt className="text-xs font-bold uppercase text-slate-400">
               Submission Fee
             </dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+            <dd className="mt-1 text-base font-normal text-[#A8DADC]">
               {formatMoney(
                 journal.submissionFee,
                 journal.submissionFeeCurrency,
               )}
             </dd>
           </div>
-          <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">
-              Country
-            </dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
-              {journal.country ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="text-base" aria-hidden="true">
-                    {countryFlag(journal.country)}
-                  </span>
-                  <span>{countryName(journal.country)}</span>
-                </span>
-              ) : (
-                "-"
-              )}
-            </dd>
-          </div>
-          <div className="md:col-span-5">
-            <dt className="text-xs font-bold uppercase text-slate-400">
-              <span className="group/note relative inline-flex items-center gap-1">
-                <Hash className="h-3.5 w-3.5 text-amber-500" /> Note
-                <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-[11px] font-semibold normal-case tracking-normal text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/note:translate-y-0 group-hover/note:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
-                  Journal note
-                </span>
-              </span>
-            </dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
-              {journal.note || "-"}
-            </dd>
-          </div>
         </dl>
+        <p className="max-w-4xl text-xs leading-5 text-[#777777]">
+          {journal.note || "No note recorded."}
+        </p>
       </section>
 
       <JournalDetailTabs
