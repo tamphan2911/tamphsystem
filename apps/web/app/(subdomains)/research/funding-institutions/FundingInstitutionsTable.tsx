@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ExternalLink, Globe2, MapPin } from "lucide-react";
+import { ExternalLink, Globe2 } from "lucide-react";
 import {
-  FilterSelect,
   IconHint,
   TablePagination,
   TableSearchInput,
@@ -26,6 +25,13 @@ export type FundingInstitutionRow = {
   researchProjects: number;
 };
 
+function countryFlag(country: string) {
+  const normalized = country.trim().toLowerCase();
+  if (!normalized) return "";
+  if (normalized === "vietnam" || normalized === "viet nam") return "🇻🇳";
+  return "🇺🇳";
+}
+
 export function FundingInstitutionsTable({
   rows,
   updateAction,
@@ -36,25 +42,10 @@ export function FundingInstitutionsTable({
   deleteAction: (funderId: string) => Promise<void>;
 }) {
   const [query, setQuery] = useState("");
-  const [country, setCountry] = useState("ALL");
-  const [website, setWebsite] = useState("ALL");
-
-  const countryOptions = useMemo(
-    () => [
-      "ALL",
-      ...Array.from(new Set(rows.map((row) => row.country).filter(Boolean)))
-        .sort((a, b) => a.localeCompare(b)),
-    ],
-    [rows],
-  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
-      const matchesCountry = country === "ALL" || row.country === country;
-      const matchesWebsite =
-        website === "ALL" ||
-        (website === "WITH" ? Boolean(row.website) : !row.website);
       const haystack = [
         row.funderCode,
         row.name,
@@ -68,13 +59,9 @@ export function FundingInstitutionsTable({
         .join(" ")
         .toLowerCase();
 
-      return (
-        matchesCountry &&
-        matchesWebsite &&
-        (!needle || haystack.includes(needle))
-      );
+      return !needle || haystack.includes(needle);
     });
-  }, [country, query, rows, website]);
+  }, [query, rows]);
 
   const pagination = useTablePagination(filtered, 10);
 
@@ -86,27 +73,6 @@ export function FundingInstitutionsTable({
           onChange={setQuery}
           placeholder="Search funder, ID, alias, country..."
         />
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <FilterSelect
-            value={country}
-            onChange={setCountry}
-            ariaLabel="Filter by country"
-            options={countryOptions.map((item) => ({
-              value: item,
-              label: item === "ALL" ? "All countries" : item,
-            }))}
-          />
-          <FilterSelect
-            value={website}
-            onChange={setWebsite}
-            ariaLabel="Filter by website"
-            options={[
-              { value: "ALL", label: "All websites" },
-              { value: "WITH", label: "With website" },
-              { value: "WITHOUT", label: "No website" },
-            ]}
-          />
-        </div>
       </div>
 
       <div className="overflow-hidden">
@@ -115,8 +81,8 @@ export function FundingInstitutionsTable({
             <tr>
               <th className="w-24 px-4 py-3">Funder ID</th>
               <th className="px-4 py-3">Funder name</th>
-              <th className="w-24 px-3 py-3">Alias</th>
-              <th className="w-28 px-3 py-3">Country</th>
+              <th className="w-24 px-3 py-3 text-center">Alias</th>
+              <th className="w-28 px-3 py-3 text-center">Country</th>
               <th className="w-20 px-3 py-3 text-center">Projects</th>
               <th className="w-16 px-3 py-3 text-center">Web</th>
               <th className="w-14 px-3 py-3 text-center">Edit</th>
@@ -144,29 +110,27 @@ export function FundingInstitutionsTable({
                     {institution.note || "No note"}
                   </p>
                 </td>
-                <td className="px-3 py-3 text-sm font-normal text-[#B0B0B0]">
+                <td className="px-3 py-3 text-center text-sm font-normal text-[#B0B0B0]">
                   {institution.shortName || "-"}
                 </td>
-                <td className="px-3 py-3">
+                <td className="px-3 py-3 text-center">
                   {institution.country ? (
                     <IconHint label={institution.country}>
-                      <span className="inline-flex h-8 max-w-full items-center justify-center text-[#B0B0B0] transition group-hover:text-[#A8DADC]">
-                        <MapPin className="h-4 w-4 shrink-0" />
+                      <span className="inline-flex h-8 max-w-full items-center justify-center text-xl leading-none">
+                        {countryFlag(institution.country)}
                         <span className="sr-only">{institution.country}</span>
                       </span>
                     </IconHint>
                   ) : (
                     <IconHint label="No country">
-                      <span className="inline-flex h-8 items-center justify-center text-[#666666]">
-                        <MapPin className="h-4 w-4" />
+                      <span className="inline-flex h-8 items-center justify-center text-xl leading-none opacity-50">
+                        🇺🇳
                       </span>
                     </IconHint>
                   )}
                 </td>
-                <td className="px-3 py-3 text-center">
-                  <span className="inline-flex min-w-8 items-center justify-center border border-[#444444] bg-[#383838] px-2 py-1 text-xs font-normal text-[#E4E4E4]">
-                    {institution.organizedProjects}
-                  </span>
+                <td className="px-3 py-3 text-center text-sm font-normal text-[#E4E4E4]">
+                  {institution.organizedProjects + institution.researchProjects}
                 </td>
                 <td className="px-3 py-3 text-center">
                   {institution.website ? (
@@ -221,7 +185,7 @@ export function FundingInstitutionsTable({
                 <td colSpan={8} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No funders match the current search."
-                    detail="Try another funder name, alias, ID, country, or website filter."
+                    detail="Try another funder name, alias, ID, country, or website keyword."
                   />
                 </td>
               </tr>

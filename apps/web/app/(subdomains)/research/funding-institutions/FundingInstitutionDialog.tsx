@@ -46,7 +46,8 @@ export function FundingInstitutionDialog({
           type="button"
           onClick={() => setOpen(true)}
           label="Edit funder"
-          tone="emerald"
+          tone="slate"
+          className="h-8 w-8 border-0 bg-transparent text-[#B0B0B0] shadow-none hover:border-transparent hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none"
         >
           <Pencil className="h-4 w-4" />
         </ResearchIconButton>
@@ -54,7 +55,7 @@ export function FundingInstitutionDialog({
         <ResearchButton
           type="button"
           onClick={() => setOpen(true)}
-          tone="success"
+          tone="primary"
         >
           <Plus className="h-4 w-4" />
           New Funder
