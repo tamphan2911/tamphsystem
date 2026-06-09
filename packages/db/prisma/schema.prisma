@@ -331,6 +331,14 @@ enum OrganizedProjectFinancialClaimStatus {
   REFUND_ADVANCE
 }
 
+enum OrganizedProjectType {
+  STUDENT
+  FACULTY
+  UNIVERSITY
+  VNU
+  NATIONAL
+}
+
 model ResearchProject {
   id           String        @id @default(uuid())
   researchCode String?       @unique
@@ -379,6 +387,7 @@ model OrganizedProject {
   organizer             String?
   referenceCode         String?
   description           String?
+  projectType           OrganizedProjectType                 @default(STUDENT)
   status                OrganizedProjectStatus               @default(PLANNED)
   financialClaimStatus  OrganizedProjectFinancialClaimStatus @default(NONE)
   requiredResearchCount Int?
@@ -404,6 +413,7 @@ model OrganizedProject {
   tasks    ResearchTask[]
 
   @@index([status])
+  @@index([projectType])
   @@index([organizer])
   @@index([financialClaimStatus])
   @@index([fundingInstitutionId])

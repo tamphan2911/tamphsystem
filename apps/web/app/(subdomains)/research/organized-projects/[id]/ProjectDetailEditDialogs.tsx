@@ -32,6 +32,7 @@ type ProjectInfo = {
   title: string;
   referenceCode: string;
   fundingInstitution: FundingInstitutionOption | null;
+  projectType: string;
   status: string;
   financialClaimStatus: string;
   fundingAmount: string;
@@ -52,9 +53,19 @@ type UserOption = {
 
 const fieldClass =
   "h-12 border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]";
+const compactFieldClass =
+  "h-11 border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]";
 const textAreaClass =
   "min-h-24 border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-[#E4E4E4] outline-none transition placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]";
 const labelClass = "grid gap-1 text-sm font-semibold text-[#E4E4E4]";
+
+const projectTypeOptions = [
+  { value: "STUDENT", label: "student" },
+  { value: "FACULTY", label: "faculty" },
+  { value: "UNIVERSITY", label: "university" },
+  { value: "VNU", label: "VNU" },
+  { value: "NATIONAL", label: "national" },
+] as const;
 
 function HiddenProjectInfo({ info }: { info: ProjectInfo }) {
   return (
@@ -66,6 +77,7 @@ function HiddenProjectInfo({ info }: { info: ProjectInfo }) {
         name="fundingInstitutionId"
         value={info.fundingInstitution?.id ?? ""}
       />
+      <input type="hidden" name="projectType" value={info.projectType} />
       <input type="hidden" name="status" value={info.status} />
       <input
         type="hidden"
@@ -208,10 +220,7 @@ function SubmitButton({
   form: string;
 }) {
   return (
-    <ResearchButton
-      form={form}
-      disabled={isPending}
-    >
+    <ResearchButton form={form} disabled={isPending}>
       {isPending ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
@@ -301,11 +310,20 @@ export function ProjectInfoEditDialog({
             </label>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <FundingInstitutionPicker
               institutions={fundingInstitutions}
               defaultInstitution={info.fundingInstitution}
             />
+            <label className={labelClass}>
+              Project type
+              <ResearchFormSelect
+                name="projectType"
+                defaultValue={info.projectType || "STUDENT"}
+                ariaLabel="Choose project type"
+                options={projectTypeOptions}
+              />
+            </label>
           </div>
 
           <div className="mt-4 grid gap-4 md:grid-cols-4">
@@ -347,7 +365,7 @@ export function ProjectInfoEditDialog({
                 type="date"
                 required
                 defaultValue={info.startDate}
-                className={fieldClass}
+                className={compactFieldClass}
               />
             </label>
             <label className={labelClass}>
@@ -358,7 +376,7 @@ export function ProjectInfoEditDialog({
                 min="1"
                 required
                 defaultValue={info.durationMonths || 1}
-                className={fieldClass}
+                className={compactFieldClass}
               />
             </label>
           </div>

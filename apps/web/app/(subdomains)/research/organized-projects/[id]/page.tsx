@@ -142,6 +142,14 @@ function claimMeta(status: string) {
   };
 }
 
+function projectTypeLabel(type: string) {
+  if (type === "FACULTY") return "faculty";
+  if (type === "UNIVERSITY") return "university";
+  if (type === "VNU") return "VNU";
+  if (type === "NATIONAL") return "national";
+  return "student";
+}
+
 function researchStageLabel(stage: string) {
   if (stage === "SUBMITTING") return "SUBMITTED";
   if (stage === "REVIEW") return "REVIEW";
@@ -466,6 +474,7 @@ export default async function OrganizedProjectDetailPage({
           country: project.fundingInstitution.country ?? "",
         }
       : null,
+    projectType: project.projectType,
     status: project.status,
     financialClaimStatus: project.financialClaimStatus,
     fundingAmount: project.fundingAmount?.toString() ?? "",
@@ -533,6 +542,9 @@ export default async function OrganizedProjectDetailPage({
                   )}
                 </span>
               </IconHint>
+              <span className="inline-flex h-8 items-center border border-[#444444] bg-[#202020] px-2 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+                {projectTypeLabel(project.projectType)}
+              </span>
             </div>
             <p className="mt-3 text-sm font-medium text-[#B0B0B0]">
               {project.fundingInstitution?.name ||
@@ -703,7 +715,9 @@ export default async function OrganizedProjectDetailPage({
                   >
                     <td className="px-3 py-3 align-top">
                       <Link href={`/projects/${researchProject.id}`}>
-                        <span className={`font-mono text-xs ${researchMutedLinkClass}`}>
+                        <span
+                          className={`font-mono text-xs ${researchMutedLinkClass}`}
+                        >
                           {researchProject.researchCode || "-"}
                         </span>
                       </Link>
@@ -713,7 +727,9 @@ export default async function OrganizedProjectDetailPage({
                         href={`/projects/${researchProject.id}`}
                         className="group"
                       >
-                        <p className={`line-clamp-2 text-base group-hover:text-[#A8DADC] ${researchLinkClass}`}>
+                        <p
+                          className={`line-clamp-2 text-base group-hover:text-[#A8DADC] ${researchLinkClass}`}
+                        >
                           {researchProject.title}
                         </p>
                         <p className="mt-1 line-clamp-1 text-xs text-[#B0B0B0]">

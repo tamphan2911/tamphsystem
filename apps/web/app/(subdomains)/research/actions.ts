@@ -16,6 +16,7 @@ import {
   ResearchStage,
   OrganizedProjectStatus,
   OrganizedProjectFinancialClaimStatus,
+  OrganizedProjectType,
   ProposalStatus,
   ProposalType,
   ResearchAuthorNotificationType,
@@ -1353,6 +1354,9 @@ export async function createOrganizedProject(formData: FormData) {
       OrganizedProjectFinancialClaimStatus,
       formData.get("financialClaimStatus"),
     ) ?? OrganizedProjectFinancialClaimStatus.NONE;
+  const projectType =
+    enumValue(OrganizedProjectType, formData.get("projectType")) ??
+    OrganizedProjectType.STUDENT;
 
   const organizedProject = await prisma.organizedProject.create({
     data: {
@@ -1360,6 +1364,7 @@ export async function createOrganizedProject(formData: FormData) {
       organizer: fundingInstitution?.name ?? null,
       referenceCode,
       description: optionalString(formData.get("description")),
+      projectType,
       note: optionalString(formData.get("note")),
       status:
         enumValue(OrganizedProjectStatus, formData.get("status")) ??
@@ -1518,6 +1523,9 @@ export async function updateOrganizedProject(
       OrganizedProjectFinancialClaimStatus,
       formData.get("financialClaimStatus"),
     ) ?? OrganizedProjectFinancialClaimStatus.NONE;
+  const projectType =
+    enumValue(OrganizedProjectType, formData.get("projectType")) ??
+    OrganizedProjectType.STUDENT;
 
   await prisma.organizedProject.update({
     where: { id: projectId },
@@ -1526,6 +1534,7 @@ export async function updateOrganizedProject(
       organizer: fundingInstitution?.name ?? null,
       referenceCode,
       description: optionalString(formData.get("description")),
+      projectType,
       note: optionalString(formData.get("note")),
       status:
         enumValue(OrganizedProjectStatus, formData.get("status")) ??
@@ -1577,12 +1586,14 @@ export async function updateOrganizedProject(
     previousProject.status !==
     (enumValue(OrganizedProjectStatus, formData.get("status")) ??
       OrganizedProjectStatus.PLANNED);
+  const projectTypeChanged = previousProject.projectType !== projectType;
   const durationChanged =
     previousProject.durationMonths !== durationMonths ||
     previousProject.startDate?.getTime() !== startDate.getTime();
 
   const changedParts = [
     statusChanged ? "status" : "",
+    projectTypeChanged ? "type" : "",
     memberChanged ? "members" : "",
     researchChanged ? "associated research" : "",
     durationChanged ? "duration" : "",

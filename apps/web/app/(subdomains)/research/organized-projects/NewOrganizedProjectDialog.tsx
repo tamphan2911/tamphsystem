@@ -10,6 +10,7 @@ import {
   ResearchButton,
   researchFieldClass,
   researchLabelClass,
+  researchSearchFieldClass,
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { currencyOptions } from "@/sites/research/lib/currency";
@@ -21,6 +22,14 @@ import {
   type FundingInstitutionOption,
   type ResearchResultOption,
 } from "./ProjectFormControls";
+
+const projectTypeOptions = [
+  { value: "STUDENT", label: "student" },
+  { value: "FACULTY", label: "faculty" },
+  { value: "UNIVERSITY", label: "university" },
+  { value: "VNU", label: "VNU" },
+  { value: "NATIONAL", label: "national" },
+] as const;
 
 export function NewOrganizedProjectDialog({
   researchOptions,
@@ -101,7 +110,6 @@ export function NewOrganizedProjectDialog({
         open={isOpen}
         onClose={closeDialog}
         title="Add Project"
-        description="Track an institutional project and connect research outputs."
         icon={<Building2 className="h-5 w-5" />}
         maxWidth="max-w-6xl"
         headerActions={
@@ -150,10 +158,21 @@ export function NewOrganizedProjectDialog({
                 </label>
               </div>
 
-              <FundingInstitutionPicker
-                institutions={fundingInstitutions}
-                defaultInstitution={null}
-              />
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                <FundingInstitutionPicker
+                  institutions={fundingInstitutions}
+                  defaultInstitution={null}
+                />
+                <label className={researchLabelClass}>
+                  Project type
+                  <ResearchFormSelect
+                    name="projectType"
+                    defaultValue="STUDENT"
+                    ariaLabel="Choose project type"
+                    options={projectTypeOptions}
+                  />
+                </label>
+              </div>
 
               <div className="grid gap-4 md:grid-cols-4">
                 <label className={researchLabelClass}>
@@ -191,7 +210,7 @@ export function NewOrganizedProjectDialog({
                     name="startDate"
                     type="date"
                     required
-                    className={researchFieldClass}
+                    className={researchSearchFieldClass}
                   />
                 </label>
                 <label className={researchLabelClass}>
@@ -202,7 +221,7 @@ export function NewOrganizedProjectDialog({
                     min="1"
                     required
                     placeholder="9"
-                    className={researchFieldClass}
+                    className={researchSearchFieldClass}
                   />
                 </label>
               </div>
