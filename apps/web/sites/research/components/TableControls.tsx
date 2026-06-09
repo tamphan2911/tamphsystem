@@ -101,7 +101,7 @@ export function FilterSelect({
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
         className={cx(
-          "group inline-flex h-10 w-full cursor-pointer items-center justify-between gap-3 rounded-none border px-3 text-sm font-semibold outline-none transition-colors duration-150 motion-reduce:transition-none",
+          "group inline-flex h-10 w-full cursor-pointer items-center justify-between gap-3 rounded-none border px-3 text-sm font-normal outline-none transition-colors duration-150 motion-reduce:transition-none",
           open
             ? "border-[#5A5A5A] bg-[#383838] text-[#E4E4E4]"
             : "border-[#444444] bg-[#2C2C2C] text-[#E4E4E4] hover:border-[#5A5A5A] hover:bg-[#383838] hover:text-white focus:border-[#5A5A5A]",
