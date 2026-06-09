@@ -70,7 +70,7 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
         onClose={closeDialog}
         title="Add Account"
         icon={<KeyRound className="h-5 w-5" />}
-        maxWidth="max-w-3xl"
+        maxWidth="max-w-4xl"
         headerActions={
           <ResearchButton form="new-account-form" disabled={isPending}>
             {isPending ? (
@@ -129,38 +129,40 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
             <input
               name="email"
               placeholder="Email"
-              className={researchFieldClass}
+              className={`${researchFieldClass} md:col-span-2`}
             />
-            <ResearchSearchPicker
-              name="journalId"
-              selected={
-                selectedJournal
-                  ? {
-                      id: selectedJournal.id,
-                      label: selectedJournal.name,
-                      description: selectedJournal.publisher,
-                      data: selectedJournal,
-                    }
-                  : null
-              }
-              query={journalQuery}
-              onQueryChange={(value) => {
-                setJournalQuery(value);
-                setSelectedJournal(null);
-              }}
-              onSelect={(option) => {
-                const journal = option.data as JournalOption;
-                setSelectedJournal(journal);
-                setJournalQuery("");
-              }}
-              onClear={() => {
-                setSelectedJournal(null);
-                setJournalQuery("");
-              }}
-              options={journalOptions}
-              placeholder="Search journal"
-              emptyText="No journal matches this search."
-            />
+            <div className="md:col-span-2">
+              <ResearchSearchPicker
+                name="journalId"
+                selected={
+                  selectedJournal
+                    ? {
+                        id: selectedJournal.id,
+                        label: selectedJournal.name,
+                        description: selectedJournal.publisher,
+                        data: selectedJournal,
+                      }
+                    : null
+                }
+                query={journalQuery}
+                onQueryChange={(value) => {
+                  setJournalQuery(value);
+                  setSelectedJournal(null);
+                }}
+                onSelect={(option) => {
+                  const journal = option.data as JournalOption;
+                  setSelectedJournal(journal);
+                  setJournalQuery("");
+                }}
+                onClear={() => {
+                  setSelectedJournal(null);
+                  setJournalQuery("");
+                }}
+                options={journalOptions}
+                placeholder="Search journal"
+                emptyText="No journal matches this search."
+              />
+            </div>
             <input
               name="note"
               placeholder="Login URL, recovery note, account scope"
