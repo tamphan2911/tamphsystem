@@ -1537,24 +1537,12 @@ textarea:focus-visible {
 }
 
 .research-text-button,
-.research-site-root
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  button:is([class*="px-"], [class*="gap-"]):not([aria-label]):not(
+    [role="option"]
+  ):not([role="tab"]):not(.journal-detail-tab-button):not(
     .research-new-button
-  ),
-[data-research-modal-overlay="true"]
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
-    .research-new-button
-  ) {
+  ):not([class*="text-left"]):not([class*="justify-start"]) {
   --research-text-button-color: #a8dadc;
   --research-text-button-ink: #1d2a2c;
   position: relative;
@@ -1573,42 +1561,18 @@ textarea:focus-visible {
 
 .research-text-button::before,
 .research-text-button::after,
-.research-site-root
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  button:is([class*="px-"], [class*="gap-"]):not([aria-label]):not(
+    [role="option"]
+  ):not([role="tab"]):not(.journal-detail-tab-button):not(
     .research-new-button
-  )::before,
-.research-site-root
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
+  ):not([class*="text-left"]):not([class*="justify-start"])::before,
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  button:is([class*="px-"], [class*="gap-"]):not([aria-label]):not(
+    [role="option"]
+  ):not([role="tab"]):not(.journal-detail-tab-button):not(
     .research-new-button
-  )::after,
-[data-research-modal-overlay="true"]
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
-    .research-new-button
-  )::before,
-[data-research-modal-overlay="true"]
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
-    .research-new-button
-  )::after {
+  ):not([class*="text-left"]):not([class*="justify-start"])::after {
   content: "";
   position: absolute;
   inset: 50%;
@@ -1623,137 +1587,65 @@ textarea:focus-visible {
 }
 
 .research-text-button::before,
-.research-site-root
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  button:is([class*="px-"], [class*="gap-"]):not([aria-label]):not(
+    [role="option"]
+  ):not([role="tab"]):not(.journal-detail-tab-button):not(
     .research-new-button
-  )::before,
-[data-research-modal-overlay="true"]
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
-    .research-new-button
-  )::before {
+  ):not([class*="text-left"]):not([class*="justify-start"])::before {
   top: -50%;
   left: -25%;
   transform: skew(90deg) rotate(180deg) translate(-50%, -50%);
 }
 
 .research-text-button:hover::before,
-.research-site-root
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  button:is([class*="px-"], [class*="gap-"]):not([aria-label]):not(
+    [role="option"]
+  ):not([role="tab"]):not(.journal-detail-tab-button):not(
     .research-new-button
-  ):hover::before,
-[data-research-modal-overlay="true"]
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
-    .research-new-button
-  ):hover::before {
+  ):not([class*="text-left"]):not([class*="justify-start"]):hover::before {
   transform: skew(45deg) rotate(180deg) translate(-50%, -50%);
 }
 
 .research-text-button:hover::after,
-.research-site-root
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  button:is([class*="px-"], [class*="gap-"]):not([aria-label]):not(
+    [role="option"]
+  ):not([role="tab"]):not(.journal-detail-tab-button):not(
     .research-new-button
-  ):hover::after,
-[data-research-modal-overlay="true"]
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
-    .research-new-button
-  ):hover::after {
+  ):not([class*="text-left"]):not([class*="justify-start"]):hover::after {
   transform: skew(45deg) translate(-50%, -50%);
 }
 
 .research-text-button:hover,
-.research-site-root
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  button:is([class*="px-"], [class*="gap-"]):not([aria-label]):not(
+    [role="option"]
+  ):not([role="tab"]):not(.journal-detail-tab-button):not(
     .research-new-button
-  ):hover,
-[data-research-modal-overlay="true"]
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
-    .research-new-button
-  ):hover {
+  ):not([class*="text-left"]):not([class*="justify-start"]):hover {
   color: var(--research-text-button-ink) !important;
 }
 
 .research-text-button:active,
-.research-site-root
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  button:is([class*="px-"], [class*="gap-"]):not([aria-label]):not(
+    [role="option"]
+  ):not([role="tab"]):not(.journal-detail-tab-button):not(
     .research-new-button
-  ):active,
-[data-research-modal-overlay="true"]
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
-    .research-new-button
-  ):active {
+  ):not([class*="text-left"]):not([class*="justify-start"]):active {
   filter: brightness(0.78);
   transform: scale(0.98) !important;
 }
 
 .research-text-button:disabled,
-.research-site-root
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  button:is([class*="px-"], [class*="gap-"]):not([aria-label]):not(
+    [role="option"]
+  ):not([role="tab"]):not(.journal-detail-tab-button):not(
     .research-new-button
-  ):disabled,
-[data-research-modal-overlay="true"]
-  button:is(
-    [class*="bg-blue-"],
-    [class*="bg-emerald-"],
-    [class*="bg-rose-"],
-    [class*="border-slate-"][class*="px-"]
-  ):not([aria-label]):not(.journal-detail-tab-button):not(
-    .research-new-button
-  ):disabled {
+  ):not([class*="text-left"]):not([class*="justify-start"]):disabled {
   filter: none;
   transform: none !important;
 }
