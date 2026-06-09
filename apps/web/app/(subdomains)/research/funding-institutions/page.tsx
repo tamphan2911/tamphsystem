@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink, Globe2, Landmark, MapPin } from "lucide-react";
+import { ExternalLink, Globe2, MapPin } from "lucide-react";
 import { redirect } from "next/navigation";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
@@ -9,6 +9,7 @@ import {
   updateFundingInstitution,
 } from "../actions";
 import { IconHint } from "@/sites/research/components/TableControls";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { DeleteFundingInstitutionButton } from "./DeleteFundingInstitutionButton";
 import { FundingInstitutionDialog } from "./FundingInstitutionDialog";
 
@@ -85,29 +86,19 @@ export default async function FundingInstitutionsPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-none bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-900">
-              <Landmark className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-black text-[#E4E4E4]">
-                Funding institutions
-              </h1>
-              <p className="mt-1 text-sm text-[#B0B0B0]">
-                Institutions used as funding sources for organized projects.
-              </p>
-            </div>
-          </div>
-          {isAdmin && (
+      <ResearchPageHeaderPortal>
+        <div className="flex w-full min-w-0 items-center justify-between gap-4">
+          <p className="min-w-0 truncate text-sm font-normal text-[#B0B0B0]">
+            Funding Institutions
+          </p>
+          <div className="flex flex-none items-center">
             <FundingInstitutionDialog
               mode="create"
               submitAction={createFundingInstitution}
             />
-          )}
+          </div>
         </div>
-      </div>
+      </ResearchPageHeaderPortal>
 
       <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
         <table className="w-full table-fixed text-left">
