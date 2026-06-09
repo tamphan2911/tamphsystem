@@ -143,34 +143,26 @@ export function JournalDetailTabs({
 
   return (
     <section className="space-y-3">
-      <div className="grid w-full grid-cols-3 border border-[#444444] bg-[#242424] text-center">
+      <div className="journal-detail-tabs grid w-full grid-cols-3 border border-[#444444] bg-[#242424] p-1 text-center">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             type="button"
+            data-active={activeTab === tab.key}
+            aria-pressed={activeTab === tab.key}
             onClick={() => {
               setActiveTab(tab.key);
               setStatus("ALL");
               setQuery("");
             }}
-            className={`cursor-pointer rounded-none border-0 px-4 py-3 text-left transition-[background-color,color,transform] duration-200 ease-out hover:-translate-y-0.5 ${
-              activeTab === tab.key
-                ? "bg-[#383838] text-[#A8DADC] shadow-[inset_0_-2px_0_#A8DADC]"
-                : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
-            }`}
+            className="journal-detail-tab-button cursor-pointer rounded-none px-4 py-3 text-left"
           >
-            <span
-              className={`flex items-center justify-between gap-2 ${
-                tab.key !== "submissions"
-                  ? "border-l border-[#444444] pl-4"
-                  : ""
-              }`}
-            >
-              <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide">
+            <span className="relative z-10 flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2 text-[11px] font-normal uppercase tracking-wide">
                 <tab.icon className="h-3.5 w-3.5" />
                 {tab.label}
               </span>
-              <span className="text-base font-black">{tab.value}</span>
+              <span className="text-base font-normal">{tab.value}</span>
             </span>
           </button>
         ))}

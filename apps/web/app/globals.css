@@ -1455,6 +1455,95 @@ textarea:focus-visible {
   transform: scale(0.98) !important;
 }
 
+.research-site-root .journal-detail-tabs {
+  overflow: hidden;
+  border-color: #444444 !important;
+  background: #242424 !important;
+}
+
+.research-site-root .journal-detail-tab-button {
+  position: relative;
+  isolation: isolate;
+  min-height: 3rem;
+  overflow: hidden;
+  border: 0;
+  border-right: 1px solid #444444;
+  background: transparent;
+  color: #b0b0b0;
+  transition:
+    color 280ms ease,
+    border-color 280ms ease,
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 160ms ease !important;
+}
+
+.research-site-root .journal-detail-tab-button:last-child {
+  border-right: 0;
+}
+
+.research-site-root .journal-detail-tab-button::before,
+.research-site-root .journal-detail-tab-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.research-site-root .journal-detail-tab-button::before {
+  background: #a8dadc;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.research-site-root .journal-detail-tab-button::after {
+  background: #303030;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.research-site-root .journal-detail-tab-button:hover {
+  color: #e4e4e4;
+  transform: translateY(-1px) !important;
+}
+
+.research-site-root .journal-detail-tab-button:hover::after {
+  opacity: 1;
+}
+
+.research-site-root .journal-detail-tab-button[data-active="true"] {
+  border-color: #a8dadc;
+  color: #1d2a2c;
+}
+
+.research-site-root .journal-detail-tab-button[data-active="true"]::before {
+  transform: scaleX(1);
+}
+
+.research-site-root .journal-detail-tab-button[data-active="true"]:hover {
+  color: #1d2a2c;
+}
+
+.research-site-root .journal-detail-tab-button[data-active="true"]:hover::after {
+  opacity: 0;
+}
+
+.research-site-root .journal-detail-tab-button svg {
+  transition:
+    color 220ms ease,
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.research-site-root .journal-detail-tab-button:hover svg {
+  transform: translateY(-1px) scale(1.08);
+}
+
+.research-site-root .journal-detail-tab-button:active {
+  filter: brightness(0.82);
+  transform: scale(0.985) !important;
+}
+
 .research-site-root button[class*="bg-emerald-600"],
 .research-site-root button[class*="bg-emerald-500"] {
   border: 1px solid #a8dadc;
