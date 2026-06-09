@@ -164,22 +164,6 @@ export default async function LoginPage({
             }
           >
             <input type="hidden" name="callbackUrl" value={redirectTo} />
-            {warningMessage && (
-              <div
-                className={
-                  isResearch
-                    ? researchAuthWarningClass
-                    : "flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-100"
-                }
-              >
-                <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
-                <div>
-                  <p className="font-bold">{warningMessage.title}</p>
-                  <p className="mt-1 leading-5">{warningMessage.detail}</p>
-                </div>
-              </div>
-            )}
-
             <label
               className={
                 isResearch
@@ -187,21 +171,17 @@ export default async function LoginPage({
                   : "block text-sm font-semibold text-slate-700 dark:text-slate-200"
               }
             >
-              Email address
+              Email address (*)
               {isResearch ? (
-                <span className="group relative mt-2 flex h-12 w-full items-center border border-[#444444] bg-transparent px-4 pr-12 text-left transition duration-300 ease-out hover:border-[#5A5A5A] focus-within:border-[#A8DADC]">
+                <span className="research-auth-input-shell mt-2">
                   <input
                     type="email"
                     name="email"
                     defaultValue={email ?? ""}
-                    placeholder="you@example.com"
-                    className="h-full w-full border-0 bg-transparent p-0 text-sm font-normal text-[#E4E4E4] outline-none placeholder:text-[#5A5A5A]"
+                    placeholder="Enter your account email"
                     required
                   />
-                  <Mail
-                    className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#B0B0B0] transition duration-300 ease-out group-hover:text-[#E4E4E4] group-focus-within:text-[#A8DADC]"
-                    aria-hidden="true"
-                  />
+                  <Mail aria-hidden="true" />
                 </span>
               ) : (
                 <input
@@ -222,20 +202,16 @@ export default async function LoginPage({
                   : "block text-sm font-semibold text-slate-700 dark:text-slate-200"
               }
             >
-              Password
+              Password (*)
               {isResearch ? (
-                <span className="group relative mt-2 flex h-12 w-full items-center border border-[#444444] bg-transparent px-4 pr-12 text-left transition duration-300 ease-out hover:border-[#5A5A5A] focus-within:border-[#A8DADC]">
+                <span className="research-auth-input-shell mt-2">
                   <input
                     type="password"
                     name="password"
-                    placeholder="Your password"
-                    className="h-full w-full border-0 bg-transparent p-0 text-sm font-normal text-[#E4E4E4] outline-none placeholder:text-[#5A5A5A]"
+                    placeholder="Enter your password"
                     required
                   />
-                  <LockKeyhole
-                    className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#B0B0B0] transition duration-300 ease-out group-hover:text-[#E4E4E4] group-focus-within:text-[#A8DADC]"
-                    aria-hidden="true"
-                  />
+                  <LockKeyhole aria-hidden="true" />
                 </span>
               ) : (
                 <input
@@ -264,6 +240,22 @@ export default async function LoginPage({
               <LogIn className="h-4 w-4" />
               {isResearch ? "SIGN IN" : "Sign in"}
             </button>
+
+            {warningMessage && (
+              <div
+                className={
+                  isResearch
+                    ? `${researchAuthWarningClass} research-auth-feedback`
+                    : "flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-100"
+                }
+              >
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
+                <div>
+                  <p className="font-bold">{warningMessage.title}</p>
+                  <p className="mt-1 leading-5">{warningMessage.detail}</p>
+                </div>
+              </div>
+            )}
           </form>
 
           <div

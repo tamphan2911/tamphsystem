@@ -25,7 +25,7 @@ export const researchAuthInputClass =
   "mt-2 h-12 w-full rounded-none border border-[#444444] bg-[#242424] px-4 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#303030] focus:border-[#A8DADC] focus:bg-[#303030] disabled:cursor-not-allowed disabled:opacity-60";
 
 export const researchAuthPrimaryButtonClass =
-  "inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-none border border-[#A8DADC] bg-[#A8DADC] px-4 text-sm font-normal text-[#1D2A2C] shadow-none transition duration-150 ease-out hover:border-[#C9F0F2] hover:bg-[#C9F0F2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 disabled:cursor-not-allowed disabled:opacity-60";
+  "research-text-button inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-none border border-[#A8DADC] bg-transparent px-4 text-sm font-normal text-[#A8DADC] shadow-none transition duration-150 ease-out focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60";
 
 export const researchAuthFooterClass =
   "border-t border-[#444444] px-8 py-5 text-center text-sm text-[#B0B0B0]";
