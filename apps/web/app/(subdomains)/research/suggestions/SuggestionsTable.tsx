@@ -40,9 +40,9 @@ export type SuggestionRow = {
 
 function typeClass(kind: SuggestionKind) {
   if (kind === "Journal") {
-    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+    return "border-[#3A5360] bg-[#24343A] text-[#A8DADC]";
   }
-  return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
+  return "border-[#5A4C66] bg-[#332D3A] text-[#D8C3EF]";
 }
 
 function DeleteSuggestionButton({
@@ -205,7 +205,7 @@ export function SuggestionsTable({
 
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
-      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] p-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+      <div className="flex flex-col gap-3 border-b border-[#333333] bg-[#242424] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={setQuery}
@@ -243,19 +243,19 @@ export function SuggestionsTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[74rem] text-left">
+      <div className="overflow-hidden">
+        <table className="w-full table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
-              <th className="sticky left-0 z-20 w-[25rem] bg-slate-50 px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] dark:bg-slate-800 dark:shadow-[1px_0_0_0_rgb(30,41,59)]">
+              <th className="w-[25%] px-3 py-3">
                 Research
               </th>
-              <th className="w-[22rem] px-4 py-3">Suggested venue</th>
-              <th className="w-[8rem] px-3 py-3">Type</th>
-              <th className="w-[18rem] px-3 py-3">Scope</th>
-              <th className="w-[12rem] px-3 py-3">Suggested by</th>
-              <th className="w-[7rem] px-3 py-3">Date</th>
-              <th className="w-[4rem] px-2 py-3 text-center">
+              <th className="w-[27%] px-3 py-3">Suggested venue</th>
+              <th className="w-[10%] px-3 py-3">Type</th>
+              <th className="w-[18%] px-3 py-3">Scope</th>
+              <th className="w-[12%] px-3 py-3">Suggested by</th>
+              <th className="w-[5%] px-3 py-3">Date</th>
+              <th className="w-[3%] px-3 py-3 text-center">
                 <IconHint label="Delete suggestion">
                   <Trash2
                     className="mx-auto h-4 w-4 text-rose-500 dark:text-rose-300"
@@ -275,7 +275,7 @@ export function SuggestionsTable({
                   key={suggestion.id}
                   className="group align-top transition-colors duration-150 hover:bg-[#383838]"
                 >
-                  <td className="sticky left-0 z-10 bg-white px-4 py-3 shadow-[1px_0_0_0_rgb(226,232,240)] transition-colors group-hover:bg-slate-50 dark:bg-slate-900 dark:shadow-[1px_0_0_0_rgb(30,41,59)] dark:group-hover:bg-slate-800">
+                  <td className="px-3 py-3">
                     <Link
                       href={`/projects/${suggestion.projectId}`}
                       className={`line-clamp-2 text-sm leading-5 ${researchLinkClass}`}
@@ -286,7 +286,7 @@ export function SuggestionsTable({
                       {suggestion.projectCode || "No research code"}
                     </p>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <Link
                       href={suggestion.venueHref}
                       className={`line-clamp-2 text-sm leading-5 ${researchLinkClass}`}
@@ -299,7 +299,7 @@ export function SuggestionsTable({
                   </td>
                   <td className="px-3 py-3">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-xs font-bold ring-1 ${typeClass(suggestion.kind)}`}
+                      className={`inline-flex items-center gap-1.5 rounded-none border px-2 py-1 text-xs font-normal ${typeClass(suggestion.kind)}`}
                     >
                       <TypeIcon className="h-3.5 w-3.5" />
                       {suggestion.kind}
@@ -319,7 +319,7 @@ export function SuggestionsTable({
                   <td className="px-3 py-3 text-xs text-[#B0B0B0]">
                     {suggestion.createdAt}
                   </td>
-                  <td className="px-2 py-3 text-center">
+                  <td className="px-3 py-3 text-center">
                     <DeleteSuggestionButton
                       suggestion={suggestion}
                       deleteJournalAction={deleteJournalAction}
