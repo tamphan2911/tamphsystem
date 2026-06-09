@@ -1176,6 +1176,38 @@ textarea:focus-visible {
   background-color: var(--research-row-hover-bg) !important;
 }
 
+.research-site-root
+  table
+  :where(td, th)
+  :where(svg):not(:where(a *, button *, [role="button"] *)) {
+  transform-origin: center;
+  transition:
+    color 180ms ease,
+    filter 180ms ease,
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+
+.research-site-root
+  table
+  tbody
+  tr:hover
+  :where(td)
+  :where(svg):not(:where(a *, button *, [role="button"] *)) {
+  filter: drop-shadow(0 0 0.45rem rgba(168, 218, 220, 0.22));
+  opacity: 1;
+  transform: translate3d(0, -1px, 0) scale(1.1) rotate(-2deg);
+}
+
+.research-site-root
+  table
+  :where(th:hover)
+  :where(svg):not(:where(a *, button *, [role="button"] *)) {
+  filter: drop-shadow(0 0 0.4rem rgba(168, 218, 220, 0.2));
+  transform: translate3d(0, -1px, 0) scale(1.08);
+}
+
 .research-site-root thead {
   background-color: #202020 !important;
   letter-spacing: 0.04em;
@@ -1207,7 +1239,8 @@ textarea:focus-visible {
 }
 
 .research-site-root button:not(:disabled):hover :where(svg),
-.research-site-root [role="button"]:not([aria-disabled="true"]):hover
+.research-site-root
+  [role="button"]:not([aria-disabled="true"]):hover
   :where(svg) {
   transform: translateY(-0.5px) scale(1.06);
 }
