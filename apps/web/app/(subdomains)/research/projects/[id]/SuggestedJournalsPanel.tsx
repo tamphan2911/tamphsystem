@@ -396,7 +396,7 @@ export function SuggestedJournalsPanel({
           title="Add suggested venue"
           icon={<Plus className="h-5 w-5" />}
           maxWidth="max-w-3xl"
-          bodyClassName="px-5 py-4"
+          bodyClassName="min-h-[25rem] px-5 py-4"
           headerActions={
             <ResearchButton
               type="button"
@@ -1070,7 +1070,7 @@ function ResultList({
   const isSearching = query.trim().length > 0;
 
   return (
-    <div className="grid max-h-96 overflow-y-auto border border-[#444444]">
+    <div className="grid max-h-56 overflow-y-auto border border-[#444444]">
       {hasChildren ? (
         children
       ) : (

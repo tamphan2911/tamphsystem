@@ -15,6 +15,8 @@ export function FloatingDropdownPortal({
   offset = 8,
   maxWidth = 480,
   matchAnchorWidth = true,
+  maxPanelHeight = 224,
+  minPanelHeight = 0,
 }: {
   anchorRef: RefObject<HTMLElement | null>;
   open: boolean;
@@ -22,6 +24,8 @@ export function FloatingDropdownPortal({
   offset?: number;
   maxWidth?: number;
   matchAnchorWidth?: boolean;
+  maxPanelHeight?: number;
+  minPanelHeight?: number;
 }) {
   const [mounted, setMounted] = useState(false);
   const [style, setStyle] = useState<FloatingDropdownStyle | null>(null);
@@ -43,10 +47,10 @@ export function FloatingDropdownPortal({
       const availableAbove = rect.top - offset;
       const placeAbove =
         availableBelow < 180 && availableAbove > availableBelow;
-      const maxPanelHeight = Math.max(
-        140,
+      const resolvedMaxPanelHeight = Math.max(
+        minPanelHeight,
         Math.min(
-          320,
+          maxPanelHeight,
           placeAbove
             ? availableAbove - viewportPadding
             : availableBelow - viewportPadding,
@@ -74,7 +78,7 @@ export function FloatingDropdownPortal({
         maxWidth: Math.min(maxWidth, window.innerWidth - viewportPadding * 2),
         top: placeAbove ? undefined : rect.bottom + offset,
         bottom: placeAbove ? window.innerHeight - rect.top + offset : undefined,
-        "--research-dropdown-max-height": `${maxPanelHeight}px`,
+        "--research-dropdown-max-height": `${resolvedMaxPanelHeight}px`,
       });
     }
 
@@ -86,7 +90,15 @@ export function FloatingDropdownPortal({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [anchorRef, matchAnchorWidth, maxWidth, offset, open]);
+  }, [
+    anchorRef,
+    matchAnchorWidth,
+    maxPanelHeight,
+    maxWidth,
+    minPanelHeight,
+    offset,
+    open,
+  ]);
 
   if (!mounted || !open || !style) return null;
 
