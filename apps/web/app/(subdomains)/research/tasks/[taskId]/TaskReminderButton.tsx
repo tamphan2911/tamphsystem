@@ -57,13 +57,13 @@ export function TaskReminderButton({
         onClick={() => setIsOpen(true)}
         className={`group relative inline-flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-none border transition hover:-translate-y-0.5 hover:shadow-sm ${
           block
-            ? "border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-300 hover:bg-amber-100 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-300 dark:hover:bg-amber-900/50"
-            : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-900/70 dark:bg-emerald-950/35 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+            ? "border-amber-500/30 bg-amber-500/10 text-amber-300 hover:border-amber-400/50 hover:bg-amber-500/15"
+            : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:border-emerald-400/50 hover:bg-emerald-500/15"
         }`}
         aria-label="Send task reminder"
       >
         <BellRing className="h-4 w-4" />
-        <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-xs font-semibold text-slate-700 opacity-0 shadow-xl transition group-hover:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+        <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap border border-[#555555] bg-[#202020] px-2.5 py-1.5 text-xs font-semibold text-[#E4E4E4] opacity-0 shadow-xl shadow-black/30 transition group-hover:opacity-100">
           Send reminder
         </span>
       </button>
@@ -105,7 +105,7 @@ export function TaskReminderButton({
       >
         {block ? (
           <div>
-            <div className="rounded-none border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+            <div className="rounded-none border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-amber-100">
               This reminder button stays available so you can see why it is not
               active for the current task state.
             </div>
@@ -135,7 +135,7 @@ export function TaskReminderButton({
             {selectedIds.map((id) => (
               <input key={id} type="hidden" name="assigneeIds" value={id} />
             ))}
-            <div className="border border-[#444444] bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
+            <div className="border border-[#444444] bg-[#202020] p-3">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                   Recipients
@@ -149,7 +149,7 @@ export function TaskReminderButton({
                         : assignees.map((assignee) => assignee.id),
                     )
                   }
-                  className="text-xs font-bold text-blue-600 transition hover:text-blue-500 dark:text-blue-300"
+                  className="text-xs font-bold text-sky-300 transition hover:text-sky-200"
                 >
                   {selectedCount === assignees.length
                     ? "Clear all"
@@ -164,15 +164,15 @@ export function TaskReminderButton({
                       key={assignee.id}
                       className={`flex cursor-pointer items-start gap-3 rounded-none border px-3 py-2.5 transition ${
                         selected
-                          ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/70 dark:bg-emerald-950/30"
-                          : "border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800/70"
+                          ? "border-emerald-500/30 bg-emerald-500/10"
+                          : "border-[#444444] bg-[#2C2C2C] hover:border-[#5a5a5a] hover:bg-[#333333]"
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={selected}
                         onChange={() => toggleAssignee(assignee.id)}
-                        className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        className="mt-1 h-4 w-4 rounded border-[#555555] bg-[#202020] text-emerald-500 focus:ring-emerald-500"
                       />
                       <span className="min-w-0">
                         <span className="block text-sm font-semibold text-[#E4E4E4]">
@@ -183,7 +183,7 @@ export function TaskReminderButton({
                         </span>
                       </span>
                       {selected && (
-                        <CheckCircle2 className="ml-auto mt-0.5 h-4 w-4 flex-none text-emerald-600 dark:text-emerald-300" />
+                        <CheckCircle2 className="ml-auto mt-0.5 h-4 w-4 flex-none text-emerald-300" />
                       )}
                     </label>
                   );

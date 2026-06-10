@@ -29,15 +29,15 @@ type TextModalFormProps = {
 const toneClasses = {
   amber: {
     button: "bg-amber-500 hover:bg-amber-600",
-    icon: "bg-amber-50 text-amber-600 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900",
+    icon: "bg-amber-500/10 text-amber-300 ring-amber-500/20",
   },
   rose: {
     button: "bg-rose-600 hover:bg-rose-700",
-    icon: "bg-rose-50 text-rose-600 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
+    icon: "bg-rose-500/10 text-rose-300 ring-rose-500/20",
   },
   blue: {
-    button: "bg-blue-600 hover:bg-blue-700",
-    icon: "bg-blue-50 text-blue-600 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900",
+    button: "bg-sky-600 hover:bg-sky-500",
+    icon: "bg-sky-500/10 text-sky-300 ring-sky-500/20",
   },
 };
 
@@ -169,7 +169,7 @@ function TextModalForm({
             />
           </label>
           {helperText ? (
-            <p className="rounded-none border border-amber-100 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+            <p className="rounded-none border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-5 text-amber-100">
               {helperText}
             </p>
           ) : null}

@@ -397,11 +397,11 @@ export function EditTaskDialog({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="group relative inline-flex h-9 w-9 flex-none cursor-pointer items-center justify-center border border-[#444444] bg-slate-50 text-slate-500 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 hover:shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-800 dark:hover:bg-blue-950/40 dark:hover:text-blue-200"
+        className="group relative inline-flex h-9 w-9 flex-none cursor-pointer items-center justify-center border border-sky-500/30 bg-sky-500/10 text-sky-200 transition hover:-translate-y-0.5 hover:border-sky-400/50 hover:bg-sky-500/15 hover:shadow-md hover:shadow-black/20"
         aria-label="Edit task"
       >
         <Edit3 className="h-4 w-4" />
-        <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-xs font-semibold text-slate-700 opacity-0 shadow-xl transition group-hover:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+        <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap border border-[#555555] bg-[#202020] px-2.5 py-1.5 text-xs font-semibold text-[#E4E4E4] opacity-0 shadow-xl shadow-black/30 transition group-hover:opacity-100">
           Edit task
         </span>
       </button>
@@ -791,7 +791,7 @@ function JournalAccountField({
 }) {
   if (accounts.length === 0) {
     return (
-      <section className="rounded-none border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200">
+      <section className="rounded-none border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
         No account is linked to this journal yet. Add a journal account before
         assigning a journal submission task.
       </section>
@@ -802,7 +802,7 @@ function JournalAccountField({
   if (accounts.length === 1 && onlyAccount) {
     const account = onlyAccount;
     return (
-      <section className="grid gap-2 rounded-none border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-200">
+      <section className="grid gap-2 rounded-none border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
         <span className="text-xs font-bold uppercase tracking-wide">
           Account to submit
         </span>

@@ -21,7 +21,7 @@ export function ConferenceUnlockButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border border-amber-200 bg-amber-50 text-amber-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-amber-100 hover:shadow-md dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200"
+        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border border-amber-500/30 bg-amber-500/10 text-amber-300 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-400/50 hover:bg-amber-500/15 hover:shadow-md hover:shadow-black/20"
         aria-label="Unlock conference editing"
       >
         <UnlockKeyhole className="h-4 w-4" />

@@ -46,34 +46,34 @@ function statusMeta(status: string) {
     return {
       icon: CheckCircle2,
       className:
-        "bg-purple-50 text-purple-700 ring-purple-100 dark:bg-purple-950/40 dark:text-purple-300 dark:ring-purple-900",
+        "bg-violet-500/10 text-violet-200 ring-violet-500/20",
     };
   }
   if (status === "IN_PROGRESS") {
     return {
       icon: PencilLine,
       className:
-        "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900",
+        "bg-sky-500/10 text-sky-200 ring-sky-500/20",
     };
   }
   if (status === "SUBMITTED") {
     return {
       icon: Send,
       className:
-        "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+        "bg-emerald-500/10 text-emerald-200 ring-emerald-500/20",
     };
   }
   if (status === "CANCELLED") {
     return {
       icon: XCircle,
       className:
-        "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+        "bg-[#383838] text-[#E4E4E4] ring-[#555555]",
     };
   }
   return {
     icon: Mail,
     className:
-      "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+      "bg-[#383838] text-[#E4E4E4] ring-[#555555]",
   };
 }
 
@@ -88,23 +88,23 @@ function taskStatusLabel(status: string) {
 
 function taskStatusClass(status: string) {
   if (status === "COMPLETED")
-    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+    return "bg-emerald-500/10 text-emerald-200 ring-emerald-500/20";
   if (status === "CHECKING")
-    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
+    return "bg-violet-500/10 text-violet-200 ring-violet-500/20";
   if (status === "NEED_CLARIFY")
-    return "bg-amber-50 text-amber-800 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900";
+    return "bg-amber-500/10 text-amber-200 ring-amber-500/20";
   if (status === "REVOKED")
-    return "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
-  return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+    return "bg-[#383838] text-[#E4E4E4] ring-[#555555]";
+  return "bg-sky-500/10 text-sky-200 ring-sky-500/20";
 }
 
 function DetailItem({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
-      <dt className="text-xs font-bold uppercase tracking-wide text-slate-400">
+      <dt className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+      <dd className="mt-1 text-sm text-[#E4E4E4]">
         {value === null || value === undefined || value === "" ? "-" : value}
       </dd>
     </div>
@@ -190,7 +190,7 @@ export default async function ReviewDetailPage({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="font-mono text-xs font-bold uppercase tracking-wide text-slate-400">
+              <p className="font-mono text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 {review.manuscriptId || review.id.slice(0, 8).toUpperCase()}
               </p>
               <span
@@ -235,7 +235,7 @@ export default async function ReviewDetailPage({
       </ResearchDetailSection>
 
       <section className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+        <div className="flex items-center justify-between gap-3 border-b border-[#444444] px-5 py-4">
           <div>
             <h2 className="text-base font-semibold text-[#E4E4E4]">
               Tasks for this review
@@ -244,26 +244,26 @@ export default async function ReviewDetailPage({
               Work assigned for this review record.
             </p>
           </div>
-          <span className="rounded-none bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <span className="border border-[#555555] bg-[#383838] px-3 py-1 text-xs font-bold text-[#E4E4E4]">
             {review.tasks.length}
           </span>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left">
+        <div className="overflow-hidden">
+          <table className="w-full table-fixed text-left">
             <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
               <tr>
                 <th className="px-4 py-3">Task</th>
-                <th className="w-36 px-4 py-3">Status</th>
-                <th className="w-36 px-4 py-3">Due</th>
-                <th className="w-56 px-4 py-3">Assignees</th>
-                <th className="w-44 px-4 py-3">Assigner</th>
+                <th className="w-32 px-4 py-3">Status</th>
+                <th className="w-24 px-4 py-3">Due</th>
+                <th className="w-44 px-4 py-3">Assignees</th>
+                <th className="w-36 px-4 py-3">Assigner</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#444444]">
               {review.tasks.map((task) => (
                 <tr
                   key={task.id}
-                  className="align-top transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                  className="align-top transition hover:bg-[#333333]"
                 >
                   <td className="px-4 py-3">
                     <Link
@@ -278,7 +278,7 @@ export default async function ReviewDetailPage({
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`inline-flex border px-2.5 py-1 text-xs font-normal ${taskStatusClass(task.status)}`}
+                      className={`inline-flex border border-current/20 px-2.5 py-1 text-xs font-normal ring-1 ${taskStatusClass(task.status)}`}
                     >
                       {taskStatusLabel(task.status)}
                     </span>
@@ -286,7 +286,7 @@ export default async function ReviewDetailPage({
                   <td className="px-4 py-3 text-sm text-[#B0B0B0]">
                     {shortDate(task.dueDate)}
                   </td>
-                  <td className="px-4 py-3 text-sm text-[#B0B0B0]">
+                  <td className="px-4 py-3 text-sm leading-5 text-[#B0B0B0]">
                     {task.assignments.length > 0
                       ? task.assignments
                           .map(
@@ -336,7 +336,7 @@ export default async function ReviewDetailPage({
                 href={item.href as string}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-9 items-center gap-2 rounded-none border border-blue-100 bg-blue-50 px-3 text-xs font-semibold text-blue-600 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-100 hover:shadow-md dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50"
+                className="inline-flex h-9 items-center gap-2 rounded-none border border-sky-500/30 bg-sky-500/10 px-3 text-xs font-semibold text-sky-200 transition hover:-translate-y-0.5 hover:border-sky-400/50 hover:bg-sky-500/15 hover:shadow-md hover:shadow-black/20"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 {item.label}
@@ -388,20 +388,20 @@ export default async function ReviewDetailPage({
       <ResearchDetailSection title="Notes">
         <div className="mt-4 space-y-4">
           <div>
-            <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
+            <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
               <Hash className="h-3.5 w-3.5 text-amber-500" />
               Private note
             </p>
-            <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">
+            <p className="mt-2 text-sm leading-6 text-[#E4E4E4]">
               {review.note || "-"}
             </p>
           </div>
           {review.editorName && (
-            <div className="border-t border-slate-200 pt-4 dark:border-slate-800">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+            <div className="border-t border-[#444444] pt-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Editor
               </p>
-              <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">
+              <p className="mt-2 text-sm leading-6 text-[#E4E4E4]">
                 {review.editorName}
               </p>
             </div>

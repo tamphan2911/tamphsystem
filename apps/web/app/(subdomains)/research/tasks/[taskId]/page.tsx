@@ -151,16 +151,16 @@ function toneClass(
   tone: "emerald" | "rose" | "blue" | "slate" | "violet" | "amber",
 ) {
   if (tone === "emerald")
-    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-200 ring-emerald-500/20";
   if (tone === "rose")
-    return "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900";
+    return "border-rose-500/30 bg-rose-500/10 text-rose-200 ring-rose-500/20";
   if (tone === "blue")
-    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+    return "border-sky-500/30 bg-sky-500/10 text-sky-200 ring-sky-500/20";
   if (tone === "violet")
-    return "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900";
+    return "border-violet-500/30 bg-violet-500/10 text-violet-200 ring-violet-500/20";
   if (tone === "amber")
-    return "bg-amber-50 text-amber-800 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900";
-  return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+    return "border-amber-500/30 bg-amber-500/10 text-amber-200 ring-amber-500/20";
+  return "border-[#555555] bg-[#383838] text-[#E4E4E4] ring-[#555555]";
 }
 
 function accountLine(
@@ -611,8 +611,8 @@ export default async function TaskDetailPage({
       <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-none bg-blue-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
-              <ClipboardList className="h-4 w-4" />
+            <div className="mb-3 inline-flex items-center gap-2 border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-sky-200">
+              <ClipboardList className="h-4 w-4 text-sky-300" />
               {task.category || "Task"}
             </div>
             <div className="flex min-w-0 items-center gap-2">
@@ -666,9 +666,9 @@ export default async function TaskDetailPage({
               Created by {task.createdBy.name || task.createdBy.email}
             </p>
           </div>
-          <div className="min-w-44 border border-[#444444] bg-[#202020] p-4">
+          <div className="min-w-44 border border-[#444444] bg-[#202020] p-4 shadow-[0_14px_36px_rgba(0,0,0,0.18)]">
             <span
-              className={`inline-flex border px-2 py-1 text-xs font-normal ${toneClass(meta.tone)}`}
+              className={`inline-flex border px-2 py-1 text-xs font-normal ring-1 ${toneClass(meta.tone)}`}
             >
               {meta.label}
             </span>
@@ -683,9 +683,9 @@ export default async function TaskDetailPage({
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {task.project && (
-            <div className="border border-[#444444] p-4">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-                <FileText className="h-4 w-4" /> Research
+            <div className="border border-[#444444] bg-[#242424] p-4 transition hover:-translate-y-0.5 hover:border-[#5a5a5a] hover:bg-[#292929] hover:shadow-lg hover:shadow-black/20">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                <FileText className="h-4 w-4 text-sky-300" /> Research
               </div>
               <Link
                 href={`/projects/${task.project.id}`}
@@ -699,10 +699,10 @@ export default async function TaskDetailPage({
             </div>
           )}
           {task.journal && (
-            <div className="border border-[#444444] p-4">
+            <div className="border border-[#444444] bg-[#242424] p-4 transition hover:-translate-y-0.5 hover:border-[#5a5a5a] hover:bg-[#292929] hover:shadow-lg hover:shadow-black/20">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-                  <Send className="h-4 w-4" /> Journal
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                  <Send className="h-4 w-4 text-emerald-300" /> Journal
                 </div>
                 <VenueLinks
                   homepage={task.journal.homepageLink}
@@ -726,10 +726,10 @@ export default async function TaskDetailPage({
             </div>
           )}
           {task.conference && (
-            <div className="border border-[#444444] p-4">
+            <div className="border border-[#444444] bg-[#242424] p-4 transition hover:-translate-y-0.5 hover:border-[#5a5a5a] hover:bg-[#292929] hover:shadow-lg hover:shadow-black/20">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-                  <Send className="h-4 w-4" /> Conference
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                  <Send className="h-4 w-4 text-violet-300" /> Conference
                 </div>
                 <VenueLinks
                   homepage={task.conference.website}
@@ -758,7 +758,7 @@ export default async function TaskDetailPage({
           )}
         </div>
 
-        <div className="mt-6 min-h-44 border border-[#444444] p-5">
+        <div className="mt-6 min-h-44 border border-[#444444] bg-[#242424] p-5">
           <h2 className="text-sm font-bold text-[#E4E4E4]">Task content</h2>
           <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#B0B0B0]">
             {task.description || "No task note."}
@@ -788,9 +788,12 @@ export default async function TaskDetailPage({
           <h2 className="text-sm font-bold text-[#E4E4E4]">Assignees</h2>
           <div className="grid max-w-2xl gap-2 sm:grid-cols-2">
             {task.assignments.map((assignment) => (
-              <div key={assignment.id} className="border border-[#444444] p-3">
+              <div
+                key={assignment.id}
+                className="border border-[#444444] bg-[#242424] p-3 transition hover:-translate-y-0.5 hover:border-[#5a5a5a] hover:bg-[#292929]"
+              >
                 <span className="flex min-w-0 items-start gap-3">
-                  <UserRound className="mt-0.5 h-4 w-4 flex-none text-slate-400" />
+                  <UserRound className="mt-0.5 h-4 w-4 flex-none text-amber-300" />
                   <span className="min-w-0 leading-tight">
                     <span className="block truncate text-sm font-semibold text-[#E4E4E4]">
                       {assignment.user.name || assignment.user.email}
@@ -805,7 +808,7 @@ export default async function TaskDetailPage({
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 border-t border-slate-200 pt-5 text-sm dark:border-slate-800 sm:grid-cols-3">
+        <div className="mt-6 grid gap-3 border-t border-[#444444] pt-5 text-sm sm:grid-cols-3">
           <MetaItem
             icon={<CalendarClock className="h-4 w-4" />}
             label="Created"
@@ -839,14 +842,14 @@ function VenueLinks({
       <ExternalVenueLink
         href={homepage}
         label="Open homepage"
-        className="border-blue-100 bg-blue-50 text-blue-600 hover:border-blue-200 hover:bg-blue-100 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50"
+        className="border-sky-500/30 bg-sky-500/10 text-sky-200 hover:border-sky-400/50 hover:bg-sky-500/15"
       >
         <Globe2 className="h-4 w-4" />
       </ExternalVenueLink>
       <ExternalVenueLink
         href={submission}
         label="Open submission site"
-        className="border-emerald-100 bg-emerald-50 text-emerald-600 hover:border-emerald-200 hover:bg-emerald-100 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+        className="border-emerald-500/30 bg-emerald-500/10 text-emerald-200 hover:border-emerald-400/50 hover:bg-emerald-500/15"
       >
         <ExternalLink className="h-4 w-4" />
       </ExternalVenueLink>
@@ -887,7 +890,7 @@ function ExternalVenueLink({
       aria-label={label}
     >
       {children}
-      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/link:translate-y-0 group-hover/link:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
+      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap border border-[#555555] bg-[#202020] px-2.5 py-1.5 text-[11px] font-semibold text-[#E4E4E4] opacity-0 shadow-lg shadow-black/30 transition duration-200 ease-out group-hover/link:translate-y-0 group-hover/link:opacity-100">
         {label}
       </span>
     </a>
@@ -904,9 +907,9 @@ function MetaItem({
   value: string;
 }) {
   return (
-    <div className="border border-[#444444] p-3">
-      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-        {icon}
+    <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
+      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+        <span className="text-sky-300">{icon}</span>
         {label}
       </div>
       <p className="mt-2 text-sm font-semibold text-[#E4E4E4]">{value}</p>

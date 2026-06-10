@@ -78,7 +78,7 @@ export function TaskReportPanel({
   }
 
   return (
-    <section className="mt-6 border border-[#444444] p-5">
+    <section className="mt-6 border border-[#444444] bg-[#242424] p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-sm font-bold text-[#E4E4E4]">Assignee report</h2>
@@ -89,7 +89,7 @@ export function TaskReportPanel({
         {canDownload && fileName && (
           <a
             href={`/api/research/tasks/${taskId}/report`}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-none border border-blue-200 bg-blue-50 px-3 text-sm font-semibold text-blue-700 transition hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-100 hover:shadow-sm dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-200 dark:hover:bg-blue-900/50"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-none border border-sky-500/30 bg-sky-500/10 px-3 text-sm font-semibold text-sky-200 transition hover:-translate-y-0.5 hover:border-sky-400/50 hover:bg-sky-500/15 hover:shadow-md hover:shadow-black/20"
           >
             <Download className="h-4 w-4" />
             Download report
@@ -98,7 +98,7 @@ export function TaskReportPanel({
       </div>
 
       {fileName ? (
-        <div className="mt-4 flex items-start gap-3 border border-[#444444] bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
+        <div className="mt-4 flex items-start gap-3 border border-[#444444] bg-[#202020] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
           <FileUp className="mt-0.5 h-4 w-4 flex-none text-emerald-500" />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-[#E4E4E4]">
@@ -115,15 +115,15 @@ export function TaskReportPanel({
           </div>
         </div>
       ) : (
-        <p className="mt-4 rounded-none border border-dashed border-slate-200 px-3 py-4 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        <p className="mt-4 rounded-none border border-dashed border-[#555555] px-3 py-4 text-sm text-[#B0B0B0]">
           No report uploaded yet.
         </p>
       )}
 
       {canUpload && (
         <form ref={formRef} action={submitReport} className="mt-4 grid gap-3">
-          <label className="flex min-h-12 cursor-pointer items-center gap-3 border border-[#444444] bg-slate-50 px-3 text-sm text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900/70 dark:hover:bg-blue-950/30">
-            <UploadCloud className="h-4 w-4 flex-none text-blue-500" />
+          <label className="flex min-h-12 cursor-pointer items-center gap-3 border border-[#444444] bg-[#202020] px-3 text-sm text-[#B0B0B0] transition hover:-translate-y-0.5 hover:border-sky-500/40 hover:bg-sky-500/10 hover:text-[#E4E4E4]">
+            <UploadCloud className="h-4 w-4 flex-none text-sky-300" />
             <span className="min-w-0 flex-1 truncate">
               {selectedName || "Choose report file"}
             </span>
@@ -139,7 +139,7 @@ export function TaskReportPanel({
           </label>
           <button
             disabled={isPending}
-            className="inline-flex h-10 w-fit cursor-pointer items-center justify-center gap-2 rounded-none bg-blue-600 px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70"
+            className="inline-flex h-10 w-fit cursor-pointer items-center justify-center gap-2 rounded-none bg-sky-600 px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-sky-500 hover:shadow-md hover:shadow-black/20 disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70"
           >
             {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />

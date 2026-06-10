@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Globe2,
   MapPin,
+  ReceiptText,
   Send,
   Users,
 } from "lucide-react";
@@ -170,14 +171,14 @@ export default async function ConferenceDetailPage({
       </Link>
 
       <section className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
-        <div className="border-b border-slate-100 p-5 dark:border-slate-800">
+        <div className="border-b border-[#444444] p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-black tracking-tight text-[#E4E4E4]">
+                <h1 className="text-2xl font-normal tracking-tight text-[#E4E4E4]">
                   {conference.name}
                 </h1>
-                <span className="rounded-none bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900">
+                <span className="border border-violet-500/30 bg-violet-500/10 px-2.5 py-1 text-xs font-bold text-violet-200 ring-1 ring-violet-500/20">
                   {conferenceTypeLabel(conference.type) || "Type not set"}
                 </span>
               </div>
@@ -190,7 +191,7 @@ export default async function ConferenceDetailPage({
                 href={conference.website}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 border border-[#444444] px-3 py-2 text-sm font-semibold text-slate-600 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:text-blue-600 hover:shadow-sm dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
+                className="inline-flex items-center justify-center gap-2 border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm font-semibold text-sky-200 transition hover:-translate-y-0.5 hover:border-sky-400/50 hover:bg-sky-500/15 hover:shadow-md hover:shadow-black/20"
               >
                 <Globe2 className="h-4 w-4" />
                 Website
@@ -214,69 +215,70 @@ export default async function ConferenceDetailPage({
           </div>
         </div>
 
-        <dl className="grid gap-4 p-5 text-sm md:grid-cols-4">
-          <div>
-            <dt className="flex items-center gap-2 text-xs font-bold uppercase text-slate-400">
-              <CalendarDays className="h-3.5 w-3.5" />
+        <dl className="grid gap-3 p-5 text-sm md:grid-cols-4">
+          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
+            <dt className="flex items-center gap-2 text-xs font-bold uppercase text-[#B0B0B0]">
+              <CalendarDays className="h-3.5 w-3.5 text-sky-300" />
               Time
             </dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+            <dd className="mt-2 text-[#E4E4E4]">
               {schedule || "-"}
             </dd>
           </div>
-          <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">
+          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
+            <dt className="text-xs font-bold uppercase text-[#B0B0B0]">
               Submission deadline
             </dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+            <dd className="mt-2 text-[#E4E4E4]">
               {dateText(conference.submissionDeadline, null) || "-"}
             </dd>
           </div>
-          <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">
+          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
+            <dt className="text-xs font-bold uppercase text-[#B0B0B0]">
               Acceptance notification
             </dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+            <dd className="mt-2 text-[#E4E4E4]">
               {dateText(conference.acceptanceNotification, null) || "-"}
             </dd>
           </div>
-          <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">
+          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
+            <dt className="text-xs font-bold uppercase text-[#B0B0B0]">
               Close date
             </dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+            <dd className="mt-2 text-[#E4E4E4]">
               {dateText(conference.closeDate, null) || "-"}
             </dd>
           </div>
-          <div>
-            <dt className="flex items-center gap-2 text-xs font-bold uppercase text-slate-400">
-              <MapPin className="h-3.5 w-3.5" />
+          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
+            <dt className="flex items-center gap-2 text-xs font-bold uppercase text-[#B0B0B0]">
+              <MapPin className="h-3.5 w-3.5 text-rose-300" />
               Location
             </dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+            <dd className="mt-2 text-[#E4E4E4]">
               {conference.location || "-"}
             </dd>
           </div>
-          <div>
-            <dt className="flex items-center gap-2 text-xs font-bold uppercase text-slate-400">
-              <Users className="h-3.5 w-3.5" />
+          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
+            <dt className="flex items-center gap-2 text-xs font-bold uppercase text-[#B0B0B0]">
+              <Users className="h-3.5 w-3.5 text-emerald-300" />
               Organizer
             </dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+            <dd className="mt-2 text-[#E4E4E4]">
               {conference.organizer || "-"}
             </dd>
           </div>
-          <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">ISBN</dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
+            <dt className="text-xs font-bold uppercase text-[#B0B0B0]">ISBN</dt>
+            <dd className="mt-2 text-[#E4E4E4]">
               {conference.isbn || "-"}
             </dd>
           </div>
-          <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">
+          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
+            <dt className="flex items-center gap-2 text-xs font-bold uppercase text-[#B0B0B0]">
+              <ReceiptText className="h-3.5 w-3.5 text-amber-300" />
               Submission fee
             </dt>
-            <dd className="mt-1 text-slate-700 dark:text-slate-300">
+            <dd className="mt-2 text-[#E4E4E4]">
               {formatMoney(
                 conference.submissionFee,
                 conference.submissionFeeCurrency,
@@ -284,11 +286,8 @@ export default async function ConferenceDetailPage({
             </dd>
           </div>
           {conference.note && (
-            <div className="md:col-span-4">
-              <dt className="text-xs font-bold uppercase text-slate-400">
-                Note
-              </dt>
-              <dd className="mt-1 text-slate-700 dark:text-slate-300">
+            <div className="border-t border-[#444444] pt-4 md:col-span-4">
+              <dd className="text-sm leading-6 text-[#B0B0B0]">
                 {conference.note}
               </dd>
             </div>

@@ -48,14 +48,14 @@ function InfoTile({
   value: string;
 }) {
   return (
-    <div className="border border-[#444444] bg-slate-50/80 px-3 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+    <div className="border border-[#444444] bg-[#242424] px-3 py-2.5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#5a5a5a] hover:bg-[#292929] hover:shadow-lg hover:shadow-black/20">
       <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-[#777777]">
-        <span className="flex h-7 w-7 items-center justify-center rounded-none bg-white text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700">
+        <span className="flex h-7 w-7 items-center justify-center rounded-none bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/20">
           <Icon className="h-3.5 w-3.5" />
         </span>
         <span>{label}</span>
       </div>
-      <p className="mt-2 break-words text-base font-black text-slate-900 dark:text-slate-100">
+      <p className="mt-2 break-words text-base font-semibold text-[#E4E4E4]">
         {value || "-"}
       </p>
     </div>
@@ -188,7 +188,7 @@ export default async function AccountDetailPage({
             <p className="font-mono text-xs font-bold uppercase tracking-wide text-slate-400">
               Site ID: {account.id}
             </p>
-            <h1 className="mt-1 flex items-center gap-2 text-2xl font-black tracking-tight text-[#E4E4E4]">
+            <h1 className="mt-1 flex items-center gap-2 text-2xl font-normal tracking-tight text-[#E4E4E4]">
               <KeyRound className="h-5 w-5 text-amber-500" />
               {account.username}
             </h1>
@@ -247,7 +247,7 @@ export default async function AccountDetailPage({
 
       <section className="space-y-3">
         <div className="flex items-center gap-2 px-1">
-          <span className="flex h-9 w-9 items-center justify-center rounded-none bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900">
+          <span className="flex h-9 w-9 items-center justify-center rounded-none bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20">
             <Send className="h-4 w-4" />
           </span>
           <div>
