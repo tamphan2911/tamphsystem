@@ -31,6 +31,9 @@ export async function verifyTurnstileToken(
   });
   if (remoteIp) body.set("remoteip", remoteIp);
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
   try {
     const response = await fetch(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
@@ -38,12 +41,19 @@ export async function verifyTurnstileToken(
         method: "POST",
         body,
         cache: "no-store",
+        signal: controller.signal,
       },
     );
     const result = (await response.json()) as {
       success?: boolean;
       "error-codes"?: string[];
     };
+    if (!result.success) {
+      console.warn(
+        "[turnstile] rejected token",
+        result["error-codes"]?.join(", ") || "invalid",
+      );
+    }
     return result.success
       ? { ok: true as const }
       : {
@@ -53,5 +63,7 @@ export async function verifyTurnstileToken(
   } catch (error) {
     console.error("[turnstile] verification failed", error);
     return { ok: false as const, reason: "unavailable" };
+  } finally {
+    clearTimeout(timeout);
   }
 }

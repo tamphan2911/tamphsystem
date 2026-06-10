@@ -77,6 +77,7 @@ function RegisterContent() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copy, setCopy] = useState(defaultCopy);
+  const [siteResolved, setSiteResolved] = useState(false);
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const isResearch = copy.accent === "emerald";
   const siteKey =
@@ -86,6 +87,7 @@ function RegisterContent() {
 
   useEffect(() => {
     setCopy(siteCopy());
+    setSiteResolved(true);
   }, []);
 
   const handleSubmit = async (formData: FormData) => {
@@ -329,11 +331,13 @@ function RegisterContent() {
               )}
             </label>
 
-            <TurnstileField
-              siteKey={siteKey}
-              resetKey={turnstileResetKey}
-              theme={isResearch ? "dark" : "light"}
-            />
+            {siteResolved ? (
+              <TurnstileField
+                siteKey={siteKey}
+                resetKey={turnstileResetKey}
+                theme={isResearch ? "dark" : "light"}
+              />
+            ) : null}
 
             <button
               type="submit"

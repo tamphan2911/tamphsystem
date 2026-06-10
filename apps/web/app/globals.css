@@ -900,6 +900,44 @@ textarea:focus-visible {
   border-color: #5a5a5a !important;
 }
 
+.turnstile-status-text {
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  color: #777777;
+}
+
+.turnstile-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid #6f5d2a;
+  background: #332d1e;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  color: #f4d47a;
+}
+
+.turnstile-status-row button {
+  cursor: pointer;
+  border: 1px solid #6f5d2a;
+  background: #242424;
+  padding: 0.25rem 0.625rem;
+  color: #f4d47a;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.turnstile-status-row button:hover {
+  border-color: #f4d47a;
+  background: #3a3322;
+  transform: translateY(-1px);
+}
+
 .research-site-root aside nav {
   padding-top: 0 !important;
 }
@@ -1726,7 +1764,8 @@ textarea:focus-visible {
   color: #1d2a2c;
 }
 
-.research-site-root .journal-detail-tab-button[data-active="true"]:hover::after {
+.research-site-root
+  .journal-detail-tab-button[data-active="true"]:hover::after {
   opacity: 0;
 }
 

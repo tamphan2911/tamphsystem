@@ -9,14 +9,17 @@ type TurnstileFieldProps = {
   theme?: "auto" | "light" | "dark";
 };
 
+type TurnstileStatus = "loading" | "ready" | "verified" | "expired" | "error";
+
 declare global {
   interface Window {
     turnstile?: {
       render: (
         element: HTMLElement,
-        options: Record<string, string | boolean>,
+        options: Record<string, string | boolean | (() => void)>,
       ) => string;
       remove: (widgetId: string) => void;
+      reset: (widgetId: string) => void;
     };
   }
 }
@@ -29,11 +32,29 @@ export function TurnstileField({
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const [scriptReady, setScriptReady] = useState(false);
+  const [status, setStatus] = useState<TurnstileStatus>("loading");
 
   useEffect(() => {
     if (window.turnstile) {
       setScriptReady(true);
+      return;
     }
+
+    const poll = window.setInterval(() => {
+      if (window.turnstile) {
+        setScriptReady(true);
+        window.clearInterval(poll);
+      }
+    }, 250);
+
+    const timeout = window.setTimeout(() => {
+      if (!window.turnstile) setStatus("error");
+    }, 10000);
+
+    return () => {
+      window.clearInterval(poll);
+      window.clearTimeout(timeout);
+    };
   }, []);
 
   useEffect(() => {
@@ -46,6 +67,8 @@ export function TurnstileField({
       return;
     }
 
+    setStatus("loading");
+
     if (widgetIdRef.current) {
       window.turnstile.remove(widgetIdRef.current);
       widgetIdRef.current = null;
@@ -56,7 +79,17 @@ export function TurnstileField({
       theme,
       "response-field": true,
       "response-field-name": "cf-turnstile-response",
+      retry: "auto",
+      "retry-interval": "8000",
+      "refresh-expired": "auto",
+      "refresh-timeout": "auto",
+      callback: () => setStatus("verified"),
+      "after-interactive-callback": () => setStatus("ready"),
+      "expired-callback": () => setStatus("expired"),
+      "timeout-callback": () => setStatus("error"),
+      "error-callback": () => setStatus("error"),
     });
+    setStatus("ready");
 
     return () => {
       if (widgetIdRef.current && window.turnstile) {
@@ -68,6 +101,15 @@ export function TurnstileField({
 
   if (!siteKey) return null;
 
+  function retryWidget() {
+    if (widgetIdRef.current && window.turnstile) {
+      setStatus("loading");
+      window.turnstile.reset(widgetIdRef.current);
+      return;
+    }
+    setScriptReady(Boolean(window.turnstile));
+  }
+
   return (
     <>
       <Script
@@ -76,15 +118,33 @@ export function TurnstileField({
         strategy="afterInteractive"
         onLoad={() => setScriptReady(true)}
         onReady={() => setScriptReady(true)}
+        onError={() => setStatus("error")}
       />
-      <div
-        className={
-          theme === "dark"
-            ? "turnstile-field turnstile-field-dark flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden"
-            : "flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden py-0"
-        }
-      >
-        <div ref={containerRef} className="max-w-full" />
+      <div className="grid gap-2">
+        <div
+          className={
+            theme === "dark"
+              ? "turnstile-field turnstile-field-dark flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden"
+              : "flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden py-0"
+          }
+        >
+          <div ref={containerRef} className="max-w-full" />
+        </div>
+        {status === "loading" ? (
+          <p className="turnstile-status-text">Loading security check...</p>
+        ) : null}
+        {status === "expired" || status === "error" ? (
+          <div className="turnstile-status-row">
+            <span>
+              {status === "expired"
+                ? "Security check expired."
+                : "Security check could not load."}
+            </span>
+            <button type="button" onClick={retryWidget}>
+              Retry
+            </button>
+          </div>
+        ) : null}
       </div>
     </>
   );
