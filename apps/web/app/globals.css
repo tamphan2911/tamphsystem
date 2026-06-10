@@ -792,9 +792,14 @@ textarea:focus-visible {
   --research-panel-2: #383838;
   --research-panel-3: #383838;
   --research-border: #444444;
+  --research-divider: #303030;
   --research-muted: #b0b0b0;
   --research-accent: #a8dadc;
   background: #242424;
+}
+
+[data-research-modal-overlay="true"] {
+  --research-divider: #303030;
 }
 
 html:has(.research-site-root),
@@ -1126,15 +1131,26 @@ body:has(.research-site-root) {
   right: 0;
   top: 0;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(168, 218, 220, 0.26),
-    rgba(68, 68, 68, 0.92),
-    rgba(168, 218, 220, 0.2),
-    transparent
-  );
+  background: var(--research-divider);
   pointer-events: none;
+}
+
+.research-site-root :where(hr),
+[data-research-modal-overlay="true"] :where(hr) {
+  border-color: var(--research-divider) !important;
+}
+
+.research-site-root :where(.border-t),
+.research-site-root :where(.border-b),
+[data-research-modal-overlay="true"] :where(.border-t),
+[data-research-modal-overlay="true"] :where(.border-b) {
+  border-color: var(--research-divider) !important;
+}
+
+.research-site-root :where(.divide-y > :not([hidden]) ~ :not([hidden])),
+[data-research-modal-overlay="true"]
+  :where(.divide-y > :not([hidden]) ~ :not([hidden])) {
+  border-color: var(--research-divider) !important;
 }
 
 .research-site-root .fixed.inset-0 .absolute.top-full {
