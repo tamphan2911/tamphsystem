@@ -16,10 +16,10 @@ export const researchFieldClass =
   "h-12 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
 
 export const researchSearchFieldClass =
-  "h-11 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
+  "h-12 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
 
 export const researchSelectTriggerClass =
-  "h-11 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
+  "h-12 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
 
 export const researchDropdownPanelClass =
   "research-dropdown-panel overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] shadow-2xl shadow-black/35";

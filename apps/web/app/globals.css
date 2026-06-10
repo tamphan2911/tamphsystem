@@ -853,7 +853,10 @@ body:has(.research-site-root) {
   :where(.research-dropdown-panel, .research-dropdown-floating-panel)
   :where([class*="overflow-y-auto"], [role="listbox"])::-webkit-scrollbar-track,
 :where([data-research-modal-overlay="true"])
-  :where([role="listbox"], [data-search-results="true"])::-webkit-scrollbar-track {
+  :where(
+    [role="listbox"],
+    [data-search-results="true"]
+  )::-webkit-scrollbar-track {
   background: transparent;
 }
 
@@ -861,7 +864,10 @@ body:has(.research-site-root) {
   :where(.research-dropdown-panel, .research-dropdown-floating-panel)
   :where([class*="overflow-y-auto"], [role="listbox"])::-webkit-scrollbar-thumb,
 :where([data-research-modal-overlay="true"])
-  :where([role="listbox"], [data-search-results="true"])::-webkit-scrollbar-thumb {
+  :where(
+    [role="listbox"],
+    [data-search-results="true"]
+  )::-webkit-scrollbar-thumb {
   min-height: 1.75rem;
   border: 2px solid transparent;
   border-radius: 999px;
@@ -871,9 +877,15 @@ body:has(.research-site-root) {
 
 :where([data-research-modal-overlay="true"])
   :where(.research-dropdown-panel, .research-dropdown-floating-panel)
-  :where([class*="overflow-y-auto"], [role="listbox"]):hover::-webkit-scrollbar-thumb,
+  :where(
+    [class*="overflow-y-auto"],
+    [role="listbox"]
+  ):hover::-webkit-scrollbar-thumb,
 :where([data-research-modal-overlay="true"])
-  :where([role="listbox"], [data-search-results="true"]):hover::-webkit-scrollbar-thumb {
+  :where(
+    [role="listbox"],
+    [data-search-results="true"]
+  ):hover::-webkit-scrollbar-thumb {
   background: rgba(224, 224, 224, 0.54);
   background-clip: padding-box;
 }
@@ -1730,26 +1742,6 @@ body:has(.research-site-root) {
     transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.research-auth-input-shell.journal-form-field svg[class*="text-[#A8DADC]"] {
-  color: #a8dadc;
-}
-
-.research-auth-input-shell.journal-form-field svg[class*="text-[#B39CD0]"] {
-  color: #b39cd0;
-}
-
-.research-auth-input-shell.journal-form-field svg[class*="text-[#F4D47A]"] {
-  color: #f4d47a;
-}
-
-.research-auth-input-shell.journal-form-field svg[class*="text-[#9ED6B5]"] {
-  color: #9ed6b5;
-}
-
-.research-auth-input-shell.journal-form-field:hover svg[class*="text-"] {
-  filter: brightness(1.12);
-}
-
 .research-auth-input-shell:hover svg {
   color: #e4e4e4;
 }
@@ -1759,26 +1751,43 @@ body:has(.research-site-root) {
   transform: translateY(-50%) scale(1.08);
 }
 
-.research-auth-input-shell.journal-form-field:hover svg[class*="text-[#A8DADC]"],
+.research-auth-input-shell.journal-form-field svg[class*="text-"] {
+  color: #5a5a5a;
+}
+
+.research-auth-input-shell.journal-form-field:hover svg[class*="text-"] {
+  color: #5a5a5a;
+  filter: none;
+}
+
+.research-auth-input-shell.journal-form-field:focus-within svg[class*="text-"] {
+  transform: translateY(-50%) scale(1.08);
+}
+
 .research-auth-input-shell.journal-form-field:focus-within
+  svg[class*="text-[#A8DADC]"],
+.research-auth-input-shell.journal-form-field:has(input:not(:placeholder-shown))
   svg[class*="text-[#A8DADC]"] {
   color: #a8dadc;
 }
 
-.research-auth-input-shell.journal-form-field:hover svg[class*="text-[#B39CD0]"],
 .research-auth-input-shell.journal-form-field:focus-within
+  svg[class*="text-[#B39CD0]"],
+.research-auth-input-shell.journal-form-field:has(input:not(:placeholder-shown))
   svg[class*="text-[#B39CD0]"] {
   color: #b39cd0;
 }
 
-.research-auth-input-shell.journal-form-field:hover svg[class*="text-[#F4D47A]"],
 .research-auth-input-shell.journal-form-field:focus-within
+  svg[class*="text-[#F4D47A]"],
+.research-auth-input-shell.journal-form-field:has(input:not(:placeholder-shown))
   svg[class*="text-[#F4D47A]"] {
   color: #f4d47a;
 }
 
-.research-auth-input-shell.journal-form-field:hover svg[class*="text-[#9ED6B5]"],
 .research-auth-input-shell.journal-form-field:focus-within
+  svg[class*="text-[#9ED6B5]"],
+.research-auth-input-shell.journal-form-field:has(input:not(:placeholder-shown))
   svg[class*="text-[#9ED6B5]"] {
   color: #9ed6b5;
 }
@@ -1814,9 +1823,9 @@ body:has(.research-site-root) {
     [role="option"]
   ):not([role="tab"]):not(.journal-detail-tab-button):not(
     [data-research-toggle-tab="true"]
-  ):not(
-    .research-new-button
-  ):not([class*="text-left"]):not([class*="justify-start"]) {
+  ):not(.research-new-button):not([class*="text-left"]):not(
+    [class*="justify-start"]
+  ) {
   --research-text-button-color: #a8dadc;
   --research-text-button-ink: #1d2a2c;
   position: relative;
@@ -1840,17 +1849,17 @@ body:has(.research-site-root) {
     [role="option"]
   ):not([role="tab"]):not(.journal-detail-tab-button):not(
     [data-research-toggle-tab="true"]
-  ):not(
-    .research-new-button
-  ):not([class*="text-left"]):not([class*="justify-start"])::before,
+  ):not(.research-new-button):not([class*="text-left"]):not(
+    [class*="justify-start"]
+  )::before,
 :where(.research-site-root, [data-research-modal-overlay="true"])
   button:is([class*="px-"], [class*="gap-"]):not([aria-label]):not(
     [role="option"]
   ):not([role="tab"]):not(.journal-detail-tab-button):not(
     [data-research-toggle-tab="true"]
-  ):not(
-    .research-new-button
-  ):not([class*="text-left"]):not([class*="justify-start"])::after {
+  ):not(.research-new-button):not([class*="text-left"]):not(
+    [class*="justify-start"]
+  )::after {
   content: "";
   position: absolute;
   inset: 50%;
@@ -1870,9 +1879,9 @@ body:has(.research-site-root) {
     [role="option"]
   ):not([role="tab"]):not(.journal-detail-tab-button):not(
     [data-research-toggle-tab="true"]
-  ):not(
-    .research-new-button
-  ):not([class*="text-left"]):not([class*="justify-start"])::before {
+  ):not(.research-new-button):not([class*="text-left"]):not(
+    [class*="justify-start"]
+  )::before {
   top: -50%;
   left: -25%;
   transform: skew(90deg) rotate(180deg) translate(-50%, -50%);
@@ -1884,9 +1893,9 @@ body:has(.research-site-root) {
     [role="option"]
   ):not([role="tab"]):not(.journal-detail-tab-button):not(
     [data-research-toggle-tab="true"]
-  ):not(
-    .research-new-button
-  ):not([class*="text-left"]):not([class*="justify-start"]):hover::before {
+  ):not(.research-new-button):not([class*="text-left"]):not(
+    [class*="justify-start"]
+  ):hover::before {
   transform: skew(45deg) rotate(180deg) translate(-50%, -50%);
 }
 
@@ -1896,9 +1905,9 @@ body:has(.research-site-root) {
     [role="option"]
   ):not([role="tab"]):not(.journal-detail-tab-button):not(
     [data-research-toggle-tab="true"]
-  ):not(
-    .research-new-button
-  ):not([class*="text-left"]):not([class*="justify-start"]):hover::after {
+  ):not(.research-new-button):not([class*="text-left"]):not(
+    [class*="justify-start"]
+  ):hover::after {
   transform: skew(45deg) translate(-50%, -50%);
 }
 
@@ -1908,9 +1917,9 @@ body:has(.research-site-root) {
     [role="option"]
   ):not([role="tab"]):not(.journal-detail-tab-button):not(
     [data-research-toggle-tab="true"]
-  ):not(
-    .research-new-button
-  ):not([class*="text-left"]):not([class*="justify-start"]):hover {
+  ):not(.research-new-button):not([class*="text-left"]):not(
+    [class*="justify-start"]
+  ):hover {
   color: var(--research-text-button-ink) !important;
 }
 
@@ -1920,9 +1929,9 @@ body:has(.research-site-root) {
     [role="option"]
   ):not([role="tab"]):not(.journal-detail-tab-button):not(
     [data-research-toggle-tab="true"]
-  ):not(
-    .research-new-button
-  ):not([class*="text-left"]):not([class*="justify-start"]):active {
+  ):not(.research-new-button):not([class*="text-left"]):not(
+    [class*="justify-start"]
+  ):active {
   filter: brightness(0.78);
   transform: scale(0.98) !important;
 }
@@ -1933,9 +1942,9 @@ body:has(.research-site-root) {
     [role="option"]
   ):not([role="tab"]):not(.journal-detail-tab-button):not(
     [data-research-toggle-tab="true"]
-  ):not(
-    .research-new-button
-  ):not([class*="text-left"]):not([class*="justify-start"]):disabled {
+  ):not(.research-new-button):not([class*="text-left"]):not(
+    [class*="justify-start"]
+  ):disabled {
   filter: none;
   transform: none !important;
 }
@@ -2026,8 +2035,7 @@ body:has(.research-site-root) {
   color: #1d2a2c;
 }
 
-.research-site-root
-  .journal-detail-tab-button[data-active="true"]:hover::after,
+.research-site-root .journal-detail-tab-button[data-active="true"]:hover::after,
 .research-site-root
   [data-research-toggle-tab="true"][data-active="true"]:hover::after {
   opacity: 0;

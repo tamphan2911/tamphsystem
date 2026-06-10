@@ -94,7 +94,7 @@ export function ResearchSearchPicker<T = unknown>({
       <div className="relative">
         {selected ? (
           <div
-            className={`${researchSearchFieldClass} flex h-auto min-h-11 items-center gap-2 px-2.5 py-1.5`}
+            className={`${researchSearchFieldClass} flex h-auto min-h-12 items-center gap-2 px-2.5 py-1.5`}
           >
             {renderSelected ? (
               renderSelected(selected)
@@ -126,7 +126,9 @@ export function ResearchSearchPicker<T = unknown>({
         ) : (
           <div className="relative">
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className={`pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition duration-200 ease-out ${
+                focused || query.trim() ? "text-[#A8DADC]" : "text-[#5A5A5A]"
+              }`}
               aria-hidden="true"
             />
             <input
@@ -159,7 +161,7 @@ export function ResearchSearchPicker<T = unknown>({
                 }
               }}
               placeholder={placeholder}
-              className={`${researchSearchFieldClass} h-11 pl-9`}
+              className={`${researchSearchFieldClass} h-12 pl-9`}
             />
           </div>
         )}
