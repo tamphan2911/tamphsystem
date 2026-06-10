@@ -3468,7 +3468,8 @@ export async function updateSubmissionStatus(formData: FormData) {
         if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
           return {
             ok: false,
-            message: "Published article link must start with http:// or https://.",
+            message:
+              "Published article link must start with http:// or https://.",
           };
         }
       } catch {
@@ -3585,19 +3586,23 @@ export async function updateSubmissionStatus(formData: FormData) {
               }
             : null;
     if (normalizedNotification) {
-      await notifyResearchAuthors(submission.researchProjectId, {
-        ...normalizedNotification,
-        summary: project?.title ?? normalizedNotification.title,
-      });
-      await notifyOrganizedProjectMembersForResearch(
-        submission.researchProjectId,
-        {
-          type: `PROJECT_${normalizedNotification.type}`,
-          title: normalizedNotification.title,
+      try {
+        await notifyResearchAuthors(submission.researchProjectId, {
+          ...normalizedNotification,
           summary: project?.title ?? normalizedNotification.title,
-          body: `${normalizedNotification.body} This research is associated with your project.`,
-        },
-      );
+        });
+        await notifyOrganizedProjectMembersForResearch(
+          submission.researchProjectId,
+          {
+            type: `PROJECT_${normalizedNotification.type}`,
+            title: normalizedNotification.title,
+            summary: project?.title ?? normalizedNotification.title,
+            body: `${normalizedNotification.body} This research is associated with your project.`,
+          },
+        );
+      } catch (error) {
+        console.error("Failed to send submission status notifications", error);
+      }
     }
     revalidatePath("/projects");
     revalidatePath(`/projects/${submission.researchProjectId}`);
@@ -3756,19 +3761,23 @@ export async function updateSubmissionStatus(formData: FormData) {
               }
             : null;
     if (normalizedNotification) {
-      await notifyResearchAuthors(submission.researchProjectId, {
-        ...normalizedNotification,
-        summary: project?.title ?? normalizedNotification.title,
-      });
-      await notifyOrganizedProjectMembersForResearch(
-        submission.researchProjectId,
-        {
-          type: `PROJECT_${normalizedNotification.type}`,
-          title: normalizedNotification.title,
+      try {
+        await notifyResearchAuthors(submission.researchProjectId, {
+          ...normalizedNotification,
           summary: project?.title ?? normalizedNotification.title,
-          body: `${normalizedNotification.body} This research is associated with your project.`,
-        },
-      );
+        });
+        await notifyOrganizedProjectMembersForResearch(
+          submission.researchProjectId,
+          {
+            type: `PROJECT_${normalizedNotification.type}`,
+            title: normalizedNotification.title,
+            summary: project?.title ?? normalizedNotification.title,
+            body: `${normalizedNotification.body} This research is associated with your project.`,
+          },
+        );
+      } catch (error) {
+        console.error("Failed to send submission status notifications", error);
+      }
     }
 
     revalidatePath("/projects");

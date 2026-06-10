@@ -40,6 +40,11 @@ export function ResearchFormSelect({
   const isPlaceholder = !selected?.value;
 
   useEffect(() => {
+    setValue(defaultValue);
+    onValueChange?.(defaultValue);
+  }, [defaultValue, onValueChange]);
+
+  useEffect(() => {
     function closeOnOutsideClick(event: MouseEvent) {
       const target = event.target as Element;
       if (

@@ -78,6 +78,13 @@ export type SubmissionRow = {
   canViewRegistrationClaim?: boolean;
 };
 
+type StatusDraft = {
+  submissionId: string;
+  submissionKind: SubmissionRow["kind"];
+  status: string;
+  statusDate: string;
+};
+
 const statusOptions = [
   { value: "PENDING", label: "Submitted" },
   { value: "UNDER_REVIEW", label: "Reviewing" },
@@ -205,6 +212,26 @@ function canEditWhenResearchLocked(row: SubmissionRow) {
 
 function isWithdrawn(row: SubmissionRow) {
   return normalizedStatus(row.status) === "WITHDRAWN";
+}
+
+function statusDraftFromForm(formData: FormData): StatusDraft {
+  return {
+    submissionId: String(formData.get("submissionId") ?? ""),
+    submissionKind: String(
+      formData.get("submissionKind") ?? "",
+    ) as SubmissionRow["kind"],
+    status: String(formData.get("status") ?? ""),
+    statusDate: String(formData.get("statusDate") ?? ""),
+  };
+}
+
+function formDataFromStatusDraft(draft: StatusDraft) {
+  const formData = new FormData();
+  formData.set("submissionId", draft.submissionId);
+  formData.set("submissionKind", draft.submissionKind);
+  formData.set("status", draft.status);
+  formData.set("statusDate", draft.statusDate);
+  return formData;
 }
 
 function MoneyCell({ amount, currency }: { amount: string; currency: string }) {
@@ -370,9 +397,9 @@ export function SubmissionsTable({
   const [editing, setEditing] = useState<SubmissionRow | null>(null);
   const [deleting, setDeleting] = useState<SubmissionRow | null>(null);
   const [acceptanceConfirmation, setAcceptanceConfirmation] =
-    useState<FormData | null>(null);
+    useState<StatusDraft | null>(null);
   const [withdrawalConfirmation, setWithdrawalConfirmation] =
-    useState<FormData | null>(null);
+    useState<StatusDraft | null>(null);
   const [editStatus, setEditStatus] = useState("");
   const [isPending, startTransition] = useTransition();
   const { showSuccess, showError } = useResearchToast();
@@ -419,7 +446,19 @@ export function SubmissionsTable({
     tone: "default" | "accepted" | "withdrawn" = "default",
   ) {
     startTransition(async () => {
-      const result = await updateSubmissionStatus(formData);
+      let result;
+      try {
+        result = await updateSubmissionStatus(formData);
+      } catch (error) {
+        showError({
+          title: "Status not updated",
+          detail:
+            error instanceof Error
+              ? error.message
+              : "The status update failed before the server returned a response. Please try again.",
+        });
+        return;
+      }
       if (result && !result.ok) {
         showError({
           title: "Status not updated",
@@ -486,12 +525,12 @@ export function SubmissionsTable({
       normalizedStatus(editing.status) !== "WITHDRAWN";
 
     if (movesToAccepted) {
-      setAcceptanceConfirmation(formData);
+      setAcceptanceConfirmation(statusDraftFromForm(formData));
       return;
     }
 
     if (movesToWithdrawn) {
-      setWithdrawalConfirmation(formData);
+      setWithdrawalConfirmation(statusDraftFromForm(formData));
       return;
     }
 
@@ -933,7 +972,11 @@ export function SubmissionsTable({
           maxWidth="max-w-lg"
           bodyClassName="px-5 py-4"
           headerActions={
-            <ResearchButton form="submission-status-form" disabled={isPending}>
+            <ResearchButton
+              type="submit"
+              form="submission-status-form"
+              disabled={isPending}
+            >
               <Check className="h-4 w-4" />
               Save status
             </ResearchButton>
@@ -1029,7 +1072,12 @@ export function SubmissionsTable({
           confirmIcon={<Check className="h-4 w-4" />}
           isConfirming={isPending}
           onCancel={() => setAcceptanceConfirmation(null)}
-          onConfirm={() => persistStatus(acceptanceConfirmation, "accepted")}
+          onConfirm={() =>
+            persistStatus(
+              formDataFromStatusDraft(acceptanceConfirmation),
+              "accepted",
+            )
+          }
         >
           <p>
             After the status becomes accepted, it cannot be changed back to
@@ -1051,7 +1099,12 @@ export function SubmissionsTable({
           confirmIcon={<TriangleAlert className="h-4 w-4" />}
           isConfirming={isPending}
           onCancel={() => setWithdrawalConfirmation(null)}
-          onConfirm={() => persistStatus(withdrawalConfirmation, "withdrawn")}
+          onConfirm={() =>
+            persistStatus(
+              formDataFromStatusDraft(withdrawalConfirmation),
+              "withdrawn",
+            )
+          }
         >
           <p>
             Use this only when the journal or conference submission has been
