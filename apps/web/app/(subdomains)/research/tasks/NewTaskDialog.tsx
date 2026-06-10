@@ -508,6 +508,7 @@ export function NewTaskDialog({
                 type="button"
                 onClick={() => setMode(item)}
                 data-research-toggle-tab="true"
+                data-active={mode === item}
                 className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
                   mode === item
                     ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
@@ -659,6 +660,7 @@ export function NewTaskDialog({
                     type="button"
                     onClick={() => setProjectSubtype(value)}
                     data-research-toggle-tab="true"
+                    data-active={projectSubtype === value}
                     className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
                       projectSubtype === value
                         ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"

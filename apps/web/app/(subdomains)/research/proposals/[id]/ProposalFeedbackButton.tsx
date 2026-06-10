@@ -122,10 +122,15 @@ export function ProposalFeedbackButton({
               <p className="text-sm font-semibold text-[#E4E4E4]">
                 {proposalTitle}
               </p>
-              <div className="grid grid-cols-2 gap-2 border border-[#444444] bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+              <div
+                data-research-toggle-tabs="true"
+                className="grid grid-cols-2 gap-2 border border-[#444444] bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950"
+              >
                 <button
                   type="button"
                   onClick={() => setDecision("ACCEPTED")}
+                  data-research-toggle-tab="true"
+                  data-active={decision === "ACCEPTED"}
                   className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-none px-3 py-2 text-sm font-black transition ${
                     decision === "ACCEPTED"
                       ? "bg-emerald-600 text-white shadow-sm"
@@ -138,6 +143,8 @@ export function ProposalFeedbackButton({
                 <button
                   type="button"
                   onClick={() => setDecision("DECLINED")}
+                  data-research-toggle-tab="true"
+                  data-active={decision === "DECLINED"}
                   className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-none px-3 py-2 text-sm font-black transition ${
                     decision === "DECLINED"
                       ? "bg-rose-600 text-white shadow-sm"

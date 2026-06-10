@@ -422,6 +422,7 @@ export function SuggestedJournalsPanel({
                     setSelectedAddVenue(null);
                   }}
                   data-research-toggle-tab="true"
+                  data-active={activeAddTab === tab}
                   className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
                     activeAddTab === tab
                       ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
@@ -610,6 +611,7 @@ export function SuggestedJournalsPanel({
                   type="button"
                   onClick={() => setTaskMode(mode)}
                   data-research-toggle-tab="true"
+                  data-active={taskMode === mode}
                   className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
                     taskMode === mode
                       ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"

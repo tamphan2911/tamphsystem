@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ActiveNavLink } from "@/sites/research/components/ActiveNavLink";
 import { ProfileMenu } from "@/sites/shared/components/ProfileMenu";
 import { SidebarSupportCard } from "@/sites/research/components/SidebarSupportCard";
@@ -260,9 +260,9 @@ export function ResearchShell({
               title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {collapsed ? (
-                <PanelLeftOpen className="h-4 w-4" strokeWidth={1.75} />
+                <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
               ) : (
-                <PanelLeftClose className="h-4 w-4" strokeWidth={1.75} />
+                <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
               )}
             </button>
           </div>
