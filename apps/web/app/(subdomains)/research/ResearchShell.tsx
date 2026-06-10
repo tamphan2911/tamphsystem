@@ -228,7 +228,7 @@ export function ResearchShell({
 
   return (
     <ResearchToastProvider>
-      <div className="research-site-root relative min-h-screen overflow-x-hidden bg-[#242424] text-[#E4E4E4]">
+      <div className="research-site-root relative h-screen overflow-y-auto overflow-x-hidden bg-[#242424] text-[#E4E4E4]">
         <aside
           className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#3D3D3D] bg-[#2C2C2C] transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none ${
             collapsed ? "w-20" : "w-72"

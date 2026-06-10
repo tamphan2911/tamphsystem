@@ -797,6 +797,34 @@ textarea:focus-visible {
   background: #242424;
 }
 
+html:has(.research-site-root),
+body:has(.research-site-root) {
+  height: 100%;
+  overflow: hidden;
+}
+
+.research-site-root {
+  scrollbar-color: rgba(176, 176, 176, 0.44) transparent;
+  scrollbar-width: thin;
+}
+
+.research-site-root::-webkit-scrollbar {
+  width: 10px;
+}
+
+.research-site-root::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.research-site-root::-webkit-scrollbar-thumb {
+  border: 2px solid #242424;
+  background: rgba(176, 176, 176, 0.52);
+}
+
+.research-site-root:hover::-webkit-scrollbar-thumb {
+  background: rgba(176, 176, 176, 0.72);
+}
+
 :where([data-research-modal-overlay="true"])
   :where(.research-dropdown-panel, .research-dropdown-floating-panel)
   :where([class*="overflow-y-auto"], [role="listbox"]),
