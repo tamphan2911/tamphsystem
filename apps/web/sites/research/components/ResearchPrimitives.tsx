@@ -150,8 +150,8 @@ export function IconHint({
     if (trigger) {
       const rect = trigger.getBoundingClientRect();
       setCoords({
-        left: rect.left + rect.width / 2,
-        top: position === "top" ? rect.top - 8 : rect.bottom + 8,
+        left: Math.round(rect.left + rect.width / 2),
+        top: Math.round(position === "top" ? rect.top - 8 : rect.bottom + 8),
       });
     }
     setVisible(true);
@@ -170,8 +170,10 @@ export function IconHint({
       const minLeft = tooltipWidth / 2 + viewportPadding;
       const maxLeft = window.innerWidth - tooltipWidth / 2 - viewportPadding;
       setCoords({
-        left: Math.min(Math.max(rawLeft, minLeft), Math.max(minLeft, maxLeft)),
-        top: position === "top" ? rect.top - 8 : rect.bottom + 8,
+        left: Math.round(
+          Math.min(Math.max(rawLeft, minLeft), Math.max(minLeft, maxLeft)),
+        ),
+        top: Math.round(position === "top" ? rect.top - 8 : rect.bottom + 8),
       });
     }
 

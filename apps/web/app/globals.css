@@ -1995,6 +1995,88 @@ textarea:focus-visible {
   opacity: 0.68;
 }
 
+.research-site-root
+  :where(
+    a,
+    button,
+    [role="button"],
+    [role="option"],
+    [role="tab"],
+    label,
+    summary,
+    svg
+  ),
+[data-research-modal-overlay="true"]
+  :where(
+    a,
+    button,
+    [role="button"],
+    [role="option"],
+    [role="tab"],
+    label,
+    summary,
+    svg
+  ),
+.research-dropdown-floating-panel
+  :where(a, button, [role="button"], [role="option"], svg) {
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+.research-site-root
+  :where(
+    a,
+    button,
+    [role="button"],
+    [role="option"],
+    [role="tab"],
+    label,
+    summary,
+    svg
+  ):is(:hover, :active, :focus-visible),
+[data-research-modal-overlay="true"]
+  :where(
+    a,
+    button,
+    [role="button"],
+    [role="option"],
+    [role="tab"],
+    label,
+    summary,
+    svg
+  ):is(:hover, :active, :focus-visible),
+.research-dropdown-floating-panel
+  :where(a, button, [role="button"], [role="option"], svg):is(
+    :hover,
+    :active,
+    :focus-visible
+  ) {
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+.research-site-root
+  :where(
+    [class*="tooltip"],
+    [class*="Tooltip"],
+    [class*="hint"],
+    [class*="Hint"],
+    [class*="group-hover"]:where(span, div)
+  ),
+[data-research-modal-overlay="true"]
+  :where(
+    [class*="tooltip"],
+    [class*="Tooltip"],
+    [class*="hint"],
+    [class*="Hint"],
+    [class*="group-hover"]:where(span, div)
+  ) {
+  filter: none !important;
+  text-shadow: none !important;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .research-site-root *,
   .research-site-root *::before,
