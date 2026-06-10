@@ -107,6 +107,12 @@ function researchMatchesMode(project: TaskResearchOption, mode: TaskMode) {
   return true;
 }
 
+function defaultTaskDueDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 7);
+  return date.toISOString().slice(0, 10);
+}
+
 export function NewTaskDialog({
   assignees,
   researchOptions,
@@ -132,6 +138,7 @@ export function NewTaskDialog({
   const [accountQuery, setAccountQuery] = useState("");
   const [reviewQuery, setReviewQuery] = useState("");
   const [organizedProjectQuery, setOrganizedProjectQuery] = useState("");
+  const [dueDate, setDueDate] = useState(defaultTaskDueDate);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedResearch, setSelectedResearch] =
     useState<TaskResearchOption | null>(null);
@@ -270,6 +277,7 @@ export function NewTaskDialog({
     setAccountQuery("");
     setReviewQuery("");
     setOrganizedProjectQuery("");
+    setDueDate(defaultTaskDueDate());
     setSelectedIds([]);
     setSelectedResearch(null);
     setSelectedVenue(null);
@@ -492,7 +500,12 @@ export function NewTaskDialog({
               <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Due date
               </span>
-              <ResearchDatePicker name="dueDate" className={inputClass} />
+              <ResearchDatePicker
+                name="dueDate"
+                value={dueDate}
+                onChange={setDueDate}
+                className={inputClass}
+              />
             </label>
           </div>
 
