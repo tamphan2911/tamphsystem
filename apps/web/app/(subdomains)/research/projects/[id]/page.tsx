@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
-  ArrowLeft,
   ClipboardCheck,
   Building2,
   Download,
@@ -42,6 +41,7 @@ import {
   IconHint,
   researchLinkClass,
 } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 
 export const dynamic = "force-dynamic";
 
@@ -424,7 +424,9 @@ export default async function ProjectDetailPage({
     ? (project.submissions.find(
         (submission) => submission.status === "PUBLISHED",
       ) ??
-      project.submissions.find((submission) => submission.status === "ACCEPTED"))
+      project.submissions.find(
+        (submission) => submission.status === "ACCEPTED",
+      ))
     : undefined;
   const highlightedConferenceSubmission = hasJournalSubmissions
     ? undefined
@@ -780,23 +782,22 @@ export default async function ProjectDetailPage({
   const StageIcon = stageStyle.icon;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <div className="min-w-0">
-        <Link
-          href="/projects"
-          className="mb-4 inline-flex items-center gap-2 text-sm font-normal text-[#B0B0B0] transition hover:text-[#A8DADC]"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to research
-        </Link>
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+    <>
+      <ResearchPageHeaderPortal>
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              {project.researchCode && (
-                <span className="font-mono text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
-                  ID: {project.researchCode}
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="min-w-0 truncate text-sm font-normal leading-6 text-[#E4E4E4] xl:text-base">
+                {project.title}
+              </h1>
+              <IconHint label={stageStyle.label}>
+                <span
+                  className={`inline-flex h-8 w-8 flex-none items-center justify-center border ${stageStyle.className}`}
+                  aria-label={stageStyle.label}
+                >
+                  <StageIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
-              )}
+              </IconHint>
               <ResearchBasicEditDialog
                 action={updateAction}
                 values={researchBasicValues}
@@ -809,11 +810,6 @@ export default async function ProjectDetailPage({
                 canEditRegistrationClaim={isAdmin}
                 disabled={!canEditResearch}
               />
-            </div>
-            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-3">
-              <h1 className="min-w-0 flex-1 text-xl font-normal leading-8 tracking-tight text-[#E4E4E4]">
-                {project.title}
-              </h1>
               {publishedArticleSubmission?.articleFileName && (
                 <IconHint label="Download published article file">
                   <a
@@ -840,36 +836,37 @@ export default async function ProjectDetailPage({
                 </IconHint>
               )}
             </div>
-            {project.fundingInstitution && (
-              <p className="mt-2 text-sm text-[#B0B0B0]">
-                Funded by:{" "}
-                <span className="font-normal text-[#E4E4E4]">
-                  {project.fundingInstitution.name}
+            <div className="mt-1 flex min-w-0 items-center gap-2 text-xs text-[#B0B0B0]">
+              {project.researchCode && (
+                <span className="font-mono uppercase tracking-wide">
+                  ID: {project.researchCode}
                 </span>
-              </p>
-            )}
-          </div>
-          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row xl:justify-end">
-            <div
-              className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 border px-3 text-sm font-normal shadow-none transition sm:w-[11.5rem] ${stageStyle.className}`}
-            >
-              <StageIcon className="h-4 w-4 flex-none" />
-              <span className="truncate">{stageStyle.label}</span>
+              )}
+              <span className="min-w-0 truncate text-[#E4E4E4]">
+                Authors: {authorsLine}
+              </span>
+              {canViewRegistrationClaim && (
+                <IconHint label={registrationLine}>
+                  <span className="inline-flex flex-none items-center border border-[#444444] bg-[#202020] px-2 py-0.5 text-[11px] font-normal text-[#B0B0B0]">
+                    {registrationLine}
+                  </span>
+                </IconHint>
+              )}
             </div>
           </div>
         </div>
-        <div className="mt-3 space-y-2 text-sm text-[#B0B0B0]">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-normal text-[#E4E4E4]">Authors:</span>
-            <span className="text-[#E4E4E4]">{authorsLine}</span>
-            {canViewRegistrationClaim && (
-              <IconHint label={registrationLine}>
-                <span className="inline-flex items-center border border-[#444444] bg-[#202020] px-2.5 py-1 text-xs font-normal text-[#B0B0B0]">
-                  {registrationLine}
-                </span>
-              </IconHint>
-            )}
-          </div>
+      </ResearchPageHeaderPortal>
+
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="min-w-0 space-y-2 text-sm text-[#B0B0B0]">
+          {project.fundingInstitution && (
+            <p>
+              Funded by:{" "}
+              <span className="font-normal text-[#E4E4E4]">
+                {project.fundingInstitution.name}
+              </span>
+            </p>
+          )}
           {highlightedJournalSubmission && highlightedJournalClass && (
             <div
               className={`flex items-center gap-3 border px-3 py-2 ${highlightedJournalClass.box}`}
@@ -935,290 +932,293 @@ export default async function ProjectDetailPage({
             </p>
           )}
         </div>
-      </div>
 
-      <SaveForm
-        id="research-detail-form"
-        action={updateAction}
-        className="grid gap-6 xl:grid-cols-[1fr_22rem]"
-      >
-        <fieldset
-          disabled={!canEditResearch || researchContentLocked}
-          className="contents"
+        <SaveForm
+          id="research-detail-form"
+          action={updateAction}
+          className="grid gap-6 xl:grid-cols-[1fr_22rem]"
         >
-          <ResearchDetailSection>
-            <input type="hidden" name="title" value={project.title} />
-            <input
-              type="hidden"
-              name="abstract"
-              value={project.abstract ?? ""}
-            />
-            {defaultAuthors.map((author) => (
-              <input
-                key={author.id}
-                type="hidden"
-                name="authorUserIds"
-                value={author.id}
-              />
-            ))}
-            <input
-              type="hidden"
-              name="correspondingAuthorId"
-              value={
-                defaultAuthors.find((author) => author.isCorresponding)?.id ??
-                defaultAuthors[0]?.id ??
-                ""
-              }
-            />
-            <input
-              type="hidden"
-              name="universityRegistration"
-              value={project.universityRegistration ?? ""}
-            />
-            <input
-              type="hidden"
-              name="registrationUserId"
-              value={defaultRegistrationUser?.id ?? ""}
-            />
-            <input
-              type="hidden"
-              name="fundingInstitutionId"
-              value={defaultFundingInstitution?.id ?? ""}
-            />
-            {!defaultRegistrationUser && project.registrationName && (
+          <fieldset
+            disabled={!canEditResearch || researchContentLocked}
+            className="contents"
+          >
+            <ResearchDetailSection>
+              <input type="hidden" name="title" value={project.title} />
               <input
                 type="hidden"
-                name="registrationName"
-                value={project.registrationName}
+                name="abstract"
+                value={project.abstract ?? ""}
               />
-            )}
-            <input
-              type="hidden"
-              name="registerStatus"
-              value={project.registerStatus}
-            />
-            <input
-              type="hidden"
-              name="claimStatus"
-              value={project.claimStatus}
-            />
-            <div>
-              {project.organizedProjectLinks.length > 0 && (
-                <>
-                  <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-                    Associated project:
-                  </h2>
-                  <div className="mt-3 grid gap-2">
-                    {project.organizedProjectLinks.map(
-                      ({ organizedProject }) => (
-                        <p
-                          key={organizedProject.id}
-                          className="text-sm leading-6 text-[#E4E4E4]"
-                        >
-                          <Link
-                            href={`/organized-projects/${organizedProject.id}`}
-                            className={researchLinkClass}
-                          >
-                            {organizedProject.title}
-                          </Link>
-                          <span className="text-[#B0B0B0]">
-                            {" "}
-                            - {organizedProject.organizer || "No funder"} -{" "}
-                            {organizedProject.status}
-                          </span>
-                        </p>
-                      ),
-                    )}
-                  </div>
-                  <div className="my-5 border-t border-[#444444]" />
-                </>
+              {defaultAuthors.map((author) => (
+                <input
+                  key={author.id}
+                  type="hidden"
+                  name="authorUserIds"
+                  value={author.id}
+                />
+              ))}
+              <input
+                type="hidden"
+                name="correspondingAuthorId"
+                value={
+                  defaultAuthors.find((author) => author.isCorresponding)?.id ??
+                  defaultAuthors[0]?.id ??
+                  ""
+                }
+              />
+              <input
+                type="hidden"
+                name="universityRegistration"
+                value={project.universityRegistration ?? ""}
+              />
+              <input
+                type="hidden"
+                name="registrationUserId"
+                value={defaultRegistrationUser?.id ?? ""}
+              />
+              <input
+                type="hidden"
+                name="fundingInstitutionId"
+                value={defaultFundingInstitution?.id ?? ""}
+              />
+              {!defaultRegistrationUser && project.registrationName && (
+                <input
+                  type="hidden"
+                  name="registrationName"
+                  value={project.registrationName}
+                />
               )}
-
-              <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-                Research notes:
-              </h2>
-              <div className="mt-3 text-sm leading-6 text-[#E4E4E4]">
-                {project.abstract?.trim() ? (
-                  <p className="whitespace-pre-wrap">{project.abstract}</p>
-                ) : (
-                  <p className="text-[#B0B0B0]">
-                    No note recorded for this research.
-                  </p>
+              <input
+                type="hidden"
+                name="registerStatus"
+                value={project.registerStatus}
+              />
+              <input
+                type="hidden"
+                name="claimStatus"
+                value={project.claimStatus}
+              />
+              <div>
+                {project.organizedProjectLinks.length > 0 && (
+                  <>
+                    <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+                      Associated project:
+                    </h2>
+                    <div className="mt-3 grid gap-2">
+                      {project.organizedProjectLinks.map(
+                        ({ organizedProject }) => (
+                          <p
+                            key={organizedProject.id}
+                            className="text-sm leading-6 text-[#E4E4E4]"
+                          >
+                            <Link
+                              href={`/organized-projects/${organizedProject.id}`}
+                              className={researchLinkClass}
+                            >
+                              {organizedProject.title}
+                            </Link>
+                            <span className="text-[#B0B0B0]">
+                              {" "}
+                              - {organizedProject.organizer ||
+                                "No funder"} - {organizedProject.status}
+                            </span>
+                          </p>
+                        ),
+                      )}
+                    </div>
+                    <div className="my-5 border-t border-[#444444]" />
+                  </>
                 )}
-              </div>
 
-              <div className="my-5 border-t border-[#444444]" />
-
-              <div className="mb-3 flex items-center justify-between gap-3">
                 <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-                  Authors
+                  Research notes:
                 </h2>
-                <div className="flex items-center gap-1">
-                  <ResearchAuthorsEditDialog
-                    action={updateAction}
-                    values={researchBasicValues}
-                    authors={defaultAuthors}
-                    completedProductionSteps={completedProductionStepValues}
-                    users={authorOptions}
-                    disabled={!canEditResearch || journalSuccessLocksResearch}
-                  />
-                  {isAdmin && (
-                    <AuthorNotificationActions
-                      projectId={project.id}
-                      sentTypes={authorNotificationSentTypes}
-                    />
+                <div className="mt-3 text-sm leading-6 text-[#E4E4E4]">
+                  {project.abstract?.trim() ? (
+                    <p className="whitespace-pre-wrap">{project.abstract}</p>
+                  ) : (
+                    <p className="text-[#B0B0B0]">
+                      No note recorded for this research.
+                    </p>
                   )}
                 </div>
-              </div>
-              <div className="divide-y divide-[#444444] border-y border-[#444444]">
-                {defaultAuthors.map((author, index) => (
-                  <div key={author.id} className="flex items-center gap-4 py-3">
-                    <span className="inline-flex w-8 flex-none justify-center font-mono text-sm text-[#A8DADC]">
-                      {index + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        <p className="truncate text-sm font-normal text-[#E4E4E4]">
-                          {author.name || author.email}
-                          {index === 0 ? "*" : ""}
-                        </p>
-                        <span className="border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#B0B0B0]">
-                          {index === 0 ? "First author" : "Author"}
-                        </span>
-                        {author.isCorresponding && (
-                          <span className="border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#A8DADC]">
-                            Corresponding
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#B0B0B0]">
-                        <Mail
-                          className="h-3 w-3 flex-none text-[#A8DADC]"
-                          aria-hidden="true"
-                        />
-                        <span className="truncate">{author.email}</span>
-                      </p>
-                      <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#B0B0B0]">
-                        <Building2
-                          className="h-3 w-3 flex-none text-[#B39CD0]"
-                          aria-hidden="true"
-                        />
-                        <span className="truncate">
-                          {author.affiliation || "No affiliation recorded"}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </ResearchDetailSection>
 
-          <ResearchDetailSection>
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <h2 className="flex items-center gap-2 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-                <ClipboardCheck className="h-4 w-4 text-[#A8DADC]" />
-                Production timeline
-              </h2>
-              <ProductionTimelineActions
-                projectId={project.id}
-                locked={productionTimelineLocked}
-                disabled={!canEditResearch || researchContentLocked}
-                totalSteps={productionSteps.length}
-              />
-            </div>
-            <div className="relative">
-              <div className="absolute bottom-7 left-[1.06rem] top-7 w-px bg-[#444444]" />
-              {productionSteps.map((step, index) => {
-                const active = completedProductionSteps.has(step.label);
-                return (
-                  <label
-                    key={step.label}
-                    className={`group/timeline relative grid cursor-pointer grid-cols-[2.125rem_minmax(0,1fr)] gap-4 border-b border-[#444444]/70 py-4 transition duration-150 last:border-b-0 ${productionTimelineLocked ? "cursor-default" : "hover:bg-[#303030]"}`}
-                  >
-                    <input
-                      type="checkbox"
-                      name="completedProductionSteps"
-                      value={step.label}
-                      defaultChecked={active}
-                      disabled={productionTimelineLocked}
-                      className="peer sr-only"
+                <div className="my-5 border-t border-[#444444]" />
+
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+                    Authors
+                  </h2>
+                  <div className="flex items-center gap-1">
+                    <ResearchAuthorsEditDialog
+                      action={updateAction}
+                      values={researchBasicValues}
+                      authors={defaultAuthors}
+                      completedProductionSteps={completedProductionStepValues}
+                      users={authorOptions}
+                      disabled={!canEditResearch || journalSuccessLocksResearch}
                     />
-                    <span className="relative z-10 mt-0.5 flex h-8 w-8 items-center justify-center border border-[#444444] bg-[#202020] text-[#666666] transition duration-150 peer-checked:border-[#A8DADC] peer-checked:bg-[#263636] peer-checked:text-[#A8DADC] peer-focus-visible:ring-4 peer-focus-visible:ring-[#A8DADC]/10 group-hover/timeline:border-[#666666] peer-checked:group-hover/timeline:border-[#A8DADC] peer-checked:[&_.timeline-check]:opacity-100 peer-checked:[&_.timeline-dot]:opacity-0">
-                      <span className="absolute left-1/2 top-full h-4 w-px -translate-x-1/2 bg-[#444444] group-last/timeline:hidden" />
-                      <CheckCircle2
-                        className="timeline-check h-4 w-4 opacity-0 transition duration-150"
-                        aria-hidden="true"
+                    {isAdmin && (
+                      <AuthorNotificationActions
+                        projectId={project.id}
+                        sentTypes={authorNotificationSentTypes}
                       />
-                      <span className="timeline-dot absolute h-2 w-2 bg-current opacity-100 transition duration-150" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="flex min-w-0 items-center justify-between gap-3">
-                        <span className="block truncate text-sm font-normal text-[#E4E4E4]">
-                          {step.label}
-                        </span>
-                        <span className="hidden border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#B0B0B0] sm:inline-flex">
-                          Step {String(index + 1).padStart(2, "0")}
-                        </span>
+                    )}
+                  </div>
+                </div>
+                <div className="divide-y divide-[#444444] border-y border-[#444444]">
+                  {defaultAuthors.map((author, index) => (
+                    <div
+                      key={author.id}
+                      className="flex items-center gap-4 py-3"
+                    >
+                      <span className="inline-flex w-8 flex-none justify-center font-mono text-sm text-[#A8DADC]">
+                        {index + 1}
                       </span>
-                      <span className="mt-1 block text-xs leading-5 text-[#B0B0B0]">
-                        {step.detail}
-                      </span>
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-          </ResearchDetailSection>
-        </fieldset>
-      </SaveForm>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <p className="truncate text-sm font-normal text-[#E4E4E4]">
+                            {author.name || author.email}
+                            {index === 0 ? "*" : ""}
+                          </p>
+                          <span className="border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#B0B0B0]">
+                            {index === 0 ? "First author" : "Author"}
+                          </span>
+                          {author.isCorresponding && (
+                            <span className="border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#A8DADC]">
+                              Corresponding
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#B0B0B0]">
+                          <Mail
+                            className="h-3 w-3 flex-none text-[#A8DADC]"
+                            aria-hidden="true"
+                          />
+                          <span className="truncate">{author.email}</span>
+                        </p>
+                        <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#B0B0B0]">
+                          <Building2
+                            className="h-3 w-3 flex-none text-[#B39CD0]"
+                            aria-hidden="true"
+                          />
+                          <span className="truncate">
+                            {author.affiliation || "No affiliation recorded"}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </ResearchDetailSection>
 
-      <section className="space-y-4 border-t border-[#444444] pt-5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <h2 className="flex items-center gap-2 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-            <Send className="h-5 w-5 text-[#A8DADC]" />
-            Submissions
-          </h2>
-          {canCreateSubmitOrOtherTask ? (
-            <CreateSubmissionTaskDialog
-              projectId={project.id}
-              projectTitle={project.title}
-              venues={venueOptions}
-              assistants={taskAssigneeOptions}
-              disabled={researchContentLocked}
-            />
-          ) : (
-            <div className="border border-[#444444] bg-[#2C2C2C] px-4 py-3 text-sm text-[#E4E4E4] shadow-none">
-              <p className="font-normal">
-                Submissions are updated from assigned tasks.
-              </p>
-              <p className="mt-1 text-[#B0B0B0]">
-                When an assigned submission task is marked finished, this table
-                and related journal/account views update automatically.
-              </p>
-            </div>
-          )}
-        </div>
-        <SubmissionsTable
-          rows={submissionRows}
+            <ResearchDetailSection>
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <h2 className="flex items-center gap-2 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+                  <ClipboardCheck className="h-4 w-4 text-[#A8DADC]" />
+                  Production timeline
+                </h2>
+                <ProductionTimelineActions
+                  projectId={project.id}
+                  locked={productionTimelineLocked}
+                  disabled={!canEditResearch || researchContentLocked}
+                  totalSteps={productionSteps.length}
+                />
+              </div>
+              <div className="relative">
+                <div className="absolute bottom-7 left-[1.06rem] top-7 w-px bg-[#444444]" />
+                {productionSteps.map((step, index) => {
+                  const active = completedProductionSteps.has(step.label);
+                  return (
+                    <label
+                      key={step.label}
+                      className={`group/timeline relative grid cursor-pointer grid-cols-[2.125rem_minmax(0,1fr)] gap-4 border-b border-[#444444]/70 py-4 transition duration-150 last:border-b-0 ${productionTimelineLocked ? "cursor-default" : "hover:bg-[#303030]"}`}
+                    >
+                      <input
+                        type="checkbox"
+                        name="completedProductionSteps"
+                        value={step.label}
+                        defaultChecked={active}
+                        disabled={productionTimelineLocked}
+                        className="peer sr-only"
+                      />
+                      <span className="relative z-10 mt-0.5 flex h-8 w-8 items-center justify-center border border-[#444444] bg-[#202020] text-[#666666] transition duration-150 peer-checked:border-[#A8DADC] peer-checked:bg-[#263636] peer-checked:text-[#A8DADC] peer-focus-visible:ring-4 peer-focus-visible:ring-[#A8DADC]/10 group-hover/timeline:border-[#666666] peer-checked:group-hover/timeline:border-[#A8DADC] peer-checked:[&_.timeline-check]:opacity-100 peer-checked:[&_.timeline-dot]:opacity-0">
+                        <span className="absolute left-1/2 top-full h-4 w-px -translate-x-1/2 bg-[#444444] group-last/timeline:hidden" />
+                        <CheckCircle2
+                          className="timeline-check h-4 w-4 opacity-0 transition duration-150"
+                          aria-hidden="true"
+                        />
+                        <span className="timeline-dot absolute h-2 w-2 bg-current opacity-100 transition duration-150" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="flex min-w-0 items-center justify-between gap-3">
+                          <span className="block truncate text-sm font-normal text-[#E4E4E4]">
+                            {step.label}
+                          </span>
+                          <span className="hidden border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#B0B0B0] sm:inline-flex">
+                            Step {String(index + 1).padStart(2, "0")}
+                          </span>
+                        </span>
+                        <span className="mt-1 block text-xs leading-5 text-[#B0B0B0]">
+                          {step.detail}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </ResearchDetailSection>
+          </fieldset>
+        </SaveForm>
+
+        <section className="space-y-4 border-t border-[#444444] pt-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+              <Send className="h-5 w-5 text-[#A8DADC]" />
+              Submissions
+            </h2>
+            {canCreateSubmitOrOtherTask ? (
+              <CreateSubmissionTaskDialog
+                projectId={project.id}
+                projectTitle={project.title}
+                venues={venueOptions}
+                assistants={taskAssigneeOptions}
+                disabled={researchContentLocked}
+              />
+            ) : (
+              <div className="border border-[#444444] bg-[#2C2C2C] px-4 py-3 text-sm text-[#E4E4E4] shadow-none">
+                <p className="font-normal">
+                  Submissions are updated from assigned tasks.
+                </p>
+                <p className="mt-1 text-[#B0B0B0]">
+                  When an assigned submission task is marked finished, this
+                  table and related journal/account views update automatically.
+                </p>
+              </div>
+            )}
+          </div>
+          <SubmissionsTable
+            rows={submissionRows}
+            isAdmin={isAdmin}
+            disabled={researchContentLocked}
+            flushControls
+          />
+        </section>
+        <SuggestedJournalsPanel
+          projectId={project.id}
+          projectTitle={project.title}
+          journals={allJournalOptions}
+          suggested={suggestedJournalOptions}
+          conferences={allConferenceOptions}
+          suggestedConferences={suggestedConferenceOptions}
+          assistants={taskAssigneeOptions}
           isAdmin={isAdmin}
+          canAssignTask={canCreateSubmitOrOtherTask}
+          canSuggestVenue={canSuggestVenue}
           disabled={researchContentLocked}
-          flushControls
         />
-      </section>
-      <SuggestedJournalsPanel
-        projectId={project.id}
-        projectTitle={project.title}
-        journals={allJournalOptions}
-        suggested={suggestedJournalOptions}
-        conferences={allConferenceOptions}
-        suggestedConferences={suggestedConferenceOptions}
-        assistants={taskAssigneeOptions}
-        isAdmin={isAdmin}
-        canAssignTask={canCreateSubmitOrOtherTask}
-        canSuggestVenue={canSuggestVenue}
-        disabled={researchContentLocked}
-      />
-    </div>
+      </div>
+    </>
   );
 }
