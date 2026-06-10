@@ -18,9 +18,7 @@ export function ResearchPageHeaderPortal({
   if (!target) return null;
 
   return createPortal(
-    <div className="mx-auto flex w-full max-w-7xl items-center">
-      {children}
-    </div>,
+    <div className="flex w-full items-center">{children}</div>,
     target,
   );
 }

@@ -290,42 +290,45 @@ export function ResearchShell({
         <div
           className={`relative z-10 transition-[padding] duration-300 ease-out ${collapsed ? "lg:pl-20" : "lg:pl-72"}`}
         >
-          <header className="sticky top-0 z-30 flex h-20 items-center gap-3 border-b border-[#444444] bg-[#242424]/92 px-4 backdrop-blur-xl sm:px-8">
-            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto lg:hidden">
-              {visibleNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`whitespace-nowrap rounded-none px-2 py-1 text-xs font-semibold transition ${
-                    "adminOnly" in item && item.adminOnly
-                      ? "bg-[#fff1e9] text-[#9f3f16] ring-1 ring-[#ffd7c2] hover:bg-[#ffe6d8] dark:bg-[#2a1812] dark:text-[#ffb38a] dark:ring-[#7a3c25] dark:hover:bg-[#3a2119]"
-                      : "text-[#655d6d] hover:bg-[#ece7df] dark:text-[#d7d1df] dark:hover:bg-[#211c2d]"
-                  }`}
-                >
-                  {titleCaseLabel(item.label)}
-                  {item.href === "/proposals" && unopenedProposalCount > 0 && (
-                    <span className="ml-1 rounded-none bg-red-600 px-1.5 py-0.5 text-[10px] font-black text-white">
-                      {unopenedProposalCount > 99
-                        ? "99+"
-                        : unopenedProposalCount}
-                    </span>
-                  )}
-                </Link>
-              ))}
-            </div>
-            <div
-              id="research-page-header"
-              className="hidden min-w-0 flex-1 items-center lg:flex"
-            />
-            <div className="flex items-center gap-3">
-              <ResearchNotificationBell enabled={Boolean(email)} />
-              <ProfileMenu
-                email={email}
-                name={name}
-                profileHref="/profile"
-                adminHref="https://admin.tamph.com"
-                variant="research"
+          <header className="sticky top-0 z-30 flex h-20 items-center border-b border-[#444444] bg-[#242424]/92 px-4 backdrop-blur-xl sm:px-8">
+            <div className="mx-auto flex w-full max-w-7xl items-center gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto lg:hidden">
+                {visibleNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`whitespace-nowrap rounded-none px-2 py-1 text-xs font-semibold transition ${
+                      "adminOnly" in item && item.adminOnly
+                        ? "bg-[#fff1e9] text-[#9f3f16] ring-1 ring-[#ffd7c2] hover:bg-[#ffe6d8] dark:bg-[#2a1812] dark:text-[#ffb38a] dark:ring-[#7a3c25] dark:hover:bg-[#3a2119]"
+                        : "text-[#655d6d] hover:bg-[#ece7df] dark:text-[#d7d1df] dark:hover:bg-[#211c2d]"
+                    }`}
+                  >
+                    {titleCaseLabel(item.label)}
+                    {item.href === "/proposals" &&
+                      unopenedProposalCount > 0 && (
+                        <span className="ml-1 rounded-none bg-red-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+                          {unopenedProposalCount > 99
+                            ? "99+"
+                            : unopenedProposalCount}
+                        </span>
+                      )}
+                  </Link>
+                ))}
+              </div>
+              <div
+                id="research-page-header"
+                className="hidden min-w-0 flex-1 items-center lg:flex"
               />
+              <div className="flex items-center gap-3">
+                <ResearchNotificationBell enabled={Boolean(email)} />
+                <ProfileMenu
+                  email={email}
+                  name={name}
+                  profileHref="/profile"
+                  adminHref="https://admin.tamph.com"
+                  variant="research"
+                />
+              </div>
             </div>
           </header>
 

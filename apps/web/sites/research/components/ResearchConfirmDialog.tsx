@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { AlertTriangle, Trash2, X } from "lucide-react";
+import { createPortal } from "react-dom";
 import { ResearchButton } from "./ResearchPrimitives";
 
 type ConfirmTone = "danger" | "warning" | "info";
@@ -56,17 +57,17 @@ export function ResearchConfirmDialog({
   onCancel: () => void;
   onConfirm: () => void | Promise<void>;
 }) {
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
   const classes = toneClasses(tone);
 
-  return (
+  return createPortal(
     <div
       data-research-modal-overlay="true"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !isConfirming) onCancel();
       }}
-      className="fixed inset-0 z-[1010] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
+      className="fixed inset-0 z-[1100] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
     >
       <div className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] text-[#E4E4E4] shadow-2xl">
         <div className="border-b border-[#444444] px-6 py-5">
@@ -127,6 +128,7 @@ export function ResearchConfirmDialog({
           </ResearchButton>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
