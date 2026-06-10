@@ -298,12 +298,6 @@ export function EditTaskDialog({
       setAccountQuery("");
       return;
     }
-    const onlyAccount = journalAccounts[0];
-    if (journalAccounts.length === 1 && onlyAccount) {
-      setSelectedAccountId(onlyAccount.id);
-      setAccountQuery("");
-      return;
-    }
     if (
       selectedAccountId &&
       !journalAccounts.some((account) => account.id === selectedAccountId)
@@ -373,7 +367,6 @@ export function EditTaskDialog({
     !needsResearch ||
     (selectedResearch ? researchMatchesMode(selectedResearch, mode) : false);
   const needsVenue = mode === "submit";
-  const needsJournalAccount = selectedVenue?.kind === "journal";
   const needsReview = mode === "review";
   const selectedReviewIsOpen =
     !needsReview ||
@@ -388,7 +381,6 @@ export function EditTaskDialog({
     selectedIds.length > 0 &&
     selectedResearchMatchesMode &&
     (!needsVenue || Boolean(selectedVenue)) &&
-    (!needsJournalAccount || Boolean(selectedAccountId)) &&
     selectedReviewIsOpen &&
     selectedOrganizedProjectIsOpen;
 
@@ -794,34 +786,18 @@ function JournalAccountField({
   if (accounts.length === 0) {
     return (
       <section className="rounded-none border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-        No account is linked to this journal yet. Add a journal account before
-        assigning a journal submission task.
-      </section>
-    );
-  }
-
-  const onlyAccount = accounts[0];
-  if (accounts.length === 1 && onlyAccount) {
-    const account = onlyAccount;
-    return (
-      <section className="grid gap-2 rounded-none border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-        <span className="text-xs font-bold uppercase tracking-wide">
-          Account to submit
-        </span>
-        <span className="font-semibold">
-          {account.username}
-          {account.email ? ` - ${account.email}` : ""}
-        </span>
+        No account is linked to this journal yet. You can still keep this
+        submission task assigned and add the account later.
       </section>
     );
   }
 
   return (
     <SearchPanel
-      title="Account to submit"
+      title="Account to submit (optional)"
       query={query}
       setQuery={setQuery}
-      placeholder="Search accounts for this journal..."
+      placeholder="Search accounts for this journal, or leave empty..."
       selectedItems={
         selectedAccount
           ? [

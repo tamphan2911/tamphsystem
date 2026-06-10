@@ -407,7 +407,7 @@ export function CreateSubmissionTaskDialog({
               <section className="grid gap-3 border border-[#444444] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                    Account to submit
+                    Account to submit (optional)
                   </span>
                   <ResearchIconButton
                     type="button"
@@ -437,7 +437,7 @@ export function CreateSubmissionTaskDialog({
                       <span className="min-w-0 truncate">
                         {selectedAccount
                           ? `${selectedAccount.username}${selectedAccount.email ? ` - ${selectedAccount.email}` : ""}`
-                          : "Choose an account"}
+                          : "Choose an account, or leave empty"}
                       </span>
                       <ChevronDown
                         className={`h-4 w-4 flex-none text-[#B0B0B0] transition ${accountOpen ? "rotate-180 text-[#A8DADC]" : ""}`}
@@ -483,7 +483,8 @@ export function CreateSubmissionTaskDialog({
                   </div>
                 ) : (
                   <p className="rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-                    This journal does not have any account yet.
+                    This journal does not have any account yet. You can assign
+                    this task now and add the account later.
                   </p>
                 )}
               </section>
