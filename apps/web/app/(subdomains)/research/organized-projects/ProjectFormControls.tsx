@@ -289,7 +289,7 @@ export function ProjectMembersPicker({
             value={member.id}
           />
         ))}
-      <div className="border border-[#444444] bg-[#2C2C2C] p-3 shadow-none">
+      <div className="border border-[#444444] bg-[#242424] p-3 shadow-none">
         <div ref={searchRef} className="relative">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
@@ -348,9 +348,9 @@ export function ProjectMembersPicker({
           {members.map((member) => (
             <div
               key={member.id}
-              className="flex items-center gap-3 border border-[#444444] bg-white px-3 py-2 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-900"
+              className="flex items-center gap-3 border border-[#444444] bg-[#2C2C2C] px-3 py-2 shadow-none transition hover:border-[#5A5A5A] hover:bg-[#303030]"
             >
-              <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-none bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900">
+              <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-none border border-[#3A3A3A] bg-[#202020] text-[#A8DADC]">
                 <UserRound className="h-4 w-4" aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
@@ -359,12 +359,12 @@ export function ProjectMembersPicker({
                     {userName(member)}
                   </p>
                   {member.isTeamLead && (
-                    <span className="rounded-none bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900">
+                    <span className="rounded-none border border-[#F4D47A]/35 bg-[#3A3322] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#F4D47A]">
                       Team lead
                     </span>
                   )}
                   {member.isInstructor && (
-                    <span className="rounded-none bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 ring-1 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-200 dark:ring-violet-900">
+                    <span className="rounded-none border border-[#B39CD0]/35 bg-[#332B3F] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#C8B6E2]">
                       Instructor
                     </span>
                   )}
@@ -381,8 +381,8 @@ export function ProjectMembersPicker({
                 onClick={() => setTeamLead(member.id)}
                 className={`rounded-none p-2 transition ${
                   member.isTeamLead
-                    ? "bg-amber-50 text-amber-600 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900"
-                    : "text-slate-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-950/40 dark:hover:text-amber-200"
+                    ? "border border-[#F4D47A]/35 bg-[#3A3322] text-[#F4D47A]"
+                    : "border border-transparent text-[#777777] hover:border-[#F4D47A]/35 hover:bg-[#3A3322] hover:text-[#F4D47A]"
                 }`}
               >
                 <Star className="h-4 w-4" aria-hidden="true" />
@@ -394,8 +394,8 @@ export function ProjectMembersPicker({
                 onClick={() => toggleInstructor(member.id)}
                 className={`rounded-none p-2 transition ${
                   member.isInstructor
-                    ? "bg-violet-50 text-violet-600 ring-1 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-200 dark:ring-violet-900"
-                    : "text-slate-400 hover:bg-violet-50 hover:text-violet-600 dark:hover:bg-violet-950/40 dark:hover:text-violet-200"
+                    ? "border border-[#B39CD0]/35 bg-[#332B3F] text-[#C8B6E2]"
+                    : "border border-transparent text-[#777777] hover:border-[#B39CD0]/35 hover:bg-[#332B3F] hover:text-[#C8B6E2]"
                 }`}
               >
                 <GraduationCap className="h-4 w-4" aria-hidden="true" />
@@ -404,14 +404,14 @@ export function ProjectMembersPicker({
                 type="button"
                 aria-label={`Remove ${userName(member)}`}
                 onClick={() => removeMember(member.id)}
-                className="rounded-none p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                className="rounded-none border border-transparent p-2 text-[#777777] transition hover:border-rose-300/35 hover:bg-[#3A252A] hover:text-rose-300"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
           ))}
           {members.length === 0 && (
-            <div className="rounded-none border border-dashed border-slate-300 px-3 py-5 text-center text-sm font-medium text-slate-400 dark:border-slate-700">
+            <div className="rounded-none border border-dashed border-[#444444] bg-[#242424] px-3 py-5 text-center text-sm font-normal text-[#777777]">
               Search and choose at least one member.
             </div>
           )}

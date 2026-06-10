@@ -2048,6 +2048,7 @@ export async function createJournal(formData: FormData) {
       apcCurrency:
         enumValue(CurrencyCode, formData.get("apcCurrency")) ??
         CurrencyCode.USD,
+      hasApcOption: formData.get("hasApcOption") === "on",
       submissionFee: optionalString(formData.get("submissionFee")),
       submissionFeeCurrency:
         enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??
@@ -2095,6 +2096,7 @@ export async function updateJournal(journalId: string, formData: FormData) {
       apcCurrency:
         enumValue(CurrencyCode, formData.get("apcCurrency")) ??
         CurrencyCode.USD,
+      hasApcOption: formData.get("hasApcOption") === "on",
       submissionFee: optionalString(formData.get("submissionFee")),
       submissionFeeCurrency:
         enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??

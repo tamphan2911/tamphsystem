@@ -288,6 +288,7 @@ export default async function JournalDetailPage({
                     country: journal.country,
                     apc: journal.apc,
                     apcCurrency: journal.apcCurrency,
+                    hasApcOption: journal.hasApcOption,
                     submissionFee: journal.submissionFee,
                     submissionFeeCurrency: journal.submissionFeeCurrency,
                     homepageLink: journal.homepageLink,
@@ -326,14 +327,21 @@ export default async function JournalDetailPage({
         <dl className="grid gap-4 border-t border-[#3A3A3A] pt-4 text-sm md:grid-cols-3">
           <div>
             <dt className="text-xs font-bold uppercase text-slate-400">Area</dt>
-            <dd className="mt-1 text-sm leading-5 text-[#B0B0B0]">
-              {journalFields.length > 0 ? journalFields.join("; ") : "-"}
+            <dd className="mt-1 space-y-1 text-sm leading-5 text-[#B0B0B0]">
+              {journalFields.length > 0
+                ? journalFields.map((field) => (
+                    <span key={field} className="block">
+                      {field}
+                    </span>
+                  ))
+                : "-"}
             </dd>
           </div>
           <div>
             <dt className="text-xs font-bold uppercase text-slate-400">APC</dt>
             <dd className="mt-1 text-base font-normal text-[#A8DADC]">
               {formatMoney(journal.apc, journal.apcCurrency)}
+              {journal.hasApcOption ? " (Option)" : ""}
             </dd>
           </div>
           <div>

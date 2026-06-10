@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   BadgeCheck,
-  BadgeDollarSign,
   BookmarkCheck,
   ClipboardCheck,
   CircleOff,
@@ -48,6 +47,7 @@ export type JournalRow = {
   country: string;
   apc: string;
   apcCurrency: string;
+  hasApcOption: boolean;
   submissionFee: string;
   submissionFeeCurrency: string;
   note: string;
@@ -137,10 +137,14 @@ function MoneyIndicator({
   amount,
   currency,
   label,
+  showIcon = true,
+  option = false,
 }: {
   amount: string;
   currency: string;
   label: string;
+  showIcon?: boolean;
+  option?: boolean;
 }) {
   const isFree = isFreeAmount(amount);
   const detail = isFree
@@ -156,15 +160,18 @@ function MoneyIndicator({
             : "text-[#F4D47A] hover:text-[#FFE7A3]"
         }`}
       >
-        {isFree ? (
+        {showIcon && isFree ? (
           <CircleOff className="h-4 w-4 flex-none" aria-hidden="true" />
-        ) : (
-          <BadgeDollarSign className="h-4 w-4 flex-none" aria-hidden="true" />
-        )}
-        <span className="min-w-0 truncate text-sm">
-          {isFree
-            ? "Free"
-            : `${currencySymbol(currency)} ${formatResearchNumber(amount)}`}
+        ) : null}
+        <span className="min-w-0 text-sm">
+          <span className="block truncate">
+            {isFree
+              ? "Free"
+              : `${currencySymbol(currency)} ${formatResearchNumber(amount)}`}
+          </span>
+          {option && !isFree ? (
+            <span className="mt-0.5 block text-xs text-[#A8DADC]">Option</span>
+          ) : null}
         </span>
       </span>
     </IconHint>
@@ -223,6 +230,7 @@ export function JournalsTable({
         row.publisher,
         countryName(row.country),
         row.apc,
+        row.hasApcOption ? "option paid free route" : "",
         row.submissionFee,
         row.note,
       ]
@@ -438,6 +446,8 @@ export function JournalsTable({
                     amount={journal.apc}
                     currency={journal.apcCurrency}
                     label="APC"
+                    showIcon={false}
+                    option={journal.hasApcOption}
                   />
                 </td>
                 <td className="px-4 py-3 text-sm text-[#B0B0B0]">

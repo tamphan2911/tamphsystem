@@ -48,6 +48,7 @@ export type JournalFormValues = {
   country?: string | null;
   apc?: string | null;
   apcCurrency?: string;
+  hasApcOption?: boolean | null;
   submissionFee?: string | null;
   submissionFeeCurrency?: string;
   homepageLink?: string | null;
@@ -215,6 +216,31 @@ function JournalFlagCheckbox({
           {detail}
         </span>
       </span>
+    </label>
+  );
+}
+
+function InlineCheckbox({
+  name,
+  defaultChecked,
+  label,
+}: {
+  name: string;
+  defaultChecked?: boolean | null;
+  label: string;
+}) {
+  return (
+    <label className="inline-flex cursor-pointer items-center gap-2 normal-case tracking-normal text-[#B0B0B0]">
+      <input
+        type="checkbox"
+        name={name}
+        defaultChecked={Boolean(defaultChecked)}
+        className="peer sr-only"
+      />
+      <span className="flex h-4 w-4 flex-none items-center justify-center border border-[#5A5A5A] bg-[#242424] text-transparent transition peer-checked:border-[#A8DADC] peer-checked:bg-[#263636] peer-checked:text-[#A8DADC]">
+        <Check className="h-3 w-3" aria-hidden="true" />
+      </span>
+      <span className="text-xs font-normal">{label}</span>
     </label>
   );
 }
@@ -532,7 +558,9 @@ export function JournalDialogForm({
                 }
                 maxWidth={640}
               >
-                <div className={`${researchDropdownPanelClass} max-h-[var(--research-dropdown-max-height)] overflow-y-auto normal-case tracking-normal`}>
+                <div
+                  className={`${researchDropdownPanelClass} max-h-[var(--research-dropdown-max-height)] overflow-y-auto normal-case tracking-normal`}
+                >
                   <>
                     {filteredFieldOptions.map((field) => (
                       <button
@@ -580,7 +608,14 @@ export function JournalDialogForm({
         <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
           <div className="grid gap-4 md:grid-cols-2">
             <label className={labelClass}>
-              APC
+              <span className="flex items-center justify-between gap-3">
+                <span>APC</span>
+                <InlineCheckbox
+                  name="hasApcOption"
+                  defaultChecked={initialValues?.hasApcOption}
+                  label="Option"
+                />
+              </span>
               <span className="grid grid-cols-[1fr_9rem] gap-2">
                 <input
                   name="apc"

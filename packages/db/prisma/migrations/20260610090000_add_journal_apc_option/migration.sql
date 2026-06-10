@@ -1,0 +1,1 @@
+ALTER TABLE "Journal" ADD COLUMN "hasApcOption" BOOLEAN NOT NULL DEFAULT false;

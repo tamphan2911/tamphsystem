@@ -1386,6 +1386,12 @@ textarea:focus-visible {
   transition-duration: 90ms;
 }
 
+[data-research-toggle-tabs="true"] [data-research-toggle-tab="true"]:active {
+  filter: brightness(1.06);
+  transform: translateY(-1px) scale(1.01);
+  transition-duration: 160ms;
+}
+
 .research-site-root button[class*="bg-blue-600"],
 .research-site-root button[class*="bg-blue-500"] {
   border: 1px solid #b39cd0;

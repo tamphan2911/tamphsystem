@@ -496,7 +496,10 @@ export function NewTaskDialog({
             </label>
           </div>
 
-          <div className="inline-flex w-fit border border-[#444444] bg-[#202020]">
+          <div
+            data-research-toggle-tabs="true"
+            className="grid w-full grid-cols-5 border border-[#444444] bg-[#202020]"
+          >
             {(
               ["submit", "production", "review", "project", "other"] as const
             ).map((item) => (
@@ -504,7 +507,8 @@ export function NewTaskDialog({
                 key={item}
                 type="button"
                 onClick={() => setMode(item)}
-                className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-xs font-normal transition last:border-r-0 hover:border-[#444444] ${
+                data-research-toggle-tab="true"
+                className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
                   mode === item
                     ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
                     : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
@@ -640,7 +644,10 @@ export function NewTaskDialog({
 
           {needsOrganizedProject && (
             <div className="grid gap-4">
-              <div className="inline-flex w-fit border border-[#444444] bg-[#202020]">
+              <div
+                data-research-toggle-tabs="true"
+                className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020]"
+              >
                 {(
                   [
                     ["PROJECT_PRODUCTION", "Project Production"],
@@ -651,7 +658,8 @@ export function NewTaskDialog({
                     key={value}
                     type="button"
                     onClick={() => setProjectSubtype(value)}
-                    className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-xs font-normal transition last:border-r-0 hover:border-[#444444] ${
+                    data-research-toggle-tab="true"
+                    className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
                       projectSubtype === value
                         ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
                         : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"

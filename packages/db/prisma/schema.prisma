@@ -628,6 +628,7 @@ model Journal {
   country               String?
   apc                   String?
   apcCurrency           CurrencyCode @default(USD)
+  hasApcOption          Boolean      @default(false)
   submissionFee         String?
   submissionFeeCurrency CurrencyCode @default(USD)
   homepageLink          String?
