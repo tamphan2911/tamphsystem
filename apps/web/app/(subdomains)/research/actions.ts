@@ -2023,45 +2023,65 @@ export async function createJournal(formData: FormData) {
   const legacyField = optionalString(formData.get("field"));
   const journalType =
     enumValue(JournalType, formData.get("type")) ?? JournalType.INTERNATIONAL;
+  const accountUsername = optionalString(formData.get("accountUsername"));
+  const accountPassword = optionalString(formData.get("accountPassword"));
+  const accountEmail = optionalString(formData.get("accountEmail"));
+  const accountNote = optionalString(formData.get("accountNote"));
+  const shouldCreateAccount = Boolean(accountUsername);
 
-  await prisma.journal.create({
-    data: {
-      name: optionalString(formData.get("name")) ?? "Untitled journal",
-      issn: optionalString(formData.get("issn")),
-      field: fields.length > 0 ? fields.join("; ") : legacyField,
-      fields,
-      type: journalType,
-      rank:
-        journalType === JournalType.INTERNATIONAL
-          ? optionalString(formData.get("rank"))
-          : null,
-      localRank:
-        journalType === JournalType.LOCAL
-          ? optionalString(formData.get("localRank"))
-          : null,
-      issuesPerYear: positiveIntFromForm(formData.get("issuesPerYear")),
-      isFavorite: formData.get("isFavorite") === "on",
-      isInterest: formData.get("isInterest") === "on",
-      publisher: optionalString(formData.get("publisher")),
-      country: optionalString(formData.get("country")),
-      apc: optionalString(formData.get("apc")),
-      apcCurrency:
-        enumValue(CurrencyCode, formData.get("apcCurrency")) ??
-        CurrencyCode.USD,
-      hasApcOption: formData.get("hasApcOption") === "on",
-      submissionFee: optionalString(formData.get("submissionFee")),
-      submissionFeeCurrency:
-        enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??
-        CurrencyCode.USD,
-      homepageLink: optionalString(formData.get("homepageLink")),
-      submissionLink: optionalString(formData.get("submissionLink")),
-      scimagoLink: optionalString(formData.get("scimagoLink")),
-      scopusLink: optionalString(formData.get("scopusLink")),
-      note: optionalString(formData.get("note")),
-    },
+  await prisma.$transaction(async (tx) => {
+    const journal = await tx.journal.create({
+      data: {
+        name: optionalString(formData.get("name")) ?? "Untitled journal",
+        issn: optionalString(formData.get("issn")),
+        field: fields.length > 0 ? fields.join("; ") : legacyField,
+        fields,
+        type: journalType,
+        rank:
+          journalType === JournalType.INTERNATIONAL
+            ? optionalString(formData.get("rank"))
+            : null,
+        localRank:
+          journalType === JournalType.LOCAL
+            ? optionalString(formData.get("localRank"))
+            : null,
+        issuesPerYear: positiveIntFromForm(formData.get("issuesPerYear")),
+        isFavorite: formData.get("isFavorite") === "on",
+        isInterest: formData.get("isInterest") === "on",
+        publisher: optionalString(formData.get("publisher")),
+        country: optionalString(formData.get("country")),
+        apc: optionalString(formData.get("apc")),
+        apcCurrency:
+          enumValue(CurrencyCode, formData.get("apcCurrency")) ??
+          CurrencyCode.USD,
+        hasApcOption: formData.get("hasApcOption") === "on",
+        submissionFee: optionalString(formData.get("submissionFee")),
+        submissionFeeCurrency:
+          enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??
+          CurrencyCode.USD,
+        homepageLink: optionalString(formData.get("homepageLink")),
+        submissionLink: optionalString(formData.get("submissionLink")),
+        scimagoLink: optionalString(formData.get("scimagoLink")),
+        scopusLink: optionalString(formData.get("scopusLink")),
+        note: optionalString(formData.get("note")),
+      },
+    });
+
+    if (accountUsername) {
+      await tx.publisherAccount.create({
+        data: {
+          username: accountUsername,
+          password: accountPassword ?? "",
+          email: accountEmail,
+          note: accountNote,
+          journalId: journal.id,
+        },
+      });
+    }
   });
 
   revalidatePath("/journals");
+  if (shouldCreateAccount) revalidatePath("/accounts");
 }
 
 export async function updateJournal(journalId: string, formData: FormData) {

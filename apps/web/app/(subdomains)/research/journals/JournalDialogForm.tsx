@@ -4,14 +4,25 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import {
   AlertTriangle,
+  AtSign,
   BookmarkCheck,
   BookOpen,
+  Building2,
+  CalendarDays,
   Check,
+  DollarSign,
+  FileText,
+  Globe2,
+  Hash,
+  KeyRound,
+  LinkIcon,
   Loader2,
+  LockKeyhole,
   PlusCircle,
   Save,
   Search,
   Star,
+  StickyNote,
   X,
 } from "lucide-react";
 import { currencyOptions } from "@/sites/research/lib/currency";
@@ -29,7 +40,6 @@ import {
   researchDropdownItemClass,
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
-  researchFieldClass,
   ResearchButton,
 } from "@/sites/research/components/ResearchPrimitives";
 
@@ -58,9 +68,6 @@ export type JournalFormValues = {
   note?: string | null;
 };
 
-const inputClass = researchFieldClass;
-const labelClass =
-  "grid gap-1.5 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]";
 const journalFieldOptions = [
   "Accounting",
   "Business",
@@ -79,6 +86,41 @@ const journalFieldOptions = [
   "Technology",
   "Tourism",
 ];
+
+function JournalInput({
+  name,
+  placeholder,
+  icon,
+  defaultValue,
+  type = "text",
+  min,
+  step,
+  className = "",
+}: {
+  name: string;
+  placeholder: string;
+  icon: ReactNode;
+  defaultValue?: string | number | null;
+  type?: string;
+  min?: string;
+  step?: string;
+  className?: string;
+}) {
+  return (
+    <span className={`research-auth-input-shell ${className}`}>
+      <input
+        name={name}
+        type={type}
+        min={min}
+        step={step}
+        defaultValue={defaultValue ?? ""}
+        placeholder={placeholder}
+        aria-label={placeholder}
+      />
+      {icon}
+    </span>
+  );
+}
 
 function initialFields(values?: JournalFormValues) {
   if (values?.fields?.length) return values.fields;
@@ -127,7 +169,6 @@ function CountryPicker({
 
   return (
     <ResearchSearchPicker
-      label="Country"
       name="country"
       selected={
         selectedCountry
@@ -153,7 +194,7 @@ function CountryPicker({
         setQuery("");
       }}
       options={options}
-      placeholder="Search country"
+      placeholder="Search and choose one country"
       emptyText="No country matches this search."
       renderSelected={(option) => (
         <span className="flex min-w-0 flex-1 items-center gap-2">
@@ -272,7 +313,11 @@ export function JournalDialogForm({
     initialValues?.country ?? "",
   );
   const [journalType, setJournalType] = useState(
-    initialValues?.type === "LOCAL" ? "LOCAL" : "INTERNATIONAL",
+    initialValues?.type === "LOCAL"
+      ? "LOCAL"
+      : initialValues?.type === "INTERNATIONAL"
+        ? "INTERNATIONAL"
+        : "",
   );
 
   useEffect(() => {
@@ -365,6 +410,29 @@ export function JournalDialogForm({
             );
             return;
           }
+          if (!isEdit) {
+            const accountFields = [
+              "accountUsername",
+              "accountPassword",
+              "accountEmail",
+              "accountNote",
+            ];
+            const hasAccountInfo = accountFields.some((fieldName) => {
+              const value = formData.get(fieldName);
+              return typeof value === "string" && value.trim().length > 0;
+            });
+            const accountUsername = formData.get("accountUsername");
+            if (
+              hasAccountInfo &&
+              (typeof accountUsername !== "string" ||
+                accountUsername.trim().length === 0)
+            ) {
+              setWarning(
+                "Enter the account login ID if you want to add an account for this new journal.",
+              );
+              return;
+            }
+          }
           setWarning("");
           startTransition(async () => {
             await submitAction(formData);
@@ -393,52 +461,40 @@ export function JournalDialogForm({
                 <span>{warning}</span>
               </div>
             ) : null}
-            <label className={labelClass}>
-              Journal name
-              <input
-                name="name"
-                defaultValue={initialValues?.name ?? ""}
-                placeholder="Journal name"
-                className={inputClass}
-              />
-            </label>
+            <JournalInput
+              name="name"
+              defaultValue={initialValues?.name}
+              placeholder="Enter the official journal name"
+              icon={<BookOpen aria-hidden="true" />}
+            />
             <div className="grid gap-4 md:grid-cols-2">
-              <label className={labelClass}>
-                Publisher
-                <input
-                  name="publisher"
-                  defaultValue={initialValues?.publisher ?? ""}
-                  placeholder="Publisher"
-                  className={inputClass}
-                />
-              </label>
+              <JournalInput
+                name="publisher"
+                defaultValue={initialValues?.publisher}
+                placeholder="Enter publisher name, for example Elsevier"
+                icon={<Building2 aria-hidden="true" />}
+              />
               <CountryPicker
                 value={selectedCountry}
                 onChange={setSelectedCountry}
               />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <label className={labelClass}>
-                ISSN
-                <input
-                  name="issn"
-                  defaultValue={initialValues?.issn ?? ""}
-                  placeholder="ISSN"
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Issues per year
-                <input
-                  name="issuesPerYear"
-                  type="number"
-                  min="1"
-                  step="1"
-                  defaultValue={initialValues?.issuesPerYear ?? ""}
-                  placeholder="4"
-                  className={inputClass}
-                />
-              </label>
+              <JournalInput
+                name="issn"
+                defaultValue={initialValues?.issn}
+                placeholder="Enter ISSN, for example 1234-5678"
+                icon={<Hash aria-hidden="true" />}
+              />
+              <JournalInput
+                name="issuesPerYear"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue={initialValues?.issuesPerYear}
+                placeholder="Enter number of issues per year"
+                icon={<CalendarDays aria-hidden="true" />}
+              />
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <JournalFlagCheckbox
@@ -459,51 +515,42 @@ export function JournalDialogForm({
               />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <label className={labelClass}>
-                Journal type
+              <ResearchFormSelect
+                name="type"
+                defaultValue={journalType}
+                ariaLabel="Journal type"
+                onValueChange={setJournalType}
+                options={[
+                  { value: "", label: "Choose journal type" },
+                  { value: "INTERNATIONAL", label: "International journal" },
+                  { value: "LOCAL", label: "Local journal" },
+                ]}
+              />
+              {journalType === "LOCAL" ? (
+                <JournalInput
+                  name="localRank"
+                  defaultValue={initialValues?.localRank}
+                  placeholder="Enter local rank or category"
+                  icon={<Hash aria-hidden="true" />}
+                />
+              ) : (
                 <ResearchFormSelect
-                  name="type"
-                  defaultValue={journalType}
-                  ariaLabel="Journal type"
-                  onValueChange={setJournalType}
+                  name="rank"
+                  defaultValue={initialValues?.rank ?? ""}
+                  ariaLabel="Journal rank"
                   options={[
-                    { value: "INTERNATIONAL", label: "International" },
-                    { value: "LOCAL", label: "Local" },
+                    { value: "", label: "Choose international rank" },
+                    { value: "Q1", label: "Q1" },
+                    { value: "Q2", label: "Q2" },
+                    { value: "Q3", label: "Q3" },
+                    { value: "Q4", label: "Q4" },
+                    { value: "Scopus", label: "Scopus" },
+                    { value: "ISI", label: "ISI" },
                   ]}
                 />
-              </label>
-              {journalType === "INTERNATIONAL" ? (
-                <label className={labelClass}>
-                  Rank
-                  <ResearchFormSelect
-                    name="rank"
-                    defaultValue={initialValues?.rank ?? ""}
-                    ariaLabel="Journal rank"
-                    options={[
-                      { value: "", label: "Rank" },
-                      { value: "Q1", label: "Q1" },
-                      { value: "Q2", label: "Q2" },
-                      { value: "Q3", label: "Q3" },
-                      { value: "Q4", label: "Q4" },
-                      { value: "Scopus", label: "Scopus" },
-                      { value: "ISI", label: "ISI" },
-                    ]}
-                  />
-                </label>
-              ) : (
-                <label className={labelClass}>
-                  Local rank
-                  <input
-                    name="localRank"
-                    defaultValue={initialValues?.localRank ?? ""}
-                    placeholder="Enter local ranking or category"
-                    className={inputClass}
-                  />
-                </label>
               )}
             </div>
-            <div ref={fieldPickerRef} className={`${labelClass} relative`}>
-              Field
+            <div ref={fieldPickerRef} className="relative">
               <div className="border border-[#444444] bg-[#2C2C2C] p-2 transition focus-within:border-[#A8DADC] focus-within:bg-[#383838]">
                 <div className="flex min-h-9 flex-wrap items-center gap-1.5">
                   {selectedFields.map((field) => (
@@ -542,8 +589,8 @@ export function JournalDialogForm({
                       }}
                       placeholder={
                         selectedFields.length
-                          ? "Search field"
-                          : "Search or add field"
+                          ? "Search another research field to add"
+                          : "Search or add research field, for example Finance"
                       }
                       className="min-w-0 flex-1 bg-transparent text-sm font-normal normal-case tracking-normal text-[#E4E4E4] outline-none placeholder:text-[#5A5A5A]"
                     />
@@ -607,9 +654,8 @@ export function JournalDialogForm({
 
         <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className={labelClass}>
-              <span className="flex items-center justify-between gap-3">
-                <span>APC</span>
+            <div className="grid gap-2">
+              <span className="flex items-center justify-end gap-3">
                 <InlineCheckbox
                   name="hasApcOption"
                   defaultChecked={initialValues?.hasApcOption}
@@ -617,95 +663,114 @@ export function JournalDialogForm({
                 />
               </span>
               <span className="grid grid-cols-[1fr_9rem] gap-2">
-                <input
+                <JournalInput
                   name="apc"
                   type="number"
                   min="0"
                   step="0.01"
-                  defaultValue={initialValues?.apc ?? ""}
-                  placeholder="APC"
-                  className={inputClass}
+                  defaultValue={initialValues?.apc}
+                  placeholder="Enter APC amount"
+                  icon={<DollarSign aria-hidden="true" />}
                 />
                 <ResearchFormSelect
                   name="apcCurrency"
-                  defaultValue={initialValues?.apcCurrency ?? "USD"}
+                  defaultValue={initialValues?.apcCurrency ?? ""}
                   ariaLabel="APC currency"
-                  options={currencyOptions}
+                  options={[
+                    { value: "", label: "Choose APC currency" },
+                    ...currencyOptions,
+                  ]}
                 />
               </span>
-            </label>
-            <label className={labelClass}>
-              Submission fee
+            </div>
+            <div className="grid gap-2">
               <span className="grid grid-cols-[1fr_9rem] gap-2">
-                <input
+                <JournalInput
                   name="submissionFee"
                   type="number"
                   min="0"
                   step="0.01"
-                  defaultValue={initialValues?.submissionFee ?? ""}
-                  placeholder="Submission fee"
-                  className={inputClass}
+                  defaultValue={initialValues?.submissionFee}
+                  placeholder="Enter submission fee if any"
+                  icon={<DollarSign aria-hidden="true" />}
                 />
                 <ResearchFormSelect
                   name="submissionFeeCurrency"
-                  defaultValue={initialValues?.submissionFeeCurrency ?? "USD"}
+                  defaultValue={initialValues?.submissionFeeCurrency ?? ""}
                   ariaLabel="Submission fee currency"
-                  options={currencyOptions}
+                  options={[
+                    { value: "", label: "Choose fee currency" },
+                    ...currencyOptions,
+                  ]}
                 />
               </span>
-            </label>
+            </div>
           </div>
         </section>
 
         <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className={labelClass}>
-              Homepage
-              <input
-                name="homepageLink"
-                defaultValue={initialValues?.homepageLink ?? ""}
-                placeholder="Journal homepage"
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
-              Submission link
-              <input
-                name="submissionLink"
-                defaultValue={initialValues?.submissionLink ?? ""}
-                placeholder="Submission portal link"
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
-              Scimago
-              <input
-                name="scimagoLink"
-                defaultValue={initialValues?.scimagoLink ?? ""}
-                placeholder="Scimago link"
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
-              Scopus
-              <input
-                name="scopusLink"
-                defaultValue={initialValues?.scopusLink ?? ""}
-                placeholder="Scopus link"
-                className={inputClass}
-              />
-            </label>
-            <label className={`${labelClass} md:col-span-2`}>
-              Note
-              <input
-                name="note"
-                defaultValue={initialValues?.note ?? ""}
-                placeholder="Fit notes, login notes, review notes"
-                className={inputClass}
-              />
-            </label>
+            <JournalInput
+              name="homepageLink"
+              defaultValue={initialValues?.homepageLink}
+              placeholder="Paste journal homepage URL"
+              icon={<Globe2 aria-hidden="true" />}
+            />
+            <JournalInput
+              name="submissionLink"
+              defaultValue={initialValues?.submissionLink}
+              placeholder="Paste manuscript submission portal URL"
+              icon={<LinkIcon aria-hidden="true" />}
+            />
+            <JournalInput
+              name="scimagoLink"
+              defaultValue={initialValues?.scimagoLink}
+              placeholder="Paste Scimago profile URL"
+              icon={<LinkIcon aria-hidden="true" />}
+            />
+            <JournalInput
+              name="scopusLink"
+              defaultValue={initialValues?.scopusLink}
+              placeholder="Paste Scopus source profile URL"
+              icon={<LinkIcon aria-hidden="true" />}
+            />
+            <JournalInput
+              name="note"
+              defaultValue={initialValues?.note}
+              placeholder="Add fit notes, login notes, or review notes"
+              icon={<StickyNote aria-hidden="true" />}
+              className="md:col-span-2"
+            />
           </div>
         </section>
+
+        {!isEdit ? (
+          <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
+            <div className="grid gap-4 md:grid-cols-2">
+              <JournalInput
+                name="accountUsername"
+                placeholder="Optional: enter journal-site login ID for this new journal"
+                icon={<KeyRound aria-hidden="true" />}
+              />
+              <JournalInput
+                name="accountPassword"
+                placeholder="Optional: enter password for this journal account"
+                icon={<LockKeyhole aria-hidden="true" />}
+              />
+              <JournalInput
+                name="accountEmail"
+                type="email"
+                placeholder="Optional: enter email used for this journal account"
+                icon={<AtSign aria-hidden="true" />}
+              />
+              <JournalInput
+                name="accountNote"
+                placeholder="Optional: add account recovery notes or login URL"
+                icon={<FileText aria-hidden="true" />}
+              />
+            </div>
+          </section>
+        ) : null}
       </form>
     </ResearchModal>
   );
