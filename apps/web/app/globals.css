@@ -795,49 +795,100 @@ textarea:focus-visible {
   --research-muted: #b0b0b0;
   --research-accent: #a8dadc;
   background: #242424;
-  scrollbar-color: #5a5a5a #242424;
+  scrollbar-color: rgba(176, 176, 176, 0.42) transparent;
   scrollbar-width: thin;
 }
 
 .research-site-root *,
 [data-research-modal-overlay="true"],
 [data-research-modal-overlay="true"] * {
-  scrollbar-color: #5a5a5a #242424;
+  scrollbar-color: rgba(176, 176, 176, 0.42) transparent;
   scrollbar-width: thin;
 }
 
 .research-site-root *::-webkit-scrollbar,
 [data-research-modal-overlay="true"] *::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 .research-site-root *::-webkit-scrollbar-track,
 [data-research-modal-overlay="true"] *::-webkit-scrollbar-track {
-  background: #242424;
+  background: transparent;
 }
 
 .research-site-root *::-webkit-scrollbar-thumb,
 [data-research-modal-overlay="true"] *::-webkit-scrollbar-thumb {
   min-height: 2.5rem;
-  border: 2px solid #242424;
+  border: 2px solid transparent;
   border-radius: 999px;
-  background: #5a5a5a;
+  background: rgba(176, 176, 176, 0.42);
+  background-clip: padding-box;
 }
 
 .research-site-root *::-webkit-scrollbar-thumb:hover,
 [data-research-modal-overlay="true"] *::-webkit-scrollbar-thumb:hover {
-  background: #777777;
+  background: rgba(224, 224, 224, 0.62);
+  background-clip: padding-box;
 }
 
 .research-site-root *::-webkit-scrollbar-thumb:active,
 [data-research-modal-overlay="true"] *::-webkit-scrollbar-thumb:active {
-  background: #a8dadc;
+  background: rgba(168, 218, 220, 0.75);
+  background-clip: padding-box;
 }
 
 .research-site-root *::-webkit-scrollbar-corner,
 [data-research-modal-overlay="true"] *::-webkit-scrollbar-corner {
-  background: #242424;
+  background: transparent;
+}
+
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(.research-dropdown-panel, .research-dropdown-floating-panel)
+  :where([class*="overflow-y-auto"], [role="listbox"]),
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  :where([role="listbox"], [data-search-results="true"]) {
+  overflow-y: auto;
+  scrollbar-color: rgba(176, 176, 176, 0.32) transparent;
+  scrollbar-width: thin;
+}
+
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(.research-dropdown-panel, .research-dropdown-floating-panel)
+  :where([class*="overflow-y-auto"], [role="listbox"])::-webkit-scrollbar,
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  :where([role="listbox"], [data-search-results="true"])::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(.research-dropdown-panel, .research-dropdown-floating-panel)
+  :where([class*="overflow-y-auto"], [role="listbox"])::-webkit-scrollbar-track,
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  :where([role="listbox"], [data-search-results="true"])::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(.research-dropdown-panel, .research-dropdown-floating-panel)
+  :where([class*="overflow-y-auto"], [role="listbox"])::-webkit-scrollbar-thumb,
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  :where([role="listbox"], [data-search-results="true"])::-webkit-scrollbar-thumb {
+  min-height: 1.75rem;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(176, 176, 176, 0.28);
+  background-clip: padding-box;
+}
+
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(.research-dropdown-panel, .research-dropdown-floating-panel)
+  :where([class*="overflow-y-auto"], [role="listbox"]):hover::-webkit-scrollbar-thumb,
+:where(.research-site-root, [data-research-modal-overlay="true"])
+  :where([role="listbox"], [data-search-results="true"]):hover::-webkit-scrollbar-thumb {
+  background: rgba(224, 224, 224, 0.54);
+  background-clip: padding-box;
 }
 
 .research-site-root :where(a:not([aria-disabled="true"])),
