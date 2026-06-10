@@ -25,6 +25,7 @@ import {
   ResearchTaskType,
   Role,
   SubmissionStatus,
+  SuggestedVenueStatus,
 } from "@repo/db";
 
 export type ResearchAuthorEmailResult = {
@@ -3844,14 +3845,70 @@ export async function addSuggestedJournal(
   }
 
   const journalId = optionalString(formData.get("journalId"));
-  if (!journalId) return;
+  const venueName = optionalString(formData.get("venueName"));
+  const venueLink = optionalString(formData.get("venueLink"));
+  if (!journalId && !venueName && !venueLink) return;
   if (await researchContentIsLocked(projectId)) return;
 
-  await prisma.suggestedJournal.upsert({
-    where: { projectId_journalId: { projectId, journalId } },
-    update: { createdById: user.id },
-    create: { projectId, journalId, createdById: user.id },
-  });
+  const canApprove =
+    journalId &&
+    (await canApproveVenueSuggestionForResearch(
+      projectId,
+      user.id,
+      user.roles,
+    ));
+  const status = canApprove
+    ? SuggestedVenueStatus.APPROVED
+    : SuggestedVenueStatus.PENDING;
+  const venue = journalId
+    ? await prisma.journal.findUnique({
+        where: { id: journalId },
+        select: { name: true },
+      })
+    : null;
+
+  const suggestion = journalId
+    ? await prisma.suggestedJournal.upsert({
+        where: { projectId_journalId: { projectId, journalId } },
+        update: {
+          createdById: user.id,
+          status,
+          approvedAt: canApprove ? new Date() : null,
+          approvedById: canApprove ? user.id : null,
+          venueName: venueName ?? venue?.name ?? null,
+          venueLink,
+        },
+        create: {
+          projectId,
+          journalId,
+          createdById: user.id,
+          status,
+          approvedAt: canApprove ? new Date() : null,
+          approvedById: canApprove ? user.id : null,
+          venueName: venueName ?? venue?.name ?? null,
+          venueLink,
+        },
+      })
+    : await prisma.suggestedJournal.create({
+        data: {
+          projectId,
+          createdById: user.id,
+          status: SuggestedVenueStatus.PENDING,
+          venueName,
+          venueLink,
+        },
+      });
+
+  if (suggestion.status === SuggestedVenueStatus.PENDING) {
+    await notifyVenueSuggestionApprovalNeeded({
+      projectId,
+      suggestionId: suggestion.id,
+      venueName: venueName ?? venue?.name ?? "New journal venue",
+      kind: "journal",
+      createdById: user.id,
+      adminOnly: !journalId,
+    });
+  }
 
   revalidatePath(`/projects/${projectId}`);
   revalidatePath("/suggestions");
@@ -3859,14 +3916,14 @@ export async function addSuggestedJournal(
 
 export async function deleteSuggestedJournal(
   projectId: string,
-  journalId: string,
+  suggestionId: string,
 ) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
   if (await researchContentIsLocked(projectId)) return;
 
   await prisma.suggestedJournal.deleteMany({
-    where: { projectId, journalId },
+    where: { projectId, id: suggestionId },
   });
 
   revalidatePath(`/projects/${projectId}`);
@@ -3883,14 +3940,70 @@ export async function addSuggestedConference(
   }
 
   const conferenceId = optionalString(formData.get("conferenceId"));
-  if (!conferenceId) return;
+  const venueName = optionalString(formData.get("venueName"));
+  const venueLink = optionalString(formData.get("venueLink"));
+  if (!conferenceId && !venueName && !venueLink) return;
   if (await researchContentIsLocked(projectId)) return;
 
-  await prisma.suggestedConference.upsert({
-    where: { projectId_conferenceId: { projectId, conferenceId } },
-    update: { createdById: user.id },
-    create: { projectId, conferenceId, createdById: user.id },
-  });
+  const canApprove =
+    conferenceId &&
+    (await canApproveVenueSuggestionForResearch(
+      projectId,
+      user.id,
+      user.roles,
+    ));
+  const status = canApprove
+    ? SuggestedVenueStatus.APPROVED
+    : SuggestedVenueStatus.PENDING;
+  const venue = conferenceId
+    ? await prisma.conference.findUnique({
+        where: { id: conferenceId },
+        select: { name: true },
+      })
+    : null;
+
+  const suggestion = conferenceId
+    ? await prisma.suggestedConference.upsert({
+        where: { projectId_conferenceId: { projectId, conferenceId } },
+        update: {
+          createdById: user.id,
+          status,
+          approvedAt: canApprove ? new Date() : null,
+          approvedById: canApprove ? user.id : null,
+          venueName: venueName ?? venue?.name ?? null,
+          venueLink,
+        },
+        create: {
+          projectId,
+          conferenceId,
+          createdById: user.id,
+          status,
+          approvedAt: canApprove ? new Date() : null,
+          approvedById: canApprove ? user.id : null,
+          venueName: venueName ?? venue?.name ?? null,
+          venueLink,
+        },
+      })
+    : await prisma.suggestedConference.create({
+        data: {
+          projectId,
+          createdById: user.id,
+          status: SuggestedVenueStatus.PENDING,
+          venueName,
+          venueLink,
+        },
+      });
+
+  if (suggestion.status === SuggestedVenueStatus.PENDING) {
+    await notifyVenueSuggestionApprovalNeeded({
+      projectId,
+      suggestionId: suggestion.id,
+      venueName: venueName ?? venue?.name ?? "New conference venue",
+      kind: "conference",
+      createdById: user.id,
+      adminOnly: !conferenceId,
+    });
+  }
 
   revalidatePath(`/projects/${projectId}`);
   revalidatePath("/suggestions");
@@ -3929,17 +4042,215 @@ async function canSuggestVenueForResearch(
   );
 }
 
+async function venueSuggestionApproverUserIds(projectId: string) {
+  const [project, admins] = await Promise.all([
+    prisma.researchProject.findUnique({
+      where: { id: projectId },
+      select: {
+        leadResearcherId: true,
+        authorEntries: {
+          where: { OR: [{ position: 0 }, { isCorresponding: true }] },
+          select: { userId: true },
+        },
+      },
+    }),
+    adminUserIds(),
+  ]);
+
+  if (!project) return admins;
+  return [
+    ...admins,
+    project.leadResearcherId,
+    ...project.authorEntries.map((entry) => entry.userId),
+  ];
+}
+
+async function canApproveVenueSuggestionForResearch(
+  projectId: string,
+  userId: string,
+  roles: Role[],
+) {
+  if (roles.includes(Role.ADMIN)) return true;
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: {
+      leadResearcherId: true,
+      authorEntries: {
+        where: { OR: [{ position: 0 }, { isCorresponding: true }] },
+        select: { userId: true },
+      },
+    },
+  });
+  if (!project) return false;
+  return (
+    project.leadResearcherId === userId ||
+    project.authorEntries.some((entry) => entry.userId === userId)
+  );
+}
+
+async function notifyVenueSuggestionApprovalNeeded({
+  projectId,
+  suggestionId,
+  venueName,
+  kind,
+  createdById,
+  adminOnly,
+}: {
+  projectId: string;
+  suggestionId: string;
+  venueName: string;
+  kind: "journal" | "conference";
+  createdById: string;
+  adminOnly: boolean;
+}) {
+  const userIds = adminOnly
+    ? await adminUserIds()
+    : await venueSuggestionApproverUserIds(projectId);
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: { title: true },
+  });
+
+  await notifyUsers({
+    userIds,
+    excludeUserId: createdById,
+    type: "VENUE_SUGGESTION_APPROVAL_NEEDED",
+    title: "Venue suggestion needs approval",
+    summary: project?.title ?? venueName,
+    body: `${venueName} was suggested as a ${kind}. ${
+      adminOnly
+        ? "This venue is not in the system yet, so an admin needs to add and link it before approval."
+        : "Approve it before submission tasks can be assigned."
+    }`,
+    href: `/projects/${projectId}`,
+    entityType: "suggestedVenue",
+    entityId: suggestionId,
+  });
+}
+
 export async function deleteSuggestedConference(
   projectId: string,
-  conferenceId: string,
+  suggestionId: string,
 ) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
   if (await researchContentIsLocked(projectId)) return;
 
   await prisma.suggestedConference.deleteMany({
-    where: { projectId, conferenceId },
+    where: { projectId, id: suggestionId },
   });
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/suggestions");
+}
+
+export async function approveSuggestedJournal(
+  projectId: string,
+  suggestionId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  if (
+    !(await canApproveVenueSuggestionForResearch(
+      projectId,
+      user.id,
+      user.roles,
+    ))
+  ) {
+    redirect("/401");
+  }
+
+  const suggestion = await prisma.suggestedJournal.findUnique({
+    where: { id: suggestionId },
+    select: { projectId: true, journalId: true, createdById: true },
+  });
+  if (!suggestion || suggestion.projectId !== projectId) return;
+
+  const linkedJournalId =
+    suggestion.journalId ?? optionalString(formData.get("journalId"));
+  if (!linkedJournalId) {
+    if (!user.roles.includes(Role.ADMIN)) redirect("/401");
+    throw new Error("Choose the journal in the system before approving.");
+  }
+
+  await prisma.suggestedJournal.update({
+    where: { id: suggestionId },
+    data: {
+      journalId: linkedJournalId,
+      status: SuggestedVenueStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedById: user.id,
+    },
+  });
+
+  if (suggestion.createdById) {
+    await notifyUsers({
+      userIds: [suggestion.createdById],
+      excludeUserId: user.id,
+      type: "VENUE_SUGGESTION_APPROVED",
+      title: "Venue suggestion approved",
+      summary: "Your journal suggestion was approved.",
+      href: `/projects/${projectId}`,
+      entityType: "suggestedVenue",
+      entityId: suggestionId,
+    });
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/suggestions");
+}
+
+export async function approveSuggestedConference(
+  projectId: string,
+  suggestionId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  if (
+    !(await canApproveVenueSuggestionForResearch(
+      projectId,
+      user.id,
+      user.roles,
+    ))
+  ) {
+    redirect("/401");
+  }
+
+  const suggestion = await prisma.suggestedConference.findUnique({
+    where: { id: suggestionId },
+    select: { projectId: true, conferenceId: true, createdById: true },
+  });
+  if (!suggestion || suggestion.projectId !== projectId) return;
+
+  const linkedConferenceId =
+    suggestion.conferenceId ?? optionalString(formData.get("conferenceId"));
+  if (!linkedConferenceId) {
+    if (!user.roles.includes(Role.ADMIN)) redirect("/401");
+    throw new Error("Choose the conference in the system before approving.");
+  }
+
+  await prisma.suggestedConference.update({
+    where: { id: suggestionId },
+    data: {
+      conferenceId: linkedConferenceId,
+      status: SuggestedVenueStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedById: user.id,
+    },
+  });
+
+  if (suggestion.createdById) {
+    await notifyUsers({
+      userIds: [suggestion.createdById],
+      excludeUserId: user.id,
+      type: "VENUE_SUGGESTION_APPROVED",
+      title: "Venue suggestion approved",
+      summary: "Your conference suggestion was approved.",
+      href: `/projects/${projectId}`,
+      entityType: "suggestedVenue",
+      entityId: suggestionId,
+    });
+  }
 
   revalidatePath(`/projects/${projectId}`);
   revalidatePath("/suggestions");

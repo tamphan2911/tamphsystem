@@ -62,15 +62,14 @@ export default async function SuggestionsPage() {
   ]);
 
   const journalRows: SuggestionRow[] = journalSuggestions.map((suggestion) => {
-    const fields =
-      suggestion.journal.fields.length > 0
-        ? suggestion.journal.fields
-        : suggestion.journal.field
-          ? suggestion.journal.field
-              .split(";")
-              .map((field) => field.trim())
-              .filter(Boolean)
-          : [];
+    const fields = suggestion.journal?.fields.length
+      ? suggestion.journal.fields
+      : suggestion.journal?.field
+        ? suggestion.journal.field
+            .split(";")
+            .map((field) => field.trim())
+            .filter(Boolean)
+        : [];
 
     return {
       id: suggestion.id,
@@ -78,13 +77,17 @@ export default async function SuggestionsPage() {
       projectId: suggestion.projectId,
       projectTitle: suggestion.project.title,
       projectCode: suggestion.project.researchCode ?? "",
-      venueId: suggestion.journalId,
-      venueName: suggestion.journal.name,
-      venueHref: `/journals/${suggestion.journalId}`,
+      venueId: suggestion.id,
+      venueName:
+        suggestion.journal?.name ?? suggestion.venueName ?? "Unlinked journal",
+      venueHref: suggestion.journalId
+        ? `/journals/${suggestion.journalId}`
+        : suggestion.venueLink || "",
       venueMeta: [
-        suggestion.journal.publisher || "No publisher",
-        suggestion.journal.rank || "No rank",
-        suggestion.journal.issn ? `ISSN ${suggestion.journal.issn}` : "",
+        suggestion.status === "PENDING" ? "Waiting approval" : "",
+        suggestion.journal?.publisher || "No publisher",
+        suggestion.journal?.rank || "No rank",
+        suggestion.journal?.issn ? `ISSN ${suggestion.journal.issn}` : "",
       ]
         .filter(Boolean)
         .join(" - "),
@@ -107,20 +110,26 @@ export default async function SuggestionsPage() {
       projectId: suggestion.projectId,
       projectTitle: suggestion.project.title,
       projectCode: suggestion.project.researchCode ?? "",
-      venueId: suggestion.conferenceId,
-      venueName: suggestion.conference.name,
-      venueHref: `/conferences/${suggestion.conferenceId}`,
+      venueId: suggestion.id,
+      venueName:
+        suggestion.conference?.name ??
+        suggestion.venueName ??
+        "Unlinked conference",
+      venueHref: suggestion.conferenceId
+        ? `/conferences/${suggestion.conferenceId}`
+        : suggestion.venueLink || "",
       venueMeta: [
-        suggestion.conference.organizer || "No organizer",
-        suggestion.conference.type || "No type",
-        suggestion.conference.location || "No location",
+        suggestion.status === "PENDING" ? "Waiting approval" : "",
+        suggestion.conference?.organizer || "No organizer",
+        suggestion.conference?.type || "No type",
+        suggestion.conference?.location || "No location",
       ]
         .filter(Boolean)
         .join(" - "),
       scope:
-        suggestion.conference.targetTheme ||
-        suggestion.conference.themes ||
-        suggestion.conference.isbn ||
+        suggestion.conference?.targetTheme ||
+        suggestion.conference?.themes ||
+        suggestion.conference?.isbn ||
         "",
       suggestedBy:
         suggestion.createdBy?.name || suggestion.createdBy?.email || "Unknown",

@@ -281,6 +281,11 @@ enum ConferenceSubmissionStatus {
   WITHDRAWN
 }
 
+enum SuggestedVenueStatus {
+  PENDING
+  APPROVED
+}
+
 enum CurrencyCode {
   VND
   USD
@@ -578,17 +583,23 @@ model Conference {
 }
 
 model SuggestedConference {
-  id           String   @id @default(uuid())
+  id           String               @id @default(uuid())
   projectId    String
-  conferenceId String
+  conferenceId String?
+  venueName    String?
+  venueLink    String?
+  status       SuggestedVenueStatus @default(APPROVED)
+  approvedAt   DateTime?
+  approvedById String?
   createdById  String?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime             @default(now())
 
   project    ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  conference Conference      @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
+  conference Conference?     @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
   createdBy  User?           @relation("SuggestedConferenceCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@unique([projectId, conferenceId])
+  @@index([projectId, status])
 }
 
 model ConferenceSubmission {
@@ -637,7 +648,7 @@ model Journal {
   scopusLink            String?
   note                  String?
   createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt @default(now())
+  updatedAt             DateTime     @default(now()) @updatedAt
 
   submissions ResearchSubmission[]
   accounts    PublisherAccount[]
@@ -647,17 +658,23 @@ model Journal {
 }
 
 model SuggestedJournal {
-  id          String   @id @default(uuid())
-  projectId   String
-  journalId   String
-  createdById String?
-  createdAt   DateTime @default(now())
+  id           String               @id @default(uuid())
+  projectId    String
+  journalId    String?
+  venueName    String?
+  venueLink    String?
+  status       SuggestedVenueStatus @default(APPROVED)
+  approvedAt   DateTime?
+  approvedById String?
+  createdById  String?
+  createdAt    DateTime             @default(now())
 
   project   ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  journal   Journal         @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  journal   Journal?        @relation(fields: [journalId], references: [id], onDelete: Cascade)
   createdBy User?           @relation("SuggestedJournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@unique([projectId, journalId])
+  @@index([projectId, status])
 }
 
 model AcademicReview {
@@ -758,7 +775,7 @@ model PublisherAccount {
   email     String?
   note      String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
   journalId String?
   journal   Journal? @relation(fields: [journalId], references: [id], onDelete: SetNull)
 
@@ -773,11 +790,11 @@ model ResearchSubmission {
   journalId         String
   accountId         String? // Which account was used to submit
 
-  submittedAt DateTime         @default(now())
-  acceptedAt  DateTime?
-  rejectedAt  DateTime?
-  withdrawnAt DateTime?
-  publishedAt DateTime?
+  submittedAt     DateTime         @default(now())
+  acceptedAt      DateTime?
+  rejectedAt      DateTime?
+  withdrawnAt     DateTime?
+  publishedAt     DateTime?
   articleUrl      String?
   articleFileName String?
   articleFileType String?
@@ -785,7 +802,7 @@ model ResearchSubmission {
   articleFileData Bytes?
   status          SubmissionStatus @default(PENDING)
   createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt @default(now())
+  updatedAt       DateTime         @default(now()) @updatedAt
 
   project ResearchProject   @relation(fields: [researchProjectId], references: [id], onDelete: Cascade)
   journal Journal           @relation(fields: [journalId], references: [id], onDelete: Cascade)

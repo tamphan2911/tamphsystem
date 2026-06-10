@@ -16,6 +16,8 @@ import {
 import {
   addSuggestedConference,
   addSuggestedJournal,
+  approveSuggestedConference,
+  approveSuggestedJournal,
   createResearchTask,
   deleteSuggestedConference,
   deleteSuggestedJournal,
@@ -35,7 +37,10 @@ import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type SuggestedJournalOption = {
   id: string;
+  venueId: string;
   name: string;
+  venueLink: string;
+  status: string;
   issn: string;
   field: string;
   rank: string;
@@ -48,7 +53,10 @@ export type SuggestedJournalOption = {
 
 export type SuggestedConferenceOption = {
   id: string;
+  venueId: string;
   name: string;
+  venueLink: string;
+  status: string;
   type: string;
   theme: string;
   location: string;
@@ -70,6 +78,7 @@ export type SuggestedVenueState = {
     | "withdrawn"
     | "accepted"
     | "published"
+    | "pendingApproval"
     | "blocked";
   publishedAt?: string;
 };
@@ -95,6 +104,7 @@ export function SuggestedJournalsPanel({
   assistants,
   isAdmin,
   canAssignTask,
+  canApproveSuggestion,
   canSuggestVenue,
   disabled = false,
 }: {
@@ -107,6 +117,7 @@ export function SuggestedJournalsPanel({
   assistants: TaskAssigneeOption[];
   isAdmin: boolean;
   canAssignTask: boolean;
+  canApproveSuggestion: boolean;
   canSuggestVenue: boolean;
   disabled?: boolean;
 }) {
@@ -118,7 +129,11 @@ export function SuggestedJournalsPanel({
   const [addOpen, setAddOpen] = useState(false);
   const [assignVenue, setAssignVenue] = useState<Venue | null>(null);
   const [deleteVenue, setDeleteVenue] = useState<Venue | null>(null);
+  const [approveVenue, setApproveVenue] = useState<Venue | null>(null);
   const [selectedAddVenue, setSelectedAddVenue] = useState<Venue | null>(null);
+  const [approvalVenue, setApprovalVenue] = useState<Venue | null>(null);
+  const [freeVenueName, setFreeVenueName] = useState("");
+  const [freeVenueLink, setFreeVenueLink] = useState("");
   const [journalQuery, setJournalQuery] = useState("");
   const [conferenceQuery, setConferenceQuery] = useState("");
   const [assistantQuery, setAssistantQuery] = useState("");
@@ -137,11 +152,16 @@ export function SuggestedJournalsPanel({
   }
 
   const suggestedJournalIds = useMemo(
-    () => new Set(suggested.map((journal) => journal.id)),
+    () => new Set(suggested.map((journal) => journal.venueId).filter(Boolean)),
     [suggested],
   );
   const suggestedConferenceIds = useMemo(
-    () => new Set(suggestedConferences.map((conference) => conference.id)),
+    () =>
+      new Set(
+        suggestedConferences
+          .map((conference) => conference.venueId)
+          .filter(Boolean),
+      ),
     [suggestedConferences],
   );
 
@@ -216,44 +236,58 @@ export function SuggestedJournalsPanel({
     setJournalQuery("");
     setConferenceQuery("");
     setSelectedAddVenue(null);
+    setFreeVenueName("");
+    setFreeVenueLink("");
   }
 
-  function addJournal(journalId: string) {
+  function addJournal(journalId?: string) {
     if (disabled) return;
     const formData = new FormData();
-    formData.set("journalId", journalId);
+    if (journalId) formData.set("journalId", journalId);
+    if (freeVenueName.trim()) formData.set("venueName", freeVenueName.trim());
+    if (freeVenueLink.trim()) formData.set("venueLink", freeVenueLink.trim());
     startTransition(async () => {
       await addSuggestedJournal(projectId, formData);
       closeAddVenue();
       showSuccess({
         title: "Suggested venue added",
-        detail: "The journal was added to this research suggested venues.",
+        detail: journalId
+          ? "The journal was added to this research suggested venues."
+          : "The journal suggestion is waiting for admin approval and linking.",
       });
       router.refresh();
     });
   }
 
-  function addConference(conferenceId: string) {
+  function addConference(conferenceId?: string) {
     if (disabled) return;
     const formData = new FormData();
-    formData.set("conferenceId", conferenceId);
+    if (conferenceId) formData.set("conferenceId", conferenceId);
+    if (freeVenueName.trim()) formData.set("venueName", freeVenueName.trim());
+    if (freeVenueLink.trim()) formData.set("venueLink", freeVenueLink.trim());
     startTransition(async () => {
       await addSuggestedConference(projectId, formData);
       closeAddVenue();
       showSuccess({
         title: "Suggested venue added",
-        detail: "The conference was added to this research suggested venues.",
+        detail: conferenceId
+          ? "The conference was added to this research suggested venues."
+          : "The conference suggestion is waiting for admin approval and linking.",
       });
       router.refresh();
     });
   }
 
   function addSelectedVenue() {
-    if (!selectedAddVenue || isPending) return;
-    if (selectedAddVenue.kind === "journal") {
-      addJournal(selectedAddVenue.item.id);
+    if (isPending) return;
+    if (selectedAddVenue?.kind === "journal") {
+      addJournal(selectedAddVenue.item.venueId);
+    } else if (selectedAddVenue?.kind === "conference") {
+      addConference(selectedAddVenue.item.venueId);
+    } else if (activeAddTab === "journal") {
+      addJournal();
     } else {
-      addConference(selectedAddVenue.item.id);
+      addConference();
     }
   }
 
@@ -271,6 +305,40 @@ export function SuggestedJournalsPanel({
       showSuccess({
         title: "Suggested venue removed",
         detail: `${removedVenueName} was removed from this research suggested venues.`,
+      });
+      router.refresh();
+    });
+  }
+
+  function approveSuggestion(formData: FormData) {
+    if (!approveVenue) return;
+    startTransition(async () => {
+      if (approveVenue.kind === "journal") {
+        if (approvalVenue?.kind === "journal") {
+          formData.set("journalId", approvalVenue.item.venueId);
+        }
+        await approveSuggestedJournal(
+          projectId,
+          approveVenue.item.id,
+          formData,
+        );
+      } else {
+        if (approvalVenue?.kind === "conference") {
+          formData.set("conferenceId", approvalVenue.item.venueId);
+        }
+        await approveSuggestedConference(
+          projectId,
+          approveVenue.item.id,
+          formData,
+        );
+      }
+      setApproveVenue(null);
+      setApprovalVenue(null);
+      setJournalQuery("");
+      setConferenceQuery("");
+      showSuccess({
+        title: "Venue suggestion approved",
+        detail: `${approveVenue.item.name} can now be used for submission tasks.`,
       });
       router.refresh();
     });
@@ -359,9 +427,13 @@ export function SuggestedJournalsPanel({
               journal={journal}
               isAdmin={isAdmin}
               canAssignTask={canAssignTask}
+              canApproveSuggestion={canApproveSuggestion}
               disabled={disabled}
               onAssign={() =>
                 openSubmitTask({ kind: "journal", item: journal })
+              }
+              onApprove={() =>
+                setApproveVenue({ kind: "journal", item: journal })
               }
               onDelete={() =>
                 setDeleteVenue({ kind: "journal", item: journal })
@@ -377,9 +449,13 @@ export function SuggestedJournalsPanel({
               conference={conference}
               isAdmin={isAdmin}
               canAssignTask={canAssignTask}
+              canApproveSuggestion={canApproveSuggestion}
               disabled={disabled}
               onAssign={() =>
                 openSubmitTask({ kind: "conference", item: conference })
+              }
+              onApprove={() =>
+                setApproveVenue({ kind: "conference", item: conference })
               }
               onDelete={() =>
                 setDeleteVenue({ kind: "conference", item: conference })
@@ -401,7 +477,12 @@ export function SuggestedJournalsPanel({
             <ResearchButton
               type="button"
               onClick={addSelectedVenue}
-              disabled={!selectedAddVenue || isPending}
+              disabled={
+                isPending ||
+                (!selectedAddVenue &&
+                  !freeVenueName.trim() &&
+                  !freeVenueLink.trim())
+              }
             >
               <Plus className="h-4 w-4" />
               Add venue
@@ -448,6 +529,15 @@ export function SuggestedJournalsPanel({
                   venue={selectedAddVenue}
                   onClear={() => setSelectedAddVenue(null)}
                 />
+                {!selectedAddVenue && (
+                  <FreeVenueFields
+                    name={freeVenueName}
+                    link={freeVenueLink}
+                    onNameChange={setFreeVenueName}
+                    onLinkChange={setFreeVenueLink}
+                    kind="journal"
+                  />
+                )}
                 <ResultList
                   query={journalQuery}
                   idleText="Search and select one journal."
@@ -493,6 +583,15 @@ export function SuggestedJournalsPanel({
                   venue={selectedAddVenue}
                   onClear={() => setSelectedAddVenue(null)}
                 />
+                {!selectedAddVenue && (
+                  <FreeVenueFields
+                    name={freeVenueName}
+                    link={freeVenueLink}
+                    onNameChange={setFreeVenueName}
+                    onLinkChange={setFreeVenueLink}
+                    kind="conference"
+                  />
+                )}
                 <ResultList
                   query={conferenceQuery}
                   idleText="Search and select one conference."
@@ -543,6 +642,139 @@ export function SuggestedJournalsPanel({
         />
       )}
 
+      {approveVenue && (
+        <ResearchModal
+          open={Boolean(approveVenue)}
+          onClose={() => {
+            setApproveVenue(null);
+            setApprovalVenue(null);
+            setJournalQuery("");
+            setConferenceQuery("");
+          }}
+          title="Approve venue suggestion"
+          icon={<Check className="h-5 w-5" />}
+          maxWidth="max-w-2xl"
+          bodyClassName="px-5 py-4"
+          headerActions={
+            <ResearchButton
+              form="approve-suggested-venue-form"
+              disabled={!approveVenue.item.venueId && !approvalVenue}
+            >
+              <Check className="h-4 w-4" />
+              Approve
+            </ResearchButton>
+          }
+        >
+          <form
+            id="approve-suggested-venue-form"
+            action={approveSuggestion}
+            className="grid gap-4"
+          >
+            <div className="border border-[#444444] bg-[#202020] px-3 py-2 text-sm text-[#B0B0B0]">
+              <p className="font-normal text-[#E4E4E4]">
+                {approveVenue.item.name}
+              </p>
+              {approveVenue.item.venueLink && (
+                <a
+                  href={approveVenue.item.venueLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 block truncate text-xs text-[#A8DADC] transition hover:text-[#C9F0F2]"
+                >
+                  {approveVenue.item.venueLink}
+                </a>
+              )}
+            </div>
+            {!approveVenue.item.venueId && (
+              <>
+                <p className="text-sm text-[#B0B0B0]">
+                  This venue is not linked to a system record yet. Add it to the
+                  journal or conference list first, then choose it here before
+                  approving.
+                </p>
+                <SearchBox
+                  value={
+                    approveVenue.kind === "journal"
+                      ? journalQuery
+                      : conferenceQuery
+                  }
+                  onChange={(value) => {
+                    if (approveVenue.kind === "journal") setJournalQuery(value);
+                    else setConferenceQuery(value);
+                    setApprovalVenue(null);
+                  }}
+                  placeholder={
+                    approveVenue.kind === "journal"
+                      ? "Search journal to link..."
+                      : "Search conference to link..."
+                  }
+                />
+                <SelectedVenuePill
+                  venue={approvalVenue}
+                  onClear={() => setApprovalVenue(null)}
+                />
+                <ResultList
+                  query={
+                    approveVenue.kind === "journal"
+                      ? journalQuery
+                      : conferenceQuery
+                  }
+                  idleText="Search and select the matching venue."
+                  emptyText="No venue matches this search."
+                >
+                  {approveVenue.kind === "journal"
+                    ? journalResults.map((journal) => (
+                        <button
+                          key={journal.id}
+                          type="button"
+                          onClick={() =>
+                            setApprovalVenue({ kind: "journal", item: journal })
+                          }
+                          className={resultButtonClass(
+                            approvalVenue?.kind === "journal" &&
+                              approvalVenue.item.id === journal.id,
+                          )}
+                        >
+                          <span className="block text-sm font-normal text-[#E4E4E4]">
+                            {journal.name}
+                          </span>
+                          <span className="mt-1 block text-xs text-[#B0B0B0]">
+                            {journal.issn || "No ISSN"} -{" "}
+                            {journal.publisher || "No publisher"}
+                          </span>
+                        </button>
+                      ))
+                    : conferenceResults.map((conference) => (
+                        <button
+                          key={conference.id}
+                          type="button"
+                          onClick={() =>
+                            setApprovalVenue({
+                              kind: "conference",
+                              item: conference,
+                            })
+                          }
+                          className={resultButtonClass(
+                            approvalVenue?.kind === "conference" &&
+                              approvalVenue.item.id === conference.id,
+                          )}
+                        >
+                          <span className="block text-sm font-normal text-[#E4E4E4]">
+                            {conference.name}
+                          </span>
+                          <span className="mt-1 block text-xs text-[#B0B0B0]">
+                            {conference.organizer || "No organizer"} -{" "}
+                            {conference.location || "No location"}
+                          </span>
+                        </button>
+                      ))}
+                </ResultList>
+              </>
+            )}
+          </form>
+        </ResearchModal>
+      )}
+
       {assignVenue && (
         <ResearchModal
           open={Boolean(assignVenue)}
@@ -575,13 +807,13 @@ export function SuggestedJournalsPanel({
               <input
                 type="hidden"
                 name="journalId"
-                value={assignVenue.item.id}
+                value={assignVenue.item.venueId}
               />
             ) : (
               <input
                 type="hidden"
                 name="conferenceId"
-                value={assignVenue.item.id}
+                value={assignVenue.item.venueId}
               />
             )}
             <input
@@ -763,6 +995,47 @@ function SelectedVenuePill({
   );
 }
 
+function FreeVenueFields({
+  name,
+  link,
+  onNameChange,
+  onLinkChange,
+  kind,
+}: {
+  name: string;
+  link: string;
+  onNameChange: (value: string) => void;
+  onLinkChange: (value: string) => void;
+  kind: "journal" | "conference";
+}) {
+  return (
+    <div className="grid gap-3 border border-[#444444] bg-[#202020] p-3 animate-[modalPanelIn_220ms_ease-out] sm:grid-cols-2">
+      <label className="grid gap-1.5">
+        <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+          {kind === "journal" ? "Journal name" : "Conference name"}
+        </span>
+        <input
+          value={name}
+          onChange={(event) => onNameChange(event.target.value)}
+          placeholder="Venue name"
+          className={researchFieldClass}
+        />
+      </label>
+      <label className="grid gap-1.5">
+        <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+          Link
+        </span>
+        <input
+          value={link}
+          onChange={(event) => onLinkChange(event.target.value)}
+          placeholder="Homepage or submission link"
+          className={researchFieldClass}
+        />
+      </label>
+    </div>
+  );
+}
+
 function VenueSection({
   title,
   children,
@@ -789,24 +1062,30 @@ function JournalCard({
   journal,
   isAdmin,
   canAssignTask,
+  canApproveSuggestion,
   disabled,
   onAssign,
+  onApprove,
   onDelete,
 }: {
   journal: SuggestedJournalOption;
   isAdmin: boolean;
   canAssignTask: boolean;
+  canApproveSuggestion: boolean;
   disabled: boolean;
   onAssign: () => void;
+  onApprove: () => void;
   onDelete: () => void;
 }) {
   return (
     <VenueCard
       isAdmin={isAdmin}
       canAssignTask={canAssignTask}
+      canApproveSuggestion={canApproveSuggestion}
       disabled={disabled}
       state={journal.venueState ?? { state: "idle" }}
       onAssign={onAssign}
+      onApprove={onApprove}
       onDelete={onDelete}
       assignLabel="Assign journal submission task"
       deleteLabel="Delete suggested journal"
@@ -833,24 +1112,30 @@ function ConferenceCard({
   conference,
   isAdmin,
   canAssignTask,
+  canApproveSuggestion,
   disabled,
   onAssign,
+  onApprove,
   onDelete,
 }: {
   conference: SuggestedConferenceOption;
   isAdmin: boolean;
   canAssignTask: boolean;
+  canApproveSuggestion: boolean;
   disabled: boolean;
   onAssign: () => void;
+  onApprove: () => void;
   onDelete: () => void;
 }) {
   return (
     <VenueCard
       isAdmin={isAdmin}
       canAssignTask={canAssignTask}
+      canApproveSuggestion={canApproveSuggestion}
       disabled={disabled}
       state={conference.venueState ?? { state: "idle" }}
       onAssign={onAssign}
+      onApprove={onApprove}
       onDelete={onDelete}
       assignLabel="Assign conference submission task"
       deleteLabel="Delete suggested conference"
@@ -886,9 +1171,11 @@ function SuggestedByLine({ name, role }: { name?: string; role?: string }) {
 function VenueCard({
   isAdmin,
   canAssignTask,
+  canApproveSuggestion,
   disabled,
   state,
   onAssign,
+  onApprove,
   onDelete,
   assignLabel,
   deleteLabel,
@@ -896,9 +1183,11 @@ function VenueCard({
 }: {
   isAdmin: boolean;
   canAssignTask: boolean;
+  canApproveSuggestion: boolean;
   disabled: boolean;
   state: SuggestedVenueState;
   onAssign: () => void;
+  onApprove: () => void;
   onDelete: () => void;
   assignLabel: string;
   deleteLabel: string;
@@ -911,8 +1200,10 @@ function VenueCard({
     (state.state === "idle" ||
       state.state === "rejected" ||
       state.state === "withdrawn");
+  const canApprove =
+    canApproveSuggestion && !disabled && state.state === "pendingApproval";
   const canDelete = isAdmin && !disabled && state.state === "idle";
-  const showActions = canAssign || canDelete;
+  const showActions = canAssign || canApprove || canDelete;
 
   return (
     <div
@@ -937,6 +1228,18 @@ function VenueCard({
               </button>
             </IconHint>
           )}
+          {canApprove && (
+            <IconHint label="Approve venue suggestion">
+              <button
+                type="button"
+                onClick={onApprove}
+                aria-label="Approve venue suggestion"
+                className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
+              >
+                <Check className="h-4 w-4" />
+              </button>
+            </IconHint>
+          )}
           {canDelete && (
             <IconHint label={deleteLabel}>
               <button
@@ -950,8 +1253,11 @@ function VenueCard({
             </IconHint>
           )}
         </div>
-      ) : meta.badge ? (
-        <div className="absolute right-2 top-2">
+      ) : null}
+      {meta.badge ? (
+        <div
+          className={`absolute right-2 top-2 transition ${showActions ? "group-hover:opacity-0" : ""}`}
+        >
           <span
             className={`inline-flex flex-col border px-2.5 py-1 text-center text-[11px] font-normal uppercase tracking-wide ring-0 ${meta.badgeClass}`}
           >
@@ -980,6 +1286,15 @@ function shortDate(value: string) {
 }
 
 function venueStateMeta(state: SuggestedVenueState) {
+  if (state.state === "pendingApproval") {
+    return {
+      cardClass: "border-[#5A4A2C] bg-[#2F2B24]",
+      badge: "Waiting approval",
+      badgeClass: "border-[#7A6338] bg-[#242118] text-[#FFD68A]",
+      tooltip:
+        "This venue suggestion is waiting for approval before a submission task can be assigned.",
+    };
+  }
   if (state.state === "published") {
     return {
       cardClass: "border-[#444444] bg-[#303030]",

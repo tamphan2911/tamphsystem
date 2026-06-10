@@ -410,6 +410,7 @@ export default async function ProjectDetailPage({
   const canEditResearch = isAdmin || isCorrespondingAuthor;
   const canCreateSubmitOrOtherTask =
     isAdmin || isFirstAuthor || isCorrespondingAuthor;
+  const canApproveVenueSuggestion = canCreateSubmitOrOtherTask;
   const canSuggestVenue =
     isAdmin || isProjectAuthor || hasUnfinishedAssignedResearchTask;
 
@@ -524,7 +525,10 @@ export default async function ProjectDetailPage({
   const allJournalOptions: SuggestedJournalOption[] = journals.map(
     (journal) => ({
       id: journal.id,
+      venueId: journal.id,
       name: journal.name,
+      venueLink: journal.homepageLink ?? journal.submissionLink ?? "",
+      status: "APPROVED",
       issn: journal.issn ?? "",
       field: journal.field ?? "",
       rank: journal.rank ?? "",
@@ -533,24 +537,35 @@ export default async function ProjectDetailPage({
     }),
   );
   const suggestedJournalOptions: SuggestedJournalOption[] =
-    project.suggestedJournals.map(({ journal, createdBy }) => ({
-      id: journal.id,
-      name: journal.name,
-      issn: journal.issn ?? "",
-      field: journal.field ?? "",
-      rank: journal.rank ?? "",
-      publisher: journal.publisher ?? "",
-      apc: journal.apc ?? "",
+    project.suggestedJournals.map(({ journal, createdBy, ...suggestion }) => ({
+      id: suggestion.id,
+      venueId: journal?.id ?? "",
+      name: journal?.name ?? suggestion.venueName ?? "Unnamed journal",
+      venueLink: suggestion.venueLink ?? "",
+      status: suggestion.status,
+      issn: journal?.issn ?? "",
+      field: journal?.field ?? "",
+      rank: journal?.rank ?? "",
+      publisher: journal?.publisher ?? "",
+      apc: journal?.apc ?? "",
       suggestedByName: createdBy?.name || createdBy?.email || "Unknown user",
       suggestedByRole: createdBy
         ? displayRole(createdBy.roles)
         : "Unknown role",
-      venueState: suggestedJournalState(journal.id),
+      venueState:
+        suggestion.status === "PENDING"
+          ? { state: "pendingApproval" }
+          : journal
+            ? suggestedJournalState(journal.id)
+            : { state: "pendingApproval" },
     }));
   const allConferenceOptions: SuggestedConferenceOption[] = conferences.map(
     (conference) => ({
       id: conference.id,
+      venueId: conference.id,
       name: conference.name,
+      venueLink: conference.website ?? "",
+      status: "APPROVED",
       type: conference.type ?? "",
       theme: conference.targetTheme || conference.themes || "",
       location: conference.location ?? "",
@@ -565,25 +580,35 @@ export default async function ProjectDetailPage({
     }),
   );
   const suggestedConferenceOptions: SuggestedConferenceOption[] =
-    project.suggestedConferences.map(({ conference, createdBy }) => ({
-      id: conference.id,
-      name: conference.name,
-      type: conference.type ?? "",
-      theme: conference.targetTheme || conference.themes || "",
-      location: conference.location ?? "",
-      organizer: conference.organizer ?? "",
-      time: [
-        conference.startDate?.toLocaleDateString(),
-        conference.endDate?.toLocaleDateString(),
-      ]
-        .filter(Boolean)
-        .join(" - "),
-      suggestedByName: createdBy?.name || createdBy?.email || "Unknown user",
-      suggestedByRole: createdBy
-        ? displayRole(createdBy.roles)
-        : "Unknown role",
-      venueState: suggestedConferenceState(conference.id),
-    }));
+    project.suggestedConferences.map(
+      ({ conference, createdBy, ...suggestion }) => ({
+        id: suggestion.id,
+        venueId: conference?.id ?? "",
+        name: conference?.name ?? suggestion.venueName ?? "Unnamed conference",
+        venueLink: suggestion.venueLink ?? "",
+        status: suggestion.status,
+        type: conference?.type ?? "",
+        theme: conference?.targetTheme || conference?.themes || "",
+        location: conference?.location ?? "",
+        organizer: conference?.organizer ?? "",
+        time: [
+          conference?.startDate?.toLocaleDateString(),
+          conference?.endDate?.toLocaleDateString(),
+        ]
+          .filter(Boolean)
+          .join(" - "),
+        suggestedByName: createdBy?.name || createdBy?.email || "Unknown user",
+        suggestedByRole: createdBy
+          ? displayRole(createdBy.roles)
+          : "Unknown role",
+        venueState:
+          suggestion.status === "PENDING"
+            ? { state: "pendingApproval" }
+            : conference
+              ? suggestedConferenceState(conference.id)
+              : { state: "pendingApproval" },
+      }),
+    );
   const taskAssigneeOptions: TaskAssigneeOption[] = taskAssignees.map(
     (user) => ({
       id: user.id,
@@ -1215,6 +1240,7 @@ export default async function ProjectDetailPage({
           assistants={taskAssigneeOptions}
           isAdmin={isAdmin}
           canAssignTask={canCreateSubmitOrOtherTask}
+          canApproveSuggestion={canApproveVenueSuggestion}
           canSuggestVenue={canSuggestVenue}
           disabled={researchContentLocked}
         />
