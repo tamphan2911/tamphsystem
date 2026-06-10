@@ -107,7 +107,7 @@ function JournalInput({
   className?: string;
 }) {
   return (
-    <span className={`research-auth-input-shell ${className}`}>
+    <span className={`research-auth-input-shell journal-form-field ${className}`}>
       <input
         name={name}
         type={type}
@@ -228,6 +228,7 @@ function JournalFlagCheckbox({
   title,
   detail,
   checkedClass,
+  tone,
 }: {
   name: string;
   defaultChecked?: boolean | null;
@@ -235,9 +236,13 @@ function JournalFlagCheckbox({
   title: string;
   detail: string;
   checkedClass: string;
+  tone: "favorite" | "interest";
 }) {
   return (
-    <label className="group flex cursor-pointer items-center gap-3 border border-[#444444] bg-[#2C2C2C] p-3 transition duration-150 ease-out hover:border-[#5A5A5A] hover:bg-[#383838]">
+    <label
+      data-tone={tone}
+      className="journal-flag-checkbox group flex cursor-pointer items-center gap-3 border border-[#444444] bg-[#2C2C2C] p-3 transition duration-150 ease-out hover:-translate-y-0.5 hover:border-[#5A5A5A] hover:bg-[#383838] active:translate-y-0 active:scale-[0.985]"
+    >
       <input
         type="checkbox"
         name={name}
@@ -245,15 +250,15 @@ function JournalFlagCheckbox({
         className="peer sr-only"
       />
       <span
-        className={`flex h-9 w-9 items-center justify-center text-[#777777] transition duration-150 ease-out group-hover:text-[#B0B0B0] ${checkedClass}`}
+        className={`flex h-9 w-9 items-center justify-center text-[#5A5A5A] transition duration-150 ease-out group-hover:text-[#B0B0B0] ${checkedClass}`}
       >
         {icon}
       </span>
       <span className="min-w-0">
-        <span className="block text-sm font-semibold normal-case tracking-normal text-[#E4E4E4]">
+        <span className="journal-flag-title block text-sm font-semibold normal-case tracking-normal text-[#5A5A5A] transition">
           {title}
         </span>
-        <span className="block text-xs font-normal normal-case tracking-normal text-[#B0B0B0]">
+        <span className="block text-xs font-normal normal-case tracking-normal text-[#5A5A5A] transition group-hover:text-[#B0B0B0]">
           {detail}
         </span>
       </span>
@@ -271,7 +276,7 @@ function InlineCheckbox({
   label: string;
 }) {
   return (
-    <label className="inline-flex cursor-pointer items-center gap-2 normal-case tracking-normal text-[#B0B0B0]">
+    <label className="inline-flex h-full min-h-11 cursor-pointer items-center justify-center gap-2 border border-[#444444] bg-[#2C2C2C] px-3 normal-case tracking-normal text-[#5A5A5A] transition hover:-translate-y-0.5 hover:border-[#5A5A5A] hover:bg-[#383838] hover:text-[#B0B0B0] active:translate-y-0 active:scale-[0.985]">
       <input
         type="checkbox"
         name={name}
@@ -281,7 +286,9 @@ function InlineCheckbox({
       <span className="flex h-4 w-4 flex-none items-center justify-center border border-[#5A5A5A] bg-[#242424] text-transparent transition peer-checked:border-[#A8DADC] peer-checked:bg-[#263636] peer-checked:text-[#A8DADC]">
         <Check className="h-3 w-3" aria-hidden="true" />
       </span>
-      <span className="text-xs font-normal">{label}</span>
+      <span className="text-xs font-normal transition peer-checked:text-[#A8DADC]">
+        {label}
+      </span>
     </label>
   );
 }
@@ -464,15 +471,15 @@ export function JournalDialogForm({
             <JournalInput
               name="name"
               defaultValue={initialValues?.name}
-              placeholder="Enter the official journal name"
-              icon={<BookOpen aria-hidden="true" />}
+              placeholder="Official journal name"
+              icon={<BookOpen aria-hidden="true" className="text-[#A8DADC]" />}
             />
             <div className="grid gap-4 md:grid-cols-2">
               <JournalInput
                 name="publisher"
                 defaultValue={initialValues?.publisher}
-                placeholder="Enter publisher name, for example Elsevier"
-                icon={<Building2 aria-hidden="true" />}
+                placeholder="Publisher name, for example Elsevier"
+                icon={<Building2 aria-hidden="true" className="text-[#B39CD0]" />}
               />
               <CountryPicker
                 value={selectedCountry}
@@ -483,8 +490,8 @@ export function JournalDialogForm({
               <JournalInput
                 name="issn"
                 defaultValue={initialValues?.issn}
-                placeholder="Enter ISSN, for example 1234-5678"
-                icon={<Hash aria-hidden="true" />}
+                placeholder="ISSN, for example 1234-5678"
+                icon={<Hash aria-hidden="true" className="text-[#F4D47A]" />}
               />
               <JournalInput
                 name="issuesPerYear"
@@ -492,8 +499,8 @@ export function JournalDialogForm({
                 min="1"
                 step="1"
                 defaultValue={initialValues?.issuesPerYear}
-                placeholder="Enter number of issues per year"
-                icon={<CalendarDays aria-hidden="true" />}
+                placeholder="Issues per year"
+                icon={<CalendarDays aria-hidden="true" className="text-[#9ED6B5]" />}
               />
             </div>
             <div className="grid gap-3 md:grid-cols-2">
@@ -504,6 +511,7 @@ export function JournalDialogForm({
                 title="Favorite journal"
                 detail="Mark this as a preferred venue."
                 checkedClass="peer-checked:text-amber-400"
+                tone="favorite"
               />
               <JournalFlagCheckbox
                 name="isInterest"
@@ -512,6 +520,7 @@ export function JournalDialogForm({
                 title="Journal of interest"
                 detail="Track this journal for future submissions."
                 checkedClass="peer-checked:text-sky-400"
+                tone="interest"
               />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
@@ -530,8 +539,8 @@ export function JournalDialogForm({
                 <JournalInput
                   name="localRank"
                   defaultValue={initialValues?.localRank}
-                  placeholder="Enter local rank or category"
-                  icon={<Hash aria-hidden="true" />}
+                  placeholder="Local rank or category"
+                  icon={<Hash aria-hidden="true" className="text-[#F4D47A]" />}
                 />
               ) : (
                 <ResearchFormSelect
@@ -550,8 +559,9 @@ export function JournalDialogForm({
                 />
               )}
             </div>
-            <div ref={fieldPickerRef} className="relative">
-              <div className="border border-[#444444] bg-[#2C2C2C] p-2 transition focus-within:border-[#A8DADC] focus-within:bg-[#383838]">
+            <div className="grid gap-3 md:grid-cols-[minmax(0,5fr)_minmax(8rem,1fr)]">
+              <div ref={fieldPickerRef} className="relative min-w-0">
+                <div className="border border-[#444444] bg-[#2C2C2C] p-2 transition focus-within:border-[#A8DADC] focus-within:bg-[#383838]">
                 <div className="flex min-h-9 flex-wrap items-center gap-1.5">
                   {selectedFields.map((field) => (
                     <span
@@ -570,7 +580,7 @@ export function JournalDialogForm({
                     </span>
                   ))}
                   <span className="flex min-w-[9rem] flex-1 items-center gap-2">
-                    <Search className="h-4 w-4 text-[#B0B0B0]" />
+                    <Search className="h-4 w-4 text-[#A8DADC]" />
                     <input
                       value={fieldQuery}
                       onFocus={() => setIsFieldPickerOpen(true)}
@@ -589,65 +599,74 @@ export function JournalDialogForm({
                       }}
                       placeholder={
                         selectedFields.length
-                          ? "Search another research field to add"
-                          : "Search or add research field, for example Finance"
+                          ? "Search another research field"
+                          : "Search research fields"
                       }
                       className="min-w-0 flex-1 bg-transparent text-sm font-normal normal-case tracking-normal text-[#E4E4E4] outline-none placeholder:text-[#5A5A5A]"
                     />
                   </span>
                 </div>
-              </div>
-              <FloatingDropdownPortal
-                anchorRef={fieldPickerRef}
-                open={
-                  isFieldPickerOpen &&
-                  Boolean(fieldQuery.trim() || filteredFieldOptions.length > 0)
-                }
-                maxWidth={640}
-              >
-                <div
-                  className={`${researchDropdownPanelClass} max-h-[var(--research-dropdown-max-height)] overflow-y-auto normal-case tracking-normal`}
-                >
-                  <>
-                    {filteredFieldOptions.map((field) => (
-                      <button
-                        key={field}
-                        type="button"
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => addField(field)}
-                        className={`${researchDropdownItemClass} ${
-                          selectedFields.includes(field)
-                            ? researchDropdownItemActiveClass
-                            : researchDropdownItemIdleClass
-                        }`}
-                      >
-                        <span className="min-w-0 px-3">{field}</span>
-                        <span className="mr-3 flex h-6 w-6 items-center justify-center rounded-none text-[#A8DADC]">
-                          <Check className="h-3.5 w-3.5" />
-                        </span>
-                      </button>
-                    ))}
-                    {fieldQuery.trim() &&
-                    !selectedFields.includes(fieldQuery.trim()) &&
-                    !journalFieldOptions.some(
-                      (field) =>
-                        field.toLowerCase() === fieldQuery.trim().toLowerCase(),
-                    ) ? (
-                      <button
-                        type="button"
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => addField(fieldQuery)}
-                        className={`${researchDropdownItemClass} ${researchDropdownItemIdleClass}`}
-                      >
-                        <span className="flex items-center gap-2 px-3">
-                          <PlusCircle className="h-4 w-4 text-[#A8DADC]" />
-                          Add &quot;{fieldQuery.trim()}&quot;
-                        </span>
-                      </button>
-                    ) : null}
-                  </>
                 </div>
-              </FloatingDropdownPortal>
+                <FloatingDropdownPortal
+                  anchorRef={fieldPickerRef}
+                  open={
+                    isFieldPickerOpen &&
+                    Boolean(
+                      fieldQuery.trim() || filteredFieldOptions.length > 0,
+                    )
+                  }
+                  maxWidth={640}
+                >
+                  <div
+                    className={`${researchDropdownPanelClass} max-h-[var(--research-dropdown-max-height)] overflow-y-auto normal-case tracking-normal`}
+                  >
+                    <>
+                      {filteredFieldOptions.map((field) => (
+                        <button
+                          key={field}
+                          type="button"
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => addField(field)}
+                          className={`${researchDropdownItemClass} ${
+                            selectedFields.includes(field)
+                              ? researchDropdownItemActiveClass
+                              : researchDropdownItemIdleClass
+                          }`}
+                        >
+                          <span className="min-w-0 px-3">{field}</span>
+                          <span className="mr-3 flex h-6 w-6 items-center justify-center rounded-none text-[#A8DADC]">
+                            <Check className="h-3.5 w-3.5" />
+                          </span>
+                        </button>
+                      ))}
+                      {fieldQuery.trim() &&
+                      !selectedFields.includes(fieldQuery.trim()) &&
+                      !journalFieldOptions.some(
+                        (field) =>
+                          field.toLowerCase() ===
+                          fieldQuery.trim().toLowerCase(),
+                      ) ? (
+                        <button
+                          type="button"
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => addField(fieldQuery)}
+                          className={`${researchDropdownItemClass} ${researchDropdownItemIdleClass}`}
+                        >
+                          <span className="flex items-center gap-2 px-3">
+                            <PlusCircle className="h-4 w-4 text-[#A8DADC]" />
+                            Add &quot;{fieldQuery.trim()}&quot;
+                          </span>
+                        </button>
+                      ) : null}
+                    </>
+                  </div>
+                </FloatingDropdownPortal>
+              </div>
+              <InlineCheckbox
+                name="hasApcOption"
+                defaultChecked={initialValues?.hasApcOption}
+                label="Option"
+              />
             </div>
           </div>
         </section>
@@ -655,13 +674,6 @@ export function JournalDialogForm({
         <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
-              <span className="flex items-center justify-end gap-3">
-                <InlineCheckbox
-                  name="hasApcOption"
-                  defaultChecked={initialValues?.hasApcOption}
-                  label="Option"
-                />
-              </span>
               <span className="grid grid-cols-[1fr_9rem] gap-2">
                 <JournalInput
                   name="apc"
@@ -669,15 +681,15 @@ export function JournalDialogForm({
                   min="0"
                   step="0.01"
                   defaultValue={initialValues?.apc}
-                  placeholder="Enter APC amount"
-                  icon={<DollarSign aria-hidden="true" />}
+                  placeholder="APC amount"
+                  icon={<DollarSign aria-hidden="true" className="text-[#9ED6B5]" />}
                 />
                 <ResearchFormSelect
                   name="apcCurrency"
                   defaultValue={initialValues?.apcCurrency ?? ""}
                   ariaLabel="APC currency"
                   options={[
-                    { value: "", label: "Choose APC currency" },
+                    { value: "", label: "Currency" },
                     ...currencyOptions,
                   ]}
                 />
@@ -691,15 +703,15 @@ export function JournalDialogForm({
                   min="0"
                   step="0.01"
                   defaultValue={initialValues?.submissionFee}
-                  placeholder="Enter submission fee if any"
-                  icon={<DollarSign aria-hidden="true" />}
+                  placeholder="Submission fee"
+                  icon={<DollarSign aria-hidden="true" className="text-[#9ED6B5]" />}
                 />
                 <ResearchFormSelect
                   name="submissionFeeCurrency"
                   defaultValue={initialValues?.submissionFeeCurrency ?? ""}
                   ariaLabel="Submission fee currency"
                   options={[
-                    { value: "", label: "Choose fee currency" },
+                    { value: "", label: "Currency" },
                     ...currencyOptions,
                   ]}
                 />
@@ -713,32 +725,32 @@ export function JournalDialogForm({
             <JournalInput
               name="homepageLink"
               defaultValue={initialValues?.homepageLink}
-              placeholder="Paste journal homepage URL"
-              icon={<Globe2 aria-hidden="true" />}
+              placeholder="Journal homepage URL"
+              icon={<Globe2 aria-hidden="true" className="text-[#A8DADC]" />}
             />
             <JournalInput
               name="submissionLink"
               defaultValue={initialValues?.submissionLink}
-              placeholder="Paste manuscript submission portal URL"
-              icon={<LinkIcon aria-hidden="true" />}
+              placeholder="Manuscript submission portal URL"
+              icon={<LinkIcon aria-hidden="true" className="text-[#B39CD0]" />}
             />
             <JournalInput
               name="scimagoLink"
               defaultValue={initialValues?.scimagoLink}
-              placeholder="Paste Scimago profile URL"
-              icon={<LinkIcon aria-hidden="true" />}
+              placeholder="Scimago profile URL"
+              icon={<LinkIcon aria-hidden="true" className="text-[#F4D47A]" />}
             />
             <JournalInput
               name="scopusLink"
               defaultValue={initialValues?.scopusLink}
-              placeholder="Paste Scopus source profile URL"
-              icon={<LinkIcon aria-hidden="true" />}
+              placeholder="Scopus source profile URL"
+              icon={<LinkIcon aria-hidden="true" className="text-[#9ED6B5]" />}
             />
             <JournalInput
               name="note"
               defaultValue={initialValues?.note}
               placeholder="Add fit notes, login notes, or review notes"
-              icon={<StickyNote aria-hidden="true" />}
+              icon={<StickyNote aria-hidden="true" className="text-[#F4D47A]" />}
               className="md:col-span-2"
             />
           </div>
@@ -749,24 +761,24 @@ export function JournalDialogForm({
             <div className="grid gap-4 md:grid-cols-2">
               <JournalInput
                 name="accountUsername"
-                placeholder="Optional: enter journal-site login ID for this new journal"
-                icon={<KeyRound aria-hidden="true" />}
+                placeholder="Optional: journal-site login ID"
+                icon={<KeyRound aria-hidden="true" className="text-[#F4D47A]" />}
               />
               <JournalInput
                 name="accountPassword"
-                placeholder="Optional: enter password for this journal account"
-                icon={<LockKeyhole aria-hidden="true" />}
+                placeholder="Optional: password"
+                icon={<LockKeyhole aria-hidden="true" className="text-[#B39CD0]" />}
               />
               <JournalInput
                 name="accountEmail"
                 type="email"
-                placeholder="Optional: enter email used for this journal account"
-                icon={<AtSign aria-hidden="true" />}
+                placeholder="Optional: email used for this account"
+                icon={<AtSign aria-hidden="true" className="text-[#A8DADC]" />}
               />
               <JournalInput
                 name="accountNote"
-                placeholder="Optional: add account recovery notes or login URL"
-                icon={<FileText aria-hidden="true" />}
+                placeholder="Optional: account recovery notes or login URL"
+                icon={<FileText aria-hidden="true" className="text-[#9ED6B5]" />}
               />
             </div>
           </section>

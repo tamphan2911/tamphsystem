@@ -37,6 +37,7 @@ export function ResearchFormSelect({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const selected =
     options.find((option) => option.value === value) ?? options[0];
+  const isPlaceholder = !selected?.value;
 
   useEffect(() => {
     function closeOnOutsideClick(event: MouseEvent) {
@@ -80,7 +81,13 @@ export function ResearchFormSelect({
           open && "border-[#A8DADC] bg-[#383838]",
         )}
       >
-        <span className="min-w-0 truncate text-left">{selected?.label}</span>
+        <span
+          className={`min-w-0 truncate text-left ${
+            isPlaceholder ? "text-[#5A5A5A]" : "text-[#E4E4E4]"
+          }`}
+        >
+          {selected?.label}
+        </span>
         <ChevronDown
           className={`h-4 w-4 flex-none text-[#B0B0B0] transition duration-200 ease-out group-hover:text-[#A8DADC] motion-reduce:transition-none ${open ? "rotate-180 text-[#A8DADC]" : ""}`}
           aria-hidden="true"

@@ -1111,6 +1111,32 @@ body:has(.research-site-root) {
   border-color: #444444 !important;
 }
 
+.research-site-root .fixed.inset-0 [class*="modalPanelIn_"] :where(.border-t) {
+  position: relative;
+  border-top-color: transparent !important;
+}
+
+.research-site-root
+  .fixed.inset-0
+  [class*="modalPanelIn_"]
+  :where(.border-t)::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(168, 218, 220, 0.26),
+    rgba(68, 68, 68, 0.92),
+    rgba(168, 218, 220, 0.2),
+    transparent
+  );
+  pointer-events: none;
+}
+
 .research-site-root .fixed.inset-0 .absolute.top-full {
   z-index: 130;
 }
@@ -1688,6 +1714,26 @@ body:has(.research-site-root) {
     transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+.research-auth-input-shell.journal-form-field svg[class*="text-[#A8DADC]"] {
+  color: #a8dadc;
+}
+
+.research-auth-input-shell.journal-form-field svg[class*="text-[#B39CD0]"] {
+  color: #b39cd0;
+}
+
+.research-auth-input-shell.journal-form-field svg[class*="text-[#F4D47A]"] {
+  color: #f4d47a;
+}
+
+.research-auth-input-shell.journal-form-field svg[class*="text-[#9ED6B5]"] {
+  color: #9ed6b5;
+}
+
+.research-auth-input-shell.journal-form-field:hover svg[class*="text-"] {
+  filter: brightness(1.12);
+}
+
 .research-auth-input-shell:hover svg {
   color: #e4e4e4;
 }
@@ -1695,6 +1741,40 @@ body:has(.research-site-root) {
 .research-auth-input-shell:focus-within svg {
   color: #a8dadc;
   transform: translateY(-50%) scale(1.08);
+}
+
+.research-auth-input-shell.journal-form-field:hover svg[class*="text-[#A8DADC]"],
+.research-auth-input-shell.journal-form-field:focus-within
+  svg[class*="text-[#A8DADC]"] {
+  color: #a8dadc;
+}
+
+.research-auth-input-shell.journal-form-field:hover svg[class*="text-[#B39CD0]"],
+.research-auth-input-shell.journal-form-field:focus-within
+  svg[class*="text-[#B39CD0]"] {
+  color: #b39cd0;
+}
+
+.research-auth-input-shell.journal-form-field:hover svg[class*="text-[#F4D47A]"],
+.research-auth-input-shell.journal-form-field:focus-within
+  svg[class*="text-[#F4D47A]"] {
+  color: #f4d47a;
+}
+
+.research-auth-input-shell.journal-form-field:hover svg[class*="text-[#9ED6B5]"],
+.research-auth-input-shell.journal-form-field:focus-within
+  svg[class*="text-[#9ED6B5]"] {
+  color: #9ed6b5;
+}
+
+.journal-flag-checkbox:has(input:checked)[data-tone="favorite"]
+  .journal-flag-title {
+  color: #f4d47a;
+}
+
+.journal-flag-checkbox:has(input:checked)[data-tone="interest"]
+  .journal-flag-title {
+  color: #a8dadc;
 }
 
 .research-auth-feedback {
