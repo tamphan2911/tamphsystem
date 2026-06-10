@@ -4,6 +4,8 @@ import {
   ArrowLeft,
   ClipboardCheck,
   Building2,
+  Download,
+  ExternalLink,
   Send,
   CheckCircle2,
   FileText,
@@ -419,10 +421,10 @@ export default async function ProjectDetailPage({
       ? stageFromConferenceSubmissions(project.conferenceSubmissions)
       : project.stage;
   const highlightedJournalSubmission = hasJournalSubmissions
-    ? project.submissions.find(
-        (submission) =>
-          submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
-      )
+    ? (project.submissions.find(
+        (submission) => submission.status === "PUBLISHED",
+      ) ??
+      project.submissions.find((submission) => submission.status === "ACCEPTED"))
     : undefined;
   const highlightedConferenceSubmission = hasJournalSubmissions
     ? undefined
@@ -436,6 +438,9 @@ export default async function ProjectDetailPage({
   const highlightedConferenceClass = highlightedConferenceSubmission
     ? highlightedSubmissionBoxClass(highlightedConferenceSubmission.status)
     : undefined;
+  const publishedArticleSubmission = project.submissions.find(
+    (submission) => submission.status === "PUBLISHED",
+  );
   const journalSuccessLocksResearch = project.submissions.some(
     (submission) =>
       submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
@@ -734,6 +739,9 @@ export default async function ProjectDetailPage({
       rejectedAt: isoDate(submission.rejectedAt),
       withdrawnAt: isoDate(submission.withdrawnAt),
       publishedAt: isoDate(submission.publishedAt),
+      articleUrl: submission.articleUrl ?? "",
+      articleFileName: submission.articleFileName ?? "",
+      articleFileSize: submission.articleFileSize,
     })),
     ...project.conferenceSubmissions.map((submission) => ({
       id: submission.id,
@@ -802,9 +810,36 @@ export default async function ProjectDetailPage({
                 disabled={!canEditResearch}
               />
             </div>
-            <h1 className="mt-2 min-w-0 text-xl font-normal leading-8 tracking-tight text-[#E4E4E4]">
-              {project.title}
-            </h1>
+            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-3">
+              <h1 className="min-w-0 flex-1 text-xl font-normal leading-8 tracking-tight text-[#E4E4E4]">
+                {project.title}
+              </h1>
+              {publishedArticleSubmission?.articleFileName && (
+                <IconHint label="Download published article file">
+                  <a
+                    href={`/api/research/submissions/${publishedArticleSubmission.id}/article`}
+                    className="research-download-button"
+                    aria-label="Download published article file"
+                  >
+                    <Download className="svgIcon h-4 w-4" aria-hidden="true" />
+                    <span className="icon2" aria-hidden="true" />
+                  </a>
+                </IconHint>
+              )}
+              {publishedArticleSubmission?.articleUrl && (
+                <IconHint label="Open published article link">
+                  <a
+                    href={publishedArticleSubmission.articleUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="research-title-icon-button"
+                    aria-label="Open published article link"
+                  >
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                  </a>
+                </IconHint>
+              )}
+            </div>
             {project.fundingInstitution && (
               <p className="mt-2 text-sm text-[#B0B0B0]">
                 Funded by:{" "}

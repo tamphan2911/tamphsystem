@@ -142,6 +142,9 @@ export default async function JournalDetailPage({
         rejectedAt: submission.rejectedAt?.toISOString() ?? "",
         withdrawnAt: submission.withdrawnAt?.toISOString() ?? "",
         publishedAt: submission.publishedAt?.toISOString() ?? "",
+        articleUrl: submission.articleUrl ?? "",
+        articleFileName: submission.articleFileName ?? "",
+        articleFileSize: submission.articleFileSize,
       };
     },
   );

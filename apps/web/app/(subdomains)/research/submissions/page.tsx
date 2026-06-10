@@ -165,6 +165,9 @@ export default async function SubmissionsPage() {
       rejectedAt: isoDate(submission.rejectedAt),
       withdrawnAt: isoDate(submission.withdrawnAt),
       publishedAt: isoDate(submission.publishedAt),
+      articleUrl: submission.articleUrl ?? "",
+      articleFileName: submission.articleFileName ?? "",
+      articleFileSize: submission.articleFileSize,
     })),
     ...conferenceSubmissions.map((submission) => ({
       id: submission.id,

@@ -64,6 +64,21 @@ function optionalString(value: FormDataEntryValue | null) {
   return text.length > 0 ? text : null;
 }
 
+const articleFileMaxSize = 10 * 1024 * 1024;
+const articleFileTypes = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
+const articleFileTypesByExtension = new Map([
+  ["pdf", "application/pdf"],
+  ["doc", "application/msword"],
+  [
+    "docx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ],
+]);
+
 function enumValue<T extends Record<string, string>>(
   values: T,
   value: FormDataEntryValue | null,
@@ -3350,6 +3365,8 @@ export async function updateSubmissionStatus(formData: FormData) {
       where: { id: submissionId },
       select: {
         acceptedAt: true,
+        articleFileName: true,
+        articleUrl: true,
         submittedAt: true,
         status: true,
         researchProjectId: true,
@@ -3434,6 +3451,59 @@ export async function updateSubmissionStatus(formData: FormData) {
           "Published date must be the same as or after the accepted date.",
       };
     }
+    const articleUrl = optionalString(formData.get("articleUrl"));
+    const articleFile = formData.get("articleFile");
+    const hasNewArticleFile =
+      articleFile instanceof File && articleFile.size > 0;
+    if (journalStatus === SubmissionStatus.PUBLISHED) {
+      if (!articleUrl) {
+        return {
+          ok: false,
+          message:
+            "Add the published article link before changing this submission to published.",
+        };
+      }
+      try {
+        const parsedUrl = new URL(articleUrl);
+        if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+          return {
+            ok: false,
+            message: "Published article link must start with http:// or https://.",
+          };
+        }
+      } catch {
+        return {
+          ok: false,
+          message: "Published article link is not a valid URL.",
+        };
+      }
+      if (!hasNewArticleFile && !currentSubmission.articleFileName) {
+        return {
+          ok: false,
+          message:
+            "Upload the published article file before changing this submission to published.",
+        };
+      }
+      if (hasNewArticleFile) {
+        const extension = articleFile.name.toLowerCase().split(".").pop();
+        const allowedByMime = articleFileTypes.has(articleFile.type);
+        const allowedByExtension =
+          Boolean(extension) &&
+          articleFileTypesByExtension.has(extension ?? "");
+        if (!allowedByMime && !allowedByExtension) {
+          return {
+            ok: false,
+            message: "Upload the article as a PDF, DOC, or DOCX file.",
+          };
+        }
+        if (articleFile.size > articleFileMaxSize) {
+          return {
+            ok: false,
+            message: "The article file must be 10 MB or smaller.",
+          };
+        }
+      }
+    }
 
     const data: {
       status: SubmissionStatus;
@@ -3442,6 +3512,11 @@ export async function updateSubmissionStatus(formData: FormData) {
       rejectedAt?: Date | null;
       withdrawnAt?: Date | null;
       publishedAt?: Date | null;
+      articleUrl?: string | null;
+      articleFileName?: string | null;
+      articleFileType?: string | null;
+      articleFileSize?: number | null;
+      articleFileData?: Buffer | null;
     } = { status: journalStatus };
 
     if (journalStatus === SubmissionStatus.ACCEPTED)
@@ -3453,6 +3528,17 @@ export async function updateSubmissionStatus(formData: FormData) {
     if (journalStatus === SubmissionStatus.PUBLISHED) {
       data.publishedAt = statusDate;
       data.acceptedAt = currentSubmission?.acceptedAt ?? statusDate;
+      data.articleUrl = articleUrl;
+      if (hasNewArticleFile) {
+        const extension = articleFile.name.toLowerCase().split(".").pop();
+        data.articleFileName = articleFile.name;
+        data.articleFileType =
+          articleFile.type ||
+          articleFileTypesByExtension.get(extension ?? "") ||
+          "application/octet-stream";
+        data.articleFileSize = articleFile.size;
+        data.articleFileData = Buffer.from(await articleFile.arrayBuffer());
+      }
     }
 
     const submission = await prisma.researchSubmission.update({

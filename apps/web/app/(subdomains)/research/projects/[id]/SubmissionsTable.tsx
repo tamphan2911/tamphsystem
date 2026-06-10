@@ -8,6 +8,7 @@ import {
   BookOpen,
   Check,
   CircleDollarSign,
+  Download,
   Edit3,
   Ban,
   CalendarCheck2,
@@ -17,9 +18,11 @@ import {
   FileClock,
   FileSearch,
   Landmark,
+  LinkIcon,
   Send,
   Trash2,
   TriangleAlert,
+  Upload,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { deleteSubmission, updateSubmissionStatus } from "../../actions";
@@ -27,10 +30,7 @@ import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePick
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
-import {
-  ResearchButton,
-  researchFieldClass,
-} from "@/sites/research/components/ResearchPrimitives";
+import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import {
   FilterSelect,
   IconHint,
@@ -64,6 +64,9 @@ export type SubmissionRow = {
   rejectedAt: string;
   withdrawnAt: string;
   publishedAt: string;
+  articleUrl?: string;
+  articleFileName?: string;
+  articleFileSize?: number | null;
   projectId?: string;
   projectTitle?: string;
   projectAuthors?: string;
@@ -370,6 +373,7 @@ export function SubmissionsTable({
     useState<FormData | null>(null);
   const [withdrawalConfirmation, setWithdrawalConfirmation] =
     useState<FormData | null>(null);
+  const [editStatus, setEditStatus] = useState("");
   const [isPending, startTransition] = useTransition();
   const { showSuccess, showError } = useResearchToast();
 
@@ -450,6 +454,28 @@ export function SubmissionsTable({
 
     const formData = new FormData(event.currentTarget);
     const nextStatus = String(formData.get("status") ?? "");
+    if (
+      editing.kind === "journal" &&
+      normalizedStatus(nextStatus) === "PUBLISHED"
+    ) {
+      const articleUrl = String(formData.get("articleUrl") ?? "").trim();
+      const articleFile = formData.get("articleFile");
+      const hasNewFile = articleFile instanceof File && articleFile.size > 0;
+      if (!articleUrl) {
+        showError({
+          title: "Published article link required",
+          detail: "Add the article link before saving Published status.",
+        });
+        return;
+      }
+      if (!hasNewFile && !editing.articleFileName) {
+        showError({
+          title: "Published article file required",
+          detail: "Upload the article file before saving Published status.",
+        });
+        return;
+      }
+    }
     const movesToAccepted =
       editing.kind === "journal" &&
       normalizedStatus(nextStatus) === "ACCEPTED" &&
@@ -837,7 +863,15 @@ export function SubmissionsTable({
                                     ? "Research is locked. Only accepted or published submissions can still be updated."
                                     : "Edit submission status"
                               }
-                              onClick={() => setEditing(row)}
+                              onClick={() => {
+                                setEditStatus(
+                                  row.kind === "conference" &&
+                                    row.status === "PLANNED"
+                                    ? "SUBMITTED"
+                                    : row.status,
+                                );
+                                setEditing(row);
+                              }}
                               className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-[#444444] bg-[#202020] text-[#B0B0B0] transition hover:-translate-y-0.5 hover:border-[#A8DADC] hover:text-[#A8DADC] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:border-[#444444] disabled:hover:text-[#B0B0B0] disabled:hover:shadow-none"
                               aria-label={`Edit status for ${row.venueName}`}
                             >
@@ -925,6 +959,7 @@ export function SubmissionsTable({
                 }
                 options={editableStatusOptions(editing)}
                 ariaLabel="Submission status"
+                onValueChange={setEditStatus}
               />
             </label>
             <label className="grid gap-1.5">
@@ -936,6 +971,50 @@ export function SubmissionsTable({
                 defaultValue={dateInputValue(statusDate(editing))}
               />
             </label>
+            {editing.kind === "journal" &&
+              normalizedStatus(editStatus) === "PUBLISHED" && (
+                <div className="grid gap-3 border-t border-[#444444] pt-4 animate-[modalPanelIn_220ms_ease-out]">
+                  <label className="grid gap-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                      Published article link
+                    </span>
+                    <span className="research-auth-input-shell">
+                      <input
+                        name="articleUrl"
+                        type="url"
+                        defaultValue={editing.articleUrl ?? ""}
+                        placeholder="Paste DOI or published article URL"
+                        aria-label="Published article link"
+                      />
+                      <LinkIcon aria-hidden="true" />
+                    </span>
+                  </label>
+                  <label className="grid gap-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                      Article file
+                    </span>
+                    <span className="flex min-h-12 cursor-pointer items-center gap-3 border border-[#444444] bg-transparent px-4 py-3 text-sm text-[#B0B0B0] transition hover:border-[#5A5A5A] hover:bg-[#303030]">
+                      <Upload
+                        className="h-5 w-5 flex-none text-[#A8DADC]"
+                        aria-hidden="true"
+                      />
+                      <input
+                        name="articleFile"
+                        type="file"
+                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        className="min-w-0 flex-1 text-sm file:mr-3 file:cursor-pointer file:border file:border-[#A8DADC] file:bg-transparent file:px-3 file:py-1.5 file:text-sm file:font-normal file:text-[#A8DADC] hover:file:bg-[#A8DADC] hover:file:text-[#1D2A2C]"
+                        aria-label="Upload published article file"
+                      />
+                    </span>
+                    {editing.articleFileName && (
+                      <span className="inline-flex items-center gap-2 text-xs text-[#B0B0B0]">
+                        <Download className="h-3.5 w-3.5 text-[#A8DADC]" />
+                        Current file: {editing.articleFileName}
+                      </span>
+                    )}
+                  </label>
+                </div>
+              )}
           </form>
         </ResearchModal>
       )}
