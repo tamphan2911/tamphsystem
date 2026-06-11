@@ -3429,27 +3429,14 @@ export async function updateSubmissionStatus(formData: FormData) {
     }
 
     if (
-      (journalStatus === SubmissionStatus.ACCEPTED ||
-        journalStatus === SubmissionStatus.REJECTED ||
+      (journalStatus === SubmissionStatus.REJECTED ||
         journalStatus === SubmissionStatus.WITHDRAWN) &&
       dateIsBefore(statusDate, currentSubmission.submittedAt)
     ) {
       return {
         ok: false,
         message:
-          "Accepted, rejected, and withdrawn dates must be the same as or after the submission date.",
-      };
-    }
-
-    if (
-      journalStatus === SubmissionStatus.PUBLISHED &&
-      currentSubmission.acceptedAt &&
-      dateIsBefore(statusDate, currentSubmission.acceptedAt)
-    ) {
-      return {
-        ok: false,
-        message:
-          "Published date must be the same as or after the accepted date.",
+          "Rejected and withdrawn dates must be the same as or after the submission date.",
       };
     }
     const articleUrl = optionalString(formData.get("articleUrl"));
@@ -3477,13 +3464,6 @@ export async function updateSubmissionStatus(formData: FormData) {
         return {
           ok: false,
           message: "Published article link is not a valid URL.",
-        };
-      }
-      if (!hasNewArticleFile && !currentSubmission.articleFileName) {
-        return {
-          ok: false,
-          message:
-            "Upload the published article file before changing this submission to published.",
         };
       }
       if (hasNewArticleFile) {
@@ -3682,8 +3662,7 @@ export async function updateSubmissionStatus(formData: FormData) {
     }
 
     if (
-      (conferenceStatus === ConferenceSubmissionStatus.ACCEPTED ||
-        conferenceStatus === ConferenceSubmissionStatus.REJECTED ||
+      (conferenceStatus === ConferenceSubmissionStatus.REJECTED ||
         conferenceStatus === ConferenceSubmissionStatus.WITHDRAWN) &&
       currentSubmission.submittedAt &&
       dateIsBefore(statusDate, currentSubmission.submittedAt)
@@ -3691,19 +3670,7 @@ export async function updateSubmissionStatus(formData: FormData) {
       return {
         ok: false,
         message:
-          "Accepted, rejected, and withdrawn dates must be the same as or after the submission date.",
-      };
-    }
-
-    if (
-      conferenceStatus === ConferenceSubmissionStatus.PUBLISHED &&
-      currentSubmission.acceptedAt &&
-      dateIsBefore(statusDate, currentSubmission.acceptedAt)
-    ) {
-      return {
-        ok: false,
-        message:
-          "Published date must be the same as or after the accepted date.",
+          "Rejected and withdrawn dates must be the same as or after the submission date.",
       };
     }
 

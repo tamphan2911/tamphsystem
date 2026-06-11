@@ -498,19 +498,10 @@ export function SubmissionsTable({
       normalizedStatus(nextStatus) === "PUBLISHED"
     ) {
       const articleUrl = String(formData.get("articleUrl") ?? "").trim();
-      const articleFile = formData.get("articleFile");
-      const hasNewFile = articleFile instanceof File && articleFile.size > 0;
       if (!articleUrl) {
         showError({
           title: "Published article link required",
           detail: "Add the article link before saving Published status.",
-        });
-        return;
-      }
-      if (!hasNewFile && !editing.articleFileName) {
-        showError({
-          title: "Published article file required",
-          detail: "Upload the article file before saving Published status.",
         });
         return;
       }
@@ -1034,7 +1025,7 @@ export function SubmissionsTable({
                   </label>
                   <label className="grid gap-1.5">
                     <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                      Article file
+                      Article file optional
                     </span>
                     <span className="flex min-h-12 cursor-pointer items-center gap-3 border border-[#444444] bg-transparent px-4 py-3 text-sm text-[#B0B0B0] transition hover:border-[#5A5A5A] hover:bg-[#303030]">
                       <Upload
