@@ -148,7 +148,7 @@ export function ResearchNotificationBell({ enabled }: { enabled: boolean }) {
             )}
           </div>
           <Link
-            href="/notifications"
+            href="/notification-center"
             onClick={() => setOpen(false)}
             className="block border-t border-[#444444] bg-[#242424] px-4 py-3 text-center text-sm font-semibold text-[#A8DADC] transition-[background-color,color] duration-180 hover:bg-[#303030] hover:text-[#C9F0F2]"
           >
