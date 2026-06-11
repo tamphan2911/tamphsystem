@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import {
@@ -17,6 +16,10 @@ import {
   AuthDarkTheme,
   AuthLightTheme,
 } from "@/sites/shared/components/AuthLightTheme";
+import {
+  AuthSwitchLink,
+  AuthTransitionCard,
+} from "@/sites/shared/components/AuthTransition";
 import { LearnAuthHeader } from "@/sites/learn/components/LearnAuthHeader";
 import {
   researchAuthCardClass,
@@ -136,11 +139,12 @@ function RegisterContent() {
         }
       >
         {isResearch ? <AuthDarkTheme /> : <AuthLightTheme />}
-        <div
+        <AuthTransitionCard
+          mode="register"
           className={
             isResearch
-              ? `${researchAuthCardClass} max-w-md`
-              : "w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/30"
+              ? `${researchAuthCardClass} max-w-lg`
+              : "w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/30"
           }
         >
           <div
@@ -378,7 +382,7 @@ function RegisterContent() {
             }
           >
             Already have an account?{" "}
-            <Link
+            <AuthSwitchLink
               href={
                 callbackUrl
                   ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
@@ -391,9 +395,9 @@ function RegisterContent() {
               }
             >
               Sign in
-            </Link>
+            </AuthSwitchLink>
           </div>
-        </div>
+        </AuthTransitionCard>
       </div>
     </>
   );

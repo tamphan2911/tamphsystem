@@ -6,6 +6,10 @@ import {
   AuthDarkTheme,
   AuthLightTheme,
 } from "@/sites/shared/components/AuthLightTheme";
+import {
+  AuthSwitchLink,
+  AuthTransitionCard,
+} from "@/sites/shared/components/AuthTransition";
 import { LearnAuthHeader } from "@/sites/learn/components/LearnAuthHeader";
 import {
   researchAuthCardClass,
@@ -120,7 +124,8 @@ export default async function LoginPage({
         }
       >
         {isResearch ? <AuthDarkTheme /> : <AuthLightTheme />}
-        <div
+        <AuthTransitionCard
+          mode="login"
           className={
             isResearch
               ? `${researchAuthCardClass} max-w-md`
@@ -267,7 +272,7 @@ export default async function LoginPage({
           >
             <p>
               {copy.registerPrompt}{" "}
-              <Link
+              <AuthSwitchLink
                 href={`/register?callbackUrl=${encodeURIComponent(redirectTo)}`}
                 className={
                   isResearch
@@ -276,7 +281,7 @@ export default async function LoginPage({
                 }
               >
                 {copy.registerLabel}
-              </Link>
+              </AuthSwitchLink>
             </p>
             <p>
               If you do not remember your password,{" "}
@@ -293,7 +298,7 @@ export default async function LoginPage({
               .
             </p>
           </div>
-        </div>
+        </AuthTransitionCard>
       </div>
     </>
   );
