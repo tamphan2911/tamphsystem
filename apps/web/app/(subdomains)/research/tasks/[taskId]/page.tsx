@@ -230,18 +230,25 @@ function taskAllowsReport(taskType: string | null) {
 function researchAuthors(project: {
   leadResearcher: { name: string | null; email: string };
   authors: { name: string | null; email: string }[];
-  authorEntries: { user: { name: string | null; email: string } }[];
+  authorEntries: {
+    isCorresponding: boolean;
+    user: { name: string | null; email: string };
+  }[];
   coAuthors: string | null;
 }) {
   const names =
     project.authorEntries.length > 0
       ? project.authorEntries.map(
-          (entry) => entry.user.name || entry.user.email,
+          (entry) =>
+            `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
         )
       : project.authors.length > 0
-        ? project.authors.map((author) => author.name || author.email)
+        ? project.authors.map(
+            (author, index) =>
+              `${author.name || author.email}${index === 0 ? "*" : ""}`,
+          )
         : [
-            project.leadResearcher.name || project.leadResearcher.email,
+            `${project.leadResearcher.name || project.leadResearcher.email}*`,
             project.coAuthors,
           ].filter(Boolean);
   return names.join("; ");
@@ -303,7 +310,10 @@ export default async function TaskDetailPage({
             orderBy: [{ name: "asc" }, { email: "asc" }],
           },
           authorEntries: {
-            include: { user: { select: { name: true, email: true } } },
+            select: {
+              isCorresponding: true,
+              user: { select: { name: true, email: true } },
+            },
             orderBy: [{ position: "asc" }, { createdAt: "asc" }],
           },
         },

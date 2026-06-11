@@ -1118,7 +1118,7 @@ export default async function ProjectDetailPage({
                         <div className="flex min-w-0 flex-wrap items-center gap-2">
                           <p className="truncate text-sm font-normal text-[#E4E4E4]">
                             {author.name || author.email}
-                            {index === 0 ? "*" : ""}
+                            {author.isCorresponding ? "*" : ""}
                           </p>
                           <span className="border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#B0B0B0]">
                             {index === 0 ? "First author" : "Author"}

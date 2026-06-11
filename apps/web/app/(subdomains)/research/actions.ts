@@ -5312,9 +5312,20 @@ export async function sendResearchAuthorNotification(
   for (const author of sourceAuthors) authorMap.set(author.id, author);
 
   const authors = Array.from(authorMap.values());
-  const authorsLine = authors
-    .map((author) => author.name || author.email)
-    .join(", ");
+  const authorsLine =
+    project.authorEntries.length > 0
+      ? project.authorEntries
+          .map(
+            (entry) =>
+              `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
+          )
+          .join(", ")
+      : authors
+          .map(
+            (author, index) =>
+              `${author.name || author.email}${index === 0 ? "*" : ""}`,
+          )
+          .join(", ");
   const researchUrl = `${researchBaseUrl()}/projects/${project.id}`;
   const venue = venueLine(project);
   const results: ResearchAuthorEmailResult[] = [];
