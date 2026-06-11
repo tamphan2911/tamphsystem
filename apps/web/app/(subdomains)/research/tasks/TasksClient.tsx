@@ -120,7 +120,7 @@ function statusMeta(task: TaskRow) {
         `assigned: ${formatDate(task.createdAt)}`,
       ],
       className:
-        "bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+        "border-[#555555] bg-[#333333] text-[#B0B0B0]",
       detailClassName: "text-[#B0B0B0]",
     };
   }
@@ -134,7 +134,7 @@ function statusMeta(task: TaskRow) {
           ? [`finished: ${formatDate(task.completedAt)}`]
           : [],
         className:
-          "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+          "border-emerald-300/40 bg-emerald-950/25 text-emerald-300",
         detailClassName: "text-emerald-600 dark:text-emerald-300",
       };
     }
@@ -144,7 +144,7 @@ function statusMeta(task: TaskRow) {
         detail: `${durationText(due.getTime() - completed.getTime())} early`,
         dateLines: [`finished: ${formatDate(task.completedAt)}`],
         className:
-          "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+          "border-emerald-300/40 bg-emerald-950/25 text-emerald-300",
         detailClassName: "text-emerald-600 dark:text-emerald-300",
       };
     }
@@ -153,7 +153,7 @@ function statusMeta(task: TaskRow) {
       detail: `${durationText(completed.getTime() - due.getTime())} late`,
       dateLines: [`finished: ${formatDate(task.completedAt)}`],
       className:
-        "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
+        "border-rose-300/40 bg-rose-950/25 text-rose-300",
       detailClassName: "text-rose-600 dark:text-rose-300",
     };
   }
@@ -164,7 +164,7 @@ function statusMeta(task: TaskRow) {
       detail: "Waiting assigner check",
       dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
       className:
-        "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900",
+        "border-violet-300/40 bg-violet-950/25 text-violet-300",
       detailClassName: "text-violet-600 dark:text-violet-300",
     };
   }
@@ -175,7 +175,7 @@ function statusMeta(task: TaskRow) {
       detail: "Waiting assigner answer",
       dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
       className:
-        "bg-amber-50 text-amber-800 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900",
+        "border-amber-300/40 bg-amber-950/25 text-amber-200",
       detailClassName: "text-amber-700 dark:text-amber-300",
     };
   }
@@ -186,7 +186,7 @@ function statusMeta(task: TaskRow) {
       detail: `${durationText(now.getTime() - due.getTime())} late`,
       dateLines: [],
       className:
-        "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
+        "border-rose-300/40 bg-rose-950/25 text-rose-300",
       detailClassName: "text-rose-600 dark:text-rose-300",
     };
   }
@@ -198,7 +198,7 @@ function statusMeta(task: TaskRow) {
       : "No due date",
     dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
     className:
-      "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900",
+      "border-[#A8DADC]/40 bg-[#A8DADC]/10 text-[#A8DADC]",
     detailClassName: "text-[#B0B0B0]",
   };
 }
@@ -233,7 +233,7 @@ function DeleteTaskButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-none border border-rose-100 bg-rose-50 text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:shadow-md dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/50"
+          className="inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent text-rose-300 shadow-none transition hover:-translate-y-0.5 hover:text-rose-200"
           aria-label={`Delete ${task.title}`}
         >
           <Trash2 className="h-4 w-4" />
@@ -484,62 +484,70 @@ export function TasksClient({
             <tbody className="divide-y divide-[#444444]">
               {pagination.pagedRows.map((task) => {
                 const status = statusMeta(task);
+                const typeLines = taskTypeLines(task);
                 return (
                   <tr
                     key={task.id}
                     className="group align-top transition-colors duration-150 hover:bg-[#383838]"
                   >
                     <td className="px-3 py-3 align-top">
-                      <span className="font-mono text-xs font-bold text-[#B0B0B0]">
+                      <span className="font-mono text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
                         {displayTaskId(task)}
                       </span>
-                      <p className="mt-1 text-[11px] font-semibold leading-4 text-[#B0B0B0]">
-                        {taskTypeLines(task).typeLabel}
+                      <p className="mt-1 text-[11px] font-normal leading-4 text-[#B0B0B0]">
+                        {typeLines.typeLabel}
                       </p>
-                      {taskTypeLines(task).subtypeLabel && (
+                      {typeLines.subtypeLabel && (
                         <p className="text-[11px] leading-4 text-[#777777]">
-                          {taskTypeLines(task).subtypeLabel}
+                          {typeLines.subtypeLabel}
                         </p>
                       )}
                     </td>
                     <td className="min-w-0 px-3 py-3 align-top">
                       <Link
                         href={`/tasks/${task.id}`}
-                        className={`text-base ${researchLinkClass}`}
+                        className={`text-sm font-normal leading-5 ${researchLinkClass}`}
                       >
                         {task.title}
                       </Link>
-                      <p className="mt-1 line-clamp-2 text-xs text-[#B0B0B0]">
+                      <p className="mt-1 line-clamp-2 text-xs font-normal leading-5 text-[#B0B0B0]">
                         {task.description || "No description"}
                       </p>
                     </td>
                     <td className="px-3 py-3 align-top">
                       <span
-                        className={`inline-flex border px-2 py-1 text-xs font-normal ${status.className}`}
+                        className={`inline-flex border px-2 py-1 text-xs font-normal leading-none ${status.className}`}
                       >
                         {status.label}
                       </span>
                     </td>
                     <td className="px-3 py-3 align-top text-xs leading-5 text-[#B0B0B0]">
-                      {task.assignments.map((assignment, index) => (
-                        <div key={assignment.id} title={assignment.userEmail}>
-                          {assignment.userName}
-                          {index < task.assignments.length - 1 ? "," : ""}
-                        </div>
-                      ))}
+                      {task.assignments.length > 0 ? (
+                        task.assignments.map((assignment) => (
+                          <div
+                            key={assignment.id}
+                            className="font-normal"
+                            title={assignment.userEmail}
+                          >
+                            {assignment.userName || assignment.userEmail}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-[#777777]">Unassigned</div>
+                      )}
                     </td>
                     <td className="px-3 py-3 align-top">
                       {status.dateLines.map((line) => (
                         <p
                           key={line}
-                          className="break-words text-xs font-medium leading-5 text-[#B0B0B0]"
+                          className="break-words text-xs font-normal leading-5 text-[#B0B0B0]"
                         >
                           {line}
                         </p>
                       ))}
                       {status.detail && (
                         <p
-                          className={`max-w-full break-words text-xs font-semibold leading-5 ${status.detailClassName}`}
+                          className={`max-w-full break-words text-xs font-normal leading-5 ${status.detailClassName}`}
                         >
                           {status.detail}
                         </p>
