@@ -20,6 +20,7 @@ import {
   OrganizedProjectType,
   ProposalStatus,
   ProposalType,
+  Prisma,
   ResearchAuthorNotificationType,
   ResearchTaskCategory,
   ResearchTaskStatus,
@@ -708,25 +709,29 @@ async function refreshResearchStage(
   });
 }
 
-async function generateResearchCode(year = new Date().getFullYear()) {
-  const existing = await prisma.researchProject.findMany({
+async function generateResearchCode(
+  year = new Date().getFullYear(),
+  client: Pick<Prisma.TransactionClient, "researchProject"> = prisma,
+) {
+  const yearPrefix = `${year}-`;
+  const yearCodePattern = new RegExp(`^${year}-(\\d+)$`);
+  const existing = await client.researchProject.findMany({
     where: {
       researchCode: {
-        startsWith: `${year}-`,
+        startsWith: yearPrefix,
       },
     },
     select: { researchCode: true },
   });
-  const used = new Set(
-    existing
-      .map((project) => project.researchCode?.split("-")[1])
-      .filter((value): value is string => Boolean(value))
-      .map((value) => Number(value)),
-  );
 
-  let next = 1;
-  while (used.has(next)) next += 1;
-  return `${year}-${String(next).padStart(2, "0")}`;
+  const maxNumber = existing.reduce((max, project) => {
+    const match = yearCodePattern.exec(project.researchCode ?? "");
+    if (!match) return max;
+    const number = Number(match[1]);
+    return Number.isFinite(number) ? Math.max(max, number) : max;
+  }, 0);
+
+  return `${yearPrefix}${String(maxNumber + 1).padStart(2, "0")}`;
 }
 
 async function requireCurrentUser() {
@@ -1758,7 +1763,7 @@ export async function createResearchForOrganizedProject(
     const research = await tx.researchProject.create({
       data: {
         title,
-        researchCode: await generateResearchCode(),
+        researchCode: await generateResearchCode(new Date().getFullYear(), tx),
         abstract: optionalString(formData.get("abstract")),
         stage: ResearchStage.PRODUCTION,
         universityRegistration: optionalString(
