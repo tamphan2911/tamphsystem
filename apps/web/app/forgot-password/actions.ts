@@ -22,6 +22,20 @@ function siteLabel(site: string) {
   return "TamphSystem";
 }
 
+function extractMailbox(value: string | null | undefined) {
+  const text = value?.trim();
+  if (!text) return "";
+  const match = text.match(/<([^<>@\s]+@[^<>@\s]+)>/);
+  return match?.[1] ?? text;
+}
+
+function mailFromForSite(site: string) {
+  const from = process.env.SMTP_FROM?.trim() ?? "";
+  if (site !== "research") return from;
+  const mailbox = extractMailbox(from);
+  return mailbox ? `"Tamph Research Hub" <${mailbox}>` : from;
+}
+
 function hostFromHeaders(requestHeaders: Headers) {
   const forwardedHost = requestHeaders.get("x-forwarded-host");
   if (forwardedHost) return forwardedHost.split(",")[0]?.trim() ?? null;
@@ -133,7 +147,7 @@ async function sendResetEmail({
 
   const label = siteLabel(site);
   await createTransporter().sendMail({
-    from: process.env.SMTP_FROM,
+    from: mailFromForSite(site),
     to: email,
     subject: `Reset your ${label} password`,
     text: `A password reset was requested for your ${label} account.\n\nUse this link within 1 hour:\n${resetUrl}\n\nIf you did not request this, you can ignore this email.`,

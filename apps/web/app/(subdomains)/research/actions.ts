@@ -220,6 +220,12 @@ function smtpConfigured() {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_FROM);
 }
 
+function researchMailFrom() {
+  const from = process.env.SMTP_FROM?.trim() ?? "";
+  const mailbox = extractMailbox(from);
+  return mailbox ? `"Tamph Research Hub" <${mailbox}>` : from;
+}
+
 function createTransporter() {
   const port = Number(process.env.SMTP_PORT || 587);
   return nodemailer.createTransport({
@@ -303,7 +309,7 @@ async function sendTaskEmail({
   }
 
   await createTransporter().sendMail({
-    from: process.env.SMTP_FROM,
+    from: researchMailFrom(),
     to: recipients,
     subject,
     text: `${heading}\n\n${intro}\n\nTask: ${taskTitle}${detail ? `\n\n${detail}` : ""}\n\nOpen task: ${taskUrl}`,
@@ -368,7 +374,7 @@ async function sendProposalEmail({
   }
 
   await createTransporter().sendMail({
-    from: process.env.SMTP_FROM,
+    from: researchMailFrom(),
     to: recipients,
     subject,
     text: `${heading}\n\n${intro}${detail ? `\n\n${detail}` : ""}\n\n${actionLabel}: ${href}`,
@@ -5347,7 +5353,7 @@ export async function sendResearchAuthorNotification(
         venue,
       });
       await transporter.sendMail({
-        from: process.env.SMTP_FROM,
+        from: researchMailFrom(),
         to: author.email,
         subject: notificationSubject(type, project.title),
         text: body.text,

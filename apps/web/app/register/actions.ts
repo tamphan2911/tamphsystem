@@ -23,6 +23,20 @@ function siteLabel(site: string) {
   return "TamphSystem";
 }
 
+function extractMailbox(value: string | null | undefined) {
+  const text = value?.trim();
+  if (!text) return "";
+  const match = text.match(/<([^<>@\s]+@[^<>@\s]+)>/);
+  return match?.[1] ?? text;
+}
+
+function mailFromForSite(site: string) {
+  const from = process.env.SMTP_FROM?.trim() ?? "";
+  if (site !== "research") return from;
+  const mailbox = extractMailbox(from);
+  return mailbox ? `"Tamph Research Hub" <${mailbox}>` : from;
+}
+
 function appBaseUrl(host: string | null) {
   if (host) {
     const protocol = host.includes("localhost") ? "http" : "https";
@@ -147,7 +161,7 @@ async function sendVerificationEmail({
 
   const label = siteLabel(site);
   await createTransporter().sendMail({
-    from: process.env.SMTP_FROM,
+    from: mailFromForSite(site),
     to: email,
     subject: `Verify your ${label} account`,
     text: `Hello ${name},\n\nPlease verify your ${label} account before logging in:\n${verifyUrl}\n\nThis link expires in 24 hours.\n\nIf you did not create this account, you can ignore this email.`,
