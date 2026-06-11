@@ -2,13 +2,12 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { notFound, redirect } from "next/navigation";
 import {
-  ArrowLeft,
-  CalendarClock,
   ClipboardList,
   ExternalLink,
   FileText,
   Globe2,
   KeyRound,
+  SearchCheck,
   Send,
   UserRound,
 } from "lucide-react";
@@ -24,9 +23,10 @@ import {
   sendTaskReminderEmail,
 } from "../../actions";
 import {
+  IconHint,
   researchLinkClass,
-  researchMutedLinkClass,
 } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { FinishTaskForm } from "./FinishTaskForm";
 import { RevokeTaskForm } from "./RevokeTaskForm";
 import { ClarificationRequestForm, RedoTaskForm } from "./TaskWorkflowForms";
@@ -161,6 +161,50 @@ function toneClass(
   if (tone === "amber")
     return "border-amber-500/30 bg-amber-500/10 text-amber-200 ring-amber-500/20";
   return "border-[#555555] bg-[#383838] text-[#E4E4E4] ring-[#555555]";
+}
+
+function taskTypeMeta(taskType: string | null, category: string | null) {
+  if (taskType === "SUBMIT_RESEARCH" || taskType === "SUBMIT_CONFERENCE") {
+    return {
+      label:
+        taskType === "SUBMIT_CONFERENCE" ? "Submit conference" : "Submit journal",
+      icon: Send,
+      className: "text-[#A8DADC]",
+    };
+  }
+  if (taskType === "PRODUCTION") {
+    return {
+      label: "Production",
+      icon: FileText,
+      className: "text-[#FFC1CC]",
+    };
+  }
+  if (taskType === "REVIEW") {
+    return {
+      label: "Review",
+      icon: SearchCheck,
+      className: "text-[#B39CD0]",
+    };
+  }
+  if (taskType === "PROJECT_PRODUCTION") {
+    return {
+      label: "Project production",
+      icon: ClipboardList,
+      className: "text-[#F4D47A]",
+    };
+  }
+  if (taskType === "PROJECT_RESEARCH_ASSOCIATED") {
+    return {
+      label: "Research associated",
+      icon: ClipboardList,
+      className: "text-[#F4D47A]",
+    };
+  }
+  return {
+    label: category || "Task",
+    icon: ClipboardList,
+    className: "text-[#B0B0B0]",
+  };
 }
 
 function accountLine(
@@ -365,6 +409,8 @@ export default async function TaskDetailPage({
   }
 
   const meta = statusMeta(task);
+  const taskType = taskTypeMeta(task.taskType, task.category);
+  const TaskTypeIcon = taskType.icon;
   const finishAction = finishResearchTask.bind(null, task.id);
   const readyAction = markResearchTaskReadyForCheck.bind(null, task.id);
   const redoAction = requestTaskRedo.bind(null, task.id);
@@ -569,58 +615,33 @@ export default async function TaskDetailPage({
   );
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Link
-          href="/tasks"
-          className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to tasks
-        </Link>
-
-        {(canMarkReady ||
-          canApprove ||
-          canRedo ||
-          canRequestClarification ||
-          canRevoke) && (
-          <div className="flex flex-col justify-end gap-2 sm:flex-row sm:items-center">
-            {canRevoke && <RevokeTaskForm action={revokeAction} />}
-            {canRedo && <RedoTaskForm action={redoAction} />}
-            {canRequestClarification && (
-              <ClarificationRequestForm action={clarificationAction} />
-            )}
-            {canMarkReady && (
-              <FinishTaskForm action={readyAction} mode="ready" />
-            )}
-            {canApprove && (
-              <FinishTaskForm
-                action={finishAction}
-                accountId={task.account?.id}
-                mode="approve"
-                requiresSubmissionDate={
-                  task.taskType === "SUBMIT_RESEARCH" ||
-                  task.taskType === "SUBMIT_CONFERENCE"
-                }
-              />
-            )}
-          </div>
-        )}
-      </div>
-
-      <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <div className="mb-3 inline-flex items-center gap-2 border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-sky-200">
-              <ClipboardList className="h-4 w-4 text-sky-300" />
-              {task.category || "Task"}
-            </div>
+    <>
+      <ResearchPageHeaderPortal>
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
-              <h1 className="text-lg font-normal tracking-tight text-[#E4E4E4]">
+              <h1 className="min-w-0 truncate text-[15px] font-normal leading-6 text-[#E4E4E4] xl:text-[15px]">
                 {task.title}
               </h1>
+              <IconHint label={taskType.label} position="bottom">
+                <span
+                  className={`inline-flex h-5 w-5 flex-none items-center justify-center ${taskType.className}`}
+                  aria-label={taskType.label}
+                >
+                  <TaskTypeIcon
+                    className="h-4 w-4"
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                  />
+                </span>
+              </IconHint>
+              <span
+                className={`inline-flex flex-none border px-2 py-1 text-[11px] font-normal leading-none ${toneClass(meta.tone)}`}
+              >
+                {meta.label}
+              </span>
               {(canEdit || canUseReminder) && (
-                <span className="inline-flex items-center gap-2">
+                <span className="inline-flex flex-none items-center gap-2">
                   {canEdit && (
                     <EditTaskDialog
                       task={{
@@ -662,30 +683,57 @@ export default async function TaskDetailPage({
                 </span>
               )}
             </div>
-            <p className="mt-2 text-sm text-[#B0B0B0]">
-              Created by {task.createdBy.name || task.createdBy.email}
-            </p>
-          </div>
-          <div className="min-w-44 border border-[#444444] bg-[#202020] p-4 shadow-[0_14px_36px_rgba(0,0,0,0.18)]">
-            <span
-              className={`inline-flex border px-2 py-1 text-xs font-normal ring-1 ${toneClass(meta.tone)}`}
-            >
-              {meta.label}
-            </span>
-            <p className="mt-2 text-sm font-semibold text-[#E4E4E4]">
-              {meta.detail}
-            </p>
-            <p className="mt-1 text-xs text-[#B0B0B0]">
-              Due {formatDate(task.dueDate)}
-            </p>
+            <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#B0B0B0]">
+              <span className="min-w-0 truncate">
+                Created by {task.createdBy.name || task.createdBy.email}
+              </span>
+              <span className="text-[#777777]">|</span>
+              <span>Created {formatDate(task.createdAt)}</span>
+              <span className="text-[#777777]">|</span>
+              <span>Due {formatDate(task.dueDate)}</span>
+              <span className="text-[#777777]">|</span>
+              <span>Completed {formatDate(task.completedAt)}</span>
+              <span className="text-[#777777]">|</span>
+              <span>{meta.detail}</span>
+            </div>
           </div>
         </div>
+      </ResearchPageHeaderPortal>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
+      <div className="mx-auto max-w-7xl space-y-5">
+        {(canMarkReady ||
+          canApprove ||
+          canRedo ||
+          canRequestClarification ||
+          canRevoke) && (
+          <div className="flex flex-col justify-end gap-2 sm:flex-row sm:items-center">
+            {canRevoke && <RevokeTaskForm action={revokeAction} />}
+            {canRedo && <RedoTaskForm action={redoAction} />}
+            {canRequestClarification && (
+              <ClarificationRequestForm action={clarificationAction} />
+            )}
+            {canMarkReady && (
+              <FinishTaskForm action={readyAction} mode="ready" />
+            )}
+            {canApprove && (
+              <FinishTaskForm
+                action={finishAction}
+                accountId={task.account?.id}
+                mode="approve"
+                requiresSubmissionDate={
+                  task.taskType === "SUBMIT_RESEARCH" ||
+                  task.taskType === "SUBMIT_CONFERENCE"
+                }
+              />
+            )}
+          </div>
+        )}
+
+        <section className="grid gap-5 border-t border-[#444444] pt-5 md:grid-cols-2">
           {task.project && (
-            <div className="border border-[#444444] bg-[#242424] p-4 transition hover:-translate-y-0.5 hover:border-[#5a5a5a] hover:bg-[#292929] hover:shadow-lg hover:shadow-black/20">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                <FileText className="h-4 w-4 text-sky-300" /> Research
+            <div className="min-w-0">
+              <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                Research
               </div>
               <Link
                 href={`/projects/${task.project.id}`}
@@ -699,22 +747,22 @@ export default async function TaskDetailPage({
             </div>
           )}
           {task.journal && (
-            <div className="border border-[#444444] bg-[#242424] p-4 transition hover:-translate-y-0.5 hover:border-[#5a5a5a] hover:bg-[#292929] hover:shadow-lg hover:shadow-black/20">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                  <Send className="h-4 w-4 text-emerald-300" /> Journal
-                </div>
+            <div className="min-w-0">
+              <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                Journal
+              </div>
+              <div className="mt-2 flex min-w-0 items-center gap-2">
+                <Link
+                  href={`/journals/${task.journal.id}`}
+                  className={`min-w-0 text-sm ${researchLinkClass}`}
+                >
+                  {task.journal.name}
+                </Link>
                 <VenueLinks
                   homepage={task.journal.homepageLink}
                   submission={journalSubmissionLink}
                 />
               </div>
-              <Link
-                href={`/journals/${task.journal.id}`}
-                className={`mt-2 inline-flex text-sm ${researchLinkClass}`}
-              >
-                {task.journal.name}
-              </Link>
               <p className="mt-1 text-xs text-[#B0B0B0]">
                 {task.journal.publisher || "No publisher"} -{" "}
                 {task.journal.rank || "No rank"}
@@ -726,22 +774,22 @@ export default async function TaskDetailPage({
             </div>
           )}
           {task.conference && (
-            <div className="border border-[#444444] bg-[#242424] p-4 transition hover:-translate-y-0.5 hover:border-[#5a5a5a] hover:bg-[#292929] hover:shadow-lg hover:shadow-black/20">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                  <Send className="h-4 w-4 text-violet-300" /> Conference
-                </div>
+            <div className="min-w-0">
+              <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                Conference
+              </div>
+              <div className="mt-2 flex min-w-0 items-center gap-2">
+                <Link
+                  href={`/conferences/${task.conference.id}`}
+                  className={`min-w-0 text-sm ${researchLinkClass}`}
+                >
+                  {task.conference.name}
+                </Link>
                 <VenueLinks
                   homepage={task.conference.website}
                   submission={conferenceSubmissionLink}
                 />
               </div>
-              <Link
-                href={`/conferences/${task.conference.id}`}
-                className={`mt-2 inline-flex text-sm ${researchLinkClass}`}
-              >
-                {task.conference.name}
-              </Link>
               <p className="mt-1 text-xs text-[#B0B0B0]">
                 {task.conference.type || "No type"} -{" "}
                 {task.conference.location || "No location"} -{" "}
@@ -756,14 +804,16 @@ export default async function TaskDetailPage({
               </p>
             </div>
           )}
-        </div>
+        </section>
 
-        <div className="mt-6 min-h-44 border border-[#444444] bg-[#242424] p-5">
-          <h2 className="text-sm font-bold text-[#E4E4E4]">Task content</h2>
+        <section className="min-h-36 border-t border-[#444444] pt-5">
+          <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+            Task content
+          </h2>
           <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#B0B0B0]">
             {task.description || "No task note."}
           </p>
-        </div>
+        </section>
 
         {reportEnabled && (
           <TaskReportPanel
@@ -784,18 +834,20 @@ export default async function TaskDetailPage({
           answerAction={clarificationAnswerAction}
         />
 
-        <div className="mt-6 grid gap-3">
-          <h2 className="text-sm font-bold text-[#E4E4E4]">Assignees</h2>
-          <div className="grid max-w-2xl gap-2 sm:grid-cols-2">
+        <section className="grid gap-3 border-t border-[#444444] pt-5">
+          <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+            Assignees
+          </h2>
+          <div className="grid max-w-2xl gap-3 sm:grid-cols-2">
             {task.assignments.map((assignment) => (
               <div
                 key={assignment.id}
-                className="border border-[#444444] bg-[#242424] p-3 transition hover:-translate-y-0.5 hover:border-[#5a5a5a] hover:bg-[#292929]"
+                className="border-t border-[#444444] pt-3"
               >
                 <span className="flex min-w-0 items-start gap-3">
                   <UserRound className="mt-0.5 h-4 w-4 flex-none text-amber-300" />
                   <span className="min-w-0 leading-tight">
-                    <span className="block truncate text-sm font-semibold text-[#E4E4E4]">
+                    <span className="block truncate text-sm font-normal text-[#E4E4E4]">
                       {assignment.user.name || assignment.user.email}
                     </span>
                     <span className="block truncate text-xs text-[#B0B0B0]">
@@ -806,27 +858,9 @@ export default async function TaskDetailPage({
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="mt-6 grid gap-3 border-t border-[#444444] pt-5 text-sm sm:grid-cols-3">
-          <MetaItem
-            icon={<CalendarClock className="h-4 w-4" />}
-            label="Created"
-            value={formatDate(task.createdAt)}
-          />
-          <MetaItem
-            icon={<CalendarClock className="h-4 w-4" />}
-            label="Updated"
-            value={formatDate(task.updatedAt)}
-          />
-          <MetaItem
-            icon={<CalendarClock className="h-4 w-4" />}
-            label="Completed"
-            value={formatDate(task.completedAt)}
-          />
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </>
   );
 }
 
@@ -838,18 +872,18 @@ function VenueLinks({
   submission: string | null | undefined;
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-none items-center gap-2">
       <ExternalVenueLink
         href={homepage}
         label="Open homepage"
-        className="border-sky-500/30 bg-sky-500/10 text-sky-200 hover:border-sky-400/50 hover:bg-sky-500/15"
+        className="text-[#B0B0B0] hover:text-[#A8DADC]"
       >
         <Globe2 className="h-4 w-4" />
       </ExternalVenueLink>
       <ExternalVenueLink
         href={submission}
         label="Open submission site"
-        className="border-emerald-500/30 bg-emerald-500/10 text-emerald-200 hover:border-emerald-400/50 hover:bg-emerald-500/15"
+        className="text-[#B0B0B0] hover:text-[#A8DADC]"
       >
         <ExternalLink className="h-4 w-4" />
       </ExternalVenueLink>
@@ -868,12 +902,12 @@ function ExternalVenueLink({
   className: string;
   children: ReactNode;
 }) {
-  const baseClass = `group/link relative inline-flex h-9 w-9 items-center justify-center rounded-none border shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${className}`;
+  const baseClass = `group/link relative inline-flex h-5 w-5 items-center justify-center border-0 bg-transparent shadow-none transition hover:-translate-y-0.5 ${className}`;
 
   if (!href) {
     return (
       <span
-        className={`${baseClass} cursor-not-allowed opacity-45 hover:translate-y-0 hover:shadow-sm`}
+        className={`${baseClass} cursor-not-allowed text-[#666666] opacity-55 hover:translate-y-0 hover:text-[#666666]`}
         aria-label={`${label} not available`}
       >
         {children}
@@ -890,29 +924,9 @@ function ExternalVenueLink({
       aria-label={label}
     >
       {children}
-      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap border border-[#555555] bg-[#202020] px-2.5 py-1.5 text-[11px] font-semibold text-[#E4E4E4] opacity-0 shadow-lg shadow-black/30 transition duration-200 ease-out group-hover/link:translate-y-0 group-hover/link:opacity-100">
+      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap border border-[#555555] bg-[#202020] px-2.5 py-1.5 text-[11px] font-normal text-[#E4E4E4] opacity-0 shadow-lg shadow-black/30 transition duration-200 ease-out group-hover/link:translate-y-0 group-hover/link:opacity-100">
         {label}
       </span>
     </a>
-  );
-}
-
-function MetaItem({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
-      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-        <span className="text-sky-300">{icon}</span>
-        {label}
-      </div>
-      <p className="mt-2 text-sm font-semibold text-[#E4E4E4]">{value}</p>
-    </div>
   );
 }

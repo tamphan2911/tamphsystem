@@ -66,31 +66,28 @@ export function TaskClarificationPanel({
   }, [isOpen, timeline.length]);
 
   return (
-    <div className="mt-6 border border-[#444444] bg-[#242424] p-4">
+    <section className="border-t border-[#444444] pt-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/20">
-            <HelpCircle className="h-5 w-5" />
-          </span>
+        <div className="min-w-0">
           <div>
-            <h2 className="text-sm font-bold text-[#E4E4E4]">
+            <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
               Request and feedback
             </h2>
             {latest ? (
               <>
-                <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-[#B0B0B0]">
+                <p className="mt-2 text-xs font-normal leading-5 text-[#B0B0B0]">
                   Latest update from {personName(latest.requestedBy)} -{" "}
                   {formatDateTime(latest.createdAt)}
                 </p>
-                <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#E4E4E4]">
+                <p className="mt-2 line-clamp-2 text-sm font-normal leading-6 text-[#E4E4E4]">
                   {latest.question}
                 </p>
                 {latest.answer ? (
-                  <p className="mt-2 line-clamp-2 rounded-none border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm leading-6 text-sky-100">
+                  <p className="mt-2 line-clamp-2 border-l border-[#A8DADC] pl-3 text-sm leading-6 text-[#B0B0B0]">
                     {latest.answer}
                   </p>
                 ) : (
-                  <p className="mt-2 text-xs font-semibold text-amber-300">
+                  <p className="mt-2 text-xs font-normal text-amber-300">
                     Waiting for assigner or admin feedback.
                   </p>
                 )}
@@ -105,7 +102,7 @@ export function TaskClarificationPanel({
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center border border-sky-500/30 bg-sky-500/10 text-sky-200 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-400/50 hover:bg-sky-500/15 hover:shadow-md hover:shadow-black/20"
+          className="inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none transition hover:-translate-y-0.5 hover:text-[#A8DADC]"
           aria-label="Open request and feedback history"
         >
           <MessageSquareText className="h-4 w-4" />
@@ -174,7 +171,7 @@ export function TaskClarificationPanel({
           )}
         </div>
       </ResearchModal>
-    </div>
+    </section>
   );
 }
 
@@ -193,15 +190,15 @@ function ChatBubble({
   return (
     <div className={`flex ${isRight ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[88%] rounded-none px-4 py-3 sm:max-w-[76%] ${
+        className={`max-w-[88%] border px-4 py-3 sm:max-w-[76%] ${
           isRight
-            ? "bg-sky-600 text-white shadow-sm"
+            ? "border-[#A8DADC]/40 bg-[#A8DADC]/10 text-[#E4E4E4]"
             : "border border-[#444444] bg-[#202020] text-[#E4E4E4]"
         }`}
       >
         <div
-          className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-bold uppercase tracking-wide ${
-            isRight ? "text-sky-100" : "text-[#B0B0B0]"
+          className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-normal uppercase tracking-wide ${
+            isRight ? "text-[#A8DADC]" : "text-[#B0B0B0]"
           }`}
         >
           <span>{label}</span>
@@ -211,7 +208,9 @@ function ChatBubble({
             </span>
           ) : null}
         </div>
-        <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{content}</p>
+        <p className="mt-2 whitespace-pre-wrap text-sm font-normal leading-6">
+          {content}
+        </p>
       </div>
     </div>
   );

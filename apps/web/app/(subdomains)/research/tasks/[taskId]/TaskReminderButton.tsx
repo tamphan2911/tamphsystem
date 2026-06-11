@@ -55,16 +55,16 @@ export function TaskReminderButton({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className={`group relative inline-flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-none border transition hover:-translate-y-0.5 hover:shadow-sm ${
+        className={`group relative inline-flex h-5 w-5 flex-none cursor-pointer items-center justify-center border-0 bg-transparent shadow-none transition hover:-translate-y-0.5 ${
           block
-            ? "border-amber-500/30 bg-amber-500/10 text-amber-300 hover:border-amber-400/50 hover:bg-amber-500/15"
-            : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:border-emerald-400/50 hover:bg-emerald-500/15"
+            ? "text-[#666666] hover:text-[#B0B0B0]"
+            : "text-[#A8DADC] hover:text-[#C9F0F2]"
         }`}
         aria-label="Send task reminder"
       >
         <BellRing className="h-4 w-4" />
-        <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap border border-[#555555] bg-[#202020] px-2.5 py-1.5 text-xs font-semibold text-[#E4E4E4] opacity-0 shadow-xl shadow-black/30 transition group-hover:opacity-100">
-          Send reminder
+        <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap border border-[#555555] bg-[#202020] px-2.5 py-1.5 text-[11px] font-normal text-[#E4E4E4] opacity-0 shadow-xl shadow-black/30 transition group-hover:opacity-100">
+          {block ? "Reminder unavailable" : "Send reminder"}
         </span>
       </button>
 
