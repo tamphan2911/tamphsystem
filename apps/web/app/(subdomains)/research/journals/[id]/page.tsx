@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowLeft,
   BarChart3,
   BookmarkCheck,
   Database,
@@ -13,10 +11,8 @@ import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { formatMoney } from "@/sites/research/lib/currency";
 import { countryFlag, countryName } from "@/sites/research/lib/countries";
-import {
-  IconHint,
-  researchMutedLinkClass,
-} from "@/sites/research/components/ResearchPrimitives";
+import { IconHint } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import {
   JournalDetailTabs,
   type JournalAccountRow,
@@ -33,14 +29,10 @@ function dateText(value: Date | null) {
 
 export default async function JournalDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ back?: string }>;
 }) {
   const { id } = await params;
-  const { back } = await searchParams;
-  const backHref = back?.startsWith("/journals") ? back : "/journals";
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const registrationIdentityValues = [session?.user?.name, session?.user?.email]
@@ -214,23 +206,15 @@ export default async function JournalDetailPage({
   const journalTypeLabel = journal.type === "LOCAL" ? "Local" : "International";
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <Link
-        href={backHref}
-        className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Journals
-      </Link>
-
-      <section className="space-y-5 px-1">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-normal tracking-tight text-[#E4E4E4]">
+    <>
+      <ResearchPageHeaderPortal>
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="min-w-0 truncate text-[15px] font-normal leading-6 text-[#E4E4E4] xl:text-[15px]">
                 {journal.name}
               </h1>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-none items-center gap-2">
                 <IconHint
                   label={
                     journal.isFavorite ? "Favorite journal" : "Not favorite"
@@ -258,7 +242,7 @@ export default async function JournalDetailPage({
                   />
                 </IconHint>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex flex-none items-center gap-1">
                 {externalLinks.map((item) => (
                   <a
                     key={item.label}
@@ -303,7 +287,7 @@ export default async function JournalDetailPage({
                 />
               </div>
             </div>
-            <p className="mt-2 text-sm font-medium text-[#B0B0B0]">
+            <p className="mt-1 min-w-0 truncate text-xs font-normal text-[#B0B0B0]">
               ISSN {journal.issn || "-"} - {journal.publisher || "No publisher"}{" "}
               - {journalTypeLabel} - {journalRank}
               {journal.issuesPerYear
@@ -326,7 +310,10 @@ export default async function JournalDetailPage({
             </p>
           </div>
         </div>
+      </ResearchPageHeaderPortal>
 
+      <div className="mx-auto max-w-7xl space-y-5">
+        <section className="space-y-5 px-1">
         <dl className="grid gap-4 border-t border-[#3A3A3A] pt-4 text-sm md:grid-cols-3">
           <div>
             <dt className="text-xs font-bold uppercase text-slate-400">Area</dt>
@@ -358,17 +345,21 @@ export default async function JournalDetailPage({
               )}
             </dd>
           </div>
+          <div className="md:col-span-3">
+            <dt className="text-xs font-bold uppercase text-slate-400">Note</dt>
+            <dd className="mt-1 max-w-4xl text-sm leading-5 text-[#B0B0B0]">
+              {journal.note || "No note recorded."}
+            </dd>
+          </div>
         </dl>
-        <p className="max-w-4xl text-xs leading-5 text-[#777777]">
-          {journal.note || "No note recorded."}
-        </p>
-      </section>
+        </section>
 
-      <JournalDetailTabs
-        submissions={submissionRows}
-        accounts={accountRows}
-        reviews={reviewRows}
-      />
-    </div>
+        <JournalDetailTabs
+          submissions={submissionRows}
+          accounts={accountRows}
+          reviews={reviewRows}
+        />
+      </div>
+    </>
   );
 }
