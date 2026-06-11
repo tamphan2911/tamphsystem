@@ -66,6 +66,12 @@ function optionalString(value: FormDataEntryValue | null) {
   return text.length > 0 ? text : null;
 }
 
+const generatedResearchEmailDomain = "no-email.research.tamph.local";
+
+function generatedResearchEmail() {
+  return `research-user-${crypto.randomBytes(8).toString("hex")}@${generatedResearchEmailDomain}`;
+}
+
 const articleFileMaxSize = 10 * 1024 * 1024;
 const articleFileTypes = new Set([
   "application/pdf",
@@ -2791,11 +2797,12 @@ export async function createResearchSiteUser(formData: FormData) {
   requireAdmin(user.roles);
 
   const name = optionalString(formData.get("name"));
-  const email = optionalString(formData.get("email"))?.toLowerCase();
+  const submittedEmail = optionalString(formData.get("email"))?.toLowerCase();
+  const email = submittedEmail ?? generatedResearchEmail();
   const affiliation = optionalString(formData.get("affiliation")) ?? "Not set";
   const password = optionalString(formData.get("password"));
 
-  if (!name || !email || !password) {
+  if (!name || !password) {
     return { ok: false, reason: "MISSING_REQUIRED" };
   }
   if (password.length < 6) {
@@ -2805,8 +2812,6 @@ export async function createResearchSiteUser(formData: FormData) {
   const roles = formData
     .getAll("roles")
     .filter((role): role is Role => Object.values(Role).includes(role as Role));
-  const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   try {
     await prisma.user.create({
@@ -2816,9 +2821,9 @@ export async function createResearchSiteUser(formData: FormData) {
         affiliation,
         passwordHash: await bcrypt.hash(password, 10),
         adminVisiblePassword: password,
-        emailVerified: null,
-        emailVerificationToken: token,
-        emailVerificationTokenExpires: expiresAt,
+        emailVerified: new Date(),
+        emailVerificationToken: null,
+        emailVerificationTokenExpires: null,
         roles: roles.length > 0 ? roles : [Role.USER],
         activeSites: ["research"],
       },
@@ -2828,14 +2833,8 @@ export async function createResearchSiteUser(formData: FormData) {
     return { ok: false, reason: "CREATE_FAILED" };
   }
 
-  await sendResearchVerificationEmail({
-    name,
-    email,
-    verifyUrl: `${researchBaseUrl()}/verify-email?token=${token}`,
-  });
-
   revalidatePath("/users");
-  return { ok: true, email };
+  return { ok: true, email: submittedEmail ?? null };
 }
 
 export async function updateResearchSiteUser(formData: FormData) {
@@ -2845,7 +2844,7 @@ export async function updateResearchSiteUser(formData: FormData) {
   const userId = optionalString(formData.get("userId"));
   const email = optionalString(formData.get("email"))?.toLowerCase();
   const password = optionalString(formData.get("password"));
-  if (!userId || !email) {
+  if (!userId) {
     return { ok: false, reason: "MISSING_REQUIRED" };
   }
 

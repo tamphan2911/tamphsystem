@@ -189,7 +189,7 @@ export function ResearchUsersTable({
                           {user.name || "Unnamed user"}
                         </span>
                         <span className="block truncate text-xs text-[#B0B0B0]">
-                          {user.email}
+                          {user.email || "No email recorded"}
                         </span>
                       </span>
                     </div>
@@ -329,7 +329,7 @@ export function ResearchUsersTable({
                   name="email"
                   type="email"
                   defaultValue={editing.email}
-                  required
+                  placeholder="Optional"
                 />
                 <Field
                   label="Affiliation"

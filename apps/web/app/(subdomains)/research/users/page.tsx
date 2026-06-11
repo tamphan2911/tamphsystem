@@ -7,6 +7,10 @@ import { NewResearchUserDialog } from "./NewResearchUserDialog";
 
 export const dynamic = "force-dynamic";
 
+function displayResearchEmail(email: string) {
+  return email.endsWith("@no-email.research.tamph.local") ? "" : email;
+}
+
 export default async function ResearchUsersPage() {
   const session = await auth();
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
@@ -33,7 +37,7 @@ export default async function ResearchUsersPage() {
   const rows: ResearchUserRow[] = users.map((user) => ({
     id: user.id,
     name: user.name ?? "",
-    email: user.email,
+    email: displayResearchEmail(user.email),
     affiliation: user.affiliation,
     roles: user.roles,
     activeSites: user.activeSites,

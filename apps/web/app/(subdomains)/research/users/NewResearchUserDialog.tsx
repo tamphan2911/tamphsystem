@@ -13,8 +13,7 @@ import {
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 function reasonMessage(reason?: string) {
-  if (reason === "MISSING_REQUIRED")
-    return "Name, email, and password are required.";
+  if (reason === "MISSING_REQUIRED") return "Name and password are required.";
   if (reason === "PASSWORD_SHORT")
     return "Password must have at least 6 characters.";
   if (reason === "CREATE_FAILED")
@@ -22,7 +21,11 @@ function reasonMessage(reason?: string) {
   return "Please check the user information and try again.";
 }
 
-export function NewResearchUserDialog({ roleOptions }: { roleOptions: string[] }) {
+export function NewResearchUserDialog({
+  roleOptions,
+}: {
+  roleOptions: string[];
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -39,7 +42,7 @@ export function NewResearchUserDialog({ roleOptions }: { roleOptions: string[] }
         closeDialog();
         showSuccess({
           title: "User created",
-          detail: `${result.email || "The user"} was added to Research Hub. A verification email was sent and the account stays pending until verified.`,
+          detail: `${result.email || "The user"} was added to Research Hub. No verification email was sent for this admin-created account.`,
         });
         router.refresh();
         return;
@@ -91,12 +94,11 @@ export function NewResearchUserDialog({ roleOptions }: { roleOptions: string[] }
               />
             </label>
             <label className={researchLabelClass}>
-              Email
+              Email (optional)
               <input
                 name="email"
                 type="email"
-                required
-                placeholder="user@example.com"
+                placeholder="user@example.com, or leave blank"
                 className={researchFieldClass}
               />
             </label>
@@ -145,8 +147,8 @@ export function NewResearchUserDialog({ roleOptions }: { roleOptions: string[] }
           </div>
 
           <div className="border border-[#444444] bg-[#242424] px-4 py-3 text-sm leading-6 text-[#B0B0B0]">
-            The account is created for Research Hub but stays email-unverified.
-            The user must open the verification email before signing in.
+            Admin-created users are activated for Research Hub immediately. No
+            verification email will be sent from this form.
           </div>
         </form>
       </ResearchModal>
