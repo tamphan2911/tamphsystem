@@ -1003,12 +1003,15 @@ export async function submitProposal(formData: FormData) {
   const venueType = optionalString(formData.get("venueType"));
   const file = formData.get("supportFile");
 
-  if (!type || !title || !description) {
+  if (!type || !title || (type !== ProposalType.JOURNAL && !description)) {
     return {
       ok: false,
       reason: "MISSING_FIELDS",
       title: "Proposal needs more detail",
-      detail: "Please add a title and proposal description before sending.",
+      detail:
+        type === ProposalType.JOURNAL
+          ? "Please add the journal title before sending."
+          : "Please add a title and proposal description before sending.",
     };
   }
 
@@ -1085,7 +1088,7 @@ export async function submitProposal(formData: FormData) {
     data: {
       type,
       title,
-      description,
+      description: description ?? "",
       contactInfo,
       notes,
       identifier,
@@ -1108,7 +1111,7 @@ export async function submitProposal(formData: FormData) {
     type: "PROPOSAL_SUBMITTED",
     title: "New proposal submitted",
     summary: `${user.name || user.email} submitted ${title}.`,
-    body: `${title}\n\n${description}`,
+    body: [title, description].filter(Boolean).join("\n\n"),
     href: `/proposals/${proposal.id}`,
     entityType: "proposal",
     entityId: proposal.id,

@@ -118,7 +118,11 @@ export function ProposalDialog({
         open={open}
         onClose={() => setOpen(false)}
         title={`Send ${typeLabel} proposal`}
-        description="Share the details, support file, and best contact channel."
+        description={
+          isJournal
+            ? "Share the journal identity and best contact channel."
+            : "Share the details, support file, and best contact channel."
+        }
         icon={<Icon className="h-5 w-5" />}
         maxWidth="max-w-3xl"
         headerActions={
@@ -140,7 +144,9 @@ export function ProposalDialog({
             if (uploadDisabled) return;
             setWarning("");
             const form = event.currentTarget;
-            const file = form.supportFile.files?.[0] as File | undefined;
+            const file = isJournal
+              ? undefined
+              : (form.supportFile?.files?.[0] as File | undefined);
             if (file) {
               const extension = file.name
                 .slice(file.name.lastIndexOf("."))
@@ -255,33 +261,35 @@ export function ProposalDialog({
               </div>
             )}
 
-            <label className={labelClass}>
-              Proposal description
-              <textarea
-                name="description"
-                required
-                className={areaClass}
-                placeholder={
-                  isProject
-                    ? "Describe the project purpose, expected outputs, team, timeline, or funding context..."
-                    : isConference
-                      ? "Describe the conference scope, important dates, theme, submission fee, or why it should be added..."
-                      : isJournal
-                        ? "Describe the journal scope, field, rank, fees, or why it should be added..."
-                        : "Describe the research question, data, methods, target outputs, or support you need..."
-                }
-              />
-            </label>
+            {!isJournal && (
+              <>
+                <label className={labelClass}>
+                  Proposal description
+                  <textarea
+                    name="description"
+                    required
+                    className={areaClass}
+                    placeholder={
+                      isProject
+                        ? "Describe the project purpose, expected outputs, team, timeline, or funding context..."
+                        : isConference
+                          ? "Describe the conference scope, important dates, theme, submission fee, or why it should be added..."
+                          : "Describe the research question, data, methods, target outputs, or support you need..."
+                    }
+                  />
+                </label>
 
-            <label className={labelClass}>
-              Support file
-              <ResearchFileUpload
-                name="supportFile"
-                accept=".doc,.docx,.pdf"
-                label="Choose support file"
-                helper="Optional. Max 2 MB. Accepted formats: .doc, .docx, .pdf."
-              />
-            </label>
+                <label className={labelClass}>
+                  Support file
+                  <ResearchFileUpload
+                    name="supportFile"
+                    accept=".doc,.docx,.pdf"
+                    label="Choose support file"
+                    helper="Optional. Max 2 MB. Accepted formats: .doc, .docx, .pdf."
+                  />
+                </label>
+              </>
+            )}
 
             <label className={labelClass}>
               Contact information
