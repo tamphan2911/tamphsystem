@@ -34,18 +34,21 @@ export default async function ResearchUsersPage() {
     },
   });
 
-  const rows: ResearchUserRow[] = users.map((user) => ({
-    id: user.id,
-    name: user.name ?? "",
-    email: displayResearchEmail(user.email),
-    affiliation: user.affiliation,
-    roles: user.roles,
-    activeSites: user.activeSites,
-    password: user.adminVisiblePassword ?? "",
-    emailVerified: user.emailVerified?.toISOString() ?? null,
-    createdAt: user.createdAt.toISOString(),
-    updatedAt: user.updatedAt.toISOString(),
-  }));
+  const rows: ResearchUserRow[] = users.map((user) => {
+    const email = displayResearchEmail(user.email);
+    return {
+      id: user.id,
+      name: user.name ?? "",
+      email,
+      affiliation: user.affiliation,
+      roles: user.roles,
+      activeSites: user.activeSites,
+      password: user.adminVisiblePassword ?? "",
+      emailVerified: email ? (user.emailVerified?.toISOString() ?? null) : null,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    };
+  });
   const stats = [
     {
       label: "Users",

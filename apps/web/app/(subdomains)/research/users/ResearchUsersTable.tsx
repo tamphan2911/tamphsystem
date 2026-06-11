@@ -239,15 +239,27 @@ export function ResearchUsersTable({
                     </div>
                   </td>
                   <td className="px-3 py-3 text-sm">
-                    <span
-                      className={`border px-2 py-1 text-xs font-normal ${
-                        user.emailVerified
+                    {(() => {
+                      const hasEmail = Boolean(user.email.trim());
+                      const label = !hasEmail
+                        ? "Empty"
+                        : user.emailVerified
+                          ? "Verified"
+                          : "Pending";
+                      const className = !hasEmail
+                        ? "border-rose-400/50 bg-rose-950/30 text-rose-300"
+                        : user.emailVerified
                           ? "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900"
-                          : "bg-amber-50 text-amber-800 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900"
-                      }`}
-                    >
-                      {user.emailVerified ? "Verified" : "Pending"}
-                    </span>
+                          : "bg-amber-50 text-amber-800 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900";
+
+                      return (
+                        <span
+                          className={`border px-2 py-1 text-xs font-normal ${className}`}
+                        >
+                          {label}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                     {formatDate(user.createdAt)}
