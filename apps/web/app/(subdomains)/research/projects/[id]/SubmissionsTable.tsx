@@ -8,7 +8,6 @@ import {
   BookOpen,
   Check,
   CircleDollarSign,
-  Download,
   Edit3,
   Ban,
   CalendarCheck2,
@@ -22,7 +21,6 @@ import {
   Send,
   Trash2,
   TriangleAlert,
-  Upload,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { deleteSubmission, updateSubmissionStatus } from "../../actions";
@@ -31,6 +29,7 @@ import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSele
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchFileUpload } from "@/sites/research/components/ResearchFileUpload";
 import {
   FilterSelect,
   IconHint,
@@ -1027,25 +1026,13 @@ export function SubmissionsTable({
                     <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                       Article file optional
                     </span>
-                    <span className="flex min-h-12 cursor-pointer items-center gap-3 border border-[#444444] bg-transparent px-4 py-3 text-sm text-[#B0B0B0] transition hover:border-[#5A5A5A] hover:bg-[#303030]">
-                      <Upload
-                        className="h-5 w-5 flex-none text-[#A8DADC]"
-                        aria-hidden="true"
-                      />
-                      <input
-                        name="articleFile"
-                        type="file"
-                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        className="min-w-0 flex-1 text-sm file:mr-3 file:cursor-pointer file:border file:border-[#A8DADC] file:bg-transparent file:px-3 file:py-1.5 file:text-sm file:font-normal file:text-[#A8DADC] hover:file:bg-[#A8DADC] hover:file:text-[#1D2A2C]"
-                        aria-label="Upload published article file"
-                      />
-                    </span>
-                    {editing.articleFileName && (
-                      <span className="inline-flex items-center gap-2 text-xs text-[#B0B0B0]">
-                        <Download className="h-3.5 w-3.5 text-[#A8DADC]" />
-                        Current file: {editing.articleFileName}
-                      </span>
-                    )}
+                    <ResearchFileUpload
+                      name="articleFile"
+                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      label="Choose published article file"
+                      currentFileName={editing.articleFileName}
+                      helper="Optional. Accepted formats: .pdf, .doc, .docx."
+                    />
                   </label>
                 </div>
               )}

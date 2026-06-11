@@ -4,7 +4,6 @@ import { useRef, useState, useTransition } from "react";
 import {
   BookOpen,
   CalendarDays,
-  FileUp,
   Lightbulb,
   Loader2,
   MapPin,
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 import { submitProposal } from "../../../app/(subdomains)/research/actions";
 import { ResearchModal } from "./ResearchModal";
+import { ResearchFileUpload } from "./ResearchFileUpload";
 import { ResearchFormSelect } from "./ResearchFormSelect";
 import {
   ResearchButton,
@@ -275,18 +275,12 @@ export function ProposalDialog({
 
             <label className={labelClass}>
               Support file
-              <span className="flex h-12 items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 text-sm text-slate-500 transition hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/20">
-                <FileUp className="h-4 w-4" />
-                <input
-                  name="supportFile"
-                  type="file"
-                  accept=".doc,.docx,.pdf"
-                  className="min-w-0 flex-1 cursor-pointer text-sm file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-slate-700 dark:file:bg-slate-800 dark:file:text-slate-200"
-                />
-              </span>
-              <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-                Optional. Max 2 MB. Accepted formats: .doc, .docx, .pdf.
-              </span>
+              <ResearchFileUpload
+                name="supportFile"
+                accept=".doc,.docx,.pdf"
+                label="Choose support file"
+                helper="Optional. Max 2 MB. Accepted formats: .doc, .docx, .pdf."
+              />
             </label>
 
             <label className={labelClass}>

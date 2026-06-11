@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useTransition } from "react";
 import { Download, FileUp, Loader2, UploadCloud } from "lucide-react";
 import { uploadResearchTaskReport } from "../../actions";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { ResearchFileUpload } from "@/sites/research/components/ResearchFileUpload";
 
 const maxFileSize = 2 * 1024 * 1024;
 const allowedExtensions = [".doc", ".docx", ".xlsx", ".pdf"];
@@ -31,7 +32,6 @@ export function TaskReportPanel({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
-  const [selectedName, setSelectedName] = useState("");
   const { showSuccess, showError } = useResearchToast();
 
   function submitReport(formData: FormData) {
@@ -72,7 +72,6 @@ export function TaskReportPanel({
         title: result.title,
         detail: result.detail,
       });
-      setSelectedName("");
       formRef.current?.reset();
     });
   }
@@ -122,21 +121,13 @@ export function TaskReportPanel({
 
       {canUpload && (
         <form ref={formRef} action={submitReport} className="mt-4 grid gap-3">
-          <label className="flex min-h-12 cursor-pointer items-center gap-3 border border-[#444444] bg-[#202020] px-3 text-sm text-[#B0B0B0] transition hover:-translate-y-0.5 hover:border-sky-500/40 hover:bg-sky-500/10 hover:text-[#E4E4E4]">
-            <UploadCloud className="h-4 w-4 flex-none text-sky-300" />
-            <span className="min-w-0 flex-1 truncate">
-              {selectedName || "Choose report file"}
-            </span>
-            <input
-              name="reportFile"
-              type="file"
-              accept=".doc,.docx,.xlsx,.pdf"
-              className="sr-only"
-              onChange={(event) =>
-                setSelectedName(event.currentTarget.files?.[0]?.name ?? "")
-              }
-            />
-          </label>
+          <ResearchFileUpload
+            name="reportFile"
+            accept=".doc,.docx,.xlsx,.pdf"
+            label="Choose report file"
+            helper="Accepted formats: .doc, .docx, .xlsx, .pdf. Max 2 MB."
+            disabled={isPending}
+          />
           <button
             disabled={isPending}
             className="inline-flex h-10 w-fit cursor-pointer items-center justify-center gap-2 rounded-none bg-sky-600 px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-sky-500 hover:shadow-md hover:shadow-black/20 disabled:cursor-wait disabled:translate-y-0 disabled:opacity-70"
