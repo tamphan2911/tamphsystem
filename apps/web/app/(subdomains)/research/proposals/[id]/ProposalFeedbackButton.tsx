@@ -84,21 +84,17 @@ export function ProposalFeedbackButton({
             <div className="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-lg font-black text-[#E4E4E4]">
+                  <h2 className="text-lg font-normal text-[#E4E4E4]">
                     Proposal feedback
                   </h2>
-                  <p className="mt-1 text-sm leading-5 text-[#B0B0B0]">
-                    Accept or decline this proposal and include a clear note for
-                    the proposer.
-                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     disabled={isSaving}
-                    className={`inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-none px-4 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 ${
+                    className={`inline-flex h-10 min-w-32 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-none border px-4 text-sm font-normal shadow-sm transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 ${
                       decision === "ACCEPTED"
-                        ? "bg-emerald-600 hover:bg-emerald-500"
-                        : "bg-rose-600 hover:bg-rose-500"
+                        ? "border-[#A8E6CF] bg-[#A8E6CF] text-[#173B2F] hover:bg-[#C7F2DF]"
+                        : "border-[#FFC1CC] bg-[#FFC1CC] text-[#4A1F28] hover:bg-[#FFD8DF]"
                     }`}
                   >
                     {isSaving ? (
@@ -131,10 +127,10 @@ export function ProposalFeedbackButton({
                   onClick={() => setDecision("ACCEPTED")}
                   data-research-toggle-tab="true"
                   data-active={decision === "ACCEPTED"}
-                  className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-none px-3 py-2 text-sm font-black transition ${
+                  className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-none border px-3 py-2 text-sm font-normal transition ${
                     decision === "ACCEPTED"
-                      ? "bg-emerald-600 text-white shadow-sm"
-                      : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-900"
+                      ? "border-[#A8E6CF] bg-[#A8E6CF] text-[#173B2F] shadow-sm"
+                      : "border-transparent text-[#B0B0B0] hover:border-[#A8E6CF]/60 hover:bg-[#24342F] hover:text-[#A8E6CF]"
                   }`}
                 >
                   <CheckCircle2 className="h-4 w-4" />
@@ -145,10 +141,10 @@ export function ProposalFeedbackButton({
                   onClick={() => setDecision("DECLINED")}
                   data-research-toggle-tab="true"
                   data-active={decision === "DECLINED"}
-                  className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-none px-3 py-2 text-sm font-black transition ${
+                  className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-none border px-3 py-2 text-sm font-normal transition ${
                     decision === "DECLINED"
-                      ? "bg-rose-600 text-white shadow-sm"
-                      : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-900"
+                      ? "border-[#FFC1CC] bg-[#FFC1CC] text-[#4A1F28] shadow-sm"
+                      : "border-transparent text-[#B0B0B0] hover:border-[#FFC1CC]/60 hover:bg-[#3A272D] hover:text-[#FFC1CC]"
                   }`}
                 >
                   <XCircle className="h-4 w-4" />
