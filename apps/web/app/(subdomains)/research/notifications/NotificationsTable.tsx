@@ -5,11 +5,9 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BellRing,
-  ClipboardList,
   ExternalLink,
-  FileCheck2,
-  FolderGit2,
   Mail,
+  MailCheck,
   MailOpen,
   Trash2,
 } from "lucide-react";
@@ -66,11 +64,12 @@ function typeClass(type: string) {
   return "text-[#B0B0B0] hover:text-[#E4E4E4]";
 }
 
-function TypeIcon({ type }: { type: string }) {
-  if (type.includes("TASK")) return ClipboardList;
-  if (type.includes("SUBMISSION")) return FileCheck2;
-  if (type.includes("PROJECT")) return FolderGit2;
-  return BellRing;
+function hasEmailDelivery(type: string) {
+  return (
+    type.startsWith("TASK_") ||
+    type === "PROPOSAL_ACCEPTED" ||
+    type === "PROPOSAL_DECLINED"
+  );
 }
 
 function DeleteNotificationButton({
@@ -274,9 +273,7 @@ export function NotificationsTable({
           </thead>
           <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((notification) => {
-              const NotificationTypeIcon = TypeIcon({
-                type: notification.type,
-              });
+              const includesEmail = hasEmailDelivery(notification.type);
               const StatusIcon = notification.readAt ? MailOpen : Mail;
 
               return (
@@ -309,19 +306,32 @@ export function NotificationsTable({
                     </span>
                   </td>
                   <td className="px-3 py-3 text-center align-top">
-                    <IconHint label={notification.typeLabel}>
-                      <span
-                        className={`inline-flex cursor-help items-center transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${typeClass(notification.type)}`}
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <IconHint
+                        label={`Site notification: ${notification.typeLabel}`}
                       >
-                        <NotificationTypeIcon
-                          className="h-4 w-4"
-                          aria-hidden="true"
-                        />
-                        <span className="sr-only">
-                          {notification.typeLabel}
+                        <span
+                          className={`inline-flex cursor-help items-center transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${typeClass(notification.type)}`}
+                        >
+                          <BellRing className="h-4 w-4" aria-hidden="true" />
+                          <span className="sr-only">
+                            Site notification: {notification.typeLabel}
+                          </span>
                         </span>
-                      </span>
-                    </IconHint>
+                      </IconHint>
+                      {includesEmail ? (
+                        <IconHint
+                          label={`Email also sent: ${notification.typeLabel}`}
+                        >
+                          <span className="inline-flex cursor-help items-center text-[#F4D47A] transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#FFE7A3] hover:drop-shadow-[0_0_0.45rem_rgba(244,212,122,0.22)]">
+                            <MailCheck className="h-4 w-4" aria-hidden="true" />
+                            <span className="sr-only">
+                              Email also sent: {notification.typeLabel}
+                            </span>
+                          </span>
+                        </IconHint>
+                      ) : null}
+                    </span>
                   </td>
                   <td className="px-3 py-3 text-center align-top">
                     <IconHint
