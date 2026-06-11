@@ -41,9 +41,13 @@ export default auth((req) => {
   const isAuthRoute =
     url.pathname.startsWith("/login") ||
     url.pathname.startsWith("/register") ||
-    url.pathname.startsWith("/verify-email");
+    url.pathname.startsWith("/verify-email") ||
+    url.pathname.startsWith("/forgot-password") ||
+    url.pathname.startsWith("/reset-password");
   if (isAuthRoute) {
-    if (isLoggedIn && !url.pathname.startsWith("/verify-email")) {
+    const redirectLoggedIn =
+      url.pathname.startsWith("/login") || url.pathname.startsWith("/register");
+    if (isLoggedIn && redirectLoggedIn) {
       return NextResponse.redirect(
         new URL(currentHost === "research" ? "/projects" : "/", req.url),
       );

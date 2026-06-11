@@ -1689,6 +1689,8 @@ body:has(.research-site-root) {
 }
 
 .auth-flip-stage {
+  display: grid;
+  place-items: center;
   width: 100%;
   perspective: 1400px;
   transform-style: preserve-3d;
