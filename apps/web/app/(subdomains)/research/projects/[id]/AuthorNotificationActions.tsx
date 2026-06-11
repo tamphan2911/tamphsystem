@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import {
   BadgeCheck,
   Check,
-  ClipboardCheck,
+  Flag,
   FilePlus2,
   MailCheck,
   Rocket,
@@ -45,7 +45,7 @@ const actions: {
     label: "Notify authors that production is finished",
     sentLabel: "Production notification already sent",
     sentTooltip: "Production finished email already sent",
-    icon: ClipboardCheck,
+    icon: Flag,
     className: "text-[#B0B0B0] hover:text-[#A8DADC]",
     sentClassName: "text-[#666666]",
   },
