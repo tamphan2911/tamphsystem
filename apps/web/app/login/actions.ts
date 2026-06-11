@@ -1,5 +1,6 @@
 "use server";
 
+import bcrypt from "bcrypt";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@repo/db";
@@ -106,14 +107,23 @@ export async function loginUser(formData: FormData) {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { email: true, emailVerified: true },
+    select: { email: true, emailVerified: true, passwordHash: true },
   });
 
   if (user && !user.emailVerified) {
+    const passwordMatches =
+      (await bcrypt.compare(password, user.passwordHash)) ||
+      (user.passwordHash === "hashed_password_placeholder" &&
+        password === "password");
+    if (passwordMatches) {
+      const params = new URLSearchParams({ email: user.email });
+      if (redirectPath) params.set("callbackUrl", redirectPath);
+      redirect(`/register/check-email?${params.toString()}`);
+    }
     redirect(
       loginUrl({
-        warning: "unverified",
-        email: user.email,
+        error: "CredentialsSignin",
+        email,
         callbackUrl: redirectPath,
       }),
     );

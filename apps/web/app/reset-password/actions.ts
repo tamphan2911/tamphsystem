@@ -56,5 +56,5 @@ export async function resetPassword(formData: FormData) {
     },
   });
 
-  redirect(`/login?email=${encodeURIComponent(user.email)}&reset=success`);
+  redirect(`/reset-password/success?email=${encodeURIComponent(user.email)}`);
 }

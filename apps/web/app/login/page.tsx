@@ -261,21 +261,37 @@ export default async function LoginPage({
           <div
             className={
               isResearch
-                ? researchAuthFooterClass
+                ? `${researchAuthFooterClass} space-y-3`
                 : "border-t border-slate-100 px-8 py-5 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400"
             }
           >
-            {copy.registerPrompt}{" "}
-            <Link
-              href={`/register?callbackUrl=${encodeURIComponent(redirectTo)}`}
-              className={
-                isResearch
-                  ? researchAuthLinkClass
-                  : "font-semibold text-blue-600 transition hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
-              }
-            >
-              {copy.registerLabel}
-            </Link>
+            <p>
+              {copy.registerPrompt}{" "}
+              <Link
+                href={`/register?callbackUrl=${encodeURIComponent(redirectTo)}`}
+                className={
+                  isResearch
+                    ? researchAuthLinkClass
+                    : "font-semibold text-blue-600 transition hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+                }
+              >
+                {copy.registerLabel}
+              </Link>
+            </p>
+            <p>
+              If you do not remember your password,{" "}
+              <Link
+                href="/forgot-password"
+                className={
+                  isResearch
+                    ? researchAuthLinkClass
+                    : "font-semibold text-blue-600 transition hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+                }
+              >
+                reset it here
+              </Link>
+              .
+            </p>
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { ResearchUsersTable, type ResearchUserRow } from "./ResearchUsersTable";
+import { NewResearchUserDialog } from "./NewResearchUserDialog";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +83,9 @@ export default async function ResearchUsersPage() {
                 <span className="font-normal text-[#E4E4E4]">{item.value}</span>
               </div>
             ))}
+          </div>
+          <div className="flex flex-none items-center">
+            <NewResearchUserDialog roleOptions={Object.values(Role)} />
           </div>
         </div>
       </ResearchPageHeaderPortal>

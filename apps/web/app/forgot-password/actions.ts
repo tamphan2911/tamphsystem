@@ -193,5 +193,5 @@ export async function requestPasswordReset(formData: FormData) {
     await sendResetEmail({ email: user.email, site, resetUrl });
   }
 
-  redirect(forgotUrl({ sent: "1", email }));
+  redirect(`/forgot-password/check-email?email=${encodeURIComponent(email)}`);
 }
