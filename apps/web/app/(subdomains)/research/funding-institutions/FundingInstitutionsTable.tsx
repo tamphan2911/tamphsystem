@@ -116,14 +116,14 @@ export function FundingInstitutionsTable({
                 <td className="px-3 py-3 text-center align-top">
                   {institution.country ? (
                     <IconHint label={institution.country}>
-                      <span className="inline-flex h-8 max-w-full items-center justify-center text-xl leading-none">
+                      <span className="inline-flex max-w-full items-start justify-center align-top text-xl leading-none">
                         {countryFlag(institution.country)}
                         <span className="sr-only">{institution.country}</span>
                       </span>
                     </IconHint>
                   ) : (
                     <IconHint label="No country">
-                      <span className="inline-flex h-8 items-center justify-center text-xl leading-none opacity-50">
+                      <span className="inline-flex items-start justify-center align-top text-xl leading-none opacity-50">
                         🇺🇳
                       </span>
                     </IconHint>
@@ -139,7 +139,7 @@ export function FundingInstitutionsTable({
                         href={institution.website}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] transition hover:text-[#A8DADC]"
+                        className="inline-flex h-5 w-5 cursor-pointer items-start justify-center align-top border-0 bg-transparent text-[#B0B0B0] transition hover:text-[#A8DADC]"
                         aria-label={`Open ${institution.name} website`}
                       >
                         <ExternalLink className="h-4 w-4" />
@@ -147,7 +147,7 @@ export function FundingInstitutionsTable({
                     </IconHint>
                   ) : (
                     <IconHint label="No website">
-                      <span className="inline-flex h-8 w-8 items-center justify-center text-[#666666]">
+                      <span className="inline-flex h-5 w-5 items-start justify-center align-top text-[#666666]">
                         <Globe2 className="h-4 w-4" />
                       </span>
                     </IconHint>

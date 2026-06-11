@@ -47,7 +47,7 @@ export function FundingInstitutionDialog({
           onClick={() => setOpen(true)}
           label="Edit funder"
           tone="slate"
-          className="h-8 w-8 border-0 bg-transparent text-[#B0B0B0] shadow-none hover:border-transparent hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none"
+          className="h-5 w-5 border-0 bg-transparent text-[#B0B0B0] shadow-none hover:border-transparent hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none"
         >
           <Pencil className="h-4 w-4" />
         </ResearchIconButton>

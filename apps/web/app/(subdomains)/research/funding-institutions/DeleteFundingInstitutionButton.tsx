@@ -34,6 +34,7 @@ export function DeleteFundingInstitutionButton({
         onClick={() => setOpen(true)}
         label={`Delete ${funder.name}`}
         tone="rose"
+        className="h-5 w-5 border-0 bg-transparent shadow-none hover:border-transparent hover:bg-transparent hover:shadow-none"
       >
         <Trash2 className="h-4 w-4" />
       </ResearchIconButton>
