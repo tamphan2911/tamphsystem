@@ -153,18 +153,15 @@ function MoneyIndicator({
 
   return (
     <IconHint label={detail}>
-      <span
-        className={`inline-flex cursor-help items-center gap-1.5 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-105 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
-          isFree
-            ? "text-[#8FCFD1] hover:text-[#C9F0F2]"
-            : "text-[#F4D47A] hover:text-[#FFE7A3]"
-        }`}
-      >
+      <span className="inline-flex cursor-help items-center gap-1.5 text-[#B0B0B0] transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-105 hover:text-[#E4E4E4] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.16)]">
         {showIcon && isFree ? (
-          <CircleOff className="h-4 w-4 flex-none" aria-hidden="true" />
+          <CircleOff
+            className="h-4 w-4 flex-none text-[#8FCFD1]"
+            aria-hidden="true"
+          />
         ) : null}
         <span className="min-w-0 text-sm">
-          <span className="block truncate">
+          <span className="block">
             {isFree
               ? "Free"
               : `${currencySymbol(currency)} ${formatResearchNumber(amount)}`}
@@ -424,7 +421,7 @@ export function JournalsTable({
                       />
                     </IconHint>
                   </span>
-                  <p className="mt-1 line-clamp-1 text-xs font-medium text-[#B0B0B0]">
+                  <p className="mt-1 whitespace-normal break-words text-xs font-normal leading-5 text-[#B0B0B0]">
                     {[
                       journal.publisher || "No publisher",
                       journal.issn ? `ISSN ${journal.issn}` : "No ISSN",
@@ -457,16 +454,16 @@ export function JournalsTable({
                     label="Submission fee"
                   />
                 </td>
-                <td className="px-2 py-3 text-center text-sm font-semibold text-[#E4E4E4]">
+                <td className="px-2 py-3 text-center text-sm font-normal text-[#E4E4E4]">
                   {journal.ongoingSubmissions}
                 </td>
-                <td className="px-2 py-3 text-center text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                <td className="px-2 py-3 text-center text-sm font-normal text-emerald-700 dark:text-emerald-300">
                   {journal.publishedSubmissions}
                 </td>
-                <td className="px-2 py-3 text-center text-sm font-semibold text-[#E4E4E4]">
+                <td className="px-2 py-3 text-center text-sm font-normal text-[#E4E4E4]">
                   {journal.reviews}
                 </td>
-                <td className="px-2 py-3">
+                <td className="px-2 py-3 text-center">
                   {journal.country ? (
                     <IconHint label={countryName(journal.country)}>
                       <span className="inline-flex cursor-help items-center text-lg leading-none transition-[filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)]">
