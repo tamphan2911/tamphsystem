@@ -42,7 +42,7 @@ export function NewResearchUserDialog({
         closeDialog();
         showSuccess({
           title: "User created",
-          detail: `${result.email || "The user"} was added to Research Hub. No verification email was sent for this admin-created account.`,
+          detail: `${result.email || "The user"} was added to Research Hub with email verification pending.`,
         });
         router.refresh();
         return;
@@ -147,8 +147,8 @@ export function NewResearchUserDialog({
           </div>
 
           <div className="border border-[#444444] bg-[#242424] px-4 py-3 text-sm leading-6 text-[#B0B0B0]">
-            Admin-created users are activated for Research Hub immediately. No
-            verification email will be sent from this form.
+            Admin-created users can access Research Hub after verifying their
+            email. Their first successful login will send the verification link.
           </div>
         </form>
       </ResearchModal>

@@ -2757,7 +2757,7 @@ export async function createResearchSiteUser(formData: FormData) {
         affiliation,
         passwordHash: await bcrypt.hash(password, 10),
         adminVisiblePassword: password,
-        emailVerified: submittedEmail ? new Date() : null,
+        emailVerified: null,
         emailVerificationToken: null,
         emailVerificationTokenExpires: null,
         roles: roles.length > 0 ? roles : [Role.USER],

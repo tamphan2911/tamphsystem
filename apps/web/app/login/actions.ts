@@ -5,6 +5,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@repo/db";
 import { signIn } from "../../auth";
+import {
+  createAndSendVerificationEmail,
+  siteFromHost,
+} from "@/sites/shared/lib/emailVerification";
 import { requestIp, verifyTurnstileToken } from "@/sites/shared/lib/turnstile";
 
 function safeRedirectPath(value: FormDataEntryValue | null) {
@@ -107,7 +111,13 @@ export async function loginUser(formData: FormData) {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { email: true, emailVerified: true, passwordHash: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      emailVerified: true,
+      passwordHash: true,
+    },
   });
 
   if (user && !user.emailVerified) {
@@ -116,6 +126,14 @@ export async function loginUser(formData: FormData) {
       (user.passwordHash === "hashed_password_placeholder" &&
         password === "password");
     if (passwordMatches) {
+      await createAndSendVerificationEmail({
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        site: siteFromHost(host),
+        baseUrl:
+          origin || process.env.NEXT_PUBLIC_APP_URL || "https://tamph.com",
+      });
       const params = new URLSearchParams({ email: user.email });
       if (redirectPath) params.set("callbackUrl", redirectPath);
       redirect(`/register/check-email?${params.toString()}`);
