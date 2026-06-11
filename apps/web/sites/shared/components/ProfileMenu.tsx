@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { LogOut, Settings, UserCircle } from "lucide-react";
 
@@ -19,7 +20,10 @@ export function ProfileMenu({
   adminHref = "https://admin.tamph.com",
   variant = "default",
 }: ProfileMenuProps) {
+  const [open, setOpen] = useState(false);
+
   function signOutToCurrentLogin() {
+    setOpen(false);
     const origin = typeof window === "undefined" ? "" : window.location.origin;
     void signOut({ callbackUrl: `${origin}/login` });
   }
@@ -27,17 +31,28 @@ export function ProfileMenu({
   const isResearch = variant === "research";
 
   return (
-    <div className="group relative">
+    <div
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+    >
       <button
         type="button"
+        onClick={() => setOpen((current) => !current)}
         className="flex h-10 w-10 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#E4E4E4] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
         aria-label="Open profile menu"
+        aria-expanded={open}
       >
         <UserCircle className="h-6 w-6" />
       </button>
 
       <div
-        className={`pointer-events-none absolute right-0 top-12 z-50 w-64 translate-y-2 overflow-hidden rounded-none border opacity-0 shadow-xl transition duration-200 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100 ${
+        className={`absolute right-0 top-12 z-50 w-64 overflow-hidden rounded-none border shadow-xl transition duration-200 ease-out ${
+          open
+            ? "pointer-events-auto translate-y-0 opacity-100"
+            : "pointer-events-none translate-y-2 opacity-0"
+        } ${
           isResearch
             ? "border-[#444444] bg-[#2C2C2C] shadow-black/30"
             : "border-slate-200 bg-white ring-1 ring-slate-950/5 dark:border-slate-800 dark:bg-slate-900 dark:ring-white/10"
@@ -69,6 +84,7 @@ export function ProfileMenu({
         <div>
           <Link
             href={profileHref}
+            onClick={() => setOpen(false)}
             className={`research-profile-menu-item flex items-center gap-3 border-y border-transparent px-4 py-3 text-sm font-normal transition ${
               isResearch
                 ? "text-[#E4E4E4] hover:border-[#444444] hover:bg-[#383838] hover:text-[#A8DADC]"
@@ -84,6 +100,7 @@ export function ProfileMenu({
           </Link>
           <Link
             href={adminHref}
+            onClick={() => setOpen(false)}
             className={`research-profile-menu-item flex items-center gap-3 border-y border-transparent px-4 py-3 text-sm font-normal transition ${
               isResearch
                 ? "text-[#E4E4E4] hover:border-[#444444] hover:bg-[#383838] hover:text-[#A8DADC]"

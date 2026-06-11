@@ -189,7 +189,7 @@ export function ProposalsTable({
 }: {
   rows: ProposalRow[];
   isAdmin: boolean;
-  deleteAction: (proposalId: string) => Promise<void>;
+  deleteAction?: (proposalId: string) => Promise<void>;
 }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("ALL");
@@ -265,7 +265,7 @@ export function ProposalsTable({
               <th className="w-36 px-3 py-3">Submitted</th>
               <th className="w-28 px-3 py-3">Contact</th>
               <th className="w-12 px-2 py-3 text-center">File</th>
-              {isAdmin && (
+              {isAdmin && deleteAction && (
                 <th className="w-12 px-2 py-3 text-center">
                   <span className="sr-only">Delete</span>
                 </th>
@@ -284,7 +284,9 @@ export function ProposalsTable({
               >
                 <td className="px-3 py-3 align-top">
                   <Link href={`/proposals/${proposal.id}`}>
-                    <span className={`font-mono text-xs ${researchMutedLinkClass}`}>
+                    <span
+                      className={`font-mono text-xs ${researchMutedLinkClass}`}
+                    >
                       {proposal.id.slice(0, 8)}
                     </span>
                   </Link>
@@ -358,7 +360,7 @@ export function ProposalsTable({
                     </IconHint>
                   )}
                 </td>
-                {isAdmin && (
+                {isAdmin && deleteAction && (
                   <td className="px-2 py-3 text-center align-top">
                     <DeleteProposalButton
                       proposal={proposal}
@@ -370,7 +372,10 @@ export function ProposalsTable({
             ))}
             {pagination.total === 0 && (
               <tr>
-                <td colSpan={isAdmin ? 8 : 7} className="px-4 py-2">
+                <td
+                  colSpan={isAdmin && deleteAction ? 8 : 7}
+                  className="px-4 py-2"
+                >
                   <ResearchEmptyState
                     title="No proposals match the current search."
                     detail="Try another proposal title, ID, type, status, or contact keyword."

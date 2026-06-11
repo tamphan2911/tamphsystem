@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BadgeCheck,
+  BarChart3,
   BriefcaseBusiness,
   Check,
   ClipboardList,
@@ -12,14 +13,25 @@ import {
   Pencil,
   ShieldCheck,
   UserRound,
-  X,
 } from "lucide-react";
 import { updateResearchProfile } from "./actions";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
+  IconHint,
   ResearchButton,
   researchFieldClass,
 } from "@/sites/research/components/ResearchPrimitives";
-import { displayResearchEmail } from "@/sites/research/lib/display";
+import {
+  ResearchProjectsTable,
+  type ResearchProjectRow,
+} from "../projects/ResearchProjectsTable";
+import {
+  OrganizedProjectsTable,
+  type OrganizedProjectRow,
+} from "../organized-projects/OrganizedProjectsTable";
+import { ProposalsTable, type ProposalRow } from "../proposals/ProposalsTable";
 
 type ResearchProfileUser = {
   id: string;
@@ -38,6 +50,21 @@ type ResearchProfileUser = {
   };
 };
 
+type ProfileTaskRow = {
+  id: string;
+  title: string;
+  status: string;
+  taskType: string;
+  dueDate: string | null;
+  completedAt: string | null;
+  finishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type TabKey = "dashboard" | "research" | "projects" | "proposals";
+type PeriodKey = "all" | "last" | "current";
+
 function roleLabel(role: string) {
   return role
     .replaceAll("_", " ")
@@ -45,196 +72,522 @@ function roleLabel(role: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function shortDate(value: string) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
+function periodLabel(period: PeriodKey) {
+  if (period === "current") return "This month";
+  if (period === "last") return "Last month";
+  return "All time";
 }
 
-export function ProfileClient({ user }: { user: ResearchProfileUser }) {
+function periodStart(period: PeriodKey) {
+  const now = new Date();
+  if (period === "current") {
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  if (period === "last") {
+    return new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  }
+  return null;
+}
+
+function periodEnd(period: PeriodKey) {
+  const now = new Date();
+  if (period === "last") {
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  return null;
+}
+
+function taskTypeLabel(value: string) {
+  return value
+    .replace("SUBMIT_RESEARCH", "SUBMITTING")
+    .replace("PROJECT_PRODUCTION", "PROJECT")
+    .replace("PROJECT_RESEARCH_ASSOCIATED", "RESEARCH ASSOCIATED")
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function isTaskInPeriod(task: ProfileTaskRow, period: PeriodKey) {
+  const start = periodStart(period);
+  const end = periodEnd(period);
+  if (!start) return true;
+  const date = new Date(task.completedAt ?? task.finishedAt ?? task.updatedAt);
+  if (date < start) return false;
+  if (end && date >= end) return false;
+  return true;
+}
+
+function isOverdue(task: ProfileTaskRow) {
+  if (
+    !task.dueDate ||
+    task.status === "COMPLETE" ||
+    task.status === "REVOKED"
+  ) {
+    return false;
+  }
+  return new Date(task.dueDate).getTime() < Date.now();
+}
+
+function statusMetric(tasks: ProfileTaskRow[]) {
+  return [
+    {
+      label: "Completed",
+      value: tasks.filter((task) => task.status === "COMPLETE").length,
+      className: "bg-[#A8DADC]",
+    },
+    {
+      label: "Checking",
+      value: tasks.filter((task) => task.status === "CHECKING").length,
+      className: "bg-[#B39CD0]",
+    },
+    {
+      label: "Active",
+      value: tasks.filter(
+        (task) =>
+          task.status !== "COMPLETE" &&
+          task.status !== "REVOKED" &&
+          task.status !== "CHECKING",
+      ).length,
+      className: "bg-[#FFC1CC]",
+    },
+    {
+      label: "Overdue",
+      value: tasks.filter(isOverdue).length,
+      className: "bg-rose-300",
+    },
+  ];
+}
+
+function typeMetric(tasks: ProfileTaskRow[]) {
+  const labels = new Map<string, number>();
+  tasks.forEach((task) => {
+    const label = taskTypeLabel(task.taskType || "OTHER");
+    labels.set(label, (labels.get(label) ?? 0) + 1);
+  });
+  return Array.from(labels.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([label, value], index) => ({
+      label,
+      value,
+      className:
+        index % 3 === 0
+          ? "bg-[#A8DADC]"
+          : index % 3 === 1
+            ? "bg-[#B39CD0]"
+            : "bg-[#FFC1CC]",
+    }));
+}
+
+export function ProfileClient({
+  user,
+  researchRows,
+  projectRows,
+  proposalRows,
+  taskRows,
+  isAssistant,
+}: {
+  user: ResearchProfileUser;
+  researchRows: ResearchProjectRow[];
+  projectRows: OrganizedProjectRow[];
+  proposalRows: ProposalRow[];
+  taskRows: ProfileTaskRow[];
+  isAssistant: boolean;
+}) {
   const router = useRouter();
+  const toast = useResearchToast();
   const [editOpen, setEditOpen] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    isAssistant ? "dashboard" : "research",
+  );
+  const [period, setPeriod] = useState<PeriodKey>("all");
 
   async function saveProfile(formData: FormData) {
     setIsSaving(true);
-    setMessage(null);
     const result = await updateResearchProfile(formData);
     setIsSaving(false);
     if (result.error) {
-      setMessage({ type: "error", text: result.error });
+      toast.showError({
+        title: "Profile update failed",
+        detail: result.error,
+      });
       return;
     }
     setEditOpen(false);
     router.refresh();
-    setMessage({ type: "success", text: "Profile information updated." });
+    toast.showSuccess({
+      title: "Profile updated",
+      detail: "Your research profile information has been saved.",
+    });
   }
 
+  const roleText = user.roles.map(roleLabel).join(", ") || "Research user";
   const stats = [
     {
       label: "Lead",
       value: user._count.researchProjects,
       icon: BriefcaseBusiness,
+      hint: "Research records where this user is the lead researcher.",
     },
-    { label: "Author", value: user._count.authoredResearch, icon: FileText },
-    { label: "Reg.", value: user._count.registeredResearch, icon: BadgeCheck },
+    {
+      label: "Author",
+      value: user._count.authoredResearch,
+      icon: FileText,
+      hint: "Research records where this user is listed as an author.",
+    },
+    {
+      label: "Reg.",
+      value: user._count.registeredResearch,
+      icon: BadgeCheck,
+      hint: "Research records registered under this user.",
+    },
     {
       label: "Tasks",
       value: user._count.assignedResearchTasks,
       icon: ClipboardList,
+      hint: "Research tasks assigned to this user.",
+    },
+  ];
+  const tabs = [
+    ...(isAssistant
+      ? [
+          {
+            key: "dashboard" as const,
+            label: "Dashboard",
+            value: taskRows.length,
+            icon: BarChart3,
+          },
+        ]
+      : []),
+    {
+      key: "research" as const,
+      label: "Research",
+      value: researchRows.length,
+      icon: FileText,
+    },
+    {
+      key: "projects" as const,
+      label: "Projects",
+      value: projectRows.length,
+      icon: BriefcaseBusiness,
+    },
+    {
+      key: "proposals" as const,
+      label: "Proposals",
+      value: proposalRows.length,
+      icon: ClipboardList,
     },
   ];
 
-  return (
-    <div className="mx-auto max-w-5xl space-y-4">
-      {message && (
-        <div
-          className={`rounded-none border px-4 py-3 text-sm font-semibold ${
-            message.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
-              : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
+  const periodTasks = useMemo(
+    () => taskRows.filter((task) => isTaskInPeriod(task, period)),
+    [period, taskRows],
+  );
+  const statusBars = statusMetric(periodTasks);
+  const typeBars = typeMetric(periodTasks);
+  const maxStatus = Math.max(1, ...statusBars.map((item) => item.value));
+  const maxType = Math.max(1, ...typeBars.map((item) => item.value));
+  const completionRate =
+    periodTasks.length === 0
+      ? 0
+      : Math.round(
+          (periodTasks.filter((task) => task.status === "COMPLETE").length /
+            periodTasks.length) *
+            100,
+        );
 
-      <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className="truncate text-2xl font-black text-[#E4E4E4]">
-                  {user.name || "Research user"}
-                </h1>
-                <button
-                  type="button"
-                  onClick={() => setEditOpen(true)}
-                  className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-[#444444] bg-slate-50 text-slate-500 transition hover:bg-white hover:text-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                  aria-label="Edit profile information"
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[#B0B0B0]">
-                <Mail className="h-4 w-4" />
-                {displayResearchEmail(user.email)}
-                {user.emailVerified && (
-                  <span className="inline-flex items-center gap-1 rounded-none bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900">
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                    Verified
+  return (
+    <>
+      <ResearchPageHeaderPortal>
+        <div className="flex w-full min-w-0 items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="truncate text-base font-normal text-[#E4E4E4]">
+                {user.name || "Research user"}
+              </h1>
+              {user.emailVerified && (
+                <IconHint label="Email verified">
+                  <span className="inline-flex cursor-help text-[#A8DADC] transition duration-200 ease-out hover:-translate-y-0.5 hover:text-[#C9F0F2]">
+                    <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">Email verified</span>
                   </span>
-                )}
-              </p>
+                </IconHint>
+              )}
+              <button
+                type="button"
+                onClick={() => setEditOpen(true)}
+                className="inline-flex cursor-pointer border-0 bg-transparent p-1 text-[#B0B0B0] transition duration-200 ease-out hover:-translate-y-0.5 hover:text-[#A8DADC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
+                aria-label="Edit profile"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
             </div>
-            <div className="text-right text-xs font-semibold text-slate-400">
-              Joined {shortDate(user.createdAt)}
-            </div>
+            <p className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-xs text-[#B0B0B0]">
+              {user.email && (
+                <span className="inline-flex min-w-0 items-center gap-1">
+                  <Mail className="h-3.5 w-3.5 flex-none" />
+                  <span className="truncate">{user.email}</span>
+                </span>
+              )}
+              {user.email && <span className="text-[#666666]">|</span>}
+              <span className="truncate">{roleText}</span>
+            </p>
+          </div>
+        </div>
+      </ResearchPageHeaderPortal>
+
+      <div className="mx-auto max-w-7xl space-y-4">
+        <div className="grid grid-cols-2 border border-[#444444] bg-[#2C2C2C] sm:grid-cols-4">
+          {stats.map((item, index) => (
+            <IconHint key={item.label} label={item.hint}>
+              <div
+                className={`flex cursor-help items-center justify-between gap-3 px-4 py-3 transition duration-200 ease-out hover:bg-[#383838] ${
+                  index > 0 ? "sm:border-l sm:border-[#444444]" : ""
+                } ${index % 2 === 1 ? "border-l border-[#444444] sm:border-l" : ""} ${
+                  index > 1 ? "border-t border-[#444444] sm:border-t-0" : ""
+                }`}
+              >
+                <div>
+                  <p className="text-[11px] font-normal uppercase tracking-wide text-[#B0B0B0]">
+                    {item.label}
+                  </p>
+                  <p className="mt-1 text-xl font-normal text-[#E4E4E4]">
+                    {item.value}
+                  </p>
+                </div>
+                <item.icon className="h-5 w-5 text-[#A8DADC]" />
+              </div>
+            </IconHint>
+          ))}
+        </div>
+
+        {user.affiliation && (
+          <p className="border-b border-[#444444] pb-3 text-sm leading-6 text-[#B0B0B0]">
+            {user.affiliation}
+          </p>
+        )}
+
+        <section className="space-y-3">
+          <div
+            className={`journal-detail-tabs grid w-full border border-[#444444] bg-[#242424] p-1 text-center ${
+              isAssistant ? "grid-cols-4" : "grid-cols-3"
+            }`}
+          >
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                data-active={activeTab === tab.key}
+                aria-pressed={activeTab === tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className="journal-detail-tab-button cursor-pointer rounded-none px-4 py-3 text-left"
+              >
+                <span className="relative z-10 flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2 text-[11px] font-normal uppercase tracking-wide">
+                    <tab.icon className="h-3.5 w-3.5" />
+                    {tab.label}
+                  </span>
+                  <span className="text-base font-normal">{tab.value}</span>
+                </span>
+              </button>
+            ))}
           </div>
 
-          <dl className="mt-5 grid gap-3 md:grid-cols-2">
-            <Info label="Affiliation" value={user.affiliation} />
-            <Info label="Roles" value={user.roles.map(roleLabel).join(", ")} />
-          </dl>
+          {activeTab === "dashboard" && isAssistant && (
+            <AssistantDashboard
+              period={period}
+              onPeriodChange={setPeriod}
+              total={periodTasks.length}
+              completionRate={completionRate}
+              statusBars={statusBars}
+              typeBars={typeBars}
+              maxStatus={maxStatus}
+              maxType={maxType}
+            />
+          )}
 
-          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {stats.map((item) => (
-              <div
-                key={item.label}
-                className="border border-[#444444] bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/50"
-              >
-                <item.icon className="h-4 w-4 text-emerald-500" />
-                <p className="mt-2 text-xl font-black text-[#E4E4E4]">
-                  {item.value}
-                </p>
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                  {item.label}
-                </p>
-              </div>
+          {activeTab === "research" && (
+            <ResearchProjectsTable
+              rows={researchRows}
+              isAdmin={false}
+              showClaimRegistration
+              emptyMessage="No authored research is linked to this account."
+            />
+          )}
+
+          {activeTab === "projects" && (
+            <OrganizedProjectsTable
+              rows={projectRows}
+              isAdmin={false}
+              emptyMessage="No organized projects are linked to this account."
+            />
+          )}
+
+          {activeTab === "proposals" && (
+            <ProposalsTable rows={proposalRows} isAdmin={false} />
+          )}
+        </section>
+      </div>
+
+      <ResearchModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title="Edit Profile"
+        icon={<UserRound className="h-5 w-5" />}
+        maxWidth="max-w-2xl"
+        headerActions={
+          <ResearchButton form="profile-edit-form" disabled={isSaving}>
+            {isSaving ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <UserRound className="h-4 w-4" />
+            )}
+            {isSaving ? "Saving..." : "Save changes"}
+          </ResearchButton>
+        }
+      >
+        <form
+          id="profile-edit-form"
+          action={saveProfile}
+          className="grid gap-5"
+        >
+          <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
+            <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+              Display name
+            </span>
+            <input
+              name="name"
+              defaultValue={user.name ?? ""}
+              required
+              className={researchFieldClass}
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
+            <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+              Affiliation
+            </span>
+            <input
+              name="affiliation"
+              defaultValue={user.affiliation}
+              required
+              className={researchFieldClass}
+            />
+          </label>
+        </form>
+      </ResearchModal>
+    </>
+  );
+}
+
+function AssistantDashboard({
+  period,
+  onPeriodChange,
+  total,
+  completionRate,
+  statusBars,
+  typeBars,
+  maxStatus,
+  maxType,
+}: {
+  period: PeriodKey;
+  onPeriodChange: (period: PeriodKey) => void;
+  total: number;
+  completionRate: number;
+  statusBars: { label: string; value: number; className: string }[];
+  typeBars: { label: string; value: number; className: string }[];
+  maxStatus: number;
+  maxType: number;
+}) {
+  return (
+    <div className="border border-[#444444] bg-[#2C2C2C]">
+      <div className="flex flex-col gap-3 border-b border-[#444444] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+            Assistant Performance
+          </p>
+          <p className="mt-1 text-sm text-[#E4E4E4]">
+            {total} task{total === 1 ? "" : "s"} tracked - {completionRate}%
+            completion rate
+          </p>
+        </div>
+        <div className="grid grid-cols-3 border border-[#444444] bg-[#242424] p-1">
+          {(["all", "last", "current"] as PeriodKey[]).map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => onPeriodChange(item)}
+              className={`cursor-pointer px-3 py-2 text-xs font-normal uppercase tracking-wide transition duration-200 ease-out ${
+                period === item
+                  ? "bg-[#A8DADC] text-[#202020]"
+                  : "text-[#B0B0B0] hover:bg-[#383838] hover:text-[#E4E4E4]"
+              }`}
+            >
+              {periodLabel(item)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="border-b border-[#444444] p-4 lg:border-b-0 lg:border-r">
+          <p className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+            Task Status
+          </p>
+          <div className="mt-4 grid gap-3">
+            {statusBars.map((item) => (
+              <BarRow key={item.label} item={item} max={maxStatus} />
             ))}
           </div>
         </div>
-      </section>
 
-      {editOpen && (
-        <div
-          data-research-modal-overlay="true"
-          className="fixed inset-0 z-[1010] flex overflow-y-auto items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
-        >
-          <form
-            id="profile-edit-form"
-            action={saveProfile}
-            className="w-full max-w-lg overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
-          >
-            <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-              <div>
-                <h2 className="text-lg font-black text-[#E4E4E4]">
-                  Edit profile
-                </h2>
-                <p className="mt-1 text-sm text-[#B0B0B0]">
-                  Update your research display name and affiliation.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <ResearchButton form="profile-edit-form" disabled={isSaving}>
-                  {isSaving ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <UserRound className="h-4 w-4" />
-                  )}
-                  {isSaving ? "Saving..." : "Save changes"}
-                </ResearchButton>
-                <button
-                  type="button"
-                  onClick={() => setEditOpen(false)}
-                  className="rounded-none p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            <div className="grid gap-4 px-5 py-4">
-              <label className="grid gap-1 text-sm font-semibold text-[#E4E4E4]">
-                Display name
-                <input
-                  name="name"
-                  defaultValue={user.name ?? ""}
-                  required
-                  className={researchFieldClass}
-                />
-              </label>
-              <label className="grid gap-1 text-sm font-semibold text-[#E4E4E4]">
-                Affiliation
-                <input
-                  name="affiliation"
-                  defaultValue={user.affiliation}
-                  required
-                  className={researchFieldClass}
-                />
-              </label>
-            </div>
-          </form>
+        <div className="p-4">
+          <p className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+            Work Mix
+          </p>
+          <div className="mt-4 grid gap-3">
+            {typeBars.length > 0 ? (
+              typeBars.map((item) => (
+                <BarRow key={item.label} item={item} max={maxType} compact />
+              ))
+            ) : (
+              <p className="border border-[#444444] bg-[#242424] px-3 py-6 text-center text-sm text-[#B0B0B0]">
+                No task data in this period.
+              </p>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
-function Info({ label, value }: { label: string; value: string }) {
+function BarRow({
+  item,
+  max,
+  compact = false,
+}: {
+  item: { label: string; value: number; className: string };
+  max: number;
+  compact?: boolean;
+}) {
+  const width = `${Math.max(6, Math.round((item.value / max) * 100))}%`;
   return (
-    <div className="border border-[#444444] bg-[#2C2C2C] px-3 py-2 dark:border-slate-800 dark:bg-slate-950/40">
-      <dt className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-        {label}
-      </dt>
-      <dd className="mt-1 text-sm font-semibold text-[#E4E4E4]">
-        {value || "-"}
-      </dd>
+    <div className="grid gap-1.5">
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <span className="font-normal uppercase tracking-wide text-[#B0B0B0]">
+          {item.label}
+        </span>
+        <span className="font-mono text-[#E4E4E4]">{item.value}</span>
+      </div>
+      <div
+        className={`${compact ? "h-2" : "h-3"} border border-[#444444] bg-[#242424]`}
+      >
+        <div
+          className={`h-full transition-all duration-500 ease-out ${item.className}`}
+          style={{ width }}
+        />
+      </div>
     </div>
   );
 }
