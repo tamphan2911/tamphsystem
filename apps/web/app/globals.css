@@ -1202,6 +1202,49 @@ body:has(.research-site-root) {
 }
 
 .research-site-root
+  main
+  :where(section, article, [data-research-lazy-section]) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 24rem;
+}
+
+.research-site-root
+  main
+  :where(div, section):has(> table),
+.research-site-root
+  main
+  :where(div, section):has(> div > table),
+.research-site-root
+  main
+  :where([data-research-lazy-table]) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 32rem;
+}
+
+.research-site-root
+  main
+  :where(
+    [data-research-modal-overlay="true"],
+    .research-dropdown-panel,
+    .research-dropdown-floating-panel,
+    [role="listbox"],
+    [data-search-results="true"]
+  ),
+.research-site-root
+  main
+  :where(
+    [data-research-modal-overlay="true"],
+    .research-dropdown-panel,
+    .research-dropdown-floating-panel,
+    [role="listbox"],
+    [data-search-results="true"]
+  )
+  * {
+  content-visibility: visible;
+  contain-intrinsic-size: none;
+}
+
+.research-site-root
   :where(
     .group\/icon,
     .group\/link,
