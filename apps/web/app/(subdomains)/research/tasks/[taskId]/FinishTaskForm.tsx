@@ -62,7 +62,7 @@ export function FinishTaskForm({
         title={title}
         description={description}
         icon={<Icon className="h-5 w-5" />}
-        maxWidth="max-w-md"
+        maxWidth="max-w-xl"
         bodyClassName="px-5 py-4"
         headerActions={
           <ResearchButton

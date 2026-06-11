@@ -29,6 +29,10 @@ import {
 } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 export type SubmissionTaskAccountOption = {
   id: string;
@@ -530,22 +534,6 @@ export function CreateSubmissionTaskDialog({
               </section>
             )}
 
-            <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                Note
-              </span>
-              <textarea
-                name="description"
-                rows={3}
-                defaultValue={
-                  selectedVenue
-                    ? `Prepare and submit this manuscript to ${selectedVenue.name}.`
-                    : "Prepare and submit this manuscript."
-                }
-                className={researchTextareaClass}
-              />
-            </label>
-
             <section className="grid gap-3">
               <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Assign to
@@ -568,7 +556,7 @@ export function CreateSubmissionTaskDialog({
                       onClick={() => toggleAssistant(assistant.id)}
                       className="inline-flex cursor-pointer items-center gap-2 border border-[#444444] bg-[#202020] px-2.5 py-1.5 text-xs text-[#E4E4E4] transition hover:border-[#A8DADC] hover:bg-[#303030]"
                     >
-                      {assistant.name || assistant.email}
+                      {displayResearchPersonName(assistant)}
                       <span className="text-[#B0B0B0]" aria-hidden="true">
                         ×
                       </span>
@@ -599,10 +587,10 @@ export function CreateSubmissionTaskDialog({
                           <UserRound className="h-4 w-4 flex-none text-slate-400" />
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-normal">
-                              {assistant.name || assistant.email}
+                              {displayResearchPersonName(assistant)}
                             </span>
                             <span className="block truncate text-xs text-[#B0B0B0]">
-                              {assistant.email}
+                              {displayResearchEmail(assistant.email)}
                             </span>
                           </span>
                         </span>
@@ -618,6 +606,22 @@ export function CreateSubmissionTaskDialog({
                 </div>
               )}
             </section>
+
+            <label className="grid gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                Note
+              </span>
+              <textarea
+                name="description"
+                rows={3}
+                defaultValue={
+                  selectedVenue
+                    ? `Prepare and submit this manuscript to ${selectedVenue.name}.`
+                    : "Prepare and submit this manuscript."
+                }
+                className={researchTextareaClass}
+              />
+            </label>
           </form>
         </ResearchModal>
       )}

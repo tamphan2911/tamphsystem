@@ -4,6 +4,7 @@ import { prisma } from "@repo/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ResearchShell } from "./ResearchShell";
+import { displayResearchEmail } from "@/sites/research/lib/display";
 
 export default async function ResearchLayout({
   children,
@@ -91,7 +92,7 @@ export default async function ResearchLayout({
 
   return (
     <ResearchShell
-      email={session?.user?.email}
+      email={displayResearchEmail(session?.user?.email)}
       name={session?.user?.name}
       isAdmin={roles.includes(Role.ADMIN)}
       isAssistant={

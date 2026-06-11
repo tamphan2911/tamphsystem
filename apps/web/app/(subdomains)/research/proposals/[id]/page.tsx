@@ -18,6 +18,10 @@ import { prisma, ProposalStatus, ProposalType, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { ProposalFeedbackButton } from "./ProposalFeedbackButton";
 import { researchMutedLinkClass } from "@/sites/research/components/ResearchPrimitives";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 export const dynamic = "force-dynamic";
 
@@ -261,10 +265,10 @@ export default async function ProposalDetailPage({
               value={
                 <span>
                   <span className="block text-[#E4E4E4]">
-                    {proposal.submittedBy.name || proposal.submittedBy.email}
+                    {displayResearchPersonName(proposal.submittedBy)}
                   </span>
                   <span className="block text-xs text-[#B0B0B0]">
-                    {proposal.submittedBy.email}
+                    {displayResearchEmail(proposal.submittedBy.email)}
                   </span>
                   <span className="mt-1 block text-xs text-slate-400">
                     {proposal.submittedBy.roles.map(label).join(", ") ||

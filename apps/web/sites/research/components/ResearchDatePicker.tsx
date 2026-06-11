@@ -42,11 +42,12 @@ function parseManualDateValue(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return "";
 
+  const compactMatch = /^(\d{2})(\d{2})(\d{2}|\d{4})$/.exec(trimmed);
   const isoMatch = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/.exec(trimmed);
   const displayMatch = /^(\d{1,2})[-/](\d{1,2})[-/](\d{2}|\d{4})$/.exec(
     trimmed,
   );
-  const match = isoMatch ?? displayMatch;
+  const match = isoMatch ?? displayMatch ?? compactMatch;
   if (!match) return null;
   const yearPart = match[1] ?? "";
   const monthPart = match[2] ?? "";
@@ -119,7 +120,7 @@ export function ResearchDatePicker({
   onChange,
   required = false,
   disabled = false,
-  placeholder = "Choose date",
+  placeholder = "DD/MM/YY or YYYY-MM-DD",
   className,
 }: {
   name: string;
@@ -246,7 +247,7 @@ export function ResearchDatePicker({
               }
             }}
             placeholder={placeholder}
-            aria-label={placeholder}
+            aria-label={`${placeholder}. You can type a date or choose from the calendar.`}
             className="h-10 min-w-0 flex-1 bg-transparent text-sm font-normal text-[#E4E4E4] outline-none placeholder:text-[#5A5A5A] disabled:cursor-not-allowed"
           />
         </label>

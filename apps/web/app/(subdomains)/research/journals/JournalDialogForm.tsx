@@ -199,7 +199,7 @@ function CountryPicker({
       placeholder="Search and choose one country"
       emptyText="No country matches this search."
       renderSelected={(option) => (
-        <span className="flex min-w-0 flex-1 items-center gap-2">
+        <span className="flex min-w-0 flex-1 items-center gap-2 px-3">
           <span className="text-base" aria-hidden="true">
             {countryFlag(option.id)}
           </span>
@@ -209,7 +209,7 @@ function CountryPicker({
         </span>
       )}
       renderOption={(option) => (
-        <span className="flex min-w-0 flex-1 items-center gap-2">
+        <span className="flex min-w-0 flex-1 items-center gap-2 px-3">
           <span className="text-base" aria-hidden="true">
             {countryFlag(option.id)}
           </span>

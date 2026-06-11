@@ -6,6 +6,10 @@ import {
   SubmissionsTable,
   type SubmissionRow,
 } from "../projects/[id]/SubmissionsTable";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 export const dynamic = "force-dynamic";
 
@@ -101,8 +105,8 @@ export default async function SubmissionsPage() {
       task.createdBy;
     const value = {
       id: submitter.id,
-      name: submitter.name || submitter.email,
-      email: submitter.email,
+      name: displayResearchPersonName(submitter),
+      email: displayResearchEmail(submitter.email),
     };
 
     if (

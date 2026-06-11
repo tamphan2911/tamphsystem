@@ -20,6 +20,7 @@ import {
   researchLinkClass,
   researchMutedLinkClass,
 } from "@/sites/research/components/ResearchPrimitives";
+import { displayResearchPersonName } from "@/sites/research/lib/display";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,7 @@ function authorLine(project: ProjectForAuthorLine) {
     return project.authorEntries
       .map(
         (entry) =>
-          `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
+          `${displayResearchPersonName(entry.user)}${entry.isCorresponding ? "*" : ""}`,
       )
       .join(", ");
   }
@@ -76,13 +77,13 @@ function authorLine(project: ProjectForAuthorLine) {
     return project.authors
       .map(
         (author, index) =>
-          `${author.name || author.email}${index === 0 ? "*" : ""}`,
+          `${displayResearchPersonName(author)}${index === 0 ? "*" : ""}`,
       )
       .join(", ");
   }
 
   return [
-    `${project.leadResearcher.name || project.leadResearcher.email}*`,
+    `${displayResearchPersonName(project.leadResearcher)}*`,
     project.coAuthors,
   ]
     .filter(Boolean)

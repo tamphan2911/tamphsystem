@@ -4,6 +4,10 @@ import { auth } from "../../../../auth";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { deleteSuggestedConference, deleteSuggestedJournal } from "../actions";
 import { SuggestionsTable, type SuggestionRow } from "./SuggestionsTable";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 export const dynamic = "force-dynamic";
 
@@ -92,11 +96,12 @@ export default async function SuggestionsPage() {
         .filter(Boolean)
         .join(" - "),
       scope: fields.join("; "),
-      suggestedBy:
-        suggestion.createdBy?.name || suggestion.createdBy?.email || "Unknown",
+      suggestedBy: suggestion.createdBy
+        ? displayResearchPersonName(suggestion.createdBy) || "Unknown"
+        : "Unknown",
       suggestedByMeta:
         suggestion.createdBy?.roles.join(", ") ||
-        suggestion.createdBy?.email ||
+        displayResearchEmail(suggestion.createdBy?.email) ||
         "",
       createdAt: shortDate(suggestion.createdAt),
       createdAtSort: suggestion.createdAt.getTime(),
@@ -131,11 +136,12 @@ export default async function SuggestionsPage() {
         suggestion.conference?.themes ||
         suggestion.conference?.isbn ||
         "",
-      suggestedBy:
-        suggestion.createdBy?.name || suggestion.createdBy?.email || "Unknown",
+      suggestedBy: suggestion.createdBy
+        ? displayResearchPersonName(suggestion.createdBy) || "Unknown"
+        : "Unknown",
       suggestedByMeta:
         suggestion.createdBy?.roles.join(", ") ||
-        suggestion.createdBy?.email ||
+        displayResearchEmail(suggestion.createdBy?.email) ||
         "",
       createdAt: shortDate(suggestion.createdAt),
       createdAtSort: suggestion.createdAt.getTime(),

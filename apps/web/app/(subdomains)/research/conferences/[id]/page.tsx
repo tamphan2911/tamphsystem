@@ -20,6 +20,10 @@ import {
   ResearchProjectsTable,
   type ResearchProjectRow,
 } from "../../projects/ResearchProjectsTable";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 export const dynamic = "force-dynamic";
 
@@ -107,27 +111,26 @@ export default async function ConferenceDetailPage({
           ? project.authorEntries
               .map(
                 (entry) =>
-                  `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
+                  `${displayResearchPersonName(entry.user)}${entry.isCorresponding ? "*" : ""}`,
               )
               .join(", ")
           : project.authors.length > 0
             ? project.authors
                 .map(
                   (author, index) =>
-                    `${author.name || author.email}${index === 0 ? "*" : ""}`,
+                    `${displayResearchPersonName(author)}${index === 0 ? "*" : ""}`,
                 )
                 .join(", ")
             : (project.coAuthors ?? ""),
       universityRegistration: project.universityRegistration ?? "",
       registerName:
         project.registrationUser?.name ||
-        project.registrationUser?.email ||
+        displayResearchEmail(project.registrationUser?.email) ||
         project.registrationName ||
         "",
       canViewRegistrationClaim:
         isAdmin || Boolean(userId && project.registrationUserId === userId),
-      leadResearcher:
-        project.leadResearcher.name || project.leadResearcher.email,
+      leadResearcher: displayResearchPersonName(project.leadResearcher),
       submissions: project._count.submissions,
       publications: project._count.publications,
       updatedAt: project.updatedAt.toLocaleDateString(),
@@ -221,9 +224,7 @@ export default async function ConferenceDetailPage({
               <CalendarDays className="h-3.5 w-3.5 text-sky-300" />
               Time
             </dt>
-            <dd className="mt-2 text-[#E4E4E4]">
-              {schedule || "-"}
-            </dd>
+            <dd className="mt-2 text-[#E4E4E4]">{schedule || "-"}</dd>
           </div>
           <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
             <dt className="text-xs font-bold uppercase text-[#B0B0B0]">
@@ -269,9 +270,7 @@ export default async function ConferenceDetailPage({
           </div>
           <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
             <dt className="text-xs font-bold uppercase text-[#B0B0B0]">ISBN</dt>
-            <dd className="mt-2 text-[#E4E4E4]">
-              {conference.isbn || "-"}
-            </dd>
+            <dd className="mt-2 text-[#E4E4E4]">{conference.isbn || "-"}</dd>
           </div>
           <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
             <dt className="flex items-center gap-2 text-xs font-bold uppercase text-[#B0B0B0]">

@@ -41,6 +41,10 @@ import {
   researchLinkClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 export const dynamic = "force-dynamic";
 
@@ -454,15 +458,15 @@ export default async function ProjectDetailPage({
     hydratedAuthorEntries.length > 0
       ? hydratedAuthorEntries.map(
           (entry) =>
-            `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
+            `${displayResearchPersonName(entry.user)}${entry.isCorresponding ? "*" : ""}`,
         )
       : project.authors.length > 0
         ? project.authors.map(
             (author, index) =>
-              `${author.name || author.email}${index === 0 ? "*" : ""}`,
+              `${displayResearchPersonName(author)}${index === 0 ? "*" : ""}`,
           )
         : [
-            `${leadResearcher?.name || leadResearcher?.email || "Deleted lead researcher"}*`,
+            `${leadResearcher ? displayResearchPersonName(leadResearcher) || "Deleted lead researcher" : "Deleted lead researcher"}*`,
             project.coAuthors,
           ].filter(Boolean);
   const authorsLine = authorNames.join(", ");
@@ -548,7 +552,9 @@ export default async function ProjectDetailPage({
       rank: journal?.rank ?? "",
       publisher: journal?.publisher ?? "",
       apc: journal?.apc ?? "",
-      suggestedByName: createdBy?.name || createdBy?.email || "Unknown user",
+      suggestedByName: createdBy
+        ? displayResearchPersonName(createdBy) || "Unknown user"
+        : "Unknown user",
       suggestedByRole: createdBy
         ? displayRole(createdBy.roles)
         : "Unknown role",
@@ -597,7 +603,9 @@ export default async function ProjectDetailPage({
         ]
           .filter(Boolean)
           .join(" - "),
-        suggestedByName: createdBy?.name || createdBy?.email || "Unknown user",
+        suggestedByName: createdBy
+          ? displayResearchPersonName(createdBy) || "Unknown user"
+          : "Unknown user",
         suggestedByRole: createdBy
           ? displayRole(createdBy.roles)
           : "Unknown role",
@@ -1120,7 +1128,7 @@ export default async function ProjectDetailPage({
                       <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 flex-wrap items-center gap-2">
                           <p className="truncate text-sm font-normal text-[#E4E4E4]">
-                            {author.name || author.email}
+                            {displayResearchPersonName(author)}
                             {author.isCorresponding ? "*" : ""}
                           </p>
                           <span className="border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#B0B0B0]">
@@ -1137,7 +1145,9 @@ export default async function ProjectDetailPage({
                             className="h-3 w-3 flex-none text-[#A8DADC]"
                             aria-hidden="true"
                           />
-                          <span className="truncate">{author.email}</span>
+                          <span className="truncate">
+                            {displayResearchEmail(author.email)}
+                          </span>
                         </p>
                         <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#B0B0B0]">
                           <Building2

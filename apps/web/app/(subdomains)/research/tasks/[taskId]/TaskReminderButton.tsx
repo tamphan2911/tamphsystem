@@ -5,6 +5,10 @@ import { AlertCircle, BellRing, CheckCircle2, Loader2 } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 type ReminderAssignee = {
   id: string;
@@ -176,10 +180,10 @@ export function TaskReminderButton({
                       />
                       <span className="min-w-0">
                         <span className="block text-sm font-semibold text-[#E4E4E4]">
-                          {assignee.name || assignee.email}
+                          {displayResearchPersonName(assignee)}
                         </span>
                         <span className="block text-xs text-[#B0B0B0]">
-                          {assignee.email}
+                          {displayResearchEmail(assignee.email)}
                         </span>
                       </span>
                       {selected && (

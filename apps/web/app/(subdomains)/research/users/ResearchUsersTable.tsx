@@ -26,6 +26,7 @@ import {
   ResearchButton,
   researchFieldClass,
 } from "@/sites/research/components/ResearchPrimitives";
+import { displayResearchPersonName } from "@/sites/research/lib/display";
 
 export type ResearchUserRow = {
   id: string;
@@ -103,7 +104,7 @@ export function ResearchUsersTable({
         setEditing(null);
         showSuccess({
           title: "User updated",
-          detail: `${target?.name || target?.email || "Research user"} has been updated.`,
+          detail: `${target ? displayResearchPersonName(target) || "Research user" : "Research user"} has been updated.`,
         });
         router.refresh();
         return;
@@ -123,7 +124,7 @@ export function ResearchUsersTable({
         setDeleting(null);
         showSuccess({
           title: "User deleted",
-          detail: `${target?.name || target?.email || "Research user"} has been removed.`,
+          detail: `${target ? displayResearchPersonName(target) || "Research user" : "Research user"} has been removed.`,
         });
         router.refresh();
         return;
@@ -412,7 +413,7 @@ export function ResearchUsersTable({
                 <p className="text-sm leading-6">
                   Delete{" "}
                   <span className="font-bold">
-                    {deleting.name || deleting.email}
+                    {displayResearchPersonName(deleting) || "Research user"}
                   </span>
                   ? This removes the user account. If the user is linked to
                   research records or tasks, deletion may be blocked.

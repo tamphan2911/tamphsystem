@@ -6,6 +6,7 @@ import { HelpCircle, Loader2, MessageSquareText, Send } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { researchTextareaClass } from "@/sites/research/components/ResearchPrimitives";
+import { displayResearchPersonName } from "@/sites/research/lib/display";
 
 export type TaskClarificationItem = {
   id: string;
@@ -24,7 +25,7 @@ export type TaskClarificationItem = {
 };
 
 function personName(person: { name: string; email: string }) {
-  return person.name || person.email;
+  return displayResearchPersonName(person);
 }
 
 function formatDateTime(value: string | null) {

@@ -16,6 +16,10 @@ import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
 import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
+import {
   researchLinkClass,
   researchMutedLinkClass,
 } from "@/sites/research/components/ResearchPrimitives";
@@ -45,35 +49,30 @@ function statusMeta(status: string) {
   if (status === "ACCEPTED") {
     return {
       icon: CheckCircle2,
-      className:
-        "bg-violet-500/10 text-violet-200 ring-violet-500/20",
+      className: "bg-violet-500/10 text-violet-200 ring-violet-500/20",
     };
   }
   if (status === "IN_PROGRESS") {
     return {
       icon: PencilLine,
-      className:
-        "bg-sky-500/10 text-sky-200 ring-sky-500/20",
+      className: "bg-sky-500/10 text-sky-200 ring-sky-500/20",
     };
   }
   if (status === "SUBMITTED") {
     return {
       icon: Send,
-      className:
-        "bg-emerald-500/10 text-emerald-200 ring-emerald-500/20",
+      className: "bg-emerald-500/10 text-emerald-200 ring-emerald-500/20",
     };
   }
   if (status === "CANCELLED") {
     return {
       icon: XCircle,
-      className:
-        "bg-[#383838] text-[#E4E4E4] ring-[#555555]",
+      className: "bg-[#383838] text-[#E4E4E4] ring-[#555555]",
     };
   }
   return {
     icon: Mail,
-    className:
-      "bg-[#383838] text-[#E4E4E4] ring-[#555555]",
+    className: "bg-[#383838] text-[#E4E4E4] ring-[#555555]",
   };
 }
 
@@ -93,8 +92,7 @@ function taskStatusClass(status: string) {
     return "bg-violet-500/10 text-violet-200 ring-violet-500/20";
   if (status === "NEED_CLARIFY")
     return "bg-amber-500/10 text-amber-200 ring-amber-500/20";
-  if (status === "REVOKED")
-    return "bg-[#383838] text-[#E4E4E4] ring-[#555555]";
+  if (status === "REVOKED") return "bg-[#383838] text-[#E4E4E4] ring-[#555555]";
   return "bg-sky-500/10 text-sky-200 ring-sky-500/20";
 }
 
@@ -289,15 +287,15 @@ export default async function ReviewDetailPage({
                   <td className="px-4 py-3 text-sm leading-5 text-[#B0B0B0]">
                     {task.assignments.length > 0
                       ? task.assignments
-                          .map(
-                            (assignment) =>
-                              assignment.user.name || assignment.user.email,
+                          .map((assignment) =>
+                            displayResearchPersonName(assignment.user),
                           )
                           .join(", ")
                       : "-"}
                   </td>
                   <td className="px-4 py-3 text-sm text-[#B0B0B0]">
-                    {task.createdBy.name || task.createdBy.email}
+                    {displayResearchPersonName(task.createdBy) ||
+                      displayResearchEmail(task.createdBy.email)}
                   </td>
                 </tr>
               ))}

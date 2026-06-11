@@ -196,10 +196,10 @@ export function ResearchSearchPicker<T = unknown>({
                           : researchDropdownItemIdleClass
                       }`}
                     >
-                      <span className="min-w-0 flex-1 px-3">
-                        {renderOption ? (
-                          renderOption(option, isActive)
-                        ) : (
+                      {renderOption ? (
+                        renderOption(option, isActive)
+                      ) : (
+                        <span className="min-w-0 flex-1 px-3">
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-normal">
                               {option.label}
@@ -210,8 +210,8 @@ export function ResearchSearchPicker<T = unknown>({
                               </span>
                             )}
                           </span>
-                        )}
-                      </span>
+                        </span>
+                      )}
                       {(isActive || isSelected) && (
                         <Check className="mr-3 mt-0.5 h-4 w-4 flex-none" />
                       )}

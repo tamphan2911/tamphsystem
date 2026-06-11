@@ -16,6 +16,10 @@ import {
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 import { researchSearchFieldClass } from "@/sites/research/components/ResearchPrimitives";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 export type AuthorOption = {
   id: string;
@@ -30,7 +34,7 @@ export type SelectedAuthor = AuthorOption & {
 };
 
 function authorName(author: AuthorOption) {
-  return author.name || author.email;
+  return displayResearchPersonName(author);
 }
 
 export function AuthorsPicker({
@@ -207,7 +211,13 @@ export function AuthorsPicker({
                             {authorName(user)}
                           </span>
                           <span className="block truncate text-xs font-normal text-[#B0B0B0]">
-                            {user.role} - {user.email} - {user.id.slice(0, 8)}
+                            {[
+                              user.role,
+                              displayResearchEmail(user.email),
+                              user.id.slice(0, 8),
+                            ]
+                              .filter(Boolean)
+                              .join(" - ")}
                           </span>
                         </span>
                         <Check
@@ -278,7 +288,7 @@ export function AuthorsPicker({
                         className="h-3 w-3 flex-none text-[#A8DADC]"
                         aria-hidden="true"
                       />
-                      {author.email}
+                      {displayResearchEmail(author.email)}
                     </p>
                   </div>
 

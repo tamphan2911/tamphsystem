@@ -19,6 +19,7 @@ import {
   ResearchButton,
   researchFieldClass,
 } from "@/sites/research/components/ResearchPrimitives";
+import { displayResearchEmail } from "@/sites/research/lib/display";
 
 type ResearchProfileUser = {
   id: string;
@@ -123,7 +124,7 @@ export function ProfileClient({ user }: { user: ResearchProfileUser }) {
               </div>
               <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[#B0B0B0]">
                 <Mail className="h-4 w-4" />
-                {user.email}
+                {displayResearchEmail(user.email)}
                 {user.emailVerified && (
                   <span className="inline-flex items-center gap-1 rounded-none bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900">
                     <ShieldCheck className="h-3.5 w-3.5" />

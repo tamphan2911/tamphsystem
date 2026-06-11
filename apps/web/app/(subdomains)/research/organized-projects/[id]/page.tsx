@@ -43,6 +43,10 @@ import {
 } from "./ProjectDetailEditDialogs";
 import { ProjectProductsForm } from "./ProjectProductsForm";
 import { formatCurrencyCodeMoney } from "@/sites/research/lib/currency";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
 import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 
@@ -219,7 +223,7 @@ function ResearchCount({ count, label }: { count: number; label: string }) {
 }
 
 function memberName(member: { name: string; email: string }) {
-  return member.name || member.email;
+  return displayResearchPersonName(member);
 }
 
 function researchAuthorLine(project: {
@@ -235,7 +239,7 @@ function researchAuthorLine(project: {
     return project.authorEntries
       .map(
         (entry) =>
-          `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
+          `${displayResearchPersonName(entry.user)}${entry.isCorresponding ? "*" : ""}`,
       )
       .join(", ");
   }
@@ -243,15 +247,11 @@ function researchAuthorLine(project: {
     return project.authors
       .map(
         (author, index) =>
-          `${author.name || author.email}${index === 0 ? "*" : ""}`,
+          `${displayResearchPersonName(author)}${index === 0 ? "*" : ""}`,
       )
       .join(", ");
   }
-  return (
-    project.coAuthors ||
-    project.leadResearcher.name ||
-    project.leadResearcher.email
-  );
+  return project.coAuthors || displayResearchPersonName(project.leadResearcher);
 }
 
 function acceptedVenueLine(project: {
@@ -617,7 +617,9 @@ export default async function OrganizedProjectDetailPage({
                   </div>
                   <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#777777]">
                     <Mail className="h-3 w-3 flex-none text-blue-400" />
-                    <span className="truncate">{member.email}</span>
+                    <span className="truncate">
+                      {displayResearchEmail(member.email)}
+                    </span>
                   </p>
                   <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#B0B0B0]">
                     <Building2 className="h-3 w-3 flex-none text-emerald-500" />

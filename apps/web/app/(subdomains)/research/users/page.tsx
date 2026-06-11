@@ -2,14 +2,11 @@ import { redirect } from "next/navigation";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
+import { displayResearchEmail } from "@/sites/research/lib/display";
 import { ResearchUsersTable, type ResearchUserRow } from "./ResearchUsersTable";
 import { NewResearchUserDialog } from "./NewResearchUserDialog";
 
 export const dynamic = "force-dynamic";
-
-function displayResearchEmail(email: string) {
-  return email.endsWith("@no-email.research.tamph.local") ? "" : email;
-}
 
 export default async function ResearchUsersPage() {
   const session = await auth();

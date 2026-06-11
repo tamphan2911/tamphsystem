@@ -6,10 +6,14 @@ import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
 } from "@/sites/research/components/ResearchSearchPicker";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 import type { AuthorOption } from "./[id]/AuthorsPicker";
 
 function displayName(user: AuthorOption) {
-  return user.name || user.email;
+  return displayResearchPersonName(user);
 }
 
 export function RegisterUserPicker({
@@ -46,7 +50,13 @@ export function RegisterUserPicker({
       results.map((user) => ({
         id: user.id,
         label: displayName(user),
-        description: `${user.role} - ${user.email} - ${user.id.slice(0, 8)}`,
+        description: [
+          user.role,
+          displayResearchEmail(user.email),
+          user.id.slice(0, 8),
+        ]
+          .filter(Boolean)
+          .join(" - "),
         data: user,
       })),
     [results],
@@ -68,7 +78,12 @@ export function RegisterUserPicker({
           : {
               id: selectedUser.id,
               label: displayName(selectedUser),
-              description: `${selectedUser.email} - ${selectedUser.id.slice(0, 8)}`,
+              description: [
+                displayResearchEmail(selectedUser.email),
+                selectedUser.id.slice(0, 8),
+              ]
+                .filter(Boolean)
+                .join(" - "),
               data: selectedUser,
             }
       }
@@ -84,16 +99,18 @@ export function RegisterUserPicker({
         const user = option.data as AuthorOption;
         return (
           <>
-            <span className="flex h-8 w-8 flex-none items-center justify-center rounded-none bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-900">
+            <span className="inline-flex h-4 w-4 flex-none items-center justify-center text-[#A8DADC]">
               <UserRound className="h-4 w-4" aria-hidden="true" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-bold text-[#E4E4E4]">
                 {displayName(user)}
               </span>
-              <span className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-[#777777]">
+              <span className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#777777]">
                 <Mail className="h-3 w-3 flex-none" aria-hidden="true" />
-                {user.email} - {user.id.slice(0, 8)}
+                {[displayResearchEmail(user.email), user.id.slice(0, 8)]
+                  .filter(Boolean)
+                  .join(" - ")}
               </span>
             </span>
           </>
@@ -101,7 +118,7 @@ export function RegisterUserPicker({
       }}
       renderOption={(option) => (
         <>
-          <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-none bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900">
+          <span className="ml-3 inline-flex h-4 w-4 flex-none items-center justify-center text-[#A8DADC]">
             <UserRound className="h-4 w-4" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">

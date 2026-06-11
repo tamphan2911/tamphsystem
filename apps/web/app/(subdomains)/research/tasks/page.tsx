@@ -12,6 +12,7 @@ import {
   type TaskVenueOption,
 } from "./NewTaskDialog";
 import { TasksClient } from "./TasksClient";
+import { displayResearchEmail } from "@/sites/research/lib/display";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +88,7 @@ export default async function ResearchTasksPage() {
   const assignees: TaskAssigneeOption[] = assigneeUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
-    email: user.email,
+    email: displayResearchEmail(user.email),
     roles: user.roles,
   }));
   const researchOptions: TaskResearchOption[] = projects.map((project) => ({

@@ -21,6 +21,10 @@ import {
 } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 type TaskAssignment = {
   id: string;
@@ -119,8 +123,7 @@ function statusMeta(task: TaskRow) {
         `due: ${formatDate(task.dueDate)}`,
         `assigned: ${formatDate(task.createdAt)}`,
       ],
-      className:
-        "border-[#555555] bg-[#333333] text-[#B0B0B0]",
+      className: "border-[#555555] bg-[#333333] text-[#B0B0B0]",
       detailClassName: "text-[#B0B0B0]",
     };
   }
@@ -133,8 +136,7 @@ function statusMeta(task: TaskRow) {
         dateLines: completed
           ? [`finished: ${formatDate(task.completedAt)}`]
           : [],
-        className:
-          "border-emerald-300/40 bg-emerald-950/25 text-emerald-300",
+        className: "border-emerald-300/40 bg-emerald-950/25 text-emerald-300",
         detailClassName: "text-emerald-600 dark:text-emerald-300",
       };
     }
@@ -143,8 +145,7 @@ function statusMeta(task: TaskRow) {
         label: "Complete",
         detail: `${durationText(due.getTime() - completed.getTime())} early`,
         dateLines: [`finished: ${formatDate(task.completedAt)}`],
-        className:
-          "border-emerald-300/40 bg-emerald-950/25 text-emerald-300",
+        className: "border-emerald-300/40 bg-emerald-950/25 text-emerald-300",
         detailClassName: "text-emerald-600 dark:text-emerald-300",
       };
     }
@@ -152,8 +153,7 @@ function statusMeta(task: TaskRow) {
       label: "Overdue",
       detail: `${durationText(completed.getTime() - due.getTime())} late`,
       dateLines: [`finished: ${formatDate(task.completedAt)}`],
-      className:
-        "border-rose-300/40 bg-rose-950/25 text-rose-300",
+      className: "border-rose-300/40 bg-rose-950/25 text-rose-300",
       detailClassName: "text-rose-600 dark:text-rose-300",
     };
   }
@@ -163,8 +163,7 @@ function statusMeta(task: TaskRow) {
       label: "Checking",
       detail: "Waiting assigner check",
       dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
-      className:
-        "border-violet-300/40 bg-violet-950/25 text-violet-300",
+      className: "border-violet-300/40 bg-violet-950/25 text-violet-300",
       detailClassName: "text-violet-600 dark:text-violet-300",
     };
   }
@@ -174,8 +173,7 @@ function statusMeta(task: TaskRow) {
       label: "Need clarify",
       detail: "Waiting assigner answer",
       dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
-      className:
-        "border-amber-300/40 bg-amber-950/25 text-amber-200",
+      className: "border-amber-300/40 bg-amber-950/25 text-amber-200",
       detailClassName: "text-amber-700 dark:text-amber-300",
     };
   }
@@ -185,8 +183,7 @@ function statusMeta(task: TaskRow) {
       label: "Overdue",
       detail: `${durationText(now.getTime() - due.getTime())} late`,
       dateLines: [],
-      className:
-        "border-rose-300/40 bg-rose-950/25 text-rose-300",
+      className: "border-rose-300/40 bg-rose-950/25 text-rose-300",
       detailClassName: "text-rose-600 dark:text-rose-300",
     };
   }
@@ -197,8 +194,7 @@ function statusMeta(task: TaskRow) {
       ? `${durationText(due.getTime() - now.getTime())} left`
       : "No due date",
     dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
-    className:
-      "border-[#A8DADC]/40 bg-[#A8DADC]/10 text-[#A8DADC]",
+    className: "border-[#A8DADC]/40 bg-[#A8DADC]/10 text-[#A8DADC]",
     detailClassName: "text-[#B0B0B0]",
   };
 }
@@ -527,9 +523,12 @@ export function TasksClient({
                           <div
                             key={assignment.id}
                             className="font-normal"
-                            title={assignment.userEmail}
+                            title={displayResearchEmail(assignment.userEmail)}
                           >
-                            {assignment.userName || assignment.userEmail}
+                            {displayResearchPersonName({
+                              name: assignment.userName,
+                              email: assignment.userEmail,
+                            })}
                           </div>
                         ))
                       ) : (

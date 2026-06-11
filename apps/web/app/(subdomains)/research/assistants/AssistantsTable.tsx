@@ -30,6 +30,10 @@ import {
   ResearchButton,
   researchFieldClass,
 } from "@/sites/research/components/ResearchPrimitives";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 export type AssistantRow = {
   id: string;
@@ -116,8 +120,8 @@ export function AssistantsTable({
           ? "Assistant account updated"
           : "Assistant role updated",
         detail: passwordChanged
-          ? `${assistant?.name || assistant?.email || "Assistant"} has a new login password and ${editRole === "CHIEF_ASSISTANT" ? "chief assistant" : "assistant"} access.`
-          : `${assistant?.name || assistant?.email || "Assistant"} is now set as ${editRole === "CHIEF_ASSISTANT" ? "chief assistant" : "assistant"}.`,
+          ? `${assistant ? displayResearchPersonName(assistant) || "Assistant" : "Assistant"} has a new login password and ${editRole === "CHIEF_ASSISTANT" ? "chief assistant" : "assistant"} access.`
+          : `${assistant ? displayResearchPersonName(assistant) || "Assistant" : "Assistant"} is now set as ${editRole === "CHIEF_ASSISTANT" ? "chief assistant" : "assistant"}.`,
       });
       router.refresh();
     });
@@ -130,7 +134,7 @@ export function AssistantsTable({
       setDeleting(null);
       showSuccess({
         title: "Assistant role removed",
-        detail: `${assistant?.name || assistant?.email || "Selected user"} no longer has assistant access in the research site.`,
+        detail: `${assistant ? displayResearchPersonName(assistant) || "Selected user" : "Selected user"} no longer has assistant access in the research site.`,
       });
       router.refresh();
     });
@@ -190,7 +194,9 @@ export function AssistantsTable({
                   </div>
                 </td>
                 <td className="px-3 py-3 text-sm text-[#B0B0B0]">
-                  <span className="block truncate">{user.email}</span>
+                  <span className="block truncate">
+                    {displayResearchEmail(user.email)}
+                  </span>
                 </td>
                 <td className="px-3 py-3">
                   <div className="inline-flex max-w-full items-center gap-2 border border-[#444444] bg-slate-50 px-2.5 py-1.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
@@ -278,10 +284,7 @@ export function AssistantsTable({
               title="Edit assistant role"
               onClose={() => setEditing(null)}
               actions={
-                <ResearchButton
-                  form="edit-assistant-form"
-                  disabled={isPending}
-                >
+                <ResearchButton form="edit-assistant-form" disabled={isPending}>
                   Save change
                 </ResearchButton>
               }
@@ -297,7 +300,9 @@ export function AssistantsTable({
                 <p className="text-sm font-bold text-[#E4E4E4]">
                   {editing.name || "Unnamed user"}
                 </p>
-                <p className="mt-1 text-xs text-[#B0B0B0]">{editing.email}</p>
+                <p className="mt-1 text-xs text-[#B0B0B0]">
+                  {displayResearchEmail(editing.email)}
+                </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <RoleChoice
@@ -365,7 +370,7 @@ export function AssistantsTable({
               <p className="text-sm leading-6 text-[#B0B0B0]">
                 Remove the assistant role from{" "}
                 <span className="font-semibold text-[#E4E4E4]">
-                  {deleting.name || deleting.email}
+                  {displayResearchPersonName(deleting) || "Selected user"}
                 </span>
                 ? This does not delete the user account.
               </p>

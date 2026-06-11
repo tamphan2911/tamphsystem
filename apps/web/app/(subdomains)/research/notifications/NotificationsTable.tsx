@@ -98,7 +98,7 @@ function DeleteNotificationButton({
       <ResearchConfirmDialog
         open={isOpen}
         title="Delete this notification?"
-        description={`This will remove the notification for ${notification.recipientName || notification.recipientEmail}.`}
+        description={`This will remove the notification for ${notification.recipientName || notification.recipientEmail || "this user"}.`}
         confirmLabel={isDeleting ? "Deleting..." : "Delete notification"}
         isConfirming={isDeleting}
         onCancel={() => setIsOpen(false)}
@@ -110,7 +110,7 @@ function DeleteNotificationButton({
             router.refresh();
             toast.showSuccess({
               title: "Notification deleted",
-              detail: `"${notification.title}" was removed from ${notification.recipientName || notification.recipientEmail}'s notification list.`,
+              detail: `"${notification.title}" was removed from ${notification.recipientName || notification.recipientEmail || "this user"}'s notification list.`,
             });
           } catch (error) {
             toast.showError({
@@ -184,7 +184,7 @@ export function NotificationsTable({
     return rows.filter((row) => {
       const recipientLabel = row.recipientName
         ? `${row.recipientName} - ${row.recipientEmail}`
-        : row.recipientEmail;
+        : row.recipientEmail || "No email";
       const matchesStatus =
         status === "ALL" ||
         (status === "UNREAD" ? !row.readAt : Boolean(row.readAt));

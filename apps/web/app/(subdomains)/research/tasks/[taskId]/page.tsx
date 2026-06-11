@@ -27,6 +27,10 @@ import {
   researchLinkClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 import { FinishTaskForm } from "./FinishTaskForm";
 import { RevokeTaskForm } from "./RevokeTaskForm";
 import { ClarificationRequestForm, RedoTaskForm } from "./TaskWorkflowForms";
@@ -167,7 +171,9 @@ function taskTypeMeta(taskType: string | null, category: string | null) {
   if (taskType === "SUBMIT_RESEARCH" || taskType === "SUBMIT_CONFERENCE") {
     return {
       label:
-        taskType === "SUBMIT_CONFERENCE" ? "Submit conference" : "Submit journal",
+        taskType === "SUBMIT_CONFERENCE"
+          ? "Submit conference"
+          : "Submit journal",
       icon: Send,
       className: "text-[#A8DADC]",
     };
@@ -240,15 +246,15 @@ function researchAuthors(project: {
     project.authorEntries.length > 0
       ? project.authorEntries.map(
           (entry) =>
-            `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
+            `${displayResearchPersonName(entry.user)}${entry.isCorresponding ? "*" : ""}`,
         )
       : project.authors.length > 0
         ? project.authors.map(
             (author, index) =>
-              `${author.name || author.email}${index === 0 ? "*" : ""}`,
+              `${displayResearchPersonName(author)}${index === 0 ? "*" : ""}`,
           )
         : [
-            `${project.leadResearcher.name || project.leadResearcher.email}*`,
+            `${displayResearchPersonName(project.leadResearcher)}*`,
             project.coAuthors,
           ].filter(Boolean);
   return names.join("; ");
@@ -695,7 +701,7 @@ export default async function TaskDetailPage({
             </div>
             <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#B0B0B0]">
               <span className="min-w-0 truncate">
-                Created by {task.createdBy.name || task.createdBy.email}
+                Created by {displayResearchPersonName(task.createdBy)}
               </span>
               <span className="text-[#777777]">|</span>
               <span>Created {formatDate(task.createdAt)}</span>
@@ -858,10 +864,10 @@ export default async function TaskDetailPage({
                   <UserRound className="mt-0.5 h-4 w-4 flex-none text-amber-300" />
                   <span className="min-w-0 leading-tight">
                     <span className="block truncate text-sm font-normal text-[#E4E4E4]">
-                      {assignment.user.name || assignment.user.email}
+                      {displayResearchPersonName(assignment.user)}
                     </span>
                     <span className="block truncate text-xs text-[#B0B0B0]">
-                      {assignment.user.email}
+                      {displayResearchEmail(assignment.user.email)}
                     </span>
                   </span>
                 </span>

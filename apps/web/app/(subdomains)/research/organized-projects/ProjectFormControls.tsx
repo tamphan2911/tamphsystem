@@ -22,6 +22,10 @@ import {
   researchDropdownPanelClass,
   researchSearchFieldClass,
 } from "@/sites/research/components/ResearchPrimitives";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 import type { AuthorOption } from "../projects/[id]/AuthorsPicker";
 
 export type FundingInstitutionOption = {
@@ -44,7 +48,7 @@ export type SelectedProjectMember = AuthorOption & {
 };
 
 function userName(user: AuthorOption) {
-  return user.name || user.email;
+  return displayResearchPersonName(user);
 }
 
 export function FundingInstitutionPicker({
@@ -134,7 +138,7 @@ export function FundingInstitutionPicker({
         const institution = option.data as FundingInstitutionOption;
         return (
           <>
-            <span className="flex h-8 w-8 flex-none items-center justify-center rounded-none bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-200 dark:ring-emerald-900">
+            <span className="inline-flex h-4 w-4 flex-none items-center justify-center text-[#A8DADC]">
               <GraduationCap className="h-4 w-4" aria-hidden="true" />
             </span>
             <span className="min-w-0 flex-1">
@@ -152,7 +156,7 @@ export function FundingInstitutionPicker({
       }}
       renderOption={(option) => (
         <>
-          <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-none bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-900">
+          <span className="ml-3 inline-flex h-4 w-4 flex-none items-center justify-center text-[#A8DADC]">
             <GraduationCap className="h-4 w-4" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
@@ -328,7 +332,13 @@ export function ProjectMembersPicker({
                           {userName(user)}
                         </span>
                         <span className="block truncate text-xs font-medium text-[#777777]">
-                          {user.role} - {user.email} - {user.id.slice(0, 8)}
+                          {[
+                            user.role,
+                            displayResearchEmail(user.email),
+                            user.id.slice(0, 8),
+                          ]
+                            .filter(Boolean)
+                            .join(" - ")}
                         </span>
                       </span>
                       <Check className="mr-3 h-4 w-4 flex-none text-[#A8DADC]" />
@@ -371,7 +381,7 @@ export function ProjectMembersPicker({
                 </div>
                 <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-[#777777]">
                   <Mail className="h-3 w-3 flex-none" aria-hidden="true" />
-                  {member.email}
+                  {displayResearchEmail(member.email)}
                 </p>
               </div>
               <button

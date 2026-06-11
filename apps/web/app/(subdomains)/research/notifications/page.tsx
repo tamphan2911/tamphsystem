@@ -11,6 +11,10 @@ import {
   type NotificationManagementRow,
 } from "./NotificationsTable";
 import { deleteResearchNotification } from "../actions";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 export const dynamic = "force-dynamic";
 
@@ -66,8 +70,8 @@ export default async function ResearchNotificationsPage() {
         href: notification.href ?? "",
         entityType: notification.entityType ?? "",
         entityId: notification.entityId ?? "",
-        recipientName: notification.user.name ?? "",
-        recipientEmail: notification.user.email,
+        recipientName: displayResearchPersonName(notification.user),
+        recipientEmail: displayResearchEmail(notification.user.email),
         recipientRoles: notification.user.roles.join(", "),
         readAt: shortDate(notification.readAt),
         createdAt: shortDate(notification.createdAt),

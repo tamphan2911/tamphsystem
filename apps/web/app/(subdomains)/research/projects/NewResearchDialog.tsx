@@ -29,11 +29,15 @@ import {
   FundingInstitutionPicker,
   type FundingInstitutionOption,
 } from "../organized-projects/ProjectFormControls";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 import type { AuthorOption } from "./[id]/AuthorsPicker";
 import { RegisterUserPicker } from "./RegisterUserPicker";
 
 function authorName(author: AuthorOption) {
-  return author.name || author.email;
+  return displayResearchPersonName(author);
 }
 
 function NewResearchAuthorsPicker({
@@ -133,7 +137,13 @@ function NewResearchAuthorsPicker({
                           {authorName(user)}
                         </span>
                         <span className="block truncate text-xs font-medium text-[#777777]">
-                          {user.role} - {user.email} - {user.id.slice(0, 8)}
+                          {[
+                            user.role,
+                            displayResearchEmail(user.email),
+                            user.id.slice(0, 8),
+                          ]
+                            .filter(Boolean)
+                            .join(" - ")}
                         </span>
                       </span>
                       <Check
@@ -154,10 +164,7 @@ function NewResearchAuthorsPicker({
 
         <div className="mt-3 divide-y divide-[#444444] border-y border-[#444444]">
           {selectedAuthors.map((author, index) => (
-            <div
-              key={author.id}
-              className="flex items-center gap-4 py-3"
-            >
+            <div key={author.id} className="flex items-center gap-4 py-3">
               <span className="inline-flex h-10 w-8 flex-none items-center justify-center text-[#A8DADC]">
                 <UserRound className="h-4 w-4" aria-hidden="true" />
               </span>
@@ -176,7 +183,7 @@ function NewResearchAuthorsPicker({
                     className="h-3 w-3 flex-none text-[#A8DADC]"
                     aria-hidden="true"
                   />
-                  {author.email}
+                  {displayResearchEmail(author.email)}
                 </p>
               </div>
               <button

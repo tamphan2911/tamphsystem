@@ -15,6 +15,7 @@ import {
   type ResearchAuthorEmailResult,
 } from "../../actions";
 import { IconHint } from "@/sites/research/components/ResearchPrimitives";
+import { displayResearchEmail } from "@/sites/research/lib/display";
 
 type NotificationType =
   | "CREATED"
@@ -222,7 +223,11 @@ export function AuthorNotificationActions({
                           {row.status}
                         </span>
                       </div>
-                      <p className="mt-1 text-[#B0B0B0]">{row.email}</p>
+                      {displayResearchEmail(row.email) && (
+                        <p className="mt-1 text-[#B0B0B0]">
+                          {displayResearchEmail(row.email)}
+                        </p>
+                      )}
                       {row.reason && (
                         <p className="mt-1 text-xs font-normal text-[#B0B0B0]">
                           {row.reason}

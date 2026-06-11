@@ -12,6 +12,10 @@ import {
   type ResearchSearchPickerOption,
 } from "@/sites/research/components/ResearchSearchPicker";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 export type AssistantCandidate = {
   id: string;
@@ -47,8 +51,13 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
     () =>
       filtered.map((user) => ({
         id: user.id,
-        label: user.name || user.email,
-        description: `${user.email} - ${user.roles.join(", ") || "No role"}`,
+        label: displayResearchPersonName(user) || "Unnamed user",
+        description: [
+          displayResearchEmail(user.email),
+          user.roles.join(", ") || "No role",
+        ]
+          .filter(Boolean)
+          .join(" - "),
         meta: user.id,
         data: user,
       })),
@@ -68,7 +77,7 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
       closeDialog();
       showSuccess({
         title: "Assistant role assigned",
-        detail: `${selectedUser?.name || selectedUser?.email || "Selected user"} is now assigned as ${assistantRole === "CHIEF_ASSISTANT" ? "chief assistant" : "assistant"}.`,
+        detail: `${selectedUser ? displayResearchPersonName(selectedUser) || "Selected user" : "Selected user"} is now assigned as ${assistantRole === "CHIEF_ASSISTANT" ? "chief assistant" : "assistant"}.`,
       });
       router.refresh();
     });
@@ -116,8 +125,15 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
               selectedUser
                 ? {
                     id: selectedUser.id,
-                    label: selectedUser.name || selectedUser.email,
-                    description: `${selectedUser.email} - ${selectedUser.roles.join(", ") || "No role"}`,
+                    label:
+                      displayResearchPersonName(selectedUser) ||
+                      "Selected user",
+                    description: [
+                      displayResearchEmail(selectedUser.email),
+                      selectedUser.roles.join(", ") || "No role",
+                    ]
+                      .filter(Boolean)
+                      .join(" - "),
                     data: selectedUser,
                   }
                 : null
@@ -149,7 +165,7 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
                     </span>
                     <span className="mt-0.5 flex items-center gap-1 truncate text-xs text-[#B0B0B0]">
                       <Mail className="h-3.5 w-3.5 flex-none" />
-                      {user.email}
+                      {displayResearchEmail(user.email)}
                     </span>
                   </span>
                 </>

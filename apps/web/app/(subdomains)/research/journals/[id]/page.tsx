@@ -11,6 +11,7 @@ import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { formatMoney } from "@/sites/research/lib/currency";
 import { countryFlag, countryName } from "@/sites/research/lib/countries";
+import { displayResearchPersonName } from "@/sites/research/lib/display";
 import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import {
@@ -88,15 +89,15 @@ export default async function JournalDetailPage({
         submission.project.authorEntries.length > 0
           ? submission.project.authorEntries.map(
               (entry) =>
-                `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
+                `${displayResearchPersonName(entry.user)}${entry.isCorresponding ? "*" : ""}`,
             )
           : submission.project.authors.length > 0
             ? submission.project.authors.map(
                 (author, index) =>
-                  `${author.name || author.email}${index === 0 ? "*" : ""}`,
+                  `${displayResearchPersonName(author)}${index === 0 ? "*" : ""}`,
               )
             : [
-                `${submission.project.leadResearcher.name || submission.project.leadResearcher.email}*`,
+                `${displayResearchPersonName(submission.project.leadResearcher)}*`,
                 submission.project.coAuthors,
               ].filter(Boolean);
 

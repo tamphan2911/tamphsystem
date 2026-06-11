@@ -34,6 +34,10 @@ import {
 } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 export type TaskAssigneeOption = {
   id: string;
@@ -379,8 +383,10 @@ export function NewTaskDialog({
     .filter((user) => selectedIds.includes(user.id))
     .map((user) => ({
       id: user.id,
-      title: user.name || user.email,
-      meta: `${user.email} - ${user.roles.join(", ")}`,
+      title: displayResearchPersonName(user),
+      meta: [displayResearchEmail(user.email), user.roles.join(", ")]
+        .filter(Boolean)
+        .join(" - "),
       icon: <UserRound className="h-4 w-4" />,
       selected: true,
       onClick: () => toggleAssignee(user.id),
@@ -737,8 +743,10 @@ export function NewTaskDialog({
             selectedItems={selectedAssigneeItems}
             items={filteredAssignees.map((user) => ({
               id: user.id,
-              title: user.name || user.email,
-              meta: `${user.email} - ${user.roles.join(", ")}`,
+              title: displayResearchPersonName(user),
+              meta: [displayResearchEmail(user.email), user.roles.join(", ")]
+                .filter(Boolean)
+                .join(" - "),
               icon: <UserRound className="h-4 w-4" />,
               selected: selectedIds.includes(user.id),
               onClick: () => toggleAssignee(user.id),

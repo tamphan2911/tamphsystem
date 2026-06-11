@@ -29,6 +29,7 @@ import {
 } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { displayResearchPersonName } from "@/sites/research/lib/display";
 
 export type OrganizedProjectResearchRow = {
   id: string;
@@ -128,7 +129,7 @@ function financialClaimMeta(status: string) {
 }
 
 function memberName(member: OrganizedProjectMemberRow) {
-  return member.name || member.email;
+  return displayResearchPersonName(member);
 }
 
 function DeleteProjectButton({

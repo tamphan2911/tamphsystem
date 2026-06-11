@@ -9,6 +9,10 @@ import {
   ResearchProjectsTable,
   type ResearchProjectRow,
 } from "./ResearchProjectsTable";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 export const dynamic = "force-dynamic";
 
@@ -169,21 +173,21 @@ export default async function ProjectsDashboard() {
         ? project.authorEntries
             .map(
               (entry) =>
-                `${entry.user.name || entry.user.email}${entry.isCorresponding ? "*" : ""}`,
+                `${displayResearchPersonName(entry.user)}${entry.isCorresponding ? "*" : ""}`,
             )
             .join(", ")
         : project.authors.length > 0
           ? project.authors
               .map(
                 (author, index) =>
-                  `${author.name || author.email}${index === 0 ? "*" : ""}`,
+                  `${displayResearchPersonName(author)}${index === 0 ? "*" : ""}`,
               )
               .join(", ")
           : (project.coAuthors ?? ""),
     universityRegistration: project.universityRegistration ?? "",
     registerName:
       project.registrationUser?.name ||
-      project.registrationUser?.email ||
+      displayResearchEmail(project.registrationUser?.email) ||
       project.registrationName ||
       "",
     canViewRegistrationClaim:
@@ -195,7 +199,7 @@ export default async function ProjectsDashboard() {
           project.registrationName.trim().toLowerCase(),
         ),
       ),
-    leadResearcher: project.leadResearcher.name || project.leadResearcher.email,
+    leadResearcher: displayResearchPersonName(project.leadResearcher),
     submissions: project._count.submissions,
     publications: project._count.publications,
     updatedAt: project.updatedAt.toLocaleDateString(),

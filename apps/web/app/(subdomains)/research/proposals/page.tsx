@@ -4,6 +4,10 @@ import { auth } from "../../../../auth";
 import { deleteProposal } from "../actions";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { ProposalsTable, type ProposalRow } from "./ProposalsTable";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 
 export const dynamic = "force-dynamic";
 
@@ -50,8 +54,8 @@ export default async function ProposalsPage() {
     decisionComment: proposal.decisionComment ?? "",
     fileName: proposal.supportFileName ?? "",
     fileSize: fileSizeLabel(proposal.supportFileSize),
-    submittedBy: proposal.submittedBy.name ?? proposal.submittedBy.email,
-    submittedByEmail: proposal.submittedBy.email,
+    submittedBy: displayResearchPersonName(proposal.submittedBy),
+    submittedByEmail: displayResearchEmail(proposal.submittedBy.email),
     createdAt: shortDate(proposal.createdAt),
   }));
 
