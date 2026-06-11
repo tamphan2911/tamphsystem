@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import type { ReactNode } from "react";
 import { Loader2, LockOpen, Save } from "lucide-react";
 import { unlockProductionTimeline } from "../../actions";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
@@ -12,11 +13,13 @@ export function ProductionTimelineActions({
   locked,
   disabled,
   totalSteps,
+  beforeActions,
 }: {
   projectId: string;
   locked: boolean;
   disabled: boolean;
   totalSteps: number;
+  beforeActions?: ReactNode;
 }) {
   const submitRef = useRef<HTMLButtonElement>(null);
   const [confirmComplete, setConfirmComplete] = useState(false);
@@ -71,6 +74,7 @@ export function ProductionTimelineActions({
   return (
     <>
       <div className="flex items-center gap-2">
+        {beforeActions}
         {locked && (
           <IconHint label="Unlock production timeline">
             <button

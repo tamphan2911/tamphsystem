@@ -1,0 +1,1 @@
+ALTER TYPE "ResearchAuthorNotificationType" ADD VALUE IF NOT EXISTS 'PRODUCTION_FINISHED';

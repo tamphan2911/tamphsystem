@@ -27,6 +27,7 @@ enum Role {
 
 enum ResearchAuthorNotificationType {
   CREATED
+  PRODUCTION_FINISHED
   ACCEPTED
   PUBLISHED
 }

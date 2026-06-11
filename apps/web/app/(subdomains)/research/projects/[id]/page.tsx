@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
-  ClipboardCheck,
   Building2,
   Download,
   ExternalLink,
@@ -410,6 +409,7 @@ export default async function ProjectDetailPage({
   const canEditResearch = isAdmin || isCorrespondingAuthor;
   const canCreateSubmitOrOtherTask =
     isAdmin || isFirstAuthor || isCorrespondingAuthor;
+  const canSendAuthorEmails = isAdmin || isFirstAuthor || isCorrespondingAuthor;
   const canApproveVenueSuggestion = canCreateSubmitOrOtherTask;
   const canSuggestVenue =
     isAdmin || isProjectAuthor || hasUnfinishedAssignedResearchTask;
@@ -1100,7 +1100,7 @@ export default async function ProjectDetailPage({
                       users={authorOptions}
                       disabled={!canEditResearch || journalSuccessLocksResearch}
                     />
-                    {isAdmin && (
+                    {canSendAuthorEmails && (
                       <AuthorNotificationActions
                         projectId={project.id}
                         sentTypes={authorNotificationSentTypes}
@@ -1157,8 +1157,7 @@ export default async function ProjectDetailPage({
 
             <ResearchDetailSection>
               <div className="mb-5 flex items-center justify-between gap-3">
-                <h2 className="flex items-center gap-2 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-                  <ClipboardCheck className="h-4 w-4 text-[#A8DADC]" />
+                <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
                   Production timeline
                 </h2>
                 <ProductionTimelineActions
@@ -1166,6 +1165,15 @@ export default async function ProjectDetailPage({
                   locked={productionTimelineLocked}
                   disabled={!canEditResearch || researchContentLocked}
                   totalSteps={productionSteps.length}
+                  beforeActions={
+                    canSendAuthorEmails && productionComplete ? (
+                      <AuthorNotificationActions
+                        projectId={project.id}
+                        sentTypes={authorNotificationSentTypes}
+                        types={["PRODUCTION_FINISHED"]}
+                      />
+                    ) : null
+                  }
                 />
               </div>
               <div className="relative">

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import {
   BadgeCheck,
   Check,
+  ClipboardCheck,
   FilePlus2,
   MailCheck,
   Rocket,
@@ -15,7 +16,11 @@ import {
 } from "../../actions";
 import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 
-type NotificationType = "CREATED" | "ACCEPTED" | "PUBLISHED";
+type NotificationType =
+  | "CREATED"
+  | "PRODUCTION_FINISHED"
+  | "ACCEPTED"
+  | "PUBLISHED";
 
 const actions: {
   type: NotificationType;
@@ -32,6 +37,15 @@ const actions: {
     sentLabel: "Created notification already sent",
     sentTooltip: "Created email already sent",
     icon: FilePlus2,
+    className: "text-[#B0B0B0] hover:text-[#A8DADC]",
+    sentClassName: "text-[#666666]",
+  },
+  {
+    type: "PRODUCTION_FINISHED",
+    label: "Notify authors that production is finished",
+    sentLabel: "Production notification already sent",
+    sentTooltip: "Production finished email already sent",
+    icon: ClipboardCheck,
     className: "text-[#B0B0B0] hover:text-[#A8DADC]",
     sentClassName: "text-[#666666]",
   },
@@ -58,9 +72,11 @@ const actions: {
 export function AuthorNotificationActions({
   projectId,
   sentTypes,
+  types = ["CREATED", "ACCEPTED", "PUBLISHED"],
 }: {
   projectId: string;
   sentTypes: string[];
+  types?: NotificationType[];
 }) {
   const [confirmType, setConfirmType] = useState<NotificationType | null>(null);
   const [localSent, setLocalSent] = useState(new Set(sentTypes));
@@ -70,7 +86,10 @@ export function AuthorNotificationActions({
     rows: ResearchAuthorEmailResult[];
   } | null>(null);
   const [isPending, startTransition] = useTransition();
-  const selected = actions.find((action) => action.type === confirmType);
+  const visibleActions = actions.filter((action) =>
+    types.includes(action.type),
+  );
+  const selected = visibleActions.find((action) => action.type === confirmType);
 
   function send(type: NotificationType) {
     startTransition(async () => {
@@ -92,7 +111,7 @@ export function AuthorNotificationActions({
   return (
     <>
       <span className="inline-flex items-center gap-1">
-        {actions.map((action) => {
+        {visibleActions.map((action) => {
           const Icon = action.icon;
           const sent = localSent.has(action.type);
           const tooltip = sent ? action.sentTooltip : action.label;
