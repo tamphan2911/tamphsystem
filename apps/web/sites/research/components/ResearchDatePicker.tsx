@@ -38,6 +38,37 @@ function parseDateValue(value?: string | null) {
   return date;
 }
 
+function parseManualDateValue(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  const isoMatch = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/.exec(trimmed);
+  const displayMatch = /^(\d{1,2})[-/](\d{1,2})[-/](\d{2}|\d{4})$/.exec(
+    trimmed,
+  );
+  const match = isoMatch ?? displayMatch;
+  if (!match) return null;
+  const yearPart = match[1] ?? "";
+  const monthPart = match[2] ?? "";
+  const dayOrYearPart = match[3] ?? "";
+
+  const year = isoMatch
+    ? Number(yearPart)
+    : Number(dayOrYearPart.length === 2 ? `20${dayOrYearPart}` : dayOrYearPart);
+  const month = Number(monthPart) - 1;
+  const day = Number(isoMatch ? dayOrYearPart : yearPart);
+  const date = new Date(year, month, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return toDateValue(date);
+}
+
 function toDateValue(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -111,10 +142,25 @@ export function ResearchDatePicker({
   const anchorRef = useRef<HTMLDivElement>(null);
   const days = useMemo(() => calendarDays(visibleMonth), [visibleMonth]);
   const today = useMemo(() => new Date(), []);
+  const [manualText, setManualText] = useState(() =>
+    selectedDate ? shortDateFormatter.format(selectedDate) : "",
+  );
 
   useEffect(() => {
-    if (open) setVisibleMonth(startOfMonth(selectedDate ?? new Date()));
+    if (open) {
+      setVisibleMonth(
+        startOfMonth(parseDateValue(selectedValue) ?? new Date()),
+      );
+    }
   }, [open, selectedValue]);
+
+  useEffect(() => {
+    if (selectedDate) {
+      setManualText(shortDateFormatter.format(selectedDate));
+    } else if (!selectedValue) {
+      setManualText("");
+    }
+  }, [selectedDate, selectedValue]);
 
   useEffect(() => {
     function closeOnEscape(event: KeyboardEvent) {
@@ -147,63 +193,101 @@ export function ResearchDatePicker({
     setOpen(false);
   }
 
+  function commitManualDate(nextText = manualText) {
+    const parsed = parseManualDateValue(nextText);
+    if (parsed === "") {
+      setDateValue("");
+      setManualText("");
+      return;
+    }
+    if (!parsed) {
+      setManualText(
+        selectedDate ? shortDateFormatter.format(selectedDate) : "",
+      );
+      return;
+    }
+    setDateValue(parsed);
+    const parsedDate = parseDateValue(parsed);
+    setManualText(parsedDate ? shortDateFormatter.format(parsedDate) : "");
+  }
+
   return (
     <div ref={anchorRef} className="relative">
       <input type="hidden" name={name} value={selectedValue} />
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => setOpen((current) => !current)}
-        aria-label={placeholder}
+      <div
         className={cx(
           researchFieldClass,
-          "flex cursor-pointer items-center justify-between gap-3 text-left disabled:cursor-not-allowed",
+          "flex items-center justify-between gap-2 p-0 disabled:cursor-not-allowed",
           open && "border-[#A8DADC] bg-[#383838]",
           className,
         )}
       >
-        <span className="flex min-w-0 items-center gap-2">
+        <label className="flex min-w-0 flex-1 items-center gap-2 pl-3">
           <CalendarDays className="h-4 w-4 flex-none text-[#A8DADC]" />
-          <span
-            className={cx(
-              "truncate",
-              selectedDate ? "text-[#E4E4E4]" : "text-[#777777]",
-            )}
-          >
-            {selectedDate
-              ? shortDateFormatter.format(selectedDate)
-              : placeholder}
-          </span>
-        </span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={manualText}
+            disabled={disabled}
+            required={required}
+            onChange={(event) => {
+              setManualText(event.target.value);
+              const parsed = parseManualDateValue(event.target.value);
+              if (parsed) setDateValue(parsed);
+              if (parsed === "") setDateValue("");
+            }}
+            onFocus={() => setOpen(true)}
+            onBlur={() => commitManualDate()}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                commitManualDate();
+                setOpen(false);
+              }
+            }}
+            placeholder={placeholder}
+            aria-label={placeholder}
+            className="h-10 min-w-0 flex-1 bg-transparent text-sm font-normal text-[#E4E4E4] outline-none placeholder:text-[#5A5A5A] disabled:cursor-not-allowed"
+          />
+        </label>
         {selectedValue && !required && !disabled ? (
-          <span
-            role="button"
-            tabIndex={-1}
+          <button
+            type="button"
             aria-label="Clear date"
             onClick={(event) => {
               event.stopPropagation();
               setDateValue("");
+              setManualText("");
             }}
-            className="inline-flex h-7 w-7 flex-none items-center justify-center text-[#777777] transition hover:text-[#E4E4E4]"
+            className="inline-flex h-10 w-8 flex-none cursor-pointer items-center justify-center text-[#777777] transition hover:text-[#E4E4E4]"
           >
             <X className="h-4 w-4" />
-          </span>
+          </button>
         ) : null}
-      </button>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setOpen((current) => !current)}
+          aria-label="Open date picker"
+          className="inline-flex h-10 w-9 flex-none cursor-pointer items-center justify-center text-[#B0B0B0] transition hover:text-[#A8DADC] disabled:cursor-not-allowed"
+        >
+          <ChevronDownIcon open={open} />
+        </button>
+      </div>
 
       <FloatingDropdownPortal
         anchorRef={anchorRef}
         open={open && !disabled}
         maxWidth={320}
         matchAnchorWidth={false}
-        maxPanelHeight={420}
+        maxPanelHeight={360}
       >
-        <div className={cx(researchDropdownPanelClass, "w-[20rem] p-3")}>
-          <div className="mb-3 flex items-center justify-between gap-2">
+        <div className={cx(researchDropdownPanelClass, "w-[18rem] p-2")}>
+          <div className="mb-2 flex items-center justify-between gap-2">
             <button
               type="button"
               onClick={() => setVisibleMonth((month) => addMonths(month, -1))}
-              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-[#444444] bg-[#242424] text-[#B0B0B0] transition hover:border-[#A8DADC] hover:bg-[#383838] hover:text-[#A8DADC]"
+              className="inline-flex h-7 w-7 cursor-pointer items-center justify-center border border-[#444444] bg-[#242424] text-[#B0B0B0] transition hover:border-[#A8DADC] hover:bg-[#383838] hover:text-[#A8DADC]"
               aria-label="Previous month"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -215,7 +299,7 @@ export function ResearchDatePicker({
               <button
                 type="button"
                 onClick={() => chooseDate(new Date())}
-                className="mt-0.5 text-xs font-normal text-[#A8DADC] transition hover:text-[#C9F0F2]"
+                className="mt-0.5 text-[11px] font-normal text-[#A8DADC] transition hover:text-[#C9F0F2]"
               >
                 Today
               </button>
@@ -223,7 +307,7 @@ export function ResearchDatePicker({
             <button
               type="button"
               onClick={() => setVisibleMonth((month) => addMonths(month, 1))}
-              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-[#444444] bg-[#242424] text-[#B0B0B0] transition hover:border-[#A8DADC] hover:bg-[#383838] hover:text-[#A8DADC]"
+              className="inline-flex h-7 w-7 cursor-pointer items-center justify-center border border-[#444444] bg-[#242424] text-[#B0B0B0] transition hover:border-[#A8DADC] hover:bg-[#383838] hover:text-[#A8DADC]"
               aria-label="Next month"
             >
               <ChevronRight className="h-4 w-4" />
@@ -249,7 +333,7 @@ export function ResearchDatePicker({
                   type="button"
                   onClick={() => chooseDate(date)}
                   className={cx(
-                    "flex h-9 cursor-pointer items-center justify-center border text-sm font-normal transition-[background-color,border-color,color,transform,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:border-[#A8DADC] hover:bg-[#303F3F] hover:text-[#E4E4E4] active:translate-y-0 motion-reduce:transition-none",
+                    "flex h-8 cursor-pointer items-center justify-center border text-xs font-normal transition-[background-color,border-color,color,transform,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:border-[#A8DADC] hover:bg-[#303F3F] hover:text-[#E4E4E4] active:translate-y-0 motion-reduce:transition-none",
                     inMonth
                       ? "border-[#3A3A3A] bg-[#242424] text-[#E4E4E4]"
                       : "border-transparent bg-transparent text-[#666666]",
@@ -267,5 +351,16 @@ export function ResearchDatePicker({
         </div>
       </FloatingDropdownPortal>
     </div>
+  );
+}
+
+function ChevronDownIcon({ open }: { open: boolean }) {
+  return (
+    <ChevronRight
+      className={cx(
+        "h-4 w-4 rotate-90 transition duration-150",
+        open && "-rotate-90 text-[#A8DADC]",
+      )}
+    />
   );
 }

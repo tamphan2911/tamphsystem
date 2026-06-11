@@ -211,7 +211,7 @@ export default async function JournalDetailPage({
         <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
-              <h1 className="min-w-0 truncate text-[15px] font-normal leading-6 text-[#E4E4E4] xl:text-[15px]">
+              <h1 className="min-w-0 truncate text-[16px] font-normal leading-6 text-[#E4E4E4] xl:text-[16px]">
                 {journal.name}
               </h1>
               <div className="flex flex-none items-center gap-2">
@@ -219,9 +219,10 @@ export default async function JournalDetailPage({
                   label={
                     journal.isFavorite ? "Favorite journal" : "Not favorite"
                   }
+                  position="bottom"
                 >
                   <Star
-                    className={`h-5 w-5 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
+                    className={`h-[19px] w-[19px] transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
                       journal.isFavorite ? "text-amber-400" : "text-[#777777]"
                     }`}
                     aria-hidden="true"
@@ -233,9 +234,10 @@ export default async function JournalDetailPage({
                       ? "Journal of interest"
                       : "Not marked as interest"
                   }
+                  position="bottom"
                 >
                   <BookmarkCheck
-                    className={`h-5 w-5 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
+                    className={`h-[19px] w-[19px] transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
                       journal.isInterest ? "text-sky-400" : "text-[#777777]"
                     }`}
                     aria-hidden="true"
@@ -244,19 +246,21 @@ export default async function JournalDetailPage({
               </div>
               <div className="flex flex-none items-center gap-1">
                 {externalLinks.map((item) => (
-                  <a
+                  <IconHint
                     key={item.label}
-                    href={item.href as string}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group/icon relative inline-flex h-9 w-9 items-center justify-center rounded-none border-0 bg-transparent text-[#B0B0B0] shadow-none transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)]"
-                    aria-label={item.label}
+                    label={item.label}
+                    position="bottom"
                   >
-                    <item.icon className="h-4 w-4" />
-                    <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
-                      {item.label}
-                    </span>
-                  </a>
+                    <a
+                      href={item.href as string}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-none border-0 bg-transparent text-[#B0B0B0] shadow-none transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)]"
+                      aria-label={item.label}
+                    >
+                      <item.icon className="h-[15px] w-[15px]" />
+                    </a>
+                  </IconHint>
                 ))}
                 <EditJournalDialog
                   journalId={journal.id}
@@ -314,44 +318,50 @@ export default async function JournalDetailPage({
 
       <div className="mx-auto max-w-7xl space-y-5">
         <section className="space-y-5 px-1">
-        <dl className="grid gap-4 border-t border-[#3A3A3A] pt-4 text-sm md:grid-cols-3">
-          <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">Area</dt>
-            <dd className="mt-1 space-y-1 text-sm leading-5 text-[#B0B0B0]">
-              {journalFields.length > 0
-                ? journalFields.map((field) => (
-                    <span key={field} className="block">
-                      {field}
-                    </span>
-                  ))
-                : "-"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">APC</dt>
-            <dd className="mt-1 text-base font-normal text-[#A8DADC]">
-              {formatMoney(journal.apc, journal.apcCurrency)}
-              {journal.hasApcOption ? " (Option)" : ""}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-bold uppercase text-slate-400">
-              Submission Fee
-            </dt>
-            <dd className="mt-1 text-base font-normal text-[#A8DADC]">
-              {formatMoney(
-                journal.submissionFee,
-                journal.submissionFeeCurrency,
-              )}
-            </dd>
-          </div>
-          <div className="md:col-span-3">
-            <dt className="text-xs font-bold uppercase text-slate-400">Note</dt>
-            <dd className="mt-1 max-w-4xl text-sm leading-5 text-[#B0B0B0]">
-              {journal.note || "No note recorded."}
-            </dd>
-          </div>
-        </dl>
+          <dl className="grid gap-4 border-t border-[#3A3A3A] pt-4 text-sm md:grid-cols-3">
+            <div>
+              <dt className="text-xs font-bold uppercase text-slate-400">
+                Area
+              </dt>
+              <dd className="mt-1 space-y-1 text-sm leading-5 text-[#B0B0B0]">
+                {journalFields.length > 0
+                  ? journalFields.map((field) => (
+                      <span key={field} className="block">
+                        {field}
+                      </span>
+                    ))
+                  : "-"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-bold uppercase text-slate-400">
+                APC
+              </dt>
+              <dd className="mt-1 text-base font-normal text-[#A8DADC]">
+                {formatMoney(journal.apc, journal.apcCurrency)}
+                {journal.hasApcOption ? " (Option)" : ""}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-bold uppercase text-slate-400">
+                Submission Fee
+              </dt>
+              <dd className="mt-1 text-base font-normal text-[#A8DADC]">
+                {formatMoney(
+                  journal.submissionFee,
+                  journal.submissionFeeCurrency,
+                )}
+              </dd>
+            </div>
+            <div className="md:col-span-3">
+              <dt className="text-xs font-bold uppercase text-slate-400">
+                Note
+              </dt>
+              <dd className="mt-1 max-w-4xl text-sm leading-5 text-[#B0B0B0]">
+                {journal.note || "No note recorded."}
+              </dd>
+            </div>
+          </dl>
         </section>
 
         <JournalDetailTabs

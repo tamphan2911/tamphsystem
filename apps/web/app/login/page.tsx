@@ -68,7 +68,7 @@ function warningCopy(warning?: string, email?: string) {
 function siteCopy(host: string) {
   if (host.startsWith("research.")) {
     return {
-      registerPrompt: "Need a research account?",
+      registerPrompt: "Need an account?",
       registerLabel: "Register here",
     };
   }
@@ -284,7 +284,7 @@ export default async function LoginPage({
               </AuthSwitchLink>
             </p>
             <p>
-              If you do not remember your password,{" "}
+              Forget your password?{" "}
               <Link
                 href="/forgot-password"
                 className={
@@ -293,7 +293,7 @@ export default async function LoginPage({
                     : "font-semibold text-blue-600 transition hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
                 }
               >
-                reset it here
+                Reset it here
               </Link>
               .
             </p>

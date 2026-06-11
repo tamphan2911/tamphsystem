@@ -159,7 +159,10 @@ export default async function ForgotPasswordPage({
             />
           </label>
 
-          <TurnstileField siteKey={siteKey} />
+          <TurnstileField
+            siteKey={siteKey}
+            theme={isResearch ? "dark" : "light"}
+          />
 
           <button
             type="submit"

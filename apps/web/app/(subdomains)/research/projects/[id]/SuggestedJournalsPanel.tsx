@@ -548,9 +548,10 @@ export function SuggestedJournalsPanel({
                       key={journal.id}
                       type="button"
                       disabled={isPending}
-                      onClick={() =>
-                        setSelectedAddVenue({ kind: "journal", item: journal })
-                      }
+                      onClick={() => {
+                        setSelectedAddVenue({ kind: "journal", item: journal });
+                        setJournalQuery("");
+                      }}
                       className={resultButtonClass(
                         selectedAddVenue?.kind === "journal" &&
                           selectedAddVenue.item.id === journal.id,
@@ -602,12 +603,13 @@ export function SuggestedJournalsPanel({
                       key={conference.id}
                       type="button"
                       disabled={isPending}
-                      onClick={() =>
+                      onClick={() => {
                         setSelectedAddVenue({
                           kind: "conference",
                           item: conference,
-                        })
-                      }
+                        });
+                        setConferenceQuery("");
+                      }}
                       className={resultButtonClass(
                         selectedAddVenue?.kind === "conference" &&
                           selectedAddVenue.item.id === conference.id,
@@ -1386,6 +1388,8 @@ function ResultList({
     ? children.length > 0
     : Boolean(children);
   const isSearching = query.trim().length > 0;
+
+  if (!isSearching && !hasChildren) return null;
 
   return (
     <div className="grid max-h-56 overflow-y-auto border border-[#444444]">

@@ -1,5 +1,5 @@
 export const researchAuthPageClass =
-  "flex min-h-screen items-center justify-center bg-[#242424] p-4 text-[#E4E4E4] transition-colors duration-200";
+  "grid min-h-dvh w-full place-items-center bg-[#242424] p-4 text-[#E4E4E4] transition-colors duration-200";
 
 export const researchAuthCardClass =
   "w-full overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] shadow-[0_24px_70px_rgba(0,0,0,0.35)]";

@@ -107,7 +107,9 @@ function JournalInput({
   className?: string;
 }) {
   return (
-    <span className={`research-auth-input-shell journal-form-field ${className}`}>
+    <span
+      className={`research-auth-input-shell journal-form-field ${className}`}
+    >
       <input
         name={name}
         type={type}
@@ -479,7 +481,9 @@ export function JournalDialogForm({
                 name="publisher"
                 defaultValue={initialValues?.publisher}
                 placeholder="Publisher name, for example Elsevier"
-                icon={<Building2 aria-hidden="true" className="text-[#B39CD0]" />}
+                icon={
+                  <Building2 aria-hidden="true" className="text-[#B39CD0]" />
+                }
               />
               <CountryPicker
                 value={selectedCountry}
@@ -500,7 +504,9 @@ export function JournalDialogForm({
                 step="1"
                 defaultValue={initialValues?.issuesPerYear}
                 placeholder="Issues per year"
-                icon={<CalendarDays aria-hidden="true" className="text-[#9ED6B5]" />}
+                icon={
+                  <CalendarDays aria-hidden="true" className="text-[#9ED6B5]" />
+                }
               />
             </div>
             <div className="grid gap-3 md:grid-cols-2">
@@ -549,6 +555,7 @@ export function JournalDialogForm({
                   ariaLabel="Journal rank"
                   options={[
                     { value: "", label: "Choose international rank" },
+                    { value: "No rank", label: "No rank" },
                     { value: "Q1", label: "Q1" },
                     { value: "Q2", label: "Q2" },
                     { value: "Q3", label: "Q3" },
@@ -562,50 +569,50 @@ export function JournalDialogForm({
             <div className="grid gap-3 md:grid-cols-[minmax(0,5fr)_minmax(8rem,1fr)]">
               <div ref={fieldPickerRef} className="relative min-w-0">
                 <div className="border border-[#444444] bg-[#2C2C2C] p-2 transition focus-within:border-[#A8DADC] focus-within:bg-[#383838]">
-                <div className="flex min-h-9 flex-wrap items-center gap-1.5">
-                  {selectedFields.map((field) => (
-                    <span
-                      key={field}
-                      className="inline-flex items-center gap-1 rounded-none border border-[#5A5A5A] bg-[#383838] px-2.5 py-1 text-xs font-normal normal-case tracking-normal text-[#E4E4E4]"
-                    >
-                      {field}
-                      <button
-                        type="button"
-                        onClick={() => removeField(field)}
-                        className="rounded-none p-0.5 text-[#B0B0B0] transition hover:bg-[#444444] hover:text-[#E4E4E4]"
-                        aria-label={`Remove ${field}`}
+                  <div className="flex min-h-9 flex-wrap items-center gap-1.5">
+                    {selectedFields.map((field) => (
+                      <span
+                        key={field}
+                        className="inline-flex items-center gap-1 rounded-none border border-[#5A5A5A] bg-[#383838] px-2.5 py-1 text-xs font-normal normal-case tracking-normal text-[#E4E4E4]"
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))}
-                  <span className="flex min-w-[9rem] flex-1 items-center gap-2">
-                    <Search className="h-4 w-4 text-[#A8DADC]" />
-                    <input
-                      value={fieldQuery}
-                      onFocus={() => setIsFieldPickerOpen(true)}
-                      onBlur={() =>
-                        window.setTimeout(
-                          () => setIsFieldPickerOpen(false),
-                          120,
-                        )
-                      }
-                      onChange={(event) => setFieldQuery(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          addField(fieldQuery);
+                        {field}
+                        <button
+                          type="button"
+                          onClick={() => removeField(field)}
+                          className="rounded-none p-0.5 text-[#B0B0B0] transition hover:bg-[#444444] hover:text-[#E4E4E4]"
+                          aria-label={`Remove ${field}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                    <span className="flex min-w-[9rem] flex-1 items-center gap-2">
+                      <Search className="h-4 w-4 text-[#A8DADC]" />
+                      <input
+                        value={fieldQuery}
+                        onFocus={() => setIsFieldPickerOpen(true)}
+                        onBlur={() =>
+                          window.setTimeout(
+                            () => setIsFieldPickerOpen(false),
+                            120,
+                          )
                         }
-                      }}
-                      placeholder={
-                        selectedFields.length
-                          ? "Search another research field"
-                          : "Search research fields"
-                      }
-                      className="min-w-0 flex-1 bg-transparent text-sm font-normal normal-case tracking-normal text-[#E4E4E4] outline-none placeholder:text-[#5A5A5A]"
-                    />
-                  </span>
-                </div>
+                        onChange={(event) => setFieldQuery(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            addField(fieldQuery);
+                          }
+                        }}
+                        placeholder={
+                          selectedFields.length
+                            ? "Search another research field"
+                            : "Search research fields"
+                        }
+                        className="min-w-0 flex-1 bg-transparent text-sm font-normal normal-case tracking-normal text-[#E4E4E4] outline-none placeholder:text-[#5A5A5A]"
+                      />
+                    </span>
+                  </div>
                 </div>
                 <FloatingDropdownPortal
                   anchorRef={fieldPickerRef}
@@ -682,7 +689,9 @@ export function JournalDialogForm({
                   step="0.01"
                   defaultValue={initialValues?.apc}
                   placeholder="APC amount"
-                  icon={<DollarSign aria-hidden="true" className="text-[#9ED6B5]" />}
+                  icon={
+                    <DollarSign aria-hidden="true" className="text-[#9ED6B5]" />
+                  }
                 />
                 <ResearchFormSelect
                   name="apcCurrency"
@@ -704,7 +713,9 @@ export function JournalDialogForm({
                   step="0.01"
                   defaultValue={initialValues?.submissionFee}
                   placeholder="Submission fee"
-                  icon={<DollarSign aria-hidden="true" className="text-[#9ED6B5]" />}
+                  icon={
+                    <DollarSign aria-hidden="true" className="text-[#9ED6B5]" />
+                  }
                 />
                 <ResearchFormSelect
                   name="submissionFeeCurrency"
@@ -750,7 +761,9 @@ export function JournalDialogForm({
               name="note"
               defaultValue={initialValues?.note}
               placeholder="Add fit notes, login notes, or review notes"
-              icon={<StickyNote aria-hidden="true" className="text-[#F4D47A]" />}
+              icon={
+                <StickyNote aria-hidden="true" className="text-[#F4D47A]" />
+              }
               className="md:col-span-2"
             />
           </div>
@@ -762,12 +775,16 @@ export function JournalDialogForm({
               <JournalInput
                 name="accountUsername"
                 placeholder="Optional: journal-site login ID"
-                icon={<KeyRound aria-hidden="true" className="text-[#F4D47A]" />}
+                icon={
+                  <KeyRound aria-hidden="true" className="text-[#F4D47A]" />
+                }
               />
               <JournalInput
                 name="accountPassword"
                 placeholder="Optional: password"
-                icon={<LockKeyhole aria-hidden="true" className="text-[#B39CD0]" />}
+                icon={
+                  <LockKeyhole aria-hidden="true" className="text-[#B39CD0]" />
+                }
               />
               <JournalInput
                 name="accountEmail"
@@ -778,7 +795,9 @@ export function JournalDialogForm({
               <JournalInput
                 name="accountNote"
                 placeholder="Optional: account recovery notes or login URL"
-                icon={<FileText aria-hidden="true" className="text-[#9ED6B5]" />}
+                icon={
+                  <FileText aria-hidden="true" className="text-[#9ED6B5]" />
+                }
               />
             </div>
           </section>

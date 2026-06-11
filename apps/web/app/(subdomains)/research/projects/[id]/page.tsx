@@ -817,7 +817,7 @@ export default async function ProjectDetailPage({
               </h1>
               <IconHint label={stageStyle.label} position="bottom">
                 <span
-                  className={`inline-flex h-6 w-6 flex-none items-center justify-center ${stageStyle.className}`}
+                  className={`inline-flex h-6 w-6 flex-none items-center justify-center transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${stageStyle.className}`}
                   aria-label={stageStyle.label}
                 >
                   <StageIcon
@@ -839,39 +839,20 @@ export default async function ProjectDetailPage({
                 canEditRegistrationClaim={isAdmin}
                 disabled={!canEditResearch}
               />
-              {publishedArticleSubmission?.articleFileName && (
-                <IconHint
-                  label="Download published article file"
-                  position="bottom"
-                >
-                  <a
-                    href={`/api/research/submissions/${publishedArticleSubmission.id}/article`}
-                    className="research-download-button"
-                    aria-label="Download published article file"
-                  >
-                    <Download className="svgIcon h-4 w-4" aria-hidden="true" />
-                    <span className="icon2" aria-hidden="true" />
-                  </a>
-                </IconHint>
-              )}
-              {publishedArticleSubmission?.articleUrl && (
-                <IconHint label="Open published article link" position="bottom">
-                  <a
-                    href={publishedArticleSubmission.articleUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="research-title-icon-button"
-                    aria-label="Open published article link"
-                  >
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                  </a>
-                </IconHint>
+              {isAdmin && (
+                <ResearchContentLockButton
+                  projectId={project.id}
+                  locked={researchContentLocked}
+                />
               )}
             </div>
             <div className="mt-1 flex min-w-0 items-center gap-2 text-xs text-[#B0B0B0]">
               {project.researchCode && (
-                <span className="font-mono uppercase tracking-wide">
-                  ID: {project.researchCode}
+                <span className="font-normal">ID: {project.researchCode}</span>
+              )}
+              {project.researchCode && (
+                <span className="text-[#777777]" aria-hidden="true">
+                  |
                 </span>
               )}
               <span className="min-w-0 truncate text-[#E4E4E4]">
@@ -900,7 +881,7 @@ export default async function ProjectDetailPage({
             </p>
           )}
           {highlightedJournalSubmission && highlightedJournalClass && (
-            <div className="space-y-1 border-y border-[#444444] py-3">
+            <div className="space-y-1 py-1">
               <div className="flex min-w-0 items-center gap-2">
                 <p className="min-w-0 text-[#E4E4E4]">
                   {highlightedJournalSubmission.journal.name} -{" "}
@@ -909,11 +890,39 @@ export default async function ProjectDetailPage({
                   - ISSN {highlightedJournalSubmission.journal.issn || "-"} -{" "}
                   {highlightedJournalSubmission.journal.rank || "No rank"}
                 </p>
-                {isAdmin && (
-                  <ResearchContentLockButton
-                    projectId={project.id}
-                    locked={researchContentLocked}
-                  />
+                {publishedArticleSubmission?.articleFileName && (
+                  <IconHint
+                    label="Download published article file"
+                    position="bottom"
+                  >
+                    <a
+                      href={`/api/research/submissions/${publishedArticleSubmission.id}/article`}
+                      className="research-download-button"
+                      aria-label="Download published article file"
+                    >
+                      <Download
+                        className="svgIcon h-4 w-4"
+                        aria-hidden="true"
+                      />
+                      <span className="icon2" aria-hidden="true" />
+                    </a>
+                  </IconHint>
+                )}
+                {publishedArticleSubmission?.articleUrl && (
+                  <IconHint
+                    label="Open published article link"
+                    position="bottom"
+                  >
+                    <a
+                      href={publishedArticleSubmission.articleUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="research-title-icon-button"
+                      aria-label="Open published article link"
+                    >
+                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    </a>
+                  </IconHint>
                 )}
               </div>
               <div className="min-w-0">
@@ -931,7 +940,7 @@ export default async function ProjectDetailPage({
             </div>
           )}
           {highlightedConferenceSubmission && highlightedConferenceClass && (
-            <div className="space-y-1 border-y border-[#444444] py-3">
+            <div className="space-y-1 py-1">
               <div className="flex min-w-0 items-center gap-2">
                 <p className="min-w-0 text-[#E4E4E4]">
                   {highlightedConferenceSubmission.conference.name} -{" "}
@@ -943,12 +952,6 @@ export default async function ProjectDetailPage({
                   {highlightedConferenceSubmission.conference.location ||
                     "No location"}
                 </p>
-                {isAdmin && (
-                  <ResearchContentLockButton
-                    projectId={project.id}
-                    locked={researchContentLocked}
-                  />
-                )}
               </div>
               <p className={`text-xs ${highlightedConferenceClass.meta}`}>
                 Submitted:{" "}
@@ -1183,7 +1186,6 @@ export default async function ProjectDetailPage({
                         className="peer sr-only"
                       />
                       <span className="relative z-10 mt-0.5 flex h-8 w-8 items-center justify-center border border-[#444444] bg-[#202020] text-[#666666] transition duration-150 peer-checked:border-[#A8DADC] peer-checked:bg-[#263636] peer-checked:text-[#A8DADC] peer-focus-visible:ring-4 peer-focus-visible:ring-[#A8DADC]/10 group-hover/timeline:border-[#666666] peer-checked:group-hover/timeline:border-[#A8DADC] peer-checked:[&_.timeline-check]:opacity-100 peer-checked:[&_.timeline-dot]:opacity-0">
-                        <span className="absolute left-1/2 top-full h-4 w-px -translate-x-1/2 bg-[#444444] group-last/timeline:hidden" />
                         <CheckCircle2
                           className="timeline-check h-4 w-4 opacity-0 transition duration-150"
                           aria-hidden="true"
