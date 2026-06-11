@@ -202,7 +202,7 @@ export function IconHint({
               ref={tooltipRef}
               style={{ left: coords.left, top: coords.top }}
               className={cx(
-                "pointer-events-none fixed z-[9999] max-w-[calc(100vw-1.5rem)] whitespace-nowrap rounded-none border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-[11px] font-normal text-[#E4E4E4] opacity-100 shadow-lg shadow-black/30 transition duration-150 ease-out",
+                "research-icon-tooltip pointer-events-none fixed z-[9999] max-w-[calc(100vw-1.5rem)] whitespace-nowrap rounded-none border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-[11px] font-normal text-[#E4E4E4] opacity-100 shadow-lg shadow-black/30 transition duration-150 ease-out",
                 position === "top"
                   ? "-translate-x-1/2 -translate-y-full"
                   : "-translate-x-1/2",

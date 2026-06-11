@@ -813,6 +813,24 @@ body:has(.research-site-root) {
   scrollbar-width: thin;
 }
 
+.research-site-root *,
+.research-site-root *::before,
+.research-site-root *::after,
+[data-research-modal-overlay="true"],
+[data-research-modal-overlay="true"] *,
+[data-research-modal-overlay="true"] *::before,
+[data-research-modal-overlay="true"] *::after,
+.research-dropdown-floating-panel,
+.research-dropdown-floating-panel *,
+.research-dropdown-floating-panel *::before,
+.research-dropdown-floating-panel *::after,
+.research-icon-tooltip,
+.research-toast-container,
+.research-toast-container * {
+  animation-timing-function: ease !important;
+  transition-timing-function: ease !important;
+}
+
 .research-site-root::-webkit-scrollbar {
   width: 10px;
 }
@@ -1050,11 +1068,11 @@ body:has(.research-site-root) {
 }
 
 .research-site-root main > :where(div, section):first-child {
-  animation: modalPanelIn 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: modalPanelIn 260ms ease;
 }
 
 .research-site-root .fixed.inset-0 {
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-timing-function: ease;
 }
 
 .research-site-root .fixed.inset-0 [class*="modalPanelIn_"] {

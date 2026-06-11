@@ -68,7 +68,7 @@ export function ResearchToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="pointer-events-none fixed bottom-24 right-6 z-[120] flex w-[min(calc(100vw-2rem),25rem)] flex-col-reverse gap-2">
+      <div className="research-toast-container pointer-events-none fixed bottom-24 right-6 z-[120] flex w-[min(calc(100vw-2rem),25rem)] flex-col-reverse gap-2">
         {toasts.map((toast) => (
           <div
             key={toast.id}

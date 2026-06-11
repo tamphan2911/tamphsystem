@@ -817,7 +817,7 @@ export default async function ProjectDetailPage({
               </h1>
               <IconHint label={stageStyle.label} position="bottom">
                 <span
-                  className={`inline-flex h-6 w-6 flex-none items-center justify-center transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${stageStyle.className}`}
+                  className={`inline-flex h-6 w-6 flex-none cursor-help items-center justify-center transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${stageStyle.className}`}
                   aria-label={stageStyle.label}
                 >
                   <StageIcon
