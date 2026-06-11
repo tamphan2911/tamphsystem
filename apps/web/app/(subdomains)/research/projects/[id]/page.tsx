@@ -82,27 +82,27 @@ const stageStyles = {
   PRODUCTION: {
     label: "Production",
     icon: FileText,
-    className: "border-[#444444] bg-[#202020] text-[#FFC1CC]",
+    className: "text-[#FFC1CC]",
   },
   SUBMITTING: {
     label: "Submitting",
     icon: Send,
-    className: "border-[#444444] bg-[#202020] text-[#B39CD0]",
+    className: "text-[#B39CD0]",
   },
   REVIEW: {
     label: "Review",
     icon: SearchCheck,
-    className: "border-[#444444] bg-[#202020] text-[#B39CD0]",
+    className: "text-[#B39CD0]",
   },
   ACCEPTED: {
     label: "Accepted",
     icon: CheckCircle2,
-    className: "border-[#444444] bg-[#202020] text-[#A8DADC]",
+    className: "text-[#A8DADC]",
   },
   PUBLISHED: {
     label: "Published",
     icon: Rocket,
-    className: "border-[#444444] bg-[#202020] text-[#A8DADC]",
+    className: "text-[#A8DADC]",
   },
 };
 
@@ -815,12 +815,16 @@ export default async function ProjectDetailPage({
               <h1 className="min-w-0 truncate text-sm font-normal leading-6 text-[#E4E4E4] xl:text-base">
                 {project.title}
               </h1>
-              <IconHint label={stageStyle.label}>
+              <IconHint label={stageStyle.label} position="bottom">
                 <span
-                  className={`inline-flex h-8 w-8 flex-none items-center justify-center border ${stageStyle.className}`}
+                  className={`inline-flex h-6 w-6 flex-none items-center justify-center ${stageStyle.className}`}
                   aria-label={stageStyle.label}
                 >
-                  <StageIcon className="h-4 w-4" aria-hidden="true" />
+                  <StageIcon
+                    className="h-4 w-4"
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                  />
                 </span>
               </IconHint>
               <ResearchBasicEditDialog
@@ -836,7 +840,10 @@ export default async function ProjectDetailPage({
                 disabled={!canEditResearch}
               />
               {publishedArticleSubmission?.articleFileName && (
-                <IconHint label="Download published article file">
+                <IconHint
+                  label="Download published article file"
+                  position="bottom"
+                >
                   <a
                     href={`/api/research/submissions/${publishedArticleSubmission.id}/article`}
                     className="research-download-button"
@@ -848,7 +855,7 @@ export default async function ProjectDetailPage({
                 </IconHint>
               )}
               {publishedArticleSubmission?.articleUrl && (
-                <IconHint label="Open published article link">
+                <IconHint label="Open published article link" position="bottom">
                   <a
                     href={publishedArticleSubmission.articleUrl}
                     target="_blank"
@@ -893,17 +900,23 @@ export default async function ProjectDetailPage({
             </p>
           )}
           {highlightedJournalSubmission && highlightedJournalClass && (
-            <div
-              className={`flex items-center gap-3 border px-3 py-2 ${highlightedJournalClass.box}`}
-            >
-              <div className="min-w-0 flex-1 space-y-1">
-                <p>
+            <div className="space-y-1 border-y border-[#444444] py-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <p className="min-w-0 text-[#E4E4E4]">
                   {highlightedJournalSubmission.journal.name} -{" "}
                   {highlightedJournalSubmission.journal.publisher ||
                     "No publisher"}{" "}
                   - ISSN {highlightedJournalSubmission.journal.issn || "-"} -{" "}
                   {highlightedJournalSubmission.journal.rank || "No rank"}
                 </p>
+                {isAdmin && (
+                  <ResearchContentLockButton
+                    projectId={project.id}
+                    locked={researchContentLocked}
+                  />
+                )}
+              </div>
+              <div className="min-w-0">
                 <p className={`text-xs ${highlightedJournalClass.meta}`}>
                   Submitted:{" "}
                   {shortDate(highlightedJournalSubmission.submittedAt)}
@@ -915,27 +928,28 @@ export default async function ProjectDetailPage({
                     : ""}
                 </p>
               </div>
-              {isAdmin && (
-                <ResearchContentLockButton
-                  projectId={project.id}
-                  locked={researchContentLocked}
-                />
-              )}
             </div>
           )}
           {highlightedConferenceSubmission && highlightedConferenceClass && (
-            <div
-              className={`space-y-1 border px-3 py-2 ${highlightedConferenceClass.box}`}
-            >
-              <p>
-                {highlightedConferenceSubmission.conference.name} -{" "}
-                {highlightedConferenceSubmission.conference.organizer ||
-                  "No organizer"}{" "}
-                - {highlightedConferenceSubmission.conference.type || "No type"}{" "}
-                -{" "}
-                {highlightedConferenceSubmission.conference.location ||
-                  "No location"}
-              </p>
+            <div className="space-y-1 border-y border-[#444444] py-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <p className="min-w-0 text-[#E4E4E4]">
+                  {highlightedConferenceSubmission.conference.name} -{" "}
+                  {highlightedConferenceSubmission.conference.organizer ||
+                    "No organizer"}{" "}
+                  -{" "}
+                  {highlightedConferenceSubmission.conference.type || "No type"}{" "}
+                  -{" "}
+                  {highlightedConferenceSubmission.conference.location ||
+                    "No location"}
+                </p>
+                {isAdmin && (
+                  <ResearchContentLockButton
+                    projectId={project.id}
+                    locked={researchContentLocked}
+                  />
+                )}
+              </div>
               <p className={`text-xs ${highlightedConferenceClass.meta}`}>
                 Submitted:{" "}
                 {shortDate(highlightedConferenceSubmission.submittedAt)}

@@ -93,7 +93,7 @@ function EditIconButton({
   disabled?: boolean;
 }) {
   return (
-    <IconHint label={label}>
+    <IconHint label={label} position="bottom">
       <button
         type="button"
         onClick={onClick}

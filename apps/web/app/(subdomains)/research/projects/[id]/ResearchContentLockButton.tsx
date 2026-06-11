@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Check, LockKeyhole, UnlockKeyhole } from "lucide-react";
 import { setResearchContentLock } from "../../actions";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export function ResearchContentLockButton({
@@ -18,6 +19,9 @@ export function ResearchContentLockButton({
   const { showSuccess } = useResearchToast();
   const Icon = locked ? UnlockKeyhole : LockKeyhole;
   const nextLocked = !locked;
+  const label = locked
+    ? "Unlock research content for editing"
+    : "Lock research content again";
 
   function submitChange() {
     startTransition(async () => {
@@ -34,23 +38,16 @@ export function ResearchContentLockButton({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setConfirming(true)}
-        title={
-          locked
-            ? "Unlock research content for editing"
-            : "Lock research content again"
-        }
-        aria-label={
-          locked
-            ? "Unlock research content for editing"
-            : "Lock research content again"
-        }
-        className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-none border border-white/70 bg-white/80 text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-blue-600 hover:shadow-md dark:border-slate-700/70 dark:bg-slate-950/70 dark:text-slate-200 dark:hover:text-blue-300"
-      >
-        <Icon className="h-4 w-4" />
-      </button>
+      <IconHint label={label} position="bottom">
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          aria-label={label}
+          className="inline-flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
+        >
+          <Icon className="h-4 w-4" strokeWidth={1.75} />
+        </button>
+      </IconHint>
 
       <ResearchConfirmDialog
         open={confirming}

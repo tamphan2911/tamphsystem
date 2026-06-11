@@ -1589,21 +1589,17 @@ body:has(.research-site-root) {
 .research-site-root .research-download-button {
   position: relative;
   display: inline-flex;
-  height: 2.5rem;
-  width: 2.5rem;
+  height: 1.5rem;
+  width: 1.5rem;
   flex: none;
   cursor: pointer;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 1px solid #444444;
-  background: #1b1b1b;
+  border: 0;
+  background: transparent;
   color: #b39cd0;
   text-decoration: none;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.11);
   transition:
-    background-color 300ms ease,
-    border-color 300ms ease,
     color 300ms ease,
     transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -1614,18 +1610,11 @@ body:has(.research-site-root) {
 }
 
 .research-site-root .research-download-button .icon2 {
-  width: 1.125rem;
-  height: 0.3125rem;
-  border-right: 2px solid #b39cd0;
-  border-bottom: 2px solid #b39cd0;
-  border-left: 2px solid #b39cd0;
-  transition: border-color 300ms ease;
+  display: none;
 }
 
 .research-site-root .research-download-button:hover {
-  border-color: #b39cd0;
-  background: #b39cd0;
-  color: #1d1d1d;
+  color: #e4e4e4;
   transform: translateY(-1px);
 }
 
@@ -1636,7 +1625,7 @@ body:has(.research-site-root) {
 }
 
 .research-site-root .research-download-button:hover .icon2 {
-  border-color: #ffffff;
+  border-color: transparent;
 }
 
 .research-site-root .research-download-button:active {
@@ -1646,25 +1635,21 @@ body:has(.research-site-root) {
 
 .research-site-root .research-title-icon-button {
   display: inline-flex;
-  height: 2.5rem;
-  width: 2.5rem;
+  height: 1.5rem;
+  width: 1.5rem;
   flex: none;
   align-items: center;
   justify-content: center;
-  border: 1px solid #444444;
-  background: #1b1b1b;
+  border: 0;
+  background: transparent;
   color: #a8dadc;
   text-decoration: none;
   transition:
-    background-color 240ms ease,
-    border-color 240ms ease,
     color 240ms ease,
     transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .research-site-root .research-title-icon-button:hover {
-  border-color: #a8dadc;
-  background: #263636;
   color: #e4e4e4;
   transform: translateY(-1px);
 }
