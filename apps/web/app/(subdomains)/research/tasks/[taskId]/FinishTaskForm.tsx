@@ -4,7 +4,10 @@ import { useRef, useState, useTransition } from "react";
 import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
-import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchButton,
+  researchFieldClass,
+} from "@/sites/research/components/ResearchPrimitives";
 
 export function FinishTaskForm({
   action,
@@ -25,6 +28,7 @@ export function FinishTaskForm({
   const [isPending, startTransition] = useTransition();
   const isReadyMode = mode === "ready";
   const Icon = isReadyMode ? CheckCircle2 : ShieldCheck;
+  const formId = isReadyMode ? "ready-task-form" : "approve-task-form";
   const buttonLabel = isReadyMode ? "Ready for check" : "Approve complete";
   const title = isReadyMode
     ? "Mark work ready for check?"
@@ -35,12 +39,14 @@ export function FinishTaskForm({
 
   return (
     <>
-      <form ref={formRef} action={action} className="flex justify-end">
+      <form
+        id={formId}
+        ref={formRef}
+        action={action}
+        className="flex justify-end"
+      >
         {accountId ? (
           <input type="hidden" name="accountId" value={accountId} />
-        ) : null}
-        {requiresSubmissionDate ? (
-          <input type="hidden" name="submissionDate" value={submissionDate} />
         ) : null}
         <button
           type="button"
@@ -97,9 +103,11 @@ export function FinishTaskForm({
                 Submission date
               </span>
               <ResearchDatePicker
-                name="submissionDatePreview"
+                name="submissionDate"
+                form={formId}
                 value={submissionDate}
                 onChange={setSubmissionDate}
+                className={researchFieldClass}
                 required
               />
             </label>

@@ -115,6 +115,7 @@ function calendarDays(month: Date) {
 
 export function ResearchDatePicker({
   name,
+  form,
   defaultValue,
   value,
   onChange,
@@ -124,6 +125,7 @@ export function ResearchDatePicker({
   className,
 }: {
   name: string;
+  form?: string;
   defaultValue?: string | null;
   value?: string | null;
   onChange?: (value: string) => void;
@@ -214,7 +216,7 @@ export function ResearchDatePicker({
 
   return (
     <div ref={anchorRef} className="relative">
-      <input type="hidden" name={name} value={selectedValue} />
+      <input type="hidden" name={name} value={selectedValue} form={form} />
       <div
         className={cx(
           researchFieldClass,
