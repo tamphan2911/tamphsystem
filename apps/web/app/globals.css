@@ -917,6 +917,47 @@ textarea:focus-visible {
   background: #242424;
 }
 
+.research-site-root .research-task-icon-motion {
+  transform-origin: center;
+  transition:
+    color 180ms ease,
+    filter 180ms ease,
+    opacity 180ms ease,
+    transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+
+.research-site-root .research-task-icon-motion:hover,
+.research-site-root .research-task-icon-motion:focus-visible,
+.research-site-root :where(span:hover, div:hover) > .research-task-icon-motion {
+  filter: drop-shadow(0 0 0.45rem rgba(168, 218, 220, 0.28));
+  transform: translate3d(0, -1px, 0) scale(1.14) rotate(-3deg);
+}
+
+.research-site-root .research-task-time-emerald {
+  color: #9ed6b5 !important;
+}
+
+.research-site-root .research-task-time-rose {
+  color: #f0a6b5 !important;
+}
+
+.research-site-root .research-task-time-blue {
+  color: #93c5fd !important;
+}
+
+.research-site-root .research-task-time-violet {
+  color: #c8b6e2 !important;
+}
+
+.research-site-root .research-task-time-amber {
+  color: #f4d47a !important;
+}
+
+.research-site-root .research-task-time-slate {
+  color: #b8bec8 !important;
+}
+
 .research-site-root.research-theme-light {
   --research-ink: #f4f1ea;
   --research-panel: #fffdf8;
@@ -1022,6 +1063,39 @@ textarea:focus-visible {
 .research-site-root.research-theme-light [class~="text-[#F2A0AC]"],
 .research-site-root.research-theme-light [class~="hover:text-[#FFD0D6]"]:hover {
   color: #b33e5c !important;
+}
+
+.research-site-root.research-theme-light .research-task-icon-motion:hover,
+.research-site-root.research-theme-light
+  .research-task-icon-motion:focus-visible,
+.research-site-root.research-theme-light
+  :where(span:hover, div:hover)
+  > .research-task-icon-motion {
+  filter: drop-shadow(0 0 0.45rem rgba(45, 120, 130, 0.22));
+}
+
+.research-site-root.research-theme-light .research-task-time-emerald {
+  color: #2f8f62 !important;
+}
+
+.research-site-root.research-theme-light .research-task-time-rose {
+  color: #b33e5c !important;
+}
+
+.research-site-root.research-theme-light .research-task-time-blue {
+  color: #2f6fae !important;
+}
+
+.research-site-root.research-theme-light .research-task-time-violet {
+  color: #6f5aa8 !important;
+}
+
+.research-site-root.research-theme-light .research-task-time-amber {
+  color: #a06716 !important;
+}
+
+.research-site-root.research-theme-light .research-task-time-slate {
+  color: #667085 !important;
 }
 
 .research-site-root.research-theme-light input,

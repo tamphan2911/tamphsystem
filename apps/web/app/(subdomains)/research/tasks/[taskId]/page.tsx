@@ -2,10 +2,14 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { notFound, redirect } from "next/navigation";
 import {
+  AlertTriangle,
+  CheckCircle2,
   ClipboardList,
+  Clock3,
   ExternalLink,
   FileText,
   Globe2,
+  HelpCircle,
   KeyRound,
   SearchCheck,
   Send,
@@ -93,6 +97,7 @@ function statusMeta(task: {
         ? `Revoked ${formatDate(task.revokedAt)}`
         : "Revoked",
       tone: "slate" as const,
+      timeTone: "slate" as const,
     };
   }
 
@@ -102,6 +107,7 @@ function statusMeta(task: {
         label: "Complete",
         detail: "Finished",
         tone: "emerald" as const,
+        timeTone: "emerald" as const,
       };
     }
     if (task.completedAt <= task.dueDate) {
@@ -109,12 +115,14 @@ function statusMeta(task: {
         label: "Complete",
         detail: `${durationText(task.dueDate.getTime() - task.completedAt.getTime())} early`,
         tone: "emerald" as const,
+        timeTone: "emerald" as const,
       };
     }
     return {
       label: "Overdue",
       detail: `${durationText(task.completedAt.getTime() - task.dueDate.getTime())} late`,
       tone: "rose" as const,
+      timeTone: "rose" as const,
     };
   }
 
@@ -123,6 +131,7 @@ function statusMeta(task: {
       label: "Checking",
       detail: "Waiting for assigner review",
       tone: "violet" as const,
+      timeTone: "violet" as const,
     };
   }
 
@@ -131,6 +140,7 @@ function statusMeta(task: {
       label: "Need clarify",
       detail: "Waiting for assigner answer",
       tone: "amber" as const,
+      timeTone: "amber" as const,
     };
   }
 
@@ -139,6 +149,7 @@ function statusMeta(task: {
       label: "Overdue",
       detail: `${durationText(now.getTime() - task.dueDate.getTime())} overdue`,
       tone: "rose" as const,
+      timeTone: "rose" as const,
     };
   }
 
@@ -148,6 +159,7 @@ function statusMeta(task: {
       ? `${durationText(task.dueDate.getTime() - now.getTime())} left`
       : "No due date",
     tone: "blue" as const,
+    timeTone: task.dueDate ? ("blue" as const) : ("slate" as const),
   };
 }
 
@@ -165,6 +177,25 @@ function toneClass(
   if (tone === "amber")
     return "border-amber-500/30 bg-amber-500/10 text-amber-200 ring-amber-500/20";
   return "border-[#555555] bg-[#383838] text-[#E4E4E4] ring-[#555555]";
+}
+
+function statusIcon(status: string) {
+  if (status === "COMPLETED") return CheckCircle2;
+  if (status === "REVOKED") return HelpCircle;
+  if (status === "CHECKING") return SearchCheck;
+  if (status === "NEED_CLARIFY") return AlertTriangle;
+  return Clock3;
+}
+
+function timeTextClass(
+  tone: "emerald" | "rose" | "blue" | "slate" | "violet" | "amber",
+) {
+  if (tone === "emerald") return "research-task-time-emerald";
+  if (tone === "rose") return "research-task-time-rose";
+  if (tone === "blue") return "research-task-time-blue";
+  if (tone === "violet") return "research-task-time-violet";
+  if (tone === "amber") return "research-task-time-amber";
+  return "research-task-time-slate";
 }
 
 function taskTypeMeta(taskType: string | null, category: string | null) {
@@ -427,6 +458,7 @@ export default async function TaskDetailPage({
   const meta = statusMeta(task);
   const taskType = taskTypeMeta(task.taskType, task.category);
   const TaskTypeIcon = taskType.icon;
+  const StatusIcon = statusIcon(task.status);
   const finishAction = finishResearchTask.bind(null, task.id);
   const readyAction = markResearchTaskReadyForCheck.bind(null, task.id);
   const redoAction = requestTaskRedo.bind(null, task.id);
@@ -641,7 +673,7 @@ export default async function TaskDetailPage({
               </h1>
               <IconHint label={taskType.label} position="bottom">
                 <span
-                  className={`inline-flex h-5 w-5 flex-none items-center justify-center ${taskType.className}`}
+                  className={`research-task-icon-motion inline-flex h-5 w-5 flex-none items-center justify-center ${taskType.className}`}
                   aria-label={taskType.label}
                 >
                   <TaskTypeIcon
@@ -652,8 +684,13 @@ export default async function TaskDetailPage({
                 </span>
               </IconHint>
               <span
-                className={`inline-flex flex-none border px-2 py-1 text-[11px] font-normal leading-none ${toneClass(meta.tone)}`}
+                className={`inline-flex flex-none items-center gap-1.5 border px-2 py-1 text-[11px] font-normal leading-none ${toneClass(meta.tone)}`}
               >
+                <StatusIcon
+                  className="research-task-icon-motion h-3.5 w-3.5"
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                />
                 {meta.label}
               </span>
               {(canEdit || canUseReminder) && (
@@ -710,7 +747,9 @@ export default async function TaskDetailPage({
               <span className="text-[#777777]">|</span>
               <span>Completed {formatDate(task.completedAt)}</span>
               <span className="text-[#777777]">|</span>
-              <span>{meta.detail}</span>
+              <span className={timeTextClass(meta.timeTone)}>
+                {meta.detail}
+              </span>
             </div>
           </div>
         </div>
@@ -745,136 +784,145 @@ export default async function TaskDetailPage({
           </div>
         )}
 
-        <section className="grid gap-5 border-t border-[#444444] pt-5 md:grid-cols-2">
-          {task.project && (
-            <div className="min-w-0">
-              <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                Research
-              </div>
-              <Link
-                href={`/projects/${task.project.id}`}
-                className={`mt-2 inline-flex text-sm ${researchLinkClass}`}
-              >
-                {task.project.title}
-              </Link>
-              <p className="mt-1 text-xs leading-5 text-[#B0B0B0]">
-                {researchAuthors(task.project)}
-              </p>
-            </div>
-          )}
-          {task.journal && (
-            <div className="min-w-0">
-              <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                Journal
-              </div>
-              <div className="mt-2 flex min-w-0 items-center gap-2">
+        <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
+          <div className="grid gap-5 p-5 md:grid-cols-2">
+            {task.project && (
+              <div className="min-w-0">
+                <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                  Research
+                </div>
                 <Link
-                  href={`/journals/${task.journal.id}`}
-                  className={`min-w-0 text-sm ${researchLinkClass}`}
+                  href={`/projects/${task.project.id}`}
+                  className={`mt-2 inline-flex text-sm ${researchLinkClass}`}
                 >
-                  {task.journal.name}
+                  {task.project.title}
                 </Link>
-                <VenueLinks
-                  homepage={task.journal.homepageLink}
-                  submission={journalSubmissionLink}
-                />
+                <p className="mt-1 text-xs leading-5 text-[#B0B0B0]">
+                  {researchAuthors(task.project)}
+                </p>
               </div>
-              <p className="mt-1 text-xs text-[#B0B0B0]">
-                {task.journal.publisher || "No publisher"} -{" "}
-                {task.journal.rank || "No rank"}
+            )}
+            {task.journal && (
+              <div className="min-w-0">
+                <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                  Journal
+                </div>
+                <div className="mt-2 flex min-w-0 items-center gap-2">
+                  <Link
+                    href={`/journals/${task.journal.id}`}
+                    className={`min-w-0 text-sm ${researchLinkClass}`}
+                  >
+                    {task.journal.name}
+                  </Link>
+                  <VenueLinks
+                    homepage={task.journal.homepageLink}
+                    submission={journalSubmissionLink}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-[#B0B0B0]">
+                  {task.journal.publisher || "No publisher"} -{" "}
+                  {task.journal.rank || "No rank"}
+                </p>
+                <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
+                  <KeyRound className="h-3.5 w-3.5 text-amber-500" />
+                  {accountLine(task.account)}
+                </p>
+              </div>
+            )}
+            {task.conference && (
+              <div className="min-w-0">
+                <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                  Conference
+                </div>
+                <div className="mt-2 flex min-w-0 items-center gap-2">
+                  <Link
+                    href={`/conferences/${task.conference.id}`}
+                    className={`min-w-0 text-sm ${researchLinkClass}`}
+                  >
+                    {task.conference.name}
+                  </Link>
+                  <VenueLinks
+                    homepage={task.conference.website}
+                    submission={conferenceSubmissionLink}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-[#B0B0B0]">
+                  {task.conference.type || "No type"} -{" "}
+                  {task.conference.location || "No location"} -{" "}
+                  {conferenceTime(
+                    task.conference.startDate,
+                    task.conference.endDate,
+                  )}
+                </p>
+                <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
+                  <KeyRound className="h-3.5 w-3.5 text-amber-500" />
+                  {accountLine(task.account)}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="grid gap-5 border-t border-[#444444] p-5 md:grid-cols-2">
+            <section className="min-h-36">
+              <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                Task content
+              </h2>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#B0B0B0]">
+                {task.description || "No task note."}
               </p>
-              <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
-                <KeyRound className="h-3.5 w-3.5 text-amber-500" />
-                {accountLine(task.account)}
-              </p>
+            </section>
+
+            <TaskClarificationPanel
+              clarifications={clarificationItems}
+              canAnswer={canAnswerClarification}
+              answerAction={clarificationAnswerAction}
+              className="min-h-36"
+            />
+          </div>
+
+          {reportEnabled && (
+            <div className="border-t border-[#444444] p-5">
+              <TaskReportPanel
+                taskId={task.id}
+                canUpload={canUploadReport}
+                canDownload={canDownloadReport}
+                fileName={task.reportFileName}
+                fileSize={task.reportFileSize}
+                uploadedAt={
+                  task.reportUploadedAt
+                    ? formatDate(task.reportUploadedAt)
+                    : null
+                }
+              />
             </div>
           )}
-          {task.conference && (
-            <div className="min-w-0">
-              <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                Conference
-              </div>
-              <div className="mt-2 flex min-w-0 items-center gap-2">
-                <Link
-                  href={`/conferences/${task.conference.id}`}
-                  className={`min-w-0 text-sm ${researchLinkClass}`}
+
+          <section className="grid gap-3 border-t border-[#444444] p-5">
+            <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+              Assignees
+            </h2>
+            <div className="grid max-w-2xl gap-3 sm:grid-cols-2">
+              {task.assignments.map((assignment) => (
+                <div
+                  key={assignment.id}
+                  className="border-t border-[#444444] pt-3"
                 >
-                  {task.conference.name}
-                </Link>
-                <VenueLinks
-                  homepage={task.conference.website}
-                  submission={conferenceSubmissionLink}
-                />
-              </div>
-              <p className="mt-1 text-xs text-[#B0B0B0]">
-                {task.conference.type || "No type"} -{" "}
-                {task.conference.location || "No location"} -{" "}
-                {conferenceTime(
-                  task.conference.startDate,
-                  task.conference.endDate,
-                )}
-              </p>
-              <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
-                <KeyRound className="h-3.5 w-3.5 text-amber-500" />
-                {accountLine(task.account)}
-              </p>
-            </div>
-          )}
-        </section>
-
-        <section className="min-h-36 border-t border-[#444444] pt-5">
-          <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-            Task content
-          </h2>
-          <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#B0B0B0]">
-            {task.description || "No task note."}
-          </p>
-        </section>
-
-        {reportEnabled && (
-          <TaskReportPanel
-            taskId={task.id}
-            canUpload={canUploadReport}
-            canDownload={canDownloadReport}
-            fileName={task.reportFileName}
-            fileSize={task.reportFileSize}
-            uploadedAt={
-              task.reportUploadedAt ? formatDate(task.reportUploadedAt) : null
-            }
-          />
-        )}
-
-        <TaskClarificationPanel
-          clarifications={clarificationItems}
-          canAnswer={canAnswerClarification}
-          answerAction={clarificationAnswerAction}
-        />
-
-        <section className="grid gap-3 border-t border-[#444444] pt-5">
-          <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-            Assignees
-          </h2>
-          <div className="grid max-w-2xl gap-3 sm:grid-cols-2">
-            {task.assignments.map((assignment) => (
-              <div
-                key={assignment.id}
-                className="border-t border-[#444444] pt-3"
-              >
-                <span className="flex min-w-0 items-start gap-3">
-                  <UserRound className="mt-0.5 h-4 w-4 flex-none text-amber-300" />
-                  <span className="min-w-0 leading-tight">
-                    <span className="block truncate text-sm font-normal text-[#E4E4E4]">
-                      {displayResearchPersonName(assignment.user)}
-                    </span>
-                    <span className="block truncate text-xs text-[#B0B0B0]">
-                      {displayResearchEmail(assignment.user.email)}
+                  <span className="flex min-w-0 items-start gap-3">
+                    <UserRound className="research-task-icon-motion mt-0.5 h-4 w-4 flex-none text-amber-300" />
+                    <span className="min-w-0 leading-tight">
+                      <span className="block truncate text-sm font-normal text-[#E4E4E4]">
+                        {displayResearchPersonName(assignment.user)}
+                      </span>
+                      <span className="block truncate text-xs text-[#B0B0B0]">
+                        {displayResearchEmail(assignment.user.email)}
+                      </span>
                     </span>
                   </span>
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
       </div>
     </>
   );

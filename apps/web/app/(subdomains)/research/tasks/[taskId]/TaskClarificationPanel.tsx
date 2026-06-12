@@ -43,10 +43,12 @@ export function TaskClarificationPanel({
   clarifications,
   canAnswer,
   answerAction,
+  className = "border-t border-[#444444] pt-5",
 }: {
   clarifications: TaskClarificationItem[];
   canAnswer: boolean;
   answerAction: (formData: FormData) => void | Promise<void>;
+  className?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const historyScrollRef = useRef<HTMLDivElement>(null);
@@ -67,7 +69,7 @@ export function TaskClarificationPanel({
   }, [isOpen, timeline.length]);
 
   return (
-    <section className="border-t border-[#444444] pt-5">
+    <section className={className}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div>
