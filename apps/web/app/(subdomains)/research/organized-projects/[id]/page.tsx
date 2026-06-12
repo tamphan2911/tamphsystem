@@ -83,20 +83,20 @@ function statusMeta(status: string) {
     return {
       label: "Completed",
       icon: CheckCircle2,
-      className: "text-[#9ED6B5]",
+      className: "text-[#2F8F62] dark:text-[#9ED6B5]",
     };
   }
   if (status === "ACTIVE") {
     return {
       label: "Active",
       icon: Clock3,
-      className: "text-[#93C5FD]",
+      className: "text-[#2F6FAE] dark:text-[#93C5FD]",
     };
   }
   return {
     label: "Planned",
     icon: CalendarClock,
-    className: "text-[#F4D47A]",
+    className: "text-[#A06716] dark:text-[#F4D47A]",
   };
 }
 
@@ -105,34 +105,34 @@ function claimMeta(status: string) {
     return {
       label: "None",
       icon: CircleOff,
-      className: "text-[#B8BEC8]",
+      className: "text-[#667085] dark:text-[#B8BEC8]",
     };
   }
   if (status === "ADVANCED") {
     return {
       label: "Advanced",
       icon: Banknote,
-      className: "text-[#C8B6E2]",
+      className: "text-[#6F5AA8] dark:text-[#C8B6E2]",
     };
   }
   if (status === "SETTLED") {
     return {
       label: "Settled",
       icon: ShieldCheck,
-      className: "text-[#9ED6B5]",
+      className: "text-[#2F8F62] dark:text-[#9ED6B5]",
     };
   }
   if (status === "REFUND_ADVANCE") {
     return {
       label: "Refund advance",
       icon: RotateCcw,
-      className: "text-[#F0A6B5]",
+      className: "text-[#B33E5C] dark:text-[#F0A6B5]",
     };
   }
   return {
     label: "Not advanced",
     icon: WalletCards,
-    className: "text-[#FFC1CC]",
+    className: "text-[#B33E5C] dark:text-[#FFC1CC]",
   };
 }
 

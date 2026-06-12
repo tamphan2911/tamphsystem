@@ -313,7 +313,7 @@ function StatusIconChip({
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 w-8 items-center justify-center border border-[#444444] bg-[#202020] transition-colors duration-150 group-hover:border-[#666666] ${className}`}
+        className={`inline-flex h-8 w-8 items-center justify-center border border-transparent bg-transparent transition-colors duration-150 ${className}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
@@ -904,7 +904,7 @@ export function SubmissionsTable({
                                 );
                                 setEditing(row);
                               }}
-                              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-[#444444] bg-[#202020] text-[#B0B0B0] transition hover:-translate-y-0.5 hover:border-[#A8DADC] hover:text-[#A8DADC] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:border-[#444444] disabled:hover:text-[#B0B0B0] disabled:hover:shadow-none"
+                              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-transparent bg-transparent text-[#B0B0B0] transition hover:-translate-y-0.5 hover:text-[#A8DADC] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:text-[#B0B0B0]"
                               aria-label={`Edit status for ${row.venueName}`}
                             >
                               <Edit3 className="h-4 w-4" />
@@ -917,7 +917,7 @@ export function SubmissionsTable({
                           disabled={disabled}
                           title="Delete submission"
                           onClick={() => setDeleting(row)}
-                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-[#444444] bg-[#202020] text-rose-300 transition hover:-translate-y-0.5 hover:border-rose-300 hover:text-rose-200 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-transparent bg-transparent text-rose-300 transition hover:-translate-y-0.5 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
                           aria-label={`Delete submission for ${row.venueName}`}
                         >
                           <Trash2 className="h-4 w-4" />

@@ -167,16 +167,16 @@ function toneClass(
   tone: "emerald" | "rose" | "blue" | "slate" | "violet" | "amber",
 ) {
   if (tone === "emerald")
-    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-200 ring-emerald-500/20";
+    return "border-emerald-200 bg-emerald-50 text-emerald-700 ring-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/20";
   if (tone === "rose")
-    return "border-rose-500/30 bg-rose-500/10 text-rose-200 ring-rose-500/20";
+    return "border-rose-200 bg-rose-50 text-rose-700 ring-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200 dark:ring-rose-500/20";
   if (tone === "blue")
-    return "border-sky-500/30 bg-sky-500/10 text-sky-200 ring-sky-500/20";
+    return "border-sky-200 bg-sky-50 text-sky-700 ring-sky-100 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-200 dark:ring-sky-500/20";
   if (tone === "violet")
-    return "border-violet-500/30 bg-violet-500/10 text-violet-200 ring-violet-500/20";
+    return "border-violet-200 bg-violet-50 text-violet-700 ring-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-500/20";
   if (tone === "amber")
-    return "border-amber-500/30 bg-amber-500/10 text-amber-200 ring-amber-500/20";
-  return "border-[#555555] bg-[#383838] text-[#E4E4E4] ring-[#555555]";
+    return "border-amber-200 bg-amber-50 text-amber-700 ring-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/20";
+  return "border-slate-200 bg-slate-50 text-slate-600 ring-slate-200 dark:border-[#555555] dark:bg-[#383838] dark:text-[#E4E4E4] dark:ring-[#555555]";
 }
 
 function statusIcon(status: string) {

@@ -384,7 +384,7 @@ export function OrganizedProjectsTable({
                     </p>
                   </td>
                   <td className="px-2 py-3 text-center align-top">
-                    <div className="inline-flex min-w-10 items-center justify-center rounded-none bg-slate-50 px-2 py-1 text-sm font-black text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700">
+                    <div className="inline-flex min-w-10 items-center justify-center px-2 py-1 text-sm font-normal text-[#B0B0B0]">
                       {project.researchCount}
                     </div>
                   </td>

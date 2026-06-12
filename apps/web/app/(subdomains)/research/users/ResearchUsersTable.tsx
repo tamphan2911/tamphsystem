@@ -7,6 +7,9 @@ import {
   AlertTriangle,
   Eye,
   EyeOff,
+  Mail,
+  MailCheck,
+  MailWarning,
   Pencil,
   Save,
   Trash2,
@@ -16,6 +19,7 @@ import {
 import { deleteResearchSiteUser, updateResearchSiteUser } from "../actions";
 import {
   FilterSelect,
+  IconHint,
   TablePagination,
   TableSearchInput,
   useTablePagination,
@@ -182,7 +186,7 @@ export function ResearchUsersTable({
                 >
                   <td className="px-4 py-3">
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-[#444444] bg-[#202020] text-[#A8DADC] shadow-none">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#1F7180] dark:text-[#A8DADC]">
                         <UserRound className="h-4 w-4" />
                       </span>
                       <span className="min-w-0">
@@ -201,19 +205,12 @@ export function ResearchUsersTable({
                     </span>
                   </td>
                   <td className="px-3 py-3">
-                    <div className="flex flex-wrap gap-1.5">
-                      {user.roles.map((item) => (
-                        <span
-                          key={item}
-                          className="border border-[#444444] bg-[#202020] px-2 py-1 text-[11px] font-normal text-[#B0B0B0]"
-                        >
-                          {item}
-                        </span>
-                      ))}
-                    </div>
+                    <span className="text-xs font-normal leading-5 text-[#B0B0B0]">
+                      {user.roles.join(", ") || "-"}
+                    </span>
                   </td>
                   <td className="px-3 py-3">
-                    <div className="inline-flex max-w-full items-center gap-2 border border-[#444444] bg-slate-50 px-2.5 py-1.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                    <div className="inline-flex max-w-full items-center gap-2 py-1.5 text-sm text-slate-700 dark:text-slate-200">
                       <span className="min-w-0 flex-1 truncate font-mono">
                         {passwordVisible
                           ? user.password || "Not stored"
@@ -226,7 +223,7 @@ export function ResearchUsersTable({
                         onClick={() =>
                           setVisiblePasswordId(passwordVisible ? null : user.id)
                         }
-                        className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-none text-slate-400 transition hover:bg-white hover:text-blue-600 dark:hover:bg-slate-900 dark:hover:text-blue-300"
+                        className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-none text-slate-400 transition hover:text-blue-600 dark:hover:text-blue-300"
                         aria-label={
                           passwordVisible ? "Hide password" : "Show password"
                         }
@@ -239,7 +236,7 @@ export function ResearchUsersTable({
                       </button>
                     </div>
                   </td>
-                  <td className="px-3 py-3 text-sm">
+                  <td className="px-3 py-3 text-sm align-top">
                     {(() => {
                       const hasEmail = Boolean(user.email.trim());
                       const label = !hasEmail
@@ -247,18 +244,25 @@ export function ResearchUsersTable({
                         : user.emailVerified
                           ? "Verified"
                           : "Pending";
-                      const className = !hasEmail
-                        ? "border-rose-400/50 bg-rose-950/30 text-rose-300"
+                      const EmailIcon = !hasEmail
+                        ? MailWarning
                         : user.emailVerified
-                          ? "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900"
-                          : "bg-amber-50 text-amber-800 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900";
+                          ? MailCheck
+                          : Mail;
+                      const className = !hasEmail
+                        ? "text-rose-700 dark:text-rose-300"
+                        : user.emailVerified
+                          ? "text-emerald-700 dark:text-emerald-300"
+                          : "text-amber-700 dark:text-amber-300";
 
                       return (
-                        <span
-                          className={`border px-2 py-1 text-xs font-normal ${className}`}
-                        >
-                          {label}
-                        </span>
+                        <IconHint label={`Email: ${label}`}>
+                          <span
+                            className={`inline-flex h-7 w-7 items-center justify-center ${className}`}
+                          >
+                            <EmailIcon className="h-4 w-4" />
+                          </span>
+                        </IconHint>
                       );
                     })()}
                   </td>
@@ -270,7 +274,7 @@ export function ResearchUsersTable({
                       <button
                         type="button"
                         onClick={() => setEditing(user)}
-                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-[#444444] bg-[#2C2C2C] text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
+                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-transparent bg-transparent text-slate-500 transition hover:-translate-y-0.5 hover:text-blue-700 dark:text-slate-300 dark:hover:text-blue-300"
                         aria-label="Edit user"
                       >
                         <Pencil className="h-4 w-4" />
@@ -278,7 +282,7 @@ export function ResearchUsersTable({
                       <button
                         type="button"
                         onClick={() => setDeleting(user)}
-                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-[#444444] bg-[#2C2C2C] text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-rose-900 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-transparent bg-transparent text-slate-500 transition hover:-translate-y-0.5 hover:text-rose-700 dark:text-slate-300 dark:hover:text-rose-300"
                         aria-label="Delete user"
                       >
                         <Trash2 className="h-4 w-4" />

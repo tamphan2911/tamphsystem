@@ -185,7 +185,7 @@ export function AssistantsTable({
               >
                 <td className="px-4 py-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-[#444444] bg-[#202020] text-[#B39CD0] shadow-none">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#6F5AA8] dark:text-[#B39CD0]">
                       <UserRound className="h-4 w-4" />
                     </span>
                     <span className="min-w-0 truncate text-sm font-medium text-slate-700 dark:text-slate-100">
@@ -199,7 +199,7 @@ export function AssistantsTable({
                   </span>
                 </td>
                 <td className="px-3 py-3">
-                  <div className="inline-flex max-w-full items-center gap-2 border border-[#444444] bg-slate-50 px-2.5 py-1.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                  <div className="inline-flex max-w-full items-center gap-2 py-1.5 text-sm text-slate-700 dark:text-slate-200">
                     <KeyRound className="h-4 w-4 shrink-0 text-[#777777]" />
                     <span className="min-w-0 flex-1 truncate font-mono">
                       {visiblePasswords[user.id]
@@ -211,7 +211,7 @@ export function AssistantsTable({
                     <button
                       type="button"
                       onClick={() => togglePassword(user.id)}
-                      className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-none text-slate-400 transition hover:bg-white hover:text-blue-600 dark:hover:bg-slate-900 dark:hover:text-blue-300"
+                      className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-none text-slate-400 transition hover:text-blue-600 dark:hover:text-blue-300"
                       aria-label={
                         visiblePasswords[user.id]
                           ? "Hide assistant password"
@@ -235,7 +235,7 @@ export function AssistantsTable({
                       <button
                         type="button"
                         onClick={() => openEdit(user)}
-                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-[#444444] bg-[#2C2C2C] text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
+                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-transparent bg-transparent text-slate-500 transition hover:-translate-y-0.5 hover:text-blue-700 dark:text-slate-300 dark:hover:text-blue-300"
                         aria-label="Edit assistant role"
                       >
                         <Pencil className="h-4 w-4" />
@@ -243,7 +243,7 @@ export function AssistantsTable({
                       <button
                         type="button"
                         onClick={() => setDeleting(user)}
-                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-[#444444] bg-[#2C2C2C] text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-rose-900 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-transparent bg-transparent text-slate-500 transition hover:-translate-y-0.5 hover:text-rose-700 dark:text-slate-300 dark:hover:text-rose-300"
                         aria-label="Remove assistant role"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -386,10 +386,10 @@ function RolePill({ role }: { role: string }) {
   const chief = role === "CHIEF_ASSISTANT";
   return (
     <span
-      className={`inline-flex border px-2 py-1 text-xs font-normal ${
+      className={`inline-flex text-xs font-normal ${
         chief
-          ? "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900"
-          : "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900"
+          ? "text-emerald-700 dark:text-emerald-300"
+          : "text-blue-700 dark:text-blue-300"
       }`}
     >
       {chief ? "Chief Assistant" : "Assistant"}

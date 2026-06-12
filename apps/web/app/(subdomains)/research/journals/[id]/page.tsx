@@ -223,7 +223,7 @@ export default async function JournalDetailPage({
                   position="bottom"
                 >
                   <Star
-                    className={`h-[19px] w-[19px] transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
+                    className={`h-4 w-4 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
                       journal.isFavorite ? "text-amber-400" : "text-[#777777]"
                     }`}
                     aria-hidden="true"
@@ -238,7 +238,7 @@ export default async function JournalDetailPage({
                   position="bottom"
                 >
                   <BookmarkCheck
-                    className={`h-[19px] w-[19px] transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
+                    className={`h-4 w-4 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
                       journal.isInterest ? "text-sky-400" : "text-[#777777]"
                     }`}
                     aria-hidden="true"

@@ -17,7 +17,6 @@ import {
   researchDropdownItemClass,
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
-  researchFieldClass,
   researchSearchFieldClass,
 } from "./ResearchPrimitives";
 import { FloatingDropdownPortal } from "./FloatingDropdownPortal";
@@ -103,15 +102,15 @@ export function FilterSelect({
         className={cx(
           "group inline-flex h-10 w-full cursor-pointer items-center justify-between gap-3 rounded-none border px-3 text-sm font-normal outline-none transition-colors duration-150 motion-reduce:transition-none",
           open
-            ? "border-[#5A5A5A] bg-[#383838] text-[#E4E4E4]"
-            : "border-[#444444] bg-[#2C2C2C] text-[#E4E4E4] hover:border-[#5A5A5A] hover:bg-[#383838] hover:text-white focus:border-[#5A5A5A]",
+            ? "border-sky-200 bg-white text-slate-950 dark:border-[#5A5A5A] dark:bg-[#383838] dark:text-[#E4E4E4]"
+            : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus:border-sky-400 dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white dark:focus:border-[#5A5A5A]",
         )}
       >
         <span className="min-w-0 truncate text-left leading-5">
           {selected?.label}
         </span>
         <ChevronDown
-          className={`h-4 w-4 flex-none text-[#B0B0B0] transition duration-200 ease-out group-hover:text-[#A8DADC] motion-reduce:transition-none ${open ? "rotate-180 text-[#A8DADC]" : ""}`}
+          className={`h-4 w-4 flex-none text-slate-500 transition duration-200 ease-out group-hover:text-sky-700 motion-reduce:transition-none dark:text-[#B0B0B0] dark:group-hover:text-[#A8DADC] ${open ? "rotate-180 text-sky-700 dark:text-[#A8DADC]" : ""}`}
           aria-hidden="true"
         />
       </button>
@@ -173,7 +172,7 @@ export function TableSearchInput({
   return (
     <div className="relative w-full min-w-0 flex-1 lg:max-w-md">
       <Search
-        className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8b8392] dark:text-[#766f80]"
+        className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-[#766f80]"
         aria-hidden="true"
       />
       <input
@@ -223,15 +222,15 @@ export function TablePagination({
   const end = Math.min(total, page * pageSize);
 
   return (
-    <div className="flex flex-col gap-3 border-t border-[#333333] bg-[#242424] px-0 py-3 transition sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-xs font-normal text-[#B0B0B0]">
+    <div className="flex flex-col gap-3 border-t border-slate-200 bg-transparent px-0 py-3 transition sm:flex-row sm:items-center sm:justify-between dark:border-[#333333] dark:bg-[#242424]">
+      <p className="text-xs font-normal text-slate-500 dark:text-[#B0B0B0]">
         Showing{" "}
-        <span className="text-[#E4E4E4]">
+        <span className="text-slate-800 dark:text-[#E4E4E4]">
           {start}-{end}
         </span>{" "}
-        of <span className="text-[#E4E4E4]">{total}</span>
+        of <span className="text-slate-800 dark:text-[#E4E4E4]">{total}</span>
       </p>
-      <div className="flex overflow-hidden border border-[#444444] bg-[#2C2C2C]">
+      <div className="flex overflow-hidden border border-slate-200 bg-white dark:border-[#444444] dark:bg-[#2C2C2C]">
         <ResearchIconButton
           type="button"
           onClick={() => onPageChange(Math.max(1, page - 1))}
@@ -242,7 +241,7 @@ export function TablePagination({
         >
           <ChevronLeft className="h-4 w-4" />
         </ResearchIconButton>
-        <span className="border-x border-[#444444] px-3 py-2 text-xs font-normal text-[#E4E4E4]">
+        <span className="border-x border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 dark:border-[#444444] dark:text-[#E4E4E4]">
           {page} / {pageCount}
         </span>
         <ResearchIconButton

@@ -43,25 +43,25 @@ export type NotificationManagementRow = {
 
 function statusClass(readAt: string) {
   if (readAt) {
-    return "text-[#8FCFD1] hover:text-[#C9F0F2]";
+    return "text-[#1F7180] hover:text-[#155864] dark:text-[#8FCFD1] dark:hover:text-[#C9F0F2]";
   }
-  return "text-[#F0A6B5] hover:text-[#FFC1CC]";
+  return "text-[#B33E5C] hover:text-[#8F2D45] dark:text-[#F0A6B5] dark:hover:text-[#FFC1CC]";
 }
 
 function typeClass(type: string) {
   if (type.includes("TASK")) {
-    return "text-[#8FCFD1] hover:text-[#C9F0F2]";
+    return "text-[#1F7180] hover:text-[#155864] dark:text-[#8FCFD1] dark:hover:text-[#C9F0F2]";
   }
   if (type.includes("SUBMISSION")) {
-    return "text-[#CDB6E8] hover:text-[#E7D8F7]";
+    return "text-[#6F5AA8] hover:text-[#513E86] dark:text-[#CDB6E8] dark:hover:text-[#E7D8F7]";
   }
   if (type.includes("PROJECT")) {
-    return "text-[#F4D47A] hover:text-[#FFE7A3]";
+    return "text-[#A06716] hover:text-[#7C4D0F] dark:text-[#F4D47A] dark:hover:text-[#FFE7A3]";
   }
   if (type.includes("PUBLISHED") || type.includes("ACCEPTED")) {
-    return "text-[#9CE6C7] hover:text-[#C9F0F2]";
+    return "text-[#2F8F62] hover:text-[#246F4C] dark:text-[#9CE6C7] dark:hover:text-[#C9F0F2]";
   }
-  return "text-[#B0B0B0] hover:text-[#E4E4E4]";
+  return "text-slate-600 hover:text-slate-900 dark:text-[#B0B0B0] dark:hover:text-[#E4E4E4]";
 }
 
 function hasEmailDelivery(type: string) {
@@ -323,7 +323,7 @@ export function NotificationsTable({
                         <IconHint
                           label={`Email also sent: ${notification.typeLabel}`}
                         >
-                          <span className="inline-flex cursor-help items-center text-[#F4D47A] transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#FFE7A3] hover:drop-shadow-[0_0_0.45rem_rgba(244,212,122,0.22)]">
+                          <span className="inline-flex cursor-help items-center text-[#A06716] transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#7C4D0F] hover:drop-shadow-[0_0_0.45rem_rgba(160,103,22,0.18)] dark:text-[#F4D47A] dark:hover:text-[#FFE7A3] dark:hover:drop-shadow-[0_0_0.45rem_rgba(244,212,122,0.22)]">
                             <MailCheck className="h-4 w-4" aria-hidden="true" />
                             <span className="sr-only">
                               Email also sent: {notification.typeLabel}
@@ -354,24 +354,28 @@ export function NotificationsTable({
                   <td className="px-3 py-3 text-xs text-[#B0B0B0]">
                     {notification.createdAt}
                   </td>
-                  <td className="px-2 py-3 text-center align-top">
+                  <td className="px-2 py-3 align-top">
                     {notification.href ? (
-                      <Link
-                        href={notification.href}
-                        className="inline-flex h-9 w-9 items-center justify-center border border-[#444444] bg-transparent text-[#B0B0B0] transition hover:-translate-y-0.5 hover:bg-[#383838] hover:text-[#A8DADC] hover:shadow-sm"
-                        aria-label="Open related page"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Link>
+                      <div className="flex justify-center">
+                        <Link
+                          href={notification.href}
+                          className="inline-flex h-9 w-9 items-center justify-center border border-transparent bg-transparent text-slate-600 transition hover:-translate-y-0.5 hover:text-[#1F7180] dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+                          aria-label="Open related page"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Link>
+                      </div>
                     ) : (
                       <span className="text-[#555555]">-</span>
                     )}
                   </td>
-                  <td className="px-2 py-3 text-center align-top">
-                    <DeleteNotificationButton
-                      notification={notification}
-                      deleteNotificationAction={deleteNotificationAction}
-                    />
+                  <td className="px-2 py-3 align-top">
+                    <div className="flex justify-center">
+                      <DeleteNotificationButton
+                        notification={notification}
+                        deleteNotificationAction={deleteNotificationAction}
+                      />
+                    </div>
                   </td>
                 </tr>
               );

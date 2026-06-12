@@ -5,7 +5,10 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { HelpCircle, Loader2, MessageSquareText, Send } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
-import { researchTextareaClass } from "@/sites/research/components/ResearchPrimitives";
+import {
+  IconHint,
+  researchTextareaClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import { displayResearchPersonName } from "@/sites/research/lib/display";
 
 export type TaskClarificationItem = {
@@ -70,12 +73,24 @@ export function TaskClarificationPanel({
 
   return (
     <section className={className}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3">
         <div className="min-w-0">
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-              Request and feedback
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                Request and feedback
+              </h2>
+              <IconHint label="Open request and feedback history">
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(true)}
+                  className="research-task-icon-motion inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none transition hover:text-[#A8DADC]"
+                  aria-label="Open request and feedback history"
+                >
+                  <MessageSquareText className="h-4 w-4" />
+                </button>
+              </IconHint>
+            </div>
             {latest ? (
               <>
                 <p className="mt-2 text-xs font-normal leading-5 text-[#B0B0B0]">
@@ -102,14 +117,6 @@ export function TaskClarificationPanel({
             )}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none transition hover:-translate-y-0.5 hover:text-[#A8DADC]"
-          aria-label="Open request and feedback history"
-        >
-          <MessageSquareText className="h-4 w-4" />
-        </button>
       </div>
 
       <ResearchModal

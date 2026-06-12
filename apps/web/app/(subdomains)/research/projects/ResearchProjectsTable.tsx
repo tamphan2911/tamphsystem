@@ -215,15 +215,15 @@ function SubmitCount({ count }: { count: number }) {
       ? `${count} submissions, high submission count`
       : `${count} submissions`;
   const className = isZero
-    ? "bg-[#383838] text-[#A8DADC] ring-[#444444]"
+    ? "text-[#1F7180] dark:text-[#A8DADC]"
     : isHigh
-      ? "bg-[#3A3A3A] text-[#E4E4E4] ring-[#A8DADC]"
-      : "bg-[#202020] text-[#E4E4E4] ring-[#666666]";
+      ? "text-[#1F2937] dark:text-[#E4E4E4]"
+      : "text-[#667085] dark:text-[#B0B0B0]";
 
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-none px-2 text-sm font-normal ring-1 transition-colors duration-150 ${className}`}
+        className={`inline-flex h-8 min-w-8 items-center justify-center px-2 text-sm font-normal transition-colors duration-150 ${className}`}
       >
         {count}
         <span className="sr-only">{label}</span>
@@ -413,14 +413,18 @@ export function ResearchProjectsTable({
               >
                 <td className="px-3 py-3 align-top">
                   <Link href={`/projects/${row.id}`}>
-                    <span className={`font-mono text-xs ${researchMutedLinkClass}`}>
+                    <span
+                      className={`font-mono text-xs ${researchMutedLinkClass}`}
+                    >
                       {row.researchCode || "-"}
                     </span>
                   </Link>
                 </td>
                 <td className="min-w-0 px-3 py-3 align-top">
                   <Link href={`/projects/${row.id}`} className="group">
-                    <p className={`line-clamp-2 text-base group-hover:text-[#A8DADC] ${researchLinkClass}`}>
+                    <p
+                      className={`line-clamp-2 text-base group-hover:text-[#A8DADC] ${researchLinkClass}`}
+                    >
                       {row.title}
                     </p>
                     <p className="mt-1 line-clamp-1 text-xs text-[#B0B0B0]">

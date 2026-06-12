@@ -83,18 +83,21 @@ export function ResearchFormSelect({
         className={cx(
           "group inline-flex cursor-pointer items-center justify-between gap-3 text-left",
           researchSelectTriggerClass,
-          open && "border-[#A8DADC] bg-[#383838]",
+          open &&
+            "border-sky-400 bg-white dark:border-[#A8DADC] dark:bg-[#383838]",
         )}
       >
         <span
           className={`min-w-0 truncate text-left ${
-            isPlaceholder ? "text-[#5A5A5A]" : "text-[#E4E4E4]"
+            isPlaceholder
+              ? "text-slate-400 dark:text-[#5A5A5A]"
+              : "text-slate-800 dark:text-[#E4E4E4]"
           }`}
         >
           {selected?.label}
         </span>
         <ChevronDown
-          className={`h-4 w-4 flex-none text-[#B0B0B0] transition duration-200 ease-out group-hover:text-[#A8DADC] motion-reduce:transition-none ${open ? "rotate-180 text-[#A8DADC]" : ""}`}
+          className={`h-4 w-4 flex-none text-slate-500 transition duration-200 ease-out group-hover:text-sky-700 motion-reduce:transition-none dark:text-[#B0B0B0] dark:group-hover:text-[#A8DADC] ${open ? "rotate-180 text-sky-700 dark:text-[#A8DADC]" : ""}`}
           aria-hidden="true"
         />
       </button>

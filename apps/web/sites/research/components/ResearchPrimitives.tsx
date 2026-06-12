@@ -13,28 +13,28 @@ export function cx(...classes: Array<string | false | null | undefined>) {
 }
 
 export const researchFieldClass =
-  "h-12 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
+  "h-12 w-full rounded-none border border-slate-200 bg-white px-3 text-sm font-normal text-slate-800 outline-none transition duration-150 ease-out placeholder:text-slate-400 hover:border-slate-300 hover:bg-slate-50 focus:border-sky-500 focus:bg-white disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:placeholder:text-[#5A5A5A] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:focus:border-[#A8DADC] dark:focus:bg-[#383838] dark:disabled:border-[#3A3A3A] dark:disabled:bg-[#383838] dark:disabled:text-[#B0B0B0]";
 
 export const researchSearchFieldClass =
-  "h-12 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
+  "h-12 w-full rounded-none border border-slate-200 bg-white px-3 text-sm font-normal text-slate-800 outline-none transition duration-150 ease-out placeholder:text-slate-400 hover:border-slate-300 hover:bg-white focus:border-sky-500 focus:bg-white disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:placeholder:text-[#5A5A5A] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:focus:border-[#A8DADC] dark:focus:bg-[#383838] dark:disabled:border-[#3A3A3A] dark:disabled:bg-[#383838] dark:disabled:text-[#B0B0B0]";
 
 export const researchSelectTriggerClass =
-  "h-12 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
+  "h-12 w-full rounded-none border border-slate-200 bg-white px-3 text-sm font-normal text-slate-800 outline-none transition duration-150 ease-out hover:border-slate-300 hover:bg-slate-50 focus:border-sky-500 focus:bg-white disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:focus:border-[#A8DADC] dark:focus:bg-[#383838] dark:disabled:border-[#3A3A3A] dark:disabled:bg-[#383838] dark:disabled:text-[#B0B0B0]";
 
 export const researchDropdownPanelClass =
-  "research-dropdown-panel overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] shadow-2xl shadow-black/35";
+  "research-dropdown-panel overflow-hidden rounded-none border border-slate-200 bg-white text-slate-800 shadow-2xl shadow-slate-900/12 dark:border-[#5A5A5A] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:shadow-black/35";
 
 export const researchDropdownItemClass =
   "flex w-full items-start justify-between gap-3 rounded-none border-y px-0 py-2.5 text-left text-sm leading-5 transition duration-150 ease-out motion-reduce:transition-none";
 
 export const researchDropdownItemIdleClass =
-  "border-transparent text-[#B0B0B0] hover:border-[#444444] hover:bg-[#303030] hover:text-white";
+  "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950 dark:text-[#B0B0B0] dark:hover:border-[#444444] dark:hover:bg-[#303030] dark:hover:text-white";
 
 export const researchDropdownItemActiveClass =
-  "border-[#444444] bg-[#383838] font-normal text-[#E4E4E4]";
+  "border-sky-100 bg-sky-50 font-normal text-slate-950 dark:border-[#444444] dark:bg-[#383838] dark:text-[#E4E4E4]";
 
 export const researchTextareaClass =
-  "min-h-28 w-full rounded-none border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-[#E4E4E4] outline-none transition duration-150 ease-out placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] disabled:cursor-not-allowed disabled:border-[#3A3A3A] disabled:bg-[#383838] disabled:text-[#B0B0B0]";
+  "min-h-28 w-full rounded-none border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal text-slate-800 outline-none transition duration-150 ease-out placeholder:text-slate-400 hover:border-slate-300 hover:bg-slate-50 focus:border-sky-500 focus:bg-white disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:placeholder:text-[#5A5A5A] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:focus:border-[#A8DADC] dark:focus:bg-[#383838] dark:disabled:border-[#3A3A3A] dark:disabled:bg-[#383838] dark:disabled:text-[#B0B0B0]";
 
 export const researchLinkClass =
   "font-normal text-[#E4E4E4] transition-[color,text-shadow,filter,transform] duration-180 ease-out hover:text-[#A8DADC] hover:[text-shadow:0_0_0.65rem_rgba(168,218,220,0.22)] active:[transform:scale(0.985)] active:brightness-110 motion-reduce:transform-none motion-reduce:transition-none";
@@ -43,13 +43,13 @@ export const researchMutedLinkClass =
   "font-normal text-[#B0B0B0] transition-[color,text-shadow,filter,transform] duration-180 ease-out hover:text-[#A8DADC] hover:[text-shadow:0_0_0.65rem_rgba(168,218,220,0.2)] active:[transform:scale(0.985)] active:brightness-110 motion-reduce:transform-none motion-reduce:transition-none";
 
 export const researchLabelClass =
-  "grid gap-1.5 text-sm font-normal text-[#E4E4E4]";
+  "grid gap-1.5 text-sm font-normal text-slate-800 dark:text-[#E4E4E4]";
 
 export const researchSectionClass =
-  "rounded-none border border-[#444444] bg-[#2C2C2C] p-5";
+  "rounded-none border border-slate-200 bg-white p-5 dark:border-[#444444] dark:bg-[#2C2C2C]";
 
 export const researchItemClass =
-  "rounded-none border border-[#444444] bg-[#2C2C2C]";
+  "rounded-none border border-slate-200 bg-white dark:border-[#444444] dark:bg-[#2C2C2C]";
 
 const buttonClasses: Record<ButtonTone, string> = {
   primary:
@@ -61,7 +61,7 @@ const buttonClasses: Record<ButtonTone, string> = {
   success:
     "border-emerald-200 bg-emerald-100/80 text-emerald-800 shadow-emerald-900/5 hover:border-emerald-300 hover:bg-emerald-50 hover:shadow-emerald-900/10 focus:ring-emerald-500/15 dark:border-emerald-800/70 dark:bg-emerald-950/45 dark:text-emerald-200 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/55 dark:hover:text-emerald-100 dark:focus:ring-emerald-500/20",
   quiet:
-    "border-transparent bg-transparent text-[#B0B0B0] shadow-transparent hover:border-[#444444] hover:bg-[#383838] hover:text-[#E4E4E4] focus:ring-[#A8DADC]/20",
+    "border-transparent bg-transparent text-slate-500 shadow-transparent hover:border-slate-200 hover:bg-slate-50 hover:text-slate-800 focus:ring-sky-500/20 dark:text-[#B0B0B0] dark:hover:border-[#444444] dark:hover:bg-[#383838] dark:hover:text-[#E4E4E4] dark:focus:ring-[#A8DADC]/20",
 };
 
 export function ResearchButton({
@@ -90,17 +90,17 @@ export function ResearchButton({
 }
 
 const iconToneClasses: Record<Tone, string> = {
-  blue: "border-blue-100 bg-blue-50 text-blue-600 hover:border-blue-200 hover:bg-blue-100 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50",
+  blue: "border-transparent bg-transparent text-blue-700 hover:border-blue-100 hover:bg-blue-50 hover:text-blue-800 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50",
   emerald:
-    "border-emerald-100 bg-emerald-50 text-emerald-600 hover:border-emerald-200 hover:bg-emerald-100 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50",
+    "border-transparent bg-transparent text-emerald-700 hover:border-emerald-100 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50",
   amber:
-    "border-amber-100 bg-amber-50 text-amber-700 hover:border-amber-200 hover:bg-amber-100 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50",
-  rose: "border-rose-100 bg-rose-50 text-rose-600 hover:border-rose-200 hover:bg-rose-100 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50",
+    "border-transparent bg-transparent text-amber-700 hover:border-amber-100 hover:bg-amber-50 hover:text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50",
+  rose: "border-transparent bg-transparent text-rose-700 hover:border-rose-100 hover:bg-rose-50 hover:text-rose-800 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50",
   violet:
-    "border-violet-100 bg-violet-50 text-violet-600 hover:border-violet-200 hover:bg-violet-100 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-300 dark:hover:bg-violet-900/50",
+    "border-transparent bg-transparent text-violet-700 hover:border-violet-100 hover:bg-violet-50 hover:text-violet-800 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-300 dark:hover:bg-violet-900/50",
   slate:
-    "border-[#444444] bg-[#2C2C2C] text-[#B0B0B0] hover:border-[#A8DADC] hover:bg-[#383838] hover:text-[#E4E4E4]",
-  cyan: "border-cyan-100 bg-cyan-50 text-cyan-700 hover:border-cyan-200 hover:bg-cyan-100 dark:border-cyan-900/70 dark:bg-cyan-950/40 dark:text-cyan-300 dark:hover:bg-cyan-900/50",
+    "border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#B0B0B0] dark:hover:border-[#A8DADC] dark:hover:bg-[#383838] dark:hover:text-[#E4E4E4]",
+  cyan: "border-transparent bg-transparent text-cyan-700 hover:border-cyan-100 hover:bg-cyan-50 hover:text-cyan-800 dark:border-cyan-900/70 dark:bg-cyan-950/40 dark:text-cyan-300 dark:hover:bg-cyan-900/50",
 };
 
 export function ResearchIconButton({
@@ -202,7 +202,7 @@ export function IconHint({
               ref={tooltipRef}
               style={{ left: coords.left, top: coords.top }}
               className={cx(
-                "research-icon-tooltip pointer-events-none fixed z-[9999] max-w-[calc(100vw-1.5rem)] whitespace-nowrap rounded-none border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-[11px] font-normal text-[#E4E4E4] opacity-100 shadow-lg shadow-black/30 transition duration-150 ease-out",
+                "research-icon-tooltip pointer-events-none fixed z-[9999] max-w-[calc(100vw-1.5rem)] whitespace-nowrap rounded-none border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-normal text-slate-700 opacity-100 shadow-lg shadow-slate-900/12 transition duration-150 ease-out dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:shadow-black/30",
                 position === "top"
                   ? "-translate-x-1/2 -translate-y-full"
                   : "-translate-x-1/2",

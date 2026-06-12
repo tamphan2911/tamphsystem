@@ -262,8 +262,8 @@ export function ProposalsTable({
               <th className="px-3 py-3">Proposal</th>
               <th className="w-14 px-2 py-3 text-center">Type</th>
               <th className="w-14 px-2 py-3 text-center">Status</th>
-              <th className="w-36 px-3 py-3">Submitted</th>
-              <th className="w-28 px-3 py-3">Contact</th>
+              <th className="w-56 px-3 py-3">Submitted</th>
+              <th className="w-24 px-3 py-3">Contact</th>
               <th className="w-12 px-2 py-3 text-center">File</th>
               {isAdmin && deleteAction && (
                 <th className="w-12 px-2 py-3 text-center">
@@ -333,7 +333,7 @@ export function ProposalsTable({
                   <span className="block text-[#E4E4E4]">
                     {proposal.submittedBy}
                   </span>
-                  <span className="line-clamp-1">
+                  <span className="block break-all">
                     {proposal.submittedByEmail}
                   </span>
                 </td>
@@ -347,7 +347,7 @@ export function ProposalsTable({
                     <IconHint label="Download support file">
                       <a
                         href={`/api/research/proposals/${proposal.id}/file`}
-                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-none border border-emerald-100 bg-emerald-50 text-emerald-700 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-100 hover:shadow-md dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/50"
+                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-none border border-transparent bg-transparent text-emerald-700 transition hover:-translate-y-0.5 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
                       >
                         <Download className="h-4 w-4" />
                       </a>

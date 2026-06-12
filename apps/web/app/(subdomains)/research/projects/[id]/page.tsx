@@ -1203,7 +1203,7 @@ export default async function ProjectDetailPage({
                         disabled={productionTimelineLocked}
                         className="peer sr-only"
                       />
-                      <span className="relative z-10 mt-0.5 flex h-8 w-8 items-center justify-center border border-[#444444] bg-[#202020] text-[#666666] transition duration-150 peer-checked:border-[#A8DADC] peer-checked:bg-[#263636] peer-checked:text-[#A8DADC] peer-focus-visible:ring-4 peer-focus-visible:ring-[#A8DADC]/10 group-hover/timeline:border-[#666666] peer-checked:group-hover/timeline:border-[#A8DADC] peer-checked:[&_.timeline-check]:opacity-100 peer-checked:[&_.timeline-dot]:opacity-0">
+                      <span className="relative z-10 mt-0.5 flex h-8 w-8 items-center justify-center border border-slate-200 bg-white text-slate-400 transition duration-150 peer-checked:border-[#1F7180] peer-checked:bg-[#E6F4F2] peer-checked:text-[#1F7180] peer-focus-visible:ring-4 peer-focus-visible:ring-[#1F7180]/10 group-hover/timeline:border-slate-300 peer-checked:group-hover/timeline:border-[#155864] dark:border-[#444444] dark:bg-[#202020] dark:text-[#666666] dark:peer-checked:border-[#A8DADC] dark:peer-checked:bg-[#263636] dark:peer-checked:text-[#A8DADC] dark:peer-focus-visible:ring-[#A8DADC]/10 dark:group-hover/timeline:border-[#666666] dark:peer-checked:group-hover/timeline:border-[#A8DADC] peer-checked:[&_.timeline-check]:opacity-100 peer-checked:[&_.timeline-dot]:opacity-0">
                         <CheckCircle2
                           className="timeline-check h-4 w-4 opacity-0 transition duration-150"
                           aria-hidden="true"

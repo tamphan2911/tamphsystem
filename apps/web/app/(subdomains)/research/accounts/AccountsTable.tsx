@@ -245,7 +245,7 @@ export function AccountsTable({
               <th className="w-32 px-3 py-3">Publisher</th>
               <th className="w-12 px-2 py-3 text-center">
                 <IconHint label="Submissions">
-                  <Send className="mx-auto h-4 w-4 text-emerald-500" />
+                  <Send className="mx-auto h-4 w-4 text-[#1F7180] dark:text-emerald-300" />
                 </IconHint>
               </th>
               <th className="w-36 px-3 py-3">Note</th>

@@ -40,9 +40,9 @@ export type SuggestionRow = {
 
 function typeClass(kind: SuggestionKind) {
   if (kind === "Journal") {
-    return "text-[#8FCFD1] hover:text-[#C9F0F2]";
+    return "text-[#1F7180] hover:text-[#155864] dark:text-[#8FCFD1] dark:hover:text-[#C9F0F2]";
   }
-  return "text-[#CDB6E8] hover:text-[#E7D8F7]";
+  return "text-[#6F5AA8] hover:text-[#513E86] dark:text-[#CDB6E8] dark:hover:text-[#E7D8F7]";
 }
 
 function DeleteSuggestionButton({
@@ -315,12 +315,14 @@ export function SuggestionsTable({
                   <td className="px-3 py-3 text-xs text-[#B0B0B0]">
                     {suggestion.createdAt}
                   </td>
-                  <td className="px-3 py-3 text-center align-top">
-                    <DeleteSuggestionButton
-                      suggestion={suggestion}
-                      deleteJournalAction={deleteJournalAction}
-                      deleteConferenceAction={deleteConferenceAction}
-                    />
+                  <td className="px-3 py-3 align-top">
+                    <div className="flex justify-center">
+                      <DeleteSuggestionButton
+                        suggestion={suggestion}
+                        deleteJournalAction={deleteJournalAction}
+                        deleteConferenceAction={deleteConferenceAction}
+                      />
+                    </div>
                   </td>
                 </tr>
               );
