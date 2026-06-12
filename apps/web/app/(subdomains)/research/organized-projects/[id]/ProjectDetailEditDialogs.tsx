@@ -4,11 +4,11 @@ import { useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import {
   Building2,
+  FilePlus2,
   FileText,
   LinkIcon,
   Loader2,
   Pencil,
-  PlusCircle,
   Save,
   UsersRound,
 } from "lucide-react";
@@ -204,7 +204,7 @@ function EditIconButton({
         type="button"
         onClick={onClick}
         aria-label={label}
-        className={`inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 ${className}`}
+        className={`research-task-icon-motion inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 ${className}`}
       >
         {icon ?? <Pencil className="h-4 w-4" />}
       </button>
@@ -607,13 +607,13 @@ export function CreateProjectResearchDialog({
       <EditIconButton
         label="Add research associated"
         onClick={() => setOpen(true)}
-        icon={<PlusCircle className="h-4 w-4" />}
+        icon={<FilePlus2 className="h-4 w-4" />}
         className="text-[#A8DADC] hover:text-[#E4E4E4]"
       />
       <DialogShell
         open={open}
         onClose={() => setOpen(false)}
-        icon={<PlusCircle className="h-5 w-5" />}
+        icon={<FilePlus2 className="h-5 w-5" />}
         title="Add research associated"
         detail="Create a research record and link it to this project."
         headerActions={

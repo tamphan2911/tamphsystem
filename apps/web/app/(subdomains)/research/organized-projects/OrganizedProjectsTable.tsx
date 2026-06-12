@@ -7,12 +7,12 @@ import {
   Banknote,
   CalendarClock,
   CheckCircle2,
-  CircleDollarSign,
   CircleOff,
   Clock3,
   RotateCcw,
   ShieldCheck,
   Trash2,
+  WalletCards,
 } from "lucide-react";
 import { formatCurrencyCodeMoney } from "@/sites/research/lib/currency";
 import {
@@ -123,7 +123,7 @@ function financialClaimMeta(status: string) {
   }
   return {
     label: "Not advanced",
-    icon: CircleDollarSign,
+    icon: WalletCards,
     className: "text-[#FFC1CC]",
   };
 }
@@ -355,7 +355,7 @@ export function OrganizedProjectsTable({
                   <td className="px-2 py-3 text-center align-top">
                     <IconHint label={claim.label}>
                       <span
-                        className={`inline-flex h-9 w-9 items-center justify-center ${claim.className}`}
+                        className={`research-task-icon-motion inline-flex h-9 w-9 items-center justify-center ${claim.className}`}
                       >
                         <ClaimIcon className="h-4 w-4" aria-hidden="true" />
                         <span className="sr-only">{claim.label}</span>

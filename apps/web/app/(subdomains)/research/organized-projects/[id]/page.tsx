@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
-  ArrowLeft,
   BadgeCheck,
   Banknote,
   BookOpenCheck,
@@ -11,7 +10,6 @@ import {
   CheckCircle2,
   CircleOff,
   Clock3,
-  ExternalLink,
   FileSearch,
   FlaskConical,
   GraduationCap,
@@ -48,7 +46,6 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
-import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
 import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 
 export const dynamic = "force-dynamic";
@@ -86,23 +83,20 @@ function statusMeta(status: string) {
     return {
       label: "Completed",
       icon: CheckCircle2,
-      className:
-        "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+      className: "text-[#9ED6B5]",
     };
   }
   if (status === "ACTIVE") {
     return {
       label: "Active",
       icon: Clock3,
-      className:
-        "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900",
+      className: "text-[#93C5FD]",
     };
   }
   return {
     label: "Planned",
     icon: CalendarClock,
-    className:
-      "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900",
+    className: "text-[#F4D47A]",
   };
 }
 
@@ -111,39 +105,34 @@ function claimMeta(status: string) {
     return {
       label: "None",
       icon: CircleOff,
-      className:
-        "bg-slate-50 text-slate-500 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+      className: "text-[#B8BEC8]",
     };
   }
   if (status === "ADVANCED") {
     return {
       label: "Advanced",
       icon: Banknote,
-      className:
-        "bg-sky-50 text-sky-700 ring-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-900",
+      className: "text-[#C8B6E2]",
     };
   }
   if (status === "SETTLED") {
     return {
       label: "Settled",
       icon: ShieldCheck,
-      className:
-        "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+      className: "text-[#9ED6B5]",
     };
   }
   if (status === "REFUND_ADVANCE") {
     return {
       label: "Refund advance",
       icon: RotateCcw,
-      className:
-        "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
+      className: "text-[#F0A6B5]",
     };
   }
   return {
     label: "Not advanced",
     icon: WalletCards,
-    className:
-      "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+    className: "text-[#FFC1CC]",
   };
 }
 
@@ -171,15 +160,15 @@ function researchStageLabel(stage: string) {
 
 function researchStageClass(stage: string) {
   if (stage === "PUBLISHED" || stage === "ACCEPTED") {
-    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+    return "text-[#9ED6B5]";
   }
   if (stage === "REVIEW") {
-    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+    return "text-[#F4D47A]";
   }
   if (stage === "SUBMITTING") {
-    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+    return "text-[#93C5FD]";
   }
-  return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+  return "text-[#B8BEC8]";
 }
 
 function researchStageIcon(stage: string) {
@@ -202,7 +191,7 @@ function StatusIconChip({
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${className}`}
+        className={`research-task-icon-motion inline-flex h-8 w-8 items-center justify-center ${className}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
@@ -503,29 +492,16 @@ export default async function OrganizedProjectDetailPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
-      <Link
-        href="/organized-projects"
-        className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Projects
-      </Link>
-
       <header className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="font-mono text-xs font-bold uppercase tracking-wide text-slate-400">
-                {project.referenceCode || project.id.slice(0, 8).toUpperCase()}
-              </p>
-            </div>
-            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
-              <h1 className="min-w-0 text-2xl font-medium leading-tight text-[#E4E4E4]">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h1 className="min-w-0 text-[23px] font-medium leading-tight text-[#E4E4E4]">
                 {project.title}
               </h1>
               <IconHint label={`Status: ${status.label}`}>
                 <span
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 ${status.className}`}
+                  className={`research-task-icon-motion inline-flex h-7 w-7 items-center justify-center ${status.className}`}
                 >
                   <StatusIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
@@ -540,21 +516,25 @@ export default async function OrganizedProjectDetailPage({
                 />
               )}
             </div>
-            <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
-              <p className="min-w-0 truncate text-sm font-medium text-[#B0B0B0]">
+            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2 text-sm text-[#B0B0B0]">
+              <span className="font-mono text-xs font-bold uppercase tracking-wide text-slate-400">
+                {project.referenceCode || project.id.slice(0, 8).toUpperCase()}
+              </span>
+              <span className="text-[#777777]">|</span>
+              <span className="min-w-0 truncate font-normal">
                 {project.fundingInstitution?.name ||
                   project.organizer ||
                   "No funding institution"}
-              </p>
+              </span>
               <IconHint label={`Financial: ${claim.label}`}>
                 <span
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 ${claim.className}`}
+                  className={`research-task-icon-motion inline-flex h-7 w-7 items-center justify-center ${claim.className}`}
                 >
                   <ClaimIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
               </IconHint>
               <IconHint label={`Project type: ${projectType.label}`}>
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-none border border-[#444444] bg-[#202020] text-[#B0B0B0] transition hover:border-[#A8DADC] hover:text-[#A8DADC]">
+                <span className="research-task-icon-motion inline-flex h-7 w-7 items-center justify-center text-[#B0B0B0] hover:text-[#A8DADC]">
                   <ProjectTypeIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
               </IconHint>
@@ -576,7 +556,7 @@ export default async function OrganizedProjectDetailPage({
             )}
           </div>
           <div className="flex flex-none items-center gap-2 text-sm text-[#B0B0B0]">
-            <CalendarDays className="h-4 w-4 text-blue-500" />
+            <CalendarDays className="research-task-icon-motion h-4 w-4 text-blue-500" />
             <span>
               {shortDate(project.startDate)} - {shortDate(project.endDate)}
             </span>
@@ -590,10 +570,12 @@ export default async function OrganizedProjectDetailPage({
       </header>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <ResearchDetailSection
-          title="Members"
-          action={
-            canEditProject ? (
+        <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
+          <div className="mb-4 flex items-center gap-2">
+            <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+              Members
+            </h2>
+            {canEditProject && (
               <ProjectMembersEditDialog
                 action={saveProject}
                 info={projectInfo}
@@ -601,9 +583,8 @@ export default async function OrganizedProjectDetailPage({
                 research={researchDefaults}
                 users={userOptions}
               />
-            ) : null
-          }
-        >
+            )}
+          </div>
           <div className="divide-y divide-[#444444] border-y border-[#444444]">
             {memberDefaults.map((member, index) => (
               <div key={member.id} className="flex items-start gap-4 py-3">
@@ -617,25 +598,25 @@ export default async function OrganizedProjectDetailPage({
                     </p>
                     {member.isTeamLead && (
                       <span className="inline-flex items-center gap-1 border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#E4E4E4]">
-                        <Star className="h-3 w-3" />
+                        <Star className="research-task-icon-motion h-3 w-3" />
                         Team lead
                       </span>
                     )}
                     {member.isInstructor && (
                       <span className="inline-flex items-center gap-1 border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#A8DADC]">
-                        <GraduationCap className="h-3 w-3" />
+                        <GraduationCap className="research-task-icon-motion h-3 w-3" />
                         Instructor
                       </span>
                     )}
                   </div>
                   <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#777777]">
-                    <Mail className="h-3 w-3 flex-none text-[#A8DADC]" />
+                    <Mail className="research-task-icon-motion h-3 w-3 flex-none text-[#A8DADC]" />
                     <span className="truncate">
                       {displayResearchEmail(member.email)}
                     </span>
                   </p>
                   <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#B0B0B0]">
-                    <Building2 className="h-3 w-3 flex-none text-[#B39CD0]" />
+                    <Building2 className="research-task-icon-motion h-3 w-3 flex-none text-[#B39CD0]" />
                     <span className="truncate">
                       {member.affiliation || "No affiliation recorded"}
                     </span>
@@ -649,14 +630,14 @@ export default async function OrganizedProjectDetailPage({
               </p>
             )}
           </div>
-        </ResearchDetailSection>
+        </section>
 
-        <ResearchDetailSection
-          title="Important documents"
-          action={<ExternalLink className="h-4 w-4 text-slate-400" />}
-        >
-          <div className="space-y-3">
-            <div className="rounded-none border border-dashed border-slate-200 p-4 dark:border-slate-800">
+        <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
+          <h2 className="mb-4 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+            Important documents
+          </h2>
+          <div className="space-y-4">
+            <div>
               <p className="text-sm font-medium text-[#E4E4E4]">
                 Shared project folder
               </p>
@@ -665,7 +646,7 @@ export default async function OrganizedProjectDetailPage({
                 here later.
               </p>
             </div>
-            <div className="rounded-none border border-dashed border-slate-200 p-4 dark:border-slate-800">
+            <div>
               <p className="text-sm font-medium text-[#E4E4E4]">
                 Key files and links
               </p>
@@ -675,16 +656,18 @@ export default async function OrganizedProjectDetailPage({
               </p>
             </div>
           </div>
-        </ResearchDetailSection>
+          <div className="mt-5 border-t border-[#444444] pt-5">
+            <ProjectProductsForm
+              requiredProducts={project.requiredProducts}
+              completedProducts={project.completedProducts}
+              action={saveProducts}
+              embedded
+            />
+          </div>
+        </section>
       </div>
 
-      <ProjectProductsForm
-        requiredProducts={project.requiredProducts}
-        completedProducts={project.completedProducts}
-        action={saveProducts}
-      />
-
-      <ResearchDetailSection>
+      <section>
         <div className="mb-4 flex items-center gap-2">
           <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
             Research associated
@@ -789,7 +772,7 @@ export default async function OrganizedProjectDetailPage({
             </tbody>
           </table>
         </div>
-      </ResearchDetailSection>
+      </section>
     </div>
   );
 }

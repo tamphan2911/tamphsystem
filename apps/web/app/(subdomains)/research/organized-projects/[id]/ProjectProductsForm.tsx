@@ -8,10 +8,12 @@ export function ProjectProductsForm({
   requiredProducts,
   completedProducts,
   action,
+  embedded = false,
 }: {
   requiredProducts: string[];
   completedProducts: string[];
   action: (formData: FormData) => Promise<void>;
+  embedded?: boolean;
 }) {
   const [selected, setSelected] = useState(() => new Set(completedProducts));
   const [isPending, startTransition] = useTransition();
@@ -27,7 +29,11 @@ export function ProjectProductsForm({
   }
 
   return (
-    <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
+    <section
+      className={
+        embedded ? "" : "border border-[#444444] bg-[#2C2C2C] p-5 shadow-none"
+      }
+    >
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -49,7 +55,7 @@ export function ProjectProductsForm({
             </h2>
             <button
               disabled={isPending || requiredProducts.length === 0}
-              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] transition hover:text-[#A8DADC] disabled:cursor-not-allowed disabled:opacity-40"
+              className="research-task-icon-motion inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] transition hover:text-[#A8DADC] disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Save required products"
             >
               {isPending ? (
@@ -67,7 +73,7 @@ export function ProjectProductsForm({
             return (
               <label
                 key={product}
-                className="group/product grid cursor-pointer grid-cols-[2.125rem_minmax(0,1fr)] gap-3 py-3 transition hover:bg-[#303030]"
+                className="group/product grid cursor-pointer grid-cols-[2.125rem_minmax(0,1fr)] items-center gap-3 py-3 transition hover:bg-[#303030]"
               >
                 <input
                   type="checkbox"
@@ -78,7 +84,7 @@ export function ProjectProductsForm({
                   className="sr-only"
                 />
                 <span
-                  className={`relative mt-0.5 flex h-8 w-8 items-center justify-center border bg-[#202020] transition group-hover/product:border-[#666666] ${
+                  className={`relative flex h-8 w-8 items-center justify-center border bg-[#202020] transition group-hover/product:border-[#666666] ${
                     checked
                       ? "border-[#A8DADC] bg-[#263636] text-[#A8DADC] group-hover/product:border-[#A8DADC]"
                       : "border-[#444444] text-[#666666]"
