@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckSquare, Loader2, Save } from "lucide-react";
+import { Check, Loader2, Save } from "lucide-react";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export function ProjectProductsForm({
@@ -44,42 +44,64 @@ export function ProjectProductsForm({
       >
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <CheckSquare className="h-4 w-4 text-emerald-500" />
-            <h2 className="text-base font-semibold text-[#E4E4E4]">
+            <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
               Required products
             </h2>
-          </div>
-          <button
-            disabled={isPending || requiredProducts.length === 0}
-            className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200"
-            aria-label="Save required products"
-          >
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-          </button>
-        </div>
-        <div className="grid gap-2 md:grid-cols-2">
-          {requiredProducts.map((product) => (
-            <label
-              key={product}
-              className="flex cursor-pointer items-center gap-3 border border-[#444444] bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-emerald-900 dark:hover:bg-emerald-950/30"
+            <button
+              disabled={isPending || requiredProducts.length === 0}
+              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] transition hover:text-[#A8DADC] disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Save required products"
             >
-              <input
-                type="checkbox"
-                name="completedProducts"
-                value={product}
-                checked={selected.has(product)}
-                onChange={() => toggle(product)}
-                className="h-4 w-4 rounded border-slate-300 text-emerald-600"
-              />
-              <span>{product}</span>
-            </label>
-          ))}
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        </div>
+        <div className="divide-y divide-[#444444] border-y border-[#444444]">
+          {requiredProducts.map((product) => {
+            const checked = selected.has(product);
+
+            return (
+              <label
+                key={product}
+                className="group/product grid cursor-pointer grid-cols-[2.125rem_minmax(0,1fr)] gap-3 py-3 transition hover:bg-[#303030]"
+              >
+                <input
+                  type="checkbox"
+                  name="completedProducts"
+                  value={product}
+                  checked={checked}
+                  onChange={() => toggle(product)}
+                  className="sr-only"
+                />
+                <span
+                  className={`relative mt-0.5 flex h-8 w-8 items-center justify-center border bg-[#202020] transition group-hover/product:border-[#666666] ${
+                    checked
+                      ? "border-[#A8DADC] bg-[#263636] text-[#A8DADC] group-hover/product:border-[#A8DADC]"
+                      : "border-[#444444] text-[#666666]"
+                  }`}
+                >
+                  <Check
+                    className={`h-4 w-4 transition ${checked ? "opacity-100" : "opacity-0"}`}
+                    aria-hidden="true"
+                  />
+                  <span
+                    className={`absolute h-2 w-2 bg-current transition ${checked ? "opacity-0" : "opacity-100"}`}
+                  />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-normal text-[#E4E4E4]">
+                    {product}
+                  </span>
+                </span>
+              </label>
+            );
+          })}
           {requiredProducts.length === 0 && (
-            <p className="rounded-none border border-dashed border-slate-200 px-3 py-5 text-sm text-slate-400 dark:border-slate-800 dark:text-slate-500">
+            <p className="px-3 py-5 text-sm text-[#777777]">
               No required products have been defined yet.
             </p>
           )}

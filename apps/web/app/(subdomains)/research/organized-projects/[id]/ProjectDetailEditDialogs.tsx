@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import {
   Building2,
   FileText,
+  LinkIcon,
   Loader2,
   Pencil,
   PlusCircle,
@@ -189,10 +190,12 @@ function DialogShell({
 function EditIconButton({
   label,
   onClick,
+  icon,
   className = "",
 }: {
   label: string;
   onClick: () => void;
+  icon?: ReactNode;
   className?: string;
 }) {
   return (
@@ -201,9 +204,9 @@ function EditIconButton({
         type="button"
         onClick={onClick}
         aria-label={label}
-        className={`inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-[#444444] bg-[#2C2C2C] text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-800 dark:hover:bg-blue-950/40 dark:hover:text-blue-200 ${className}`}
+        className={`inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 ${className}`}
       >
-        <Pencil className="h-3.5 w-3.5" />
+        {icon ?? <Pencil className="h-4 w-4" />}
       </button>
       <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
         {label}
@@ -521,6 +524,7 @@ export function ProjectResearchEditDialog({
       <EditIconButton
         label="Edit associated research"
         onClick={() => setOpen(true)}
+        icon={<LinkIcon className="h-4 w-4" />}
       />
       <DialogShell
         open={open}
@@ -591,7 +595,8 @@ export function CreateProjectResearchDialog({
       <EditIconButton
         label="Add research associated"
         onClick={() => setOpen(true)}
-        className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200"
+        icon={<PlusCircle className="h-4 w-4" />}
+        className="text-[#A8DADC] hover:text-[#E4E4E4]"
       />
       <DialogShell
         open={open}

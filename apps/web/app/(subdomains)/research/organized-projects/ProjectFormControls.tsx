@@ -3,6 +3,8 @@
 import { useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
   Check,
   GraduationCap,
   Mail,
@@ -265,6 +267,19 @@ export function ProjectMembersPicker({
     );
   }
 
+  function moveMember(userId: string, direction: -1 | 1) {
+    setMembers((current) => {
+      const index = current.findIndex((member) => member.id === userId);
+      const target = index + direction;
+      if (index < 0 || target < 0 || target >= current.length) return current;
+      const next = [...current];
+      const [member] = next.splice(index, 1);
+      if (!member) return current;
+      next.splice(target, 0, member);
+      return next;
+    });
+  }
+
   return (
     <div className="grid gap-2 text-sm font-semibold text-[#E4E4E4]">
       <span>Members</span>
@@ -354,33 +369,56 @@ export function ProjectMembersPicker({
           </FloatingDropdownPortal>
         </div>
 
-        <div className="mt-3 grid gap-2">
-          {members.map((member) => (
+        <div className="mt-3 divide-y divide-[#444444] border-y border-[#444444]">
+          {members.map((member, index) => (
             <div
               key={member.id}
-              className="flex items-center gap-3 border border-[#444444] bg-[#2C2C2C] px-3 py-2 shadow-none transition hover:border-[#5A5A5A] hover:bg-[#303030]"
+              className="flex items-center gap-3 py-3 transition hover:bg-[#303030]"
             >
-              <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-none border border-[#3A3A3A] bg-[#202020] text-[#A8DADC]">
-                <UserRound className="h-4 w-4" aria-hidden="true" />
+              <span className="inline-flex w-8 flex-none justify-center font-mono text-sm font-normal text-[#A8DADC]">
+                {index + 1}
               </span>
+              <div className="flex flex-none flex-col">
+                <button
+                  type="button"
+                  aria-label={`Move ${userName(member)} up`}
+                  disabled={index === 0}
+                  onClick={() => moveMember(member.id, -1)}
+                  className="inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] transition hover:text-[#A8DADC] disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Move ${userName(member)} down`}
+                  disabled={index === members.length - 1}
+                  onClick={() => moveMember(member.id, 1)}
+                  className="inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] transition hover:text-[#A8DADC] disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </div>
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <p className="truncate text-sm font-bold text-[#E4E4E4]">
+                  <p className="truncate text-sm font-medium text-[#E4E4E4]">
                     {userName(member)}
                   </p>
                   {member.isTeamLead && (
-                    <span className="rounded-none border border-[#F4D47A]/35 bg-[#3A3322] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#F4D47A]">
+                    <span className="border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#E4E4E4]">
                       Team lead
                     </span>
                   )}
                   {member.isInstructor && (
-                    <span className="rounded-none border border-[#B39CD0]/35 bg-[#332B3F] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#C8B6E2]">
+                    <span className="border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#A8DADC]">
                       Instructor
                     </span>
                   )}
                 </div>
                 <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-medium text-[#777777]">
-                  <Mail className="h-3 w-3 flex-none" aria-hidden="true" />
+                  <Mail
+                    className="h-3 w-3 flex-none text-[#A8DADC]"
+                    aria-hidden="true"
+                  />
                   {displayResearchEmail(member.email)}
                 </p>
               </div>
@@ -421,7 +459,7 @@ export function ProjectMembersPicker({
             </div>
           ))}
           {members.length === 0 && (
-            <div className="rounded-none border border-dashed border-[#444444] bg-[#242424] px-3 py-5 text-center text-sm font-normal text-[#777777]">
+            <div className="px-3 py-5 text-center text-sm font-normal text-[#777777]">
               Search and choose at least one member.
             </div>
           )}

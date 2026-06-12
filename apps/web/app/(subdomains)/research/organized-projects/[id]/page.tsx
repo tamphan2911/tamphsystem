@@ -9,19 +9,20 @@ import {
   CalendarClock,
   CalendarDays,
   CheckCircle2,
-  CircleDollarSign,
   CircleOff,
   Clock3,
   ExternalLink,
   FileSearch,
   FlaskConical,
   GraduationCap,
+  Landmark,
   Mail,
   RotateCcw,
   Send,
   ShieldCheck,
   Star,
   UserRound,
+  WalletCards,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { prisma, Role } from "@repo/db";
@@ -140,18 +141,26 @@ function claimMeta(status: string) {
   }
   return {
     label: "Not advanced",
-    icon: CircleDollarSign,
+    icon: WalletCards,
     className:
       "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
   };
 }
 
-function projectTypeLabel(type: string) {
-  if (type === "FACULTY") return "faculty";
-  if (type === "UNIVERSITY") return "university";
-  if (type === "VNU") return "VNU";
-  if (type === "NATIONAL") return "national";
-  return "student";
+function projectTypeMeta(type: string) {
+  if (type === "FACULTY") {
+    return { label: "faculty", icon: UserRound };
+  }
+  if (type === "UNIVERSITY") {
+    return { label: "university", icon: Building2 };
+  }
+  if (type === "VNU") {
+    return { label: "VNU", icon: Landmark };
+  }
+  if (type === "NATIONAL") {
+    return { label: "national", icon: ShieldCheck };
+  }
+  return { label: "student", icon: GraduationCap };
 }
 
 function researchStageLabel(stage: string) {
@@ -416,6 +425,8 @@ export default async function OrganizedProjectDetailPage({
   const StatusIcon = status.icon;
   const claim = claimMeta(project.financialClaimStatus);
   const ClaimIcon = claim.icon;
+  const projectType = projectTypeMeta(project.projectType);
+  const ProjectTypeIcon = projectType.icon;
   const memberDefaults = project.members.map((member) => ({
     id: member.user.id,
     name: member.user.name ?? "",
@@ -507,15 +518,6 @@ export default async function OrganizedProjectDetailPage({
               <p className="font-mono text-xs font-bold uppercase tracking-wide text-slate-400">
                 {project.referenceCode || project.id.slice(0, 8).toUpperCase()}
               </p>
-              {canEditProject && (
-                <ProjectInfoEditDialog
-                  action={saveProject}
-                  info={projectInfo}
-                  members={memberDefaults}
-                  research={researchDefaults}
-                  fundingInstitutions={fundingOptions}
-                />
-              )}
             </div>
             <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
               <h1 className="min-w-0 text-2xl font-medium leading-tight text-[#E4E4E4]">
@@ -528,29 +530,40 @@ export default async function OrganizedProjectDetailPage({
                   <StatusIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
               </IconHint>
+              {canEditProject && (
+                <ProjectInfoEditDialog
+                  action={saveProject}
+                  info={projectInfo}
+                  members={memberDefaults}
+                  research={researchDefaults}
+                  fundingInstitutions={fundingOptions}
+                />
+              )}
+            </div>
+            <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
+              <p className="min-w-0 truncate text-sm font-medium text-[#B0B0B0]">
+                {project.fundingInstitution?.name ||
+                  project.organizer ||
+                  "No funding institution"}
+              </p>
               <IconHint label={`Financial: ${claim.label}`}>
-                <span className="inline-flex items-center gap-2">
-                  <span
-                    className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 ${claim.className}`}
-                  >
-                    <ClaimIcon className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  {fundingAmountLabel && (
-                    <span className="text-sm font-semibold text-[#B0B0B0]">
-                      ({fundingAmountLabel})
-                    </span>
-                  )}
+                <span
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 ${claim.className}`}
+                >
+                  <ClaimIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
               </IconHint>
-              <span className="inline-flex h-8 items-center border border-[#444444] bg-[#202020] px-2 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
-                {projectTypeLabel(project.projectType)}
-              </span>
+              <IconHint label={`Project type: ${projectType.label}`}>
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-none border border-[#444444] bg-[#202020] text-[#B0B0B0] transition hover:border-[#A8DADC] hover:text-[#A8DADC]">
+                  <ProjectTypeIcon className="h-4 w-4" aria-hidden="true" />
+                </span>
+              </IconHint>
+              {fundingAmountLabel && (
+                <span className="text-sm font-normal text-[#B0B0B0]">
+                  ({fundingAmountLabel})
+                </span>
+              )}
             </div>
-            <p className="mt-3 text-sm font-medium text-[#B0B0B0]">
-              {project.fundingInstitution?.name ||
-                project.organizer ||
-                "No funding institution"}
-            </p>
             {project.description && (
               <p className="mt-1 max-w-4xl text-sm leading-6 text-[#B0B0B0]">
                 {project.description}
@@ -591,11 +604,11 @@ export default async function OrganizedProjectDetailPage({
             ) : null
           }
         >
-          <div className="divide-y divide-[#444444]">
-            {memberDefaults.map((member) => (
-              <div key={member.id} className="flex items-center gap-3 py-3">
-                <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-none bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-200 dark:ring-blue-900">
-                  <UserRound className="h-4 w-4" />
+          <div className="divide-y divide-[#444444] border-y border-[#444444]">
+            {memberDefaults.map((member, index) => (
+              <div key={member.id} className="flex items-start gap-4 py-3">
+                <span className="inline-flex w-8 flex-none justify-center font-mono text-sm text-[#A8DADC]">
+                  {index + 1}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -603,26 +616,26 @@ export default async function OrganizedProjectDetailPage({
                       {memberName(member)}
                     </p>
                     {member.isTeamLead && (
-                      <span className="inline-flex items-center gap-1 rounded-none bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900">
+                      <span className="inline-flex items-center gap-1 border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#E4E4E4]">
                         <Star className="h-3 w-3" />
                         Team lead
                       </span>
                     )}
                     {member.isInstructor && (
-                      <span className="inline-flex items-center gap-1 rounded-none bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 ring-1 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-200 dark:ring-violet-900">
+                      <span className="inline-flex items-center gap-1 border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#A8DADC]">
                         <GraduationCap className="h-3 w-3" />
                         Instructor
                       </span>
                     )}
                   </div>
                   <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#777777]">
-                    <Mail className="h-3 w-3 flex-none text-blue-400" />
+                    <Mail className="h-3 w-3 flex-none text-[#A8DADC]" />
                     <span className="truncate">
                       {displayResearchEmail(member.email)}
                     </span>
                   </p>
                   <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#B0B0B0]">
-                    <Building2 className="h-3 w-3 flex-none text-emerald-500" />
+                    <Building2 className="h-3 w-3 flex-none text-[#B39CD0]" />
                     <span className="truncate">
                       {member.affiliation || "No affiliation recorded"}
                     </span>
@@ -631,7 +644,7 @@ export default async function OrganizedProjectDetailPage({
               </div>
             ))}
             {memberDefaults.length === 0 && (
-              <p className="py-5 text-sm text-[#777777]">
+              <p className="px-3 py-5 text-sm text-[#777777]">
                 No members assigned.
               </p>
             )}
@@ -672,19 +685,17 @@ export default async function OrganizedProjectDetailPage({
       />
 
       <ResearchDetailSection>
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-black text-[#E4E4E4]">
-              Research Associated
-            </h2>
-            {canEditResearchAssociated && (
-              <CreateProjectResearchDialog
-                action={createProjectResearch}
-                users={userOptions}
-                members={memberDefaults}
-              />
-            )}
-          </div>
+        <div className="mb-4 flex items-center gap-2">
+          <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+            Research associated
+          </h2>
+          {canEditResearchAssociated && (
+            <CreateProjectResearchDialog
+              action={createProjectResearch}
+              users={userOptions}
+              members={memberDefaults}
+            />
+          )}
           {canEditResearchAssociated && (
             <ProjectResearchEditDialog
               action={saveProject}
@@ -695,7 +706,7 @@ export default async function OrganizedProjectDetailPage({
             />
           )}
         </div>
-        <div className="overflow-hidden border border-[#444444] dark:border-slate-800">
+        <div className="overflow-hidden">
           <table className="w-full table-fixed text-left">
             <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
               <tr>
