@@ -820,7 +820,7 @@ export default async function ProjectDetailPage({
         <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
-              <h1 className="min-w-0 truncate text-sm font-normal leading-6 text-[#E4E4E4] xl:text-base">
+              <h1 className="line-clamp-2 min-w-0 whitespace-normal break-words text-sm font-normal leading-5 text-[#E4E4E4] xl:text-base xl:leading-6">
                 {project.title}
               </h1>
               <IconHint label={stageStyle.label} position="bottom">
