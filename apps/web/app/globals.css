@@ -1411,14 +1411,22 @@ html[data-research-theme="light"]
 
 html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
-  :where(input:not([type="checkbox"]):not([type="radio"]), textarea, select):hover {
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]),
+    textarea,
+    select
+  ):hover {
   border-color: #c4b9aa !important;
   background-color: #fffdf8 !important;
 }
 
 html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
-  :where(input:not([type="checkbox"]):not([type="radio"]), textarea, select):focus {
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]),
+    textarea,
+    select
+  ):focus {
   border-color: #2d7882 !important;
   background-color: #fffdf8 !important;
 }
@@ -3019,6 +3027,22 @@ html[data-auth-leaving="reset"]
   transform: none !important;
 }
 
+.research-site-root.research-theme-light .research-text-button,
+.theme-light .research-text-button,
+.research-auth-page .research-text-button,
+html[data-research-theme="light"]
+  :where(.research-site-root, [data-research-modal-overlay="true"])
+  button:is([class*="px-"], [class*="gap-"]):not([aria-label]):not(
+    [role="option"]
+  ):not([role="tab"]):not(.journal-detail-tab-button):not(
+    [data-research-toggle-tab="true"]
+  ):not(.research-new-button):not([class*="text-left"]):not(
+    [class*="justify-start"]
+  ) {
+  --research-text-button-color: #1f7180;
+  --research-text-button-ink: #f7fbfb;
+}
+
 .research-site-root .journal-detail-tabs,
 .research-site-root [data-research-toggle-tabs="true"] {
   overflow: hidden;
@@ -3149,7 +3173,11 @@ html[data-auth-leaving="reset"]
  * SVG icons can force browser rasterization, which makes hover states look
  * blurry. Motion stays visible through color, border, background and shadows.
  */
-:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
   :where(button, [role="button"], a[href]):not(.research-allow-transform):not(
     [data-allow-transform="true"]
   ) {
@@ -3158,7 +3186,11 @@ html[data-auth-leaving="reset"]
   -webkit-font-smoothing: antialiased;
 }
 
-:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
   :where(button, [role="button"], a[href]):not(:disabled):not(
     [aria-disabled="true"]
   ):not([role="option"]):not([role="tab"]):not(.research-allow-transform):not(
@@ -3172,7 +3204,11 @@ html[data-auth-leaving="reset"]
     inset 0 0 0 1px var(--research-control-ring, rgba(45, 120, 130, 0.12)) !important;
 }
 
-:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
   :where(button, [role="button"], a[href]):not(:disabled):not(
     [aria-disabled="true"]
   ):not([role="option"]):not([role="tab"]):not(.research-allow-transform):not(
@@ -3181,11 +3217,18 @@ html[data-auth-leaving="reset"]
   filter: none !important;
   transform: none !important;
   box-shadow:
-    var(--research-control-active-shadow, inset 0 0 0 1px rgba(45, 120, 130, 0.22)),
+    var(
+      --research-control-active-shadow,
+      inset 0 0 0 1px rgba(45, 120, 130, 0.22)
+    ),
     inset 0 1px 3px rgba(31, 41, 55, 0.12) !important;
 }
 
-:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
   :where(button, [role="button"], a[href])
   :where(svg) {
   backface-visibility: hidden;
@@ -3196,12 +3239,20 @@ html[data-auth-leaving="reset"]
     stroke 180ms ease !important;
 }
 
-:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
   :where(button, [role="button"], a[href]):not(.research-allow-transform):not(
     [data-allow-transform="true"]
   ):hover
   :where(svg),
-:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
   :where(button, [role="button"], a[href]):not(.research-allow-transform):not(
     [data-allow-transform="true"]
   ):active
@@ -3401,7 +3452,11 @@ html[data-auth-leaving="reset"]
   text-rendering: geometricPrecision;
 }
 
-:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
   :where(button, [role="button"], a[href], [role="option"], [role="tab"]):not(
     .research-allow-transform
   ):not([data-allow-transform="true"]):is(:hover, :active, :focus-visible) {
@@ -3410,7 +3465,11 @@ html[data-auth-leaving="reset"]
   transform: none !important;
 }
 
-:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
   :where(button, [role="button"], a[href], [role="option"], [role="tab"]):not(
     .research-allow-transform
   ):not([data-allow-transform="true"]):is(:hover, :active, :focus-visible)

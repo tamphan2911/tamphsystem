@@ -25,13 +25,13 @@ export const researchAuthInputClass =
   "h-12 w-full rounded-none border border-[#D7E1E8] bg-white px-4 text-sm font-normal text-[#14202E] outline-none transition duration-150 ease-out placeholder:text-[#8A98A8] hover:border-[#B8C8D3] hover:bg-[#FBFDFE] focus:border-[#A8DADC] focus:bg-white focus:shadow-[inset_0_0_0_1px_rgba(168,218,220,0.24),0_10px_26px_rgba(15,23,42,0.06)] disabled:cursor-not-allowed disabled:opacity-60";
 
 export const researchAuthPrimaryButtonClass =
-  "research-text-button inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-none border border-sky-700 bg-transparent px-4 text-sm font-normal text-sky-700 shadow-none transition duration-150 ease-out hover:border-sky-800 hover:text-sky-800 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60";
+  "research-text-button inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-none border border-[#1F7180] bg-transparent px-4 text-sm font-normal text-[#1F7180] shadow-none transition duration-150 ease-out hover:border-[#155864] hover:text-[#155864] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60";
 
 export const researchAuthFooterClass =
   "border-t border-slate-200 px-8 py-5 text-center text-sm text-slate-500";
 
 export const researchAuthLinkClass =
-  "font-normal text-sky-700 transition duration-150 ease-out hover:text-sky-800";
+  "font-normal text-[#1F7180] transition duration-150 ease-out hover:text-[#155864]";
 
 export const researchAuthWarningClass =
   "flex items-start gap-3 rounded-none border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800";
