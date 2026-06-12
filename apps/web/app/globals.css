@@ -2822,6 +2822,15 @@ html[data-auth-leaving="reset"]
   opacity: 0.68;
 }
 
+.research-site-root.research-theme-light button:disabled,
+.research-site-root.research-theme-light button:disabled:hover {
+  border-color: #d8d0c2 !important;
+  background: #ece6da !important;
+  color: #7a8494 !important;
+  box-shadow: none !important;
+  opacity: 0.78;
+}
+
 .research-site-root
   :where(
     a,
