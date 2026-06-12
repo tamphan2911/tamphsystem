@@ -6,6 +6,27 @@ import { redirect } from "next/navigation";
 import { ResearchShell } from "./ResearchShell";
 import { displayResearchEmail } from "@/sites/research/lib/display";
 
+function ResearchThemeInitScript({ isAdmin }: { isAdmin: boolean }) {
+  const source = `
+try {
+  var canUseLight = ${isAdmin ? "true" : "false"};
+  var theme = canUseLight && window.localStorage.getItem("research-theme-mode") === "light" ? "light" : "dark";
+  document.documentElement.dataset.researchTheme = theme;
+  document.documentElement.classList.toggle("dark", theme === "dark");
+} catch (_) {
+  document.documentElement.dataset.researchTheme = "dark";
+  document.documentElement.classList.add("dark");
+}
+`;
+
+  return (
+    <script
+      dangerouslySetInnerHTML={{ __html: source }}
+      suppressHydrationWarning
+    />
+  );
+}
+
 export default async function ResearchLayout({
   children,
 }: {
@@ -91,19 +112,22 @@ export default async function ResearchLayout({
   }
 
   return (
-    <ResearchShell
-      email={displayResearchEmail(session?.user?.email)}
-      name={session?.user?.name}
-      isAdmin={roles.includes(Role.ADMIN)}
-      isAssistant={
-        roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT)
-      }
-      canSeeTasks={canSeeTasks}
-      canSeeAccounts={canSeeAccounts}
-      canSeeReviews={canSeeReviews}
-      unopenedProposalCount={unopenedProposalCount}
-    >
-      {children}
-    </ResearchShell>
+    <>
+      <ResearchThemeInitScript isAdmin={roles.includes(Role.ADMIN)} />
+      <ResearchShell
+        email={displayResearchEmail(session?.user?.email)}
+        name={session?.user?.name}
+        isAdmin={roles.includes(Role.ADMIN)}
+        isAssistant={
+          roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT)
+        }
+        canSeeTasks={canSeeTasks}
+        canSeeAccounts={canSeeAccounts}
+        canSeeReviews={canSeeReviews}
+        unopenedProposalCount={unopenedProposalCount}
+      >
+        {children}
+      </ResearchShell>
+    </>
   );
 }
