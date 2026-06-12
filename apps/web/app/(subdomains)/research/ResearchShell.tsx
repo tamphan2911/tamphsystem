@@ -175,24 +175,17 @@ export function ResearchShell({
     return window.localStorage.getItem(sidebarStateKey) === "true";
   });
   const [theme, setTheme] = useState<ResearchTheme>(() => {
-    if (typeof window === "undefined" || !isAdmin) return "dark";
-    return window.localStorage.getItem(researchThemeKey) === "light"
-      ? "light"
-      : "dark";
+    if (typeof window === "undefined") return "light";
+    return window.localStorage.getItem(researchThemeKey) === "dark"
+      ? "dark"
+      : "light";
   });
 
   useEffect(() => {
-    if (!isAdmin) {
-      document.documentElement.classList.add("dark");
-      document.documentElement.dataset.researchTheme = "dark";
-      setTheme("dark");
-      return;
-    }
-
     document.documentElement.classList.toggle("dark", theme === "dark");
     document.documentElement.dataset.researchTheme = theme;
     window.localStorage.setItem(researchThemeKey, theme);
-  }, [isAdmin, theme]);
+  }, [theme]);
 
   useEffect(() => {
     window.localStorage.setItem(sidebarStateKey, String(collapsed));
