@@ -854,32 +854,32 @@ export default async function ProjectDetailPage({
                 />
               )}
             </div>
-            <div className="mt-1 flex min-w-0 items-center gap-2 text-xs text-[#B0B0B0]">
-              {project.researchCode && (
-                <span className="font-normal">ID: {project.researchCode}</span>
-              )}
-              {project.researchCode && (
-                <span className="text-[#777777]" aria-hidden="true">
-                  |
-                </span>
-              )}
-              <span className="min-w-0 truncate text-[#E4E4E4]">
-                Authors: {authorsLine}
-              </span>
-              {canViewRegistrationClaim && (
-                <IconHint label={registrationLine}>
-                  <span className="inline-flex flex-none items-center border border-[#444444] bg-[#202020] px-2 py-0.5 text-[11px] font-normal text-[#B0B0B0]">
-                    {registrationLine}
-                  </span>
-                </IconHint>
-              )}
-            </div>
           </div>
         </div>
       </ResearchPageHeaderPortal>
 
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="min-w-0 space-y-2 text-sm text-[#B0B0B0]">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-[#B0B0B0]">
+            {project.researchCode && (
+              <span className="font-normal">ID: {project.researchCode}</span>
+            )}
+            {project.researchCode && (
+              <span className="text-[#777777]" aria-hidden="true">
+                |
+              </span>
+            )}
+            <span className="min-w-0 text-[#E4E4E4]">
+              Authors: {authorsLine}
+            </span>
+            {canViewRegistrationClaim && (
+              <IconHint label={registrationLine}>
+                <span className="inline-flex flex-none items-center border border-[#444444] bg-[#202020] px-2 py-0.5 text-[11px] font-normal text-[#B0B0B0]">
+                  {registrationLine}
+                </span>
+              </IconHint>
+            )}
+          </div>
           {project.fundingInstitution && (
             <p>
               Funded by:{" "}
