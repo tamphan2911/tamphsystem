@@ -22,7 +22,7 @@ export const researchAuthLabelClass =
   "block text-sm font-normal text-slate-700";
 
 export const researchAuthInputClass =
-  "h-12 w-full rounded-none border border-slate-200 bg-white px-4 text-sm font-normal text-slate-900 outline-none transition duration-150 ease-out placeholder:text-slate-400 hover:border-slate-300 hover:bg-slate-50 focus:border-sky-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60";
+  "h-12 w-full rounded-none border border-[#D7E1E8] bg-white px-4 text-sm font-normal text-[#14202E] outline-none transition duration-150 ease-out placeholder:text-[#8A98A8] hover:border-[#B8C8D3] hover:bg-[#FBFDFE] focus:border-[#A8DADC] focus:bg-white focus:shadow-[inset_0_0_0_1px_rgba(168,218,220,0.24),0_10px_26px_rgba(15,23,42,0.06)] disabled:cursor-not-allowed disabled:opacity-60";
 
 export const researchAuthPrimaryButtonClass =
   "research-text-button inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-none border border-sky-700 bg-transparent px-4 text-sm font-normal text-sky-700 shadow-none transition duration-150 ease-out hover:border-sky-800 hover:text-sky-800 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60";

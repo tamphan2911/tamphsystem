@@ -2,7 +2,6 @@ import Link from "next/link";
 import { MailCheck } from "lucide-react";
 import { headers } from "next/headers";
 import {
-  AuthDarkTheme,
   AuthLightTheme,
 } from "@/sites/shared/components/AuthLightTheme";
 import {
@@ -36,7 +35,7 @@ export default async function PasswordResetCheckEmailPage({
           : "flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-950 dark:bg-slate-950 dark:text-white"
       }
     >
-      {isResearch ? <AuthDarkTheme /> : <AuthLightTheme />}
+      <AuthLightTheme />
       <div
         className={
           isResearch

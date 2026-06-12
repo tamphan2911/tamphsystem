@@ -2,7 +2,6 @@ import { AlertTriangle, KeyRound } from "lucide-react";
 import { headers } from "next/headers";
 import { prisma } from "@repo/db";
 import {
-  AuthDarkTheme,
   AuthLightTheme,
 } from "@/sites/shared/components/AuthLightTheme";
 import {
@@ -82,7 +81,7 @@ export default async function ResetPasswordPage({
           : "flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-950 transition-colors duration-200 dark:bg-slate-950 dark:text-white"
       }
     >
-      {isResearch ? <AuthDarkTheme /> : <AuthLightTheme />}
+      <AuthLightTheme />
       <AuthTransitionCard
         mode="reset"
         className={
