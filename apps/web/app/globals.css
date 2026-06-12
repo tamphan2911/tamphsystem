@@ -192,8 +192,8 @@ body {
 
 .research-required-mark {
   margin-left: 0.25rem;
-  color: #ffc1cc;
-  font-weight: 900;
+  color: inherit;
+  font-weight: 400;
 }
 
 @keyframes hubFloat {

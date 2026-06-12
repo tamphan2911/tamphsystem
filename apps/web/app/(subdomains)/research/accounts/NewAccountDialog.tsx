@@ -7,6 +7,7 @@ import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   ResearchButton,
   researchFieldClass,
+  researchLabelClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
@@ -115,12 +116,18 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
           className="grid gap-4"
         >
           <div className="grid gap-4 md:grid-cols-2">
-            <input
-              name="username"
-              required
-              placeholder="ID / username"
-              className={researchFieldClass}
-            />
+            <label className={researchLabelClass}>
+              <span>
+                ID / username
+                <span className="research-required-mark">(*)</span>
+              </span>
+              <input
+                name="username"
+                required
+                placeholder="ID / username"
+                className={researchFieldClass}
+              />
+            </label>
             <input
               name="password"
               placeholder="Password"
