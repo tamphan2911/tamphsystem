@@ -123,7 +123,7 @@ function dateFromForm(value: FormDataEntryValue | null) {
 function positiveIntFromForm(value: FormDataEntryValue | null) {
   const text = optionalString(value);
   if (!text) return null;
-  const number = Number(text);
+  const number = Number(text.replaceAll(".", ""));
   return Number.isInteger(number) && number > 0 ? number : null;
 }
 

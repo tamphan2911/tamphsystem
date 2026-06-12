@@ -38,6 +38,7 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import { formatResearchNumber } from "@/sites/research/lib/currency";
 
 export type SuggestedJournalOption = {
   id: string;
@@ -1103,7 +1104,7 @@ function JournalCard({
       </p>
       {journal.apc && (
         <p className="mt-2 text-xs font-normal text-[#B0B0B0]">
-          APC: {journal.apc}
+          APC: {formatResearchNumber(journal.apc)}
         </p>
       )}
       <SuggestedByLine

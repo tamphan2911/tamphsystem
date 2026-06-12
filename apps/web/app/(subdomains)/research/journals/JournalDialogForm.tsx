@@ -30,6 +30,7 @@ import { countryFlag, countryOptions } from "@/sites/research/lib/countries";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchNumberInput } from "@/sites/research/components/ResearchNumberInput";
 import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
@@ -110,15 +111,27 @@ function JournalInput({
     <span
       className={`research-auth-input-shell journal-form-field ${className}`}
     >
-      <input
-        name={name}
-        type={type}
-        min={min}
-        step={step}
-        defaultValue={defaultValue ?? ""}
-        placeholder={placeholder}
-        aria-label={placeholder}
-      />
+      {type === "number" ? (
+        <ResearchNumberInput
+          name={name}
+          min={min ? Number(min) : undefined}
+          defaultValue={defaultValue}
+          placeholder={placeholder}
+          ariaLabel={placeholder}
+          className=""
+          allowDecimal={step !== "1"}
+        />
+      ) : (
+        <input
+          name={name}
+          type={type}
+          min={min}
+          step={step}
+          defaultValue={defaultValue ?? ""}
+          placeholder={placeholder}
+          aria-label={placeholder}
+        />
+      )}
       {icon}
     </span>
   );

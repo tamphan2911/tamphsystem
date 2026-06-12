@@ -38,7 +38,10 @@ import {
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
-import { currencySymbol } from "@/sites/research/lib/currency";
+import {
+  currencySymbol,
+  formatResearchNumber,
+} from "@/sites/research/lib/currency";
 
 export type SubmissionRow = {
   id: string;
@@ -239,13 +242,13 @@ function MoneyCell({ amount, currency }: { amount: string; currency: string }) {
     return (
       <span className="inline-flex items-center gap-1.5">
         <CircleDollarSign className="h-4 w-4 text-[#A8DADC]" />
-        {amount}
+        {formatResearchNumber(amount)}
       </span>
     );
   }
   return (
     <span>
-      {currencySymbol(currency)} {amount}
+      {currencySymbol(currency)} {formatResearchNumber(amount)}
     </span>
   );
 }

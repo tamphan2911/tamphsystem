@@ -14,6 +14,7 @@ import {
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchNumberInput } from "@/sites/research/components/ResearchNumberInput";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { currencyOptions } from "@/sites/research/lib/currency";
@@ -370,13 +371,13 @@ export function ProjectInfoEditDialog({
             </label>
             <label className={labelClass}>
               Duration months
-              <input
+              <ResearchNumberInput
                 name="durationMonths"
-                type="number"
-                min="1"
+                min={1}
                 required
                 defaultValue={info.durationMonths || 1}
                 className={compactFieldClass}
+                allowDecimal={false}
               />
             </label>
           </div>
@@ -385,11 +386,9 @@ export function ProjectInfoEditDialog({
             <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_14rem]">
               <label className={labelClass}>
                 Funding amount
-                <input
+                <ResearchNumberInput
                   name="fundingAmount"
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  min={0}
                   defaultValue={info.fundingAmount}
                   className={fieldClass}
                 />

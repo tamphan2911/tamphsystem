@@ -7,6 +7,7 @@ import { createOrganizedProject } from "../actions";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
+import { ResearchNumberInput } from "@/sites/research/components/ResearchNumberInput";
 import {
   ResearchButton,
   researchFieldClass,
@@ -215,13 +216,13 @@ export function NewOrganizedProjectDialog({
                 </label>
                 <label className={researchLabelClass}>
                   Duration months
-                  <input
+                  <ResearchNumberInput
                     name="durationMonths"
-                    type="number"
-                    min="1"
+                    min={1}
                     required
                     placeholder="9"
                     className={researchSearchFieldClass}
+                    allowDecimal={false}
                   />
                 </label>
               </div>
@@ -230,12 +231,10 @@ export function NewOrganizedProjectDialog({
                 <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_14rem]">
                   <label className={researchLabelClass}>
                     Funding amount
-                    <input
+                    <ResearchNumberInput
                       name="fundingAmount"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="20000000"
+                      min={0}
+                      placeholder="20.000.000"
                       className={researchFieldClass}
                     />
                   </label>

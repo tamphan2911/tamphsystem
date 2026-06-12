@@ -20,15 +20,44 @@ export function currencyLabel(value?: string | null) {
   );
 }
 
-export function formatResearchNumber(value?: string | number | null) {
+export function normalizeResearchNumberInput(value?: string | number | null) {
   if (value === null || value === undefined || value === "") return "";
-  const text = String(value).trim().replaceAll(",", "").replaceAll(" ", "");
-  const [integerPart, decimalPart] = text.split(".");
+  const text = String(value).trim().replace(/\s/g, "");
+  if (!text) return "";
+
+  const hasComma = text.includes(",");
+  const hasDot = text.includes(".");
+  let normalized = text;
+
+  if (hasComma) {
+    normalized = text.replaceAll(".", "").replace(",", ".");
+  } else if (hasDot) {
+    const dotParts = text.split(".");
+    const looksGrouped =
+      dotParts.length > 1 &&
+      dotParts.slice(1).every((part) => /^\d{3}$/.test(part));
+    normalized = looksGrouped ? dotParts.join("") : text;
+  }
+
+  return normalized.replace(/[^\d.-]/g, "");
+}
+
+export function formatResearchNumber(value?: string | number | null) {
+  const normalized = normalizeResearchNumberInput(value);
+  if (!normalized) return "";
+
+  const sign = normalized.startsWith("-") ? "-" : "";
+  const unsigned = sign ? normalized.slice(1) : normalized;
+  const [integerRaw, decimalRaw] = unsigned.split(".");
+  const integerPart = (integerRaw ?? "").replace(/\D/g, "") || "0";
+  const decimalPart = decimalRaw?.replace(/\D/g, "");
   const formattedInteger = (integerPart || "0").replace(
     /\B(?=(\d{3})+(?!\d))/g,
     ".",
   );
-  return decimalPart ? `${formattedInteger},${decimalPart}` : formattedInteger;
+  return decimalRaw !== undefined
+    ? `${sign}${formattedInteger},${decimalPart}`
+    : `${sign}${formattedInteger}`;
 }
 
 export function formatMoney(amount?: string | null, currency?: string | null) {

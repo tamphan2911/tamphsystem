@@ -5,6 +5,7 @@ import { CalendarPlus, Loader2, Pencil, Save } from "lucide-react";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchNumberInput } from "@/sites/research/components/ResearchNumberInput";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { currencyOptions } from "@/sites/research/lib/currency";
@@ -265,10 +266,12 @@ export function ConferenceDialog({
             <div className="grid gap-4 md:grid-cols-2">
               <label className={labelClass}>
                 Submission fee
-                <input
+                <ResearchNumberInput
                   name="submissionFee"
                   defaultValue={initialValues?.submissionFee ?? ""}
                   className={fieldClass}
+                  placeholder="Submission fee"
+                  min={0}
                 />
               </label>
               <label className={labelClass}>
