@@ -819,40 +819,42 @@ export default async function ProjectDetailPage({
       <ResearchPageHeaderPortal>
         <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-2">
-              <h1 className="line-clamp-2 min-w-0 whitespace-normal break-words text-sm font-normal leading-5 text-[#E4E4E4] xl:text-base xl:leading-6">
+            <div className="min-w-0 text-sm font-normal leading-5 text-[#E4E4E4] xl:text-base xl:leading-6">
+              <h1 className="inline break-words font-normal">
                 {project.title}
               </h1>
-              <IconHint label={stageStyle.label} position="bottom">
-                <span
-                  className={`inline-flex h-6 w-6 flex-none cursor-help items-center justify-center transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${stageStyle.className}`}
-                  aria-label={stageStyle.label}
-                >
-                  <StageIcon
-                    className="h-4 w-4"
-                    strokeWidth={1.75}
-                    aria-hidden="true"
-                  />
-                </span>
-              </IconHint>
-              <ResearchBasicEditDialog
-                action={updateAction}
-                values={researchBasicValues}
-                authors={defaultAuthors}
-                completedProductionSteps={completedProductionStepValues}
-                users={authorOptions}
-                fundingInstitutions={fundingInstitutionOptions}
-                registerOptions={registerOptions}
-                claimOptions={claimOptions}
-                canEditRegistrationClaim={isAdmin}
-                disabled={!canEditResearch}
-              />
-              {isAdmin && (
-                <ResearchContentLockButton
-                  projectId={project.id}
-                  locked={researchContentLocked}
+              <span className="ml-2 inline-flex items-center gap-2 align-middle">
+                <IconHint label={stageStyle.label} position="bottom">
+                  <span
+                    className={`inline-flex h-6 w-6 flex-none cursor-help items-center justify-center transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${stageStyle.className}`}
+                    aria-label={stageStyle.label}
+                  >
+                    <StageIcon
+                      className="h-4 w-4"
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
+                  </span>
+                </IconHint>
+                <ResearchBasicEditDialog
+                  action={updateAction}
+                  values={researchBasicValues}
+                  authors={defaultAuthors}
+                  completedProductionSteps={completedProductionStepValues}
+                  users={authorOptions}
+                  fundingInstitutions={fundingInstitutionOptions}
+                  registerOptions={registerOptions}
+                  claimOptions={claimOptions}
+                  canEditRegistrationClaim={isAdmin}
+                  disabled={!canEditResearch}
                 />
-              )}
+                {isAdmin && (
+                  <ResearchContentLockButton
+                    projectId={project.id}
+                    locked={researchContentLocked}
+                  />
+                )}
+              </span>
             </div>
           </div>
         </div>
