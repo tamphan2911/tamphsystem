@@ -3144,6 +3144,119 @@ html[data-auth-leaving="reset"]
   box-shadow: none;
 }
 
+/*
+ * Keep research controls crisp: scaling/translating text-bearing controls and
+ * SVG icons can force browser rasterization, which makes hover states look
+ * blurry. Motion stays visible through color, border, background and shadows.
+ */
+:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+  :where(button, [role="button"], a[href]):not(.research-allow-transform):not(
+    [data-allow-transform="true"]
+  ) {
+  backface-visibility: hidden;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+  :where(button, [role="button"], a[href]):not(:disabled):not(
+    [aria-disabled="true"]
+  ):not([role="option"]):not([role="tab"]):not(.research-allow-transform):not(
+    [data-allow-transform="true"]
+  ):hover {
+  filter: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  box-shadow:
+    var(--research-control-shadow, 0 8px 18px rgba(31, 41, 55, 0.1)),
+    inset 0 0 0 1px var(--research-control-ring, rgba(45, 120, 130, 0.12)) !important;
+}
+
+:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+  :where(button, [role="button"], a[href]):not(:disabled):not(
+    [aria-disabled="true"]
+  ):not([role="option"]):not([role="tab"]):not(.research-allow-transform):not(
+    [data-allow-transform="true"]
+  ):active {
+  filter: none !important;
+  transform: none !important;
+  box-shadow:
+    var(--research-control-active-shadow, inset 0 0 0 1px rgba(45, 120, 130, 0.22)),
+    inset 0 1px 3px rgba(31, 41, 55, 0.12) !important;
+}
+
+:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+  :where(button, [role="button"], a[href])
+  :where(svg) {
+  backface-visibility: hidden;
+  shape-rendering: geometricPrecision;
+  transition:
+    color 180ms ease,
+    opacity 180ms ease,
+    stroke 180ms ease !important;
+}
+
+:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+  :where(button, [role="button"], a[href]):not(.research-allow-transform):not(
+    [data-allow-transform="true"]
+  ):hover
+  :where(svg),
+:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+  :where(button, [role="button"], a[href]):not(.research-allow-transform):not(
+    [data-allow-transform="true"]
+  ):active
+  :where(svg) {
+  filter: none !important;
+  transform: none !important;
+}
+
+.research-site-root
+  table
+  :where(td, th)
+  :where(svg):not(:where(a *, button *, [role="button"] *)),
+.research-site-root .research-task-icon-motion {
+  backface-visibility: hidden;
+  filter: none !important;
+  transform: none !important;
+  transition:
+    color 180ms ease,
+    opacity 180ms ease,
+    stroke 180ms ease !important;
+}
+
+.research-site-root
+  table
+  tbody
+  tr:hover
+  :where(td)
+  :where(svg):not(:where(a *, button *, [role="button"] *)),
+.research-site-root
+  table
+  :where(th:hover)
+  :where(svg):not(:where(a *, button *, [role="button"] *)),
+.research-site-root .research-task-icon-motion:hover,
+.research-site-root .research-task-icon-motion:focus-visible,
+.research-site-root :where(span:hover, div:hover) > .research-task-icon-motion {
+  filter: none !important;
+  transform: none !important;
+}
+
+.research-site-root .journal-detail-tab-button:hover,
+.research-site-root [data-research-toggle-tab="true"]:hover,
+.research-site-root .journal-detail-tab-button:active,
+.research-site-root [data-research-toggle-tab="true"]:active,
+[data-research-toggle-tabs="true"] [data-research-toggle-tab="true"]:active {
+  filter: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+}
+
+.research-site-root .journal-detail-tab-button:hover svg,
+.research-site-root [data-research-toggle-tab="true"]:hover svg {
+  filter: none !important;
+  transform: none !important;
+}
+
 .research-site-root button[class*="bg-rose-600"],
 .research-site-root button[class*="bg-rose-500"] {
   border: 1px solid #ffc1cc;
@@ -3286,6 +3399,24 @@ html[data-auth-leaving="reset"]
   text-shadow: none !important;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
+}
+
+:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+  :where(button, [role="button"], a[href], [role="option"], [role="tab"]):not(
+    .research-allow-transform
+  ):not([data-allow-transform="true"]):is(:hover, :active, :focus-visible) {
+  filter: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+}
+
+:where(.research-site-root, [data-research-modal-overlay="true"], .research-dropdown-floating-panel)
+  :where(button, [role="button"], a[href], [role="option"], [role="tab"]):not(
+    .research-allow-transform
+  ):not([data-allow-transform="true"]):is(:hover, :active, :focus-visible)
+  :where(svg) {
+  filter: none !important;
+  transform: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
