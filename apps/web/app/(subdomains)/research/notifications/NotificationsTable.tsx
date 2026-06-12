@@ -12,7 +12,6 @@ import {
   Trash2,
 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import { ResearchIconButton } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
@@ -86,14 +85,16 @@ function DeleteNotificationButton({
 
   return (
     <>
-      <ResearchIconButton
-        type="button"
-        onClick={() => setIsOpen(true)}
-        label={`Delete notification: ${notification.title}`}
-        tone="rose"
-      >
-        <Trash2 className="h-4 w-4" />
-      </ResearchIconButton>
+      <IconHint label={`Delete notification: ${notification.title}`}>
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          aria-label={`Delete notification: ${notification.title}`}
+          className="inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-rose-600 shadow-none outline-none transition hover:text-rose-700 focus-visible:ring-2 focus-visible:ring-rose-300/40 dark:text-[#FFC1CC] dark:hover:text-rose-300"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </IconHint>
 
       <ResearchConfirmDialog
         open={isOpen}
@@ -357,13 +358,15 @@ export function NotificationsTable({
                   <td className="px-2 py-3 align-top">
                     {notification.href ? (
                       <div className="flex justify-center">
-                        <Link
-                          href={notification.href}
-                          className="inline-flex h-9 w-9 items-center justify-center border border-transparent bg-transparent text-slate-600 transition hover:-translate-y-0.5 hover:text-[#1F7180] dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
-                          aria-label="Open related page"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
+                        <IconHint label="Open related page">
+                          <Link
+                            href={notification.href}
+                            className="inline-flex h-5 w-5 items-start justify-center border-0 bg-transparent p-0 text-slate-600 shadow-none outline-none transition hover:text-[#1F7180] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+                            aria-label="Open related page"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Link>
+                        </IconHint>
                       </div>
                     ) : (
                       <span className="text-[#555555]">-</span>
