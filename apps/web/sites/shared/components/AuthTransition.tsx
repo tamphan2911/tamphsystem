@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { MouseEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
-type AuthMode = "login" | "register";
+type AuthMode = "login" | "register" | "reset";
 
 const storageKey = "tamph-auth-transition-mode";
 
@@ -18,9 +18,9 @@ export function AuthTransitionCard({
   className: string;
   children: ReactNode;
 }) {
-  const [motion, setMotion] = useState<"none" | "to-login" | "to-register">(
-    "none",
-  );
+  const [motion, setMotion] = useState<
+    "none" | "to-login" | "to-register" | "to-reset"
+  >("none");
 
   useEffect(() => {
     delete document.documentElement.dataset.authLeaving;
@@ -29,10 +29,12 @@ export function AuthTransitionCard({
         ? window.sessionStorage.getItem(storageKey)
         : null;
 
-    if (previous === "login" && mode === "register") {
-      setMotion("to-register");
-    } else if (previous === "register" && mode === "login") {
+    if (mode === "login" && previous && previous !== "login") {
       setMotion("to-login");
+    } else if (mode === "register" && previous && previous !== "register") {
+      setMotion("to-register");
+    } else if (mode === "reset" && previous && previous !== "reset") {
+      setMotion("to-reset");
     }
 
     window.sessionStorage.setItem(storageKey, mode);
@@ -64,6 +66,14 @@ export function AuthSwitchLink({
     const path = href.split("?")[0] ?? "";
     if (path === "/login") return "login";
     if (path === "/register") return "register";
+    if (
+      path === "/forgot-password" ||
+      path === "/forgot-password/check-email" ||
+      path === "/reset-password" ||
+      path === "/reset-password/success"
+    ) {
+      return "reset";
+    }
     return null;
   }, [href]);
 
@@ -80,7 +90,13 @@ export function AuthSwitchLink({
       return;
     }
 
-    const currentMode = pathname === "/register" ? "register" : "login";
+    const currentMode =
+      pathname === "/register"
+        ? "register"
+        : pathname.startsWith("/forgot-password") ||
+            pathname.startsWith("/reset-password")
+          ? "reset"
+          : "login";
     if (currentMode === targetMode) return;
 
     event.preventDefault();

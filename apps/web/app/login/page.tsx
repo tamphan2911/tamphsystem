@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { AlertTriangle, LockKeyhole, LogIn, Mail } from "lucide-react";
 import { headers } from "next/headers";
 import { TurnstileField } from "@/sites/shared/components/TurnstileField";
@@ -285,7 +284,7 @@ export default async function LoginPage({
             </p>
             <p>
               Forget your password?{" "}
-              <Link
+              <AuthSwitchLink
                 href="/forgot-password"
                 className={
                   isResearch
@@ -294,7 +293,7 @@ export default async function LoginPage({
                 }
               >
                 Reset it here
-              </Link>
+              </AuthSwitchLink>
               .
             </p>
           </div>

@@ -1,10 +1,13 @@
-import Link from "next/link";
 import { AlertTriangle, Mail, RotateCcw } from "lucide-react";
 import { headers } from "next/headers";
 import {
   AuthDarkTheme,
   AuthLightTheme,
 } from "@/sites/shared/components/AuthLightTheme";
+import {
+  AuthSwitchLink,
+  AuthTransitionCard,
+} from "@/sites/shared/components/AuthTransition";
 import { TurnstileField } from "@/sites/shared/components/TurnstileField";
 import {
   researchAuthCardClass,
@@ -60,7 +63,8 @@ export default async function ForgotPasswordPage({
       }
     >
       {isResearch ? <AuthDarkTheme /> : <AuthLightTheme />}
-      <div
+      <AuthTransitionCard
+        mode="reset"
         className={
           isResearch
             ? `${researchAuthCardClass} max-w-md`
@@ -185,7 +189,7 @@ export default async function ForgotPasswordPage({
           }
         >
           Remembered your password?{" "}
-          <Link
+          <AuthSwitchLink
             href="/login"
             className={
               isResearch
@@ -194,9 +198,9 @@ export default async function ForgotPasswordPage({
             }
           >
             Sign in
-          </Link>
+          </AuthSwitchLink>
         </div>
-      </div>
+      </AuthTransitionCard>
     </div>
   );
 }

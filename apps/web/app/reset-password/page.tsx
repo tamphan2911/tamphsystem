@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { AlertTriangle, KeyRound } from "lucide-react";
 import { headers } from "next/headers";
 import { prisma } from "@repo/db";
@@ -6,6 +5,10 @@ import {
   AuthDarkTheme,
   AuthLightTheme,
 } from "@/sites/shared/components/AuthLightTheme";
+import {
+  AuthSwitchLink,
+  AuthTransitionCard,
+} from "@/sites/shared/components/AuthTransition";
 import {
   researchAuthCardClass,
   researchAuthFooterClass,
@@ -80,7 +83,8 @@ export default async function ResetPasswordPage({
       }
     >
       {isResearch ? <AuthDarkTheme /> : <AuthLightTheme />}
-      <div
+      <AuthTransitionCard
+        mode="reset"
         className={
           isResearch
             ? `${researchAuthCardClass} max-w-md`
@@ -212,7 +216,7 @@ export default async function ResetPasswordPage({
           }
         >
           Need a new link?{" "}
-          <Link
+          <AuthSwitchLink
             href="/forgot-password"
             className={
               isResearch
@@ -221,9 +225,9 @@ export default async function ResetPasswordPage({
             }
           >
             Request reset
-          </Link>
+          </AuthSwitchLink>
         </div>
-      </div>
+      </AuthTransitionCard>
     </div>
   );
 }
