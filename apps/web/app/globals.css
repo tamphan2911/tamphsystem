@@ -1293,6 +1293,22 @@ html[data-research-theme="light"]
   color: #667085 !important;
 }
 
+html[data-research-theme="light"]
+  :where(.research-dropdown-floating-panel)
+  :where([role="option"][aria-selected="true"]) {
+  border-top-color: #d8d0c2 !important;
+  border-bottom-color: #d8d0c2 !important;
+  background-color: #eef7f8 !important;
+  color: #1f2937 !important;
+}
+
+html[data-research-theme="light"]
+  :where(.research-dropdown-floating-panel)
+  :where([role="option"][aria-selected="true"] svg) {
+  color: #2d7882 !important;
+  stroke-width: 1.75;
+}
+
 [data-research-modal-overlay="true"] {
   --research-divider: #383838;
 }
