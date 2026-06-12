@@ -1221,6 +1221,220 @@ html[data-research-theme="light"]
   color: #155864 !important;
 }
 
+html[data-research-theme="light"] [data-research-modal-overlay="true"] {
+  background-color: rgba(15, 23, 42, 0.34) !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where([class*="modalPanelIn_"]) {
+  border-color: #d8d0c2 !important;
+  background: #fffdf8 !important;
+  color: #1f2937 !important;
+  box-shadow:
+    0 28px 82px rgba(31, 41, 55, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(
+    [class~="bg-[#242424]"],
+    [class~="bg-[#202020]"],
+    [class~="dark:bg-[#242424]"],
+    [class~="dark:bg-[#202020]"]
+  ) {
+  background-color: #f4f1ea !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where([class~="bg-[#2C2C2C]"], [class~="dark:bg-[#2C2C2C]"]) {
+  background-color: #f8f6ef !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(
+    [class~="bg-[#303030]"],
+    [class~="bg-[#383838]"],
+    [class~="dark:bg-[#303030]"],
+    [class~="dark:bg-[#383838]"],
+    [class~="hover:bg-[#303030]"]:hover,
+    [class~="hover:bg-[#383838]"]:hover,
+    [class~="dark:hover:bg-[#303030]"]:hover,
+    [class~="dark:hover:bg-[#383838]"]:hover
+  ) {
+  background-color: #f1ece2 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where([class~="bg-[#263636]"], [class~="hover:bg-[#263636]"]:hover) {
+  background-color: #e6f4f2 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where([class~="bg-[#3A3322]"], [class~="hover:bg-[#3A3322]"]:hover) {
+  background-color: #fff7da !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where([class~="bg-[#332B3F]"], [class~="hover:bg-[#332B3F]"]:hover) {
+  background-color: #f3edff !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where([class~="bg-[#3A252A]"], [class~="hover:bg-[#3A252A]"]:hover) {
+  background-color: #fff0f3 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(
+    [class~="border-[#3A3A3A]"],
+    [class~="border-[#3D3D3D]"],
+    [class~="border-[#444444]"],
+    [class~="border-[#5A5A5A]"],
+    [class~="dark:border-[#3A3A3A]"],
+    [class~="dark:border-[#3D3D3D]"],
+    [class~="dark:border-[#444444]"],
+    [class~="dark:border-[#5A5A5A]"],
+    [class~="hover:border-[#444444]"]:hover,
+    [class~="hover:border-[#5A5A5A]"]:hover,
+    [class~="dark:hover:border-[#444444]"]:hover,
+    [class~="dark:hover:border-[#5A5A5A]"]:hover
+  ) {
+  border-color: #d8d0c2 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(
+    [class~="border-[#A8DADC]"],
+    [class~="dark:border-[#A8DADC]"],
+    [class~="hover:border-[#A8DADC]"]:hover,
+    [class~="dark:hover:border-[#A8DADC]"]:hover
+  ) {
+  border-color: #2d7882 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(
+    [class~="text-[#E4E4E4]"],
+    [class~="dark:text-[#E4E4E4]"],
+    [class~="hover:text-[#E4E4E4]"]:hover,
+    [class~="dark:hover:text-[#E4E4E4]"]:hover,
+    [class~="hover:text-white"]:hover,
+    [class~="dark:hover:text-white"]:hover
+  ) {
+  color: #1f2937 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(
+    [class~="text-[#B0B0B0]"],
+    [class~="text-[#777777]"],
+    [class~="text-[#5A5A5A]"],
+    [class~="dark:text-[#B0B0B0]"],
+    [class~="dark:text-[#777777]"],
+    [class~="dark:text-[#5A5A5A]"]
+  ) {
+  color: #667085 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(
+    [class~="text-[#A8DADC]"],
+    [class~="dark:text-[#A8DADC]"],
+    [class~="hover:text-[#A8DADC]"]:hover,
+    [class~="dark:hover:text-[#A8DADC]"]:hover,
+    [class~="text-[#C9F0F2]"],
+    [class~="hover:text-[#C9F0F2]"]:hover
+  ) {
+  color: #1f7180 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(
+    [class~="text-[#B39CD0]"],
+    [class~="dark:text-[#B39CD0]"],
+    [class~="text-[#C8B6E2]"],
+    [class~="dark:text-[#C8B6E2]"]
+  ) {
+  color: #6f5aa8 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(
+    [class~="text-[#F4D47A]"],
+    [class~="dark:text-[#F4D47A]"],
+    [class~="hover:text-[#F4D47A]"]:hover
+  ) {
+  color: #9a6b10 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(
+    [class~="text-[#FFC1CC]"],
+    [class~="dark:text-[#FFC1CC]"],
+    [class~="hover:text-[#FFC1CC]"]:hover,
+    [class~="text-rose-300"],
+    [class~="hover:text-rose-300"]:hover
+  ) {
+  color: #b33e5c !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(label, h2, h3, h4, p, span, div) {
+  text-shadow: none !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(input:not([type="checkbox"]):not([type="radio"]), textarea, select) {
+  border-color: #d8d0c2 !important;
+  background-color: #fffdf8 !important;
+  color: #1f2937 !important;
+  box-shadow: none !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(input:not([type="checkbox"]):not([type="radio"]), textarea, select):hover {
+  border-color: #c4b9aa !important;
+  background-color: #fffdf8 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(input:not([type="checkbox"]):not([type="radio"]), textarea, select):focus {
+  border-color: #2d7882 !important;
+  background-color: #fffdf8 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(input::placeholder, textarea::placeholder) {
+  color: #98a2b3 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  :where(.divide-y > :not([hidden]) ~ :not([hidden])) {
+  border-color: #e2d9cc !important;
+}
+
 .research-site-root.research-theme-light .research-profile-menu-item:hover,
 .research-site-root.research-theme-light
   :where(a:not([aria-disabled="true"])):hover {
