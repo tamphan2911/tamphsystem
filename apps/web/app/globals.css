@@ -1075,6 +1075,32 @@ textarea:focus-visible {
   color: #667085 !important;
 }
 
+html[data-research-theme="light"]
+  .research-site-root
+  :where(
+    [class~="text-[#E4E4E4]"],
+    [class~="dark:text-[#E4E4E4]"],
+    [class~="hover:text-[#E4E4E4]"]:hover,
+    [class~="dark:hover:text-[#E4E4E4]"]:hover,
+    [class~="hover:text-white"]:hover,
+    [class~="dark:hover:text-white"]:hover
+  ) {
+  color: #1f2937 !important;
+}
+
+html[data-research-theme="light"]
+  .research-site-root
+  :where(
+    [class~="text-[#B0B0B0]"],
+    [class~="text-[#777777]"],
+    [class~="text-[#5A5A5A]"],
+    [class~="dark:text-[#B0B0B0]"],
+    [class~="dark:text-[#777777]"],
+    [class~="dark:text-[#5A5A5A]"]
+  ) {
+  color: #4b5565 !important;
+}
+
 .research-site-root.research-theme-light [class~="text-[#A8DADC]"],
 .research-site-root.research-theme-light [class~="dark:text-[#A8DADC]"],
 .research-site-root.research-theme-light [class~="hover:text-[#A8DADC]"]:hover,
@@ -1082,6 +1108,19 @@ textarea:focus-visible {
   [class~="dark:hover:text-[#A8DADC]"]:hover,
 .research-site-root.research-theme-light [class~="text-[#C9F0F2]"],
 .research-site-root.research-theme-light [class~="hover:text-[#C9F0F2]"]:hover {
+  color: #1f7180 !important;
+}
+
+html[data-research-theme="light"]
+  .research-site-root
+  :where(
+    [class~="text-[#A8DADC]"],
+    [class~="dark:text-[#A8DADC]"],
+    [class~="hover:text-[#A8DADC]"]:hover,
+    [class~="dark:hover:text-[#A8DADC]"]:hover,
+    [class~="text-[#C9F0F2]"],
+    [class~="hover:text-[#C9F0F2]"]:hover
+  ) {
   color: #1f7180 !important;
 }
 
@@ -1093,6 +1132,27 @@ textarea:focus-visible {
 .research-site-root.research-theme-light [class~="hover:text-[#FFC1CC]"]:hover,
 .research-site-root.research-theme-light [class~="text-[#F2A0AC]"],
 .research-site-root.research-theme-light [class~="hover:text-[#FFD0D6]"]:hover {
+  color: #b33e5c !important;
+}
+
+html[data-research-theme="light"]
+  .research-site-root
+  :where([class~="text-[#B39CD0]"], [class~="dark:text-[#B39CD0]"]) {
+  color: #6f5aa8 !important;
+}
+
+html[data-research-theme="light"]
+  .research-site-root
+  :where(
+    [class~="text-[#FFC1CC]"],
+    [class~="dark:text-[#FFC1CC]"],
+    [class~="hover:text-[#FFC1CC]"]:hover,
+    [class~="dark:hover:text-[#FFC1CC]"]:hover,
+    [class~="text-[#F2A0AC]"],
+    [class~="dark:text-[#F2A0AC]"],
+    [class~="hover:text-[#FFD0D6]"]:hover,
+    [class~="dark:hover:text-[#FFD0D6]"]:hover
+  ) {
   color: #b33e5c !important;
 }
 

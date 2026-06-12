@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Moon, Sun } from "lucide-react";
 import { ActiveNavLink } from "@/sites/research/components/ActiveNavLink";
 import { ProfileMenu } from "@/sites/shared/components/ProfileMenu";
@@ -84,6 +84,12 @@ const navItems = [
 const sidebarStateKey = "research-sidebar-collapsed";
 const researchThemeKey = "research-theme-mode";
 type ResearchTheme = "dark" | "light";
+
+function applyResearchTheme(theme: ResearchTheme) {
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  document.documentElement.dataset.researchTheme = theme;
+  window.localStorage.setItem(researchThemeKey, theme);
+}
 
 function titleCaseLabel(label: string) {
   return label
@@ -181,10 +187,8 @@ export function ResearchShell({
       : "light";
   });
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    document.documentElement.dataset.researchTheme = theme;
-    window.localStorage.setItem(researchThemeKey, theme);
+  useLayoutEffect(() => {
+    applyResearchTheme(theme);
   }, [theme]);
 
   useEffect(() => {
