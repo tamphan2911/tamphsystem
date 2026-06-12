@@ -6,6 +6,13 @@ import nodemailer from "nodemailer";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@repo/db";
+import {
+  researchEmailButton,
+  researchEmailInfoTable,
+  researchEmailLink,
+  researchEmailParagraph,
+  researchLightEmail,
+} from "@/sites/shared/lib/emailTemplates";
 import { requestIp, verifyTurnstileToken } from "@/sites/shared/lib/turnstile";
 
 function siteFromHost(host: string | null) {
@@ -109,38 +116,18 @@ function verificationEmailHtml({
   verifyUrl: string;
 }) {
   const label = siteLabel(site);
-  return `
-    <div style="margin:0;padding:0;background:#f8fafc;font-family:Inter,Arial,sans-serif;color:#0f172a;">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 16px;background:#f8fafc;">
-        <tr>
-          <td align="center">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
-              <tr>
-                <td style="padding:28px 32px;border-bottom:1px solid #e2e8f0;">
-                  <div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#059669;">${label}</div>
-                  <h1 style="margin:10px 0 0;font-size:24px;line-height:1.25;color:#0f172a;">Verify your email address</h1>
-                  <p style="margin:10px 0 0;font-size:14px;line-height:1.7;color:#475569;">Hello ${name}, thanks for registering an account for ${label}. Please verify this email address before signing in.</p>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:28px 32px;">
-                  <p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#475569;">Account email: <strong style="color:#0f172a;">${email}</strong></p>
-                  <a href="${verifyUrl}" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 18px;border-radius:12px;">Verify account</a>
-                  <p style="margin:22px 0 0;font-size:12px;line-height:1.7;color:#64748b;">This verification link expires in 24 hours. If the button does not work, copy and paste this link into your browser:</p>
-                  <p style="margin:8px 0 0;font-size:12px;line-height:1.6;word-break:break-all;color:#2563eb;">${verifyUrl}</p>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:18px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:12px;line-height:1.6;color:#64748b;">
-                  If you did not create this account, you can ignore this email.
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </div>
-  `;
+  return researchLightEmail({
+    eyebrow: label,
+    title: "Verify your email address",
+    intro: `Hello ${name}, thanks for registering an account for ${label}. Please verify this email address before signing in.`,
+    children: `
+      ${researchEmailInfoTable([{ label: "Account email", value: email }])}
+      ${researchEmailButton(verifyUrl, "Verify account")}
+      ${researchEmailParagraph("This verification link expires in 24 hours. If the button does not work, copy and paste this link into your browser.")}
+      ${researchEmailLink(verifyUrl)}
+    `,
+    footer: "If you did not create this account, you can ignore this email.",
+  });
 }
 
 async function sendVerificationEmail({

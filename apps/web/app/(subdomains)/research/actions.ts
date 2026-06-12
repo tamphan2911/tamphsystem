@@ -7,6 +7,13 @@ import { redirect } from "next/navigation";
 import nodemailer from "nodemailer";
 import { auth } from "../../../auth";
 import {
+  researchEmailButton,
+  researchEmailInfoTable,
+  researchEmailLink,
+  researchEmailParagraph,
+  researchLightEmail,
+} from "@/sites/shared/lib/emailTemplates";
+import {
   prisma,
   ClaimStatus,
   ConferenceType,
@@ -209,14 +216,6 @@ function researchBaseUrl() {
   return "https://research.tamph.com";
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
-}
-
 function smtpConfigured() {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_FROM);
 }
@@ -314,27 +313,17 @@ async function sendTaskEmail({
     to: recipients,
     subject,
     text: `${heading}\n\n${intro}\n\nTask: ${taskTitle}${detail ? `\n\n${detail}` : ""}\n\nOpen task: ${taskUrl}`,
-    html: `
-      <div style="margin:0;padding:0;background:#f8fafc;font-family:Inter,Arial,sans-serif;color:#0f172a;">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 16px;background:#f8fafc;">
-          <tr><td align="center">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
-              <tr><td style="padding:26px 30px;border-bottom:1px solid #e2e8f0;">
-                <div style="font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#059669;">Research Hub Task</div>
-                <h1 style="margin:10px 0 0;font-size:22px;line-height:1.3;color:#0f172a;">${escapeHtml(heading)}</h1>
-                <p style="margin:10px 0 0;font-size:14px;line-height:1.7;color:#475569;">${escapeHtml(intro)}</p>
-              </td></tr>
-              <tr><td style="padding:24px 30px;">
-                <p style="margin:0 0 8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#64748b;">Task</p>
-                <p style="margin:0 0 16px;font-size:15px;font-weight:700;line-height:1.6;color:#0f172a;">${escapeHtml(taskTitle)}</p>
-                ${detail ? `<p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#475569;white-space:pre-line;">${escapeHtml(detail)}</p>` : ""}
-                <a href="${taskUrl}" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 18px;border-radius:12px;">${escapeHtml(actionLabel ?? "Open task")}</a>
-              </td></tr>
-            </table>
-          </td></tr>
-        </table>
-      </div>
-    `,
+    html: researchLightEmail({
+      eyebrow: "Research Hub Task",
+      title: heading,
+      intro,
+      children: `
+        ${researchEmailInfoTable([{ label: "Task", value: taskTitle }])}
+        ${detail ? researchEmailParagraph(detail, { preLine: true }) : ""}
+        ${researchEmailButton(taskUrl, actionLabel ?? "Open task")}
+      `,
+      footer: "This task notification was sent by Tamph Research Hub.",
+    }),
   });
 }
 
@@ -379,25 +368,16 @@ async function sendProposalEmail({
     to: recipients,
     subject,
     text: `${heading}\n\n${intro}${detail ? `\n\n${detail}` : ""}\n\n${actionLabel}: ${href}`,
-    html: `
-      <div style="margin:0;padding:0;background:#f8fafc;font-family:Inter,Arial,sans-serif;color:#0f172a;">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 16px;background:#f8fafc;">
-          <tr><td align="center">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
-              <tr><td style="padding:26px 30px;border-bottom:1px solid #e2e8f0;">
-                <div style="font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#059669;">Research Hub</div>
-                <h1 style="margin:10px 0 0;font-size:22px;line-height:1.3;color:#0f172a;">${escapeHtml(heading)}</h1>
-                <p style="margin:10px 0 0;font-size:14px;line-height:1.7;color:#475569;">${escapeHtml(intro)}</p>
-              </td></tr>
-              <tr><td style="padding:24px 30px;">
-                ${detail ? `<p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#475569;">${escapeHtml(detail)}</p>` : ""}
-                <a href="${href}" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 18px;border-radius:12px;">${escapeHtml(actionLabel)}</a>
-              </td></tr>
-            </table>
-          </td></tr>
-        </table>
-      </div>
-    `,
+    html: researchLightEmail({
+      eyebrow: "Research Hub",
+      title: heading,
+      intro,
+      children: `
+        ${detail ? researchEmailParagraph(detail, { preLine: true }) : ""}
+        ${researchEmailButton(href, actionLabel)}
+      `,
+      footer: "This proposal notification was sent by Tamph Research Hub.",
+    }),
   });
 }
 
@@ -5165,25 +5145,25 @@ You can track the full information here:
 ${researchUrl}
 
 Best regards,
-Research Management System`;
+Tamph Research Hub`;
 
-  const html = `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-      <p>Dear ${escapeHtml(authorName)},</p>
-      <p>${escapeHtml(opening)}</p>
-      <table style="border-collapse:collapse;margin:16px 0">
-        <tr><td style="padding:4px 12px 4px 0;font-weight:700">Research title</td><td>${escapeHtml(title)}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;font-weight:700">Authors</td><td>${escapeHtml(authorsLine)}</td></tr>
-        ${
-          venue
-            ? `<tr><td style="padding:4px 12px 4px 0;font-weight:700">Venue</td><td>${escapeHtml(venue)}</td></tr>`
-            : ""
-        }
-        <tr><td style="padding:4px 12px 4px 0;font-weight:700">Status</td><td>${escapeHtml(status)}</td></tr>
-      </table>
-      <p><a href="${escapeHtml(researchUrl)}" style="color:#2563eb;font-weight:700">Open research detail page</a></p>
-      <p>Best regards,<br/>Research Management System</p>
-    </div>`;
+  const html = researchLightEmail({
+    eyebrow: "Research Hub",
+    title: notificationSubject(type, title),
+    intro: `Dear ${authorName}, ${opening}`,
+    children: `
+      ${researchEmailInfoTable([
+        { label: "Research title", value: title },
+        { label: "Authors", value: authorsLine },
+        { label: "Venue", value: venue },
+        { label: "Status", value: status },
+      ])}
+      ${researchEmailButton(researchUrl, "Open research detail page")}
+      ${researchEmailParagraph("You can use the research detail page to track full information, authorship, venue, and submission progress.")}
+      ${researchEmailLink(researchUrl)}
+    `,
+    footer: "Best regards, Tamph Research Hub.",
+  });
 
   return { text, html };
 }
