@@ -1,5 +1,5 @@
 export const researchAuthPageClass =
-  "research-auth-page grid min-h-dvh w-full place-items-center bg-[#F7F7F5] p-4 text-slate-900 transition-colors duration-200";
+  "theme-light research-auth-page grid min-h-dvh w-full place-items-center bg-[#F7F7F5] p-4 text-slate-900 transition-colors duration-200";
 
 export const researchAuthCardClass =
   "w-full overflow-hidden rounded-none border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.10)]";

@@ -1,14 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
-import { useTheme } from "next-themes";
+import { useLayoutEffect } from "react";
 
 export function AuthTheme({ theme }: { theme: "light" | "dark" }) {
-  const { setTheme } = useTheme();
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    const opposite = theme === "dark" ? "light" : "dark";
+    const hadTheme = root.classList.contains(theme);
+    const hadOpposite = root.classList.contains(opposite);
 
-  useEffect(() => {
-    setTheme(theme);
-  }, [setTheme, theme]);
+    root.classList.remove(opposite);
+    root.classList.add(theme);
+
+    return () => {
+      root.classList.toggle(theme, hadTheme);
+      root.classList.toggle(opposite, hadOpposite);
+    };
+  }, [theme]);
 
   return null;
 }
