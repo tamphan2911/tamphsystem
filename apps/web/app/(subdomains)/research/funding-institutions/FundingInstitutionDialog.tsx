@@ -4,8 +4,8 @@ import { useState, useTransition } from "react";
 import { Landmark, Loader2, Pencil, Plus, Save } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
+  IconHint,
   ResearchButton,
-  ResearchIconButton,
   researchFieldClass,
   researchLabelClass,
   researchTextareaClass,
@@ -42,15 +42,16 @@ export function FundingInstitutionDialog({
   return (
     <>
       {isEdit ? (
-        <ResearchIconButton
-          type="button"
-          onClick={() => setOpen(true)}
-          label="Edit funder"
-          tone="slate"
-          className="h-5 w-5 border-0 bg-transparent text-[#B0B0B0] shadow-none hover:border-transparent hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none"
-        >
-          <Pencil className="h-4 w-4" />
-        </ResearchIconButton>
+        <IconHint label="Edit funder">
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-label="Edit funder"
+            className="inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-slate-600 shadow-none outline-none transition hover:text-[#1f7180] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+        </IconHint>
       ) : (
         <ResearchButton
           type="button"

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import { ResearchIconButton } from "@/sites/research/components/ResearchPrimitives";
+import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type DeleteFundingInstitutionRow = {
@@ -29,15 +29,16 @@ export function DeleteFundingInstitutionButton({
 
   return (
     <>
-      <ResearchIconButton
-        type="button"
-        onClick={() => setOpen(true)}
-        label={`Delete ${funder.name}`}
-        tone="rose"
-        className="h-5 w-5 border-0 bg-transparent shadow-none hover:border-transparent hover:bg-transparent hover:shadow-none"
-      >
-        <Trash2 className="h-4 w-4" />
-      </ResearchIconButton>
+      <IconHint label={`Delete ${funder.name}`}>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label={`Delete ${funder.name}`}
+          className="inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-rose-600 shadow-none outline-none transition hover:text-rose-700 focus-visible:ring-2 focus-visible:ring-rose-300/40 dark:text-[#FFC1CC] dark:hover:text-rose-300"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </IconHint>
 
       <ResearchConfirmDialog
         open={open}
