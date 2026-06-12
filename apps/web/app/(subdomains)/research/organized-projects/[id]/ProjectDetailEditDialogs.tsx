@@ -296,7 +296,10 @@ export function ProjectInfoEditDialog({
           <input type="hidden" name="updateScope" value="info" />
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_12rem]">
             <label className={labelClass}>
-              Project name
+              <span>
+                Project name
+                <span className="research-required-mark">(*)</span>
+              </span>
               <input
                 name="title"
                 required
@@ -305,7 +308,10 @@ export function ProjectInfoEditDialog({
               />
             </label>
             <label className={labelClass}>
-              Project ID
+              <span>
+                Project ID
+                <span className="research-required-mark">(*)</span>
+              </span>
               <input
                 name="referenceCode"
                 required
@@ -364,7 +370,10 @@ export function ProjectInfoEditDialog({
               />
             </label>
             <label className={labelClass}>
-              Start date
+              <span>
+                Start date
+                <span className="research-required-mark">(*)</span>
+              </span>
               <ResearchDatePicker
                 name="startDate"
                 required
@@ -373,7 +382,10 @@ export function ProjectInfoEditDialog({
               />
             </label>
             <label className={labelClass}>
-              Duration months
+              <span>
+                Duration months
+                <span className="research-required-mark">(*)</span>
+              </span>
               <ResearchNumberInput
                 name="durationMonths"
                 min={1}
@@ -641,7 +653,10 @@ export function CreateProjectResearchDialog({
         >
           <div className="grid gap-4">
             <label className={labelClass}>
-              Title
+              <span>
+                Title
+                <span className="research-required-mark">(*)</span>
+              </span>
               <input
                 name="title"
                 required

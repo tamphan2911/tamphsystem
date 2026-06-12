@@ -25,6 +25,7 @@ export type ResearchSearchPickerOption<T = unknown> = {
 
 export function ResearchSearchPicker<T = unknown>({
   label,
+  required = false,
   name,
   selected,
   query,
@@ -39,6 +40,7 @@ export function ResearchSearchPicker<T = unknown>({
   renderSelected,
 }: {
   label?: string;
+  required?: boolean;
   name?: string;
   selected: ResearchSearchPickerOption<T> | null;
   query: string;
@@ -89,7 +91,14 @@ export function ResearchSearchPicker<T = unknown>({
       ref={wrapperRef}
       className="grid gap-1.5 text-left text-sm font-semibold text-slate-700 dark:text-slate-200"
     >
-      {label}
+      {label ? (
+        <span>
+          {label}
+          {required ? (
+            <span className="research-required-mark">(*)</span>
+          ) : null}
+        </span>
+      ) : null}
       {name && <input type="hidden" name={name} value={selected?.id ?? ""} />}
       <div className="relative">
         {selected ? (

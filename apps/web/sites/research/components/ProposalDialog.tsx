@@ -202,14 +202,20 @@ export function ProposalDialog({
 
           <div className="grid gap-4">
             <label className={labelClass}>
-              Title
+              <span>
+                Title
+                <span className="research-required-mark">(*)</span>
+              </span>
               <input name="title" required className={fieldClass} />
             </label>
 
             {isVenue && (
               <div className="grid gap-4 md:grid-cols-2">
                 <label className={labelClass}>
-                  {isConference ? "ISBN" : "ISSN"}
+                  <span>
+                    {isConference ? "ISBN" : "ISSN"}
+                    <span className="research-required-mark">(*)</span>
+                  </span>
                   <input
                     name="identifier"
                     required
@@ -264,7 +270,10 @@ export function ProposalDialog({
             {!isJournal && (
               <>
                 <label className={labelClass}>
-                  Proposal description
+                  <span>
+                    Proposal description
+                    <span className="research-required-mark">(*)</span>
+                  </span>
                   <textarea
                     name="description"
                     required

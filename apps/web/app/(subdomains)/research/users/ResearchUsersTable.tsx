@@ -446,6 +446,7 @@ function Field({
     <label className="grid gap-2">
       <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
         {label}
+        {required ? <span className="research-required-mark">(*)</span> : null}
       </span>
       <input
         name={name}

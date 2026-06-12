@@ -85,7 +85,10 @@ export function NewResearchUserDialog({
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <label className={researchLabelClass}>
-              Name
+              <span>
+                Name
+                <span className="research-required-mark">(*)</span>
+              </span>
               <input
                 name="name"
                 required
@@ -111,7 +114,10 @@ export function NewResearchUserDialog({
               />
             </label>
             <label className={researchLabelClass}>
-              Temporary password
+              <span>
+                Temporary password
+                <span className="research-required-mark">(*)</span>
+              </span>
               <input
                 name="password"
                 type="text"

@@ -84,7 +84,10 @@ function NewResearchAuthorsPicker({
 
   return (
     <div className="grid gap-2 text-sm font-semibold text-[#E4E4E4]">
-      <span>Authors</span>
+      <span>
+        Authors
+        <span className="research-required-mark">(*)</span>
+      </span>
       {selectedAuthors.map((author) => (
         <input
           key={author.id}
@@ -299,7 +302,10 @@ export function NewResearchDialog({
 
           <section className="grid gap-4">
             <label className={researchLabelClass}>
-              Title
+              <span>
+                Title
+                <span className="research-required-mark">(*)</span>
+              </span>
               <input
                 name="title"
                 placeholder="Research title"

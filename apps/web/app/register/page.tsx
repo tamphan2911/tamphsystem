@@ -193,9 +193,9 @@ function RegisterContent() {
                   : "block text-sm font-semibold text-slate-700 dark:text-slate-200"
               }
             >
-              Full name (*)
+              <span className="sr-only">Full name</span>
               {isResearch ? (
-                <span className="research-auth-input-shell mt-2">
+                <span className="research-auth-input-shell">
                   <input
                     type="text"
                     name="name"
@@ -209,7 +209,7 @@ function RegisterContent() {
                   type="text"
                   name="name"
                   placeholder="Enter your full legal name"
-                  className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
+                  className="h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
                   required
                 />
               )}
@@ -222,9 +222,9 @@ function RegisterContent() {
                   : "block text-sm font-semibold text-slate-700 dark:text-slate-200"
               }
             >
-              Email address (*)
+              <span className="sr-only">Email address</span>
               {isResearch ? (
-                <span className="research-auth-input-shell mt-2">
+                <span className="research-auth-input-shell">
                   <input
                     type="email"
                     name="email"
@@ -238,7 +238,7 @@ function RegisterContent() {
                   type="email"
                   name="email"
                   placeholder="Enter your working email"
-                  className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
+                  className="h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
                   required
                 />
               )}
@@ -251,9 +251,9 @@ function RegisterContent() {
                   : "block text-sm font-semibold text-slate-700 dark:text-slate-200"
               }
             >
-              Affiliation (*)
+              <span className="sr-only">Affiliation</span>
               {isResearch ? (
-                <span className="research-auth-input-shell mt-2">
+                <span className="research-auth-input-shell">
                   <input
                     type="text"
                     name="affiliation"
@@ -267,7 +267,7 @@ function RegisterContent() {
                   type="text"
                   name="affiliation"
                   placeholder="Enter your university or institution"
-                  className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
+                  className="h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
                   required
                 />
               )}
@@ -280,9 +280,9 @@ function RegisterContent() {
                   : "block text-sm font-semibold text-slate-700 dark:text-slate-200"
               }
             >
-              Password (*)
+              <span className="sr-only">Password</span>
               {isResearch ? (
-                <span className="research-auth-input-shell mt-2">
+                <span className="research-auth-input-shell">
                   <input
                     type="password"
                     name="password"
@@ -297,7 +297,7 @@ function RegisterContent() {
                   type="password"
                   name="password"
                   placeholder="Create a password with 6+ characters"
-                  className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
+                  className="h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
                   required
                   minLength={6}
                 />
@@ -311,9 +311,9 @@ function RegisterContent() {
                   : "block text-sm font-semibold text-slate-700 dark:text-slate-200"
               }
             >
-              Confirm password (*)
+              <span className="sr-only">Confirm password</span>
               {isResearch ? (
-                <span className="research-auth-input-shell mt-2">
+                <span className="research-auth-input-shell">
                   <input
                     type="password"
                     name="confirmPassword"
@@ -328,7 +328,7 @@ function RegisterContent() {
                   type="password"
                   name="confirmPassword"
                   placeholder="Retype the same password"
-                  className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
+                  className="h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
                   required
                   minLength={6}
                 />

@@ -20,7 +20,6 @@ import {
   researchAuthLinkClass,
   researchAuthPageClass,
   researchAuthPrimaryButtonClass,
-  researchAuthSubtitleClass,
   researchAuthSuccessClass,
   researchAuthTitleClass,
   researchAuthWarningClass,
@@ -78,34 +77,26 @@ export default async function ForgotPasswordPage({
               : "border-b border-slate-100 px-8 py-7 text-center dark:border-slate-800"
           }
         >
-          <div
-            className={
-              isResearch
-                ? researchAuthIconClass
-                : "mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:ring-blue-900"
-            }
-          >
-            <RotateCcw className="h-6 w-6" />
-          </div>
-          <h1
-            className={
-              isResearch
-                ? researchAuthTitleClass
-                : "mt-4 text-2xl font-bold tracking-tight"
-            }
-          >
-            Reset password
+          <h1 className="inline-flex items-center justify-center gap-2">
+            <span
+              className={
+                isResearch
+                  ? researchAuthIconClass
+                  : "inline-flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:ring-blue-900"
+              }
+            >
+              <RotateCcw className="h-5 w-5" />
+            </span>
+            <span
+              className={
+                isResearch
+                  ? researchAuthTitleClass
+                  : "text-2xl font-bold tracking-tight"
+              }
+            >
+              Reset password
+            </span>
           </h1>
-          <p
-            className={
-              isResearch
-                ? researchAuthSubtitleClass
-                : "mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400"
-            }
-          >
-            Enter your TamphSystem account email. If the account exists, we will
-            send a reset link.
-          </p>
         </div>
 
         <form
@@ -148,7 +139,7 @@ export default async function ForgotPasswordPage({
                 : "block text-sm font-semibold text-slate-700 dark:text-slate-200"
             }
           >
-            Email address
+            <span className="sr-only">Email address</span>
             <input
               type="email"
               name="email"
@@ -157,7 +148,7 @@ export default async function ForgotPasswordPage({
               className={
                 isResearch
                   ? researchAuthInputClass
-                  : "mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
+                  : "h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
               }
               required
             />

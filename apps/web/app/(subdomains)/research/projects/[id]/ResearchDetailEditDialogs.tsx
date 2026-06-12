@@ -117,10 +117,7 @@ function SubmitButton({
   form: string;
 }) {
   return (
-    <ResearchButton
-      form={form}
-      disabled={isPending}
-    >
+    <ResearchButton form={form} disabled={isPending}>
       {isPending ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
@@ -277,7 +274,10 @@ export function ResearchBasicEditDialog({
           <HiddenProduction steps={completedProductionSteps} />
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
             <label className={labelClass}>
-              Title
+              <span>
+                Title
+                <span className="research-required-mark">(*)</span>
+              </span>
               <input
                 name="title"
                 required

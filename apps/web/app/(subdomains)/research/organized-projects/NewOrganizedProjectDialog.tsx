@@ -141,7 +141,10 @@ export function NewOrganizedProjectDialog({
             <section className="grid gap-4">
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_12rem]">
                 <label className={researchLabelClass}>
-                  Project name
+                  <span>
+                    Project name
+                    <span className="research-required-mark">(*)</span>
+                  </span>
                   <input
                     name="title"
                     required
@@ -150,7 +153,10 @@ export function NewOrganizedProjectDialog({
                   />
                 </label>
                 <label className={researchLabelClass}>
-                  Project ID
+                  <span>
+                    Project ID
+                    <span className="research-required-mark">(*)</span>
+                  </span>
                   <input
                     name="referenceCode"
                     required
@@ -207,7 +213,10 @@ export function NewOrganizedProjectDialog({
                   />
                 </label>
                 <label className={researchLabelClass}>
-                  Start date
+                  <span>
+                    Start date
+                    <span className="research-required-mark">(*)</span>
+                  </span>
                   <ResearchDatePicker
                     name="startDate"
                     required
@@ -215,7 +224,10 @@ export function NewOrganizedProjectDialog({
                   />
                 </label>
                 <label className={researchLabelClass}>
-                  Duration months
+                  <span>
+                    Duration months
+                    <span className="research-required-mark">(*)</span>
+                  </span>
                   <ResearchNumberInput
                     name="durationMonths"
                     min={1}

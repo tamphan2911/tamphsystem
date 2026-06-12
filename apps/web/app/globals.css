@@ -80,6 +80,122 @@ body {
   }
 }
 
+.research-unread-count {
+  position: absolute;
+  right: -0.125rem;
+  top: -0.125rem;
+  isolation: isolate;
+  display: inline-flex;
+  height: 1rem;
+  min-width: 1rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 196, 209, 0.72);
+  background: linear-gradient(180deg, #ff4568 0%, #e6002f 55%, #a90022 100%);
+  padding: 0 0.25rem;
+  color: #ffffff;
+  font-size: 0.625rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0 0.35rem rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 0 0.35rem rgba(255, 0, 56, 0.9),
+    0 0 1.1rem rgba(255, 0, 56, 0.58),
+    inset 0 0.08rem 0.16rem rgba(255, 255, 255, 0.42);
+  animation: researchUnreadTick 1.35s ease-in-out infinite;
+}
+
+.research-unread-count::before,
+.research-unread-count::after {
+  content: "";
+  position: absolute;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.research-unread-count::before {
+  inset: -0.125rem;
+  z-index: -1;
+  background: #ff0038;
+  filter: blur(0.22rem);
+  opacity: 0.74;
+  animation: researchUnreadGlow 1.35s ease-in-out infinite;
+}
+
+.research-unread-count::after {
+  inset: -0.35rem;
+  z-index: -2;
+  border: 1px solid rgba(255, 52, 92, 0.48);
+  opacity: 0;
+  animation: researchUnreadPulse 1.35s ease-out infinite;
+}
+
+@keyframes researchUnreadTick {
+  0%,
+  44%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+  8% {
+    transform: translate3d(0, -0.0625rem, 0) scale(1.16) rotate(-8deg);
+    filter: brightness(1.34);
+  }
+  16% {
+    transform: translate3d(0.0625rem, 0, 0) scale(1.08) rotate(7deg);
+  }
+  24% {
+    transform: translate3d(0, 0, 0) scale(1.12) rotate(0deg);
+    filter: brightness(1.18);
+  }
+}
+
+@keyframes researchUnreadGlow {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+  24% {
+    opacity: 0.96;
+    transform: scale(1.2);
+  }
+  52% {
+    opacity: 0.62;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes researchUnreadPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.58);
+  }
+  18% {
+    opacity: 0.58;
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.58);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .research-unread-count,
+  .research-unread-count::before,
+  .research-unread-count::after {
+    animation: none;
+  }
+}
+
+.research-required-mark {
+  margin-left: 0.25rem;
+  color: #ffc1cc;
+  font-weight: 900;
+}
+
 @keyframes hubFloat {
   0%,
   100% {

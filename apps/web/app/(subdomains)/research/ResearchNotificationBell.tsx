@@ -95,7 +95,7 @@ export function ResearchNotificationBell({ enabled }: { enabled: boolean }) {
       >
         <Bell className="h-5 w-5" />
         {count > 0 && (
-          <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-normal leading-none text-white shadow-sm shadow-red-950/25 ring-1 ring-red-300/30">
+          <span className="research-unread-count">
             {count > 99 ? "99+" : count}
           </span>
         )}

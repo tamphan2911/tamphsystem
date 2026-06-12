@@ -68,6 +68,7 @@ function JournalPicker({
   return (
     <ResearchSearchPicker
       label="Journal"
+      required
       name="journalId"
       selected={
         selectedJournal
@@ -170,7 +171,10 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
             />
             <div className="grid gap-4">
               <label className={labelClass}>
-                Manuscript title
+                <span>
+                  Manuscript title
+                  <span className="research-required-mark">(*)</span>
+                </span>
                 <input
                   name="manuscriptTitle"
                   required

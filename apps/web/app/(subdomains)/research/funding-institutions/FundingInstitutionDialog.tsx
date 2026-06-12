@@ -105,7 +105,10 @@ export function FundingInstitutionDialog({
         >
           <div className="grid gap-4">
             <label className={researchLabelClass}>
-              Funder name
+              <span>
+                Funder name
+                <span className="research-required-mark">(*)</span>
+              </span>
               <input
                 name="name"
                 defaultValue={initialValues?.name ?? ""}

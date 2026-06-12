@@ -145,7 +145,8 @@ export function ConferenceDialog({
             )}
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_14rem]">
               <label className={labelClass}>
-                Conference name *
+                Conference name{" "}
+                <span className="research-required-mark">(*)</span>
                 <input
                   name="name"
                   defaultValue={initialValues?.name ?? ""}
@@ -153,7 +154,7 @@ export function ConferenceDialog({
                 />
               </label>
               <label className={labelClass}>
-                Type *
+                Type <span className="research-required-mark">(*)</span>
                 <ResearchFormSelect
                   name="type"
                   defaultValue={initialValues?.type ?? "INTERNATIONAL"}
@@ -192,7 +193,8 @@ export function ConferenceDialog({
                 />
               </label>
               <label className={labelClass}>
-                Submission deadline *
+                Submission deadline{" "}
+                <span className="research-required-mark">(*)</span>
                 <ResearchDatePicker
                   name="submissionDeadline"
                   required
@@ -201,7 +203,8 @@ export function ConferenceDialog({
                 />
               </label>
               <label className={labelClass}>
-                Acceptance notification *
+                Acceptance notification{" "}
+                <span className="research-required-mark">(*)</span>
                 <ResearchDatePicker
                   name="acceptanceNotification"
                   required
@@ -210,7 +213,7 @@ export function ConferenceDialog({
                 />
               </label>
               <label className={labelClass}>
-                Location *
+                Location <span className="research-required-mark">(*)</span>
                 <input
                   name="location"
                   defaultValue={initialValues?.location ?? ""}
@@ -221,7 +224,7 @@ export function ConferenceDialog({
 
             <div className="grid gap-4 md:grid-cols-2">
               <label className={labelClass}>
-                Organizer *
+                Organizer <span className="research-required-mark">(*)</span>
                 <input
                   name="organizer"
                   defaultValue={initialValues?.organizer ?? ""}
@@ -229,7 +232,7 @@ export function ConferenceDialog({
                 />
               </label>
               <label className={labelClass}>
-                ISBN *
+                ISBN <span className="research-required-mark">(*)</span>
                 <input
                   name="isbn"
                   defaultValue={initialValues?.isbn ?? ""}

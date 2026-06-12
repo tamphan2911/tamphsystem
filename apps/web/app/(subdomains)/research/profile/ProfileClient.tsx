@@ -455,6 +455,7 @@ export function ProfileClient({
           <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
             <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
               Display name
+              <span className="research-required-mark">(*)</span>
             </span>
             <input
               name="name"
@@ -466,6 +467,7 @@ export function ProfileClient({
           <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
             <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
               Affiliation
+              <span className="research-required-mark">(*)</span>
             </span>
             <input
               name="affiliation"

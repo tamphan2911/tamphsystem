@@ -175,9 +175,9 @@ export default async function LoginPage({
                   : "block text-sm font-semibold text-slate-700 dark:text-slate-200"
               }
             >
-              Email address (*)
+              <span className="sr-only">Email address</span>
               {isResearch ? (
-                <span className="research-auth-input-shell mt-2">
+                <span className="research-auth-input-shell">
                   <input
                     type="email"
                     name="email"
@@ -193,7 +193,7 @@ export default async function LoginPage({
                   name="email"
                   defaultValue={email ?? ""}
                   placeholder="you@example.com"
-                  className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
+                  className="h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
                   required
                 />
               )}
@@ -206,9 +206,9 @@ export default async function LoginPage({
                   : "block text-sm font-semibold text-slate-700 dark:text-slate-200"
               }
             >
-              Password (*)
+              <span className="sr-only">Password</span>
               {isResearch ? (
-                <span className="research-auth-input-shell mt-2">
+                <span className="research-auth-input-shell">
                   <input
                     type="password"
                     name="password"
@@ -222,7 +222,7 @@ export default async function LoginPage({
                   type="password"
                   name="password"
                   placeholder="Your password"
-                  className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
+                  className="h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
                   required
                 />
               )}

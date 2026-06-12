@@ -490,6 +490,7 @@ export function EditTaskDialog({
             <label className="grid gap-1.5">
               <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Task title
+                <span className="research-required-mark">(*)</span>
               </span>
               <input
                 name="title"

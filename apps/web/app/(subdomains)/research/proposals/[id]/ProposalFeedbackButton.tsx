@@ -153,7 +153,10 @@ export function ProposalFeedbackButton({
               </div>
 
               <label className="grid gap-1 text-sm font-semibold text-[#E4E4E4]">
-                Note to proposer
+                <span>
+                  Note to proposer
+                  <span className="research-required-mark">(*)</span>
+                </span>
                 <textarea
                   name="comment"
                   required

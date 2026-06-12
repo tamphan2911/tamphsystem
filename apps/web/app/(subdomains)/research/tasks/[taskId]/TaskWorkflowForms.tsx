@@ -119,7 +119,13 @@ function TextModalForm({
           <ResearchButton
             type="button"
             disabled={isPending || content.trim().length === 0}
-            tone={tone === "rose" ? "danger" : tone === "amber" ? "secondary" : "primary"}
+            tone={
+              tone === "rose"
+                ? "danger"
+                : tone === "amber"
+                  ? "secondary"
+                  : "primary"
+            }
             onClick={() => {
               startTransition(() => {
                 formRef.current?.requestSubmit();
@@ -157,6 +163,7 @@ function TextModalForm({
           <label className="grid gap-1.5">
             <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
               {fieldLabel}
+              <span className="research-required-mark">(*)</span>
             </span>
             <textarea
               name={fieldName}

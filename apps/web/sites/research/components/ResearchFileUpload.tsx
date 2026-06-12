@@ -50,6 +50,9 @@ export function ResearchFileUpload({
         <span className="min-w-0 flex-1 truncate">
           <span className={selectedName ? "text-[#E4E4E4]" : "text-[#777777]"}>
             {displayName}
+            {required ? (
+              <span className="research-required-mark">(*)</span>
+            ) : null}
           </span>
           {currentFileName && !selectedName && (
             <span className="ml-2 text-xs text-[#B0B0B0]">

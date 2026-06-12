@@ -218,17 +218,25 @@ export default async function ProjectsDashboard() {
       label: "Published",
       value: published.length,
     },
-    {
-      label: "Claims",
-      value: claimQueue.length,
-    },
+    ...(isAdmin
+      ? [
+          {
+            label: "Claims",
+            value: claimQueue.length,
+          },
+        ]
+      : []),
   ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <ResearchPageHeaderPortal>
         <div className="flex w-full min-w-0 items-center justify-between gap-4">
-          <div className="grid min-w-0 border border-[#444444] bg-[#2C2C2C] sm:grid-cols-4">
+          <div
+            className={`grid min-w-0 border border-[#444444] bg-[#2C2C2C] ${
+              isAdmin ? "sm:grid-cols-4" : "sm:grid-cols-3"
+            }`}
+          >
             {stats.map((item, index) => (
               <div
                 key={item.label}
