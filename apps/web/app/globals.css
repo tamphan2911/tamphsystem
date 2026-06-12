@@ -1266,6 +1266,7 @@ textarea:focus-visible {
 }
 
 html[data-research-theme="light"] :where(.research-dropdown-floating-panel),
+.research-dropdown-floating-panel.research-theme-light,
 .research-site-root.research-theme-light :where(.research-dropdown-panel),
 .research-site-root.research-theme-light
   :where([class*="absolute"][class*="top-full"][class*="shadow"]) {
@@ -1277,24 +1278,42 @@ html[data-research-theme="light"] :where(.research-dropdown-floating-panel),
 
 html[data-research-theme="light"]
   :where(.research-dropdown-floating-panel)
-  :where([class~="bg-[#2C2C2C]"], [class~="bg-[#383838]"]) {
+  :where([class~="bg-[#2C2C2C]"], [class~="bg-[#383838]"]),
+.research-dropdown-floating-panel.research-theme-light
+  :where(
+    [class~="bg-[#2C2C2C]"],
+    [class~="bg-[#383838]"],
+    [class~="dark:bg-[#2C2C2C]"],
+    [class~="dark:bg-[#383838]"]
+  ) {
   background-color: #fffdf8 !important;
 }
 
 html[data-research-theme="light"]
   :where(.research-dropdown-floating-panel)
-  :where([class~="text-[#E4E4E4]"]) {
+  :where([class~="text-[#E4E4E4]"]),
+.research-dropdown-floating-panel.research-theme-light
+  :where([class~="text-[#E4E4E4]"], [class~="dark:text-[#E4E4E4]"]) {
   color: #1f2937 !important;
 }
 
 html[data-research-theme="light"]
   :where(.research-dropdown-floating-panel)
-  :where([class~="text-[#B0B0B0]"], [class~="text-[#777777]"]) {
+  :where([class~="text-[#B0B0B0]"], [class~="text-[#777777]"]),
+.research-dropdown-floating-panel.research-theme-light
+  :where(
+    [class~="text-[#B0B0B0]"],
+    [class~="text-[#777777]"],
+    [class~="dark:text-[#B0B0B0]"],
+    [class~="dark:text-[#777777]"]
+  ) {
   color: #667085 !important;
 }
 
 html[data-research-theme="light"]
   :where(.research-dropdown-floating-panel)
+  :where([role="option"][aria-selected="true"]),
+.research-dropdown-floating-panel.research-theme-light
   :where([role="option"][aria-selected="true"]) {
   border-top-color: #d8d0c2 !important;
   border-bottom-color: #d8d0c2 !important;
@@ -1304,6 +1323,8 @@ html[data-research-theme="light"]
 
 html[data-research-theme="light"]
   :where(.research-dropdown-floating-panel)
+  :where([role="option"][aria-selected="true"] svg),
+.research-dropdown-floating-panel.research-theme-light
   :where([role="option"][aria-selected="true"] svg) {
   color: #2d7882 !important;
   stroke-width: 1.75;

@@ -103,9 +103,14 @@ export function FloatingDropdownPortal({
 
   if (!mounted || !open || !style) return null;
 
+  const storedTheme = window.localStorage.getItem("research-theme-mode");
+  const documentTheme = document.documentElement.dataset.researchTheme;
+  const themeClass =
+    (documentTheme || storedTheme) === "light" ? "research-theme-light" : "";
+
   return createPortal(
     <div
-      className="research-dropdown-floating-panel fixed z-[1100]"
+      className={`research-dropdown-floating-panel fixed z-[1100] ${themeClass}`}
       style={style}
     >
       <AnimatedResize className="overflow-hidden">{children}</AnimatedResize>
