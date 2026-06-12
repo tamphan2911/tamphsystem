@@ -156,7 +156,7 @@ export default async function ForgotPasswordPage({
 
           <TurnstileField
             siteKey={siteKey}
-            theme={isResearch ? "dark" : "light"}
+            theme="light"
           />
 
           <button

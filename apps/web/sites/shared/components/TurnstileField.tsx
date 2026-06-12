@@ -125,7 +125,7 @@ export function TurnstileField({
           className={
             theme === "dark"
               ? "turnstile-field turnstile-field-dark flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden"
-              : "flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden py-0"
+              : "turnstile-field turnstile-field-light flex min-h-[4.25rem] w-full items-center justify-start overflow-hidden py-0"
           }
         >
           <div ref={containerRef} className="max-w-full" />

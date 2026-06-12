@@ -230,7 +230,7 @@ export default async function LoginPage({
 
             <TurnstileField
               siteKey={siteKey}
-              theme={isResearch ? "dark" : "light"}
+              theme="light"
             />
 
             <button

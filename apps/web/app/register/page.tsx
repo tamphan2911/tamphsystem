@@ -339,7 +339,7 @@ function RegisterContent() {
               <TurnstileField
                 siteKey={siteKey}
                 resetKey={turnstileResetKey}
-                theme={isResearch ? "dark" : "light"}
+                theme="light"
               />
             ) : null}
 
