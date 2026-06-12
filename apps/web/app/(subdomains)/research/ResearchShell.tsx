@@ -89,6 +89,7 @@ function applyResearchTheme(theme: ResearchTheme) {
   document.documentElement.classList.toggle("dark", theme === "dark");
   document.documentElement.dataset.researchTheme = theme;
   window.localStorage.setItem(researchThemeKey, theme);
+  window.localStorage.setItem("theme", theme);
 }
 
 function titleCaseLabel(label: string) {
