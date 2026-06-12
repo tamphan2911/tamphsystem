@@ -187,8 +187,15 @@ export async function registerUser(formData: FormData) {
   const host = hostFromHeaders(requestHeaders);
   const activeSite = siteFromHost(host);
 
-  if (!name || !email || !affiliation || !password || !confirmPassword) {
-    return { error: "All fields are required." };
+  if (!name) return { error: "Enter your full name to create the account." };
+  if (!email)
+    return { error: "Enter your email address to create the account." };
+  if (!affiliation) {
+    return { error: "Enter your university or institution." };
+  }
+  if (!password) return { error: "Create a password for this account." };
+  if (!confirmPassword) {
+    return { error: "Retype the password to confirm it." };
   }
   if (password.length < 6) {
     return { error: "Password must have at least 6 characters." };

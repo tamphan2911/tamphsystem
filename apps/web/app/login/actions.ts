@@ -85,10 +85,19 @@ export async function loginUser(formData: FormData) {
   const redirectTo =
     isResearch && origin ? `${origin}${redirectPath}` : redirectPath;
 
-  if (!email || !password) {
+  if (!email) {
     redirect(
       loginUrl({
-        warning: "missing",
+        warning: "missing_email",
+        callbackUrl: redirectPath,
+      }),
+    );
+  }
+  if (!password) {
+    redirect(
+      loginUrl({
+        warning: "missing_password",
+        email,
         callbackUrl: redirectPath,
       }),
     );
@@ -120,31 +129,42 @@ export async function loginUser(formData: FormData) {
     },
   });
 
-  if (user && !user.emailVerified) {
-    const passwordMatches =
-      (await bcrypt.compare(password, user.passwordHash)) ||
-      (user.passwordHash === "hashed_password_placeholder" &&
-        password === "password");
-    if (passwordMatches) {
-      await createAndSendVerificationEmail({
-        userId: user.id,
-        name: user.name,
-        email: user.email,
-        site: siteFromHost(host),
-        baseUrl:
-          origin || process.env.NEXT_PUBLIC_APP_URL || "https://tamph.com",
-      });
-      const params = new URLSearchParams({ email: user.email });
-      if (redirectPath) params.set("callbackUrl", redirectPath);
-      redirect(`/register/check-email?${params.toString()}`);
-    }
+  if (!user) {
     redirect(
       loginUrl({
-        error: "CredentialsSignin",
+        warning: "email_not_found",
         email,
         callbackUrl: redirectPath,
       }),
     );
+  }
+
+  const passwordMatches =
+    (await bcrypt.compare(password, user.passwordHash)) ||
+    (user.passwordHash === "hashed_password_placeholder" &&
+      password === "password");
+
+  if (!passwordMatches) {
+    redirect(
+      loginUrl({
+        warning: "password_wrong",
+        email,
+        callbackUrl: redirectPath,
+      }),
+    );
+  }
+
+  if (!user.emailVerified) {
+    await createAndSendVerificationEmail({
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      site: siteFromHost(host),
+      baseUrl: origin || process.env.NEXT_PUBLIC_APP_URL || "https://tamph.com",
+    });
+    const params = new URLSearchParams({ email: user.email });
+    if (redirectPath) params.set("callbackUrl", redirectPath);
+    redirect(`/register/check-email?${params.toString()}`);
   }
 
   formData.set("email", email);

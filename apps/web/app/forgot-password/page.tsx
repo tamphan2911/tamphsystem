@@ -1,8 +1,6 @@
 import { AlertTriangle, Mail, RotateCcw } from "lucide-react";
 import { headers } from "next/headers";
-import {
-  AuthLightTheme,
-} from "@/sites/shared/components/AuthLightTheme";
+import { AuthLightTheme } from "@/sites/shared/components/AuthLightTheme";
 import {
   AuthSwitchLink,
   AuthTransitionCard,
@@ -26,9 +24,12 @@ import {
 import { turnstileSiteKey } from "@/sites/shared/lib/turnstile";
 import { requestPasswordReset } from "./actions";
 
-function warningCopy(warning?: string) {
+function warningCopy(warning?: string, email?: string) {
   if (warning === "missing") {
     return "Enter your email address to request a password reset link.";
+  }
+  if (warning === "email_not_found") {
+    return `${email || "This email address"} is not registered in our system. Check the spelling or register a new account.`;
   }
   if (warning === "security") {
     return "Cloudflare verification was not completed. Complete the security check, then try again.";
@@ -50,7 +51,7 @@ export default async function ForgotPasswordPage({
     requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
   const isResearch = host.startsWith("research.");
   const siteKey = turnstileSiteKey();
-  const warningMessage = warningCopy(warning);
+  const warningMessage = warningCopy(warning, email);
 
   return (
     <div
@@ -102,6 +103,30 @@ export default async function ForgotPasswordPage({
           action={requestPasswordReset}
           className={isResearch ? researchAuthFormClass : "space-y-5 px-8 py-7"}
         >
+          <label
+            className={
+              isResearch
+                ? researchAuthLabelClass
+                : "block text-sm font-semibold text-slate-700 dark:text-slate-200"
+            }
+          >
+            <span className="sr-only">Email address</span>
+            <input
+              type="email"
+              name="email"
+              defaultValue={email ?? ""}
+              placeholder="you@example.com"
+              className={
+                isResearch
+                  ? researchAuthInputClass
+                  : "h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
+              }
+              required
+            />
+          </label>
+
+          <TurnstileField siteKey={siteKey} theme="light" />
+
           {sent === "1" && (
             <div
               className={
@@ -130,33 +155,6 @@ export default async function ForgotPasswordPage({
               <span>{warningMessage}</span>
             </div>
           )}
-
-          <label
-            className={
-              isResearch
-                ? researchAuthLabelClass
-                : "block text-sm font-semibold text-slate-700 dark:text-slate-200"
-            }
-          >
-            <span className="sr-only">Email address</span>
-            <input
-              type="email"
-              name="email"
-              defaultValue={email ?? ""}
-              placeholder="you@example.com"
-              className={
-                isResearch
-                  ? researchAuthInputClass
-                  : "h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-slate-900"
-              }
-              required
-            />
-          </label>
-
-          <TurnstileField
-            siteKey={siteKey}
-            theme="light"
-          />
 
           <button
             type="submit"

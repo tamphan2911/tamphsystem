@@ -1,9 +1,7 @@
 import { AlertTriangle, LockKeyhole, LogIn, Mail } from "lucide-react";
 import { headers } from "next/headers";
 import { TurnstileField } from "@/sites/shared/components/TurnstileField";
-import {
-  AuthLightTheme,
-} from "@/sites/shared/components/AuthLightTheme";
+import { AuthLightTheme } from "@/sites/shared/components/AuthLightTheme";
 import {
   AuthSwitchLink,
   AuthTransitionCard,
@@ -44,6 +42,31 @@ function warningCopy(warning?: string, email?: string) {
     return {
       title: "Missing login information",
       detail: "Enter both email and password to continue.",
+    };
+  }
+  if (warning === "missing_email") {
+    return {
+      title: "Email address required",
+      detail: "Enter the email address registered with your account.",
+    };
+  }
+  if (warning === "missing_password") {
+    return {
+      title: "Password required",
+      detail: "Enter your password to sign in.",
+    };
+  }
+  if (warning === "email_not_found") {
+    return {
+      title: "Email not found",
+      detail: `${email || "This email address"} is not registered in our system. Check the spelling or register a new account.`,
+    };
+  }
+  if (warning === "password_wrong") {
+    return {
+      title: "Incorrect password",
+      detail:
+        "This email exists, but the password is not correct. Check it and try again.",
     };
   }
   if (warning === "security") {
@@ -227,22 +250,7 @@ export default async function LoginPage({
               )}
             </label>
 
-            <TurnstileField
-              siteKey={siteKey}
-              theme="light"
-            />
-
-            <button
-              type="submit"
-              className={
-                isResearch
-                  ? researchAuthPrimaryButtonClass
-                  : "inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-blue-600 bg-blue-600 px-4 text-sm font-bold text-white shadow-lg shadow-blue-900/15 transition hover:-translate-y-0.5 hover:bg-blue-500 hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/30 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400"
-              }
-            >
-              <LogIn className="h-4 w-4" />
-              {isResearch ? "SIGN IN" : "Sign in"}
-            </button>
+            <TurnstileField siteKey={siteKey} theme="light" />
 
             {warningMessage && (
               <div
@@ -259,6 +267,18 @@ export default async function LoginPage({
                 </div>
               </div>
             )}
+
+            <button
+              type="submit"
+              className={
+                isResearch
+                  ? researchAuthPrimaryButtonClass
+                  : "inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-blue-600 bg-blue-600 px-4 text-sm font-bold text-white shadow-lg shadow-blue-900/15 transition hover:-translate-y-0.5 hover:bg-blue-500 hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/30 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400"
+              }
+            >
+              <LogIn className="h-4 w-4" />
+              {isResearch ? "SIGN IN" : "Sign in"}
+            </button>
           </form>
 
           <div

@@ -191,21 +191,23 @@ export async function requestPasswordReset(formData: FormData) {
     select: { id: true, email: true },
   });
 
-  if (user) {
-    const token = crypto.randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordResetToken: token,
-        passwordResetTokenExpires: expiresAt,
-      },
-    });
-
-    const resetUrl = `${baseUrlFromHeaders(requestHeaders)}/reset-password?token=${token}`;
-    await sendResetEmail({ email: user.email, site, resetUrl });
+  if (!user) {
+    redirect(forgotUrl({ warning: "email_not_found", email }));
   }
+
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordResetToken: token,
+      passwordResetTokenExpires: expiresAt,
+    },
+  });
+
+  const resetUrl = `${baseUrlFromHeaders(requestHeaders)}/reset-password?token=${token}`;
+  await sendResetEmail({ email: user.email, site, resetUrl });
 
   redirect(`/forgot-password/check-email?email=${encodeURIComponent(email)}`);
 }

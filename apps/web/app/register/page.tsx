@@ -12,9 +12,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { TurnstileField } from "@/sites/shared/components/TurnstileField";
-import {
-  AuthLightTheme,
-} from "@/sites/shared/components/AuthLightTheme";
+import { AuthLightTheme } from "@/sites/shared/components/AuthLightTheme";
 import {
   AuthSwitchLink,
   AuthTransitionCard,
@@ -101,8 +99,24 @@ function RegisterContent() {
     const confirmPassword = String(formData.get("confirmPassword") ?? "");
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!name || !email || !affiliation || !password || !confirmPassword) {
-      setError("Fill in every required field marked with (*).");
+    if (!name) {
+      setError("Enter your full name to create the account.");
+      return;
+    }
+    if (!email) {
+      setError("Enter your email address to create the account.");
+      return;
+    }
+    if (!affiliation) {
+      setError("Enter your university or institution.");
+      return;
+    }
+    if (!password) {
+      setError("Create a password for this account.");
+      return;
+    }
+    if (!confirmPassword) {
+      setError("Retype the password to confirm it.");
       return;
     }
     if (!emailPattern.test(email)) {
@@ -342,6 +356,19 @@ function RegisterContent() {
               />
             ) : null}
 
+            {error && (
+              <div
+                className={
+                  isResearch
+                    ? `${researchAuthErrorClass} research-auth-feedback`
+                    : "flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200"
+                }
+              >
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
+                <span>{error}</span>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={isLoading}
@@ -358,19 +385,6 @@ function RegisterContent() {
               )}
               {isLoading ? "Creating account..." : "REGISTER"}
             </button>
-
-            {error && (
-              <div
-                className={
-                  isResearch
-                    ? `${researchAuthErrorClass} research-auth-feedback`
-                    : "flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200"
-                }
-              >
-                <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
-                <span>{error}</span>
-              </div>
-            )}
           </form>
 
           <div
