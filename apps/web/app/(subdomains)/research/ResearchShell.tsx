@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Moon, Sun } from "lucide-react";
 import { ActiveNavLink } from "@/sites/research/components/ActiveNavLink";
 import { ProfileMenu } from "@/sites/shared/components/ProfileMenu";
 import { SidebarSupportCard } from "@/sites/research/components/SidebarSupportCard";
@@ -82,6 +82,8 @@ const navItems = [
 ];
 
 const sidebarStateKey = "research-sidebar-collapsed";
+const researchThemeKey = "research-theme-mode";
+type ResearchTheme = "dark" | "light";
 
 function titleCaseLabel(label: string) {
   return label
@@ -120,6 +122,33 @@ function isResearchModalOverlay(element: HTMLElement) {
   );
 }
 
+function ResearchThemeSwitch({
+  theme,
+  onChange,
+}: {
+  theme: ResearchTheme;
+  onChange: (theme: ResearchTheme) => void;
+}) {
+  const isLight = theme === "light";
+
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(isLight ? "dark" : "light")}
+      className="research-theme-switch group inline-flex h-10 w-10 cursor-pointer items-center justify-center border border-[#444444] bg-[#2C2C2C] text-[#B0B0B0] outline-none transition duration-180 ease-out hover:border-[#A8DADC] hover:bg-[#383838] hover:text-[#E4E4E4] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
+      aria-label={isLight ? "Switch to dark theme" : "Switch to light theme"}
+      title={isLight ? "Switch to dark theme" : "Switch to light theme"}
+      aria-pressed={isLight}
+    >
+      {isLight ? (
+        <Moon className="h-4 w-4 transition group-hover:-rotate-6" />
+      ) : (
+        <Sun className="h-4 w-4 transition group-hover:rotate-12" />
+      )}
+    </button>
+  );
+}
+
 export function ResearchShell({
   children,
   email,
@@ -145,10 +174,25 @@ export function ResearchShell({
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(sidebarStateKey) === "true";
   });
+  const [theme, setTheme] = useState<ResearchTheme>(() => {
+    if (typeof window === "undefined" || !isAdmin) return "dark";
+    return window.localStorage.getItem(researchThemeKey) === "light"
+      ? "light"
+      : "dark";
+  });
 
   useEffect(() => {
-    document.documentElement.classList.add("dark");
-  }, []);
+    if (!isAdmin) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.dataset.researchTheme = "dark";
+      setTheme("dark");
+      return;
+    }
+
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.dataset.researchTheme = theme;
+    window.localStorage.setItem(researchThemeKey, theme);
+  }, [isAdmin, theme]);
 
   useEffect(() => {
     window.localStorage.setItem(sidebarStateKey, String(collapsed));
@@ -228,7 +272,11 @@ export function ResearchShell({
 
   return (
     <ResearchToastProvider>
-      <div className="research-site-root relative h-screen overflow-y-auto overflow-x-hidden bg-[#242424] text-[#E4E4E4]">
+      <div
+        className={`research-site-root relative h-screen overflow-y-auto overflow-x-hidden bg-[#242424] text-[#E4E4E4] ${
+          theme === "light" ? "research-theme-light" : "research-theme-dark"
+        }`}
+      >
         <aside
           className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#3D3D3D] bg-[#2C2C2C] transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none ${
             collapsed ? "w-20" : "w-72"
@@ -320,6 +368,9 @@ export function ResearchShell({
                 className="hidden min-w-0 flex-1 items-center lg:flex"
               />
               <div className="flex items-center gap-3">
+                {isAdmin && (
+                  <ResearchThemeSwitch theme={theme} onChange={setTheme} />
+                )}
                 <ResearchNotificationBell enabled={Boolean(email)} />
                 <ProfileMenu
                   email={email}
