@@ -2210,6 +2210,21 @@ body:has(.research-site-root) {
   border-top-color: var(--research-table-line) !important;
 }
 
+:where(
+    html[data-research-theme="light"] .research-site-root,
+    .research-site-root.research-theme-light
+  )
+  :where(div, section):has(> div > table)
+  > :where(div:first-child:not(:has(table))),
+:where(
+    html[data-research-theme="light"] .research-site-root,
+    .research-site-root.research-theme-light
+  )
+  :where(div, section):has(> table)
+  > :where(div:first-child:not(:has(table))) {
+  background: #f5f2ec !important;
+}
+
 .research-site-root :where(table tr > :first-child) {
   border-left-width: 0 !important;
 }
