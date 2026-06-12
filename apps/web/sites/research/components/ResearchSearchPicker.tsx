@@ -170,6 +170,7 @@ export function ResearchSearchPicker<T = unknown>({
           anchorRef={wrapperRef}
           open={showDropdown}
           maxWidth={640}
+          maxPanelHeight={240}
         >
           <div className={researchDropdownPanelClass}>
             <div

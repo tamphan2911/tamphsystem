@@ -793,6 +793,9 @@ textarea:focus-visible {
   --research-panel-3: #383838;
   --research-border: #444444;
   --research-divider: #383838;
+  --research-table-chrome: #242424;
+  --research-table-head: #1b1b1b;
+  --research-table-line: #303030;
   --research-muted: #b0b0b0;
   --research-accent: #a8dadc;
   background: #242424;
@@ -1208,15 +1211,9 @@ body:has(.research-site-root) {
   contain-intrinsic-size: auto 24rem;
 }
 
-.research-site-root
-  main
-  :where(div, section):has(> table),
-.research-site-root
-  main
-  :where(div, section):has(> div > table),
-.research-site-root
-  main
-  :where([data-research-lazy-table]) {
+.research-site-root main :where(div, section):has(> table),
+.research-site-root main :where(div, section):has(> div > table),
+.research-site-root main :where([data-research-lazy-table]) {
   content-visibility: auto;
   contain-intrinsic-size: auto 32rem;
 }
@@ -1297,10 +1294,20 @@ body:has(.research-site-root) {
 .research-site-root
   :where(div, section):has(> table)
   > :where(div:first-child:not(:has(table))) {
-  background-color: #242424 !important;
-  border-bottom-color: #3a3a3a !important;
+  background-color: var(--research-table-chrome) !important;
+  border-bottom-color: var(--research-table-line) !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
+}
+
+.research-site-root
+  :where(div, section):has(> div > table)
+  > :where(div:last-child:not(:has(table))),
+.research-site-root
+  :where(div, section):has(> table)
+  > :where(div:last-child:not(:has(table))) {
+  background-color: var(--research-table-chrome) !important;
+  border-top-color: var(--research-table-line) !important;
 }
 
 .research-site-root :where(table tr > :first-child) {
@@ -1364,7 +1371,7 @@ body:has(.research-site-root) {
 .research-site-root tbody tr {
   --research-row-bg: #242424;
   --research-row-hover-bg: #303030;
-  --research-row-line: #3a3a3a;
+  --research-row-line: var(--research-table-line);
   background-color: var(--research-row-bg);
   transition:
     background-color 180ms ease,
@@ -1390,12 +1397,12 @@ body:has(.research-site-root) {
 
 .research-site-root tbody tr[class*="bg-rose"] {
   --research-row-bg: #2d2828;
-  --research-row-line: #3a3a3a;
+  --research-row-line: var(--research-table-line);
 }
 
 .research-site-root tbody tr:hover {
   --research-row-bg: var(--research-row-hover-bg);
-  --research-row-line: #404040;
+  --research-row-line: #383838;
   box-shadow: inset 3px 0 0 #a8dadc;
 }
 
@@ -1436,14 +1443,14 @@ body:has(.research-site-root) {
 }
 
 .research-site-root thead {
-  background-color: #202020 !important;
+  background-color: var(--research-table-head) !important;
   letter-spacing: 0.04em;
 }
 
 .research-site-root thead > tr,
 .research-site-root thead > tr > th {
-  background-color: #202020 !important;
-  border-bottom-color: #444444 !important;
+  background-color: var(--research-table-head) !important;
+  border-bottom-color: var(--research-table-line) !important;
 }
 
 .research-site-root button,

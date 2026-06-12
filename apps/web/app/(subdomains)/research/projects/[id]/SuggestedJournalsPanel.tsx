@@ -1396,7 +1396,7 @@ function ResultList({
   if (!isSearching && !hasChildren) return null;
 
   return (
-    <div className="grid max-h-56 overflow-y-auto border border-[#444444]">
+    <div className="grid max-h-[18rem] min-h-[18rem] overflow-y-auto border border-[#444444]">
       {hasChildren ? (
         children
       ) : (
