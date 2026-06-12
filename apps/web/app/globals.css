@@ -996,7 +996,7 @@ textarea:focus-visible {
 
 .research-site-root.research-theme-light [class~="bg-[#2C2C2C]"],
 .research-site-root.research-theme-light [class~="dark:bg-[#2C2C2C]"] {
-  background-color: #fffdf8 !important;
+  background-color: #f8f6ef !important;
 }
 
 .research-site-root.research-theme-light [class~="bg-[#303030]"],
