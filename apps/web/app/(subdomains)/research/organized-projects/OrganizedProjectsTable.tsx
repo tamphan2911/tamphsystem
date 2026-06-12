@@ -23,10 +23,7 @@ import {
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import {
-  ResearchIconButton,
-  researchLinkClass,
-} from "@/sites/research/components/ResearchPrimitives";
+import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { displayResearchPersonName } from "@/sites/research/lib/display";
@@ -146,15 +143,16 @@ function DeleteProjectButton({
 
   return (
     <>
-      <ResearchIconButton
-        type="button"
-        onClick={() => setOpen(true)}
-        label={`Delete ${project.title}`}
-        tone="rose"
-        className="h-8 w-8"
-      >
-        <Trash2 className="h-4 w-4" />
-      </ResearchIconButton>
+      <IconHint label={`Delete ${project.title}`}>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label={`Delete ${project.title}`}
+          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#FFC1CC] shadow-none outline-none transition hover:text-rose-300 focus-visible:ring-2 focus-visible:ring-[#FFC1CC]/30"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </IconHint>
 
       <ResearchConfirmDialog
         open={open}
@@ -327,30 +325,27 @@ export function OrganizedProjectsTable({
                       >
                         {project.title}
                       </Link>
-                      {project.durationLabel && (
-                        <span className="text-xs font-semibold text-[#777777]">
-                          ({project.durationLabel})
-                        </span>
-                      )}
                     </div>
                     <p className="mt-1 line-clamp-1 text-xs leading-5 text-[#B0B0B0]">
                       {project.members.length > 0
                         ? project.members.map(memberName).join(", ")
                         : "No members"}
                     </p>
-                    <p className="mt-0.5 line-clamp-1 text-xs leading-5 text-[#777777]">
-                      {project.description || project.note || "No description"}
-                    </p>
                   </td>
                   <td className="px-2 py-3 text-center align-top">
                     <IconHint label={status.label}>
                       <span
-                        className={`inline-flex h-9 w-9 items-center justify-center ${status.className}`}
+                        className={`research-task-icon-motion inline-flex h-9 w-9 items-center justify-center ${status.className}`}
                       >
                         <StatusIcon className="h-4 w-4" aria-hidden="true" />
                         <span className="sr-only">{status.label}</span>
                       </span>
                     </IconHint>
+                    {project.durationLabel && (
+                      <span className="mt-1 block text-[11px] font-normal leading-4 text-[#777777]">
+                        {project.durationLabel}
+                      </span>
+                    )}
                   </td>
                   <td className="px-2 py-3 text-center align-top">
                     <IconHint label={claim.label}>
@@ -363,7 +358,7 @@ export function OrganizedProjectsTable({
                     </IconHint>
                   </td>
                   <td className="px-3 py-3 align-top text-sm text-[#B0B0B0]">
-                    <span className="line-clamp-2">
+                    <span className="block whitespace-normal break-words leading-5">
                       {project.organizer || "No funding institution"}
                     </span>
                     {project.fundingAmount && (
