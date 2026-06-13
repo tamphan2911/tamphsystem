@@ -1,15 +1,17 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { notFound, redirect } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
+  Ban,
   CheckCircle2,
   ClipboardList,
   Clock3,
+  CircleHelp,
   ExternalLink,
   FileText,
   Globe2,
-  HelpCircle,
   KeyRound,
   SearchCheck,
   Send,
@@ -163,28 +165,63 @@ function statusMeta(task: {
   };
 }
 
-function toneClass(
-  tone: "emerald" | "rose" | "blue" | "slate" | "violet" | "amber",
-) {
-  if (tone === "emerald")
-    return "border-emerald-200 bg-emerald-50 text-emerald-700 ring-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/20";
-  if (tone === "rose")
-    return "border-rose-200 bg-rose-50 text-rose-700 ring-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200 dark:ring-rose-500/20";
-  if (tone === "blue")
-    return "border-sky-200 bg-sky-50 text-sky-700 ring-sky-100 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-200 dark:ring-sky-500/20";
-  if (tone === "violet")
-    return "border-violet-200 bg-violet-50 text-violet-700 ring-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-500/20";
-  if (tone === "amber")
-    return "border-amber-200 bg-amber-50 text-amber-700 ring-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/20";
-  return "border-slate-200 bg-slate-50 text-slate-600 ring-slate-200 dark:border-[#555555] dark:bg-[#383838] dark:text-[#E4E4E4] dark:ring-[#555555]";
-}
+function statusIconMeta(
+  task: {
+    status: string;
+    dueDate: Date | null;
+    completedAt: Date | null;
+    revokedAt?: Date | null;
+  },
+  label: string,
+): {
+  icon: LucideIcon;
+  className: string;
+} {
+  if (task.status === "REVOKED") {
+    return {
+      icon: Ban,
+      className:
+        "text-slate-500 hover:text-slate-700 dark:text-[#B0B0B0] dark:hover:text-[#E4E4E4]",
+    };
+  }
 
-function statusIcon(status: string) {
-  if (status === "COMPLETED") return CheckCircle2;
-  if (status === "REVOKED") return HelpCircle;
-  if (status === "CHECKING") return SearchCheck;
-  if (status === "NEED_CLARIFY") return AlertTriangle;
-  return Clock3;
+  if (task.status === "COMPLETED") {
+    return {
+      icon: CheckCircle2,
+      className:
+        "text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200",
+    };
+  }
+
+  if (task.status === "CHECKING") {
+    return {
+      icon: SearchCheck,
+      className:
+        "text-violet-700 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200",
+    };
+  }
+
+  if (task.status === "NEED_CLARIFY") {
+    return {
+      icon: CircleHelp,
+      className:
+        "text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200",
+    };
+  }
+
+  if (label === "Overdue") {
+    return {
+      icon: AlertTriangle,
+      className:
+        "text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-rose-200",
+    };
+  }
+
+  return {
+    icon: Clock3,
+    className:
+      "text-sky-700 hover:text-sky-800 dark:text-[#A8DADC] dark:hover:text-cyan-200",
+  };
 }
 
 function timeTextClass(
@@ -458,7 +495,8 @@ export default async function TaskDetailPage({
   const meta = statusMeta(task);
   const taskType = taskTypeMeta(task.taskType, task.category);
   const TaskTypeIcon = taskType.icon;
-  const StatusIcon = statusIcon(task.status);
+  const statusIcon = statusIconMeta(task, meta.label);
+  const StatusIcon = statusIcon.icon;
   const finishAction = finishResearchTask.bind(null, task.id);
   const readyAction = markResearchTaskReadyForCheck.bind(null, task.id);
   const redoAction = requestTaskRedo.bind(null, task.id);
@@ -683,16 +721,18 @@ export default async function TaskDetailPage({
                   />
                 </span>
               </IconHint>
-              <span
-                className={`inline-flex flex-none items-center gap-1.5 border px-2 py-1 text-[11px] font-normal leading-none ${toneClass(meta.tone)}`}
-              >
-                <StatusIcon
-                  className="research-task-icon-motion h-3.5 w-3.5"
-                  strokeWidth={1.75}
-                  aria-hidden="true"
-                />
-                {meta.label}
-              </span>
+              <IconHint label={meta.label} position="bottom">
+                <span
+                  className={`research-task-icon-motion inline-flex h-5 w-5 flex-none cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:bg-transparent hover:shadow-none ${statusIcon.className}`}
+                  aria-label={meta.label}
+                >
+                  <StatusIcon
+                    className="h-4 w-4"
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                  />
+                </span>
+              </IconHint>
               {(canEdit || canUseReminder) && (
                 <span className="inline-flex flex-none items-center gap-2">
                   {canEdit && (
@@ -966,7 +1006,7 @@ function ExternalVenueLink({
   className: string;
   children: ReactNode;
 }) {
-  const baseClass = `group/link relative inline-flex h-5 w-5 items-center justify-center border-0 bg-transparent shadow-none transition hover:-translate-y-0.5 ${className}`;
+  const baseClass = `research-allow-transform inline-flex h-5 w-5 items-center justify-center border-0 bg-transparent shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${className}`;
 
   if (!href) {
     return (
@@ -980,17 +1020,16 @@ function ExternalVenueLink({
   }
 
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className={baseClass}
-      aria-label={label}
-    >
-      {children}
-      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap border border-[#555555] bg-[#202020] px-2.5 py-1.5 text-[11px] font-normal text-[#E4E4E4] opacity-0 shadow-lg shadow-black/30 transition duration-200 ease-out group-hover/link:translate-y-0 group-hover/link:opacity-100">
-        {label}
-      </span>
-    </a>
+    <IconHint label={label}>
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className={baseClass}
+        aria-label={label}
+      >
+        {children}
+      </a>
+    </IconHint>
   );
 }
