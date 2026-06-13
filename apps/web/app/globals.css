@@ -3364,6 +3364,35 @@ html[data-research-theme="light"]
   color: #6f5aa8 !important;
 }
 
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  :where(button, a)[aria-label]:has(> svg),
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  :where(button, a)[aria-label]:has(> svg):hover,
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  :where(button, a)[aria-label]:has(> svg):active,
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  :where(button, a)[aria-label]:has(> svg):focus-visible {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 .research-site-root .journal-detail-tab-button:hover,
 .research-site-root [data-research-toggle-tab="true"]:hover,
 .research-site-root .journal-detail-tab-button:active,

@@ -90,17 +90,17 @@ export function ResearchButton({
 }
 
 const iconToneClasses: Record<Tone, string> = {
-  blue: "border-transparent bg-transparent text-blue-700 hover:border-blue-100 hover:bg-blue-50 hover:text-blue-800 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50",
+  blue: "border-transparent bg-transparent text-blue-700 hover:border-transparent hover:bg-transparent hover:text-blue-800 dark:border-transparent dark:bg-transparent dark:text-blue-300 dark:hover:bg-transparent",
   emerald:
-    "border-transparent bg-transparent text-emerald-700 hover:border-emerald-100 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50",
+    "border-transparent bg-transparent text-emerald-700 hover:border-transparent hover:bg-transparent hover:text-emerald-800 dark:border-transparent dark:bg-transparent dark:text-emerald-300 dark:hover:bg-transparent",
   amber:
-    "border-transparent bg-transparent text-amber-700 hover:border-amber-100 hover:bg-amber-50 hover:text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50",
-  rose: "border-transparent bg-transparent text-rose-700 hover:border-rose-100 hover:bg-rose-50 hover:text-rose-800 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50",
+    "border-transparent bg-transparent text-amber-700 hover:border-transparent hover:bg-transparent hover:text-amber-800 dark:border-transparent dark:bg-transparent dark:text-amber-300 dark:hover:bg-transparent",
+  rose: "border-transparent bg-transparent text-rose-700 hover:border-transparent hover:bg-transparent hover:text-rose-800 dark:border-transparent dark:bg-transparent dark:text-rose-300 dark:hover:bg-transparent",
   violet:
-    "border-transparent bg-transparent text-violet-700 hover:border-violet-100 hover:bg-violet-50 hover:text-violet-800 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-300 dark:hover:bg-violet-900/50",
+    "border-transparent bg-transparent text-violet-700 hover:border-transparent hover:bg-transparent hover:text-violet-800 dark:border-transparent dark:bg-transparent dark:text-violet-300 dark:hover:bg-transparent",
   slate:
-    "border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#B0B0B0] dark:hover:border-[#A8DADC] dark:hover:bg-[#383838] dark:hover:text-[#E4E4E4]",
-  cyan: "border-transparent bg-transparent text-cyan-700 hover:border-cyan-100 hover:bg-cyan-50 hover:text-cyan-800 dark:border-cyan-900/70 dark:bg-cyan-950/40 dark:text-cyan-300 dark:hover:bg-cyan-900/50",
+    "border-transparent bg-transparent text-slate-600 hover:border-transparent hover:bg-transparent hover:text-slate-900 dark:border-transparent dark:bg-transparent dark:text-[#B0B0B0] dark:hover:bg-transparent dark:hover:text-[#E4E4E4]",
+  cyan: "border-transparent bg-transparent text-cyan-700 hover:border-transparent hover:bg-transparent hover:text-cyan-800 dark:border-transparent dark:bg-transparent dark:text-cyan-300 dark:hover:bg-transparent",
 };
 
 export function ResearchIconButton({
@@ -120,7 +120,7 @@ export function ResearchIconButton({
         {...props}
         aria-label={props["aria-label"] ?? label}
         className={cx(
-          "inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border shadow-sm outline-none transition duration-150 ease-out hover:shadow-md focus:ring-2 focus:ring-[#A8DADC]/20 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:shadow-sm motion-reduce:transition-none",
+          "inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border shadow-none outline-none transition duration-150 ease-out hover:shadow-none focus:ring-0 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:shadow-none motion-reduce:transition-none",
           iconToneClasses[tone],
           className,
         )}
@@ -230,7 +230,7 @@ export function ResearchStatusIcon({
     <IconHint label={label}>
       <span
         className={cx(
-          "inline-flex h-8 w-8 items-center justify-center rounded-none border shadow-sm transition duration-200 ease-out hover:shadow-md motion-reduce:transition-none",
+          "inline-flex h-8 w-8 items-center justify-center rounded-none border border-transparent bg-transparent shadow-none transition duration-200 ease-out hover:border-transparent hover:bg-transparent hover:shadow-none motion-reduce:transition-none",
           iconToneClasses[tone],
         )}
       >
