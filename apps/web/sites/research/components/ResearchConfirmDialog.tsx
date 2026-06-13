@@ -36,7 +36,6 @@ export function ResearchConfirmDialog({
   title,
   children,
   confirmLabel,
-  cancelLabel = "Cancel",
   isConfirming = false,
   tone = "danger",
   icon,
@@ -49,7 +48,6 @@ export function ResearchConfirmDialog({
   description?: string;
   children?: ReactNode;
   confirmLabel: string;
-  cancelLabel?: string;
   isConfirming?: boolean;
   tone?: ConfirmTone;
   icon?: ReactNode;
@@ -102,15 +100,7 @@ export function ResearchConfirmDialog({
           </div>
         )}
 
-        <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-[#444444]">
-          <ResearchButton
-            type="button"
-            onClick={onCancel}
-            disabled={isConfirming}
-            tone="secondary"
-          >
-            {cancelLabel}
-          </ResearchButton>
+        <div className="flex justify-end border-t border-slate-200 px-6 py-4 dark:border-[#444444]">
           <ResearchButton
             type="button"
             disabled={isConfirming}
