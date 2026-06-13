@@ -2891,6 +2891,166 @@ html[data-auth-leaving="reset"]
   color: #9ed6b5;
 }
 
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field {
+  border-color: #d8d0c2 !important;
+  background: #fffdf8 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field:hover,
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field:focus-within {
+  border-color: #2d7882 !important;
+  background: #fffdf8 !important;
+  box-shadow: none !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field
+  input {
+  background: transparent !important;
+  color: #1f2937 !important;
+  caret-color: #1f7180;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field
+  input::placeholder {
+  color: #9aa3af !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field
+  svg[class*="text-"] {
+  color: #8a94a3 !important;
+  filter: none !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field:hover
+  svg[class*="text-"] {
+  color: #667085 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field:focus-within
+  svg[class*="text-[#A8DADC]"],
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field:has(
+    input:not(:placeholder-shown)
+  )
+  svg[class*="text-[#A8DADC]"] {
+  color: #1f7180 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field:focus-within
+  svg[class*="text-[#B39CD0]"],
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field:has(
+    input:not(:placeholder-shown)
+  )
+  svg[class*="text-[#B39CD0]"] {
+  color: #6f5aa8 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field:focus-within
+  svg[class*="text-[#F4D47A]"],
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field:has(
+    input:not(:placeholder-shown)
+  )
+  svg[class*="text-[#F4D47A]"] {
+  color: #9a6b10 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field:focus-within
+  svg[class*="text-[#9ED6B5]"],
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field:has(
+    input:not(:placeholder-shown)
+  )
+  svg[class*="text-[#9ED6B5]"] {
+  color: #2f8f62 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .journal-flag-checkbox {
+  border-color: #d8d0c2 !important;
+  background: #fffdf8 !important;
+  color: #98a2b3 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .journal-flag-checkbox:hover {
+  border-color: #c4b9aa !important;
+  background: #f8f6ef !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .journal-flag-checkbox
+  :where(.journal-flag-title, span) {
+  color: #667085 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .journal-flag-checkbox
+  > span:first-of-type {
+  color: #8a94a3 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .journal-flag-checkbox:has(input:checked)[data-tone="favorite"] {
+  border-color: #d89f2a !important;
+  background: #fff7df !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .journal-flag-checkbox:has(input:checked)[data-tone="favorite"]
+  :where(.journal-flag-title, span:first-of-type) {
+  color: #9a6b10 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .journal-flag-checkbox:has(input:checked)[data-tone="interest"] {
+  border-color: #2d7882 !important;
+  background: #eef7f8 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .journal-flag-checkbox:has(input:checked)[data-tone="interest"]
+  :where(.journal-flag-title, span:first-of-type) {
+  color: #1f7180 !important;
+}
+
 .journal-flag-checkbox:has(input:checked)[data-tone="favorite"]
   .journal-flag-title {
   color: #f4d47a;
@@ -3378,12 +3538,17 @@ html[data-research-theme="light"]
   border-color: #444444 !important;
 }
 
-.research-site-root .research-project-member-list > :not([hidden]) ~ :not([hidden]) {
+.research-site-root
+  .research-project-member-list
+  > :not([hidden])
+  ~ :not([hidden]) {
   border-color: #444444 !important;
 }
 
 .research-site-root.research-theme-light .research-project-member-list,
-html[data-research-theme="light"] .research-site-root .research-project-member-list {
+html[data-research-theme="light"]
+  .research-site-root
+  .research-project-member-list {
   border-color: #d8d0c2 !important;
 }
 
@@ -3416,25 +3581,33 @@ html[data-research-theme="light"]
     [data-research-modal-overlay="true"],
     .research-dropdown-floating-panel
   )
-  :where(button, a)[aria-label]:has(> svg):not(:has(> span:not(.research-unread-count))),
+  :where(button, a)[aria-label]:has(> svg):not(
+    :has(> span:not(.research-unread-count))
+  ),
 :where(
     .research-site-root,
     [data-research-modal-overlay="true"],
     .research-dropdown-floating-panel
   )
-  :where(button, a)[aria-label]:has(> svg):not(:has(> span:not(.research-unread-count))):hover,
+  :where(button, a)[aria-label]:has(> svg):not(
+    :has(> span:not(.research-unread-count))
+  ):hover,
 :where(
     .research-site-root,
     [data-research-modal-overlay="true"],
     .research-dropdown-floating-panel
   )
-  :where(button, a)[aria-label]:has(> svg):not(:has(> span:not(.research-unread-count))):active,
+  :where(button, a)[aria-label]:has(> svg):not(
+    :has(> span:not(.research-unread-count))
+  ):active,
 :where(
     .research-site-root,
     [data-research-modal-overlay="true"],
     .research-dropdown-floating-panel
   )
-  :where(button, a)[aria-label]:has(> svg):not(:has(> span:not(.research-unread-count))):focus-visible {
+  :where(button, a)[aria-label]:has(> svg):not(
+    :has(> span:not(.research-unread-count))
+  ):focus-visible {
   border-color: transparent !important;
   background: transparent !important;
   box-shadow: none !important;
