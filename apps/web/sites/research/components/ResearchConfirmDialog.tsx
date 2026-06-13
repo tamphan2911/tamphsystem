@@ -10,7 +10,7 @@ type ConfirmTone = "danger" | "warning" | "info";
 function toneClasses(tone: ConfirmTone) {
   if (tone === "warning") {
     return {
-      icon: "text-amber-300",
+      icon: "text-amber-600 dark:text-amber-300",
       confirm:
         "border-amber-600 bg-amber-600 text-white hover:border-amber-500 hover:bg-amber-500 disabled:hover:bg-amber-600",
     };
