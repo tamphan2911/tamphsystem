@@ -182,7 +182,7 @@ export function NewOrganizedProjectDialog({
                 </label>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 <label className={researchLabelClass}>
                   Status
                   <ResearchFormSelect
@@ -212,6 +212,9 @@ export function NewOrganizedProjectDialog({
                     ]}
                   />
                 </label>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
                 <label className={researchLabelClass}>
                   <span>
                     Start date

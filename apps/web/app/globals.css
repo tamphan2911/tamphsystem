@@ -3376,25 +3376,25 @@ html[data-research-theme="light"]
     [data-research-modal-overlay="true"],
     .research-dropdown-floating-panel
   )
-  :where(button, a)[aria-label]:has(> svg),
+  :where(button, a)[aria-label]:has(> svg):not(:has(> span:not(.research-unread-count))),
 :where(
     .research-site-root,
     [data-research-modal-overlay="true"],
     .research-dropdown-floating-panel
   )
-  :where(button, a)[aria-label]:has(> svg):hover,
+  :where(button, a)[aria-label]:has(> svg):not(:has(> span:not(.research-unread-count))):hover,
 :where(
     .research-site-root,
     [data-research-modal-overlay="true"],
     .research-dropdown-floating-panel
   )
-  :where(button, a)[aria-label]:has(> svg):active,
+  :where(button, a)[aria-label]:has(> svg):not(:has(> span:not(.research-unread-count))):active,
 :where(
     .research-site-root,
     [data-research-modal-overlay="true"],
     .research-dropdown-floating-panel
   )
-  :where(button, a)[aria-label]:has(> svg):focus-visible {
+  :where(button, a)[aria-label]:has(> svg):not(:has(> span:not(.research-unread-count))):focus-visible {
   border-color: transparent !important;
   background: transparent !important;
   box-shadow: none !important;

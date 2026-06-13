@@ -337,7 +337,7 @@ export function ProjectInfoEditDialog({
             </label>
           </div>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-4">
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
             <label className={labelClass}>
               Status
               <ResearchFormSelect
@@ -369,6 +369,9 @@ export function ProjectInfoEditDialog({
                 ]}
               />
             </label>
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
             <label className={labelClass}>
               <span>
                 Start date
