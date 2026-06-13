@@ -1201,24 +1201,17 @@ html[data-research-theme="light"]
 }
 
 .research-site-root.research-theme-light .research-theme-switch {
-  border-color: #d8d0c2 !important;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.82),
-      rgba(241, 236, 226, 0.9)
-    ),
-    #fffdf8 !important;
+  border-color: transparent !important;
+  background: transparent !important;
   color: #1f7180 !important;
-  box-shadow:
-    0 12px 24px rgba(31, 41, 55, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  box-shadow: none !important;
 }
 
 .research-site-root.research-theme-light .research-theme-switch:hover {
-  border-color: #2d7882 !important;
-  background: #e6f4f2 !important;
-  color: #155864 !important;
+  border-color: transparent !important;
+  background: transparent !important;
+  color: #6f5aa8 !important;
+  box-shadow: none !important;
 }
 
 html[data-research-theme="light"] [data-research-modal-overlay="true"] {
