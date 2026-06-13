@@ -43,7 +43,7 @@ export function ResearchContentLockButton({
           type="button"
           onClick={() => setConfirming(true)}
           aria-label={label}
-          className="inline-flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
+          className="research-allow-transform inline-flex h-5 w-5 shrink-0 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-[#1F7180] shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-200"
         >
           <Icon className="h-4 w-4" strokeWidth={1.75} />
         </button>

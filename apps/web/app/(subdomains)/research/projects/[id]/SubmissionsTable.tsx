@@ -686,7 +686,7 @@ export function SubmissionsTable({
                               ? `/journals/${row.venueId}`
                               : `/conferences/${row.venueId}`
                         }
-                        className="group/link flex min-w-0 items-start gap-3"
+                        className="research-allow-transform group/link flex min-w-0 items-start gap-3"
                       >
                         {!isResearchView && (
                           <IconHint
@@ -814,7 +814,7 @@ export function SubmissionsTable({
                         {row.accountId ? (
                           <Link
                             href={`/accounts/${row.accountId}`}
-                            className="group/account block min-w-0"
+                            className="research-allow-transform group/account block min-w-0"
                           >
                             <span className="block truncate font-normal text-[#E4E4E4] transition group-hover/account:text-[#A8DADC]">
                               {row.account || "No login ID"}
@@ -861,7 +861,7 @@ export function SubmissionsTable({
                         ) : row.accountId ? (
                           <Link
                             href={`/accounts/${row.accountId}`}
-                            className="group/account block min-w-0"
+                            className="research-allow-transform group/account block min-w-0"
                           >
                             <span className="block truncate text-[#E4E4E4] transition group-hover/account:text-[#A8DADC]">
                               {row.account || "No login ID"}
@@ -904,7 +904,7 @@ export function SubmissionsTable({
                                 );
                                 setEditing(row);
                               }}
-                              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-transparent bg-transparent text-[#B0B0B0] transition hover:-translate-y-0.5 hover:text-[#A8DADC] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:text-[#B0B0B0]"
+                              className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-[#1F7180] shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:text-[#B0B0B0] disabled:active:scale-100 dark:text-[#A8DADC] dark:hover:text-cyan-200"
                               aria-label={`Edit status for ${row.venueName}`}
                             >
                               <Edit3 className="h-4 w-4" />
@@ -917,7 +917,7 @@ export function SubmissionsTable({
                           disabled={disabled}
                           title="Delete submission"
                           onClick={() => setDeleting(row)}
-                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-transparent bg-transparent text-rose-300 transition hover:-translate-y-0.5 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+                          className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-rose-700 shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-rose-800 hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:active:scale-100 dark:text-rose-300 dark:hover:text-rose-200"
                           aria-label={`Delete submission for ${row.venueName}`}
                         >
                           <Trash2 className="h-4 w-4" />
