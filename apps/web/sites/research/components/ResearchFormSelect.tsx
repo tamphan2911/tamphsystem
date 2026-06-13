@@ -24,6 +24,7 @@ export function ResearchFormSelect({
   ariaLabel,
   disabled = false,
   onValueChange,
+  triggerClassName,
 }: {
   name: string;
   defaultValue: string;
@@ -31,6 +32,7 @@ export function ResearchFormSelect({
   ariaLabel: string;
   disabled?: boolean;
   onValueChange?: (value: string) => void;
+  triggerClassName?: string;
 }) {
   const [value, setValue] = useState(defaultValue);
   const [open, setOpen] = useState(false);
@@ -83,6 +85,7 @@ export function ResearchFormSelect({
         className={cx(
           "group inline-flex cursor-pointer items-center justify-between gap-3 text-left",
           researchSelectTriggerClass,
+          triggerClassName,
           open &&
             "border-sky-400 bg-white dark:border-[#5A5A5A] dark:bg-[#383838]",
         )}

@@ -337,6 +337,7 @@ export function NewResearchDialog({
                     defaultValue={registerStatus}
                     onValueChange={setRegisterStatus}
                     ariaLabel="Registration status"
+                    triggerClassName="dark:!border-[#5A5A5A] dark:hover:!border-[#6A6A6A] dark:focus:!border-[#A8DADC]"
                     options={[
                       { value: "NOT_REGISTERED", label: "Not registered" },
                       { value: "PREPARING", label: "Plan" },
