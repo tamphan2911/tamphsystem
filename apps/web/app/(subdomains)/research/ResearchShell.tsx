@@ -142,15 +142,15 @@ function ResearchThemeSwitch({
     <button
       type="button"
       onClick={() => onChange(isLight ? "dark" : "light")}
-      className="research-theme-switch group inline-flex h-10 w-10 cursor-pointer items-center justify-center border border-[#444444] bg-[#2C2C2C] text-[#B0B0B0] outline-none transition duration-180 ease-out hover:border-[#A8DADC] hover:bg-[#383838] hover:text-[#E4E4E4] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
+      className="research-theme-switch research-allow-transform group inline-flex h-10 w-10 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-[#B0B0B0] outline-none transition duration-180 ease-out hover:text-[#E4E4E4] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
       aria-label={isLight ? "Switch to dark theme" : "Switch to light theme"}
       title={isLight ? "Switch to dark theme" : "Switch to light theme"}
       aria-pressed={isLight}
     >
       {isLight ? (
-        <Moon className="h-4 w-4 transition group-hover:-rotate-6" />
+        <Moon className="h-4 w-4" />
       ) : (
-        <Sun className="h-4 w-4 transition group-hover:rotate-12" />
+        <Sun className="h-4 w-4" />
       )}
     </button>
   );
