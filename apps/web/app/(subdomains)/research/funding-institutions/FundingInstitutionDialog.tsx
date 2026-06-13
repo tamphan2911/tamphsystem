@@ -47,7 +47,7 @@ export function FundingInstitutionDialog({
             type="button"
             onClick={() => setOpen(true)}
             aria-label="Edit funder"
-            className="inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-slate-600 shadow-none outline-none transition hover:text-[#1f7180] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+            className="inline-flex h-5 w-5 cursor-pointer items-start justify-center border border-transparent bg-transparent p-0 text-slate-600 shadow-none outline-none transition-[color,transform] duration-150 ease-out hover:border-transparent hover:bg-transparent hover:text-[#1f7180] hover:shadow-none active:scale-95 focus-visible:ring-0 dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
           >
             <Pencil className="h-4 w-4" />
           </button>

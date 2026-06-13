@@ -34,7 +34,7 @@ export function DeleteFundingInstitutionButton({
           type="button"
           onClick={() => setOpen(true)}
           aria-label={`Delete ${funder.name}`}
-          className="inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-rose-600 shadow-none outline-none transition hover:text-rose-700 focus-visible:ring-2 focus-visible:ring-rose-300/40 dark:text-[#FFC1CC] dark:hover:text-rose-300"
+          className="inline-flex h-5 w-5 cursor-pointer items-start justify-center border border-transparent bg-transparent p-0 text-rose-600 shadow-none outline-none transition-[color,transform] duration-150 ease-out hover:border-transparent hover:bg-transparent hover:text-rose-700 hover:shadow-none active:scale-95 focus-visible:ring-0 dark:text-[#FFC1CC] dark:hover:text-rose-300"
         >
           <Trash2 className="h-4 w-4" />
         </button>

@@ -139,7 +139,7 @@ export function FundingInstitutionsTable({
                         href={institution.website}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex h-5 w-5 cursor-pointer items-start justify-center align-top border-0 bg-transparent text-[#B0B0B0] transition hover:text-[#A8DADC]"
+                        className="inline-flex h-5 w-5 cursor-pointer items-start justify-center align-top border border-transparent bg-transparent text-[#B0B0B0] shadow-none outline-none transition-[color,transform] duration-150 ease-out hover:border-transparent hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none active:scale-95 focus-visible:ring-0"
                         aria-label={`Open ${institution.name} website`}
                       >
                         <ExternalLink className="h-4 w-4" />
