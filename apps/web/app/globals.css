@@ -3293,7 +3293,8 @@ html[data-research-theme="light"]
   transition:
     color 180ms ease,
     opacity 180ms ease,
-    stroke 180ms ease !important;
+    stroke 180ms ease,
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
 }
 
 .research-site-root
@@ -3305,12 +3306,26 @@ html[data-research-theme="light"]
 .research-site-root
   table
   :where(th:hover)
-  :where(svg):not(:where(a *, button *, [role="button"] *)),
-.research-site-root .research-task-icon-motion:hover,
-.research-site-root .research-task-icon-motion:focus-visible,
-.research-site-root :where(span:hover, div:hover) > .research-task-icon-motion {
+  :where(svg):not(:where(a *, button *, [role="button"] *)) {
   filter: none !important;
   transform: none !important;
+}
+
+.research-site-root .research-task-icon-motion:hover,
+.research-site-root .research-task-icon-motion:focus-visible,
+.research-site-root
+  :where(span:hover, div:hover, button:hover, a:hover)
+  > .research-task-icon-motion {
+  filter: none !important;
+  transform: translate3d(0, -1px, 0) scale(1.12) rotate(-3deg) !important;
+}
+
+.research-site-root .research-task-icon-motion:active,
+.research-site-root
+  :where(button:active, a:active)
+  > .research-task-icon-motion {
+  filter: none !important;
+  transform: translate3d(0, 0, 0) scale(0.94) rotate(8deg) !important;
 }
 
 .research-site-root .research-theme-switch {

@@ -242,12 +242,14 @@ export function ProjectInfoEditDialog({
   members,
   research,
   fundingInstitutions,
+  formId = "project-info-edit-form",
 }: {
   action: (formData: FormData) => Promise<void>;
   info: ProjectInfo;
   members: SelectedProjectMember[];
   research: ResearchResultOption[];
   fundingInstitutions: FundingInstitutionOption[];
+  formId?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [financial, setFinancial] = useState(info.financialClaimStatus);
@@ -268,14 +270,14 @@ export function ProjectInfoEditDialog({
         detail="Update project identity, funding, duration, status, and internal notes."
         headerActions={
           <SubmitButton
-            form="project-info-edit-form"
+            form={formId}
             isPending={isPending}
             label="Save information"
           />
         }
       >
         <form
-          id="project-info-edit-form"
+          id={formId}
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);

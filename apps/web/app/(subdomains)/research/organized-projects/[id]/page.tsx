@@ -6,7 +6,6 @@ import {
   BookOpenCheck,
   Building2,
   CalendarClock,
-  CalendarDays,
   CheckCircle2,
   CircleOff,
   Clock3,
@@ -29,6 +28,7 @@ import {
   researchLinkClass,
   researchMutedLinkClass,
 } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import {
   createResearchForOrganizedProject,
   updateOrganizedProject,
@@ -489,14 +489,21 @@ export default async function OrganizedProjectDetailPage({
     project.fundingAmount?.toString() ?? null,
     project.fundingCurrency,
   );
+  const projectTimeLabel = `${shortDate(project.startDate)} - ${shortDate(
+    project.endDate,
+  )}${
+    durationLabel(project.durationMonths)
+      ? ` (${durationLabel(project.durationMonths)})`
+      : ""
+  }`;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
-      <header className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h1 className="min-w-0 text-[23px] font-medium leading-tight text-[#E4E4E4]">
+    <>
+      <ResearchPageHeaderPortal>
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="min-w-0 truncate text-[22px] font-medium leading-tight text-[#E4E4E4]">
                 {project.title}
               </h1>
               <IconHint label={`Status: ${status.label}`}>
@@ -513,10 +520,40 @@ export default async function OrganizedProjectDetailPage({
                   members={memberDefaults}
                   research={researchDefaults}
                   fundingInstitutions={fundingOptions}
+                  formId="project-info-edit-form-header"
                 />
               )}
             </div>
-            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2 text-sm text-[#B0B0B0]">
+          </div>
+        </div>
+      </ResearchPageHeaderPortal>
+
+      <div className="mx-auto max-w-6xl space-y-5">
+        <header className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
+          <div className="min-w-0">
+            <div className="mb-3 flex min-w-0 items-center gap-2 lg:hidden">
+              <h1 className="min-w-0 flex-1 text-[22px] font-medium leading-tight text-[#E4E4E4]">
+                {project.title}
+              </h1>
+              <IconHint label={`Status: ${status.label}`}>
+                <span
+                  className={`research-task-icon-motion inline-flex h-7 w-7 flex-none items-center justify-center ${status.className}`}
+                >
+                  <StatusIcon className="h-4 w-4" aria-hidden="true" />
+                </span>
+              </IconHint>
+              {canEditProject && (
+                <ProjectInfoEditDialog
+                  action={saveProject}
+                  info={projectInfo}
+                  members={memberDefaults}
+                  research={researchDefaults}
+                  fundingInstitutions={fundingOptions}
+                  formId="project-info-edit-form-mobile"
+                />
+              )}
+            </div>
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-[#B0B0B0]">
               <span className="font-mono text-xs font-bold uppercase tracking-wide text-slate-400">
                 {project.referenceCode || project.id.slice(0, 8).toUpperCase()}
               </span>
@@ -543,6 +580,10 @@ export default async function OrganizedProjectDetailPage({
                   ({fundingAmountLabel})
                 </span>
               )}
+              <span className="text-[#777777]">|</span>
+              <span className="text-sm font-normal text-[#B0B0B0]">
+                {projectTimeLabel}
+              </span>
             </div>
             {project.description && (
               <p className="mt-1 max-w-4xl text-sm leading-6 text-[#B0B0B0]">
@@ -555,19 +596,7 @@ export default async function OrganizedProjectDetailPage({
               </p>
             )}
           </div>
-          <div className="flex flex-none items-center gap-2 text-sm text-[#B0B0B0]">
-            <CalendarDays className="research-task-icon-motion h-4 w-4 text-blue-500" />
-            <span>
-              {shortDate(project.startDate)} - {shortDate(project.endDate)}
-            </span>
-            {durationLabel(project.durationMonths) && (
-              <span className="text-xs font-semibold text-[#777777]">
-                ({durationLabel(project.durationMonths)})
-              </span>
-            )}
-          </div>
-        </div>
-      </header>
+        </header>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
@@ -597,13 +626,13 @@ export default async function OrganizedProjectDetailPage({
                       {memberName(member)}
                     </p>
                     {member.isTeamLead && (
-                      <span className="inline-flex items-center gap-1 border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#E4E4E4]">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[#E4E4E4]">
                         <Star className="research-task-icon-motion h-3 w-3" />
                         Team lead
                       </span>
                     )}
                     {member.isInstructor && (
-                      <span className="inline-flex items-center gap-1 border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#A8DADC]">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[#A8DADC]">
                         <GraduationCap className="research-task-icon-motion h-3 w-3" />
                         Instructor
                       </span>
@@ -773,6 +802,7 @@ export default async function OrganizedProjectDetailPage({
           </table>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }
