@@ -614,9 +614,9 @@ export default async function OrganizedProjectDetailPage({
                 />
               )}
             </div>
-            <div className="research-project-member-list divide-y border-y">
+            <div className="research-project-member-list divide-y divide-[#e2d9cc] border-y border-[#e2d9cc] dark:divide-[#444444] dark:border-[#444444]">
               {memberDefaults.map((member, index) => (
-                <div key={member.id} className="flex items-start gap-4 py-3">
+                <div key={member.id} className="flex items-center gap-4 py-3">
                   <span className="inline-flex w-8 flex-none justify-center font-mono text-sm text-[#A8DADC]">
                     {index + 1}
                   </span>
