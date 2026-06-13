@@ -6,7 +6,10 @@ import { createAcademicReview } from "../actions";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
-import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchButton,
+  researchFieldClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
@@ -21,6 +24,7 @@ type JournalOption = {
 
 const inputClass =
   "h-12 border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm text-[#E4E4E4] outline-none transition placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]";
+const dateInputClass = researchFieldClass;
 const labelClass = "grid gap-1.5 text-sm font-semibold text-[#E4E4E4]";
 const helperClass = "text-xs font-normal leading-5 text-[#B0B0B0]";
 const reviewStatusOptions = [
@@ -226,14 +230,17 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
               </label>
               <label className={labelClass}>
                 Requested date
-                <ResearchDatePicker name="requestedAt" className={inputClass} />
+                <ResearchDatePicker
+                  name="requestedAt"
+                  className={dateInputClass}
+                />
                 <span className={helperClass}>
                   Date the editor or journal invited you to review.
                 </span>
               </label>
               <label className={labelClass}>
                 Due date
-                <ResearchDatePicker name="dueDate" className={inputClass} />
+                <ResearchDatePicker name="dueDate" className={dateInputClass} />
                 <span className={helperClass}>
                   The deadline for submitting your review.
                 </span>

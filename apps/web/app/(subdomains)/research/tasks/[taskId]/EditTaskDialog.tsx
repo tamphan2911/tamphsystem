@@ -31,6 +31,7 @@ import {
   researchDropdownItemClass,
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
+  researchFieldClass,
   researchSearchFieldClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import {
@@ -75,6 +76,7 @@ type SearchPanelItem = {
 
 const inputClass =
   "border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm text-[#E4E4E4] outline-none transition placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]";
+const dateInputClass = researchFieldClass;
 const finishedResearchStages = new Set(["ACCEPTED", "PUBLISHED"]);
 const closedReviewStatuses = new Set(["SUBMITTED", "DECLINED", "CANCELLED"]);
 const closedProjectStatuses = new Set(["COMPLETED"]);
@@ -507,7 +509,7 @@ export function EditTaskDialog({
               <ResearchDatePicker
                 name="dueDate"
                 defaultValue={task.dueDate}
-                className={inputClass}
+                className={dateInputClass}
               />
             </label>
           </div>

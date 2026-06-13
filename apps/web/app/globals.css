@@ -3310,17 +3310,7 @@ html[data-research-theme="light"]
 }
 
 .research-site-root .research-theme-switch::before {
-  content: "";
-  position: absolute;
-  inset: 0.35rem;
-  z-index: -1;
-  border: 1px solid currentColor;
-  opacity: 0;
-  transform: rotate(0deg) scale(0.58);
-  transition:
-    border-color 180ms ease,
-    opacity 180ms ease,
-    transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  content: none;
 }
 
 .research-site-root .research-theme-switch:hover {
@@ -3328,19 +3318,9 @@ html[data-research-theme="light"]
   transform: rotate(10deg) scale(1.06) !important;
 }
 
-.research-site-root .research-theme-switch:hover::before {
-  opacity: 0.55;
-  transform: rotate(45deg) scale(1);
-}
-
 .research-site-root .research-theme-switch:active {
   color: #ffc1cc !important;
   transform: rotate(-18deg) scale(0.92) !important;
-}
-
-.research-site-root .research-theme-switch:active::before {
-  opacity: 0.8;
-  transform: rotate(90deg) scale(0.72);
 }
 
 .research-site-root .research-theme-switch svg {
