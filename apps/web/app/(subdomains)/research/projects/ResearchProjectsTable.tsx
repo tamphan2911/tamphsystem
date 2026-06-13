@@ -53,6 +53,7 @@ export type ResearchProjectRow = {
   submissions: number;
   publications: number;
   updatedAt: string;
+  notSubmittedAnywhere: boolean;
 };
 
 const stages = [
@@ -82,6 +83,20 @@ function statusClass(stage: string) {
   if (stage === "PUBLISHED" || stage === "ACCEPTED") return "text-[#A8DADC]";
   if (stage === "REVIEW" || stage === "SUBMITTING") return "text-[#B39CD0]";
   return "text-[#FFC1CC]";
+}
+
+function stageStatusClass(row: ResearchProjectRow) {
+  if (row.stage === "SUBMITTING" && row.notSubmittedAnywhere) {
+    return "text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-rose-200";
+  }
+  return statusClass(row.stage);
+}
+
+function stageTooltip(row: ResearchProjectRow) {
+  if (row.stage === "SUBMITTING" && row.notSubmittedAnywhere) {
+    return "Not submit anywhere";
+  }
+  return stageLabel(row.stage);
 }
 
 function stageIcon(stage: string) {
@@ -435,8 +450,8 @@ export function ResearchProjectsTable({
                 <td className="px-3 py-3 align-top">
                   <StatusIconChip
                     icon={stageIcon(row.stage)}
-                    label={stageLabel(row.stage)}
-                    className={statusClass(row.stage)}
+                    label={stageTooltip(row)}
+                    className={stageStatusClass(row)}
                   />
                 </td>
                 {showRegistrationClaim && (

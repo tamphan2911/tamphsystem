@@ -122,6 +122,12 @@ export default async function ProjectsDashboard() {
             include: { user: { select: { name: true, email: true } } },
             orderBy: [{ position: "asc" }, { createdAt: "asc" }],
           },
+          submissions: {
+            select: { status: true },
+          },
+          conferenceSubmissions: {
+            select: { status: true },
+          },
           _count: {
             select: { submissions: true, publications: true },
           },
@@ -160,50 +166,61 @@ export default async function ProjectsDashboard() {
       project.claimStatus === "WAITING",
   );
 
-  const rows: ResearchProjectRow[] = projects.map((project) => ({
-    id: project.id,
-    researchCode: project.researchCode ?? "",
-    title: project.title,
-    abstract: project.abstract ?? "",
-    stage: project.stage,
-    claimStatus: project.claimStatus,
-    registerStatus: project.registerStatus,
-    coAuthors:
-      project.authorEntries.length > 0
-        ? project.authorEntries
-            .map(
-              (entry) =>
-                `${displayResearchPersonName(entry.user)}${entry.isCorresponding ? "*" : ""}`,
-            )
-            .join(", ")
-        : project.authors.length > 0
-          ? project.authors
+  const rows: ResearchProjectRow[] = projects.map((project) => {
+    const submissionStatuses = [
+      ...project.submissions.map((submission) => submission.status),
+      ...project.conferenceSubmissions.map((submission) => submission.status),
+    ];
+    const hasSubmissions = submissionStatuses.length > 0;
+
+    return {
+      id: project.id,
+      researchCode: project.researchCode ?? "",
+      title: project.title,
+      abstract: project.abstract ?? "",
+      stage: project.stage,
+      claimStatus: project.claimStatus,
+      registerStatus: project.registerStatus,
+      coAuthors:
+        project.authorEntries.length > 0
+          ? project.authorEntries
               .map(
-                (author, index) =>
-                  `${displayResearchPersonName(author)}${index === 0 ? "*" : ""}`,
+                (entry) =>
+                  `${displayResearchPersonName(entry.user)}${entry.isCorresponding ? "*" : ""}`,
               )
               .join(", ")
-          : (project.coAuthors ?? ""),
-    universityRegistration: project.universityRegistration ?? "",
-    registerName:
-      project.registrationUser?.name ||
-      displayResearchEmail(project.registrationUser?.email) ||
-      project.registrationName ||
-      "",
-    canViewRegistrationClaim:
-      isAdmin ||
-      project.registrationUserId === userId ||
-      Boolean(
-        project.registrationName &&
-        registrationIdentityValues.includes(
-          project.registrationName.trim().toLowerCase(),
+          : project.authors.length > 0
+            ? project.authors
+                .map(
+                  (author, index) =>
+                    `${displayResearchPersonName(author)}${index === 0 ? "*" : ""}`,
+                )
+                .join(", ")
+            : (project.coAuthors ?? ""),
+      universityRegistration: project.universityRegistration ?? "",
+      registerName:
+        project.registrationUser?.name ||
+        displayResearchEmail(project.registrationUser?.email) ||
+        project.registrationName ||
+        "",
+      canViewRegistrationClaim:
+        isAdmin ||
+        project.registrationUserId === userId ||
+        Boolean(
+          project.registrationName &&
+          registrationIdentityValues.includes(
+            project.registrationName.trim().toLowerCase(),
+          ),
         ),
-      ),
-    leadResearcher: displayResearchPersonName(project.leadResearcher),
-    submissions: project._count.submissions,
-    publications: project._count.publications,
-    updatedAt: project.updatedAt.toLocaleDateString(),
-  }));
+      leadResearcher: displayResearchPersonName(project.leadResearcher),
+      submissions: project._count.submissions,
+      publications: project._count.publications,
+      updatedAt: project.updatedAt.toLocaleDateString(),
+      notSubmittedAnywhere:
+        !hasSubmissions ||
+        submissionStatuses.every((status) => status === "REJECTED"),
+    };
+  });
 
   const stats = [
     {
