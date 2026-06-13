@@ -472,25 +472,20 @@ export function NewTaskDialog({
 
           <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                Task title
-                <span className="research-required-mark">(*)</span>
-              </span>
               <input
                 name="title"
                 required
-                placeholder="Task title"
+                aria-label="Task title"
+                placeholder="Task title (*)"
                 className={inputClass}
               />
             </label>
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                Due date
-              </span>
               <ResearchDatePicker
                 name="dueDate"
                 value={dueDate}
                 onChange={setDueDate}
+                placeholder="Due date"
                 className={inputClass}
               />
             </label>
@@ -522,10 +517,9 @@ export function NewTaskDialog({
 
           {needsResearch && (
             <SearchPanel
-              title="Research"
               query={researchQuery}
               setQuery={setResearchQuery}
-              placeholder="Search research by title, ID, or stage..."
+              placeholder="Search research by title, ID, or stage (*)"
               selectedItems={
                 selectedResearch
                   ? [
@@ -558,10 +552,9 @@ export function NewTaskDialog({
 
           {needsVenue && (
             <SearchPanel
-              title="Journal or conference"
               query={venueQuery}
               setQuery={setVenueQuery}
-              placeholder="Search journal or conference..."
+              placeholder="Search journal or conference (*)"
               selectedItems={
                 selectedVenue
                   ? [
@@ -611,10 +604,9 @@ export function NewTaskDialog({
 
           {needsReview && (
             <SearchPanel
-              title="Academic review"
               query={reviewQuery}
               setQuery={setReviewQuery}
-              placeholder="Search review by manuscript, journal, or status..."
+              placeholder="Search review by manuscript, journal, or status (*)"
               selectedItems={
                 selectedReview
                   ? [
@@ -646,10 +638,9 @@ export function NewTaskDialog({
           {needsOrganizedProject && (
             <div className="grid gap-4">
               <SearchPanel
-                title="Project"
                 query={organizedProjectQuery}
                 setQuery={setOrganizedProjectQuery}
-                placeholder="Search project by title, ID, or status..."
+                placeholder="Search project by title, ID, or status (*)"
                 selectedItems={
                   selectedOrganizedProject
                     ? [
@@ -687,22 +678,19 @@ export function NewTaskDialog({
           )}
 
           <label className="grid gap-1.5">
-            <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-              Description
-            </span>
             <textarea
               name="description"
               rows={3}
-              placeholder="Add instructions, expected output, files, or notes..."
+              aria-label="Description"
+              placeholder="Description, expected output, files, or notes"
               className={researchTextareaClass}
             />
           </label>
 
           <SearchPanel
-            title="Assign to"
             query={assigneeQuery}
             setQuery={setAssigneeQuery}
-            placeholder="Search active research users by name, email, ID, or role..."
+            placeholder="Search active research users by name, email, ID, or role (*)"
             selectedItems={selectedAssigneeItems}
             items={filteredAssignees.map((user) => ({
               id: user.id,
@@ -749,7 +737,6 @@ function JournalAccountField({
 
   return (
     <SearchPanel
-      title="Account to submit (optional)"
       query={query}
       setQuery={setQuery}
       placeholder="Search accounts for this journal, or leave empty..."
@@ -787,7 +774,7 @@ function SearchPanel({
   selectedItems = [],
   items,
 }: {
-  title: string;
+  title?: string;
   query: string;
   setQuery: (value: string) => void;
   placeholder: string;
@@ -799,9 +786,11 @@ function SearchPanel({
   const showDropdown = focused && query.trim().length > 0;
   return (
     <section className="grid gap-3">
-      <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-        {title}
-      </span>
+      {title ? (
+        <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+          {title}
+        </span>
+      ) : null}
       {selectedItems.length > 0 && (
         <div className="grid gap-2">
           {selectedItems.map((item) => (
@@ -875,20 +864,22 @@ function SelectedSearchItem({ item }: { item: SearchPanelItem }) {
     <button
       type="button"
       onClick={item.onClick}
-      className="group flex cursor-pointer items-start justify-between gap-3 rounded-none border border-[#444444] bg-[#202020] px-3 py-2 text-left text-[#E4E4E4] transition hover:border-[#5A5A5A] hover:bg-[#303030]"
+      className="group flex cursor-pointer items-start justify-between gap-3 rounded-none border border-[#D8D0C2] bg-[#FFFDF8] px-3 py-2 text-left text-[#1F2937] transition hover:border-[#7FBFC5] hover:bg-[#F3FAF9] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#303030]"
     >
       <span className="flex min-w-0 items-start gap-3">
-        <span className="mt-0.5 flex-none text-[#A8DADC]">{item.icon}</span>
+        <span className="mt-0.5 flex-none text-[#1F7180] dark:text-[#A8DADC]">
+          {item.icon}
+        </span>
         <span className="min-w-0">
-          <span className="block text-sm font-normal leading-5 text-[#E4E4E4]">
+          <span className="block text-sm font-normal leading-5 text-[#1F2937] dark:text-[#E4E4E4]">
             {item.title}
           </span>
-          <span className="mt-0.5 block text-xs leading-5 text-[#B0B0B0]">
+          <span className="mt-0.5 block text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
             {item.meta}
           </span>
         </span>
       </span>
-      <X className="mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] transition group-hover:text-[#A8DADC]" />
+      <X className="mt-0.5 h-4 w-4 flex-none text-[#667085] transition group-hover:text-[#1F7180] dark:text-[#B0B0B0] dark:group-hover:text-[#A8DADC]" />
     </button>
   );
 }

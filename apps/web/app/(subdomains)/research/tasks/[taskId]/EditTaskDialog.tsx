@@ -33,6 +33,7 @@ import {
   researchDropdownPanelClass,
   researchFieldClass,
   researchSearchFieldClass,
+  researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import {
   displayResearchEmail,
@@ -73,8 +74,7 @@ type SearchPanelItem = {
   onClick: () => void;
 };
 
-const inputClass =
-  "border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm text-[#E4E4E4] outline-none transition placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]";
+const inputClass = researchFieldClass;
 const dateInputClass = researchFieldClass;
 const finishedResearchStages = new Set(["ACCEPTED", "PUBLISHED"]);
 const closedReviewStatuses = new Set(["SUBMITTED", "DECLINED", "CANCELLED"]);
@@ -484,25 +484,20 @@ export function EditTaskDialog({
 
           <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                Task title
-                <span className="research-required-mark">(*)</span>
-              </span>
               <input
                 name="title"
                 required
                 defaultValue={task.title}
-                placeholder="Task title"
+                aria-label="Task title"
+                placeholder="Task title (*)"
                 className={inputClass}
               />
             </label>
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                Due date
-              </span>
               <ResearchDatePicker
                 name="dueDate"
                 defaultValue={task.dueDate}
+                placeholder="Due date"
                 className={dateInputClass}
               />
             </label>
@@ -534,10 +529,9 @@ export function EditTaskDialog({
 
           {needsResearch && (
             <SearchPanel
-              title="Research"
               query={researchQuery}
               setQuery={setResearchQuery}
-              placeholder="Search research by title, ID, or stage..."
+              placeholder="Search research by title, ID, or stage (*)"
               selectedItems={
                 selectedResearch
                   ? [
@@ -570,10 +564,9 @@ export function EditTaskDialog({
 
           {needsVenue && (
             <SearchPanel
-              title="Journal or conference"
               query={venueQuery}
               setQuery={setVenueQuery}
-              placeholder="Search journal or conference..."
+              placeholder="Search journal or conference (*)"
               selectedItems={
                 selectedVenue
                   ? [
@@ -623,10 +616,9 @@ export function EditTaskDialog({
 
           {needsReview && (
             <SearchPanel
-              title="Academic review"
               query={reviewQuery}
               setQuery={setReviewQuery}
-              placeholder="Search review by manuscript, journal, or status..."
+              placeholder="Search review by manuscript, journal, or status (*)"
               selectedItems={
                 selectedReview
                   ? [
@@ -658,10 +650,9 @@ export function EditTaskDialog({
           {needsOrganizedProject && (
             <div className="grid gap-4">
               <SearchPanel
-                title="Project"
                 query={organizedProjectQuery}
                 setQuery={setOrganizedProjectQuery}
-                placeholder="Search project by title, ID, or status..."
+                placeholder="Search project by title, ID, or status (*)"
                 selectedItems={
                   selectedOrganizedProject
                     ? [
@@ -699,23 +690,20 @@ export function EditTaskDialog({
           )}
 
           <label className="grid gap-1.5">
-            <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-              Description
-            </span>
             <textarea
               name="description"
               rows={3}
               defaultValue={task.description}
-              placeholder="Add instructions, expected output, files, or notes..."
-              className={inputClass}
+              aria-label="Description"
+              placeholder="Description, expected output, files, or notes"
+              className={researchTextareaClass}
             />
           </label>
 
           <SearchPanel
-            title="Assign to"
             query={assigneeQuery}
             setQuery={setAssigneeQuery}
-            placeholder="Search active research users by name, email, ID, or role..."
+            placeholder="Search active research users by name, email, ID, or role (*)"
             selectedItems={assignees
               .filter((user) => selectedIds.includes(user.id))
               .map((user) => ({
@@ -773,7 +761,6 @@ function JournalAccountField({
 
   return (
     <SearchPanel
-      title="Account to submit (optional)"
       query={query}
       setQuery={setQuery}
       placeholder="Search accounts for this journal, or leave empty..."
@@ -811,7 +798,7 @@ function SearchPanel({
   selectedItems = [],
   items,
 }: {
-  title: string;
+  title?: string;
   query: string;
   setQuery: (value: string) => void;
   placeholder: string;
@@ -823,9 +810,11 @@ function SearchPanel({
   const showDropdown = focused && query.trim().length > 0;
   return (
     <section className="grid gap-3">
-      <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-        {title}
-      </span>
+      {title ? (
+        <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+          {title}
+        </span>
+      ) : null}
       {selectedItems.length > 0 && (
         <div className="grid gap-2">
           {selectedItems.map((item) => (
@@ -899,20 +888,22 @@ function SelectedSearchItem({ item }: { item: SearchPanelItem }) {
     <button
       type="button"
       onClick={item.onClick}
-      className="flex cursor-pointer items-start justify-between gap-3 rounded-none border border-emerald-200 bg-emerald-50 px-3 py-2 text-left text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+      className="group flex cursor-pointer items-start justify-between gap-3 rounded-none border border-[#D8D0C2] bg-[#FFFDF8] px-3 py-2 text-left text-[#1F2937] transition hover:border-[#7FBFC5] hover:bg-[#F3FAF9] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#303030]"
     >
       <span className="flex min-w-0 items-start gap-3">
-        <span className="mt-0.5 flex-none text-emerald-500">{item.icon}</span>
+        <span className="mt-0.5 flex-none text-[#1F7180] dark:text-[#A8DADC]">
+          {item.icon}
+        </span>
         <span className="min-w-0">
-          <span className="block text-sm font-bold leading-5">
+          <span className="block text-sm font-normal leading-5 text-[#1F2937] dark:text-[#E4E4E4]">
             {item.title}
           </span>
-          <span className="mt-0.5 block text-xs leading-5 text-emerald-700/80 dark:text-emerald-200/80">
+          <span className="mt-0.5 block text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
             {item.meta}
           </span>
         </span>
       </span>
-      <X className="mt-0.5 h-4 w-4 flex-none" />
+      <X className="mt-0.5 h-4 w-4 flex-none text-[#667085] transition group-hover:text-[#1F7180] dark:text-[#B0B0B0] dark:group-hover:text-[#A8DADC]" />
     </button>
   );
 }

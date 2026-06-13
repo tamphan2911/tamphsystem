@@ -3383,6 +3383,65 @@ html[data-research-theme="light"]
   transform: scale(0.985) !important;
 }
 
+html[data-research-theme="light"]
+  :where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(.journal-detail-tabs, [data-research-toggle-tabs="true"]) {
+  border-color: #d8d0c2 !important;
+  background: #fffdf8 !important;
+  padding: 0 !important;
+}
+
+html[data-research-theme="light"]
+  :where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(.journal-detail-tab-button, [data-research-toggle-tab="true"]) {
+  border-right-color: #e2d9cc !important;
+  background: transparent !important;
+  color: #667085 !important;
+}
+
+html[data-research-theme="light"]
+  :where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(
+    .journal-detail-tab-button,
+    [data-research-toggle-tab="true"]
+  )::before {
+  background: #e6f4f2 !important;
+}
+
+html[data-research-theme="light"]
+  :where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(.journal-detail-tab-button, [data-research-toggle-tab="true"])::after {
+  background: #f3faf9 !important;
+}
+
+html[data-research-theme="light"]
+  :where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(.journal-detail-tab-button, [data-research-toggle-tab="true"]):hover {
+  border-right-color: #b8d9dc !important;
+  color: #1f7180 !important;
+}
+
+html[data-research-theme="light"]
+  :where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(
+    .journal-detail-tab-button[data-active="true"],
+    [data-research-toggle-tab="true"][data-active="true"]
+  ) {
+  border-color: #7fbfc5 !important;
+  border-right-color: #7fbfc5 !important;
+  background: #e6f4f2 !important;
+  color: #155864 !important;
+}
+
+html[data-research-theme="light"]
+  :where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(
+    .journal-detail-tab-button[data-active="true"],
+    [data-research-toggle-tab="true"][data-active="true"]
+  ):hover {
+  color: #155864 !important;
+}
+
 .research-site-root button[class*="bg-emerald-600"],
 .research-site-root button[class*="bg-emerald-500"] {
   border: 1px solid #a8dadc;
