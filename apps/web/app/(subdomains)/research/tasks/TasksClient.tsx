@@ -262,7 +262,7 @@ function statusIconMeta(task: TaskRow): {
   return {
     icon: Clock3,
     className:
-      "text-sky-700 hover:text-sky-800 dark:text-[#A8DADC] dark:hover:text-cyan-200",
+      "text-indigo-700 hover:text-indigo-800 dark:text-violet-300 dark:hover:text-violet-200",
   };
 }
 
