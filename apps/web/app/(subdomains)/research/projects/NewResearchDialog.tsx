@@ -165,7 +165,7 @@ function NewResearchAuthorsPicker({
           </FloatingDropdownPortal>
         </div>
 
-        <div className="mt-3 divide-y divide-[#444444] border-y border-[#444444]">
+        <div className="mt-3 divide-y divide-[#e2d9cc] border-y border-[#e2d9cc] dark:divide-[#444444] dark:border-[#444444]">
           {selectedAuthors.map((author, index) => (
             <div key={author.id} className="flex items-center gap-4 py-3">
               <span className="inline-flex h-10 w-8 flex-none items-center justify-center text-[#A8DADC]">
