@@ -948,7 +948,7 @@ export default async function TaskDetailPage({
                   className="border-t border-[#444444] pt-3"
                 >
                   <span className="flex min-w-0 items-start gap-3">
-                    <UserRound className="research-task-icon-motion mt-0.5 h-4 w-4 flex-none text-amber-300" />
+                    <UserRound className="research-task-icon-motion mt-0.5 h-4 w-4 flex-none text-amber-700 dark:text-amber-300" />
                     <span className="min-w-0 leading-tight">
                       <span className="block truncate text-sm font-normal text-[#E4E4E4]">
                         {displayResearchPersonName(assignment.user)}

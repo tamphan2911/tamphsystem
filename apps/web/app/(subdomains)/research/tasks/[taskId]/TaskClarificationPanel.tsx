@@ -84,7 +84,7 @@ export function TaskClarificationPanel({
                 <button
                   type="button"
                   onClick={() => setIsOpen(true)}
-                  className="research-task-icon-motion inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none transition hover:text-[#A8DADC]"
+                  className="research-allow-transform research-task-icon-motion inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-[#B0B0B0] shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
                   aria-label="Open request and feedback history"
                 >
                   <MessageSquareText className="h-4 w-4" />
