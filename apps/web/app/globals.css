@@ -1452,6 +1452,18 @@ html[data-research-theme="light"]
 }
 
 html[data-research-theme="light"]
+  :where(.research-site-root, [data-research-modal-overlay="true"])
+  input[class~="bg-transparent"] {
+  background-color: transparent !important;
+}
+
+html[data-research-theme="light"]
+  :where(.research-site-root, [data-research-modal-overlay="true"])
+  input[class~="bg-transparent"]:where(:hover, :focus) {
+  background-color: transparent !important;
+}
+
+html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
   :where(.divide-y > :not([hidden]) ~ :not([hidden])) {
   border-color: #e2d9cc !important;
