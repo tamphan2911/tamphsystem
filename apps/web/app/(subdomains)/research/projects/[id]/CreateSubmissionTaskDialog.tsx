@@ -367,7 +367,7 @@ export function CreateSubmissionTaskDialog({
                 <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                   Due date
                 </span>
-                <ResearchDatePicker name="dueDate" className={inputClass} />
+                <ResearchDatePicker name="dueDate" />
               </label>
             </div>
 
