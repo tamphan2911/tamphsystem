@@ -51,6 +51,13 @@ export function ProfileMenu({
         <UserCircle className="h-6 w-6" />
       </button>
 
+      <span
+        aria-hidden="true"
+        className={`absolute right-0 top-10 z-40 h-3 w-64 ${
+          open ? "pointer-events-auto" : "pointer-events-none"
+        }`}
+      />
+
       <div
         className={`absolute right-0 top-12 z-50 w-64 overflow-hidden rounded-none border shadow-xl transition duration-200 ease-out ${
           open
