@@ -84,7 +84,7 @@ export function ResearchFormSelect({
           "group inline-flex cursor-pointer items-center justify-between gap-3 text-left",
           researchSelectTriggerClass,
           open &&
-            "border-sky-400 bg-white dark:border-[#A8DADC] dark:bg-[#383838]",
+            "border-sky-400 bg-white dark:border-[#5A5A5A] dark:bg-[#383838]",
         )}
       >
         <span
