@@ -996,6 +996,7 @@ export function SubmissionsTable({
                 options={editableStatusOptions(editing)}
                 ariaLabel="Submission status"
                 onValueChange={setEditStatus}
+                triggerClassName="dark:!border-[#5A5A5A] dark:hover:!border-[#6A6A6A] dark:focus:!border-[#A8DADC]"
               />
             </label>
             <label className="grid gap-1.5">
