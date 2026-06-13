@@ -2884,23 +2884,37 @@ html[data-auth-leaving="reset"]
 
 html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
+  .research-published-article-section,
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-published-article-section
+  label {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
   .research-published-article-link-field {
   border-color: #d6cbbb;
-  background: transparent;
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
   .research-published-article-link-field:hover {
   border-color: #b8aa98;
-  background: transparent;
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
   .research-published-article-link-field:focus-within {
   border-color: #1f7180;
-  background: transparent;
+  background: transparent !important;
+  background-color: transparent !important;
   transform: none;
 }
 
@@ -2922,8 +2936,22 @@ html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
   .research-published-article-link-field
   input {
+  background: transparent !important;
+  background-color: transparent !important;
   color: #253142;
   caret-color: #1f7180;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-published-article-link-field
+  input:hover,
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-published-article-link-field
+  input:focus {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 html[data-research-theme="light"]

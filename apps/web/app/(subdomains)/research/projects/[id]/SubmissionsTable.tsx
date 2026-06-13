@@ -1010,7 +1010,7 @@ export function SubmissionsTable({
             </label>
             {editing.kind === "journal" &&
               normalizedStatus(editStatus) === "PUBLISHED" && (
-                <div className="grid gap-3 border-t border-slate-200 pt-4 animate-[modalPanelIn_220ms_ease-out] dark:border-[#444444]">
+                <div className="research-published-article-section grid gap-3 border-t border-slate-200 pt-4 animate-[modalPanelIn_220ms_ease-out] dark:border-[#444444]">
                   <label className="grid gap-1.5">
                     <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                       Published article link
