@@ -211,7 +211,7 @@ export function AssistantsTable({
                     <button
                       type="button"
                       onClick={() => togglePassword(user.id)}
-                      className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-none text-slate-400 transition hover:text-blue-600 dark:hover:text-blue-300"
+                      className="research-allow-transform inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center border border-transparent bg-transparent p-0 text-slate-400 shadow-none outline-none transition-[color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-transparent hover:bg-transparent hover:text-blue-600 hover:shadow-none active:scale-95 focus-visible:ring-0 dark:hover:text-blue-300"
                       aria-label={
                         visiblePasswords[user.id]
                           ? "Hide assistant password"
