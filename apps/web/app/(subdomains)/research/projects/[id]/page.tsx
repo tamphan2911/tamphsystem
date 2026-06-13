@@ -1189,7 +1189,7 @@ export default async function ProjectDetailPage({
                 />
               </div>
               <div className="relative">
-                <div className="absolute bottom-7 left-[1.06rem] top-7 w-px bg-[#444444]" />
+                <div className="absolute bottom-7 left-[1.06rem] top-7 w-px bg-[#e2d9cc] dark:bg-[#444444]" />
                 {productionSteps.map((step, index) => {
                   const active = completedProductionSteps.has(step.label);
                   return (
