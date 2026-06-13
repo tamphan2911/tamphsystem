@@ -74,7 +74,7 @@ function DeleteAccountButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-none border border-rose-100 bg-rose-50 text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:shadow-md dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/50"
+          className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-rose-700 shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-rose-800 hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-rose-300 dark:hover:text-rose-200"
           aria-label={`Delete ${account.username}`}
         >
           <Trash2 className="h-4 w-4" />
