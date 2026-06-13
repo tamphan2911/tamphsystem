@@ -1464,6 +1464,31 @@ html[data-research-theme="light"]
 }
 
 html[data-research-theme="light"]
+  :where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(.research-search-field, input[class~="bg-transparent"]) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+}
+
+html[data-research-theme="light"]
+  :where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(.research-search-field, input[class~="bg-transparent"]):where(
+    :hover,
+    :focus,
+    :focus-visible,
+    :active
+  ) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+}
+
+html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
   :where(.divide-y > :not([hidden]) ~ :not([hidden])) {
   border-color: #e2d9cc !important;

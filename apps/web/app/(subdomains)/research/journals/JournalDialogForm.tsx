@@ -622,7 +622,7 @@ export function JournalDialogForm({
                             ? "Search another research field"
                             : "Search research fields"
                         }
-                        className="min-w-0 flex-1 bg-transparent text-sm font-normal normal-case tracking-normal text-[#E4E4E4] outline-none placeholder:text-[#5A5A5A]"
+                        className="research-search-field min-w-0 flex-1 bg-transparent text-sm font-normal normal-case tracking-normal text-[#E4E4E4] outline-none placeholder:text-[#5A5A5A]"
                       />
                     </span>
                   </div>
