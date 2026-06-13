@@ -34,7 +34,7 @@ export function ProposalFeedbackButton({
         type="button"
         disabled={disabled}
         onClick={() => setOpen(true)}
-        className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-none border border-blue-200 bg-blue-50 text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-100 hover:shadow-md disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:hover:translate-y-0 disabled:hover:shadow-none dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50 dark:disabled:border-slate-800 dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
+        className="inline-flex h-5 w-5 cursor-pointer items-center justify-center border border-transparent bg-transparent text-blue-700 shadow-none outline-none transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:border-transparent hover:bg-transparent hover:text-blue-800 hover:drop-shadow-[0_0_0.45rem_rgba(31,113,128,0.24)] active:scale-95 disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:translate-y-0 disabled:hover:scale-100 disabled:hover:bg-transparent disabled:hover:drop-shadow-none dark:text-blue-300 dark:hover:text-blue-200 dark:disabled:text-slate-600"
         aria-label="Send proposal feedback"
         title={
           disabled

@@ -1,8 +1,6 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import {
-  ArrowLeft,
   BookOpen,
   Building2,
   CalendarDays,
@@ -17,7 +15,8 @@ import {
 import { prisma, ProposalStatus, ProposalType, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { ProposalFeedbackButton } from "./ProposalFeedbackButton";
-import { researchMutedLinkClass } from "@/sites/research/components/ResearchPrimitives";
+import { IconHint } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import {
   displayResearchEmail,
   displayResearchPersonName,
@@ -55,31 +54,27 @@ function typeMeta(type: ProposalType) {
     return {
       icon: CalendarDays,
       label: "Conference proposal",
-      className:
-        "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900",
+      className: "text-blue-700 dark:text-blue-300",
     };
   }
   if (type === ProposalType.JOURNAL) {
     return {
       icon: BookOpen,
       label: "Journal proposal",
-      className:
-        "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+      className: "text-emerald-700 dark:text-emerald-300",
     };
   }
   if (type === ProposalType.PROJECT) {
     return {
       icon: Building2,
       label: "Project proposal",
-      className:
-        "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-900",
+      className: "text-violet-700 dark:text-violet-300",
     };
   }
   return {
     icon: FolderGit2,
     label: "Research proposal",
-    className:
-      "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900",
+    className: "text-amber-700 dark:text-amber-300",
   };
 }
 
@@ -87,21 +82,18 @@ function statusMeta(status: ProposalStatus) {
   if (status === ProposalStatus.ACCEPTED) {
     return {
       icon: CheckCircle2,
-      className:
-        "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900",
+      className: "text-emerald-700 dark:text-emerald-300",
     };
   }
   if (status === ProposalStatus.DECLINED) {
     return {
       icon: XCircle,
-      className:
-        "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900",
+      className: "text-rose-700 dark:text-rose-300",
     };
   }
   return {
     icon: FolderGit2,
-    className:
-      "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900",
+    className: "text-amber-700 dark:text-amber-300",
   };
 }
 
@@ -119,17 +111,39 @@ function DetailItem({
   value: ReactNode;
 }) {
   return (
-    <div className="border border-[#444444] bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
-      <dt className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
+    <div className="min-w-0">
+      <dt className="flex items-center gap-2 text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
         {icon}
         {label}
       </dt>
-      <dd className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">
+      <dd className="mt-2 text-sm leading-6 text-slate-700 dark:text-[#E4E4E4]">
         {value === null || value === undefined || value === "" ? "-" : value}
       </dd>
     </div>
   );
 }
+
+function HeaderIcon({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className: string;
+  children: ReactNode;
+}) {
+  return (
+    <IconHint label={label} position="bottom">
+      <span
+        className={`inline-flex h-5 w-5 cursor-help items-center justify-center border border-transparent bg-transparent transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] active:scale-95 ${className}`}
+      >
+        {children}
+      </span>
+    </IconHint>
+  );
+}
+
+const sectionDividerClass = "border-t border-[#D8D0C2] dark:border-[#4A4A4A]";
 
 export default async function ProposalDetailPage({
   params,
@@ -176,101 +190,75 @@ export default async function ProposalDetailPage({
   const hasFile = Boolean(proposal.supportFileName);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
-      <Link
-        href="/proposals"
-        className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Proposals
-      </Link>
-
-      <header className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex items-center gap-2 rounded-none px-3 py-1.5 text-xs font-bold ring-1 ${type.className}`}
-              >
-                <TypeIcon className="h-3.5 w-3.5" />
-                {type.label}
-              </span>
-              <span
-                className={`inline-flex items-center gap-2 rounded-none px-3 py-1.5 text-xs font-bold ring-1 ${status.className}`}
-              >
-                <StatusIcon className="h-3.5 w-3.5" />
-                {label(visibleStatus)}
-              </span>
-              <span className="text-xs font-medium text-[#777777]">
-                Submitted {longDate(proposal.createdAt)}
-              </span>
-            </div>
-            <div className="mt-4 flex items-start gap-3">
-              <h1 className="min-w-0 flex-1 text-2xl font-normal leading-tight tracking-tight text-[#E4E4E4]">
+    <>
+      <ResearchPageHeaderPortal>
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="min-w-0 text-[14px] font-normal leading-6 text-[#252525] dark:text-[#E4E4E4]">
+              <h1 className="inline whitespace-normal break-words font-normal">
                 {proposal.title}
               </h1>
-              <ProposalFeedbackButton
-                proposalId={proposal.id}
-                proposalTitle={proposal.title}
-                disabled={
-                  effectiveStatus === ProposalStatus.ACCEPTED ||
-                  effectiveStatus === ProposalStatus.DECLINED
-                }
-              />
+              <span className="ml-2 inline-flex items-center gap-2 align-middle">
+                <HeaderIcon label={type.label} className={type.className}>
+                  <TypeIcon className="h-4 w-4" aria-hidden="true" />
+                </HeaderIcon>
+                <HeaderIcon
+                  label={label(visibleStatus)}
+                  className={status.className}
+                >
+                  <StatusIcon className="h-4 w-4" aria-hidden="true" />
+                </HeaderIcon>
+                <ProposalFeedbackButton
+                  proposalId={proposal.id}
+                  proposalTitle={proposal.title}
+                  disabled={
+                    effectiveStatus === ProposalStatus.ACCEPTED ||
+                    effectiveStatus === ProposalStatus.DECLINED
+                  }
+                />
+              </span>
             </div>
-            <p className="mt-3 max-w-4xl text-sm leading-6 text-[#B0B0B0]">
+          </div>
+        </div>
+      </ResearchPageHeaderPortal>
+
+      <div className="mx-auto max-w-7xl space-y-5">
+        <section className="border border-[#D8D0C2] bg-[#FFFDF8] shadow-none dark:border-[#444444] dark:bg-[#2C2C2C]">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-5 py-3 text-xs text-[#667085] dark:text-[#B0B0B0]">
+            <span>
               Proposal ID:{" "}
-              <span className="font-mono text-xs text-slate-400">
+              <span className="font-mono text-[#344054] dark:text-[#E4E4E4]">
                 {proposal.id}
               </span>
-            </p>
+            </span>
+            <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
+            <span>Submitted {longDate(proposal.createdAt)}</span>
           </div>
 
-          {hasFile && (
-            <a
-              href={`/api/research/proposals/${proposal.id}/file`}
-              className="inline-flex items-center justify-center gap-2 rounded-none border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-200 dark:hover:bg-emerald-900/40"
-            >
-              <Download className="h-4 w-4" />
-              Download file
-            </a>
-          )}
-        </div>
-      </header>
-
-      <section className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-5">
-          <div className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
-            <h2 className="text-sm font-bold text-[#E4E4E4]">
+          <div className={`${sectionDividerClass} p-5`}>
+            <h2 className="text-sm font-normal text-[#252525] dark:text-[#E4E4E4]">
               Proposal description
             </h2>
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#B0B0B0]">
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#4B5565] dark:text-[#B0B0B0]">
               {proposal.description}
             </p>
           </div>
 
-          <div className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
-            <h2 className="text-sm font-bold text-[#E4E4E4]">Notes</h2>
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#B0B0B0]">
-              {proposal.notes || "No notes."}
-            </p>
-          </div>
-        </div>
-
-        <aside className="space-y-5">
-          <dl className="grid gap-3">
+          <div
+            className={`${sectionDividerClass} grid gap-5 p-5 lg:grid-cols-2`}
+          >
             <DetailItem
               icon={<UserRound className="h-3.5 w-3.5" />}
               label="Submitted by"
               value={
                 <span>
-                  <span className="block text-[#E4E4E4]">
+                  <span className="block text-[#252525] dark:text-[#E4E4E4]">
                     {displayResearchPersonName(proposal.submittedBy)}
                   </span>
-                  <span className="block text-xs text-[#B0B0B0]">
+                  <span className="block text-xs text-[#667085] dark:text-[#B0B0B0]">
                     {displayResearchEmail(proposal.submittedBy.email)}
                   </span>
-                  <span className="mt-1 block text-xs text-slate-400">
+                  <span className="mt-1 block text-xs text-[#667085] dark:text-[#B0B0B0]">
                     {proposal.submittedBy.roles.map(label).join(", ") ||
                       "No roles"}
                   </span>
@@ -282,45 +270,48 @@ export default async function ProposalDetailPage({
               label="Contact"
               value={proposal.contactInfo || "-"}
             />
-            {(proposal.identifier ||
-              proposal.organization ||
-              proposal.location ||
-              proposal.website) && (
-              <DetailItem
-                icon={<Building2 className="h-3.5 w-3.5" />}
-                label="Venue details"
-                value={
-                  <span>
-                    {proposal.identifier && (
-                      <span className="block">
-                        {proposal.type === ProposalType.CONFERENCE
-                          ? "ISBN"
-                          : "ISSN"}
-                        : {proposal.identifier}
-                      </span>
-                    )}
-                    {proposal.organization && (
-                      <span className="block">{proposal.organization}</span>
-                    )}
-                    {proposal.location && (
-                      <span className="block">{proposal.location}</span>
-                    )}
-                    {proposal.website && (
-                      <span className="block break-all">
-                        {proposal.website}
-                      </span>
-                    )}
-                  </span>
-                }
-              />
-            )}
-            {proposal.decisionComment && (
-              <DetailItem
-                icon={<CheckCircle2 className="h-3.5 w-3.5" />}
-                label="Admin comment"
-                value={proposal.decisionComment}
-              />
-            )}
+          </div>
+
+          {(proposal.identifier ||
+            proposal.organization ||
+            proposal.location ||
+            proposal.website) && (
+            <div className={`${sectionDividerClass} p-5`}>
+              <dl>
+                <DetailItem
+                  icon={<Building2 className="h-3.5 w-3.5" />}
+                  label="Venue details"
+                  value={
+                    <span>
+                      {proposal.identifier && (
+                        <span className="block">
+                          {proposal.type === ProposalType.CONFERENCE
+                            ? "ISBN"
+                            : "ISSN"}
+                          : {proposal.identifier}
+                        </span>
+                      )}
+                      {proposal.organization && (
+                        <span className="block">{proposal.organization}</span>
+                      )}
+                      {proposal.location && (
+                        <span className="block">{proposal.location}</span>
+                      )}
+                      {proposal.website && (
+                        <span className="block break-all">
+                          {proposal.website}
+                        </span>
+                      )}
+                    </span>
+                  }
+                />
+              </dl>
+            </div>
+          )}
+
+          <div
+            className={`${sectionDividerClass} grid gap-5 p-5 lg:grid-cols-2`}
+          >
             <DetailItem
               icon={<FileText className="h-3.5 w-3.5" />}
               label="Support file"
@@ -328,21 +319,44 @@ export default async function ProposalDetailPage({
                 hasFile ? (
                   <span>
                     <span className="block">{proposal.supportFileName}</span>
-                    <span className="block text-xs text-[#B0B0B0]">
+                    <span className="block text-xs text-[#667085] dark:text-[#B0B0B0]">
                       {proposal.supportFileType || "Unknown type"}
                       {proposal.supportFileSize
                         ? ` - ${fileSizeLabel(proposal.supportFileSize)}`
                         : ""}
                     </span>
+                    <a
+                      href={`/api/research/proposals/${proposal.id}/file`}
+                      className="mt-2 inline-flex origin-left items-center gap-2 text-sm font-normal text-emerald-700 outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:text-emerald-800 hover:[text-shadow:0_0_0.55rem_rgba(16,185,129,0.18)] active:scale-[0.985] dark:text-emerald-300 dark:hover:text-emerald-200"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download file
+                    </a>
                   </span>
                 ) : (
                   "No support file"
                 )
               }
             />
-          </dl>
-        </aside>
-      </section>
-    </div>
+            {proposal.decisionComment && (
+              <DetailItem
+                icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+                label="Admin comment"
+                value={proposal.decisionComment}
+              />
+            )}
+          </div>
+
+          <div className={`${sectionDividerClass} p-5`}>
+            <h2 className="text-sm font-normal text-[#252525] dark:text-[#E4E4E4]">
+              Notes
+            </h2>
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#4B5565] dark:text-[#B0B0B0]">
+              {proposal.notes || "No notes."}
+            </p>
+          </div>
+        </section>
+      </div>
+    </>
   );
 }
