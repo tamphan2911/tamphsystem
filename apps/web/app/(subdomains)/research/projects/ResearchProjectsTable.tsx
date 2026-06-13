@@ -251,7 +251,7 @@ function DeleteResearchButton({
         onClick={() => setOpen(true)}
         label={`Delete ${row.title}`}
         tone="rose"
-        className="h-8 w-8 rounded-[2px]"
+        className="h-8 w-8"
       >
         <Trash2 className="h-4 w-4" />
       </ResearchIconButton>

@@ -4062,6 +4062,48 @@ html[data-research-theme="light"]
   transform: none !important;
 }
 
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  :where(
+    .research-clickable-icon,
+    button[aria-label]:has(> svg),
+    a[aria-label]:has(> svg),
+    [role="button"][aria-label]:has(> svg),
+    .research-allow-transform:has(> svg)
+  ):not([role="option"]):not([role="tab"]) {
+  border-color: transparent !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  :where(
+    .research-clickable-icon,
+    button[aria-label]:has(> svg),
+    a[aria-label]:has(> svg),
+    [role="button"][aria-label]:has(> svg),
+    .research-allow-transform:has(> svg)
+  ):not([role="option"]):not([role="tab"]):is(
+    :hover,
+    :active,
+    :focus,
+    :focus-visible
+  ) {
+  border-color: transparent !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .research-site-root *,
   .research-site-root *::before,

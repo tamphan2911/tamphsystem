@@ -120,7 +120,7 @@ export function ResearchIconButton({
         {...props}
         aria-label={props["aria-label"] ?? label}
         className={cx(
-          "inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border shadow-none outline-none transition duration-150 ease-out hover:shadow-none focus:ring-0 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:shadow-none motion-reduce:transition-none",
+          "research-clickable-icon research-allow-transform inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border shadow-none outline-none transition duration-150 ease-out hover:shadow-none focus:ring-0 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:shadow-none motion-reduce:transition-none",
           iconToneClasses[tone],
           className,
         )}
