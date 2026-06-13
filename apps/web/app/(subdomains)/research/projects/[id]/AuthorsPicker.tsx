@@ -236,7 +236,7 @@ export function AuthorsPicker({
             </FloatingDropdownPortal>
           </div>
 
-          <div className="mt-3 divide-y divide-[#444444] border-y border-[#444444]">
+          <div className="mt-3 divide-y divide-[#d8d0c3] border-y border-[#d8d0c3] dark:divide-[#444444] dark:border-[#444444]">
             {authors.map((author, index) => {
               const roleLabel = index === 0 ? "First author" : "Author";
               const corresponding = author.isCorresponding;
