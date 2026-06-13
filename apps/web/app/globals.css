@@ -3317,6 +3317,7 @@ html[data-research-theme="light"]
   position: relative;
   isolation: isolate;
   border: 0 !important;
+  border-color: transparent !important;
   background: transparent !important;
   color: #b0b0b0 !important;
   box-shadow: none !important;
@@ -3328,12 +3329,18 @@ html[data-research-theme="light"]
 }
 
 .research-site-root .research-theme-switch:hover {
+  border-color: transparent !important;
+  background: transparent !important;
   color: #a8dadc !important;
+  box-shadow: none !important;
   transform: rotate(10deg) scale(1.06) !important;
 }
 
 .research-site-root .research-theme-switch:active {
+  border-color: transparent !important;
+  background: transparent !important;
   color: #ffc1cc !important;
+  box-shadow: none !important;
   transform: rotate(-18deg) scale(0.92) !important;
 }
 

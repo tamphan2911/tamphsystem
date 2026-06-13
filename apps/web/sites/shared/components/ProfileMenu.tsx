@@ -40,7 +40,11 @@ export function ProfileMenu({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex h-10 w-10 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#E4E4E4] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
+        className={
+          isResearch
+            ? "research-theme-switch research-allow-transform flex h-10 w-10 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-[#B0B0B0] outline-none transition duration-180 ease-out hover:text-[#E4E4E4] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
+            : "flex h-10 w-10 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#E4E4E4] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
+        }
         aria-label="Open profile menu"
         aria-expanded={open}
       >
