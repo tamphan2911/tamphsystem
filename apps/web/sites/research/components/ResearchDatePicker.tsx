@@ -220,25 +220,23 @@ export function ResearchDatePicker({
       <div
         className={cx(
           researchFieldClass,
-          "flex items-center justify-between gap-2 p-0 disabled:cursor-not-allowed",
+          className,
+          "box-border flex h-12 min-h-12 w-full items-center justify-between gap-2 p-0 disabled:cursor-not-allowed",
           open &&
             "border-[#7FBFC5] bg-[#F8F6EF] dark:border-[#A8DADC] dark:bg-[#383838]",
-          className,
         )}
       >
         <label className="flex min-w-0 flex-1 items-center gap-2 pl-3">
           <CalendarDays className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
           <input
             type="text"
-            inputMode="numeric"
+            inputMode="text"
+            autoComplete="off"
             value={manualText}
             disabled={disabled}
             required={required}
             onChange={(event) => {
               setManualText(event.target.value);
-              const parsed = parseManualDateValue(event.target.value);
-              if (parsed) setDateValue(parsed);
-              if (parsed === "") setDateValue("");
             }}
             onFocus={() => setOpen(true)}
             onBlur={() => commitManualDate()}
@@ -267,7 +265,9 @@ export function ResearchDatePicker({
           >
             <X className="h-4 w-4" />
           </button>
-        ) : null}
+        ) : (
+          <span className="h-10 w-8 flex-none" aria-hidden="true" />
+        )}
         <button
           type="button"
           disabled={disabled}
