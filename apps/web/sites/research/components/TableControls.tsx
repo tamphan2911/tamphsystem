@@ -237,7 +237,7 @@ export function TablePagination({
           disabled={page <= 1}
           label="Previous page"
           tone="slate"
-          className="!rounded-none border-0 shadow-none hover:translate-y-0 hover:shadow-none"
+          className="research-allow-transform !rounded-none border-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#1F7180] hover:shadow-none active:translate-y-0 active:scale-95 disabled:hover:translate-y-0 disabled:active:scale-100 dark:hover:text-[#A8DADC]"
         >
           <ChevronLeft className="h-4 w-4" />
         </ResearchIconButton>
@@ -250,7 +250,7 @@ export function TablePagination({
           disabled={page >= pageCount}
           label="Next page"
           tone="slate"
-          className="!rounded-none border-0 shadow-none hover:translate-y-0 hover:shadow-none"
+          className="research-allow-transform !rounded-none border-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#1F7180] hover:shadow-none active:translate-y-0 active:scale-95 disabled:hover:translate-y-0 disabled:active:scale-100 dark:hover:text-[#A8DADC]"
         >
           <ChevronRight className="h-4 w-4" />
         </ResearchIconButton>
