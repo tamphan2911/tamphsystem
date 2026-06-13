@@ -1101,7 +1101,7 @@ export default async function ProjectDetailPage({
                   <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
                     Authors
                   </h2>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     <ResearchAuthorsEditDialog
                       action={updateAction}
                       values={researchBasicValues}
@@ -1144,7 +1144,7 @@ export default async function ProjectDetailPage({
                         </div>
                         <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#B0B0B0]">
                           <Mail
-                            className="h-3 w-3 flex-none text-[#A8DADC]"
+                            className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]"
                             aria-hidden="true"
                           />
                           <span className="truncate">
@@ -1153,7 +1153,7 @@ export default async function ProjectDetailPage({
                         </p>
                         <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#B0B0B0]">
                           <Building2
-                            className="h-3 w-3 flex-none text-[#B39CD0]"
+                            className="h-3.5 w-3.5 flex-none text-violet-700 dark:text-[#B39CD0]"
                             aria-hidden="true"
                           />
                           <span className="truncate">

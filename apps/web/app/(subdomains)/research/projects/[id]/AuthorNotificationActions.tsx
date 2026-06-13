@@ -38,8 +38,9 @@ const actions: {
     sentLabel: "Created notification already sent",
     sentTooltip: "Created email already sent",
     icon: FilePlus2,
-    className: "text-[#B0B0B0] hover:text-[#A8DADC]",
-    sentClassName: "text-[#666666]",
+    className:
+      "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-200",
+    sentClassName: "text-slate-400 dark:text-[#666666]",
   },
   {
     type: "PRODUCTION_FINISHED",
@@ -47,8 +48,9 @@ const actions: {
     sentLabel: "Production notification already sent",
     sentTooltip: "Production finished email already sent",
     icon: Flag,
-    className: "text-[#B0B0B0] hover:text-[#A8DADC]",
-    sentClassName: "text-[#666666]",
+    className:
+      "text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200",
+    sentClassName: "text-slate-400 dark:text-[#666666]",
   },
   {
     type: "ACCEPTED",
@@ -56,8 +58,9 @@ const actions: {
     sentLabel: "Accepted notification already sent",
     sentTooltip: "Accepted email already sent",
     icon: BadgeCheck,
-    className: "text-[#B0B0B0] hover:text-emerald-300",
-    sentClassName: "text-[#666666]",
+    className:
+      "text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200",
+    sentClassName: "text-slate-400 dark:text-[#666666]",
   },
   {
     type: "PUBLISHED",
@@ -65,8 +68,9 @@ const actions: {
     sentLabel: "Published notification already sent",
     sentTooltip: "Published email already sent",
     icon: Rocket,
-    className: "text-[#B0B0B0] hover:text-[#B39CD0]",
-    sentClassName: "text-[#666666]",
+    className:
+      "text-violet-700 hover:text-violet-800 dark:text-[#B39CD0] dark:hover:text-violet-200",
+    sentClassName: "text-slate-400 dark:text-[#666666]",
   },
 ];
 
@@ -111,7 +115,7 @@ export function AuthorNotificationActions({
 
   return (
     <>
-      <span className="inline-flex items-center gap-1">
+      <span className="inline-flex items-center gap-2">
         {visibleActions.map((action) => {
           const Icon = action.icon;
           const sent = localSent.has(action.type);
@@ -123,7 +127,7 @@ export function AuthorNotificationActions({
                 disabled={sent || isPending}
                 aria-label={sent ? action.sentLabel : action.label}
                 onClick={() => setConfirmType(action.type)}
-                className={`inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent outline-none transition focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 disabled:cursor-not-allowed disabled:opacity-80 ${sent ? action.sentClassName : action.className}`}
+                className={`research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 !border-transparent !bg-transparent p-0 shadow-none !shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:!bg-transparent hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:active:scale-100 ${sent ? action.sentClassName : action.className}`}
               >
                 <Icon className="h-4 w-4" />
               </button>
