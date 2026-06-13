@@ -5,10 +5,6 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, CalendarDays, Trash2 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import {
-  ResearchIconButton,
-  researchLinkClass,
-} from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
@@ -64,14 +60,16 @@ function DeleteSuggestionButton({
 
   return (
     <>
-      <ResearchIconButton
-        type="button"
-        onClick={() => setIsOpen(true)}
-        label={`Delete suggestion for ${suggestion.venueName}`}
-        tone="rose"
-      >
-        <Trash2 className="h-4 w-4" />
-      </ResearchIconButton>
+      <IconHint label={`Delete suggestion for ${suggestion.venueName}`}>
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          aria-label={`Delete suggestion for ${suggestion.venueName}`}
+          className="inline-flex h-5 w-5 cursor-pointer items-start justify-center border border-transparent bg-transparent p-0 text-rose-700 shadow-none outline-none transition-[color,transform] duration-150 ease-out hover:border-transparent hover:bg-transparent hover:text-rose-800 hover:shadow-none active:scale-95 focus-visible:ring-0 dark:text-rose-300 dark:hover:text-rose-200"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </IconHint>
 
       <ResearchConfirmDialog
         open={isOpen}
@@ -272,7 +270,7 @@ export function SuggestionsTable({
                   <td className="px-3 py-3">
                     <Link
                       href={`/projects/${suggestion.projectId}`}
-                      className={`line-clamp-2 text-sm leading-5 ${researchLinkClass}`}
+                      className="line-clamp-2 origin-left text-sm font-normal leading-5 text-[#E4E4E4] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:[text-shadow:0_0_0.55rem_rgba(168,218,220,0.18)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 motion-reduce:transform-none motion-reduce:transition-none"
                     >
                       {suggestion.projectTitle}
                     </Link>
@@ -283,7 +281,7 @@ export function SuggestionsTable({
                   <td className="px-3 py-3">
                     <Link
                       href={suggestion.venueHref}
-                      className={`line-clamp-2 text-sm leading-5 ${researchLinkClass}`}
+                      className="line-clamp-2 origin-left text-sm font-normal leading-5 text-[#E4E4E4] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:[text-shadow:0_0_0.55rem_rgba(168,218,220,0.18)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 motion-reduce:transform-none motion-reduce:transition-none"
                     >
                       {suggestion.venueName}
                     </Link>
@@ -316,7 +314,7 @@ export function SuggestionsTable({
                     {suggestion.createdAt}
                   </td>
                   <td className="px-3 py-3 align-top">
-                    <div className="flex justify-center">
+                    <div className="flex items-start justify-center">
                       <DeleteSuggestionButton
                         suggestion={suggestion}
                         deleteJournalAction={deleteJournalAction}
