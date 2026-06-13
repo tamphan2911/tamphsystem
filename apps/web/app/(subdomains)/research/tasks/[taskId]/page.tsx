@@ -701,90 +701,77 @@ export default async function TaskDetailPage({
       <ResearchPageHeaderPortal>
         <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-2">
-              <h1 className="min-w-0 truncate text-[15px] font-normal leading-6 text-[#E4E4E4] xl:text-[15px]">
+            <div className="min-w-0 text-[15px] font-normal leading-6 text-[#E4E4E4]">
+              <h1 className="inline whitespace-normal break-words font-normal">
                 {task.title}
               </h1>
-              <IconHint label={taskType.label} position="bottom">
-                <span
-                  className={`research-task-icon-motion inline-flex h-5 w-5 flex-none items-center justify-center ${taskType.className}`}
-                  aria-label={taskType.label}
-                >
-                  <TaskTypeIcon
-                    className="h-4 w-4"
-                    strokeWidth={1.75}
-                    aria-hidden="true"
-                  />
-                </span>
-              </IconHint>
-              <IconHint label={meta.label} position="bottom">
-                <span
-                  className={`research-task-icon-motion inline-flex h-5 w-5 flex-none cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:bg-transparent hover:shadow-none ${statusIcon.className}`}
-                  aria-label={meta.label}
-                >
-                  <StatusIcon
-                    className="h-4 w-4"
-                    strokeWidth={1.75}
-                    aria-hidden="true"
-                  />
-                </span>
-              </IconHint>
-              {(canEdit || canUseReminder) && (
-                <span className="inline-flex flex-none items-center gap-2">
-                  {canEdit && (
-                    <EditTaskDialog
-                      task={{
-                        id: task.id,
-                        title: task.title,
-                        description: task.description ?? "",
-                        dueDate: dateInputValue(task.dueDate),
-                        taskType: task.taskType ?? "OTHER",
-                        projectId: task.projectId ?? "",
-                        journalId: task.journalId ?? "",
-                        conferenceId: task.conferenceId ?? "",
-                        reviewId: task.reviewId ?? "",
-                        organizedProjectId: task.organizedProjectId ?? "",
-                        accountId: task.accountId ?? "",
-                        assigneeIds: task.assignments.map(
-                          (assignment) => assignment.userId,
-                        ),
-                      }}
-                      assignees={assignees}
-                      researchOptions={researchOptions}
-                      venueOptions={venueOptions}
-                      accountOptions={accountOptions}
-                      reviewOptions={reviewOptions}
-                      organizedProjectOptions={organizedProjectOptions}
+              <span className="ml-2 inline-flex items-center gap-2 align-middle">
+                <IconHint label={taskType.label} position="bottom">
+                  <span
+                    className={`research-task-icon-motion inline-flex h-5 w-5 flex-none items-center justify-center ${taskType.className}`}
+                    aria-label={taskType.label}
+                  >
+                    <TaskTypeIcon
+                      className="h-4 w-4"
+                      strokeWidth={1.75}
+                      aria-hidden="true"
                     />
-                  )}
-                  {canUseReminder && (
-                    <TaskReminderButton
-                      taskTitle={task.title}
-                      action={reminderAction}
-                      block={reminderBlock}
-                      assignees={task.assignments.map((assignment) => ({
-                        id: assignment.userId,
-                        name: assignment.user.name ?? "",
-                        email: assignment.user.email,
-                      }))}
+                  </span>
+                </IconHint>
+                <IconHint label={meta.label} position="bottom">
+                  <span
+                    className={`research-task-icon-motion inline-flex h-5 w-5 flex-none cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:bg-transparent hover:shadow-none ${statusIcon.className}`}
+                    aria-label={meta.label}
+                  >
+                    <StatusIcon
+                      className="h-4 w-4"
+                      strokeWidth={1.75}
+                      aria-hidden="true"
                     />
-                  )}
-                </span>
-              )}
-            </div>
-            <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#B0B0B0]">
-              <span className="min-w-0 truncate">
-                Created by {displayResearchPersonName(task.createdBy)}
-              </span>
-              <span className="text-[#777777]">|</span>
-              <span>Created {formatDate(task.createdAt)}</span>
-              <span className="text-[#777777]">|</span>
-              <span>Due {formatDate(task.dueDate)}</span>
-              <span className="text-[#777777]">|</span>
-              <span>Completed {formatDate(task.completedAt)}</span>
-              <span className="text-[#777777]">|</span>
-              <span className={timeTextClass(meta.timeTone)}>
-                {meta.detail}
+                  </span>
+                </IconHint>
+                {(canEdit || canUseReminder) && (
+                  <span className="inline-flex flex-none items-center gap-2">
+                    {canEdit && (
+                      <EditTaskDialog
+                        task={{
+                          id: task.id,
+                          title: task.title,
+                          description: task.description ?? "",
+                          dueDate: dateInputValue(task.dueDate),
+                          taskType: task.taskType ?? "OTHER",
+                          projectId: task.projectId ?? "",
+                          journalId: task.journalId ?? "",
+                          conferenceId: task.conferenceId ?? "",
+                          reviewId: task.reviewId ?? "",
+                          organizedProjectId: task.organizedProjectId ?? "",
+                          accountId: task.accountId ?? "",
+                          assigneeIds: task.assignments.map(
+                            (assignment) => assignment.userId,
+                          ),
+                        }}
+                        assignees={assignees}
+                        researchOptions={researchOptions}
+                        venueOptions={venueOptions}
+                        accountOptions={accountOptions}
+                        reviewOptions={reviewOptions}
+                        organizedProjectOptions={organizedProjectOptions}
+                      />
+                    )}
+                    {canUseReminder && (
+                      <TaskReminderButton
+                        taskTitle={task.title}
+                        action={reminderAction}
+                        block={reminderBlock}
+                        assignees={task.assignments.map((assignment) => ({
+                          id: assignment.userId,
+                          name: assignment.user.name ?? "",
+                          email: assignment.user.email,
+                        }))}
+                      />
+                    )}
+                  </span>
+                )}
               </span>
             </div>
           </div>
@@ -821,6 +808,19 @@ export default async function TaskDetailPage({
         )}
 
         <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-[#D8D0C2] px-5 py-3 text-xs text-[#667085] dark:border-[#4A4A4A] dark:text-[#B0B0B0]">
+            <span className="min-w-0 truncate">
+              Created by {displayResearchPersonName(task.createdBy)}
+            </span>
+            <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
+            <span>Created {formatDate(task.createdAt)}</span>
+            <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
+            <span>Due {formatDate(task.dueDate)}</span>
+            <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
+            <span>Completed {formatDate(task.completedAt)}</span>
+            <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
+            <span className={timeTextClass(meta.timeTone)}>{meta.detail}</span>
+          </div>
           <div className="grid gap-5 p-5 md:grid-cols-2">
             {task.project && (
               <div className="min-w-0">
