@@ -4,7 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { Trash2 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+  AlertTriangle,
+  Ban,
+  CheckCircle2,
+  CircleHelp,
+  Clock3,
+  SearchCheck,
+  Trash2,
+} from "lucide-react";
 import {
   FilterSelect,
   IconHint,
@@ -207,6 +216,59 @@ function statusMeta(task: TaskRow) {
   };
 }
 
+function statusIconMeta(task: TaskRow): {
+  icon: LucideIcon;
+  className: string;
+} {
+  const status = statusMeta(task);
+
+  if (task.status === "REVOKED") {
+    return {
+      icon: Ban,
+      className:
+        "text-slate-500 hover:text-slate-700 dark:text-[#B0B0B0] dark:hover:text-[#E4E4E4]",
+    };
+  }
+
+  if (task.status === "COMPLETED") {
+    return {
+      icon: CheckCircle2,
+      className:
+        "text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200",
+    };
+  }
+
+  if (task.status === "CHECKING") {
+    return {
+      icon: SearchCheck,
+      className:
+        "text-violet-700 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200",
+    };
+  }
+
+  if (task.status === "NEED_CLARIFY") {
+    return {
+      icon: CircleHelp,
+      className:
+        "text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200",
+    };
+  }
+
+  if (status.label === "Overdue") {
+    return {
+      icon: AlertTriangle,
+      className:
+        "text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-rose-200",
+    };
+  }
+
+  return {
+    icon: Clock3,
+    className:
+      "text-sky-700 hover:text-sky-800 dark:text-[#A8DADC] dark:hover:text-cyan-200",
+  };
+}
+
 function derivedStatus(task: TaskRow) {
   if (task.status === "CHECKING" || task.status === "NEED_CLARIFY") {
     return task.status;
@@ -237,7 +299,7 @@ function DeleteTaskButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent text-rose-300 shadow-none transition hover:-translate-y-0.5 hover:text-rose-200"
+          className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent text-rose-700 shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-rose-800 hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-rose-300 dark:hover:text-rose-200"
           aria-label={`Delete ${task.title}`}
         >
           <Trash2 className="h-4 w-4" />
@@ -488,6 +550,8 @@ export function TasksClient({
             <tbody className="divide-y divide-[#444444]">
               {pagination.pagedRows.map((task) => {
                 const status = statusMeta(task);
+                const statusIcon = statusIconMeta(task);
+                const StatusIcon = statusIcon.icon;
                 const typeLines = taskTypeLines(task);
                 return (
                   <tr
@@ -510,7 +574,7 @@ export function TasksClient({
                     <td className="min-w-0 px-3 py-3 align-top">
                       <Link
                         href={`/tasks/${task.id}`}
-                        className={`text-sm font-normal leading-5 ${researchLinkClass}`}
+                        className={`research-allow-transform text-sm font-normal leading-5 ${researchLinkClass}`}
                       >
                         {task.title}
                       </Link>
@@ -519,11 +583,14 @@ export function TasksClient({
                       </p>
                     </td>
                     <td className="px-3 py-3 align-top">
-                      <span
-                        className={`inline-flex border px-2 py-1 text-xs font-normal leading-none ${status.className}`}
-                      >
-                        {status.label}
-                      </span>
+                      <IconHint label={status.label}>
+                        <span
+                          className={`research-allow-transform inline-flex cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${statusIcon.className}`}
+                        >
+                          <StatusIcon className="h-4 w-4" aria-hidden="true" />
+                          <span className="sr-only">{status.label}</span>
+                        </span>
+                      </IconHint>
                     </td>
                     <td className="px-3 py-3 align-top text-xs leading-5 text-[#B0B0B0]">
                       {task.assignments.length > 0 ? (
