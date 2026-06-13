@@ -147,11 +147,7 @@ function ResearchThemeSwitch({
       title={isLight ? "Switch to dark theme" : "Switch to light theme"}
       aria-pressed={isLight}
     >
-      {isLight ? (
-        <Moon className="h-5 w-5" />
-      ) : (
-        <Sun className="h-5 w-5" />
-      )}
+      {isLight ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
     </button>
   );
 }
@@ -366,9 +362,7 @@ export function ResearchShell({
                 className="hidden min-w-0 flex-1 items-center lg:flex"
               />
               <div className="flex items-center gap-3">
-                {isAdmin && (
-                  <ResearchThemeSwitch theme={theme} onChange={setTheme} />
-                )}
+                <ResearchThemeSwitch theme={theme} onChange={setTheme} />
                 <ResearchNotificationBell enabled={Boolean(email)} />
                 <ProfileMenu
                   email={email}
