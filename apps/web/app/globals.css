@@ -2594,9 +2594,12 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
   cursor: pointer;
   align-items: center;
   justify-content: center;
-  border: 0;
-  background: transparent;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: #b39cd0;
+  outline: none;
+  padding: 0;
   text-decoration: none;
   transition:
     color 300ms ease,
@@ -2613,6 +2616,9 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
 }
 
 .research-site-root .research-download-button:hover {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: #e4e4e4;
   transform: translateY(-1px);
 }
@@ -2628,8 +2634,19 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
 }
 
 .research-site-root .research-download-button:active {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
   filter: brightness(0.78);
   transform: scale(0.96);
+}
+
+.research-site-root .research-download-button:focus,
+.research-site-root .research-download-button:focus-visible {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
 }
 
 .research-site-root .research-title-icon-button {
@@ -2639,9 +2656,12 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
   flex: none;
   align-items: center;
   justify-content: center;
-  border: 0;
-  background: transparent;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: #a8dadc;
+  outline: none;
+  padding: 0;
   text-decoration: none;
   transition:
     color 240ms ease,
@@ -2649,6 +2669,9 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
 }
 
 .research-site-root .research-title-icon-button:hover {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: #e4e4e4;
   transform: translateY(-1px);
 }
@@ -2674,8 +2697,19 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
 }
 
 .research-site-root .research-title-icon-button:active {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
   filter: brightness(0.86);
   transform: scale(0.96);
+}
+
+.research-site-root .research-title-icon-button:focus,
+.research-site-root .research-title-icon-button:focus-visible {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
 }
 
 @keyframes research-slide-in-top {
