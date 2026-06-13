@@ -7,8 +7,8 @@ import {
   BookOpen,
   Building2,
   CheckCircle2,
-  Download,
   FileQuestion,
+  FileText,
   FolderGit2,
   Trash2,
   XCircle,
@@ -22,10 +22,7 @@ import {
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import {
-  researchLinkClass,
-  researchMutedLinkClass,
-} from "@/sites/research/components/ResearchPrimitives";
+import { researchMutedLinkClass } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
@@ -133,7 +130,7 @@ function DeleteProposalButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-none border border-rose-100 bg-rose-50 text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-100 hover:shadow-md dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/50"
+          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-transparent bg-transparent text-rose-600 shadow-none outline-none transition-[color,transform] duration-150 ease-out hover:border-transparent hover:bg-transparent hover:text-rose-700 hover:shadow-none active:scale-95 focus-visible:ring-0 dark:text-rose-300 dark:hover:text-rose-200"
           aria-label={`Delete ${proposal.title}`}
         >
           <Trash2 className="h-4 w-4" />
@@ -294,7 +291,7 @@ export function ProposalsTable({
                 <td className="px-4 py-3 align-top">
                   <Link
                     href={`/proposals/${proposal.id}`}
-                    className={`line-clamp-2 text-base leading-snug ${researchLinkClass}`}
+                    className="line-clamp-2 origin-left text-base font-normal leading-snug text-[#E4E4E4] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:[text-shadow:0_0_0.55rem_rgba(168,218,220,0.18)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 motion-reduce:transform-none motion-reduce:transition-none"
                   >
                     {proposal.title}
                   </Link>
@@ -347,14 +344,14 @@ export function ProposalsTable({
                     <IconHint label="Download support file">
                       <a
                         href={`/api/research/proposals/${proposal.id}/file`}
-                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-none border border-transparent bg-transparent text-emerald-700 transition hover:-translate-y-0.5 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
+                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-transparent bg-transparent text-emerald-700 shadow-none outline-none transition-[color,transform] duration-150 ease-out hover:border-transparent hover:bg-transparent hover:text-emerald-800 hover:shadow-none active:scale-95 focus-visible:ring-0 dark:text-emerald-300 dark:hover:text-emerald-200"
                       >
-                        <Download className="h-4 w-4" />
+                        <FileText className="h-4 w-4" />
                       </a>
                     </IconHint>
                   ) : (
                     <IconHint label="No support file">
-                      <span className="inline-flex h-8 w-8 items-center justify-center border border-[#444444] bg-slate-50 text-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-600">
+                      <span className="inline-flex h-8 w-8 items-center justify-center border border-transparent bg-transparent text-slate-300 dark:text-slate-600">
                         <FileQuestion className="h-4 w-4" />
                       </span>
                     </IconHint>
