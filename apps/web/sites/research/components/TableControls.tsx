@@ -100,7 +100,7 @@ export function FilterSelect({
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
         className={cx(
-          "group inline-flex h-10 w-full cursor-pointer items-center justify-between gap-3 rounded-none border px-3 text-sm font-normal outline-none transition-colors duration-150 motion-reduce:transition-none",
+          "research-filter-select-trigger group inline-flex h-10 w-full cursor-pointer items-center justify-between gap-3 rounded-none border px-3 text-sm font-normal outline-none transition-colors duration-150 motion-reduce:transition-none",
           open
             ? "border-sky-200 bg-white text-slate-950 dark:border-[#5A5A5A] dark:bg-[#383838] dark:text-[#E4E4E4]"
             : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus:border-sky-400 dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white dark:focus:border-[#5A5A5A]",
