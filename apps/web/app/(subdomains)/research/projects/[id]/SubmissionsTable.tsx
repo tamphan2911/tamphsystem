@@ -241,7 +241,7 @@ function MoneyCell({ amount, currency }: { amount: string; currency: string }) {
   if (currency === "USD") {
     return (
       <span className="inline-flex items-center gap-1.5">
-        <CircleDollarSign className="h-4 w-4 text-[#A8DADC]" />
+        <CircleDollarSign className="research-task-icon-motion h-4 w-4 text-[#A8DADC]" />
         {formatResearchNumber(amount)}
       </span>
     );
@@ -313,7 +313,7 @@ function StatusIconChip({
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 w-8 items-center justify-center border border-transparent bg-transparent transition-colors duration-150 ${className}`}
+        className={`research-task-icon-motion inline-flex h-8 w-8 items-center justify-center border border-transparent bg-transparent transition-[color,filter,transform] duration-200 ease-out ${className}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
@@ -344,7 +344,7 @@ function RegistrationCell({
     <div className="grid max-w-60 grid-cols-[2rem_minmax(0,1fr)] items-center gap-2">
       <IconHint label={registerLine}>
         <span
-          className={`inline-flex h-8 w-8 flex-none items-center justify-center border border-[#444444] bg-[#202020] transition-colors duration-150 group-hover:border-[#666666] ${registrationClass(status)}`}
+          className={`research-task-icon-motion inline-flex h-8 w-8 flex-none items-center justify-center border border-[#444444] bg-[#202020] transition-[border-color,color,filter,transform] duration-200 ease-out group-hover:border-[#666666] ${registrationClass(status)}`}
         >
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
@@ -627,7 +627,7 @@ export function SubmissionsTable({
                     {showStatusEdit && (
                       <IconHint label="Edit status from a row">
                         <Edit3
-                          className="h-3.5 w-3.5 text-[#B0B0B0]"
+                          className="research-task-icon-motion h-3.5 w-3.5 text-[#B0B0B0]"
                           aria-hidden="true"
                         />
                       </IconHint>
@@ -695,9 +695,9 @@ export function SubmissionsTable({
                             }
                           >
                             {row.kind === "journal" ? (
-                              <BookOpen className="mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] group-hover/link:text-[#A8DADC]" />
+                              <BookOpen className="research-task-icon-motion mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] group-hover/link:text-[#A8DADC]" />
                             ) : (
-                              <Landmark className="mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] group-hover/link:text-[#A8DADC]" />
+                              <Landmark className="research-task-icon-motion mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] group-hover/link:text-[#A8DADC]" />
                             )}
                           </IconHint>
                         )}
@@ -723,9 +723,9 @@ export function SubmissionsTable({
                             }
                           >
                             {row.kind === "journal" ? (
-                              <BookOpen className="mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] group-hover/link:text-[#A8DADC]" />
+                              <BookOpen className="research-task-icon-motion mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] group-hover/link:text-[#A8DADC]" />
                             ) : (
-                              <Landmark className="mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] group-hover/link:text-[#A8DADC]" />
+                              <Landmark className="research-task-icon-motion mt-0.5 h-4 w-4 flex-none text-[#B0B0B0] group-hover/link:text-[#A8DADC]" />
                             )}
                           </IconHint>
                         )}
