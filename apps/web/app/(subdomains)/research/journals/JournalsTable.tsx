@@ -73,7 +73,7 @@ function DeleteJournalButton({
           aria-label={`Delete ${journal.name}`}
           className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-rose-700 shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-rose-800 hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-rose-300 dark:hover:text-rose-200"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="research-task-icon-motion h-4 w-4" />
         </button>
       </IconHint>
 
@@ -154,7 +154,7 @@ function MoneyIndicator({
       <span className="inline-flex cursor-help items-center gap-1.5 text-[#B0B0B0] transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-105 hover:text-[#E4E4E4] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.16)]">
         {showIcon && isFree ? (
           <CircleOff
-            className="h-4 w-4 flex-none text-[#8FCFD1]"
+            className="research-task-icon-motion h-4 w-4 flex-none text-[#8FCFD1]"
             aria-hidden="true"
           />
         ) : null}
@@ -326,7 +326,7 @@ export function JournalsTable({
               >
                 <IconHint label="Ongoing submissions">
                   <Send
-                    className="mx-auto h-4 w-4 text-blue-600 dark:text-blue-300"
+                    className="research-task-icon-motion mx-auto h-4 w-4 text-blue-600 dark:text-blue-300"
                     aria-hidden="true"
                   />
                 </IconHint>
@@ -340,7 +340,7 @@ export function JournalsTable({
               >
                 <IconHint label="Accepted and published submissions">
                   <BadgeCheck
-                    className="mx-auto h-4 w-4 text-emerald-600 dark:text-emerald-300"
+                    className="research-task-icon-motion mx-auto h-4 w-4 text-emerald-600 dark:text-emerald-300"
                     aria-hidden="true"
                   />
                 </IconHint>
@@ -354,7 +354,7 @@ export function JournalsTable({
               >
                 <IconHint label="Reviews">
                   <ClipboardCheck
-                    className="mx-auto h-4 w-4 text-amber-500 dark:text-amber-300"
+                    className="research-task-icon-motion mx-auto h-4 w-4 text-amber-500 dark:text-amber-300"
                     aria-hidden="true"
                   />
                 </IconHint>
@@ -366,7 +366,7 @@ export function JournalsTable({
                 <th className="w-[5%] px-2 py-3 text-center">
                   <IconHint label="Delete journal">
                     <Trash2
-                      className="mx-auto h-4 w-4 text-rose-500 dark:text-rose-300"
+                      className="research-task-icon-motion mx-auto h-4 w-4 text-rose-500 dark:text-rose-300"
                       aria-hidden="true"
                     />
                   </IconHint>
@@ -395,7 +395,7 @@ export function JournalsTable({
                       }
                     >
                       <Star
-                        className={`h-3.5 w-3.5 transition duration-150 ease-out ${
+                        className={`research-task-icon-motion h-3.5 w-3.5 transition duration-150 ease-out ${
                           journal.isFavorite
                             ? "text-amber-400"
                             : "text-[#666666] group-hover:text-[#B0B0B0]"
@@ -411,7 +411,7 @@ export function JournalsTable({
                       }
                     >
                       <BookmarkCheck
-                        className={`h-3.5 w-3.5 transition duration-150 ease-out ${
+                        className={`research-task-icon-motion h-3.5 w-3.5 transition duration-150 ease-out ${
                           journal.isInterest
                             ? "text-sky-400"
                             : "text-[#666666] group-hover:text-[#B0B0B0]"

@@ -16,7 +16,7 @@ export function NewJournalDialog() {
         onClick={() => setIsOpen(true)}
         tone="primary"
       >
-        <PlusCircle className="h-4 w-4" />
+        <PlusCircle className="research-task-icon-motion h-4 w-4" />
         New Journal
       </ResearchButton>
 
