@@ -99,7 +99,7 @@ export function ProjectProductsForm({
                   />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-normal text-[#E4E4E4]">
+                  <span className="block whitespace-normal break-words text-sm font-normal leading-5 text-[#E4E4E4]">
                     {product}
                   </span>
                 </span>

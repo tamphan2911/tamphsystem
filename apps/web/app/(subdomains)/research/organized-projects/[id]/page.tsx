@@ -598,7 +598,7 @@ export default async function OrganizedProjectDetailPage({
           </div>
         </header>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
           <div className="mb-4 flex items-center gap-2">
             <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
@@ -614,7 +614,7 @@ export default async function OrganizedProjectDetailPage({
               />
             )}
           </div>
-          <div className="divide-y divide-[#444444] border-y border-[#444444]">
+          <div className="research-project-member-list divide-y border-y">
             {memberDefaults.map((member, index) => (
               <div key={member.id} className="flex items-start gap-4 py-3">
                 <span className="inline-flex w-8 flex-none justify-center font-mono text-sm text-[#A8DADC]">
@@ -622,20 +622,24 @@ export default async function OrganizedProjectDetailPage({
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-medium text-[#E4E4E4]">
+                    <p className="min-w-0 text-sm font-medium text-[#E4E4E4]">
                       {memberName(member)}
                     </p>
                     {member.isTeamLead && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[#E4E4E4]">
-                        <Star className="research-task-icon-motion h-3 w-3" />
-                        Team lead
-                      </span>
+                      <IconHint label="Team lead">
+                        <span className="inline-flex items-center text-[#A06716] dark:text-[#F4D47A]">
+                          <Star className="research-task-icon-motion h-3.5 w-3.5" />
+                          <span className="sr-only">Team lead</span>
+                        </span>
+                      </IconHint>
                     )}
                     {member.isInstructor && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[#A8DADC]">
-                        <GraduationCap className="research-task-icon-motion h-3 w-3" />
-                        Instructor
-                      </span>
+                      <IconHint label="Instructor">
+                        <span className="inline-flex items-center text-[#6F5AA8] dark:text-[#B39CD0]">
+                          <GraduationCap className="research-task-icon-motion h-3.5 w-3.5" />
+                          <span className="sr-only">Instructor</span>
+                        </span>
+                      </IconHint>
                     )}
                   </div>
                   <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#777777]">
@@ -644,9 +648,9 @@ export default async function OrganizedProjectDetailPage({
                       {displayResearchEmail(member.email)}
                     </span>
                   </p>
-                  <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#B0B0B0]">
+                  <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs leading-5 text-[#B0B0B0]">
                     <Building2 className="research-task-icon-motion h-3 w-3 flex-none text-[#B39CD0]" />
-                    <span className="truncate">
+                    <span className="min-w-0 whitespace-normal break-words">
                       {member.affiliation || "No affiliation recorded"}
                     </span>
                   </p>
@@ -673,15 +677,6 @@ export default async function OrganizedProjectDetailPage({
               <p className="mt-1 text-xs leading-5 text-[#777777]">
                 Add Drive, manuscript, grant, data, or shared reference links
                 here later.
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-[#E4E4E4]">
-                Key files and links
-              </p>
-              <p className="mt-1 text-xs leading-5 text-[#777777]">
-                Use this space for contracts, approval documents, and evidence
-                files.
               </p>
             </div>
           </div>

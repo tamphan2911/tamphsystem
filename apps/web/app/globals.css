@@ -3374,6 +3374,31 @@ html[data-research-theme="light"]
   transform: rotate(120deg) scale(0.9) !important;
 }
 
+.research-site-root .research-project-member-list {
+  border-color: #444444 !important;
+}
+
+.research-site-root .research-project-member-list > :not([hidden]) ~ :not([hidden]) {
+  border-color: #444444 !important;
+}
+
+.research-site-root.research-theme-light .research-project-member-list,
+html[data-research-theme="light"] .research-site-root .research-project-member-list {
+  border-color: #d8d0c2 !important;
+}
+
+.research-site-root.research-theme-light
+  .research-project-member-list
+  > :not([hidden])
+  ~ :not([hidden]),
+html[data-research-theme="light"]
+  .research-site-root
+  .research-project-member-list
+  > :not([hidden])
+  ~ :not([hidden]) {
+  border-color: #d8d0c2 !important;
+}
+
 .research-site-root.research-theme-light .research-theme-switch,
 html[data-research-theme="light"] .research-site-root .research-theme-switch {
   color: #1f7180 !important;
