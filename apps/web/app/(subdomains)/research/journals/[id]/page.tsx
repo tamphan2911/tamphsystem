@@ -256,7 +256,7 @@ export default async function JournalDetailPage({
                       href={item.href as string}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-none border-0 bg-transparent text-[#B0B0B0] shadow-none transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)]"
+                      className="research-clickable-icon research-allow-transform inline-flex h-8 w-8 items-center justify-center rounded-none border-0 bg-transparent text-[#B0B0B0] shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none focus-visible:ring-0"
                       aria-label={item.label}
                     >
                       <item.icon className="h-[15px] w-[15px]" />

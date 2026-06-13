@@ -3667,6 +3667,136 @@ html[data-research-theme="light"]
   transform: rotate(120deg) scale(0.9) !important;
 }
 
+.research-site-root .research-clickable-icon,
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  :where(button, a)[aria-label]:has(> svg):not(
+    :has(> span:not(.research-unread-count))
+  ),
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  .research-allow-transform:has(> svg) {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible;
+  transform-origin: 50% 50%;
+  transition:
+    color 180ms ease,
+    transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+.research-site-root .research-clickable-icon:hover,
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  :where(button, a)[aria-label]:has(> svg):not(
+    :has(> span:not(.research-unread-count))
+  ):hover,
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  .research-allow-transform:has(> svg):hover {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: rotate(10deg) scale(1.06) !important;
+}
+
+.research-site-root .research-clickable-icon:active,
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  :where(button, a)[aria-label]:has(> svg):not(
+    :has(> span:not(.research-unread-count))
+  ):active,
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  .research-allow-transform:has(> svg):active {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: rotate(-18deg) scale(0.92) !important;
+}
+
+.research-site-root .research-clickable-icon svg,
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  :where(button, a)[aria-label]:has(> svg):not(
+    :has(> span:not(.research-unread-count))
+  )
+  > svg,
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  .research-allow-transform:has(> svg)
+  > svg {
+  transform-origin: 50% 50%;
+  transition:
+    color 180ms ease,
+    transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+.research-site-root .research-clickable-icon:hover svg,
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  :where(button, a)[aria-label]:has(> svg):not(
+    :has(> span:not(.research-unread-count))
+  ):hover
+  > svg,
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  .research-allow-transform:has(> svg):hover
+  > svg {
+  transform: rotate(-24deg) scale(1.16) !important;
+}
+
+.research-site-root .research-clickable-icon:active svg,
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  :where(button, a)[aria-label]:has(> svg):not(
+    :has(> span:not(.research-unread-count))
+  ):active
+  > svg,
+:where(
+    .research-site-root,
+    [data-research-modal-overlay="true"],
+    .research-dropdown-floating-panel
+  )
+  .research-allow-transform:has(> svg):active
+  > svg {
+  transform: rotate(120deg) scale(0.9) !important;
+}
+
 .research-site-root .research-project-member-list {
   border-color: #444444 !important;
 }
