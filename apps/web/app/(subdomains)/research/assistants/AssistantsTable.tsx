@@ -235,7 +235,7 @@ export function AssistantsTable({
                       <button
                         type="button"
                         onClick={() => openEdit(user)}
-                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-transparent bg-transparent text-slate-500 transition hover:-translate-y-0.5 hover:text-blue-700 dark:text-slate-300 dark:hover:text-blue-300"
+                        className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-blue-700 shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-blue-800 hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-blue-300 dark:hover:text-blue-200"
                         aria-label="Edit assistant role"
                       >
                         <Pencil className="h-4 w-4" />
@@ -243,7 +243,7 @@ export function AssistantsTable({
                       <button
                         type="button"
                         onClick={() => setDeleting(user)}
-                        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-transparent bg-transparent text-slate-500 transition hover:-translate-y-0.5 hover:text-rose-700 dark:text-slate-300 dark:hover:text-rose-300"
+                        className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-rose-700 shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-rose-800 hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-rose-300 dark:hover:text-rose-200"
                         aria-label="Remove assistant role"
                       >
                         <Trash2 className="h-4 w-4" />
