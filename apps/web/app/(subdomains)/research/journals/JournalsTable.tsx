@@ -13,10 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import {
-  ResearchIconButton,
-  researchLinkClass,
-} from "@/sites/research/components/ResearchPrimitives";
+import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import {
   FilterSelect,
@@ -70,14 +67,16 @@ function DeleteJournalButton({
 
   return (
     <>
-      <ResearchIconButton
-        type="button"
-        onClick={() => setIsOpen(true)}
-        label={`Delete ${journal.name}`}
-        tone="rose"
-      >
-        <Trash2 className="h-4 w-4" />
-      </ResearchIconButton>
+      <IconHint label={`Delete ${journal.name}`}>
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          aria-label={`Delete ${journal.name}`}
+          className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-rose-700 shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-rose-800 hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-rose-300 dark:hover:text-rose-200"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </IconHint>
 
       <ResearchConfirmDialog
         open={isOpen}
