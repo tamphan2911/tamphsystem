@@ -90,7 +90,7 @@ function DeleteNotificationButton({
           type="button"
           onClick={() => setIsOpen(true)}
           aria-label={`Delete notification: ${notification.title}`}
-          className="inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-rose-600 shadow-none outline-none transition hover:text-rose-700 focus-visible:ring-2 focus-visible:ring-rose-300/40 dark:text-[#FFC1CC] dark:hover:text-rose-300"
+          className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-rose-700 shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-rose-800 hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-[#FFC1CC] dark:hover:text-rose-300"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -361,7 +361,7 @@ export function NotificationsTable({
                         <IconHint label="Open related page">
                           <Link
                             href={notification.href}
-                            className="inline-flex h-5 w-5 items-start justify-center border-0 bg-transparent p-0 text-slate-600 shadow-none outline-none transition hover:text-[#1F7180] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+                            className="research-allow-transform inline-flex h-5 w-5 items-start justify-center border-0 bg-transparent p-0 text-slate-600 shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#1F7180] hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
                             aria-label="Open related page"
                           >
                             <ExternalLink className="h-4 w-4" />
