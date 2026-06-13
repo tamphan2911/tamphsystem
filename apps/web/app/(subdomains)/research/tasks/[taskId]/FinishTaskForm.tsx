@@ -89,7 +89,7 @@ export function FinishTaskForm({
       >
         <div className="grid gap-4">
           {requiresSubmissionDate ? (
-            <p className="rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium leading-5 text-slate-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+            <p className="rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium leading-5 text-slate-600 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
               Choose the actual submission date carefully. This date is
               permanent after the submission is created.
             </p>
