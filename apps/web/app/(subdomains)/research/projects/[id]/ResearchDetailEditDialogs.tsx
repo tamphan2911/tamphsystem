@@ -101,7 +101,7 @@ function EditIconButton({
         aria-label={label}
         className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-[#1F7180] shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 disabled:active:scale-100 dark:text-[#A8DADC] dark:hover:text-cyan-200"
       >
-        <Edit3 className="h-3.5 w-3.5" />
+        <Edit3 className="h-4 w-4" />
       </button>
     </IconHint>
   );

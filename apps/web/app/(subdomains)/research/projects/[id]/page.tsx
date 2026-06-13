@@ -826,7 +826,7 @@ export default async function ProjectDetailPage({
               <span className="ml-2 inline-flex items-center gap-2 align-middle">
                 <IconHint label={stageStyle.label} position="bottom">
                   <span
-                    className={`inline-flex h-6 w-6 flex-none cursor-help items-center justify-center transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${stageStyle.className}`}
+                    className={`inline-flex h-5 w-5 flex-none cursor-help items-center justify-center transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${stageStyle.className}`}
                     aria-label={stageStyle.label}
                   >
                     <StageIcon
