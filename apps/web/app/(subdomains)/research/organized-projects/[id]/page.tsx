@@ -649,8 +649,8 @@ export default async function OrganizedProjectDetailPage({
                       </span>
                     </p>
                     <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs leading-5 text-[#B0B0B0]">
-                      <Building2 className="research-task-icon-motion h-3 w-3 flex-none text-[#B39CD0]" />
-                      <span className="min-w-0 whitespace-normal break-words">
+                      <Building2 className="research-task-icon-motion mt-1 h-3 w-3 flex-none text-[#B39CD0]" />
+                      <span className="line-clamp-2 min-w-0 whitespace-normal break-words">
                         {member.affiliation || "No affiliation recorded"}
                       </span>
                     </p>
