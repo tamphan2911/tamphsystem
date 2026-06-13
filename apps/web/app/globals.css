@@ -1200,6 +1200,27 @@ html[data-research-theme="light"]
   color: #8c95a4 !important;
 }
 
+.research-site-root [data-research-date-field="true"] input,
+[data-research-modal-overlay="true"] [data-research-date-field="true"] input {
+  height: 2.5rem !important;
+  min-height: 2.5rem !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  line-height: 2.5rem;
+}
+
+.research-site-root [data-research-date-field="true"] input:focus,
+.research-site-root [data-research-date-field="true"] input:focus-visible,
+[data-research-modal-overlay="true"]
+  [data-research-date-field="true"]
+  input:focus,
+[data-research-modal-overlay="true"]
+  [data-research-date-field="true"]
+  input:focus-visible {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 .research-site-root.research-theme-light .research-theme-switch {
   border-color: transparent !important;
   background: transparent !important;
