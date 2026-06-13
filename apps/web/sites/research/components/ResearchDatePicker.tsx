@@ -343,17 +343,29 @@ export function ResearchDatePicker({
                   type="button"
                   onClick={() => chooseDate(date)}
                   className={cx(
-                    "flex h-8 cursor-pointer items-center justify-center border text-xs font-normal transition-[background-color,border-color,color,transform,box-shadow] duration-150 ease-out hover:border-[#7FBFC5] hover:bg-[#E6F4F2] hover:text-[#1F2937] active:translate-y-0 motion-reduce:transition-none dark:hover:border-[#A8DADC] dark:hover:bg-[#303F3F] dark:hover:text-[#E4E4E4]",
+                    "relative flex h-8 cursor-pointer items-center justify-center border text-xs font-normal transition-[background-color,border-color,color,transform,box-shadow] duration-150 ease-out hover:border-[#7FBFC5] hover:bg-[#E6F4F2] hover:text-[#1F2937] active:translate-y-0 motion-reduce:transition-none dark:hover:border-[#A8DADC] dark:hover:bg-[#303F3F] dark:hover:text-[#E4E4E4]",
                     inMonth
                       ? "border-[#E2D9CC] bg-[#FFFDF8] text-[#1F2937] dark:border-[#3A3A3A] dark:bg-[#242424] dark:text-[#E4E4E4]"
                       : "border-transparent bg-transparent text-[#A0A8B5] dark:text-[#666666]",
                     isToday &&
-                      "border-[#7FBFC5] text-[#1F7180] shadow-[inset_0_0_0_1px_rgba(31,113,128,0.16)] dark:border-[#A8DADC]/70 dark:text-[#A8DADC] dark:shadow-[inset_0_0_0_1px_rgba(168,218,220,0.2)]",
+                      "border-[#7FBFC5] bg-[#E6F4F2] text-[#155864] shadow-[inset_0_0_0_1px_rgba(31,113,128,0.18),0_0_0_2px_rgba(127,191,197,0.16)] dark:border-[#A8DADC]/80 dark:bg-[#263636] dark:text-[#C9F0F2] dark:shadow-[inset_0_0_0_1px_rgba(168,218,220,0.22),0_0_0_2px_rgba(168,218,220,0.12)]",
                     selected &&
                       "border-[#B39CD0] bg-[#B39CD0] text-[#1F2937] shadow-lg shadow-[#B39CD0]/15 hover:border-[#A58BC8] hover:bg-[#C8B6E2] hover:text-[#1F2937] dark:text-[#242424] dark:hover:text-[#242424]",
+                    selected &&
+                      isToday &&
+                      "ring-2 ring-[#1F7180]/20 dark:ring-[#A8DADC]/25",
                   )}
                 >
-                  {date.getDate()}
+                  <span className="relative z-10">{date.getDate()}</span>
+                  {isToday && (
+                    <span
+                      className={cx(
+                        "absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 bg-[#1F7180] dark:bg-[#A8DADC]",
+                        selected && "bg-[#1F2937] dark:bg-[#242424]",
+                      )}
+                      aria-hidden="true"
+                    />
+                  )}
                 </button>
               );
             })}
