@@ -528,7 +528,7 @@ export default async function OrganizedProjectDetailPage({
         </div>
       </ResearchPageHeaderPortal>
 
-      <div className="mx-auto max-w-6xl space-y-5">
+      <div className="mx-auto max-w-7xl space-y-5">
         <header className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
           <div className="min-w-0">
             <div className="mb-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 lg:hidden">
