@@ -1630,6 +1630,10 @@ html[data-research-theme="light"]
   --research-divider: #383838;
 }
 
+html[data-research-theme="light"] [data-research-modal-overlay="true"] {
+  --research-divider: #e2d9cc;
+}
+
 html:has(.research-site-root),
 body:has(.research-site-root) {
   height: 100%;
@@ -2906,7 +2910,7 @@ html[data-research-theme="light"]
 html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
   .research-auth-input-shell.journal-form-field:focus-within {
-  border-color: #2d7882 !important;
+  border-color: #c4b9aa !important;
   background: #fffdf8 !important;
   box-shadow: none !important;
 }
