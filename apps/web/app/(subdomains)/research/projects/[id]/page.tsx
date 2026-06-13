@@ -1118,7 +1118,7 @@ export default async function ProjectDetailPage({
                     )}
                   </div>
                 </div>
-                <div className="divide-y divide-[#444444] border-y border-[#444444]">
+                <div className="research-readonly-authors-list divide-y divide-[#e2d9cc] border-y border-[#e2d9cc] dark:divide-[#444444] dark:border-[#444444]">
                   {defaultAuthors.map((author, index) => (
                     <div
                       key={author.id}

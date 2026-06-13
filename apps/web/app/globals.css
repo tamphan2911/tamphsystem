@@ -2979,6 +2979,18 @@ html[data-research-theme="light"]
   color: #1f7180;
 }
 
+html[data-research-theme="light"] .research-readonly-authors-list {
+  border-top-color: var(--research-divider) !important;
+  border-bottom-color: var(--research-divider) !important;
+}
+
+html[data-research-theme="light"]
+  .research-readonly-authors-list
+  > :not([hidden])
+  ~ :not([hidden]) {
+  border-top-color: var(--research-divider) !important;
+}
+
 .research-auth-page .research-auth-input-shell {
   border-color: #d7e1e8;
   background: #ffffff;
