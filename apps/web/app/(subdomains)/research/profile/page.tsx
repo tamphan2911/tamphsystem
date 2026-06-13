@@ -130,6 +130,12 @@ export default async function ResearchProfilePage() {
           include: { user: { select: { name: true, email: true } } },
           orderBy: [{ position: "asc" }, { createdAt: "asc" }],
         },
+        submissions: {
+          select: { status: true },
+        },
+        conferenceSubmissions: {
+          select: { status: true },
+        },
         _count: {
           select: { submissions: true, publications: true },
         },
@@ -190,8 +196,14 @@ export default async function ResearchProfilePage() {
     .filter((value): value is string => Boolean(value?.trim()))
     .map((value) => value.trim().toLowerCase());
 
-  const researchRows: ResearchProjectRow[] = authoredResearch.map(
-    (project) => ({
+  const researchRows: ResearchProjectRow[] = authoredResearch.map((project) => {
+    const submissionStatuses = [
+      ...project.submissions.map((submission) => submission.status),
+      ...project.conferenceSubmissions.map((submission) => submission.status),
+    ];
+    const hasSubmissions = submissionStatuses.length > 0;
+
+    return {
       id: project.id,
       researchCode: project.researchCode ?? "",
       title: project.title,
@@ -218,8 +230,11 @@ export default async function ResearchProfilePage() {
       submissions: project._count.submissions,
       publications: project._count.publications,
       updatedAt: project.updatedAt.toLocaleDateString(),
-    }),
-  );
+      notSubmittedAnywhere:
+        !hasSubmissions ||
+        submissionStatuses.every((status) => status === "REJECTED"),
+    };
+  });
 
   const projectRows: OrganizedProjectRow[] = organizedProjects.map(
     (project) => ({

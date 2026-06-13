@@ -907,7 +907,7 @@ export default async function ProjectDetailPage({
                   >
                     <a
                       href={`/api/research/submissions/${publishedArticleSubmission.id}/article`}
-                      className="research-published-action-icon research-download-button"
+                      className="research-download-button"
                       aria-label="Download published article file"
                     >
                       <Download
@@ -927,7 +927,7 @@ export default async function ProjectDetailPage({
                       href={publishedArticleSubmission.articleUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="research-published-action-icon research-title-icon-button"
+                      className="research-title-icon-button"
                       aria-label="Open published article link"
                     >
                       <ExternalLink className="h-4 w-4" aria-hidden="true" />

@@ -2592,15 +2592,11 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
   width: 1.5rem;
   flex: none;
   cursor: pointer;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
+  border: 0;
+  background: transparent;
   color: #b39cd0;
-  outline: none;
-  padding: 0;
   text-decoration: none;
   transition:
     color 300ms ease,
@@ -2613,23 +2609,10 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
 }
 
 .research-site-root .research-download-button .icon2 {
-  display: block;
-  width: 0.875rem;
-  height: 0.25rem;
-  border-bottom: 0.125rem solid currentColor;
-  border-left: 0.125rem solid currentColor;
-  border-right: 0.125rem solid currentColor;
-  opacity: 0.9;
-  transition:
-    border-color 300ms ease,
-    opacity 300ms ease,
-    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: none;
 }
 
 .research-site-root .research-download-button:hover {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
   color: #e4e4e4;
   transform: translateY(-1px);
 }
@@ -2641,24 +2624,12 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
 }
 
 .research-site-root .research-download-button:hover .icon2 {
-  border-color: currentColor;
-  opacity: 1;
+  border-color: transparent;
 }
 
 .research-site-root .research-download-button:active {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
   filter: brightness(0.78);
   transform: scale(0.96);
-}
-
-.research-site-root .research-download-button:focus,
-.research-site-root .research-download-button:focus-visible {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  outline: none;
 }
 
 .research-site-root .research-title-icon-button {
@@ -2722,24 +2693,6 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
   background: transparent !important;
   box-shadow: none !important;
   outline: none;
-}
-
-.research-site-root .research-published-action-icon,
-.research-site-root .research-published-action-icon:where(:hover, :focus, :focus-visible, :active) {
-  border: 0 !important;
-  background: transparent !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-  outline: none !important;
-  --tw-ring-color: transparent !important;
-  --tw-ring-offset-shadow: 0 0 #0000 !important;
-  --tw-ring-shadow: 0 0 #0000 !important;
-}
-
-.research-site-root .research-published-action-icon::before,
-.research-site-root .research-published-action-icon::after {
-  display: none !important;
-  content: none !important;
 }
 
 @keyframes research-slide-in-top {
