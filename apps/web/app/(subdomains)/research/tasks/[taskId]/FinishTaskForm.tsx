@@ -4,10 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
-import {
-  ResearchButton,
-  researchFieldClass,
-} from "@/sites/research/components/ResearchPrimitives";
+import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 
 export function FinishTaskForm({
   action,
@@ -92,7 +89,7 @@ export function FinishTaskForm({
       >
         <div className="grid gap-4">
           {requiresSubmissionDate ? (
-            <p className="rounded-none border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-medium leading-5 text-amber-100">
+            <p className="rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium leading-5 text-slate-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
               Choose the actual submission date carefully. This date is
               permanent after the submission is created.
             </p>
@@ -108,7 +105,6 @@ export function FinishTaskForm({
                 form={formId}
                 value={submissionDate}
                 onChange={setSubmissionDate}
-                className={researchFieldClass}
                 required
               />
             </label>
