@@ -260,16 +260,12 @@ function taskTypeMeta(taskType: string | null, category: string | null) {
       className: "text-[#B39CD0]",
     };
   }
-  if (taskType === "PROJECT_PRODUCTION") {
+  if (
+    taskType === "PROJECT_PRODUCTION" ||
+    taskType === "PROJECT_RESEARCH_ASSOCIATED"
+  ) {
     return {
-      label: "Project production",
-      icon: ClipboardList,
-      className: "text-[#F4D47A]",
-    };
-  }
-  if (taskType === "PROJECT_RESEARCH_ASSOCIATED") {
-    return {
-      label: "Research associated",
+      label: "Project",
       icon: ClipboardList,
       className: "text-[#F4D47A]",
     };

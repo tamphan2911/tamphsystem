@@ -108,11 +108,8 @@ function taskTypeLines(task: TaskRow) {
       subtypeLabel: type === "SUBMIT_CONFERENCE" ? "Conference" : "Journal",
     };
   }
-  if (type === "PROJECT_PRODUCTION") {
-    return { typeLabel: "Project", subtypeLabel: "Production" };
-  }
-  if (type === "PROJECT_RESEARCH_ASSOCIATED") {
-    return { typeLabel: "Project", subtypeLabel: "Research Associated" };
+  if (type === "PROJECT_PRODUCTION" || type === "PROJECT_RESEARCH_ASSOCIATED") {
+    return { typeLabel: "Project", subtypeLabel: "" };
   }
 
   return { typeLabel: titleCase(type), subtypeLabel: "" };

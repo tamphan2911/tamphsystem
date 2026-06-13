@@ -82,7 +82,6 @@ export type TaskOrganizedProjectOption = {
 };
 
 type TaskMode = "submit" | "production" | "review" | "project" | "other";
-type ProjectTaskSubtype = "PROJECT_PRODUCTION" | "PROJECT_RESEARCH_ASSOCIATED";
 type SearchPanelItem = {
   id: string;
   title: string;
@@ -134,8 +133,6 @@ export function NewTaskDialog({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<TaskMode>("submit");
-  const [projectSubtype, setProjectSubtype] =
-    useState<ProjectTaskSubtype>("PROJECT_PRODUCTION");
   const [assigneeQuery, setAssigneeQuery] = useState("");
   const [researchQuery, setResearchQuery] = useState("");
   const [venueQuery, setVenueQuery] = useState("");
@@ -268,7 +265,6 @@ export function NewTaskDialog({
 
   function reset() {
     setMode("submit");
-    setProjectSubtype("PROJECT_PRODUCTION");
     setAssigneeQuery("");
     setResearchQuery("");
     setVenueQuery("");
@@ -461,21 +457,13 @@ export function NewTaskDialog({
           )}
           {mode === "project" && selectedOrganizedProject && (
             <>
-              <input type="hidden" name="taskType" value={projectSubtype} />
+              <input type="hidden" name="taskType" value="PROJECT_PRODUCTION" />
               <input
                 type="hidden"
                 name="organizedProjectId"
                 value={selectedOrganizedProject.id}
               />
-              <input
-                type="hidden"
-                name="category"
-                value={
-                  projectSubtype === "PROJECT_PRODUCTION"
-                    ? "Production"
-                    : "Research production"
-                }
-              />
+              <input type="hidden" name="category" value="Production" />
             </>
           )}
           {mode === "other" && (
@@ -657,32 +645,6 @@ export function NewTaskDialog({
 
           {needsOrganizedProject && (
             <div className="grid gap-4">
-              <div
-                data-research-toggle-tabs="true"
-                className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020]"
-              >
-                {(
-                  [
-                    ["PROJECT_PRODUCTION", "Project Production"],
-                    ["PROJECT_RESEARCH_ASSOCIATED", "Research Associated"],
-                  ] as const
-                ).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setProjectSubtype(value)}
-                    data-research-toggle-tab="true"
-                    data-active={projectSubtype === value}
-                    className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
-                      projectSubtype === value
-                        ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
-                        : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
               <SearchPanel
                 title="Project"
                 query={organizedProjectQuery}
