@@ -2907,6 +2907,39 @@ html[data-auth-leaving="reset"]
   color: #9ed6b5;
 }
 
+.research-journal-name-link {
+  transition:
+    color 180ms ease-out,
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.research-journal-name-link:hover {
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  text-shadow: none !important;
+  color: #a8dadc;
+}
+
+.research-journal-name-link:active {
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transform: translateY(1px) scale(0.985);
+}
+
+html[data-research-theme="light"]
+  .research-site-root
+  .research-journal-name-link:hover {
+  color: #1f7180 !important;
+}
+
+html[data-research-theme="light"]
+  .research-site-root
+  .research-journal-name-link:active {
+  color: #155864 !important;
+}
+
 html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
   .research-auth-input-shell.journal-form-field {

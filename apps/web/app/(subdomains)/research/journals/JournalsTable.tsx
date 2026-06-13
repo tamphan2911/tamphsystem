@@ -13,7 +13,6 @@ import {
   Trash2,
 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import {
   FilterSelect,
@@ -384,7 +383,8 @@ export function JournalsTable({
                 <td className="px-4 py-3">
                   <Link
                     href={`/journals/${journal.id}?back=${encodeURIComponent(currentListPath)}`}
-                    className={`text-base ${researchLinkClass}`}
+                    data-allow-transform="true"
+                    className="research-journal-name-link inline-block text-base font-normal text-[#E4E4E4]"
                   >
                     {journal.name}
                   </Link>
