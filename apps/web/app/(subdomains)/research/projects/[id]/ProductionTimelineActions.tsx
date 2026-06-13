@@ -82,7 +82,7 @@ export function ProductionTimelineActions({
               onClick={() => setConfirmUnlock(true)}
               disabled={disabled || isPending}
               aria-label="Unlock production timeline"
-              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 disabled:cursor-not-allowed disabled:text-[#666666]"
+              className="research-allow-transform inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-transparent bg-transparent p-0 text-[#B0B0B0] shadow-none outline-none transition-[color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-transparent hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none active:scale-95 focus-visible:ring-0 disabled:cursor-not-allowed disabled:text-[#666666] disabled:hover:translate-y-0 disabled:hover:text-[#666666] disabled:active:scale-100"
             >
               {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -106,7 +106,7 @@ export function ProductionTimelineActions({
             onClick={handleSaveClick}
             disabled={disabled || locked}
             aria-label="Save production timeline"
-            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 disabled:cursor-not-allowed disabled:text-[#666666]"
+            className="research-allow-transform inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-transparent bg-transparent p-0 text-[#B0B0B0] shadow-none outline-none transition-[color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-transparent hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none active:scale-95 focus-visible:ring-0 disabled:cursor-not-allowed disabled:text-[#666666] disabled:hover:translate-y-0 disabled:hover:text-[#666666] disabled:active:scale-100"
           >
             <Save className="h-4 w-4" />
           </button>
