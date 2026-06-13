@@ -55,7 +55,7 @@ export function ProjectProductsForm({
             </h2>
             <button
               disabled={isPending || requiredProducts.length === 0}
-              className="research-task-icon-motion inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] transition hover:text-[#A8DADC] disabled:cursor-not-allowed disabled:opacity-40"
+              className="research-clickable-icon research-allow-transform inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Save required products"
             >
               {isPending ? (

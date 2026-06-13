@@ -502,8 +502,8 @@ export default async function OrganizedProjectDetailPage({
       <ResearchPageHeaderPortal>
         <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-2">
-              <h1 className="min-w-0 truncate text-[22px] font-medium leading-tight text-[#E4E4E4]">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              <h1 className="min-w-0 max-w-full whitespace-normal break-words text-[15px] font-normal leading-5 text-[#E4E4E4]">
                 {project.title}
               </h1>
               <IconHint label={`Status: ${status.label}`}>
@@ -531,8 +531,8 @@ export default async function OrganizedProjectDetailPage({
       <div className="mx-auto max-w-6xl space-y-5">
         <header className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
           <div className="min-w-0">
-            <div className="mb-3 flex min-w-0 items-center gap-2 lg:hidden">
-              <h1 className="min-w-0 flex-1 text-[22px] font-medium leading-tight text-[#E4E4E4]">
+            <div className="mb-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 lg:hidden">
+              <h1 className="min-w-0 max-w-full whitespace-normal break-words text-[18px] font-normal leading-6 text-[#E4E4E4]">
                 {project.title}
               </h1>
               <IconHint label={`Status: ${status.label}`}>
@@ -598,205 +598,205 @@ export default async function OrganizedProjectDetailPage({
           </div>
         </header>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
+            <div className="mb-4 flex items-center gap-2">
+              <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+                Members
+              </h2>
+              {canEditProject && (
+                <ProjectMembersEditDialog
+                  action={saveProject}
+                  info={projectInfo}
+                  members={memberDefaults}
+                  research={researchDefaults}
+                  users={userOptions}
+                />
+              )}
+            </div>
+            <div className="research-project-member-list divide-y border-y">
+              {memberDefaults.map((member, index) => (
+                <div key={member.id} className="flex items-start gap-4 py-3">
+                  <span className="inline-flex w-8 flex-none justify-center font-mono text-sm text-[#A8DADC]">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <p className="min-w-0 text-sm font-medium text-[#E4E4E4]">
+                        {memberName(member)}
+                      </p>
+                      {member.isTeamLead && (
+                        <IconHint label="Team lead">
+                          <span className="inline-flex items-center text-[#A06716] dark:text-[#F4D47A]">
+                            <Star className="research-task-icon-motion h-3.5 w-3.5" />
+                            <span className="sr-only">Team lead</span>
+                          </span>
+                        </IconHint>
+                      )}
+                      {member.isInstructor && (
+                        <IconHint label="Instructor">
+                          <span className="inline-flex items-center text-[#6F5AA8] dark:text-[#B39CD0]">
+                            <GraduationCap className="research-task-icon-motion h-3.5 w-3.5" />
+                            <span className="sr-only">Instructor</span>
+                          </span>
+                        </IconHint>
+                      )}
+                    </div>
+                    <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#777777]">
+                      <Mail className="research-task-icon-motion h-3 w-3 flex-none text-[#A8DADC]" />
+                      <span className="truncate">
+                        {displayResearchEmail(member.email)}
+                      </span>
+                    </p>
+                    <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs leading-5 text-[#B0B0B0]">
+                      <Building2 className="research-task-icon-motion h-3 w-3 flex-none text-[#B39CD0]" />
+                      <span className="min-w-0 whitespace-normal break-words">
+                        {member.affiliation || "No affiliation recorded"}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {memberDefaults.length === 0 && (
+                <p className="px-3 py-5 text-sm text-[#777777]">
+                  No members assigned.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
+            <h2 className="mb-4 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+              Important documents
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-[#E4E4E4]">
+                  Shared project folder
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[#777777]">
+                  Add Drive, manuscript, grant, data, or shared reference links
+                  here later.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 border-t border-[#444444] pt-5">
+              <ProjectProductsForm
+                requiredProducts={project.requiredProducts}
+                completedProducts={project.completedProducts}
+                action={saveProducts}
+                embedded
+              />
+            </div>
+          </section>
+        </div>
+
+        <section>
           <div className="mb-4 flex items-center gap-2">
             <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-              Members
+              Research associated
             </h2>
-            {canEditProject && (
-              <ProjectMembersEditDialog
+            {canEditResearchAssociated && (
+              <CreateProjectResearchDialog
+                action={createProjectResearch}
+                users={userOptions}
+                members={memberDefaults}
+              />
+            )}
+            {canEditResearchAssociated && (
+              <ProjectResearchEditDialog
                 action={saveProject}
                 info={projectInfo}
                 members={memberDefaults}
                 research={researchDefaults}
-                users={userOptions}
+                researchOptions={mappedResearchOptions}
               />
             )}
           </div>
-          <div className="research-project-member-list divide-y border-y">
-            {memberDefaults.map((member, index) => (
-              <div key={member.id} className="flex items-start gap-4 py-3">
-                <span className="inline-flex w-8 flex-none justify-center font-mono text-sm text-[#A8DADC]">
-                  {index + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <p className="min-w-0 text-sm font-medium text-[#E4E4E4]">
-                      {memberName(member)}
-                    </p>
-                    {member.isTeamLead && (
-                      <IconHint label="Team lead">
-                        <span className="inline-flex items-center text-[#A06716] dark:text-[#F4D47A]">
-                          <Star className="research-task-icon-motion h-3.5 w-3.5" />
-                          <span className="sr-only">Team lead</span>
-                        </span>
-                      </IconHint>
-                    )}
-                    {member.isInstructor && (
-                      <IconHint label="Instructor">
-                        <span className="inline-flex items-center text-[#6F5AA8] dark:text-[#B39CD0]">
-                          <GraduationCap className="research-task-icon-motion h-3.5 w-3.5" />
-                          <span className="sr-only">Instructor</span>
-                        </span>
-                      </IconHint>
-                    )}
-                  </div>
-                  <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#777777]">
-                    <Mail className="research-task-icon-motion h-3 w-3 flex-none text-[#A8DADC]" />
-                    <span className="truncate">
-                      {displayResearchEmail(member.email)}
-                    </span>
-                  </p>
-                  <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs leading-5 text-[#B0B0B0]">
-                    <Building2 className="research-task-icon-motion h-3 w-3 flex-none text-[#B39CD0]" />
-                    <span className="min-w-0 whitespace-normal break-words">
-                      {member.affiliation || "No affiliation recorded"}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            ))}
-            {memberDefaults.length === 0 && (
-              <p className="px-3 py-5 text-sm text-[#777777]">
-                No members assigned.
-              </p>
-            )}
-          </div>
-        </section>
+          <div className="overflow-hidden">
+            <table className="w-full table-fixed text-left">
+              <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
+                <tr>
+                  <th className="w-[5.75rem] px-3 py-3">ID</th>
+                  <th className="px-3 py-3">Research</th>
+                  <th className="w-[4.5rem] px-3 py-3">Stage</th>
+                  <th className="w-[5rem] px-3 py-3 text-center">Submit</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#444444]">
+                {project.research.map(({ researchProject }) => {
+                  const venueLine = acceptedVenueLine(researchProject);
+                  const rankLine = stageRankLine(researchProject);
 
-        <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
-          <h2 className="mb-4 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-            Important documents
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-[#E4E4E4]">
-                Shared project folder
-              </p>
-              <p className="mt-1 text-xs leading-5 text-[#777777]">
-                Add Drive, manuscript, grant, data, or shared reference links
-                here later.
-              </p>
-            </div>
-          </div>
-          <div className="mt-5 border-t border-[#444444] pt-5">
-            <ProjectProductsForm
-              requiredProducts={project.requiredProducts}
-              completedProducts={project.completedProducts}
-              action={saveProducts}
-              embedded
-            />
-          </div>
-        </section>
-      </div>
-
-      <section>
-        <div className="mb-4 flex items-center gap-2">
-          <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-            Research associated
-          </h2>
-          {canEditResearchAssociated && (
-            <CreateProjectResearchDialog
-              action={createProjectResearch}
-              users={userOptions}
-              members={memberDefaults}
-            />
-          )}
-          {canEditResearchAssociated && (
-            <ProjectResearchEditDialog
-              action={saveProject}
-              info={projectInfo}
-              members={memberDefaults}
-              research={researchDefaults}
-              researchOptions={mappedResearchOptions}
-            />
-          )}
-        </div>
-        <div className="overflow-hidden">
-          <table className="w-full table-fixed text-left">
-            <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
-              <tr>
-                <th className="w-[5.75rem] px-3 py-3">ID</th>
-                <th className="px-3 py-3">Research</th>
-                <th className="w-[4.5rem] px-3 py-3">Stage</th>
-                <th className="w-[5rem] px-3 py-3 text-center">Submit</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#444444]">
-              {project.research.map(({ researchProject }) => {
-                const venueLine = acceptedVenueLine(researchProject);
-                const rankLine = stageRankLine(researchProject);
-
-                return (
-                  <tr
-                    key={researchProject.id}
-                    className="group align-top transition-colors duration-150 hover:bg-[#383838]"
-                  >
-                    <td className="px-3 py-3 align-top">
-                      <Link href={`/projects/${researchProject.id}`}>
-                        <span
-                          className={`font-mono text-xs ${researchMutedLinkClass}`}
+                  return (
+                    <tr
+                      key={researchProject.id}
+                      className="group align-top transition-colors duration-150 hover:bg-[#383838]"
+                    >
+                      <td className="px-3 py-3 align-top">
+                        <Link href={`/projects/${researchProject.id}`}>
+                          <span
+                            className={`font-mono text-xs ${researchMutedLinkClass}`}
+                          >
+                            {researchProject.researchCode || "-"}
+                          </span>
+                        </Link>
+                      </td>
+                      <td className="min-w-0 px-3 py-3 align-top">
+                        <Link
+                          href={`/projects/${researchProject.id}`}
+                          className="group"
                         >
-                          {researchProject.researchCode || "-"}
-                        </span>
-                      </Link>
-                    </td>
-                    <td className="min-w-0 px-3 py-3 align-top">
-                      <Link
-                        href={`/projects/${researchProject.id}`}
-                        className="group"
-                      >
-                        <p
-                          className={`line-clamp-2 text-base group-hover:text-[#A8DADC] ${researchLinkClass}`}
-                        >
-                          {researchProject.title}
-                        </p>
-                        <p className="mt-1 line-clamp-1 text-xs text-[#B0B0B0]">
-                          {researchAuthorLine(researchProject)}
-                        </p>
-                        {venueLine && (
-                          <p className="mt-0.5 line-clamp-1 text-xs text-[#777777]">
-                            {venueLine}
+                          <p
+                            className={`line-clamp-2 text-base group-hover:text-[#A8DADC] ${researchLinkClass}`}
+                          >
+                            {researchProject.title}
+                          </p>
+                          <p className="mt-1 line-clamp-1 text-xs text-[#B0B0B0]">
+                            {researchAuthorLine(researchProject)}
+                          </p>
+                          {venueLine && (
+                            <p className="mt-0.5 line-clamp-1 text-xs text-[#777777]">
+                              {venueLine}
+                            </p>
+                          )}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-3 align-top">
+                        <StatusIconChip
+                          icon={researchStageIcon(researchProject.stage)}
+                          label={researchStageLabel(researchProject.stage)}
+                          className={researchStageClass(researchProject.stage)}
+                        />
+                        {rankLine && (
+                          <p className="mt-1 text-center text-[11px] font-semibold text-[#777777]">
+                            {rankLine}
                           </p>
                         )}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      <StatusIconChip
-                        icon={researchStageIcon(researchProject.stage)}
-                        label={researchStageLabel(researchProject.stage)}
-                        className={researchStageClass(researchProject.stage)}
-                      />
-                      {rankLine && (
-                        <p className="mt-1 text-center text-[11px] font-semibold text-[#777777]">
-                          {rankLine}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-center align-top">
-                      <ResearchCount
-                        count={researchProject._count.submissions}
-                        label="Submissions"
-                      />
+                      </td>
+                      <td className="px-3 py-3 text-center align-top">
+                        <ResearchCount
+                          count={researchProject._count.submissions}
+                          label="Submissions"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+                {project.research.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-4 py-10 text-center text-sm text-[#B0B0B0]"
+                    >
+                      No research associated.
                     </td>
                   </tr>
-                );
-              })}
-              {project.research.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-4 py-10 text-center text-sm text-[#B0B0B0]"
-                  >
-                    No research associated.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
     </>
   );

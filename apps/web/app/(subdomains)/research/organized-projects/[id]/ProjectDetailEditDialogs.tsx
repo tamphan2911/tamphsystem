@@ -199,19 +199,14 @@ function EditIconButton({
   className?: string;
 }) {
   return (
-    <span className="group/icon relative inline-flex">
-      <button
-        type="button"
-        onClick={onClick}
-        aria-label={label}
-        className={`research-task-icon-motion inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 ${className}`}
-      >
-        {icon ?? <Pencil className="h-4 w-4" />}
-      </button>
-      <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 opacity-0 shadow-lg shadow-slate-900/10 transition duration-200 ease-out group-hover/icon:translate-y-0 group-hover/icon:opacity-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-black/30">
-        {label}
-      </span>
-    </span>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className={`research-clickable-icon research-allow-transform inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none focus-visible:ring-0 ${className}`}
+    >
+      {icon ?? <Pencil className="h-4 w-4" />}
+    </button>
   );
 }
 
