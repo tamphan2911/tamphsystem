@@ -11,6 +11,7 @@ export function ResearchFileUpload({
   currentFileName,
   disabled = false,
   required = false,
+  className = "",
 }: {
   name: string;
   accept?: string;
@@ -19,6 +20,7 @@ export function ResearchFileUpload({
   currentFileName?: string;
   disabled?: boolean;
   required?: boolean;
+  className?: string;
 }) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -37,7 +39,7 @@ export function ResearchFileUpload({
     <div className="grid gap-1.5">
       <label
         htmlFor={inputId}
-        className={`group flex min-h-12 items-center gap-3 border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-600 transition duration-200 ease-out dark:border-[#444444] dark:bg-[#202020] dark:text-[#B0B0B0] ${
+        className={`group flex min-h-12 items-center gap-3 border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-600 transition duration-200 ease-out dark:border-[#444444] dark:bg-[#202020] dark:text-[#B0B0B0] ${className} ${
           disabled
             ? "cursor-not-allowed opacity-60"
             : "cursor-pointer hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:hover:border-[#A8DADC] dark:hover:bg-[#263636] dark:hover:text-[#E4E4E4]"

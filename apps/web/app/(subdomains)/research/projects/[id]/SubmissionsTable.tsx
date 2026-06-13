@@ -1036,6 +1036,7 @@ export function SubmissionsTable({
                       label="Choose published article file"
                       currentFileName={editing.articleFileName}
                       helper="Optional. Accepted formats: .pdf, .doc, .docx."
+                      className="research-published-article-file-field"
                     />
                   </label>
                 </div>

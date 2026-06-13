@@ -2852,22 +2852,36 @@ html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
   .research-published-article-link-field {
   border-color: #d6cbbb;
-  background: #fffdf8;
+  background: transparent;
 }
 
 html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
   .research-published-article-link-field:hover {
   border-color: #b8aa98;
-  background: #fffaf0;
+  background: transparent;
 }
 
 html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
   .research-published-article-link-field:focus-within {
   border-color: #1f7180;
-  background: #fffdf8;
+  background: transparent;
   transform: none;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-published-article-file-field {
+  border-color: #d6cbbb !important;
+  background: transparent !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-published-article-file-field:hover {
+  border-color: #b8aa98 !important;
+  background: transparent !important;
 }
 
 html[data-research-theme="light"]
