@@ -69,6 +69,8 @@ export type SubmissionTaskAssigneeOption = {
   roles: string[];
 };
 
+const defaultSubmissionTaskAssigneeEmail = "tamphan.ntc@gmail.com";
+
 const inputClass = researchFieldClass;
 
 export function CreateSubmissionTaskDialog({
@@ -99,6 +101,14 @@ export function CreateSubmissionTaskDialog({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { showSuccess } = useResearchToast();
+  const defaultAssistantId = useMemo(
+    () =>
+      assistants.find(
+        (assistant) =>
+          assistant.email.toLowerCase() === defaultSubmissionTaskAssigneeEmail,
+      )?.id ?? "",
+    [assistants],
+  );
 
   function showProductionIncomplete() {
     showSuccess({
@@ -174,9 +184,14 @@ export function CreateSubmissionTaskDialog({
     setAssistantQuery("");
     setSelectedVenue(null);
     setSelectedAccountId("");
-    setSelectedAssistantIds([]);
+    setSelectedAssistantIds(defaultAssistantId ? [defaultAssistantId] : []);
     setAccountOpen(false);
     setAddAccountOpen(false);
+  }
+
+  function openDialog() {
+    setSelectedAssistantIds(defaultAssistantId ? [defaultAssistantId] : []);
+    setIsOpen(true);
   }
 
   function selectVenue(venue: SubmissionTaskVenueOption) {
@@ -276,7 +291,7 @@ export function CreateSubmissionTaskDialog({
             ? "Research is locked. Unlock it before creating a task."
             : "Create task"
         }
-        onClick={() => setIsOpen(true)}
+        onClick={openDialog}
       >
         <ClipboardPlus className="h-4 w-4" />
         Create task
