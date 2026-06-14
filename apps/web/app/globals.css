@@ -1970,6 +1970,22 @@ body:has(.research-site-root) {
   color: var(--research-sidebar-link-admin-hover-text) !important;
 }
 
+.research-site-root .research-sidebar-link[data-collapsed="true"] {
+  width: 100% !important;
+}
+
+.research-site-root .research-sidebar-link-active[data-collapsed="true"] {
+  border-top-color: var(--research-sidebar-link-active-border) !important;
+  border-bottom-color: var(--research-sidebar-link-active-border) !important;
+  background-color: var(--research-sidebar-link-active-bg) !important;
+}
+
+.research-site-root .research-sidebar-link-idle[data-collapsed="true"]:hover {
+  border-top-color: var(--research-sidebar-link-hover-border) !important;
+  border-bottom-color: var(--research-sidebar-link-hover-border) !important;
+  background-color: var(--research-sidebar-link-hover-bg) !important;
+}
+
 .research-site-root aside nav {
   padding-top: 0 !important;
 }
