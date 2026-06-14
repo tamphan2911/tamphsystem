@@ -30,10 +30,39 @@ export function FloatingDropdownPortal({
 }) {
   const [mounted, setMounted] = useState(false);
   const [style, setStyle] = useState<FloatingDropdownStyle | null>(null);
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    const storedTheme = window.localStorage.getItem("research-theme-mode");
+    const documentTheme = document.documentElement.dataset.researchTheme;
+    return (documentTheme || storedTheme) === "light" ? "light" : "dark";
+  });
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    function syncTheme() {
+      const storedTheme = window.localStorage.getItem("research-theme-mode");
+      const documentTheme = document.documentElement.dataset.researchTheme;
+      setTheme((documentTheme || storedTheme) === "light" ? "light" : "dark");
+    }
+
+    syncTheme();
+    const observer = new MutationObserver(syncTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-research-theme"],
+    });
+    window.addEventListener("storage", syncTheme);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("storage", syncTheme);
+    };
+  }, [mounted]);
 
   useEffect(() => {
     if (!open) return;
@@ -103,10 +132,7 @@ export function FloatingDropdownPortal({
 
   if (!mounted || !open || !style) return null;
 
-  const storedTheme = window.localStorage.getItem("research-theme-mode");
-  const documentTheme = document.documentElement.dataset.researchTheme;
-  const themeClass =
-    (documentTheme || storedTheme) === "light" ? "research-theme-light" : "";
+  const themeClass = theme === "light" ? "research-theme-light" : "";
 
   return createPortal(
     <div

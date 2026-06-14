@@ -83,13 +83,32 @@ const navItems = [
 
 const sidebarStateKey = "research-sidebar-collapsed";
 const researchThemeKey = "research-theme-mode";
+const researchThemeTransitionMs = 720;
 type ResearchTheme = "dark" | "light";
+
+let researchThemeTransitionTimer: number | undefined;
 
 function applyResearchTheme(theme: ResearchTheme) {
   document.documentElement.classList.toggle("dark", theme === "dark");
   document.documentElement.dataset.researchTheme = theme;
   window.localStorage.setItem(researchThemeKey, theme);
   window.localStorage.setItem("theme", theme);
+}
+
+function startResearchThemeTransition(theme: ResearchTheme) {
+  const root = document.documentElement;
+  root.dataset.researchThemeTransition =
+    theme === "dark" ? "to-dark" : "to-light";
+  root.classList.add("research-theme-transitioning");
+
+  if (researchThemeTransitionTimer) {
+    window.clearTimeout(researchThemeTransitionTimer);
+  }
+
+  researchThemeTransitionTimer = window.setTimeout(() => {
+    root.classList.remove("research-theme-transitioning");
+    delete root.dataset.researchThemeTransition;
+  }, researchThemeTransitionMs);
 }
 
 function titleCaseLabel(label: string) {
@@ -183,6 +202,12 @@ export function ResearchShell({
       ? "dark"
       : "light";
   });
+
+  function handleThemeChange(nextTheme: ResearchTheme) {
+    if (nextTheme === theme) return;
+    startResearchThemeTransition(nextTheme);
+    setTheme(nextTheme);
+  }
 
   useLayoutEffect(() => {
     applyResearchTheme(theme);
@@ -362,7 +387,10 @@ export function ResearchShell({
                 className="hidden min-w-0 flex-1 items-center lg:flex"
               />
               <div className="flex items-center gap-3">
-                <ResearchThemeSwitch theme={theme} onChange={setTheme} />
+                <ResearchThemeSwitch
+                  theme={theme}
+                  onChange={handleThemeChange}
+                />
                 <ResearchNotificationBell enabled={Boolean(email)} />
                 <ProfileMenu
                   email={email}
