@@ -311,10 +311,10 @@ export function ResearchShell({
                 href="/"
                 className="block truncate text-lg font-normal text-[#E4E4E4] capitalize transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8DADC]/45"
               >
-                Research Hub
+                Meth lab
               </Link>
               <p className="truncate text-xs text-[#B0B0B0]">
-                Pipeline and journal control
+                Tam Phan, the cook!
               </p>
             </div>
             <button
