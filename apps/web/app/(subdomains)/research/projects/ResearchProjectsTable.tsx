@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import {
   BadgeCheck,
   Ban,
+  BookMarked,
   BookOpenCheck,
   CalendarCheck2,
   CheckCircle2,
@@ -118,8 +119,9 @@ function claimLabel(claim: string) {
 
 function claimClass(claim: string) {
   if (claim === "CLAIMED") return "text-[#A8DADC]";
-  if (claim === "WAITING" || claim === "WAITING_PUBLISH")
-    return "text-[#FFC1CC]";
+  if (claim === "WAITING") return "text-amber-700 dark:text-amber-300";
+  if (claim === "WAITING_PUBLISH")
+    return "text-violet-700 dark:text-violet-300";
   if (claim === "MAKING_DOCUMENT") return "text-[#B39CD0]";
   if (claim === "CANNOT_CLAIM") return "text-rose-300";
   return "text-[#FFC1CC]";
@@ -128,7 +130,7 @@ function claimClass(claim: string) {
 function claimIcon(claim: string) {
   if (claim === "CLAIMED") return CheckCircle2;
   if (claim === "WAITING") return FileClock;
-  if (claim === "WAITING_PUBLISH") return FileSearch;
+  if (claim === "WAITING_PUBLISH") return BookMarked;
   if (claim === "MAKING_DOCUMENT") return FileCheck2;
   if (claim === "CANNOT_CLAIM") return Ban;
   return CircleDollarSign;
