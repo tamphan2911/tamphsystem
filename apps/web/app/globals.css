@@ -3408,7 +3408,6 @@ html[data-research-theme="light"]
 
 .research-site-root.research-theme-light .research-text-button,
 .theme-light .research-text-button,
-.research-auth-page .research-text-button,
 html[data-research-theme="light"]
   :where(.research-site-root, [data-research-modal-overlay="true"])
   button:is([class*="px-"], [class*="gap-"]):not([aria-label]):not(
@@ -3420,6 +3419,33 @@ html[data-research-theme="light"]
   ) {
   --research-text-button-color: #1f7180;
   --research-text-button-ink: #f7fbfb;
+}
+
+.research-auth-page .research-text-button {
+  --research-text-button-color: #a8dadc;
+  --research-text-button-ink: #1f2937;
+  border-color: rgba(168, 218, 220, 0.82) !important;
+  color: #c9f0f2 !important;
+}
+
+.research-auth-page .research-text-button::before,
+.research-auth-page .research-text-button::after {
+  background-color: #a8dadc;
+}
+
+.research-auth-page .research-text-button:hover {
+  border-color: #c9f0f2 !important;
+  color: #1f2937 !important;
+}
+
+.research-auth-page .research-text-button:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(168, 218, 220, 0.18) !important;
+}
+
+.research-auth-page .research-text-button:disabled {
+  border-color: #5a5a5a !important;
+  color: #777777 !important;
 }
 
 .research-site-root .journal-detail-tabs,
