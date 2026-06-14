@@ -176,6 +176,30 @@ function StatusIconChip({
   );
 }
 
+function ClaimStatusChip({
+  status,
+}: {
+  status: string;
+}) {
+  const Icon = claimIcon(status);
+  const label = claimLabel(status);
+
+  return (
+    <IconHint label={label}>
+      <span className="inline-flex min-w-16 flex-col items-center justify-start gap-1">
+        <span
+          className={`inline-flex h-5 w-5 items-center justify-center rounded-none transition-colors duration-150 ${claimClass(status)}`}
+        >
+          <Icon className="h-4 w-4" aria-hidden="true" />
+        </span>
+        <span className="max-w-20 text-center text-[10px] font-normal uppercase leading-3 tracking-wide text-[#B0B0B0]">
+          {label}
+        </span>
+      </span>
+    </IconHint>
+  );
+}
+
 function RegistrationCell({
   status,
   registration,
@@ -458,11 +482,7 @@ export function ResearchProjectsTable({
                   <>
                     <td className="px-3 py-3 align-top">
                       {row.canViewRegistrationClaim ? (
-                        <StatusIconChip
-                          icon={claimIcon(row.claimStatus)}
-                          label={claimLabel(row.claimStatus)}
-                          className={claimClass(row.claimStatus)}
-                        />
+                        <ClaimStatusChip status={row.claimStatus} />
                       ) : (
                         <span className="text-sm text-[#8b8392]">-</span>
                       )}
