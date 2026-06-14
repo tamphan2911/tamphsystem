@@ -4199,7 +4199,9 @@ html[data-research-theme="light"]
     a[aria-label]:has(> svg),
     [role="button"][aria-label]:has(> svg),
     .research-allow-transform:has(> svg)
-  ):not([role="option"]):not([role="tab"]) {
+  ):not([role="option"]):not([role="tab"]):not(
+    .research-select-trigger
+  ):not(.research-filter-select-trigger):not([aria-haspopup="listbox"]) {
   border-color: transparent !important;
   background: transparent !important;
   background-color: transparent !important;
@@ -4217,7 +4219,9 @@ html[data-research-theme="light"]
     a[aria-label]:has(> svg),
     [role="button"][aria-label]:has(> svg),
     .research-allow-transform:has(> svg)
-  ):not([role="option"]):not([role="tab"]):is(
+  ):not([role="option"]):not([role="tab"]):not(
+    .research-select-trigger
+  ):not(.research-filter-select-trigger):not([aria-haspopup="listbox"]):is(
     :hover,
     :active,
     :focus,
@@ -4258,6 +4262,20 @@ html:not([data-research-theme="light"])
   ):where(:hover, [aria-expanded="true"]) {
   border-color: #5a5a5a !important;
   background-color: #383838 !important;
+}
+
+html:not([data-research-theme="light"])
+  :where(.research-site-root, [data-research-modal-overlay="true"])
+  :where(
+    .research-select-trigger,
+    .research-filter-select-trigger,
+    button[aria-haspopup="listbox"],
+    button[aria-haspopup="menu"]
+  ):where([aria-expanded="true"], :focus, :focus-visible) {
+  border-color: #a8dadc !important;
+  background-color: #383838 !important;
+  box-shadow: inset 0 0 0 1px rgba(168, 218, 220, 0.16) !important;
+  outline: none !important;
 }
 
 html:not([data-research-theme="light"])
