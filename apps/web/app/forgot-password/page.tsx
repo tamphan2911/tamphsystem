@@ -1,6 +1,9 @@
 import { AlertTriangle, Mail, RotateCcw } from "lucide-react";
 import { headers } from "next/headers";
-import { AuthLightTheme } from "@/sites/shared/components/AuthLightTheme";
+import {
+  AuthDarkTheme,
+  AuthLightTheme,
+} from "@/sites/shared/components/AuthLightTheme";
 import {
   AuthSwitchLink,
   AuthTransitionCard,
@@ -61,7 +64,7 @@ export default async function ForgotPasswordPage({
           : "flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-950 transition-colors duration-200 dark:bg-slate-950 dark:text-white"
       }
     >
-      <AuthLightTheme />
+      {isResearch ? <AuthDarkTheme /> : <AuthLightTheme />}
       <AuthTransitionCard
         mode="reset"
         className={
@@ -125,7 +128,7 @@ export default async function ForgotPasswordPage({
             />
           </label>
 
-          <TurnstileField siteKey={siteKey} theme="light" />
+          <TurnstileField siteKey={siteKey} theme={isResearch ? "dark" : "light"} />
 
           {sent === "1" && (
             <div

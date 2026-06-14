@@ -1,7 +1,10 @@
 import { AlertTriangle, LockKeyhole, LogIn, Mail } from "lucide-react";
 import { headers } from "next/headers";
 import { TurnstileField } from "@/sites/shared/components/TurnstileField";
-import { AuthLightTheme } from "@/sites/shared/components/AuthLightTheme";
+import {
+  AuthDarkTheme,
+  AuthLightTheme,
+} from "@/sites/shared/components/AuthLightTheme";
 import {
   AuthSwitchLink,
   AuthTransitionCard,
@@ -144,7 +147,7 @@ export default async function LoginPage({
             : "flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-950 transition-colors duration-200 dark:bg-slate-950 dark:text-white"
         }
       >
-        <AuthLightTheme />
+        {isResearch ? <AuthDarkTheme /> : <AuthLightTheme />}
         <AuthTransitionCard
           mode="login"
           className={
@@ -250,7 +253,7 @@ export default async function LoginPage({
               )}
             </label>
 
-            <TurnstileField siteKey={siteKey} theme="light" />
+            <TurnstileField siteKey={siteKey} theme={isResearch ? "dark" : "light"} />
 
             {warningMessage && (
               <div

@@ -194,10 +194,10 @@ export function ResearchShell({
     return window.localStorage.getItem(sidebarStateKey) === "true";
   });
   const [theme, setTheme] = useState<ResearchTheme>(() => {
-    if (typeof window === "undefined") return "light";
-    return window.localStorage.getItem(researchThemeKey) === "dark"
-      ? "dark"
-      : "light";
+    if (typeof window === "undefined") return "dark";
+    return window.localStorage.getItem(researchThemeKey) === "light"
+      ? "light"
+      : "dark";
   });
 
   function handleThemeChange(nextTheme: ResearchTheme) {

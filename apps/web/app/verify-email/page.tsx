@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { headers } from "next/headers";
 import { prisma } from "@repo/db";
 import {
+  AuthDarkTheme,
   AuthLightTheme,
 } from "@/sites/shared/components/AuthLightTheme";
 import {
@@ -100,7 +101,7 @@ export default async function VerifyEmailPage({
           : "flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-950 dark:bg-slate-950 dark:text-white"
       }
     >
-      <AuthLightTheme />
+      {isResearch ? <AuthDarkTheme /> : <AuthLightTheme />}
       <div
         className={
           isResearch

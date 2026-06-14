@@ -12,7 +12,10 @@ import {
   UserPlus,
 } from "lucide-react";
 import { TurnstileField } from "@/sites/shared/components/TurnstileField";
-import { AuthLightTheme } from "@/sites/shared/components/AuthLightTheme";
+import {
+  AuthDarkTheme,
+  AuthLightTheme,
+} from "@/sites/shared/components/AuthLightTheme";
 import {
   AuthSwitchLink,
   AuthTransitionCard,
@@ -151,7 +154,7 @@ function RegisterContent() {
             : "flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-950 transition-colors duration-200 dark:bg-slate-950 dark:text-white"
         }
       >
-        <AuthLightTheme />
+        {isResearch ? <AuthDarkTheme /> : <AuthLightTheme />}
         <AuthTransitionCard
           mode="register"
           className={
@@ -352,7 +355,7 @@ function RegisterContent() {
               <TurnstileField
                 siteKey={siteKey}
                 resetKey={turnstileResetKey}
-                theme="light"
+                theme={isResearch ? "dark" : "light"}
               />
             ) : null}
 
