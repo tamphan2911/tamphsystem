@@ -88,6 +88,9 @@ const journalFieldOptions = [
   "Tourism",
 ];
 
+const darkSelectBorderClass =
+  "dark:!border-[#5A5A5A] dark:hover:!border-[#6A6A6A] dark:focus:!border-[#A8DADC]";
+
 function JournalInput({
   name,
   placeholder,
@@ -548,6 +551,7 @@ export function JournalDialogForm({
                 defaultValue={journalType}
                 ariaLabel="Journal type"
                 onValueChange={setJournalType}
+                triggerClassName={darkSelectBorderClass}
                 options={[
                   { value: "", label: "Choose journal type" },
                   { value: "INTERNATIONAL", label: "International journal" },
@@ -566,6 +570,7 @@ export function JournalDialogForm({
                   name="rank"
                   defaultValue={initialValues?.rank ?? ""}
                   ariaLabel="Journal rank"
+                  triggerClassName={darkSelectBorderClass}
                   options={[
                     { value: "", label: "Choose international rank" },
                     { value: "No rank", label: "No rank" },
@@ -710,6 +715,7 @@ export function JournalDialogForm({
                   name="apcCurrency"
                   defaultValue={initialValues?.apcCurrency ?? ""}
                   ariaLabel="APC currency"
+                  triggerClassName={darkSelectBorderClass}
                   options={[
                     { value: "", label: "Currency" },
                     ...currencyOptions,
@@ -734,6 +740,7 @@ export function JournalDialogForm({
                   name="submissionFeeCurrency"
                   defaultValue={initialValues?.submissionFeeCurrency ?? ""}
                   ariaLabel="Submission fee currency"
+                  triggerClassName={darkSelectBorderClass}
                   options={[
                     { value: "", label: "Currency" },
                     ...currencyOptions,
