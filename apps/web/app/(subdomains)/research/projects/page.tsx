@@ -156,12 +156,7 @@ export default async function ProjectsDashboard() {
   }));
 
   const published = projects.filter((project) => project.stage === "PUBLISHED");
-  const claimQueue = projects.filter(
-    (project) =>
-      project.claimStatus === "WAITING_PUBLISH" ||
-      project.claimStatus === "MAKING_DOCUMENT" ||
-      project.claimStatus === "WAITING",
-  );
+  const claimed = projects.filter((project) => project.claimStatus === "CLAIMED");
 
   const rows: ResearchProjectRow[] = projects.map((project) => {
     const submissionStatuses = [
@@ -264,8 +259,8 @@ export default async function ProjectsDashboard() {
     ...(isAdmin
       ? [
           {
-            label: "Claims",
-            value: claimQueue.length,
+            label: "Claimed",
+            value: claimed.length,
           },
         ]
       : []),
