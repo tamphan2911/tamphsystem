@@ -1922,28 +1922,30 @@ body:has(.research-site-root) {
   --research-sidebar-link-text: #b0b0b0;
   --research-sidebar-link-hover-text: #a8dadc;
   --research-sidebar-link-admin-hover-text: #ffc1cc;
-  --research-sidebar-link-hover-bg: #333333;
-  --research-sidebar-link-hover-border: #4f4f4f;
-  --research-sidebar-link-active-bg: #383838;
-  --research-sidebar-link-active-border: #5a5a5a;
+  --research-sidebar-link-hover-bg: #333a3a;
+  --research-sidebar-link-hover-border: #586464;
+  --research-sidebar-link-active-bg: #244142;
+  --research-sidebar-link-active-border: #78b7bb;
   --research-sidebar-link-active-text: #e4e4e4;
-  --research-sidebar-link-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+  --research-sidebar-link-shadow: inset 0 0 0 1px rgba(168, 218, 220, 0.05);
   --research-sidebar-link-active-shadow:
-    inset 0 0 0 1px rgba(168, 218, 220, 0.08),
-    0 10px 24px rgba(0, 0, 0, 0.18);
+    inset 3px 0 0 #a8dadc,
+    inset 0 0 0 1px rgba(168, 218, 220, 0.12);
 }
 
 .research-site-root.research-theme-light {
   --research-sidebar-link-text: #5b6472;
   --research-sidebar-link-hover-text: #1f7180;
   --research-sidebar-link-admin-hover-text: #9f3f63;
-  --research-sidebar-link-hover-bg: #ece6da;
-  --research-sidebar-link-hover-border: #c9bdad;
-  --research-sidebar-link-active-bg: #e6f4f2;
-  --research-sidebar-link-active-border: #8fc3c8;
+  --research-sidebar-link-hover-bg: #ece7dc;
+  --research-sidebar-link-hover-border: #cfc5b8;
+  --research-sidebar-link-active-bg: #d8ecea;
+  --research-sidebar-link-active-border: #6faeb5;
   --research-sidebar-link-active-text: #1f2937;
-  --research-sidebar-link-shadow: none;
-  --research-sidebar-link-active-shadow: inset 0 0 0 1px rgba(31, 113, 128, 0.14);
+  --research-sidebar-link-shadow: inset 0 0 0 1px rgba(31, 113, 128, 0.04);
+  --research-sidebar-link-active-shadow:
+    inset 3px 0 0 #1f7180,
+    inset 0 0 0 1px rgba(31, 113, 128, 0.14);
 }
 
 .research-site-root .research-sidebar-link {
