@@ -17,7 +17,6 @@ import {
   RotateCcw,
   Send,
   ShieldCheck,
-  Star,
   UserRound,
   WalletCards,
 } from "lucide-react";
@@ -222,6 +221,37 @@ function ResearchCount({ count, label }: { count: number; label: string }) {
 
 function memberName(member: { name: string; email: string }) {
   return displayResearchPersonName(member);
+}
+
+function ProjectMemberRoleBadges({
+  isTeamLead,
+  isInstructor,
+}: {
+  isTeamLead: boolean;
+  isInstructor: boolean;
+}) {
+  if (!isTeamLead && !isInstructor) {
+    return (
+      <span className="border border-[#D8D0C2] bg-[#FFFDF8] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#667085] dark:border-[#444444] dark:bg-[#202020] dark:text-[#B0B0B0]">
+        Member
+      </span>
+    );
+  }
+
+  return (
+    <>
+      {isTeamLead && (
+        <span className="border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-amber-800 dark:border-[#6f5d2a] dark:bg-[#2d2819] dark:text-[#F4D47A]">
+          Leader
+        </span>
+      )}
+      {isInstructor && (
+        <span className="border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-violet-700 dark:border-[#4f436d] dark:bg-[#282236] dark:text-[#B39CD0]">
+          Instructor
+        </span>
+      )}
+    </>
+  );
 }
 
 function researchAuthorLine(project: {
@@ -625,22 +655,10 @@ export default async function OrganizedProjectDetailPage({
                       <p className="min-w-0 text-sm font-medium text-[#E4E4E4]">
                         {memberName(member)}
                       </p>
-                      {member.isTeamLead && (
-                        <IconHint label="Team lead">
-                          <span className="inline-flex items-center text-[#A06716] dark:text-[#F4D47A]">
-                            <Star className="research-task-icon-motion h-3.5 w-3.5" />
-                            <span className="sr-only">Team lead</span>
-                          </span>
-                        </IconHint>
-                      )}
-                      {member.isInstructor && (
-                        <IconHint label="Instructor">
-                          <span className="inline-flex items-center text-[#6F5AA8] dark:text-[#B39CD0]">
-                            <GraduationCap className="research-task-icon-motion h-3.5 w-3.5" />
-                            <span className="sr-only">Instructor</span>
-                          </span>
-                        </IconHint>
-                      )}
+                      <ProjectMemberRoleBadges
+                        isTeamLead={member.isTeamLead}
+                        isInstructor={member.isInstructor}
+                      />
                     </div>
                     <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#777777]">
                       <Mail className="research-task-icon-motion h-3 w-3 flex-none text-[#A8DADC]" />
