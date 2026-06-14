@@ -83,7 +83,7 @@ export function ResearchFormSelect({
         disabled={disabled}
         onClick={() => setOpen((current) => !current)}
         className={cx(
-          "group inline-flex cursor-pointer items-center justify-between gap-3 text-left",
+          "research-select-trigger group inline-flex cursor-pointer items-center justify-between gap-3 text-left",
           researchSelectTriggerClass,
           triggerClassName,
           open &&
