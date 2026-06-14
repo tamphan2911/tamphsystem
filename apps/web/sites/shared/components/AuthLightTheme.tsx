@@ -2,19 +2,25 @@
 
 import { useLayoutEffect } from "react";
 
+let authThemeMountId = 0;
+
 export function AuthTheme({ theme }: { theme: "light" | "dark" }) {
   useLayoutEffect(() => {
     const root = document.documentElement;
     const opposite = theme === "dark" ? "light" : "dark";
     const hadTheme = root.classList.contains(theme);
     const hadOpposite = root.classList.contains(opposite);
+    const mountId = ++authThemeMountId;
 
     root.classList.remove(opposite);
     root.classList.add(theme);
 
     return () => {
-      root.classList.toggle(theme, hadTheme);
-      root.classList.toggle(opposite, hadOpposite);
+      window.setTimeout(() => {
+        if (authThemeMountId !== mountId) return;
+        root.classList.toggle(theme, hadTheme);
+        root.classList.toggle(opposite, hadOpposite);
+      }, 0);
     };
   }, [theme]);
 
