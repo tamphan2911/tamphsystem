@@ -492,8 +492,13 @@ export function ResearchProjectsTable({
                       {row.title}
                     </p>
                     <p className="mt-1 line-clamp-1 text-xs text-[#B0B0B0]">
-                      {row.coAuthors || row.abstract || "No notes"}
+                      {row.coAuthors || "No authors recorded"}
                     </p>
+                    {row.abstract.trim() ? (
+                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#8F98A8] dark:text-[#8F98A8]">
+                        {row.abstract}
+                      </p>
+                    ) : null}
                   </Link>
                 </td>
                 <td className="px-3 py-3 align-top">
