@@ -77,10 +77,20 @@ const claims = [
 ];
 
 function stageLabel(stage: string) {
+  const labels: Record<string, string> = {
+    PRODUCTION: "Production",
+    NEED_SUBMIT: "Need submit",
+    SUBMITTED: "Submitted",
+    SUBMITTING: "Submitted",
+    REVIEW: "Review",
+    ACCEPTED: "Accepted",
+    PUBLISHED: "Published",
+  };
+  if (labels[stage]) return labels[stage];
   if (stage === "NEED_SUBMIT") return "Need submit";
   if (stage === "SUBMITTED" || stage === "SUBMITTING") return "Submitted";
-  if (stage === "REVIEW") return "REVIEW";
-  return stage;
+  const normalized = stage.replaceAll("_", " ").toLowerCase();
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
 function stageFilterKey(row: ResearchProjectRow) {
@@ -115,7 +125,8 @@ function stageIcon(stage: string) {
   if (stage === "PUBLISHED") return BookOpenCheck;
   if (stage === "ACCEPTED") return BadgeCheck;
   if (stage === "REVIEW") return FileSearch;
-  if (stage === "SUBMITTING") return Send;
+  if (stage === "SUBMITTING" || stage === "SUBMITTED" || stage === "NEED_SUBMIT")
+    return Send;
   return FlaskConical;
 }
 

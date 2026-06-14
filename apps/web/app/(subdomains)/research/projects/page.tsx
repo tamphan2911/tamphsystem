@@ -155,9 +155,6 @@ export default async function ProjectsDashboard() {
     role: displayRole(user.roles),
   }));
 
-  const submitting = projects.filter(
-    (project) => project.stage === "SUBMITTING",
-  );
   const published = projects.filter((project) => project.stage === "PUBLISHED");
   const claimQueue = projects.filter(
     (project) =>
@@ -228,14 +225,27 @@ export default async function ProjectsDashboard() {
     };
   });
 
+  const needSubmit = rows.filter(
+    (row) => row.stage === "SUBMITTING" && !row.hasSubmittedSubmission,
+  );
+  const submitted = rows.filter(
+    (row) =>
+      row.stage === "SUBMITTED" ||
+      (row.stage === "SUBMITTING" && row.hasSubmittedSubmission),
+  );
+
   const stats = [
     {
       label: "Total",
       value: projects.length,
     },
     {
+      label: "Need submit",
+      value: needSubmit.length,
+    },
+    {
       label: "Submitted",
-      value: submitting.length,
+      value: submitted.length,
     },
     {
       label: "Published",
@@ -257,7 +267,7 @@ export default async function ProjectsDashboard() {
         <div className="flex w-full min-w-0 items-center justify-between gap-4">
           <div
             className={`grid min-w-0 border border-[#444444] bg-[#2C2C2C] ${
-              isAdmin ? "sm:grid-cols-4" : "sm:grid-cols-3"
+              isAdmin ? "sm:grid-cols-5" : "sm:grid-cols-4"
             }`}
           >
             {stats.map((item, index) => (
