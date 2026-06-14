@@ -674,7 +674,12 @@ export function SubmissionsTable({
                   className={`group align-top transition duration-200 ease-out ${rowClass()}`}
                 >
                   <td className="px-3 py-3 text-[11px] font-normal uppercase tracking-wide text-[#B0B0B0]">
-                    {row.code}
+                    <Link
+                      href={`/submissions/${row.id}`}
+                      className="research-allow-transform inline-flex font-mono text-[#A8DADC] transition-[color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:text-[#C9F0F2] active:translate-y-0 active:scale-[0.98]"
+                    >
+                      {row.code}
+                    </Link>
                   </td>
                   <td className="px-3 py-3">
                     {linkVenue ? (
