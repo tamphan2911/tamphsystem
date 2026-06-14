@@ -113,6 +113,9 @@ export default async function ConferenceDetailPage({
       const hasSubmittedSubmission = submissionStatuses.some(
         (status) => status === "PENDING" || status === "SUBMITTED",
       );
+      const hasAcceptedSubmission = submissionStatuses.some(
+        (status) => status === "ACCEPTED",
+      );
 
       return {
         id: project.id,
@@ -156,6 +159,7 @@ export default async function ConferenceDetailPage({
             (status) => status === "REJECTED" || status === "WITHDRAWN",
           ),
         hasSubmittedSubmission,
+        hasAcceptedSubmission,
       };
     },
   );

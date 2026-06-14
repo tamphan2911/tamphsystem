@@ -205,6 +205,9 @@ export default async function ResearchProfilePage() {
     const hasSubmittedSubmission = submissionStatuses.some(
       (status) => status === "PENDING" || status === "SUBMITTED",
     );
+    const hasAcceptedSubmission = submissionStatuses.some(
+      (status) => status === "ACCEPTED",
+    );
 
     return {
       id: project.id,
@@ -239,6 +242,7 @@ export default async function ResearchProfilePage() {
           (status) => status === "REJECTED" || status === "WITHDRAWN",
         ),
       hasSubmittedSubmission,
+      hasAcceptedSubmission,
     };
   });
 

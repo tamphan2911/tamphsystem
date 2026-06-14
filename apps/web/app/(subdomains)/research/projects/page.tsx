@@ -172,6 +172,9 @@ export default async function ProjectsDashboard() {
     const hasSubmittedSubmission = submissionStatuses.some(
       (status) => status === "PENDING" || status === "SUBMITTED",
     );
+    const hasAcceptedSubmission = submissionStatuses.some(
+      (status) => status === "ACCEPTED",
+    );
 
     return {
       id: project.id,
@@ -222,6 +225,7 @@ export default async function ProjectsDashboard() {
           (status) => status === "REJECTED" || status === "WITHDRAWN",
         ),
       hasSubmittedSubmission,
+      hasAcceptedSubmission,
     };
   });
 
@@ -233,6 +237,7 @@ export default async function ProjectsDashboard() {
       row.stage === "SUBMITTED" ||
       (row.stage === "SUBMITTING" && row.hasSubmittedSubmission),
   );
+  const accepted = rows.filter((row) => row.hasAcceptedSubmission);
 
   const stats = [
     {
@@ -246,6 +251,10 @@ export default async function ProjectsDashboard() {
     {
       label: "Submitted",
       value: submitted.length,
+    },
+    {
+      label: "Accepted",
+      value: accepted.length,
     },
     {
       label: "Published",
@@ -267,7 +276,7 @@ export default async function ProjectsDashboard() {
         <div className="flex w-full min-w-0 items-center justify-between gap-4">
           <div
             className={`grid min-w-0 border border-[#444444] bg-[#2C2C2C] ${
-              isAdmin ? "sm:grid-cols-5" : "sm:grid-cols-4"
+              isAdmin ? "sm:grid-cols-6" : "sm:grid-cols-5"
             }`}
           >
             {stats.map((item, index) => (

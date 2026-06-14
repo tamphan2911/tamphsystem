@@ -56,6 +56,7 @@ export type ResearchProjectRow = {
   updatedAt: string;
   notSubmittedAnywhere: boolean;
   hasSubmittedSubmission: boolean;
+  hasAcceptedSubmission: boolean;
 };
 
 const stages = [
