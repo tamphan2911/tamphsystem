@@ -43,6 +43,7 @@ export function ActiveNavLink({
   collapsed = false,
   adminOnly = false,
   badgeCount = 0,
+  onNavigate,
 }: {
   href: string;
   label: string;
@@ -50,6 +51,7 @@ export function ActiveNavLink({
   collapsed?: boolean;
   adminOnly?: boolean;
   badgeCount?: number;
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const isActive =
@@ -70,6 +72,7 @@ export function ActiveNavLink({
       data-active={isActive ? "true" : "false"}
       data-collapsed={collapsed ? "true" : "false"}
       aria-label={collapsed ? displayLabel : undefined}
+      onClick={onNavigate}
       className={`${baseClass} ${stateClass} ${
         collapsed ? "w-full justify-center px-0" : ""
       }`}

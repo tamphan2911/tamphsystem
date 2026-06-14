@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useLayoutEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Moon, Sun } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Menu, Moon, Sun, X } from "lucide-react";
 import { ActiveNavLink } from "@/sites/research/components/ActiveNavLink";
 import { ProfileMenu } from "@/sites/shared/components/ProfileMenu";
 import { SidebarSupportCard } from "@/sites/research/components/SidebarSupportCard";
@@ -189,10 +190,13 @@ export function ResearchShell({
   canSeeReviews: boolean;
   unopenedProposalCount: number;
 }) {
+  const pathname = usePathname();
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(sidebarStateKey) === "true";
   });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState<ResearchTheme>(() => {
     if (typeof window === "undefined") return "dark";
     return window.localStorage.getItem(researchThemeKey) === "light"
@@ -213,6 +217,32 @@ export function ResearchShell({
   useEffect(() => {
     window.localStorage.setItem(sidebarStateKey, String(collapsed));
   }, [collapsed]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    function closeMobileMenu(event: MouseEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (mobileMenuRef.current?.contains(target)) return;
+      setMobileMenuOpen(false);
+    }
+
+    function closeMobileMenuOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    }
+
+    document.addEventListener("mousedown", closeMobileMenu);
+    document.addEventListener("keydown", closeMobileMenuOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeMobileMenu);
+      document.removeEventListener("keydown", closeMobileMenuOnEscape);
+    };
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
     function visibleModalOverlays() {
@@ -285,6 +315,10 @@ export function ResearchShell({
       return canSeeAccounts;
     return true;
   });
+  const currentNavItem =
+    visibleNavItems.find(
+      (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+    ) ?? visibleNavItems[0];
 
   return (
     <ResearchToastProvider>
@@ -356,28 +390,56 @@ export function ResearchShell({
         >
           <header className="sticky top-0 z-30 flex h-20 items-center border-b border-[#444444] bg-[#242424]/92 px-4 backdrop-blur-xl sm:px-8">
             <div className="mx-auto flex w-full max-w-7xl items-center gap-3">
-              <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto lg:hidden">
-                {visibleNavItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`whitespace-nowrap rounded-none px-2 py-1 text-xs font-semibold transition ${
-                      "adminOnly" in item && item.adminOnly
-                        ? "bg-[#fff1e9] text-[#9f3f16] ring-1 ring-[#ffd7c2] hover:bg-[#ffe6d8] dark:bg-[#2a1812] dark:text-[#ffb38a] dark:ring-[#7a3c25] dark:hover:bg-[#3a2119]"
-                        : "text-[#655d6d] hover:bg-[#ece7df] dark:text-[#d7d1df] dark:hover:bg-[#211c2d]"
-                    }`}
+              <div
+                ref={mobileMenuRef}
+                className="relative flex min-w-0 flex-1 lg:hidden"
+              >
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen((value) => !value)}
+                  className="research-mobile-menu-trigger research-allow-transform inline-flex h-10 max-w-full cursor-pointer items-center gap-2 border border-[#444444] bg-[#2C2C2C] px-3 text-sm font-normal text-[#E4E4E4] outline-none transition-[background-color,border-color,color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-[#586464] hover:bg-[#333a3a] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35 active:translate-y-0 active:scale-[0.98]"
+                  aria-expanded={mobileMenuOpen}
+                  aria-controls="research-mobile-menu"
+                >
+                  {mobileMenuOpen ? (
+                    <X className="h-4 w-4 flex-none" strokeWidth={1.75} />
+                  ) : (
+                    <Menu className="h-4 w-4 flex-none" strokeWidth={1.75} />
+                  )}
+                  <span className="min-w-0 truncate">
+                    {titleCaseLabel(currentNavItem?.label ?? "Research")}
+                  </span>
+                </button>
+
+                {mobileMenuOpen && (
+                  <div
+                    id="research-mobile-menu"
+                    className="research-mobile-menu-panel absolute left-0 top-[calc(100%+0.75rem)] z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-2xl shadow-black/35 animate-[modalPanelIn_160ms_ease-out]"
                   >
-                    {titleCaseLabel(item.label)}
-                    {item.href === "/proposals" &&
-                      unopenedProposalCount > 0 && (
-                        <span className="ml-1 rounded-none bg-red-600 px-1.5 py-0.5 text-[10px] font-black text-white">
-                          {unopenedProposalCount > 99
-                            ? "99+"
-                            : unopenedProposalCount}
-                        </span>
-                      )}
-                  </Link>
-                ))}
+                    <div className="border-b border-[#444444] px-4 py-3">
+                      <p className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+                        Navigation
+                      </p>
+                    </div>
+                    <nav className="max-h-[min(70vh,34rem)] overflow-y-auto py-1">
+                      {visibleNavItems.map((item) => (
+                        <ActiveNavLink
+                          key={item.href}
+                          href={item.href}
+                          label={item.label}
+                          icon={item.icon}
+                          adminOnly={"adminOnly" in item && item.adminOnly}
+                          badgeCount={
+                            item.href === "/proposals"
+                              ? unopenedProposalCount
+                              : 0
+                          }
+                          onNavigate={() => setMobileMenuOpen(false)}
+                        />
+                      ))}
+                    </nav>
+                  </div>
+                )}
               </div>
               <div
                 id="research-page-header"
