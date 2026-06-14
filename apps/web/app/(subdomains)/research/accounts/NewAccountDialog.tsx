@@ -1,14 +1,10 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { KeyRound, Loader2, PlusCircle } from "lucide-react";
+import { AtSign, KeyRound, Link2, Loader2, Mail, PlusCircle } from "lucide-react";
 import { createPublisherAccount } from "../actions";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
-import {
-  ResearchButton,
-  researchFieldClass,
-  researchLabelClass,
-} from "@/sites/research/components/ResearchPrimitives";
+import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
   ResearchSearchPicker,
@@ -116,28 +112,48 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
           className="grid gap-4"
         >
           <div className="grid gap-4 md:grid-cols-2">
-            <label className={researchLabelClass}>
-              <span>
-                ID / username
-                <span className="research-required-mark">(*)</span>
+            <label className="block">
+              <span className="sr-only">Account login ID or username</span>
+              <span className="research-auth-input-shell">
+                <input
+                  name="username"
+                  required
+                  placeholder="Enter the journal login ID or username"
+                />
+                <AtSign aria-hidden="true" />
               </span>
-              <input
-                name="username"
-                required
-                placeholder="ID / username"
-                className={researchFieldClass}
-              />
             </label>
-            <input
-              name="password"
-              placeholder="Password"
-              className={researchFieldClass}
-            />
-            <input
-              name="email"
-              placeholder="Email"
-              className={`${researchFieldClass} md:col-span-2`}
-            />
+            <label className="block">
+              <span className="sr-only">Account password</span>
+              <span className="research-auth-input-shell">
+                <input
+                  name="password"
+                  placeholder="Enter the password, if you want to store it"
+                />
+                <KeyRound aria-hidden="true" />
+              </span>
+            </label>
+            <label className="block md:col-span-2">
+              <span className="sr-only">Recovery email</span>
+              <span className="research-auth-input-shell">
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="Enter the recovery email linked to this account"
+                />
+                <Mail aria-hidden="true" />
+              </span>
+            </label>
+            <label className="block md:col-span-2">
+              <span className="sr-only">Account notes</span>
+              <span className="research-auth-input-shell">
+                <input
+                  name="note"
+                  placeholder="Add login URL, recovery note, or account scope"
+                />
+                <Link2 aria-hidden="true" />
+              </span>
+            </label>
             <div className="md:col-span-2">
               <ResearchSearchPicker
                 name="journalId"
@@ -166,15 +182,10 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
                   setJournalQuery("");
                 }}
                 options={journalOptions}
-                placeholder="Search journal"
+                placeholder="Search and choose the journal this account belongs to"
                 emptyText="No journal matches this search."
               />
             </div>
-            <input
-              name="note"
-              placeholder="Login URL, recovery note, account scope"
-              className={`${researchFieldClass} md:col-span-2`}
-            />
           </div>
         </form>
       </ResearchModal>
