@@ -874,20 +874,29 @@ export default async function ProjectDetailPage({
             <span className="min-w-0 text-[#E4E4E4]">
               Authors: {authorsLine}
             </span>
-            {canViewRegistrationClaim && (
-              <IconHint label={registrationLine}>
-                <span className="inline-flex flex-none items-center border border-[#444444] bg-[#202020] px-2 py-0.5 text-[11px] font-normal text-[#B0B0B0]">
-                  {registrationLine}
-                </span>
-              </IconHint>
-            )}
           </div>
-          {project.fundingInstitution && (
-            <p>
-              Funded by:{" "}
-              <span className="font-normal text-[#E4E4E4]">
-                {project.fundingInstitution.name}
-              </span>
+          {(project.fundingInstitution || canViewRegistrationClaim) && (
+            <p className="flex min-w-0 flex-wrap items-center gap-2">
+              {project.fundingInstitution && (
+                <span>
+                  Funded by:{" "}
+                  <span className="font-normal text-[#E4E4E4]">
+                    {project.fundingInstitution.name}
+                  </span>
+                </span>
+              )}
+              {project.fundingInstitution && canViewRegistrationClaim && (
+                <span className="text-[#777777]" aria-hidden="true">
+                  |
+                </span>
+              )}
+              {canViewRegistrationClaim && (
+                <IconHint label={registrationLine}>
+                  <span className="inline-flex flex-none items-center border border-[#444444] bg-[#202020] px-2 py-0.5 text-[11px] font-normal text-[#B0B0B0]">
+                    {registrationLine}
+                  </span>
+                </IconHint>
+              )}
             </p>
           )}
           {highlightedJournalSubmission && highlightedJournalClass && (
