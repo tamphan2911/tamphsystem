@@ -1170,7 +1170,7 @@ export default async function ProjectDetailPage({
             <ResearchDetailSection>
               <div className="mb-5 flex items-center justify-between gap-3">
                 <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-                  Production timeline
+                  Cooking process
                 </h2>
                 <ProductionTimelineActions
                   projectId={project.id}
