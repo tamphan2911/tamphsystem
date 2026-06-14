@@ -110,6 +110,9 @@ export default async function ConferenceDetailPage({
         ...project.conferenceSubmissions.map((s) => s.status),
       ];
       const hasSubmissions = submissionStatuses.length > 0;
+      const hasSubmittedSubmission = submissionStatuses.some(
+        (status) => status === "PENDING" || status === "SUBMITTED",
+      );
 
       return {
         id: project.id,
@@ -147,7 +150,12 @@ export default async function ConferenceDetailPage({
         submissions: project._count.submissions,
         publications: project._count.publications,
         updatedAt: project.updatedAt.toLocaleDateString(),
-        notSubmittedAnywhere: !hasSubmissions,
+        notSubmittedAnywhere:
+          !hasSubmissions ||
+          submissionStatuses.every(
+            (status) => status === "REJECTED" || status === "WITHDRAWN",
+          ),
+        hasSubmittedSubmission,
       };
     },
   );

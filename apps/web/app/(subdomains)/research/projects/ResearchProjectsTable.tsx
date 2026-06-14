@@ -55,12 +55,14 @@ export type ResearchProjectRow = {
   publications: number;
   updatedAt: string;
   notSubmittedAnywhere: boolean;
+  hasSubmittedSubmission: boolean;
 };
 
 const stages = [
   "ALL",
   "PRODUCTION",
-  "SUBMITTING",
+  "NEED_SUBMIT",
+  "SUBMITTED",
   "REVIEW",
   "ACCEPTED",
   "PUBLISHED",
@@ -75,29 +77,38 @@ const claims = [
 ];
 
 function stageLabel(stage: string) {
-  if (stage === "SUBMITTING") return "SUBMITTED";
+  if (stage === "NEED_SUBMIT") return "Need submit";
+  if (stage === "SUBMITTED" || stage === "SUBMITTING") return "Submitted";
   if (stage === "REVIEW") return "REVIEW";
   return stage;
 }
 
+function stageFilterKey(row: ResearchProjectRow) {
+  if (row.stage === "SUBMITTING") {
+    return row.hasSubmittedSubmission ? "SUBMITTED" : "NEED_SUBMIT";
+  }
+  return row.stage;
+}
+
 function statusClass(stage: string) {
   if (stage === "PUBLISHED" || stage === "ACCEPTED") return "text-[#A8DADC]";
-  if (stage === "REVIEW" || stage === "SUBMITTING") return "text-[#B39CD0]";
+  if (stage === "REVIEW" || stage === "SUBMITTING" || stage === "SUBMITTED")
+    return "text-[#B39CD0]";
   return "text-[#FFC1CC]";
 }
 
 function stageStatusClass(row: ResearchProjectRow) {
-  if (row.stage === "SUBMITTING" && row.notSubmittedAnywhere) {
+  if (stageFilterKey(row) === "NEED_SUBMIT") {
     return "text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-rose-200";
   }
-  return statusClass(row.stage);
+  return statusClass(stageFilterKey(row));
 }
 
 function stageTooltip(row: ResearchProjectRow) {
-  if (row.stage === "SUBMITTING" && row.notSubmittedAnywhere) {
+  if (stageFilterKey(row) === "NEED_SUBMIT") {
     return "Not submit anywhere";
   }
-  return stageLabel(row.stage);
+  return stageLabel(stageFilterKey(row));
 }
 
 function stageIcon(stage: string) {
@@ -365,7 +376,7 @@ export function ResearchProjectsTable({
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
-      const matchesStage = stage === "ALL" || row.stage === stage;
+      const matchesStage = stage === "ALL" || stageFilterKey(row) === stage;
       const matchesClaim =
         !showRegistrationClaim || claim === "ALL" || row.claimStatus === claim;
       const haystack = [

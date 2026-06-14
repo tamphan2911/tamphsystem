@@ -202,6 +202,9 @@ export default async function ResearchProfilePage() {
       ...project.conferenceSubmissions.map((submission) => submission.status),
     ];
     const hasSubmissions = submissionStatuses.length > 0;
+    const hasSubmittedSubmission = submissionStatuses.some(
+      (status) => status === "PENDING" || status === "SUBMITTED",
+    );
 
     return {
       id: project.id,
@@ -232,7 +235,10 @@ export default async function ResearchProfilePage() {
       updatedAt: project.updatedAt.toLocaleDateString(),
       notSubmittedAnywhere:
         !hasSubmissions ||
-        submissionStatuses.every((status) => status === "REJECTED"),
+        submissionStatuses.every(
+          (status) => status === "REJECTED" || status === "WITHDRAWN",
+        ),
+      hasSubmittedSubmission,
     };
   });
 
