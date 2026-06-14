@@ -83,7 +83,7 @@ const navItems = [
 
 const sidebarStateKey = "research-sidebar-collapsed";
 const researchThemeKey = "research-theme-mode";
-const researchThemeTransitionMs = 720;
+const researchThemeTransitionMs = 280;
 type ResearchTheme = "dark" | "light";
 
 let researchThemeTransitionTimer: number | undefined;
@@ -97,8 +97,6 @@ function applyResearchTheme(theme: ResearchTheme) {
 
 function startResearchThemeTransition(theme: ResearchTheme) {
   const root = document.documentElement;
-  root.dataset.researchThemeTransition =
-    theme === "dark" ? "to-dark" : "to-light";
   root.classList.add("research-theme-transitioning");
 
   if (researchThemeTransitionTimer) {
@@ -107,7 +105,6 @@ function startResearchThemeTransition(theme: ResearchTheme) {
 
   researchThemeTransitionTimer = window.setTimeout(() => {
     root.classList.remove("research-theme-transitioning");
-    delete root.dataset.researchThemeTransition;
   }, researchThemeTransitionMs);
 }
 
