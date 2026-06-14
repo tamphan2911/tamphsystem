@@ -229,6 +229,7 @@ export default async function ProjectsDashboard() {
     };
   });
 
+  const production = rows.filter((row) => row.stage === "PRODUCTION");
   const needSubmit = rows.filter(
     (row) => row.stage === "SUBMITTING" && !row.hasSubmittedSubmission,
   );
@@ -241,8 +242,8 @@ export default async function ProjectsDashboard() {
 
   const stats = [
     {
-      label: "Total",
-      value: projects.length,
+      label: "Production",
+      value: production.length,
     },
     {
       label: "Need submit",
