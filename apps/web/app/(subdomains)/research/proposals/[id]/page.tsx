@@ -154,9 +154,7 @@ export default async function ProposalDetailPage({
   const session = await auth();
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
-  if (!roles.includes(Role.ADMIN) && !roles.includes(Role.CHIEF_ASSISTANT)) {
-    redirect("/401");
-  }
+  if (!roles.includes(Role.ADMIN)) redirect("/401");
 
   const proposal = await prisma.proposal.findUnique({
     where: { id },

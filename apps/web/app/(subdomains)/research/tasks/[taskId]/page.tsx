@@ -344,6 +344,8 @@ export default async function TaskDetailPage({
 
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const isRootAdmin = roles.includes(Role.ADMIN);
+  const isChiefAssistant = roles.includes(Role.CHIEF_ASSISTANT);
   await prisma.researchTask.updateMany({
     where: { status: ResearchTaskStatus.OPEN },
     data: { status: ResearchTaskStatus.IN_PROGRESS },
@@ -380,18 +382,36 @@ export default async function TaskDetailPage({
           id: true,
           title: true,
           coAuthors: true,
+          leadResearcherId: true,
           leadResearcher: { select: { name: true, email: true } },
           authors: {
-            select: { name: true, email: true },
+            select: { id: true, name: true, email: true },
             orderBy: [{ name: "asc" }, { email: "asc" }],
           },
           authorEntries: {
             select: {
+              userId: true,
               isCorresponding: true,
               user: { select: { name: true, email: true } },
             },
             orderBy: [{ position: "asc" }, { createdAt: "asc" }],
           },
+          organizedProjectLinks: {
+            select: {
+              organizedProject: {
+                select: {
+                  createdById: true,
+                  members: { select: { userId: true } },
+                },
+              },
+            },
+          },
+        },
+      },
+      organizedProject: {
+        select: {
+          createdById: true,
+          members: { select: { userId: true } },
         },
       },
       journal: {
@@ -443,7 +463,25 @@ export default async function TaskDetailPage({
   const isAssigner = task.createdById === userId;
   const isAssignee = Boolean(myAssignment);
   const selfAssigned = isAssigner && isAssignee;
-  if (!isAdmin && !isAssigner && !isAssignee) notFound();
+  const isRelatedResearchTask =
+    task.project?.leadResearcherId === userId ||
+    task.project?.authors.some((author) => author.id === userId) ||
+    task.project?.authorEntries.some((entry) => entry.userId === userId) ||
+    task.project?.organizedProjectLinks.some(({ organizedProject }) =>
+      organizedProject.createdById === userId ||
+      organizedProject.members.some((member) => member.userId === userId),
+    );
+  const isRelatedOrganizedProjectTask =
+    task.organizedProject?.createdById === userId ||
+    task.organizedProject?.members.some((member) => member.userId === userId);
+  const canAccessAsChiefAssistant =
+    isChiefAssistant &&
+    (isAssigner ||
+      isAssignee ||
+      Boolean(isRelatedResearchTask) ||
+      Boolean(isRelatedOrganizedProjectTask));
+  const canManageThisTask = isRootAdmin || canAccessAsChiefAssistant;
+  if (!canManageThisTask && !isAssigner && !isAssignee) notFound();
 
   let taskClarifications = task.clarifications;
   const demoRequester = task.assignments.find(
@@ -575,6 +613,33 @@ export default async function TaskDetailPage({
     reportEnabled && !isClosed && isAssignee && !isAssigner;
   const canDownloadReport =
     reportEnabled && Boolean(task.reportFileName) && (isAdmin || isAssigner);
+  const scopedResearchWhere = isRootAdmin
+    ? {}
+    : {
+        OR: [
+          { leadResearcherId: userId },
+          { authors: { some: { id: userId } } },
+          { authorEntries: { some: { userId } } },
+          { registrationUserId: userId },
+          {
+            organizedProjectLinks: {
+              some: {
+                organizedProject: {
+                  OR: [
+                    { createdById: userId },
+                    { members: { some: { userId } } },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      };
+  const scopedOrganizedProjectWhere = isRootAdmin
+    ? {}
+    : {
+        OR: [{ createdById: userId }, { members: { some: { userId } } }],
+      };
   const journalSubmissionLink =
     task.journal?.submissionLink || firstUrl(task.journal?.note);
   const conferenceSubmissionLink = firstUrl(task.conference?.note);
@@ -594,6 +659,7 @@ export default async function TaskDetailPage({
           select: { id: true, name: true, email: true, roles: true },
         }),
         prisma.researchProject.findMany({
+          where: scopedResearchWhere,
           orderBy: [{ updatedAt: "desc" }],
           select: { id: true, researchCode: true, title: true, stage: true },
         }),
@@ -627,6 +693,7 @@ export default async function TaskDetailPage({
           include: { journal: { select: { name: true } } },
         }),
         prisma.organizedProject.findMany({
+          where: scopedOrganizedProjectWhere,
           orderBy: [{ updatedAt: "desc" }],
           select: { id: true, title: true, referenceCode: true, status: true },
         }),

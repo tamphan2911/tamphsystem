@@ -424,13 +424,60 @@ function taskTypeCanBeCreatedByResearchAuthor(taskType: ResearchTaskType) {
 async function canCreateResearchTaskForProject({
   user,
   projectId,
+  organizedProjectId,
   taskType,
 }: {
   user: { id: string; roles: Role[] };
   projectId: string | null;
+  organizedProjectId: string | null;
   taskType: ResearchTaskType;
 }) {
-  if (isResearchAdminRole(user.roles)) return true;
+  if (user.roles.includes(Role.ADMIN)) return true;
+  if (user.roles.includes(Role.CHIEF_ASSISTANT)) {
+    if (projectId) {
+      return (
+        (await prisma.researchProject.count({
+          where: {
+            id: projectId,
+            OR: [
+              { leadResearcherId: user.id },
+              { authors: { some: { id: user.id } } },
+              { authorEntries: { some: { userId: user.id } } },
+              { registrationUserId: user.id },
+              {
+                organizedProjectLinks: {
+                  some: {
+                    organizedProject: {
+                      OR: [
+                        { createdById: user.id },
+                        { members: { some: { userId: user.id } } },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        })) > 0
+      );
+    }
+
+    if (organizedProjectId) {
+      return (
+        (await prisma.organizedProject.count({
+          where: {
+            id: organizedProjectId,
+            OR: [
+              { createdById: user.id },
+              { members: { some: { userId: user.id } } },
+            ],
+          },
+        })) > 0
+      );
+    }
+
+    return false;
+  }
   if (!projectId || !taskTypeCanBeCreatedByResearchAuthor(taskType)) {
     return false;
   }
@@ -758,6 +805,59 @@ function requireResearchAdmin(roles: Role[]) {
   if (!isResearchAdminRole(roles)) {
     redirect("/401");
   }
+}
+
+function scopedTaskWhere(taskId: string, userId: string) {
+  return {
+    id: taskId,
+    OR: [
+      { createdById: userId },
+      { assignments: { some: { userId } } },
+      {
+        project: {
+          OR: [
+            { leadResearcherId: userId },
+            { authors: { some: { id: userId } } },
+            { authorEntries: { some: { userId } } },
+            { registrationUserId: userId },
+            {
+              organizedProjectLinks: {
+                some: {
+                  organizedProject: {
+                    OR: [
+                      { createdById: userId },
+                      { members: { some: { userId } } },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        organizedProject: {
+          OR: [
+            { createdById: userId },
+            { members: { some: { userId } } },
+          ],
+        },
+      },
+    ],
+  };
+}
+
+async function canManageTaskAsResearchAdmin(
+  taskId: string,
+  user: { id: string; roles: Role[] },
+) {
+  if (user.roles.includes(Role.ADMIN)) return true;
+  if (!user.roles.includes(Role.CHIEF_ASSISTANT)) return false;
+  return (
+    (await prisma.researchTask.count({
+      where: scopedTaskWhere(taskId, user.id),
+    })) > 0
+  );
 }
 
 async function notifyUsers({
@@ -1147,7 +1247,7 @@ export async function submitProposal(formData: FormData) {
 
 export async function deleteProposal(proposalId: string) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   await prisma.proposal.delete({
     where: { id: proposalId },
@@ -1158,7 +1258,7 @@ export async function deleteProposal(proposalId: string) {
 
 export async function reviewProposal(formData: FormData) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   const proposalId = optionalString(formData.get("proposalId"));
   const status = enumValue(ProposalStatus, formData.get("status"));
@@ -2437,7 +2537,7 @@ export async function deletePublisherAccount(accountId: string) {
 
 export async function createFundingInstitution(formData: FormData) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   const name = optionalString(formData.get("name")) ?? "Untitled funder";
   const shortName = optionalString(formData.get("shortName"));
@@ -2462,7 +2562,7 @@ export async function updateFundingInstitution(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   await prisma.fundingInstitution.update({
     where: { id: institutionId },
@@ -2481,7 +2581,7 @@ export async function updateFundingInstitution(
 
 export async function deleteFundingInstitution(institutionId: string) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   const institution = await prisma.fundingInstitution.findUnique({
     where: { id: institutionId },
@@ -2892,6 +2992,7 @@ export async function createResearchTask(formData: FormData) {
     !(await canCreateResearchTaskForProject({
       user,
       projectId,
+      organizedProjectId,
       taskType,
     }))
   ) {
@@ -2939,7 +3040,12 @@ export async function createResearchTask(formData: FormData) {
     (taskType === ResearchTaskType.SUBMIT_RESEARCH ||
       taskType === ResearchTaskType.SUBMIT_CONFERENCE) &&
     !(await researchProductionIsComplete(projectId)) &&
-    !(await canCreateResearchTaskForProject({ user, projectId, taskType }))
+    !(await canCreateResearchTaskForProject({
+      user,
+      projectId,
+      organizedProjectId,
+      taskType,
+    }))
   ) {
     return { ok: false, reason: "PRODUCTION_INCOMPLETE" };
   }
@@ -3069,6 +3175,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     },
   });
   if (!currentTask) return { ok: false, reason: "NOT_FOUND" };
+  if (!(await canManageTaskAsResearchAdmin(taskId, user))) redirect("/401");
   if (
     currentTask.status === ResearchTaskStatus.COMPLETED ||
     currentTask.status === ResearchTaskStatus.REVOKED
@@ -3318,7 +3425,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
 
 export async function revokeResearchTask(taskId: string) {
   const user = await requireCurrentUser();
-  const isAdmin = isResearchAdminRole(user.roles);
+  const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);
 
   const currentTask = await prisma.researchTask.findUnique({
     where: { id: taskId },
@@ -3384,6 +3491,7 @@ export async function deleteResearchTask(taskId: string) {
     },
   });
   if (!task) return;
+  if (!(await canManageTaskAsResearchAdmin(taskId, user))) redirect("/401");
 
   await prisma.researchTask.delete({
     where: { id: taskId },
@@ -3411,7 +3519,7 @@ export async function deleteResearchNotification(notificationId: string) {
 
 export async function updateSubmissionStatus(formData: FormData) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   const submissionId = optionalString(formData.get("submissionId"));
   const submissionKind = optionalString(formData.get("submissionKind"));
@@ -3822,7 +3930,7 @@ export async function updateSubmissionStatus(formData: FormData) {
 
 export async function deleteSubmission(formData: FormData) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   const submissionId = optionalString(formData.get("submissionId"));
   const submissionKind = optionalString(formData.get("submissionKind"));
@@ -3949,7 +4057,7 @@ export async function deleteSuggestedJournal(
   suggestionId: string,
 ) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
   if (await researchContentIsLocked(projectId)) return;
 
   await prisma.suggestedJournal.deleteMany({
@@ -4100,7 +4208,7 @@ async function canApproveVenueSuggestionForResearch(
   userId: string,
   roles: Role[],
 ) {
-  if (isResearchAdminRole(roles)) return true;
+  if (roles.includes(Role.ADMIN)) return true;
   const project = await prisma.researchProject.findUnique({
     where: { id: projectId },
     select: {
@@ -4163,7 +4271,7 @@ export async function deleteSuggestedConference(
   suggestionId: string,
 ) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
   if (await researchContentIsLocked(projectId)) return;
 
   await prisma.suggestedConference.deleteMany({
@@ -4180,6 +4288,7 @@ export async function approveSuggestedJournal(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
+  requireAdmin(user.roles);
   if (
     !(await canApproveVenueSuggestionForResearch(
       projectId,
@@ -4199,7 +4308,6 @@ export async function approveSuggestedJournal(
   const linkedJournalId =
     suggestion.journalId ?? optionalString(formData.get("journalId"));
   if (!linkedJournalId) {
-    if (!isResearchAdminRole(user.roles)) redirect("/401");
     throw new Error("Choose the journal in the system before approving.");
   }
 
@@ -4236,6 +4344,7 @@ export async function approveSuggestedConference(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
+  requireAdmin(user.roles);
   if (
     !(await canApproveVenueSuggestionForResearch(
       projectId,
@@ -4255,7 +4364,6 @@ export async function approveSuggestedConference(
   const linkedConferenceId =
     suggestion.conferenceId ?? optionalString(formData.get("conferenceId"));
   if (!linkedConferenceId) {
-    if (!isResearchAdminRole(user.roles)) redirect("/401");
     throw new Error("Choose the conference in the system before approving.");
   }
 
@@ -4427,7 +4535,7 @@ async function createSubmissionAfterTaskApproval(
 
 export async function markResearchTaskReadyForCheck(taskId: string) {
   const user = await requireCurrentUser();
-  const isAdmin = isResearchAdminRole(user.roles);
+  const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
     select: {
@@ -4616,7 +4724,6 @@ export async function uploadResearchTaskReport(
 
 export async function finishResearchTask(taskId: string, formData?: FormData) {
   const user = await requireCurrentUser();
-  const isAdmin = isResearchAdminRole(user.roles);
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
     select: {
@@ -4637,6 +4744,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
   });
 
   if (!task) return;
+  const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);
   if (
     task.status === ResearchTaskStatus.COMPLETED ||
     task.status === ResearchTaskStatus.REVOKED
@@ -4759,7 +4867,7 @@ export async function sendTaskReminderEmail(
     };
   }
 
-  const isAdmin = isResearchAdminRole(user.roles);
+  const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);
   const isAssigner = task.createdById === user.id;
   if (!isAdmin && !isAssigner) redirect("/401");
 
@@ -4867,7 +4975,10 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
     },
   });
   if (!task) return;
-  if (!isResearchAdminRole(user.roles) && task.createdById !== user.id) {
+  if (
+    !(await canManageTaskAsResearchAdmin(taskId, user)) &&
+    task.createdById !== user.id
+  ) {
     redirect("/401");
   }
 
@@ -5009,7 +5120,10 @@ export async function answerTaskClarification(
     },
   });
   if (!task) return;
-  if (!isResearchAdminRole(user.roles) && task.createdById !== user.id) {
+  if (
+    !(await canManageTaskAsResearchAdmin(taskId, user)) &&
+    task.createdById !== user.id
+  ) {
     redirect("/401");
   }
   if (

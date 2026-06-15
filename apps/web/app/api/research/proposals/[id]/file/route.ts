@@ -2,10 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../../auth";
 
-function isResearchAdmin(roles: Role[]) {
-  return roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
-}
-
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -23,7 +19,7 @@ export async function GET(
     currentUser?.roles ??
     (((session?.user as { roles?: Role[] } | undefined)?.roles ??
       []) as Role[]);
-  if (!isResearchAdmin(roles)) {
+  if (!roles.includes(Role.ADMIN)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

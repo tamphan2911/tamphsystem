@@ -2,10 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../../auth";
 
-function isResearchAdmin(roles: Role[]) {
-  return roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
-}
-
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -51,7 +47,7 @@ export async function GET(
   }
 
   const canAccess =
-    isResearchAdmin(roles) ||
+    roles.includes(Role.ADMIN) ||
     submission.project.leadResearcherId === userId ||
     submission.project.authorEntries.some((entry) => entry.userId === userId) ||
     submission.project.tasks.some(

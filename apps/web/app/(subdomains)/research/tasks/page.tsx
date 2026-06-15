@@ -19,13 +19,46 @@ export const dynamic = "force-dynamic";
 export default async function ResearchTasksPage() {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
-    []) as Role[];
 
   if (!userId) redirect("/login");
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: true },
+  });
+  const roles =
+    currentUser?.roles ??
+    (((session?.user as { roles?: Role[] } | undefined)?.roles ??
+      []) as Role[]);
 
-  const isAdmin =
-    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const isRootAdmin = roles.includes(Role.ADMIN);
+  const canManageTasks = isRootAdmin || roles.includes(Role.CHIEF_ASSISTANT);
+  const scopedResearchWhere = isRootAdmin
+    ? {}
+    : {
+        OR: [
+          { leadResearcherId: userId },
+          { authors: { some: { id: userId } } },
+          { authorEntries: { some: { userId } } },
+          { registrationUserId: userId },
+          {
+            organizedProjectLinks: {
+              some: {
+                organizedProject: {
+                  OR: [
+                    { createdById: userId },
+                    { members: { some: { userId } } },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      };
+  const scopedOrganizedProjectWhere = isRootAdmin
+    ? {}
+    : {
+        OR: [{ createdById: userId }, { members: { some: { userId } } }],
+      };
   await prisma.researchTask.updateMany({
     where: { status: ResearchTaskStatus.OPEN },
     data: { status: ResearchTaskStatus.IN_PROGRESS },
@@ -39,7 +72,7 @@ export default async function ResearchTasksPage() {
     conferences,
     reviews,
     organizedProjects,
-  ] = isAdmin
+  ] = canManageTasks
     ? await Promise.all([
         prisma.user.findMany({
           where: { activeSites: { has: "research" } },
@@ -47,6 +80,7 @@ export default async function ResearchTasksPage() {
           select: { id: true, name: true, email: true, roles: true },
         }),
         prisma.researchProject.findMany({
+          where: scopedResearchWhere,
           orderBy: [{ updatedAt: "desc" }],
           select: { id: true, researchCode: true, title: true, stage: true },
         }),
@@ -80,6 +114,7 @@ export default async function ResearchTasksPage() {
           include: { journal: { select: { name: true, publisher: true } } },
         }),
         prisma.organizedProject.findMany({
+          where: scopedOrganizedProjectWhere,
           orderBy: [{ updatedAt: "desc" }],
           select: { id: true, title: true, referenceCode: true, status: true },
         }),
@@ -141,10 +176,10 @@ export default async function ResearchTasksPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <TasksClient
-        isAdmin={isAdmin}
+        isAdmin={canManageTasks}
         deleteAction={deleteResearchTask}
         action={
-          isAdmin ? (
+          canManageTasks ? (
             <NewTaskDialog
               assignees={assignees}
               researchOptions={researchOptions}

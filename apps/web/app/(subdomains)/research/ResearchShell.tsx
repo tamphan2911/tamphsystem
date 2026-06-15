@@ -22,13 +22,13 @@ const navItems = [
     href: "/funding-institutions",
     label: "Funder",
     icon: "fundingInstitutions" as const,
-    adminOnly: true,
+    rootAdminOnly: true,
   },
   {
     href: "/proposals",
     label: "Proposals",
     icon: "proposals" as const,
-    adminOnly: true,
+    rootAdminOnly: true,
   },
   {
     href: "/tasks",
@@ -40,13 +40,13 @@ const navItems = [
     href: "/submissions",
     label: "Submissions",
     icon: "submissions" as const,
-    adminOnly: true,
+    rootAdminOnly: true,
   },
   {
     href: "/suggestions",
     label: "Suggestions",
     icon: "suggestions" as const,
-    adminOnly: true,
+    rootAdminOnly: true,
   },
   {
     href: "/notifications",

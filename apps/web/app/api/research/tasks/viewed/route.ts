@@ -6,6 +6,45 @@ function isResearchAdmin(roles: Role[]) {
   return roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
 }
 
+function scopedTaskWhere(userId: string) {
+  return {
+    OR: [
+      { createdById: userId },
+      { assignments: { some: { userId } } },
+      {
+        project: {
+          OR: [
+            { leadResearcherId: userId },
+            { authors: { some: { id: userId } } },
+            { authorEntries: { some: { userId } } },
+            { registrationUserId: userId },
+            {
+              organizedProjectLinks: {
+                some: {
+                  organizedProject: {
+                    OR: [
+                      { createdById: userId },
+                      { members: { some: { userId } } },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        organizedProject: {
+          OR: [
+            { createdById: userId },
+            { members: { some: { userId } } },
+          ],
+        },
+      },
+    ],
+  };
+}
+
 export async function POST() {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
@@ -29,8 +68,13 @@ export async function POST() {
 
   await prisma.researchTask.updateMany({
     where: {
-      status: ResearchTaskStatus.COMPLETED,
-      adminViewedAt: null,
+      AND: [
+        roles.includes(Role.ADMIN) ? {} : scopedTaskWhere(userId),
+        {
+          status: ResearchTaskStatus.COMPLETED,
+          adminViewedAt: null,
+        },
+      ],
     },
     data: {
       adminViewedAt: new Date(),

@@ -2,11 +2,70 @@ import { NextResponse } from "next/server";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 
-function taskNotificationWhere(isAdmin: boolean, userId: string) {
-  if (isAdmin) {
+function scopedTaskWhere(userId: string) {
+  return {
+    OR: [
+      { createdById: userId },
+      { assignments: { some: { userId } } },
+      {
+        project: {
+          OR: [
+            { leadResearcherId: userId },
+            { authors: { some: { id: userId } } },
+            { authorEntries: { some: { userId } } },
+            { registrationUserId: userId },
+            {
+              organizedProjectLinks: {
+                some: {
+                  organizedProject: {
+                    OR: [
+                      { createdById: userId },
+                      { members: { some: { userId } } },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        organizedProject: {
+          OR: [
+            { createdById: userId },
+            { members: { some: { userId } } },
+          ],
+        },
+      },
+    ],
+  };
+}
+
+function taskNotificationWhere({
+  isRootAdmin,
+  isChiefAssistant,
+  userId,
+}: {
+  isRootAdmin: boolean;
+  isChiefAssistant: boolean;
+  userId: string;
+}) {
+  if (isRootAdmin) {
     return {
       status: ResearchTaskStatus.COMPLETED,
       adminViewedAt: null,
+    };
+  }
+
+  if (isChiefAssistant) {
+    return {
+      AND: [
+        scopedTaskWhere(userId),
+        {
+          status: ResearchTaskStatus.COMPLETED,
+          adminViewedAt: null,
+        },
+      ],
     };
   }
 
@@ -18,10 +77,6 @@ function taskNotificationWhere(isAdmin: boolean, userId: string) {
       },
     },
   };
-}
-
-function isResearchAdmin(roles: Role[]) {
-  return roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
 }
 
 export async function GET() {
@@ -40,19 +95,22 @@ export async function GET() {
     currentUser?.roles ??
     (((session?.user as { roles?: Role[] } | undefined)?.roles ??
       []) as Role[]);
-  const isAdmin = isResearchAdmin(roles);
+  const isRootAdmin = roles.includes(Role.ADMIN);
+  const isChiefAssistant = roles.includes(Role.CHIEF_ASSISTANT);
   await prisma.researchTask.updateMany({
     where: { status: ResearchTaskStatus.OPEN },
     data: { status: ResearchTaskStatus.IN_PROGRESS },
   });
 
-  const where = isAdmin
+  const where = isRootAdmin
     ? {}
-    : {
-        assignments: {
-          some: { userId },
-        },
-      };
+    : isChiefAssistant
+      ? scopedTaskWhere(userId)
+      : {
+          assignments: {
+            some: { userId },
+          },
+        };
 
   const [tasks, notificationCount] = await Promise.all([
     prisma.researchTask.findMany({
@@ -71,7 +129,7 @@ export async function GET() {
       orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     }),
     prisma.researchTask.count({
-      where: taskNotificationWhere(isAdmin, userId),
+      where: taskNotificationWhere({ isRootAdmin, isChiefAssistant, userId }),
     }),
   ]);
 

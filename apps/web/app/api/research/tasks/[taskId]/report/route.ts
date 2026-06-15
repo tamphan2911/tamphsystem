@@ -2,8 +2,44 @@ import { NextResponse } from "next/server";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../../auth";
 
-function isResearchAdmin(roles: Role[]) {
-  return roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+function scopedTaskWhere(taskId: string, userId: string) {
+  return {
+    id: taskId,
+    OR: [
+      { createdById: userId },
+      { assignments: { some: { userId } } },
+      {
+        project: {
+          OR: [
+            { leadResearcherId: userId },
+            { authors: { some: { id: userId } } },
+            { authorEntries: { some: { userId } } },
+            { registrationUserId: userId },
+            {
+              organizedProjectLinks: {
+                some: {
+                  organizedProject: {
+                    OR: [
+                      { createdById: userId },
+                      { members: { some: { userId } } },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        organizedProject: {
+          OR: [
+            { createdById: userId },
+            { members: { some: { userId } } },
+          ],
+        },
+      },
+    ],
+  };
 }
 
 export async function GET(
@@ -25,6 +61,12 @@ export async function GET(
       []) as Role[]);
 
   const { taskId } = await params;
+  const canReadAsChiefAssistant =
+    roles.includes(Role.CHIEF_ASSISTANT) &&
+    !roles.includes(Role.ADMIN) &&
+    (await prisma.researchTask.count({
+      where: scopedTaskWhere(taskId, userId),
+    })) > 0;
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
     select: {
@@ -38,7 +80,11 @@ export async function GET(
   if (!task?.reportFileData || !task.reportFileName) {
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
-  if (!isResearchAdmin(roles) && task.createdById !== userId) {
+  if (
+    !roles.includes(Role.ADMIN) &&
+    !canReadAsChiefAssistant &&
+    task.createdById !== userId
+  ) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
