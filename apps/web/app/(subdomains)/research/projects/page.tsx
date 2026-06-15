@@ -97,9 +97,8 @@ export default async function ProjectsDashboard() {
     currentUser?.roles ??
     (((session?.user as { roles?: Role[] } | undefined)?.roles ??
       []) as Role[]);
-  const isAdmin =
-    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
-  const projectWhere = isAdmin
+  const isRootAdmin = roles.includes(Role.ADMIN);
+  const projectWhere = isRootAdmin
     ? {}
     : {
         OR: [
@@ -205,7 +204,7 @@ export default async function ProjectsDashboard() {
         project.registrationName ||
         "",
       canViewRegistrationClaim:
-        isAdmin ||
+        isRootAdmin ||
         project.registrationUserId === userId ||
         Boolean(
           project.registrationName &&
@@ -259,7 +258,7 @@ export default async function ProjectsDashboard() {
       label: "Published",
       value: published.length,
     },
-    ...(isAdmin
+    ...(isRootAdmin
       ? [
           {
             label: "Claimed",
@@ -275,7 +274,7 @@ export default async function ProjectsDashboard() {
         <div className="flex w-full min-w-0 items-center justify-between gap-4">
           <div
             className={`grid min-w-0 border border-[#444444] bg-[#2C2C2C] ${
-              isAdmin ? "sm:grid-cols-6" : "sm:grid-cols-5"
+              isRootAdmin ? "sm:grid-cols-6" : "sm:grid-cols-5"
             }`}
           >
             {stats.map((item, index) => (
@@ -293,10 +292,10 @@ export default async function ProjectsDashboard() {
             ))}
           </div>
           <div className="flex flex-none items-center">
-            {isAdmin ? (
+            {isRootAdmin ? (
               <NewResearchDialog
                 users={authorOptions}
-                isAdmin={isAdmin}
+                isAdmin={isRootAdmin}
                 fundingInstitutions={fundingInstitutions.map((institution) => ({
                   id: institution.id,
                   name: institution.name,
@@ -317,7 +316,7 @@ export default async function ProjectsDashboard() {
 
       <ResearchProjectsTable
         rows={rows}
-        isAdmin={isAdmin}
+        isAdmin={isRootAdmin}
         deleteAction={deleteResearchProject}
         emptyMessage="No research is connected to your account yet. When you join a study, author a paper, or receive a research task, it will appear here."
       />

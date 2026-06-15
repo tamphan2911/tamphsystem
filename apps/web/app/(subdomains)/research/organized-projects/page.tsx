@@ -48,9 +48,8 @@ export default async function OrganizedProjectsPage() {
     currentUser?.roles ??
     (((session?.user as { roles?: Role[] } | undefined)?.roles ??
       []) as Role[]);
-  const isAdmin =
-    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
-  const projectWhere = isAdmin
+  const isRootAdmin = roles.includes(Role.ADMIN);
+  const projectWhere = isRootAdmin
     ? {}
     : {
         OR: [
@@ -180,7 +179,7 @@ export default async function OrganizedProjectsPage() {
           </div>
 
           <div className="flex flex-none items-center">
-            {isAdmin ? (
+            {isRootAdmin ? (
               <NewOrganizedProjectDialog
                 researchOptions={researchOptions.map((research) => ({
                   id: research.id,
@@ -214,7 +213,7 @@ export default async function OrganizedProjectsPage() {
 
       <OrganizedProjectsTable
         rows={rows}
-        isAdmin={isAdmin}
+        isAdmin={isRootAdmin}
         deleteAction={deleteOrganizedProject}
         emptyMessage="No project is connected to your account yet. Projects will show here when you are added as a member or assigned a related task."
       />
