@@ -250,7 +250,7 @@ export function ResearchDatePicker({
             }}
             placeholder={placeholder}
             aria-label={`${placeholder}. You can type a date or choose from the calendar.`}
-            className="h-10 min-w-0 flex-1 appearance-none bg-transparent text-sm font-normal text-[#1F2937] outline-none placeholder:text-[#8C95A4] disabled:cursor-not-allowed dark:text-[#E4E4E4] dark:placeholder:text-[#5A5A5A]"
+            className="h-10 min-w-0 flex-1 appearance-none bg-transparent text-sm font-normal text-[#1F2937] outline-none placeholder:text-[#A8B2C2] disabled:cursor-not-allowed dark:text-[#E4E4E4] dark:placeholder:text-[#5A5A5A]"
           />
         </label>
         {selectedValue && !required && !disabled ? (

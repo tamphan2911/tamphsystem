@@ -23,7 +23,7 @@ type JournalOption = {
 };
 
 const inputClass =
-  "h-12 border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm text-[#E4E4E4] outline-none transition placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]";
+  "h-12 border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-slate-800 outline-none transition placeholder:text-[#A8B2C2] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838] dark:text-[#E4E4E4] dark:placeholder:text-[#5A5A5A]";
 const dateInputClass = researchFieldClass;
 const labelClass = "grid gap-1.5 text-sm font-semibold text-[#E4E4E4]";
 const helperClass = "text-xs font-normal leading-5 text-[#B0B0B0]";
@@ -228,6 +228,8 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
                   New review records start as accepted by default.
                 </span>
               </label>
+            </div>
+            <div className="grid items-start gap-4 md:grid-cols-2">
               <label className={labelClass}>
                 Requested date
                 <ResearchDatePicker

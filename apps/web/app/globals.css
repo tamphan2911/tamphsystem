@@ -1197,7 +1197,7 @@ html[data-research-theme="light"]
 
 .research-site-root.research-theme-light input::placeholder,
 .research-site-root.research-theme-light textarea::placeholder {
-  color: #8c95a4 !important;
+  color: #a8b2c2 !important;
 }
 
 .research-site-root [data-research-date-field="true"] input,
@@ -1448,7 +1448,7 @@ html[data-research-theme="light"]
 html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
   :where(input::placeholder, textarea::placeholder) {
-  color: #98a2b3 !important;
+  color: #a8b2c2 !important;
 }
 
 html[data-research-theme="light"]
