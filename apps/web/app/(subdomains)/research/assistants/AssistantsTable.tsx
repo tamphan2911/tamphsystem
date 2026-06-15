@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   Crown,
@@ -64,6 +65,7 @@ export function AssistantsTable({
   const passwordTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>(
     {},
   );
+  const modalRoot = typeof document === "undefined" ? null : document.body;
 
   useEffect(() => {
     const timers = passwordTimers.current;
@@ -274,110 +276,119 @@ export function AssistantsTable({
         onPageChange={pagination.setPage}
       />
 
-      {editing && (
-        <div
-          data-research-modal-overlay="true"
-          className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
-        >
-          <div className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <DialogHeader
-              title="Edit assistant role"
-              onClose={() => setEditing(null)}
-              actions={
-                <ResearchButton form="edit-assistant-form" disabled={isPending}>
-                  Save change
-                </ResearchButton>
-              }
-            />
-            <form
-              id="edit-assistant-form"
-              action={submitEdit}
-              className="grid gap-5 px-5 py-5"
+      {editing && modalRoot
+        ? createPortal(
+            <div
+              data-research-modal-overlay="true"
+              className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
             >
-              <input type="hidden" name="userId" value={editing.id} />
-              <input type="hidden" name="assistantRole" value={editRole} />
-              <div className="border border-[#444444] bg-[#202020] p-4">
-                <p className="text-sm font-bold text-[#E4E4E4]">
-                  {editing.name || "Unnamed user"}
-                </p>
-                <p className="mt-1 text-xs text-[#B0B0B0]">
-                  {displayResearchEmail(editing.email)}
-                </p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <RoleChoice
-                  active={editRole === "ASSISTANT"}
-                  title="Assistant"
-                  icon={<ShieldCheck className="h-5 w-5" />}
-                  onClick={() => setEditRole("ASSISTANT")}
+              <div className="w-full max-w-lg animate-[modalPanelIn_220ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+                <DialogHeader
+                  title="Edit assistant role"
+                  onClose={() => setEditing(null)}
+                  actions={
+                    <ResearchButton
+                      form="edit-assistant-form"
+                      disabled={isPending}
+                    >
+                      Save change
+                    </ResearchButton>
+                  }
                 />
-                <RoleChoice
-                  active={editRole === "CHIEF_ASSISTANT"}
-                  title="Chief Assistant"
-                  icon={<Crown className="h-5 w-5" />}
-                  onClick={() => setEditRole("CHIEF_ASSISTANT")}
-                />
-              </div>
-              <label className="grid gap-2">
-                <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                  Login password
-                </span>
-                <div className="relative">
-                  <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#777777]" />
-                  <input
-                    name="password"
-                    type="text"
-                    autoComplete="new-password"
-                    placeholder="Leave blank to keep current password"
-                    className={`${researchFieldClass} pl-10`}
-                  />
-                </div>
-                <span className="text-xs leading-5 text-[#B0B0B0]">
-                  Set a new value here to update the assistant login password
-                  and the password shown in this table.
-                </span>
-              </label>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {deleting && (
-        <div
-          data-research-modal-overlay="true"
-          className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
-        >
-          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <DialogHeader
-              title="Remove assistant role"
-              onClose={() => setDeleting(null)}
-              actions={
-                <ResearchButton
-                  form="delete-assistant-role-form"
-                  disabled={isPending}
-                  tone="danger"
+                <form
+                  id="edit-assistant-form"
+                  action={submitEdit}
+                  className="grid gap-5 px-5 py-5"
                 >
-                  Remove role
-                </ResearchButton>
-              }
-            />
-            <form
-              id="delete-assistant-role-form"
-              action={confirmDelete}
-              className="space-y-4 px-5 py-5"
+                  <input type="hidden" name="userId" value={editing.id} />
+                  <input type="hidden" name="assistantRole" value={editRole} />
+                  <div className="border border-[#444444] bg-[#202020] p-4">
+                    <p className="text-sm font-bold text-[#E4E4E4]">
+                      {editing.name || "Unnamed user"}
+                    </p>
+                    <p className="mt-1 text-xs text-[#B0B0B0]">
+                      {displayResearchEmail(editing.email)}
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <RoleChoice
+                      active={editRole === "ASSISTANT"}
+                      title="Assistant"
+                      icon={<ShieldCheck className="h-5 w-5" />}
+                      onClick={() => setEditRole("ASSISTANT")}
+                    />
+                    <RoleChoice
+                      active={editRole === "CHIEF_ASSISTANT"}
+                      title="Chief Assistant"
+                      icon={<Crown className="h-5 w-5" />}
+                      onClick={() => setEditRole("CHIEF_ASSISTANT")}
+                    />
+                  </div>
+                  <label className="grid gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                      Login password
+                    </span>
+                    <div className="relative">
+                      <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#777777]" />
+                      <input
+                        name="password"
+                        type="text"
+                        autoComplete="new-password"
+                        placeholder="Leave blank to keep current password"
+                        className={`${researchFieldClass} pl-10`}
+                      />
+                    </div>
+                    <span className="text-xs leading-5 text-[#B0B0B0]">
+                      Set a new value here to update the assistant login
+                      password and the password shown in this table.
+                    </span>
+                  </label>
+                </form>
+              </div>
+            </div>,
+            modalRoot,
+          )
+        : null}
+
+      {deleting && modalRoot
+        ? createPortal(
+            <div
+              data-research-modal-overlay="true"
+              className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
             >
-              <input type="hidden" name="userId" value={deleting.id} />
-              <p className="text-sm leading-6 text-[#B0B0B0]">
-                Remove the assistant role from{" "}
-                <span className="font-semibold text-[#E4E4E4]">
-                  {displayResearchPersonName(deleting) || "Selected user"}
-                </span>
-                ? This does not delete the user account.
-              </p>
-            </form>
-          </div>
-        </div>
-      )}
+              <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+                <DialogHeader
+                  title="Remove assistant role"
+                  onClose={() => setDeleting(null)}
+                  actions={
+                    <ResearchButton
+                      form="delete-assistant-role-form"
+                      disabled={isPending}
+                      tone="danger"
+                    >
+                      Remove role
+                    </ResearchButton>
+                  }
+                />
+                <form
+                  id="delete-assistant-role-form"
+                  action={confirmDelete}
+                  className="space-y-4 px-5 py-5"
+                >
+                  <input type="hidden" name="userId" value={deleting.id} />
+                  <p className="text-sm leading-6 text-[#B0B0B0]">
+                    Remove the assistant role from{" "}
+                    <span className="font-semibold text-[#E4E4E4]">
+                      {displayResearchPersonName(deleting) || "Selected user"}
+                    </span>
+                    ? This does not delete the user account.
+                  </p>
+                </form>
+              </div>
+            </div>,
+            modalRoot,
+          )
+        : null}
     </div>
   );
 }
