@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -80,6 +81,7 @@ export function ResearchUsersTable({
     null,
   );
   const [isPending, startTransition] = useTransition();
+  const modalRoot = typeof document === "undefined" ? null : document.body;
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -314,119 +316,129 @@ export function ResearchUsersTable({
         onPageChange={pagination.setPage}
       />
 
-      {editing && (
-        <div
-          data-research-modal-overlay="true"
-          className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
-        >
-          <div className="w-full max-w-2xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <DialogHeader
-              title="Edit research user"
-              onClose={() => setEditing(null)}
-              actions={
-                <ResearchButton
-                  form="edit-research-user-form"
-                  disabled={isPending}
-                >
-                  <Save className="h-4 w-4" />
-                  Save user
-                </ResearchButton>
-              }
-            />
-            <form
-              id="edit-research-user-form"
-              action={submitEdit}
-              className="grid gap-4 px-5 py-5"
+      {editing && modalRoot
+        ? createPortal(
+            <div
+              data-research-modal-overlay="true"
+              className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
             >
-              <input type="hidden" name="userId" value={editing.id} />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Name" name="name" defaultValue={editing.name} />
-                <Field
-                  label="Email"
-                  name="email"
-                  type="email"
-                  defaultValue={editing.email}
-                  placeholder="Optional"
-                />
-                <Field
-                  label="Affiliation"
-                  name="affiliation"
-                  defaultValue={editing.affiliation}
-                />
-                <Field
-                  label="New password"
-                  name="password"
-                  type="text"
-                  placeholder="Leave blank to keep current password"
-                />
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                  Roles
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {roleOptions.map((item) => (
-                    <label
-                      key={item}
-                      className="flex items-center gap-2 border border-[#444444] px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200"
+              <div className="w-full max-w-2xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+                <DialogHeader
+                  title="Edit research user"
+                  onClose={() => setEditing(null)}
+                  actions={
+                    <ResearchButton
+                      form="edit-research-user-form"
+                      disabled={isPending}
                     >
-                      <input
-                        type="checkbox"
-                        name="roles"
-                        value={item}
-                        defaultChecked={editing.roles.includes(item)}
-                      />
-                      {item}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {deleting && (
-        <div
-          data-research-modal-overlay="true"
-          className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
-        >
-          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            <DialogHeader
-              title="Delete research user"
-              onClose={() => setDeleting(null)}
-              actions={
-                <ResearchButton
-                  form="delete-research-user-form"
-                  disabled={isPending}
-                  tone="danger"
+                      <Save className="h-4 w-4" />
+                      Save user
+                    </ResearchButton>
+                  }
+                />
+                <form
+                  id="edit-research-user-form"
+                  action={submitEdit}
+                  className="grid gap-4 px-5 py-5"
                 >
-                  <Trash2 className="h-4 w-4" />
-                  Delete user
-                </ResearchButton>
-              }
-            />
-            <form
-              id="delete-research-user-form"
-              action={confirmDelete}
-              className="space-y-4 px-5 py-5"
-            >
-              <input type="hidden" name="userId" value={deleting.id} />
-              <div className="flex gap-3 rounded-none border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-900/70 dark:bg-rose-950/30 dark:text-rose-200">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
-                <p className="text-sm leading-6">
-                  Delete{" "}
-                  <span className="font-bold">
-                    {displayResearchPersonName(deleting) || "Research user"}
-                  </span>
-                  ? This removes the user account. If the user is linked to
-                  research records or tasks, deletion may be blocked.
-                </p>
+                  <input type="hidden" name="userId" value={editing.id} />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field
+                      label="Name"
+                      name="name"
+                      defaultValue={editing.name}
+                    />
+                    <Field
+                      label="Email"
+                      name="email"
+                      type="email"
+                      defaultValue={editing.email}
+                      placeholder="Optional"
+                    />
+                    <Field
+                      label="Affiliation"
+                      name="affiliation"
+                      defaultValue={editing.affiliation}
+                    />
+                    <Field
+                      label="New password"
+                      name="password"
+                      type="text"
+                      placeholder="Leave blank to keep current password"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                      Roles
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {roleOptions.map((item) => (
+                        <label
+                          key={item}
+                          className="flex items-center gap-2 border border-[#444444] px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200"
+                        >
+                          <input
+                            type="checkbox"
+                            name="roles"
+                            value={item}
+                            defaultChecked={editing.roles.includes(item)}
+                          />
+                          {item}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </form>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>,
+            modalRoot,
+          )
+        : null}
+
+      {deleting && modalRoot
+        ? createPortal(
+            <div
+              data-research-modal-overlay="true"
+              className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
+            >
+              <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+                <DialogHeader
+                  title="Delete research user"
+                  onClose={() => setDeleting(null)}
+                  actions={
+                    <ResearchButton
+                      form="delete-research-user-form"
+                      disabled={isPending}
+                      tone="danger"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete user
+                    </ResearchButton>
+                  }
+                />
+                <form
+                  id="delete-research-user-form"
+                  action={confirmDelete}
+                  className="space-y-4 px-5 py-5"
+                >
+                  <input type="hidden" name="userId" value={deleting.id} />
+                  <div className="flex gap-3 rounded-none border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-900/70 dark:bg-rose-950/30 dark:text-rose-200">
+                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                    <p className="text-sm leading-6">
+                      Delete{" "}
+                      <span className="font-bold">
+                        {displayResearchPersonName(deleting) || "Research user"}
+                      </span>
+                      ? This removes the user account. If the user is linked to
+                      research records or tasks, deletion may be blocked.
+                    </p>
+                  </div>
+                </form>
+              </div>
+            </div>,
+            modalRoot,
+          )
+        : null}
     </div>
   );
 }
