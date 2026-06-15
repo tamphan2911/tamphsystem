@@ -640,6 +640,13 @@ export default async function TaskDetailPage({
     : {
         OR: [{ createdById: userId }, { members: { some: { userId } } }],
       };
+  const assigneeWhere = isRootAdmin
+    ? { activeSites: { has: "research" } }
+    : {
+        activeSites: { has: "research" },
+        roles: { has: Role.ASSISTANT },
+        NOT: { id: userId },
+      };
   const journalSubmissionLink =
     task.journal?.submissionLink || firstUrl(task.journal?.note);
   const conferenceSubmissionLink = firstUrl(task.conference?.note);
@@ -654,7 +661,7 @@ export default async function TaskDetailPage({
   ] = canEdit
     ? await Promise.all([
         prisma.user.findMany({
-          where: { activeSites: { has: "research" } },
+          where: assigneeWhere,
           orderBy: [{ name: "asc" }, { email: "asc" }],
           select: { id: true, name: true, email: true, roles: true },
         }),

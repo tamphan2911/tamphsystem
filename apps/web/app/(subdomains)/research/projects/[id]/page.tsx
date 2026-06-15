@@ -249,8 +249,16 @@ export default async function ProjectDetailPage({
     currentUser?.roles ??
     (((session?.user as { roles?: Role[] } | undefined)?.roles ??
       []) as Role[]);
-  const isAdmin =
-    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const isRootAdmin = roles.includes(Role.ADMIN);
+  const isChiefAssistant = roles.includes(Role.CHIEF_ASSISTANT);
+  const isAdmin = isRootAdmin || isChiefAssistant;
+  const taskAssigneeWhere = isRootAdmin
+    ? { activeSites: { has: "research" } }
+    : {
+        activeSites: { has: "research" },
+        roles: { has: Role.ASSISTANT },
+        NOT: { id: userId },
+      };
   const [
     project,
     journals,
@@ -322,7 +330,7 @@ export default async function ProjectDetailPage({
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
     }),
     prisma.user.findMany({
-      where: { activeSites: { has: "research" } },
+      where: taskAssigneeWhere,
       orderBy: [{ name: "asc" }, { email: "asc" }],
       select: {
         id: true,

@@ -31,7 +31,15 @@ export default async function ResearchTasksPage() {
       []) as Role[]);
 
   const isRootAdmin = roles.includes(Role.ADMIN);
-  const canManageTasks = isRootAdmin || roles.includes(Role.CHIEF_ASSISTANT);
+  const isChiefAssistant = roles.includes(Role.CHIEF_ASSISTANT);
+  const canManageTasks = isRootAdmin || isChiefAssistant;
+  const assigneeWhere = isRootAdmin
+    ? { activeSites: { has: "research" } }
+    : {
+        activeSites: { has: "research" },
+        roles: { has: Role.ASSISTANT },
+        NOT: { id: userId },
+      };
   const scopedResearchWhere = isRootAdmin
     ? {}
     : {
@@ -75,7 +83,7 @@ export default async function ResearchTasksPage() {
   ] = canManageTasks
     ? await Promise.all([
         prisma.user.findMany({
-          where: { activeSites: { has: "research" } },
+          where: assigneeWhere,
           orderBy: [{ name: "asc" }, { email: "asc" }],
           select: { id: true, name: true, email: true, roles: true },
         }),

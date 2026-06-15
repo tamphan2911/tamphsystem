@@ -860,6 +860,36 @@ async function canManageTaskAsResearchAdmin(
   );
 }
 
+async function taskAssigneesAreSelectableByUser({
+  assigneeIds,
+  user,
+}: {
+  assigneeIds: string[];
+  user: { id: string; roles: Role[] };
+}) {
+  const uniqueAssigneeIds = Array.from(new Set(assigneeIds));
+  if (uniqueAssigneeIds.length === 0) return false;
+
+  const chiefAssistantOnly =
+    user.roles.includes(Role.CHIEF_ASSISTANT) &&
+    !user.roles.includes(Role.ADMIN);
+  const selectableAssigneeCount = await prisma.user.count({
+    where: chiefAssistantOnly
+      ? {
+          id: { in: uniqueAssigneeIds },
+          activeSites: { has: "research" },
+          roles: { has: Role.ASSISTANT },
+          NOT: { id: user.id },
+        }
+      : {
+          id: { in: uniqueAssigneeIds },
+          activeSites: { has: "research" },
+        },
+  });
+
+  return selectableAssigneeCount === uniqueAssigneeIds.length;
+}
+
 async function notifyUsers({
   userIds,
   type,
@@ -2969,13 +2999,7 @@ export async function createResearchTask(formData: FormData) {
     return { ok: false, reason: "NO_ASSIGNEE" };
   }
 
-  const activeAssigneeCount = await prisma.user.count({
-    where: {
-      id: { in: assigneeIds },
-      activeSites: { has: "research" },
-    },
-  });
-  if (activeAssigneeCount !== new Set(assigneeIds).size) {
+  if (!(await taskAssigneesAreSelectableByUser({ assigneeIds, user }))) {
     return { ok: false, reason: "INACTIVE_RESEARCH_ASSIGNEE" };
   }
 
@@ -3198,13 +3222,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     return { ok: false, reason: "NO_ASSIGNEE" };
   }
 
-  const activeAssigneeCount = await prisma.user.count({
-    where: {
-      id: { in: assigneeIds },
-      activeSites: { has: "research" },
-    },
-  });
-  if (activeAssigneeCount !== assigneeIds.length) {
+  if (!(await taskAssigneesAreSelectableByUser({ assigneeIds, user }))) {
     return { ok: false, reason: "INACTIVE_RESEARCH_ASSIGNEE" };
   }
 
