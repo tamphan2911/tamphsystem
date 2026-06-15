@@ -430,7 +430,7 @@ async function canCreateResearchTaskForProject({
   projectId: string | null;
   taskType: ResearchTaskType;
 }) {
-  if (user.roles.includes(Role.ADMIN)) return true;
+  if (isResearchAdminRole(user.roles)) return true;
   if (!projectId || !taskTypeCanBeCreatedByResearchAuthor(taskType)) {
     return false;
   }
@@ -737,8 +737,18 @@ function canManageResearch(roles: Role[]) {
   );
 }
 
+function isResearchAdminRole(roles: Role[]) {
+  return roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+}
+
 function requireAdmin(roles: Role[]) {
   if (!roles.includes(Role.ADMIN)) {
+    redirect("/401");
+  }
+}
+
+function requireResearchAdmin(roles: Role[]) {
+  if (!isResearchAdminRole(roles)) {
     redirect("/401");
   }
 }
@@ -1130,7 +1140,7 @@ export async function submitProposal(formData: FormData) {
 
 export async function deleteProposal(proposalId: string) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   await prisma.proposal.delete({
     where: { id: proposalId },
@@ -1141,7 +1151,7 @@ export async function deleteProposal(proposalId: string) {
 
 export async function reviewProposal(formData: FormData) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   const proposalId = optionalString(formData.get("proposalId"));
   const status = enumValue(ProposalStatus, formData.get("status"));
@@ -1260,10 +1270,10 @@ export async function reviewProposal(formData: FormData) {
 
 export async function createResearchProject(formData: FormData) {
   const user = await requireCurrentUser();
-  if (!user.roles.includes(Role.ADMIN)) {
+  if (!isResearchAdminRole(user.roles)) {
     redirect("/401");
   }
-  const isAdmin = user.roles.includes(Role.ADMIN);
+  const isAdmin = isResearchAdminRole(user.roles);
   const authorIds = orderedUniqueStrings(formData.getAll("authorUserIds"));
   if (authorIds.length === 0 || !optionalString(formData.get("title"))) return;
   const selectedAuthorIds = authorIds;
@@ -1327,7 +1337,7 @@ export async function createResearchProject(formData: FormData) {
 
 export async function createOrganizedProject(formData: FormData) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
   const researchProjectIds = orderedUniqueStrings(
     formData.getAll("researchProjectIds"),
   );
@@ -1437,7 +1447,7 @@ export async function createOrganizedProject(formData: FormData) {
 
 export async function deleteOrganizedProject(projectId: string) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   const project = await prisma.organizedProject.findUnique({
     where: { id: projectId },
@@ -1472,7 +1482,7 @@ export async function updateOrganizedProject(
   });
   if (!previousProject) return;
 
-  const isAdmin = user.roles.includes(Role.ADMIN);
+  const isAdmin = isResearchAdminRole(user.roles);
   const isTeamLead = previousProject.members.some(
     (member) => member.userId === user.id && member.isTeamLead,
   );
@@ -1656,7 +1666,7 @@ export async function updateOrganizedProjectProducts(
   });
   if (!project) return;
   const canEdit =
-    user.roles.includes(Role.ADMIN) ||
+    isResearchAdminRole(user.roles) ||
     project.members.some(
       (member) => member.userId === user.id && member.isTeamLead,
     );
@@ -1712,7 +1722,7 @@ export async function createResearchForOrganizedProject(
   });
   if (!organizedProject) return { ok: false, reason: "PROJECT_NOT_FOUND" };
   const canEdit =
-    user.roles.includes(Role.ADMIN) ||
+    isResearchAdminRole(user.roles) ||
     organizedProject.members.some(
       (member) => member.userId === user.id && member.isTeamLead,
     );
@@ -1808,7 +1818,7 @@ export async function updateResearchProject(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
-  const isAdmin = user.roles.includes(Role.ADMIN);
+  const isAdmin = isResearchAdminRole(user.roles);
   const projectLock = await prisma.researchProject.findUnique({
     where: { id: projectId },
     select: {
@@ -1959,7 +1969,7 @@ export async function updateResearchProject(
 
 export async function deleteResearchProject(projectId: string) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   const project = await prisma.researchProject.findUnique({
     where: { id: projectId },
@@ -2023,7 +2033,7 @@ export async function setResearchContentLock(
   locked: boolean,
 ) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   await prisma.researchProject.update({
     where: { id: projectId },
@@ -2152,7 +2162,7 @@ export async function updateJournal(journalId: string, formData: FormData) {
 
 export async function deleteJournal(journalId: string) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   const journal = await prisma.journal.findUnique({
     where: { id: journalId },
@@ -2195,7 +2205,7 @@ export async function deleteJournal(journalId: string) {
 
 export async function deleteConference(conferenceId: string) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   const conference = await prisma.conference.findUnique({
     where: { id: conferenceId },
@@ -2303,7 +2313,7 @@ function dateHasPassed(value: Date | null) {
 
 export async function createConference(formData: FormData) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
   const data = conferenceDataFromForm(formData);
   const validationMessage = conferenceValidationMessage(data);
   if (validationMessage) {
@@ -2332,7 +2342,7 @@ export async function updateConference(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   const conference = await prisma.conference.findUnique({
     where: { id: conferenceId },
@@ -2376,7 +2386,7 @@ export async function updateConference(
 
 export async function unlockConference(conferenceId: string) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   await prisma.conference.update({
     where: { id: conferenceId },
@@ -2407,7 +2417,7 @@ export async function createPublisherAccount(formData: FormData) {
 
 export async function deletePublisherAccount(accountId: string) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   await prisma.publisherAccount.delete({
     where: { id: accountId },
@@ -2420,7 +2430,7 @@ export async function deletePublisherAccount(accountId: string) {
 
 export async function createFundingInstitution(formData: FormData) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   const name = optionalString(formData.get("name")) ?? "Untitled funder";
   const shortName = optionalString(formData.get("shortName"));
@@ -2445,7 +2455,7 @@ export async function updateFundingInstitution(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   await prisma.fundingInstitution.update({
     where: { id: institutionId },
@@ -2464,7 +2474,7 @@ export async function updateFundingInstitution(
 
 export async function deleteFundingInstitution(institutionId: string) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   const institution = await prisma.fundingInstitution.findUnique({
     where: { id: institutionId },
@@ -2534,7 +2544,7 @@ export async function createAcademicReview(formData: FormData) {
 
 export async function deleteAcademicReview(reviewId: string) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   await prisma.academicReview.delete({
     where: { id: reviewId },
@@ -3038,7 +3048,7 @@ export async function createResearchTask(formData: FormData) {
 
 export async function updateResearchTask(taskId: string, formData: FormData) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   const currentTask = await prisma.researchTask.findUnique({
     where: { id: taskId },
@@ -3301,7 +3311,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
 
 export async function revokeResearchTask(taskId: string) {
   const user = await requireCurrentUser();
-  const isAdmin = user.roles.includes(Role.ADMIN);
+  const isAdmin = isResearchAdminRole(user.roles);
 
   const currentTask = await prisma.researchTask.findUnique({
     where: { id: taskId },
@@ -3356,7 +3366,7 @@ export async function revokeResearchTask(taskId: string) {
 
 export async function deleteResearchTask(taskId: string) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
@@ -3383,7 +3393,7 @@ export async function deleteResearchTask(taskId: string) {
 
 export async function deleteResearchNotification(notificationId: string) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   await prisma.researchNotification.delete({
     where: { id: notificationId },
@@ -3394,7 +3404,7 @@ export async function deleteResearchNotification(notificationId: string) {
 
 export async function updateSubmissionStatus(formData: FormData) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   const submissionId = optionalString(formData.get("submissionId"));
   const submissionKind = optionalString(formData.get("submissionKind"));
@@ -3805,7 +3815,7 @@ export async function updateSubmissionStatus(formData: FormData) {
 
 export async function deleteSubmission(formData: FormData) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
 
   const submissionId = optionalString(formData.get("submissionId"));
   const submissionKind = optionalString(formData.get("submissionKind"));
@@ -3932,7 +3942,7 @@ export async function deleteSuggestedJournal(
   suggestionId: string,
 ) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
   if (await researchContentIsLocked(projectId)) return;
 
   await prisma.suggestedJournal.deleteMany({
@@ -4027,7 +4037,7 @@ async function canSuggestVenueForResearch(
   userId: string,
   roles: Role[],
 ) {
-  if (roles.includes(Role.ADMIN)) return true;
+  if (isResearchAdminRole(roles)) return true;
   const project = await prisma.researchProject.findUnique({
     where: { id: projectId },
     select: {
@@ -4083,7 +4093,7 @@ async function canApproveVenueSuggestionForResearch(
   userId: string,
   roles: Role[],
 ) {
-  if (roles.includes(Role.ADMIN)) return true;
+  if (isResearchAdminRole(roles)) return true;
   const project = await prisma.researchProject.findUnique({
     where: { id: projectId },
     select: {
@@ -4146,7 +4156,7 @@ export async function deleteSuggestedConference(
   suggestionId: string,
 ) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireResearchAdmin(user.roles);
   if (await researchContentIsLocked(projectId)) return;
 
   await prisma.suggestedConference.deleteMany({
@@ -4182,7 +4192,7 @@ export async function approveSuggestedJournal(
   const linkedJournalId =
     suggestion.journalId ?? optionalString(formData.get("journalId"));
   if (!linkedJournalId) {
-    if (!user.roles.includes(Role.ADMIN)) redirect("/401");
+    if (!isResearchAdminRole(user.roles)) redirect("/401");
     throw new Error("Choose the journal in the system before approving.");
   }
 
@@ -4238,7 +4248,7 @@ export async function approveSuggestedConference(
   const linkedConferenceId =
     suggestion.conferenceId ?? optionalString(formData.get("conferenceId"));
   if (!linkedConferenceId) {
-    if (!user.roles.includes(Role.ADMIN)) redirect("/401");
+    if (!isResearchAdminRole(user.roles)) redirect("/401");
     throw new Error("Choose the conference in the system before approving.");
   }
 
@@ -4410,7 +4420,7 @@ async function createSubmissionAfterTaskApproval(
 
 export async function markResearchTaskReadyForCheck(taskId: string) {
   const user = await requireCurrentUser();
-  const isAdmin = user.roles.includes(Role.ADMIN);
+  const isAdmin = isResearchAdminRole(user.roles);
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
     select: {
@@ -4599,7 +4609,7 @@ export async function uploadResearchTaskReport(
 
 export async function finishResearchTask(taskId: string, formData?: FormData) {
   const user = await requireCurrentUser();
-  const isAdmin = user.roles.includes(Role.ADMIN);
+  const isAdmin = isResearchAdminRole(user.roles);
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
     select: {
@@ -4742,7 +4752,7 @@ export async function sendTaskReminderEmail(
     };
   }
 
-  const isAdmin = user.roles.includes(Role.ADMIN);
+  const isAdmin = isResearchAdminRole(user.roles);
   const isAssigner = task.createdById === user.id;
   if (!isAdmin && !isAssigner) redirect("/401");
 
@@ -4850,7 +4860,7 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
     },
   });
   if (!task) return;
-  if (!user.roles.includes(Role.ADMIN) && task.createdById !== user.id) {
+  if (!isResearchAdminRole(user.roles) && task.createdById !== user.id) {
     redirect("/401");
   }
 
@@ -4992,7 +5002,7 @@ export async function answerTaskClarification(
     },
   });
   if (!task) return;
-  if (!user.roles.includes(Role.ADMIN) && task.createdById !== user.id) {
+  if (!isResearchAdminRole(user.roles) && task.createdById !== user.id) {
     redirect("/401");
   }
   if (
@@ -5249,7 +5259,7 @@ export async function sendResearchAuthorNotification(
           .map((entry) => entry.userId)
       : [project.leadResearcherId];
   const canSendAuthorNotification =
-    user.roles.includes(Role.ADMIN) ||
+    isResearchAdminRole(user.roles) ||
     user.id === firstAuthorId ||
     correspondingAuthorIds.includes(user.id);
   if (!canSendAuthorNotification) {

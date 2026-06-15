@@ -68,7 +68,8 @@ export default async function ConferenceDetailPage({
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
-  const isAdmin = roles.includes(Role.ADMIN);
+  const isAdmin =
+    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
   const conference = await prisma.conference.findUnique({
     where: { id },
     include: {

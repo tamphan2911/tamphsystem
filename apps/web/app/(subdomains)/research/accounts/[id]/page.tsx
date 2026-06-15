@@ -101,7 +101,8 @@ export default async function AccountDetailPage({
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   if (!userId) redirect("/login");
-  const isAdmin = roles.includes(Role.ADMIN);
+  const isAdmin =
+    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
   const account = await prisma.publisherAccount.findUnique({
     where: { id },
     include: {

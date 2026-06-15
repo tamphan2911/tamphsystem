@@ -463,11 +463,13 @@ export default async function OrganizedProjectDetailPage({
   }));
   const canEditProject =
     currentRoles.includes(Role.ADMIN) ||
+    currentRoles.includes(Role.CHIEF_ASSISTANT) ||
     project.members.some(
       (member) => member.userId === currentUserId && member.isTeamLead,
     );
   const canViewProject =
     currentRoles.includes(Role.ADMIN) ||
+    currentRoles.includes(Role.CHIEF_ASSISTANT) ||
     project.createdBy?.id === currentUserId ||
     project.members.some((member) => member.userId === currentUserId) ||
     Boolean(assignedResearchEditTask);

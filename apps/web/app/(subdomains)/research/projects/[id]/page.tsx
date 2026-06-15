@@ -243,7 +243,8 @@ export default async function ProjectDetailPage({
     .map((value) => value.trim().toLowerCase());
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
-  const isAdmin = roles.includes(Role.ADMIN);
+  const isAdmin =
+    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
   const [
     project,
     journals,

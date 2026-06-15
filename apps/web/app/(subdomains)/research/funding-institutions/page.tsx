@@ -73,7 +73,8 @@ export default async function FundingInstitutionsPage() {
   const session = await auth();
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
-  const isAdmin = roles.includes(Role.ADMIN);
+  const isAdmin =
+    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
   if (!isAdmin) redirect("/401");
 
   await ensureFunderCodes();

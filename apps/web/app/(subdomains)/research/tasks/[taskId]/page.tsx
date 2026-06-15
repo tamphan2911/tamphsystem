@@ -337,7 +337,8 @@ export default async function TaskDetailPage({
 
   if (!userId) redirect("/login");
 
-  const isAdmin = roles.includes(Role.ADMIN);
+  const isAdmin =
+    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
   await prisma.researchTask.updateMany({
     where: { status: ResearchTaskStatus.OPEN },
     data: { status: ResearchTaskStatus.IN_PROGRESS },

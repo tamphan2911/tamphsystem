@@ -91,7 +91,8 @@ export default async function ProjectsDashboard() {
   );
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
-  const isAdmin = roles.includes(Role.ADMIN);
+  const isAdmin =
+    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
   const projectWhere = isAdmin
     ? {}
     : {

@@ -13,7 +13,8 @@ export default async function PublisherAccountsPage() {
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  const isAdmin = roles.includes(Role.ADMIN);
+  const isAdmin =
+    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
   if (!userId) redirect("/login");
 
   const [accounts, journals] = await Promise.all([

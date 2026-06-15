@@ -24,9 +24,12 @@ export default async function ResearchLayout({
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
-  let canSeeAccounts = roles.includes(Role.ADMIN);
-  let canSeeReviews = roles.includes(Role.ADMIN);
-  let canSeeTasks = roles.includes(Role.ADMIN);
+  const isRootAdmin = roles.includes(Role.ADMIN);
+  const isResearchAdmin =
+    isRootAdmin || roles.includes(Role.CHIEF_ASSISTANT);
+  let canSeeAccounts = isResearchAdmin;
+  let canSeeReviews = isResearchAdmin;
+  let canSeeTasks = isResearchAdmin;
   let unopenedProposalCount = 0;
   if (userId) {
     const [
@@ -39,12 +42,12 @@ export default async function ResearchLayout({
         where: { id: userId },
         select: { activeSites: true },
       }),
-      roles.includes(Role.ADMIN)
+      isResearchAdmin
         ? Promise.resolve(0)
         : prisma.researchTask.count({
             where: { assignments: { some: { userId } } },
           }),
-      roles.includes(Role.ADMIN)
+      isResearchAdmin
         ? Promise.resolve(0)
         : prisma.researchTask.count({
             where: {
@@ -58,7 +61,7 @@ export default async function ResearchLayout({
               assignments: { some: { userId } },
             },
           }),
-      roles.includes(Role.ADMIN)
+      isResearchAdmin
         ? Promise.resolve(0)
         : prisma.researchTask.count({
             where: {
@@ -80,10 +83,10 @@ export default async function ResearchLayout({
       redirect("/activate");
     }
     canSeeAccounts =
-      roles.includes(Role.ADMIN) || unfinishedAccountTaskCount > 0;
-    canSeeReviews = roles.includes(Role.ADMIN) || unfinishedReviewTaskCount > 0;
-    canSeeTasks = roles.includes(Role.ADMIN) || assignedTaskCount > 0;
-    if (roles.includes(Role.ADMIN)) {
+      isResearchAdmin || unfinishedAccountTaskCount > 0;
+    canSeeReviews = isResearchAdmin || unfinishedReviewTaskCount > 0;
+    canSeeTasks = isResearchAdmin || assignedTaskCount > 0;
+    if (isResearchAdmin) {
       unopenedProposalCount = await prisma.proposal.count({
         where: { status: ProposalStatus.NEW },
       });
@@ -94,7 +97,8 @@ export default async function ResearchLayout({
     <ResearchShell
       email={displayResearchEmail(session?.user?.email)}
       name={session?.user?.name}
-      isAdmin={roles.includes(Role.ADMIN)}
+      isAdmin={isResearchAdmin}
+      isRootAdmin={isRootAdmin}
       isAssistant={
         roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT)
       }

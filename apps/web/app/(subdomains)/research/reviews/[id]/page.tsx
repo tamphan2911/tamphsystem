@@ -120,7 +120,8 @@ export default async function ReviewDetailPage({
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   if (!userId) redirect("/login");
-  const isAdmin = roles.includes(Role.ADMIN);
+  const isAdmin =
+    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
   const review = await prisma.academicReview.findUnique({
     where: { id },
     include: {

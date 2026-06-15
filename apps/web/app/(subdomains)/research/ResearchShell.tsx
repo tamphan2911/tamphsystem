@@ -72,13 +72,13 @@ const navItems = [
     href: "/assistants",
     label: "Assistants",
     icon: "assistants" as const,
-    adminOnly: true,
+    rootAdminOnly: true,
   },
   {
     href: "/users",
     label: "Users",
     icon: "users" as const,
-    adminOnly: true,
+    rootAdminOnly: true,
   },
 ];
 
@@ -174,6 +174,7 @@ export function ResearchShell({
   email,
   name,
   isAdmin,
+  isRootAdmin,
   isAssistant,
   canSeeTasks,
   canSeeAccounts,
@@ -184,6 +185,7 @@ export function ResearchShell({
   email?: string | null;
   name?: string | null;
   isAdmin: boolean;
+  isRootAdmin: boolean;
   isAssistant: boolean;
   canSeeTasks: boolean;
   canSeeAccounts: boolean;
@@ -306,6 +308,7 @@ export function ResearchShell({
   }, [collapsed]);
 
   const visibleNavItems = navItems.filter((item) => {
+    if ("rootAdminOnly" in item && item.rootAdminOnly) return isRootAdmin;
     if ("adminOnly" in item && item.adminOnly) return isAdmin;
     if ("requiresTaskAccess" in item && item.requiresTaskAccess)
       return canSeeTasks || isAssistant;

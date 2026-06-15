@@ -31,7 +31,9 @@ export default async function SubmissionsPage() {
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
 
-  if (!roles.includes(Role.ADMIN)) redirect("/401");
+  if (!roles.includes(Role.ADMIN) && !roles.includes(Role.CHIEF_ASSISTANT)) {
+    redirect("/401");
+  }
 
   const [journalSubmissions, conferenceSubmissions] = await Promise.all([
     prisma.researchSubmission.findMany({

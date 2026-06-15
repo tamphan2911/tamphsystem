@@ -49,7 +49,7 @@ export default async function ResearchNotificationsPage() {
   });
   if (!currentUser?.activeSites.includes("research")) redirect("/401");
 
-  if (roles.includes(Role.ADMIN)) {
+  if (roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT)) {
     const notifications = await prisma.researchNotification.findMany({
       include: {
         user: {
