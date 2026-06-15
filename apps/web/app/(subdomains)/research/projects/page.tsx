@@ -89,8 +89,14 @@ export default async function ProjectsDashboard() {
       registrationName: { equals: value, mode: "insensitive" as const },
     }),
   );
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
-    []) as Role[];
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: true, emailVerified: true },
+  });
+  const roles =
+    currentUser?.roles ??
+    (((session?.user as { roles?: Role[] } | undefined)?.roles ??
+      []) as Role[]);
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
   const projectWhere = isAdmin
@@ -106,7 +112,7 @@ export default async function ProjectsDashboard() {
         ],
       };
 
-  const [projects, authorUsers, fundingInstitutions, currentUser] =
+  const [projects, authorUsers, fundingInstitutions] =
     await Promise.all([
       prisma.researchProject.findMany({
         where: projectWhere,
@@ -143,10 +149,6 @@ export default async function ProjectsDashboard() {
       prisma.fundingInstitution.findMany({
         orderBy: [{ name: "asc" }],
         select: { id: true, name: true, shortName: true, country: true },
-      }),
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { emailVerified: true },
       }),
     ]);
   const authorOptions = authorUsers.map((user) => ({

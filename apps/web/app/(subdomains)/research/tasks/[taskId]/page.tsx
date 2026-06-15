@@ -332,10 +332,15 @@ export default async function TaskDetailPage({
   const { taskId } = await params;
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
-    []) as Role[];
-
   if (!userId) redirect("/login");
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: true },
+  });
+  const roles =
+    currentUser?.roles ??
+    (((session?.user as { roles?: Role[] } | undefined)?.roles ??
+      []) as Role[]);
 
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);

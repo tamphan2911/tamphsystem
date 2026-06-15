@@ -40,8 +40,14 @@ export default async function OrganizedProjectsPage() {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!session || !userId) redirect("/login");
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
-    []) as Role[];
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: true, emailVerified: true },
+  });
+  const roles =
+    currentUser?.roles ??
+    (((session?.user as { roles?: Role[] } | undefined)?.roles ??
+      []) as Role[]);
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
   const projectWhere = isAdmin
@@ -53,7 +59,7 @@ export default async function OrganizedProjectsPage() {
         ],
       };
 
-  const [projects, researchOptions, users, fundingInstitutions, currentUser] =
+  const [projects, researchOptions, users, fundingInstitutions] =
     await Promise.all([
       prisma.organizedProject.findMany({
         where: projectWhere,
@@ -91,12 +97,6 @@ export default async function OrganizedProjectsPage() {
         select: { id: true, name: true, shortName: true, country: true },
         orderBy: { name: "asc" },
       }),
-      userId
-        ? prisma.user.findUnique({
-            where: { id: userId },
-            select: { emailVerified: true },
-          })
-        : Promise.resolve(null),
     ]);
 
   const active = projects.filter((project) => project.status === "ACTIVE");

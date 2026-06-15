@@ -22,8 +22,19 @@ export default async function ResearchLayout({
 
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+  let roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
+  let userActiveSites: string[] | null = null;
+  if (userId) {
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { roles: true, activeSites: true },
+    });
+    if (currentUser) {
+      roles = currentUser.roles;
+      userActiveSites = currentUser.activeSites;
+    }
+  }
   const isRootAdmin = roles.includes(Role.ADMIN);
   const isResearchAdmin =
     isRootAdmin || roles.includes(Role.CHIEF_ASSISTANT);
@@ -33,15 +44,10 @@ export default async function ResearchLayout({
   let unopenedProposalCount = 0;
   if (userId) {
     const [
-      user,
       assignedTaskCount,
       unfinishedAccountTaskCount,
       unfinishedReviewTaskCount,
     ] = await Promise.all([
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { activeSites: true },
-      }),
       isResearchAdmin
         ? Promise.resolve(0)
         : prisma.researchTask.count({
@@ -77,7 +83,7 @@ export default async function ResearchLayout({
           }),
     ]);
     if (
-      !user?.activeSites.includes("research") &&
+      !userActiveSites?.includes("research") &&
       sitePathname !== "/activate"
     ) {
       redirect("/activate");

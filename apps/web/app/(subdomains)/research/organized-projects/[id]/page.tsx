@@ -344,8 +344,14 @@ export default async function OrganizedProjectDetailPage({
   const session = await auth();
   const currentUserId = (session?.user as { id?: string } | undefined)?.id;
   if (!session || !currentUserId) redirect("/login");
-  const currentRoles = ((session?.user as { roles?: Role[] } | undefined)
-    ?.roles ?? []) as Role[];
+  const currentUser = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    select: { roles: true },
+  });
+  const currentRoles =
+    currentUser?.roles ??
+    (((session?.user as { roles?: Role[] } | undefined)?.roles ??
+      []) as Role[]);
   const [project, users, researchOptions, fundingInstitutions] =
     await Promise.all([
       prisma.organizedProject.findUnique({

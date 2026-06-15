@@ -241,8 +241,14 @@ export default async function ProjectDetailPage({
   const registrationIdentityValues = [session.user?.name, session.user?.email]
     .filter((value): value is string => Boolean(value?.trim()))
     .map((value) => value.trim().toLowerCase());
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
-    []) as Role[];
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: true },
+  });
+  const roles =
+    currentUser?.roles ??
+    (((session?.user as { roles?: Role[] } | undefined)?.roles ??
+      []) as Role[]);
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
   const [

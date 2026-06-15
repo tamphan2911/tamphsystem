@@ -722,10 +722,17 @@ async function requireCurrentUser() {
     redirect("/login");
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: true },
+  });
+
   return {
     id: userId,
-    roles: ((session?.user as { roles?: Role[] } | undefined)?.roles ??
-      []) as Role[],
+    roles:
+      user?.roles ??
+      (((session?.user as { roles?: Role[] } | undefined)?.roles ??
+        []) as Role[]),
   };
 }
 
