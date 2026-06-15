@@ -215,7 +215,7 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
           </section>
 
           <section className="grid gap-4 border-t border-slate-200 pt-5 dark:border-slate-800">
-            <div className="grid items-start gap-4 md:grid-cols-3">
+            <div className="grid items-start gap-4 md:grid-cols-2">
               <label className={labelClass}>
                 Current status
                 <ResearchFormSelect
