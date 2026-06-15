@@ -863,7 +863,7 @@ export default async function ProjectDetailPage({
                   canEditRegistrationClaim={isAdmin}
                   disabled={!canEditResearch}
                 />
-                {isAdmin && (
+                {isRootAdmin && (
                   <ResearchContentLockButton
                     projectId={project.id}
                     locked={researchContentLocked}
@@ -1200,6 +1200,7 @@ export default async function ProjectDetailPage({
                   projectId={project.id}
                   locked={productionTimelineLocked}
                   disabled={!canEditResearch || researchContentLocked}
+                  canUnlock={isRootAdmin}
                   totalSteps={productionSteps.length}
                   beforeActions={
                     canSendAuthorEmails && productionComplete ? (

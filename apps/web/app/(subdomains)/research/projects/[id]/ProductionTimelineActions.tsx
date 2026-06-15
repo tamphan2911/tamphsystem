@@ -12,12 +12,14 @@ export function ProductionTimelineActions({
   projectId,
   locked,
   disabled,
+  canUnlock,
   totalSteps,
   beforeActions,
 }: {
   projectId: string;
   locked: boolean;
   disabled: boolean;
+  canUnlock: boolean;
   totalSteps: number;
   beforeActions?: ReactNode;
 }) {
@@ -75,7 +77,7 @@ export function ProductionTimelineActions({
     <>
       <div className="flex items-center gap-2">
         {beforeActions}
-        {locked && (
+        {locked && canUnlock && (
           <IconHint label="Unlock production timeline">
             <button
               type="button"

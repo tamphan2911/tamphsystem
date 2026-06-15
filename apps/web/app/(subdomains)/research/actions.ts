@@ -2149,7 +2149,8 @@ export async function deleteResearchProject(projectId: string) {
 }
 
 export async function unlockProductionTimeline(projectId: string) {
-  await requireCurrentUser();
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
 
   if (await researchContentIsLocked(projectId)) {
     revalidatePath(`/projects/${projectId}`);
@@ -2170,7 +2171,7 @@ export async function setResearchContentLock(
   locked: boolean,
 ) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   await prisma.researchProject.update({
     where: { id: projectId },
