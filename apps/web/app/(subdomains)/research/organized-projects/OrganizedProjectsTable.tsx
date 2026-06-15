@@ -147,7 +147,7 @@ function DeleteProjectButton({
           type="button"
           onClick={() => setOpen(true)}
           aria-label={`Delete ${project.title}`}
-          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-transparent bg-transparent text-[#FFC1CC] shadow-none outline-none transition-[color,transform] duration-150 ease-out hover:border-transparent hover:bg-transparent hover:text-rose-300 hover:shadow-none active:scale-95 focus-visible:ring-0"
+          className="research-allow-transform inline-flex h-8 w-8 cursor-pointer items-center justify-center border border-transparent bg-transparent text-[#FFC1CC] shadow-none outline-none transition-[color,transform] duration-150 ease-out hover:border-transparent hover:bg-transparent hover:text-rose-300 hover:shadow-none active:scale-95 focus-visible:ring-0"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -320,7 +320,7 @@ export function OrganizedProjectsTable({
                     <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
                       <Link
                         href={`/organized-projects/${project.id}`}
-                        className="line-clamp-2 origin-left text-base font-normal text-[#E4E4E4] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:[text-shadow:0_0_0.55rem_rgba(168,218,220,0.18)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 motion-reduce:transform-none motion-reduce:transition-none"
+                        className="research-allow-transform line-clamp-2 origin-left text-base font-normal text-[#E4E4E4] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:[text-shadow:0_0_0.55rem_rgba(168,218,220,0.18)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 motion-reduce:transform-none motion-reduce:transition-none"
                       >
                         {project.title}
                       </Link>
