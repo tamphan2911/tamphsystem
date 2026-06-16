@@ -420,14 +420,14 @@ export function ProfileClient({
       </ResearchPageHeaderPortal>
 
       <div className="mx-auto max-w-7xl space-y-4">
-        <div className="grid grid-cols-2 border border-[#444444] bg-[#2C2C2C] sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-b border-[#444444] pb-3 sm:grid-cols-4">
           {stats.map((item, index) => (
             <IconHint key={item.label} label={item.hint}>
               <div
-                className={`flex cursor-help items-center justify-between gap-3 px-4 py-3 transition duration-200 ease-out hover:bg-[#383838] ${
-                  index > 0 ? "sm:border-l sm:border-[#444444]" : ""
-                } ${index % 2 === 1 ? "border-l border-[#444444] sm:border-l" : ""} ${
-                  index > 1 ? "border-t border-[#444444] sm:border-t-0" : ""
+                className={`flex cursor-help items-center justify-between gap-3 transition duration-200 ease-out ${
+                  index > 0 ? "sm:border-l sm:border-[#444444] sm:pl-6" : ""
+                } ${index % 2 === 1 ? "pl-6 sm:pl-6" : ""} ${
+                  index > 1 ? "pt-4 sm:pt-0" : ""
                 }`}
               >
                 <div>
