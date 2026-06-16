@@ -52,7 +52,7 @@ const navItems = [
     href: "/notifications",
     label: "Notifications",
     icon: "notifications" as const,
-    adminOnly: true,
+    rootAdminOnly: true,
   },
   { href: "/journals", label: "Journals", icon: "journals" as const },
   { href: "/conferences", label: "Conferences", icon: "conferences" as const },
@@ -96,7 +96,7 @@ function applyResearchTheme(theme: ResearchTheme) {
   window.localStorage.setItem("theme", theme);
 }
 
-function startResearchThemeTransition(theme: ResearchTheme) {
+function startResearchThemeTransition() {
   const root = document.documentElement;
   root.classList.add("research-theme-transitioning");
 
@@ -208,7 +208,7 @@ export function ResearchShell({
 
   function handleThemeChange(nextTheme: ResearchTheme) {
     if (nextTheme === theme) return;
-    startResearchThemeTransition(nextTheme);
+    startResearchThemeTransition();
     setTheme(nextTheme);
   }
 
