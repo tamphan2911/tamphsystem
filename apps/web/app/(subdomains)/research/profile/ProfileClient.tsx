@@ -67,12 +67,10 @@ type ProfileTaskRow = {
 };
 
 type TabKey = "dashboard" | "research" | "projects" | "proposals";
-type PeriodKey = "all" | "last" | "current";
+type PeriodKey = "all" | "lastWeek" | "currentWeek" | "lastMonth" | "currentMonth";
 type DashboardStatusKey =
   | "all"
   | "active"
-  | "needClarify"
-  | "checking"
   | "completed"
   | "revoked"
   | "overdue";
@@ -85,17 +83,33 @@ function roleLabel(role: string) {
 }
 
 function periodLabel(period: PeriodKey) {
-  if (period === "current") return "This month";
-  if (period === "last") return "Last month";
+  if (period === "currentWeek") return "This week";
+  if (period === "lastWeek") return "Last week";
+  if (period === "currentMonth") return "This month";
+  if (period === "lastMonth") return "Last month";
   return "All time";
 }
 
 function periodStart(period: PeriodKey) {
   const now = new Date();
-  if (period === "current") {
+  const currentDay = now.getDay();
+  const weekOffset = currentDay === 0 ? 6 : currentDay - 1;
+  const startOfCurrentWeek = new Date(now);
+  startOfCurrentWeek.setHours(0, 0, 0, 0);
+  startOfCurrentWeek.setDate(now.getDate() - weekOffset);
+
+  if (period === "currentWeek") {
+    return startOfCurrentWeek;
+  }
+  if (period === "lastWeek") {
+    const startOfLastWeek = new Date(startOfCurrentWeek);
+    startOfLastWeek.setDate(startOfCurrentWeek.getDate() - 7);
+    return startOfLastWeek;
+  }
+  if (period === "currentMonth") {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   }
-  if (period === "last") {
+  if (period === "lastMonth") {
     return new Date(now.getFullYear(), now.getMonth() - 1, 1);
   }
   return null;
@@ -103,8 +117,25 @@ function periodStart(period: PeriodKey) {
 
 function periodEnd(period: PeriodKey) {
   const now = new Date();
-  if (period === "last") {
+  const currentDay = now.getDay();
+  const weekOffset = currentDay === 0 ? 6 : currentDay - 1;
+  const startOfCurrentWeek = new Date(now);
+  startOfCurrentWeek.setHours(0, 0, 0, 0);
+  startOfCurrentWeek.setDate(now.getDate() - weekOffset);
+
+  if (period === "lastWeek") {
+    return startOfCurrentWeek;
+  }
+  if (period === "currentWeek") {
+    const endOfCurrentWeek = new Date(startOfCurrentWeek);
+    endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 7);
+    return endOfCurrentWeek;
+  }
+  if (period === "lastMonth") {
     return new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  if (period === "currentMonth") {
+    return new Date(now.getFullYear(), now.getMonth() + 1, 1);
   }
   return null;
 }
@@ -192,10 +223,13 @@ function matchesDashboardStatus(
   if (statusKey === "overdue") return isOverdue(task);
   if (statusKey === "completed") return task.status === "COMPLETED";
   if (statusKey === "revoked") return task.status === "REVOKED";
-  if (statusKey === "checking") return task.status === "CHECKING";
-  if (statusKey === "needClarify") return task.status === "NEED_CLARIFY";
   return (
-    (task.status === "OPEN" || task.status === "IN_PROGRESS") &&
+    (
+      task.status === "OPEN" ||
+      task.status === "IN_PROGRESS" ||
+      task.status === "CHECKING" ||
+      task.status === "NEED_CLARIFY"
+    ) &&
     !isOverdue(task)
   );
 }
@@ -204,8 +238,6 @@ function dashboardStatusTabs(tasks: ProfileTaskRow[]) {
   const entries: { key: DashboardStatusKey; label: string }[] = [
     { key: "all", label: "All" },
     { key: "active", label: "Active" },
-    { key: "needClarify", label: "Need clarify" },
-    { key: "checking", label: "Checking" },
     { key: "completed", label: "Completed" },
     { key: "overdue", label: "Overdue" },
     { key: "revoked", label: "Revoked" },
@@ -214,38 +246,6 @@ function dashboardStatusTabs(tasks: ProfileTaskRow[]) {
   return entries.map((item) => ({
     ...item,
     value: tasks.filter((task) => matchesDashboardStatus(task, item.key)).length,
-  }));
-}
-
-function typeMetric(tasks: ProfileTaskRow[]) {
-  const labels = new Map<string, number>();
-  tasks.forEach((task) => {
-    const label = taskTypeLabel(task.taskType || "OTHER");
-    labels.set(label, (labels.get(label) ?? 0) + 1);
-  });
-  const sorted = Array.from(labels.entries()).sort((a, b) => b[1] - a[1]);
-  const topRows = sorted.slice(0, 5);
-  const otherCount = sorted
-    .slice(5)
-    .reduce((sum, [, value]) => sum + value, 0);
-  const rows = otherCount > 0 ? [...topRows, ["Other", otherCount] as const] : topRows;
-  const total = Math.max(
-    1,
-    rows.reduce((sum, [, value]) => sum + value, 0),
-  );
-
-  return rows.map(([label, value], index) => ({
-    label,
-    value,
-    percent: Math.round((value / total) * 100),
-    className:
-      index % 4 === 0
-        ? "bg-[#A8DADC]"
-        : index % 4 === 1
-          ? "bg-[#B39CD0]"
-          : index % 4 === 2
-            ? "bg-[#FFC1CC]"
-            : "bg-[#F4D47A]",
   }));
 }
 
@@ -370,7 +370,6 @@ export function ProfileClient({
         ),
     [dashboardStatus, periodTasks],
   );
-  const typeBars = useMemo(() => typeMetric(periodTasks), [periodTasks]);
   const completionRate =
     periodTasks.length === 0
       ? 0
@@ -487,7 +486,6 @@ export function ProfileClient({
               completionRate={completionRate}
               statusTabs={statusTabs}
               filteredTasks={filteredTasks}
-              typeBars={typeBars}
             />
           )}
 
@@ -575,7 +573,6 @@ function AssistantDashboard({
   completionRate,
   statusTabs,
   filteredTasks,
-  typeBars,
 }: {
   period: PeriodKey;
   onPeriodChange: (period: PeriodKey) => void;
@@ -585,7 +582,6 @@ function AssistantDashboard({
   completionRate: number;
   statusTabs: { key: DashboardStatusKey; label: string; value: number }[];
   filteredTasks: ProfileTaskRow[];
-  typeBars: { label: string; value: number; percent: number; className: string }[];
 }) {
   const overdueCount = statusTabs.find((item) => item.key === "overdue")?.value ?? 0;
   const activeCount = statusTabs.find((item) => item.key === "active")?.value ?? 0;
@@ -606,8 +602,16 @@ function AssistantDashboard({
             {overdueCount} overdue in the selected period.
           </p>
         </div>
-        <div className="grid grid-cols-3 border border-[#444444] bg-[#242424] p-1">
-          {(["all", "last", "current"] as PeriodKey[]).map((item) => (
+        <div className="grid grid-cols-2 border border-[#444444] bg-[#242424] p-1 md:grid-cols-5">
+          {(
+            [
+              "all",
+              "currentWeek",
+              "lastWeek",
+              "currentMonth",
+              "lastMonth",
+            ] as PeriodKey[]
+          ).map((item) => (
             <button
               key={item}
               type="button"
@@ -624,79 +628,31 @@ function AssistantDashboard({
         </div>
       </div>
 
-      <div className="grid gap-0 xl:grid-cols-[minmax(0,1.6fr)_minmax(20rem,0.9fr)]">
-        <div className="border-b border-[#444444] p-4 xl:border-b-0 xl:border-r">
-          <p className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
-            Task Status
-          </p>
-          <div className="journal-detail-tabs mt-4 flex flex-wrap border border-[#444444] bg-[#242424] p-1">
-            {statusTabs.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                data-active={dashboardStatus === item.key}
-                aria-pressed={dashboardStatus === item.key}
-                onClick={() => onDashboardStatusChange(item.key)}
-                className="journal-detail-tab-button min-w-[8.5rem] flex-1 cursor-pointer rounded-none px-3 py-3 text-left"
-              >
-                <span className="relative z-10 flex items-center justify-between gap-3">
-                  <span className="text-[11px] font-normal uppercase tracking-wide">
-                    {item.label}
-                  </span>
-                  <span className="text-sm font-normal">{item.value}</span>
+      <div className="p-4">
+        <p className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+          Task Status
+        </p>
+        <div className="journal-detail-tabs mt-4 flex flex-wrap border border-[#444444] bg-[#242424] p-1">
+          {statusTabs.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              data-active={dashboardStatus === item.key}
+              aria-pressed={dashboardStatus === item.key}
+              onClick={() => onDashboardStatusChange(item.key)}
+              className="journal-detail-tab-button min-w-[8.5rem] flex-1 cursor-pointer rounded-none px-3 py-3 text-left"
+            >
+              <span className="relative z-10 flex items-center justify-between gap-3">
+                <span className="text-[11px] font-normal uppercase tracking-wide">
+                  {item.label}
                 </span>
-              </button>
-            ))}
-          </div>
-
-          <ProfileTaskTable rows={filteredTasks} />
+                <span className="text-sm font-normal">{item.value}</span>
+              </span>
+            </button>
+          ))}
         </div>
 
-        <div className="p-4">
-          <p className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
-            Work Mix
-          </p>
-          <div className="mt-4 space-y-4">
-            {typeBars.length > 0 ? (
-              <>
-                <div className="flex h-4 overflow-hidden border border-[#444444] bg-[#242424]">
-                  {typeBars.map((item) => (
-                    <div
-                      key={item.label}
-                      className={`h-full transition-all duration-500 ease-out ${item.className}`}
-                      style={{ width: `${item.percent}%` }}
-                      title={`${item.label}: ${item.value}`}
-                    />
-                  ))}
-                </div>
-                <div className="grid gap-3">
-                  {typeBars.map((item) => (
-                    <div
-                      key={item.label}
-                      className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 text-sm"
-                    >
-                      <span
-                        className={`h-2.5 w-2.5 flex-none ${item.className}`}
-                        aria-hidden="true"
-                      />
-                      <span className="min-w-0 truncate text-[#E4E4E4]">
-                        {item.label}
-                      </span>
-                      <span className="text-[#B0B0B0]">{item.percent}%</span>
-                      <span className="font-mono text-[#E4E4E4]">
-                        {item.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p className="border border-[#444444] bg-[#242424] px-3 py-6 text-center text-sm text-[#B0B0B0]">
-                No task data in this period.
-              </p>
-            )}
-          </div>
-        </div>
+        <ProfileTaskTable rows={filteredTasks} />
       </div>
     </div>
   );
