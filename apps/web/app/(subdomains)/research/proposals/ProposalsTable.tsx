@@ -183,10 +183,12 @@ export function ProposalsTable({
   rows,
   isAdmin,
   deleteAction,
+  linkTitleToDetail = true,
 }: {
   rows: ProposalRow[];
   isAdmin: boolean;
   deleteAction?: (proposalId: string) => Promise<void>;
+  linkTitleToDetail?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("ALL");
@@ -289,12 +291,18 @@ export function ProposalsTable({
                   </Link>
                 </td>
                 <td className="px-4 py-3 align-top">
-                  <Link
-                    href={`/proposals/${proposal.id}`}
-                    className="line-clamp-2 origin-left text-base font-normal leading-snug text-[#E4E4E4] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:[text-shadow:0_0_0.55rem_rgba(168,218,220,0.18)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 motion-reduce:transform-none motion-reduce:transition-none"
-                  >
-                    {proposal.title}
-                  </Link>
+                  {linkTitleToDetail ? (
+                    <Link
+                      href={`/proposals/${proposal.id}`}
+                      className="line-clamp-2 origin-left text-base font-normal leading-snug text-[#E4E4E4] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:[text-shadow:0_0_0.55rem_rgba(168,218,220,0.18)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 motion-reduce:transform-none motion-reduce:transition-none"
+                    >
+                      {proposal.title}
+                    </Link>
+                  ) : (
+                    <span className="line-clamp-2 text-base font-normal leading-snug text-[#E4E4E4]">
+                      {proposal.title}
+                    </span>
+                  )}
                   <p className="mt-1 font-mono text-xs text-[#777777]">
                     {proposal.createdAt}
                   </p>

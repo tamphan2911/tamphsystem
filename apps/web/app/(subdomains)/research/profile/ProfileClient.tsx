@@ -507,7 +507,11 @@ export function ProfileClient({
           )}
 
           {activeTab === "proposals" && (
-            <ProposalsTable rows={proposalRows} isAdmin={false} />
+            <ProposalsTable
+              rows={proposalRows}
+              isAdmin={false}
+              linkTitleToDetail={false}
+            />
           )}
         </section>
       </div>

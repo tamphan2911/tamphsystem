@@ -288,6 +288,19 @@ function accountLine(
   ].join(" | ");
 }
 
+function journalMetaLine(journal: {
+  publisher: string | null;
+  rank: string | null;
+  localRank?: string | null;
+  type?: string | null;
+}) {
+  const rankLabel =
+    journal.type === "LOCAL"
+      ? journal.localRank || "No local rank"
+      : journal.rank || "No rank";
+  return `${journal.publisher || "No publisher"} - ${rankLabel}`;
+}
+
 function taskAllowsReport(taskType: string | null) {
   return (
     taskType === "PRODUCTION" ||
@@ -418,7 +431,9 @@ export default async function TaskDetailPage({
         select: {
           id: true,
           name: true,
+          type: true,
           rank: true,
+          localRank: true,
           publisher: true,
           homepageLink: true,
           submissionLink: true,
@@ -675,8 +690,10 @@ export default async function TaskDetailPage({
           select: {
             id: true,
             name: true,
+            type: true,
             publisher: true,
             rank: true,
+            localRank: true,
             issn: true,
           },
         }),
@@ -723,7 +740,7 @@ export default async function TaskDetailPage({
       kind: "journal" as const,
       id: journal.id,
       name: journal.name,
-      meta: [journal.publisher, journal.rank, journal.issn]
+      meta: [journalMetaLine(journal), journal.issn]
         .filter(Boolean)
         .join(" - "),
     })),
@@ -936,8 +953,7 @@ export default async function TaskDetailPage({
                   />
                 </div>
                 <p className="mt-1 text-xs text-[#B0B0B0]">
-                  {task.journal.publisher || "No publisher"} -{" "}
-                  {task.journal.rank || "No rank"}
+                  {journalMetaLine(task.journal)}
                 </p>
                 <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
                   <KeyRound className="h-3.5 w-3.5 text-amber-500" />
