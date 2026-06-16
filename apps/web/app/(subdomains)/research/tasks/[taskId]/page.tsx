@@ -282,10 +282,10 @@ function accountLine(
 ) {
   if (!account) return "No account assigned";
   return [
-    account.username || "No account id",
-    account.email || "No email",
-    account.password || "No pass",
-  ].join(" - ");
+    `ID: ${account.username || "No account id"}`,
+    `pass: ${account.password || "No pass"}`,
+    `email: ${account.email || "No email"}`,
+  ].join(" | ");
 }
 
 function taskAllowsReport(taskType: string | null) {

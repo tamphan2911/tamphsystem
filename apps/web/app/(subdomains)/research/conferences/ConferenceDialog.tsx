@@ -63,7 +63,7 @@ export function ConferenceDialog({
         className={
           isEdit
             ? "inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border border-blue-200 bg-blue-50 text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-100 hover:shadow-md dark:border-blue-800/70 dark:bg-blue-950/40 dark:text-blue-200"
-            : "inline-flex cursor-pointer items-center gap-2 rounded-none border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-sm font-bold text-cyan-800 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-100 hover:shadow-md dark:border-cyan-800/70 dark:bg-cyan-950/40 dark:text-cyan-200"
+            : "inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-none border border-[#B39CD0] bg-[#B39CD0] px-4 text-sm font-normal text-[#2C2C2C] shadow-sm outline-none transition duration-150 ease-out hover:border-[#C8B6E2] hover:bg-[#C8B6E2] hover:text-[#2C2C2C] hover:shadow-md focus:ring-2 focus:ring-[#B39CD0]/30 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:shadow-sm"
         }
         aria-label={isEdit ? "Edit conference" : "Add conference"}
       >
