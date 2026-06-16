@@ -22,11 +22,12 @@ import {
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import { CountryFlag } from "@/sites/research/components/CountryFlag";
 import {
   currencySymbol,
   formatResearchNumber,
 } from "@/sites/research/lib/currency";
-import { countryFlag, countryName } from "@/sites/research/lib/countries";
+import { countryName } from "@/sites/research/lib/countries";
 
 export type JournalRow = {
   id: string;
@@ -466,7 +467,7 @@ export function JournalsTable({
                   {journal.country ? (
                     <IconHint label={countryName(journal.country)}>
                       <span className="inline-flex cursor-help items-center text-lg leading-none transition-[filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)]">
-                        {countryFlag(journal.country)}
+                        <CountryFlag value={journal.country} />
                         <span className="sr-only">
                           {countryName(journal.country)}
                         </span>

@@ -9,7 +9,9 @@ import {
   TableSearchInput,
   useTablePagination,
 } from "@/sites/research/components/TableControls";
+import { CountryFlag } from "@/sites/research/components/CountryFlag";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
+import { countryCode } from "@/sites/research/lib/countries";
 import { DeleteFundingInstitutionButton } from "./DeleteFundingInstitutionButton";
 import { FundingInstitutionDialog } from "./FundingInstitutionDialog";
 
@@ -24,13 +26,6 @@ export type FundingInstitutionRow = {
   organizedProjects: number;
   researchProjects: number;
 };
-
-function countryFlag(country: string) {
-  const normalized = country.trim().toLowerCase();
-  if (!normalized) return "";
-  if (normalized === "vietnam" || normalized === "viet nam") return "🇻🇳";
-  return "🇺🇳";
-}
 
 export function FundingInstitutionsTable({
   rows,
@@ -114,17 +109,17 @@ export function FundingInstitutionsTable({
                   {institution.shortName || "-"}
                 </td>
                 <td className="px-3 py-3 text-center align-top">
-                  {institution.country ? (
+                  {countryCode(institution.country) ? (
                     <IconHint label={institution.country}>
                       <span className="inline-flex max-w-full items-start justify-center align-top text-xl leading-none">
-                        {countryFlag(institution.country)}
+                        <CountryFlag value={institution.country} className="h-5 w-7" />
                         <span className="sr-only">{institution.country}</span>
                       </span>
                     </IconHint>
                   ) : (
                     <IconHint label="No country">
-                      <span className="inline-flex items-start justify-center align-top text-xl leading-none opacity-50">
-                        🇺🇳
+                      <span className="inline-flex items-start justify-center align-top text-sm leading-none opacity-50">
+                        --
                       </span>
                     </IconHint>
                   )}

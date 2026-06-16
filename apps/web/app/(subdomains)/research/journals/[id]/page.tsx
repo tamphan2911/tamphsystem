@@ -9,8 +9,9 @@ import {
 } from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
+import { CountryFlag } from "@/sites/research/components/CountryFlag";
 import { formatMoney } from "@/sites/research/lib/currency";
-import { countryFlag, countryName } from "@/sites/research/lib/countries";
+import { countryName } from "@/sites/research/lib/countries";
 import { displayResearchPersonName } from "@/sites/research/lib/display";
 import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
@@ -305,7 +306,7 @@ export default async function JournalDetailPage({
                   -{" "}
                   <IconHint label={countryName(journal.country)}>
                     <span className="inline-flex cursor-help items-center text-base leading-none transition-[filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)]">
-                      {countryFlag(journal.country)}
+                      <CountryFlag value={journal.country} />
                       <span className="sr-only">
                         {countryName(journal.country)}
                       </span>

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
+import { CountryFlag } from "@/sites/research/components/CountryFlag";
 import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
 import {
   displayResearchEmail,
@@ -24,7 +25,7 @@ import {
   researchMutedLinkClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { formatMoney } from "@/sites/research/lib/currency";
-import { countryFlag, countryName } from "@/sites/research/lib/countries";
+import { countryName } from "@/sites/research/lib/countries";
 
 export const dynamic = "force-dynamic";
 
@@ -351,9 +352,7 @@ export default async function ReviewDetailPage({
             value={
               review.journal.country ? (
                 <span className="inline-flex items-center gap-2">
-                  <span aria-hidden="true">
-                    {countryFlag(review.journal.country)}
-                  </span>
+                  <CountryFlag value={review.journal.country} />
                   <span>{countryName(review.journal.country)}</span>
                 </span>
               ) : (

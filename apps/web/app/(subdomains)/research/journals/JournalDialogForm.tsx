@@ -26,7 +26,8 @@ import {
   X,
 } from "lucide-react";
 import { currencyOptions } from "@/sites/research/lib/currency";
-import { countryFlag, countryOptions } from "@/sites/research/lib/countries";
+import { countryOptions } from "@/sites/research/lib/countries";
+import { CountryFlag } from "@/sites/research/components/CountryFlag";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
@@ -216,9 +217,7 @@ function CountryPicker({
       emptyText="No country matches this search."
       renderSelected={(option) => (
         <span className="flex min-w-0 flex-1 items-center gap-2 px-3">
-          <span className="text-base" aria-hidden="true">
-            {countryFlag(option.id)}
-          </span>
+          <CountryFlag value={option.id} />
           <span className="truncate text-sm font-semibold text-[#E4E4E4]">
             {option.label}
           </span>
@@ -226,9 +225,7 @@ function CountryPicker({
       )}
       renderOption={(option) => (
         <span className="flex min-w-0 flex-1 items-center gap-2 px-3">
-          <span className="text-base" aria-hidden="true">
-            {countryFlag(option.id)}
-          </span>
+          <CountryFlag value={option.id} />
           <span className="min-w-0 flex-1 truncate">{option.label}</span>
           <span className="font-mono text-[11px] font-bold text-slate-400">
             {option.id}

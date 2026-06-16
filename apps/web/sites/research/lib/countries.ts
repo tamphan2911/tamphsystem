@@ -52,16 +52,34 @@ export const countryOptions: CountryOption[] = [
 export function countryName(code: string | null | undefined) {
   if (!code) return "";
   return (
-    countryOptions.find((country) => country.code === code)?.name ??
+    countryOptions.find((country) => country.code === code.toUpperCase())
+      ?.name ??
     code.toUpperCase()
   );
 }
 
-export function countryFlag(code: string | null | undefined) {
-  if (!code || code.length !== 2) return "";
-  return code
-    .toUpperCase()
-    .split("")
-    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
-    .join("");
+export function countryCode(value: string | null | undefined) {
+  if (!value) return "";
+
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  const upper = trimmed.toUpperCase();
+  if (upper.length === 2) {
+    return (
+      countryOptions.find((country) => country.code === upper)?.code ?? upper
+    );
+  }
+
+  const normalized = trimmed.toLowerCase();
+  return (
+    countryOptions.find((country) => country.name.toLowerCase() === normalized)
+      ?.code ?? ""
+  );
+}
+
+export function countryFlagSrc(value: string | null | undefined) {
+  const code = countryCode(value);
+  if (!code) return "";
+  return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 }

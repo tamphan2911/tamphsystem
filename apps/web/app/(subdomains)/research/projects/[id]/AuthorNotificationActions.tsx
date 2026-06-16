@@ -127,7 +127,7 @@ export function AuthorNotificationActions({
                 disabled={sent || isPending}
                 aria-label={sent ? action.sentLabel : action.label}
                 onClick={() => setConfirmType(action.type)}
-                className={`research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 !border-transparent !bg-transparent p-0 shadow-none !shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:!bg-transparent hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:active:scale-100 ${sent ? action.sentClassName : action.className}`}
+                className={`research-allow-transform inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 !border-transparent !bg-transparent p-0 shadow-none !shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:!bg-transparent hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:active:scale-100 ${sent ? action.sentClassName : action.className}`}
               >
                 <Icon className="h-4 w-4" />
               </button>

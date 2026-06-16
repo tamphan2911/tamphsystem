@@ -779,7 +779,11 @@ export default async function ProjectDetailPage({
       kind: "journal" as const,
       venueId: submission.journalId,
       venueName: submission.journal.name,
-      metaLine: `${submission.journal.publisher || "No publisher"} - ${submission.journal.rank || "No rank"}`,
+      metaLine: `${submission.journal.publisher || "No publisher"} - ${
+        submission.journal.type === "LOCAL"
+          ? submission.journal.localRank || "No local rank"
+          : submission.journal.rank || "No rank"
+      }`,
       apc: submission.journal.apc ?? "",
       apcCurrency: submission.journal.apcCurrency,
       submissionFee: submission.journal.submissionFee ?? "",
