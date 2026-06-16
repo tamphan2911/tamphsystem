@@ -539,8 +539,8 @@ export function ProfileClient({
           className="grid gap-5"
         >
           <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
-            <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
-              Display name
+            <span className="inline-flex items-center gap-1 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+              <span>Display name</span>
               <span className="research-required-mark">(*)</span>
             </span>
             <input
@@ -551,8 +551,8 @@ export function ProfileClient({
             />
           </label>
           <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
-            <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
-              Affiliation
+            <span className="inline-flex items-center gap-1 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+              <span>Affiliation</span>
               <span className="research-required-mark">(*)</span>
             </span>
             <input

@@ -54,28 +54,32 @@ export function ConferenceDialog({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => {
-          setWarning("");
-          setOpen(true);
-        }}
-        className={
-          isEdit
-            ? "inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border border-blue-200 bg-blue-50 text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-100 hover:shadow-md dark:border-blue-800/70 dark:bg-blue-950/40 dark:text-blue-200"
-            : "inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-none border border-[#B39CD0] bg-[#B39CD0] px-4 text-sm font-normal text-[#2C2C2C] shadow-sm outline-none transition duration-150 ease-out hover:border-[#C8B6E2] hover:bg-[#C8B6E2] hover:text-[#2C2C2C] hover:shadow-md focus:ring-2 focus:ring-[#B39CD0]/30 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:shadow-sm"
-        }
-        aria-label={isEdit ? "Edit conference" : "Add conference"}
-      >
-        {isEdit ? (
+      {isEdit ? (
+        <button
+          type="button"
+          onClick={() => {
+            setWarning("");
+            setOpen(true);
+          }}
+          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border border-blue-200 bg-blue-50 text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-100 hover:shadow-md dark:border-blue-800/70 dark:bg-blue-950/40 dark:text-blue-200"
+          aria-label="Edit conference"
+        >
           <Pencil className="h-4 w-4" />
-        ) : (
-          <>
-            <CalendarPlus className="h-4 w-4" />
-            New conference
-          </>
-        )}
-      </button>
+        </button>
+      ) : (
+        <ResearchButton
+          type="button"
+          onClick={() => {
+            setWarning("");
+            setOpen(true);
+          }}
+          tone="primary"
+          aria-label="Add conference"
+        >
+          <CalendarPlus className="h-4 w-4" />
+          New Conference
+        </ResearchButton>
+      )}
 
       <ResearchModal
         open={open}
