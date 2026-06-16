@@ -176,7 +176,10 @@ export default async function ResearchProfilePage() {
         task: {
           select: {
             id: true,
+            taskCode: true,
             title: true,
+            description: true,
+            category: true,
             status: true,
             taskType: true,
             dueDate: true,
@@ -301,7 +304,10 @@ export default async function ResearchProfilePage() {
 
   const taskRows = taskAssignments.map((assignment) => ({
     id: assignment.task.id,
+    taskCode: assignment.task.taskCode,
     title: assignment.task.title,
+    description: assignment.task.description ?? "",
+    category: assignment.task.category ?? "",
     status: assignment.task.status,
     taskType: assignment.task.taskType ?? "OTHER",
     dueDate: assignment.task.dueDate?.toISOString() ?? null,

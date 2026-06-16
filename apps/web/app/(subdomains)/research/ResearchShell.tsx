@@ -378,7 +378,7 @@ export function ResearchShell({
                 label={item.label}
                 icon={item.icon}
                 collapsed={collapsed}
-                adminOnly={"adminOnly" in item && item.adminOnly}
+                adminOnly={Boolean("adminOnly" in item && item.adminOnly)}
                 badgeCount={
                   item.href === "/proposals" ? unopenedProposalCount : 0
                 }
@@ -431,7 +431,9 @@ export function ResearchShell({
                           href={item.href}
                           label={item.label}
                           icon={item.icon}
-                          adminOnly={"adminOnly" in item && item.adminOnly}
+                          adminOnly={Boolean(
+                            "adminOnly" in item && item.adminOnly,
+                          )}
                           badgeCount={
                             item.href === "/proposals"
                               ? unopenedProposalCount
@@ -459,6 +461,7 @@ export function ResearchShell({
                   name={name}
                   profileHref="/profile"
                   adminHref="https://admin.tamph.com"
+                  showAdminConsole={isRootAdmin}
                   variant="research"
                 />
               </div>

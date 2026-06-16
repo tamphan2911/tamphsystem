@@ -10,6 +10,7 @@ type ProfileMenuProps = {
   name?: string | null;
   profileHref?: string;
   adminHref?: string;
+  showAdminConsole?: boolean;
   variant?: "default" | "research";
 };
 
@@ -18,6 +19,7 @@ export function ProfileMenu({
   name,
   profileHref = "/profile",
   adminHref = "https://admin.tamph.com",
+  showAdminConsole = false,
   variant = "default",
 }: ProfileMenuProps) {
   const [open, setOpen] = useState(false);
@@ -109,22 +111,24 @@ export function ProfileMenu({
             />
             Profile
           </Link>
-          <Link
-            href={adminHref}
-            onClick={() => setOpen(false)}
-            className={`research-profile-menu-item flex items-center gap-3 border-y border-transparent px-4 py-3 text-sm font-normal transition ${
-              isResearch
-                ? "text-[#E4E4E4] hover:border-[#444444] hover:bg-[#383838] hover:text-[#A8DADC]"
-                : "text-slate-700 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
-            }`}
-          >
-            <Settings
-              className={`h-4 w-4 ${
-                isResearch ? "text-[#B0B0B0]" : "text-slate-400"
+          {showAdminConsole ? (
+            <Link
+              href={adminHref}
+              onClick={() => setOpen(false)}
+              className={`research-profile-menu-item flex items-center gap-3 border-y border-transparent px-4 py-3 text-sm font-normal transition ${
+                isResearch
+                  ? "text-[#E4E4E4] hover:border-[#444444] hover:bg-[#383838] hover:text-[#A8DADC]"
+                  : "text-slate-700 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
               }`}
-            />
-            Admin console
-          </Link>
+            >
+              <Settings
+                className={`h-4 w-4 ${
+                  isResearch ? "text-[#B0B0B0]" : "text-slate-400"
+                }`}
+              />
+              Admin console
+            </Link>
+          ) : null}
           <button
             type="button"
             onClick={signOutToCurrentLogin}

@@ -425,6 +425,8 @@ export default async function ProjectDetailPage({
     notFound();
   }
   const canViewRegistrationClaim = isAdmin || isRegistrationUser;
+  const canEditResearchInfo =
+    isAdmin || isCorrespondingAuthor || isFirstAuthor;
   const canEditResearch = isAdmin || isCorrespondingAuthor;
   const canCreateSubmitOrOtherTask =
     isAdmin || isFirstAuthor || isCorrespondingAuthor;
@@ -861,7 +863,12 @@ export default async function ProjectDetailPage({
                   registerOptions={registerOptions}
                   claimOptions={claimOptions}
                   canEditRegistrationClaim={isAdmin}
-                  disabled={!canEditResearch}
+                  disabled={!canEditResearchInfo || researchContentLocked}
+                  disabledReason={
+                    researchContentLocked
+                      ? "Research information is locked after accepted or published submission"
+                      : "Only admin, first author, or corresponding author can edit research information"
+                  }
                 />
                 {isRootAdmin && (
                   <ResearchContentLockButton

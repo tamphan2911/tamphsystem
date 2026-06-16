@@ -1977,20 +1977,29 @@ export async function updateResearchProject(
           (entry) => entry.userId === user.id && entry.isCorresponding,
         )
       : projectLock.leadResearcherId === user.id;
-  if (!isAdmin && !isCorrespondingAuthor) redirect("/401");
+  const isFirstAuthor =
+    projectLock.authorEntries.length > 0
+      ? projectLock.authorEntries[0]?.userId === user.id
+      : projectLock.leadResearcherId === user.id;
+  const updateScope = optionalString(formData.get("updateScope"));
+  const canEditBasicResearch =
+    isAdmin || isCorrespondingAuthor || isFirstAuthor;
+  const canEditLockedResearchSections = isAdmin || isCorrespondingAuthor;
+
+  if (
+    (updateScope === "basic" && !canEditBasicResearch) ||
+    (updateScope !== "basic" && !canEditLockedResearchSections)
+  ) {
+    redirect("/401");
+  }
 
   const hasLockedJournalSubmission = projectLock?.submissions.some(
     (submission) =>
       submission.status === SubmissionStatus.ACCEPTED ||
       submission.status === SubmissionStatus.PUBLISHED,
   );
-  const updateScope = optionalString(formData.get("updateScope"));
 
-  if (
-    hasLockedJournalSubmission &&
-    !projectLock?.contentUnlocked &&
-    updateScope !== "basic"
-  ) {
+  if (hasLockedJournalSubmission && !projectLock?.contentUnlocked) {
     revalidatePath(`/projects/${projectId}`);
     return;
   }

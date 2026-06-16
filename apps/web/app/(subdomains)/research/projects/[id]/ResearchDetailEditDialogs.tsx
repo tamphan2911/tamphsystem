@@ -215,6 +215,7 @@ export function ResearchBasicEditDialog({
   claimOptions,
   canEditRegistrationClaim,
   disabled = false,
+  disabledReason,
 }: {
   action: (formData: FormData) => Promise<void>;
   values: ResearchBasicValues;
@@ -226,6 +227,7 @@ export function ResearchBasicEditDialog({
   claimOptions: { value: string; label: string }[];
   canEditRegistrationClaim: boolean;
   disabled?: boolean;
+  disabledReason?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -234,7 +236,11 @@ export function ResearchBasicEditDialog({
   return (
     <>
       <EditIconButton
-        label="Edit research information"
+        label={
+          disabled && disabledReason
+            ? disabledReason
+            : "Edit research information"
+        }
         onClick={() => setOpen(true)}
         disabled={disabled}
       />

@@ -12,6 +12,7 @@ import { ThemeToggle } from "@/sites/shared/components/ThemeToggle";
 import { ProfileMenu } from "@/sites/shared/components/ProfileMenu";
 import { auth } from "../../../auth";
 import { prisma } from "@repo/db";
+import { Role } from "@repo/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -34,6 +35,8 @@ export default async function LearnLayout({
 }) {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
+  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
+    []) as Role[];
   const sitePathname = (await headers()).get("x-site-pathname") ?? "";
   const isHomepage = sitePathname === "/";
   const isPublicCourseRoute =
@@ -98,6 +101,7 @@ export default async function LearnLayout({
                 name={session.user.name}
                 profileHref="/profile"
                 adminHref="https://admin.tamph.com"
+                showAdminConsole={roles.includes(Role.ADMIN)}
               />
             ) : (
               <Link

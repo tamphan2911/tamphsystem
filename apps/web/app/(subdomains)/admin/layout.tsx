@@ -158,6 +158,7 @@ export default async function AdminLayout({
               name={session.user.name}
               profileHref="/users"
               adminHref="/"
+              showAdminConsole
             />
           </div>
         </header>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -52,7 +53,10 @@ type ResearchProfileUser = {
 
 type ProfileTaskRow = {
   id: string;
+  taskCode: string | null;
   title: string;
+  description: string;
+  category: string;
   status: string;
   taskType: string;
   dueDate: string | null;
@@ -64,6 +68,14 @@ type ProfileTaskRow = {
 
 type TabKey = "dashboard" | "research" | "projects" | "proposals";
 type PeriodKey = "all" | "last" | "current";
+type DashboardStatusKey =
+  | "all"
+  | "active"
+  | "needClarify"
+  | "checking"
+  | "completed"
+  | "revoked"
+  | "overdue";
 
 function roleLabel(role: string) {
   return role
@@ -107,6 +119,50 @@ function taskTypeLabel(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function formatDate(value: string | null) {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  }).format(new Date(value));
+}
+
+function displayTaskCode(task: ProfileTaskRow) {
+  return task.taskCode || task.id.replaceAll("-", "").slice(0, 10).toUpperCase();
+}
+
+function taskStatusLabel(status: string) {
+  if (status === "OPEN" || status === "IN_PROGRESS") return "In progress";
+  if (status === "NEED_CLARIFY") return "Need clarify";
+  if (status === "CHECKING") return "Checking";
+  if (status === "COMPLETED") return "Completed";
+  if (status === "REVOKED") return "Revoked";
+  return status
+    .toLowerCase()
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function taskStatusDetail(task: ProfileTaskRow) {
+  if (task.status === "COMPLETED") {
+    return task.completedAt ? `finished ${formatDate(task.completedAt)}` : "Done";
+  }
+  if (task.status === "REVOKED") {
+    return "Closed by assigner";
+  }
+  if (task.status === "CHECKING") {
+    return "Waiting assigner check";
+  }
+  if (task.status === "NEED_CLARIFY") {
+    return "Waiting assigner answer";
+  }
+  if (isOverdue(task)) {
+    return `Due ${formatDate(task.dueDate)}`;
+  }
+  return task.dueDate ? `Due ${formatDate(task.dueDate)}` : "No due date";
+}
+
 function isTaskInPeriod(task: ProfileTaskRow, period: PeriodKey) {
   const start = periodStart(period);
   const end = periodEnd(period);
@@ -120,7 +176,7 @@ function isTaskInPeriod(task: ProfileTaskRow, period: PeriodKey) {
 function isOverdue(task: ProfileTaskRow) {
   if (
     !task.dueDate ||
-    task.status === "COMPLETE" ||
+    task.status === "COMPLETED" ||
     task.status === "REVOKED"
   ) {
     return false;
@@ -128,34 +184,37 @@ function isOverdue(task: ProfileTaskRow) {
   return new Date(task.dueDate).getTime() < Date.now();
 }
 
-function statusMetric(tasks: ProfileTaskRow[]) {
-  return [
-    {
-      label: "Completed",
-      value: tasks.filter((task) => task.status === "COMPLETE").length,
-      className: "bg-[#A8DADC]",
-    },
-    {
-      label: "Checking",
-      value: tasks.filter((task) => task.status === "CHECKING").length,
-      className: "bg-[#B39CD0]",
-    },
-    {
-      label: "Active",
-      value: tasks.filter(
-        (task) =>
-          task.status !== "COMPLETE" &&
-          task.status !== "REVOKED" &&
-          task.status !== "CHECKING",
-      ).length,
-      className: "bg-[#FFC1CC]",
-    },
-    {
-      label: "Overdue",
-      value: tasks.filter(isOverdue).length,
-      className: "bg-rose-300",
-    },
+function matchesDashboardStatus(
+  task: ProfileTaskRow,
+  statusKey: DashboardStatusKey,
+) {
+  if (statusKey === "all") return true;
+  if (statusKey === "overdue") return isOverdue(task);
+  if (statusKey === "completed") return task.status === "COMPLETED";
+  if (statusKey === "revoked") return task.status === "REVOKED";
+  if (statusKey === "checking") return task.status === "CHECKING";
+  if (statusKey === "needClarify") return task.status === "NEED_CLARIFY";
+  return (
+    (task.status === "OPEN" || task.status === "IN_PROGRESS") &&
+    !isOverdue(task)
+  );
+}
+
+function dashboardStatusTabs(tasks: ProfileTaskRow[]) {
+  const entries: { key: DashboardStatusKey; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "active", label: "Active" },
+    { key: "needClarify", label: "Need clarify" },
+    { key: "checking", label: "Checking" },
+    { key: "completed", label: "Completed" },
+    { key: "overdue", label: "Overdue" },
+    { key: "revoked", label: "Revoked" },
   ];
+
+  return entries.map((item) => ({
+    ...item,
+    value: tasks.filter((task) => matchesDashboardStatus(task, item.key)).length,
+  }));
 }
 
 function typeMetric(tasks: ProfileTaskRow[]) {
@@ -164,19 +223,30 @@ function typeMetric(tasks: ProfileTaskRow[]) {
     const label = taskTypeLabel(task.taskType || "OTHER");
     labels.set(label, (labels.get(label) ?? 0) + 1);
   });
-  return Array.from(labels.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([label, value], index) => ({
-      label,
-      value,
-      className:
-        index % 3 === 0
-          ? "bg-[#A8DADC]"
-          : index % 3 === 1
-            ? "bg-[#B39CD0]"
-            : "bg-[#FFC1CC]",
-    }));
+  const sorted = Array.from(labels.entries()).sort((a, b) => b[1] - a[1]);
+  const topRows = sorted.slice(0, 5);
+  const otherCount = sorted
+    .slice(5)
+    .reduce((sum, [, value]) => sum + value, 0);
+  const rows = otherCount > 0 ? [...topRows, ["Other", otherCount] as const] : topRows;
+  const total = Math.max(
+    1,
+    rows.reduce((sum, [, value]) => sum + value, 0),
+  );
+
+  return rows.map(([label, value], index) => ({
+    label,
+    value,
+    percent: Math.round((value / total) * 100),
+    className:
+      index % 4 === 0
+        ? "bg-[#A8DADC]"
+        : index % 4 === 1
+          ? "bg-[#B39CD0]"
+          : index % 4 === 2
+            ? "bg-[#FFC1CC]"
+            : "bg-[#F4D47A]",
+  }));
 }
 
 export function ProfileClient({
@@ -202,6 +272,8 @@ export function ProfileClient({
     isAssistant ? "dashboard" : "research",
   );
   const [period, setPeriod] = useState<PeriodKey>("all");
+  const [dashboardStatus, setDashboardStatus] =
+    useState<DashboardStatusKey>("all");
 
   async function saveProfile(formData: FormData) {
     setIsSaving(true);
@@ -244,7 +316,7 @@ export function ProfileClient({
     },
     {
       label: "Tasks",
-      value: user._count.assignedResearchTasks,
+      value: taskRows.length,
       icon: ClipboardList,
       hint: "Research tasks assigned to this user.",
     },
@@ -284,15 +356,26 @@ export function ProfileClient({
     () => taskRows.filter((task) => isTaskInPeriod(task, period)),
     [period, taskRows],
   );
-  const statusBars = statusMetric(periodTasks);
-  const typeBars = typeMetric(periodTasks);
-  const maxStatus = Math.max(1, ...statusBars.map((item) => item.value));
-  const maxType = Math.max(1, ...typeBars.map((item) => item.value));
+  const statusTabs = useMemo(
+    () => dashboardStatusTabs(periodTasks),
+    [periodTasks],
+  );
+  const filteredTasks = useMemo(
+    () =>
+      periodTasks
+        .filter((task) => matchesDashboardStatus(task, dashboardStatus))
+        .sort(
+          (left, right) =>
+            new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime(),
+        ),
+    [dashboardStatus, periodTasks],
+  );
+  const typeBars = useMemo(() => typeMetric(periodTasks), [periodTasks]);
   const completionRate =
     periodTasks.length === 0
       ? 0
       : Math.round(
-          (periodTasks.filter((task) => task.status === "COMPLETE").length /
+          (periodTasks.filter((task) => task.status === "COMPLETED").length /
             periodTasks.length) *
             100,
         );
@@ -307,7 +390,7 @@ export function ProfileClient({
                 {user.name || "Research user"}
               </h1>
               {user.emailVerified && (
-                <IconHint label="Email verified">
+                <IconHint label="Email verified" position="bottom">
                   <span className="inline-flex cursor-help text-[#A8DADC] transition duration-200 ease-out hover:-translate-y-0.5 hover:text-[#C9F0F2]">
                     <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                     <span className="sr-only">Email verified</span>
@@ -398,12 +481,13 @@ export function ProfileClient({
             <AssistantDashboard
               period={period}
               onPeriodChange={setPeriod}
+              dashboardStatus={dashboardStatus}
+              onDashboardStatusChange={setDashboardStatus}
               total={periodTasks.length}
               completionRate={completionRate}
-              statusBars={statusBars}
+              statusTabs={statusTabs}
+              filteredTasks={filteredTasks}
               typeBars={typeBars}
-              maxStatus={maxStatus}
-              maxType={maxType}
             />
           )}
 
@@ -485,22 +569,27 @@ export function ProfileClient({
 function AssistantDashboard({
   period,
   onPeriodChange,
+  dashboardStatus,
+  onDashboardStatusChange,
   total,
   completionRate,
-  statusBars,
+  statusTabs,
+  filteredTasks,
   typeBars,
-  maxStatus,
-  maxType,
 }: {
   period: PeriodKey;
   onPeriodChange: (period: PeriodKey) => void;
+  dashboardStatus: DashboardStatusKey;
+  onDashboardStatusChange: (status: DashboardStatusKey) => void;
   total: number;
   completionRate: number;
-  statusBars: { label: string; value: number; className: string }[];
-  typeBars: { label: string; value: number; className: string }[];
-  maxStatus: number;
-  maxType: number;
+  statusTabs: { key: DashboardStatusKey; label: string; value: number }[];
+  filteredTasks: ProfileTaskRow[];
+  typeBars: { label: string; value: number; percent: number; className: string }[];
 }) {
+  const overdueCount = statusTabs.find((item) => item.key === "overdue")?.value ?? 0;
+  const activeCount = statusTabs.find((item) => item.key === "active")?.value ?? 0;
+
   return (
     <div className="border border-[#444444] bg-[#2C2C2C]">
       <div className="flex flex-col gap-3 border-b border-[#444444] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
@@ -511,6 +600,10 @@ function AssistantDashboard({
           <p className="mt-1 text-sm text-[#E4E4E4]">
             {total} task{total === 1 ? "" : "s"} tracked - {completionRate}%
             completion rate
+          </p>
+          <p className="mt-1 text-xs text-[#B0B0B0]">
+            {activeCount} active task{activeCount === 1 ? "" : "s"} and{" "}
+            {overdueCount} overdue in the selected period.
           </p>
         </div>
         <div className="grid grid-cols-3 border border-[#444444] bg-[#242424] p-1">
@@ -531,27 +624,72 @@ function AssistantDashboard({
         </div>
       </div>
 
-      <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="border-b border-[#444444] p-4 lg:border-b-0 lg:border-r">
+      <div className="grid gap-0 xl:grid-cols-[minmax(0,1.6fr)_minmax(20rem,0.9fr)]">
+        <div className="border-b border-[#444444] p-4 xl:border-b-0 xl:border-r">
           <p className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
             Task Status
           </p>
-          <div className="mt-4 grid gap-3">
-            {statusBars.map((item) => (
-              <BarRow key={item.label} item={item} max={maxStatus} />
+          <div className="journal-detail-tabs mt-4 flex flex-wrap border border-[#444444] bg-[#242424] p-1">
+            {statusTabs.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                data-active={dashboardStatus === item.key}
+                aria-pressed={dashboardStatus === item.key}
+                onClick={() => onDashboardStatusChange(item.key)}
+                className="journal-detail-tab-button min-w-[8.5rem] flex-1 cursor-pointer rounded-none px-3 py-3 text-left"
+              >
+                <span className="relative z-10 flex items-center justify-between gap-3">
+                  <span className="text-[11px] font-normal uppercase tracking-wide">
+                    {item.label}
+                  </span>
+                  <span className="text-sm font-normal">{item.value}</span>
+                </span>
+              </button>
             ))}
           </div>
+
+          <ProfileTaskTable rows={filteredTasks} />
         </div>
 
         <div className="p-4">
           <p className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
             Work Mix
           </p>
-          <div className="mt-4 grid gap-3">
+          <div className="mt-4 space-y-4">
             {typeBars.length > 0 ? (
-              typeBars.map((item) => (
-                <BarRow key={item.label} item={item} max={maxType} compact />
-              ))
+              <>
+                <div className="flex h-4 overflow-hidden border border-[#444444] bg-[#242424]">
+                  {typeBars.map((item) => (
+                    <div
+                      key={item.label}
+                      className={`h-full transition-all duration-500 ease-out ${item.className}`}
+                      style={{ width: `${item.percent}%` }}
+                      title={`${item.label}: ${item.value}`}
+                    />
+                  ))}
+                </div>
+                <div className="grid gap-3">
+                  {typeBars.map((item) => (
+                    <div
+                      key={item.label}
+                      className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 text-sm"
+                    >
+                      <span
+                        className={`h-2.5 w-2.5 flex-none ${item.className}`}
+                        aria-hidden="true"
+                      />
+                      <span className="min-w-0 truncate text-[#E4E4E4]">
+                        {item.label}
+                      </span>
+                      <span className="text-[#B0B0B0]">{item.percent}%</span>
+                      <span className="font-mono text-[#E4E4E4]">
+                        {item.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
               <p className="border border-[#444444] bg-[#242424] px-3 py-6 text-center text-sm text-[#B0B0B0]">
                 No task data in this period.
@@ -564,32 +702,82 @@ function AssistantDashboard({
   );
 }
 
-function BarRow({
-  item,
-  max,
-  compact = false,
-}: {
-  item: { label: string; value: number; className: string };
-  max: number;
-  compact?: boolean;
-}) {
-  const width = `${Math.max(6, Math.round((item.value / max) * 100))}%`;
+function ProfileTaskTable({ rows }: { rows: ProfileTaskRow[] }) {
   return (
-    <div className="grid gap-1.5">
-      <div className="flex items-center justify-between gap-3 text-xs">
-        <span className="font-normal uppercase tracking-wide text-[#B0B0B0]">
-          {item.label}
-        </span>
-        <span className="font-mono text-[#E4E4E4]">{item.value}</span>
-      </div>
-      <div
-        className={`${compact ? "h-2" : "h-3"} border border-[#444444] bg-[#242424]`}
-      >
-        <div
-          className={`h-full transition-all duration-500 ease-out ${item.className}`}
-          style={{ width }}
-        />
-      </div>
+    <div className="mt-4 overflow-hidden border border-[#444444]">
+      <table className="w-full table-fixed text-left">
+        <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
+          <tr>
+            <th className="w-[7rem] px-3 py-3">ID</th>
+            <th className="px-3 py-3">Task</th>
+            <th className="w-[9rem] px-3 py-3">Type</th>
+            <th className="w-[10rem] px-3 py-3">Status</th>
+            <th className="w-[8rem] px-3 py-3">Due</th>
+            <th className="w-[8rem] px-3 py-3">Updated</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-[#444444]">
+          {rows.length > 0 ? (
+            rows.map((task) => (
+              <tr
+                key={task.id}
+                className="align-top transition-colors duration-150 odd:bg-[#2C2C2C] even:bg-[#262626] hover:bg-[#303030]"
+              >
+                <td className="px-3 py-3 align-top">
+                  <Link href={`/tasks/${task.id}`}>
+                    <span className="font-mono text-xs text-[#B0B0B0] transition hover:text-[#A8DADC]">
+                      {displayTaskCode(task)}
+                    </span>
+                  </Link>
+                </td>
+                <td className="px-3 py-3 align-top">
+                  <Link href={`/tasks/${task.id}`} className="group block min-w-0">
+                    <span className="block text-sm text-[#E4E4E4] transition group-hover:text-[#A8DADC]">
+                      {task.title}
+                    </span>
+                    <span className="mt-1 block line-clamp-2 text-xs leading-5 text-[#B0B0B0]">
+                      {task.description || "No extra note on this task."}
+                    </span>
+                  </Link>
+                </td>
+                <td className="px-3 py-3 align-top text-sm text-[#E4E4E4]">
+                  <span className="block">{taskTypeLabel(task.taskType)}</span>
+                  <span className="mt-1 block text-xs text-[#B0B0B0]">
+                    {task.category
+                      ? task.category
+                          .toLowerCase()
+                          .replace(/\b\w/g, (letter) => letter.toUpperCase())
+                      : "General"}
+                  </span>
+                </td>
+                <td className="px-3 py-3 align-top">
+                  <span className="block text-sm text-[#E4E4E4]">
+                    {taskStatusLabel(task.status)}
+                  </span>
+                  <span className="mt-1 block text-xs leading-5 text-[#B0B0B0]">
+                    {taskStatusDetail(task)}
+                  </span>
+                </td>
+                <td className="px-3 py-3 align-top text-sm text-[#E4E4E4]">
+                  {formatDate(task.dueDate)}
+                </td>
+                <td className="px-3 py-3 align-top text-sm text-[#B0B0B0]">
+                  {formatDate(task.updatedAt)}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td
+                colSpan={6}
+                className="px-4 py-8 text-center text-sm text-[#B0B0B0]"
+              >
+                No tasks match this status in the selected period.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
