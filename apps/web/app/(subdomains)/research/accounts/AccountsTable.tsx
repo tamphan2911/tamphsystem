@@ -8,7 +8,6 @@ import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfi
 import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import {
-  FilterSelect,
   IconHint,
   TablePagination,
   TableSearchInput,
@@ -29,7 +28,8 @@ export type AccountRow = {
   submissions: number;
 };
 
-const scopes = ["ALL", "PUBLISHER", "JOURNAL"];
+const accountIdLinkClass =
+  "font-normal text-[#E4E4E4] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:[text-shadow:0_0_0.55rem_rgba(168,218,220,0.18)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 motion-reduce:transform-none motion-reduce:transition-none";
 
 function SubmitCount({ count }: { count: number }) {
   const isZero = count === 0;
@@ -140,43 +140,10 @@ export function AccountsTable({
   deleteAction: (accountId: string) => Promise<void>;
 }) {
   const [query, setQuery] = usePersistentTableValue("accounts:q", "");
-  const [scope, setScope] = usePersistentTableValue("accounts:scope", "ALL");
-  const [journal, setJournal] = usePersistentTableValue(
-    "accounts:journal",
-    "ALL",
-  );
-  const [publisher, setPublisher] = usePersistentTableValue(
-    "accounts:publisher",
-    "ALL",
-  );
-
-  const journalOptions = useMemo(
-    () => [
-      "ALL",
-      ...Array.from(
-        new Set(rows.map((row) => row.journalName).filter(Boolean)),
-      ).sort(),
-    ],
-    [rows],
-  );
-  const publisherOptions = useMemo(
-    () => [
-      "ALL",
-      ...Array.from(
-        new Set(rows.map((row) => row.publisher).filter(Boolean)),
-      ).sort(),
-    ],
-    [rows],
-  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
-      const rowScope = row.journalName ? "JOURNAL" : "PUBLISHER";
-      const matchesScope = scope === "ALL" || rowScope === scope;
-      const matchesJournal = journal === "ALL" || row.journalName === journal;
-      const matchesPublisher =
-        publisher === "ALL" || row.publisher === publisher;
       const haystack = [
         row.username,
         row.email,
@@ -186,14 +153,9 @@ export function AccountsTable({
       ]
         .join(" ")
         .toLowerCase();
-      return (
-        matchesScope &&
-        matchesJournal &&
-        matchesPublisher &&
-        (!needle || haystack.includes(needle))
-      );
+      return !needle || haystack.includes(needle);
     });
-  }, [journal, publisher, query, rows, scope]);
+  }, [query, rows]);
 
   const pagination = useTablePagination(filtered, 10, 1, "accounts");
 
@@ -202,63 +164,14 @@ export function AccountsTable({
     pagination.setPage(1);
   }
 
-  function updateScope(value: string) {
-    setScope(value);
-    pagination.setPage(1);
-  }
-
-  function updateJournal(value: string) {
-    setJournal(value);
-    pagination.setPage(1);
-  }
-
-  function updatePublisher(value: string) {
-    setPublisher(value);
-    pagination.setPage(1);
-  }
-
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
-      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+      <div className="border-b border-[#444444] bg-[#2C2C2C] py-3">
         <TableSearchInput
           value={query}
           onChange={updateQuery}
           placeholder="Search accounts, email, journal..."
         />
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <FilterSelect
-            value={scope}
-            onChange={updateScope}
-            ariaLabel="Filter by scope"
-            options={scopes.map((item) => ({
-              value: item,
-              label:
-                item === "ALL"
-                  ? "All scopes"
-                  : item === "PUBLISHER"
-                    ? "Publisher-wide"
-                    : "Journal-specific",
-            }))}
-          />
-          <FilterSelect
-            value={journal}
-            onChange={updateJournal}
-            ariaLabel="Filter by journal"
-            options={journalOptions.map((item) => ({
-              value: item,
-              label: item === "ALL" ? "All journals" : item,
-            }))}
-          />
-          <FilterSelect
-            value={publisher}
-            onChange={updatePublisher}
-            ariaLabel="Filter by publisher"
-            options={publisherOptions.map((item) => ({
-              value: item,
-              label: item === "ALL" ? "All publishers" : item,
-            }))}
-          />
-        </div>
       </div>
 
       <div className="overflow-hidden">
@@ -299,7 +212,7 @@ export function AccountsTable({
                     </IconHint>
                     <Link
                       href={`/accounts/${account.id}`}
-                      className={`truncate whitespace-nowrap ${researchLinkClass}`}
+                      className={`truncate whitespace-nowrap ${accountIdLinkClass}`}
                     >
                       {account.username}
                     </Link>
