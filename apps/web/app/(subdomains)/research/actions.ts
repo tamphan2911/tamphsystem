@@ -2562,6 +2562,30 @@ export async function createPublisherAccount(formData: FormData) {
   if (projectId) revalidatePath(`/projects/${projectId}`);
 }
 
+export async function updatePublisherAccount(
+  accountId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  requireResearchAdmin(user.roles);
+
+  await prisma.publisherAccount.update({
+    where: { id: accountId },
+    data: {
+      username: optionalString(formData.get("username")) ?? "new-account",
+      password: optionalString(formData.get("password")) ?? "",
+      email: optionalString(formData.get("email")),
+      note: optionalString(formData.get("note")),
+      journalId: optionalString(formData.get("journalId")),
+    },
+  });
+
+  revalidatePath("/accounts");
+  revalidatePath(`/accounts/${accountId}`);
+  revalidatePath("/journals");
+  revalidatePath("/submissions");
+}
+
 export async function deletePublisherAccount(accountId: string) {
   const user = await requireCurrentUser();
   requireResearchAdmin(user.roles);

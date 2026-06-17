@@ -1,26 +1,16 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import {
-  ArrowLeft,
-  AtSign,
-  ClipboardList,
-  KeyRound,
-  LockKeyhole,
-  Send,
-  ShieldCheck,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { AtSign, KeyRound, LockKeyhole, Send } from "lucide-react";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import {
   SubmissionsTable,
   type SubmissionRow,
 } from "../../projects/[id]/SubmissionsTable";
-import {
-  researchLinkClass,
-  researchMutedLinkClass,
-} from "@/sites/research/components/ResearchPrimitives";
+import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { displayResearchPersonName } from "@/sites/research/lib/display";
+import { EditAccountDialog } from "./EditAccountDialog";
 
 export const dynamic = "force-dynamic";
 
@@ -38,30 +28,6 @@ type ProjectForAuthorLine = {
     user: AuthorUser;
   }[];
 };
-
-function InfoTile({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="border border-[#444444] bg-[#242424] px-3 py-2.5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#5a5a5a] hover:bg-[#292929] hover:shadow-lg hover:shadow-black/20">
-      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-[#777777]">
-        <span className="flex h-7 w-7 items-center justify-center rounded-none bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/20">
-          <Icon className="h-3.5 w-3.5" />
-        </span>
-        <span>{label}</span>
-      </div>
-      <p className="mt-2 break-words text-base font-semibold text-[#E4E4E4]">
-        {value || "-"}
-      </p>
-    </div>
-  );
-}
 
 function authorLine(project: ProjectForAuthorLine) {
   if (project.authorEntries.length > 0) {
@@ -103,34 +69,40 @@ export default async function AccountDetailPage({
   if (!userId) redirect("/login");
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
-  const account = await prisma.publisherAccount.findUnique({
-    where: { id },
-    include: {
-      journal: true,
-      submissions: {
-        include: {
-          project: {
-            include: {
-              leadResearcher: true,
-              authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
-              authorEntries: {
-                include: { user: true },
-                orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+  const [account, journals] = await Promise.all([
+    prisma.publisherAccount.findUnique({
+      where: { id },
+      include: {
+        journal: true,
+        submissions: {
+          include: {
+            project: {
+              include: {
+                leadResearcher: true,
+                authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
+                authorEntries: {
+                  include: { user: true },
+                  orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+                },
               },
             },
           },
+          orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
         },
-        orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
-      },
-      tasks: {
-        include: {
-          project: true,
-          assignments: { select: { userId: true } },
+        tasks: {
+          include: {
+            project: true,
+            assignments: { select: { userId: true } },
+          },
+          orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
         },
-        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
       },
-    },
-  });
+    }),
+    prisma.journal.findMany({
+      orderBy: [{ name: "asc" }],
+      select: { id: true, name: true, publisher: true },
+    }),
+  ]);
 
   if (!account) notFound();
   const hasUnfinishedAssignedTask = account.tasks.some(
@@ -176,84 +148,91 @@ export default async function AccountDetailPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
-      <Link
-        href="/accounts"
-        className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Accounts
-      </Link>
-
-      <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <p className="font-mono text-xs font-bold uppercase tracking-wide text-slate-400">
-              Site ID: {account.id}
-            </p>
-            <h1 className="mt-1 flex items-center gap-2 text-2xl font-normal tracking-tight text-[#E4E4E4]">
-              <KeyRound className="h-5 w-5 text-amber-500" />
-              {account.username}
-            </h1>
-            <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#B0B0B0]">
-              <span className="inline-flex items-center gap-1.5">
-                <LockKeyhole className="h-3.5 w-3.5 text-amber-500" />
-                <span className="font-mono">{account.password || "-"}</span>
+      <ResearchPageHeaderPortal>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#E4E4E4]">
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <KeyRound className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+              <span className="min-w-0 truncate font-mono text-sm font-normal">
+                {account.username}
               </span>
-              <span className="inline-flex items-center gap-1.5">
-                <AtSign className="h-3.5 w-3.5 text-sky-500" />
-                {account.email || "No email"}
+            </span>
+            <span className="text-[#777777]" aria-hidden="true">
+              |
+            </span>
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <LockKeyhole className="h-4 w-4 flex-none text-[#A06716] dark:text-[#F4D47A]" />
+              <span className="min-w-0 truncate font-mono text-sm font-normal">
+                {account.password || "-"}
               </span>
-            </p>
-            <p className="mt-3 text-sm text-[#B0B0B0]">
-              {account.journal ? (
-                <Link
-                  href={`/journals/${account.journal.id}`}
-                  className={researchLinkClass}
-                >
-                  {account.journal.name}
-                </Link>
-              ) : (
-                "Publisher-wide account"
-              )}
-              {account.journal && (
-                <>
-                  {" "}
-                  - {account.journal.publisher || "No publisher"} -{" "}
-                  {account.journal.rank || "No rank"}
-                </>
-              )}
-            </p>
-            <p className="mt-2 max-w-3xl text-xs leading-5 text-[#B0B0B0]">
-              {account.note || "No note recorded."}
-            </p>
+            </span>
+            {isAdmin && (
+              <EditAccountDialog
+                account={{
+                  id: account.id,
+                  username: account.username,
+                  password: account.password,
+                  email: account.email ?? "",
+                  note: account.note ?? "",
+                  journal: account.journal
+                    ? {
+                        id: account.journal.id,
+                        name: account.journal.name,
+                        publisher: account.journal.publisher ?? "",
+                      }
+                    : null,
+                }}
+                journals={journals.map((journal) => ({
+                  id: journal.id,
+                  name: journal.name,
+                  publisher: journal.publisher ?? "",
+                }))}
+              />
+            )}
           </div>
-          <div className="grid w-full grid-cols-3 gap-2 lg:w-[24rem]">
-            <InfoTile
-              icon={Send}
-              label="Submissions"
-              value={String(account.submissions.length)}
-            />
-            <InfoTile
-              icon={ClipboardList}
-              label="Tasks"
-              value={String(account.tasks.length)}
-            />
-            <InfoTile
-              icon={ShieldCheck}
-              label="Scope"
-              value={account.journal ? "Journal" : "Publisher"}
-            />
-          </div>
+          <p className="flex min-w-0 items-center gap-1.5 text-xs text-[#B0B0B0]">
+            <AtSign className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+            <span className="truncate">{account.email || "No email"}</span>
+          </p>
         </div>
+      </ResearchPageHeaderPortal>
+
+      <section className="space-y-2 border-b border-[#444444] pb-4">
+        <p className="text-sm text-[#B0B0B0]">
+          {account.journal ? (
+            <Link
+              href={`/journals/${account.journal.id}`}
+              className={researchLinkClass}
+            >
+              {account.journal.name}
+            </Link>
+          ) : (
+            "Publisher-wide account"
+          )}
+          {account.journal && (
+            <>
+              {" "}
+              - {account.journal.publisher || "No publisher"} -{" "}
+              {account.journal.rank || "No rank"}
+            </>
+          )}
+        </p>
+        <p className="text-xs text-[#B0B0B0]">
+          Submissions:{" "}
+          <span className="text-[#E4E4E4]">{account.submissions.length}</span>
+        </p>
+        <p className="max-w-3xl text-xs leading-5 text-[#B0B0B0]">
+          {account.note || "No note recorded."}
+        </p>
       </section>
 
       <section className="space-y-3">
         <div className="flex items-center gap-2 px-1">
-          <span className="flex h-9 w-9 items-center justify-center rounded-none bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20">
-            <Send className="h-4 w-4" />
+          <span className="inline-flex items-center justify-center text-[#1F7180] dark:text-[#A8DADC]">
+            <Send className="h-4 w-4 transition-[color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:scale-110" />
           </span>
           <div>
-            <h2 className="text-sm font-black text-[#E4E4E4]">Submissions</h2>
+            <h2 className="text-sm font-normal text-[#E4E4E4]">Submissions</h2>
             <p className="text-xs text-[#B0B0B0]">
               Research records submitted with this account.
             </p>
