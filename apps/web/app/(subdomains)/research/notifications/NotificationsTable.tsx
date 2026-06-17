@@ -20,6 +20,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 
 export type NotificationManagementRow = {
@@ -146,10 +147,16 @@ export function NotificationsTable({
   rows: NotificationManagementRow[];
   deleteNotificationAction: (notificationId: string) => Promise<void>;
 }) {
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("ALL");
-  const [type, setType] = useState("ALL");
-  const [recipient, setRecipient] = useState("ALL");
+  const [query, setQuery] = usePersistentTableValue("notifications:q", "");
+  const [status, setStatus] = usePersistentTableValue(
+    "notifications:status",
+    "ALL",
+  );
+  const [type, setType] = usePersistentTableValue("notifications:type", "ALL");
+  const [recipient, setRecipient] = usePersistentTableValue(
+    "notifications:recipient",
+    "ALL",
+  );
 
   const typeOptions = useMemo(() => {
     const labels = new Map<string, string>();
@@ -218,20 +225,40 @@ export function NotificationsTable({
     });
   }, [query, recipient, rows, status, type]);
 
-  const pagination = useTablePagination(filtered, 10);
+  const pagination = useTablePagination(filtered, 10, 1, "notifications");
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateStatus(value: string) {
+    setStatus(value);
+    pagination.setPage(1);
+  }
+
+  function updateType(value: string) {
+    setType(value);
+    pagination.setPage(1);
+  }
+
+  function updateRecipient(value: string) {
+    setRecipient(value);
+    pagination.setPage(1);
+  }
 
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
-          onChange={setQuery}
+          onChange={updateQuery}
           placeholder="Search notifications, users, type..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
           <FilterSelect
             value={status}
-            onChange={setStatus}
+            onChange={updateStatus}
             ariaLabel="Filter by read status"
             options={[
               { value: "ALL", label: "All status" },
@@ -241,13 +268,13 @@ export function NotificationsTable({
           />
           <FilterSelect
             value={type}
-            onChange={setType}
+            onChange={updateType}
             ariaLabel="Filter by notification type"
             options={typeOptions}
           />
           <FilterSelect
             value={recipient}
-            onChange={setRecipient}
+            onChange={updateRecipient}
             ariaLabel="Filter by recipient"
             options={recipientOptions.map((item) => ({
               value: item,

@@ -36,6 +36,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
@@ -393,9 +394,15 @@ export function SubmissionsTable({
     !isResearchView || rows.some((row) => row.canViewRegistrationClaim);
   const showStatusEdit = isAdmin && actionMode === "edit";
   const showDelete = isAdmin && actionMode === "delete";
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("ALL");
-  const [kind, setKind] = useState("ALL");
+  const [query, setQuery] = usePersistentTableValue("research-submissions:q", "");
+  const [status, setStatus] = usePersistentTableValue(
+    "research-submissions:status",
+    "ALL",
+  );
+  const [kind, setKind] = usePersistentTableValue(
+    "research-submissions:kind",
+    "ALL",
+  );
   const [editing, setEditing] = useState<SubmissionRow | null>(null);
   const [deleting, setDeleting] = useState<SubmissionRow | null>(null);
   const [acceptanceConfirmation, setAcceptanceConfirmation] =
@@ -441,7 +448,22 @@ export function SubmissionsTable({
     });
   }, [kind, query, rows, status]);
 
-  const pagination = useTablePagination(filtered, 10);
+  const pagination = useTablePagination(filtered, 10, 1, "research-submissions");
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateStatus(value: string) {
+    setStatus(value);
+    pagination.setPage(1);
+  }
+
+  function updateKind(value: string) {
+    setKind(value);
+    pagination.setPage(1);
+  }
 
   function persistStatus(
     formData: FormData,
@@ -566,7 +588,7 @@ export function SubmissionsTable({
         >
           <TableSearchInput
             value={query}
-            onChange={setQuery}
+            onChange={updateQuery}
             placeholder={
               isResearchView
                 ? "Search research, authors, status..."
@@ -576,7 +598,7 @@ export function SubmissionsTable({
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
             <FilterSelect
               value={status}
-              onChange={setStatus}
+              onChange={updateStatus}
               ariaLabel="Filter submissions by status"
               options={[
                 { value: "ALL", label: "All status" },
@@ -591,7 +613,7 @@ export function SubmissionsTable({
             {!isResearchView && (
               <FilterSelect
                 value={kind}
-                onChange={setKind}
+                onChange={updateKind}
                 ariaLabel="Filter by venue type"
                 options={[
                   { value: "ALL", label: "All venues" },

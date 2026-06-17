@@ -17,6 +17,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 
 export type SuggestionKind = "Journal" | "Conference";
@@ -140,10 +141,16 @@ export function SuggestionsTable({
     conferenceId: string,
   ) => Promise<void>;
 }) {
-  const [query, setQuery] = useState("");
-  const [kind, setKind] = useState("ALL");
-  const [project, setProject] = useState("ALL");
-  const [suggestedBy, setSuggestedBy] = useState("ALL");
+  const [query, setQuery] = usePersistentTableValue("suggestions:q", "");
+  const [kind, setKind] = usePersistentTableValue("suggestions:kind", "ALL");
+  const [project, setProject] = usePersistentTableValue(
+    "suggestions:project",
+    "ALL",
+  );
+  const [suggestedBy, setSuggestedBy] = usePersistentTableValue(
+    "suggestions:suggestedBy",
+    "ALL",
+  );
 
   const projectOptions = useMemo(
     () => [
@@ -203,20 +210,27 @@ export function SuggestionsTable({
     });
   }, [kind, project, query, rows, suggestedBy]);
 
-  const pagination = useTablePagination(filtered, 10);
+  const pagination = useTablePagination(filtered, 10, 1, "suggestions");
+
+  function resetPageAfter(update: (value: string) => void) {
+    return (value: string) => {
+      update(value);
+      pagination.setPage(1);
+    };
+  }
 
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
       <div className="flex flex-col gap-3 border-b border-[#333333] bg-[#242424] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
-          onChange={setQuery}
+          onChange={resetPageAfter(setQuery)}
           placeholder="Search suggestion, research, venue, user..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
           <FilterSelect
             value={kind}
-            onChange={setKind}
+            onChange={resetPageAfter(setKind)}
             ariaLabel="Filter by suggestion type"
             options={[
               { value: "ALL", label: "All types" },
@@ -226,7 +240,7 @@ export function SuggestionsTable({
           />
           <FilterSelect
             value={project}
-            onChange={setProject}
+            onChange={resetPageAfter(setProject)}
             ariaLabel="Filter by research"
             options={projectOptions.map((item) => ({
               value: item,
@@ -235,7 +249,7 @@ export function SuggestionsTable({
           />
           <FilterSelect
             value={suggestedBy}
-            onChange={setSuggestedBy}
+            onChange={resetPageAfter(setSuggestedBy)}
             ariaLabel="Filter by suggested user"
             options={suggestedByOptions.map((item) => ({
               value: item,

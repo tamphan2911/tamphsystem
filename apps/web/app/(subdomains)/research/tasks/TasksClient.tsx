@@ -20,6 +20,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
@@ -357,9 +358,12 @@ export function TasksClient({
   action?: ReactNode;
 }) {
   const [tasks, setTasks] = useState<TaskRow[]>([]);
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("ALL");
-  const [assignee, setAssignee] = useState("ALL");
+  const [query, setQuery] = usePersistentTableValue("tasks:q", "");
+  const [status, setStatus] = usePersistentTableValue("tasks:status", "ALL");
+  const [assignee, setAssignee] = usePersistentTableValue(
+    "tasks:assignee",
+    "ALL",
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
@@ -446,7 +450,22 @@ export function TasksClient({
       );
     });
   }, [assignee, query, status, tasks]);
-  const pagination = useTablePagination(filtered, 10);
+  const pagination = useTablePagination(filtered, 10, 1, "tasks");
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateStatus(value: string) {
+    setStatus(value);
+    pagination.setPage(1);
+  }
+
+  function updateAssignee(value: string) {
+    setAssignee(value);
+    pagination.setPage(1);
+  }
 
   const stats = [
     {
@@ -496,13 +515,13 @@ export function TasksClient({
         <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
           <TableSearchInput
             value={query}
-            onChange={setQuery}
+            onChange={updateQuery}
             placeholder="Search task, assistant, category..."
           />
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
             <FilterSelect
               value={status}
-              onChange={setStatus}
+              onChange={updateStatus}
               ariaLabel="Filter by task status"
               options={[
                 { value: "ALL", label: "All status" },
@@ -517,7 +536,7 @@ export function TasksClient({
             {isAdmin && (
               <FilterSelect
                 value={assignee}
-                onChange={setAssignee}
+                onChange={updateAssignee}
                 ariaLabel="Filter by assignee"
                 options={assigneeOptions.map((item) => ({
                   value: item,

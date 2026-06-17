@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import {
   AtSign,
@@ -17,6 +17,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import {
   SubmissionsTable,
@@ -70,9 +71,15 @@ export function JournalDetailTabs({
   accounts: JournalAccountRow[];
   reviews: JournalReviewRow[];
 }) {
-  const [activeTab, setActiveTab] = useState<TabKey>("submissions");
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("ALL");
+  const [activeTab, setActiveTab] = usePersistentTableValue<TabKey>(
+    "journal-detail:tab",
+    "submissions",
+  );
+  const [query, setQuery] = usePersistentTableValue("journal-detail:q", "");
+  const [status, setStatus] = usePersistentTableValue(
+    "journal-detail:status",
+    "ALL",
+  );
 
   const statusOptions = useMemo(() => {
     const rows =
@@ -117,8 +124,37 @@ export function JournalDetailTabs({
       return matchesStatus && (!needle || haystack.includes(needle));
     });
   }, [query, reviews, status]);
-  const accountPagination = useTablePagination(filteredAccounts, 10);
-  const reviewPagination = useTablePagination(filteredReviews, 10);
+  const accountPagination = useTablePagination(
+    filteredAccounts,
+    10,
+    1,
+    "journal-detail-accounts",
+  );
+  const reviewPagination = useTablePagination(
+    filteredReviews,
+    10,
+    1,
+    "journal-detail-reviews",
+  );
+
+  function updateTab(value: TabKey) {
+    setActiveTab(value);
+    setStatus("ALL");
+    setQuery("");
+    accountPagination.setPage(1);
+    reviewPagination.setPage(1);
+  }
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    accountPagination.setPage(1);
+    reviewPagination.setPage(1);
+  }
+
+  function updateStatus(value: string) {
+    setStatus(value);
+    reviewPagination.setPage(1);
+  }
 
   const tabs = [
     {
@@ -150,11 +186,7 @@ export function JournalDetailTabs({
             type="button"
             data-active={activeTab === tab.key}
             aria-pressed={activeTab === tab.key}
-            onClick={() => {
-              setActiveTab(tab.key);
-              setStatus("ALL");
-              setQuery("");
-            }}
+            onClick={() => updateTab(tab.key)}
             className="journal-detail-tab-button cursor-pointer rounded-none px-4 py-3 text-left"
           >
             <span className="relative z-10 flex items-center justify-between gap-2">
@@ -177,13 +209,13 @@ export function JournalDetailTabs({
           <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
             <TableSearchInput
               value={query}
-              onChange={setQuery}
+              onChange={updateQuery}
               placeholder={`Search ${activeTab}...`}
             />
             {activeTab !== "accounts" && (
               <FilterSelect
                 value={status}
-                onChange={setStatus}
+                onChange={updateStatus}
                 ariaLabel="Filter by status"
                 options={statusOptions.map((item) => ({
                   value: item,

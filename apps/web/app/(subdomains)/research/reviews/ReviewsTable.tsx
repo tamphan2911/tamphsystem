@@ -19,6 +19,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import {
@@ -173,9 +174,9 @@ export function ReviewsTable({
   isAdmin: boolean;
   deleteAction: (reviewId: string) => Promise<void>;
 }) {
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("ALL");
-  const [journal, setJournal] = useState("ALL");
+  const [query, setQuery] = usePersistentTableValue("reviews:q", "");
+  const [status, setStatus] = usePersistentTableValue("reviews:status", "ALL");
+  const [journal, setJournal] = usePersistentTableValue("reviews:journal", "ALL");
 
   const journalOptions = useMemo(
     () => [
@@ -213,20 +214,35 @@ export function ReviewsTable({
     });
   }, [journal, query, rows, status]);
 
-  const pagination = useTablePagination(filtered, 10);
+  const pagination = useTablePagination(filtered, 10, 1, "reviews");
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateStatus(value: string) {
+    setStatus(value);
+    pagination.setPage(1);
+  }
+
+  function updateJournal(value: string) {
+    setJournal(value);
+    pagination.setPage(1);
+  }
 
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
-          onChange={setQuery}
+          onChange={updateQuery}
           placeholder="Search reviews, journal, manuscript..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
           <FilterSelect
             value={status}
-            onChange={setStatus}
+            onChange={updateStatus}
             ariaLabel="Filter by status"
             options={statuses.map((item) => ({
               value: item,
@@ -235,7 +251,7 @@ export function ReviewsTable({
           />
           <FilterSelect
             value={journal}
-            onChange={setJournal}
+            onChange={updateJournal}
             ariaLabel="Filter by journal"
             options={journalOptions.map((item) => ({
               value: item,

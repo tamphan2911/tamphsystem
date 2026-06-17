@@ -16,6 +16,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
@@ -184,8 +185,8 @@ export function ConferencesTable({
   isAdmin: boolean;
   deleteAction: (conferenceId: string) => Promise<void>;
 }) {
-  const [query, setQuery] = useState("");
-  const [type, setType] = useState("ALL");
+  const [query, setQuery] = usePersistentTableValue("conferences:q", "");
+  const [type, setType] = usePersistentTableValue("conferences:type", "ALL");
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -209,20 +210,30 @@ export function ConferencesTable({
     });
   }, [query, rows, type]);
 
-  const pagination = useTablePagination(filtered, 10);
+  const pagination = useTablePagination(filtered, 10, 1, "conferences");
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateType(value: string) {
+    setType(value);
+    pagination.setPage(1);
+  }
 
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
-          onChange={setQuery}
+          onChange={updateQuery}
           placeholder="Search conference, organizer, theme, ISBN..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
           <FilterSelect
             value={type}
-            onChange={setType}
+            onChange={updateType}
             ariaLabel="Filter by conference type"
             options={conferenceTypes.map((item) => ({
               value: item,

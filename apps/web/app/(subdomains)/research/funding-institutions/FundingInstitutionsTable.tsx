@@ -8,6 +8,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { CountryFlag } from "@/sites/research/components/CountryFlag";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
@@ -36,7 +37,7 @@ export function FundingInstitutionsTable({
   updateAction: (funderId: string, formData: FormData) => Promise<void>;
   deleteAction: (funderId: string) => Promise<void>;
 }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = usePersistentTableValue("funders:q", "");
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -58,14 +59,19 @@ export function FundingInstitutionsTable({
     });
   }, [query, rows]);
 
-  const pagination = useTablePagination(filtered, 10);
+  const pagination = useTablePagination(filtered, 10, 1, "funders");
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    pagination.setPage(1);
+  }
 
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
-          onChange={setQuery}
+          onChange={updateQuery}
           placeholder="Search funder, ID, alias, country..."
         />
       </div>

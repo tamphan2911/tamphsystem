@@ -22,6 +22,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
@@ -53,8 +54,8 @@ export function AssistantsTable({
   const router = useRouter();
   const { showSuccess } = useResearchToast();
   const [isPending, startTransition] = useTransition();
-  const [query, setQuery] = useState("");
-  const [role, setRole] = useState("ALL");
+  const [query, setQuery] = usePersistentTableValue("assistants:q", "");
+  const [role, setRole] = usePersistentTableValue("assistants:role", "ALL");
   const [editing, setEditing] = useState<AssistantRow | null>(null);
   const [deleting, setDeleting] = useState<AssistantRow | null>(null);
   const [editRole, setEditRole] = useState("ASSISTANT");
@@ -83,7 +84,17 @@ export function AssistantsTable({
     });
   }, [query, role, rows]);
 
-  const pagination = useTablePagination(filtered, 10);
+  const pagination = useTablePagination(filtered, 10, 1, "assistants");
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateRole(value: string) {
+    setRole(value);
+    pagination.setPage(1);
+  }
 
   function togglePassword(userId: string) {
     setVisiblePasswords((current) => {
@@ -145,13 +156,13 @@ export function AssistantsTable({
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
-          onChange={setQuery}
+          onChange={updateQuery}
           placeholder="Search assistant, email, role..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
           <FilterSelect
             value={role}
-            onChange={setRole}
+            onChange={updateRole}
             ariaLabel="Filter by assistant role"
             options={[
               { value: "ALL", label: "All roles" },

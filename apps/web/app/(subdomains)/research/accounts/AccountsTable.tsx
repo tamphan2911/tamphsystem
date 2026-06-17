@@ -13,6 +13,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
@@ -138,10 +139,16 @@ export function AccountsTable({
   isAdmin: boolean;
   deleteAction: (accountId: string) => Promise<void>;
 }) {
-  const [query, setQuery] = useState("");
-  const [scope, setScope] = useState("ALL");
-  const [journal, setJournal] = useState("ALL");
-  const [publisher, setPublisher] = useState("ALL");
+  const [query, setQuery] = usePersistentTableValue("accounts:q", "");
+  const [scope, setScope] = usePersistentTableValue("accounts:scope", "ALL");
+  const [journal, setJournal] = usePersistentTableValue(
+    "accounts:journal",
+    "ALL",
+  );
+  const [publisher, setPublisher] = usePersistentTableValue(
+    "accounts:publisher",
+    "ALL",
+  );
 
   const journalOptions = useMemo(
     () => [
@@ -188,20 +195,40 @@ export function AccountsTable({
     });
   }, [journal, publisher, query, rows, scope]);
 
-  const pagination = useTablePagination(filtered, 10);
+  const pagination = useTablePagination(filtered, 10, 1, "accounts");
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateScope(value: string) {
+    setScope(value);
+    pagination.setPage(1);
+  }
+
+  function updateJournal(value: string) {
+    setJournal(value);
+    pagination.setPage(1);
+  }
+
+  function updatePublisher(value: string) {
+    setPublisher(value);
+    pagination.setPage(1);
+  }
 
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
-          onChange={setQuery}
+          onChange={updateQuery}
           placeholder="Search accounts, email, journal..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
           <FilterSelect
             value={scope}
-            onChange={setScope}
+            onChange={updateScope}
             ariaLabel="Filter by scope"
             options={scopes.map((item) => ({
               value: item,
@@ -215,7 +242,7 @@ export function AccountsTable({
           />
           <FilterSelect
             value={journal}
-            onChange={setJournal}
+            onChange={updateJournal}
             ariaLabel="Filter by journal"
             options={journalOptions.map((item) => ({
               value: item,
@@ -224,7 +251,7 @@ export function AccountsTable({
           />
           <FilterSelect
             value={publisher}
-            onChange={setPublisher}
+            onChange={updatePublisher}
             ariaLabel="Filter by publisher"
             options={publisherOptions.map((item) => ({
               value: item,

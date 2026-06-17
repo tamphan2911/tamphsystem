@@ -24,6 +24,7 @@ import {
   ResearchButton,
   researchFieldClass,
 } from "@/sites/research/components/ResearchPrimitives";
+import { usePersistentTableValue } from "@/sites/research/components/TableControls";
 import {
   ResearchProjectsTable,
   type ResearchProjectRow,
@@ -268,12 +269,16 @@ export function ProfileClient({
   const toast = useResearchToast();
   const [editOpen, setEditOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabKey>(
+  const [activeTab, setActiveTab] = usePersistentTableValue<TabKey>(
+    "profile:tab",
     isAssistant ? "dashboard" : "research",
   );
-  const [period, setPeriod] = useState<PeriodKey>("all");
+  const [period, setPeriod] = usePersistentTableValue<PeriodKey>(
+    "profile:period",
+    "all",
+  );
   const [dashboardStatus, setDashboardStatus] =
-    useState<DashboardStatusKey>("all");
+    usePersistentTableValue<DashboardStatusKey>("profile:status", "all");
 
   async function saveProfile(formData: FormData) {
     setIsSaving(true);

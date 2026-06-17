@@ -1,7 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   Check,
   ChevronDown,
@@ -189,13 +190,27 @@ export function useTablePagination<T>(
   rows: T[],
   pageSize = 10,
   initialPage = 1,
+  storageKey?: string,
 ) {
-  const [page, setPage] = useState(initialPage);
+  const pathname = usePathname();
+  const resolvedStorageKey = storageKey
+    ? `research:${pathname}:${storageKey}:page`
+    : `research:${pathname}:table:${pageSize}:page`;
+  const [page, setPage] = useState(() => {
+    if (typeof window === "undefined") return initialPage;
+    const stored = window.sessionStorage.getItem(resolvedStorageKey);
+    const parsed = stored ? Number.parseInt(stored, 10) : initialPage;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : initialPage;
+  });
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
 
   useEffect(() => {
     setPage((current) => Math.min(current, pageCount));
   }, [pageCount]);
+
+  useEffect(() => {
+    window.sessionStorage.setItem(resolvedStorageKey, String(page));
+  }, [page, resolvedStorageKey]);
 
   const pagedRows = useMemo(() => {
     const start = (page - 1) * pageSize;
@@ -203,6 +218,36 @@ export function useTablePagination<T>(
   }, [page, pageSize, rows]);
 
   return { page, setPage, pageCount, pagedRows, total: rows.length, pageSize };
+}
+
+export function usePersistentTableValue(
+  key: string,
+  defaultValue: string,
+): readonly [string, Dispatch<SetStateAction<string>>];
+export function usePersistentTableValue<T extends string>(
+  key: string,
+  defaultValue: T,
+): readonly [T, Dispatch<SetStateAction<T>>];
+export function usePersistentTableValue(
+  key: string,
+  defaultValue: string,
+) {
+  const pathname = usePathname();
+  const storageKey = `research:${pathname}:${key}`;
+  const [value, setValue] = useState<string>(() => {
+    if (typeof window === "undefined") return defaultValue;
+    return window.sessionStorage.getItem(storageKey) ?? defaultValue;
+  });
+
+  useEffect(() => {
+    if (value === defaultValue) {
+      window.sessionStorage.removeItem(storageKey);
+      return;
+    }
+    window.sessionStorage.setItem(storageKey, value);
+  }, [defaultValue, storageKey, value]);
+
+  return [value, setValue] as const;
 }
 
 export function TablePagination({

@@ -20,6 +20,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { researchMutedLinkClass } from "@/sites/research/components/ResearchPrimitives";
@@ -190,9 +191,12 @@ export function ProposalsTable({
   deleteAction?: (proposalId: string) => Promise<void>;
   linkTitleToDetail?: boolean;
 }) {
-  const [query, setQuery] = useState("");
-  const [type, setType] = useState("ALL");
-  const [status, setStatus] = useState("ALL");
+  const [query, setQuery] = usePersistentTableValue("proposals:q", "");
+  const [type, setType] = usePersistentTableValue("proposals:type", "ALL");
+  const [status, setStatus] = usePersistentTableValue(
+    "proposals:status",
+    "ALL",
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -221,20 +225,35 @@ export function ProposalsTable({
     });
   }, [query, rows, status, type]);
 
-  const pagination = useTablePagination(filtered, 10);
+  const pagination = useTablePagination(filtered, 10, 1, "proposals");
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateType(value: string) {
+    setType(value);
+    pagination.setPage(1);
+  }
+
+  function updateStatus(value: string) {
+    setStatus(value);
+    pagination.setPage(1);
+  }
 
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
-          onChange={setQuery}
+          onChange={updateQuery}
           placeholder="Search proposal, contact, submitter..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
           <FilterSelect
             value={type}
-            onChange={setType}
+            onChange={updateType}
             ariaLabel="Filter by proposal type"
             options={typeOptions.map((item) => ({
               value: item,
@@ -243,7 +262,7 @@ export function ProposalsTable({
           />
           <FilterSelect
             value={status}
-            onChange={setStatus}
+            onChange={updateStatus}
             ariaLabel="Filter by proposal status"
             options={statusOptions.map((item) => ({
               value: item,

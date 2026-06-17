@@ -28,6 +28,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import {
@@ -378,9 +379,9 @@ export function ResearchProjectsTable({
   showClaimRegistration?: boolean;
   emptyMessage?: string;
 }) {
-  const [query, setQuery] = useState("");
-  const [stage, setStage] = useState("ALL");
-  const [claim, setClaim] = useState("ALL");
+  const [query, setQuery] = usePersistentTableValue("projects:q", "");
+  const [stage, setStage] = usePersistentTableValue("projects:stage", "ALL");
+  const [claim, setClaim] = usePersistentTableValue("projects:claim", "ALL");
   const showRegistrationClaim = rows.some(
     (row) => showClaimRegistration && row.canViewRegistrationClaim,
   );
@@ -410,14 +411,29 @@ export function ResearchProjectsTable({
     });
   }, [claim, query, rows, showRegistrationClaim, stage]);
 
-  const pagination = useTablePagination(filtered, 10);
+  const pagination = useTablePagination(filtered, 10, 1, "projects");
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateStage(value: string) {
+    setStage(value);
+    pagination.setPage(1);
+  }
+
+  function updateClaim(value: string) {
+    setClaim(value);
+    pagination.setPage(1);
+  }
 
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
-          onChange={setQuery}
+          onChange={updateQuery}
           placeholder={
             showRegistrationClaim
               ? "Search research, authors, registration..."
@@ -427,7 +443,7 @@ export function ResearchProjectsTable({
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
           <FilterSelect
             value={stage}
-            onChange={setStage}
+            onChange={updateStage}
             ariaLabel="Filter by stage"
             options={stages.map((item) => ({
               value: item,
@@ -437,7 +453,7 @@ export function ResearchProjectsTable({
           {showRegistrationClaim && (
             <FilterSelect
               value={claim}
-              onChange={setClaim}
+              onChange={updateClaim}
               ariaLabel="Filter by claim"
               options={claims.map((item) => ({
                 value: item,

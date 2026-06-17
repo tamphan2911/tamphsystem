@@ -21,6 +21,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
@@ -209,8 +210,11 @@ export function OrganizedProjectsTable({
   deleteAction?: (projectId: string) => Promise<void>;
   emptyMessage?: string;
 }) {
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("ALL");
+  const [query, setQuery] = usePersistentTableValue("organized-projects:q", "");
+  const [status, setStatus] = usePersistentTableValue(
+    "organized-projects:status",
+    "ALL",
+  );
 
   const statusOptions = useMemo(
     () => [
@@ -259,19 +263,29 @@ export function OrganizedProjectsTable({
       });
   }, [query, rows, status]);
 
-  const pagination = useTablePagination(filtered, 10);
+  const pagination = useTablePagination(filtered, 10, 1, "organized-projects");
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateStatus(value: string) {
+    setStatus(value);
+    pagination.setPage(1);
+  }
 
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
-          onChange={setQuery}
+          onChange={updateQuery}
           placeholder="Search project, funding institution, member, research..."
         />
         <FilterSelect
           value={status}
-          onChange={setStatus}
+          onChange={updateStatus}
           ariaLabel="Filter by project status"
           options={statusOptions.map((item) => ({
             value: item,

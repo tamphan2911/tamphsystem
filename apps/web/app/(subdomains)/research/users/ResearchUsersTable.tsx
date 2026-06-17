@@ -21,6 +21,7 @@ import {
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
@@ -71,8 +72,8 @@ export function ResearchUsersTable({
 }) {
   const router = useRouter();
   const { showSuccess, showError } = useResearchToast();
-  const [query, setQuery] = useState("");
-  const [role, setRole] = useState("ALL");
+  const [query, setQuery] = usePersistentTableValue("users:q", "");
+  const [role, setRole] = usePersistentTableValue("users:role", "ALL");
   const [editing, setEditing] = useState<ResearchUserRow | null>(null);
   const [deleting, setDeleting] = useState<ResearchUserRow | null>(null);
   const [visiblePasswordId, setVisiblePasswordId] = useState<string | null>(
@@ -97,7 +98,17 @@ export function ResearchUsersTable({
     });
   }, [query, role, rows]);
 
-  const pagination = useTablePagination(filtered, 12);
+  const pagination = useTablePagination(filtered, 12, 1, "users");
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateRole(value: string) {
+    setRole(value);
+    pagination.setPage(1);
+  }
 
   function submitEdit(formData: FormData) {
     const target = editing;
@@ -144,13 +155,13 @@ export function ResearchUsersTable({
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
-          onChange={setQuery}
+          onChange={updateQuery}
           placeholder="Search name, email, affiliation, role..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
           <FilterSelect
             value={role}
-            onChange={setRole}
+            onChange={updateRole}
             ariaLabel="Filter by role"
             options={[
               { value: "ALL", label: "All roles" },

@@ -13,6 +13,7 @@ import {
 import {
   FilterSelect,
   TableSearchInput,
+  usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 
@@ -72,12 +73,22 @@ export function NotificationsCenter({
   initialNotifications: NotificationCenterItem[];
 }) {
   const [notifications, setNotifications] = useState(initialNotifications);
-  const [selectedId, setSelectedId] = useState(
+  const [selectedId, setSelectedId] = usePersistentTableValue(
+    "notification-center:selected",
     initialNotifications[0]?.id ?? "",
   );
-  const [query, setQuery] = useState("");
-  const [scope, setScope] = useState("ALL");
-  const [type, setType] = useState("ALL");
+  const [query, setQuery] = usePersistentTableValue(
+    "notification-center:q",
+    "",
+  );
+  const [scope, setScope] = usePersistentTableValue(
+    "notification-center:scope",
+    "ALL",
+  );
+  const [type, setType] = usePersistentTableValue(
+    "notification-center:type",
+    "ALL",
+  );
 
   const typeOptions = useMemo(() => {
     const labels = new Map<string, string>();
