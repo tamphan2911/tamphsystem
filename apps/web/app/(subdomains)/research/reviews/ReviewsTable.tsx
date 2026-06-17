@@ -22,10 +22,6 @@ import {
   usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import {
-  ResearchIconButton,
-  researchLinkClass,
-} from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
@@ -47,6 +43,8 @@ export type ReviewRow = {
 };
 
 const statuses = ["ALL", "ACCEPTED", "IN_PROGRESS", "SUBMITTED", "CANCELLED"];
+const reviewTableLinkClass =
+  "font-normal text-[#E4E4E4] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:[text-shadow:0_0_0.55rem_rgba(168,218,220,0.18)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 motion-reduce:transform-none motion-reduce:transition-none";
 
 function statusLabel(status: string) {
   if (status === "IN_PROGRESS") return "In progress";
@@ -84,7 +82,7 @@ function StatusIconChip({
   return (
     <IconHint label={label}>
       <span
-        className={`inline-flex h-8 w-8 items-center justify-center transition-colors duration-150 ${className}`}
+        className={`inline-flex h-5 w-5 items-center justify-center transition-[color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:scale-110 ${className}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">{label}</span>
@@ -107,15 +105,14 @@ function DeleteReviewButton({
 
   return (
     <>
-      <ResearchIconButton
+      <button
         type="button"
         onClick={() => setOpen(true)}
-        label={`Delete review for ${review.manuscriptTitle}`}
-        tone="rose"
-        className="h-8 w-8"
+        aria-label={`Delete review for ${review.manuscriptTitle}`}
+        className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-center justify-center border border-transparent bg-transparent p-0 text-rose-600 shadow-none outline-none transition-[color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:scale-110 hover:border-transparent hover:bg-transparent hover:text-rose-700 hover:shadow-none active:scale-95 focus-visible:ring-0 dark:text-[#FFC1CC] dark:hover:text-rose-300"
       >
         <Trash2 className="h-4 w-4" />
-      </ResearchIconButton>
+      </button>
 
       <ResearchConfirmDialog
         open={open}
@@ -295,7 +292,7 @@ export function ReviewsTable({
                     <div>
                       <Link
                         href={`/reviews/${row.id}`}
-                        className={`text-sm ${researchLinkClass}`}
+                        className={`text-sm ${reviewTableLinkClass}`}
                       >
                         {row.manuscriptTitle}
                       </Link>
@@ -310,7 +307,7 @@ export function ReviewsTable({
                 <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                   <Link
                     href={`/journals/${row.journalId}`}
-                    className={`line-clamp-2 ${researchLinkClass}`}
+                    className={`line-clamp-2 ${reviewTableLinkClass}`}
                   >
                     {row.journalName}
                   </Link>
@@ -318,7 +315,7 @@ export function ReviewsTable({
                     {row.publisher || "-"}
                   </p>
                 </td>
-                <td className="px-2 py-3 text-center">
+                <td className="px-2 py-3 text-center align-top">
                   <StatusIconChip
                     icon={statusIcon(row.status)}
                     label={statusLabel(row.status)}
@@ -335,7 +332,7 @@ export function ReviewsTable({
                   <span className="line-clamp-2">{row.note || "-"}</span>
                 </td>
                 {isAdmin && (
-                  <td className="px-2 py-3 text-center">
+                  <td className="px-2 py-3 text-center align-top">
                     <DeleteReviewButton
                       review={row}
                       deleteAction={deleteAction}
