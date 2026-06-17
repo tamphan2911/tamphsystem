@@ -1,5 +1,4 @@
-import Image from "next/image";
-import { countryCode, countryFlagSrc, countryName } from "@/sites/research/lib/countries";
+import { countryCode, countryName } from "@/sites/research/lib/countries";
 
 export function CountryFlag({
   value,
@@ -12,15 +11,19 @@ export function CountryFlag({
   if (!code) return null;
 
   const name = countryName(code);
+  const flag = code
+    .toUpperCase()
+    .replace(/./g, (char) =>
+      String.fromCodePoint(127397 + char.charCodeAt(0)),
+    );
 
   return (
-    <Image
-      src={countryFlagSrc(code)}
-      alt={`${name} flag`}
-      width={20}
-      height={16}
-      loading="lazy"
-      className={`inline-block h-4 w-5 object-cover ${className}`.trim()}
-    />
+    <span
+      aria-label={name}
+      title={name}
+      className={`inline-flex items-center justify-center font-normal leading-none ${className}`.trim()}
+    >
+      {flag}
+    </span>
   );
 }
