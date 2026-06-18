@@ -5,6 +5,7 @@ import {
   Download,
   ExternalLink,
   FolderOpen,
+  ListTodo,
   Send,
   CheckCircle2,
   FileText,
@@ -16,6 +17,10 @@ import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { updateResearchProject } from "../../actions";
 import { SubmissionsTable, type SubmissionRow } from "./SubmissionsTable";
+import {
+  ActiveResearchTasksTable,
+  type ActiveResearchTaskRow,
+} from "./ActiveResearchTasksTable";
 import {
   SuggestedJournalsPanel,
   type SuggestedConferenceOption,
@@ -319,6 +324,9 @@ export default async function ProjectDetailPage({
             journal: true,
             conference: true,
             assignments: {
+              include: {
+                user: { select: { name: true, email: true } },
+              },
               orderBy: { createdAt: "asc" },
             },
           },
@@ -894,6 +902,27 @@ export default async function ProjectDetailPage({
       publishedAt: isoDate(submission.publishedAt),
     })),
   ].sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || ""));
+  const activeTaskRows: ActiveResearchTaskRow[] = project.tasks
+    .filter(
+      (task) =>
+        task.status !== ResearchTaskStatus.COMPLETED &&
+        task.status !== ResearchTaskStatus.REVOKED,
+    )
+    .map((task) => ({
+      id: task.id,
+      taskCode: task.taskCode,
+      title: task.title,
+      description: task.description ?? "",
+      status: task.status,
+      taskType: task.taskType ?? task.category ?? "TASK",
+      dueDate: task.dueDate?.toISOString() ?? null,
+      createdAt: task.createdAt.toISOString(),
+      assignments: task.assignments.map((assignment) => ({
+        id: assignment.id,
+        name: assignment.user.name || assignment.user.email,
+        email: displayResearchEmail(assignment.user.email),
+      })),
+    }));
   const stageStyle = stageStyles[displayStage];
   const StageIcon = stageStyle.icon;
 
@@ -1391,6 +1420,17 @@ export default async function ProjectDetailPage({
             </ResearchDetailSection>
           </fieldset>
         </SaveForm>
+
+        <section className="space-y-4 border-t border-[#444444] pt-5">
+          <h2 className="flex items-center gap-2 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+            <ListTodo className="h-5 w-5 text-[#B39CD0]" />
+            Active tasks
+          </h2>
+          <ActiveResearchTasksTable
+            projectId={project.id}
+            rows={activeTaskRows}
+          />
+        </section>
 
         <section className="space-y-4 border-t border-[#444444] pt-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
