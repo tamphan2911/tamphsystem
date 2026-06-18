@@ -311,25 +311,19 @@ export default async function JournalDetailPage({
               </div>
             </div>
             <p className="mt-1 min-w-0 truncate text-xs font-normal text-[#B0B0B0]">
-              ISSN {journal.issn || "-"} - {journal.publisher || "No publisher"}{" "}
-              - {journalTypeLabel} - {journalRank}
-              {journal.issuesPerYear
-                ? ` - ${journal.issuesPerYear} issues/year`
-                : ""}
+              ISSN: {journal.issn || "-"} |{" "}
+              {journal.publisher || "No publisher"} | {journalTypeLabel} |{" "}
+              {journalRank} |{" "}
               {journal.country ? (
-                <>
-                  {" "}
-                  -{" "}
-                  <IconHint label={countryName(journal.country)}>
-                    <span className="inline-flex cursor-help items-center text-base leading-none transition-[filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)]">
-                      <CountryFlag value={journal.country} />
-                      <span className="sr-only">
-                        {countryName(journal.country)}
-                      </span>
-                    </span>
-                  </IconHint>
-                </>
-              ) : null}
+                <IconHint label={countryName(journal.country)}>
+                  <span className="inline-flex cursor-help items-center gap-1 align-middle transition-[color,transform] duration-200 ease-out hover:-translate-y-0.5 hover:text-[#A8DADC]">
+                    <CountryFlag value={journal.country} />
+                    <span>{countryName(journal.country)}</span>
+                  </span>
+                </IconHint>
+              ) : (
+                "No country"
+              )}
             </p>
           </div>
         </div>
