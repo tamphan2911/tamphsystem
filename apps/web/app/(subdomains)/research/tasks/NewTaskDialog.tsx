@@ -128,6 +128,7 @@ export function NewTaskDialog({
   organizedProjectOptions,
   initialMode = "submit",
   initialResearch = null,
+  initialTitle = "",
   triggerVariant = "default",
 }: {
   assignees: TaskAssigneeOption[];
@@ -138,6 +139,7 @@ export function NewTaskDialog({
   organizedProjectOptions: TaskOrganizedProjectOption[];
   initialMode?: TaskMode;
   initialResearch?: TaskResearchOption | null;
+  initialTitle?: string;
   triggerVariant?: TaskTriggerVariant;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -538,6 +540,7 @@ export function NewTaskDialog({
               <input
                 name="title"
                 required
+                defaultValue={initialTitle}
                 aria-label="Task title"
                 placeholder="Task title (*)"
                 className={inputClass}

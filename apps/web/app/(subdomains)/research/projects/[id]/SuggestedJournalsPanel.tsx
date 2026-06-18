@@ -111,6 +111,7 @@ export function SuggestedJournalsPanel({
   canAssignTask,
   canApproveSuggestion,
   canSuggestVenue,
+  taskAction,
   disabled = false,
 }: {
   projectId: string;
@@ -124,6 +125,7 @@ export function SuggestedJournalsPanel({
   canAssignTask: boolean;
   canApproveSuggestion: boolean;
   canSuggestVenue: boolean;
+  taskAction?: ReactNode;
   disabled?: boolean;
 }) {
   const router = useRouter();
@@ -399,9 +401,12 @@ export function SuggestedJournalsPanel({
     <ResearchDetailSection>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-            Suggested venues
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+              Suggested venues
+            </h2>
+            {taskAction}
+          </div>
           <p className="mt-1 text-xs text-[#B0B0B0]">
             Track journal and conference targets for this research.
           </p>

@@ -454,6 +454,7 @@ function taskTypeCanBeCreatedByResearchAuthor(taskType: ResearchTaskType) {
   return (
     taskType === ResearchTaskType.SUBMIT_RESEARCH ||
     taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
+    taskType === ResearchTaskType.PRODUCTION ||
     taskType === ResearchTaskType.OTHER
   );
 }

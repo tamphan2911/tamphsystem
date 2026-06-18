@@ -441,6 +441,8 @@ export default async function ProjectDetailPage({
   const canEditResearch = isAdmin || isCorrespondingAuthor;
   const canCreateSubmitOrOtherTask =
     isAdmin || isFirstAuthor || isCorrespondingAuthor;
+  const canCreateProductionTask =
+    canCreateSubmitOrOtherTask && project.stage === "PRODUCTION";
   const canSendAuthorEmails = isAdmin || isFirstAuthor || isCorrespondingAuthor;
   const canApproveVenueSuggestion = canCreateSubmitOrOtherTask;
   const canSuggestVenue =
@@ -1310,7 +1312,7 @@ export default async function ProjectDetailPage({
                   <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
                     Cooking process
                   </h2>
-                  {isAdmin && project.stage === "PRODUCTION" ? (
+                  {canCreateProductionTask ? (
                     <NewTaskDialog
                       assignees={taskAssigneeOptions}
                       researchOptions={[currentResearchTaskOption]}
@@ -1431,6 +1433,22 @@ export default async function ProjectDetailPage({
           canAssignTask={canCreateSubmitOrOtherTask}
           canApproveSuggestion={canApproveVenueSuggestion}
           canSuggestVenue={canSuggestVenue}
+          taskAction={
+            canCreateSubmitOrOtherTask ? (
+              <NewTaskDialog
+                assignees={taskAssigneeOptions}
+                researchOptions={[currentResearchTaskOption]}
+                venueOptions={generalTaskVenueOptions}
+                accountOptions={generalTaskAccountOptions}
+                reviewOptions={[]}
+                organizedProjectOptions={[]}
+                initialMode="other"
+                initialResearch={currentResearchTaskOption}
+                initialTitle={`Suggested venue for research "${project.title}"`}
+                triggerVariant="other"
+              />
+            ) : null
+          }
           disabled={researchContentLocked}
         />
       </div>
