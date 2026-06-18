@@ -29,6 +29,7 @@ import {
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
 import type { AuthorOption } from "../projects/[id]/AuthorsPicker";
+import { ContactEmailChoiceButton } from "../projects/[id]/AuthorsPicker";
 
 export type FundingInstitutionOption = {
   id: string;
@@ -185,7 +186,12 @@ export function ProjectMembersPicker({
   onWarning?: (message: string) => void;
 }) {
   const [members, setMembers] =
-    useState<SelectedProjectMember[]>(defaultMembers);
+    useState<SelectedProjectMember[]>(
+      defaultMembers.map((member) => ({
+        ...member,
+        selectedEmail: member.selectedEmail || member.email,
+      })),
+    );
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -218,6 +224,7 @@ export function ProjectMembersPicker({
       ...current,
       {
         ...user,
+        selectedEmail: user.selectedEmail || user.email,
         isTeamLead: current.length === 0,
         isInstructor: false,
       },
@@ -267,6 +274,14 @@ export function ProjectMembersPicker({
     );
   }
 
+  function setSelectedEmail(userId: string, email: string) {
+    setMembers((current) =>
+      current.map((member) =>
+        member.id === userId ? { ...member, selectedEmail: email } : member,
+      ),
+    );
+  }
+
   function moveMember(userId: string, direction: -1 | 1) {
     setMembers((current) => {
       const index = current.findIndex((member) => member.id === userId);
@@ -295,6 +310,14 @@ export function ProjectMembersPicker({
           type="hidden"
           name="memberUserIds"
           value={member.id}
+        />
+      ))}
+      {members.map((member) => (
+        <input
+          key={`selected-email-${member.id}`}
+          type="hidden"
+          name="selectedContactEmails"
+          value={`${member.id}\t${member.selectedEmail || member.email}`}
         />
       ))}
       <input type="hidden" name="teamLeadUserId" value={teamLeadId} />
@@ -419,7 +442,11 @@ export function ProjectMembersPicker({
                     className="h-3 w-3 flex-none text-[#A8DADC]"
                     aria-hidden="true"
                   />
-                  {displayResearchEmail(member.email)}
+                  {displayResearchEmail(member.selectedEmail || member.email)}
+                  <ContactEmailChoiceButton
+                    person={member}
+                    onChange={(email) => setSelectedEmail(member.id, email)}
+                  />
                 </p>
               </div>
               <button

@@ -412,6 +412,7 @@ export default async function OrganizedProjectDetailPage({
           id: true,
           name: true,
           email: true,
+          additionalEmails: true,
           affiliation: true,
           roles: true,
         },
@@ -457,6 +458,8 @@ export default async function OrganizedProjectDetailPage({
     id: member.user.id,
     name: member.user.name ?? "",
     email: member.user.email,
+    additionalEmails: member.user.additionalEmails,
+    selectedEmail: member.selectedEmail ?? member.user.email,
     affiliation: member.user.affiliation,
     role: member.user.roles.join(", "),
     isTeamLead: member.isTeamLead,
@@ -493,6 +496,7 @@ export default async function OrganizedProjectDetailPage({
     id: user.id,
     name: user.name ?? "",
     email: user.email,
+    additionalEmails: user.additionalEmails,
     affiliation: user.affiliation,
     role: user.roles.join(", "),
   }));
@@ -673,7 +677,9 @@ export default async function OrganizedProjectDetailPage({
                     <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#777777]">
                       <Mail className="research-task-icon-motion h-3 w-3 flex-none text-[#A8DADC]" />
                       <span className="truncate">
-                        {displayResearchEmail(member.email)}
+                        {displayResearchEmail(
+                          member.selectedEmail || member.email,
+                        )}
                       </span>
                     </p>
                     <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs leading-5 text-[#B0B0B0]">

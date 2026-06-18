@@ -13,11 +13,36 @@ export async function updateResearchProfile(formData: FormData) {
   if (!name) return { error: "Display name is required." };
   const affiliation = String(formData.get("affiliation") ?? "").trim();
   if (!affiliation) return { error: "Affiliation is required." };
+  const additionalEmails = String(formData.get("additionalEmails") ?? "")
+    .split(/[\n,;]/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const invalidEmail = additionalEmails.find(
+    (additionalEmail) => !emailPattern.test(additionalEmail),
+  );
+  if (invalidEmail) {
+    return { error: `Additional email is not valid: ${invalidEmail}` };
+  }
+  const mainEmail = email.trim().toLowerCase();
+  const uniqueAdditionalEmails = Array.from(
+    new Map(
+      additionalEmails
+        .filter(
+          (additionalEmail) =>
+            additionalEmail.trim().toLowerCase() !== mainEmail,
+        )
+        .map((additionalEmail) => [
+          additionalEmail.trim().toLowerCase(),
+          additionalEmail.trim(),
+        ]),
+    ).values(),
+  );
 
   try {
     await prisma.user.update({
       where: { email },
-      data: { name, affiliation },
+      data: { name, affiliation, additionalEmails: uniqueAdditionalEmails },
     });
     revalidatePath("/profile");
     revalidatePath("/research/profile");

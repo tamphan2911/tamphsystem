@@ -61,6 +61,7 @@ enum JournalType {
 model User {
   id                            String    @id @default(uuid())
   email                         String    @unique
+  additionalEmails              String[]  @default([])
   emailVerified                 DateTime?
   emailVerificationToken        String?   @unique
   emailVerificationTokenExpires DateTime?
@@ -449,6 +450,7 @@ model OrganizedProjectMember {
   organizedProjectId String
   userId             String
   position           Int
+  selectedEmail      String?
   isTeamLead         Boolean  @default(false)
   isInstructor       Boolean  @default(false)
   createdAt          DateTime @default(now())
@@ -515,6 +517,7 @@ model ResearchProjectAuthor {
   projectId       String
   userId          String
   position        Int
+  selectedEmail   String?
   isCorresponding Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

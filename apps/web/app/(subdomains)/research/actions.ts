@@ -74,6 +74,43 @@ function optionalString(value: FormDataEntryValue | null) {
   return text.length > 0 ? text : null;
 }
 
+function normalizeContactEmail(value: string | null | undefined) {
+  return value?.trim().toLowerCase() ?? "";
+}
+
+function selectedContactEmailMap(formData: FormData) {
+  const map = new Map<string, string>();
+  for (const value of formData.getAll("selectedContactEmails")) {
+    if (typeof value !== "string") continue;
+    const [userId, email] = value.split("\t");
+    if (userId && email) {
+      map.set(userId, email.trim());
+    }
+  }
+  return map;
+}
+
+async function validatedSelectedContactEmails(
+  userIds: string[],
+  selectedEmails: Map<string, string>,
+) {
+  if (userIds.length === 0) return new Map<string, string>();
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: { id: true, email: true, additionalEmails: true },
+  });
+  const result = new Map<string, string>();
+  for (const user of users) {
+    const requested = normalizeContactEmail(selectedEmails.get(user.id));
+    const choices = [user.email, ...user.additionalEmails];
+    const matched =
+      choices.find((email) => normalizeContactEmail(email) === requested) ??
+      user.email;
+    result.set(user.id, matched);
+  }
+  return result;
+}
+
 const generatedResearchEmailDomain = "no-email.research.tamph.local";
 
 function generatedResearchEmail() {
@@ -1417,6 +1454,10 @@ export async function createResearchProject(formData: FormData) {
   const correspondingAuthorId =
     optionalString(formData.get("correspondingAuthorId")) ??
     selectedAuthorIds[0];
+  const authorContactEmails = await validatedSelectedContactEmails(
+    selectedAuthorIds,
+    selectedContactEmailMap(formData),
+  );
   const registrationUserId = isAdmin
     ? optionalString(formData.get("registrationUserId"))
     : null;
@@ -1454,6 +1495,7 @@ export async function createResearchProject(formData: FormData) {
         create: selectedAuthorIds.map((id, index) => ({
           userId: id,
           position: index,
+          selectedEmail: authorContactEmails.get(id),
           isCorresponding: id === correspondingAuthorId,
         })),
       },
@@ -1492,6 +1534,10 @@ export async function createOrganizedProject(formData: FormData) {
     teamLeadUserId && memberUserIds.includes(teamLeadUserId)
       ? teamLeadUserId
       : memberUserIds[0];
+  const memberContactEmails = await validatedSelectedContactEmails(
+    memberUserIds,
+    selectedContactEmailMap(formData),
+  );
 
   if (
     !title ||
@@ -1555,6 +1601,7 @@ export async function createOrganizedProject(formData: FormData) {
         create: memberUserIds.map((userId, index) => ({
           userId,
           position: index,
+          selectedEmail: memberContactEmails.get(userId),
           isTeamLead: userId === selectedTeamLeadId,
           isInstructor: instructorUserIds.has(userId),
         })),
@@ -1663,6 +1710,10 @@ export async function updateOrganizedProject(
     teamLeadUserId && memberUserIds.includes(teamLeadUserId)
       ? teamLeadUserId
       : memberUserIds[0];
+  const memberContactEmails = await validatedSelectedContactEmails(
+    memberUserIds,
+    selectedContactEmailMap(formData),
+  );
 
   if (
     !title ||
@@ -1724,6 +1775,7 @@ export async function updateOrganizedProject(
         create: memberUserIds.map((userId, index) => ({
           userId,
           position: index,
+          selectedEmail: memberContactEmails.get(userId),
           isTeamLead: userId === selectedTeamLeadId,
           isInstructor: instructorUserIds.has(userId),
         })),
@@ -1887,6 +1939,10 @@ export async function createResearchForOrganizedProject(
   }
   const correspondingAuthorId =
     optionalString(formData.get("correspondingAuthorId")) ?? authorIds[0];
+  const authorContactEmails = await validatedSelectedContactEmails(
+    authorIds,
+    selectedContactEmailMap(formData),
+  );
   const registrationUserId = optionalString(formData.get("registrationUserId"));
 
   const createdProject = await prisma.$transaction(async (tx) => {
@@ -1914,6 +1970,7 @@ export async function createResearchForOrganizedProject(
           create: authorIds.map((id, index) => ({
             userId: id,
             position: index,
+            selectedEmail: authorContactEmails.get(id),
             isCorresponding: id === correspondingAuthorId,
           })),
         },
@@ -2013,6 +2070,10 @@ export async function updateResearchProject(
   const correspondingAuthorId =
     optionalString(formData.get("correspondingAuthorId")) ??
     selectedAuthorIds[0];
+  const authorContactEmails = await validatedSelectedContactEmails(
+    selectedAuthorIds,
+    selectedContactEmailMap(formData),
+  );
   const completedProductionSteps = formData
     .getAll("completedProductionSteps")
     .filter(
@@ -2075,6 +2136,7 @@ export async function updateResearchProject(
         projectId,
         userId: id,
         position: index,
+        selectedEmail: authorContactEmails.get(id),
         isCorresponding: id === correspondingAuthorId,
       })),
     });
@@ -5417,15 +5479,25 @@ export async function sendResearchAuthorNotification(
       id: string;
       name: string | null;
       email: string;
+      loginEmail: string;
       emailVerified: Date | null;
     }
   >();
   const sourceAuthors =
     project.authorEntries.length > 0
-      ? project.authorEntries.map((entry) => entry.user)
+      ? project.authorEntries.map((entry) => ({
+          id: entry.user.id,
+          name: entry.user.name,
+          email: entry.selectedEmail ?? entry.user.email,
+          loginEmail: entry.user.email,
+          emailVerified: entry.user.emailVerified,
+        }))
       : project.authors.length > 0
-        ? project.authors
-        : [project.leadResearcher];
+        ? project.authors.map((author) => ({
+            ...author,
+            loginEmail: author.email,
+          }))
+        : [{ ...project.leadResearcher, loginEmail: project.leadResearcher.email }];
   for (const author of sourceAuthors) authorMap.set(author.id, author);
 
   const authors = Array.from(authorMap.values());
@@ -5499,12 +5571,15 @@ export async function sendResearchAuthorNotification(
       continue;
     }
 
-    if (!author.emailVerified) {
+    const usesLoginEmail =
+      author.email.trim().toLowerCase() ===
+      author.loginEmail.trim().toLowerCase();
+    if (usesLoginEmail && !author.emailVerified) {
       results.push({
         authorName,
         email: author.email,
         status: "skipped",
-        reason: "Email is not verified.",
+        reason: "Main email is not verified.",
       });
       continue;
     }

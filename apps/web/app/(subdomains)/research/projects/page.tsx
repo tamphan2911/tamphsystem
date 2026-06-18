@@ -118,14 +118,22 @@ export default async function ProjectsDashboard() {
         include: {
           leadResearcher: { select: { name: true, email: true } },
           registrationUser: {
-            select: { id: true, name: true, email: true, roles: true },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              additionalEmails: true,
+              roles: true,
+            },
           },
           authors: {
-            select: { name: true, email: true },
+            select: { name: true, email: true, additionalEmails: true },
             orderBy: [{ name: "asc" }, { email: "asc" }],
           },
           authorEntries: {
-            include: { user: { select: { name: true, email: true } } },
+            include: {
+              user: { select: { name: true, email: true, additionalEmails: true } },
+            },
             orderBy: [{ position: "asc" }, { createdAt: "asc" }],
           },
           submissions: {
@@ -143,7 +151,13 @@ export default async function ProjectsDashboard() {
       prisma.user.findMany({
         where: { activeSites: { has: "research" } },
         orderBy: [{ name: "asc" }, { email: "asc" }],
-        select: { id: true, name: true, email: true, roles: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          additionalEmails: true,
+          roles: true,
+        },
       }),
       prisma.fundingInstitution.findMany({
         orderBy: [{ name: "asc" }],
@@ -154,6 +168,7 @@ export default async function ProjectsDashboard() {
     id: user.id,
     name: user.name ?? "",
     email: user.email,
+    additionalEmails: user.additionalEmails,
     role: displayRole(user.roles),
   }));
 

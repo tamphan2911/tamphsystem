@@ -96,6 +96,7 @@ export default async function ResearchProfilePage() {
         id: true,
         name: true,
         email: true,
+        additionalEmails: true,
         affiliation: true,
         avatarUrl: true,
         emailVerified: true,

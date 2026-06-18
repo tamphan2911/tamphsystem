@@ -130,6 +130,14 @@ function HiddenMembers({ members }: { members: SelectedProjectMember[] }) {
           value={member.id}
         />
       ))}
+      {members.map((member) => (
+        <input
+          key={`selected-email-${member.id}`}
+          type="hidden"
+          name="selectedContactEmails"
+          value={`${member.id}\t${member.selectedEmail || member.email}`}
+        />
+      ))}
       <input type="hidden" name="teamLeadUserId" value={teamLeadId} />
       {members
         .filter((member) => member.isInstructor)

@@ -149,6 +149,14 @@ function HiddenAuthors({ authors }: { authors: SelectedAuthor[] }) {
         name="correspondingAuthorId"
         value={correspondingId}
       />
+      {authors.map((author) => (
+        <input
+          key={`selected-email-${author.id}`}
+          type="hidden"
+          name="selectedContactEmails"
+          value={`${author.id}\t${author.selectedEmail || author.email}`}
+        />
+      ))}
     </>
   );
 }

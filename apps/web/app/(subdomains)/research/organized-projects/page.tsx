@@ -89,7 +89,13 @@ export default async function OrganizedProjectsPage() {
       }),
       prisma.user.findMany({
         where: { activeSites: { has: "research" } },
-        select: { id: true, name: true, email: true, roles: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          additionalEmails: true,
+          roles: true,
+        },
         orderBy: [{ name: "asc" }, { email: "asc" }],
       }),
       prisma.fundingInstitution.findMany({
@@ -191,6 +197,7 @@ export default async function OrganizedProjectsPage() {
                   id: user.id,
                   name: user.name ?? "",
                   email: user.email,
+                  additionalEmails: user.additionalEmails,
                   role: user.roles.join(", "),
                 }))}
                 fundingInstitutions={fundingInstitutions.map((institution) => ({

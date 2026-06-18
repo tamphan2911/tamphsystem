@@ -23,6 +23,7 @@ import {
   IconHint,
   ResearchButton,
   researchFieldClass,
+  researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { usePersistentTableValue } from "@/sites/research/components/TableControls";
 import {
@@ -39,6 +40,7 @@ type ResearchProfileUser = {
   id: string;
   name: string | null;
   email: string;
+  additionalEmails: string[];
   affiliation: string;
   avatarUrl: string | null;
   emailVerified: string | null;
@@ -566,6 +568,21 @@ export function ProfileClient({
               required
               className={researchFieldClass}
             />
+          </label>
+          <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
+            <span className="inline-flex items-center gap-1 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+              <span>Additional emails</span>
+            </span>
+            <textarea
+              name="additionalEmails"
+              defaultValue={user.additionalEmails.join("\n")}
+              placeholder="Optional. Add one extra contact email per line."
+              className={`${researchTextareaClass} min-h-28`}
+            />
+            <span className="text-xs font-normal text-[#B0B0B0]">
+              These emails are only for research contact choices. Login still
+              uses your main email.
+            </span>
           </label>
         </form>
       </ResearchModal>

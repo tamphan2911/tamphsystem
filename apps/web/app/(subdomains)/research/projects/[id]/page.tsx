@@ -337,6 +337,7 @@ export default async function ProjectDetailPage({
         id: true,
         name: true,
         email: true,
+        additionalEmails: true,
         affiliation: true,
         roles: true,
       },
@@ -348,6 +349,7 @@ export default async function ProjectDetailPage({
         id: true,
         name: true,
         email: true,
+        additionalEmails: true,
         affiliation: true,
         roles: true,
       },
@@ -374,6 +376,7 @@ export default async function ProjectDetailPage({
       id: true,
       name: true,
       email: true,
+      additionalEmails: true,
       affiliation: true,
       roles: true,
     },
@@ -647,6 +650,7 @@ export default async function ProjectDetailPage({
     id: user.id,
     name: user.name ?? "",
     email: user.email,
+    additionalEmails: user.additionalEmails,
     affiliation: user.affiliation,
     role: displayRole(user.roles),
   }));
@@ -655,6 +659,7 @@ export default async function ProjectDetailPage({
         id: project.registrationUser.id,
         name: project.registrationUser.name ?? "",
         email: project.registrationUser.email,
+        additionalEmails: project.registrationUser.additionalEmails,
         affiliation: project.registrationUser.affiliation,
         role: displayRole(project.registrationUser.roles),
       }
@@ -679,6 +684,8 @@ export default async function ProjectDetailPage({
           id: entry.user.id,
           name: entry.user.name ?? "",
           email: entry.user.email,
+          additionalEmails: entry.user.additionalEmails,
+          selectedEmail: entry.selectedEmail ?? entry.user.email,
           affiliation: entry.user.affiliation,
           role: displayRole(entry.user.roles),
           isCorresponding: entry.isCorresponding,
@@ -688,6 +695,8 @@ export default async function ProjectDetailPage({
             id: author.id,
             name: author.name ?? "",
             email: author.email,
+            additionalEmails: author.additionalEmails,
+            selectedEmail: author.email,
             affiliation: author.affiliation,
             role: displayRole(author.roles),
             isCorresponding: index === 0,
@@ -698,6 +707,8 @@ export default async function ProjectDetailPage({
                 id: leadResearcher.id,
                 name: leadResearcher.name ?? "",
                 email: leadResearcher.email,
+                additionalEmails: leadResearcher.additionalEmails,
+                selectedEmail: leadResearcher.email,
                 affiliation: leadResearcher.affiliation,
                 role: displayRole(leadResearcher.roles),
                 isCorresponding: true,
@@ -1203,7 +1214,9 @@ export default async function ProjectDetailPage({
                             aria-hidden="true"
                           />
                           <span className="truncate">
-                            {displayResearchEmail(author.email)}
+                            {displayResearchEmail(
+                              author.selectedEmail || author.email,
+                            )}
                           </span>
                         </p>
                         <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#B0B0B0]">

@@ -5,6 +5,7 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
+  MailCheck,
   LockKeyhole,
   Mail,
   Search,
@@ -15,7 +16,14 @@ import {
 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
-import { researchSearchFieldClass } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import {
+  IconHint,
+  ResearchButton,
+  researchSearchFieldClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import {
   displayResearchEmail,
   displayResearchPersonName,
@@ -25,6 +33,8 @@ export type AuthorOption = {
   id: string;
   name: string;
   email: string;
+  additionalEmails?: string[];
+  selectedEmail?: string;
   affiliation?: string;
   role: string;
 };
@@ -35,6 +45,95 @@ export type SelectedAuthor = AuthorOption & {
 
 function authorName(author: AuthorOption) {
   return displayResearchPersonName(author);
+}
+
+function contactEmailOptions(user: AuthorOption) {
+  return Array.from(
+    new Map(
+      [user.email, ...(user.additionalEmails ?? [])]
+        .filter(Boolean)
+        .map((email) => [email.trim().toLowerCase(), email.trim()]),
+    ).values(),
+  );
+}
+
+export function ContactEmailChoiceButton({
+  person,
+  disabled = false,
+  onChange,
+}: {
+  person: AuthorOption;
+  disabled?: boolean;
+  onChange: (email: string) => void;
+}) {
+  const emails = contactEmailOptions(person);
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(person.selectedEmail || person.email);
+  const toast = useResearchToast();
+
+  if (emails.length <= 1) return null;
+
+  return (
+    <>
+      <IconHint label="Choose contact email" position="bottom">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            setDraft(person.selectedEmail || person.email);
+            setOpen(true);
+          }}
+          className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-[#B39CD0] shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#D8C8EF] focus-visible:ring-0 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:active:scale-100"
+          aria-label={`Choose contact email for ${authorName(person)}`}
+        >
+          <MailCheck className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      </IconHint>
+      <ResearchModal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Choose contact email"
+        icon={<MailCheck className="h-5 w-5" />}
+        maxWidth="max-w-xl"
+        headerActions={
+          <ResearchButton
+            type="button"
+            onClick={() => {
+              onChange(draft);
+              setOpen(false);
+              toast.showSuccess({
+                title: "Contact email updated",
+                detail: `${authorName(person)} will use ${displayResearchEmail(draft)} for this record.`,
+              });
+            }}
+          >
+            <Check className="h-4 w-4" />
+            Use email
+          </ResearchButton>
+        }
+      >
+        <div className="grid gap-4">
+          <p className="text-sm font-normal text-[#B0B0B0]">
+            Select which email this person should use for this research or
+            project record.
+          </p>
+          <ResearchFormSelect
+            name="contactEmailDraft"
+            defaultValue={draft}
+            ariaLabel="Contact email"
+            onValueChange={setDraft}
+            options={emails.map((email) => ({
+              value: email,
+              label:
+                email.trim().toLowerCase() === person.email.trim().toLowerCase()
+                  ? `${displayResearchEmail(email)} (main)`
+                  : displayResearchEmail(email),
+            }))}
+          />
+        </div>
+      </ResearchModal>
+    </>
+  );
 }
 
 export function AuthorsPicker({
@@ -48,8 +147,15 @@ export function AuthorsPicker({
 }) {
   const initialAuthors =
     defaultAuthors.length > 0
-      ? defaultAuthors
-      : users.slice(0, 1).map((user) => ({ ...user, isCorresponding: true }));
+      ? defaultAuthors.map((author) => ({
+          ...author,
+          selectedEmail: author.selectedEmail || author.email,
+        }))
+      : users.slice(0, 1).map((user) => ({
+          ...user,
+          selectedEmail: user.selectedEmail || user.email,
+          isCorresponding: true,
+        }));
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -89,7 +195,11 @@ export function AuthorsPicker({
         isCorresponding:
           index === 0 ? author.isCorresponding : author.isCorresponding,
       })),
-      { ...user, isCorresponding: current.length === 0 },
+      {
+        ...user,
+        selectedEmail: user.selectedEmail || user.email,
+        isCorresponding: current.length === 0,
+      },
     ]);
     setDirty(true);
     setQuery("");
@@ -143,6 +253,16 @@ export function AuthorsPicker({
     setDirty(true);
   }
 
+  function setSelectedEmail(userId: string, email: string) {
+    if (disabled) return;
+    setAuthors((current) =>
+      current.map((author) =>
+        author.id === userId ? { ...author, selectedEmail: email } : author,
+      ),
+    );
+    setDirty(true);
+  }
+
   return (
     <>
       <div className="grid gap-2 text-sm font-normal text-[#E4E4E4]">
@@ -170,6 +290,14 @@ export function AuthorsPicker({
           name="correspondingAuthorId"
           value={correspondingId}
         />
+        {authors.map((author) => (
+          <input
+            key={`selected-email-${author.id}`}
+            type="hidden"
+            name="selectedContactEmails"
+            value={`${author.id}\t${author.selectedEmail || author.email}`}
+          />
+        ))}
 
         <div className="border border-[#444444] bg-[#2C2C2C] p-3">
           <div ref={searchRef} className="relative">
@@ -288,7 +416,14 @@ export function AuthorsPicker({
                         className="h-3 w-3 flex-none text-[#A8DADC]"
                         aria-hidden="true"
                       />
-                      {displayResearchEmail(author.email)}
+                      {displayResearchEmail(
+                        author.selectedEmail || author.email,
+                      )}
+                      <ContactEmailChoiceButton
+                        person={author}
+                        disabled={disabled}
+                        onChange={(email) => setSelectedEmail(author.id, email)}
+                      />
                     </p>
                   </div>
 
