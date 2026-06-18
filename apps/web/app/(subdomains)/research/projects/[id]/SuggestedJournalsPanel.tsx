@@ -38,6 +38,7 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import { defaultResearchTaskDueDate } from "@/sites/research/lib/task-date";
 import { formatResearchNumber } from "@/sites/research/lib/currency";
 
 export type SuggestedJournalOption = {
@@ -888,7 +889,10 @@ export function SuggestedJournalsPanel({
                 <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
                   Due date
                 </span>
-                <ResearchDatePicker name="dueDate" />
+                <ResearchDatePicker
+                  name="dueDate"
+                  defaultValue={defaultResearchTaskDueDate()}
+                />
               </label>
             </div>
 

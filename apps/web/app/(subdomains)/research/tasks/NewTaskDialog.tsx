@@ -40,6 +40,7 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import { defaultResearchTaskDueDate } from "@/sites/research/lib/task-date";
 
 export type TaskAssigneeOption = {
   id: string;
@@ -112,12 +113,6 @@ function researchMatchesMode(project: TaskResearchOption, mode: TaskMode) {
   return true;
 }
 
-function defaultTaskDueDate() {
-  const date = new Date();
-  date.setDate(date.getDate() + 7);
-  return date.toISOString().slice(0, 10);
-}
-
 export function NewTaskDialog({
   assignees,
   researchOptions,
@@ -149,7 +144,7 @@ export function NewTaskDialog({
   const [accountQuery, setAccountQuery] = useState("");
   const [reviewQuery, setReviewQuery] = useState("");
   const [organizedProjectQuery, setOrganizedProjectQuery] = useState("");
-  const [dueDate, setDueDate] = useState(defaultTaskDueDate);
+  const [dueDate, setDueDate] = useState(defaultResearchTaskDueDate);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedResearch, setSelectedResearch] =
     useState<TaskResearchOption | null>(initialResearch);
@@ -282,7 +277,7 @@ export function NewTaskDialog({
     setAccountQuery("");
     setReviewQuery("");
     setOrganizedProjectQuery("");
-    setDueDate(defaultTaskDueDate());
+    setDueDate(defaultResearchTaskDueDate());
     setSelectedIds([]);
     setSelectedResearch(initialResearch);
     setSelectedVenue(null);

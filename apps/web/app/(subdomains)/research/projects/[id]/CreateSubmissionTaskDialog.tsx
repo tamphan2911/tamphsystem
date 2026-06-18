@@ -33,6 +33,7 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import { defaultResearchTaskDueDate } from "@/sites/research/lib/task-date";
 
 export type SubmissionTaskAccountOption = {
   id: string;
@@ -382,7 +383,10 @@ export function CreateSubmissionTaskDialog({
                 <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                   Due date
                 </span>
-                <ResearchDatePicker name="dueDate" />
+                <ResearchDatePicker
+                  name="dueDate"
+                  defaultValue={defaultResearchTaskDueDate()}
+                />
               </label>
             </div>
 
