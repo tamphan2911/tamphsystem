@@ -5,19 +5,15 @@ import type { LucideIcon } from "lucide-react";
 import {
   Ban,
   BarChart3,
-  CalendarDays,
   CheckCircle2,
   CircleHelp,
   Clock3,
   Database,
   Globe2,
-  Hash,
   Mail,
-  MessageSquareText,
   PencilLine,
   SearchCheck,
   Send,
-  UserRound,
   XCircle,
 } from "lucide-react";
 import { prisma, Role } from "@repo/db";
@@ -129,28 +125,6 @@ function taskStatusMeta(status: string): {
     className:
       "text-sky-700 hover:text-sky-800 dark:text-[#A8DADC] dark:hover:text-cyan-200",
   };
-}
-
-function DetailItem({
-  icon,
-  label,
-  value,
-}: {
-  icon?: ReactNode;
-  label: string;
-  value: ReactNode;
-}) {
-  return (
-    <div className="min-w-0">
-      <dt className="flex items-center gap-2 text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
-        {icon}
-        {label}
-      </dt>
-      <dd className="mt-2 text-sm leading-6 text-slate-700 dark:text-[#E4E4E4]">
-        {value === null || value === undefined || value === "" ? "-" : value}
-      </dd>
-    </div>
-  );
 }
 
 function HoverIcon({
@@ -267,7 +241,6 @@ export default async function ReviewDetailPage({
             <p className="mt-1 min-w-0 truncate text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
               {review.manuscriptId || review.id.slice(0, 8).toUpperCase()} -{" "}
               {review.journal.name}
-              {review.reviewRound ? ` - ${review.reviewRound}` : ""}
             </p>
           </div>
         </div>
@@ -275,55 +248,30 @@ export default async function ReviewDetailPage({
 
       <div className="mx-auto max-w-7xl space-y-5">
         <section className="border border-[#D8D0C2] bg-[#FFFDF8] shadow-none dark:border-[#444444] dark:bg-[#2C2C2C]">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-5 py-3 text-xs text-[#667085] dark:text-[#B0B0B0]">
-            <span>
+          <div className="space-y-2 px-5 py-3 text-xs text-[#667085] dark:text-[#B0B0B0]">
+            <p>
               Review ID:{" "}
               <span className="font-mono text-[#344054] dark:text-[#E4E4E4]">
                 {review.id}
               </span>
-            </span>
-            <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
-            <span>Status: {statusLabel(review.status)}</span>
-            <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
-            <span>Due: {shortDate(review.dueDate)}</span>
-          </div>
-
-          <div className={`${sectionDividerClass} p-5`}>
-            <h2 className="text-sm font-normal text-[#252525] dark:text-[#E4E4E4]">
-              Review information
-            </h2>
-            <dl className="mt-4 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              <DetailItem
-                icon={<CalendarDays className="h-3.5 w-3.5" />}
-                label="Requested date"
-                value={shortDate(review.requestedAt)}
-              />
-              <DetailItem
-                icon={<CalendarDays className="h-3.5 w-3.5" />}
-                label="Due date"
-                value={shortDate(review.dueDate)}
-              />
-              <DetailItem
-                icon={<CheckCircle2 className="h-3.5 w-3.5" />}
-                label="Completed date"
-                value={shortDate(review.completedAt)}
-              />
-              <DetailItem
-                icon={<PencilLine className="h-3.5 w-3.5" />}
-                label="Review round"
-                value={review.reviewRound || "-"}
-              />
-              <DetailItem
-                icon={<MessageSquareText className="h-3.5 w-3.5" />}
-                label="Recommendation"
-                value={review.recommendation || "-"}
-              />
-              <DetailItem
-                icon={<UserRound className="h-3.5 w-3.5" />}
-                label="Editor"
-                value={review.editorName || "-"}
-              />
-            </dl>
+            </p>
+            <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              <span>Status: {statusLabel(review.status)}</span>
+              <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
+              <span>Round: {review.reviewRound || "-"}</span>
+              <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
+              <span>Requested: {shortDate(review.requestedAt)}</span>
+              <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
+              <span>Due: {shortDate(review.dueDate)}</span>
+              {review.completedAt ? (
+                <>
+                  <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
+                  <span>Completed: {shortDate(review.completedAt)}</span>
+                  <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
+                  <span>Recommendation: {review.recommendation || "-"}</span>
+                </>
+              ) : null}
+            </p>
           </div>
 
           <div className={`${sectionDividerClass} p-5`}>
@@ -392,15 +340,6 @@ export default async function ReviewDetailPage({
             </div>
           </div>
 
-          <div className={`${sectionDividerClass} p-5`}>
-            <h2 className="flex items-center gap-2 text-sm font-normal text-[#252525] dark:text-[#E4E4E4]">
-              <Hash className="h-4 w-4 text-amber-600 dark:text-amber-300" />
-              Private note
-            </h2>
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#4B5565] dark:text-[#B0B0B0]">
-              {review.note || "No private note recorded."}
-            </p>
-          </div>
         </section>
 
         <section className="overflow-hidden border border-[#D8D0C2] bg-[#FFFDF8] shadow-none dark:border-[#444444] dark:bg-[#2C2C2C]">
