@@ -424,17 +424,23 @@ async function researchContentIsLocked(projectId: string) {
     select: {
       contentUnlocked: true,
       submissions: { select: { status: true } },
+      conferenceSubmissions: { select: { status: true } },
     },
   });
 
   if (!project) return false;
   return (
     !project.contentUnlocked &&
-    project.submissions.some(
+    (project.submissions.some(
       (submission) =>
         submission.status === SubmissionStatus.ACCEPTED ||
         submission.status === SubmissionStatus.PUBLISHED,
-    )
+    ) ||
+      project.conferenceSubmissions.some(
+        (submission) =>
+          submission.status === ConferenceSubmissionStatus.ACCEPTED ||
+          submission.status === ConferenceSubmissionStatus.PUBLISHED,
+      ))
   );
 }
 
@@ -471,50 +477,22 @@ async function canCreateResearchTaskForProject({
   taskType: ResearchTaskType;
 }) {
   if (user.roles.includes(Role.ADMIN)) return true;
-  if (user.roles.includes(Role.CHIEF_ASSISTANT)) {
-    if (projectId) {
-      return (
-        (await prisma.researchProject.count({
-          where: {
-            id: projectId,
-            OR: [
-              { leadResearcherId: user.id },
-              { authors: { some: { id: user.id } } },
-              { authorEntries: { some: { userId: user.id } } },
-              { registrationUserId: user.id },
-              {
-                organizedProjectLinks: {
-                  some: {
-                    organizedProject: {
-                      OR: [
-                        { createdById: user.id },
-                        { members: { some: { userId: user.id } } },
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        })) > 0
-      );
-    }
-
-    if (organizedProjectId) {
-      return (
-        (await prisma.organizedProject.count({
-          where: {
-            id: organizedProjectId,
-            OR: [
-              { createdById: user.id },
-              { members: { some: { userId: user.id } } },
-            ],
-          },
-        })) > 0
-      );
-    }
-
-    return false;
+  if (
+    user.roles.includes(Role.CHIEF_ASSISTANT) &&
+    organizedProjectId &&
+    !projectId
+  ) {
+    return (
+      (await prisma.organizedProject.count({
+        where: {
+          id: organizedProjectId,
+          OR: [
+            { createdById: user.id },
+            { members: { some: { userId: user.id } } },
+          ],
+        },
+      })) > 0
+    );
   }
   if (!projectId || !taskTypeCanBeCreatedByResearchAuthor(taskType)) {
     return false;

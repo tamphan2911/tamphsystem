@@ -439,11 +439,9 @@ export default async function ProjectDetailPage({
   const canEditResearchInfo =
     isAdmin || isCorrespondingAuthor || isFirstAuthor;
   const canEditResearch = isAdmin || isCorrespondingAuthor;
-  const canCreateSubmitOrOtherTask =
-    isAdmin || isFirstAuthor || isCorrespondingAuthor;
-  const canCreateProductionTask = canCreateSubmitOrOtherTask;
+  const canManageResearchTasks =
+    isRootAdmin || isFirstAuthor || isCorrespondingAuthor;
   const canSendAuthorEmails = isAdmin || isFirstAuthor || isCorrespondingAuthor;
-  const canApproveVenueSuggestion = canCreateSubmitOrOtherTask;
   const canSuggestVenue =
     isAdmin || isProjectAuthor || hasUnfinishedAssignedResearchTask;
 
@@ -489,12 +487,12 @@ export default async function ProjectDetailPage({
   const publishedArticleSubmission = project.submissions.find(
     (submission) => submission.status === "PUBLISHED",
   );
-  const journalSuccessLocksResearch = project.submissions.some(
-    (submission) =>
-      submission.status === "PUBLISHED" || submission.status === "ACCEPTED",
-  );
   const researchContentLocked =
-    journalSuccessLocksResearch && !project.contentUnlocked;
+    researchAcceptedOrPublished && !project.contentUnlocked;
+  const canCreateSubmitOrOtherTask =
+    canManageResearchTasks && !researchContentLocked;
+  const canCreateProductionTask = canCreateSubmitOrOtherTask;
+  const canApproveVenueSuggestion = canCreateSubmitOrOtherTask;
   const authorNames =
     hydratedAuthorEntries.length > 0
       ? hydratedAuthorEntries.map(
