@@ -32,6 +32,18 @@ export default async function AcademicReviewsPage() {
     }),
     prisma.journal.findMany({
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
+      include: {
+        accounts: {
+          select: {
+            id: true,
+            username: true,
+            password: true,
+            email: true,
+            note: true,
+          },
+          orderBy: [{ updatedAt: "desc" }],
+        },
+      },
     }),
   ]);
   if (!isAdmin && reviews.length === 0) redirect("/401");
@@ -85,6 +97,13 @@ export default async function AcademicReviewsPage() {
     id: journal.id,
     name: journal.name,
     publisher: journal.publisher ?? "",
+    accounts: journal.accounts.map((account) => ({
+      id: account.id,
+      username: account.username,
+      password: account.password,
+      email: account.email ?? "",
+      note: account.note ?? "",
+    })),
   }));
 
   return (

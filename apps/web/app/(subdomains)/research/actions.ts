@@ -2785,7 +2785,17 @@ export async function createAcademicReview(formData: FormData) {
   requireAdmin(user.roles);
 
   const journalId = optionalString(formData.get("journalId"));
-  if (!journalId) return;
+  const accountId = optionalString(formData.get("accountId"));
+  if (!journalId || !accountId) {
+    return { ok: false, reason: "MISSING_ACCOUNT" };
+  }
+  const account = await prisma.publisherAccount.findFirst({
+    where: { id: accountId, journalId },
+    select: { id: true },
+  });
+  if (!account) {
+    return { ok: false, reason: "ACCOUNT_NOT_FOR_JOURNAL" };
+  }
   const status = optionalString(formData.get("status")) ?? "ACCEPTED";
   const allowedStatuses = new Set([
     "ACCEPTED",
@@ -2797,6 +2807,7 @@ export async function createAcademicReview(formData: FormData) {
   await prisma.academicReview.create({
     data: {
       journalId,
+      accountId,
       manuscriptTitle:
         optionalString(formData.get("manuscriptTitle")) ??
         "Untitled manuscript",
@@ -2820,6 +2831,7 @@ export async function createAcademicReview(formData: FormData) {
 
   revalidatePath("/reviews");
   revalidatePath("/journals");
+  return { ok: true };
 }
 
 export async function deleteAcademicReview(reviewId: string) {

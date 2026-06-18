@@ -20,6 +20,13 @@ type JournalOption = {
   id: string;
   name: string;
   publisher: string;
+  accounts: {
+    id: string;
+    username: string;
+    password: string;
+    email: string;
+    note: string;
+  }[];
 };
 
 const inputClass =
@@ -108,10 +115,36 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [selectedJournalId, setSelectedJournalId] = useState("");
+  const [selectedAccountId, setSelectedAccountId] = useState("");
   const toast = useResearchToast();
+  const selectedJournal = journals.find(
+    (journal) => journal.id === selectedJournalId,
+  );
+  const accountOptions = [
+    {
+      value: "",
+      label:
+        selectedJournal?.accounts.length === 0
+          ? "No account available for this journal"
+          : "Choose the journal account used for this review",
+    },
+    ...(selectedJournal?.accounts.map((account) => ({
+      value: account.id,
+      label: [account.username, account.email].filter(Boolean).join(" - "),
+    })) ?? []),
+  ];
+
+  function selectJournal(journalId: string) {
+    setSelectedJournalId(journalId);
+    const journal = journals.find((item) => item.id === journalId);
+    setSelectedAccountId(
+      journal?.accounts.length === 1 ? journal.accounts[0]?.id ?? "" : "",
+    );
+  }
 
   const closeDialog = () => {
     setSelectedJournalId("");
+    setSelectedAccountId("");
     setIsOpen(false);
   };
 
@@ -149,7 +182,17 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
             startTransition(async () => {
-              await createAcademicReview(formData);
+              const result = await createAcademicReview(formData);
+              if (!result?.ok) {
+                toast.showError({
+                  title: "Review not added",
+                  detail:
+                    result?.reason === "ACCOUNT_NOT_FOR_JOURNAL"
+                      ? "The selected account does not belong to this journal."
+                      : "Choose an account for this journal before adding the review.",
+                });
+                return;
+              }
               closeDialog();
               toast.showSuccess({
                 title: "Review added",
@@ -163,7 +206,7 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
             <JournalPicker
               journals={journals}
               value={selectedJournalId}
-              onChange={setSelectedJournalId}
+              onChange={selectJournal}
             />
             <input
               tabIndex={-1}
@@ -173,6 +216,29 @@ export function NewReviewDialog({ journals }: { journals: JournalOption[] }) {
               value={selectedJournalId}
               className="pointer-events-none absolute h-px w-px opacity-0"
             />
+            {selectedJournalId && (
+              <label className={labelClass}>
+                <span>
+                  Account
+                  <span className="research-required-mark">(*)</span>
+                </span>
+                <ResearchFormSelect
+                  name="accountId"
+                  defaultValue={selectedAccountId}
+                  onValueChange={setSelectedAccountId}
+                  ariaLabel="Journal account"
+                  options={accountOptions}
+                />
+                <input
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  required
+                  readOnly
+                  value={selectedAccountId}
+                  className="pointer-events-none absolute h-px w-px opacity-0"
+                />
+              </label>
+            )}
             <div className="grid gap-4">
               <label className={labelClass}>
                 <span>

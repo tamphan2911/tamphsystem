@@ -22,18 +22,15 @@ import {
 } from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
-import { CountryFlag } from "@/sites/research/components/CountryFlag";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
-import { formatMoney } from "@/sites/research/lib/currency";
 import { countryName } from "@/sites/research/lib/countries";
 import {
   accessibleResearchReviewWhere,
-  assignedResearchReviewWhere,
   canAccessAllResearchReviews,
 } from "@/sites/research/lib/reviewAccess";
 
@@ -193,18 +190,8 @@ export default async function ReviewDetailPage({
   const review = await prisma.academicReview.findFirst({
     where: { id, ...accessibleResearchReviewWhere(roles, userId) },
     include: {
-      journal: {
-        include: {
-          _count: {
-            select: {
-              submissions: true,
-              reviews: {
-                where: isAdmin ? {} : assignedResearchReviewWhere(userId),
-              },
-            },
-          },
-        },
-      },
+      journal: true,
+      account: true,
       tasks: {
         where: isAdmin
           ? {}
@@ -230,15 +217,6 @@ export default async function ReviewDetailPage({
 
   const status = reviewStatusMeta(review.status);
   const StatusIcon = status.icon;
-  const journalFields =
-    review.journal.fields.length > 0
-      ? review.journal.fields
-      : review.journal.field
-        ? review.journal.field
-            .split(";")
-            .map((field) => field.trim())
-            .filter(Boolean)
-        : [];
   const externalLinks = [
     {
       href: review.journal.homepageLink,
@@ -349,88 +327,69 @@ export default async function ReviewDetailPage({
           </div>
 
           <div className={`${sectionDividerClass} p-5`}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <h2 className="text-sm font-normal text-[#252525] dark:text-[#E4E4E4]">
-                  Journal
-                </h2>
+            <div className="min-w-0">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <Link
                   href={`/journals/${review.journal.id}`}
-                  className="research-allow-transform mt-2 inline-flex max-w-full text-sm font-normal text-[#1F7180] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#155864] hover:[text-shadow:0_0_0.55rem_rgba(31,113,128,0.16)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+                  className="research-allow-transform inline-flex max-w-full text-sm font-normal text-[#1F7180] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#155864] hover:[text-shadow:0_0_0.55rem_rgba(31,113,128,0.16)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
                 >
                   {review.journal.name}
                 </Link>
-                <p className="mt-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
-                  {review.journal.publisher || "No publisher"}
-                </p>
-              </div>
-              {externalLinks.length > 0 && (
-                <div className="flex flex-none items-center gap-2">
-                  {externalLinks.map((item) => (
-                    <IconHint
-                      key={item.label}
-                      label={item.label}
-                      position="bottom"
-                    >
-                      <a
-                        href={item.href as string}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={`research-clickable-icon research-allow-transform inline-flex h-8 w-8 items-center justify-center border-0 bg-transparent shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:bg-transparent hover:shadow-none active:scale-95 focus-visible:ring-0 ${item.className}`}
-                        aria-label={item.label}
+                {externalLinks.length > 0 && (
+                  <div className="flex flex-none items-center gap-2">
+                    {externalLinks.map((item) => (
+                      <IconHint
+                        key={item.label}
+                        label={item.label}
+                        position="bottom"
                       >
-                        <item.icon className="h-4 w-4" aria-hidden="true" />
-                      </a>
-                    </IconHint>
-                  ))}
-                </div>
+                        <a
+                          href={item.href as string}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`research-clickable-icon research-allow-transform inline-flex h-8 w-8 items-center justify-center border-0 bg-transparent shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:bg-transparent hover:shadow-none active:scale-95 focus-visible:ring-0 ${item.className}`}
+                          aria-label={item.label}
+                        >
+                          <item.icon className="h-4 w-4" aria-hidden="true" />
+                        </a>
+                      </IconHint>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <p className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
+                <span>ISSN: {review.journal.issn || "-"}</span>
+                <span aria-hidden="true">|</span>
+                <span>{review.journal.publisher || "No publisher"}</span>
+                <span aria-hidden="true">|</span>
+                <span>{review.journal.rank || "No rank"}</span>
+                <span aria-hidden="true">|</span>
+                <span>
+                  {review.journal.country
+                    ? countryName(review.journal.country)
+                    : "No country"}
+                </span>
+              </p>
+              {review.account ? (
+                <p className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#4B5565] dark:text-[#B0B0B0]">
+                  <span>ID: {review.account.username}</span>
+                  <span aria-hidden="true">|</span>
+                  <span>Pass: {review.account.password}</span>
+                  {review.account.email ? (
+                    <>
+                      <span aria-hidden="true">|</span>
+                      <span>Email: {review.account.email}</span>
+                    </>
+                  ) : null}
+                  <span aria-hidden="true">|</span>
+                  <span>Note: {review.account.note || "-"}</span>
+                </p>
+              ) : (
+                <p className="mt-2 text-xs text-[#667085] dark:text-[#B0B0B0]">
+                  No account associated with this review.
+                </p>
               )}
             </div>
-            <dl className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-              <DetailItem label="ISSN" value={review.journal.issn || "-"} />
-              <DetailItem label="Rank" value={review.journal.rank || "-"} />
-              <DetailItem
-                label="Country"
-                value={
-                  review.journal.country ? (
-                    <span className="inline-flex items-center gap-2">
-                      <CountryFlag value={review.journal.country} />
-                      <span>{countryName(review.journal.country)}</span>
-                    </span>
-                  ) : (
-                    "-"
-                  )
-                }
-              />
-              <DetailItem
-                label="Field"
-                value={
-                  journalFields.length > 0 ? journalFields.join("; ") : "-"
-                }
-              />
-              <DetailItem
-                label="APC"
-                value={formatMoney(
-                  review.journal.apc,
-                  review.journal.apcCurrency,
-                )}
-              />
-              <DetailItem
-                label="Submission fee"
-                value={formatMoney(
-                  review.journal.submissionFee,
-                  review.journal.submissionFeeCurrency,
-                )}
-              />
-              <DetailItem
-                label="Submissions"
-                value={review.journal._count.submissions}
-              />
-              <DetailItem
-                label="Reviews"
-                value={review.journal._count.reviews}
-              />
-            </dl>
           </div>
 
           <div className={`${sectionDividerClass} p-5`}>
