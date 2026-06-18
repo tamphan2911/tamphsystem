@@ -3192,7 +3192,6 @@ export async function createResearchTask(formData: FormData) {
       (!projectId || !journalId)) ||
     (taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
       (!projectId || !conferenceId)) ||
-    (taskType === ResearchTaskType.OTHER && !journalId) ||
     (taskType === ResearchTaskType.PRODUCTION && !projectId) ||
     (taskType === ResearchTaskType.REVIEW && !reviewId) ||
     (taskType === ResearchTaskType.PROJECT_PRODUCTION && !organizedProjectId) ||
@@ -3417,7 +3416,6 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       (!effectiveProjectId || !journalId)) ||
     (taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
       (!effectiveProjectId || !conferenceId)) ||
-    (taskType === ResearchTaskType.OTHER && !journalId) ||
     (taskType === ResearchTaskType.PRODUCTION && !effectiveProjectId) ||
     (taskType === ResearchTaskType.REVIEW && !reviewId) ||
     (taskType === ResearchTaskType.PROJECT_PRODUCTION &&

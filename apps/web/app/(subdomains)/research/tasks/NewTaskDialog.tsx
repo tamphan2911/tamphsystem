@@ -375,7 +375,8 @@ export function NewTaskDialog({
   const selectedResearchMatchesMode =
     !needsResearch ||
     (selectedResearch ? researchMatchesMode(selectedResearch, mode) : false);
-  const needsVenue = mode === "submit" || mode === "other";
+  const needsVenue =
+    mode === "submit" || (mode === "other" && triggerVariant === "default");
   const selectedVenueMatchesMode =
     !needsVenue ||
     Boolean(
@@ -522,10 +523,16 @@ export function NewTaskDialog({
               <input type="hidden" name="category" value="Production" />
             </>
           )}
-          {mode === "other" && selectedVenue?.kind === "journal" && (
+          {mode === "other" && (
             <>
               <input type="hidden" name="taskType" value="OTHER" />
-              <input type="hidden" name="journalId" value={selectedVenue.id} />
+              {selectedVenue?.kind === "journal" ? (
+                <input
+                  type="hidden"
+                  name="journalId"
+                  value={selectedVenue.id}
+                />
+              ) : null}
             </>
           )}
 

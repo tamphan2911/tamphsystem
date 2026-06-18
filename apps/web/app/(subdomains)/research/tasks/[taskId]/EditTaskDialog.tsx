@@ -384,12 +384,10 @@ export function EditTaskDialog({
   const selectedResearchMatchesMode =
     !needsResearch ||
     (selectedResearch ? researchMatchesMode(selectedResearch, mode) : false);
-  const needsVenue = mode === "submit" || mode === "other";
+  const showsVenue = mode === "submit" || mode === "other";
+  const needsVenue = mode === "submit";
   const selectedVenueMatchesMode =
-    !needsVenue ||
-    Boolean(
-      selectedVenue && (mode !== "other" || selectedVenue.kind === "journal"),
-    );
+    !needsVenue || Boolean(selectedVenue);
   const needsReview = mode === "review";
   const selectedReviewIsOpen =
     !needsReview ||
@@ -493,10 +491,16 @@ export function EditTaskDialog({
               <input type="hidden" name="category" value={projectCategory} />
             </>
           )}
-          {mode === "other" && selectedVenue?.kind === "journal" && (
+          {mode === "other" && (
             <>
               <input type="hidden" name="taskType" value="OTHER" />
-              <input type="hidden" name="journalId" value={selectedVenue.id} />
+              {selectedVenue?.kind === "journal" ? (
+                <input
+                  type="hidden"
+                  name="journalId"
+                  value={selectedVenue.id}
+                />
+              ) : null}
             </>
           )}
 
@@ -580,13 +584,13 @@ export function EditTaskDialog({
             />
           )}
 
-          {needsVenue && (
+          {showsVenue && (
             <SearchPanel
               query={venueQuery}
               setQuery={setVenueQuery}
               placeholder={
                 mode === "other"
-                  ? "Search journal (*)"
+                  ? "Search journal (optional)"
                   : "Search journal or conference (*)"
               }
               selectedItems={
