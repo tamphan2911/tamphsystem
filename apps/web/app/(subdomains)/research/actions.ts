@@ -4917,6 +4917,33 @@ export async function uploadResearchTaskReport(
   };
 }
 
+export async function deleteResearchTaskReport(taskId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: { id: true, reportFileName: true },
+  });
+  if (!task) throw new Error("Task not found.");
+  if (!task.reportFileName) throw new Error("This task has no report file.");
+
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: {
+      reportFileName: null,
+      reportFileType: null,
+      reportFileSize: null,
+      reportFileData: null,
+      reportUploadedAt: null,
+      reportUploadedById: null,
+    },
+  });
+
+  revalidatePath("/task-reports");
+  revalidatePath(`/tasks/${taskId}`);
+}
+
 export async function finishResearchTask(taskId: string, formData?: FormData) {
   const user = await requireCurrentUser();
   const task = await prisma.researchTask.findUnique({
