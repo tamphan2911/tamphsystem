@@ -56,6 +56,8 @@ function formatDate(value: string | null) {
 
 function reasonMessage(reason?: string) {
   if (reason === "SELF_DELETE") return "You cannot delete your own account.";
+  if (reason === "VERIFIED_EMAIL_LOCKED")
+    return "The main email cannot be changed after it has been verified.";
   if (reason === "DELETE_FAILED")
     return "This user is linked to research records, tasks, or notifications and could not be deleted.";
   if (reason === "UPDATE_FAILED")
@@ -352,7 +354,13 @@ export function ResearchUsersTable({
                 name="email"
                 type="email"
                 defaultValue={editing.email}
-                placeholder="Optional"
+                placeholder="Main account email"
+                readOnly={Boolean(editing.emailVerified)}
+                hint={
+                  editing.emailVerified
+                    ? "Verified main email cannot be changed."
+                    : undefined
+                }
               />
               <Field
                 label="Affiliation"
@@ -441,6 +449,8 @@ function Field({
   defaultValue,
   placeholder,
   required = false,
+  readOnly = false,
+  hint,
 }: {
   label: string;
   name: string;
@@ -448,6 +458,8 @@ function Field({
   defaultValue?: string;
   placeholder?: string;
   required?: boolean;
+  readOnly?: boolean;
+  hint?: string;
 }) {
   return (
     <label className="grid gap-2">
@@ -461,8 +473,13 @@ function Field({
         defaultValue={defaultValue}
         placeholder={placeholder}
         required={required}
-        className={researchFieldClass}
+        readOnly={readOnly}
+        aria-readonly={readOnly}
+        className={`${researchFieldClass} ${readOnly ? "cursor-not-allowed opacity-70" : ""}`}
       />
+      {hint ? (
+        <span className="text-xs font-normal text-[#B0B0B0]">{hint}</span>
+      ) : null}
     </label>
   );
 }

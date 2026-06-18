@@ -3067,10 +3067,16 @@ export async function updateResearchSiteUser(formData: FormData) {
     .filter((role): role is Role => Object.values(Role).includes(role as Role));
   const existing = await prisma.user.findUnique({
     where: { id: userId },
-    select: { activeSites: true },
+    select: { activeSites: true, email: true, emailVerified: true },
   });
   if (!existing?.activeSites.includes("research")) {
     return { ok: false, reason: "NOT_RESEARCH_USER" };
+  }
+  if (
+    existing.emailVerified &&
+    email !== existing.email.trim().toLowerCase()
+  ) {
+    return { ok: false, reason: "VERIFIED_EMAIL_LOCKED" };
   }
 
   try {
@@ -3078,7 +3084,7 @@ export async function updateResearchSiteUser(formData: FormData) {
       where: { id: userId },
       data: {
         name: optionalString(formData.get("name")),
-        email,
+        email: existing.emailVerified ? existing.email : email,
         affiliation: optionalString(formData.get("affiliation")) ?? "Not set",
         roles: roles.length > 0 ? roles : [Role.STUDENT],
         activeSites: {
