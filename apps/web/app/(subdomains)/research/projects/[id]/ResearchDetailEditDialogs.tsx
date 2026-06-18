@@ -27,6 +27,7 @@ import {
 
 type ResearchBasicValues = {
   title: string;
+  sharedFolderUrl: string;
   abstract: string;
   universityRegistration: string;
   registrationName: string;
@@ -156,6 +157,11 @@ function HiddenBasic({ values }: { values: ResearchBasicValues }) {
   return (
     <>
       <input type="hidden" name="title" value={values.title} />
+      <input
+        type="hidden"
+        name="sharedFolderUrl"
+        value={values.sharedFolderUrl}
+      />
       <input type="hidden" name="abstract" value={values.abstract} />
       <input
         type="hidden"
@@ -302,6 +308,17 @@ export function ResearchBasicEditDialog({
               />
             </label>
           </div>
+
+          <label className={`${labelClass} mt-4`}>
+            Shared research folder
+            <input
+              name="sharedFolderUrl"
+              type="url"
+              defaultValue={values.sharedFolderUrl}
+              placeholder="Paste the shared Google Drive folder link..."
+              className={inputClass}
+            />
+          </label>
 
           <label className={`${labelClass} mt-4`}>
             Note

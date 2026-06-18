@@ -1429,6 +1429,7 @@ export async function createResearchProject(formData: FormData) {
       title: optionalString(formData.get("title")) ?? "Untitled research",
       researchCode: await generateResearchCode(),
       abstract: optionalString(formData.get("abstract")),
+      sharedFolderUrl: optionalString(formData.get("sharedFolderUrl")),
       stage: ResearchStage.PRODUCTION,
       coAuthors: optionalString(formData.get("coAuthors")),
       universityRegistration: isAdmin
@@ -1894,6 +1895,7 @@ export async function createResearchForOrganizedProject(
         title,
         researchCode: await generateResearchCode(new Date().getFullYear(), tx),
         abstract: optionalString(formData.get("abstract")),
+        sharedFolderUrl: optionalString(formData.get("sharedFolderUrl")),
         stage: ResearchStage.PRODUCTION,
         universityRegistration: optionalString(
           formData.get("universityRegistration"),
@@ -2024,6 +2026,7 @@ export async function updateResearchProject(
   );
   const data = {
     title: optionalString(formData.get("title")) ?? "Untitled research",
+    sharedFolderUrl: optionalString(formData.get("sharedFolderUrl")),
     coAuthors: null,
     completedProductionSteps,
     ...(isAdmin

@@ -4,6 +4,7 @@ import {
   Building2,
   Download,
   ExternalLink,
+  FolderOpen,
   Send,
   CheckCircle2,
   FileText,
@@ -706,6 +707,7 @@ export default async function ProjectDetailPage({
   const completedProductionStepValues = project.completedProductionSteps;
   const researchBasicValues = {
     title: project.title,
+    sharedFolderUrl: project.sharedFolderUrl ?? "",
     abstract: project.abstract ?? "",
     universityRegistration: project.universityRegistration ?? "",
     registrationName: project.registrationName ?? "",
@@ -845,6 +847,19 @@ export default async function ProjectDetailPage({
                 {project.title}
               </h1>
               <span className="ml-2 inline-flex items-center gap-2 align-middle">
+                {project.sharedFolderUrl ? (
+                  <IconHint label="Open research folder" position="bottom">
+                    <a
+                      href={project.sharedFolderUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="research-title-icon-button research-folder-link-button"
+                      aria-label="Open research folder"
+                    >
+                      <FolderOpen className="h-4 w-4" aria-hidden="true" />
+                    </a>
+                  </IconHint>
+                ) : null}
                 <IconHint label={stageStyle.label} position="bottom">
                   <span
                     className={`inline-flex h-5 w-5 flex-none cursor-help items-center justify-center transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${stageStyle.className}`}
@@ -1031,6 +1046,11 @@ export default async function ProjectDetailPage({
           >
             <ResearchDetailSection>
               <input type="hidden" name="title" value={project.title} />
+              <input
+                type="hidden"
+                name="sharedFolderUrl"
+                value={project.sharedFolderUrl ?? ""}
+              />
               <input
                 type="hidden"
                 name="abstract"

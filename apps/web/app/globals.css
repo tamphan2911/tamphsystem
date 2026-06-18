@@ -2768,6 +2768,22 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
   color: #15566a;
 }
 
+.research-site-root .research-folder-link-button {
+  color: #b39cd0;
+}
+
+.research-site-root .research-folder-link-button:hover {
+  color: #d8c8ef;
+}
+
+.research-site-root.research-theme-light .research-folder-link-button {
+  color: #6f5aa8;
+}
+
+.research-site-root.research-theme-light .research-folder-link-button:hover {
+  color: #563f8f;
+}
+
 .research-site-root .research-title-icon-button:active {
   border-color: transparent !important;
   background: transparent !important;

@@ -350,6 +350,7 @@ model ResearchProject {
   researchCode String?       @unique
   title        String
   abstract     String?
+  sharedFolderUrl String?
   stage        ResearchStage @default(PRODUCTION)
 
   // Production Stage Tracking

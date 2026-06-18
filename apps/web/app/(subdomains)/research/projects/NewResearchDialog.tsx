@@ -312,6 +312,15 @@ export function NewResearchDialog({
                 className={researchFieldClass}
               />
             </label>
+            <label className={researchLabelClass}>
+              Shared research folder
+              <input
+                name="sharedFolderUrl"
+                type="url"
+                placeholder="Paste the shared Google Drive folder link..."
+                className={researchFieldClass}
+              />
+            </label>
             <NewResearchAuthorsPicker
               users={users}
               selectedAuthors={selectedAuthors}
