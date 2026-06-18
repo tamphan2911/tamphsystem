@@ -567,12 +567,6 @@ async function taskAssociationIsSelectable({
     });
     if (!project) return "MISSING_ASSOCIATION";
     if (
-      taskType === ResearchTaskType.PRODUCTION &&
-      project.stage !== ResearchStage.PRODUCTION
-    ) {
-      return "RESEARCH_PRODUCTION_COMPLETE";
-    }
-    if (
       (taskType === ResearchTaskType.SUBMIT_RESEARCH ||
         taskType === ResearchTaskType.SUBMIT_CONFERENCE) &&
       (project.stage === ResearchStage.ACCEPTED ||

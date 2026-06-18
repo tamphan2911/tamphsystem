@@ -441,8 +441,7 @@ export default async function ProjectDetailPage({
   const canEditResearch = isAdmin || isCorrespondingAuthor;
   const canCreateSubmitOrOtherTask =
     isAdmin || isFirstAuthor || isCorrespondingAuthor;
-  const canCreateProductionTask =
-    canCreateSubmitOrOtherTask && project.stage === "PRODUCTION";
+  const canCreateProductionTask = canCreateSubmitOrOtherTask;
   const canSendAuthorEmails = isAdmin || isFirstAuthor || isCorrespondingAuthor;
   const canApproveVenueSuggestion = canCreateSubmitOrOtherTask;
   const canSuggestVenue =

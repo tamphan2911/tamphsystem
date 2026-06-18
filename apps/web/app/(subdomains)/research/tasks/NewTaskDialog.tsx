@@ -109,7 +109,6 @@ function modeLabel(mode: TaskMode) {
 
 function researchMatchesMode(project: TaskResearchOption, mode: TaskMode) {
   if (mode === "submit") return !finishedResearchStages.has(project.stage);
-  if (mode === "production") return project.stage === "PRODUCTION";
   return true;
 }
 
