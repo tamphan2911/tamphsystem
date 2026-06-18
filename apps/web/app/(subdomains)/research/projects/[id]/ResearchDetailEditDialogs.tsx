@@ -391,6 +391,7 @@ export function ResearchAuthorsEditDialog({
   completedProductionSteps,
   users,
   disabled = false,
+  disabledReason,
 }: {
   action: (formData: FormData) => Promise<void>;
   values: ResearchBasicValues;
@@ -398,6 +399,7 @@ export function ResearchAuthorsEditDialog({
   completedProductionSteps: string[];
   users: AuthorOption[];
   disabled?: boolean;
+  disabledReason?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -408,7 +410,7 @@ export function ResearchAuthorsEditDialog({
       <EditIconButton
         label={
           disabled
-            ? "Authors are locked after accepted or published submission"
+            ? disabledReason || "Author editing is unavailable"
             : "Edit authors"
         }
         onClick={() => setOpen(true)}

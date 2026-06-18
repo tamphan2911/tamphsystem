@@ -367,6 +367,7 @@ model ResearchProject {
   completedProductionSteps String[]            @default([])
   productionTimelineLocked Boolean             @default(false)
   contentUnlocked          Boolean             @default(false)
+  authorsUnlocked          Boolean             @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

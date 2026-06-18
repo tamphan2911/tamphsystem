@@ -30,6 +30,7 @@ import {
   type SubmissionTaskVenueOption,
 } from "./CreateSubmissionTaskDialog";
 import { ResearchContentLockButton } from "./ResearchContentLockButton";
+import { ResearchAuthorsLockButton } from "./ResearchAuthorsLockButton";
 import { ProductionTimelineActions } from "./ProductionTimelineActions";
 import { AuthorNotificationActions } from "./AuthorNotificationActions";
 import {
@@ -446,6 +447,18 @@ export default async function ProjectDetailPage({
     : project.conferenceSubmissions.length > 0
       ? stageFromConferenceSubmissions(project.conferenceSubmissions)
       : project.stage;
+  const researchAcceptedOrPublished =
+    project.stage === "ACCEPTED" ||
+    project.stage === "PUBLISHED" ||
+    project.submissions.some(
+      (submission) =>
+        submission.status === "ACCEPTED" || submission.status === "PUBLISHED",
+    ) ||
+    project.conferenceSubmissions.some(
+      (submission) =>
+        submission.status === "ACCEPTED" || submission.status === "PUBLISHED",
+    );
+  const authorsLocked = researchAcceptedOrPublished && !project.authorsUnlocked;
   const highlightedJournalSubmission = hasJournalSubmissions
     ? (project.submissions.find(
         (submission) => submission.status === "PUBLISHED",
@@ -1164,9 +1177,17 @@ export default async function ProjectDetailPage({
                 <div className="my-5 border-t border-[#444444]" />
 
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-                    Authors
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+                      Authors
+                    </h2>
+                    {isRootAdmin && researchAcceptedOrPublished && (
+                      <ResearchAuthorsLockButton
+                        projectId={project.id}
+                        locked={authorsLocked}
+                      />
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     <ResearchAuthorsEditDialog
                       action={updateAction}
@@ -1174,7 +1195,12 @@ export default async function ProjectDetailPage({
                       authors={defaultAuthors}
                       completedProductionSteps={completedProductionStepValues}
                       users={authorOptions}
-                      disabled={!canEditResearch || journalSuccessLocksResearch}
+                      disabled={!canEditResearch || authorsLocked}
+                      disabledReason={
+                        authorsLocked
+                          ? "Authors are locked after the research was accepted"
+                          : "Only admin or the corresponding author can edit authors"
+                      }
                     />
                     {canSendAuthorEmails && (
                       <AuthorNotificationActions

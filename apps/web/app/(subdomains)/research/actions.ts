@@ -2024,10 +2024,12 @@ export async function updateResearchProject(
       stage: true,
       completedProductionSteps: true,
       contentUnlocked: true,
+      authorsUnlocked: true,
       leadResearcherId: true,
       authors: { select: { id: true } },
       authorEntries: { select: { userId: true, isCorresponding: true } },
       submissions: { select: { status: true } },
+      conferenceSubmissions: { select: { status: true } },
     },
   });
   if (!projectLock) return;
@@ -2059,8 +2061,27 @@ export async function updateResearchProject(
       submission.status === SubmissionStatus.ACCEPTED ||
       submission.status === SubmissionStatus.PUBLISHED,
   );
+  const hasAcceptedResearch =
+    projectLock.stage === ResearchStage.ACCEPTED ||
+    projectLock.stage === ResearchStage.PUBLISHED ||
+    hasLockedJournalSubmission ||
+    projectLock.conferenceSubmissions.some(
+      (submission) =>
+        submission.status === ConferenceSubmissionStatus.ACCEPTED ||
+        submission.status === ConferenceSubmissionStatus.PUBLISHED,
+    );
+  const authorsLocked = hasAcceptedResearch && !projectLock.authorsUnlocked;
 
-  if (hasLockedJournalSubmission && !projectLock?.contentUnlocked) {
+  if (updateScope === "authors" && authorsLocked) {
+    revalidatePath(`/projects/${projectId}`);
+    return;
+  }
+
+  if (
+    updateScope !== "authors" &&
+    hasLockedJournalSubmission &&
+    !projectLock?.contentUnlocked
+  ) {
     revalidatePath(`/projects/${projectId}`);
     return;
   }
@@ -2124,22 +2145,28 @@ export async function updateResearchProject(
       data: {
         ...data,
         ...productionLockUpdate,
-        authors: {
-          set: selectedAuthorIds.map((id) => ({ id })),
-        },
+        ...(updateScope === "authors"
+          ? {
+              authors: {
+                set: selectedAuthorIds.map((id) => ({ id })),
+              },
+            }
+          : {}),
       },
     });
 
-    await tx.researchProjectAuthor.deleteMany({ where: { projectId } });
-    await tx.researchProjectAuthor.createMany({
-      data: selectedAuthorIds.map((id, index) => ({
-        projectId,
-        userId: id,
-        position: index,
-        selectedEmail: authorContactEmails.get(id),
-        isCorresponding: id === correspondingAuthorId,
-      })),
-    });
+    if (updateScope === "authors") {
+      await tx.researchProjectAuthor.deleteMany({ where: { projectId } });
+      await tx.researchProjectAuthor.createMany({
+        data: selectedAuthorIds.map((id, index) => ({
+          projectId,
+          userId: id,
+          position: index,
+          selectedEmail: authorContactEmails.get(id),
+          isCorresponding: id === correspondingAuthorId,
+        })),
+      });
+    }
   });
 
   await refreshResearchStage(projectId, completedProductionSteps);
@@ -2252,6 +2279,47 @@ export async function setResearchContentLock(
   await prisma.researchProject.update({
     where: { id: projectId },
     data: { contentUnlocked: !locked },
+  });
+
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function setResearchAuthorsLock(
+  projectId: string,
+  locked: boolean,
+) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: {
+      stage: true,
+      submissions: { select: { status: true } },
+      conferenceSubmissions: { select: { status: true } },
+    },
+  });
+  if (!project) return;
+
+  const acceptedOrPublished =
+    project.stage === ResearchStage.ACCEPTED ||
+    project.stage === ResearchStage.PUBLISHED ||
+    project.submissions.some(
+      (submission) =>
+        submission.status === SubmissionStatus.ACCEPTED ||
+        submission.status === SubmissionStatus.PUBLISHED,
+    ) ||
+    project.conferenceSubmissions.some(
+      (submission) =>
+        submission.status === ConferenceSubmissionStatus.ACCEPTED ||
+        submission.status === ConferenceSubmissionStatus.PUBLISHED,
+    );
+  if (!acceptedOrPublished) return;
+
+  await prisma.researchProject.update({
+    where: { id: projectId },
+    data: { authorsUnlocked: !locked },
   });
 
   revalidatePath("/projects");
@@ -3820,7 +3888,12 @@ export async function updateSubmissionStatus(formData: FormData) {
         project:
           journalStatus === SubmissionStatus.ACCEPTED ||
           journalStatus === SubmissionStatus.PUBLISHED
-            ? { update: { contentUnlocked: false } }
+            ? {
+                update: {
+                  contentUnlocked: false,
+                  authorsUnlocked: false,
+                },
+              }
             : undefined,
       },
       select: {
@@ -3986,7 +4059,14 @@ export async function updateSubmissionStatus(formData: FormData) {
 
     const submission = await prisma.conferenceSubmission.update({
       where: { id: submissionId },
-      data,
+      data: {
+        ...data,
+        project:
+          conferenceStatus === ConferenceSubmissionStatus.ACCEPTED ||
+          conferenceStatus === ConferenceSubmissionStatus.PUBLISHED
+            ? { update: { authorsUnlocked: false } }
+            : undefined,
+      },
       select: {
         researchProjectId: true,
         conferenceId: true,
