@@ -1,5 +1,6 @@
 "use server";
 
+import bcrypt from "bcrypt";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@repo/db";
 import { auth } from "../../../../auth";
@@ -49,6 +50,55 @@ export async function updateResearchProfile(formData: FormData) {
     return { success: true };
   } catch {
     return { error: "Profile could not be updated." };
+  }
+}
+
+export async function updateResearchPassword(formData: FormData) {
+  const session = await auth();
+  const email = session?.user?.email;
+  if (!email) return { error: "Unauthorized" };
+
+  const currentPassword = String(formData.get("currentPassword") ?? "");
+  const newPassword = String(formData.get("newPassword") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return { error: "All password fields are required." };
+  }
+  if (newPassword.length < 8) {
+    return { error: "New password must be at least 8 characters." };
+  }
+  if (newPassword !== confirmPassword) {
+    return { error: "New password and confirmation do not match." };
+  }
+  if (currentPassword === newPassword) {
+    return { error: "New password must be different from current password." };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { passwordHash: true },
+  });
+  if (!user) return { error: "User account was not found." };
+
+  const currentPasswordMatches = await bcrypt.compare(
+    currentPassword,
+    user.passwordHash,
+  );
+  if (!currentPasswordMatches) {
+    return { error: "Current password is not correct." };
+  }
+
+  try {
+    await prisma.user.update({
+      where: { email },
+      data: { passwordHash: await bcrypt.hash(newPassword, 10) },
+    });
+    revalidatePath("/profile");
+    revalidatePath("/research/profile");
+    return { success: true };
+  } catch {
+    return { error: "Password could not be updated." };
   }
 }
 

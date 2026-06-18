@@ -10,12 +10,13 @@ import {
   Check,
   ClipboardList,
   FileText,
+  KeyRound,
   Mail,
   Pencil,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { updateResearchProfile } from "./actions";
+import { updateResearchPassword, updateResearchProfile } from "./actions";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
@@ -270,7 +271,9 @@ export function ProfileClient({
   const router = useRouter();
   const toast = useResearchToast();
   const [editOpen, setEditOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPasswordSaving, setIsPasswordSaving] = useState(false);
   const [activeTab, setActiveTab] = usePersistentTableValue<TabKey>(
     "profile:tab",
     isAssistant ? "dashboard" : "research",
@@ -298,6 +301,24 @@ export function ProfileClient({
     toast.showSuccess({
       title: "Profile updated",
       detail: "Your research profile information has been saved.",
+    });
+  }
+
+  async function savePassword(formData: FormData) {
+    setIsPasswordSaving(true);
+    const result = await updateResearchPassword(formData);
+    setIsPasswordSaving(false);
+    if (result.error) {
+      toast.showError({
+        title: "Password not changed",
+        detail: result.error,
+      });
+      return;
+    }
+    setPasswordOpen(false);
+    toast.showSuccess({
+      title: "Password changed",
+      detail: "Your research account password has been updated.",
     });
   }
 
@@ -403,6 +424,16 @@ export function ProfileClient({
                   </span>
                 </IconHint>
               )}
+              <IconHint label="Change password" position="bottom">
+                <button
+                  type="button"
+                  onClick={() => setPasswordOpen(true)}
+                  className="research-allow-transform inline-flex cursor-pointer border-0 bg-transparent p-1 text-[#B0B0B0] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#B39CD0] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95"
+                  aria-label="Change password"
+                >
+                  <KeyRound className="h-4 w-4" />
+                </button>
+              </IconHint>
               <button
                 type="button"
                 onClick={() => setEditOpen(true)}
@@ -522,6 +553,75 @@ export function ProfileClient({
           )}
         </section>
       </div>
+
+      <ResearchModal
+        open={passwordOpen}
+        onClose={() => setPasswordOpen(false)}
+        title="Change password"
+        icon={<KeyRound className="h-5 w-5" />}
+        maxWidth="max-w-xl"
+        headerActions={
+          <ResearchButton form="profile-password-form" disabled={isPasswordSaving}>
+            {isPasswordSaving ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <KeyRound className="h-4 w-4" />
+            )}
+            {isPasswordSaving ? "Saving..." : "Save password"}
+          </ResearchButton>
+        }
+      >
+        <form
+          id="profile-password-form"
+          action={savePassword}
+          className="grid gap-5"
+        >
+          <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
+            <span className="inline-flex items-center gap-1 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+              <span>Current password</span>
+              <span className="research-required-mark">(*)</span>
+            </span>
+            <input
+              name="currentPassword"
+              type="password"
+              required
+              autoComplete="current-password"
+              placeholder="Type your current password"
+              className={researchFieldClass}
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
+            <span className="inline-flex items-center gap-1 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+              <span>New password</span>
+              <span className="research-required-mark">(*)</span>
+            </span>
+            <input
+              name="newPassword"
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              placeholder="At least 8 characters"
+              className={researchFieldClass}
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
+            <span className="inline-flex items-center gap-1 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+              <span>Confirm new password</span>
+              <span className="research-required-mark">(*)</span>
+            </span>
+            <input
+              name="confirmPassword"
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              placeholder="Type the new password again"
+              className={researchFieldClass}
+            />
+          </label>
+        </form>
+      </ResearchModal>
 
       <ResearchModal
         open={editOpen}
