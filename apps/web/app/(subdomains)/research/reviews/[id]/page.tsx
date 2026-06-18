@@ -20,7 +20,7 @@ import {
   UserRound,
   XCircle,
 } from "lucide-react";
-import { prisma, ResearchTaskStatus, Role } from "@repo/db";
+import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { CountryFlag } from "@/sites/research/components/CountryFlag";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
@@ -31,6 +31,11 @@ import {
 } from "@/sites/research/lib/display";
 import { formatMoney } from "@/sites/research/lib/currency";
 import { countryName } from "@/sites/research/lib/countries";
+import {
+  accessibleResearchReviewWhere,
+  assignedResearchReviewWhere,
+  canAccessAllResearchReviews,
+} from "@/sites/research/lib/reviewAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -184,26 +189,26 @@ export default async function ReviewDetailPage({
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   if (!userId) redirect("/login");
-  const isAdmin =
-    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
-  const review = await prisma.academicReview.findUnique({
-    where: { id },
+  const isAdmin = canAccessAllResearchReviews(roles);
+  const review = await prisma.academicReview.findFirst({
+    where: { id, ...accessibleResearchReviewWhere(roles, userId) },
     include: {
       journal: {
         include: {
-          _count: { select: { submissions: true, reviews: true } },
+          _count: {
+            select: {
+              submissions: true,
+              reviews: {
+                where: isAdmin ? {} : assignedResearchReviewWhere(userId),
+              },
+            },
+          },
         },
       },
       tasks: {
         where: isAdmin
           ? {}
           : {
-              status: {
-                notIn: [
-                  ResearchTaskStatus.COMPLETED,
-                  ResearchTaskStatus.REVOKED,
-                ],
-              },
               assignments: { some: { userId } },
             },
         include: {
@@ -218,8 +223,10 @@ export default async function ReviewDetailPage({
     },
   });
 
-  if (!review) notFound();
-  if (!isAdmin && review.tasks.length === 0) redirect("/401");
+  if (!review) {
+    if (!isAdmin) redirect("/401");
+    notFound();
+  }
 
   const status = reviewStatusMeta(review.status);
   const StatusIcon = status.icon;

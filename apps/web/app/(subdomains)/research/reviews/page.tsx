@@ -1,10 +1,14 @@
 import { redirect } from "next/navigation";
-import { prisma, ResearchTaskStatus, Role } from "@repo/db";
+import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { deleteAcademicReview } from "../actions";
 import { NewReviewDialog } from "./NewReviewDialog";
 import { ReviewsTable, type ReviewRow } from "./ReviewsTable";
+import {
+  accessibleResearchReviewWhere,
+  canAccessAllResearchReviews,
+} from "@/sites/research/lib/reviewAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -17,27 +21,12 @@ export default async function AcademicReviewsPage() {
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  const isAdmin =
-    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const isAdmin = canAccessAllResearchReviews(roles);
   if (!userId) redirect("/login");
 
   const [reviews, journals] = await Promise.all([
     prisma.academicReview.findMany({
-      where: isAdmin
-        ? {}
-        : {
-            tasks: {
-              some: {
-                status: {
-                  notIn: [
-                    ResearchTaskStatus.COMPLETED,
-                    ResearchTaskStatus.REVOKED,
-                  ],
-                },
-                assignments: { some: { userId } },
-              },
-            },
-          },
+      where: accessibleResearchReviewWhere(roles, userId),
       include: { journal: true },
       orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
     }),

@@ -13,6 +13,7 @@ import {
 } from "./NewTaskDialog";
 import { TasksClient } from "./TasksClient";
 import { displayResearchEmail } from "@/sites/research/lib/display";
+import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -118,6 +119,7 @@ export default async function ResearchTasksPage() {
           },
         }),
         prisma.academicReview.findMany({
+          where: accessibleResearchReviewWhere(roles, userId),
           orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
           include: { journal: { select: { name: true, publisher: true } } },
         }),

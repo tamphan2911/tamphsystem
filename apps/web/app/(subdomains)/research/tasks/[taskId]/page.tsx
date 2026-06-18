@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
+import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
 import {
   answerTaskClarification,
   finishResearchTask,
@@ -482,9 +483,10 @@ export default async function TaskDetailPage({
     task.project?.leadResearcherId === userId ||
     task.project?.authors.some((author) => author.id === userId) ||
     task.project?.authorEntries.some((entry) => entry.userId === userId) ||
-    task.project?.organizedProjectLinks.some(({ organizedProject }) =>
-      organizedProject.createdById === userId ||
-      organizedProject.members.some((member) => member.userId === userId),
+    task.project?.organizedProjectLinks.some(
+      ({ organizedProject }) =>
+        organizedProject.createdById === userId ||
+        organizedProject.members.some((member) => member.userId === userId),
     );
   const isRelatedOrganizedProjectTask =
     task.organizedProject?.createdById === userId ||
@@ -713,6 +715,7 @@ export default async function TaskDetailPage({
           },
         }),
         prisma.academicReview.findMany({
+          where: accessibleResearchReviewWhere(roles, userId),
           orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
           include: { journal: { select: { name: true } } },
         }),

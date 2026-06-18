@@ -36,8 +36,7 @@ export default async function ResearchLayout({
     }
   }
   const isRootAdmin = roles.includes(Role.ADMIN);
-  const isResearchAdmin =
-    isRootAdmin || roles.includes(Role.CHIEF_ASSISTANT);
+  const isResearchAdmin = isRootAdmin || roles.includes(Role.CHIEF_ASSISTANT);
   let canSeeAccounts = isResearchAdmin;
   let canSeeReviews = isResearchAdmin;
   let canSeeTasks = isResearchAdmin;
@@ -46,7 +45,7 @@ export default async function ResearchLayout({
     const [
       assignedTaskCount,
       unfinishedAccountTaskCount,
-      unfinishedReviewTaskCount,
+      assignedReviewTaskCount,
     ] = await Promise.all([
       isResearchAdmin
         ? Promise.resolve(0)
@@ -67,17 +66,11 @@ export default async function ResearchLayout({
               assignments: { some: { userId } },
             },
           }),
-      isResearchAdmin
+      isRootAdmin
         ? Promise.resolve(0)
         : prisma.researchTask.count({
             where: {
               reviewId: { not: null },
-              status: {
-                notIn: [
-                  ResearchTaskStatus.COMPLETED,
-                  ResearchTaskStatus.REVOKED,
-                ],
-              },
               assignments: { some: { userId } },
             },
           }),
@@ -88,9 +81,8 @@ export default async function ResearchLayout({
     ) {
       redirect("/activate");
     }
-    canSeeAccounts =
-      isResearchAdmin || unfinishedAccountTaskCount > 0;
-    canSeeReviews = isResearchAdmin || unfinishedReviewTaskCount > 0;
+    canSeeAccounts = isResearchAdmin || unfinishedAccountTaskCount > 0;
+    canSeeReviews = isRootAdmin || assignedReviewTaskCount > 0;
     canSeeTasks = isResearchAdmin || assignedTaskCount > 0;
     if (isResearchAdmin) {
       unopenedProposalCount = await prisma.proposal.count({

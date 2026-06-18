@@ -26,6 +26,7 @@ import {
   accessibleJournalWhere,
   hasUnrestrictedVenueAccess,
 } from "@/sites/research/lib/venueAccess";
+import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -79,7 +80,12 @@ export default async function JournalDetailPage({
         include: { _count: { select: { submissions: true } } },
         orderBy: [{ updatedAt: "desc" }],
       },
-      reviews: { orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }] },
+      reviews: {
+        where: userId
+          ? accessibleResearchReviewWhere(roles, userId)
+          : { id: "__no_access__" },
+        orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
+      },
       _count: { select: { submissions: true, accounts: true, reviews: true } },
     },
   });

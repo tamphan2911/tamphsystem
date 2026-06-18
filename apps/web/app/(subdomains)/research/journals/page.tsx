@@ -9,6 +9,10 @@ import {
   accessibleJournalWhere,
   hasUnrestrictedVenueAccess,
 } from "@/sites/research/lib/venueAccess";
+import {
+  assignedResearchReviewWhere,
+  canAccessAllResearchReviews,
+} from "@/sites/research/lib/reviewAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -25,12 +29,22 @@ export default async function JournalsPage() {
     : userId
       ? accessibleJournalWhere(userId)
       : { id: "__no_access__" };
+  const reviewCountWhere = canAccessAllResearchReviews(roles)
+    ? {}
+    : userId
+      ? assignedResearchReviewWhere(userId)
+      : { id: "__no_access__" };
   const [journals, currentUser] = await Promise.all([
     prisma.journal.findMany({
       where: journalWhere,
       include: {
         submissions: { select: { status: true } },
-        _count: { select: { accounts: true, reviews: true } },
+        _count: {
+          select: {
+            accounts: true,
+            reviews: { where: reviewCountWhere },
+          },
+        },
       },
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
     }),

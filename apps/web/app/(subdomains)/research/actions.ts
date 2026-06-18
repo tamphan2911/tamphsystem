@@ -2803,7 +2803,8 @@ export async function deleteFundingInstitution(institutionId: string) {
 }
 
 export async function createAcademicReview(formData: FormData) {
-  await requireCurrentUser();
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
 
   const journalId = optionalString(formData.get("journalId"));
   if (!journalId) return;
@@ -2845,7 +2846,7 @@ export async function createAcademicReview(formData: FormData) {
 
 export async function deleteAcademicReview(reviewId: string) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   await prisma.academicReview.delete({
     where: { id: reviewId },
