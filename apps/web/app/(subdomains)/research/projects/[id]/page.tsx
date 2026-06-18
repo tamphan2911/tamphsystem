@@ -1443,7 +1443,7 @@ export default async function ProjectDetailPage({
                 organizedProjectOptions={[]}
                 initialMode="other"
                 initialResearch={currentResearchTaskOption}
-                initialTitle={`Suggested venue for research "${project.title}"`}
+                initialTitle={`Suggest venue for research "${project.title}"`}
                 triggerVariant="other"
               />
             ) : null
