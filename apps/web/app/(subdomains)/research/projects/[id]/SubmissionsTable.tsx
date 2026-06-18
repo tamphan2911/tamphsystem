@@ -630,19 +630,19 @@ export function SubmissionsTable({
             <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
               <tr>
                 <th
-                  className={`${isResearchView ? "w-[8%]" : "w-[6%]"} px-3 py-3`}
+                  className={`${isResearchView ? (showRegistrationClaim ? "w-[6%]" : "w-[7%]") : "w-[6%]"} px-3 py-3`}
                 >
                   ID
                 </th>
                 <th
-                  className={`${isResearchView ? "w-[42%]" : showSubmitter ? "w-[31%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-3 py-3`}
+                  className={`${isResearchView ? (showRegistrationClaim ? "w-[49%]" : "w-[56%]") : showSubmitter ? "w-[31%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-3 py-3`}
                 >
                   {isResearchView
                     ? "Research Associated"
                     : "Journal / Conference"}
                 </th>
                 <th
-                  className={`${isResearchView ? "w-[15%]" : "w-[13%]"} px-3 py-3`}
+                  className={`${isResearchView ? (showRegistrationClaim ? "w-[12%]" : "w-[13%]") : "w-[13%]"} px-3 py-3`}
                 >
                   <span className="inline-flex items-center gap-2">
                     Status
@@ -661,10 +661,14 @@ export function SubmissionsTable({
                     {showRegistrationClaim && (
                       <>
                         <th className="w-[10%] px-3 py-3">Research claim</th>
-                        <th className="w-[18%] px-3 py-3">Registration</th>
+                        <th className="w-[16%] px-3 py-3">Registration</th>
                       </>
                     )}
-                    <th className="w-[12%] px-3 py-3">Account</th>
+                    <th
+                      className={`${showRegistrationClaim ? "w-[8%]" : "w-[12%]"} px-3 py-3`}
+                    >
+                      Account
+                    </th>
                   </>
                 ) : (
                   <>
@@ -730,7 +734,7 @@ export function SubmissionsTable({
                         )}
                         <span className="min-w-0">
                           <span
-                            className={`${isResearchView ? "text-sm" : "text-sm"} block truncate font-normal text-[#E4E4E4] transition group-hover/link:text-[#A8DADC]`}
+                            className={`${isResearchView ? "whitespace-normal break-words text-[15px] leading-6" : "truncate text-sm"} block font-normal text-[#E4E4E4] transition group-hover/link:text-[#A8DADC]`}
                           >
                             {isResearchView ? row.projectTitle : row.venueName}
                           </span>
@@ -758,7 +762,7 @@ export function SubmissionsTable({
                         )}
                         <span className="min-w-0">
                           <span
-                            className={`${isResearchView ? "text-sm" : "text-sm"} block truncate font-normal text-[#E4E4E4] transition group-hover/link:text-[#A8DADC]`}
+                            className={`${isResearchView ? "whitespace-normal break-words text-[15px] leading-6" : "truncate text-sm"} block font-normal text-[#E4E4E4] transition group-hover/link:text-[#A8DADC]`}
                           >
                             {isResearchView ? row.projectTitle : row.venueName}
                           </span>
