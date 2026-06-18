@@ -1046,11 +1046,14 @@ export default async function ProjectDetailPage({
             <div className="space-y-1 py-1">
               <div className="flex min-w-0 items-center gap-2">
                 <p className="min-w-0 text-[#E4E4E4]">
-                  {highlightedJournalSubmission.journal.name} -{" "}
+                  ISSN: {highlightedJournalSubmission.journal.issn || "-"} |{" "}
+                  {highlightedJournalSubmission.journal.name} |{" "}
                   {highlightedJournalSubmission.journal.publisher ||
                     "No publisher"}{" "}
-                  - ISSN {highlightedJournalSubmission.journal.issn || "-"} -{" "}
-                  {highlightedJournalSubmission.journal.rank || "No rank"}
+                  |{" "}
+                  {highlightedJournalSubmission.journal.rank ||
+                    highlightedJournalSubmission.journal.localRank ||
+                    "No rank"}
                 </p>
                 {publishedArticleSubmission?.articleFileName && (
                   <IconHint
@@ -1092,10 +1095,10 @@ export default async function ProjectDetailPage({
                   Submitted:{" "}
                   {shortDate(highlightedJournalSubmission.submittedAt)}
                   {highlightedJournalSubmission.acceptedAt
-                    ? ` - Accepted: ${shortDate(highlightedJournalSubmission.acceptedAt)}`
+                    ? ` | Accepted: ${shortDate(highlightedJournalSubmission.acceptedAt)}`
                     : ""}
                   {highlightedJournalSubmission.publishedAt
-                    ? ` - Published: ${shortDate(highlightedJournalSubmission.publishedAt)}`
+                    ? ` | Published: ${shortDate(highlightedJournalSubmission.publishedAt)}`
                     : ""}
                 </p>
               </div>
@@ -1119,10 +1122,10 @@ export default async function ProjectDetailPage({
                 Submitted:{" "}
                 {shortDate(highlightedConferenceSubmission.submittedAt)}
                 {highlightedConferenceSubmission.acceptedAt
-                  ? ` - Accepted: ${shortDate(highlightedConferenceSubmission.acceptedAt)}`
+                  ? ` | Accepted: ${shortDate(highlightedConferenceSubmission.acceptedAt)}`
                   : ""}
                 {highlightedConferenceSubmission.publishedAt
-                  ? ` - Published: ${shortDate(highlightedConferenceSubmission.publishedAt)}`
+                  ? ` | Published: ${shortDate(highlightedConferenceSubmission.publishedAt)}`
                   : ""}
               </p>
             </div>
