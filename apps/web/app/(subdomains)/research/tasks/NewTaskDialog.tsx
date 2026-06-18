@@ -187,13 +187,14 @@ export function NewTaskDialog({
     if (!needle) return [];
     return venueOptions
       .filter((venue) => {
+        if (mode === "other" && venue.kind !== "journal") return false;
         return [venue.name, venue.meta, venue.kind, venue.id]
           .join(" ")
           .toLowerCase()
           .includes(needle);
       })
       .slice(0, 10);
-  }, [venueOptions, venueQuery]);
+  }, [mode, venueOptions, venueQuery]);
 
   const journalAccounts = useMemo(() => {
     if (selectedVenue?.kind !== "journal") return [];
@@ -301,6 +302,16 @@ export function NewTaskDialog({
     setAccountQuery("");
   }
 
+  function changeMode(nextMode: TaskMode) {
+    setMode(nextMode);
+    if (nextMode === "other" && selectedVenue?.kind === "conference") {
+      setSelectedVenue(null);
+      setVenueQuery("");
+      setSelectedAccountId("");
+      setAccountQuery("");
+    }
+  }
+
   function selectReview(review: TaskReviewOption) {
     setSelectedReview(review);
     setReviewQuery("");
@@ -358,7 +369,12 @@ export function NewTaskDialog({
   const selectedResearchMatchesMode =
     !needsResearch ||
     (selectedResearch ? researchMatchesMode(selectedResearch, mode) : false);
-  const needsVenue = mode === "submit";
+  const needsVenue = mode === "submit" || mode === "other";
+  const selectedVenueMatchesMode =
+    !needsVenue ||
+    Boolean(
+      selectedVenue && (mode !== "other" || selectedVenue.kind === "journal"),
+    );
   const needsReview = mode === "review";
   const selectedReviewIsOpen =
     !needsReview ||
@@ -372,7 +388,7 @@ export function NewTaskDialog({
   const canSubmit =
     selectedIds.length > 0 &&
     selectedResearchMatchesMode &&
-    (!needsVenue || Boolean(selectedVenue)) &&
+    selectedVenueMatchesMode &&
     selectedReviewIsOpen &&
     selectedOrganizedProjectIsOpen;
   const selectedAssigneeItems: SearchPanelItem[] = assignees
@@ -418,7 +434,7 @@ export function NewTaskDialog({
           {selectedResearch && (
             <input type="hidden" name="projectId" value={selectedResearch.id} />
           )}
-          {selectedVenue?.kind === "journal" && (
+          {mode === "submit" && selectedVenue?.kind === "journal" && (
             <>
               <input type="hidden" name="taskType" value="SUBMIT_RESEARCH" />
               <input type="hidden" name="journalId" value={selectedVenue.id} />
@@ -432,7 +448,7 @@ export function NewTaskDialog({
               <input type="hidden" name="category" value="Submit research" />
             </>
           )}
-          {selectedVenue?.kind === "conference" && (
+          {mode === "submit" && selectedVenue?.kind === "conference" && (
             <>
               <input type="hidden" name="taskType" value="SUBMIT_CONFERENCE" />
               <input
@@ -466,8 +482,11 @@ export function NewTaskDialog({
               <input type="hidden" name="category" value="Production" />
             </>
           )}
-          {mode === "other" && (
-            <input type="hidden" name="taskType" value="OTHER" />
+          {mode === "other" && selectedVenue?.kind === "journal" && (
+            <>
+              <input type="hidden" name="taskType" value="OTHER" />
+              <input type="hidden" name="journalId" value={selectedVenue.id} />
+            </>
           )}
 
           <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
@@ -501,7 +520,7 @@ export function NewTaskDialog({
               <button
                 key={item}
                 type="button"
-                onClick={() => setMode(item)}
+                onClick={() => changeMode(item)}
                 data-research-toggle-tab="true"
                 data-active={mode === item}
                 className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
@@ -554,7 +573,11 @@ export function NewTaskDialog({
             <SearchPanel
               query={venueQuery}
               setQuery={setVenueQuery}
-              placeholder="Search journal or conference (*)"
+              placeholder={
+                mode === "other"
+                  ? "Search journal (*)"
+                  : "Search journal or conference (*)"
+              }
               selectedItems={
                 selectedVenue
                   ? [
@@ -587,7 +610,7 @@ export function NewTaskDialog({
             />
           )}
 
-          {selectedVenue?.kind === "journal" && (
+          {mode === "submit" && selectedVenue?.kind === "journal" && (
             <JournalAccountField
               accounts={journalAccounts}
               query={accountQuery}
