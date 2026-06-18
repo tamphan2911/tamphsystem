@@ -393,6 +393,7 @@ model OrganizedProject {
   organizer             String?
   referenceCode         String?
   description           String?
+  sharedFolderUrl       String?
   projectType           OrganizedProjectType                 @default(STUDENT)
   status                OrganizedProjectStatus               @default(PLANNED)
   financialClaimStatus  OrganizedProjectFinancialClaimStatus @default(NONE)

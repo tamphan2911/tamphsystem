@@ -520,6 +520,7 @@ export default async function OrganizedProjectDetailPage({
     startDate: dateInputValue(project.startDate),
     durationMonths: project.durationMonths ?? 1,
     requiredProducts: project.requiredProducts,
+    sharedFolderUrl: project.sharedFolderUrl ?? "",
     description: project.description ?? "",
     note: project.note ?? "",
   };
@@ -700,10 +701,21 @@ export default async function OrganizedProjectDetailPage({
                 <p className="text-sm font-medium text-[#E4E4E4]">
                   Shared project folder
                 </p>
-                <p className="mt-1 text-xs leading-5 text-[#777777]">
-                  Add Drive, manuscript, grant, data, or shared reference links
-                  here later.
-                </p>
+                {project.sharedFolderUrl ? (
+                  <Link
+                    href={project.sharedFolderUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`mt-1 block break-all text-xs leading-5 ${researchLinkClass}`}
+                  >
+                    {project.sharedFolderUrl}
+                  </Link>
+                ) : (
+                  <p className="mt-1 text-xs leading-5 text-[#777777]">
+                    Add Drive, manuscript, grant, data, or shared reference
+                    links here later.
+                  </p>
+                )}
               </div>
             </div>
             <div className="mt-5 border-t border-[#444444] pt-5">

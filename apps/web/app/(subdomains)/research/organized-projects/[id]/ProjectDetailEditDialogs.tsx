@@ -43,6 +43,7 @@ type ProjectInfo = {
   startDate: string;
   durationMonths: number;
   requiredProducts: string[];
+  sharedFolderUrl: string;
   description: string;
   note: string;
 };
@@ -103,6 +104,11 @@ function HiddenProjectInfo({ info }: { info: ProjectInfo }) {
         type="hidden"
         name="requiredProducts"
         value={info.requiredProducts.join("\n")}
+      />
+      <input
+        type="hidden"
+        name="sharedFolderUrl"
+        value={info.sharedFolderUrl}
       />
       <input type="hidden" name="description" value={info.description} />
       <input type="hidden" name="note" value={info.note} />
@@ -428,6 +434,16 @@ export function ProjectInfoEditDialog({
                 defaultValue={info.requiredProducts.join("\n")}
                 placeholder="One required project output per line..."
                 className="min-h-20 border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-[#E4E4E4] outline-none transition placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]"
+              />
+            </label>
+            <label className={labelClass}>
+              Shared project folder
+              <input
+                name="sharedFolderUrl"
+                type="url"
+                defaultValue={info.sharedFolderUrl}
+                placeholder="Paste the shared Drive, OneDrive, SharePoint, or project folder link..."
+                className={fieldClass}
               />
             </label>
             <label className={labelClass}>

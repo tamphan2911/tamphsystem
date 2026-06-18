@@ -275,6 +275,16 @@ export function NewOrganizedProjectDialog({
               </label>
 
               <label className={researchLabelClass}>
+                Shared project folder
+                <input
+                  name="sharedFolderUrl"
+                  type="url"
+                  placeholder="Paste the shared Drive, OneDrive, SharePoint, or project folder link..."
+                  className={researchFieldClass}
+                />
+              </label>
+
+              <label className={researchLabelClass}>
                 Description
                 <textarea
                   name="description"

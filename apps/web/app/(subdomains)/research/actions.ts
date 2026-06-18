@@ -1528,6 +1528,7 @@ export async function createOrganizedProject(formData: FormData) {
       organizer: fundingInstitution?.name ?? null,
       referenceCode,
       description: optionalString(formData.get("description")),
+      sharedFolderUrl: optionalString(formData.get("sharedFolderUrl")),
       projectType,
       note: optionalString(formData.get("note")),
       status:
@@ -1698,6 +1699,7 @@ export async function updateOrganizedProject(
       organizer: fundingInstitution?.name ?? null,
       referenceCode,
       description: optionalString(formData.get("description")),
+      sharedFolderUrl: optionalString(formData.get("sharedFolderUrl")),
       projectType,
       note: optionalString(formData.get("note")),
       status:
