@@ -5,6 +5,10 @@ import { ProposalDialog } from "@/sites/research/components/ProposalDialog";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { JournalsTable, type JournalRow } from "./JournalsTable";
 import { NewJournalDialog } from "./NewJournalDialog";
+import {
+  accessibleJournalWhere,
+  hasUnrestrictedVenueAccess,
+} from "@/sites/research/lib/venueAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +19,15 @@ export default async function JournalsPage() {
     []) as Role[];
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
+  const journalWhere = unrestrictedAccess
+    ? {}
+    : userId
+      ? accessibleJournalWhere(userId)
+      : { id: "__no_access__" };
   const [journals, currentUser] = await Promise.all([
     prisma.journal.findMany({
+      where: journalWhere,
       include: {
         submissions: { select: { status: true } },
         _count: { select: { accounts: true, reviews: true } },

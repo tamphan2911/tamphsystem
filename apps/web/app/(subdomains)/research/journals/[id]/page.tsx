@@ -22,6 +22,10 @@ import {
   type JournalSubmissionRow,
 } from "./JournalDetailTabs";
 import { EditJournalDialog } from "./EditJournalDialog";
+import {
+  accessibleJournalWhere,
+  hasUnrestrictedVenueAccess,
+} from "@/sites/research/lib/venueAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -44,9 +48,15 @@ export default async function JournalDetailPage({
     []) as Role[];
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
+  const journalAccessWhere = unrestrictedAccess
+    ? {}
+    : userId
+      ? accessibleJournalWhere(userId)
+      : { id: "__no_access__" };
 
-  const journal = await prisma.journal.findUnique({
-    where: { id },
+  const journal = await prisma.journal.findFirst({
+    where: { AND: [{ id }, journalAccessWhere] },
     include: {
       submissions: {
         include: {

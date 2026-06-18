@@ -5,6 +5,10 @@ import { ProposalDialog } from "@/sites/research/components/ProposalDialog";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { ConferenceDialog } from "./ConferenceDialog";
 import { ConferencesTable, type ConferenceRow } from "./ConferencesTable";
+import {
+  accessibleConferenceWhere,
+  hasUnrestrictedVenueAccess,
+} from "@/sites/research/lib/venueAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -37,8 +41,15 @@ export default async function ConferencesPage() {
     []) as Role[];
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
+  const conferenceWhere = unrestrictedAccess
+    ? {}
+    : userId
+      ? accessibleConferenceWhere(userId)
+      : { id: "__no_access__" };
   const [conferences, currentUser] = await Promise.all([
     prisma.conference.findMany({
+      where: conferenceWhere,
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
       include: {
         _count: {

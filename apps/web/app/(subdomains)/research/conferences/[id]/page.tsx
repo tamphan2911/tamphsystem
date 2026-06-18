@@ -24,6 +24,10 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import {
+  accessibleConferenceWhere,
+  hasUnrestrictedVenueAccess,
+} from "@/sites/research/lib/venueAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -70,8 +74,14 @@ export default async function ConferenceDetailPage({
     []) as Role[];
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
-  const conference = await prisma.conference.findUnique({
-    where: { id },
+  const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
+  const conferenceAccessWhere = unrestrictedAccess
+    ? {}
+    : userId
+      ? accessibleConferenceWhere(userId)
+      : { id: "__no_access__" };
+  const conference = await prisma.conference.findFirst({
+    where: { AND: [{ id }, conferenceAccessWhere] },
     include: {
       submissions: {
         include: {
