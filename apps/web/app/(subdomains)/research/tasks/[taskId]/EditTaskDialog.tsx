@@ -95,14 +95,6 @@ function modeFromTaskType(taskType: string): TaskMode {
   return "other";
 }
 
-function modeLabel(mode: TaskMode) {
-  if (mode === "submit") return "Submit";
-  if (mode === "production") return "Production";
-  if (mode === "review") return "Review";
-  if (mode === "project") return "Project";
-  return "Other";
-}
-
 function researchMatchesMode(project: TaskResearchOption, mode: TaskMode) {
   if (mode === "submit") return !finishedResearchStages.has(project.stage);
   return true;
@@ -176,7 +168,7 @@ export function EditTaskDialog({
     ) ?? null;
 
   const [isOpen, setIsOpen] = useState(false);
-  const [mode, setMode] = useState<TaskMode>(initialMode);
+  const mode = initialMode;
   const projectTaskType =
     task.taskType === "PROJECT_RESEARCH_ASSOCIATED"
       ? "PROJECT_RESEARCH_ASSOCIATED"
@@ -336,16 +328,6 @@ export function EditTaskDialog({
     setAccountQuery("");
   }
 
-  function changeMode(nextMode: TaskMode) {
-    setMode(nextMode);
-    if (nextMode === "other" && selectedVenue?.kind === "conference") {
-      setSelectedVenue(null);
-      setVenueQuery("");
-      setSelectedAccountId("");
-      setAccountQuery("");
-    }
-  }
-
   function selectReview(review: TaskReviewOption) {
     setSelectedReview(review);
     setReviewQuery("");
@@ -359,6 +341,22 @@ export function EditTaskDialog({
   function selectAccount(account: TaskAccountOption) {
     setSelectedAccountId(account.id);
     setAccountQuery("");
+  }
+
+  function openDialog() {
+    setAssigneeQuery("");
+    setResearchQuery("");
+    setVenueQuery("");
+    setAccountQuery("");
+    setReviewQuery("");
+    setOrganizedProjectQuery("");
+    setSelectedIds(task.assigneeIds);
+    setSelectedResearch(initialResearch);
+    setSelectedVenue(initialVenue);
+    setSelectedAccountId(task.accountId);
+    setSelectedReview(initialReview);
+    setSelectedOrganizedProject(initialOrganizedProject);
+    setIsOpen(true);
   }
 
   function submitTask(formData: FormData) {
@@ -381,13 +379,14 @@ export function EditTaskDialog({
   }
 
   const needsResearch = mode === "submit" || mode === "production";
+  const isResearchShortcutOther = mode === "other" && Boolean(task.projectId);
   const selectedResearchMatchesMode =
     !needsResearch ||
     (selectedResearch ? researchMatchesMode(selectedResearch, mode) : false);
-  const showsVenue = mode === "submit" || mode === "other";
+  const showsVenue =
+    mode === "submit" || (mode === "other" && !isResearchShortcutOther);
   const needsVenue = mode === "submit";
-  const selectedVenueMatchesMode =
-    !needsVenue || Boolean(selectedVenue);
+  const selectedVenueMatchesMode = !needsVenue || Boolean(selectedVenue);
   const needsReview = mode === "review";
   const selectedReviewIsOpen =
     !needsReview ||
@@ -409,7 +408,7 @@ export function EditTaskDialog({
     <>
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={openDialog}
         className="group relative inline-flex h-5 w-5 flex-none cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none transition hover:-translate-y-0.5 hover:text-[#A8DADC]"
         aria-label="Edit task"
       >
@@ -525,29 +524,24 @@ export function EditTaskDialog({
             </label>
           </div>
 
-          <div
-            data-research-toggle-tabs="true"
-            className="grid w-full grid-cols-5 border border-[#444444] bg-[#202020]"
-          >
-            {(
-              ["submit", "production", "review", "project", "other"] as const
-            ).map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => changeMode(item)}
-                data-research-toggle-tab="true"
-                data-active={mode === item}
-                className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
-                  mode === item
-                    ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
-                    : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
-                }`}
-              >
-                {modeLabel(item)}
-              </button>
-            ))}
-          </div>
+          {isResearchShortcutOther && selectedResearch ? (
+            <section className="grid gap-2">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                Associated research
+              </span>
+              <div className="flex min-w-0 items-center gap-3 border border-[#d9d0c3] bg-[#f8f5f0] px-4 py-3 text-[#243047] dark:border-[#444444] dark:bg-[#252525] dark:text-[#E4E4E4]">
+                <FileText className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+                <span className="min-w-0 flex-1 truncate text-sm">
+                  {selectedResearch.title}
+                </span>
+                {selectedResearch.code ? (
+                  <span className="flex-none text-xs text-[#6C778D] dark:text-[#B0B0B0]">
+                    {selectedResearch.code}
+                  </span>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
 
           {needsResearch && (
             <SearchPanel

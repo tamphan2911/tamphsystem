@@ -923,17 +923,17 @@ export default async function TaskDetailPage({
           </div>
           <div className="grid gap-5 p-5 md:grid-cols-2">
             {task.project && (
-              <div className="min-w-0">
+              <div className="min-w-0 md:col-span-2">
                 <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                   Research
                 </div>
                 <Link
                   href={`/projects/${task.project.id}`}
-                  className={`mt-2 inline-flex text-sm ${researchLinkClass}`}
+                  className="mt-2 block w-full text-sm font-normal text-[#1F7180] outline-none transition-[color,text-shadow] duration-180 ease-out hover:bg-transparent hover:text-[#155864] hover:[text-shadow:0_0_0.55rem_rgba(31,113,128,0.16)] focus-visible:bg-transparent focus-visible:ring-0 dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
                 >
                   {task.project.title}
                 </Link>
-                <p className="mt-1 text-xs leading-5 text-[#B0B0B0]">
+                <p className="mt-1 w-full text-xs leading-5 text-[#B0B0B0]">
                   {researchAuthors(task.project)}
                 </p>
               </div>
