@@ -88,6 +88,7 @@ export function CreateSubmissionTaskDialog({
   disabled?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [dueDate, setDueDate] = useState(defaultResearchTaskDueDate);
   const [venueQuery, setVenueQuery] = useState("");
   const [assistantQuery, setAssistantQuery] = useState("");
   const [selectedVenue, setSelectedVenue] =
@@ -188,10 +189,12 @@ export function CreateSubmissionTaskDialog({
     setSelectedAssistantIds(defaultAssistantId ? [defaultAssistantId] : []);
     setAccountOpen(false);
     setAddAccountOpen(false);
+    setDueDate(defaultResearchTaskDueDate());
   }
 
   function openDialog() {
     setSelectedAssistantIds(defaultAssistantId ? [defaultAssistantId] : []);
+    setDueDate(defaultResearchTaskDueDate());
     setIsOpen(true);
   }
 
@@ -353,7 +356,7 @@ export function CreateSubmissionTaskDialog({
             ))}
 
             <div className="rounded-none border border-indigo-100 bg-indigo-50/60 p-4 dark:border-indigo-900/60 dark:bg-indigo-950/20">
-              <p className="text-xs font-bold uppercase tracking-wide text-indigo-500 dark:text-indigo-300">
+              <p className="text-xs font-bold text-indigo-500 dark:text-indigo-300">
                 Research
               </p>
               <p className="mt-1 text-sm font-semibold text-[#E4E4E4]">
@@ -363,7 +366,7 @@ export function CreateSubmissionTaskDialog({
 
             <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                <span className="text-xs font-bold text-[#B0B0B0]">
                   Task title
                   <span className="research-required-mark">(*)</span>
                 </span>
@@ -380,18 +383,19 @@ export function CreateSubmissionTaskDialog({
                 />
               </label>
               <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                <span className="text-xs font-bold text-[#B0B0B0]">
                   Due date
                 </span>
                 <ResearchDatePicker
                   name="dueDate"
-                  defaultValue={defaultResearchTaskDueDate()}
+                  value={dueDate}
+                  onChange={setDueDate}
                 />
               </label>
             </div>
 
             <section className="grid gap-3">
-              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+              <span className="text-xs font-bold text-[#B0B0B0]">
                 Journal or conference
               </span>
               <div className="relative">
@@ -470,7 +474,7 @@ export function CreateSubmissionTaskDialog({
             {selectedVenue?.kind === "journal" && (
               <section className="grid gap-3 border border-[#444444] p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                  <span className="text-xs font-bold text-[#B0B0B0]">
                     Account to submit (optional)
                   </span>
                   <ResearchIconButton
@@ -555,7 +559,7 @@ export function CreateSubmissionTaskDialog({
             )}
 
             <section className="grid gap-3">
-              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+              <span className="text-xs font-bold text-[#B0B0B0]">
                 Assign to
               </span>
               <div className="relative">
@@ -628,9 +632,7 @@ export function CreateSubmissionTaskDialog({
             </section>
 
             <label className="grid gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                Note
-              </span>
+              <span className="text-xs font-bold text-[#B0B0B0]">Note</span>
               <textarea
                 name="description"
                 rows={3}
