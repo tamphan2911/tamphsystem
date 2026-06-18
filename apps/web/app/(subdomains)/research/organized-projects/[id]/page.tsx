@@ -11,6 +11,7 @@ import {
   Clock3,
   FileSearch,
   FlaskConical,
+  FolderOpen,
   GraduationCap,
   Landmark,
   Mail,
@@ -693,30 +694,23 @@ export default async function OrganizedProjectDetailPage({
           </section>
 
           <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
-            <h2 className="mb-4 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-              Important documents
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-[#E4E4E4]">
-                  Shared project folder
-                </p>
-                {project.sharedFolderUrl ? (
+            <div className="mb-4 flex items-center gap-2">
+              <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+                Project folder
+              </h2>
+              {project.sharedFolderUrl ? (
+                <IconHint label="Open project folder">
                   <Link
                     href={project.sharedFolderUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className={`mt-1 block break-all text-xs leading-5 ${researchLinkClass}`}
+                    className="research-task-icon-motion inline-flex h-7 w-7 items-center justify-center text-[#A8DADC] transition-colors duration-180 hover:text-[#C9F0F2] active:text-[#88C8CB]"
                   >
-                    {project.sharedFolderUrl}
+                    <FolderOpen className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">Open project folder</span>
                   </Link>
-                ) : (
-                  <p className="mt-1 text-xs leading-5 text-[#777777]">
-                    Add Drive, manuscript, grant, data, or shared reference
-                    links here later.
-                  </p>
-                )}
-              </div>
+                </IconHint>
+              ) : null}
             </div>
             <div className="mt-5 border-t border-[#444444] pt-5">
               <ProjectProductsForm
