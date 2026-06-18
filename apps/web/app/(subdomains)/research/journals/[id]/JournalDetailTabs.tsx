@@ -4,13 +4,21 @@ import { useMemo } from "react";
 import Link from "next/link";
 import {
   AtSign,
+  Ban,
+  BookOpen,
   CalendarClock,
+  CheckCircle2,
   ClipboardCheck,
+  Download,
+  ExternalLink,
+  FileSearch,
   KeyRound,
   LockKeyhole,
   Send,
   StickyNote,
+  TriangleAlert,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   FilterSelect,
   IconHint,
@@ -19,10 +27,7 @@ import {
   useTablePagination,
   usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
-import {
-  SubmissionsTable,
-  type SubmissionRow,
-} from "../../projects/[id]/SubmissionsTable";
+import type { SubmissionRow } from "../../projects/[id]/SubmissionsTable";
 import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
 
 export type JournalSubmissionRow = SubmissionRow;
@@ -60,6 +65,289 @@ function statusClass(status: string) {
   if (status === "REJECTED" || status === "WITHDRAWN" || status === "DECLINED")
     return "bg-red-50 text-red-700 ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900";
   return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700";
+}
+
+function normalizedSubmissionStatus(value: string) {
+  if (value === "PENDING" || value === "SUBMITTED") return "SUBMITTED";
+  if (value === "UNDER_REVIEW" || value === "REVISION") return "REVIEWING";
+  return value;
+}
+
+function submissionStatusMeta(value: string): {
+  label: string;
+  icon: LucideIcon;
+  className: string;
+} {
+  const status = normalizedSubmissionStatus(value);
+  if (status === "PUBLISHED") {
+    return {
+      label: "Published",
+      icon: BookOpen,
+      className: "text-emerald-700 dark:text-emerald-300",
+    };
+  }
+  if (status === "ACCEPTED") {
+    return {
+      label: "Accepted",
+      icon: CheckCircle2,
+      className: "text-cyan-700 dark:text-[#A8DADC]",
+    };
+  }
+  if (status === "REVIEWING") {
+    return {
+      label: "Reviewing",
+      icon: FileSearch,
+      className: "text-violet-700 dark:text-violet-300",
+    };
+  }
+  if (status === "REJECTED") {
+    return {
+      label: "Rejected",
+      icon: Ban,
+      className: "text-rose-700 dark:text-rose-300",
+    };
+  }
+  if (status === "WITHDRAWN") {
+    return {
+      label: "Withdrawn",
+      icon: TriangleAlert,
+      className: "text-amber-700 dark:text-amber-300",
+    };
+  }
+  return {
+    label: "Submitted",
+    icon: Send,
+    className: "text-sky-700 dark:text-sky-300",
+  };
+}
+
+function shortDate(value: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  }).format(date);
+}
+
+function JournalSubmissionsTable({ rows }: { rows: JournalSubmissionRow[] }) {
+  const [query, setQuery] = usePersistentTableValue(
+    "journal-detail-submissions:q",
+    "",
+  );
+  const [status, setStatus] = usePersistentTableValue(
+    "journal-detail-submissions:status",
+    "ALL",
+  );
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return rows.filter((row) => {
+      const normalized = normalizedSubmissionStatus(row.status);
+      const matchesStatus = status === "ALL" || normalized === status;
+      const haystack = [
+        row.code,
+        row.projectTitle,
+        row.projectAuthors,
+        normalized,
+        row.account,
+        row.accountEmail,
+        row.articleUrl,
+        row.articleFileName,
+        row.submittedAt,
+        row.acceptedAt,
+        row.rejectedAt,
+        row.withdrawnAt,
+        row.publishedAt,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return matchesStatus && (!needle || haystack.includes(needle));
+    });
+  }, [query, rows, status]);
+  const pagination = useTablePagination(
+    filtered,
+    10,
+    1,
+    "journal-detail-submissions",
+  );
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateStatus(value: string) {
+    setStatus(value);
+    pagination.setPage(1);
+  }
+
+  return (
+    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+        <TableSearchInput
+          value={query}
+          onChange={updateQuery}
+          placeholder="Search submission ID, manuscript, account..."
+        />
+        <FilterSelect
+          value={status}
+          onChange={updateStatus}
+          ariaLabel="Filter journal submissions by status"
+          options={[
+            { value: "ALL", label: "All status" },
+            { value: "SUBMITTED", label: "Submitted" },
+            { value: "REVIEWING", label: "Reviewing" },
+            { value: "ACCEPTED", label: "Accepted" },
+            { value: "REJECTED", label: "Rejected" },
+            { value: "WITHDRAWN", label: "Withdrawn" },
+            { value: "PUBLISHED", label: "Published" },
+          ]}
+        />
+      </div>
+
+      <div className="overflow-hidden">
+        <table className="w-full table-fixed text-left">
+          <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
+            <tr>
+              <th className="w-[7rem] px-3 py-3">Submission ID</th>
+              <th className="px-3 py-3">Submission</th>
+              <th className="w-[7rem] px-3 py-3">Status</th>
+              <th className="w-[13rem] px-3 py-3">Timeline</th>
+              <th className="w-[11rem] px-3 py-3">Account</th>
+              <th className="w-[5rem] px-3 py-3 text-center">Article</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#444444]">
+            {pagination.pagedRows.map((row) => {
+              const statusMeta = submissionStatusMeta(row.status);
+              const StatusIcon = statusMeta.icon;
+              const timeline = [
+                row.submittedAt
+                  ? `Submitted: ${shortDate(row.submittedAt)}`
+                  : "",
+                row.acceptedAt ? `Accepted: ${shortDate(row.acceptedAt)}` : "",
+                row.rejectedAt ? `Rejected: ${shortDate(row.rejectedAt)}` : "",
+                row.withdrawnAt
+                  ? `Withdrawn: ${shortDate(row.withdrawnAt)}`
+                  : "",
+                row.publishedAt
+                  ? `Published: ${shortDate(row.publishedAt)}`
+                  : "",
+              ].filter(Boolean);
+              return (
+                <tr
+                  key={row.id}
+                  className="group align-top transition-colors duration-150 hover:bg-[#383838]"
+                >
+                  <td className="px-3 py-3 align-top">
+                    <Link
+                      href={`/submissions/${row.id}`}
+                      className="research-journal-name-link font-mono text-xs uppercase tracking-wide text-[#1F7180] dark:text-[#A8DADC]"
+                    >
+                      {row.code}
+                    </Link>
+                  </td>
+                  <td className="min-w-0 px-3 py-3 align-top">
+                    <Link
+                      href={`/submissions/${row.id}`}
+                      className="research-journal-name-link block whitespace-normal break-words text-[15px] font-normal leading-6 text-[#1F7180] dark:text-[#A8DADC]"
+                    >
+                      {row.projectTitle || "Untitled submission"}
+                    </Link>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#B0B0B0]">
+                      {row.projectAuthors || "No author information"}
+                    </p>
+                  </td>
+                  <td className="px-3 py-3 align-top">
+                    <IconHint label={statusMeta.label}>
+                      <span
+                        className={`research-task-icon-motion inline-flex h-5 w-5 items-start justify-center border-0 bg-transparent p-0 shadow-none ${statusMeta.className}`}
+                      >
+                        <StatusIcon className="h-4 w-4" aria-hidden="true" />
+                        <span className="sr-only">{statusMeta.label}</span>
+                      </span>
+                    </IconHint>
+                  </td>
+                  <td className="px-3 py-3 align-top text-xs leading-5 text-[#B0B0B0]">
+                    {timeline.map((item) => (
+                      <p key={item}>{item}</p>
+                    ))}
+                  </td>
+                  <td className="px-3 py-3 align-top text-xs leading-5 text-[#B0B0B0]">
+                    {row.accountId ? (
+                      <Link
+                        href={`/accounts/${row.accountId}`}
+                        className="research-journal-name-link block min-w-0 text-[#1F7180] dark:text-[#A8DADC]"
+                      >
+                        <span className="block truncate">
+                          {row.account || "No login ID"}
+                        </span>
+                        <span className="block truncate text-[#B0B0B0]">
+                          {row.accountEmail || "No email"}
+                        </span>
+                      </Link>
+                    ) : (
+                      "Not recorded"
+                    )}
+                  </td>
+                  <td className="px-3 py-3 text-center align-top">
+                    <span className="inline-flex items-center justify-center gap-2">
+                      {row.articleFileName ? (
+                        <IconHint label="Download published article">
+                          <a
+                            href={`/api/research/submissions/${row.id}/article`}
+                            className="research-task-icon-motion inline-flex h-5 w-5 items-start justify-center border-0 bg-transparent p-0 text-violet-700 shadow-none hover:bg-transparent hover:shadow-none dark:text-violet-300"
+                            aria-label="Download published article"
+                          >
+                            <Download className="h-4 w-4" />
+                          </a>
+                        </IconHint>
+                      ) : null}
+                      {row.articleUrl ? (
+                        <IconHint label="Open published article">
+                          <a
+                            href={row.articleUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="research-task-icon-motion inline-flex h-5 w-5 items-start justify-center border-0 bg-transparent p-0 text-[#1F7180] shadow-none hover:bg-transparent hover:shadow-none dark:text-[#A8DADC]"
+                            aria-label="Open published article"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </IconHint>
+                      ) : null}
+                      {!row.articleFileName && !row.articleUrl ? (
+                        <span className="text-xs text-[#777777]">-</span>
+                      ) : null}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+            {pagination.total === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-3 py-14 text-center text-sm text-[#B0B0B0]">
+                  {rows.length === 0
+                    ? "No submissions have been recorded for this journal."
+                    : "No submissions match the current filters."}
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+      <TablePagination
+        page={pagination.page}
+        pageCount={pagination.pageCount}
+        total={pagination.total}
+        pageSize={pagination.pageSize}
+        onPageChange={pagination.setPage}
+      />
+    </div>
+  );
 }
 
 export function JournalDetailTabs({
@@ -201,7 +489,7 @@ export function JournalDetailTabs({
       </div>
 
       {activeTab === "submissions" && (
-        <SubmissionsTable rows={submissions} isAdmin={false} view="research" />
+        <JournalSubmissionsTable rows={submissions} />
       )}
 
       {activeTab !== "submissions" && (
