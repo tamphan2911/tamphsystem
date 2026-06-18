@@ -864,7 +864,7 @@ export default async function ProjectDetailPage({
                       href={project.sharedFolderUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="research-title-icon-button research-folder-link-button"
+                      className="research-allow-transform research-title-icon-button research-folder-link-button"
                       aria-label="Open research folder"
                     >
                       <FolderOpen className="h-4 w-4" aria-hidden="true" />
