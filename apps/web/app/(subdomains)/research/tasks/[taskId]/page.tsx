@@ -929,7 +929,7 @@ export default async function TaskDetailPage({
                 </div>
                 <Link
                   href={`/projects/${task.project.id}`}
-                  className="mt-2 block w-full text-sm font-normal text-[#1F7180] outline-none transition-[color,text-shadow] duration-180 ease-out hover:bg-transparent hover:text-[#155864] hover:[text-shadow:0_0_0.55rem_rgba(31,113,128,0.16)] focus-visible:bg-transparent focus-visible:ring-0 dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+                  className="research-journal-name-link mt-2 block w-full border-0 bg-transparent p-0 text-sm font-normal text-[#1F7180] shadow-none outline-none hover:border-0 hover:bg-transparent hover:shadow-none focus-visible:border-0 focus-visible:bg-transparent focus-visible:ring-0 dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
                 >
                   {task.project.title}
                 </Link>
