@@ -997,8 +997,8 @@ export default async function TaskDetailPage({
             )}
           </div>
 
-          <div className="grid gap-5 border-t border-[#444444] p-5 md:grid-cols-2">
-            <section className="min-h-36">
+          <div className="grid items-start gap-5 border-t border-[#444444] p-5 md:grid-cols-2">
+            <section>
               <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Task content
               </h2>
@@ -1011,7 +1011,7 @@ export default async function TaskDetailPage({
               clarifications={clarificationItems}
               canAnswer={canAnswerClarification}
               answerAction={clarificationAnswerAction}
-              className="min-h-36"
+              className=""
             />
           </div>
 
