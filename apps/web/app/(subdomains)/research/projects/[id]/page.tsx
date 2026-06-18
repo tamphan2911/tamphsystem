@@ -759,6 +759,13 @@ export default async function ProjectDetailPage({
           claimLabel(project.claimStatus),
         ].filter(Boolean);
   const registrationLine = registrationParts.join(" - ");
+  const showRegistrationClaimSummary =
+    canViewRegistrationClaim &&
+    !(
+      project.registerStatus === "NOT_REGISTERED" &&
+      project.claimStatus === "CANNOT_CLAIM" &&
+      !project.fundingInstitution
+    );
   const authorNotificationSentTypes = project.authorNotifications
     .filter((notification) => {
       if (!Array.isArray(notification.results)) return false;
@@ -984,7 +991,7 @@ export default async function ProjectDetailPage({
               Authors: {authorsLine}
             </span>
           </div>
-          {(project.fundingInstitution || canViewRegistrationClaim) && (
+          {(project.fundingInstitution || showRegistrationClaimSummary) && (
             <p className="flex min-w-0 flex-wrap items-center gap-2">
               {project.fundingInstitution && (
                 <span>
@@ -994,12 +1001,12 @@ export default async function ProjectDetailPage({
                   </span>
                 </span>
               )}
-              {project.fundingInstitution && canViewRegistrationClaim && (
+              {project.fundingInstitution && showRegistrationClaimSummary && (
                 <span className="text-[#777777]" aria-hidden="true">
                   |
                 </span>
               )}
-              {canViewRegistrationClaim && (
+              {showRegistrationClaimSummary && (
                 <IconHint label={registrationLine}>
                   <span className="inline-flex flex-none items-center border border-[#444444] bg-[#202020] px-2 py-0.5 text-[11px] font-normal text-[#B0B0B0]">
                     {registrationLine}
@@ -1025,7 +1032,7 @@ export default async function ProjectDetailPage({
                   >
                     <a
                       href={`/api/research/submissions/${publishedArticleSubmission.id}/article`}
-                      className="research-download-button"
+                      className="research-allow-transform research-download-button"
                       aria-label="Download published article file"
                     >
                       <Download
@@ -1045,7 +1052,7 @@ export default async function ProjectDetailPage({
                       href={publishedArticleSubmission.articleUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="research-title-icon-button"
+                      className="research-allow-transform research-title-icon-button"
                       aria-label="Open published article link"
                     >
                       <ExternalLink className="h-4 w-4" aria-hidden="true" />
