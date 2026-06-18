@@ -29,6 +29,12 @@ import {
   CreateSubmissionTaskDialog,
   type SubmissionTaskVenueOption,
 } from "./CreateSubmissionTaskDialog";
+import {
+  NewTaskDialog,
+  type TaskAccountOption as GeneralTaskAccountOption,
+  type TaskResearchOption as GeneralTaskResearchOption,
+  type TaskVenueOption as GeneralTaskVenueOption,
+} from "../../tasks/NewTaskDialog";
 import { ResearchContentLockButton } from "./ResearchContentLockButton";
 import { ResearchAuthorsLockButton } from "./ResearchAuthorsLockButton";
 import { ProductionTimelineActions } from "./ProductionTimelineActions";
@@ -797,6 +803,30 @@ export default async function ProjectDetailPage({
         .join(" - "),
     })),
   ];
+  const currentResearchTaskOption: GeneralTaskResearchOption = {
+    id: project.id,
+    title: project.title,
+    code: project.researchCode ?? "",
+    stage: project.stage,
+  };
+  const generalTaskVenueOptions: GeneralTaskVenueOption[] = venueOptions.map(
+    (venue) => ({
+      kind: venue.kind,
+      id: venue.id,
+      name: venue.name,
+      meta:
+        venue.kind === "journal"
+          ? [venue.publisher, venue.rank, venue.issn]
+              .filter(Boolean)
+              .join(" - ")
+          : [venue.organizer, venue.type, venue.location]
+              .filter(Boolean)
+              .join(" - "),
+    }),
+  );
+  const generalTaskAccountOptions: GeneralTaskAccountOption[] = venueOptions
+    .filter((venue) => venue.kind === "journal")
+    .flatMap((venue) => venue.accounts);
   const submissionRows: SubmissionRow[] = [
     ...project.submissions.map((submission) => ({
       id: submission.id,
@@ -883,6 +913,19 @@ export default async function ProjectDetailPage({
                       <FolderOpen className="h-4 w-4" aria-hidden="true" />
                     </a>
                   </IconHint>
+                ) : null}
+                {canCreateSubmitOrOtherTask ? (
+                  <NewTaskDialog
+                    assignees={taskAssigneeOptions}
+                    researchOptions={[currentResearchTaskOption]}
+                    venueOptions={generalTaskVenueOptions}
+                    accountOptions={generalTaskAccountOptions}
+                    reviewOptions={[]}
+                    organizedProjectOptions={[]}
+                    initialMode="other"
+                    initialResearch={currentResearchTaskOption}
+                    triggerVariant="other"
+                  />
                 ) : null}
                 <IconHint label={stageStyle.label} position="bottom">
                   <span
@@ -1263,9 +1306,24 @@ export default async function ProjectDetailPage({
 
             <ResearchDetailSection>
               <div className="mb-5 flex items-center justify-between gap-3">
-                <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-                  Cooking process
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+                    Cooking process
+                  </h2>
+                  {isAdmin && project.stage === "PRODUCTION" ? (
+                    <NewTaskDialog
+                      assignees={taskAssigneeOptions}
+                      researchOptions={[currentResearchTaskOption]}
+                      venueOptions={generalTaskVenueOptions}
+                      accountOptions={generalTaskAccountOptions}
+                      reviewOptions={[]}
+                      organizedProjectOptions={[]}
+                      initialMode="production"
+                      initialResearch={currentResearchTaskOption}
+                      triggerVariant="production"
+                    />
+                  ) : null}
+                </div>
                 <ProductionTimelineActions
                   projectId={project.id}
                   locked={productionTimelineLocked}

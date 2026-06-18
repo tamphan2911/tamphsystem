@@ -3407,7 +3407,8 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   const effectiveProjectId =
     taskType === ResearchTaskType.SUBMIT_RESEARCH ||
     taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
-    taskType === ResearchTaskType.PRODUCTION
+    taskType === ResearchTaskType.PRODUCTION ||
+    taskType === ResearchTaskType.OTHER
       ? projectId
       : null;
   const effectiveOrganizedProjectId =

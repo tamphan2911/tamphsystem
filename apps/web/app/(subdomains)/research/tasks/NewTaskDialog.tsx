@@ -11,6 +11,7 @@ import {
 import {
   Check,
   ClipboardList,
+  ClipboardPlus,
   FileText,
   PlusCircle,
   Search,
@@ -23,6 +24,7 @@ import { createResearchTask } from "../actions";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
+  IconHint,
   ResearchButton,
   researchDropdownItemActiveClass,
   researchDropdownItemClass,
@@ -81,7 +83,8 @@ export type TaskOrganizedProjectOption = {
   status: string;
 };
 
-type TaskMode = "submit" | "production" | "review" | "project" | "other";
+export type TaskMode = "submit" | "production" | "review" | "project" | "other";
+type TaskTriggerVariant = "default" | "other" | "production";
 type SearchPanelItem = {
   id: string;
   title: string;
@@ -123,6 +126,9 @@ export function NewTaskDialog({
   accountOptions,
   reviewOptions,
   organizedProjectOptions,
+  initialMode = "submit",
+  initialResearch = null,
+  triggerVariant = "default",
 }: {
   assignees: TaskAssigneeOption[];
   researchOptions: TaskResearchOption[];
@@ -130,9 +136,12 @@ export function NewTaskDialog({
   accountOptions: TaskAccountOption[];
   reviewOptions: TaskReviewOption[];
   organizedProjectOptions: TaskOrganizedProjectOption[];
+  initialMode?: TaskMode;
+  initialResearch?: TaskResearchOption | null;
+  triggerVariant?: TaskTriggerVariant;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [mode, setMode] = useState<TaskMode>("submit");
+  const [mode, setMode] = useState<TaskMode>(initialMode);
   const [assigneeQuery, setAssigneeQuery] = useState("");
   const [researchQuery, setResearchQuery] = useState("");
   const [venueQuery, setVenueQuery] = useState("");
@@ -142,7 +151,7 @@ export function NewTaskDialog({
   const [dueDate, setDueDate] = useState(defaultTaskDueDate);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedResearch, setSelectedResearch] =
-    useState<TaskResearchOption | null>(null);
+    useState<TaskResearchOption | null>(initialResearch);
   const [selectedVenue, setSelectedVenue] = useState<TaskVenueOption | null>(
     null,
   );
@@ -265,7 +274,7 @@ export function NewTaskDialog({
   }, [organizedProjectOptions, organizedProjectQuery]);
 
   function reset() {
-    setMode("submit");
+    setMode(initialMode);
     setAssigneeQuery("");
     setResearchQuery("");
     setVenueQuery("");
@@ -274,7 +283,7 @@ export function NewTaskDialog({
     setOrganizedProjectQuery("");
     setDueDate(defaultTaskDueDate());
     setSelectedIds([]);
-    setSelectedResearch(null);
+    setSelectedResearch(initialResearch);
     setSelectedVenue(null);
     setSelectedAccountId("");
     setSelectedReview(null);
@@ -366,6 +375,7 @@ export function NewTaskDialog({
   }
 
   const needsResearch = mode === "submit" || mode === "production";
+  const fixedResearch = triggerVariant !== "default" && initialResearch;
   const selectedResearchMatchesMode =
     !needsResearch ||
     (selectedResearch ? researchMatchesMode(selectedResearch, mode) : false);
@@ -406,15 +416,49 @@ export function NewTaskDialog({
 
   return (
     <>
-      <ResearchButton type="button" onClick={() => setIsOpen(true)}>
-        <PlusCircle className="h-4 w-4" />
-        New Task
-      </ResearchButton>
+      {triggerVariant === "default" ? (
+        <ResearchButton type="button" onClick={() => setIsOpen(true)}>
+          <PlusCircle className="h-4 w-4" />
+          New Task
+        </ResearchButton>
+      ) : (
+        <IconHint
+          label={
+            triggerVariant === "production"
+              ? "Create production task"
+              : "Create other task"
+          }
+          position="bottom"
+        >
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className={`research-allow-transform inline-flex h-5 w-5 flex-none cursor-pointer items-center justify-center border-0 bg-transparent shadow-none transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 active:translate-y-0 active:scale-90 ${
+              triggerVariant === "production"
+                ? "text-[#B85C78] hover:text-[#8F3E59] dark:text-[#FFC1CC] dark:hover:text-[#FFD7DF]"
+                : "text-[#70549B] hover:text-[#563B7E] dark:text-[#B39CD0] dark:hover:text-[#D0BCE5]"
+            }`}
+            aria-label={
+              triggerVariant === "production"
+                ? "Create production task"
+                : "Create other task"
+            }
+          >
+            <ClipboardPlus className="h-4 w-4" strokeWidth={1.8} />
+          </button>
+        </IconHint>
+      )}
 
       <ResearchModal
         open={isOpen}
         onClose={() => setIsOpen(false)}
-        title="Assign Task"
+        title={
+          triggerVariant === "production"
+            ? "Create Production Task"
+            : triggerVariant === "other"
+              ? "Create Other Task"
+              : "Assign Task"
+        }
         icon={<ClipboardList className="h-5 w-5" />}
         maxWidth="max-w-5xl"
         headerActions={
@@ -423,7 +467,7 @@ export function NewTaskDialog({
             disabled={!canSubmit || isPending}
           >
             <PlusCircle className="h-4 w-4" />
-            Assign Task
+            {triggerVariant === "default" ? "Assign Task" : "Create Task"}
           </ResearchButton>
         }
       >
@@ -510,31 +554,52 @@ export function NewTaskDialog({
             </label>
           </div>
 
-          <div
-            data-research-toggle-tabs="true"
-            className="grid w-full grid-cols-5 border border-[#444444] bg-[#202020]"
-          >
-            {(
-              ["submit", "production", "review", "project", "other"] as const
-            ).map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => changeMode(item)}
-                data-research-toggle-tab="true"
-                data-active={mode === item}
-                className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
-                  mode === item
-                    ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
-                    : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
-                }`}
-              >
-                {modeLabel(item)}
-              </button>
-            ))}
-          </div>
+          {triggerVariant === "default" && (
+            <div
+              data-research-toggle-tabs="true"
+              className="grid w-full grid-cols-5 border border-[#444444] bg-[#202020]"
+            >
+              {(
+                ["submit", "production", "review", "project", "other"] as const
+              ).map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => changeMode(item)}
+                  data-research-toggle-tab="true"
+                  data-active={mode === item}
+                  className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
+                    mode === item
+                      ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
+                      : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
+                  }`}
+                >
+                  {modeLabel(item)}
+                </button>
+              ))}
+            </div>
+          )}
 
-          {needsResearch && (
+          {fixedResearch ? (
+            <section className="grid gap-2">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                Associated research
+              </span>
+              <div className="flex min-w-0 items-center gap-3 border border-[#d9d0c3] bg-[#f8f5f0] px-4 py-3 text-[#243047] dark:border-[#444444] dark:bg-[#252525] dark:text-[#E4E4E4]">
+                <FileText className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+                <span className="min-w-0 flex-1 truncate text-sm">
+                  {fixedResearch.title}
+                </span>
+                {fixedResearch.code ? (
+                  <span className="flex-none text-xs text-[#6C778D] dark:text-[#B0B0B0]">
+                    {fixedResearch.code}
+                  </span>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
+
+          {needsResearch && !fixedResearch && (
             <SearchPanel
               query={researchQuery}
               setQuery={setResearchQuery}
