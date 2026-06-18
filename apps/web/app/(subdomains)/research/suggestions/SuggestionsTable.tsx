@@ -290,7 +290,7 @@ export function SuggestionsTable({
                       href={`/projects/${suggestion.projectId}`}
                       className={cx(
                         researchLinkClass,
-                        "block line-clamp-2 text-sm leading-5 focus-visible:ring-0",
+                        "research-allow-transform block line-clamp-2 text-sm leading-5 focus-visible:ring-0",
                       )}
                     >
                       {suggestion.projectTitle}
@@ -304,7 +304,7 @@ export function SuggestionsTable({
                       href={suggestion.venueHref}
                       className={cx(
                         researchLinkClass,
-                        "block line-clamp-2 text-sm leading-5 focus-visible:ring-0",
+                        "research-allow-transform block line-clamp-2 text-sm leading-5 focus-visible:ring-0",
                       )}
                     >
                       {suggestion.venueName}
