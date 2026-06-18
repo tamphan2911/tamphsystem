@@ -1,29 +1,34 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import {
-  ArrowLeft,
+  Ban,
+  BarChart3,
   CalendarDays,
   CheckCircle2,
-  ExternalLink,
+  CircleHelp,
+  Clock3,
+  Database,
+  Globe2,
   Hash,
   Mail,
+  MessageSquareText,
   PencilLine,
+  SearchCheck,
   Send,
+  UserRound,
   XCircle,
 } from "lucide-react";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { CountryFlag } from "@/sites/research/components/CountryFlag";
-import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
+import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
-import {
-  researchLinkClass,
-  researchMutedLinkClass,
-} from "@/sites/research/components/ResearchPrimitives";
 import { formatMoney } from "@/sites/research/lib/currency";
 import { countryName } from "@/sites/research/lib/countries";
 
@@ -42,73 +47,131 @@ function statusLabel(status: string) {
   if (status === "IN_PROGRESS") return "In progress";
   return status
     .toLowerCase()
-    .replace("_", " ")
+    .replaceAll("_", " ")
     .replace(/^\w/, (letter) => letter.toUpperCase());
 }
 
-function statusMeta(status: string) {
+function reviewStatusMeta(status: string): {
+  icon: LucideIcon;
+  className: string;
+} {
   if (status === "ACCEPTED") {
     return {
       icon: CheckCircle2,
-      className: "bg-violet-500/10 text-violet-200 ring-violet-500/20",
+      className:
+        "text-rose-700 hover:text-rose-800 dark:text-[#FFC1CC] dark:hover:text-rose-200",
     };
   }
   if (status === "IN_PROGRESS") {
     return {
       icon: PencilLine,
-      className: "bg-sky-500/10 text-sky-200 ring-sky-500/20",
+      className:
+        "text-violet-700 hover:text-violet-800 dark:text-[#B39CD0] dark:hover:text-violet-200",
     };
   }
   if (status === "SUBMITTED") {
     return {
       icon: Send,
-      className: "bg-emerald-500/10 text-emerald-200 ring-emerald-500/20",
+      className:
+        "text-cyan-700 hover:text-cyan-800 dark:text-[#A8DADC] dark:hover:text-cyan-200",
     };
   }
   if (status === "CANCELLED") {
     return {
       icon: XCircle,
-      className: "bg-[#383838] text-[#E4E4E4] ring-[#555555]",
+      className:
+        "text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-rose-200",
     };
   }
   return {
     icon: Mail,
-    className: "bg-[#383838] text-[#E4E4E4] ring-[#555555]",
+    className:
+      "text-slate-500 hover:text-slate-700 dark:text-[#B0B0B0] dark:hover:text-[#E4E4E4]",
   };
 }
 
-function taskStatusLabel(status: string) {
-  if (status === "IN_PROGRESS") return "In progress";
-  if (status === "NEED_CLARIFY") return "Need clarify";
-  return status
-    .toLowerCase()
-    .replace("_", " ")
-    .replace(/^\w/, (letter) => letter.toUpperCase());
+function taskStatusMeta(status: string): {
+  icon: LucideIcon;
+  className: string;
+} {
+  if (status === "COMPLETED") {
+    return {
+      icon: CheckCircle2,
+      className:
+        "text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200",
+    };
+  }
+  if (status === "CHECKING") {
+    return {
+      icon: SearchCheck,
+      className:
+        "text-violet-700 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200",
+    };
+  }
+  if (status === "NEED_CLARIFY") {
+    return {
+      icon: CircleHelp,
+      className:
+        "text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200",
+    };
+  }
+  if (status === "REVOKED") {
+    return {
+      icon: Ban,
+      className:
+        "text-slate-500 hover:text-slate-700 dark:text-[#B0B0B0] dark:hover:text-[#E4E4E4]",
+    };
+  }
+  return {
+    icon: Clock3,
+    className:
+      "text-sky-700 hover:text-sky-800 dark:text-[#A8DADC] dark:hover:text-cyan-200",
+  };
 }
 
-function taskStatusClass(status: string) {
-  if (status === "COMPLETED")
-    return "bg-emerald-500/10 text-emerald-200 ring-emerald-500/20";
-  if (status === "CHECKING")
-    return "bg-violet-500/10 text-violet-200 ring-violet-500/20";
-  if (status === "NEED_CLARIFY")
-    return "bg-amber-500/10 text-amber-200 ring-amber-500/20";
-  if (status === "REVOKED") return "bg-[#383838] text-[#E4E4E4] ring-[#555555]";
-  return "bg-sky-500/10 text-sky-200 ring-sky-500/20";
-}
-
-function DetailItem({ label, value }: { label: string; value: ReactNode }) {
+function DetailItem({
+  icon,
+  label,
+  value,
+}: {
+  icon?: ReactNode;
+  label: string;
+  value: ReactNode;
+}) {
   return (
-    <div>
-      <dt className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+    <div className="min-w-0">
+      <dt className="flex items-center gap-2 text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
+        {icon}
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-[#E4E4E4]">
+      <dd className="mt-2 text-sm leading-6 text-slate-700 dark:text-[#E4E4E4]">
         {value === null || value === undefined || value === "" ? "-" : value}
       </dd>
     </div>
   );
 }
+
+function HoverIcon({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className: string;
+  children: ReactNode;
+}) {
+  return (
+    <IconHint label={label} position="bottom">
+      <span
+        className={`inline-flex h-5 w-5 cursor-help items-center justify-center border-0 bg-transparent transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] active:scale-95 ${className}`}
+      >
+        {children}
+      </span>
+    </IconHint>
+  );
+}
+
+const sectionDividerClass = "border-t border-[#D8D0C2] dark:border-[#4A4A4A]";
 
 export default async function ReviewDetailPage({
   params,
@@ -158,7 +221,7 @@ export default async function ReviewDetailPage({
   if (!review) notFound();
   if (!isAdmin && review.tasks.length === 0) redirect("/401");
 
-  const status = statusMeta(review.status);
+  const status = reviewStatusMeta(review.status);
   const StatusIcon = status.icon;
   const journalFields =
     review.journal.fields.length > 0
@@ -170,242 +233,304 @@ export default async function ReviewDetailPage({
             .filter(Boolean)
         : [];
   const externalLinks = [
-    { href: review.journal.homepageLink, label: "Homepage" },
-    { href: review.journal.submissionLink, label: "Submission portal" },
-    { href: review.journal.scimagoLink, label: "Scimago" },
-    { href: review.journal.scopusLink, label: "Scopus" },
+    {
+      href: review.journal.homepageLink,
+      label: "Open journal homepage",
+      icon: Globe2,
+      className:
+        "text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200",
+    },
+    {
+      href: review.journal.submissionLink,
+      label: "Open submission portal",
+      icon: Send,
+      className:
+        "text-cyan-700 hover:text-cyan-800 dark:text-[#A8DADC] dark:hover:text-cyan-200",
+    },
+    {
+      href: review.journal.scimagoLink,
+      label: "Open Scimago profile",
+      icon: BarChart3,
+      className:
+        "text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200",
+    },
+    {
+      href: review.journal.scopusLink,
+      label: "Open Scopus profile",
+      icon: Database,
+      className:
+        "text-violet-700 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200",
+    },
   ].filter((item) => Boolean(item.href));
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
-      <Link
-        href="/reviews"
-        className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Reviews
-      </Link>
-
-      <header className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="font-mono text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                {review.manuscriptId || review.id.slice(0, 8).toUpperCase()}
-              </p>
-              <span
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-none ring-1 ${status.className}`}
+    <>
+      <ResearchPageHeaderPortal>
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="min-w-0 truncate text-[16px] font-normal leading-6 text-[#252525] dark:text-[#E4E4E4]">
+                {review.manuscriptTitle}
+              </h1>
+              <HoverIcon
+                label={statusLabel(review.status)}
+                className={status.className}
               >
                 <StatusIcon className="h-4 w-4" aria-hidden="true" />
-              </span>
+              </HoverIcon>
             </div>
-            <h1 className="mt-3 text-2xl font-medium leading-tight text-[#E4E4E4]">
-              {review.manuscriptTitle}
-            </h1>
-            <p className="mt-2 text-sm font-medium text-[#B0B0B0]">
-              {statusLabel(review.status)}
+            <p className="mt-1 min-w-0 truncate text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
+              {review.manuscriptId || review.id.slice(0, 8).toUpperCase()} -{" "}
+              {review.journal.name}
               {review.reviewRound ? ` - ${review.reviewRound}` : ""}
             </p>
           </div>
-          <div className="flex flex-none items-center gap-2 text-sm text-[#B0B0B0]">
-            <CalendarDays className="h-4 w-4 text-blue-500" />
-            <span>Due {shortDate(review.dueDate)}</span>
-          </div>
         </div>
-      </header>
+      </ResearchPageHeaderPortal>
 
-      <ResearchDetailSection title="Review information">
-        <dl className="mt-4 grid gap-4 md:grid-cols-3">
-          <DetailItem label="Status" value={statusLabel(review.status)} />
-          <DetailItem
-            label="Requested date"
-            value={shortDate(review.requestedAt)}
-          />
-          <DetailItem label="Due date" value={shortDate(review.dueDate)} />
-          <DetailItem
-            label="Completed date"
-            value={shortDate(review.completedAt)}
-          />
-          <DetailItem label="Review round" value={review.reviewRound || "-"} />
-          <DetailItem
-            label="Recommendation"
-            value={review.recommendation || "-"}
-          />
-        </dl>
-      </ResearchDetailSection>
+      <div className="mx-auto max-w-7xl space-y-5">
+        <section className="border border-[#D8D0C2] bg-[#FFFDF8] shadow-none dark:border-[#444444] dark:bg-[#2C2C2C]">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-5 py-3 text-xs text-[#667085] dark:text-[#B0B0B0]">
+            <span>
+              Review ID:{" "}
+              <span className="font-mono text-[#344054] dark:text-[#E4E4E4]">
+                {review.id}
+              </span>
+            </span>
+            <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
+            <span>Status: {statusLabel(review.status)}</span>
+            <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
+            <span>Due: {shortDate(review.dueDate)}</span>
+          </div>
 
-      <section className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
-        <div className="flex items-center justify-between gap-3 border-b border-[#444444] px-5 py-4">
-          <div>
-            <h2 className="text-base font-semibold text-[#E4E4E4]">
-              Tasks for this review
+          <div className={`${sectionDividerClass} p-5`}>
+            <h2 className="text-sm font-normal text-[#252525] dark:text-[#E4E4E4]">
+              Review information
             </h2>
-            <p className="mt-1 text-sm text-[#B0B0B0]">
-              Work assigned for this review record.
-            </p>
+            <dl className="mt-4 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              <DetailItem
+                icon={<CalendarDays className="h-3.5 w-3.5" />}
+                label="Requested date"
+                value={shortDate(review.requestedAt)}
+              />
+              <DetailItem
+                icon={<CalendarDays className="h-3.5 w-3.5" />}
+                label="Due date"
+                value={shortDate(review.dueDate)}
+              />
+              <DetailItem
+                icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+                label="Completed date"
+                value={shortDate(review.completedAt)}
+              />
+              <DetailItem
+                icon={<PencilLine className="h-3.5 w-3.5" />}
+                label="Review round"
+                value={review.reviewRound || "-"}
+              />
+              <DetailItem
+                icon={<MessageSquareText className="h-3.5 w-3.5" />}
+                label="Recommendation"
+                value={review.recommendation || "-"}
+              />
+              <DetailItem
+                icon={<UserRound className="h-3.5 w-3.5" />}
+                label="Editor"
+                value={review.editorName || "-"}
+              />
+            </dl>
           </div>
-          <span className="border border-[#555555] bg-[#383838] px-3 py-1 text-xs font-bold text-[#E4E4E4]">
-            {review.tasks.length}
-          </span>
-        </div>
-        <div className="overflow-hidden">
-          <table className="w-full table-fixed text-left">
-            <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
-              <tr>
-                <th className="px-4 py-3">Task</th>
-                <th className="w-32 px-4 py-3">Status</th>
-                <th className="w-24 px-4 py-3">Due</th>
-                <th className="w-44 px-4 py-3">Assignees</th>
-                <th className="w-36 px-4 py-3">Assigner</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#444444]">
-              {review.tasks.map((task) => (
-                <tr
-                  key={task.id}
-                  className="align-top transition hover:bg-[#333333]"
+
+          <div className={`${sectionDividerClass} p-5`}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <h2 className="text-sm font-normal text-[#252525] dark:text-[#E4E4E4]">
+                  Journal
+                </h2>
+                <Link
+                  href={`/journals/${review.journal.id}`}
+                  className="research-allow-transform mt-2 inline-flex max-w-full text-sm font-normal text-[#1F7180] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#155864] hover:[text-shadow:0_0_0.55rem_rgba(31,113,128,0.16)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
                 >
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/tasks/${task.id}`}
-                      className={`text-sm ${researchLinkClass}`}
+                  {review.journal.name}
+                </Link>
+                <p className="mt-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
+                  {review.journal.publisher || "No publisher"}
+                </p>
+              </div>
+              {externalLinks.length > 0 && (
+                <div className="flex flex-none items-center gap-2">
+                  {externalLinks.map((item) => (
+                    <IconHint
+                      key={item.label}
+                      label={item.label}
+                      position="bottom"
                     >
-                      {task.title}
-                    </Link>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#B0B0B0]">
-                      {task.description || task.category || "No task note."}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex border border-current/20 px-2.5 py-1 text-xs font-normal ring-1 ${taskStatusClass(task.status)}`}
-                    >
-                      {taskStatusLabel(task.status)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-[#B0B0B0]">
-                    {shortDate(task.dueDate)}
-                  </td>
-                  <td className="px-4 py-3 text-sm leading-5 text-[#B0B0B0]">
-                    {task.assignments.length > 0
-                      ? task.assignments
-                          .map((assignment) =>
-                            displayResearchPersonName(assignment.user),
-                          )
-                          .join(", ")
-                      : "-"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-[#B0B0B0]">
-                    {displayResearchPersonName(task.createdBy) ||
-                      displayResearchEmail(task.createdBy.email)}
-                  </td>
-                </tr>
-              ))}
-              {review.tasks.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-12 text-center text-sm text-[#B0B0B0]"
-                  >
-                    No task is linked to this review yet.
-                  </td>
-                </tr>
+                      <a
+                        href={item.href as string}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`research-clickable-icon research-allow-transform inline-flex h-8 w-8 items-center justify-center border-0 bg-transparent shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:bg-transparent hover:shadow-none active:scale-95 focus-visible:ring-0 ${item.className}`}
+                        aria-label={item.label}
+                      >
+                        <item.icon className="h-4 w-4" aria-hidden="true" />
+                      </a>
+                    </IconHint>
+                  ))}
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <ResearchDetailSection title="Journal">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <Link
-              href={`/journals/${review.journal.id}`}
-              className={`mt-3 inline-flex text-base ${researchLinkClass}`}
-            >
-              {review.journal.name}
-            </Link>
-            <p className="mt-1 text-sm text-[#B0B0B0]">
-              {review.journal.publisher || "No publisher"}
-            </p>
+            </div>
+            <dl className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+              <DetailItem label="ISSN" value={review.journal.issn || "-"} />
+              <DetailItem label="Rank" value={review.journal.rank || "-"} />
+              <DetailItem
+                label="Country"
+                value={
+                  review.journal.country ? (
+                    <span className="inline-flex items-center gap-2">
+                      <CountryFlag value={review.journal.country} />
+                      <span>{countryName(review.journal.country)}</span>
+                    </span>
+                  ) : (
+                    "-"
+                  )
+                }
+              />
+              <DetailItem
+                label="Field"
+                value={
+                  journalFields.length > 0 ? journalFields.join("; ") : "-"
+                }
+              />
+              <DetailItem
+                label="APC"
+                value={formatMoney(
+                  review.journal.apc,
+                  review.journal.apcCurrency,
+                )}
+              />
+              <DetailItem
+                label="Submission fee"
+                value={formatMoney(
+                  review.journal.submissionFee,
+                  review.journal.submissionFeeCurrency,
+                )}
+              />
+              <DetailItem
+                label="Submissions"
+                value={review.journal._count.submissions}
+              />
+              <DetailItem
+                label="Reviews"
+                value={review.journal._count.reviews}
+              />
+            </dl>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {externalLinks.map((item) => (
-              <a
-                key={item.label}
-                href={item.href as string}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex h-9 items-center gap-2 rounded-none border border-sky-500/30 bg-sky-500/10 px-3 text-xs font-semibold text-sky-200 transition hover:-translate-y-0.5 hover:border-sky-400/50 hover:bg-sky-500/15 hover:shadow-md hover:shadow-black/20"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                {item.label}
-              </a>
-            ))}
-          </div>
-        </div>
-        <dl className="mt-4 grid gap-4 md:grid-cols-4">
-          <DetailItem label="ISSN" value={review.journal.issn || "-"} />
-          <DetailItem label="Rank" value={review.journal.rank || "-"} />
-          <DetailItem
-            label="Country"
-            value={
-              review.journal.country ? (
-                <span className="inline-flex items-center gap-2">
-                  <CountryFlag value={review.journal.country} />
-                  <span>{countryName(review.journal.country)}</span>
-                </span>
-              ) : (
-                "-"
-              )
-            }
-          />
-          <DetailItem
-            label="Field"
-            value={journalFields.length > 0 ? journalFields.join("; ") : "-"}
-          />
-          <DetailItem
-            label="APC"
-            value={formatMoney(review.journal.apc, review.journal.apcCurrency)}
-          />
-          <DetailItem
-            label="Submission fee"
-            value={formatMoney(
-              review.journal.submissionFee,
-              review.journal.submissionFeeCurrency,
-            )}
-          />
-          <DetailItem
-            label="Submissions"
-            value={review.journal._count.submissions}
-          />
-          <DetailItem label="Reviews" value={review.journal._count.reviews} />
-        </dl>
-      </ResearchDetailSection>
 
-      <ResearchDetailSection title="Notes">
-        <div className="mt-4 space-y-4">
-          <div>
-            <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-              <Hash className="h-3.5 w-3.5 text-amber-500" />
+          <div className={`${sectionDividerClass} p-5`}>
+            <h2 className="flex items-center gap-2 text-sm font-normal text-[#252525] dark:text-[#E4E4E4]">
+              <Hash className="h-4 w-4 text-amber-600 dark:text-amber-300" />
               Private note
-            </p>
-            <p className="mt-2 text-sm leading-6 text-[#E4E4E4]">
-              {review.note || "-"}
+            </h2>
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#4B5565] dark:text-[#B0B0B0]">
+              {review.note || "No private note recorded."}
             </p>
           </div>
-          {review.editorName && (
-            <div className="border-t border-[#444444] pt-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                Editor
-              </p>
-              <p className="mt-2 text-sm leading-6 text-[#E4E4E4]">
-                {review.editorName}
+        </section>
+
+        <section className="overflow-hidden border border-[#D8D0C2] bg-[#FFFDF8] shadow-none dark:border-[#444444] dark:bg-[#2C2C2C]">
+          <div className="flex items-center justify-between gap-3 border-b border-[#D8D0C2] px-5 py-4 dark:border-[#444444]">
+            <div>
+              <h2 className="text-sm font-normal text-[#252525] dark:text-[#E4E4E4]">
+                Tasks for this review
+              </h2>
+              <p className="mt-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
+                Work assigned for this review record.
               </p>
             </div>
-          )}
-        </div>
-      </ResearchDetailSection>
-    </div>
+            <span className="text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
+              {review.tasks.length}{" "}
+              {review.tasks.length === 1 ? "task" : "tasks"}
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[820px] table-fixed text-left">
+              <thead className="border-b border-[#D8D0C2] bg-[#F6F3EC] text-xs uppercase tracking-wide text-[#667085] dark:border-[#444444] dark:bg-[#383838] dark:text-[#B0B0B0]">
+                <tr>
+                  <th className="px-4 py-3">Task</th>
+                  <th className="w-36 px-4 py-3">Status</th>
+                  <th className="w-24 px-4 py-3">Due</th>
+                  <th className="w-44 px-4 py-3">Assignees</th>
+                  <th className="w-36 px-4 py-3">Assigner</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E4DDD1] dark:divide-[#444444]">
+                {review.tasks.map((task) => {
+                  const taskStatus = taskStatusMeta(task.status);
+                  const TaskStatusIcon = taskStatus.icon;
+                  return (
+                    <tr
+                      key={task.id}
+                      className="align-top transition-colors duration-150 hover:bg-[#F7F4ED] dark:hover:bg-[#333333]"
+                    >
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/tasks/${task.id}`}
+                          className="research-allow-transform text-sm font-normal text-[#1F7180] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#155864] hover:[text-shadow:0_0_0.55rem_rgba(31,113,128,0.16)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+                        >
+                          {task.title}
+                        </Link>
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                          {task.description || task.category || "No task note."}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-[#E4E4E4]">
+                          <HoverIcon
+                            label={statusLabel(task.status)}
+                            className={taskStatus.className}
+                          >
+                            <TaskStatusIcon
+                              className="h-4 w-4"
+                              aria-hidden="true"
+                            />
+                          </HoverIcon>
+                          <span>{statusLabel(task.status)}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-[#667085] dark:text-[#B0B0B0]">
+                        {shortDate(task.dueDate)}
+                      </td>
+                      <td className="px-4 py-3 text-sm leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                        {task.assignments.length > 0
+                          ? task.assignments
+                              .map((assignment) =>
+                                displayResearchPersonName(assignment.user),
+                              )
+                              .join(", ")
+                          : "-"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-[#667085] dark:text-[#B0B0B0]">
+                        {displayResearchPersonName(task.createdBy) ||
+                          displayResearchEmail(task.createdBy.email)}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {review.tasks.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-10 text-center text-sm text-[#667085] dark:text-[#B0B0B0]"
+                    >
+                      No task is linked to this review yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </>
   );
 }
