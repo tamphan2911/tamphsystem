@@ -707,8 +707,8 @@ function readableResearchValue(value: string) {
 
 function compactResearchNotificationValue(value: string) {
   const normalized = value.replace(/\s+/g, " ").trim() || "Not set";
-  return normalized.length > 160
-    ? `${normalized.slice(0, 157)}...`
+  return normalized.length > 100
+    ? `${normalized.slice(0, 97)}...`
     : normalized;
 }
 
@@ -722,8 +722,7 @@ function researchAuthorsNotificationValue(
   if (snapshot.authorEntries.length > 0) {
     return snapshot.authorEntries
       .map((entry) => {
-        const contactEmail = entry.selectedEmail || entry.user.email;
-        return `${researchPersonLabel(entry.user)} <${contactEmail}>${entry.isCorresponding ? " (corresponding)" : ""}`;
+        return `${researchPersonLabel(entry.user)}${entry.isCorresponding ? " (corresponding)" : ""}`;
       })
       .join(", ");
   }
@@ -751,6 +750,26 @@ function researchProjectNotificationChanges(
     const normalizedPrevious = previous.trim();
     const normalizedNext = next.trim();
     if (normalizedPrevious === normalizedNext) return;
+    if (label === "Title") {
+      changes.push({
+        label,
+        detail: `Previous title: "${compactResearchNotificationValue(previous)}".`,
+      });
+      return;
+    }
+    if (
+      label === "Abstract" ||
+      label === "Shared folder" ||
+      label === "Author contact email"
+    ) {
+      const action = !normalizedPrevious
+        ? "Added"
+        : !normalizedNext
+          ? "Removed"
+          : "Updated";
+      changes.push({ label, detail: `${label}: ${action}.` });
+      return;
+    }
     changes.push({
       label,
       detail: `${label} - Before: "${compactResearchNotificationValue(previous)}"; After: "${compactResearchNotificationValue(next)}"`,
@@ -794,11 +813,41 @@ function researchProjectNotificationChanges(
     researchAuthorsNotificationValue(before),
     researchAuthorsNotificationValue(after),
   );
-  addChange(
-    "Production checklist",
-    before.completedProductionSteps.join(", "),
-    after.completedProductionSteps.join(", "),
+  if (
+    researchAuthorsNotificationValue(before) ===
+    researchAuthorsNotificationValue(after)
+  ) {
+    addChange(
+      "Author contact email",
+      before.authorEntries
+        .map((entry) => `${entry.userId}:${entry.selectedEmail ?? entry.user.email}`)
+        .join("|"),
+      after.authorEntries
+        .map((entry) => `${entry.userId}:${entry.selectedEmail ?? entry.user.email}`)
+        .join("|"),
+    );
+  }
+
+  const previousSteps = new Set(before.completedProductionSteps);
+  const nextSteps = new Set(after.completedProductionSteps);
+  const addedSteps = after.completedProductionSteps.filter(
+    (step) => !previousSteps.has(step),
   );
+  const removedSteps = before.completedProductionSteps.filter(
+    (step) => !nextSteps.has(step),
+  );
+  if (addedSteps.length > 0 || removedSteps.length > 0) {
+    const stepChanges = [
+      addedSteps.length > 0 ? `Added: ${addedSteps.join(", ")}.` : "",
+      removedSteps.length > 0 ? `Removed: ${removedSteps.join(", ")}.` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    changes.push({
+      label: "Production checklist",
+      detail: `Production checklist - ${stepChanges}`,
+    });
+  }
 
   return changes;
 }
@@ -1387,8 +1436,13 @@ export async function submitProposal(formData: FormData) {
     userIds: admins.map((admin) => admin.id),
     type: "PROPOSAL_SUBMITTED",
     title: "New proposal submitted",
-    summary: `${user.name || user.email} submitted ${title}.`,
-    body: [title, description].filter(Boolean).join("\n\n"),
+    summary: title,
+    body: [
+      `Submitted by: ${user.name || user.email}.`,
+      description ? `Note: ${description}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n"),
     href: `/proposals/${proposal.id}`,
     entityType: "proposal",
     entityId: proposal.id,
@@ -1521,13 +1575,13 @@ export async function reviewProposal(formData: FormData) {
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
   const adminNote = comment ?? "No additional admin note was added.";
-  const decisionSummary = `Your ${proposalType.toLowerCase()} "${proposal.title}" was ${statusLabel}.`;
+  const emailDecisionSummary = `Your ${proposalType.toLowerCase()} "${proposal.title}" was ${statusLabel}.`;
   await notifyUsers({
     userIds: [proposal.submittedById],
     type: accepted ? "PROPOSAL_ACCEPTED" : "PROPOSAL_DECLINED",
     title: `Proposal feedback: ${statusLabel}`,
-    summary: decisionSummary,
-    body: `Proposal type: ${proposalType}\nProposal: ${proposal.title}\n\nAdmin note:\n${adminNote}`,
+    summary: proposal.title,
+    body: `Decision: ${statusLabel}.\nType: ${proposalType}.\nAdmin note: ${adminNote}`,
     href: accepted ? createdHref : "/notifications",
     entityType: "proposal",
     entityId: reviewed.id,
@@ -1537,7 +1591,7 @@ export async function reviewProposal(formData: FormData) {
     to: [proposal.submittedBy.email],
     subject: `Feedback on your Research Hub proposal`,
     heading: `Proposal ${statusLabel}`,
-    intro: `${decisionSummary} Thank you for sharing this proposal with Research Hub.`,
+    intro: `${emailDecisionSummary} Thank you for sharing this proposal with Research Hub.`,
     detail: `Proposal type: ${proposalType}\nProposal description: ${proposal.description}\n\nAdmin note: ${adminNote}`,
     actionHref: `${researchBaseUrl()}${accepted ? createdHref : "/notifications"}`,
     actionLabel: accepted ? "View item" : "View notification",
@@ -1935,10 +1989,8 @@ export async function updateOrganizedProject(
       title: researchChanged
         ? "Project research associated updated"
         : "Project updated",
-      summary: `${title} updated: ${changedParts.join(", ")}.`,
-      body: researchChanged
-        ? "Research associated with this project was added or removed."
-        : "Project status, members, associated research, or duration changed.",
+      summary: title,
+      body: `Changed: ${changedParts.join(", ")}.`,
       href: `/organized-projects/${projectId}`,
       entityType: "organizedProject",
       entityId: projectId,
@@ -2105,8 +2157,8 @@ export async function createResearchForOrganizedProject(
     userIds: await organizedProjectNotificationUserIds(organizedProjectId),
     type: "PROJECT_RESEARCH_ASSOCIATED_UPDATED",
     title: "Project research associated updated",
-    summary: createdProject.title,
-    body: `A new research record was added to ${organizedProject.title}.`,
+    summary: organizedProject.title,
+    body: `Associated research added: ${createdProject.title}.`,
     href: `/organized-projects/${organizedProjectId}`,
     entityType: "organizedProject",
     entityId: organizedProjectId,
@@ -2343,15 +2395,14 @@ export async function updateResearchProject(
     await notifyResearchAuthors(projectId, {
       type: "RESEARCH_STATUS_UPDATED",
       title: "Research status updated",
-      summary: `${updatedProject.title} moved to ${updatedProject.stage.toLowerCase()}.`,
+      summary: updatedProject.title,
       body: `Research stage - Before: "${readableResearchValue(projectLock.stage)}"; After: "${readableResearchValue(updatedProject.stage)}"`,
     });
   } else if (updatedProject && notificationChanges.length > 0) {
-    const changedLabels = notificationChanges.map((change) => change.label);
     await notifyResearchAuthors(projectId, {
       type: "RESEARCH_UPDATED",
       title: "Research updated",
-      summary: `${changedLabels.join(", ")} changed for ${updatedProject.title}.`,
+      summary: updatedProject.title,
       body: notificationChanges.map((change) => change.detail).join("\n"),
       excludeUserId: user.id,
     });
@@ -3499,8 +3550,8 @@ export async function createResearchTask(formData: FormData) {
     title: "Task assigned",
     summary: task.title,
     body: task.description
-      ? `You were assigned "${task.title}". Task note: ${task.description}`
-      : `You were assigned the task "${task.title}".`,
+      ? `Assigned to you. Note: ${task.description}`
+      : "Assigned to you.",
     href: `/tasks/${task.id}`,
     entityType: "task",
     entityId: task.id,
@@ -3746,8 +3797,8 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       title: "Task assigned",
       summary: task.title,
       body: task.description
-        ? `You were assigned "${task.title}". Task note: ${task.description}`
-        : `You were assigned the task "${task.title}".`,
+        ? `Assigned to you. Note: ${task.description}`
+        : "Assigned to you.",
       href: `/tasks/${task.id}`,
       entityType: "task",
       entityId: task.id,
@@ -3817,7 +3868,7 @@ export async function revokeResearchTask(taskId: string) {
     type: "TASK_REVOKED",
     title: "Task revoked",
     summary: task.title,
-    body: `The assigned task "${task.title}" was revoked.`,
+    body: "This task was revoked.",
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,
@@ -4088,19 +4139,19 @@ export async function updateSubmissionStatus(formData: FormData) {
         ? {
             type: "SUBMISSION_REVIEW",
             title: "Submission in review",
-            body: `The submission of "${project?.title ?? "this research"}" to ${submission.journal.name} moved to review stage.`,
+            body: `Journal: ${submission.journal.name}. Status: In review.`,
           }
         : journalStatus === SubmissionStatus.ACCEPTED
           ? {
               type: "RESEARCH_ACCEPTED",
               title: "Research accepted",
-              body: `The submission of "${project?.title ?? "this research"}" to ${submission.journal.name} was accepted.`,
+              body: `Journal: ${submission.journal.name}. Status: Accepted.`,
             }
           : journalStatus === SubmissionStatus.PUBLISHED
             ? {
                 type: "RESEARCH_PUBLISHED",
                 title: "Research published",
-                body: `The submission of "${project?.title ?? "this research"}" to ${submission.journal.name} was published.`,
+                body: `Journal: ${submission.journal.name}. Status: Published.`,
               }
             : null;
     if (normalizedNotification) {
@@ -4115,7 +4166,7 @@ export async function updateSubmissionStatus(formData: FormData) {
             type: `PROJECT_${normalizedNotification.type}`,
             title: normalizedNotification.title,
             summary: project?.title ?? normalizedNotification.title,
-            body: `${normalizedNotification.body} This research is associated with your project.`,
+            body: normalizedNotification.body,
           },
         );
       } catch (error) {
@@ -4257,19 +4308,19 @@ export async function updateSubmissionStatus(formData: FormData) {
         ? {
             type: "SUBMISSION_REVIEW",
             title: "Submission in review",
-            body: `The submission of "${project?.title ?? "this research"}" to ${submission.conference.name} moved to review stage.`,
+            body: `Conference: ${submission.conference.name}. Status: In review.`,
           }
         : conferenceStatus === ConferenceSubmissionStatus.ACCEPTED
           ? {
               type: "RESEARCH_ACCEPTED",
               title: "Research accepted",
-              body: `The submission of "${project?.title ?? "this research"}" to ${submission.conference.name} was accepted.`,
+              body: `Conference: ${submission.conference.name}. Status: Accepted.`,
             }
           : conferenceStatus === ConferenceSubmissionStatus.PUBLISHED
             ? {
                 type: "RESEARCH_PUBLISHED",
                 title: "Research published",
-                body: `The submission of "${project?.title ?? "this research"}" to ${submission.conference.name} was published.`,
+                body: `Conference: ${submission.conference.name}. Status: Published.`,
               }
             : null;
     if (normalizedNotification) {
@@ -4284,7 +4335,7 @@ export async function updateSubmissionStatus(formData: FormData) {
             type: `PROJECT_${normalizedNotification.type}`,
             title: normalizedNotification.title,
             summary: project?.title ?? normalizedNotification.title,
-            body: `${normalizedNotification.body} This research is associated with your project.`,
+            body: normalizedNotification.body,
           },
         );
       } catch (error) {
@@ -4674,7 +4725,12 @@ export async function approveSuggestedJournal(
 
   const suggestion = await prisma.suggestedJournal.findUnique({
     where: { id: suggestionId },
-    select: { projectId: true, journalId: true, createdById: true },
+    select: {
+      projectId: true,
+      journalId: true,
+      venueName: true,
+      createdById: true,
+    },
   });
   if (!suggestion || suggestion.projectId !== projectId) return;
 
@@ -4694,13 +4750,18 @@ export async function approveSuggestedJournal(
     },
   });
 
+  const linkedJournal = await prisma.journal.findUnique({
+    where: { id: linkedJournalId },
+    select: { name: true },
+  });
+
   if (suggestion.createdById) {
     await notifyUsers({
       userIds: [suggestion.createdById],
       excludeUserId: user.id,
       type: "VENUE_SUGGESTION_APPROVED",
       title: "Venue suggestion approved",
-      summary: "Your journal suggestion was approved.",
+      summary: linkedJournal?.name ?? suggestion.venueName ?? "Journal",
       href: `/projects/${projectId}`,
       entityType: "suggestedVenue",
       entityId: suggestionId,
@@ -4730,7 +4791,12 @@ export async function approveSuggestedConference(
 
   const suggestion = await prisma.suggestedConference.findUnique({
     where: { id: suggestionId },
-    select: { projectId: true, conferenceId: true, createdById: true },
+    select: {
+      projectId: true,
+      conferenceId: true,
+      venueName: true,
+      createdById: true,
+    },
   });
   if (!suggestion || suggestion.projectId !== projectId) return;
 
@@ -4750,13 +4816,18 @@ export async function approveSuggestedConference(
     },
   });
 
+  const linkedConference = await prisma.conference.findUnique({
+    where: { id: linkedConferenceId },
+    select: { name: true },
+  });
+
   if (suggestion.createdById) {
     await notifyUsers({
       userIds: [suggestion.createdById],
       excludeUserId: user.id,
       type: "VENUE_SUGGESTION_APPROVED",
       title: "Venue suggestion approved",
-      summary: "Your conference suggestion was approved.",
+      summary: linkedConference?.name ?? suggestion.venueName ?? "Conference",
       href: `/projects/${projectId}`,
       entityType: "suggestedVenue",
       entityId: suggestionId,
@@ -4832,14 +4903,14 @@ async function createSubmissionAfterTaskApproval(
       type: "SUBMISSION_CREATED",
       title: "New journal submission",
       summary: project?.title ?? "A research submission was created.",
-      body: `"${project?.title ?? "This research"}" was submitted to ${journal?.name ?? "the selected journal"} after the assigner approved the submission task "${task.title}".`,
+      body: `Journal: ${journal?.name ?? "Selected journal"}. Submission task approved.`,
     });
     await notifyOrganizedProjectMembersForResearch(task.projectId, {
       type: "PROJECT_RESEARCH_SUBMISSION",
       title: "Project research submitted",
       summary:
         project?.title ?? "A project research record has a new submission.",
-      body: `"${project?.title ?? "A research associated with your project"}" was submitted to ${journal?.name ?? "the selected journal"}.`,
+      body: `Journal: ${journal?.name ?? "Selected journal"}.`,
     });
 
     revalidatePath("/projects");
@@ -4886,7 +4957,7 @@ async function createSubmissionAfterTaskApproval(
       type: "SUBMISSION_CREATED",
       title: "New conference submission",
       summary: project?.title ?? "A conference submission was created.",
-      body: `"${project?.title ?? "This research"}" was submitted to ${conference?.name ?? "the selected conference"} after the assigner approved the submission task "${task.title}".`,
+      body: `Conference: ${conference?.name ?? "Selected conference"}. Submission task approved.`,
     });
     await notifyOrganizedProjectMembersForResearch(task.projectId, {
       type: "PROJECT_RESEARCH_SUBMISSION",
@@ -4894,7 +4965,7 @@ async function createSubmissionAfterTaskApproval(
       summary:
         project?.title ??
         "A project research record has a new conference submission.",
-      body: `"${project?.title ?? "A research associated with your project"}" was submitted to ${conference?.name ?? "the selected conference"}.`,
+      body: `Conference: ${conference?.name ?? "Selected conference"}.`,
     });
 
     revalidatePath("/projects");
@@ -4960,7 +5031,7 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
     type: "TASK_READY_FOR_CHECK",
     title: "Task ready for check",
     summary: task.title,
-    body: `An assignee marked "${task.title}" as finished and ready for your review.`,
+    body: "An assignee marked this task as finished and ready for review.",
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,
@@ -5079,7 +5150,7 @@ export async function uploadResearchTaskReport(
     type: "TASK_REPORT_UPLOADED",
     title: "Task report uploaded",
     summary: task.title,
-    body: `A report file "${file.name}" was uploaded for task "${task.title}".`,
+    body: `Report uploaded: "${file.name}".`,
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,
@@ -5206,7 +5277,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     type: "TASK_COMPLETED",
     title: "Task completed",
     summary: task.title,
-    body: `The assigner reviewed and approved "${task.title}" as complete.`,
+    body: "The assigner reviewed and approved this task as complete.",
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,
@@ -5409,8 +5480,8 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
     title: "Task needs revision",
     summary: task.title,
     body: reason
-      ? `Revision requested for "${task.title}". Note: ${reason}`
-      : `The assigner requested revision for "${task.title}" before approval.`,
+      ? `Revision note: ${reason}`
+      : "The assigner requested revision before approval.",
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,
