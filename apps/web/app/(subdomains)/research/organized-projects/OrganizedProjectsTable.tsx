@@ -294,19 +294,19 @@ export function OrganizedProjectsTable({
         />
       </div>
 
-      <div className="overflow-hidden">
-        <table className="w-full table-fixed text-left">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[64rem] table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
-              <th className="w-[7.5rem] px-3 py-3">Project ID</th>
+              <th className="w-[10%] px-3 py-3">Project ID</th>
               <th className="px-3 py-3">Project</th>
-              <th className="w-16 px-2 py-3 text-center">Status</th>
-              <th className="w-16 px-2 py-3 text-center">Financial</th>
-              <th className="w-[11rem] px-3 py-3">Funding</th>
-              <th className="w-[8.5rem] px-3 py-3">Dates</th>
-              <th className="w-[6rem] px-2 py-3 text-center">Results</th>
+              <th className="w-[7%] px-2 py-3 text-center">Status</th>
+              <th className="w-[7%] px-2 py-3 text-center">Financial</th>
+              <th className="w-[15%] px-3 py-3">Funding</th>
+              <th className="w-[12%] px-3 py-3">Dates</th>
+              <th className="w-[7%] px-2 py-3 text-center">Results</th>
               {isAdmin && deleteAction && (
-                <th className="w-12 px-2 py-3 text-center">
+                <th className="w-[5%] px-2 py-3 text-center">
                   <span className="sr-only">Delete</span>
                 </th>
               )}
@@ -331,14 +331,12 @@ export function OrganizedProjectsTable({
                     </span>
                   </td>
                   <td className="min-w-0 px-3 py-3 align-top">
-                    <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-                      <Link
-                        href={`/organized-projects/${project.id}`}
-                        className="research-allow-transform line-clamp-2 origin-left text-base font-normal text-[#E4E4E4] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:[text-shadow:0_0_0.55rem_rgba(168,218,220,0.18)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 motion-reduce:transform-none motion-reduce:transition-none"
-                      >
-                        {project.title}
-                      </Link>
-                    </div>
+                    <Link
+                      href={`/organized-projects/${project.id}`}
+                      className="research-allow-transform block w-full origin-left whitespace-normal break-words text-base font-normal leading-6 text-[#E4E4E4] outline-none transition-[color,text-shadow,transform] duration-180 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:[text-shadow:0_0_0.55rem_rgba(168,218,220,0.18)] active:scale-[0.985] focus-visible:bg-transparent focus-visible:ring-0 motion-reduce:transform-none motion-reduce:transition-none"
+                    >
+                      {project.title}
+                    </Link>
                     <p className="mt-1 line-clamp-1 text-xs leading-5 text-[#B0B0B0]">
                       {project.members.length > 0
                         ? project.members.map(memberName).join(", ")
