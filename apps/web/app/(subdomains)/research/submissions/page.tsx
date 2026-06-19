@@ -41,8 +41,10 @@ export default async function SubmissionsPage() {
           select: {
             id: true,
             name: true,
+            type: true,
             publisher: true,
             rank: true,
+            localRank: true,
             apc: true,
             apcCurrency: true,
             submissionFee: true,
@@ -139,11 +141,13 @@ export default async function SubmissionsPage() {
       kind: "journal" as const,
       venueId: submission.journal.id,
       venueName: submission.journal.name,
-      metaLine: [
-        submission.project.title,
+      metaLine: submission.project.title,
+      venueDetailLine: [
         submission.journal.publisher || "No publisher",
-        submission.journal.rank || "No rank",
-      ].join(" - "),
+        submission.journal.type === "LOCAL"
+          ? submission.journal.localRank || "No local rank"
+          : submission.journal.rank || "No rank",
+      ].join(" | "),
       apc: submission.journal.apc ?? "",
       apcCurrency: submission.journal.apcCurrency,
       submissionFee: submission.journal.submissionFee ?? "",

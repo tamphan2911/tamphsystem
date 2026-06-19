@@ -51,6 +51,7 @@ export type SubmissionRow = {
   venueId: string;
   venueName: string;
   metaLine: string;
+  venueDetailLine?: string;
   apc: string;
   apcCurrency: string;
   submissionFee: string;
@@ -394,7 +395,10 @@ export function SubmissionsTable({
     !isResearchView || rows.some((row) => row.canViewRegistrationClaim);
   const showStatusEdit = isAdmin && actionMode === "edit";
   const showDelete = isAdmin && actionMode === "delete";
-  const [query, setQuery] = usePersistentTableValue("research-submissions:q", "");
+  const [query, setQuery] = usePersistentTableValue(
+    "research-submissions:q",
+    "",
+  );
   const [status, setStatus] = usePersistentTableValue(
     "research-submissions:status",
     "ALL",
@@ -430,6 +434,7 @@ export function SubmissionsTable({
         row.canViewRegistrationClaim ? row.projectRegisterName : "",
         row.code,
         row.metaLine,
+        row.venueDetailLine,
         row.apc,
         row.submissionFee,
         row.account,
@@ -448,7 +453,12 @@ export function SubmissionsTable({
     });
   }, [kind, query, rows, status]);
 
-  const pagination = useTablePagination(filtered, 10, 1, "research-submissions");
+  const pagination = useTablePagination(
+    filtered,
+    10,
+    1,
+    "research-submissions",
+  );
 
   function updateQuery(value: string) {
     setQuery(value);
@@ -743,6 +753,11 @@ export function SubmissionsTable({
                               ? row.projectAuthors || "-"
                               : row.metaLine || "-"}
                           </span>
+                          {!isResearchView && row.venueDetailLine ? (
+                            <span className="mt-1 block whitespace-normal break-words text-xs leading-5 text-[#8F98A8]">
+                              {row.venueDetailLine}
+                            </span>
+                          ) : null}
                         </span>
                       </Link>
                     ) : (
@@ -771,6 +786,11 @@ export function SubmissionsTable({
                               ? row.projectAuthors || "-"
                               : row.metaLine || "-"}
                           </span>
+                          {!isResearchView && row.venueDetailLine ? (
+                            <span className="mt-1 block whitespace-normal break-words text-xs leading-5 text-[#8F98A8]">
+                              {row.venueDetailLine}
+                            </span>
+                          ) : null}
                         </span>
                       </div>
                     )}
