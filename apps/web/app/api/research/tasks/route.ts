@@ -127,7 +127,7 @@ export async function GET() {
         },
       },
       orderBy: [
-        { dueDate: { sort: "asc", nulls: "last" } },
+        { dueDate: { sort: "desc", nulls: "last" } },
         { createdAt: "desc" },
       ],
     }),
