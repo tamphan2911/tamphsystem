@@ -88,7 +88,9 @@ export default auth((req) => {
       // If logged in but not an admin/moderator, send them to unauthorized page
       return NextResponse.redirect(new URL("https://tamph.com/401", req.url));
     }
-    return NextResponse.rewrite(new URL(`/admin${url.pathname}`, req.url));
+    return NextResponse.rewrite(
+      new URL(`/admin${url.pathname}${url.search}`, req.url),
+    );
   }
 
   if (currentHost === "learn") {
@@ -108,9 +110,12 @@ export default auth((req) => {
 
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set("x-site-pathname", url.pathname);
-    return NextResponse.rewrite(new URL(`/learn${url.pathname}`, req.url), {
-      request: { headers: requestHeaders },
-    });
+    return NextResponse.rewrite(
+      new URL(`/learn${url.pathname}${url.search}`, req.url),
+      {
+        request: { headers: requestHeaders },
+      },
+    );
   }
 
   if (currentHost === "research") {
@@ -124,7 +129,7 @@ export default auth((req) => {
       const requestHeaders = new Headers(req.headers);
       requestHeaders.set("x-site-pathname", url.pathname);
       return NextResponse.rewrite(
-        new URL(`/research${url.pathname}`, req.url),
+        new URL(`/research${url.pathname}${url.search}`, req.url),
         {
           request: { headers: requestHeaders },
         },
@@ -141,9 +146,12 @@ export default auth((req) => {
     }
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set("x-site-pathname", url.pathname);
-    return NextResponse.rewrite(new URL(`/research${url.pathname}`, req.url), {
-      request: { headers: requestHeaders },
-    });
+    return NextResponse.rewrite(
+      new URL(`/research${url.pathname}${url.search}`, req.url),
+      {
+        request: { headers: requestHeaders },
+      },
+    );
   }
 
   return NextResponse.next();
