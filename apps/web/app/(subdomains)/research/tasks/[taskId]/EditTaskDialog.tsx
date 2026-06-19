@@ -391,12 +391,14 @@ export function EditTaskDialog({
   const selectedReviewIsOpen =
     !needsReview ||
     (selectedReview ? !closedReviewStatuses.has(selectedReview.status) : false);
-  const needsOrganizedProject = mode === "project";
+  const showsOrganizedProject = mode === "project";
+  const requiresOrganizedProject =
+    task.taskType === "PROJECT_RESEARCH_ASSOCIATED";
   const selectedOrganizedProjectIsOpen =
-    !needsOrganizedProject ||
+    !showsOrganizedProject ||
     (selectedOrganizedProject
       ? !closedProjectStatuses.has(selectedOrganizedProject.status)
-      : false);
+      : !requiresOrganizedProject);
   const canSubmit =
     selectedIds.length > 0 &&
     selectedResearchMatchesMode &&
@@ -479,14 +481,16 @@ export function EditTaskDialog({
               <input type="hidden" name="reviewId" value={selectedReview.id} />
             </>
           )}
-          {mode === "project" && selectedOrganizedProject && (
+          {mode === "project" && (
             <>
               <input type="hidden" name="taskType" value={projectTaskType} />
-              <input
-                type="hidden"
-                name="organizedProjectId"
-                value={selectedOrganizedProject.id}
-              />
+              {selectedOrganizedProject && (
+                <input
+                  type="hidden"
+                  name="organizedProjectId"
+                  value={selectedOrganizedProject.id}
+                />
+              )}
               <input type="hidden" name="category" value={projectCategory} />
             </>
           )}
@@ -667,12 +671,16 @@ export function EditTaskDialog({
             />
           )}
 
-          {needsOrganizedProject && (
+          {showsOrganizedProject && (
             <div className="grid gap-4">
               <SearchPanel
                 query={organizedProjectQuery}
                 setQuery={setOrganizedProjectQuery}
-                placeholder="Search project by title, ID, or status (*)"
+                placeholder={
+                  requiresOrganizedProject
+                    ? "Search project by title, ID, or status (*)"
+                    : "Search project by title, ID, or status (optional)"
+                }
                 selectedItems={
                   selectedOrganizedProject
                     ? [

@@ -481,6 +481,13 @@ async function canCreateResearchTaskForProject({
     if (taskType === ResearchTaskType.REVIEW) {
       return true;
     }
+    if (
+      taskType === ResearchTaskType.PROJECT_PRODUCTION &&
+      !organizedProjectId &&
+      !projectId
+    ) {
+      return true;
+    }
     if (organizedProjectId && !projectId) {
       return (
         (await prisma.organizedProject.count({
@@ -3194,7 +3201,6 @@ export async function createResearchTask(formData: FormData) {
       (!projectId || !conferenceId)) ||
     (taskType === ResearchTaskType.PRODUCTION && !projectId) ||
     (taskType === ResearchTaskType.REVIEW && !reviewId) ||
-    (taskType === ResearchTaskType.PROJECT_PRODUCTION && !organizedProjectId) ||
     (taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED &&
       !organizedProjectId)
   ) {
@@ -3418,8 +3424,6 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       (!effectiveProjectId || !conferenceId)) ||
     (taskType === ResearchTaskType.PRODUCTION && !effectiveProjectId) ||
     (taskType === ResearchTaskType.REVIEW && !reviewId) ||
-    (taskType === ResearchTaskType.PROJECT_PRODUCTION &&
-      !effectiveOrganizedProjectId) ||
     (taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED &&
       !effectiveOrganizedProjectId)
   ) {

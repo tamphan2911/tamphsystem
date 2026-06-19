@@ -384,9 +384,10 @@ export function NewTaskDialog({
   const selectedReviewIsOpen =
     !needsReview ||
     (selectedReview ? !closedReviewStatuses.has(selectedReview.status) : false);
-  const needsOrganizedProject = mode === "project";
+  const showsOrganizedProject = mode === "project";
   const selectedOrganizedProjectIsOpen =
-    !needsOrganizedProject ||
+    !showsOrganizedProject ||
+    !selectedOrganizedProject ||
     (selectedOrganizedProject
       ? !closedProjectStatuses.has(selectedOrganizedProject.status)
       : false);
@@ -510,14 +511,16 @@ export function NewTaskDialog({
               <input type="hidden" name="reviewId" value={selectedReview.id} />
             </>
           )}
-          {mode === "project" && selectedOrganizedProject && (
+          {mode === "project" && (
             <>
               <input type="hidden" name="taskType" value="PROJECT_PRODUCTION" />
-              <input
-                type="hidden"
-                name="organizedProjectId"
-                value={selectedOrganizedProject.id}
-              />
+              {selectedOrganizedProject && (
+                <input
+                  type="hidden"
+                  name="organizedProjectId"
+                  value={selectedOrganizedProject.id}
+                />
+              )}
               <input type="hidden" name="category" value="Production" />
             </>
           )}
@@ -725,12 +728,12 @@ export function NewTaskDialog({
             />
           )}
 
-          {needsOrganizedProject && (
+          {showsOrganizedProject && (
             <div className="grid gap-4">
               <SearchPanel
                 query={organizedProjectQuery}
                 setQuery={setOrganizedProjectQuery}
-                placeholder="Search project by title, ID, or status (*)"
+                placeholder="Search project by title, ID, or status (optional)"
                 selectedItems={
                   selectedOrganizedProject
                     ? [
