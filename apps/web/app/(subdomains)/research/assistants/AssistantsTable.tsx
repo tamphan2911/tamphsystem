@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Crown,
@@ -199,9 +200,12 @@ export function AssistantsTable({
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#6F5AA8] dark:text-[#B39CD0]">
                       <UserRound className="h-4 w-4" />
                     </span>
-                    <span className="min-w-0 truncate text-sm font-medium text-slate-700 dark:text-slate-100">
+                    <Link
+                      href={`/profile?userId=${encodeURIComponent(user.id)}`}
+                      className="min-w-0 truncate text-sm font-medium text-slate-700 transition-colors duration-180 ease-out hover:text-[#1F7180] focus-visible:outline-none focus-visible:text-[#1F7180] dark:text-slate-100 dark:hover:text-[#A8DADC] dark:focus-visible:text-[#A8DADC]"
+                    >
                       {user.name || "Unnamed user"}
-                    </span>
+                    </Link>
                   </div>
                 </td>
                 <td className="px-3 py-3 text-sm text-[#B0B0B0]">

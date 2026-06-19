@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { ProfileClient } from "./ProfileClient";
@@ -77,11 +77,34 @@ function authorLine(project: {
     .join(", ");
 }
 
-export default async function ResearchProfilePage() {
+export default async function ResearchProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ userId?: string }>;
+}) {
   const session = await auth();
-  const userId = (session?.user as { id?: string } | undefined)?.id;
+  const viewerUserId = (session?.user as { id?: string } | undefined)?.id;
 
-  if (!userId) redirect("/login");
+  if (!viewerUserId) redirect("/login");
+
+  const viewer = await prisma.user.findUnique({
+    where: { id: viewerUserId },
+    select: { roles: true },
+  });
+  if (!viewer) redirect("/login");
+
+  const requestedUserId = (await searchParams).userId?.trim();
+  const viewingAnotherUser = Boolean(
+    requestedUserId && requestedUserId !== viewerUserId,
+  );
+  if (
+    viewingAnotherUser &&
+    !viewer.roles.includes(Role.ADMIN) &&
+    !viewer.roles.includes(Role.CHIEF_ASSISTANT)
+  ) {
+    redirect("/401");
+  }
+  const profileUserId = requestedUserId || viewerUserId;
 
   const [
     user,
@@ -91,7 +114,7 @@ export default async function ResearchProfilePage() {
     taskAssignments,
   ] = await Promise.all([
     prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: profileUserId },
       select: {
         id: true,
         name: true,
@@ -115,9 +138,9 @@ export default async function ResearchProfilePage() {
     prisma.researchProject.findMany({
       where: {
         OR: [
-          { leadResearcherId: userId },
-          { authors: { some: { id: userId } } },
-          { authorEntries: { some: { userId } } },
+          { leadResearcherId: profileUserId },
+          { authors: { some: { id: profileUserId } } },
+          { authorEntries: { some: { userId: profileUserId } } },
         ],
       },
       include: {
@@ -144,7 +167,7 @@ export default async function ResearchProfilePage() {
       orderBy: { updatedAt: "desc" },
     }),
     prisma.organizedProject.findMany({
-      where: { members: { some: { userId } } },
+      where: { members: { some: { userId: profileUserId } } },
       include: {
         fundingInstitution: true,
         members: {
@@ -165,14 +188,14 @@ export default async function ResearchProfilePage() {
       orderBy: { updatedAt: "desc" },
     }),
     prisma.proposal.findMany({
-      where: { submittedById: userId },
+      where: { submittedById: profileUserId },
       include: {
         submittedBy: { select: { name: true, email: true } },
       },
       orderBy: { updatedAt: "desc" },
     }),
     prisma.researchTaskAssignment.findMany({
-      where: { userId },
+      where: { userId: profileUserId },
       include: {
         task: {
           select: {
@@ -194,7 +217,7 @@ export default async function ResearchProfilePage() {
     }),
   ]);
 
-  if (!user) redirect("/login");
+  if (!user) notFound();
 
   const registrationIdentityValues = [user.name, user.email]
     .filter((value): value is string => Boolean(value?.trim()))
@@ -229,7 +252,7 @@ export default async function ResearchProfilePage() {
         project.registrationName ||
         "",
       canViewRegistrationClaim:
-        project.registrationUserId === userId ||
+        project.registrationUserId === profileUserId ||
         Boolean(
           project.registrationName &&
           registrationIdentityValues.includes(
@@ -334,6 +357,7 @@ export default async function ResearchProfilePage() {
         user.roles.includes(Role.ASSISTANT) ||
         user.roles.includes(Role.CHIEF_ASSISTANT)
       }
+      canEditProfile={!viewingAnotherUser}
     />
   );
 }
