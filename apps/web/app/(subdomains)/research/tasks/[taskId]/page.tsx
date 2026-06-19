@@ -576,10 +576,12 @@ export default async function TaskDetailPage({
     task.status !== ResearchTaskStatus.NEED_CLARIFY;
   const canApprove =
     !isClosed &&
+    !isAssignee &&
     (isAdmin || isAssigner) &&
     (selfAssigned || isAdmin || task.status === ResearchTaskStatus.CHECKING);
   const canRedo =
     !isClosed &&
+    !isAssignee &&
     (isAdmin || isAssigner) &&
     task.status === ResearchTaskStatus.CHECKING;
   const canRequestClarification =
@@ -589,9 +591,9 @@ export default async function TaskDetailPage({
     task.status !== ResearchTaskStatus.CHECKING &&
     task.status !== ResearchTaskStatus.NEED_CLARIFY &&
     !hasOpenMyClarification;
-  const canRevoke = !isClosed && (isAdmin || isAssigner);
-  const canEdit = !isClosed && isAdmin;
-  const canUseReminder = isAdmin || isAssigner;
+  const canRevoke = !isClosed && !isAssignee && (isAdmin || isAssigner);
+  const canEdit = !isClosed && !isAssignee && isAdmin;
+  const canUseReminder = !isAssignee && (isAdmin || isAssigner);
   const reminderBlock =
     task.assignments.length === 0
       ? {
