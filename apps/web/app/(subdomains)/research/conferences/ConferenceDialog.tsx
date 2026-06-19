@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CalendarPlus, Loader2, Pencil, Save } from "lucide-react";
+import { CalendarPlus, Loader2, Pencil, PlusCircle, Save } from "lucide-react";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
@@ -73,10 +73,10 @@ export function ConferenceDialog({
             setWarning("");
             setOpen(true);
           }}
-          tone="primary"
+          className="research-new-button"
           aria-label="Add conference"
         >
-          <CalendarPlus className="h-4 w-4" />
+          <PlusCircle className="h-4 w-4" />
           New Conference
         </ResearchButton>
       )}
