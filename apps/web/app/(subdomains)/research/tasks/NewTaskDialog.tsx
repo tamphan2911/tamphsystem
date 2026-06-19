@@ -375,8 +375,9 @@ export function NewTaskDialog({
   const selectedResearchMatchesMode =
     !needsResearch ||
     (selectedResearch ? researchMatchesMode(selectedResearch, mode) : false);
-  const needsVenue =
+  const showsVenue =
     mode === "submit" || (mode === "other" && triggerVariant === "default");
+  const needsVenue = mode === "submit";
   const selectedVenueMatchesMode =
     !needsVenue ||
     Boolean(
@@ -638,13 +639,13 @@ export function NewTaskDialog({
             />
           )}
 
-          {needsVenue && (
+          {showsVenue && (
             <SearchPanel
               query={venueQuery}
               setQuery={setVenueQuery}
               placeholder={
                 mode === "other"
-                  ? "Search journal (*)"
+                  ? "Search journal (optional)"
                   : "Search journal or conference (*)"
               }
               selectedItems={
