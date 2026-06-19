@@ -678,6 +678,131 @@ const productionStepLabels = [
   "References",
 ];
 
+type ResearchNotificationSnapshot = {
+  title: string;
+  abstract: string | null;
+  sharedFolderUrl: string | null;
+  universityRegistration: string | null;
+  registerStatus: RegistrationStatus;
+  claimStatus: ClaimStatus;
+  completedProductionSteps: string[];
+  registrationName: string | null;
+  registrationUser: { name: string | null; email: string } | null;
+  fundingInstitution: { name: string } | null;
+  authors: { id: string; name: string | null; email: string }[];
+  authorEntries: {
+    userId: string;
+    selectedEmail: string | null;
+    isCorresponding: boolean;
+    user: { name: string | null; email: string };
+  }[];
+};
+
+function readableResearchValue(value: string) {
+  return value
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function compactResearchNotificationValue(value: string) {
+  const normalized = value.replace(/\s+/g, " ").trim() || "Not set";
+  return normalized.length > 160
+    ? `${normalized.slice(0, 157)}...`
+    : normalized;
+}
+
+function researchPersonLabel(person: { name: string | null; email: string }) {
+  return person.name?.trim() || person.email;
+}
+
+function researchAuthorsNotificationValue(
+  snapshot: ResearchNotificationSnapshot,
+) {
+  if (snapshot.authorEntries.length > 0) {
+    return snapshot.authorEntries
+      .map((entry) => {
+        const contactEmail = entry.selectedEmail || entry.user.email;
+        return `${researchPersonLabel(entry.user)} <${contactEmail}>${entry.isCorresponding ? " (corresponding)" : ""}`;
+      })
+      .join(", ");
+  }
+
+  return snapshot.authors
+    .map((author) => researchPersonLabel(author))
+    .join(", ");
+}
+
+function researchRegistrationUserNotificationValue(
+  snapshot: ResearchNotificationSnapshot,
+) {
+  if (snapshot.registrationUser) {
+    return researchPersonLabel(snapshot.registrationUser);
+  }
+  return snapshot.registrationName ?? "";
+}
+
+function researchProjectNotificationChanges(
+  before: ResearchNotificationSnapshot,
+  after: ResearchNotificationSnapshot,
+) {
+  const changes: { label: string; detail: string }[] = [];
+  function addChange(label: string, previous: string, next: string) {
+    const normalizedPrevious = previous.trim();
+    const normalizedNext = next.trim();
+    if (normalizedPrevious === normalizedNext) return;
+    changes.push({
+      label,
+      detail: `${label} - Before: "${compactResearchNotificationValue(previous)}"; After: "${compactResearchNotificationValue(next)}"`,
+    });
+  }
+
+  addChange("Title", before.title, after.title);
+  addChange("Abstract", before.abstract ?? "", after.abstract ?? "");
+  addChange(
+    "Shared folder",
+    before.sharedFolderUrl ?? "",
+    after.sharedFolderUrl ?? "",
+  );
+  addChange(
+    "University registration",
+    before.universityRegistration ?? "",
+    after.universityRegistration ?? "",
+  );
+  addChange(
+    "Registration user",
+    researchRegistrationUserNotificationValue(before),
+    researchRegistrationUserNotificationValue(after),
+  );
+  addChange(
+    "Funding institution",
+    before.fundingInstitution?.name ?? "",
+    after.fundingInstitution?.name ?? "",
+  );
+  addChange(
+    "Registration status",
+    readableResearchValue(before.registerStatus),
+    readableResearchValue(after.registerStatus),
+  );
+  addChange(
+    "Claim status",
+    readableResearchValue(before.claimStatus),
+    readableResearchValue(after.claimStatus),
+  );
+  addChange(
+    "Authors",
+    researchAuthorsNotificationValue(before),
+    researchAuthorsNotificationValue(after),
+  );
+  addChange(
+    "Production checklist",
+    before.completedProductionSteps.join(", "),
+    after.completedProductionSteps.join(", "),
+  );
+
+  return changes;
+}
+
 function orderedUniqueStrings(values: FormDataEntryValue[]) {
   const seen = new Set<string>();
   return values.filter((value): value is string => {
@@ -2004,13 +2129,29 @@ export async function updateResearchProject(
     where: { id: projectId },
     select: {
       title: true,
+      abstract: true,
+      sharedFolderUrl: true,
+      universityRegistration: true,
+      registerStatus: true,
+      claimStatus: true,
+      registrationName: true,
+      registrationUser: { select: { name: true, email: true } },
+      fundingInstitution: { select: { name: true } },
       stage: true,
       completedProductionSteps: true,
       contentUnlocked: true,
       authorsUnlocked: true,
       leadResearcherId: true,
-      authors: { select: { id: true } },
-      authorEntries: { select: { userId: true, isCorresponding: true } },
+      authors: { select: { id: true, name: true, email: true } },
+      authorEntries: {
+        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        select: {
+          userId: true,
+          selectedEmail: true,
+          isCorresponding: true,
+          user: { select: { name: true, email: true } },
+        },
+      },
       submissions: { select: { status: true } },
       conferenceSubmissions: { select: { status: true } },
     },
@@ -2155,8 +2296,34 @@ export async function updateResearchProject(
   await refreshResearchStage(projectId, completedProductionSteps);
   const updatedProject = await prisma.researchProject.findUnique({
     where: { id: projectId },
-    select: { title: true, stage: true },
+    select: {
+      title: true,
+      abstract: true,
+      sharedFolderUrl: true,
+      universityRegistration: true,
+      registerStatus: true,
+      claimStatus: true,
+      registrationName: true,
+      registrationUser: { select: { name: true, email: true } },
+      fundingInstitution: { select: { name: true } },
+      stage: true,
+      completedProductionSteps: true,
+      authors: { select: { id: true, name: true, email: true } },
+      authorEntries: {
+        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        select: {
+          userId: true,
+          selectedEmail: true,
+          isCorresponding: true,
+          user: { select: { name: true, email: true } },
+        },
+      },
+    },
   });
+
+  const notificationChanges = updatedProject
+    ? researchProjectNotificationChanges(projectLock, updatedProject)
+    : [];
 
   const productionWasComplete = productionStepLabels.every((step) =>
     projectLock?.completedProductionSteps.includes(step),
@@ -2167,21 +2334,25 @@ export async function updateResearchProject(
       type: "RESEARCH_PRODUCTION_FINISHED",
       title: "Research production finished",
       summary: updatedProject?.title ?? "Research production is finished.",
-      body: "All production checklist items have been marked complete.",
+      body:
+        notificationChanges.find(
+          (change) => change.label === "Production checklist",
+        )?.detail ?? "All production checklist items have been marked complete.",
     });
   } else if (updatedProject && projectLock?.stage !== updatedProject.stage) {
     await notifyResearchAuthors(projectId, {
       type: "RESEARCH_STATUS_UPDATED",
       title: "Research status updated",
       summary: `${updatedProject.title} moved to ${updatedProject.stage.toLowerCase()}.`,
-      body: "The research stage changed after recent updates.",
+      body: `Research stage - Before: "${readableResearchValue(projectLock.stage)}"; After: "${readableResearchValue(updatedProject.stage)}"`,
     });
-  } else {
+  } else if (updatedProject && notificationChanges.length > 0) {
+    const changedLabels = notificationChanges.map((change) => change.label);
     await notifyResearchAuthors(projectId, {
       type: "RESEARCH_UPDATED",
       title: "Research updated",
-      summary: updatedProject?.title ?? "A research record was updated.",
-      body: "Research information, authors, registration, claim, or production checklist details were changed.",
+      summary: `${changedLabels.join(", ")} changed for ${updatedProject.title}.`,
+      body: notificationChanges.map((change) => change.detail).join("\n"),
       excludeUserId: user.id,
     });
   }

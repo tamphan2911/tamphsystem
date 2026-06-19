@@ -304,7 +304,7 @@ export function NotificationsCenter({
                 </p>
 
                 {selected.body ? (
-                  <div className="mt-6 border border-[#D8D0C2] bg-[#F8F6EF] p-4 text-sm leading-7 text-[#4B5565] dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#B0B0B0]">
+                  <div className="mt-6 whitespace-pre-line border border-[#D8D0C2] bg-[#F8F6EF] p-4 text-sm leading-7 text-[#4B5565] dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#B0B0B0]">
                     {selected.body}
                   </div>
                 ) : null}

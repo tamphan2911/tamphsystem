@@ -317,7 +317,7 @@ export function NotificationsTable({
                       {notification.summary}
                     </p>
                     {notification.body ? (
-                      <p className="mt-1 text-xs leading-5 text-[#777777]">
+                      <p className="mt-1 whitespace-pre-line text-xs leading-5 text-[#777777]">
                         {notification.body}
                       </p>
                     ) : null}
