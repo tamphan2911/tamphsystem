@@ -353,10 +353,6 @@ export default async function ResearchProfilePage({
       projectRows={projectRows}
       proposalRows={proposalRows}
       taskRows={taskRows}
-      isAssistant={
-        user.roles.includes(Role.ASSISTANT) ||
-        user.roles.includes(Role.CHIEF_ASSISTANT)
-      }
       canEditProfile={!viewingAnotherUser}
     />
   );

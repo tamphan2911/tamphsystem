@@ -259,7 +259,6 @@ export function ProfileClient({
   projectRows,
   proposalRows,
   taskRows,
-  isAssistant,
   canEditProfile,
 }: {
   user: ResearchProfileUser;
@@ -267,7 +266,6 @@ export function ProfileClient({
   projectRows: OrganizedProjectRow[];
   proposalRows: ProposalRow[];
   taskRows: ProfileTaskRow[];
-  isAssistant: boolean;
   canEditProfile: boolean;
 }) {
   const router = useRouter();
@@ -278,7 +276,7 @@ export function ProfileClient({
   const [isPasswordSaving, setIsPasswordSaving] = useState(false);
   const [activeTab, setActiveTab] = usePersistentTableValue<TabKey>(
     "profile:tab",
-    isAssistant ? "dashboard" : "research",
+    "dashboard",
   );
   const [period, setPeriod] = usePersistentTableValue<PeriodKey>(
     "profile:period",
@@ -353,16 +351,12 @@ export function ProfileClient({
     },
   ];
   const tabs = [
-    ...(isAssistant
-      ? [
-          {
-            key: "dashboard" as const,
-            label: "Dashboard",
-            value: taskRows.length,
-            icon: BarChart3,
-          },
-        ]
-      : []),
+    {
+      key: "dashboard" as const,
+      label: "Dashboard",
+      value: taskRows.length,
+      icon: BarChart3,
+    },
     {
       key: "research" as const,
       label: "Research",
@@ -509,11 +503,7 @@ export function ProfileClient({
         )}
 
         <section className="space-y-3">
-          <div
-            className={`journal-detail-tabs grid w-full border border-[#444444] bg-[#242424] p-1 text-center ${
-              isAssistant ? "grid-cols-4" : "grid-cols-3"
-            }`}
-          >
+          <div className="journal-detail-tabs grid w-full grid-cols-4 border border-[#444444] bg-[#242424] p-1 text-center">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -534,8 +524,8 @@ export function ProfileClient({
             ))}
           </div>
 
-          {activeTab === "dashboard" && isAssistant && (
-            <AssistantDashboard
+          {activeTab === "dashboard" && (
+            <TaskDashboard
               period={period}
               onPeriodChange={setPeriod}
               dashboardStatus={dashboardStatus}
@@ -710,7 +700,7 @@ export function ProfileClient({
   );
 }
 
-function AssistantDashboard({
+function TaskDashboard({
   period,
   onPeriodChange,
   dashboardStatus,
@@ -737,7 +727,7 @@ function AssistantDashboard({
       <div className="flex flex-col gap-3 border-b border-[#444444] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
-            Assistant Performance
+            Task Performance
           </p>
           <p className="mt-1 text-sm text-[#E4E4E4]">
             {total} task{total === 1 ? "" : "s"} tracked - {completionRate}%
