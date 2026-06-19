@@ -92,7 +92,10 @@ export function FilterSelect({
   }, []);
 
   return (
-    <div ref={wrapperRef} className="relative w-full sm:w-52 lg:w-56">
+    <div
+      ref={wrapperRef}
+      className="research-filter-select relative w-full sm:w-52 lg:w-56"
+    >
       <span className="sr-only">{label ?? ariaLabel}</span>
       <button
         type="button"

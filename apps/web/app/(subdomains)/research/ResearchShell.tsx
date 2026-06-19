@@ -10,6 +10,7 @@ import { SidebarSupportCard } from "@/sites/research/components/SidebarSupportCa
 import { ResearchNotificationBell } from "./ResearchNotificationBell";
 import { ResearchToastProvider } from "@/sites/research/components/ResearchToast";
 import { ScrollToTopButton } from "@/sites/research/components/ScrollToTopButton";
+import { ResearchMobileTableEnhancer } from "@/sites/research/components/ResearchMobileTableEnhancer";
 
 const navItems = [
   { href: "/projects", label: "Research", icon: "projects" as const },
@@ -483,6 +484,7 @@ export function ResearchShell({
           </main>
         </div>
         <ScrollToTopButton />
+        <ResearchMobileTableEnhancer />
       </div>
     </ResearchToastProvider>
   );
