@@ -91,10 +91,22 @@ const navItems = [
 
 const sidebarStateKey = "research-sidebar-collapsed";
 const researchThemeKey = "research-theme-mode";
+const researchThemePreferenceKey = "research-theme-preference";
 const researchThemeTransitionMs = 280;
 type ResearchTheme = "dark" | "light";
 
 let researchThemeTransitionTimer: number | undefined;
+
+function timeBasedResearchTheme(date = new Date()): ResearchTheme {
+  const hour = date.getHours();
+  return hour >= 6 && hour < 18 ? "light" : "dark";
+}
+
+function initialResearchTheme(): ResearchTheme {
+  const preference = window.localStorage.getItem(researchThemePreferenceKey);
+  if (preference === "light" || preference === "dark") return preference;
+  return timeBasedResearchTheme();
+}
 
 function applyResearchTheme(theme: ResearchTheme) {
   document.documentElement.classList.toggle("dark", theme === "dark");
@@ -208,14 +220,13 @@ export function ResearchShell({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState<ResearchTheme>(() => {
     if (typeof window === "undefined") return "dark";
-    return window.localStorage.getItem(researchThemeKey) === "light"
-      ? "light"
-      : "dark";
+    return initialResearchTheme();
   });
 
   function handleThemeChange(nextTheme: ResearchTheme) {
     if (nextTheme === theme) return;
     startResearchThemeTransition();
+    window.localStorage.setItem(researchThemePreferenceKey, nextTheme);
     setTheme(nextTheme);
   }
 
