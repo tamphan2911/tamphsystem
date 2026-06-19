@@ -1350,7 +1350,7 @@ export default async function ProjectDetailPage({
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 flex-wrap items-center gap-2">
-                          <p className="truncate text-sm font-normal text-[#E4E4E4]">
+                          <p className="min-w-0 whitespace-normal break-words text-sm font-normal text-[#E4E4E4] lg:truncate">
                             {displayResearchPersonName(author)}
                             {author.isCorresponding ? "*" : ""}
                           </p>
@@ -1363,23 +1363,23 @@ export default async function ProjectDetailPage({
                             </span>
                           )}
                         </div>
-                        <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#B0B0B0]">
+                        <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs font-normal text-[#B0B0B0] lg:items-center lg:truncate">
                           <Mail
                             className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]"
                             aria-hidden="true"
                           />
-                          <span className="truncate">
+                          <span className="min-w-0 whitespace-normal break-all lg:truncate">
                             {displayResearchEmail(
                               author.selectedEmail || author.email,
                             )}
                           </span>
                         </p>
-                        <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#B0B0B0]">
+                        <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs font-normal leading-5 text-[#B0B0B0] lg:items-center lg:truncate">
                           <Building2
                             className="h-3.5 w-3.5 flex-none text-violet-700 dark:text-[#B39CD0]"
                             aria-hidden="true"
                           />
-                          <span className="truncate">
+                          <span className="min-w-0 whitespace-normal break-words lg:truncate">
                             {author.affiliation || "No affiliation recorded"}
                           </span>
                         </p>

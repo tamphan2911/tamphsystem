@@ -379,10 +379,7 @@ export function NewTaskDialog({
     mode === "submit" || (mode === "other" && triggerVariant === "default");
   const needsVenue = mode === "submit";
   const selectedVenueMatchesMode =
-    !needsVenue ||
-    Boolean(
-      selectedVenue && (mode !== "other" || selectedVenue.kind === "journal"),
-    );
+    !needsVenue || Boolean(selectedVenue);
   const needsReview = mode === "review";
   const selectedReviewIsOpen =
     !needsReview ||
@@ -562,7 +559,7 @@ export function NewTaskDialog({
           {triggerVariant === "default" && (
             <div
               data-research-toggle-tabs="true"
-              className="grid w-full grid-cols-5 border border-[#444444] bg-[#202020]"
+              className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020] sm:grid-cols-5"
             >
               {(
                 ["submit", "production", "review", "project", "other"] as const

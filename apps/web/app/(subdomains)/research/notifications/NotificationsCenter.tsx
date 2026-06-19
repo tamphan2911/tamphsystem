@@ -199,7 +199,7 @@ export function NotificationsCenter({
               placeholder="Search notifications..."
             />
           </div>
-          <div className="grid flex-none grid-cols-2 gap-2 lg:w-[28rem]">
+          <div className="grid flex-none gap-2 sm:grid-cols-2 lg:w-[28rem]">
             <FilterSelect
               value={scope}
               onChange={setScope}

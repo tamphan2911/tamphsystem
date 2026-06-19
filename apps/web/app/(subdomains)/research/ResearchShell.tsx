@@ -474,7 +474,11 @@ export function ResearchShell({
             </div>
           </header>
 
-          <main className="min-h-[calc(100vh-5rem)] p-4 transition-[padding] duration-300 sm:p-8">
+          <main className="min-h-[calc(100vh-5rem)] min-w-0 overflow-x-hidden p-4 transition-[padding] duration-300 sm:p-8 lg:overflow-x-visible">
+            <div
+              id="research-page-mobile-header"
+              className="mb-4 min-w-0 empty:hidden lg:hidden"
+            />
             {children}
           </main>
         </div>

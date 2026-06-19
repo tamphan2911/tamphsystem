@@ -575,34 +575,12 @@ export default async function OrganizedProjectDetailPage({
       <div className="mx-auto max-w-7xl space-y-5">
         <header className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
           <div className="min-w-0">
-            <div className="mb-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 lg:hidden">
-              <h1 className="min-w-0 max-w-full whitespace-normal break-words text-[18px] font-normal leading-6 text-[#E4E4E4]">
-                {project.title}
-              </h1>
-              <IconHint label={`Status: ${status.label}`}>
-                <span
-                  className={`research-task-icon-motion inline-flex h-7 w-7 flex-none items-center justify-center ${status.className}`}
-                >
-                  <StatusIcon className="h-4 w-4" aria-hidden="true" />
-                </span>
-              </IconHint>
-              {canEditProject && (
-                <ProjectInfoEditDialog
-                  action={saveProject}
-                  info={projectInfo}
-                  members={memberDefaults}
-                  research={researchDefaults}
-                  fundingInstitutions={fundingOptions}
-                  formId="project-info-edit-form-mobile"
-                />
-              )}
-            </div>
             <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-[#B0B0B0]">
               <span className="font-mono text-xs font-bold uppercase tracking-wide text-slate-400">
                 {project.referenceCode || project.id.slice(0, 8).toUpperCase()}
               </span>
               <span className="text-[#777777]">|</span>
-              <span className="min-w-0 truncate font-normal">
+              <span className="min-w-0 whitespace-normal break-words font-normal lg:truncate">
                 {project.fundingInstitution?.name ||
                   project.organizer ||
                   "No funding institution"}
@@ -684,7 +662,7 @@ export default async function OrganizedProjectDetailPage({
                     </p>
                     <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs leading-5 text-[#B0B0B0]">
                       <Building2 className="research-task-icon-motion mt-1 h-3 w-3 flex-none text-[#B39CD0]" />
-                      <span className="line-clamp-2 min-w-0 whitespace-normal break-words">
+                      <span className="min-w-0 whitespace-normal break-words lg:line-clamp-2">
                         {member.affiliation || "No affiliation recorded"}
                       </span>
                     </p>
