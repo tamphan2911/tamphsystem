@@ -120,6 +120,7 @@ function statusMeta(task: TaskRow) {
   const due = task.dueDate ? new Date(task.dueDate) : null;
   const completed = task.completedAt ? new Date(task.completedAt) : null;
   const now = new Date();
+  const remainingMs = due ? due.getTime() - now.getTime() : null;
 
   if (task.status === "REVOKED") {
     return {
@@ -205,12 +206,15 @@ function statusMeta(task: TaskRow) {
   return {
     label: "In progress",
     detail: due
-      ? `${durationText(due.getTime() - now.getTime())} left`
+      ? `${durationText(remainingMs ?? 0)} left`
       : "No due date",
     dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
     className:
       "border-sky-200 bg-sky-50 text-sky-700 dark:border-[#A8DADC]/40 dark:bg-[#A8DADC]/10 dark:text-[#A8DADC]",
-    detailClassName: "text-[#B0B0B0]",
+    detailClassName:
+      remainingMs !== null && remainingMs < 24 * 60 * 60 * 1000
+        ? "font-semibold text-[#B64F48] dark:text-[#FFB4A2]"
+        : "text-[#B0B0B0]",
   };
 }
 

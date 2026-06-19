@@ -126,7 +126,10 @@ export async function GET() {
           orderBy: { createdAt: "asc" },
         },
       },
-      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      orderBy: [
+        { dueDate: { sort: "asc", nulls: "last" } },
+        { createdAt: "desc" },
+      ],
     }),
     prisma.researchTask.count({
       where: taskNotificationWhere({ isRootAdmin, isChiefAssistant, userId }),
