@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { ExternalLink, Globe2 } from "lucide-react";
 import {
   IconHint,
@@ -76,18 +76,18 @@ export function FundingInstitutionsTable({
         />
       </div>
 
-      <div className="overflow-hidden">
-        <table className="w-full table-fixed text-left">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[56rem] table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
-              <th className="w-24 px-4 py-3">Funder ID</th>
+              <th className="w-[11%] px-4 py-3">Funder ID</th>
               <th className="px-4 py-3">Funder name</th>
-              <th className="w-24 px-3 py-3 text-center">Alias</th>
-              <th className="w-28 px-3 py-3 text-center">Country</th>
-              <th className="w-20 px-3 py-3 text-center">Projects</th>
-              <th className="w-16 px-3 py-3 text-center">Web</th>
-              <th className="w-14 px-3 py-3 text-center">Edit</th>
-              <th className="w-14 px-3 py-3 text-center">
+              <th className="w-[10%] px-3 py-3 text-center">Alias</th>
+              <th className="w-[10%] px-3 py-3 text-center">Country</th>
+              <th className="w-[8%] px-3 py-3 text-center">Projects</th>
+              <th className="w-[6%] px-3 py-3 text-center">Web</th>
+              <th className="w-[6%] px-3 py-3 text-center">Edit</th>
+              <th className="w-[6%] px-3 py-3 text-center">
                 <span className="sr-only">Delete</span>
               </th>
             </tr>
@@ -103,8 +103,8 @@ export function FundingInstitutionsTable({
                     {institution.funderCode || institution.id.slice(0, 8)}
                   </span>
                 </td>
-                <td className="px-4 py-3 align-top">
-                  <p className="line-clamp-1 text-base font-normal text-[#E4E4E4]">
+                <td className="min-w-0 px-4 py-3 align-top">
+                  <p className="w-full whitespace-normal break-words text-base font-normal leading-6 text-[#E4E4E4]">
                     {institution.name}
                   </p>
                   <p className="mt-1 line-clamp-1 text-xs text-[#B0B0B0]">
