@@ -1046,11 +1046,19 @@ export default async function ProjectDetailPage({
             <div className="space-y-1 py-1">
               <div className="flex min-w-0 items-center gap-2">
                 <p className="min-w-0 text-[#E4E4E4]">
-                  ISSN: {highlightedJournalSubmission.journal.issn || "-"} |{" "}
-                  {highlightedJournalSubmission.journal.name} |{" "}
+                  ISSN: {highlightedJournalSubmission.journal.issn || "-"}
+                  <span className="px-1.5 text-[#777777]" aria-hidden="true">
+                    |
+                  </span>
+                  {highlightedJournalSubmission.journal.name}
+                  <span className="px-1.5 text-[#777777]" aria-hidden="true">
+                    |
+                  </span>
                   {highlightedJournalSubmission.journal.publisher ||
-                    "No publisher"}{" "}
-                  |{" "}
+                    "No publisher"}
+                  <span className="px-1.5 text-[#777777]" aria-hidden="true">
+                    |
+                  </span>
                   {highlightedJournalSubmission.journal.rank ||
                     highlightedJournalSubmission.journal.localRank ||
                     "No rank"}
@@ -1094,12 +1102,30 @@ export default async function ProjectDetailPage({
                 <p className={`text-xs ${highlightedJournalClass.meta}`}>
                   Submitted:{" "}
                   {shortDate(highlightedJournalSubmission.submittedAt)}
-                  {highlightedJournalSubmission.acceptedAt
-                    ? ` | Accepted: ${shortDate(highlightedJournalSubmission.acceptedAt)}`
-                    : ""}
-                  {highlightedJournalSubmission.publishedAt
-                    ? ` | Published: ${shortDate(highlightedJournalSubmission.publishedAt)}`
-                    : ""}
+                  {highlightedJournalSubmission.acceptedAt && (
+                    <>
+                      <span
+                        className="px-1.5 text-[#777777]"
+                        aria-hidden="true"
+                      >
+                        |
+                      </span>
+                      Accepted:{" "}
+                      {shortDate(highlightedJournalSubmission.acceptedAt)}
+                    </>
+                  )}
+                  {highlightedJournalSubmission.publishedAt && (
+                    <>
+                      <span
+                        className="px-1.5 text-[#777777]"
+                        aria-hidden="true"
+                      >
+                        |
+                      </span>
+                      Published:{" "}
+                      {shortDate(highlightedJournalSubmission.publishedAt)}
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -1121,12 +1147,30 @@ export default async function ProjectDetailPage({
               <p className={`text-xs ${highlightedConferenceClass.meta}`}>
                 Submitted:{" "}
                 {shortDate(highlightedConferenceSubmission.submittedAt)}
-                {highlightedConferenceSubmission.acceptedAt
-                  ? ` | Accepted: ${shortDate(highlightedConferenceSubmission.acceptedAt)}`
-                  : ""}
-                {highlightedConferenceSubmission.publishedAt
-                  ? ` | Published: ${shortDate(highlightedConferenceSubmission.publishedAt)}`
-                  : ""}
+                {highlightedConferenceSubmission.acceptedAt && (
+                  <>
+                    <span
+                      className="px-1.5 text-[#777777]"
+                      aria-hidden="true"
+                    >
+                      |
+                    </span>
+                    Accepted:{" "}
+                    {shortDate(highlightedConferenceSubmission.acceptedAt)}
+                  </>
+                )}
+                {highlightedConferenceSubmission.publishedAt && (
+                  <>
+                    <span
+                      className="px-1.5 text-[#777777]"
+                      aria-hidden="true"
+                    >
+                      |
+                    </span>
+                    Published:{" "}
+                    {shortDate(highlightedConferenceSubmission.publishedAt)}
+                  </>
+                )}
               </p>
             </div>
           )}
