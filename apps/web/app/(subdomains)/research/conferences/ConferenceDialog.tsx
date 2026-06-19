@@ -74,9 +74,8 @@ export function ConferenceDialog({
             setOpen(true);
           }}
           className="research-new-button"
-          aria-label="Add conference"
         >
-          <PlusCircle className="h-4 w-4" />
+          <PlusCircle className="research-task-icon-motion h-4 w-4" />
           New Conference
         </ResearchButton>
       )}
