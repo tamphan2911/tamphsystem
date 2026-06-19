@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ResearchShell } from "./ResearchShell";
 import { displayResearchEmail } from "@/sites/research/lib/display";
+import { ResearchDesktopOnly } from "@/sites/research/components/ResearchDesktopOnly";
 
 export default async function ResearchLayout({
   children,
@@ -17,7 +18,7 @@ export default async function ResearchLayout({
     sitePathname === "/learn" ||
     sitePathname === "/portfolio"
   ) {
-    return <>{children}</>;
+    return <ResearchDesktopOnly>{children}</ResearchDesktopOnly>;
   }
 
   const session = await auth();
@@ -92,20 +93,22 @@ export default async function ResearchLayout({
   }
 
   return (
-    <ResearchShell
-      email={displayResearchEmail(session?.user?.email)}
-      name={session?.user?.name}
-      isAdmin={isResearchAdmin}
-      isRootAdmin={isRootAdmin}
-      isAssistant={
-        roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT)
-      }
-      canSeeTasks={canSeeTasks}
-      canSeeAccounts={canSeeAccounts}
-      canSeeReviews={canSeeReviews}
-      unopenedProposalCount={unopenedProposalCount}
-    >
-      {children}
-    </ResearchShell>
+    <ResearchDesktopOnly>
+      <ResearchShell
+        email={displayResearchEmail(session?.user?.email)}
+        name={session?.user?.name}
+        isAdmin={isResearchAdmin}
+        isRootAdmin={isRootAdmin}
+        isAssistant={
+          roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT)
+        }
+        canSeeTasks={canSeeTasks}
+        canSeeAccounts={canSeeAccounts}
+        canSeeReviews={canSeeReviews}
+        unopenedProposalCount={unopenedProposalCount}
+      >
+        {children}
+      </ResearchShell>
+    </ResearchDesktopOnly>
   );
 }
