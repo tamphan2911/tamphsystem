@@ -1,5 +1,7 @@
 "use client";
 
+import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
@@ -32,7 +34,7 @@ export type NotificationCenterItem = {
 };
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-GB", {
+  return researchDateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",

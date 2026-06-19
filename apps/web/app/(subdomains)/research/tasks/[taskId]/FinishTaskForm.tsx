@@ -5,6 +5,7 @@ import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
+import { researchDateValue } from "@/sites/research/lib/date-time";
 
 export function FinishTaskForm({
   action,
@@ -18,9 +19,7 @@ export function FinishTaskForm({
   mode?: "ready" | "approve";
 }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const [submissionDate, setSubmissionDate] = useState(() =>
-    new Date().toISOString().slice(0, 10),
-  );
+  const [submissionDate, setSubmissionDate] = useState(researchDateValue);
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const isReadyMode = mode === "ready";

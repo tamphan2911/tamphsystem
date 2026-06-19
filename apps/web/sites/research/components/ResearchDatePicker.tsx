@@ -8,6 +8,7 @@ import {
   researchDropdownPanelClass,
   researchFieldClass,
 } from "./ResearchPrimitives";
+import { researchCalendarDate } from "@/sites/research/lib/date-time";
 
 const weekdayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 const monthLabelFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -140,11 +141,11 @@ export function ResearchDatePicker({
   const selectedDate = parseDateValue(selectedValue);
   const [open, setOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(() =>
-    startOfMonth(selectedDate ?? new Date()),
+    startOfMonth(selectedDate ?? researchCalendarDate()),
   );
   const anchorRef = useRef<HTMLDivElement>(null);
   const days = useMemo(() => calendarDays(visibleMonth), [visibleMonth]);
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => researchCalendarDate(), []);
   const [manualText, setManualText] = useState(() =>
     selectedDate ? shortDateFormatter.format(selectedDate) : "",
   );
@@ -152,7 +153,7 @@ export function ResearchDatePicker({
   useEffect(() => {
     if (open) {
       setVisibleMonth(
-        startOfMonth(parseDateValue(selectedValue) ?? new Date()),
+        startOfMonth(parseDateValue(selectedValue) ?? researchCalendarDate()),
       );
     }
   }, [open, selectedValue]);
@@ -308,7 +309,7 @@ export function ResearchDatePicker({
               </p>
               <button
                 type="button"
-                onClick={() => chooseDate(new Date())}
+                onClick={() => chooseDate(researchCalendarDate())}
                 className="mt-0.5 text-[11px] font-normal text-[#1F7180] transition hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
               >
                 Today

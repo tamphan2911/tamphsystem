@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  researchDateTimeFormat,
+  researchStartOfDay,
+  researchStartOfMonth,
+  researchWeekday,
+} from "@/sites/research/lib/date-time";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -95,51 +102,41 @@ function periodLabel(period: PeriodKey) {
 }
 
 function periodStart(period: PeriodKey) {
-  const now = new Date();
-  const currentDay = now.getDay();
+  const currentDay = researchWeekday();
   const weekOffset = currentDay === 0 ? 6 : currentDay - 1;
-  const startOfCurrentWeek = new Date(now);
-  startOfCurrentWeek.setHours(0, 0, 0, 0);
-  startOfCurrentWeek.setDate(now.getDate() - weekOffset);
+  const startOfCurrentWeek = researchStartOfDay(new Date(), -weekOffset);
 
   if (period === "currentWeek") {
     return startOfCurrentWeek;
   }
   if (period === "lastWeek") {
-    const startOfLastWeek = new Date(startOfCurrentWeek);
-    startOfLastWeek.setDate(startOfCurrentWeek.getDate() - 7);
-    return startOfLastWeek;
+    return researchStartOfDay(new Date(), -weekOffset - 7);
   }
   if (period === "currentMonth") {
-    return new Date(now.getFullYear(), now.getMonth(), 1);
+    return researchStartOfMonth();
   }
   if (period === "lastMonth") {
-    return new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return researchStartOfMonth(new Date(), -1);
   }
   return null;
 }
 
 function periodEnd(period: PeriodKey) {
-  const now = new Date();
-  const currentDay = now.getDay();
+  const currentDay = researchWeekday();
   const weekOffset = currentDay === 0 ? 6 : currentDay - 1;
-  const startOfCurrentWeek = new Date(now);
-  startOfCurrentWeek.setHours(0, 0, 0, 0);
-  startOfCurrentWeek.setDate(now.getDate() - weekOffset);
+  const startOfCurrentWeek = researchStartOfDay(new Date(), -weekOffset);
 
   if (period === "lastWeek") {
     return startOfCurrentWeek;
   }
   if (period === "currentWeek") {
-    const endOfCurrentWeek = new Date(startOfCurrentWeek);
-    endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 7);
-    return endOfCurrentWeek;
+    return researchStartOfDay(new Date(), 7 - weekOffset);
   }
   if (period === "lastMonth") {
-    return new Date(now.getFullYear(), now.getMonth(), 1);
+    return researchStartOfMonth();
   }
   if (period === "currentMonth") {
-    return new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return researchStartOfMonth(new Date(), 1);
   }
   return null;
 }
@@ -156,7 +153,7 @@ function taskTypeLabel(value: string) {
 
 function formatDate(value: string | null) {
   if (!value) return "-";
-  return new Intl.DateTimeFormat("en-GB", {
+  return researchDateTimeFormat("en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "2-digit",

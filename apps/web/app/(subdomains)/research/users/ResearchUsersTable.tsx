@@ -1,5 +1,7 @@
 "use client";
 
+import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
+
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -47,7 +49,7 @@ export type ResearchUserRow = {
 
 function formatDate(value: string | null) {
   if (!value) return "-";
-  return new Intl.DateTimeFormat("en-GB", {
+  return researchDateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",

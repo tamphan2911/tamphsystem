@@ -29,6 +29,7 @@ import {
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
 import type { TaskAssigneeOption } from "../../tasks/NewTaskDialog";
+import { defaultResearchTaskDueDate } from "@/sites/research/lib/task-date";
 
 type SearchPanelItem = {
   id: string;
@@ -37,12 +38,6 @@ type SearchPanelItem = {
   selected: boolean;
   onClick: () => void;
 };
-
-function defaultTaskDueDate() {
-  const date = new Date();
-  date.setDate(date.getDate() + 7);
-  return date.toISOString().slice(0, 10);
-}
 
 export function NewReviewTaskDialog({
   reviewId,
@@ -58,7 +53,7 @@ export function NewReviewTaskDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [assigneeQuery, setAssigneeQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [dueDate, setDueDate] = useState(defaultTaskDueDate);
+  const [dueDate, setDueDate] = useState(defaultResearchTaskDueDate);
   const [isPending, startTransition] = useTransition();
   const { showError, showSuccess } = useResearchToast();
 
@@ -90,7 +85,7 @@ export function NewReviewTaskDialog({
   function reset() {
     setAssigneeQuery("");
     setSelectedIds([]);
-    setDueDate(defaultTaskDueDate());
+    setDueDate(defaultResearchTaskDueDate());
   }
 
   function toggleAssignee(id: string) {

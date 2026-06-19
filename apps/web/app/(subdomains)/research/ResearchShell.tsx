@@ -11,6 +11,7 @@ import { ResearchNotificationBell } from "./ResearchNotificationBell";
 import { ResearchToastProvider } from "@/sites/research/components/ResearchToast";
 import { ScrollToTopButton } from "@/sites/research/components/ScrollToTopButton";
 import { ResearchMobileTableEnhancer } from "@/sites/research/components/ResearchMobileTableEnhancer";
+import { researchHour } from "@/sites/research/lib/date-time";
 
 const navItems = [
   { href: "/projects", label: "Research", icon: "projects" as const },
@@ -98,7 +99,7 @@ type ResearchTheme = "dark" | "light";
 let researchThemeTransitionTimer: number | undefined;
 
 function timeBasedResearchTheme(date = new Date()): ResearchTheme {
-  const hour = date.getHours();
+  const hour = researchHour(date);
   return hour >= 6 && hour < 18 ? "light" : "dark";
 }
 

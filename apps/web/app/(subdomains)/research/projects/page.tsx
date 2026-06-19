@@ -13,6 +13,7 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 
 export const dynamic = "force-dynamic";
 
@@ -230,7 +231,7 @@ export default async function ProjectsDashboard() {
       leadResearcher: displayResearchPersonName(project.leadResearcher),
       submissions: project._count.submissions,
       publications: project._count.publications,
-      updatedAt: project.updatedAt.toLocaleDateString(),
+      updatedAt: researchDateTimeFormat("en-GB").format(project.updatedAt),
       notSubmittedAnywhere:
         !hasSubmissions ||
         submissionStatuses.every(

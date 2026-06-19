@@ -1,3 +1,7 @@
+import {
+  researchDateTimeFormat,
+  researchDateValue,
+} from "@/sites/research/lib/date-time";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -33,7 +37,7 @@ export const dynamic = "force-dynamic";
 
 function dateText(start: Date | null, end: Date | null) {
   if (!start && !end) return "";
-  const formatter = new Intl.DateTimeFormat("en", {
+  const formatter = researchDateTimeFormat("en", {
     month: "short",
     day: "2-digit",
     year: "numeric",
@@ -44,7 +48,7 @@ function dateText(start: Date | null, end: Date | null) {
 }
 
 function dateValue(value: Date | null) {
-  return value ? value.toISOString().slice(0, 10) : "";
+  return value ? researchDateValue(value) : "";
 }
 
 function conferenceTypeLabel(value: string | null) {
@@ -55,11 +59,7 @@ function conferenceTypeLabel(value: string | null) {
 
 function dateHasPassed(value: Date | null) {
   if (!value) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const date = new Date(value);
-  date.setHours(0, 0, 0, 0);
-  return date.getTime() < today.getTime();
+  return researchDateValue(value) < researchDateValue();
 }
 
 export default async function ConferenceDetailPage({
@@ -163,7 +163,7 @@ export default async function ConferenceDetailPage({
         leadResearcher: displayResearchPersonName(project.leadResearcher),
         submissions: project._count.submissions,
         publications: project._count.publications,
-        updatedAt: project.updatedAt.toLocaleDateString(),
+        updatedAt: researchDateTimeFormat("en-GB").format(project.updatedAt),
         notSubmittedAnywhere:
           !hasSubmissions ||
           submissionStatuses.every(

@@ -27,11 +27,12 @@ import {
   hasUnrestrictedVenueAccess,
 } from "@/sites/research/lib/venueAccess";
 import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
+import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 
 export const dynamic = "force-dynamic";
 
 function dateText(value: Date | null) {
-  return value ? value.toLocaleDateString() : "";
+  return value ? researchDateTimeFormat("en-GB").format(value) : "";
 }
 
 export default async function JournalDetailPage({

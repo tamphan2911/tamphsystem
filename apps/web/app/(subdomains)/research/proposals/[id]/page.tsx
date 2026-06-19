@@ -1,3 +1,4 @@
+import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import {
@@ -26,7 +27,7 @@ export const dynamic = "force-dynamic";
 
 function longDate(value: Date | null) {
   if (!value) return "-";
-  return new Intl.DateTimeFormat("en", {
+  return researchDateTimeFormat("en", {
     month: "short",
     day: "2-digit",
     year: "numeric",

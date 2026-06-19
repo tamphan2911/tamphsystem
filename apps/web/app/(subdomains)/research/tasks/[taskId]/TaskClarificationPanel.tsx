@@ -1,5 +1,7 @@
 "use client";
 
+import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
+
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { HelpCircle, Loader2, MessageSquareText, Send } from "lucide-react";
@@ -33,7 +35,7 @@ function personName(person: { name: string; email: string }) {
 
 function formatDateTime(value: string | null) {
   if (!value) return "";
-  return new Intl.DateTimeFormat("en-GB", {
+  return researchDateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",

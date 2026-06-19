@@ -1,3 +1,7 @@
+import {
+  researchDateTimeFormat,
+  researchDateValue,
+} from "@/sites/research/lib/date-time";
 import { auth } from "../../../../auth";
 import { prisma, Role } from "@repo/db";
 import { createConference, deleteConference } from "../actions";
@@ -14,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 function dateText(start: Date | null, end: Date | null) {
   if (!start && !end) return "";
-  const formatter = new Intl.DateTimeFormat("en", {
+  const formatter = researchDateTimeFormat("en", {
     month: "short",
     day: "2-digit",
     year: "numeric",
@@ -25,7 +29,7 @@ function dateText(start: Date | null, end: Date | null) {
 }
 
 function dateValue(value: Date | null) {
-  return value ? value.toISOString().slice(0, 10) : "";
+  return value ? researchDateValue(value) : "";
 }
 
 function conferenceTypeLabel(value: string | null) {

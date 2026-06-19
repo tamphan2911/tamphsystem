@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  researchDateTimeFormat,
+  researchDateValue,
+} from "@/sites/research/lib/date-time";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -42,22 +47,17 @@ const conferenceTypes = ["ALL", "International", "National"];
 
 function formatDate(value: string) {
   if (!value) return "";
-  return new Intl.DateTimeFormat("en", {
+  return researchDateTimeFormat("en", {
     month: "short",
     day: "2-digit",
     year: "numeric",
-  }).format(new Date(`${value}T00:00:00`));
+  }).format(new Date(`${value}T00:00:00+07:00`));
 }
 
 function conferenceStatus(conference: ConferenceRow) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const deadline = conference.submissionDeadline
-    ? new Date(`${conference.submissionDeadline}T00:00:00`)
-    : null;
-  const close = conference.closeDate
-    ? new Date(`${conference.closeDate}T00:00:00`)
-    : null;
+  const today = researchDateValue();
+  const deadline = conference.submissionDeadline || null;
+  const close = conference.closeDate || null;
 
   if (deadline && deadline >= today) {
     return {

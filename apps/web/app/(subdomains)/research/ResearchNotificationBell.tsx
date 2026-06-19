@@ -1,5 +1,7 @@
 "use client";
 
+import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
+
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, ExternalLink } from "lucide-react";
@@ -16,7 +18,7 @@ type NotificationItem = {
 function timeLabel(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("en-GB", {
+  return researchDateTimeFormat("en-GB", {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",

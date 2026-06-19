@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  researchDateTimeFormat,
+  researchDateValue,
+} from "@/sites/research/lib/date-time";
+
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import type { FormEvent } from "react";
@@ -152,7 +157,7 @@ function shortDate(value: string) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("en-GB", {
+  return researchDateTimeFormat("en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "2-digit",
@@ -160,11 +165,10 @@ function shortDate(value: string) {
 }
 
 function dateInputValue(value: string) {
-  if (!value) return new Date().toISOString().slice(0, 10);
+  if (!value) return researchDateValue();
   const date = new Date(value);
-  if (Number.isNaN(date.getTime()))
-    return new Date().toISOString().slice(0, 10);
-  return date.toISOString().slice(0, 10);
+  if (Number.isNaN(date.getTime())) return researchDateValue();
+  return researchDateValue(date);
 }
 
 function editableStatusOptions(row: SubmissionRow) {

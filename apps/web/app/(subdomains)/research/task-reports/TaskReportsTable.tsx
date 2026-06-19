@@ -1,5 +1,7 @@
 "use client";
 
+import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -58,7 +60,7 @@ function fileSize(bytes: number) {
 
 function dateTime(value: string | null) {
   if (!value) return "Unknown time";
-  return new Intl.DateTimeFormat("en-GB", {
+  return researchDateTimeFormat("en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "2-digit",

@@ -1,3 +1,4 @@
+import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
@@ -145,7 +146,7 @@ function sentAuthorEmail(value: unknown) {
 
 function shortDate(value: Date | null | undefined) {
   if (!value) return "";
-  return new Intl.DateTimeFormat("en-GB", {
+  return researchDateTimeFormat("en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "2-digit",
@@ -625,8 +626,12 @@ export default async function ProjectDetailPage({
       organizer: conference.organizer ?? "",
       isbn: conference.isbn ?? "",
       time: [
-        conference.startDate?.toLocaleDateString(),
-        conference.endDate?.toLocaleDateString(),
+        conference.startDate
+          ? researchDateTimeFormat("en-GB").format(conference.startDate)
+          : undefined,
+        conference.endDate
+          ? researchDateTimeFormat("en-GB").format(conference.endDate)
+          : undefined,
       ]
         .filter(Boolean)
         .join(" - "),
@@ -645,8 +650,12 @@ export default async function ProjectDetailPage({
         location: conference?.location ?? "",
         organizer: conference?.organizer ?? "",
         time: [
-          conference?.startDate?.toLocaleDateString(),
-          conference?.endDate?.toLocaleDateString(),
+          conference?.startDate
+            ? researchDateTimeFormat("en-GB").format(conference.startDate)
+            : undefined,
+          conference?.endDate
+            ? researchDateTimeFormat("en-GB").format(conference.endDate)
+            : undefined,
         ]
           .filter(Boolean)
           .join(" - "),

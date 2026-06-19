@@ -1,5 +1,10 @@
 "use server";
 
+import {
+  researchDateTimeFormat,
+  researchDateValue,
+  researchYear,
+} from "@/sites/research/lib/date-time";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
@@ -225,10 +230,6 @@ function addMonths(date: Date, months: number) {
   return next;
 }
 
-function startOfDay(value: Date) {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
-}
-
 function taskAllowsReportUpload(taskType: ResearchTaskType | null) {
   return (
     taskType === ResearchTaskType.PRODUCTION ||
@@ -239,7 +240,7 @@ function taskAllowsReportUpload(taskType: ResearchTaskType | null) {
 }
 
 function dateIsBefore(left: Date, right: Date) {
-  return startOfDay(left).getTime() < startOfDay(right).getTime();
+  return researchDateValue(left) < researchDateValue(right);
 }
 
 function researchBaseUrl() {
@@ -931,7 +932,7 @@ async function refreshResearchStage(
 }
 
 async function generateResearchCode(
-  year = new Date().getFullYear(),
+  year = researchYear(),
   client: Pick<Prisma.TransactionClient, "researchProject"> = prisma,
 ) {
   const yearPrefix = `${year}-`;
@@ -2109,7 +2110,7 @@ export async function createResearchForOrganizedProject(
     const research = await tx.researchProject.create({
       data: {
         title,
-        researchCode: await generateResearchCode(new Date().getFullYear(), tx),
+        researchCode: await generateResearchCode(researchYear(), tx),
         abstract: optionalString(formData.get("abstract")),
         sharedFolderUrl: optionalString(formData.get("sharedFolderUrl")),
         stage: ResearchStage.PRODUCTION,
@@ -2791,11 +2792,7 @@ async function conferenceIsbnExists(isbn: string, conferenceId?: string) {
 
 function dateHasPassed(value: Date | null) {
   if (!value) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const date = new Date(value);
-  date.setHours(0, 0, 0, 0);
-  return date.getTime() < today.getTime();
+  return researchDateValue(value) < researchDateValue();
 }
 
 export async function createConference(formData: FormData) {
@@ -5394,7 +5391,7 @@ export async function sendTaskReminderEmail(
   });
   const senderName = sender?.name || sender?.email || "the assigner";
   const dueLine = task.dueDate
-    ? new Intl.DateTimeFormat("en-GB", {
+    ? researchDateTimeFormat("en-GB", {
         day: "2-digit",
         month: "short",
         year: "numeric",

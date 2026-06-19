@@ -1,3 +1,4 @@
+import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 import { redirect } from "next/navigation";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
@@ -15,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 function shortDate(value: Date | null) {
   if (!value) return "";
-  return new Intl.DateTimeFormat("en-GB", {
+  return researchDateTimeFormat("en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "2-digit",
