@@ -310,10 +310,23 @@ export default async function JournalDetailPage({
                 />
               </div>
             </div>
-            <p className="mt-1 min-w-0 truncate text-xs font-normal text-[#B0B0B0]">
-              ISSN: {journal.issn || "-"} |{" "}
-              {journal.publisher || "No publisher"} | {journalTypeLabel} |{" "}
-              {journalRank} |{" "}
+            <p className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-xs font-normal text-[#B0B0B0]">
+              <span>ISSN: {journal.issn || "-"}</span>
+              <span className="text-[#777777]" aria-hidden="true">
+                |
+              </span>
+              <span>{journal.publisher || "No publisher"}</span>
+              <span className="text-[#777777]" aria-hidden="true">
+                |
+              </span>
+              <span>{journalTypeLabel}</span>
+              <span className="text-[#777777]" aria-hidden="true">
+                |
+              </span>
+              <span>{journalRank}</span>
+              <span className="text-[#777777]" aria-hidden="true">
+                |
+              </span>
               {journal.country ? (
                 <IconHint label={countryName(journal.country)}>
                   <span className="inline-flex cursor-help items-center gap-1 align-middle transition-[color,transform] duration-200 ease-out hover:-translate-y-0.5 hover:text-[#A8DADC]">

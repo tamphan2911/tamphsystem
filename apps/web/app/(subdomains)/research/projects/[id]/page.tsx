@@ -1045,23 +1045,29 @@ export default async function ProjectDetailPage({
           {highlightedJournalSubmission && highlightedJournalClass && (
             <div className="space-y-1 py-1">
               <div className="flex min-w-0 items-center gap-2">
-                <p className="min-w-0 text-[#E4E4E4]">
-                  ISSN: {highlightedJournalSubmission.journal.issn || "-"}
-                  <span className="px-1.5 text-[#777777]" aria-hidden="true">
+                <p className="flex min-w-0 flex-wrap items-center gap-2 text-[#E4E4E4]">
+                  <span>
+                    ISSN: {highlightedJournalSubmission.journal.issn || "-"}
+                  </span>
+                  <span className="text-[#777777]" aria-hidden="true">
                     |
                   </span>
-                  {highlightedJournalSubmission.journal.name}
-                  <span className="px-1.5 text-[#777777]" aria-hidden="true">
+                  <span>{highlightedJournalSubmission.journal.name}</span>
+                  <span className="text-[#777777]" aria-hidden="true">
                     |
                   </span>
-                  {highlightedJournalSubmission.journal.publisher ||
-                    "No publisher"}
-                  <span className="px-1.5 text-[#777777]" aria-hidden="true">
+                  <span>
+                    {highlightedJournalSubmission.journal.publisher ||
+                      "No publisher"}
+                  </span>
+                  <span className="text-[#777777]" aria-hidden="true">
                     |
                   </span>
-                  {highlightedJournalSubmission.journal.rank ||
-                    highlightedJournalSubmission.journal.localRank ||
-                    "No rank"}
+                  <span>
+                    {highlightedJournalSubmission.journal.rank ||
+                      highlightedJournalSubmission.journal.localRank ||
+                      "No rank"}
+                  </span>
                 </p>
                 {publishedArticleSubmission?.articleFileName && (
                   <IconHint
@@ -1099,31 +1105,30 @@ export default async function ProjectDetailPage({
                 )}
               </div>
               <div className="min-w-0">
-                <p className={`text-xs ${highlightedJournalClass.meta}`}>
-                  Submitted:{" "}
-                  {shortDate(highlightedJournalSubmission.submittedAt)}
+                <p
+                  className={`flex flex-wrap items-center gap-2 text-xs ${highlightedJournalClass.meta}`}
+                >
+                  <span>
+                    Submitted: {shortDate(highlightedJournalSubmission.submittedAt)}
+                  </span>
                   {highlightedJournalSubmission.acceptedAt && (
                     <>
-                      <span
-                        className="px-1.5 text-[#777777]"
-                        aria-hidden="true"
-                      >
+                      <span className="text-[#777777]" aria-hidden="true">
                         |
                       </span>
-                      Accepted:{" "}
-                      {shortDate(highlightedJournalSubmission.acceptedAt)}
+                      <span>
+                        Accepted: {shortDate(highlightedJournalSubmission.acceptedAt)}
+                      </span>
                     </>
                   )}
                   {highlightedJournalSubmission.publishedAt && (
                     <>
-                      <span
-                        className="px-1.5 text-[#777777]"
-                        aria-hidden="true"
-                      >
+                      <span className="text-[#777777]" aria-hidden="true">
                         |
                       </span>
-                      Published:{" "}
-                      {shortDate(highlightedJournalSubmission.publishedAt)}
+                      <span>
+                        Published: {shortDate(highlightedJournalSubmission.publishedAt)}
+                      </span>
                     </>
                   )}
                 </p>
@@ -1144,31 +1149,30 @@ export default async function ProjectDetailPage({
                     "No location"}
                 </p>
               </div>
-              <p className={`text-xs ${highlightedConferenceClass.meta}`}>
-                Submitted:{" "}
-                {shortDate(highlightedConferenceSubmission.submittedAt)}
+              <p
+                className={`flex flex-wrap items-center gap-2 text-xs ${highlightedConferenceClass.meta}`}
+              >
+                <span>
+                  Submitted: {shortDate(highlightedConferenceSubmission.submittedAt)}
+                </span>
                 {highlightedConferenceSubmission.acceptedAt && (
                   <>
-                    <span
-                      className="px-1.5 text-[#777777]"
-                      aria-hidden="true"
-                    >
+                    <span className="text-[#777777]" aria-hidden="true">
                       |
                     </span>
-                    Accepted:{" "}
-                    {shortDate(highlightedConferenceSubmission.acceptedAt)}
+                    <span>
+                      Accepted: {shortDate(highlightedConferenceSubmission.acceptedAt)}
+                    </span>
                   </>
                 )}
                 {highlightedConferenceSubmission.publishedAt && (
                   <>
-                    <span
-                      className="px-1.5 text-[#777777]"
-                      aria-hidden="true"
-                    >
+                    <span className="text-[#777777]" aria-hidden="true">
                       |
                     </span>
-                    Published:{" "}
-                    {shortDate(highlightedConferenceSubmission.publishedAt)}
+                    <span>
+                      Published: {shortDate(highlightedConferenceSubmission.publishedAt)}
+                    </span>
                   </>
                 )}
               </p>
