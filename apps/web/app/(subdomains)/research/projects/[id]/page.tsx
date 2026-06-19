@@ -18,8 +18,8 @@ import { auth } from "../../../../../auth";
 import { updateResearchProject } from "../../actions";
 import { SubmissionsTable, type SubmissionRow } from "./SubmissionsTable";
 import {
-  ActiveResearchTasksTable,
-  type ActiveResearchTaskRow,
+  RelatedResearchTasksTable,
+  type RelatedResearchTaskRow,
 } from "./ActiveResearchTasksTable";
 import {
   SuggestedJournalsPanel,
@@ -902,13 +902,8 @@ export default async function ProjectDetailPage({
       publishedAt: isoDate(submission.publishedAt),
     })),
   ].sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || ""));
-  const activeTaskRows: ActiveResearchTaskRow[] = project.tasks
-    .filter(
-      (task) =>
-        task.status !== ResearchTaskStatus.COMPLETED &&
-        task.status !== ResearchTaskStatus.REVOKED,
-    )
-    .map((task) => ({
+  const relatedTaskRows: RelatedResearchTaskRow[] = project.tasks.map(
+    (task) => ({
       id: task.id,
       taskCode: task.taskCode,
       title: task.title,
@@ -922,7 +917,8 @@ export default async function ProjectDetailPage({
         name: assignment.user.name || assignment.user.email,
         email: displayResearchEmail(assignment.user.email),
       })),
-    }));
+    }),
+  );
   const stageStyle = stageStyles[displayStage];
   const StageIcon = stageStyle.icon;
 
@@ -1473,17 +1469,6 @@ export default async function ProjectDetailPage({
         </SaveForm>
 
         <section className="space-y-4 border-t border-[#444444] pt-5">
-          <h2 className="flex items-center gap-2 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-            <ListTodo className="h-5 w-5 text-[#B39CD0]" />
-            Active tasks
-          </h2>
-          <ActiveResearchTasksTable
-            projectId={project.id}
-            rows={activeTaskRows}
-          />
-        </section>
-
-        <section className="space-y-4 border-t border-[#444444] pt-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <h2 className="flex items-center gap-2 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
               <Send className="h-5 w-5 text-[#A8DADC]" />
@@ -1546,6 +1531,16 @@ export default async function ProjectDetailPage({
           }
           disabled={researchContentLocked}
         />
+        <section className="space-y-4 border-t border-[#444444] pt-5">
+          <h2 className="flex items-center gap-2 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+            <ListTodo className="h-5 w-5 text-[#B39CD0]" />
+            Related tasks
+          </h2>
+          <RelatedResearchTasksTable
+            projectId={project.id}
+            rows={relatedTaskRows}
+          />
+        </section>
       </div>
     </>
   );

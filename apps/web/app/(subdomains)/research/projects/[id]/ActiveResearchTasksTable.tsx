@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import type { LucideIcon } from "lucide-react";
-import { AlertTriangle, CircleHelp, Clock3, SearchCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  Ban,
+  CheckCircle2,
+  CircleHelp,
+  Clock3,
+  SearchCheck,
+} from "lucide-react";
 import {
   FilterSelect,
   IconHint,
@@ -14,7 +21,7 @@ import {
 } from "@/sites/research/components/TableControls";
 import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
 
-export type ActiveResearchTaskRow = {
+export type RelatedResearchTaskRow = {
   id: string;
   taskCode: string | null;
   title: string;
@@ -39,7 +46,7 @@ function shortDate(value: string | null) {
   }).format(new Date(value));
 }
 
-function taskId(row: ActiveResearchTaskRow) {
+function taskId(row: RelatedResearchTaskRow) {
   return row.taskCode || row.id.replaceAll("-", "").slice(0, 10).toUpperCase();
 }
 
@@ -51,13 +58,32 @@ function sentenceCase(value: string) {
     .join(" ");
 }
 
-function statusMeta(row: ActiveResearchTaskRow): {
+function statusMeta(row: RelatedResearchTaskRow): {
   value: string;
   label: string;
   icon: LucideIcon;
   className: string;
 } {
   const overdue = Boolean(row.dueDate && new Date(row.dueDate) < new Date());
+
+  if (row.status === "COMPLETED") {
+    return {
+      value: "COMPLETED",
+      label: "Completed",
+      icon: CheckCircle2,
+      className:
+        "text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200",
+    };
+  }
+  if (row.status === "REVOKED") {
+    return {
+      value: "REVOKED",
+      label: "Revoked",
+      icon: Ban,
+      className:
+        "text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200",
+    };
+  }
 
   if (row.status === "CHECKING") {
     return {
@@ -95,18 +121,18 @@ function statusMeta(row: ActiveResearchTaskRow): {
   };
 }
 
-export function ActiveResearchTasksTable({
+export function RelatedResearchTasksTable({
   projectId,
   rows,
 }: {
   projectId: string;
-  rows: ActiveResearchTaskRow[];
+  rows: RelatedResearchTaskRow[];
 }) {
-  const storageKey = `research-active-tasks:${projectId}`;
+  const storageKey = `research-related-tasks:${projectId}`;
   const [query, setQuery] = usePersistentTableValue(`${storageKey}:q`, "");
   const [status, setStatus] = usePersistentTableValue(
     `${storageKey}:status`,
-    "ALL",
+    "IN_PROGRESS",
   );
 
   const filtered = useMemo(() => {
@@ -153,13 +179,15 @@ export function ActiveResearchTasksTable({
         <FilterSelect
           value={status}
           onChange={updateStatus}
-          ariaLabel="Filter active tasks by status"
+          ariaLabel="Filter related tasks by status"
           options={[
-            { value: "ALL", label: "All active status" },
+            { value: "ALL", label: "All statuses" },
             { value: "IN_PROGRESS", label: "In progress" },
             { value: "OVERDUE", label: "Overdue" },
             { value: "CHECKING", label: "Checking" },
             { value: "NEED_CLARIFY", label: "Need clarify" },
+            { value: "COMPLETED", label: "Completed" },
+            { value: "REVOKED", label: "Revoked" },
           ]}
         />
       </div>
@@ -235,8 +263,8 @@ export function ActiveResearchTasksTable({
                   className="px-3 py-14 text-center text-sm text-[#B0B0B0]"
                 >
                   {rows.length === 0
-                    ? "No active tasks are associated with this research."
-                    : "No active tasks match the current filters."}
+                    ? "No tasks are related to this research."
+                    : "No related tasks match the current filters."}
                 </td>
               </tr>
             )}
