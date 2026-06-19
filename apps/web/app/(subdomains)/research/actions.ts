@@ -477,22 +477,25 @@ async function canCreateResearchTaskForProject({
   taskType: ResearchTaskType;
 }) {
   if (user.roles.includes(Role.ADMIN)) return true;
-  if (
-    user.roles.includes(Role.CHIEF_ASSISTANT) &&
-    organizedProjectId &&
-    !projectId
-  ) {
-    return (
-      (await prisma.organizedProject.count({
-        where: {
-          id: organizedProjectId,
-          OR: [
-            { createdById: user.id },
-            { members: { some: { userId: user.id } } },
-          ],
-        },
-      })) > 0
-    );
+  if (user.roles.includes(Role.CHIEF_ASSISTANT)) {
+    if (taskType === ResearchTaskType.REVIEW) {
+      return true;
+    }
+    if (organizedProjectId && !projectId) {
+      return (
+        (await prisma.organizedProject.count({
+          where: {
+            id: organizedProjectId,
+            OR: [
+              { createdById: user.id },
+              { members: { some: { userId: user.id } } },
+            ],
+          },
+        })) > 0
+      );
+    }
+
+    return false;
   }
   if (!projectId || !taskTypeCanBeCreatedByResearchAuthor(taskType)) {
     return false;

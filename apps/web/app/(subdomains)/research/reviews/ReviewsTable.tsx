@@ -315,12 +315,14 @@ export function ReviewsTable({
                     {row.publisher || "-"}
                   </p>
                 </td>
-                <td className="px-2 py-3 text-center align-top">
-                  <StatusIconChip
-                    icon={statusIcon(row.status)}
-                    label={statusLabel(row.status)}
-                    className={statusClass(row.status)}
-                  />
+                <td className="px-2 py-3 align-top text-center">
+                  <div className="flex items-start justify-center">
+                    <StatusIconChip
+                      icon={statusIcon(row.status)}
+                      label={statusLabel(row.status)}
+                      className={statusClass(row.status)}
+                    />
+                  </div>
                 </td>
                 <td className="px-3 py-3 text-sm text-[#B0B0B0]">
                   {row.dueDate || "-"}
@@ -332,11 +334,13 @@ export function ReviewsTable({
                   <span className="line-clamp-2">{row.note || "-"}</span>
                 </td>
                 {isAdmin && (
-                  <td className="px-2 py-3 text-center align-top">
-                    <DeleteReviewButton
-                      review={row}
-                      deleteAction={deleteAction}
-                    />
+                  <td className="px-2 py-3 align-top text-center">
+                    <div className="flex items-start justify-center">
+                      <DeleteReviewButton
+                        review={row}
+                        deleteAction={deleteAction}
+                      />
+                    </div>
                   </td>
                 )}
               </tr>
