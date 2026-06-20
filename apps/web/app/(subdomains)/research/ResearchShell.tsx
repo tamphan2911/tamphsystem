@@ -40,7 +40,7 @@ const navItems = [
   },
   {
     href: "/task-reports",
-    label: "Task reports",
+    label: "Uploaded Files",
     icon: "taskReports" as const,
     rootAdminOnly: true,
   },

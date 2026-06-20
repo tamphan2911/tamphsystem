@@ -603,37 +603,33 @@ export function CreateSubmissionTaskDialog({
               >
                 <div className={`${researchDropdownPanelClass} grid`}>
                   <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
-                  {assistantResults.map((assistant) => {
-                    return (
-                      <button
-                        key={assistant.id}
-                        type="button"
-                        onClick={() => toggleAssistant(assistant.id)}
-                        className={`${researchDropdownItemClass} cursor-pointer ${
-                          selected
-                            ? researchDropdownItemActiveClass
-                            : researchDropdownItemIdleClass
-                        }`}
-                      >
-                        <span className="flex min-w-0 items-center gap-3 px-3">
-                          <UserRound className="h-4 w-4 flex-none text-slate-400" />
-                          <span className="min-w-0">
-                            <span className="block truncate text-sm font-normal">
-                              {displayResearchPersonName(assistant)}
-                            </span>
-                            <span className="block truncate text-xs text-[#B0B0B0]">
-                              {displayResearchEmail(assistant.email)}
+                    {assistantResults.map((assistant) => {
+                      return (
+                        <button
+                          key={assistant.id}
+                          type="button"
+                          onClick={() => toggleAssistant(assistant.id)}
+                          className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
+                        >
+                          <span className="flex min-w-0 items-center gap-3 px-3">
+                            <UserRound className="h-4 w-4 flex-none text-slate-400" />
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-normal">
+                                {displayResearchPersonName(assistant)}
+                              </span>
+                              <span className="block truncate text-xs text-[#B0B0B0]">
+                                {displayResearchEmail(assistant.email)}
+                              </span>
                             </span>
                           </span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                  {assistantQuery.trim() && assistantResults.length === 0 && (
-                    <p className="py-10 text-center text-sm text-[#B0B0B0]">
-                      No user matches this search.
-                    </p>
-                  )}
+                        </button>
+                      );
+                    })}
+                    {assistantQuery.trim() && assistantResults.length === 0 && (
+                      <p className="py-10 text-center text-sm text-[#B0B0B0]">
+                        No user matches this search.
+                      </p>
+                    )}
                   </div>
                 </div>
               </FloatingDropdownPortal>

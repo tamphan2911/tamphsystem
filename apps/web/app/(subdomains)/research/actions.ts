@@ -5300,6 +5300,73 @@ export async function deleteResearchTaskReport(taskId: string) {
   revalidatePath(`/tasks/${taskId}`);
 }
 
+export async function deleteResearchUploadedFile(
+  fileKind: "task-report" | "proposal-support" | "published-article",
+  ownerId: string,
+) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  if (fileKind === "task-report") {
+    await deleteResearchTaskReport(ownerId);
+    return;
+  }
+
+  if (fileKind === "proposal-support") {
+    const proposal = await prisma.proposal.findUnique({
+      where: { id: ownerId },
+      select: { id: true, supportFileName: true },
+    });
+    if (!proposal) throw new Error("Proposal not found.");
+    if (!proposal.supportFileName)
+      throw new Error("This proposal has no support file.");
+
+    await prisma.proposal.update({
+      where: { id: ownerId },
+      data: {
+        supportFileName: null,
+        supportFileType: null,
+        supportFileSize: null,
+        supportFileData: null,
+      },
+    });
+
+    revalidatePath("/task-reports");
+    revalidatePath("/proposals");
+    revalidatePath(`/proposals/${ownerId}`);
+    return;
+  }
+
+  const submission = await prisma.researchSubmission.findUnique({
+    where: { id: ownerId },
+    select: {
+      id: true,
+      articleFileName: true,
+      researchProjectId: true,
+      journalId: true,
+    },
+  });
+  if (!submission) throw new Error("Submission not found.");
+  if (!submission.articleFileName)
+    throw new Error("This submission has no article file.");
+
+  await prisma.researchSubmission.update({
+    where: { id: ownerId },
+    data: {
+      articleFileName: null,
+      articleFileType: null,
+      articleFileSize: null,
+      articleFileData: null,
+    },
+  });
+
+  revalidatePath("/task-reports");
+  revalidatePath("/submissions");
+  revalidatePath(`/submissions/${ownerId}`);
+  revalidatePath(`/projects/${submission.researchProjectId}`);
+  revalidatePath(`/journals/${submission.journalId}`);
+}
+
 export async function finishResearchTask(taskId: string, formData?: FormData) {
   const user = await requireCurrentUser();
   const task = await prisma.researchTask.findUnique({

@@ -17,27 +17,36 @@ import {
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
-export type TaskReportRow = {
-  taskId: string;
-  taskCode: string;
-  taskTitle: string;
-  taskType: string;
-  taskStatus: string;
+export type UploadedFileKind =
+  | "task-report"
+  | "proposal-support"
+  | "published-article";
+
+export type UploadedFileRow = {
+  id: string;
+  ownerId: string;
+  kind: UploadedFileKind;
+  source: string;
+  sourceStatus: string;
+  sourceHref: string;
+  sourceCode: string;
+  sourceTitle: string;
+  sourceMeta: string;
   fileName: string;
   fileType: string;
   fileSize: number;
   uploadedAt: string | null;
   uploaderName: string;
   uploaderEmail: string;
-  assignerName: string;
-  assignerEmail: string;
-  research: { id: string; code: string; title: string } | null;
-  project: { id: string; code: string; title: string } | null;
+  downloadHref: string;
+  context: {
+    type: string;
+    id: string;
+    code: string;
+    title: string;
+    href: string;
+  } | null;
 };
-
-function displayTaskId(row: TaskReportRow) {
-  return row.taskCode || row.taskId.replaceAll("-", "").slice(0, 10).toUpperCase();
-}
 
 function sentenceCase(value: string) {
   return value
@@ -55,7 +64,9 @@ function fileExtension(fileName: string) {
 function fileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024 * 1024)
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
 function dateTime(value: string | null) {
@@ -69,51 +80,77 @@ function dateTime(value: string | null) {
   }).format(new Date(value));
 }
 
+const fileKindOptions = [
+  { value: "ALL", label: "All files" },
+  { value: "task-report", label: "Task reports" },
+  { value: "proposal-support", label: "Proposal support" },
+  { value: "published-article", label: "Published articles" },
+];
+
 export function TaskReportsTable({
   rows,
   deleteAction,
 }: {
-  rows: TaskReportRow[];
-  deleteAction: (taskId: string) => Promise<void>;
+  rows: UploadedFileRow[];
+  deleteAction: (fileKind: UploadedFileKind, ownerId: string) => Promise<void>;
 }) {
-  const [query, setQuery] = usePersistentTableValue("task-reports:q", "");
-  const [type, setType] = usePersistentTableValue("task-reports:type", "ALL");
-  const [deleting, setDeleting] = useState<TaskReportRow | null>(null);
+  const [query, setQuery] = usePersistentTableValue("uploaded-files:q", "");
+  const [kind, setKind] = usePersistentTableValue("uploaded-files:kind", "ALL");
+  const [type, setType] = usePersistentTableValue("uploaded-files:type", "ALL");
+  const [deleting, setDeleting] = useState<UploadedFileRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
   const toast = useResearchToast();
+
+  const fileTypeOptions = useMemo(() => {
+    const extensions = Array.from(
+      new Set(rows.map((row) => fileExtension(row.fileName))),
+    ).sort();
+    return [
+      { value: "ALL", label: "All types" },
+      ...extensions.map((extension) => ({
+        value: extension,
+        label: extension,
+      })),
+    ];
+  }, [rows]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const extension = fileExtension(row.fileName);
+      const matchesKind = kind === "ALL" || row.kind === kind;
       const matchesType = type === "ALL" || extension === type;
       const haystack = [
-        displayTaskId(row),
-        row.taskTitle,
-        row.taskType,
-        row.taskStatus,
+        row.source,
+        row.sourceStatus,
+        row.sourceCode,
+        row.sourceTitle,
+        row.sourceMeta,
         row.fileName,
         row.fileType,
+        extension,
         row.uploaderName,
         row.uploaderEmail,
-        row.assignerName,
-        row.assignerEmail,
-        row.research?.code,
-        row.research?.title,
-        row.project?.code,
-        row.project?.title,
+        row.context?.type,
+        row.context?.code,
+        row.context?.title,
       ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
-      return matchesType && (!needle || haystack.includes(needle));
+      return matchesKind && matchesType && (!needle || haystack.includes(needle));
     });
-  }, [query, rows, type]);
-  const pagination = useTablePagination(filtered, 10, 1, "task-reports");
+  }, [kind, query, rows, type]);
+  const pagination = useTablePagination(filtered, 10, 1, "uploaded-files");
 
   function updateQuery(value: string) {
     setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateKind(value: string) {
+    setKind(value);
     pagination.setPage(1);
   }
 
@@ -126,16 +163,16 @@ export function TaskReportsTable({
     if (!deleting) return;
     setIsDeleting(true);
     try {
-      await deleteAction(deleting.taskId);
+      await deleteAction(deleting.kind, deleting.ownerId);
       setDeleting(null);
       toast.showSuccess({
-        title: "Report file deleted",
-        detail: `The report for task "${deleting.taskTitle}" was removed. The task was kept.`,
+        title: "File deleted",
+        detail: `${deleting.fileName} was removed. The related record was kept.`,
       });
       router.refresh();
     } catch (error) {
       toast.showError({
-        title: "Report file not deleted",
+        title: "File not deleted",
         detail:
           error instanceof Error
             ? error.message
@@ -148,35 +185,38 @@ export function TaskReportsTable({
 
   return (
     <>
-      <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
-        <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+      <div className="overflow-hidden border border-[#d9d0c3] bg-[#f8f6ef] shadow-none dark:border-[#444444] dark:bg-[#2C2C2C]">
+        <div className="flex flex-col gap-3 border-b border-[#d9d0c3] bg-[#f5f2ec] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4 dark:border-[#444444] dark:bg-[#2C2C2C]">
           <TableSearchInput
             value={query}
             onChange={updateQuery}
-            placeholder="Search file, task, uploader, research..."
+            placeholder="Search file, source, uploader, research..."
           />
-          <FilterSelect
-            value={type}
-            onChange={updateType}
-            ariaLabel="Filter reports by file type"
-            options={[
-              { value: "ALL", label: "All file types" },
-              { value: "PDF", label: "PDF" },
-              { value: "DOC", label: "DOC" },
-              { value: "DOCX", label: "DOCX" },
-              { value: "XLSX", label: "XLSX" },
-            ]}
-          />
+          <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[34rem]">
+            <FilterSelect
+              value={kind}
+              onChange={updateKind}
+              ariaLabel="Filter files by source"
+              options={fileKindOptions}
+            />
+            <FilterSelect
+              value={type}
+              onChange={updateType}
+              ariaLabel="Filter files by type"
+              options={fileTypeOptions}
+            />
+          </div>
         </div>
 
         <div className="overflow-hidden">
           <table className="w-full table-fixed text-left">
-            <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
+            <thead className="border-b border-[#d9d0c3] bg-[#e8e1d4] text-xs uppercase tracking-wide text-[#6C778D] dark:border-[#444444] dark:bg-[#383838] dark:text-[#B0B0B0]">
               <tr>
-                <th className="w-[7rem] px-3 py-3">Task ID</th>
-                <th className="px-3 py-3">Task</th>
-                <th className="w-[18rem] px-3 py-3">File</th>
-                <th className="w-[13rem] px-3 py-3">Uploaded by</th>
+                <th className="w-[9rem] px-3 py-3">Source</th>
+                <th className="px-3 py-3">File</th>
+                <th className="w-[7rem] px-3 py-3 text-right">Volume</th>
+                <th className="w-[15rem] px-3 py-3">Uploaded by</th>
+                <th className="w-[9rem] px-3 py-3">Time</th>
                 <th className="w-12 px-2 py-3 text-center">
                   <span className="sr-only">Download</span>
                 </th>
@@ -185,70 +225,80 @@ export function TaskReportsTable({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#444444]">
+            <tbody className="divide-y divide-[#d9d0c3] dark:divide-[#444444]">
               {pagination.pagedRows.map((row) => (
                 <tr
-                  key={row.taskId}
-                  className="group align-top transition-colors duration-150 hover:bg-[#383838]"
+                  key={row.id}
+                  className="group align-top transition-colors duration-150 odd:bg-[#f8f6ef] even:bg-[#f2eee6] hover:bg-[#e9e2d6] dark:odd:bg-[#2C2C2C] dark:even:bg-[#303030] dark:hover:bg-[#383838]"
                 >
                   <td className="px-3 py-3 align-top">
-                    <span className="font-mono text-xs uppercase tracking-wide text-[#B0B0B0]">
-                      {displayTaskId(row)}
+                    <span className="block text-sm text-[#243047] dark:text-[#E4E4E4]">
+                      {row.source}
                     </span>
-                    <p className="mt-1 text-[11px] text-[#777777]">
-                      {sentenceCase(row.taskStatus)}
-                    </p>
-                  </td>
-                  <td className="min-w-0 px-3 py-3 align-top">
-                    <Link
-                      href={`/tasks/${row.taskId}`}
-                      className="research-journal-name-link text-sm font-normal text-[#1F7180] dark:text-[#A8DADC]"
-                    >
-                      {row.taskTitle}
-                    </Link>
-                    <p className="mt-1 text-xs text-[#B0B0B0]">
-                      {sentenceCase(row.taskType)} · Assigned by {row.assignerName}
-                    </p>
-                    {row.research ? (
-                      <p className="mt-1 line-clamp-1 text-xs text-[#777777]">
-                        Research: {row.research.code ? `${row.research.code} · ` : ""}
-                        {row.research.title}
-                      </p>
-                    ) : row.project ? (
-                      <p className="mt-1 line-clamp-1 text-xs text-[#777777]">
-                        Project: {row.project.code ? `${row.project.code} · ` : ""}
-                        {row.project.title}
-                      </p>
-                    ) : null}
+                    <span className="mt-1 block font-mono text-[11px] uppercase tracking-wide text-[#6C778D] dark:text-[#B0B0B0]">
+                      {row.sourceCode}
+                    </span>
+                    <span className="mt-1 block text-[11px] text-[#6C778D] dark:text-[#777777]">
+                      {sentenceCase(row.sourceStatus)}
+                    </span>
                   </td>
                   <td className="min-w-0 px-3 py-3 align-top">
                     <div className="flex min-w-0 items-start gap-2">
-                      <FileArchive className="mt-0.5 h-4 w-4 flex-none text-[#B39CD0]" />
+                      <FileArchive className="mt-0.5 h-4 w-4 flex-none text-[#7C5EA8] dark:text-[#B39CD0]" />
                       <div className="min-w-0">
-                        <p className="truncate text-sm text-[#E4E4E4]" title={row.fileName}>
+                        <p
+                          className="truncate text-sm text-[#243047] dark:text-[#E4E4E4]"
+                          title={row.fileName}
+                        >
                           {row.fileName}
                         </p>
-                        <p className="mt-1 text-xs text-[#B0B0B0]">
-                          {fileExtension(row.fileName)} · {fileSize(row.fileSize)}
+                        <Link
+                          href={row.sourceHref}
+                          className="research-journal-name-link mt-1 block truncate text-xs text-[#1F7180] dark:text-[#A8DADC]"
+                        >
+                          {row.sourceTitle}
+                        </Link>
+                        <p className="mt-1 line-clamp-1 text-xs text-[#6C778D] dark:text-[#B0B0B0]">
+                          {row.sourceMeta}
                         </p>
-                        <p className="mt-1 text-xs text-[#777777]">
-                          {dateTime(row.uploadedAt)}
-                        </p>
+                        {row.context ? (
+                          <Link
+                            href={row.context.href}
+                            className="research-journal-name-link mt-1 block truncate text-xs text-[#6C778D] dark:text-[#777777]"
+                          >
+                            {row.context.type}:{" "}
+                            {row.context.code ? `${row.context.code} - ` : ""}
+                            {row.context.title}
+                          </Link>
+                        ) : null}
                       </div>
                     </div>
                   </td>
+                  <td className="px-3 py-3 text-right align-top">
+                    <span className="text-sm text-[#243047] dark:text-[#E4E4E4]">
+                      {fileSize(row.fileSize)}
+                    </span>
+                    <span className="mt-1 block text-[11px] uppercase tracking-wide text-[#6C778D] dark:text-[#B0B0B0]">
+                      {fileExtension(row.fileName)}
+                    </span>
+                  </td>
                   <td className="px-3 py-3 align-top">
-                    <p className="text-sm text-[#E4E4E4]">{row.uploaderName}</p>
+                    <p className="text-sm text-[#243047] dark:text-[#E4E4E4]">
+                      {row.uploaderName}
+                    </p>
                     {row.uploaderEmail ? (
-                      <p className="mt-1 break-all text-xs text-[#B0B0B0]">
+                      <p className="mt-1 break-all text-xs text-[#6C778D] dark:text-[#B0B0B0]">
                         {row.uploaderEmail}
                       </p>
                     ) : null}
                   </td>
+                  <td className="px-3 py-3 align-top text-xs text-[#6C778D] dark:text-[#B0B0B0]">
+                    {dateTime(row.uploadedAt)}
+                  </td>
                   <td className="px-2 py-3 text-center align-top">
-                    <IconHint label="Download report">
+                    <IconHint label="Download file">
                       <a
-                        href={`/api/research/tasks/${row.taskId}/report`}
+                        href={row.downloadHref}
                         className="research-task-icon-motion inline-flex h-5 w-5 items-start justify-center border-0 bg-transparent p-0 text-[#1F7180] shadow-none outline-none hover:bg-transparent hover:text-[#155864] hover:shadow-none focus-visible:ring-0 dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
                         aria-label={`Download ${row.fileName}`}
                       >
@@ -257,7 +307,7 @@ export function TaskReportsTable({
                     </IconHint>
                   </td>
                   <td className="px-2 py-3 text-center align-top">
-                    <IconHint label="Delete report file">
+                    <IconHint label="Delete file">
                       <button
                         type="button"
                         onClick={() => setDeleting(row)}
@@ -272,10 +322,13 @@ export function TaskReportsTable({
               ))}
               {pagination.total === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-3 py-14 text-center text-sm text-[#B0B0B0]">
+                  <td
+                    colSpan={7}
+                    className="px-3 py-14 text-center text-sm text-[#6C778D] dark:text-[#B0B0B0]"
+                  >
                     {rows.length === 0
-                      ? "No assignee report files have been uploaded."
-                      : "No report files match the current filters."}
+                      ? "No uploaded files are stored on the research site yet."
+                      : "No uploaded files match the current filters."}
                   </td>
                 </tr>
               ) : null}
@@ -293,20 +346,26 @@ export function TaskReportsTable({
 
       <ResearchConfirmDialog
         open={Boolean(deleting)}
-        title="Delete this report file?"
-        description="The uploaded file and its upload metadata will be removed. The task itself will remain available."
-        confirmLabel={isDeleting ? "Deleting..." : "Delete report"}
+        title="Delete this file?"
+        description="The uploaded file and its storage metadata will be removed. The related task, proposal, or submission will remain available."
+        confirmLabel={isDeleting ? "Deleting..." : "Delete file"}
         isConfirming={isDeleting}
         onCancel={() => setDeleting(null)}
         onConfirm={confirmDelete}
       >
         {deleting ? (
-          <div className="space-y-2 text-sm text-[#B0B0B0]">
+          <div className="space-y-2 text-sm text-[#6C778D] dark:text-[#B0B0B0]">
             <p>
-              File: <span className="text-[#E4E4E4]">{deleting.fileName}</span>
+              File:{" "}
+              <span className="text-[#243047] dark:text-[#E4E4E4]">
+                {deleting.fileName}
+              </span>
             </p>
             <p>
-              Task: <span className="text-[#E4E4E4]">{deleting.taskTitle}</span>
+              Source:{" "}
+              <span className="text-[#243047] dark:text-[#E4E4E4]">
+                {deleting.source} - {deleting.sourceTitle}
+              </span>
             </p>
             <p className="text-rose-700 dark:text-rose-300">
               This file cannot be restored from this page.
