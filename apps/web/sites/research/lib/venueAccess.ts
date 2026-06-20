@@ -11,12 +11,15 @@ export function hasUnrestrictedVenueAccess(roles: Role[]) {
 
 export function associatedResearchWhere(
   userId: string,
+  registrationIdentityValues: string[] = [],
 ): Prisma.ResearchProjectWhereInput {
   return {
     OR: [
       { leadResearcherId: userId },
       { authors: { some: { id: userId } } },
       { authorEntries: { some: { userId } } },
+      { registrationUserId: userId },
+      { tasks: { some: { assignments: { some: { userId } } } } },
       {
         organizedProjectLinks: {
           some: {
@@ -24,14 +27,25 @@ export function associatedResearchWhere(
           },
         },
       },
+      ...(registrationIdentityValues.length > 0
+        ? [
+            {
+              registrationName: {
+                in: registrationIdentityValues,
+                mode: Prisma.QueryMode.insensitive,
+              },
+            } satisfies Prisma.ResearchProjectWhereInput,
+          ]
+        : []),
     ],
   };
 }
 
 export function accessibleJournalWhere(
   userId: string,
+  registrationIdentityValues: string[] = [],
 ): Prisma.JournalWhereInput {
-  const project = associatedResearchWhere(userId);
+  const project = associatedResearchWhere(userId, registrationIdentityValues);
   return {
     OR: [
       { submissions: { some: { project } } },
@@ -42,8 +56,9 @@ export function accessibleJournalWhere(
 
 export function accessibleConferenceWhere(
   userId: string,
+  registrationIdentityValues: string[] = [],
 ): Prisma.ConferenceWhereInput {
-  const project = associatedResearchWhere(userId);
+  const project = associatedResearchWhere(userId, registrationIdentityValues);
   return {
     OR: [
       { submissions: { some: { project } } },

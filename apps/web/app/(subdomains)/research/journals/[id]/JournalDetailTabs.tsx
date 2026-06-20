@@ -134,7 +134,13 @@ function shortDate(value: string) {
   }).format(date);
 }
 
-function JournalSubmissionsTable({ rows }: { rows: JournalSubmissionRow[] }) {
+function JournalSubmissionsTable({
+  rows,
+  linkSubmissions,
+}: {
+  rows: JournalSubmissionRow[];
+  linkSubmissions: boolean;
+}) {
   const [query, setQuery] = usePersistentTableValue(
     "journal-detail-submissions:q",
     "",
@@ -245,20 +251,32 @@ function JournalSubmissionsTable({ rows }: { rows: JournalSubmissionRow[] }) {
                   className="group align-top transition-colors duration-150 hover:bg-[#383838]"
                 >
                   <td className="px-3 py-3 align-top">
-                    <Link
-                      href={`/submissions/${row.id}`}
-                      className="research-journal-name-link font-mono text-xs uppercase tracking-wide text-[#1F7180] dark:text-[#A8DADC]"
-                    >
-                      {row.code}
-                    </Link>
+                    {linkSubmissions ? (
+                      <Link
+                        href={`/submissions/${row.id}`}
+                        className="research-journal-name-link font-mono text-xs uppercase tracking-wide text-[#1F7180] dark:text-[#A8DADC]"
+                      >
+                        {row.code}
+                      </Link>
+                    ) : (
+                      <span className="font-mono text-xs uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
+                        {row.code}
+                      </span>
+                    )}
                   </td>
                   <td className="min-w-0 px-3 py-3 align-top">
-                    <Link
-                      href={`/submissions/${row.id}`}
-                      className="research-journal-name-link block whitespace-normal break-words text-[15px] font-normal leading-6 text-[#1F7180] dark:text-[#A8DADC]"
-                    >
-                      {row.projectTitle || "Untitled submission"}
-                    </Link>
+                    {linkSubmissions ? (
+                      <Link
+                        href={`/submissions/${row.id}`}
+                        className="research-journal-name-link block whitespace-normal break-words text-[15px] font-normal leading-6 text-[#1F7180] dark:text-[#A8DADC]"
+                      >
+                        {row.projectTitle || "Untitled submission"}
+                      </Link>
+                    ) : (
+                      <span className="block whitespace-normal break-words text-[15px] font-normal leading-6 text-[#252525] dark:text-[#E4E4E4]">
+                        {row.projectTitle || "Untitled submission"}
+                      </span>
+                    )}
                     <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#B0B0B0]">
                       {row.projectAuthors || "No author information"}
                     </p>
@@ -331,7 +349,10 @@ function JournalSubmissionsTable({ rows }: { rows: JournalSubmissionRow[] }) {
             })}
             {pagination.total === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-14 text-center text-sm text-[#B0B0B0]">
+                <td
+                  colSpan={6}
+                  className="px-3 py-14 text-center text-sm text-[#B0B0B0]"
+                >
                   {rows.length === 0
                     ? "No submissions have been recorded for this journal."
                     : "No submissions match the current filters."}
@@ -356,10 +377,20 @@ export function JournalDetailTabs({
   submissions,
   accounts,
   reviews,
+  submissionCount,
+  accountCount,
+  reviewCount,
+  showManagementTabs,
+  linkSubmissions,
 }: {
   submissions: JournalSubmissionRow[];
   accounts: JournalAccountRow[];
   reviews: JournalReviewRow[];
+  submissionCount: number;
+  accountCount: number;
+  reviewCount: number;
+  showManagementTabs: boolean;
+  linkSubmissions: boolean;
 }) {
   const [activeTab, setActiveTab] = usePersistentTableValue<TabKey>(
     "journal-detail:tab",
@@ -450,22 +481,39 @@ export function JournalDetailTabs({
     {
       key: "submissions" as const,
       label: "Submissions",
-      value: submissions.length,
+      value: submissionCount,
       icon: Send,
     },
     {
       key: "accounts" as const,
       label: "Accounts",
-      value: accounts.length,
+      value: accountCount,
       icon: KeyRound,
     },
     {
       key: "reviews" as const,
       label: "Reviews",
-      value: reviews.length,
+      value: reviewCount,
       icon: ClipboardCheck,
     },
   ];
+
+  if (!showManagementTabs) {
+    return (
+      <section className="space-y-3 border-t border-[#D8D0C2] pt-5 dark:border-[#444444]">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="flex items-center gap-2 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
+            <Send className="research-task-icon-motion h-5 w-5 text-[#A8DADC]" />
+            Submissions
+          </h2>
+          <span className="text-xs font-normal text-[#777777]">
+            {submissions.length}
+          </span>
+        </div>
+        <JournalSubmissionsTable rows={submissions} linkSubmissions={false} />
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-3">
@@ -491,7 +539,10 @@ export function JournalDetailTabs({
       </div>
 
       {activeTab === "submissions" && (
-        <JournalSubmissionsTable rows={submissions} />
+        <JournalSubmissionsTable
+          rows={submissions}
+          linkSubmissions={linkSubmissions}
+        />
       )}
 
       {activeTab !== "submissions" && (

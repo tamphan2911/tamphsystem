@@ -24,6 +24,7 @@ import {
 import { EditJournalDialog } from "./EditJournalDialog";
 import {
   accessibleJournalWhere,
+  associatedResearchWhere,
   hasUnrestrictedVenueAccess,
 } from "@/sites/research/lib/venueAccess";
 import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
@@ -48,20 +49,27 @@ export default async function JournalDetailPage({
     .map((value) => value.trim().toLowerCase());
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
-  const isAdmin =
-    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
-  const canEditVenue = roles.includes(Role.ADMIN);
+  const isAdmin = roles.includes(Role.ADMIN);
+  const isAssistant =
+    roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
+  const canViewAllRegistrationClaims =
+    isAdmin || roles.includes(Role.CHIEF_ASSISTANT);
+  const canEditVenue = isAdmin;
   const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
+  const scopedProjectWhere = userId
+    ? associatedResearchWhere(userId, registrationIdentityValues)
+    : { id: "__no_access__" };
   const journalAccessWhere = unrestrictedAccess
     ? {}
     : userId
-      ? accessibleJournalWhere(userId)
+      ? accessibleJournalWhere(userId, registrationIdentityValues)
       : { id: "__no_access__" };
 
   const journal = await prisma.journal.findFirst({
     where: { AND: [{ id }, journalAccessWhere] },
     include: {
       submissions: {
+        where: isAdmin ? {} : { project: scopedProjectWhere },
         include: {
           project: {
             include: {
@@ -79,13 +87,21 @@ export default async function JournalDetailPage({
         orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
       },
       accounts: {
+        where: isAdmin
+          ? {}
+          : isAssistant && userId
+            ? { tasks: { some: { assignments: { some: { userId } } } } }
+            : { id: "__no_access__" },
         include: { _count: { select: { submissions: true } } },
         orderBy: [{ updatedAt: "desc" }],
       },
       reviews: {
-        where: userId
-          ? accessibleResearchReviewWhere(roles, userId)
-          : { id: "__no_access__" },
+        where:
+          isAdmin && userId
+            ? {}
+            : isAssistant && userId
+              ? accessibleResearchReviewWhere(roles, userId)
+              : { id: "__no_access__" },
         orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
       },
       _count: { select: { submissions: true, accounts: true, reviews: true } },
@@ -97,7 +113,7 @@ export default async function JournalDetailPage({
   const submissionRows: JournalSubmissionRow[] = journal.submissions.map(
     (submission) => {
       const canViewRegistrationClaim =
-        isAdmin ||
+        canViewAllRegistrationClaims ||
         Boolean(userId && submission.project.registrationUserId === userId) ||
         Boolean(
           submission.project.registrationName &&
@@ -398,6 +414,11 @@ export default async function JournalDetailPage({
           submissions={submissionRows}
           accounts={accountRows}
           reviews={reviewRows}
+          submissionCount={journal._count.submissions}
+          accountCount={journal._count.accounts}
+          reviewCount={journal._count.reviews}
+          showManagementTabs={isAdmin || isAssistant}
+          linkSubmissions={isAdmin}
         />
       </div>
     </>
