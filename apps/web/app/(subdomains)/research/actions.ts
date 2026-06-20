@@ -225,6 +225,34 @@ const taskReportFileTypesByExtension = new Map([
 ]);
 const taskReportMaxFileSize = 2 * 1024 * 1024;
 
+async function taskAssignerFileFromForm(formData: FormData) {
+  const file = formData.get("taskFile");
+  if (!(file instanceof File) || file.size === 0) return null;
+
+  const extension = file.name.toLowerCase().split(".").pop();
+  const allowedByMime = taskReportFileTypes.has(file.type);
+  const allowedByExtension =
+    Boolean(extension) && taskReportFileTypesByExtension.has(extension ?? "");
+
+  if (!allowedByMime && !allowedByExtension) {
+    return { ok: false as const, reason: "TASK_FILE_REJECTED" };
+  }
+  if (file.size > taskReportMaxFileSize) {
+    return { ok: false as const, reason: "TASK_FILE_TOO_LARGE" };
+  }
+
+  return {
+    ok: true as const,
+    data: {
+      taskFileName: file.name,
+      taskFileType:
+        file.type || taskReportFileTypesByExtension.get(extension ?? "") || "",
+      taskFileSize: file.size,
+      taskFileData: Buffer.from(await file.arrayBuffer()),
+    },
+  };
+}
+
 function addMonths(date: Date, months: number) {
   const next = new Date(date);
   next.setMonth(next.getMonth() + months);
@@ -709,9 +737,7 @@ function readableResearchValue(value: string) {
 
 function compactResearchNotificationValue(value: string) {
   const normalized = value.replace(/\s+/g, " ").trim() || "Not set";
-  return normalized.length > 100
-    ? `${normalized.slice(0, 97)}...`
-    : normalized;
+  return normalized.length > 100 ? `${normalized.slice(0, 97)}...` : normalized;
 }
 
 function researchPersonLabel(person: { name: string | null; email: string }) {
@@ -822,10 +848,16 @@ function researchProjectNotificationChanges(
     addChange(
       "Author contact email",
       before.authorEntries
-        .map((entry) => `${entry.userId}:${entry.selectedEmail ?? entry.user.email}`)
+        .map(
+          (entry) =>
+            `${entry.userId}:${entry.selectedEmail ?? entry.user.email}`,
+        )
         .join("|"),
       after.authorEntries
-        .map((entry) => `${entry.userId}:${entry.selectedEmail ?? entry.user.email}`)
+        .map(
+          (entry) =>
+            `${entry.userId}:${entry.selectedEmail ?? entry.user.email}`,
+        )
         .join("|"),
     );
   }
@@ -1033,10 +1065,7 @@ function scopedTaskWhere(taskId: string, userId: string) {
       },
       {
         organizedProject: {
-          OR: [
-            { createdById: userId },
-            { members: { some: { userId } } },
-          ],
+          OR: [{ createdById: userId }, { members: { some: { userId } } }],
         },
       },
     ],
@@ -2391,7 +2420,8 @@ export async function updateResearchProject(
       body:
         notificationChanges.find(
           (change) => change.label === "Production checklist",
-        )?.detail ?? "All production checklist items have been marked complete.",
+        )?.detail ??
+        "All production checklist items have been marked complete.",
     });
   } else if (updatedProject && projectLock?.stage !== updatedProject.stage) {
     await notifyResearchAuthors(projectId, {
@@ -3314,10 +3344,7 @@ export async function updateResearchSiteUser(formData: FormData) {
   if (!existing?.activeSites.includes("research")) {
     return { ok: false, reason: "NOT_RESEARCH_USER" };
   }
-  if (
-    existing.emailVerified &&
-    email !== existing.email.trim().toLowerCase()
-  ) {
+  if (existing.emailVerified && email !== existing.email.trim().toLowerCase()) {
     return { ok: false, reason: "VERIFIED_EMAIL_LOCKED" };
   }
 
@@ -3506,6 +3533,11 @@ export async function createResearchTask(formData: FormData) {
     }
   }
 
+  const taskFile = await taskAssignerFileFromForm(formData);
+  if (taskFile?.ok === false) {
+    return { ok: false, reason: taskFile.reason };
+  }
+
   const task = await prisma.researchTask.create({
     data: {
       title: optionalString(formData.get("title")) ?? "Untitled task",
@@ -3522,6 +3554,7 @@ export async function createResearchTask(formData: FormData) {
       accountId,
       dueDate: researchTaskDueDate(optionalString(formData.get("dueDate"))),
       createdById: user.id,
+      ...(taskFile?.ok ? taskFile.data : {}),
       assignments: {
         create: assigneeIds.map((userId) => ({ userId })),
       },
@@ -5301,11 +5334,38 @@ export async function deleteResearchTaskReport(taskId: string) {
 }
 
 export async function deleteResearchUploadedFile(
-  fileKind: "task-report" | "proposal-support" | "published-article",
+  fileKind:
+    | "task-attachment"
+    | "task-report"
+    | "proposal-support"
+    | "published-article",
   ownerId: string,
 ) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
+
+  if (fileKind === "task-attachment") {
+    const task = await prisma.researchTask.findUnique({
+      where: { id: ownerId },
+      select: { id: true, taskFileName: true },
+    });
+    if (!task) throw new Error("Task not found.");
+    if (!task.taskFileName) throw new Error("This task has no assigner file.");
+
+    await prisma.researchTask.update({
+      where: { id: ownerId },
+      data: {
+        taskFileName: null,
+        taskFileType: null,
+        taskFileSize: null,
+        taskFileData: null,
+      },
+    });
+
+    revalidatePath("/task-reports");
+    revalidatePath(`/tasks/${ownerId}`);
+    return;
+  }
 
   if (fileKind === "task-report") {
     await deleteResearchTaskReport(ownerId);
@@ -6023,7 +6083,12 @@ export async function sendResearchAuthorNotification(
             ...author,
             loginEmail: author.email,
           }))
-        : [{ ...project.leadResearcher, loginEmail: project.leadResearcher.email }];
+        : [
+            {
+              ...project.leadResearcher,
+              loginEmail: project.leadResearcher.email,
+            },
+          ];
   for (const author of sourceAuthors) authorMap.set(author.id, author);
 
   const authors = Array.from(authorMap.values());

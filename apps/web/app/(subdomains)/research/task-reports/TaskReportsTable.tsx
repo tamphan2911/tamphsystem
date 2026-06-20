@@ -18,6 +18,7 @@ import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfi
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export type UploadedFileKind =
+  | "task-attachment"
   | "task-report"
   | "proposal-support"
   | "published-article";
@@ -82,6 +83,7 @@ function dateTime(value: string | null) {
 
 const fileKindOptions = [
   { value: "ALL", label: "All files" },
+  { value: "task-attachment", label: "Task attachments" },
   { value: "task-report", label: "Task reports" },
   { value: "proposal-support", label: "Proposal support" },
   { value: "published-article", label: "Published articles" },
@@ -139,7 +141,9 @@ export function TaskReportsTable({
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
-      return matchesKind && matchesType && (!needle || haystack.includes(needle));
+      return (
+        matchesKind && matchesType && (!needle || haystack.includes(needle))
+      );
     });
   }, [kind, query, rows, type]);
   const pagination = useTablePagination(filtered, 10, 1, "uploaded-files");

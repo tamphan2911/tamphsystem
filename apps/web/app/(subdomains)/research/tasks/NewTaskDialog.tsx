@@ -13,6 +13,7 @@ import {
   ClipboardList,
   ClipboardPlus,
   Database,
+  FileUp,
   FileText,
   PlusCircle,
   Search,
@@ -431,7 +432,11 @@ export function NewTaskDialog({
                             ? "An active submission task already exists for this research and venue."
                             : result?.reason === "ACCOUNT_NOT_FOR_JOURNAL"
                               ? "Choose an account that belongs to the selected journal."
-                              : "Please check the task details and try again.",
+                              : result?.reason === "TASK_FILE_TOO_LARGE"
+                                ? "Task file must be 2 MB or smaller."
+                                : result?.reason === "TASK_FILE_REJECTED"
+                                  ? "Upload the task file as PDF, DOC, DOCX, or XLSX."
+                                  : "Please check the task details and try again.",
         });
         return;
       }
@@ -453,8 +458,7 @@ export function NewTaskDialog({
   const showsVenue =
     mode === "submit" || (mode === "other" && triggerVariant === "default");
   const needsVenue = mode === "submit";
-  const selectedVenueMatchesMode =
-    !needsVenue || Boolean(selectedVenue);
+  const selectedVenueMatchesMode = !needsVenue || Boolean(selectedVenue);
   const needsReview = mode === "review";
   const selectedReviewIsOpen =
     !needsReview ||
@@ -901,6 +905,8 @@ export function NewTaskDialog({
             />
           </label>
 
+          <TaskAttachmentField />
+
           <SearchPanel
             query={assigneeQuery}
             setQuery={setAssigneeQuery}
@@ -920,6 +926,26 @@ export function NewTaskDialog({
         </form>
       </ResearchModal>
     </>
+  );
+}
+
+function TaskAttachmentField() {
+  return (
+    <label className="grid gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-4 py-3 text-sm text-[#6C778D] dark:border-[#444444] dark:bg-[#202020] dark:text-[#B0B0B0]">
+      <span className="flex items-center gap-2 text-xs font-normal uppercase tracking-wide text-[#6C778D] dark:text-[#B0B0B0]">
+        <FileUp className="h-4 w-4 text-[#1F7180] dark:text-[#A8DADC]" />
+        Task file (optional)
+      </span>
+      <input
+        name="taskFile"
+        type="file"
+        accept=".pdf,.doc,.docx,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        className="block w-full cursor-pointer text-sm text-[#243047] file:mr-4 file:cursor-pointer file:border file:border-[#D8D0C2] file:bg-transparent file:px-3 file:py-2 file:text-sm file:font-normal file:text-[#1F7180] hover:file:border-[#A8DADC] dark:text-[#E4E4E4] dark:file:border-[#444444] dark:file:text-[#A8DADC] dark:hover:file:border-[#A8DADC]"
+      />
+      <span className="text-xs text-[#7C8798] dark:text-[#9CA3AF]">
+        PDF, DOC, DOCX, or XLSX. Maximum 2 MB.
+      </span>
+    </label>
   );
 }
 

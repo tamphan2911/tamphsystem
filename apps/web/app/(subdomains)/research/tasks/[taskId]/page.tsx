@@ -14,6 +14,7 @@ import {
   Clock3,
   CircleHelp,
   ExternalLink,
+  FileDown,
   FileText,
   Globe2,
   KeyRound,
@@ -390,6 +391,8 @@ export default async function TaskDetailPage({
       reviewId: true,
       accountId: true,
       taskType: true,
+      taskFileName: true,
+      taskFileSize: true,
       reportFileName: true,
       reportFileSize: true,
       reportUploadedAt: true,
@@ -907,6 +910,24 @@ export default async function TaskDetailPage({
                     />
                   </span>
                 </IconHint>
+                {task.taskFileName ? (
+                  <IconHint
+                    label={`Download task file: ${task.taskFileName}`}
+                    position="bottom"
+                  >
+                    <a
+                      href={`/api/research/tasks/${task.id}/attachment`}
+                      className="research-task-icon-motion inline-flex h-5 w-5 flex-none items-center justify-center text-[#1F7180] dark:text-[#A8DADC]"
+                      aria-label={`Download task file: ${task.taskFileName}`}
+                    >
+                      <FileDown
+                        className="h-4 w-4"
+                        strokeWidth={1.75}
+                        aria-hidden="true"
+                      />
+                    </a>
+                  </IconHint>
+                ) : null}
                 {(canEdit || canUseReminder) && (
                   <span className="inline-flex flex-none items-center gap-2">
                     {canEdit && (

@@ -347,12 +347,12 @@ enum OrganizedProjectType {
 }
 
 model ResearchProject {
-  id           String        @id @default(uuid())
-  researchCode String?       @unique
-  title        String
-  abstract     String?
+  id              String        @id @default(uuid())
+  researchCode    String?       @unique
+  title           String
+  abstract        String?
   sharedFolderUrl String?
-  stage        ResearchStage @default(PRODUCTION)
+  stage           ResearchStage @default(PRODUCTION)
 
   // Production Stage Tracking
   coAuthors                String?
@@ -719,6 +719,10 @@ model ResearchTask {
   completedAt        DateTime?
   revokedAt          DateTime?
   adminViewedAt      DateTime?
+  taskFileName       String?
+  taskFileType       String?
+  taskFileSize       Int?
+  taskFileData       Bytes?
   reportFileName     String?
   reportFileType     String?
   reportFileSize     Int?

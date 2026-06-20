@@ -6,6 +6,7 @@ import {
   Check,
   ChevronDown,
   ClipboardPlus,
+  FileUp,
   KeyRound,
   Plus,
   Search,
@@ -258,6 +259,20 @@ export function CreateSubmissionTaskDialog({
           setIsOpen(false);
           return;
         }
+        if (result?.reason === "TASK_FILE_TOO_LARGE") {
+          showSuccess({
+            title: "Task file is too large",
+            detail: "Task file must be 2 MB or smaller.",
+          });
+          return;
+        }
+        if (result?.reason === "TASK_FILE_REJECTED") {
+          showSuccess({
+            title: "Task file was not uploaded",
+            detail: "Upload the task file as PDF, DOC, DOCX, or XLSX.",
+          });
+          return;
+        }
         showSuccess({
           title: "Submission task already exists",
           detail:
@@ -437,44 +452,44 @@ export function CreateSubmissionTaskDialog({
               >
                 <div className={`${researchDropdownPanelClass} grid`}>
                   <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
-                  {venueResults.map((venue) => {
-                    const selected =
-                      selectedVenue?.kind === venue.kind &&
-                      selectedVenue.id === venue.id;
-                    return (
-                      <button
-                        key={`${venue.kind}-${venue.id}`}
-                        type="button"
-                        onClick={() => selectVenue(venue)}
-                        className={`${researchDropdownItemClass} cursor-pointer ${
-                          selected
-                            ? researchDropdownItemActiveClass
-                            : researchDropdownItemIdleClass
-                        }`}
-                      >
-                        <span className="flex min-w-0 flex-1 items-start justify-between gap-3 px-3">
-                          <span>
-                            <span className="block text-sm font-normal">
-                              {venue.name}
+                    {venueResults.map((venue) => {
+                      const selected =
+                        selectedVenue?.kind === venue.kind &&
+                        selectedVenue.id === venue.id;
+                      return (
+                        <button
+                          key={`${venue.kind}-${venue.id}`}
+                          type="button"
+                          onClick={() => selectVenue(venue)}
+                          className={`${researchDropdownItemClass} cursor-pointer ${
+                            selected
+                              ? researchDropdownItemActiveClass
+                              : researchDropdownItemIdleClass
+                          }`}
+                        >
+                          <span className="flex min-w-0 flex-1 items-start justify-between gap-3 px-3">
+                            <span>
+                              <span className="block text-sm font-normal">
+                                {venue.name}
+                              </span>
+                              <span className="mt-1 block text-xs text-[#B0B0B0]">
+                                {venue.kind === "journal"
+                                  ? `${venue.issn || "No ISSN"} - ${venue.publisher || "No publisher"} - ${venue.rank || "No rank"}`
+                                  : `${venue.isbn || "No ISBN"} - ${venue.organizer || "No organizer"} - ${venue.type || "No type"}`}
+                              </span>
                             </span>
-                            <span className="mt-1 block text-xs text-[#B0B0B0]">
-                              {venue.kind === "journal"
-                                ? `${venue.issn || "No ISSN"} - ${venue.publisher || "No publisher"} - ${venue.rank || "No rank"}`
-                                : `${venue.isbn || "No ISBN"} - ${venue.organizer || "No organizer"} - ${venue.type || "No type"}`}
+                            <span className="rounded-none bg-slate-100 px-2 py-1 text-[11px] font-bold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                              {venue.kind}
                             </span>
                           </span>
-                          <span className="rounded-none bg-slate-100 px-2 py-1 text-[11px] font-bold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-                            {venue.kind}
-                          </span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                  {venueQuery.trim() && venueResults.length === 0 && (
-                    <p className="py-10 text-center text-sm text-[#B0B0B0]">
-                      No venue matches this search.
-                    </p>
-                  )}
+                        </button>
+                      );
+                    })}
+                    {venueQuery.trim() && venueResults.length === 0 && (
+                      <p className="py-10 text-center text-sm text-[#B0B0B0]">
+                        No venue matches this search.
+                      </p>
+                    )}
                   </div>
                 </div>
               </FloatingDropdownPortal>
@@ -648,6 +663,8 @@ export function CreateSubmissionTaskDialog({
                 className={researchTextareaClass}
               />
             </label>
+
+            <TaskAttachmentField />
           </form>
         </ResearchModal>
       )}
@@ -714,5 +731,25 @@ export function CreateSubmissionTaskDialog({
         </ResearchModal>
       )}
     </>
+  );
+}
+
+function TaskAttachmentField() {
+  return (
+    <label className="grid gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-4 py-3 text-sm text-[#6C778D] dark:border-[#444444] dark:bg-[#202020] dark:text-[#B0B0B0]">
+      <span className="flex items-center gap-2 text-xs font-normal uppercase tracking-wide text-[#6C778D] dark:text-[#B0B0B0]">
+        <FileUp className="h-4 w-4 text-[#1F7180] dark:text-[#A8DADC]" />
+        Task file (optional)
+      </span>
+      <input
+        name="taskFile"
+        type="file"
+        accept=".pdf,.doc,.docx,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        className="block w-full cursor-pointer text-sm text-[#243047] file:mr-4 file:cursor-pointer file:border file:border-[#D8D0C2] file:bg-transparent file:px-3 file:py-2 file:text-sm file:font-normal file:text-[#1F7180] hover:file:border-[#A8DADC] dark:text-[#E4E4E4] dark:file:border-[#444444] dark:file:text-[#A8DADC] dark:hover:file:border-[#A8DADC]"
+      />
+      <span className="text-xs text-[#7C8798] dark:text-[#9CA3AF]">
+        PDF, DOC, DOCX, or XLSX. Maximum 2 MB.
+      </span>
+    </label>
   );
 }

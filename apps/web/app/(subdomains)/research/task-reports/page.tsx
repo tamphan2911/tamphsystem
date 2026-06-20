@@ -3,10 +3,7 @@ import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { deleteResearchUploadedFile } from "../actions";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
-import {
-  TaskReportsTable,
-  type UploadedFileRow,
-} from "./TaskReportsTable";
+import { TaskReportsTable, type UploadedFileRow } from "./TaskReportsTable";
 
 export const dynamic = "force-dynamic";
 
@@ -21,72 +18,98 @@ export default async function TaskReportsPage() {
   });
   if (!currentUser?.roles.includes(Role.ADMIN)) redirect("/401");
 
-  const [tasks, proposals, articleSubmissions] = await Promise.all([
-    prisma.researchTask.findMany({
-      where: {
-        reportFileName: { not: null },
-        reportFileData: { not: null },
-      },
-      select: {
-        id: true,
-        taskCode: true,
-        title: true,
-        taskType: true,
-        category: true,
-        status: true,
-        reportFileName: true,
-        reportFileType: true,
-        reportFileSize: true,
-        reportUploadedAt: true,
-        reportUploadedById: true,
-        updatedAt: true,
-        createdBy: { select: { name: true, email: true } },
-        project: { select: { id: true, researchCode: true, title: true } },
-        organizedProject: {
-          select: { id: true, referenceCode: true, title: true },
+  const [taskAttachments, tasks, proposals, articleSubmissions] =
+    await Promise.all([
+      prisma.researchTask.findMany({
+        where: {
+          taskFileName: { not: null },
+          taskFileData: { not: null },
         },
-      },
-      orderBy: [{ reportUploadedAt: "desc" }, { updatedAt: "desc" }],
-    }),
-    prisma.proposal.findMany({
-      where: {
-        supportFileName: { not: null },
-        supportFileData: { not: null },
-      },
-      select: {
-        id: true,
-        type: true,
-        title: true,
-        status: true,
-        supportFileName: true,
-        supportFileType: true,
-        supportFileSize: true,
-        createdAt: true,
-        updatedAt: true,
-        submittedBy: { select: { name: true, email: true } },
-      },
-      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-    }),
-    prisma.researchSubmission.findMany({
-      where: {
-        articleFileName: { not: null },
-        articleFileData: { not: null },
-      },
-      select: {
-        id: true,
-        submissionCode: true,
-        status: true,
-        articleFileName: true,
-        articleFileType: true,
-        articleFileSize: true,
-        publishedAt: true,
-        updatedAt: true,
-        project: { select: { id: true, researchCode: true, title: true } },
-        journal: { select: { id: true, name: true, publisher: true } },
-      },
-      orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
-    }),
-  ]);
+        select: {
+          id: true,
+          taskCode: true,
+          title: true,
+          taskType: true,
+          category: true,
+          status: true,
+          taskFileName: true,
+          taskFileType: true,
+          taskFileSize: true,
+          createdAt: true,
+          updatedAt: true,
+          createdBy: { select: { name: true, email: true } },
+          project: { select: { id: true, researchCode: true, title: true } },
+          organizedProject: {
+            select: { id: true, referenceCode: true, title: true },
+          },
+        },
+        orderBy: [{ createdAt: "desc" }, { updatedAt: "desc" }],
+      }),
+      prisma.researchTask.findMany({
+        where: {
+          reportFileName: { not: null },
+          reportFileData: { not: null },
+        },
+        select: {
+          id: true,
+          taskCode: true,
+          title: true,
+          taskType: true,
+          category: true,
+          status: true,
+          reportFileName: true,
+          reportFileType: true,
+          reportFileSize: true,
+          reportUploadedAt: true,
+          reportUploadedById: true,
+          updatedAt: true,
+          createdBy: { select: { name: true, email: true } },
+          project: { select: { id: true, researchCode: true, title: true } },
+          organizedProject: {
+            select: { id: true, referenceCode: true, title: true },
+          },
+        },
+        orderBy: [{ reportUploadedAt: "desc" }, { updatedAt: "desc" }],
+      }),
+      prisma.proposal.findMany({
+        where: {
+          supportFileName: { not: null },
+          supportFileData: { not: null },
+        },
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          status: true,
+          supportFileName: true,
+          supportFileType: true,
+          supportFileSize: true,
+          createdAt: true,
+          updatedAt: true,
+          submittedBy: { select: { name: true, email: true } },
+        },
+        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      }),
+      prisma.researchSubmission.findMany({
+        where: {
+          articleFileName: { not: null },
+          articleFileData: { not: null },
+        },
+        select: {
+          id: true,
+          submissionCode: true,
+          status: true,
+          articleFileName: true,
+          articleFileType: true,
+          articleFileSize: true,
+          publishedAt: true,
+          updatedAt: true,
+          project: { select: { id: true, researchCode: true, title: true } },
+          journal: { select: { id: true, name: true, publisher: true } },
+        },
+        orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
+      }),
+    ]);
 
   const uploaderIds = Array.from(
     new Set(
@@ -100,6 +123,45 @@ export default async function TaskReportsPage() {
     select: { id: true, name: true, email: true },
   });
   const uploaderById = new Map(uploaders.map((user) => [user.id, user]));
+
+  const taskAttachmentRows: UploadedFileRow[] = taskAttachments.map((task) => ({
+    id: `task-attachment:${task.id}`,
+    ownerId: task.id,
+    kind: "task-attachment",
+    source: "Task attachment",
+    sourceStatus: task.status,
+    sourceHref: `/tasks/${task.id}`,
+    sourceCode:
+      task.taskCode ?? task.id.replaceAll("-", "").slice(0, 10).toUpperCase(),
+    sourceTitle: task.title,
+    sourceMeta: `${task.taskType ?? task.category ?? "OTHER"} - Uploaded by assigner ${
+      task.createdBy.name || task.createdBy.email
+    }`,
+    fileName: task.taskFileName ?? "Task attachment",
+    fileType: task.taskFileType ?? "",
+    fileSize: task.taskFileSize ?? 0,
+    uploadedAt: task.createdAt.toISOString(),
+    uploaderName: task.createdBy.name || task.createdBy.email || "Unknown user",
+    uploaderEmail: task.createdBy.email ?? "",
+    downloadHref: `/api/research/tasks/${task.id}/attachment`,
+    context: task.project
+      ? {
+          type: "Research",
+          id: task.project.id,
+          code: task.project.researchCode ?? "",
+          title: task.project.title,
+          href: `/projects/${task.project.id}`,
+        }
+      : task.organizedProject
+        ? {
+            type: "Project",
+            id: task.organizedProject.id,
+            code: task.organizedProject.referenceCode ?? "",
+            title: task.organizedProject.title,
+            href: `/organized-projects/${task.organizedProject.id}`,
+          }
+        : null,
+  }));
 
   const taskRows: UploadedFileRow[] = tasks.map((task) => {
     const uploader = task.reportUploadedById
@@ -183,7 +245,8 @@ export default async function TaskReportsPage() {
       fileType: submission.articleFileType ?? "",
       fileSize: submission.articleFileSize ?? 0,
       uploadedAt:
-        submission.publishedAt?.toISOString() ?? submission.updatedAt.toISOString(),
+        submission.publishedAt?.toISOString() ??
+        submission.updatedAt.toISOString(),
       uploaderName: "Admin",
       uploaderEmail: "",
       downloadHref: `/api/research/submissions/${submission.id}/article`,
@@ -196,7 +259,12 @@ export default async function TaskReportsPage() {
       },
     }),
   );
-  const rows = [...taskRows, ...proposalRows, ...articleRows].sort(
+  const rows = [
+    ...taskAttachmentRows,
+    ...taskRows,
+    ...proposalRows,
+    ...articleRows,
+  ].sort(
     (a, b) =>
       new Date(b.uploadedAt ?? 0).getTime() -
       new Date(a.uploadedAt ?? 0).getTime(),
@@ -247,7 +315,9 @@ function configuredStorageVolume() {
     process.env.RESEARCH_FILE_STORAGE_BYTES ??
     process.env.RESEARCH_STORAGE_VOLUME_BYTES;
   const parsed = raw ? Number(raw) : Number.NaN;
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 5 * 1024 * 1024 * 1024;
+  return Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : 5 * 1024 * 1024 * 1024;
 }
 
 function formatStorage(bytes: number) {
