@@ -356,10 +356,12 @@ function DeleteTaskButton({
 
 export function TasksClient({
   isAdmin,
+  canDelete,
   deleteAction,
   action,
 }: {
   isAdmin: boolean;
+  canDelete: boolean;
   deleteAction: (taskId: string) => Promise<void>;
   action?: ReactNode;
 }) {
@@ -562,7 +564,7 @@ export function TasksClient({
                 <th className="w-[7rem] px-3 py-3">Status</th>
                 <th className="w-[9.5rem] px-3 py-3">Assignees</th>
                 <th className="w-[11rem] px-3 py-3">Time</th>
-                {isAdmin && (
+                {canDelete && (
                   <th className="w-12 px-2 py-3 text-center">
                     <span className="sr-only">Delete</span>
                   </th>
@@ -649,7 +651,7 @@ export function TasksClient({
                         </p>
                       )}
                     </td>
-                    {isAdmin && (
+                    {canDelete && (
                       <td className="px-2 py-3 text-center align-top">
                         <DeleteTaskButton
                           task={task}
@@ -662,10 +664,10 @@ export function TasksClient({
                 );
               })}
               {isLoading && pagination.total === 0 ? (
-                <TableSkeletonRows rows={7} columns={isAdmin ? 6 : 5} />
+                <TableSkeletonRows rows={7} columns={canDelete ? 6 : 5} />
               ) : loadError && pagination.total === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 6 : 5} className="px-4 py-2">
+                  <td colSpan={canDelete ? 6 : 5} className="px-4 py-2">
                     <ResearchErrorState
                       title="Tasks could not load"
                       detail="Refresh the page or try again in a moment."
@@ -674,7 +676,7 @@ export function TasksClient({
                 </tr>
               ) : pagination.total === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 6 : 5} className="px-4 py-2">
+                  <td colSpan={canDelete ? 6 : 5} className="px-4 py-2">
                     <ResearchEmptyState
                       title="No tasks match the current filters."
                       detail={

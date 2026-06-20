@@ -45,6 +45,7 @@ export default async function ConferencesPage() {
     []) as Role[];
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const canDelete = roles.includes(Role.ADMIN);
   const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
   const conferenceWhere = unrestrictedAccess
     ? {}
@@ -112,7 +113,7 @@ export default async function ConferencesPage() {
       </ResearchPageHeaderPortal>
       <ConferencesTable
         rows={rows}
-        isAdmin={isAdmin}
+        isAdmin={canDelete}
         deleteAction={deleteConference}
       />
     </div>

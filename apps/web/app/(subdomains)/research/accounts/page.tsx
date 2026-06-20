@@ -15,6 +15,7 @@ export default async function PublisherAccountsPage() {
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const canDelete = roles.includes(Role.ADMIN);
   if (!userId) redirect("/login");
 
   const [accounts, journals] = await Promise.all([
@@ -115,7 +116,7 @@ export default async function PublisherAccountsPage() {
 
       <AccountsTable
         rows={rows}
-        isAdmin={isAdmin}
+        isAdmin={canDelete}
         deleteAction={deletePublisherAccount}
       />
     </div>

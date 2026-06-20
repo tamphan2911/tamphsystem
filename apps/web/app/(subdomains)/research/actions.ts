@@ -1796,7 +1796,7 @@ export async function createOrganizedProject(formData: FormData) {
 
 export async function deleteOrganizedProject(projectId: string) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   const project = await prisma.organizedProject.findUnique({
     where: { id: projectId },
@@ -2415,7 +2415,7 @@ export async function updateResearchProject(
 
 export async function deleteResearchProject(projectId: string) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   const project = await prisma.researchProject.findUnique({
     where: { id: projectId },
@@ -2650,7 +2650,7 @@ export async function updateJournal(journalId: string, formData: FormData) {
 
 export async function deleteJournal(journalId: string) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   const journal = await prisma.journal.findUnique({
     where: { id: journalId },
@@ -2693,7 +2693,7 @@ export async function deleteJournal(journalId: string) {
 
 export async function deleteConference(conferenceId: string) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   const conference = await prisma.conference.findUnique({
     where: { id: conferenceId },
@@ -2925,7 +2925,7 @@ export async function updatePublisherAccount(
 
 export async function deletePublisherAccount(accountId: string) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   await prisma.publisherAccount.delete({
     where: { id: accountId },
@@ -3889,7 +3889,7 @@ export async function revokeResearchTask(taskId: string) {
 
 export async function deleteResearchTask(taskId: string) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },

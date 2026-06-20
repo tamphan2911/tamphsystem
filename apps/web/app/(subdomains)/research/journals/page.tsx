@@ -23,6 +23,7 @@ export default async function JournalsPage() {
     []) as Role[];
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const canDelete = roles.includes(Role.ADMIN);
   const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
   const journalWhere = unrestrictedAccess
     ? {}
@@ -121,7 +122,7 @@ export default async function JournalsPage() {
 
       <JournalsTable
         rows={rows}
-        isAdmin={isAdmin}
+        isAdmin={canDelete}
         deleteAction={deleteJournal}
       />
     </div>
