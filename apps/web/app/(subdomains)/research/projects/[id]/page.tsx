@@ -588,6 +588,10 @@ export default async function ProjectDetailPage({
       rank: journal.rank ?? "",
       publisher: journal.publisher ?? "",
       apc: journal.apc ?? "",
+      apcCurrency: journal.apcCurrency,
+      hasApcOption: journal.hasApcOption,
+      submissionFee: journal.submissionFee ?? "",
+      submissionFeeCurrency: journal.submissionFeeCurrency,
       accounts: journal.accounts.map((account) => ({
         id: account.id,
         journalId: account.journalId ?? "",
@@ -608,6 +612,10 @@ export default async function ProjectDetailPage({
       rank: journal?.rank ?? "",
       publisher: journal?.publisher ?? "",
       apc: journal?.apc ?? "",
+      apcCurrency: journal?.apcCurrency ?? "USD",
+      hasApcOption: journal?.hasApcOption ?? false,
+      submissionFee: journal?.submissionFee ?? "",
+      submissionFeeCurrency: journal?.submissionFeeCurrency ?? "USD",
       accounts:
         journal?.accounts.map((account) => ({
           id: account.id,
@@ -650,6 +658,10 @@ export default async function ProjectDetailPage({
       ]
         .filter(Boolean)
         .join(" - "),
+      apc: conference.apc ?? "",
+      apcCurrency: conference.apcCurrency,
+      submissionFee: conference.submissionFee ?? "",
+      submissionFeeCurrency: conference.submissionFeeCurrency,
     }),
   );
   const suggestedConferenceOptions: SuggestedConferenceOption[] =
@@ -674,6 +686,10 @@ export default async function ProjectDetailPage({
         ]
           .filter(Boolean)
           .join(" - "),
+        apc: conference?.apc ?? "",
+        apcCurrency: conference?.apcCurrency ?? "USD",
+        submissionFee: conference?.submissionFee ?? "",
+        submissionFeeCurrency: conference?.submissionFeeCurrency ?? "USD",
         suggestedByName: createdBy
           ? displayResearchPersonName(createdBy) || "Unknown user"
           : "Unknown user",

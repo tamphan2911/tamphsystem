@@ -50,7 +50,11 @@ import {
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
 import { defaultResearchTaskDueDate } from "@/sites/research/lib/task-date";
-import { formatResearchNumber } from "@/sites/research/lib/currency";
+import {
+  currencySymbol,
+  formatResearchNumber,
+  normalizeResearchNumberInput,
+} from "@/sites/research/lib/currency";
 
 export type SuggestedJournalOption = {
   id: string;
@@ -63,6 +67,10 @@ export type SuggestedJournalOption = {
   rank: string;
   publisher: string;
   apc: string;
+  apcCurrency: string;
+  hasApcOption: boolean;
+  submissionFee: string;
+  submissionFeeCurrency: string;
   accounts: SuggestedJournalAccountOption[];
   suggestedByName?: string;
   suggestedByRole?: string;
@@ -88,6 +96,10 @@ export type SuggestedConferenceOption = {
   organizer: string;
   isbn?: string;
   time: string;
+  apc: string;
+  apcCurrency: string;
+  submissionFee: string;
+  submissionFeeCurrency: string;
   suggestedByName?: string;
   suggestedByRole?: string;
   venueState?: SuggestedVenueState;
@@ -1288,17 +1300,19 @@ function JournalCard({
       onDelete={onDelete}
       assignLabel="Assign journal submission task"
       deleteLabel="Delete suggested journal"
+      title={<p className="font-normal text-[#E4E4E4]">{journal.name}</p>}
     >
-      <p className="pr-16 font-normal text-[#E4E4E4]">{journal.name}</p>
       <p className="mt-1 text-xs text-[#B0B0B0]">
         {journal.field || "No field"} - {journal.rank || "No rank"} -{" "}
         {journal.publisher || "No publisher"}
       </p>
-      {journal.apc && (
-        <p className="mt-2 text-xs font-normal text-[#B0B0B0]">
-          APC: {formatResearchNumber(journal.apc)}
-        </p>
-      )}
+      <VenueFees
+        apc={journal.apc}
+        apcCurrency={journal.apcCurrency}
+        hasApcOption={journal.hasApcOption}
+        submissionFee={journal.submissionFee}
+        submissionFeeCurrency={journal.submissionFeeCurrency}
+      />
       <SuggestedByLine
         name={journal.suggestedByName}
         role={journal.suggestedByRole}
@@ -1338,8 +1352,8 @@ function ConferenceCard({
       onDelete={onDelete}
       assignLabel="Assign conference submission task"
       deleteLabel="Delete suggested conference"
+      title={<p className="font-normal text-[#E4E4E4]">{conference.name}</p>}
     >
-      <p className="pr-16 font-normal text-[#E4E4E4]">{conference.name}</p>
       <p className="mt-1 text-xs text-[#B0B0B0]">
         {conference.type || "No type"} - {conference.theme || "No theme"}
       </p>
@@ -1347,11 +1361,69 @@ function ConferenceCard({
         {[conference.time, conference.location].filter(Boolean).join(" - ") ||
           "Time/location not set"}
       </p>
+      <VenueFees
+        apc={conference.apc}
+        apcCurrency={conference.apcCurrency}
+        submissionFee={conference.submissionFee}
+        submissionFeeCurrency={conference.submissionFeeCurrency}
+      />
       <SuggestedByLine
         name={conference.suggestedByName}
         role={conference.suggestedByRole}
       />
     </VenueCard>
+  );
+}
+
+function VenueFees({
+  apc,
+  apcCurrency,
+  hasApcOption = false,
+  submissionFee,
+  submissionFeeCurrency,
+}: {
+  apc: string;
+  apcCurrency: string;
+  hasApcOption?: boolean;
+  submissionFee: string;
+  submissionFeeCurrency: string;
+}) {
+  const normalizedApc = normalizeResearchNumberInput(apc);
+  const apcValue = Number(normalizedApc || 0);
+  const apcIsFree = !Number.isFinite(apcValue) || apcValue <= 0;
+  const apcIsHigh = apcValue > 1000;
+  const normalizedFee = normalizeResearchNumberInput(submissionFee);
+  const feeValue = Number(normalizedFee || 0);
+  const hasSubmissionFee = Number.isFinite(feeValue) && feeValue > 0;
+
+  return (
+    <p className="mt-2 flex flex-wrap items-center gap-x-1 text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
+      <span>APC:</span>
+      <span
+        className={
+          apcIsFree
+            ? "font-normal text-emerald-700 dark:text-emerald-300"
+            : apcIsHigh
+              ? "font-normal text-rose-700 dark:text-rose-300"
+              : "font-normal text-[#344054] dark:text-[#E4E4E4]"
+        }
+      >
+        {apcIsFree
+          ? "free"
+          : `${currencySymbol(apcCurrency)} ${formatResearchNumber(apc)}`}
+      </span>
+      {hasApcOption ? <span>- Option</span> : null}
+      {hasSubmissionFee ? (
+        <>
+          <span className="mx-1 text-[#98A2B3] dark:text-[#777777]">|</span>
+          <span>Fee:</span>
+          <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
+            {currencySymbol(submissionFeeCurrency)}{" "}
+            {formatResearchNumber(submissionFee)}
+          </span>
+        </>
+      ) : null}
+    </p>
   );
 }
 
@@ -1378,6 +1450,7 @@ function VenueCard({
   onDelete,
   assignLabel,
   deleteLabel,
+  title,
   children,
 }: {
   isAdmin: boolean;
@@ -1390,6 +1463,7 @@ function VenueCard({
   onDelete: () => void;
   assignLabel: string;
   deleteLabel: string;
+  title: ReactNode;
   children: ReactNode;
 }) {
   const meta = venueStateMeta(state);
@@ -1448,32 +1522,39 @@ function VenueCard({
           )}
         </div>
       ) : null}
-      {meta.badge ? (
+      <div className="flex min-w-0 items-start justify-between gap-3">
         <div
-          className={`absolute right-2 top-2 transition ${showActions ? "group-hover:opacity-0" : ""}`}
+          className={`min-w-0 flex-1 ${showActions && !meta.badge ? "pr-24" : ""}`}
         >
-          <IconHint label={meta.tooltip || meta.badge} position="bottom">
-            <span
-              className={`inline-flex flex-col border px-2.5 py-1 text-center text-[11px] font-normal uppercase tracking-wide ring-0 ${meta.badgeClass}`}
-            >
-              {meta.badge}
-              {state.state === "published" && state.publishedAt ? (
-                <span className="mt-0.5 text-[10px] font-semibold normal-case tracking-normal">
-                  {shortDate(state.publishedAt)}
-                </span>
-              ) : null}
-            </span>
-          </IconHint>
+          {title}
         </div>
-      ) : meta.tooltip ? (
-        <div className="absolute right-2 top-2">
-          <IconHint label={meta.tooltip} position="bottom">
-            <span className="inline-flex h-6 w-6 items-center justify-center text-[#B0B0B0] transition hover:text-[#A8DADC]">
-              <Info className="h-4 w-4" aria-hidden="true" />
-            </span>
-          </IconHint>
-        </div>
-      ) : null}
+        {meta.badge ? (
+          <div
+            className={`flex-none transition ${showActions ? "group-hover:opacity-0" : ""}`}
+          >
+            <IconHint label={meta.tooltip || meta.badge} position="bottom">
+              <span
+                className={`inline-flex flex-col border px-2.5 py-1 text-center text-[11px] font-normal uppercase tracking-wide ring-0 ${meta.badgeClass}`}
+              >
+                {meta.badge}
+                {state.state === "published" && state.publishedAt ? (
+                  <span className="mt-0.5 text-[10px] font-semibold normal-case tracking-normal">
+                    {shortDate(state.publishedAt)}
+                  </span>
+                ) : null}
+              </span>
+            </IconHint>
+          </div>
+        ) : meta.tooltip ? (
+          <div className="flex-none">
+            <IconHint label={meta.tooltip} position="bottom">
+              <span className="inline-flex h-6 w-6 items-center justify-center text-[#B0B0B0] transition hover:text-[#A8DADC]">
+                <Info className="h-4 w-4" aria-hidden="true" />
+              </span>
+            </IconHint>
+          </div>
+        ) : null}
+      </div>
       {children}
     </div>
   );
