@@ -162,7 +162,13 @@ export default async function ResearchProfilePage({
           select: { status: true },
         },
         _count: {
-          select: { submissions: true, publications: true },
+          select: {
+            submissions: true,
+            publications: true,
+            tasks: {
+              where: { status: { notIn: ["COMPLETED", "REVOKED"] } },
+            },
+          },
         },
       },
       orderBy: { updatedAt: "desc" },
@@ -263,6 +269,7 @@ export default async function ResearchProfilePage({
       leadResearcher: displayResearchPersonName(project.leadResearcher),
       submissions: project._count.submissions,
       publications: project._count.publications,
+      activeTasks: project._count.tasks,
       updatedAt: researchDateTimeFormat("en-GB").format(project.updatedAt),
       notSubmittedAnywhere:
         !hasSubmissions ||

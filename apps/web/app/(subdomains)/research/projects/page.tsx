@@ -112,59 +112,66 @@ export default async function ProjectsDashboard() {
         ],
       };
 
-  const [projects, authorUsers, fundingInstitutions] =
-    await Promise.all([
-      prisma.researchProject.findMany({
-        where: projectWhere,
-        include: {
-          leadResearcher: { select: { name: true, email: true } },
-          registrationUser: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              additionalEmails: true,
-              roles: true,
-            },
-          },
-          authors: {
-            select: { name: true, email: true, additionalEmails: true },
-            orderBy: [{ name: "asc" }, { email: "asc" }],
-          },
-          authorEntries: {
-            include: {
-              user: { select: { name: true, email: true, additionalEmails: true } },
-            },
-            orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-          },
-          submissions: {
-            select: { status: true },
-          },
-          conferenceSubmissions: {
-            select: { status: true },
-          },
-          _count: {
-            select: { submissions: true, publications: true },
+  const [projects, authorUsers, fundingInstitutions] = await Promise.all([
+    prisma.researchProject.findMany({
+      where: projectWhere,
+      include: {
+        leadResearcher: { select: { name: true, email: true } },
+        registrationUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            additionalEmails: true,
+            roles: true,
           },
         },
-        orderBy: { updatedAt: "desc" },
-      }),
-      prisma.user.findMany({
-        where: { activeSites: { has: "research" } },
-        orderBy: [{ name: "asc" }, { email: "asc" }],
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          additionalEmails: true,
-          roles: true,
+        authors: {
+          select: { name: true, email: true, additionalEmails: true },
+          orderBy: [{ name: "asc" }, { email: "asc" }],
         },
-      }),
-      prisma.fundingInstitution.findMany({
-        orderBy: [{ name: "asc" }],
-        select: { id: true, name: true, shortName: true, country: true },
-      }),
-    ]);
+        authorEntries: {
+          include: {
+            user: {
+              select: { name: true, email: true, additionalEmails: true },
+            },
+          },
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        },
+        submissions: {
+          select: { status: true },
+        },
+        conferenceSubmissions: {
+          select: { status: true },
+        },
+        _count: {
+          select: {
+            submissions: true,
+            publications: true,
+            tasks: {
+              where: { status: { notIn: ["COMPLETED", "REVOKED"] } },
+            },
+          },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.user.findMany({
+      where: { activeSites: { has: "research" } },
+      orderBy: [{ name: "asc" }, { email: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        additionalEmails: true,
+        roles: true,
+      },
+    }),
+    prisma.fundingInstitution.findMany({
+      orderBy: [{ name: "asc" }],
+      select: { id: true, name: true, shortName: true, country: true },
+    }),
+  ]);
   const authorOptions = authorUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -174,7 +181,9 @@ export default async function ProjectsDashboard() {
   }));
 
   const published = projects.filter((project) => project.stage === "PUBLISHED");
-  const claimed = projects.filter((project) => project.claimStatus === "CLAIMED");
+  const claimed = projects.filter(
+    (project) => project.claimStatus === "CLAIMED",
+  );
 
   const rows: ResearchProjectRow[] = projects.map((project) => {
     const submissionStatuses = [
@@ -231,6 +240,7 @@ export default async function ProjectsDashboard() {
       leadResearcher: displayResearchPersonName(project.leadResearcher),
       submissions: project._count.submissions,
       publications: project._count.publications,
+      activeTasks: project._count.tasks,
       updatedAt: researchDateTimeFormat("en-GB").format(project.updatedAt),
       notSubmittedAnywhere:
         !hasSubmissions ||

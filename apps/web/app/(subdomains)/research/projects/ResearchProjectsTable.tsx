@@ -54,6 +54,7 @@ export type ResearchProjectRow = {
   leadResearcher: string;
   submissions: number;
   publications: number;
+  activeTasks: number;
   updatedAt: string;
   notSubmittedAnywhere: boolean;
   hasSubmittedSubmission: boolean;
@@ -127,7 +128,11 @@ function stageIcon(stage: string) {
   if (stage === "PUBLISHED") return BookOpenCheck;
   if (stage === "ACCEPTED") return BadgeCheck;
   if (stage === "REVIEW") return FileSearch;
-  if (stage === "SUBMITTING" || stage === "SUBMITTED" || stage === "NEED_SUBMIT")
+  if (
+    stage === "SUBMITTING" ||
+    stage === "SUBMITTED" ||
+    stage === "NEED_SUBMIT"
+  )
     return Send;
   return FlaskConical;
 }
@@ -202,11 +207,33 @@ function StatusIconChip({
   );
 }
 
-function ClaimStatusChip({
-  status,
+function ActiveTaskCount({
+  projectId,
+  count,
 }: {
-  status: string;
+  projectId: string;
+  count: number;
 }) {
+  const label = `${count} unfinished related ${count === 1 ? "task" : "tasks"}. Open related tasks.`;
+  const colorClass =
+    count > 0
+      ? "text-violet-700 hover:text-violet-900 dark:text-[#B39CD0] dark:hover:text-[#D8C8EC]"
+      : "text-[#667085] hover:text-[#344054] dark:text-[#777777] dark:hover:text-[#B0B0B0]";
+
+  return (
+    <IconHint label={label}>
+      <Link
+        href={`/projects/${projectId}#related-tasks`}
+        aria-label={label}
+        className={`research-allow-transform inline-flex min-h-5 min-w-8 items-center justify-center px-1 font-mono text-[11px] font-normal transition-[color,transform] duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-95 ${colorClass}`}
+      >
+        {count}
+      </Link>
+    </IconHint>
+  );
+}
+
+function ClaimStatusChip({ status }: { status: string }) {
   const Icon = claimIcon(status);
   const label = claimLabel(status);
 
@@ -518,11 +545,17 @@ export function ResearchProjectsTable({
                   </Link>
                 </td>
                 <td className="px-3 py-3 align-top">
-                  <StatusIconChip
-                    icon={stageIcon(row.stage)}
-                    label={stageTooltip(row)}
-                    className={stageStatusClass(row)}
-                  />
+                  <div className="inline-flex flex-col items-center">
+                    <StatusIconChip
+                      icon={stageIcon(row.stage)}
+                      label={stageTooltip(row)}
+                      className={stageStatusClass(row)}
+                    />
+                    <ActiveTaskCount
+                      projectId={row.id}
+                      count={row.activeTasks}
+                    />
+                  </div>
                 </td>
                 {showRegistrationClaim && (
                   <>
