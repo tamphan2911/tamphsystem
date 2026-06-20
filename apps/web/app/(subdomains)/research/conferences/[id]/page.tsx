@@ -2,36 +2,25 @@ import {
   researchDateTimeFormat,
   researchDateValue,
 } from "@/sites/research/lib/date-time";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  ArrowLeft,
-  CalendarDays,
-  Globe2,
-  MapPin,
-  ReceiptText,
-  Send,
-  Users,
-} from "lucide-react";
+import { Globe2, Landmark } from "lucide-react";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { unlockConference, updateConference } from "../../actions";
 import { ConferenceDialog } from "../ConferenceDialog";
 import { ConferenceUnlockButton } from "./ConferenceUnlockButton";
 import { formatMoney } from "@/sites/research/lib/currency";
-import { researchMutedLinkClass } from "@/sites/research/components/ResearchPrimitives";
-import {
-  ResearchProjectsTable,
-  type ResearchProjectRow,
-} from "../../projects/ResearchProjectsTable";
-import {
-  displayResearchEmail,
-  displayResearchPersonName,
-} from "@/sites/research/lib/display";
+import { IconHint } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
+import { displayResearchPersonName } from "@/sites/research/lib/display";
 import {
   accessibleConferenceWhere,
   hasUnrestrictedVenueAccess,
 } from "@/sites/research/lib/venueAccess";
+import {
+  ConferenceSubmissionsTable,
+  type ConferenceSubmissionRow,
+} from "./ConferenceSubmissionsTable";
 
 export const dynamic = "force-dynamic";
 
@@ -72,8 +61,6 @@ export default async function ConferenceDetailPage({
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
-  const isAdmin =
-    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
   const canEditVenue = roles.includes(Role.ADMIN);
   const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
   const conferenceAccessWhere = unrestrictedAccess
@@ -88,8 +75,6 @@ export default async function ConferenceDetailPage({
         include: {
           project: {
             include: {
-              leadResearcher: true,
-              registrationUser: true,
               authors: {
                 select: { name: true, email: true },
                 orderBy: [{ name: "asc" }, { email: "asc" }],
@@ -98,13 +83,6 @@ export default async function ConferenceDetailPage({
                 include: { user: { select: { name: true, email: true } } },
                 orderBy: [{ position: "asc" }, { createdAt: "asc" }],
               },
-              submissions: {
-                select: { status: true },
-              },
-              conferenceSubmissions: {
-                select: { status: true },
-              },
-              _count: { select: { submissions: true, publications: true } },
             },
           },
         },
@@ -115,65 +93,36 @@ export default async function ConferenceDetailPage({
 
   if (!conference) notFound();
 
-  const submittedResearch: ResearchProjectRow[] = conference.submissions.map(
-    ({ project }) => {
-      const submissionStatuses = [
-        ...project.submissions.map((s) => s.status),
-        ...project.conferenceSubmissions.map((s) => s.status),
-      ];
-      const hasSubmissions = submissionStatuses.length > 0;
-      const hasSubmittedSubmission = submissionStatuses.some(
-        (status) => status === "PENDING" || status === "SUBMITTED",
-      );
-      const hasAcceptedSubmission = submissionStatuses.some(
-        (status) => status === "ACCEPTED",
-      );
-
-      return {
-        id: project.id,
-        researchCode: project.researchCode ?? "",
-        title: project.title,
-        abstract: project.abstract ?? "",
-        stage: project.stage,
-        claimStatus: project.claimStatus,
-        registerStatus: project.registerStatus,
-        coAuthors:
-          project.authorEntries.length > 0
-            ? project.authorEntries
+  const submissionRows: ConferenceSubmissionRow[] = conference.submissions.map(
+    (submission) => ({
+      id: submission.id,
+      code:
+        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
+      projectId: submission.project.id,
+      projectTitle: submission.project.title,
+      projectAuthors:
+        submission.project.authorEntries.length > 0
+          ? submission.project.authorEntries
+              .map(
+                (entry) =>
+                  `${displayResearchPersonName(entry.user)}${entry.isCorresponding ? "*" : ""}`,
+              )
+              .join(", ")
+          : submission.project.authors.length > 0
+            ? submission.project.authors
                 .map(
-                  (entry) =>
-                    `${displayResearchPersonName(entry.user)}${entry.isCorresponding ? "*" : ""}`,
+                  (author, index) =>
+                    `${displayResearchPersonName(author)}${index === 0 ? "*" : ""}`,
                 )
                 .join(", ")
-            : project.authors.length > 0
-              ? project.authors
-                  .map(
-                    (author, index) =>
-                      `${displayResearchPersonName(author)}${index === 0 ? "*" : ""}`,
-                  )
-                  .join(", ")
-              : (project.coAuthors ?? ""),
-        universityRegistration: project.universityRegistration ?? "",
-        registerName:
-          project.registrationUser?.name ||
-          displayResearchEmail(project.registrationUser?.email) ||
-          project.registrationName ||
-          "",
-        canViewRegistrationClaim:
-          isAdmin || Boolean(userId && project.registrationUserId === userId),
-        leadResearcher: displayResearchPersonName(project.leadResearcher),
-        submissions: project._count.submissions,
-        publications: project._count.publications,
-        updatedAt: researchDateTimeFormat("en-GB").format(project.updatedAt),
-        notSubmittedAnywhere:
-          !hasSubmissions ||
-          submissionStatuses.every(
-            (status) => status === "REJECTED" || status === "WITHDRAWN",
-          ),
-        hasSubmittedSubmission,
-        hasAcceptedSubmission,
-      };
-    },
+            : (submission.project.coAuthors ?? ""),
+      status: submission.status,
+      submittedAt: submission.submittedAt?.toISOString() ?? "",
+      acceptedAt: submission.acceptedAt?.toISOString() ?? "",
+      rejectedAt: submission.rejectedAt?.toISOString() ?? "",
+      withdrawnAt: submission.withdrawnAt?.toISOString() ?? "",
+      publishedAt: submission.publishedAt?.toISOString() ?? "",
+    }),
   );
 
   const schedule = dateText(conference.startDate, conference.endDate);
@@ -204,148 +153,139 @@ export default async function ConferenceDetailPage({
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <Link
-        href="/conferences"
-        className={`inline-flex items-center gap-2 text-sm ${researchMutedLinkClass}`}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Conferences
-      </Link>
-
-      <section className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
-        <div className="border-b border-[#444444] p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-normal tracking-tight text-[#E4E4E4]">
-                  {conference.name}
-                </h1>
-                <span className="border border-violet-500/30 bg-violet-500/10 px-2.5 py-1 text-xs font-bold text-violet-200 ring-1 ring-violet-500/20">
-                  {conferenceTypeLabel(conference.type) || "Type not set"}
-                </span>
-              </div>
-              {theme && (
-                <p className="mt-3 max-w-4xl text-sm text-[#B0B0B0]">{theme}</p>
-              )}
-            </div>
-            {conference.website && (
-              <a
-                href={conference.website}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm font-semibold text-sky-200 transition hover:-translate-y-0.5 hover:border-sky-400/50 hover:bg-sky-500/15 hover:shadow-md hover:shadow-black/20"
+    <>
+      <ResearchPageHeaderPortal>
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="min-w-0 truncate text-[16px] font-normal leading-6 text-[#E4E4E4] xl:text-[16px]">
+                {conference.name}
+              </h1>
+              <IconHint
+                label={`${conferenceTypeLabel(conference.type) || "Unspecified"} conference`}
+                position="bottom"
               >
-                <Globe2 className="h-4 w-4" />
-                Website
-              </a>
-            )}
-            <div className="flex items-center gap-2">
-              {canEdit && (
-                <ConferenceDialog
-                  mode="edit"
-                  action={editConference}
-                  initialValues={initialValues}
-                />
-              )}
-              {canUnlock && (
-                <ConferenceUnlockButton
-                  conferenceName={conference.name}
-                  action={unlock}
-                />
-              )}
+                <Landmark className="research-task-icon-motion h-4 w-4 flex-none text-violet-700 dark:text-violet-300" />
+              </IconHint>
+              <div className="flex flex-none items-center gap-1">
+                {conference.website && (
+                  <IconHint label="Open conference website" position="bottom">
+                    <a
+                      href={conference.website}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="research-clickable-icon research-allow-transform inline-flex h-8 w-8 items-center justify-center border-0 bg-transparent text-[#1F7180] shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:bg-transparent hover:text-[#155864] hover:shadow-none focus-visible:ring-0 dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+                      aria-label="Open conference website"
+                    >
+                      <Globe2 className="h-[15px] w-[15px]" />
+                    </a>
+                  </IconHint>
+                )}
+                {canEdit && (
+                  <ConferenceDialog
+                    mode="edit"
+                    action={editConference}
+                    initialValues={initialValues}
+                  />
+                )}
+                {canUnlock && (
+                  <ConferenceUnlockButton
+                    conferenceName={conference.name}
+                    action={unlock}
+                  />
+                )}
+              </div>
             </div>
+            <p className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-xs font-normal text-[#B0B0B0]">
+              <span>ISBN: {conference.isbn || "-"}</span>
+              <span className="text-[#777777]" aria-hidden="true">
+                |
+              </span>
+              <span>{conference.organizer || "No organizer"}</span>
+              <span className="text-[#777777]" aria-hidden="true">
+                |
+              </span>
+              <span>{conferenceTypeLabel(conference.type) || "No type"}</span>
+              <span className="text-[#777777]" aria-hidden="true">
+                |
+              </span>
+              <span>{conference.location || "No location"}</span>
+            </p>
           </div>
         </div>
+      </ResearchPageHeaderPortal>
 
-        <dl className="grid gap-3 p-5 text-sm md:grid-cols-4">
-          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
-            <dt className="flex items-center gap-2 text-xs font-bold uppercase text-[#B0B0B0]">
-              <CalendarDays className="h-3.5 w-3.5 text-sky-300" />
-              Time
-            </dt>
-            <dd className="mt-2 text-[#E4E4E4]">{schedule || "-"}</dd>
-          </div>
-          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
-            <dt className="text-xs font-bold uppercase text-[#B0B0B0]">
-              Submission deadline
-            </dt>
-            <dd className="mt-2 text-[#E4E4E4]">
-              {dateText(conference.submissionDeadline, null) || "-"}
-            </dd>
-          </div>
-          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
-            <dt className="text-xs font-bold uppercase text-[#B0B0B0]">
-              Acceptance notification
-            </dt>
-            <dd className="mt-2 text-[#E4E4E4]">
-              {dateText(conference.acceptanceNotification, null) || "-"}
-            </dd>
-          </div>
-          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
-            <dt className="text-xs font-bold uppercase text-[#B0B0B0]">
-              Close date
-            </dt>
-            <dd className="mt-2 text-[#E4E4E4]">
-              {dateText(conference.closeDate, null) || "-"}
-            </dd>
-          </div>
-          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
-            <dt className="flex items-center gap-2 text-xs font-bold uppercase text-[#B0B0B0]">
-              <MapPin className="h-3.5 w-3.5 text-rose-300" />
-              Location
-            </dt>
-            <dd className="mt-2 text-[#E4E4E4]">
-              {conference.location || "-"}
-            </dd>
-          </div>
-          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
-            <dt className="flex items-center gap-2 text-xs font-bold uppercase text-[#B0B0B0]">
-              <Users className="h-3.5 w-3.5 text-emerald-300" />
-              Organizer
-            </dt>
-            <dd className="mt-2 text-[#E4E4E4]">
-              {conference.organizer || "-"}
-            </dd>
-          </div>
-          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
-            <dt className="text-xs font-bold uppercase text-[#B0B0B0]">ISBN</dt>
-            <dd className="mt-2 text-[#E4E4E4]">{conference.isbn || "-"}</dd>
-          </div>
-          <div className="border border-[#444444] bg-[#242424] p-3 transition hover:border-[#5a5a5a] hover:bg-[#292929]">
-            <dt className="flex items-center gap-2 text-xs font-bold uppercase text-[#B0B0B0]">
-              <ReceiptText className="h-3.5 w-3.5 text-amber-300" />
-              Submission fee
-            </dt>
-            <dd className="mt-2 text-[#E4E4E4]">
-              {formatMoney(
-                conference.submissionFee,
-                conference.submissionFeeCurrency,
-              )}
-            </dd>
-          </div>
-          {conference.note && (
-            <div className="border-t border-[#444444] pt-4 md:col-span-4">
-              <dd className="text-sm leading-6 text-[#B0B0B0]">
-                {conference.note}
+      <div className="mx-auto max-w-7xl space-y-5">
+        <section className="space-y-5 px-1">
+          <dl className="grid gap-4 border-t border-[#3A3A3A] pt-4 text-sm md:grid-cols-3">
+            <div>
+              <dt className="text-xs font-bold uppercase text-slate-400">
+                Theme
+              </dt>
+              <dd className="mt-1 text-sm leading-5 text-[#B0B0B0]">
+                {theme || "No theme recorded."}
               </dd>
             </div>
-          )}
-        </dl>
-      </section>
+            <div>
+              <dt className="text-xs font-bold uppercase text-slate-400">
+                Time
+              </dt>
+              <dd className="mt-1 text-sm leading-5 text-[#B0B0B0]">
+                {schedule || "-"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-bold uppercase text-slate-400">
+                Submission fee
+              </dt>
+              <dd className="mt-1 text-base font-normal text-[#A8DADC]">
+                {formatMoney(
+                  conference.submissionFee,
+                  conference.submissionFeeCurrency,
+                )}
+              </dd>
+            </div>
 
-      <section className="space-y-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-[#E4E4E4]">
-            <Send className="h-5 w-5 text-blue-500" />
-            Research submitted to this conference
-          </h2>
-        </div>
-        <ResearchProjectsTable
-          rows={submittedResearch}
-          showClaimRegistration={false}
-        />
-      </section>
-    </div>
+            <div className="grid gap-4 border-t border-[#3A3A3A] pt-4 md:col-span-3 md:grid-cols-3">
+              <div>
+                <dt className="text-xs font-bold uppercase text-slate-400">
+                  Submission deadline
+                </dt>
+                <dd className="mt-1 text-sm leading-5 text-[#B0B0B0]">
+                  {dateText(conference.submissionDeadline, null) || "-"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-bold uppercase text-slate-400">
+                  Acceptance notification
+                </dt>
+                <dd className="mt-1 text-sm leading-5 text-[#B0B0B0]">
+                  {dateText(conference.acceptanceNotification, null) || "-"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-bold uppercase text-slate-400">
+                  Close date
+                </dt>
+                <dd className="mt-1 text-sm leading-5 text-[#B0B0B0]">
+                  {dateText(conference.closeDate, null) || "-"}
+                </dd>
+              </div>
+            </div>
+
+            <div className="border-t border-[#3A3A3A] pt-4 md:col-span-3">
+              <dt className="text-xs font-bold uppercase text-slate-400">
+                Note
+              </dt>
+              <dd className="mt-1 max-w-4xl text-sm leading-5 text-[#B0B0B0]">
+                {conference.note || "No note recorded."}
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <ConferenceSubmissionsTable rows={submissionRows} />
+      </div>
+    </>
   );
 }

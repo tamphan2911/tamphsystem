@@ -6,7 +6,10 @@ import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePick
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchNumberInput } from "@/sites/research/components/ResearchNumberInput";
-import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
+import {
+  IconHint,
+  ResearchButton,
+} from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { currencyOptions } from "@/sites/research/lib/currency";
 
@@ -55,17 +58,19 @@ export function ConferenceDialog({
   return (
     <>
       {isEdit ? (
-        <button
-          type="button"
-          onClick={() => {
-            setWarning("");
-            setOpen(true);
-          }}
-          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border border-blue-200 bg-blue-50 text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-100 hover:shadow-md dark:border-blue-800/70 dark:bg-blue-950/40 dark:text-blue-200"
-          aria-label="Edit conference"
-        >
-          <Pencil className="h-4 w-4" />
-        </button>
+        <IconHint label="Edit conference" position="bottom">
+          <button
+            type="button"
+            onClick={() => {
+              setWarning("");
+              setOpen(true);
+            }}
+            className="research-clickable-icon research-allow-transform inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-blue-700 shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:bg-transparent hover:text-blue-800 hover:shadow-none focus-visible:ring-0 dark:text-blue-300 dark:hover:text-blue-200"
+            aria-label="Edit conference"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+        </IconHint>
       ) : (
         <ResearchButton
           type="button"

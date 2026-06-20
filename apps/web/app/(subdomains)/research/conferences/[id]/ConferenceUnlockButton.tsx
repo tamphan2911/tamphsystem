@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { LockKeyhole, Loader2, UnlockKeyhole } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export function ConferenceUnlockButton({
@@ -18,14 +19,16 @@ export function ConferenceUnlockButton({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border border-amber-500/30 bg-amber-500/10 text-amber-300 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-400/50 hover:bg-amber-500/15 hover:shadow-md hover:shadow-black/20"
-        aria-label="Unlock conference editing"
-      >
-        <UnlockKeyhole className="h-4 w-4" />
-      </button>
+      <IconHint label="Unlock conference editing" position="bottom">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="research-clickable-icon research-allow-transform inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-amber-700 shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:bg-transparent hover:text-amber-800 hover:shadow-none focus-visible:ring-0 dark:text-amber-300 dark:hover:text-amber-200"
+          aria-label="Unlock conference editing"
+        >
+          <UnlockKeyhole className="h-4 w-4" />
+        </button>
+      </IconHint>
       <ResearchConfirmDialog
         open={open}
         tone="warning"
