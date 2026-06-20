@@ -52,7 +52,7 @@ const navItems = [
   },
   {
     href: "/suggestions",
-    label: "Suggestions",
+    label: "Suggested Venues",
     icon: "suggestions" as const,
     rootAdminOnly: true,
   },
