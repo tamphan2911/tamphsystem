@@ -185,6 +185,8 @@ export function CreateSubmissionTaskDialog({
           (account) => account.id === selectedAccountId,
         )
       : null;
+  const accountRequired =
+    selectedVenue?.kind === "journal" && selectedVenue.accounts.length > 1;
 
   function reset() {
     setVenueQuery("");
@@ -257,6 +259,14 @@ export function CreateSubmissionTaskDialog({
               "Only admin, first author, or corresponding author can create this task for the research.",
           });
           setIsOpen(false);
+          return;
+        }
+        if (result?.reason === "ACCOUNT_REQUIRED") {
+          showSuccess({
+            title: "Account is required",
+            detail:
+              "This journal has multiple accounts. Choose the account for this submission task.",
+          });
           return;
         }
         if (result?.reason === "TASK_FILE_TOO_LARGE") {
@@ -336,7 +346,10 @@ export function CreateSubmissionTaskDialog({
             <ResearchButton
               form="create-submission-task-form"
               disabled={
-                !selectedVenue || selectedAssistantIds.length === 0 || isPending
+                !selectedVenue ||
+                (accountRequired && !selectedAccountId) ||
+                selectedAssistantIds.length === 0 ||
+                isPending
               }
             >
               <Plus className="h-4 w-4" />
@@ -499,7 +512,10 @@ export function CreateSubmissionTaskDialog({
               <section className="grid gap-3 border border-[#444444] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-bold text-[#B0B0B0]">
-                    Account to submit (optional)
+                    Account to submit
+                    {accountRequired ? (
+                      <span className="research-required-mark">(*)</span>
+                    ) : null}
                   </span>
                   <ResearchIconButton
                     type="button"
@@ -529,7 +545,9 @@ export function CreateSubmissionTaskDialog({
                       <span className="min-w-0 truncate">
                         {selectedAccount
                           ? `${selectedAccount.username}${selectedAccount.email ? ` - ${selectedAccount.email}` : ""}`
-                          : "Choose an account, or leave empty"}
+                          : accountRequired
+                            ? "Choose the account for this task"
+                            : "Choose an account"}
                       </span>
                       <ChevronDown
                         className={`h-4 w-4 flex-none text-[#B0B0B0] transition ${accountOpen ? "rotate-180 text-[#A8DADC]" : ""}`}

@@ -3428,7 +3428,7 @@ export async function createResearchTask(formData: FormData) {
   const journalId = optionalString(formData.get("journalId"));
   const conferenceId = optionalString(formData.get("conferenceId"));
   const reviewId = optionalString(formData.get("reviewId"));
-  const accountId = optionalString(formData.get("accountId"));
+  let accountId = optionalString(formData.get("accountId"));
 
   if (
     !(await canCreateResearchTaskForProject({
@@ -3472,12 +3472,23 @@ export async function createResearchTask(formData: FormData) {
     return { ok: false, reason: associationBlockReason };
   }
 
-  if (accountId && taskType === ResearchTaskType.SUBMIT_RESEARCH) {
-    const account = await prisma.publisherAccount.findFirst({
-      where: { id: accountId, journalId },
+  if (taskType === ResearchTaskType.SUBMIT_RESEARCH && journalId) {
+    const journalAccounts = await prisma.publisherAccount.findMany({
+      where: { journalId },
       select: { id: true },
     });
-    if (!account) return { ok: false, reason: "ACCOUNT_NOT_FOR_JOURNAL" };
+    if (!accountId && journalAccounts.length === 1) {
+      accountId = journalAccounts[0]?.id ?? null;
+    }
+    if (!accountId && journalAccounts.length > 1) {
+      return { ok: false, reason: "ACCOUNT_REQUIRED" };
+    }
+    if (
+      accountId &&
+      !journalAccounts.some((account) => account.id === accountId)
+    ) {
+      return { ok: false, reason: "ACCOUNT_NOT_FOR_JOURNAL" };
+    }
   }
 
   if (

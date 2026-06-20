@@ -243,10 +243,19 @@ export function NewTaskDialog({
     selectedVenue?.kind === "journal"
       ? journalAccounts.find((account) => account.id === selectedAccountId)
       : null;
+  const submitAccountRequired =
+    mode === "submit" &&
+    selectedVenue?.kind === "journal" &&
+    journalAccounts.length > 1;
 
   useEffect(() => {
     if (selectedVenue?.kind !== "journal") {
       setSelectedAccountId("");
+      setAccountQuery("");
+      return;
+    }
+    if (journalAccounts.length === 1) {
+      setSelectedAccountId(journalAccounts[0]?.id ?? "");
       setAccountQuery("");
       return;
     }
@@ -345,9 +354,14 @@ export function NewTaskDialog({
   }
 
   function selectVenue(venue: TaskVenueOption) {
+    const venueAccounts =
+      venue.kind === "journal"
+        ? accountOptions.filter((account) => account.journalId === venue.id)
+        : [];
+    const singleAccount = venueAccounts.length === 1 ? venueAccounts[0] : null;
     setSelectedVenue(venue);
     setVenueQuery("");
-    setSelectedAccountId("");
+    setSelectedAccountId(singleAccount?.id ?? "");
     setAccountQuery("");
     if (
       selectedSubmission &&
@@ -432,11 +446,13 @@ export function NewTaskDialog({
                             ? "An active submission task already exists for this research and venue."
                             : result?.reason === "ACCOUNT_NOT_FOR_JOURNAL"
                               ? "Choose an account that belongs to the selected journal."
-                              : result?.reason === "TASK_FILE_TOO_LARGE"
-                                ? "Task file must be 2 MB or smaller."
-                                : result?.reason === "TASK_FILE_REJECTED"
-                                  ? "Upload the task file as PDF, DOC, DOCX, or XLSX."
-                                  : "Please check the task details and try again.",
+                              : result?.reason === "ACCOUNT_REQUIRED"
+                                ? "Choose the journal account for this submission task."
+                                : result?.reason === "TASK_FILE_TOO_LARGE"
+                                  ? "Task file must be 2 MB or smaller."
+                                  : result?.reason === "TASK_FILE_REJECTED"
+                                    ? "Upload the task file as PDF, DOC, DOCX, or XLSX."
+                                    : "Please check the task details and try again.",
         });
         return;
       }
@@ -474,6 +490,7 @@ export function NewTaskDialog({
     selectedIds.length > 0 &&
     selectedResearchMatchesMode &&
     selectedVenueMatchesMode &&
+    (!submitAccountRequired || Boolean(selectedAccountId)) &&
     selectedReviewIsOpen &&
     selectedOrganizedProjectIsOpen;
   const selectedAssigneeItems: SearchPanelItem[] = assignees
@@ -813,6 +830,7 @@ export function NewTaskDialog({
               selectedAccount={selectedAccount}
               filteredAccounts={filteredAccounts}
               selectAccount={selectAccount}
+              required={submitAccountRequired}
               clearAccount={() => {
                 setSelectedAccountId("");
                 setAccountQuery("");
@@ -956,6 +974,7 @@ function JournalAccountField({
   selectedAccount,
   filteredAccounts,
   selectAccount,
+  required,
   clearAccount,
 }: {
   accounts: TaskAccountOption[];
@@ -964,6 +983,7 @@ function JournalAccountField({
   selectedAccount: TaskAccountOption | null | undefined;
   filteredAccounts: TaskAccountOption[];
   selectAccount: (account: TaskAccountOption) => void;
+  required: boolean;
   clearAccount: () => void;
 }) {
   if (accounts.length === 0) {
@@ -979,7 +999,11 @@ function JournalAccountField({
     <SearchPanel
       query={query}
       setQuery={setQuery}
-      placeholder="Search accounts for this journal, or leave empty..."
+      placeholder={
+        required
+          ? "Search and choose the journal account (*)"
+          : "Account selected automatically"
+      }
       selectedItems={
         selectedAccount
           ? [
