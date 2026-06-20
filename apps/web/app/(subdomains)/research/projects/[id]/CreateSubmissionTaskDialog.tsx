@@ -604,6 +604,7 @@ export function CreateSubmissionTaskDialog({
                 <div className={`${researchDropdownPanelClass} grid`}>
                   <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
                   {assistantResults.map((assistant) => {
+                    const selected = selectedAssistantIds.includes(assistant.id);
                     return (
                       <button
                         key={assistant.id}
