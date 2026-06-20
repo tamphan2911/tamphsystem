@@ -229,7 +229,7 @@ export function RelatedResearchTasksTable({
                     >
                       {row.title}
                     </Link>
-                    <p className="mt-1 line-clamp-2 text-xs font-normal leading-5 text-[#B0B0B0]">
+                    <p className="mt-1 line-clamp-3 whitespace-pre-line break-words text-xs font-normal leading-5 text-[#B0B0B0]">
                       {row.description || "No description"}
                     </p>
                   </td>

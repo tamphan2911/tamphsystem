@@ -78,7 +78,12 @@ type ProfileTaskRow = {
 };
 
 type TabKey = "dashboard" | "research" | "projects" | "proposals";
-type PeriodKey = "all" | "lastWeek" | "currentWeek" | "lastMonth" | "currentMonth";
+type PeriodKey =
+  | "all"
+  | "lastWeek"
+  | "currentWeek"
+  | "lastMonth"
+  | "currentMonth";
 type DashboardStatusKey =
   | "all"
   | "active"
@@ -160,8 +165,19 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
+function durationText(ms: number) {
+  const absolute = Math.abs(ms);
+  const hours = Math.max(1, Math.round(absolute / (1000 * 60 * 60)));
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  const restHours = hours % 24;
+  return restHours > 0 ? `${days}d ${restHours}h` : `${days}d`;
+}
+
 function displayTaskCode(task: ProfileTaskRow) {
-  return task.taskCode || task.id.replaceAll("-", "").slice(0, 10).toUpperCase();
+  return (
+    task.taskCode || task.id.replaceAll("-", "").slice(0, 10).toUpperCase()
+  );
 }
 
 function taskStatusLabel(status: string) {
@@ -176,23 +192,69 @@ function taskStatusLabel(status: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function taskStatusDetail(task: ProfileTaskRow) {
+function profileTaskStatusMeta(task: ProfileTaskRow) {
+  const due = task.dueDate ? new Date(task.dueDate) : null;
+  const completed = task.completedAt ? new Date(task.completedAt) : null;
+
   if (task.status === "COMPLETED") {
-    return task.completedAt ? `finished ${formatDate(task.completedAt)}` : "Done";
+    if (!due || !completed) {
+      return {
+        label: "Completed",
+        detail: "Finished",
+        detailClassName: "text-emerald-600 dark:text-emerald-300",
+      };
+    }
+    if (completed <= due) {
+      return {
+        label: "Completed",
+        detail: `${durationText(due.getTime() - completed.getTime())} early`,
+        detailClassName: "text-emerald-600 dark:text-emerald-300",
+      };
+    }
+    return {
+      label: "Overdue",
+      detail: `${durationText(completed.getTime() - due.getTime())} late`,
+      detailClassName: "text-rose-600 dark:text-rose-300",
+    };
   }
   if (task.status === "REVOKED") {
-    return "Closed by assigner";
+    return {
+      label: "Revoked",
+      detail: "Closed by assigner",
+      detailClassName: "text-slate-600 dark:text-[#B0B0B0]",
+    };
   }
   if (task.status === "CHECKING") {
-    return "Waiting assigner check";
+    return {
+      label: "Checking",
+      detail: "Waiting assigner check",
+      detailClassName: "text-violet-600 dark:text-violet-300",
+    };
   }
   if (task.status === "NEED_CLARIFY") {
-    return "Waiting assigner answer";
+    return {
+      label: "Need clarify",
+      detail: "Waiting assigner answer",
+      detailClassName: "text-amber-700 dark:text-amber-300",
+    };
   }
   if (isOverdue(task)) {
-    return `Due ${formatDate(task.dueDate)}`;
+    return {
+      label: "Overdue",
+      detail: `${durationText(Date.now() - (due?.getTime() ?? Date.now()))} late`,
+      detailClassName: "text-rose-600 dark:text-rose-300",
+    };
   }
-  return task.dueDate ? `Due ${formatDate(task.dueDate)}` : "No due date";
+  return {
+    label: taskStatusLabel(task.status),
+    detail: due
+      ? `${durationText(due.getTime() - Date.now())} left`
+      : "No due date",
+    detailClassName:
+      due && due.getTime() - Date.now() < 24 * 60 * 60 * 1000
+        ? "font-semibold text-[#B64F48] dark:text-[#FFB4A2]"
+        : "text-[#667085] dark:text-[#B0B0B0]",
+  };
 }
 
 function isTaskInPeriod(task: ProfileTaskRow, period: PeriodKey) {
@@ -225,12 +287,10 @@ function matchesDashboardStatus(
   if (statusKey === "completed") return task.status === "COMPLETED";
   if (statusKey === "revoked") return task.status === "REVOKED";
   return (
-    (
-      task.status === "OPEN" ||
+    (task.status === "OPEN" ||
       task.status === "IN_PROGRESS" ||
       task.status === "CHECKING" ||
-      task.status === "NEED_CLARIFY"
-    ) &&
+      task.status === "NEED_CLARIFY") &&
     !isOverdue(task)
   );
 }
@@ -246,7 +306,8 @@ function dashboardStatusTabs(tasks: ProfileTaskRow[]) {
 
   return entries.map((item) => ({
     ...item,
-    value: tasks.filter((task) => matchesDashboardStatus(task, item.key)).length,
+    value: tasks.filter((task) => matchesDashboardStatus(task, item.key))
+      .length,
   }));
 }
 
@@ -273,9 +334,11 @@ export function ProfileClient({
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPasswordSaving, setIsPasswordSaving] = useState(false);
-  const [activeTab, setActiveTab] = usePersistentTableValue<TabKey>(
-    "profile:tab",
-    "dashboard",
+  const isAssistantProfile = user.roles.some(
+    (role) => role === "ASSISTANT" || role === "CHIEF_ASSISTANT",
+  );
+  const [activeTab, setActiveTab] = useState<TabKey>(() =>
+    isAssistantProfile ? "dashboard" : "research",
   );
   const [period, setPeriod] = usePersistentTableValue<PeriodKey>(
     "profile:period",
@@ -390,7 +453,8 @@ export function ProfileClient({
         .filter((task) => matchesDashboardStatus(task, dashboardStatus))
         .sort(
           (left, right) =>
-            new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime(),
+            new Date(right.updatedAt).getTime() -
+            new Date(left.updatedAt).getTime(),
         ),
     [dashboardStatus, periodTasks],
   );
@@ -455,7 +519,10 @@ export function ProfileClient({
                   <Mail className="h-3.5 w-3.5 flex-none" />
                   <span className="flex min-w-0 flex-wrap items-center gap-2">
                     {profileEmails.map((email, index) => (
-                      <span key={email} className="inline-flex items-center gap-2">
+                      <span
+                        key={email}
+                        className="inline-flex items-center gap-2"
+                      >
                         {index > 0 && (
                           <span className="text-[#666666]" aria-hidden="true">
                             |
@@ -576,7 +643,10 @@ export function ProfileClient({
         icon={<KeyRound className="h-5 w-5" />}
         maxWidth="max-w-xl"
         headerActions={
-          <ResearchButton form="profile-password-form" disabled={isPasswordSaving}>
+          <ResearchButton
+            form="profile-password-form"
+            disabled={isPasswordSaving}
+          >
             {isPasswordSaving ? (
               <Check className="h-4 w-4" />
             ) : (
@@ -725,8 +795,10 @@ function TaskDashboard({
   statusTabs: { key: DashboardStatusKey; label: string; value: number }[];
   filteredTasks: ProfileTaskRow[];
 }) {
-  const overdueCount = statusTabs.find((item) => item.key === "overdue")?.value ?? 0;
-  const activeCount = statusTabs.find((item) => item.key === "active")?.value ?? 0;
+  const overdueCount =
+    statusTabs.find((item) => item.key === "overdue")?.value ?? 0;
+  const activeCount =
+    statusTabs.find((item) => item.key === "active")?.value ?? 0;
 
   return (
     <div className="border border-[#444444] bg-[#2C2C2C]">
@@ -811,63 +883,69 @@ function ProfileTaskTable({ rows }: { rows: ProfileTaskRow[] }) {
             <th className="w-[9rem] px-3 py-3">Type</th>
             <th className="w-[10rem] px-3 py-3">Status</th>
             <th className="w-[8rem] px-3 py-3">Due</th>
-            <th className="w-[8rem] px-3 py-3">Updated</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[#444444]">
           {rows.length > 0 ? (
-            rows.map((task) => (
-              <tr
-                key={task.id}
-                className="align-top transition-colors duration-150 odd:bg-[#2C2C2C] even:bg-[#262626] hover:bg-[#303030]"
-              >
-                <td className="px-3 py-3 align-top">
-                  <Link href={`/tasks/${task.id}`}>
-                    <span className="font-mono text-xs text-[#B0B0B0] transition hover:text-[#A8DADC]">
-                      {displayTaskCode(task)}
+            rows.map((task) => {
+              const status = profileTaskStatusMeta(task);
+              return (
+                <tr
+                  key={task.id}
+                  className="align-top transition-colors duration-150 odd:bg-[#2C2C2C] even:bg-[#262626] hover:bg-[#303030]"
+                >
+                  <td className="px-3 py-3 align-top">
+                    <Link href={`/tasks/${task.id}`}>
+                      <span className="font-mono text-xs text-[#B0B0B0] transition hover:text-[#A8DADC]">
+                        {displayTaskCode(task)}
+                      </span>
+                    </Link>
+                  </td>
+                  <td className="px-3 py-3 align-top">
+                    <Link
+                      href={`/tasks/${task.id}`}
+                      className="group block min-w-0"
+                    >
+                      <span className="block text-sm text-[#E4E4E4] transition group-hover:text-[#A8DADC]">
+                        {task.title}
+                      </span>
+                      <span className="mt-1 block line-clamp-3 whitespace-pre-line break-words text-xs leading-5 text-[#B0B0B0]">
+                        {task.description || "No extra note on this task."}
+                      </span>
+                    </Link>
+                  </td>
+                  <td className="px-3 py-3 align-top text-sm text-[#E4E4E4]">
+                    <span className="block">
+                      {taskTypeLabel(task.taskType)}
                     </span>
-                  </Link>
-                </td>
-                <td className="px-3 py-3 align-top">
-                  <Link href={`/tasks/${task.id}`} className="group block min-w-0">
-                    <span className="block text-sm text-[#E4E4E4] transition group-hover:text-[#A8DADC]">
-                      {task.title}
+                    <span className="mt-1 block text-xs text-[#B0B0B0]">
+                      {task.category
+                        ? task.category
+                            .toLowerCase()
+                            .replace(/\b\w/g, (letter) => letter.toUpperCase())
+                        : "General"}
                     </span>
-                    <span className="mt-1 block line-clamp-2 text-xs leading-5 text-[#B0B0B0]">
-                      {task.description || "No extra note on this task."}
+                  </td>
+                  <td className="px-3 py-3 align-top">
+                    <span className="block text-sm text-[#E4E4E4]">
+                      {status.label}
                     </span>
-                  </Link>
-                </td>
-                <td className="px-3 py-3 align-top text-sm text-[#E4E4E4]">
-                  <span className="block">{taskTypeLabel(task.taskType)}</span>
-                  <span className="mt-1 block text-xs text-[#B0B0B0]">
-                    {task.category
-                      ? task.category
-                          .toLowerCase()
-                          .replace(/\b\w/g, (letter) => letter.toUpperCase())
-                      : "General"}
-                  </span>
-                </td>
-                <td className="px-3 py-3 align-top">
-                  <span className="block text-sm text-[#E4E4E4]">
-                    {taskStatusLabel(task.status)}
-                  </span>
-                  <span className="mt-1 block text-xs leading-5 text-[#B0B0B0]">
-                    {taskStatusDetail(task)}
-                  </span>
-                </td>
-                <td className="px-3 py-3 align-top text-sm text-[#E4E4E4]">
-                  {formatDate(task.dueDate)}
-                </td>
-                <td className="px-3 py-3 align-top text-sm text-[#B0B0B0]">
-                  {formatDate(task.updatedAt)}
-                </td>
-              </tr>
-            ))
+                    <span
+                      className={`mt-1 block text-xs leading-5 ${status.detailClassName}`}
+                    >
+                      {status.detail}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 align-top text-sm text-[#E4E4E4]">
+                    {formatDate(task.dueDate)}
+                  </td>
+                </tr>
+              );
+            })
           ) : (
             <tr>
               <td
-                colSpan={6}
+                colSpan={5}
                 className="px-4 py-8 text-center text-sm text-[#B0B0B0]"
               >
                 No tasks match this status in the selected period.

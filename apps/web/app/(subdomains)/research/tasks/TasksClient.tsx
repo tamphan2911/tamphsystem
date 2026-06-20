@@ -207,9 +207,7 @@ function statusMeta(task: TaskRow) {
 
   return {
     label: "In progress",
-    detail: due
-      ? `${durationText(remainingMs ?? 0)} left`
-      : "No due date",
+    detail: due ? `${durationText(remainingMs ?? 0)} left` : "No due date",
     dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
     className:
       "border-sky-200 bg-sky-50 text-sky-700 dark:border-[#A8DADC]/40 dark:bg-[#A8DADC]/10 dark:text-[#A8DADC]",
@@ -602,7 +600,7 @@ export function TasksClient({
                       >
                         {task.title}
                       </Link>
-                      <p className="mt-1 line-clamp-2 text-xs font-normal leading-5 text-[#B0B0B0]">
+                      <p className="mt-1 line-clamp-3 whitespace-pre-line break-words text-xs font-normal leading-5 text-[#B0B0B0]">
                         {task.description || "No description"}
                       </p>
                     </td>

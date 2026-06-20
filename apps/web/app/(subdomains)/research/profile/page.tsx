@@ -344,6 +344,7 @@ export default async function ResearchProfilePage({
 
   return (
     <ProfileClient
+      key={user.id}
       user={{
         ...user,
         email: displayResearchEmail(user.email),
@@ -354,9 +355,7 @@ export default async function ResearchProfilePage({
       projectRows={projectRows}
       proposalRows={proposalRows}
       taskRows={taskRows}
-      canEditProfile={
-        !viewingAnotherUser || viewer.roles.includes(Role.ADMIN)
-      }
+      canEditProfile={!viewingAnotherUser || viewer.roles.includes(Role.ADMIN)}
       canChangePassword={!viewingAnotherUser}
     />
   );
