@@ -354,7 +354,10 @@ export default async function ResearchProfilePage({
       projectRows={projectRows}
       proposalRows={proposalRows}
       taskRows={taskRows}
-      canEditProfile={!viewingAnotherUser}
+      canEditProfile={
+        !viewingAnotherUser || viewer.roles.includes(Role.ADMIN)
+      }
+      canChangePassword={!viewingAnotherUser}
     />
   );
 }

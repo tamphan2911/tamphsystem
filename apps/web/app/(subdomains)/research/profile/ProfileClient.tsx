@@ -257,6 +257,7 @@ export function ProfileClient({
   proposalRows,
   taskRows,
   canEditProfile,
+  canChangePassword,
 }: {
   user: ResearchProfileUser;
   researchRows: ResearchProjectRow[];
@@ -264,6 +265,7 @@ export function ProfileClient({
   proposalRows: ProposalRow[];
   taskRows: ProfileTaskRow[];
   canEditProfile: boolean;
+  canChangePassword: boolean;
 }) {
   const router = useRouter();
   const toast = useResearchToast();
@@ -297,7 +299,7 @@ export function ProfileClient({
     router.refresh();
     toast.showSuccess({
       title: "Profile updated",
-      detail: "Your research profile information has been saved.",
+      detail: "The research profile information has been saved.",
     });
   }
 
@@ -418,27 +420,27 @@ export function ProfileClient({
                   </span>
                 </IconHint>
               )}
-              {canEditProfile && (
-                <>
-                  <IconHint label="Change password" position="bottom">
-                    <button
-                      type="button"
-                      onClick={() => setPasswordOpen(true)}
-                      className="research-allow-transform inline-flex cursor-pointer border-0 bg-transparent p-1 text-[#B0B0B0] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#B39CD0] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95"
-                      aria-label="Change password"
-                    >
-                      <KeyRound className="h-4 w-4" />
-                    </button>
-                  </IconHint>
+              {canChangePassword && (
+                <IconHint label="Change password" position="bottom">
                   <button
                     type="button"
-                    onClick={() => setEditOpen(true)}
-                    className="research-allow-transform inline-flex cursor-pointer border-0 bg-transparent p-1 text-[#B0B0B0] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#A8DADC] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95"
-                    aria-label="Edit profile"
+                    onClick={() => setPasswordOpen(true)}
+                    className="research-allow-transform inline-flex cursor-pointer border-0 bg-transparent p-1 text-[#B0B0B0] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#B39CD0] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95"
+                    aria-label="Change password"
                   >
-                    <Pencil className="h-4 w-4" />
+                    <KeyRound className="h-4 w-4" />
                   </button>
-                </>
+                </IconHint>
+              )}
+              {canEditProfile && (
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(true)}
+                  className="research-allow-transform inline-flex cursor-pointer border-0 bg-transparent p-1 text-[#B0B0B0] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#A8DADC] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95"
+                  aria-label="Edit profile"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
               )}
             </div>
             <p className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-xs text-[#B0B0B0]">
@@ -652,6 +654,7 @@ export function ProfileClient({
           action={saveProfile}
           className="grid gap-5"
         >
+          <input type="hidden" name="targetUserId" value={user.id} />
           <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
             <span className="inline-flex items-center gap-1 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
               <span>Display name</span>

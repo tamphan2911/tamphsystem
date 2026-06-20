@@ -2,13 +2,33 @@
 
 import bcrypt from "bcrypt";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@repo/db";
+import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 
 export async function updateResearchProfile(formData: FormData) {
   const session = await auth();
-  const email = session?.user?.email;
-  if (!email) return { error: "Unauthorized" };
+  const viewerUserId = (session?.user as { id?: string } | undefined)?.id;
+  if (!viewerUserId) return { error: "Unauthorized" };
+
+  const targetUserId =
+    String(formData.get("targetUserId") ?? "").trim() || viewerUserId;
+  const viewer = await prisma.user.findUnique({
+    where: { id: viewerUserId },
+    select: { roles: true },
+  });
+  if (!viewer) return { error: "Unauthorized" };
+  if (
+    targetUserId !== viewerUserId &&
+    !viewer.roles.includes(Role.ADMIN)
+  ) {
+    return { error: "Only admin can edit another user's profile." };
+  }
+
+  const targetUser = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    select: { email: true },
+  });
+  if (!targetUser) return { error: "User account was not found." };
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { error: "Display name is required." };
@@ -25,7 +45,7 @@ export async function updateResearchProfile(formData: FormData) {
   if (invalidEmail) {
     return { error: `Additional email is not valid: ${invalidEmail}` };
   }
-  const mainEmail = email.trim().toLowerCase();
+  const mainEmail = targetUser.email.trim().toLowerCase();
   const uniqueAdditionalEmails = Array.from(
     new Map(
       additionalEmails
@@ -42,7 +62,7 @@ export async function updateResearchProfile(formData: FormData) {
 
   try {
     await prisma.user.update({
-      where: { email },
+      where: { id: targetUserId },
       data: { name, affiliation, additionalEmails: uniqueAdditionalEmails },
     });
     revalidatePath("/profile");
