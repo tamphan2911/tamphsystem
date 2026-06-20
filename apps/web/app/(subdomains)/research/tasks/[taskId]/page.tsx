@@ -504,6 +504,31 @@ export default async function TaskDetailPage({
   const canManageThisTask = isRootAdmin || canAccessAsChiefAssistant;
   if (!canManageThisTask && !isAssigner && !isAssignee) notFound();
 
+  const associatedJournalSubmission =
+    task.projectId && task.journalId
+      ? await prisma.researchSubmission.findUnique({
+          where: {
+            researchProjectId_journalId: {
+              researchProjectId: task.projectId,
+              journalId: task.journalId,
+            },
+          },
+          select: {
+            account: {
+              select: {
+                id: true,
+                username: true,
+                password: true,
+                email: true,
+              },
+            },
+          },
+        })
+      : null;
+  const journalAccount = associatedJournalSubmission
+    ? associatedJournalSubmission.account
+    : task.account;
+
   let taskClarifications = task.clarifications;
   const demoRequester = task.assignments.find(
     (assignment) => assignment.userId !== task.createdById,
@@ -1013,7 +1038,7 @@ export default async function TaskDetailPage({
                 </p>
                 <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
                   <KeyRound className="h-3.5 w-3.5 text-amber-500" />
-                  {accountLine(task.account)}
+                  {accountLine(journalAccount)}
                 </p>
               </div>
             )}
