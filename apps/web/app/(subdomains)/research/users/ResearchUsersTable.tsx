@@ -3,6 +3,7 @@
 import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -204,9 +205,12 @@ export function ResearchUsersTable({
                         <UserRound className="h-4 w-4" />
                       </span>
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold text-[#E4E4E4]">
+                        <Link
+                          href={`/profile?userId=${encodeURIComponent(user.id)}`}
+                          className="block truncate text-sm font-medium text-slate-700 transition-colors duration-180 ease-out hover:text-[#1F7180] focus-visible:outline-none focus-visible:text-[#1F7180] dark:text-slate-100 dark:hover:text-[#A8DADC] dark:focus-visible:text-[#A8DADC]"
+                        >
                           {user.name || "Unnamed user"}
-                        </span>
+                        </Link>
                         <span className="block truncate text-xs text-[#B0B0B0]">
                           {user.email || "No email recorded"}
                         </span>
