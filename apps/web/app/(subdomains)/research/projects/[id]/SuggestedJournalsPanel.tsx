@@ -2,11 +2,12 @@
 
 import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   Check,
+  ChevronDown,
   ClipboardList,
   Plus,
   Search,
@@ -32,10 +33,17 @@ import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   IconHint,
   ResearchButton,
+  cx,
+  researchDropdownItemActiveClass,
+  researchDropdownItemClass,
+  researchDropdownItemIdleClass,
+  researchDropdownPanelClass,
   researchFieldClass,
   researchSearchFieldClass,
+  researchSelectTriggerClass,
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
+import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
   displayResearchEmail,
@@ -55,9 +63,17 @@ export type SuggestedJournalOption = {
   rank: string;
   publisher: string;
   apc: string;
+  accounts: SuggestedJournalAccountOption[];
   suggestedByName?: string;
   suggestedByRole?: string;
   venueState?: SuggestedVenueState;
+};
+
+type SuggestedJournalAccountOption = {
+  id: string;
+  journalId: string;
+  username: string;
+  email: string;
 };
 
 export type SuggestedConferenceOption = {
@@ -148,11 +164,15 @@ export function SuggestedJournalsPanel({
   const [journalQuery, setJournalQuery] = useState("");
   const [conferenceQuery, setConferenceQuery] = useState("");
   const [assistantQuery, setAssistantQuery] = useState("");
+  const [selectedAccountId, setSelectedAccountId] = useState("");
+  const [accountOpen, setAccountOpen] = useState(false);
   const [selectedAssistantIds, setSelectedAssistantIds] = useState<string[]>(
     [],
   );
   const [taskMode, setTaskMode] = useState<"submit" | "other">("submit");
   const { showSuccess } = useResearchToast();
+  const accountDropdownRef = useRef<HTMLDivElement>(null);
+  const assistantDropdownRef = useRef<HTMLDivElement>(null);
 
   function showProductionIncomplete() {
     showSuccess({
@@ -221,6 +241,7 @@ export function SuggestedJournalsPanel({
     if (!needle) return [];
     return assistants
       .filter((assistant) => {
+        if (selectedAssistantIds.includes(assistant.id)) return false;
         return [
           assistant.name,
           assistant.email,
@@ -232,7 +253,29 @@ export function SuggestedJournalsPanel({
           .includes(needle);
       })
       .slice(0, 12);
-  }, [assistantQuery, assistants]);
+  }, [assistantQuery, assistants, selectedAssistantIds]);
+
+  const selectedAssistants = useMemo(
+    () =>
+      selectedAssistantIds.flatMap((id) => {
+        const assistant = assistants.find((item) => item.id === id);
+        return assistant ? [assistant] : [];
+      }),
+    [assistants, selectedAssistantIds],
+  );
+
+  const assignJournalAccounts =
+    assignVenue?.kind === "journal" ? assignVenue.item.accounts : [];
+  const selectedAccount =
+    assignVenue?.kind === "journal"
+      ? assignJournalAccounts.find(
+          (account) => account.id === selectedAccountId,
+        )
+      : null;
+  const accountRequired =
+    taskMode === "submit" &&
+    assignVenue?.kind === "journal" &&
+    assignJournalAccounts.length > 1;
 
   function toggleAssistant(id: string) {
     setSelectedAssistantIds((current) =>
@@ -240,6 +283,7 @@ export function SuggestedJournalsPanel({
         ? current.filter((item) => item !== id)
         : [...current, id],
     );
+    setAssistantQuery("");
   }
 
   function closeAddVenue() {
@@ -374,6 +418,13 @@ export function SuggestedJournalsPanel({
             detail:
               "Only admin, first author, or corresponding author can create this task for the research.",
           });
+        } else if (result?.reason === "ACCOUNT_REQUIRED") {
+          showSuccess({
+            title: "Account is required",
+            detail:
+              "This journal has multiple accounts. Choose the account for this submission task.",
+          });
+          return;
         } else {
           showSuccess({
             title: "Submission task already exists",
@@ -387,6 +438,8 @@ export function SuggestedJournalsPanel({
       setAssignVenue(null);
       setSelectedAssistantIds([]);
       setAssistantQuery("");
+      setSelectedAccountId("");
+      setAccountOpen(false);
       setTaskMode("submit");
       router.refresh();
     });
@@ -395,6 +448,13 @@ export function SuggestedJournalsPanel({
   function openSubmitTask(venue: Venue) {
     if (disabled) return;
     setTaskMode("submit");
+    setSelectedAccountId(
+      venue.kind === "journal" && venue.item.accounts.length === 1
+        ? (venue.item.accounts[0]?.id ?? "")
+        : "",
+    );
+    setAccountOpen(false);
+    setAssistantQuery("");
     setAssignVenue(venue);
   }
 
@@ -794,7 +854,14 @@ export function SuggestedJournalsPanel({
       {assignVenue && (
         <ResearchModal
           open={Boolean(assignVenue)}
-          onClose={() => setAssignVenue(null)}
+          onClose={() => {
+            setAssignVenue(null);
+            setSelectedAssistantIds([]);
+            setAssistantQuery("");
+            setSelectedAccountId("");
+            setAccountOpen(false);
+            setTaskMode("submit");
+          }}
           title="Assign task"
           description={`Create a task for ${assignName}.`}
           icon={<ClipboardList className="h-5 w-5" />}
@@ -803,7 +870,11 @@ export function SuggestedJournalsPanel({
           headerActions={
             <ResearchButton
               form="suggested-venue-task-form"
-              disabled={selectedAssistantIds.length === 0 || isPending}
+              disabled={
+                selectedAssistantIds.length === 0 ||
+                (accountRequired && !selectedAccountId) ||
+                isPending
+              }
             >
               <Plus className="h-4 w-4" />
               Assign Task
@@ -820,11 +891,20 @@ export function SuggestedJournalsPanel({
             ))}
             <input type="hidden" name="projectId" value={projectId} />
             {assignKind === "journal" ? (
-              <input
-                type="hidden"
-                name="journalId"
-                value={assignVenue.item.venueId}
-              />
+              <>
+                <input
+                  type="hidden"
+                  name="journalId"
+                  value={assignVenue.item.venueId}
+                />
+                {selectedAccountId ? (
+                  <input
+                    type="hidden"
+                    name="accountId"
+                    value={selectedAccountId}
+                  />
+                ) : null}
+              </>
             ) : (
               <input
                 type="hidden"
@@ -899,13 +979,94 @@ export function SuggestedJournalsPanel({
               </label>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4">
               <ReadOnlyField label="Research" value={projectTitle} />
               <ReadOnlyField
                 label={assignKind === "journal" ? "Journal" : "Conference"}
                 value={assignName}
               />
             </div>
+
+            {taskMode === "submit" && assignVenue.kind === "journal" ? (
+              <section className="grid gap-3 border border-[#D8D0C2] bg-[#FFFDF8] p-4 dark:border-[#444444] dark:bg-[#202020]">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-normal uppercase tracking-wide text-[#6C778D] dark:text-[#B0B0B0]">
+                    Account to submit
+                    {accountRequired ? (
+                      <span className="research-required-mark">(*)</span>
+                    ) : null}
+                  </span>
+                </div>
+                {assignJournalAccounts.length > 0 ? (
+                  <div ref={accountDropdownRef} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setAccountOpen((current) => !current)}
+                      className={cx(
+                        "flex cursor-pointer items-center justify-between gap-3 text-left",
+                        researchSelectTriggerClass,
+                        accountOpen &&
+                          "border-[#A8DADC] bg-[#f8f6ef] dark:bg-[#383838]",
+                      )}
+                    >
+                      <span className="min-w-0 truncate">
+                        {selectedAccount
+                          ? `${selectedAccount.username}${selectedAccount.email ? ` - ${selectedAccount.email}` : ""}`
+                          : accountRequired
+                            ? "Choose the account for this task"
+                            : "Choose an account"}
+                      </span>
+                      <ChevronDown
+                        className={`h-4 w-4 flex-none text-[#6C778D] transition dark:text-[#B0B0B0] ${accountOpen ? "rotate-180 text-[#1F7180] dark:text-[#A8DADC]" : ""}`}
+                      />
+                    </button>
+                    <FloatingDropdownPortal
+                      anchorRef={accountDropdownRef}
+                      open={accountOpen}
+                      maxWidth={640}
+                      maxPanelHeight={232}
+                    >
+                      <div className={researchDropdownPanelClass}>
+                        <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
+                          {assignJournalAccounts.map((account) => (
+                            <button
+                              key={account.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedAccountId(account.id);
+                                setAccountOpen(false);
+                              }}
+                              className={`${researchDropdownItemClass} ${
+                                selectedAccountId === account.id
+                                  ? researchDropdownItemActiveClass
+                                  : researchDropdownItemIdleClass
+                              }`}
+                            >
+                              <span className="min-w-0 px-3">
+                                <span className="block truncate font-normal">
+                                  {account.username}
+                                </span>
+                                <span className="block text-xs text-[#6C778D] dark:text-[#B0B0B0]">
+                                  {account.email || "No email"}
+                                </span>
+                              </span>
+                              {selectedAccountId === account.id ? (
+                                <Check className="mr-3 h-4 w-4 text-[#1F7180] dark:text-[#A8DADC]" />
+                              ) : null}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </FloatingDropdownPortal>
+                  </div>
+                ) : (
+                  <p className="border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                    This journal does not have any account yet. You can assign
+                    this task now and add the account later.
+                  </p>
+                )}
+              </section>
+            ) : null}
 
             <label className="grid gap-1.5">
               <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
@@ -923,50 +1084,68 @@ export function SuggestedJournalsPanel({
               />
             </label>
 
-            <div className="grid gap-3">
-              <SearchBox
-                value={assistantQuery}
-                onChange={setAssistantQuery}
-                placeholder="Search assistants or admin by name, email, ID, or role..."
-              />
-              <div className="grid max-h-72 overflow-y-auto border border-[#444444]">
-                {assistantResults.map((assistant) => {
-                  const selected = selectedAssistantIds.includes(assistant.id);
-                  return (
+            <section className="grid gap-3">
+              {selectedAssistants.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {selectedAssistants.map((assistant) => (
                     <button
                       key={assistant.id}
                       type="button"
                       onClick={() => toggleAssistant(assistant.id)}
-                      className={`flex cursor-pointer items-center justify-between gap-3 border-y px-3 py-2 text-left transition first:border-t-transparent last:border-b-transparent first:hover:border-t-transparent last:hover:border-b-transparent ${
-                        selected
-                          ? "border-[#444444] bg-[#303030] text-[#A8DADC]"
-                          : "border-transparent bg-[#202020] text-[#E4E4E4] hover:border-[#444444] hover:bg-[#303030]"
-                      }`}
+                      className="inline-flex cursor-pointer items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-2.5 py-1.5 text-xs text-[#243047] transition hover:border-[#A8DADC] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#A8DADC]"
                     >
-                      <span className="flex min-w-0 items-center gap-3">
-                        <UserRound className="h-4 w-4 flex-none text-[#B0B0B0]" />
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm font-normal">
-                            {displayResearchPersonName(assistant)}
-                          </span>
-                          <span className="block truncate text-xs text-[#B0B0B0]">
-                            {displayResearchEmail(assistant.email)}
+                      {displayResearchPersonName(assistant)}
+                      <X className="h-3.5 w-3.5 text-[#6C778D] dark:text-[#B0B0B0]" />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <div ref={assistantDropdownRef} className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6C778D] dark:text-[#B0B0B0]" />
+                <input
+                  value={assistantQuery}
+                  onChange={(event) => setAssistantQuery(event.target.value)}
+                  placeholder="Search assistants or admin by name, email, ID, or role (*)"
+                  className={`${researchSearchFieldClass} pl-9`}
+                />
+              </div>
+              <FloatingDropdownPortal
+                anchorRef={assistantDropdownRef}
+                open={Boolean(assistantQuery.trim())}
+                maxWidth={820}
+                maxPanelHeight={232}
+              >
+                <div className={researchDropdownPanelClass}>
+                  <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
+                    {assistantResults.map((assistant) => (
+                      <button
+                        key={assistant.id}
+                        type="button"
+                        onClick={() => toggleAssistant(assistant.id)}
+                        className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
+                      >
+                        <span className="flex min-w-0 items-center gap-3 px-3">
+                          <UserRound className="h-4 w-4 flex-none text-[#6C778D] dark:text-[#B0B0B0]" />
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-normal">
+                              {displayResearchPersonName(assistant)}
+                            </span>
+                            <span className="block truncate text-xs text-[#6C778D] dark:text-[#B0B0B0]">
+                              {displayResearchEmail(assistant.email)}
+                            </span>
                           </span>
                         </span>
-                      </span>
-                      {selected && <Check className="h-4 w-4 flex-none" />}
-                    </button>
-                  );
-                })}
-                {assistantResults.length === 0 && (
-                  <div className="py-10 text-center text-sm text-[#B0B0B0]">
-                    {assistantQuery.trim()
-                      ? "No user matches this search."
-                      : "Search and choose assignees."}
+                      </button>
+                    ))}
+                    {assistantQuery.trim() && assistantResults.length === 0 ? (
+                      <p className="py-10 text-center text-sm text-[#6C778D] dark:text-[#B0B0B0]">
+                        No user matches this search.
+                      </p>
+                    ) : null}
                   </div>
-                )}
-              </div>
-            </div>
+                </div>
+              </FloatingDropdownPortal>
+            </section>
           </form>
         </ResearchModal>
       )}

@@ -305,7 +305,9 @@ export default async function ProjectDetailPage({
         },
         suggestedJournals: {
           include: {
-            journal: true,
+            journal: {
+              include: { accounts: { orderBy: [{ updatedAt: "desc" }] } },
+            },
             createdBy: { select: { name: true, email: true, roles: true } },
           },
           orderBy: { createdAt: "desc" },
@@ -446,8 +448,7 @@ export default async function ProjectDetailPage({
     notFound();
   }
   const canViewRegistrationClaim = isAdmin || isRegistrationUser;
-  const canEditResearchInfo =
-    isAdmin || isCorrespondingAuthor || isFirstAuthor;
+  const canEditResearchInfo = isAdmin || isCorrespondingAuthor || isFirstAuthor;
   const canEditResearch = isAdmin || isCorrespondingAuthor;
   const canManageResearchTasks =
     isRootAdmin || isFirstAuthor || isCorrespondingAuthor;
@@ -587,6 +588,12 @@ export default async function ProjectDetailPage({
       rank: journal.rank ?? "",
       publisher: journal.publisher ?? "",
       apc: journal.apc ?? "",
+      accounts: journal.accounts.map((account) => ({
+        id: account.id,
+        journalId: account.journalId ?? "",
+        username: account.username,
+        email: account.email ?? "",
+      })),
     }),
   );
   const suggestedJournalOptions: SuggestedJournalOption[] =
@@ -601,6 +608,13 @@ export default async function ProjectDetailPage({
       rank: journal?.rank ?? "",
       publisher: journal?.publisher ?? "",
       apc: journal?.apc ?? "",
+      accounts:
+        journal?.accounts.map((account) => ({
+          id: account.id,
+          journalId: account.journalId ?? "",
+          username: account.username,
+          email: account.email ?? "",
+        })) ?? [],
       suggestedByName: createdBy
         ? displayResearchPersonName(createdBy) || "Unknown user"
         : "Unknown user",
@@ -1140,7 +1154,8 @@ export default async function ProjectDetailPage({
                   className={`flex flex-wrap items-center gap-2 text-xs ${highlightedJournalClass.meta}`}
                 >
                   <span>
-                    Submitted: {shortDate(highlightedJournalSubmission.submittedAt)}
+                    Submitted:{" "}
+                    {shortDate(highlightedJournalSubmission.submittedAt)}
                   </span>
                   {highlightedJournalSubmission.acceptedAt && (
                     <>
@@ -1148,7 +1163,8 @@ export default async function ProjectDetailPage({
                         |
                       </span>
                       <span>
-                        Accepted: {shortDate(highlightedJournalSubmission.acceptedAt)}
+                        Accepted:{" "}
+                        {shortDate(highlightedJournalSubmission.acceptedAt)}
                       </span>
                     </>
                   )}
@@ -1158,7 +1174,8 @@ export default async function ProjectDetailPage({
                         |
                       </span>
                       <span>
-                        Published: {shortDate(highlightedJournalSubmission.publishedAt)}
+                        Published:{" "}
+                        {shortDate(highlightedJournalSubmission.publishedAt)}
                       </span>
                     </>
                   )}
@@ -1184,7 +1201,8 @@ export default async function ProjectDetailPage({
                 className={`flex flex-wrap items-center gap-2 text-xs ${highlightedConferenceClass.meta}`}
               >
                 <span>
-                  Submitted: {shortDate(highlightedConferenceSubmission.submittedAt)}
+                  Submitted:{" "}
+                  {shortDate(highlightedConferenceSubmission.submittedAt)}
                 </span>
                 {highlightedConferenceSubmission.acceptedAt && (
                   <>
@@ -1192,7 +1210,8 @@ export default async function ProjectDetailPage({
                       |
                     </span>
                     <span>
-                      Accepted: {shortDate(highlightedConferenceSubmission.acceptedAt)}
+                      Accepted:{" "}
+                      {shortDate(highlightedConferenceSubmission.acceptedAt)}
                     </span>
                   </>
                 )}
@@ -1202,7 +1221,8 @@ export default async function ProjectDetailPage({
                       |
                     </span>
                     <span>
-                      Published: {shortDate(highlightedConferenceSubmission.publishedAt)}
+                      Published:{" "}
+                      {shortDate(highlightedConferenceSubmission.publishedAt)}
                     </span>
                   </>
                 )}
