@@ -67,6 +67,7 @@ export type SubmissionRow = {
   submissionFeeCurrency: string;
   accountId?: string;
   account: string;
+  accountPassword?: string;
   accountEmail?: string;
   submittedByName?: string;
   submittedById?: string;
@@ -409,6 +410,7 @@ export function SubmissionsTable({
     isAdmin && actionMode === "manage" && Boolean(editOptions);
   const showDelete =
     isAdmin && (actionMode === "delete" || actionMode === "manage");
+  const isAdminListing = !isResearchView && showSubmitter;
   const [query, setQuery] = usePersistentTableValue(
     "research-submissions:q",
     "",
@@ -455,6 +457,7 @@ export function SubmissionsTable({
         row.apc,
         row.submissionFee,
         row.account,
+        row.accountPassword,
         row.accountEmail,
         row.submittedByName,
         row.submittedByEmail,
@@ -657,19 +660,19 @@ export function SubmissionsTable({
             <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
               <tr>
                 <th
-                  className={`${isResearchView ? (showRegistrationClaim ? "w-[6%]" : "w-[7%]") : "w-[6%]"} px-3 py-3`}
+                  className={`${isResearchView ? (showRegistrationClaim ? "w-[6%]" : "w-[7%]") : isAdminListing ? "w-[6%] xl:w-[5%]" : "w-[6%]"} px-3 py-3`}
                 >
                   ID
                 </th>
                 <th
-                  className={`${isResearchView ? (showRegistrationClaim ? "w-[49%]" : "w-[56%]") : showSubmitter ? "w-[31%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-3 py-3`}
+                  className={`${isResearchView ? (showRegistrationClaim ? "w-[49%]" : "w-[56%]") : isAdminListing ? "w-[35%] xl:w-[39%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-3 py-3`}
                 >
                   {isResearchView
                     ? "Research Associated"
                     : "Journal / Conference"}
                 </th>
                 <th
-                  className={`${isResearchView ? (showRegistrationClaim ? "w-[12%]" : "w-[13%]") : "w-[13%]"} px-3 py-3`}
+                  className={`${isResearchView ? (showRegistrationClaim ? "w-[12%]" : "w-[13%]") : isAdminListing ? "w-[12%] xl:w-[11%]" : "w-[13%]"} px-3 py-3`}
                 >
                   <span className="inline-flex items-center gap-2">
                     Status
@@ -700,19 +703,33 @@ export function SubmissionsTable({
                 ) : (
                   <>
                     {showSubmitter && (
-                      <th className="w-[13%] px-3 py-3">Submitted by</th>
+                      <th
+                        className={`${isAdminListing ? "w-[11%] xl:w-[10%]" : "w-[13%]"} px-3 py-3`}
+                      >
+                        Submitted by
+                      </th>
                     )}
-                    <th className="w-[8%] px-3 py-3">APC</th>
-                    <th className="w-[8%] px-3 py-3">Fee</th>
                     <th
-                      className={`${hasAction ? "w-[12%]" : "w-[14%]"} px-3 py-3`}
+                      className={`${isAdminListing ? "w-[6%] xl:w-[5%]" : "w-[8%]"} px-3 py-3`}
+                    >
+                      APC
+                    </th>
+                    <th
+                      className={`${isAdminListing ? "w-[6%] xl:w-[5%]" : "w-[8%]"} px-3 py-3`}
+                    >
+                      Fee
+                    </th>
+                    <th
+                      className={`${isAdminListing ? "w-[18%] xl:w-[19%]" : hasAction ? "w-[12%]" : "w-[14%]"} px-3 py-3`}
                     >
                       Account
                     </th>
                   </>
                 )}
                 {hasAction && (
-                  <th className="w-[7%] px-3 py-3 text-right">
+                  <th
+                    className={`${isAdminListing ? "w-[6%]" : "w-[7%]"} px-3 py-3 text-right`}
+                  >
                     <span className="sr-only">
                       {showDetailsEdit
                         ? "Edit or delete"
@@ -765,7 +782,7 @@ export function SubmissionsTable({
                         )}
                         <span className="min-w-0">
                           <span
-                            className={`${isResearchView ? "whitespace-normal break-words text-[15px] leading-6" : "truncate text-sm"} block font-normal text-[#E4E4E4] transition group-hover/link:text-[#A8DADC]`}
+                            className={`${isResearchView ? "text-[15px] leading-6" : "text-sm leading-5"} block whitespace-normal break-words font-normal text-[#E4E4E4] transition group-hover/link:text-[#A8DADC]`}
                           >
                             {isResearchView ? row.projectTitle : row.venueName}
                           </span>
@@ -798,7 +815,7 @@ export function SubmissionsTable({
                         )}
                         <span className="min-w-0">
                           <span
-                            className={`${isResearchView ? "whitespace-normal break-words text-[15px] leading-6" : "truncate text-sm"} block font-normal text-[#E4E4E4] transition group-hover/link:text-[#A8DADC]`}
+                            className={`${isResearchView ? "text-[15px] leading-6" : "text-sm leading-5"} block whitespace-normal break-words font-normal text-[#E4E4E4] transition group-hover/link:text-[#A8DADC]`}
                           >
                             {isResearchView ? row.projectTitle : row.venueName}
                           </span>
@@ -933,13 +950,16 @@ export function SubmissionsTable({
                         ) : row.accountId ? (
                           <Link
                             href={`/accounts/${row.accountId}`}
-                            className="research-allow-transform group/account block min-w-0"
+                            className="research-allow-transform group/account grid min-w-0 gap-0.5"
                           >
-                            <span className="block truncate text-[#E4E4E4] transition group-hover/account:text-[#A8DADC]">
-                              {row.account || "No login ID"}
+                            <span className="whitespace-normal break-all text-[#E4E4E4] transition group-hover/account:text-[#A8DADC]">
+                              id: {row.account || "Not recorded"}
                             </span>
-                            <span className="mt-0.5 block truncate">
-                              {row.accountEmail || "No email"}
+                            <span className="whitespace-normal break-all">
+                              pass: {row.accountPassword || "Not recorded"}
+                            </span>
+                            <span className="whitespace-normal break-all">
+                              email: {row.accountEmail || "Not recorded"}
                             </span>
                           </Link>
                         ) : (
