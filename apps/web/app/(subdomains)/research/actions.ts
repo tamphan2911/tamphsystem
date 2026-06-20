@@ -2642,7 +2642,8 @@ export async function createJournal(formData: FormData) {
 }
 
 export async function updateJournal(journalId: string, formData: FormData) {
-  await requireCurrentUser();
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
   const fields = orderedUniqueStrings(formData.getAll("fields"));
   const legacyField = optionalString(formData.get("field"));
   const journalType =
@@ -2868,7 +2869,7 @@ export async function updateConference(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   const conference = await prisma.conference.findUnique({
     where: { id: conferenceId },
@@ -2912,7 +2913,7 @@ export async function updateConference(
 
 export async function unlockConference(conferenceId: string) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireAdmin(user.roles);
 
   await prisma.conference.update({
     where: { id: conferenceId },

@@ -74,6 +74,7 @@ export default async function ConferenceDetailPage({
     []) as Role[];
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const canEditVenue = roles.includes(Role.ADMIN);
   const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
   const conferenceAccessWhere = unrestrictedAccess
     ? {}
@@ -178,8 +179,9 @@ export default async function ConferenceDetailPage({
   const schedule = dateText(conference.startDate, conference.endDate);
   const theme = conference.targetTheme || conference.themes || "";
   const isClosed = dateHasPassed(conference.closeDate);
-  const canEdit = isAdmin && (!isClosed || conference.editUnlocked);
-  const canUnlock = isAdmin && Boolean(isClosed) && !conference.editUnlocked;
+  const canEdit = canEditVenue && (!isClosed || conference.editUnlocked);
+  const canUnlock =
+    canEditVenue && Boolean(isClosed) && !conference.editUnlocked;
   const editConference = updateConference.bind(null, conference.id);
   const unlock = unlockConference.bind(null, conference.id);
   const initialValues = {

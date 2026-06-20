@@ -50,6 +50,7 @@ export default async function JournalDetailPage({
     []) as Role[];
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const canEditVenue = roles.includes(Role.ADMIN);
   const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
   const journalAccessWhere = unrestrictedAccess
     ? {}
@@ -282,33 +283,35 @@ export default async function JournalDetailPage({
                     </a>
                   </IconHint>
                 ))}
-                <EditJournalDialog
-                  journalId={journal.id}
-                  journal={{
-                    name: journal.name,
-                    issn: journal.issn,
-                    fields: journalFields,
-                    field: journal.field,
-                    type: journal.type,
-                    rank: journal.rank,
-                    localRank: journal.localRank,
-                    issuesPerYear: journal.issuesPerYear,
-                    isFavorite: journal.isFavorite,
-                    isInterest: journal.isInterest,
-                    publisher: journal.publisher,
-                    country: journal.country,
-                    apc: journal.apc,
-                    apcCurrency: journal.apcCurrency,
-                    hasApcOption: journal.hasApcOption,
-                    submissionFee: journal.submissionFee,
-                    submissionFeeCurrency: journal.submissionFeeCurrency,
-                    homepageLink: journal.homepageLink,
-                    submissionLink: journal.submissionLink,
-                    scimagoLink: journal.scimagoLink,
-                    scopusLink: journal.scopusLink,
-                    note: journal.note,
-                  }}
-                />
+                {canEditVenue && (
+                  <EditJournalDialog
+                    journalId={journal.id}
+                    journal={{
+                      name: journal.name,
+                      issn: journal.issn,
+                      fields: journalFields,
+                      field: journal.field,
+                      type: journal.type,
+                      rank: journal.rank,
+                      localRank: journal.localRank,
+                      issuesPerYear: journal.issuesPerYear,
+                      isFavorite: journal.isFavorite,
+                      isInterest: journal.isInterest,
+                      publisher: journal.publisher,
+                      country: journal.country,
+                      apc: journal.apc,
+                      apcCurrency: journal.apcCurrency,
+                      hasApcOption: journal.hasApcOption,
+                      submissionFee: journal.submissionFee,
+                      submissionFeeCurrency: journal.submissionFeeCurrency,
+                      homepageLink: journal.homepageLink,
+                      submissionLink: journal.submissionLink,
+                      scimagoLink: journal.scimagoLink,
+                      scopusLink: journal.scopusLink,
+                      note: journal.note,
+                    }}
+                  />
+                )}
               </div>
             </div>
             <p className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-xs font-normal text-[#B0B0B0]">
