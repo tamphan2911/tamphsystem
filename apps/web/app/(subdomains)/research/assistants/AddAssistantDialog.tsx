@@ -3,7 +3,14 @@
 import { useMemo, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Crown, Mail, PlusCircle, ShieldCheck, UserRound } from "lucide-react";
+import {
+  Crown,
+  LibraryBig,
+  Mail,
+  PlusCircle,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import { assignResearchAssistant } from "../actions";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
@@ -22,6 +29,7 @@ export type AssistantCandidate = {
   name: string;
   email: string;
   roles: string[];
+  canManageResearchVenues: boolean;
 };
 
 export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
@@ -32,6 +40,7 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
   const [query, setQuery] = useState("");
   const [selectedUserId, setSelectedUserId] = useState("");
   const [assistantRole, setAssistantRole] = useState("ASSISTANT");
+  const [canManageVenues, setCanManageVenues] = useState(false);
   const selectedUser = users.find((user) => user.id === selectedUserId) ?? null;
 
   const filtered = useMemo(() => {
@@ -69,6 +78,7 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
     setQuery("");
     setSelectedUserId("");
     setAssistantRole("ASSISTANT");
+    setCanManageVenues(false);
   }
 
   function handleSubmit(formData: FormData) {
@@ -118,6 +128,11 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
         >
           <input type="hidden" name="userId" value={selectedUserId} />
           <input type="hidden" name="assistantRole" value={assistantRole} />
+          <input
+            type="hidden"
+            name="canManageResearchVenues"
+            value={canManageVenues ? "true" : "false"}
+          />
 
           <ResearchSearchPicker
             label="Assistant account"
@@ -187,6 +202,22 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
               title="Chief Assistant"
               description="Can coordinate research operations"
               onClick={() => setAssistantRole("CHIEF_ASSISTANT")}
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <RoleButton
+              active={canManageVenues}
+              icon={<LibraryBig className="h-5 w-5" />}
+              title="Can Add Venues"
+              description="Add journals and conferences directly"
+              onClick={() => setCanManageVenues(true)}
+            />
+            <RoleButton
+              active={!canManageVenues}
+              icon={<ShieldCheck className="h-5 w-5" />}
+              title="No Venue Authority"
+              description="Use proposal flow for new venues"
+              onClick={() => setCanManageVenues(false)}
             />
           </div>
         </form>

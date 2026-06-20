@@ -21,8 +21,7 @@ export default async function JournalsPage() {
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
-  const isAdmin =
-    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const isAdmin = roles.includes(Role.ADMIN);
   const canDelete = roles.includes(Role.ADMIN);
   const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
   const journalWhere = unrestrictedAccess
@@ -52,7 +51,7 @@ export default async function JournalsPage() {
     userId
       ? prisma.user.findUnique({
           where: { id: userId },
-          select: { emailVerified: true },
+          select: { emailVerified: true, canManageResearchVenues: true },
         })
       : Promise.resolve(null),
   ]);
@@ -107,7 +106,7 @@ export default async function JournalsPage() {
             JOURNAL LIST
           </p>
           <div className="flex flex-none items-center">
-            {isAdmin ? (
+            {isAdmin || currentUser?.canManageResearchVenues ? (
               <NewJournalDialog />
             ) : (
               <ProposalDialog

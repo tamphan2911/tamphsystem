@@ -57,6 +57,7 @@ export default async function AssistantsPage() {
     assistantRole: user.roles.includes(Role.CHIEF_ASSISTANT)
       ? Role.CHIEF_ASSISTANT
       : Role.ASSISTANT,
+    canManageResearchVenues: user.canManageResearchVenues,
   }));
 
   const candidates: AssistantCandidate[] = users.map((user) => ({
@@ -64,6 +65,7 @@ export default async function AssistantsPage() {
     name: user.name ?? "",
     email: user.email,
     roles: user.roles,
+    canManageResearchVenues: user.canManageResearchVenues,
   }));
 
   const stats = [

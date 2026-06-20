@@ -999,11 +999,12 @@ async function requireCurrentUser() {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { roles: true },
+    select: { roles: true, canManageResearchVenues: true },
   });
 
   return {
     id: userId,
+    canManageResearchVenues: user?.canManageResearchVenues ?? false,
     roles:
       user?.roles ??
       (((session?.user as { roles?: Role[] } | undefined)?.roles ??
@@ -1031,6 +1032,15 @@ function requireAdmin(roles: Role[]) {
 
 function requireResearchAdmin(roles: Role[]) {
   if (!isResearchAdminRole(roles)) {
+    redirect("/401");
+  }
+}
+
+function requireVenueCreator(user: {
+  roles: Role[];
+  canManageResearchVenues: boolean;
+}) {
+  if (!user.roles.includes(Role.ADMIN) && !user.canManageResearchVenues) {
     redirect("/401");
   }
 }
@@ -2564,7 +2574,8 @@ export async function setResearchAuthorsLock(
 }
 
 export async function createJournal(formData: FormData) {
-  await requireCurrentUser();
+  const user = await requireCurrentUser();
+  requireVenueCreator(user);
   const fields = orderedUniqueStrings(formData.getAll("fields"));
   const legacyField = optionalString(formData.get("field"));
   const journalType =
@@ -2828,7 +2839,7 @@ function dateHasPassed(value: Date | null) {
 
 export async function createConference(formData: FormData) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  requireVenueCreator(user);
   const data = conferenceDataFromForm(formData);
   const validationMessage = conferenceValidationMessage(data);
   if (validationMessage) {
@@ -3220,6 +3231,8 @@ export async function assignResearchAssistant(formData: FormData) {
   const userId = optionalString(formData.get("userId"));
   const password = optionalString(formData.get("password"));
   const role = formData.get("assistantRole");
+  const canManageResearchVenues =
+    formData.get("canManageResearchVenues") === "true";
   if (!userId || (role !== Role.ASSISTANT && role !== Role.CHIEF_ASSISTANT))
     return;
 
@@ -3241,6 +3254,7 @@ export async function assignResearchAssistant(formData: FormData) {
     data: {
       roles: Array.from(roles),
       activeSites: { set: Array.from(activeSites) },
+      canManageResearchVenues,
       ...(password
         ? {
             passwordHash: await bcrypt.hash(password, 10),
@@ -3272,6 +3286,7 @@ export async function removeResearchAssistantRole(formData: FormData) {
       roles: target.roles.filter(
         (role) => role !== Role.ASSISTANT && role !== Role.CHIEF_ASSISTANT,
       ),
+      canManageResearchVenues: false,
     },
   });
 

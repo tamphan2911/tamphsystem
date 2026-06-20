@@ -9,6 +9,7 @@ import {
   Eye,
   EyeOff,
   KeyRound,
+  LibraryBig,
   Pencil,
   ShieldCheck,
   Trash2,
@@ -43,6 +44,7 @@ export type AssistantRow = {
   email: string;
   password: string;
   assistantRole: string;
+  canManageResearchVenues: boolean;
 };
 
 export function AssistantsTable({
@@ -60,6 +62,7 @@ export function AssistantsTable({
   const [editing, setEditing] = useState<AssistantRow | null>(null);
   const [deleting, setDeleting] = useState<AssistantRow | null>(null);
   const [editRole, setEditRole] = useState("ASSISTANT");
+  const [editCanManageVenues, setEditCanManageVenues] = useState(false);
   const [visiblePasswords, setVisiblePasswords] = useState<
     Record<string, boolean>
   >({});
@@ -78,7 +81,12 @@ export function AssistantsTable({
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const matchesRole = role === "ALL" || row.assistantRole === role;
-      const haystack = [row.name, row.email, row.assistantRole]
+      const haystack = [
+        row.name,
+        row.email,
+        row.assistantRole,
+        row.canManageResearchVenues ? "venue journal conference" : "",
+      ]
         .join(" ")
         .toLowerCase();
       return matchesRole && (!needle || haystack.includes(needle));
@@ -117,6 +125,7 @@ export function AssistantsTable({
   function openEdit(row: AssistantRow) {
     setEditing(row);
     setEditRole(row.assistantRole);
+    setEditCanManageVenues(row.canManageResearchVenues);
   }
 
   function submitEdit(formData: FormData) {
@@ -133,7 +142,7 @@ export function AssistantsTable({
           : "Assistant role updated",
         detail: passwordChanged
           ? `${assistant ? displayResearchPersonName(assistant) || "Assistant" : "Assistant"} has a new login password and ${editRole === "CHIEF_ASSISTANT" ? "chief assistant" : "assistant"} access.`
-          : `${assistant ? displayResearchPersonName(assistant) || "Assistant" : "Assistant"} is now set as ${editRole === "CHIEF_ASSISTANT" ? "chief assistant" : "assistant"}.`,
+          : `${assistant ? displayResearchPersonName(assistant) || "Assistant" : "Assistant"} is now set as ${editRole === "CHIEF_ASSISTANT" ? "chief assistant" : "assistant"}${editCanManageVenues ? " with journal/conference add authority" : ""}.`,
       });
       router.refresh();
     });
@@ -178,12 +187,13 @@ export function AssistantsTable({
         <table className="w-full table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
-              <th className="w-[32%] px-4 py-3">Assistant</th>
-              <th className="w-[28%] px-3 py-3">Email</th>
-              <th className="w-[20%] px-3 py-3">Password</th>
-              <th className="w-[12%] px-3 py-3">Role</th>
+              <th className="w-[28%] px-4 py-3">Assistant</th>
+              <th className="w-[25%] px-3 py-3">Email</th>
+              <th className="w-[18%] px-3 py-3">Password</th>
+              <th className="w-[11%] px-3 py-3">Role</th>
+              <th className="w-[12%] px-3 py-3">Jurisdiction</th>
               {canManage && (
-                <th className="w-[8%] px-2 py-3 text-right">
+                <th className="w-[6%] px-2 py-3 text-right">
                   <span className="sr-only">Action</span>
                 </th>
               )}
@@ -244,6 +254,11 @@ export function AssistantsTable({
                 <td className="px-3 py-3">
                   <RolePill role={user.assistantRole} />
                 </td>
+                <td className="px-3 py-3">
+                  <VenueJurisdictionPill
+                    enabled={user.canManageResearchVenues}
+                  />
+                </td>
                 {canManage && (
                   <td className="px-2 py-3 text-right">
                     <div className="inline-flex gap-1.5">
@@ -270,7 +285,7 @@ export function AssistantsTable({
             ))}
             {pagination.total === 0 && (
               <tr>
-                <td colSpan={canManage ? 5 : 4} className="px-4 py-2">
+                <td colSpan={canManage ? 6 : 5} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No assistants match the current search."
                     detail="Try another name, email, role, or active-site filter."
@@ -310,6 +325,11 @@ export function AssistantsTable({
           >
             <input type="hidden" name="userId" value={editing.id} />
             <input type="hidden" name="assistantRole" value={editRole} />
+            <input
+              type="hidden"
+              name="canManageResearchVenues"
+              value={editCanManageVenues ? "true" : "false"}
+            />
             <div className="border border-slate-200 bg-slate-50 p-4 dark:border-[#444444] dark:bg-[#202020]">
               <p className="text-sm font-bold text-slate-800 dark:text-[#E4E4E4]">
                 {editing.name || "Unnamed user"}
@@ -330,6 +350,20 @@ export function AssistantsTable({
                 title="Chief Assistant"
                 icon={<Crown className="h-5 w-5" />}
                 onClick={() => setEditRole("CHIEF_ASSISTANT")}
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <RoleChoice
+                active={editCanManageVenues}
+                title="Can Add Venues"
+                icon={<LibraryBig className="h-5 w-5" />}
+                onClick={() => setEditCanManageVenues(true)}
+              />
+              <RoleChoice
+                active={!editCanManageVenues}
+                title="No Venue Authority"
+                icon={<ShieldCheck className="h-5 w-5" />}
+                onClick={() => setEditCanManageVenues(false)}
               />
             </div>
             <label className="grid gap-2">
@@ -404,6 +438,20 @@ function RolePill({ role }: { role: string }) {
       }`}
     >
       {chief ? "Chief Assistant" : "Assistant"}
+    </span>
+  );
+}
+
+function VenueJurisdictionPill({ enabled }: { enabled: boolean }) {
+  return (
+    <span
+      className={`inline-flex text-xs font-normal ${
+        enabled
+          ? "text-[#1F7180] dark:text-[#A8DADC]"
+          : "text-[#6C778D] dark:text-[#777777]"
+      }`}
+    >
+      {enabled ? "Can add venues" : "Proposal only"}
     </span>
   );
 }
