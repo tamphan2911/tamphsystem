@@ -5,6 +5,7 @@ import {
   researchDateValue,
   researchYear,
 } from "@/sites/research/lib/date-time";
+import { researchTaskDueDate } from "@/sites/research/lib/task-date";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
@@ -3515,9 +3516,7 @@ export async function createResearchTask(formData: FormData) {
       conferenceId,
       reviewId,
       accountId,
-      dueDate: optionalString(formData.get("dueDate"))
-        ? new Date(optionalString(formData.get("dueDate")) as string)
-        : null,
+      dueDate: researchTaskDueDate(optionalString(formData.get("dueDate"))),
       createdById: user.id,
       assignments: {
         create: assigneeIds.map((userId) => ({ userId })),
@@ -3758,9 +3757,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
         conferenceId:
           taskType === ResearchTaskType.SUBMIT_CONFERENCE ? conferenceId : null,
         reviewId: taskType === ResearchTaskType.REVIEW ? reviewId : null,
-        dueDate: optionalString(formData.get("dueDate"))
-          ? new Date(optionalString(formData.get("dueDate")) as string)
-          : null,
+        dueDate: researchTaskDueDate(optionalString(formData.get("dueDate"))),
       },
       select: { id: true, title: true, description: true },
     });

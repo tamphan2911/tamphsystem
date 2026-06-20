@@ -3,7 +3,7 @@ builder = "NIXPACKS"
 buildCommand = "npm run build"
 
 [deploy]
-preDeployCommand = "npx prisma db push --accept-data-loss --schema=packages/db/prisma/schema.prisma"
+preDeployCommand = "npx prisma db push --accept-data-loss --schema=packages/db/prisma/schema.prisma && npx prisma db execute --file=packages/db/prisma/migrations/20260620093000_task_due_end_of_hanoi_day/migration.sql --schema=packages/db/prisma/schema.prisma"
 startCommand = "npm run start --workspace=apps/web"
 healthcheckPath = "/"
 healthcheckTimeout = 100
