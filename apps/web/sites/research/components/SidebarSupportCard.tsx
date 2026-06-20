@@ -46,10 +46,6 @@ export function SidebarSupportCard({
           <p className="text-sm font-normal text-[#E4E4E4]">
             Alright, you found me
           </p>
-          <p className="mt-1 text-xs leading-5 text-[#B0B0B0]">
-            Just kidding, boss. Pull up here when the system starts acting
-            dramatic.
-          </p>
           <div className="mt-3 space-y-1.5 text-xs font-normal text-[#E4E4E4]">
             <p>tamphan.ntc@gmail.com</p>
             <p>0798109293</p>
