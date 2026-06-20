@@ -7,6 +7,7 @@ import {
   SubmissionsTable,
   type SubmissionRow,
 } from "../projects/[id]/SubmissionsTable";
+import type { SubmissionEditOptions } from "./EditSubmissionDialog";
 import {
   displayResearchEmail,
   displayResearchPersonName,
@@ -34,7 +35,13 @@ export default async function SubmissionsPage() {
 
   if (!roles.includes(Role.ADMIN)) redirect("/401");
 
-  const [journalSubmissions, conferenceSubmissions] = await Promise.all([
+  const [
+    journalSubmissions,
+    conferenceSubmissions,
+    researchProjects,
+    journals,
+    conferences,
+  ] = await Promise.all([
     prisma.researchSubmission.findMany({
       include: {
         project: { select: { title: true } },
@@ -74,6 +81,26 @@ export default async function SubmissionsPage() {
         },
       },
       orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
+    }),
+    prisma.researchProject.findMany({
+      select: { id: true, researchCode: true, title: true },
+      orderBy: { title: "asc" },
+    }),
+    prisma.journal.findMany({
+      select: {
+        id: true,
+        name: true,
+        publisher: true,
+        accounts: {
+          select: { id: true, username: true, email: true },
+          orderBy: { username: "asc" },
+        },
+      },
+      orderBy: { name: "asc" },
+    }),
+    prisma.conference.findMany({
+      select: { id: true, name: true, organizer: true },
+      orderBy: { name: "asc" },
     }),
   ]);
 
@@ -140,6 +167,7 @@ export default async function SubmissionsPage() {
       code:
         submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
       kind: "journal" as const,
+      projectId: submission.researchProjectId,
       venueId: submission.journal.id,
       venueName: submission.journal.name,
       metaLine: submission.project.title,
@@ -183,6 +211,7 @@ export default async function SubmissionsPage() {
       code:
         submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
       kind: "conference" as const,
+      projectId: submission.researchProjectId,
       venueId: submission.conference.id,
       venueName: submission.conference.name,
       metaLine: [
@@ -222,12 +251,39 @@ export default async function SubmissionsPage() {
       rejectedAt: isoDate(submission.rejectedAt),
       withdrawnAt: isoDate(submission.withdrawnAt),
       publishedAt: isoDate(submission.publishedAt),
+      note: submission.note ?? "",
     })),
   ].sort((left, right) =>
     (right.submittedAt || "").localeCompare(left.submittedAt || ""),
   );
 
   const publishedRows = rows.filter((row) => row.status === "PUBLISHED");
+  const editOptions: SubmissionEditOptions = {
+    projects: researchProjects.map((project) => ({
+      id: project.id,
+      label: project.researchCode
+        ? `${project.researchCode} - ${project.title}`
+        : project.title,
+    })),
+    journals: journals.map((journal) => ({
+      id: journal.id,
+      label: journal.publisher
+        ? `${journal.name} - ${journal.publisher}`
+        : journal.name,
+      accounts: journal.accounts.map((account) => ({
+        id: account.id,
+        label: account.email
+          ? `${account.username} - ${account.email}`
+          : account.username,
+      })),
+    })),
+    conferences: conferences.map((conference) => ({
+      id: conference.id,
+      label: conference.organizer
+        ? `${conference.name} - ${conference.organizer}`
+        : conference.name,
+    })),
+  };
   const stats = [
     {
       label: "Submit",
@@ -272,7 +328,8 @@ export default async function SubmissionsPage() {
       <SubmissionsTable
         rows={rows}
         isAdmin
-        actionMode="delete"
+        actionMode="manage"
+        editOptions={editOptions}
         linkVenue={false}
         showSubmitter
         flushControls

@@ -48,6 +48,10 @@ import {
   currencySymbol,
   formatResearchNumber,
 } from "@/sites/research/lib/currency";
+import {
+  EditSubmissionDialog,
+  type SubmissionEditOptions,
+} from "../../submissions/EditSubmissionDialog";
 
 export type SubmissionRow = {
   id: string;
@@ -85,6 +89,7 @@ export type SubmissionRow = {
   projectRegistration?: string;
   projectRegisterName?: string;
   canViewRegistrationClaim?: boolean;
+  note?: string;
 };
 
 type StatusDraft = {
@@ -382,15 +387,17 @@ export function SubmissionsTable({
   linkVenue = true,
   showSubmitter = false,
   flushControls = false,
+  editOptions,
 }: {
   rows: SubmissionRow[];
   isAdmin: boolean;
   disabled?: boolean;
-  actionMode?: "none" | "edit" | "delete";
+  actionMode?: "none" | "edit" | "delete" | "manage";
   view?: "venue" | "research";
   linkVenue?: boolean;
   showSubmitter?: boolean;
   flushControls?: boolean;
+  editOptions?: SubmissionEditOptions;
 }) {
   const router = useRouter();
   const hasAction = isAdmin && actionMode !== "none";
@@ -398,7 +405,10 @@ export function SubmissionsTable({
   const showRegistrationClaim =
     !isResearchView || rows.some((row) => row.canViewRegistrationClaim);
   const showStatusEdit = isAdmin && actionMode === "edit";
-  const showDelete = isAdmin && actionMode === "delete";
+  const showDetailsEdit =
+    isAdmin && actionMode === "manage" && Boolean(editOptions);
+  const showDelete =
+    isAdmin && (actionMode === "delete" || actionMode === "manage");
   const [query, setQuery] = usePersistentTableValue(
     "research-submissions:q",
     "",
@@ -412,6 +422,9 @@ export function SubmissionsTable({
     "ALL",
   );
   const [editing, setEditing] = useState<SubmissionRow | null>(null);
+  const [editingDetails, setEditingDetails] = useState<SubmissionRow | null>(
+    null,
+  );
   const [deleting, setDeleting] = useState<SubmissionRow | null>(null);
   const [acceptanceConfirmation, setAcceptanceConfirmation] =
     useState<StatusDraft | null>(null);
@@ -701,7 +714,11 @@ export function SubmissionsTable({
                 {hasAction && (
                   <th className="w-[7%] px-3 py-3 text-right">
                     <span className="sr-only">
-                      {showDelete ? "Delete" : "Edit"}
+                      {showDetailsEdit
+                        ? "Edit or delete"
+                        : showDelete
+                          ? "Delete"
+                          : "Edit"}
                     </span>
                   </th>
                 )}
@@ -933,51 +950,66 @@ export function SubmissionsTable({
                   )}
                   {hasAction && (
                     <td className="px-3 py-3 text-right">
-                      {showStatusEdit &&
-                        (() => {
-                          const withdrawn = isWithdrawn(row);
-                          const editDisabled =
-                            withdrawn ||
-                            (disabled && !canEditWhenResearchLocked(row));
-                          return (
+                      <div className="flex items-start justify-end gap-2">
+                        {showStatusEdit &&
+                          (() => {
+                            const withdrawn = isWithdrawn(row);
+                            const editDisabled =
+                              withdrawn ||
+                              (disabled && !canEditWhenResearchLocked(row));
+                            return (
+                              <button
+                                type="button"
+                                disabled={editDisabled}
+                                title={
+                                  withdrawn
+                                    ? "Withdrawn submissions are locked and cannot be changed."
+                                    : editDisabled
+                                      ? "Research is locked. Only accepted or published submissions can still be updated."
+                                      : "Edit submission status"
+                                }
+                                onClick={() => {
+                                  setEditStatus(
+                                    row.kind === "conference" &&
+                                      row.status === "PLANNED"
+                                      ? "SUBMITTED"
+                                      : row.status,
+                                  );
+                                  setEditing(row);
+                                }}
+                                className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-[#1F7180] shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:text-[#B0B0B0] disabled:active:scale-100 dark:text-[#A8DADC] dark:hover:text-cyan-200"
+                                aria-label={`Edit status for ${row.venueName}`}
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </button>
+                            );
+                          })()}
+                        {showDetailsEdit && (
+                          <IconHint label="Edit submission">
                             <button
                               type="button"
-                              disabled={editDisabled}
-                              title={
-                                withdrawn
-                                  ? "Withdrawn submissions are locked and cannot be changed."
-                                  : editDisabled
-                                    ? "Research is locked. Only accepted or published submissions can still be updated."
-                                    : "Edit submission status"
-                              }
-                              onClick={() => {
-                                setEditStatus(
-                                  row.kind === "conference" &&
-                                    row.status === "PLANNED"
-                                    ? "SUBMITTED"
-                                    : row.status,
-                                );
-                                setEditing(row);
-                              }}
-                              className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-[#1F7180] shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:text-[#B0B0B0] disabled:active:scale-100 dark:text-[#A8DADC] dark:hover:text-cyan-200"
-                              aria-label={`Edit status for ${row.venueName}`}
+                              disabled={disabled}
+                              onClick={() => setEditingDetails(row)}
+                              className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-[#1F7180] shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 dark:text-[#A8DADC] dark:hover:text-cyan-200"
+                              aria-label={`Edit submission for ${row.venueName}`}
                             >
                               <Edit3 className="h-4 w-4" />
                             </button>
-                          );
-                        })()}
-                      {showDelete && (
-                        <button
-                          type="button"
-                          disabled={disabled}
-                          title="Delete submission"
-                          onClick={() => setDeleting(row)}
-                          className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-rose-700 shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-rose-800 hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:active:scale-100 dark:text-rose-300 dark:hover:text-rose-200"
-                          aria-label={`Delete submission for ${row.venueName}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
+                          </IconHint>
+                        )}
+                        {showDelete && (
+                          <button
+                            type="button"
+                            disabled={disabled}
+                            title="Delete submission"
+                            onClick={() => setDeleting(row)}
+                            className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-start justify-center border-0 bg-transparent p-0 text-rose-700 shadow-none outline-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-rose-800 hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:active:scale-100 dark:text-rose-300 dark:hover:text-rose-200"
+                            aria-label={`Delete submission for ${row.venueName}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>
@@ -1099,6 +1131,14 @@ export function SubmissionsTable({
               )}
           </form>
         </ResearchModal>
+      )}
+
+      {editingDetails && editOptions && (
+        <EditSubmissionDialog
+          submission={editingDetails}
+          options={editOptions}
+          onClose={() => setEditingDetails(null)}
+        />
       )}
 
       {acceptanceConfirmation && editing && (

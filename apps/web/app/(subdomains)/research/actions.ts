@@ -4354,6 +4354,111 @@ export async function updateSubmissionStatus(formData: FormData) {
   return { ok: false, message: "Submission type is not valid." };
 }
 
+export async function updateSubmissionDetails(formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const submissionId = optionalString(formData.get("submissionId"));
+  const submissionKind = optionalString(formData.get("submissionKind"));
+  const researchProjectId = optionalString(formData.get("researchProjectId"));
+  const venueId = optionalString(formData.get("venueId"));
+  const submittedAt = dateFromForm(formData.get("submittedAt"));
+
+  if (
+    !submissionId ||
+    !submissionKind ||
+    !researchProjectId ||
+    !venueId ||
+    !submittedAt
+  ) {
+    return { ok: false, message: "Complete all required submission fields." };
+  }
+
+  try {
+    if (submissionKind === "journal") {
+      const current = await prisma.researchSubmission.findUnique({
+        where: { id: submissionId },
+        select: { researchProjectId: true, journalId: true },
+      });
+      if (!current) return { ok: false, message: "Submission was not found." };
+
+      const accountId = optionalString(formData.get("accountId"));
+      if (accountId) {
+        const account = await prisma.publisherAccount.findFirst({
+          where: { id: accountId, journalId: venueId },
+          select: { id: true },
+        });
+        if (!account) {
+          return {
+            ok: false,
+            message: "The selected account does not belong to this journal.",
+          };
+        }
+      }
+
+      await prisma.researchSubmission.update({
+        where: { id: submissionId },
+        data: {
+          researchProjectId,
+          journalId: venueId,
+          accountId,
+          submittedAt,
+        },
+      });
+
+      await Promise.all([
+        refreshResearchStage(current.researchProjectId),
+        current.researchProjectId === researchProjectId
+          ? Promise.resolve()
+          : refreshResearchStage(researchProjectId),
+      ]);
+      revalidatePath(`/journals/${current.journalId}`);
+      revalidatePath(`/journals/${venueId}`);
+      revalidatePath(`/projects/${current.researchProjectId}`);
+      revalidatePath(`/projects/${researchProjectId}`);
+    } else if (submissionKind === "conference") {
+      const current = await prisma.conferenceSubmission.findUnique({
+        where: { id: submissionId },
+        select: { researchProjectId: true, conferenceId: true },
+      });
+      if (!current) return { ok: false, message: "Submission was not found." };
+
+      await prisma.conferenceSubmission.update({
+        where: { id: submissionId },
+        data: {
+          researchProjectId,
+          conferenceId: venueId,
+          submittedAt,
+          note: optionalString(formData.get("note")),
+        },
+      });
+
+      revalidatePath(`/conferences/${current.conferenceId}`);
+      revalidatePath(`/conferences/${venueId}`);
+      revalidatePath(`/projects/${current.researchProjectId}`);
+      revalidatePath(`/projects/${researchProjectId}`);
+    } else {
+      return { ok: false, message: "Submission type is not valid." };
+    }
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return {
+        ok: false,
+        message:
+          "This research already has a submission for the selected venue.",
+      };
+    }
+    throw error;
+  }
+
+  revalidatePath("/submissions");
+  revalidatePath("/projects");
+  return { ok: true };
+}
+
 export async function deleteSubmission(formData: FormData) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
