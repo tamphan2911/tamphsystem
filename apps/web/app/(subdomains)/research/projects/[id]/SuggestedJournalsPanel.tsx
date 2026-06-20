@@ -14,6 +14,7 @@ import {
   Trash2,
   UserRound,
   X,
+  Info,
 } from "lucide-react";
 import {
   addSuggestedConference,
@@ -1228,11 +1229,6 @@ function VenueCard({
     <div
       className={`group relative cursor-default border p-3 text-sm transition hover:-translate-y-0.5 hover:shadow-md ${meta.cardClass}`}
     >
-      {meta.tooltip && (
-        <span className="pointer-events-none absolute left-4 top-full z-40 mt-2 max-w-72 translate-y-1 border border-[#444444] bg-[#202020] px-3 py-2 text-xs font-normal leading-5 text-[#E4E4E4] opacity-0 shadow-xl shadow-black/30 transition duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100">
-          {meta.tooltip}
-        </span>
-      )}
       {showActions ? (
         <div className="absolute right-2 top-2 flex translate-y-1 gap-1 opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
           {canAssign && (
@@ -1277,16 +1273,26 @@ function VenueCard({
         <div
           className={`absolute right-2 top-2 transition ${showActions ? "group-hover:opacity-0" : ""}`}
         >
-          <span
-            className={`inline-flex flex-col border px-2.5 py-1 text-center text-[11px] font-normal uppercase tracking-wide ring-0 ${meta.badgeClass}`}
-          >
-            {meta.badge}
-            {state.state === "published" && state.publishedAt ? (
-              <span className="mt-0.5 text-[10px] font-semibold normal-case tracking-normal">
-                {shortDate(state.publishedAt)}
-              </span>
-            ) : null}
-          </span>
+          <IconHint label={meta.tooltip || meta.badge} position="bottom">
+            <span
+              className={`inline-flex flex-col border px-2.5 py-1 text-center text-[11px] font-normal uppercase tracking-wide ring-0 ${meta.badgeClass}`}
+            >
+              {meta.badge}
+              {state.state === "published" && state.publishedAt ? (
+                <span className="mt-0.5 text-[10px] font-semibold normal-case tracking-normal">
+                  {shortDate(state.publishedAt)}
+                </span>
+              ) : null}
+            </span>
+          </IconHint>
+        </div>
+      ) : meta.tooltip ? (
+        <div className="absolute right-2 top-2">
+          <IconHint label={meta.tooltip} position="bottom">
+            <span className="inline-flex h-6 w-6 items-center justify-center text-[#B0B0B0] transition hover:text-[#A8DADC]">
+              <Info className="h-4 w-4" aria-hidden="true" />
+            </span>
+          </IconHint>
         </div>
       ) : null}
       {children}
