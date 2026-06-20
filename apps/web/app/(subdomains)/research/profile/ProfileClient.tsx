@@ -420,27 +420,33 @@ export function ProfileClient({
                   </span>
                 </IconHint>
               )}
-              {canChangePassword && (
-                <IconHint label="Change password" position="bottom">
-                  <button
-                    type="button"
-                    onClick={() => setPasswordOpen(true)}
-                    className="research-allow-transform inline-flex cursor-pointer border-0 bg-transparent p-1 text-[#B0B0B0] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#B39CD0] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95"
-                    aria-label="Change password"
-                  >
-                    <KeyRound className="h-4 w-4" />
-                  </button>
-                </IconHint>
-              )}
-              {canEditProfile && (
-                <button
-                  type="button"
-                  onClick={() => setEditOpen(true)}
-                  className="research-allow-transform inline-flex cursor-pointer border-0 bg-transparent p-1 text-[#B0B0B0] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#A8DADC] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95"
-                  aria-label="Edit profile"
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
+              {(canEditProfile || canChangePassword) && (
+                <>
+                  {canChangePassword && (
+                    <IconHint label="Change password" position="bottom">
+                      <button
+                        type="button"
+                        onClick={() => setPasswordOpen(true)}
+                        className="research-allow-transform inline-flex cursor-pointer border-0 bg-transparent p-1 text-[#B0B0B0] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#B39CD0] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95"
+                        aria-label="Change password"
+                      >
+                        <KeyRound className="h-4 w-4" />
+                      </button>
+                    </IconHint>
+                  )}
+                  {canEditProfile && (
+                    <IconHint label="Edit profile" position="bottom">
+                      <button
+                        type="button"
+                        onClick={() => setEditOpen(true)}
+                        className="research-allow-transform inline-flex cursor-pointer border-0 bg-transparent p-1 text-[#B0B0B0] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#A8DADC] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95"
+                        aria-label="Edit profile"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    </IconHint>
+                  )}
+                </>
               )}
             </div>
             <p className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-xs text-[#B0B0B0]">

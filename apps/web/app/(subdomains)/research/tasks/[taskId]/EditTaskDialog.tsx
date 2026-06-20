@@ -11,6 +11,7 @@ import {
 import {
   Check,
   ClipboardList,
+  Database,
   Edit3,
   FileText,
   Save,
@@ -45,6 +46,7 @@ import type {
   TaskOrganizedProjectOption,
   TaskResearchOption,
   TaskReviewOption,
+  TaskSubmissionOption,
   TaskVenueOption,
 } from "../NewTaskDialog";
 
@@ -142,6 +144,7 @@ export function EditTaskDialog({
   accountOptions,
   reviewOptions,
   organizedProjectOptions,
+  submissionOptions = [],
 }: {
   task: EditableTask;
   assignees: TaskAssigneeOption[];
@@ -150,6 +153,7 @@ export function EditTaskDialog({
   accountOptions: TaskAccountOption[];
   reviewOptions: TaskReviewOption[];
   organizedProjectOptions: TaskOrganizedProjectOption[];
+  submissionOptions?: TaskSubmissionOption[];
 }) {
   const initialMode = modeFromTaskType(task.taskType);
   const initialResearch =
@@ -166,6 +170,16 @@ export function EditTaskDialog({
     organizedProjectOptions.find(
       (option) => option.id === task.organizedProjectId,
     ) ?? null;
+  const initialSubmission =
+    initialMode === "other"
+      ? (submissionOptions.find(
+          (option) =>
+            option.researchId === task.projectId &&
+            ((option.kind === "journal" && option.venueId === task.journalId) ||
+              (option.kind === "conference" &&
+                option.venueId === task.conferenceId)),
+        ) ?? null)
+      : null;
 
   const [isOpen, setIsOpen] = useState(false);
   const mode = initialMode;
@@ -183,6 +197,7 @@ export function EditTaskDialog({
   const [accountQuery, setAccountQuery] = useState("");
   const [reviewQuery, setReviewQuery] = useState("");
   const [organizedProjectQuery, setOrganizedProjectQuery] = useState("");
+  const [submissionQuery, setSubmissionQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>(task.assigneeIds);
   const [selectedResearch, setSelectedResearch] =
     useState<TaskResearchOption | null>(initialResearch);
@@ -195,6 +210,8 @@ export function EditTaskDialog({
   );
   const [selectedOrganizedProject, setSelectedOrganizedProject] =
     useState<TaskOrganizedProjectOption | null>(initialOrganizedProject);
+  const [selectedSubmission, setSelectedSubmission] =
+    useState<TaskSubmissionOption | null>(initialSubmission);
   const [isPending, startTransition] = useTransition();
   const { showSuccess, showError } = useResearchToast();
 
@@ -267,6 +284,26 @@ export function EditTaskDialog({
       .slice(0, 10);
   }, [organizedProjectOptions, organizedProjectQuery]);
 
+  const filteredSubmissions = useMemo(() => {
+    const needle = submissionQuery.trim().toLowerCase();
+    if (!needle) return [];
+    return submissionOptions
+      .filter((submission) =>
+        [
+          submission.code,
+          submission.researchTitle,
+          submission.venueName,
+          submission.status,
+          submission.kind,
+          submission.id,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 10);
+  }, [submissionOptions, submissionQuery]);
+
   const journalAccounts = useMemo(() => {
     if (selectedVenue?.kind !== "journal") return [];
     return accountOptions.filter(
@@ -319,10 +356,41 @@ export function EditTaskDialog({
   function selectResearch(project: TaskResearchOption) {
     setSelectedResearch(project);
     setResearchQuery("");
+    if (selectedSubmission?.researchId !== project.id) {
+      setSelectedSubmission(null);
+      setSubmissionQuery("");
+    }
   }
 
   function selectVenue(venue: TaskVenueOption) {
     setSelectedVenue(venue);
+    setVenueQuery("");
+    setSelectedAccountId("");
+    setAccountQuery("");
+    if (
+      selectedSubmission &&
+      (selectedSubmission.kind !== venue.kind ||
+        selectedSubmission.venueId !== venue.id)
+    ) {
+      setSelectedSubmission(null);
+      setSubmissionQuery("");
+    }
+  }
+
+  function selectSubmission(submission: TaskSubmissionOption) {
+    setSelectedSubmission(submission);
+    setSubmissionQuery("");
+    setSelectedResearch(
+      researchOptions.find((option) => option.id === submission.researchId) ??
+        null,
+    );
+    setResearchQuery("");
+    setSelectedVenue(
+      venueOptions.find(
+        (option) =>
+          option.kind === submission.kind && option.id === submission.venueId,
+      ) ?? null,
+    );
     setVenueQuery("");
     setSelectedAccountId("");
     setAccountQuery("");
@@ -350,12 +418,14 @@ export function EditTaskDialog({
     setAccountQuery("");
     setReviewQuery("");
     setOrganizedProjectQuery("");
+    setSubmissionQuery("");
     setSelectedIds(task.assigneeIds);
     setSelectedResearch(initialResearch);
     setSelectedVenue(initialVenue);
     setSelectedAccountId(task.accountId);
     setSelectedReview(initialReview);
     setSelectedOrganizedProject(initialOrganizedProject);
+    setSelectedSubmission(initialSubmission);
     setIsOpen(true);
   }
 
@@ -379,12 +449,11 @@ export function EditTaskDialog({
   }
 
   const needsResearch = mode === "submit" || mode === "production";
-  const isResearchShortcutOther = mode === "other" && Boolean(task.projectId);
+  const showsResearch = needsResearch || mode === "other";
   const selectedResearchMatchesMode =
     !needsResearch ||
     (selectedResearch ? researchMatchesMode(selectedResearch, mode) : false);
-  const showsVenue =
-    mode === "submit" || (mode === "other" && !isResearchShortcutOther);
+  const showsVenue = mode === "submit" || mode === "other";
   const needsVenue = mode === "submit";
   const selectedVenueMatchesMode = !needsVenue || Boolean(selectedVenue);
   const needsReview = mode === "review";
@@ -504,6 +573,13 @@ export function EditTaskDialog({
                   value={selectedVenue.id}
                 />
               ) : null}
+              {selectedVenue?.kind === "conference" ? (
+                <input
+                  type="hidden"
+                  name="conferenceId"
+                  value={selectedVenue.id}
+                />
+              ) : null}
             </>
           )}
 
@@ -528,30 +604,11 @@ export function EditTaskDialog({
             </label>
           </div>
 
-          {isResearchShortcutOther && selectedResearch ? (
-            <section className="grid gap-2">
-              <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                Associated research
-              </span>
-              <div className="flex min-w-0 items-center gap-3 border border-[#d9d0c3] bg-[#f8f5f0] px-4 py-3 text-[#243047] dark:border-[#444444] dark:bg-[#252525] dark:text-[#E4E4E4]">
-                <FileText className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
-                <span className="min-w-0 flex-1 truncate text-sm">
-                  {selectedResearch.title}
-                </span>
-                {selectedResearch.code ? (
-                  <span className="flex-none text-xs text-[#6C778D] dark:text-[#B0B0B0]">
-                    {selectedResearch.code}
-                  </span>
-                ) : null}
-              </div>
-            </section>
-          ) : null}
-
-          {needsResearch && (
+          {showsResearch && (
             <SearchPanel
               query={researchQuery}
               setQuery={setResearchQuery}
-              placeholder="Search research by title, ID, or stage (*)"
+              placeholder={`Search research by title, ID, or stage${needsResearch ? " (*)" : " (optional)"}`}
               selectedItems={
                 selectedResearch
                   ? [
@@ -566,6 +623,8 @@ export function EditTaskDialog({
                         onClick: () => {
                           setSelectedResearch(null);
                           setResearchQuery("");
+                          setSelectedSubmission(null);
+                          setSubmissionQuery("");
                         },
                       },
                     ]
@@ -582,6 +641,40 @@ export function EditTaskDialog({
             />
           )}
 
+          {mode === "other" && (
+            <SearchPanel
+              title="Associated submission"
+              query={submissionQuery}
+              setQuery={setSubmissionQuery}
+              placeholder="Search submission by ID, research, venue, or status (optional)"
+              selectedItems={
+                selectedSubmission
+                  ? [
+                      {
+                        id: selectedSubmission.id,
+                        title: `${selectedSubmission.code} - ${selectedSubmission.researchTitle}`,
+                        meta: `${selectedSubmission.venueName} - ${selectedSubmission.status}`,
+                        icon: <Database className="h-4 w-4" />,
+                        selected: true,
+                        onClick: () => {
+                          setSelectedSubmission(null);
+                          setSubmissionQuery("");
+                        },
+                      },
+                    ]
+                  : []
+              }
+              items={filteredSubmissions.map((submission) => ({
+                id: submission.id,
+                title: `${submission.code} - ${submission.researchTitle}`,
+                meta: `${submission.venueName} - ${submission.status}`,
+                icon: <Database className="h-4 w-4" />,
+                selected: selectedSubmission?.id === submission.id,
+                onClick: () => selectSubmission(submission),
+              }))}
+            />
+          )}
+
           {showsVenue && (
             <SearchPanel
               query={venueQuery}
@@ -592,7 +685,8 @@ export function EditTaskDialog({
                   : "Search journal or conference (*)"
               }
               selectedItems={
-                selectedVenue
+                selectedVenue &&
+                (mode !== "other" || selectedVenue.kind === "journal")
                   ? [
                       {
                         id: `${selectedVenue.kind}-${selectedVenue.id}`,
@@ -605,6 +699,8 @@ export function EditTaskDialog({
                           setVenueQuery("");
                           setSelectedAccountId("");
                           setAccountQuery("");
+                          setSelectedSubmission(null);
+                          setSubmissionQuery("");
                         },
                       },
                     ]

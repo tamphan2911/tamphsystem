@@ -67,6 +67,8 @@ export async function updateResearchProfile(formData: FormData) {
     });
     revalidatePath("/profile");
     revalidatePath("/research/profile");
+    revalidatePath("/users");
+    revalidatePath("/assistants");
     return { success: true };
   } catch {
     return { error: "Profile could not be updated." };

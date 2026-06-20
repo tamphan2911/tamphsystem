@@ -782,6 +782,52 @@ export default async function TaskDetailPage({
     code: project.referenceCode ?? "",
     status: project.status,
   }));
+  const projectIds = projects.map((project) => project.id);
+  const [journalSubmissions, conferenceSubmissions] =
+    canEdit && projectIds.length > 0
+      ? await Promise.all([
+          prisma.researchSubmission.findMany({
+            where: { researchProjectId: { in: projectIds } },
+            orderBy: [{ updatedAt: "desc" }],
+            include: {
+              project: { select: { title: true } },
+              journal: { select: { name: true } },
+            },
+          }),
+          prisma.conferenceSubmission.findMany({
+            where: { researchProjectId: { in: projectIds } },
+            orderBy: [{ updatedAt: "desc" }],
+            include: {
+              project: { select: { title: true } },
+              conference: { select: { name: true } },
+            },
+          }),
+        ])
+      : [[], []];
+  const submissionOptions = [
+    ...journalSubmissions.map((submission) => ({
+      id: submission.id,
+      kind: "journal" as const,
+      researchId: submission.researchProjectId,
+      venueId: submission.journalId,
+      code:
+        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
+      researchTitle: submission.project.title,
+      venueName: submission.journal.name,
+      status: submission.status,
+    })),
+    ...conferenceSubmissions.map((submission) => ({
+      id: submission.id,
+      kind: "conference" as const,
+      researchId: submission.researchProjectId,
+      venueId: submission.conferenceId,
+      code:
+        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
+      researchTitle: submission.project.title,
+      venueName: submission.conference.name,
+      status: submission.status,
+    })),
+  ];
   const clarificationItems: TaskClarificationItem[] = taskClarifications.map(
     (clarification) => ({
       id: clarification.id,
@@ -862,6 +908,7 @@ export default async function TaskDetailPage({
                         accountOptions={accountOptions}
                         reviewOptions={reviewOptions}
                         organizedProjectOptions={organizedProjectOptions}
+                        submissionOptions={submissionOptions}
                       />
                     )}
                     {canUseReminder && (

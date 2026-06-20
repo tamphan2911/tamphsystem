@@ -3427,7 +3427,11 @@ export async function createResearchTask(formData: FormData) {
     return { ok: false, reason: "MISSING_ASSOCIATION" };
   }
 
-  if (projectId && (await researchContentIsLocked(projectId))) {
+  if (
+    projectId &&
+    taskType !== ResearchTaskType.OTHER &&
+    (await researchContentIsLocked(projectId))
+  ) {
     return { ok: false, reason: "RESEARCH_LOCKED" };
   }
 
@@ -3650,6 +3654,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
 
   if (
     effectiveProjectId &&
+    taskType !== ResearchTaskType.OTHER &&
     (await researchContentIsLocked(effectiveProjectId))
   ) {
     return { ok: false, reason: "RESEARCH_LOCKED" };
@@ -3755,7 +3760,10 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
         accountId:
           taskType === ResearchTaskType.SUBMIT_RESEARCH ? accountId : null,
         conferenceId:
-          taskType === ResearchTaskType.SUBMIT_CONFERENCE ? conferenceId : null,
+          taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
+          taskType === ResearchTaskType.OTHER
+            ? conferenceId
+            : null,
         reviewId: taskType === ResearchTaskType.REVIEW ? reviewId : null,
         dueDate: researchTaskDueDate(optionalString(formData.get("dueDate"))),
       },

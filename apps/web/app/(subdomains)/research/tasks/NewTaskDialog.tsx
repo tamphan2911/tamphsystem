@@ -12,6 +12,7 @@ import {
   Check,
   ClipboardList,
   ClipboardPlus,
+  Database,
   FileText,
   PlusCircle,
   Search,
@@ -84,6 +85,17 @@ export type TaskOrganizedProjectOption = {
   status: string;
 };
 
+export type TaskSubmissionOption = {
+  id: string;
+  kind: "journal" | "conference";
+  researchId: string;
+  venueId: string;
+  code: string;
+  researchTitle: string;
+  venueName: string;
+  status: string;
+};
+
 export type TaskMode = "submit" | "production" | "review" | "project" | "other";
 type TaskTriggerVariant = "default" | "other" | "production";
 type SearchPanelItem = {
@@ -120,6 +132,7 @@ export function NewTaskDialog({
   accountOptions,
   reviewOptions,
   organizedProjectOptions,
+  submissionOptions = [],
   initialMode = "submit",
   initialResearch = null,
   initialTitle = "",
@@ -131,6 +144,7 @@ export function NewTaskDialog({
   accountOptions: TaskAccountOption[];
   reviewOptions: TaskReviewOption[];
   organizedProjectOptions: TaskOrganizedProjectOption[];
+  submissionOptions?: TaskSubmissionOption[];
   initialMode?: TaskMode;
   initialResearch?: TaskResearchOption | null;
   initialTitle?: string;
@@ -144,6 +158,7 @@ export function NewTaskDialog({
   const [accountQuery, setAccountQuery] = useState("");
   const [reviewQuery, setReviewQuery] = useState("");
   const [organizedProjectQuery, setOrganizedProjectQuery] = useState("");
+  const [submissionQuery, setSubmissionQuery] = useState("");
   const [dueDate, setDueDate] = useState(defaultResearchTaskDueDate);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedResearch, setSelectedResearch] =
@@ -157,6 +172,8 @@ export function NewTaskDialog({
   );
   const [selectedOrganizedProject, setSelectedOrganizedProject] =
     useState<TaskOrganizedProjectOption | null>(null);
+  const [selectedSubmission, setSelectedSubmission] =
+    useState<TaskSubmissionOption | null>(null);
   const [isPending, startTransition] = useTransition();
   const { showSuccess, showError } = useResearchToast();
 
@@ -269,6 +286,26 @@ export function NewTaskDialog({
       .slice(0, 10);
   }, [organizedProjectOptions, organizedProjectQuery]);
 
+  const filteredSubmissions = useMemo(() => {
+    const needle = submissionQuery.trim().toLowerCase();
+    if (!needle) return [];
+    return submissionOptions
+      .filter((submission) =>
+        [
+          submission.code,
+          submission.researchTitle,
+          submission.venueName,
+          submission.status,
+          submission.kind,
+          submission.id,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 10);
+  }, [submissionOptions, submissionQuery]);
+
   function reset() {
     setMode(initialMode);
     setAssigneeQuery("");
@@ -277,6 +314,7 @@ export function NewTaskDialog({
     setAccountQuery("");
     setReviewQuery("");
     setOrganizedProjectQuery("");
+    setSubmissionQuery("");
     setDueDate(defaultResearchTaskDueDate());
     setSelectedIds([]);
     setSelectedResearch(initialResearch);
@@ -284,6 +322,7 @@ export function NewTaskDialog({
     setSelectedAccountId("");
     setSelectedReview(null);
     setSelectedOrganizedProject(null);
+    setSelectedSubmission(null);
   }
 
   function toggleAssignee(id: string) {
@@ -298,6 +337,10 @@ export function NewTaskDialog({
   function selectResearch(project: TaskResearchOption) {
     setSelectedResearch(project);
     setResearchQuery("");
+    if (selectedSubmission?.researchId !== project.id) {
+      setSelectedSubmission(null);
+      setSubmissionQuery("");
+    }
   }
 
   function selectVenue(venue: TaskVenueOption) {
@@ -305,6 +348,14 @@ export function NewTaskDialog({
     setVenueQuery("");
     setSelectedAccountId("");
     setAccountQuery("");
+    if (
+      selectedSubmission &&
+      (selectedSubmission.kind !== venue.kind ||
+        selectedSubmission.venueId !== venue.id)
+    ) {
+      setSelectedSubmission(null);
+      setSubmissionQuery("");
+    }
   }
 
   function changeMode(nextMode: TaskMode) {
@@ -315,6 +366,29 @@ export function NewTaskDialog({
       setSelectedAccountId("");
       setAccountQuery("");
     }
+    if (nextMode !== "other") {
+      setSelectedSubmission(null);
+      setSubmissionQuery("");
+    }
+  }
+
+  function selectSubmission(submission: TaskSubmissionOption) {
+    setSelectedSubmission(submission);
+    setSubmissionQuery("");
+    setSelectedResearch(
+      researchOptions.find((option) => option.id === submission.researchId) ??
+        null,
+    );
+    setResearchQuery("");
+    setSelectedVenue(
+      venueOptions.find(
+        (option) =>
+          option.kind === submission.kind && option.id === submission.venueId,
+      ) ?? null,
+    );
+    setVenueQuery("");
+    setSelectedAccountId("");
+    setAccountQuery("");
   }
 
   function selectReview(review: TaskReviewOption) {
@@ -371,6 +445,7 @@ export function NewTaskDialog({
   }
 
   const needsResearch = mode === "submit" || mode === "production";
+  const showsResearch = needsResearch || mode === "other";
   const fixedResearch = triggerVariant !== "default" && initialResearch;
   const selectedResearchMatchesMode =
     !needsResearch ||
@@ -534,6 +609,13 @@ export function NewTaskDialog({
                   value={selectedVenue.id}
                 />
               ) : null}
+              {selectedVenue?.kind === "conference" ? (
+                <input
+                  type="hidden"
+                  name="conferenceId"
+                  value={selectedVenue.id}
+                />
+              ) : null}
             </>
           )}
 
@@ -604,11 +686,11 @@ export function NewTaskDialog({
             </section>
           ) : null}
 
-          {needsResearch && !fixedResearch && (
+          {showsResearch && !fixedResearch && (
             <SearchPanel
               query={researchQuery}
               setQuery={setResearchQuery}
-              placeholder="Search research by title, ID, or stage (*)"
+              placeholder={`Search research by title, ID, or stage${needsResearch ? " (*)" : " (optional)"}`}
               selectedItems={
                 selectedResearch
                   ? [
@@ -623,6 +705,8 @@ export function NewTaskDialog({
                         onClick: () => {
                           setSelectedResearch(null);
                           setResearchQuery("");
+                          setSelectedSubmission(null);
+                          setSubmissionQuery("");
                         },
                       },
                     ]
@@ -639,6 +723,40 @@ export function NewTaskDialog({
             />
           )}
 
+          {mode === "other" && (
+            <SearchPanel
+              title="Associated submission"
+              query={submissionQuery}
+              setQuery={setSubmissionQuery}
+              placeholder="Search submission by ID, research, venue, or status (optional)"
+              selectedItems={
+                selectedSubmission
+                  ? [
+                      {
+                        id: selectedSubmission.id,
+                        title: `${selectedSubmission.code} - ${selectedSubmission.researchTitle}`,
+                        meta: `${selectedSubmission.venueName} - ${selectedSubmission.status}`,
+                        icon: <Database className="h-4 w-4" />,
+                        selected: true,
+                        onClick: () => {
+                          setSelectedSubmission(null);
+                          setSubmissionQuery("");
+                        },
+                      },
+                    ]
+                  : []
+              }
+              items={filteredSubmissions.map((submission) => ({
+                id: submission.id,
+                title: `${submission.code} - ${submission.researchTitle}`,
+                meta: `${submission.venueName} - ${submission.status}`,
+                icon: <Database className="h-4 w-4" />,
+                selected: selectedSubmission?.id === submission.id,
+                onClick: () => selectSubmission(submission),
+              }))}
+            />
+          )}
+
           {showsVenue && (
             <SearchPanel
               query={venueQuery}
@@ -649,7 +767,8 @@ export function NewTaskDialog({
                   : "Search journal or conference (*)"
               }
               selectedItems={
-                selectedVenue
+                selectedVenue &&
+                (mode !== "other" || selectedVenue.kind === "journal")
                   ? [
                       {
                         id: `${selectedVenue.kind}-${selectedVenue.id}`,
@@ -662,6 +781,8 @@ export function NewTaskDialog({
                           setVenueQuery("");
                           setSelectedAccountId("");
                           setAccountQuery("");
+                          setSelectedSubmission(null);
+                          setSubmissionQuery("");
                         },
                       },
                     ]

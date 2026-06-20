@@ -39,6 +39,7 @@ import {
   NewTaskDialog,
   type TaskAccountOption as GeneralTaskAccountOption,
   type TaskResearchOption as GeneralTaskResearchOption,
+  type TaskSubmissionOption as GeneralTaskSubmissionOption,
   type TaskVenueOption as GeneralTaskVenueOption,
 } from "../../tasks/NewTaskDialog";
 import { ResearchContentLockButton } from "./ResearchContentLockButton";
@@ -911,6 +912,30 @@ export default async function ProjectDetailPage({
       publishedAt: isoDate(submission.publishedAt),
     })),
   ].sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || ""));
+  const generalTaskSubmissionOptions: GeneralTaskSubmissionOption[] = [
+    ...project.submissions.map((submission) => ({
+      id: submission.id,
+      kind: "journal" as const,
+      researchId: project.id,
+      venueId: submission.journalId,
+      code:
+        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
+      researchTitle: project.title,
+      venueName: submission.journal.name,
+      status: submission.status,
+    })),
+    ...project.conferenceSubmissions.map((submission) => ({
+      id: submission.id,
+      kind: "conference" as const,
+      researchId: project.id,
+      venueId: submission.conferenceId,
+      code:
+        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
+      researchTitle: project.title,
+      venueName: submission.conference.name,
+      status: submission.status,
+    })),
+  ];
   const relatedTaskRows: RelatedResearchTaskRow[] = project.tasks.map(
     (task) => ({
       id: task.id,
@@ -962,6 +987,7 @@ export default async function ProjectDetailPage({
                     accountOptions={generalTaskAccountOptions}
                     reviewOptions={[]}
                     organizedProjectOptions={[]}
+                    submissionOptions={generalTaskSubmissionOptions}
                     initialMode="other"
                     initialResearch={currentResearchTaskOption}
                     triggerVariant="other"
@@ -1409,6 +1435,7 @@ export default async function ProjectDetailPage({
                       accountOptions={generalTaskAccountOptions}
                       reviewOptions={[]}
                       organizedProjectOptions={[]}
+                      submissionOptions={generalTaskSubmissionOptions}
                       initialMode="production"
                       initialResearch={currentResearchTaskOption}
                       triggerVariant="production"
@@ -1531,6 +1558,7 @@ export default async function ProjectDetailPage({
                 accountOptions={generalTaskAccountOptions}
                 reviewOptions={[]}
                 organizedProjectOptions={[]}
+                submissionOptions={generalTaskSubmissionOptions}
                 initialMode="other"
                 initialResearch={currentResearchTaskOption}
                 initialTitle={`Suggest venue for research "${project.title}"`}

@@ -9,6 +9,7 @@ import {
   type TaskOrganizedProjectOption,
   type TaskResearchOption,
   type TaskReviewOption,
+  type TaskSubmissionOption,
   type TaskVenueOption,
 } from "./NewTaskDialog";
 import { TasksClient } from "./TasksClient";
@@ -182,6 +183,52 @@ export default async function ResearchTasksPage() {
       code: project.referenceCode ?? "",
       status: project.status,
     }));
+  const projectIds = projects.map((project) => project.id);
+  const [journalSubmissions, conferenceSubmissions] =
+    canManageTasks && projectIds.length > 0
+      ? await Promise.all([
+          prisma.researchSubmission.findMany({
+            where: { researchProjectId: { in: projectIds } },
+            orderBy: [{ updatedAt: "desc" }],
+            include: {
+              project: { select: { title: true } },
+              journal: { select: { name: true } },
+            },
+          }),
+          prisma.conferenceSubmission.findMany({
+            where: { researchProjectId: { in: projectIds } },
+            orderBy: [{ updatedAt: "desc" }],
+            include: {
+              project: { select: { title: true } },
+              conference: { select: { name: true } },
+            },
+          }),
+        ])
+      : [[], []];
+  const submissionOptions: TaskSubmissionOption[] = [
+    ...journalSubmissions.map((submission) => ({
+      id: submission.id,
+      kind: "journal" as const,
+      researchId: submission.researchProjectId,
+      venueId: submission.journalId,
+      code:
+        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
+      researchTitle: submission.project.title,
+      venueName: submission.journal.name,
+      status: submission.status,
+    })),
+    ...conferenceSubmissions.map((submission) => ({
+      id: submission.id,
+      kind: "conference" as const,
+      researchId: submission.researchProjectId,
+      venueId: submission.conferenceId,
+      code:
+        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
+      researchTitle: submission.project.title,
+      venueName: submission.conference.name,
+      status: submission.status,
+    })),
+  ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
@@ -198,6 +245,7 @@ export default async function ResearchTasksPage() {
               accountOptions={accountOptions}
               reviewOptions={reviewOptions}
               organizedProjectOptions={organizedProjectOptions}
+              submissionOptions={submissionOptions}
             />
           ) : null
         }
