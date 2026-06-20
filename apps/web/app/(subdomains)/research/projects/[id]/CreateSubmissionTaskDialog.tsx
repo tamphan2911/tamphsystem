@@ -10,6 +10,7 @@ import {
   Plus,
   Search,
   UserRound,
+  X,
 } from "lucide-react";
 import { createPublisherAccount, createResearchTask } from "../../actions";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
@@ -99,7 +100,9 @@ export function CreateSubmissionTaskDialog({
   );
   const [accountOpen, setAccountOpen] = useState(false);
   const [addAccountOpen, setAddAccountOpen] = useState(false);
+  const venueDropdownRef = useRef<HTMLDivElement>(null);
   const accountDropdownRef = useRef<HTMLDivElement>(null);
+  const assistantDropdownRef = useRef<HTMLDivElement>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { showSuccess } = useResearchToast();
@@ -152,6 +155,7 @@ export function CreateSubmissionTaskDialog({
     if (!needle) return [];
     return assistants
       .filter((assistant) => {
+        if (selectedAssistantIds.includes(assistant.id)) return false;
         return [
           assistant.name,
           assistant.email,
@@ -163,7 +167,7 @@ export function CreateSubmissionTaskDialog({
           .includes(needle);
       })
       .slice(0, 12);
-  }, [assistantQuery, assistants]);
+  }, [assistantQuery, assistants, selectedAssistantIds]);
 
   const selectedAssistants = useMemo(
     () =>
@@ -398,7 +402,7 @@ export function CreateSubmissionTaskDialog({
               <span className="text-xs font-bold text-[#B0B0B0]">
                 Journal or conference
               </span>
-              <div className="relative">
+              <div ref={venueDropdownRef} className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   value={venueQuery}
@@ -425,10 +429,14 @@ export function CreateSubmissionTaskDialog({
                   </span>
                 </button>
               )}
-              {venueQuery.trim() && (
-                <div
-                  className={`${researchDropdownPanelClass} grid max-h-72 overflow-y-auto`}
-                >
+              <FloatingDropdownPortal
+                anchorRef={venueDropdownRef}
+                open={Boolean(venueQuery.trim())}
+                maxWidth={820}
+                maxPanelHeight={272}
+              >
+                <div className={`${researchDropdownPanelClass} grid`}>
+                  <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
                   {venueResults.map((venue) => {
                     const selected =
                       selectedVenue?.kind === venue.kind &&
@@ -467,8 +475,9 @@ export function CreateSubmissionTaskDialog({
                       No venue matches this search.
                     </p>
                   )}
+                  </div>
                 </div>
-              )}
+              </FloatingDropdownPortal>
             </section>
 
             {selectedVenue?.kind === "journal" && (
@@ -562,7 +571,22 @@ export function CreateSubmissionTaskDialog({
               <span className="text-xs font-bold text-[#B0B0B0]">
                 Assign to
               </span>
-              <div className="relative">
+              {selectedAssistants.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedAssistants.map((assistant) => (
+                    <button
+                      key={assistant.id}
+                      type="button"
+                      onClick={() => toggleAssistant(assistant.id)}
+                      className="inline-flex cursor-pointer items-center gap-2 border border-[#d9d0c3] bg-[#f8f5f0] px-2.5 py-1.5 text-xs text-[#243047] transition hover:border-[#A8DADC] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#A8DADC] dark:hover:bg-[#303030]"
+                    >
+                      {displayResearchPersonName(assistant)}
+                      <X className="h-3.5 w-3.5 text-[#6C778D] dark:text-[#B0B0B0]" />
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div ref={assistantDropdownRef} className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   value={assistantQuery}
@@ -571,31 +595,15 @@ export function CreateSubmissionTaskDialog({
                   className={`${researchSearchFieldClass} pl-9`}
                 />
               </div>
-              {selectedAssistants.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {selectedAssistants.map((assistant) => (
-                    <button
-                      key={assistant.id}
-                      type="button"
-                      onClick={() => toggleAssistant(assistant.id)}
-                      className="inline-flex cursor-pointer items-center gap-2 border border-[#444444] bg-[#202020] px-2.5 py-1.5 text-xs text-[#E4E4E4] transition hover:border-[#A8DADC] hover:bg-[#303030]"
-                    >
-                      {displayResearchPersonName(assistant)}
-                      <span className="text-[#B0B0B0]" aria-hidden="true">
-                        ×
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {assistantQuery.trim() && (
-                <div
-                  className={`${researchDropdownPanelClass} grid max-h-64 overflow-y-auto`}
-                >
+              <FloatingDropdownPortal
+                anchorRef={assistantDropdownRef}
+                open={Boolean(assistantQuery.trim())}
+                maxWidth={820}
+                maxPanelHeight={272}
+              >
+                <div className={`${researchDropdownPanelClass} grid`}>
+                  <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
                   {assistantResults.map((assistant) => {
-                    const selected = selectedAssistantIds.includes(
-                      assistant.id,
-                    );
                     return (
                       <button
                         key={assistant.id}
@@ -618,7 +626,6 @@ export function CreateSubmissionTaskDialog({
                             </span>
                           </span>
                         </span>
-                        {selected && <Check className="h-4 w-4 flex-none" />}
                       </button>
                     );
                   })}
@@ -627,8 +634,9 @@ export function CreateSubmissionTaskDialog({
                       No user matches this search.
                     </p>
                   )}
+                  </div>
                 </div>
-              )}
+              </FloatingDropdownPortal>
             </section>
 
             <label className="grid gap-1.5">
