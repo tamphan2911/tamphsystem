@@ -392,6 +392,7 @@ export function ResearchAuthorsEditDialog({
   users,
   disabled = false,
   disabledReason,
+  allowPendingEmail = false,
 }: {
   action: (formData: FormData) => Promise<void>;
   values: ResearchBasicValues;
@@ -400,6 +401,7 @@ export function ResearchAuthorsEditDialog({
   users: AuthorOption[];
   disabled?: boolean;
   disabledReason?: string;
+  allowPendingEmail?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -450,7 +452,11 @@ export function ResearchAuthorsEditDialog({
           <input type="hidden" name="updateScope" value="authors" />
           <HiddenBasic values={values} />
           <HiddenProduction steps={completedProductionSteps} />
-          <AuthorsPicker users={users} defaultAuthors={authors} />
+          <AuthorsPicker
+            users={users}
+            defaultAuthors={authors}
+            allowPendingEmail={allowPendingEmail}
+          />
         </form>
       </DialogShell>
     </>

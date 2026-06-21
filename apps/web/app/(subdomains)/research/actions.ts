@@ -84,6 +84,11 @@ function normalizeContactEmail(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? "";
 }
 
+function isValidContactEmail(value: string | null | undefined) {
+  const text = value?.trim();
+  return Boolean(text && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text));
+}
+
 function selectedContactEmailMap(formData: FormData) {
   const map = new Map<string, string>();
   for (const value of formData.getAll("selectedContactEmails")) {
@@ -99,6 +104,7 @@ function selectedContactEmailMap(formData: FormData) {
 async function validatedSelectedContactEmails(
   userIds: string[],
   selectedEmails: Map<string, string>,
+  options: { allowPendingEmail?: boolean } = {},
 ) {
   if (userIds.length === 0) return new Map<string, string>();
   const users = await prisma.user.findMany({
@@ -107,10 +113,14 @@ async function validatedSelectedContactEmails(
   });
   const result = new Map<string, string>();
   for (const user of users) {
-    const requested = normalizeContactEmail(selectedEmails.get(user.id));
+    const requestedRaw = selectedEmails.get(user.id)?.trim();
+    const requested = normalizeContactEmail(requestedRaw);
     const choices = [user.email, ...user.additionalEmails];
     const matched =
       choices.find((email) => normalizeContactEmail(email) === requested) ??
+      (options.allowPendingEmail && isValidContactEmail(requestedRaw)
+        ? requestedRaw
+        : null) ??
       user.email;
     result.set(user.id, matched);
   }
@@ -1651,6 +1661,7 @@ export async function createResearchProject(formData: FormData) {
   const authorContactEmails = await validatedSelectedContactEmails(
     selectedAuthorIds,
     selectedContactEmailMap(formData),
+    { allowPendingEmail: isAdmin },
   );
   const registrationUserId = isAdmin
     ? optionalString(formData.get("registrationUserId"))
@@ -2302,6 +2313,7 @@ export async function updateResearchProject(
   const authorContactEmails = await validatedSelectedContactEmails(
     selectedAuthorIds,
     selectedContactEmailMap(formData),
+    { allowPendingEmail: isAdmin },
   );
   const completedProductionSteps = formData
     .getAll("completedProductionSteps")

@@ -57,21 +57,37 @@ function contactEmailOptions(user: AuthorOption) {
   );
 }
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
 export function ContactEmailChoiceButton({
   person,
   disabled = false,
+  allowPendingEmail = false,
   onChange,
 }: {
   person: AuthorOption;
   disabled?: boolean;
+  allowPendingEmail?: boolean;
   onChange: (email: string) => void;
 }) {
   const emails = contactEmailOptions(person);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(person.selectedEmail || person.email);
   const toast = useResearchToast();
+  const normalizedDraft = draft.trim().toLowerCase();
+  const draftMatchesSavedEmail = emails.some(
+    (email) => email.trim().toLowerCase() === normalizedDraft,
+  );
+  const pendingOption =
+    allowPendingEmail && isValidEmail(draft) && !draftMatchesSavedEmail
+      ? draft.trim()
+      : "";
+  const options = pendingOption ? [...emails, pendingOption] : emails;
+  const canUseDraft = draftMatchesSavedEmail || Boolean(pendingOption);
 
-  if (emails.length <= 1) return null;
+  if (emails.length <= 1 && !allowPendingEmail) return null;
 
   return (
     <>
@@ -98,6 +114,7 @@ export function ContactEmailChoiceButton({
         headerActions={
           <ResearchButton
             type="button"
+            disabled={!canUseDraft}
             onClick={() => {
               onChange(draft);
               setOpen(false);
@@ -122,14 +139,35 @@ export function ContactEmailChoiceButton({
             defaultValue={draft}
             ariaLabel="Contact email"
             onValueChange={setDraft}
-            options={emails.map((email) => ({
+            options={options.map((email) => ({
               value: email,
               label:
                 email.trim().toLowerCase() === person.email.trim().toLowerCase()
                   ? `${displayResearchEmail(email)} (main)`
-                  : displayResearchEmail(email),
+                  : email.trim().toLowerCase() ===
+                      pendingOption.trim().toLowerCase()
+                    ? `${displayResearchEmail(email)} (pending)`
+                    : displayResearchEmail(email),
             }))}
           />
+          {allowPendingEmail && (
+            <label className="grid gap-2">
+              <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+                Pending email
+              </span>
+              <input
+                type="email"
+                value={draftMatchesSavedEmail ? "" : draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder="Enter pending email for this author"
+                className={researchSearchFieldClass}
+              />
+              <span className="text-xs text-[#777777]">
+                Admin only. This email is saved for this research record, not as
+                the user&apos;s login email.
+              </span>
+            </label>
+          )}
         </div>
       </ResearchModal>
     </>
@@ -140,10 +178,12 @@ export function AuthorsPicker({
   users,
   defaultAuthors,
   disabled = false,
+  allowPendingEmail = false,
 }: {
   users: AuthorOption[];
   defaultAuthors: SelectedAuthor[];
   disabled?: boolean;
+  allowPendingEmail?: boolean;
 }) {
   const initialAuthors =
     defaultAuthors.length > 0
@@ -422,6 +462,7 @@ export function AuthorsPicker({
                       <ContactEmailChoiceButton
                         person={author}
                         disabled={disabled}
+                        allowPendingEmail={allowPendingEmail}
                         onChange={(email) => setSelectedEmail(author.id, email)}
                       />
                     </p>

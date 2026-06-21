@@ -1391,6 +1391,7 @@ export default async function ProjectDetailPage({
                       authors={defaultAuthors}
                       completedProductionSteps={completedProductionStepValues}
                       users={authorOptions}
+                      allowPendingEmail={isAdmin}
                       disabled={!canEditResearch || authorsLocked}
                       disabledReason={
                         authorsLocked
