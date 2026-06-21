@@ -60,6 +60,7 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import { defaultSuggestVenueTaskDescription } from "@/sites/research/lib/task-description";
 
 export const dynamic = "force-dynamic";
 
@@ -1602,6 +1603,7 @@ export default async function ProjectDetailPage({
                 initialMode="other"
                 initialResearch={currentResearchTaskOption}
                 initialTitle={`Suggest venue for research "${project.title}"`}
+                initialDescription={defaultSuggestVenueTaskDescription}
                 triggerVariant="other"
               />
             ) : null

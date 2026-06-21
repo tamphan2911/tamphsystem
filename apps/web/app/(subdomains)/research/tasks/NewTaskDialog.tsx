@@ -138,6 +138,7 @@ export function NewTaskDialog({
   initialMode = "submit",
   initialResearch = null,
   initialTitle = "",
+  initialDescription = "",
   triggerVariant = "default",
 }: {
   assignees: TaskAssigneeOption[];
@@ -150,6 +151,7 @@ export function NewTaskDialog({
   initialMode?: TaskMode;
   initialResearch?: TaskResearchOption | null;
   initialTitle?: string;
+  initialDescription?: string;
   triggerVariant?: TaskTriggerVariant;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -923,13 +925,15 @@ export function NewTaskDialog({
 
           <label className="grid gap-1.5">
             <textarea
-              key={mode}
+              key={`${mode}-${initialDescription}`}
               name="description"
               rows={3}
               aria-label="Description"
               placeholder="Description, expected output, files, or notes"
               defaultValue={
-                mode === "submit" ? defaultSubmitTaskDescription : ""
+                mode === "submit"
+                  ? defaultSubmitTaskDescription
+                  : initialDescription
               }
               className={researchTextareaClass}
             />
