@@ -75,6 +75,15 @@ const taskStatusValues = [
   "REVOKED",
 ];
 
+const taskTypeFilterValues = [
+  "ALL",
+  "SUBMIT",
+  "PRODUCTION",
+  "REVIEW",
+  "PROJECT",
+  "OTHER",
+];
+
 function formatDate(value: string | null) {
   if (!value) return "-";
   return researchDateTimeFormat("en-GB", {
@@ -127,6 +136,29 @@ function taskTypeLines(task: TaskRow) {
   }
 
   return { typeLabel: titleCase(type), subtypeLabel: "" };
+}
+
+function taskTypeFilterValue(task: TaskRow) {
+  if (
+    task.taskType === "SUBMIT_RESEARCH" ||
+    task.taskType === "SUBMIT_CONFERENCE"
+  ) {
+    return "SUBMIT";
+  }
+  if (
+    task.taskType === "PROJECT_PRODUCTION" ||
+    task.taskType === "PROJECT_RESEARCH_ASSOCIATED"
+  ) {
+    return "PROJECT";
+  }
+  if (task.taskType === "PRODUCTION") return "PRODUCTION";
+  if (task.taskType === "REVIEW") return "REVIEW";
+  return "OTHER";
+}
+
+function taskTypeFilterLabel(value: string) {
+  if (value === "ALL") return "All types";
+  return titleCase(value);
 }
 
 function statusMeta(task: TaskRow) {
@@ -428,16 +460,16 @@ export function TasksClient({
     };
   }, [isAdmin, loadTasks]);
 
-  const assigneeOptions = useMemo(() => {
+  const peopleCount = useMemo(() => {
     const names = new Set<string>();
     tasks.forEach((task) =>
       task.assignments.forEach((assignment) => names.add(assignment.userName)),
     );
-    return ["ALL", ...Array.from(names).sort()];
+    return names.size;
   }, [tasks]);
-  const [assignees, setAssignees] = usePersistentMultiFilter(
-    "tasks:assignee",
-    assigneeOptions,
+  const [taskTypes, setTaskTypes] = usePersistentMultiFilter(
+    "tasks:type",
+    taskTypeFilterValues,
   );
 
   const filtered = useMemo(() => {
@@ -445,9 +477,8 @@ export function TasksClient({
     return tasks.filter((task) => {
       const matchesStatus =
         statuses.length === 0 || statuses.includes(derivedStatus(task));
-      const matchesAssignee =
-        assignees.length === 0 ||
-        task.assignments.some((item) => assignees.includes(item.userName));
+      const matchesType =
+        taskTypes.length === 0 || taskTypes.includes(taskTypeFilterValue(task));
       const haystack = [
         displayTaskId(task),
         task.title,
@@ -465,12 +496,10 @@ export function TasksClient({
         .join(" ")
         .toLowerCase();
       return (
-        matchesStatus &&
-        matchesAssignee &&
-        (!needle || haystack.includes(needle))
+        matchesStatus && matchesType && (!needle || haystack.includes(needle))
       );
     });
-  }, [assignees, query, statuses, tasks]);
+  }, [query, statuses, taskTypes, tasks]);
   const pagination = useTablePagination(filtered, 10, 1, "tasks");
 
   function updateQuery(value: string) {
@@ -483,8 +512,8 @@ export function TasksClient({
     pagination.setPage(1);
   }
 
-  function updateAssignees(values: string[]) {
-    setAssignees(values);
+  function updateTaskTypes(values: string[]) {
+    setTaskTypes(values);
     pagination.setPage(1);
   }
 
@@ -505,7 +534,7 @@ export function TasksClient({
     },
     {
       label: "People",
-      value: assigneeOptions.length - 1,
+      value: peopleCount,
     },
   ];
 
@@ -541,6 +570,15 @@ export function TasksClient({
           />
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
             <MultiFilterSelect
+              values={taskTypes}
+              onChange={updateTaskTypes}
+              ariaLabel="Filter by task type"
+              options={taskTypeFilterValues.map((value) => ({
+                value,
+                label: taskTypeFilterLabel(value),
+              }))}
+            />
+            <MultiFilterSelect
               values={statuses}
               onChange={updateStatuses}
               ariaLabel="Filter by task status"
@@ -555,17 +593,6 @@ export function TasksClient({
                         .replace(/^\w/, (letter) => letter.toUpperCase()),
               }))}
             />
-            {isAdmin && (
-              <MultiFilterSelect
-                values={assignees}
-                onChange={updateAssignees}
-                ariaLabel="Filter by assignee"
-                options={assigneeOptions.map((item) => ({
-                  value: item,
-                  label: item === "ALL" ? "All assignees" : item,
-                }))}
-              />
-            )}
           </div>
         </div>
 
@@ -696,7 +723,7 @@ export function TasksClient({
                       detail={
                         tasks.length === 0
                           ? "Create a task to start tracking assigned work."
-                          : "Try another keyword, status, or assignee."
+                          : "Try another keyword, status, or task type."
                       }
                     />
                   </td>
