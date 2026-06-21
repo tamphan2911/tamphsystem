@@ -201,7 +201,7 @@ export function RelatedResearchTasksTable({
               <th className="w-[8rem] px-3 py-3">Task ID</th>
               <th className="px-3 py-3">Task</th>
               <th className="w-[7rem] px-3 py-3">Status</th>
-              <th className="w-[12rem] px-3 py-3">Assignees</th>
+              <th className="w-[16rem] px-3 py-3">Assignees</th>
               <th className="w-[7rem] px-3 py-3">Due date</th>
             </tr>
           </thead>
@@ -246,8 +246,13 @@ export function RelatedResearchTasksTable({
                   <td className="px-3 py-3 align-top text-xs leading-5 text-[#B0B0B0]">
                     {row.assignments.length > 0
                       ? row.assignments.map((assignment) => (
-                          <div key={assignment.id} title={assignment.email}>
-                            {assignment.name || assignment.email}
+                          <div key={assignment.id} className="mb-2 last:mb-0">
+                            <div className="text-[#E4E4E4]">
+                              {assignment.name || assignment.email}
+                            </div>
+                            <div className="break-all text-[#B0B0B0]">
+                              {assignment.email}
+                            </div>
                           </div>
                         ))
                       : "Unassigned"}
