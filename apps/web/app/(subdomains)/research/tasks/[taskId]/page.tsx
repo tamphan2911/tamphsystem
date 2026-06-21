@@ -283,15 +283,29 @@ function taskTypeMeta(taskType: string | null, category: string | null) {
   };
 }
 
-function accountLine(
-  account: { username: string; password: string; email: string | null } | null,
-) {
-  if (!account) return "No account assigned";
-  return [
-    `ID: ${account.username || "No account id"}`,
-    `pass: ${account.password || "No pass"}`,
-    `email: ${account.email || "No email"}`,
-  ].join(" | ");
+function DetailSeparator() {
+  return (
+    <span className="px-1 text-[#A0A8B5] dark:text-[#777777]" aria-hidden>
+      |
+    </span>
+  );
+}
+
+function AccountLine({
+  account,
+}: {
+  account: { username: string; password: string; email: string | null } | null;
+}) {
+  if (!account) return <span>No account assigned</span>;
+  return (
+    <span className="inline-flex min-w-0 flex-wrap items-center gap-y-1">
+      <span>ID: {account.username || "No account id"}</span>
+      <DetailSeparator />
+      <span>pass: {account.password || "No pass"}</span>
+      <DetailSeparator />
+      <span>email: {account.email || "No email"}</span>
+    </span>
+  );
 }
 
 function journalMetaLine(journal: {
@@ -1019,18 +1033,24 @@ export default async function TaskDetailPage({
         )}
 
         <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-[#D8D0C2] px-5 py-3 text-xs text-[#667085] dark:border-[#4A4A4A] dark:text-[#B0B0B0]">
-            <span className="min-w-0 truncate">
-              Created by {displayResearchPersonName(task.createdBy)}
-            </span>
-            <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
-            <span>Created {formatDate(task.createdAt)}</span>
-            <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
-            <span>Due {formatDate(task.dueDate)}</span>
-            <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
-            <span>Completed {formatDate(task.completedAt)}</span>
-            <span className="text-[#A0A8B5] dark:text-[#777777]">|</span>
-            <span className={timeTextClass(meta.timeTone)}>{meta.detail}</span>
+          <div className="flex min-w-0 flex-wrap items-center gap-y-1 border-b border-[#D8D0C2] px-5 py-3 text-xs text-[#667085] dark:border-[#4A4A4A] dark:text-[#B0B0B0]">
+            <span>Created: {formatDate(task.createdAt)}</span>
+            <DetailSeparator />
+            <span>Due: {formatDate(task.dueDate)}</span>
+            {task.completedAt && (
+              <>
+                <DetailSeparator />
+                <span>Completed: {formatDate(task.completedAt)}</span>
+              </>
+            )}
+            {meta.detail && (
+              <>
+                <DetailSeparator />
+                <span className={timeTextClass(meta.timeTone)}>
+                  {meta.detail}
+                </span>
+              </>
+            )}
           </div>
           {hasAssociatedItems && (
             <div className="grid gap-5 p-5 md:grid-cols-2">
@@ -1104,7 +1124,7 @@ export default async function TaskDetailPage({
                   </p>
                   <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
                     <KeyRound className="h-3.5 w-3.5 text-amber-500" />
-                    {accountLine(journalAccount)}
+                    <AccountLine account={journalAccount} />
                   </p>
                 </div>
               )}
@@ -1135,7 +1155,7 @@ export default async function TaskDetailPage({
                   </p>
                   <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
                     <KeyRound className="h-3.5 w-3.5 text-amber-500" />
-                    {accountLine(task.account)}
+                    <AccountLine account={task.account} />
                   </p>
                 </div>
               )}
