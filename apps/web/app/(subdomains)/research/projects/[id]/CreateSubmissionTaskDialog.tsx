@@ -677,10 +677,12 @@ export function CreateSubmissionTaskDialog({
                   </div>
                 </FloatingDropdownPortal>
               </section>
-              <ReportUploadPermissionField
-                checked={allowReportUpload}
-                onChange={setAllowReportUpload}
-              />
+              <div className="lg:pt-[1.625rem]">
+                <ReportUploadPermissionField
+                  checked={allowReportUpload}
+                  onChange={setAllowReportUpload}
+                />
+              </div>
             </div>
 
             <label className="grid gap-1.5">
