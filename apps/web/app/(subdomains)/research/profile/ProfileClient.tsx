@@ -909,7 +909,7 @@ function ProfileTaskTable({ rows }: { rows: ProfileTaskRow[] }) {
                       <span className="block text-sm text-[#E4E4E4] transition group-hover:text-[#A8DADC]">
                         {task.title}
                       </span>
-                      <span className="mt-1 block overflow-hidden break-words text-xs leading-5 text-[#B0B0B0] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]">
+                      <span className="mt-1 block line-clamp-3 whitespace-pre-line break-words text-xs leading-5 text-[#B0B0B0]">
                         {task.description || "No extra note on this task."}
                       </span>
                     </Link>
