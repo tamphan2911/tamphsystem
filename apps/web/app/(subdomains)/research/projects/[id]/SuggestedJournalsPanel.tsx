@@ -49,6 +49,7 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import { defaultSubmitTaskDescription } from "@/sites/research/lib/task-description";
 import { defaultResearchTaskDueDate } from "@/sites/research/lib/task-date";
 import {
   currencySymbol,
@@ -1094,12 +1095,11 @@ export function SuggestedJournalsPanel({
                 Note
               </span>
               <textarea
+                key={taskMode}
                 name="description"
                 rows={3}
                 defaultValue={
-                  taskMode === "submit"
-                    ? `Prepare and submit this manuscript to ${assignName}.`
-                    : ""
+                  taskMode === "submit" ? defaultSubmitTaskDescription : ""
                 }
                 className={researchTextareaClass}
               />

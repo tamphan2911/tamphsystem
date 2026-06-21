@@ -35,6 +35,7 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import { defaultSubmitTaskDescription } from "@/sites/research/lib/task-description";
 import { defaultResearchTaskDueDate } from "@/sites/research/lib/task-date";
 
 export type SubmissionTaskAccountOption = {
@@ -688,11 +689,7 @@ export function CreateSubmissionTaskDialog({
               <textarea
                 name="description"
                 rows={3}
-                defaultValue={
-                  selectedVenue
-                    ? `Prepare and submit this manuscript to ${selectedVenue.name}.`
-                    : "Prepare and submit this manuscript."
-                }
+                defaultValue={defaultSubmitTaskDescription}
                 className={researchTextareaClass}
               />
             </label>

@@ -42,6 +42,7 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import { defaultSubmitTaskDescription } from "@/sites/research/lib/task-description";
 import { defaultResearchTaskDueDate } from "@/sites/research/lib/task-date";
 
 export type TaskAssigneeOption = {
@@ -922,10 +923,14 @@ export function NewTaskDialog({
 
           <label className="grid gap-1.5">
             <textarea
+              key={mode}
               name="description"
               rows={3}
               aria-label="Description"
               placeholder="Description, expected output, files, or notes"
+              defaultValue={
+                mode === "submit" ? defaultSubmitTaskDescription : ""
+              }
               className={researchTextareaClass}
             />
           </label>
