@@ -23,8 +23,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
-  FilterSelect,
   IconHint,
+  MultiFilterSelect,
   TablePagination,
   TableSearchInput,
   useTablePagination,
@@ -78,6 +78,12 @@ const claims = [
   "WAITING",
   "CLAIMED",
 ];
+
+function selectedFilterValues(value: string, options: string[]) {
+  if (!value || value === "ALL") return [];
+  const valid = new Set(options.filter((option) => option !== "ALL"));
+  return value.split(",").filter((option) => valid.has(option));
+}
 
 function stageLabel(stage: string) {
   const labels: Record<string, string> = {
@@ -407,8 +413,22 @@ export function ResearchProjectsTable({
   emptyMessage?: string;
 }) {
   const [query, setQuery] = usePersistentTableValue("projects:q", "");
-  const [stage, setStage] = usePersistentTableValue("projects:stage", "ALL");
-  const [claim, setClaim] = usePersistentTableValue("projects:claim", "ALL");
+  const [stageValue, setStageValue] = usePersistentTableValue(
+    "projects:stage",
+    "ALL",
+  );
+  const [claimValue, setClaimValue] = usePersistentTableValue(
+    "projects:claim",
+    "ALL",
+  );
+  const selectedStages = useMemo(
+    () => selectedFilterValues(stageValue, stages),
+    [stageValue],
+  );
+  const selectedClaims = useMemo(
+    () => selectedFilterValues(claimValue, claims),
+    [claimValue],
+  );
   const showRegistrationClaim = rows.some(
     (row) => showClaimRegistration && row.canViewRegistrationClaim,
   );
@@ -416,9 +436,13 @@ export function ResearchProjectsTable({
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
-      const matchesStage = stage === "ALL" || stageFilterKey(row) === stage;
+      const matchesStage =
+        selectedStages.length === 0 ||
+        selectedStages.includes(stageFilterKey(row));
       const matchesClaim =
-        !showRegistrationClaim || claim === "ALL" || row.claimStatus === claim;
+        !showRegistrationClaim ||
+        selectedClaims.length === 0 ||
+        selectedClaims.includes(row.claimStatus);
       const haystack = [
         row.title,
         row.researchCode,
@@ -436,7 +460,7 @@ export function ResearchProjectsTable({
         matchesStage && matchesClaim && (!needle || haystack.includes(needle))
       );
     });
-  }, [claim, query, rows, showRegistrationClaim, stage]);
+  }, [query, rows, selectedClaims, selectedStages, showRegistrationClaim]);
 
   const pagination = useTablePagination(filtered, 10, 1, "projects");
 
@@ -445,13 +469,13 @@ export function ResearchProjectsTable({
     pagination.setPage(1);
   }
 
-  function updateStage(value: string) {
-    setStage(value);
+  function updateStages(values: string[]) {
+    setStageValue(values.length > 0 ? values.join(",") : "ALL");
     pagination.setPage(1);
   }
 
-  function updateClaim(value: string) {
-    setClaim(value);
+  function updateClaims(values: string[]) {
+    setClaimValue(values.length > 0 ? values.join(",") : "ALL");
     pagination.setPage(1);
   }
 
@@ -468,9 +492,9 @@ export function ResearchProjectsTable({
           }
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <FilterSelect
-            value={stage}
-            onChange={updateStage}
+          <MultiFilterSelect
+            values={selectedStages}
+            onChange={updateStages}
             ariaLabel="Filter by stage"
             options={stages.map((item) => ({
               value: item,
@@ -478,9 +502,9 @@ export function ResearchProjectsTable({
             }))}
           />
           {showRegistrationClaim && (
-            <FilterSelect
-              value={claim}
-              onChange={updateClaim}
+            <MultiFilterSelect
+              values={selectedClaims}
+              onChange={updateClaims}
               ariaLabel="Filter by claim"
               options={claims.map((item) => ({
                 value: item,

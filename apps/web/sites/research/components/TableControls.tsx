@@ -164,6 +164,145 @@ export function FilterSelect({
   );
 }
 
+export function MultiFilterSelect({
+  values,
+  onChange,
+  options,
+  ariaLabel,
+}: {
+  values: string[];
+  onChange: (values: string[]) => void;
+  options: FilterOption[];
+  ariaLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const specificOptions = options.filter((option) => option.value !== "ALL");
+  const selectedLabels = specificOptions
+    .filter((option) => values.includes(option.value))
+    .map((option) => option.label);
+  const allLabel =
+    options.find((option) => option.value === "ALL")?.label ?? "All";
+  const triggerLabel =
+    selectedLabels.length === 0
+      ? allLabel
+      : selectedLabels.length === 1
+        ? selectedLabels[0]
+        : `${selectedLabels.length} selected`;
+
+  useEffect(() => {
+    function closeOnOutsideClick(event: MouseEvent) {
+      const target = event.target as Element;
+      if (
+        !wrapperRef.current?.contains(event.target as Node) &&
+        !target.closest(".research-dropdown-floating-panel")
+      ) {
+        setOpen(false);
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
+  function toggleValue(value: string) {
+    if (value === "ALL") {
+      onChange([]);
+      return;
+    }
+    onChange(
+      values.includes(value)
+        ? values.filter((item) => item !== value)
+        : [...values, value],
+    );
+  }
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="research-filter-select relative w-full sm:w-52 lg:w-56"
+    >
+      <button
+        type="button"
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className={cx(
+          "research-filter-select-trigger group inline-flex h-10 w-full cursor-pointer items-center justify-between gap-3 rounded-none border px-3 text-sm font-normal outline-none transition-colors duration-150 motion-reduce:transition-none",
+          open
+            ? "border-sky-200 bg-white text-slate-950 dark:border-[#5A5A5A] dark:bg-[#383838] dark:text-[#E4E4E4]"
+            : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus:border-sky-400 dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white dark:focus:border-[#5A5A5A]",
+        )}
+      >
+        <span className="min-w-0 truncate text-left leading-5">
+          {triggerLabel}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 flex-none text-slate-500 transition duration-200 ease-out group-hover:text-sky-700 motion-reduce:transition-none dark:text-[#B0B0B0] dark:group-hover:text-[#A8DADC] ${open ? "rotate-180 text-sky-700 dark:text-[#A8DADC]" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+
+      <FloatingDropdownPortal anchorRef={wrapperRef} open={open} maxWidth={576}>
+        <div className={`${researchDropdownPanelClass} w-full`}>
+          <div
+            className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto"
+            role="listbox"
+            aria-label={ariaLabel}
+            aria-multiselectable="true"
+          >
+            {options.map((option) => {
+              const selected =
+                option.value === "ALL"
+                  ? values.length === 0
+                  : values.includes(option.value);
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => toggleValue(option.value)}
+                  className={`${researchDropdownItemClass} ${
+                    selected
+                      ? researchDropdownItemActiveClass
+                      : researchDropdownItemIdleClass
+                  }`}
+                >
+                  <span className="flex min-w-0 flex-1 items-center gap-2.5 px-3">
+                    <span
+                      className={`inline-flex h-4 w-4 flex-none items-center justify-center border transition-colors ${
+                        selected
+                          ? "border-sky-600 bg-sky-600 text-white dark:border-[#A8DADC] dark:bg-[#A8DADC] dark:text-[#202020]"
+                          : "border-slate-300 bg-white text-transparent dark:border-[#666666] dark:bg-[#202020]"
+                      }`}
+                      aria-hidden="true"
+                    >
+                      <Check className="h-3 w-3" />
+                    </span>
+                    <span className="whitespace-normal break-words">
+                      {option.label}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </FloatingDropdownPortal>
+    </div>
+  );
+}
+
 export function TableSearchInput({
   value,
   onChange,
