@@ -78,6 +78,13 @@ const claims = [
   "WAITING",
   "CLAIMED",
 ];
+const registrations = [
+  "ALL",
+  "NOT_REGISTERED",
+  "PREPARING",
+  "SUBMITTED",
+  "APPROVED",
+];
 
 function selectedFilterValues(value: string, options: string[]) {
   if (!value || value === "ALL") return [];
@@ -421,6 +428,10 @@ export function ResearchProjectsTable({
     "projects:claim",
     "ALL",
   );
+  const [registrationValue, setRegistrationValue] = usePersistentTableValue(
+    "projects:registration",
+    "ALL",
+  );
   const selectedStages = useMemo(
     () => selectedFilterValues(stageValue, stages),
     [stageValue],
@@ -428,6 +439,10 @@ export function ResearchProjectsTable({
   const selectedClaims = useMemo(
     () => selectedFilterValues(claimValue, claims),
     [claimValue],
+  );
+  const selectedRegistrations = useMemo(
+    () => selectedFilterValues(registrationValue, registrations),
+    [registrationValue],
   );
   const showRegistrationClaim = rows.some(
     (row) => showClaimRegistration && row.canViewRegistrationClaim,
@@ -443,6 +458,10 @@ export function ResearchProjectsTable({
         !showRegistrationClaim ||
         selectedClaims.length === 0 ||
         selectedClaims.includes(row.claimStatus);
+      const matchesRegistration =
+        !showRegistrationClaim ||
+        selectedRegistrations.length === 0 ||
+        selectedRegistrations.includes(row.registerStatus);
       const haystack = [
         row.title,
         row.researchCode,
@@ -452,15 +471,26 @@ export function ResearchProjectsTable({
         row.stage,
         row.canViewRegistrationClaim ? row.universityRegistration : "",
         row.canViewRegistrationClaim ? row.registerName : "",
+        row.canViewRegistrationClaim ? row.registerStatus : "",
         row.canViewRegistrationClaim ? row.claimStatus : "",
       ]
         .join(" ")
         .toLowerCase();
       return (
-        matchesStage && matchesClaim && (!needle || haystack.includes(needle))
+        matchesStage &&
+        matchesClaim &&
+        matchesRegistration &&
+        (!needle || haystack.includes(needle))
       );
     });
-  }, [query, rows, selectedClaims, selectedStages, showRegistrationClaim]);
+  }, [
+    query,
+    rows,
+    selectedClaims,
+    selectedRegistrations,
+    selectedStages,
+    showRegistrationClaim,
+  ]);
 
   const pagination = useTablePagination(filtered, 10, 1, "projects");
 
@@ -476,6 +506,11 @@ export function ResearchProjectsTable({
 
   function updateClaims(values: string[]) {
     setClaimValue(values.length > 0 ? values.join(",") : "ALL");
+    pagination.setPage(1);
+  }
+
+  function updateRegistrations(values: string[]) {
+    setRegistrationValue(values.length > 0 ? values.join(",") : "ALL");
     pagination.setPage(1);
   }
 
@@ -502,15 +537,29 @@ export function ResearchProjectsTable({
             }))}
           />
           {showRegistrationClaim && (
-            <MultiFilterSelect
-              values={selectedClaims}
-              onChange={updateClaims}
-              ariaLabel="Filter by claim"
-              options={claims.map((item) => ({
-                value: item,
-                label: item === "ALL" ? "All claims" : claimLabel(item),
-              }))}
-            />
+            <>
+              <MultiFilterSelect
+                values={selectedRegistrations}
+                onChange={updateRegistrations}
+                ariaLabel="Filter by registration"
+                options={registrations.map((item) => ({
+                  value: item,
+                  label:
+                    item === "ALL"
+                      ? "All registrations"
+                      : registrationLabel(item),
+                }))}
+              />
+              <MultiFilterSelect
+                values={selectedClaims}
+                onChange={updateClaims}
+                ariaLabel="Filter by claim"
+                options={claims.map((item) => ({
+                  value: item,
+                  label: item === "ALL" ? "All claims" : claimLabel(item),
+                }))}
+              />
+            </>
           )}
         </div>
       </div>
@@ -634,7 +683,7 @@ export function ResearchProjectsTable({
                     detail={
                       rows.length === 0
                         ? "Create a new research record or adjust access filters when relevant."
-                        : "Try another keyword, stage, or claim filter."
+                        : "Try another keyword, stage, registration, or claim filter."
                     }
                   />
                 </td>
