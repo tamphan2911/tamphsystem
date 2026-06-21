@@ -1105,23 +1105,23 @@ export function SuggestedJournalsPanel({
               />
             </label>
 
-            <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
-              <section className="grid gap-3">
-                {selectedAssistants.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedAssistants.map((assistant) => (
-                      <button
-                        key={assistant.id}
-                        type="button"
-                        onClick={() => toggleAssistant(assistant.id)}
-                        className="inline-flex cursor-pointer items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-2.5 py-1.5 text-xs text-[#243047] transition hover:border-[#A8DADC] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#A8DADC]"
-                      >
-                        {displayResearchPersonName(assistant)}
-                        <X className="h-3.5 w-3.5 text-[#6C778D] dark:text-[#B0B0B0]" />
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
+            <section className="grid gap-3">
+              {selectedAssistants.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {selectedAssistants.map((assistant) => (
+                    <button
+                      key={assistant.id}
+                      type="button"
+                      onClick={() => toggleAssistant(assistant.id)}
+                      className="inline-flex cursor-pointer items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-2.5 py-1.5 text-xs text-[#243047] transition hover:border-[#A8DADC] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#A8DADC]"
+                    >
+                      {displayResearchPersonName(assistant)}
+                      <X className="h-3.5 w-3.5 text-[#6C778D] dark:text-[#B0B0B0]" />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
                 <div ref={assistantDropdownRef} className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6C778D] dark:text-[#B0B0B0]" />
                   <input
@@ -1168,12 +1168,12 @@ export function SuggestedJournalsPanel({
                     </div>
                   </div>
                 </FloatingDropdownPortal>
-              </section>
-              <ReportUploadPermissionField
-                checked={allowReportUpload}
-                onChange={setAllowReportUpload}
-              />
-            </div>
+                <ReportUploadPermissionField
+                  checked={allowReportUpload}
+                  onChange={setAllowReportUpload}
+                />
+              </div>
+            </section>
           </form>
         </ResearchModal>
       )}

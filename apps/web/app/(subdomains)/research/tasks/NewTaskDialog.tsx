@@ -932,28 +932,28 @@ export function NewTaskDialog({
 
           <TaskAttachmentField />
 
-          <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
-            <SearchPanel
-              query={assigneeQuery}
-              setQuery={setAssigneeQuery}
-              placeholder="Search active research users by name, email, ID, or role (*)"
-              selectedItems={selectedAssigneeItems}
-              items={filteredAssignees.map((user) => ({
-                id: user.id,
-                title: displayResearchPersonName(user),
-                meta: [displayResearchEmail(user.email), user.roles.join(", ")]
-                  .filter(Boolean)
-                  .join(" - "),
-                icon: <UserRound className="h-4 w-4" />,
-                selected: selectedIds.includes(user.id),
-                onClick: () => toggleAssignee(user.id),
-              }))}
-            />
-            <ReportUploadPermissionField
-              checked={allowReportUpload}
-              onChange={setAllowReportUpload}
-            />
-          </div>
+          <SearchPanel
+            query={assigneeQuery}
+            setQuery={setAssigneeQuery}
+            placeholder="Search active research users by name, email, ID, or role (*)"
+            selectedItems={selectedAssigneeItems}
+            items={filteredAssignees.map((user) => ({
+              id: user.id,
+              title: displayResearchPersonName(user),
+              meta: [displayResearchEmail(user.email), user.roles.join(", ")]
+                .filter(Boolean)
+                .join(" - "),
+              icon: <UserRound className="h-4 w-4" />,
+              selected: selectedIds.includes(user.id),
+              onClick: () => toggleAssignee(user.id),
+            }))}
+            sideControl={
+              <ReportUploadPermissionField
+                checked={allowReportUpload}
+                onChange={setAllowReportUpload}
+              />
+            }
+          />
         </form>
       </ResearchModal>
     </>
@@ -1072,6 +1072,7 @@ function SearchPanel({
   placeholder,
   selectedItems = [],
   items,
+  sideControl,
 }: {
   title?: string;
   query: string;
@@ -1079,6 +1080,7 @@ function SearchPanel({
   placeholder: string;
   selectedItems?: SearchPanelItem[];
   items: SearchPanelItem[];
+  sideControl?: ReactNode;
 }) {
   const [focused, setFocused] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -1097,62 +1099,71 @@ function SearchPanel({
           ))}
         </div>
       )}
-      <div ref={wrapperRef} className="relative z-30">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => window.setTimeout(() => setFocused(false), 120)}
-          placeholder={placeholder}
-          className={`${researchSearchFieldClass} pl-9`}
-        />
+      <div
+        className={
+          sideControl
+            ? "grid items-start gap-4 lg:grid-cols-[1fr_18rem]"
+            : undefined
+        }
+      >
+        <div ref={wrapperRef} className="relative z-30">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => window.setTimeout(() => setFocused(false), 120)}
+            placeholder={placeholder}
+            className={`${researchSearchFieldClass} pl-9`}
+          />
 
-        <FloatingDropdownPortal
-          anchorRef={wrapperRef}
-          open={showDropdown}
-          maxWidth={640}
-        >
-          <div
-            className={`${researchDropdownPanelClass} max-h-[var(--research-dropdown-max-height)] overflow-y-auto`}
+          <FloatingDropdownPortal
+            anchorRef={wrapperRef}
+            open={showDropdown}
+            maxWidth={640}
           >
-            {items.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={item.onClick}
-                className={`${researchDropdownItemClass} cursor-pointer ${
-                  item.selected
-                    ? researchDropdownItemActiveClass
-                    : researchDropdownItemIdleClass
-                }`}
-              >
-                <span className="flex min-w-0 items-start gap-3 px-3">
-                  <span className="mt-0.5 flex-none text-slate-400">
-                    {item.icon}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm font-normal leading-5">
-                      {item.title}
+            <div
+              className={`${researchDropdownPanelClass} max-h-[var(--research-dropdown-max-height)] overflow-y-auto`}
+            >
+              {items.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={item.onClick}
+                  className={`${researchDropdownItemClass} cursor-pointer ${
+                    item.selected
+                      ? researchDropdownItemActiveClass
+                      : researchDropdownItemIdleClass
+                  }`}
+                >
+                  <span className="flex min-w-0 items-start gap-3 px-3">
+                    <span className="mt-0.5 flex-none text-slate-400">
+                      {item.icon}
                     </span>
-                    <span className="mt-0.5 block text-xs leading-5 text-[#B0B0B0]">
-                      {item.meta}
+                    <span className="min-w-0">
+                      <span className="block text-sm font-normal leading-5">
+                        {item.title}
+                      </span>
+                      <span className="mt-0.5 block text-xs leading-5 text-[#B0B0B0]">
+                        {item.meta}
+                      </span>
                     </span>
                   </span>
-                </span>
-                {item.selected && (
-                  <Check className="mr-3 mt-0.5 h-4 w-4 flex-none" />
-                )}
-              </button>
-            ))}
-            {items.length === 0 && (
-              <div className="py-8 text-center text-sm text-[#B0B0B0]">
-                No result matches this search.
-              </div>
-            )}
-          </div>
-        </FloatingDropdownPortal>
+                  {item.selected && (
+                    <Check className="mr-3 mt-0.5 h-4 w-4 flex-none" />
+                  )}
+                </button>
+              ))}
+              {items.length === 0 && (
+                <div className="py-8 text-center text-sm text-[#B0B0B0]">
+                  No result matches this search.
+                </div>
+              )}
+            </div>
+          </FloatingDropdownPortal>
+        </div>
+        {sideControl}
       </div>
     </section>
   );

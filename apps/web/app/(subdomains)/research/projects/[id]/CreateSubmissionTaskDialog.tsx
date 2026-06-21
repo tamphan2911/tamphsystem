@@ -608,26 +608,26 @@ export function CreateSubmissionTaskDialog({
               </section>
             )}
 
-            <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
-              <section className="grid gap-3">
-                <span className="text-xs font-bold text-[#B0B0B0]">
-                  Assign to
-                </span>
-                {selectedAssistants.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedAssistants.map((assistant) => (
-                      <button
-                        key={assistant.id}
-                        type="button"
-                        onClick={() => toggleAssistant(assistant.id)}
-                        className="inline-flex cursor-pointer items-center gap-2 border border-[#d9d0c3] bg-[#f8f5f0] px-2.5 py-1.5 text-xs text-[#243047] transition hover:border-[#A8DADC] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#A8DADC] dark:hover:bg-[#303030]"
-                      >
-                        {displayResearchPersonName(assistant)}
-                        <X className="h-3.5 w-3.5 text-[#6C778D] dark:text-[#B0B0B0]" />
-                      </button>
-                    ))}
-                  </div>
-                )}
+            <section className="grid gap-3">
+              <span className="text-xs font-bold text-[#B0B0B0]">
+                Assign to
+              </span>
+              {selectedAssistants.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedAssistants.map((assistant) => (
+                    <button
+                      key={assistant.id}
+                      type="button"
+                      onClick={() => toggleAssistant(assistant.id)}
+                      className="inline-flex cursor-pointer items-center gap-2 border border-[#d9d0c3] bg-[#f8f5f0] px-2.5 py-1.5 text-xs text-[#243047] transition hover:border-[#A8DADC] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#A8DADC] dark:hover:bg-[#303030]"
+                    >
+                      {displayResearchPersonName(assistant)}
+                      <X className="h-3.5 w-3.5 text-[#6C778D] dark:text-[#B0B0B0]" />
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
                 <div ref={assistantDropdownRef} className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
@@ -676,14 +676,12 @@ export function CreateSubmissionTaskDialog({
                     </div>
                   </div>
                 </FloatingDropdownPortal>
-              </section>
-              <div className="lg:pt-[1.625rem]">
                 <ReportUploadPermissionField
                   checked={allowReportUpload}
                   onChange={setAllowReportUpload}
                 />
               </div>
-            </div>
+            </section>
 
             <label className="grid gap-1.5">
               <span className="text-xs font-bold text-[#B0B0B0]">Note</span>
