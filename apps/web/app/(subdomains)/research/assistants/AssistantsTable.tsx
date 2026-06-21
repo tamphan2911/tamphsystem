@@ -45,7 +45,34 @@ export type AssistantRow = {
   password: string;
   assistantRole: string;
   canManageResearchVenues: boolean;
+  unfinishedTasks: {
+    status: string;
+    count: number;
+  }[];
 };
+
+const unfinishedTaskStatusOrder = [
+  "OPEN",
+  "IN_PROGRESS",
+  "CHECKING",
+  "NEED_CLARIFY",
+];
+
+function taskStatusLabel(status: string) {
+  if (status === "OPEN") return "open";
+  if (status === "IN_PROGRESS") return "in progress";
+  if (status === "CHECKING") return "checking";
+  if (status === "NEED_CLARIFY") return "need clarify";
+  return status.toLowerCase().replaceAll("_", " ");
+}
+
+function sortedTaskBreakdown(row: AssistantRow) {
+  return [...row.unfinishedTasks].sort(
+    (left, right) =>
+      unfinishedTaskStatusOrder.indexOf(left.status) -
+      unfinishedTaskStatusOrder.indexOf(right.status),
+  );
+}
 
 export function AssistantsTable({
   rows,
@@ -86,6 +113,9 @@ export function AssistantsTable({
         row.email,
         row.assistantRole,
         row.canManageResearchVenues ? "venue journal conference" : "",
+        row.unfinishedTasks
+          .map((item) => `${item.count} ${taskStatusLabel(item.status)}`)
+          .join(" "),
       ]
         .join(" ")
         .toLowerCase();
@@ -187,13 +217,14 @@ export function AssistantsTable({
         <table className="w-full table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
-              <th className="w-[28%] px-4 py-3">Assistant</th>
-              <th className="w-[25%] px-3 py-3">Email</th>
-              <th className="w-[18%] px-3 py-3">Password</th>
-              <th className="w-[11%] px-3 py-3">Role</th>
-              <th className="w-[12%] px-3 py-3">Jurisdiction</th>
+              <th className="w-[23%] px-4 py-3">Assistant</th>
+              <th className="w-[20%] px-3 py-3">Email</th>
+              <th className="w-[15%] px-3 py-3">Password</th>
+              <th className="w-[10%] px-3 py-3">Role</th>
+              <th className="w-[13%] px-3 py-3">Unfinished tasks</th>
+              <th className="w-[11%] px-3 py-3">Jurisdiction</th>
               {canManage && (
-                <th className="w-[6%] px-2 py-3 text-right">
+                <th className="w-[8%] px-2 py-3 text-right">
                   <span className="sr-only">Action</span>
                 </th>
               )}
@@ -254,6 +285,26 @@ export function AssistantsTable({
                 <td className="px-3 py-3">
                   <RolePill role={user.assistantRole} />
                 </td>
+                <td className="px-3 py-3 text-sm leading-5 text-[#243047] dark:text-[#E4E4E4]">
+                  {user.unfinishedTasks.length > 0 ? (
+                    <div className="grid gap-1">
+                      {sortedTaskBreakdown(user).map((item) => (
+                        <span key={item.status} className="block">
+                          <span className="font-normal text-[#1F2937] dark:text-[#E4E4E4]">
+                            {item.count}
+                          </span>{" "}
+                          <span className="text-[#6C778D] dark:text-[#B0B0B0]">
+                            {taskStatusLabel(item.status)}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-[#6C778D] dark:text-[#B0B0B0]">
+                      No unfinished task
+                    </span>
+                  )}
+                </td>
                 <td className="px-3 py-3">
                   <VenueJurisdictionPill
                     enabled={user.canManageResearchVenues}
@@ -285,7 +336,7 @@ export function AssistantsTable({
             ))}
             {pagination.total === 0 && (
               <tr>
-                <td colSpan={canManage ? 6 : 5} className="px-4 py-2">
+                <td colSpan={canManage ? 7 : 6} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No assistants match the current search."
                     detail="Try another name, email, role, or active-site filter."

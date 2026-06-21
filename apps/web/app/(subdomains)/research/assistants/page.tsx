@@ -1,4 +1,4 @@
-import { prisma, Role } from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { assertResearchManager } from "../actions";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { AssistantsTable, type AssistantRow } from "./AssistantsTable";
@@ -49,6 +49,37 @@ export default async function AssistantsPage() {
       user.roles.includes(Role.CHIEF_ASSISTANT),
   );
 
+  const taskAssignments = await prisma.researchTaskAssignment.findMany({
+    where: {
+      userId: { in: assistantUsers.map((user) => user.id) },
+      task: {
+        status: {
+          notIn: [ResearchTaskStatus.COMPLETED, ResearchTaskStatus.REVOKED],
+        },
+      },
+    },
+    select: {
+      userId: true,
+      task: {
+        select: {
+          status: true,
+        },
+      },
+    },
+  });
+
+  const taskBreakdowns = new Map<string, Map<ResearchTaskStatus, number>>();
+  taskAssignments.forEach((assignment) => {
+    const breakdown =
+      taskBreakdowns.get(assignment.userId) ??
+      new Map<ResearchTaskStatus, number>();
+    breakdown.set(
+      assignment.task.status,
+      (breakdown.get(assignment.task.status) ?? 0) + 1,
+    );
+    taskBreakdowns.set(assignment.userId, breakdown);
+  });
+
   const rows: AssistantRow[] = assistantUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -58,6 +89,12 @@ export default async function AssistantsPage() {
       ? Role.CHIEF_ASSISTANT
       : Role.ASSISTANT,
     canManageResearchVenues: user.canManageResearchVenues,
+    unfinishedTasks: Array.from(taskBreakdowns.get(user.id) ?? []).map(
+      ([status, count]) => ({
+        status,
+        count,
+      }),
+    ),
   }));
 
   const candidates: AssistantCandidate[] = users.map((user) => ({
