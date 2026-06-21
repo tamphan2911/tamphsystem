@@ -1,46 +1,57 @@
 "use client";
 
-import Link from "next/link";
-import { Ghost, Home, SearchX } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, ShieldAlert } from "lucide-react";
+
+const researchThemeKey = "research-theme-mode";
 
 export default function NotFound() {
-  return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center overflow-hidden relative">
-      
-      {/* Background Animated Beams */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
-        <div className="absolute top-1/3 right-1/3 w-96 h-96 bg-purple-600 rounded-full mix-blend-screen filter blur-[100px] animate-pulse"></div>
-        <div className="absolute bottom-1/3 left-1/3 w-96 h-96 bg-blue-600 rounded-full mix-blend-screen filter blur-[100px] animate-pulse" style={{ animationDelay: '1.5s' }}></div>
-      </div>
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
-      <div className="relative z-10 flex flex-col items-center max-w-2xl">
-        <div className="relative group animate-[spin_10s_linear_infinite]">
-          <SearchX className="w-40 h-40 text-purple-500 mb-8" />
-          <div className="absolute inset-0 bg-purple-500 blur-2xl opacity-20 group-hover:opacity-40 transition-opacity rounded-full"></div>
+  useEffect(() => {
+    const storedTheme = window.localStorage.getItem(researchThemeKey);
+    setTheme(storedTheme === "dark" ? "dark" : "light");
+  }, []);
+
+  return (
+    <main
+      className={`research-site-root flex min-h-screen items-center justify-center px-6 py-10 ${
+        theme === "light" ? "research-theme-light" : "research-theme-dark"
+      } bg-[#242424] text-[#E4E4E4]`}
+    >
+      <section className="w-full max-w-2xl border border-[#444444] bg-[#2C2C2C]">
+        <div className="border-b border-[#444444] px-6 py-5">
+          <div className="flex items-center gap-3">
+            <ShieldAlert
+              className="h-5 w-5 text-[#A8DADC]"
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
+            <p className="text-xs font-normal uppercase tracking-[0.18em] text-[#B0B0B0]">
+              404
+            </p>
+          </div>
         </div>
-        
-        <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-blue-500 mb-6 tracking-tighter">
-          404
-        </h1>
-        
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-          Lost in the void.
-        </h2>
-        
-        <p className="text-xl md:text-2xl text-slate-400 mb-12 font-medium">
-          Whatever you were looking for doesn't exist here. It might have been deleted, moved, or it was just a figment of your imagination.
-        </p>
-        
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Link 
-            href="/"
-            className="flex items-center justify-center gap-2 px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_40px_-10px_rgba(147,51,234,0.5)]"
-          >
-            <Home className="w-5 h-5" />
-            Return to Reality
-          </Link>
+        <div className="grid gap-5 px-6 py-8">
+          <h1 className="text-2xl font-normal leading-tight text-[#E4E4E4] md:text-3xl">
+            You are not allowed to access this page.
+          </h1>
+          <p className="max-w-xl text-sm leading-6 text-[#B0B0B0]">
+            This page is unavailable, moved, or outside your current Research
+            Hub access. Go back and continue from a page you can open.
+          </p>
+          <div>
+            <button
+              type="button"
+              onClick={() => window.history.back()}
+              className="research-allow-transform inline-flex cursor-pointer items-center gap-2 border border-[#A8DADC] bg-transparent px-4 py-2 text-sm font-normal text-[#A8DADC] transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-[#263636] hover:text-[#C9F0F2] active:translate-y-0 active:scale-95"
+            >
+              <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
+              Go back
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
