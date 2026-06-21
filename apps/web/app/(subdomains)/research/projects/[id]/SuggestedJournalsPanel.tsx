@@ -181,6 +181,7 @@ export function SuggestedJournalsPanel({
   const [selectedAssistantIds, setSelectedAssistantIds] = useState<string[]>(
     [],
   );
+  const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [taskMode, setTaskMode] = useState<"submit" | "other">("submit");
   const { showSuccess } = useResearchToast();
   const accountDropdownRef = useRef<HTMLDivElement>(null);
@@ -453,6 +454,7 @@ export function SuggestedJournalsPanel({
       setSelectedAccountId("");
       setAccountOpen(false);
       setTaskMode("submit");
+      setAllowReportUpload(false);
       router.refresh();
     });
   }
@@ -467,6 +469,7 @@ export function SuggestedJournalsPanel({
     );
     setAccountOpen(false);
     setAssistantQuery("");
+    setAllowReportUpload(false);
     setAssignVenue(venue);
   }
 
@@ -873,6 +876,7 @@ export function SuggestedJournalsPanel({
             setSelectedAccountId("");
             setAccountOpen(false);
             setTaskMode("submit");
+            setAllowReportUpload(false);
           }}
           title="Assign task"
           description={`Create a task for ${assignName}.`}
@@ -901,6 +905,11 @@ export function SuggestedJournalsPanel({
             {selectedAssistantIds.map((id) => (
               <input key={id} type="hidden" name="assigneeIds" value={id} />
             ))}
+            <input
+              type="hidden"
+              name="allowAssigneeReportUpload"
+              value={allowReportUpload ? "true" : "false"}
+            />
             <input type="hidden" name="projectId" value={projectId} />
             {assignKind === "journal" ? (
               <>
@@ -1096,72 +1105,101 @@ export function SuggestedJournalsPanel({
               />
             </label>
 
-            <section className="grid gap-3">
-              {selectedAssistants.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {selectedAssistants.map((assistant) => (
-                    <button
-                      key={assistant.id}
-                      type="button"
-                      onClick={() => toggleAssistant(assistant.id)}
-                      className="inline-flex cursor-pointer items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-2.5 py-1.5 text-xs text-[#243047] transition hover:border-[#A8DADC] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#A8DADC]"
-                    >
-                      {displayResearchPersonName(assistant)}
-                      <X className="h-3.5 w-3.5 text-[#6C778D] dark:text-[#B0B0B0]" />
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-              <div ref={assistantDropdownRef} className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6C778D] dark:text-[#B0B0B0]" />
-                <input
-                  value={assistantQuery}
-                  onChange={(event) => setAssistantQuery(event.target.value)}
-                  placeholder="Search assistants or admin by name, email, ID, or role (*)"
-                  className={`${researchSearchFieldClass} pl-9`}
-                />
-              </div>
-              <FloatingDropdownPortal
-                anchorRef={assistantDropdownRef}
-                open={Boolean(assistantQuery.trim())}
-                maxWidth={820}
-                maxPanelHeight={232}
-              >
-                <div className={researchDropdownPanelClass}>
-                  <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
-                    {assistantResults.map((assistant) => (
+            <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
+              <section className="grid gap-3">
+                {selectedAssistants.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedAssistants.map((assistant) => (
                       <button
                         key={assistant.id}
                         type="button"
                         onClick={() => toggleAssistant(assistant.id)}
-                        className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
+                        className="inline-flex cursor-pointer items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-2.5 py-1.5 text-xs text-[#243047] transition hover:border-[#A8DADC] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#A8DADC]"
                       >
-                        <span className="flex min-w-0 items-center gap-3 px-3">
-                          <UserRound className="h-4 w-4 flex-none text-[#6C778D] dark:text-[#B0B0B0]" />
-                          <span className="min-w-0">
-                            <span className="block truncate text-sm font-normal">
-                              {displayResearchPersonName(assistant)}
-                            </span>
-                            <span className="block truncate text-xs text-[#6C778D] dark:text-[#B0B0B0]">
-                              {displayResearchEmail(assistant.email)}
-                            </span>
-                          </span>
-                        </span>
+                        {displayResearchPersonName(assistant)}
+                        <X className="h-3.5 w-3.5 text-[#6C778D] dark:text-[#B0B0B0]" />
                       </button>
                     ))}
-                    {assistantQuery.trim() && assistantResults.length === 0 ? (
-                      <p className="py-10 text-center text-sm text-[#6C778D] dark:text-[#B0B0B0]">
-                        No user matches this search.
-                      </p>
-                    ) : null}
                   </div>
+                ) : null}
+                <div ref={assistantDropdownRef} className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6C778D] dark:text-[#B0B0B0]" />
+                  <input
+                    value={assistantQuery}
+                    onChange={(event) => setAssistantQuery(event.target.value)}
+                    placeholder="Search assistants or admin by name, email, ID, or role (*)"
+                    className={`${researchSearchFieldClass} pl-9`}
+                  />
                 </div>
-              </FloatingDropdownPortal>
-            </section>
+                <FloatingDropdownPortal
+                  anchorRef={assistantDropdownRef}
+                  open={Boolean(assistantQuery.trim())}
+                  maxWidth={820}
+                  maxPanelHeight={232}
+                >
+                  <div className={researchDropdownPanelClass}>
+                    <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
+                      {assistantResults.map((assistant) => (
+                        <button
+                          key={assistant.id}
+                          type="button"
+                          onClick={() => toggleAssistant(assistant.id)}
+                          className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
+                        >
+                          <span className="flex min-w-0 items-center gap-3 px-3">
+                            <UserRound className="h-4 w-4 flex-none text-[#6C778D] dark:text-[#B0B0B0]" />
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-normal">
+                                {displayResearchPersonName(assistant)}
+                              </span>
+                              <span className="block truncate text-xs text-[#6C778D] dark:text-[#B0B0B0]">
+                                {displayResearchEmail(assistant.email)}
+                              </span>
+                            </span>
+                          </span>
+                        </button>
+                      ))}
+                      {assistantQuery.trim() &&
+                      assistantResults.length === 0 ? (
+                        <p className="py-10 text-center text-sm text-[#6C778D] dark:text-[#B0B0B0]">
+                          No user matches this search.
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </FloatingDropdownPortal>
+              </section>
+              <ReportUploadPermissionField
+                checked={allowReportUpload}
+                onChange={setAllowReportUpload}
+              />
+            </div>
           </form>
         </ResearchModal>
       )}
     </ResearchDetailSection>
+  );
+}
+
+function ReportUploadPermissionField({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex min-h-[52px] cursor-pointer items-center gap-3 border border-[#D8D0C2] bg-[#FFFDF8] px-4 py-3 text-sm text-[#243047] transition hover:border-[#A8DADC] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4]">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="h-4 w-4 flex-none accent-[#1F7180]"
+      />
+      <span className="min-w-0 leading-5">
+        Allow assignee to upload task report
+      </span>
+    </label>
   );
 }
 

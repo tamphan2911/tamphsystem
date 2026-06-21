@@ -307,15 +307,6 @@ function journalMetaLine(journal: {
   return `${journal.publisher || "No publisher"} - ${rankLabel}`;
 }
 
-function taskAllowsReport(taskType: string | null) {
-  return (
-    taskType === "PRODUCTION" ||
-    taskType === "PROJECT_PRODUCTION" ||
-    taskType === "PROJECT_RESEARCH_ASSOCIATED" ||
-    taskType === "OTHER"
-  );
-}
-
 function researchAuthors(project: {
   leadResearcher: { name: string | null; email: string };
   authors: { name: string | null; email: string }[];
@@ -393,6 +384,7 @@ export default async function TaskDetailPage({
       taskType: true,
       taskFileName: true,
       taskFileSize: true,
+      allowAssigneeReportUpload: true,
       reportFileName: true,
       reportFileSize: true,
       reportUploadedAt: true,
@@ -659,7 +651,7 @@ export default async function TaskDetailPage({
                 }
               : null;
   const canAnswerClarification = !isClosed && (isAdmin || isAssigner);
-  const reportEnabled = taskAllowsReport(task.taskType);
+  const reportEnabled = task.allowAssigneeReportUpload;
   const canUploadReport =
     reportEnabled && !isClosed && isAssignee && !isAssigner;
   const canDownloadReport =
@@ -944,6 +936,8 @@ export default async function TaskDetailPage({
                           reviewId: task.reviewId ?? "",
                           organizedProjectId: task.organizedProjectId ?? "",
                           accountId: task.accountId ?? "",
+                          allowAssigneeReportUpload:
+                            task.allowAssigneeReportUpload,
                           assigneeIds: task.assignments.map(
                             (assignment) => assignment.userId,
                           ),

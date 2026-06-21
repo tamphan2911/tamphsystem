@@ -710,28 +710,29 @@ model AcademicReview {
 }
 
 model ResearchTask {
-  id                 String                @id @default(uuid())
-  taskCode           String?               @unique
-  title              String
-  description        String?
-  category           ResearchTaskCategory?
-  status             ResearchTaskStatus    @default(IN_PROGRESS)
-  dueDate            DateTime?
-  completedAt        DateTime?
-  revokedAt          DateTime?
-  adminViewedAt      DateTime?
-  taskFileName       String?
-  taskFileType       String?
-  taskFileSize       Int?
-  taskFileData       Bytes?
-  reportFileName     String?
-  reportFileType     String?
-  reportFileSize     Int?
-  reportFileData     Bytes?
-  reportUploadedAt   DateTime?
-  reportUploadedById String?
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
+  id                        String                @id @default(uuid())
+  taskCode                  String?               @unique
+  title                     String
+  description               String?
+  category                  ResearchTaskCategory?
+  status                    ResearchTaskStatus    @default(IN_PROGRESS)
+  dueDate                   DateTime?
+  completedAt               DateTime?
+  revokedAt                 DateTime?
+  adminViewedAt             DateTime?
+  taskFileName              String?
+  taskFileType              String?
+  taskFileSize              Int?
+  taskFileData              Bytes?
+  allowAssigneeReportUpload Boolean               @default(false)
+  reportFileName            String?
+  reportFileType            String?
+  reportFileSize            Int?
+  reportFileData            Bytes?
+  reportUploadedAt          DateTime?
+  reportUploadedById        String?
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
 
   createdById        String
   createdBy          User              @relation("ResearchTaskCreator", fields: [createdById], references: [id])

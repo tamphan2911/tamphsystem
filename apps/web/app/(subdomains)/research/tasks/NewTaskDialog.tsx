@@ -175,6 +175,7 @@ export function NewTaskDialog({
     useState<TaskOrganizedProjectOption | null>(null);
   const [selectedSubmission, setSelectedSubmission] =
     useState<TaskSubmissionOption | null>(null);
+  const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { showSuccess, showError } = useResearchToast();
 
@@ -333,6 +334,7 @@ export function NewTaskDialog({
     setSelectedReview(null);
     setSelectedOrganizedProject(null);
     setSelectedSubmission(null);
+    setAllowReportUpload(false);
   }
 
   function toggleAssignee(id: string) {
@@ -567,6 +569,11 @@ export function NewTaskDialog({
           {selectedIds.map((id) => (
             <input key={id} type="hidden" name="assigneeIds" value={id} />
           ))}
+          <input
+            type="hidden"
+            name="allowAssigneeReportUpload"
+            value={allowReportUpload ? "true" : "false"}
+          />
           {selectedResearch && (
             <input type="hidden" name="projectId" value={selectedResearch.id} />
           )}
@@ -925,25 +932,53 @@ export function NewTaskDialog({
 
           <TaskAttachmentField />
 
-          <SearchPanel
-            query={assigneeQuery}
-            setQuery={setAssigneeQuery}
-            placeholder="Search active research users by name, email, ID, or role (*)"
-            selectedItems={selectedAssigneeItems}
-            items={filteredAssignees.map((user) => ({
-              id: user.id,
-              title: displayResearchPersonName(user),
-              meta: [displayResearchEmail(user.email), user.roles.join(", ")]
-                .filter(Boolean)
-                .join(" - "),
-              icon: <UserRound className="h-4 w-4" />,
-              selected: selectedIds.includes(user.id),
-              onClick: () => toggleAssignee(user.id),
-            }))}
-          />
+          <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
+            <SearchPanel
+              query={assigneeQuery}
+              setQuery={setAssigneeQuery}
+              placeholder="Search active research users by name, email, ID, or role (*)"
+              selectedItems={selectedAssigneeItems}
+              items={filteredAssignees.map((user) => ({
+                id: user.id,
+                title: displayResearchPersonName(user),
+                meta: [displayResearchEmail(user.email), user.roles.join(", ")]
+                  .filter(Boolean)
+                  .join(" - "),
+                icon: <UserRound className="h-4 w-4" />,
+                selected: selectedIds.includes(user.id),
+                onClick: () => toggleAssignee(user.id),
+              }))}
+            />
+            <ReportUploadPermissionField
+              checked={allowReportUpload}
+              onChange={setAllowReportUpload}
+            />
+          </div>
         </form>
       </ResearchModal>
     </>
+  );
+}
+
+function ReportUploadPermissionField({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex min-h-[52px] cursor-pointer items-center gap-3 border border-[#D8D0C2] bg-[#FFFDF8] px-4 py-3 text-sm text-[#243047] transition hover:border-[#A8DADC] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4]">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="h-4 w-4 flex-none accent-[#1F7180]"
+      />
+      <span className="min-w-0 leading-5">
+        Allow assignee to upload task report
+      </span>
+    </label>
   );
 }
 

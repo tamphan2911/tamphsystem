@@ -259,15 +259,6 @@ function addMonths(date: Date, months: number) {
   return next;
 }
 
-function taskAllowsReportUpload(taskType: ResearchTaskType | null) {
-  return (
-    taskType === ResearchTaskType.PRODUCTION ||
-    taskType === ResearchTaskType.PROJECT_PRODUCTION ||
-    taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED ||
-    taskType === ResearchTaskType.OTHER
-  );
-}
-
 function dateIsBefore(left: Date, right: Date) {
   return researchDateValue(left) < researchDateValue(right);
 }
@@ -3445,6 +3436,8 @@ export async function createResearchTask(formData: FormData) {
   const conferenceId = optionalString(formData.get("conferenceId"));
   const reviewId = optionalString(formData.get("reviewId"));
   let accountId = optionalString(formData.get("accountId"));
+  const allowAssigneeReportUpload =
+    formData.get("allowAssigneeReportUpload") === "true";
 
   if (
     !(await canCreateResearchTaskForProject({
@@ -3579,6 +3572,7 @@ export async function createResearchTask(formData: FormData) {
       conferenceId,
       reviewId,
       accountId,
+      allowAssigneeReportUpload,
       dueDate: researchTaskDueDate(optionalString(formData.get("dueDate"))),
       createdById: user.id,
       ...(taskFile?.ok ? taskFile.data : {}),
@@ -3686,6 +3680,8 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   const conferenceId = optionalString(formData.get("conferenceId"));
   const reviewId = optionalString(formData.get("reviewId"));
   const accountId = optionalString(formData.get("accountId"));
+  const allowAssigneeReportUpload =
+    formData.get("allowAssigneeReportUpload") === "true";
   const effectiveProjectId =
     taskType === ResearchTaskType.SUBMIT_RESEARCH ||
     taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
@@ -3825,6 +3821,17 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
             ? conferenceId
             : null,
         reviewId: taskType === ResearchTaskType.REVIEW ? reviewId : null,
+        allowAssigneeReportUpload,
+        ...(!allowAssigneeReportUpload
+          ? {
+              reportFileName: null,
+              reportFileType: null,
+              reportFileSize: null,
+              reportFileData: null,
+              reportUploadedAt: null,
+              reportUploadedById: null,
+            }
+          : {}),
         dueDate: researchTaskDueDate(optionalString(formData.get("dueDate"))),
       },
       select: { id: true, title: true, description: true },
@@ -5238,7 +5245,7 @@ export async function uploadResearchTaskReport(
     select: {
       id: true,
       title: true,
-      taskType: true,
+      allowAssigneeReportUpload: true,
       status: true,
       createdById: true,
       assignments: { select: { userId: true } },
@@ -5251,11 +5258,11 @@ export async function uploadResearchTaskReport(
       detail: "This task could not be found.",
     };
   }
-  if (!taskAllowsReportUpload(task.taskType)) {
+  if (!task.allowAssigneeReportUpload) {
     return {
       ok: false,
       title: "Report not available",
-      detail: "Reports are only used for project, production, and other tasks.",
+      detail: "The assigner did not enable report uploads for this task.",
     };
   }
   if (
