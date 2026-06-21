@@ -1,7 +1,7 @@
 "use client";
 
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   Check,
@@ -26,6 +26,15 @@ export type FilterOption = {
   value: string;
   label: string;
 };
+
+export function parseMultiFilterValue(
+  value: string,
+  options: readonly string[],
+) {
+  if (!value || value === "ALL") return [];
+  const valid = new Set(options.filter((option) => option !== "ALL"));
+  return value.split(",").filter((option) => valid.has(option));
+}
 
 export function IconHint({
   label,
@@ -390,6 +399,24 @@ export function usePersistentTableValue(
   }, [defaultValue, storageKey, value]);
 
   return [value, setValue] as const;
+}
+
+export function usePersistentMultiFilter(
+  key: string,
+  options: readonly string[],
+) {
+  const [storedValue, setStoredValue] = usePersistentTableValue(key, "ALL");
+  const values = useMemo(
+    () => parseMultiFilterValue(storedValue, options),
+    [options, storedValue],
+  );
+  const setValues = useCallback(
+    (nextValues: string[]) => {
+      setStoredValue(nextValues.length > 0 ? nextValues.join(",") : "ALL");
+    },
+    [setStoredValue],
+  );
+  return [values, setValues] as const;
 }
 
 export function TablePagination({

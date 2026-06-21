@@ -16,12 +16,13 @@ import {
 } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import {
-  FilterSelect,
   IconHint,
+  MultiFilterSelect,
   TablePagination,
   TableSearchInput,
   useTablePagination,
   usePersistentTableValue,
+  usePersistentMultiFilter,
 } from "@/sites/research/components/TableControls";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
@@ -186,12 +187,15 @@ export function ConferencesTable({
   deleteAction: (conferenceId: string) => Promise<void>;
 }) {
   const [query, setQuery] = usePersistentTableValue("conferences:q", "");
-  const [type, setType] = usePersistentTableValue("conferences:type", "ALL");
+  const [types, setTypes] = usePersistentMultiFilter(
+    "conferences:type",
+    conferenceTypes,
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
-      const matchesType = type === "ALL" || row.type === type;
+      const matchesType = types.length === 0 || types.includes(row.type);
       const haystack = [
         row.name,
         row.type,
@@ -208,7 +212,7 @@ export function ConferencesTable({
         .toLowerCase();
       return matchesType && (!needle || haystack.includes(needle));
     });
-  }, [query, rows, type]);
+  }, [query, rows, types]);
 
   const pagination = useTablePagination(filtered, 10, 1, "conferences");
 
@@ -217,8 +221,8 @@ export function ConferencesTable({
     pagination.setPage(1);
   }
 
-  function updateType(value: string) {
-    setType(value);
+  function updateTypes(values: string[]) {
+    setTypes(values);
     pagination.setPage(1);
   }
 
@@ -231,9 +235,9 @@ export function ConferencesTable({
           placeholder="Search conference, organizer, theme, ISBN..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <FilterSelect
-            value={type}
-            onChange={updateType}
+          <MultiFilterSelect
+            values={types}
+            onChange={updateTypes}
             ariaLabel="Filter by conference type"
             options={conferenceTypes.map((item) => ({
               value: item,

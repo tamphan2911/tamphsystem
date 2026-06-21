@@ -15,10 +15,11 @@ import {
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import {
-  FilterSelect,
   IconHint,
+  MultiFilterSelect,
   TablePagination,
   TableSearchInput,
+  parseMultiFilterValue,
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
@@ -28,6 +29,8 @@ import {
   formatResearchNumber,
 } from "@/sites/research/lib/currency";
 import { countryName } from "@/sites/research/lib/countries";
+
+const binaryFilterOptions = ["ALL", "YES", "NO"];
 
 export type JournalRow = {
   id: string;
@@ -187,11 +190,13 @@ export function JournalsTable({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
-  const [field, setField] = useState(() => searchParams.get("field") ?? "ALL");
-  const [favorite, setFavorite] = useState(
+  const [fieldValue, setFieldValue] = useState(
+    () => searchParams.get("field") ?? "ALL",
+  );
+  const [favoriteValue, setFavoriteValue] = useState(
     () => searchParams.get("favorite") ?? "ALL",
   );
-  const [interest, setInterest] = useState(
+  const [interestValue, setInterestValue] = useState(
     () => searchParams.get("interest") ?? "ALL",
   );
 
@@ -204,16 +209,30 @@ export function JournalsTable({
     ],
     [rows],
   );
+  const fields = useMemo(
+    () => parseMultiFilterValue(fieldValue, fieldOptions),
+    [fieldOptions, fieldValue],
+  );
+  const favoriteStatuses = useMemo(
+    () => parseMultiFilterValue(favoriteValue, binaryFilterOptions),
+    [favoriteValue],
+  );
+  const interestStatuses = useMemo(
+    () => parseMultiFilterValue(interestValue, binaryFilterOptions),
+    [interestValue],
+  );
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
-      const matchesField = field === "ALL" || row.fields.includes(field);
+      const matchesField =
+        fields.length === 0 ||
+        fields.some((field) => row.fields.includes(field));
       const matchesFavorite =
-        favorite === "ALL" ||
-        (favorite === "YES" ? row.isFavorite : !row.isFavorite);
+        favoriteStatuses.length === 0 ||
+        favoriteStatuses.includes(row.isFavorite ? "YES" : "NO");
       const matchesInterest =
-        interest === "ALL" ||
-        (interest === "YES" ? row.isInterest : !row.isInterest);
+        interestStatuses.length === 0 ||
+        interestStatuses.includes(row.isInterest ? "YES" : "NO");
       const haystack = [
         row.name,
         row.issn,
@@ -239,7 +258,7 @@ export function JournalsTable({
         (!needle || haystack.includes(needle))
       );
     });
-  }, [favorite, field, interest, query, rows]);
+  }, [favoriteStatuses, fields, interestStatuses, query, rows]);
 
   const initialPage = Number(searchParams.get("page") ?? "1");
   const pagination = useTablePagination(
@@ -250,12 +269,36 @@ export function JournalsTable({
   const currentListPath = useMemo(() => {
     const params = new URLSearchParams();
     if (query.trim()) params.set("q", query.trim());
-    if (field !== "ALL") params.set("field", field);
-    if (favorite !== "ALL") params.set("favorite", favorite);
-    if (interest !== "ALL") params.set("interest", interest);
+    if (fields.length > 0) params.set("field", fields.join(","));
+    if (favoriteStatuses.length > 0)
+      params.set("favorite", favoriteStatuses.join(","));
+    if (interestStatuses.length > 0)
+      params.set("interest", interestStatuses.join(","));
     if (pagination.page > 1) params.set("page", String(pagination.page));
     return params.toString() ? `${pathname}?${params.toString()}` : pathname;
-  }, [favorite, field, interest, pagination.page, pathname, query]);
+  }, [
+    favoriteStatuses,
+    fields,
+    interestStatuses,
+    pagination.page,
+    pathname,
+    query,
+  ]);
+
+  function updateFields(values: string[]) {
+    setFieldValue(values.length > 0 ? values.join(",") : "ALL");
+    pagination.setPage(1);
+  }
+
+  function updateFavoriteStatuses(values: string[]) {
+    setFavoriteValue(values.length > 0 ? values.join(",") : "ALL");
+    pagination.setPage(1);
+  }
+
+  function updateInterestStatuses(values: string[]) {
+    setInterestValue(values.length > 0 ? values.join(",") : "ALL");
+    pagination.setPage(1);
+  }
 
   useEffect(() => {
     router.replace(currentListPath, { scroll: false });
@@ -270,18 +313,18 @@ export function JournalsTable({
           placeholder="Search journals, ISSN, publisher..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <FilterSelect
-            value={field}
-            onChange={setField}
+          <MultiFilterSelect
+            values={fields}
+            onChange={updateFields}
             ariaLabel="Filter by field"
             options={fieldOptions.map((item) => ({
               value: item,
               label: item === "ALL" ? "All fields" : item,
             }))}
           />
-          <FilterSelect
-            value={favorite}
-            onChange={setFavorite}
+          <MultiFilterSelect
+            values={favoriteStatuses}
+            onChange={updateFavoriteStatuses}
             ariaLabel="Filter by favorite"
             options={[
               { value: "ALL", label: "All favorite status" },
@@ -289,9 +332,9 @@ export function JournalsTable({
               { value: "NO", label: "Not favorite" },
             ]}
           />
-          <FilterSelect
-            value={interest}
-            onChange={setInterest}
+          <MultiFilterSelect
+            values={interestStatuses}
+            onChange={updateInterestStatuses}
             ariaLabel="Filter by interest"
             options={[
               { value: "ALL", label: "All interest status" },

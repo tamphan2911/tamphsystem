@@ -7,11 +7,12 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Download, FileArchive, Trash2 } from "lucide-react";
 import {
-  FilterSelect,
   IconHint,
+  MultiFilterSelect,
   TablePagination,
   TableSearchInput,
   usePersistentTableValue,
+  usePersistentMultiFilter,
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
@@ -97,8 +98,10 @@ export function TaskReportsTable({
   deleteAction: (fileKind: UploadedFileKind, ownerId: string) => Promise<void>;
 }) {
   const [query, setQuery] = usePersistentTableValue("uploaded-files:q", "");
-  const [kind, setKind] = usePersistentTableValue("uploaded-files:kind", "ALL");
-  const [type, setType] = usePersistentTableValue("uploaded-files:type", "ALL");
+  const [kinds, setKinds] = usePersistentMultiFilter(
+    "uploaded-files:kind",
+    fileKindOptions.map((option) => option.value),
+  );
   const [deleting, setDeleting] = useState<UploadedFileRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -116,13 +119,17 @@ export function TaskReportsTable({
       })),
     ];
   }, [rows]);
+  const [types, setTypes] = usePersistentMultiFilter(
+    "uploaded-files:type",
+    fileTypeOptions.map((option) => option.value),
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const extension = fileExtension(row.fileName);
-      const matchesKind = kind === "ALL" || row.kind === kind;
-      const matchesType = type === "ALL" || extension === type;
+      const matchesKind = kinds.length === 0 || kinds.includes(row.kind);
+      const matchesType = types.length === 0 || types.includes(extension);
       const haystack = [
         row.source,
         row.sourceStatus,
@@ -145,7 +152,7 @@ export function TaskReportsTable({
         matchesKind && matchesType && (!needle || haystack.includes(needle))
       );
     });
-  }, [kind, query, rows, type]);
+  }, [kinds, query, rows, types]);
   const pagination = useTablePagination(filtered, 10, 1, "uploaded-files");
 
   function updateQuery(value: string) {
@@ -153,13 +160,13 @@ export function TaskReportsTable({
     pagination.setPage(1);
   }
 
-  function updateKind(value: string) {
-    setKind(value);
+  function updateKinds(values: string[]) {
+    setKinds(values);
     pagination.setPage(1);
   }
 
-  function updateType(value: string) {
-    setType(value);
+  function updateTypes(values: string[]) {
+    setTypes(values);
     pagination.setPage(1);
   }
 
@@ -197,15 +204,15 @@ export function TaskReportsTable({
             placeholder="Search file, source, uploader, research..."
           />
           <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[34rem]">
-            <FilterSelect
-              value={kind}
-              onChange={updateKind}
+            <MultiFilterSelect
+              values={kinds}
+              onChange={updateKinds}
               ariaLabel="Filter files by source"
               options={fileKindOptions}
             />
-            <FilterSelect
-              value={type}
-              onChange={updateType}
+            <MultiFilterSelect
+              values={types}
+              onChange={updateTypes}
               ariaLabel="Filter files by type"
               options={fileTypeOptions}
             />

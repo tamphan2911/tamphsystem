@@ -12,12 +12,13 @@ import {
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
-  FilterSelect,
   IconHint,
+  MultiFilterSelect,
   TablePagination,
   TableSearchInput,
   useTablePagination,
   usePersistentTableValue,
+  usePersistentMultiFilter,
 } from "@/sites/research/components/TableControls";
 
 export type SuggestionKind = "Journal" | "Conference";
@@ -142,15 +143,7 @@ export function SuggestionsTable({
   ) => Promise<void>;
 }) {
   const [query, setQuery] = usePersistentTableValue("suggestions:q", "");
-  const [kind, setKind] = usePersistentTableValue("suggestions:kind", "ALL");
-  const [project, setProject] = usePersistentTableValue(
-    "suggestions:project",
-    "ALL",
-  );
-  const [suggestedBy, setSuggestedBy] = usePersistentTableValue(
-    "suggestions:suggestedBy",
-    "ALL",
-  );
+  const suggestionKinds = ["ALL", "Journal", "Conference"];
 
   const projectOptions = useMemo(
     () => [
@@ -176,6 +169,18 @@ export function SuggestionsTable({
     ],
     [rows],
   );
+  const [kinds, setKinds] = usePersistentMultiFilter(
+    "suggestions:kind",
+    suggestionKinds,
+  );
+  const [projects, setProjects] = usePersistentMultiFilter(
+    "suggestions:project",
+    projectOptions,
+  );
+  const [suggestedUsers, setSuggestedUsers] = usePersistentMultiFilter(
+    "suggestions:suggestedBy",
+    suggestedByOptions,
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -183,10 +188,11 @@ export function SuggestionsTable({
       const projectLabel = row.projectCode
         ? `${row.projectCode} - ${row.projectTitle}`
         : row.projectTitle;
-      const matchesKind = kind === "ALL" || row.kind === kind;
-      const matchesProject = project === "ALL" || projectLabel === project;
+      const matchesKind = kinds.length === 0 || kinds.includes(row.kind);
+      const matchesProject =
+        projects.length === 0 || projects.includes(projectLabel);
       const matchesSuggestedBy =
-        suggestedBy === "ALL" || row.suggestedBy === suggestedBy;
+        suggestedUsers.length === 0 || suggestedUsers.includes(row.suggestedBy);
       const haystack = [
         row.kind,
         row.projectCode,
@@ -208,12 +214,12 @@ export function SuggestionsTable({
         (!needle || haystack.includes(needle))
       );
     });
-  }, [kind, project, query, rows, suggestedBy]);
+  }, [kinds, projects, query, rows, suggestedUsers]);
 
   const pagination = useTablePagination(filtered, 10, 1, "suggestions");
 
-  function resetPageAfter(update: (value: string) => void) {
-    return (value: string) => {
+  function resetPageAfter<T>(update: (value: T) => void) {
+    return (value: T) => {
       update(value);
       pagination.setPage(1);
     };
@@ -228,9 +234,9 @@ export function SuggestionsTable({
           placeholder="Search suggestion, research, venue, user..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <FilterSelect
-            value={kind}
-            onChange={resetPageAfter(setKind)}
+          <MultiFilterSelect
+            values={kinds}
+            onChange={resetPageAfter(setKinds)}
             ariaLabel="Filter by suggestion type"
             options={[
               { value: "ALL", label: "All types" },
@@ -238,18 +244,18 @@ export function SuggestionsTable({
               { value: "Conference", label: "Conferences" },
             ]}
           />
-          <FilterSelect
-            value={project}
-            onChange={resetPageAfter(setProject)}
+          <MultiFilterSelect
+            values={projects}
+            onChange={resetPageAfter(setProjects)}
             ariaLabel="Filter by research"
             options={projectOptions.map((item) => ({
               value: item,
               label: item === "ALL" ? "All research" : item,
             }))}
           />
-          <FilterSelect
-            value={suggestedBy}
-            onChange={resetPageAfter(setSuggestedBy)}
+          <MultiFilterSelect
+            values={suggestedUsers}
+            onChange={resetPageAfter(setSuggestedUsers)}
             ariaLabel="Filter by suggested user"
             options={suggestedByOptions.map((item) => ({
               value: item,

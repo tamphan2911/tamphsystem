@@ -17,11 +17,12 @@ import {
   Trash2,
 } from "lucide-react";
 import {
-  FilterSelect,
   IconHint,
+  MultiFilterSelect,
   TablePagination,
   TableSearchInput,
   useTablePagination,
+  usePersistentMultiFilter,
   usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
@@ -63,6 +64,16 @@ type TaskRow = {
   createdBy: string;
   assignments: TaskAssignment[];
 };
+
+const taskStatusValues = [
+  "ALL",
+  "IN_PROGRESS",
+  "CHECKING",
+  "NEED_CLARIFY",
+  "OVERDUE",
+  "COMPLETED",
+  "REVOKED",
+];
 
 function formatDate(value: string | null) {
   if (!value) return "-";
@@ -365,10 +376,9 @@ export function TasksClient({
 }) {
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [query, setQuery] = usePersistentTableValue("tasks:q", "");
-  const [status, setStatus] = usePersistentTableValue("tasks:status", "ALL");
-  const [assignee, setAssignee] = usePersistentTableValue(
-    "tasks:assignee",
-    "ALL",
+  const [statuses, setStatuses] = usePersistentMultiFilter(
+    "tasks:status",
+    taskStatusValues,
   );
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -425,14 +435,19 @@ export function TasksClient({
     );
     return ["ALL", ...Array.from(names).sort()];
   }, [tasks]);
+  const [assignees, setAssignees] = usePersistentMultiFilter(
+    "tasks:assignee",
+    assigneeOptions,
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return tasks.filter((task) => {
-      const matchesStatus = status === "ALL" || derivedStatus(task) === status;
+      const matchesStatus =
+        statuses.length === 0 || statuses.includes(derivedStatus(task));
       const matchesAssignee =
-        assignee === "ALL" ||
-        task.assignments.some((item) => item.userName === assignee);
+        assignees.length === 0 ||
+        task.assignments.some((item) => assignees.includes(item.userName));
       const haystack = [
         displayTaskId(task),
         task.title,
@@ -455,7 +470,7 @@ export function TasksClient({
         (!needle || haystack.includes(needle))
       );
     });
-  }, [assignee, query, status, tasks]);
+  }, [assignees, query, statuses, tasks]);
   const pagination = useTablePagination(filtered, 10, 1, "tasks");
 
   function updateQuery(value: string) {
@@ -463,13 +478,13 @@ export function TasksClient({
     pagination.setPage(1);
   }
 
-  function updateStatus(value: string) {
-    setStatus(value);
+  function updateStatuses(values: string[]) {
+    setStatuses(values);
     pagination.setPage(1);
   }
 
-  function updateAssignee(value: string) {
-    setAssignee(value);
+  function updateAssignees(values: string[]) {
+    setAssignees(values);
     pagination.setPage(1);
   }
 
@@ -525,24 +540,25 @@ export function TasksClient({
             placeholder="Search task, assistant, category..."
           />
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-            <FilterSelect
-              value={status}
-              onChange={updateStatus}
+            <MultiFilterSelect
+              values={statuses}
+              onChange={updateStatuses}
               ariaLabel="Filter by task status"
-              options={[
-                { value: "ALL", label: "All status" },
-                { value: "IN_PROGRESS", label: "In progress" },
-                { value: "CHECKING", label: "Checking" },
-                { value: "NEED_CLARIFY", label: "Need clarify" },
-                { value: "OVERDUE", label: "Overdue" },
-                { value: "COMPLETED", label: "Completed" },
-                { value: "REVOKED", label: "Revoked" },
-              ]}
+              options={taskStatusValues.map((value) => ({
+                value,
+                label:
+                  value === "ALL"
+                    ? "All status"
+                    : value
+                        .toLowerCase()
+                        .replaceAll("_", " ")
+                        .replace(/^\w/, (letter) => letter.toUpperCase()),
+              }))}
             />
             {isAdmin && (
-              <FilterSelect
-                value={assignee}
-                onChange={updateAssignee}
+              <MultiFilterSelect
+                values={assignees}
+                onChange={updateAssignees}
                 ariaLabel="Filter by assignee"
                 options={assigneeOptions.map((item) => ({
                   value: item,

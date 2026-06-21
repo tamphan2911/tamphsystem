@@ -14,12 +14,13 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
-  FilterSelect,
   IconHint,
+  MultiFilterSelect,
   TablePagination,
   TableSearchInput,
   useTablePagination,
   usePersistentTableValue,
+  usePersistentMultiFilter,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
@@ -172,8 +173,10 @@ export function ReviewsTable({
   deleteAction: (reviewId: string) => Promise<void>;
 }) {
   const [query, setQuery] = usePersistentTableValue("reviews:q", "");
-  const [status, setStatus] = usePersistentTableValue("reviews:status", "ALL");
-  const [journal, setJournal] = usePersistentTableValue("reviews:journal", "ALL");
+  const [selectedStatuses, setSelectedStatuses] = usePersistentMultiFilter(
+    "reviews:status",
+    statuses,
+  );
 
   const journalOptions = useMemo(
     () => [
@@ -184,12 +187,18 @@ export function ReviewsTable({
     ],
     [rows],
   );
+  const [journals, setJournals] = usePersistentMultiFilter(
+    "reviews:journal",
+    journalOptions,
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
-      const matchesStatus = status === "ALL" || row.status === status;
-      const matchesJournal = journal === "ALL" || row.journalName === journal;
+      const matchesStatus =
+        selectedStatuses.length === 0 || selectedStatuses.includes(row.status);
+      const matchesJournal =
+        journals.length === 0 || journals.includes(row.journalName);
       const haystack = [
         row.journalName,
         row.publisher,
@@ -209,7 +218,7 @@ export function ReviewsTable({
         (!needle || haystack.includes(needle))
       );
     });
-  }, [journal, query, rows, status]);
+  }, [journals, query, rows, selectedStatuses]);
 
   const pagination = useTablePagination(filtered, 10, 1, "reviews");
 
@@ -218,13 +227,13 @@ export function ReviewsTable({
     pagination.setPage(1);
   }
 
-  function updateStatus(value: string) {
-    setStatus(value);
+  function updateStatuses(values: string[]) {
+    setSelectedStatuses(values);
     pagination.setPage(1);
   }
 
-  function updateJournal(value: string) {
-    setJournal(value);
+  function updateJournals(values: string[]) {
+    setJournals(values);
     pagination.setPage(1);
   }
 
@@ -237,18 +246,18 @@ export function ReviewsTable({
           placeholder="Search reviews, journal, manuscript..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <FilterSelect
-            value={status}
-            onChange={updateStatus}
+          <MultiFilterSelect
+            values={selectedStatuses}
+            onChange={updateStatuses}
             ariaLabel="Filter by status"
             options={statuses.map((item) => ({
               value: item,
               label: item === "ALL" ? "All statuses" : statusLabel(item),
             }))}
           />
-          <FilterSelect
-            value={journal}
-            onChange={updateJournal}
+          <MultiFilterSelect
+            values={journals}
+            onChange={updateJournals}
             ariaLabel="Filter by journal"
             options={journalOptions.map((item) => ({
               value: item,

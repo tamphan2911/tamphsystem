@@ -36,12 +36,13 @@ import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchFileUpload } from "@/sites/research/components/ResearchFileUpload";
 import {
-  FilterSelect,
   IconHint,
+  MultiFilterSelect,
   TablePagination,
   TableSearchInput,
   useTablePagination,
   usePersistentTableValue,
+  usePersistentMultiFilter,
 } from "@/sites/research/components/TableControls";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
@@ -117,6 +118,17 @@ const conferenceStatusOptions = [
   { value: "WITHDRAWN", label: "Withdraw" },
   { value: "PUBLISHED", label: "Published" },
 ];
+
+const submissionFilterStatuses = [
+  "ALL",
+  "SUBMITTED",
+  "REVIEWING",
+  "ACCEPTED",
+  "REJECTED",
+  "WITHDRAWN",
+  "PUBLISHED",
+];
+const submissionKinds = ["ALL", "journal", "conference"];
 
 function normalizedStatus(value: string) {
   if (value === "PENDING" || value === "SUBMITTED") return "SUBMITTED";
@@ -415,13 +427,13 @@ export function SubmissionsTable({
     "research-submissions:q",
     "",
   );
-  const [status, setStatus] = usePersistentTableValue(
+  const [statuses, setStatuses] = usePersistentMultiFilter(
     "research-submissions:status",
-    "ALL",
+    submissionFilterStatuses,
   );
-  const [kind, setKind] = usePersistentTableValue(
+  const [kinds, setKinds] = usePersistentMultiFilter(
     "research-submissions:kind",
-    "ALL",
+    submissionKinds,
   );
   const [editing, setEditing] = useState<SubmissionRow | null>(null);
   const [editingDetails, setEditingDetails] = useState<SubmissionRow | null>(
@@ -440,8 +452,9 @@ export function SubmissionsTable({
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const matchesStatus =
-        status === "ALL" || normalizedStatus(row.status) === status;
-      const matchesKind = kind === "ALL" || row.kind === kind;
+        statuses.length === 0 ||
+        statuses.includes(normalizedStatus(row.status));
+      const matchesKind = kinds.length === 0 || kinds.includes(row.kind);
       const haystack = [
         row.venueName,
         row.projectTitle,
@@ -471,7 +484,7 @@ export function SubmissionsTable({
         matchesStatus && matchesKind && (!needle || haystack.includes(needle))
       );
     });
-  }, [kind, query, rows, status]);
+  }, [kinds, query, rows, statuses]);
 
   const pagination = useTablePagination(
     filtered,
@@ -485,13 +498,13 @@ export function SubmissionsTable({
     pagination.setPage(1);
   }
 
-  function updateStatus(value: string) {
-    setStatus(value);
+  function updateStatuses(values: string[]) {
+    setStatuses(values);
     pagination.setPage(1);
   }
 
-  function updateKind(value: string) {
-    setKind(value);
+  function updateKinds(values: string[]) {
+    setKinds(values);
     pagination.setPage(1);
   }
 
@@ -626,24 +639,19 @@ export function SubmissionsTable({
             }
           />
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-            <FilterSelect
-              value={status}
-              onChange={updateStatus}
+            <MultiFilterSelect
+              values={statuses}
+              onChange={updateStatuses}
               ariaLabel="Filter submissions by status"
-              options={[
-                { value: "ALL", label: "All status" },
-                { value: "SUBMITTED", label: "Submitted" },
-                { value: "REVIEWING", label: "Reviewing" },
-                { value: "ACCEPTED", label: "Accepted" },
-                { value: "REJECTED", label: "Rejected" },
-                { value: "WITHDRAWN", label: "Withdraw" },
-                { value: "PUBLISHED", label: "Published" },
-              ]}
+              options={submissionFilterStatuses.map((value) => ({
+                value,
+                label: value === "ALL" ? "All status" : statusLabel(value),
+              }))}
             />
             {!isResearchView && (
-              <FilterSelect
-                value={kind}
-                onChange={updateKind}
+              <MultiFilterSelect
+                values={kinds}
+                onChange={updateKinds}
                 ariaLabel="Filter by venue type"
                 options={[
                   { value: "ALL", label: "All venues" },

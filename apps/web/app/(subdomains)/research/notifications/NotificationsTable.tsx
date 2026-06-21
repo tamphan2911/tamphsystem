@@ -15,12 +15,13 @@ import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfi
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
-  FilterSelect,
   IconHint,
+  MultiFilterSelect,
   TablePagination,
   TableSearchInput,
   useTablePagination,
   usePersistentTableValue,
+  usePersistentMultiFilter,
 } from "@/sites/research/components/TableControls";
 
 export type NotificationManagementRow = {
@@ -148,15 +149,7 @@ export function NotificationsTable({
   deleteNotificationAction: (notificationId: string) => Promise<void>;
 }) {
   const [query, setQuery] = usePersistentTableValue("notifications:q", "");
-  const [status, setStatus] = usePersistentTableValue(
-    "notifications:status",
-    "ALL",
-  );
-  const [type, setType] = usePersistentTableValue("notifications:type", "ALL");
-  const [recipient, setRecipient] = usePersistentTableValue(
-    "notifications:recipient",
-    "ALL",
-  );
+  const notificationStatuses = ["ALL", "UNREAD", "READ"];
 
   const typeOptions = useMemo(() => {
     const labels = new Map<string, string>();
@@ -186,6 +179,18 @@ export function NotificationsTable({
     ],
     [rows],
   );
+  const [statuses, setStatuses] = usePersistentMultiFilter(
+    "notifications:status",
+    notificationStatuses,
+  );
+  const [types, setTypes] = usePersistentMultiFilter(
+    "notifications:type",
+    typeOptions.map((option) => option.value),
+  );
+  const [recipients, setRecipients] = usePersistentMultiFilter(
+    "notifications:recipient",
+    recipientOptions,
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -194,11 +199,13 @@ export function NotificationsTable({
         ? `${row.recipientName} - ${row.recipientEmail}`
         : row.recipientEmail || "No email";
       const matchesStatus =
-        status === "ALL" ||
-        (status === "UNREAD" ? !row.readAt : Boolean(row.readAt));
-      const matchesType = type === "ALL" || row.type === type;
+        statuses.length === 0 ||
+        statuses.some((status) =>
+          status === "UNREAD" ? !row.readAt : Boolean(row.readAt),
+        );
+      const matchesType = types.length === 0 || types.includes(row.type);
       const matchesRecipient =
-        recipient === "ALL" || recipientLabel === recipient;
+        recipients.length === 0 || recipients.includes(recipientLabel);
       const haystack = [
         row.type,
         row.typeLabel,
@@ -223,7 +230,7 @@ export function NotificationsTable({
         (!needle || haystack.includes(needle))
       );
     });
-  }, [query, recipient, rows, status, type]);
+  }, [query, recipients, rows, statuses, types]);
 
   const pagination = useTablePagination(filtered, 10, 1, "notifications");
 
@@ -232,18 +239,18 @@ export function NotificationsTable({
     pagination.setPage(1);
   }
 
-  function updateStatus(value: string) {
-    setStatus(value);
+  function updateStatuses(values: string[]) {
+    setStatuses(values);
     pagination.setPage(1);
   }
 
-  function updateType(value: string) {
-    setType(value);
+  function updateTypes(values: string[]) {
+    setTypes(values);
     pagination.setPage(1);
   }
 
-  function updateRecipient(value: string) {
-    setRecipient(value);
+  function updateRecipients(values: string[]) {
+    setRecipients(values);
     pagination.setPage(1);
   }
 
@@ -256,9 +263,9 @@ export function NotificationsTable({
           placeholder="Search notifications, users, type..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <FilterSelect
-            value={status}
-            onChange={updateStatus}
+          <MultiFilterSelect
+            values={statuses}
+            onChange={updateStatuses}
             ariaLabel="Filter by read status"
             options={[
               { value: "ALL", label: "All status" },
@@ -266,15 +273,15 @@ export function NotificationsTable({
               { value: "READ", label: "Read" },
             ]}
           />
-          <FilterSelect
-            value={type}
-            onChange={updateType}
+          <MultiFilterSelect
+            values={types}
+            onChange={updateTypes}
             ariaLabel="Filter by notification type"
             options={typeOptions}
           />
-          <FilterSelect
-            value={recipient}
-            onChange={updateRecipient}
+          <MultiFilterSelect
+            values={recipients}
+            onChange={updateRecipients}
             ariaLabel="Filter by recipient"
             options={recipientOptions.map((item) => ({
               value: item,

@@ -15,12 +15,13 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
-  FilterSelect,
   IconHint,
+  MultiFilterSelect,
   TablePagination,
   TableSearchInput,
   useTablePagination,
   usePersistentTableValue,
+  usePersistentMultiFilter,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { researchMutedLinkClass } from "@/sites/research/components/ResearchPrimitives";
@@ -192,18 +193,22 @@ export function ProposalsTable({
   linkTitleToDetail?: boolean;
 }) {
   const [query, setQuery] = usePersistentTableValue("proposals:q", "");
-  const [type, setType] = usePersistentTableValue("proposals:type", "ALL");
-  const [status, setStatus] = usePersistentTableValue(
+  const [types, setTypes] = usePersistentMultiFilter(
+    "proposals:type",
+    typeOptions,
+  );
+  const [statuses, setStatuses] = usePersistentMultiFilter(
     "proposals:status",
-    "ALL",
+    statusOptions,
   );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const rowStatus = row.status === "REVIEWING" ? "NEW" : row.status;
-      const matchesType = type === "ALL" || row.type === type;
-      const matchesStatus = status === "ALL" || rowStatus === status;
+      const matchesType = types.length === 0 || types.includes(row.type);
+      const matchesStatus =
+        statuses.length === 0 || statuses.includes(rowStatus);
       const haystack = [
         row.title,
         row.description,
@@ -223,7 +228,7 @@ export function ProposalsTable({
         matchesType && matchesStatus && (!needle || haystack.includes(needle))
       );
     });
-  }, [query, rows, status, type]);
+  }, [query, rows, statuses, types]);
 
   const pagination = useTablePagination(filtered, 10, 1, "proposals");
 
@@ -232,13 +237,13 @@ export function ProposalsTable({
     pagination.setPage(1);
   }
 
-  function updateType(value: string) {
-    setType(value);
+  function updateTypes(values: string[]) {
+    setTypes(values);
     pagination.setPage(1);
   }
 
-  function updateStatus(value: string) {
-    setStatus(value);
+  function updateStatuses(values: string[]) {
+    setStatuses(values);
     pagination.setPage(1);
   }
 
@@ -251,18 +256,18 @@ export function ProposalsTable({
           placeholder="Search proposal, contact, submitter..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <FilterSelect
-            value={type}
-            onChange={updateType}
+          <MultiFilterSelect
+            values={types}
+            onChange={updateTypes}
             ariaLabel="Filter by proposal type"
             options={typeOptions.map((item) => ({
               value: item,
               label: item === "ALL" ? "All types" : label(item),
             }))}
           />
-          <FilterSelect
-            value={status}
-            onChange={updateStatus}
+          <MultiFilterSelect
+            values={statuses}
+            onChange={updateStatuses}
             ariaLabel="Filter by proposal status"
             options={statusOptions.map((item) => ({
               value: item,
