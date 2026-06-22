@@ -1567,6 +1567,13 @@ html[data-research-theme="light"]
   --research-row-bg: #faf7f0;
 }
 
+.research-site-root.research-theme-light
+  .research-related-tasks-table
+  tbody
+  tr:first-child {
+  --research-row-bg: var(--research-ink);
+}
+
 .research-site-root.research-theme-light tbody tr:hover {
   --research-row-bg: #f1ece2;
   --research-row-line: #d8d0c2;

@@ -195,7 +195,7 @@ export function RelatedResearchTasksTable({
       </div>
 
       <div className="overflow-hidden">
-        <table className="w-full table-fixed text-left">
+        <table className="research-related-tasks-table w-full table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="w-[8rem] px-3 py-3">Task ID</th>
