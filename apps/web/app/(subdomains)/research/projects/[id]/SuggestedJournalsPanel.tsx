@@ -824,83 +824,32 @@ export function SuggestedJournalsPanel({
                   journal or conference list first, then choose it here before
                   approving.
                 </p>
-                <SearchBox
-                  value={
-                    approveVenue.kind === "journal"
-                      ? journalQuery
-                      : conferenceQuery
-                  }
-                  onChange={(value) => {
-                    if (approveVenue.kind === "journal") setJournalQuery(value);
-                    else setConferenceQuery(value);
-                    setApprovalVenue(null);
-                  }}
-                  placeholder={
-                    approveVenue.kind === "journal"
-                      ? "Search journal to link..."
-                      : "Search conference to link..."
-                  }
-                />
-                <SelectedVenuePill
-                  venue={approvalVenue}
-                  onClear={() => setApprovalVenue(null)}
-                />
-                <ResultList
+                <ApprovalVenuePicker
+                  kind={approveVenue.kind}
                   query={
                     approveVenue.kind === "journal"
                       ? journalQuery
                       : conferenceQuery
                   }
-                  idleText="Search and select the matching venue."
-                  emptyText="No venue matches this search."
-                >
-                  {approveVenue.kind === "journal"
-                    ? journalResults.map((journal) => (
-                        <button
-                          key={journal.id}
-                          type="button"
-                          onClick={() =>
-                            setApprovalVenue({ kind: "journal", item: journal })
-                          }
-                          className={resultButtonClass(
-                            approvalVenue?.kind === "journal" &&
-                              approvalVenue.item.id === journal.id,
-                          )}
-                        >
-                          <span className="block text-sm font-normal text-[#E4E4E4]">
-                            {journal.name}
-                          </span>
-                          <span className="mt-1 block text-xs text-[#B0B0B0]">
-                            {journal.issn || "No ISSN"} -{" "}
-                            {journal.publisher || "No publisher"}
-                          </span>
-                        </button>
-                      ))
-                    : conferenceResults.map((conference) => (
-                        <button
-                          key={conference.id}
-                          type="button"
-                          onClick={() =>
-                            setApprovalVenue({
-                              kind: "conference",
-                              item: conference,
-                            })
-                          }
-                          className={resultButtonClass(
-                            approvalVenue?.kind === "conference" &&
-                              approvalVenue.item.id === conference.id,
-                          )}
-                        >
-                          <span className="block text-sm font-normal text-[#E4E4E4]">
-                            {conference.name}
-                          </span>
-                          <span className="mt-1 block text-xs text-[#B0B0B0]">
-                            {conference.organizer || "No organizer"} -{" "}
-                            {conference.location || "No location"}
-                          </span>
-                        </button>
-                      ))}
-                </ResultList>
+                  selectedVenue={approvalVenue}
+                  journals={journalResults}
+                  conferences={conferenceResults}
+                  onQueryChange={(value) => {
+                    if (approveVenue.kind === "journal") setJournalQuery(value);
+                    else setConferenceQuery(value);
+                    setApprovalVenue(null);
+                  }}
+                  onSelect={(venue) => {
+                    setApprovalVenue(venue);
+                    if (venue.kind === "journal") setJournalQuery(venue.item.name);
+                    else setConferenceQuery(venue.item.name);
+                  }}
+                  onClear={() => {
+                    setApprovalVenue(null);
+                    if (approveVenue.kind === "journal") setJournalQuery("");
+                    else setConferenceQuery("");
+                  }}
+                />
               </>
             )}
           </form>
@@ -1327,6 +1276,103 @@ function resultButtonClass(selected: boolean) {
   }`;
 }
 
+function ApprovalVenuePicker({
+  kind,
+  query,
+  selectedVenue,
+  journals,
+  conferences,
+  onQueryChange,
+  onSelect,
+  onClear,
+}: {
+  kind: "journal" | "conference";
+  query: string;
+  selectedVenue: Venue | null;
+  journals: SuggestedJournalOption[];
+  conferences: SuggestedConferenceOption[];
+  onQueryChange: (value: string) => void;
+  onSelect: (venue: Venue) => void;
+  onClear: () => void;
+}) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const results = kind === "journal" ? journals : conferences;
+  const showDropdown = !selectedVenue && query.trim().length > 0;
+
+  return (
+    <div ref={wrapperRef} className="relative z-30">
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6C778D] dark:text-[#B0B0B0]" />
+      <input
+        value={selectedVenue ? selectedVenue.item.name : query}
+        onChange={(event) => onQueryChange(event.target.value)}
+        readOnly={Boolean(selectedVenue)}
+        placeholder={
+          kind === "journal"
+            ? "Search journal to link..."
+            : "Search conference to link..."
+        }
+        className={`${researchSearchFieldClass} pr-10 pl-9`}
+      />
+      {selectedVenue ? (
+        <IconHint label="Clear selection" position="bottom">
+          <button
+            type="button"
+            onClick={onClear}
+            aria-label="Clear selected venue"
+            className="research-clickable-icon research-allow-transform absolute right-3 top-1/2 inline-flex h-5 w-5 -translate-y-1/2 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-[#6C778D] shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:bg-transparent hover:text-[#1F7180] hover:shadow-none focus-visible:ring-0 active:scale-95 dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </IconHint>
+      ) : null}
+      <FloatingDropdownPortal
+        anchorRef={wrapperRef}
+        open={showDropdown}
+        maxWidth={760}
+        maxPanelHeight={232}
+      >
+        <div className={researchDropdownPanelClass}>
+          <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
+            {results.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onSelect({ kind, item } as Venue)}
+                className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
+              >
+                <span className="min-w-0 px-3">
+                  <span className="block truncate text-sm font-normal">
+                    {item.name}
+                  </span>
+                  <span className="mt-1 block truncate text-xs text-[#6C778D] dark:text-[#B0B0B0]">
+                    {kind === "journal"
+                      ? `${(item as SuggestedJournalOption).issn || "No ISSN"} | ${
+                          (item as SuggestedJournalOption).publisher ||
+                          "No publisher"
+                        }`
+                      : `${
+                          (item as SuggestedConferenceOption).organizer ||
+                          "No organizer"
+                        } | ${
+                          (item as SuggestedConferenceOption).location ||
+                          "No location"
+                        }`}
+                  </span>
+                </span>
+              </button>
+            ))}
+            {results.length === 0 ? (
+              <p className="py-8 text-center text-sm text-[#6C778D] dark:text-[#B0B0B0]">
+                No {kind} matches this search.
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </FloatingDropdownPortal>
+    </div>
+  );
+}
+
 function SelectedVenuePill({
   venue,
   onClear,
@@ -1418,7 +1464,7 @@ function VenueSection({
       <h3 className="mb-3 text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
         {title}
       </h3>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{children}</div>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{children}</div>
     </div>
   );
 }
@@ -1635,18 +1681,30 @@ function VenueAttribution({
       <p className="whitespace-normal break-words">
         Suggested by{" "}
         <span className="font-normal text-slate-900 dark:text-[#E4E4E4]">
-          {name || "Unknown user"} - {email || "Unknown email"}
+          {name || "Unknown user"}
+          <AttributionSeparator />
+          {email || "Unknown email"}
         </span>
       </p>
       {showApproval && approvedByName && approvedByEmail ? (
         <p className="whitespace-normal break-words">
           Approved by{" "}
           <span className="font-normal text-slate-900 dark:text-[#E4E4E4]">
-            {approvedByName} - {approvedByEmail}
+            {approvedByName}
+            <AttributionSeparator />
+            {approvedByEmail}
           </span>
         </p>
       ) : null}
     </div>
+  );
+}
+
+function AttributionSeparator() {
+  return (
+    <span className="px-1.5 text-[#98A2B3] dark:text-[#777777]" aria-hidden>
+      |
+    </span>
   );
 }
 
