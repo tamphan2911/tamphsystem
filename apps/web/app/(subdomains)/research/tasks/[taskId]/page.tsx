@@ -25,7 +25,6 @@ import {
 import {
   prisma,
   JournalApprovalStatus,
-  ResearchTaskType,
   ResearchTaskStatus,
   Role,
 } from "@repo/db";
@@ -568,12 +567,6 @@ export default async function TaskDetailPage({
       Boolean(isRelatedOrganizedProjectTask));
   const canManageThisTask = isRootAdmin || canAccessAsChiefAssistant;
   if (!canManageThisTask && !isAssigner && !isAssignee) notFound();
-
-  const effectiveTaskType = task.taskType ?? ResearchTaskType.OTHER;
-  const taskGuide = await prisma.taskGuide.findUnique({
-    where: { taskType: effectiveTaskType },
-    select: { title: true, content: true },
-  });
 
   const associatedJournalSubmission =
     task.projectId && task.journalId
@@ -1267,10 +1260,7 @@ export default async function TaskDetailPage({
                 <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                   Task content
                 </h2>
-                <TaskGuideButton
-                  taskType={effectiveTaskType}
-                  guide={taskGuide}
-                />
+                <TaskGuideButton />
               </div>
               <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#B0B0B0]">
                 {task.description || "No task note."}

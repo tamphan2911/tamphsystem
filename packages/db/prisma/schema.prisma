@@ -820,13 +820,13 @@ model ResearchTask {
 }
 
 model TaskGuide {
-  id          String           @id @default(uuid())
-  taskType    ResearchTaskType @unique
+  id          String   @id @default(uuid())
+  guideCode   String   @unique
   title       String
   content     String
   createdById String?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   createdBy User? @relation("TaskGuideCreator", fields: [createdById], references: [id], onDelete: SetNull)
 

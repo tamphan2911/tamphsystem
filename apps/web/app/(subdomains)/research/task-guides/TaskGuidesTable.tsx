@@ -10,12 +10,11 @@ import {
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
-import { taskGuideTypeLabel } from "@/sites/research/lib/task-guide";
 import { TaskGuideDialog } from "./TaskGuideDialog";
 
 export type TaskGuideRow = {
   id: string;
-  taskType: string;
+  guideCode: string;
   title: string;
   content: string;
   updatedAt: string;
@@ -59,7 +58,7 @@ function DeleteGuideButton({
             router.refresh();
             toast.showSuccess({
               title: "Task guide deleted",
-              detail: `${guide.title} is no longer shown on matching tasks.`,
+              detail: `${guide.title} has been removed.`,
             });
           } catch (error) {
             toast.showError({
@@ -94,7 +93,7 @@ export function TaskGuidesTable({
     const needle = query.trim().toLowerCase();
     if (!needle) return rows;
     return rows.filter((row) =>
-      [row.taskType, taskGuideTypeLabel(row.taskType), row.title, row.content]
+      [row.guideCode, row.title, row.content]
         .join(" ")
         .toLowerCase()
         .includes(needle),
@@ -107,14 +106,14 @@ export function TaskGuidesTable({
         <TableSearchInput
           value={query}
           onChange={setQuery}
-          placeholder="Search task type, title, or guide content..."
+          placeholder="Search guide ID, title, or content..."
         />
       </div>
       <div className="overflow-hidden">
         <table className="w-full table-fixed text-left">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500 dark:border-[#444444] dark:bg-[#383838] dark:text-[#B0B0B0]">
             <tr>
-              <th className="w-[14rem] px-4 py-3">Task type</th>
+              <th className="w-24 px-4 py-3">ID</th>
               <th className="px-4 py-3">Guide</th>
               <th className="w-[9rem] px-3 py-3">Updated</th>
               <th className="w-12 px-2 py-3 text-center">
@@ -131,8 +130,8 @@ export function TaskGuidesTable({
                 key={guide.id}
                 className="align-top transition-colors hover:bg-slate-50 dark:hover:bg-[#383838]"
               >
-                <td className="px-4 py-3 text-sm text-violet-700 dark:text-violet-300">
-                  {taskGuideTypeLabel(guide.taskType)}
+                <td className="px-4 py-3 font-mono text-xs text-violet-700 dark:text-violet-300">
+                  {guide.guideCode}
                 </td>
                 <td className="px-4 py-3">
                   <p className="font-normal text-slate-900 dark:text-[#E4E4E4]">
@@ -167,8 +166,8 @@ export function TaskGuidesTable({
                     title="No task guides match this search."
                     detail={
                       rows.length
-                        ? "Try another task type or keyword."
-                        : "Create the first guide for a task type."
+                        ? "Try another guide ID or keyword."
+                        : "Create the first task guide."
                     }
                   />
                 </td>

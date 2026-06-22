@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { BookOpenText, Loader2, Pencil, PlusCircle, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
-import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import {
   ResearchButton,
   ResearchIconButton,
@@ -12,13 +11,9 @@ import {
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
-import {
-  taskGuideTypeLabel,
-  taskGuideTypeOptions,
-} from "@/sites/research/lib/task-guide";
 
 export type TaskGuideFormValues = {
-  taskType: string;
+  guideCode: string;
   title: string;
   content: string;
 };
@@ -89,7 +84,7 @@ export function TaskGuideDialog({
                 router.refresh();
                 toast.showSuccess({
                   title: isEdit ? "Task guide updated" : "Task guide created",
-                  detail: "The guide content is ready for matching tasks.",
+                  detail: "The guide content is ready to be assigned later.",
                 });
               } catch (error) {
                 toast.showError({
@@ -103,24 +98,19 @@ export function TaskGuideDialog({
             });
           }}
         >
-          <label className="grid gap-1.5 text-sm">
-            <span className="text-xs uppercase text-slate-500 dark:text-[#B0B0B0]">
-              Task type
-            </span>
-            <ResearchFormSelect
-              name="taskType"
-              defaultValue={initialValues?.taskType ?? ""}
-              ariaLabel="Task guide type"
-              disabled={isEdit}
-              options={[
-                { value: "", label: "Choose task type" },
-                ...taskGuideTypeOptions.map((value) => ({
-                  value,
-                  label: taskGuideTypeLabel(value),
-                })),
-              ]}
-            />
-          </label>
+          {isEdit ? (
+            <label className="grid gap-1.5 text-sm">
+              <span className="text-xs uppercase text-slate-500 dark:text-[#B0B0B0]">
+                Guide ID
+              </span>
+              <input
+                value={initialValues?.guideCode ?? ""}
+                readOnly
+                aria-label="Guide ID"
+                className={`${researchFieldClass} font-mono`}
+              />
+            </label>
+          ) : null}
           <label className="grid gap-1.5 text-sm">
             <span className="text-xs uppercase text-slate-500 dark:text-[#B0B0B0]">
               Guide title
@@ -142,7 +132,7 @@ export function TaskGuideDialog({
               required
               rows={12}
               defaultValue={initialValues?.content}
-              placeholder="Write the instructions, checks, links, and notes for this task type."
+              placeholder="Write the instructions, checks, links, and notes for this guide."
               className={`${researchTextareaClass} min-h-72 whitespace-pre-wrap`}
             />
           </label>

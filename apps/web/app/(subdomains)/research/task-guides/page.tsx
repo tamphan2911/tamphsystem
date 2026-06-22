@@ -17,11 +17,11 @@ export default async function TaskGuidesPage() {
   if (!roles.includes(Role.ADMIN)) redirect("/401");
   const guides = await prisma.taskGuide.findMany({
     include: { createdBy: { select: { name: true, email: true } } },
-    orderBy: [{ updatedAt: "desc" }, { taskType: "asc" }],
+    orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
   });
   const rows: TaskGuideRow[] = guides.map((guide) => ({
     id: guide.id,
-    taskType: guide.taskType,
+    guideCode: guide.guideCode,
     title: guide.title,
     content: guide.content,
     updatedAt: researchDateTimeFormat("en-GB", {

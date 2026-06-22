@@ -2,9 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma, ResearchTaskType, Role } from "@repo/db";
+import { Prisma, prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
-import { taskGuideTypeOptions } from "@/sites/research/lib/task-guide";
 
 async function requireAdmin() {
   const session = await auth();
@@ -19,28 +18,45 @@ async function requireAdmin() {
 }
 
 function guideValues(formData: FormData) {
-  const taskType = String(formData.get("taskType") ?? "").trim();
   const title = String(formData.get("title") ?? "").trim();
   const content = String(formData.get("content") ?? "").trim();
-  if (!taskGuideTypeOptions.includes(taskType as never)) {
-    throw new Error("Choose a valid task type.");
-  }
   if (!title) throw new Error("Enter a guide title.");
   if (!content) throw new Error("Enter the guide content.");
-  return { taskType: taskType as ResearchTaskType, title, content };
+  return { title, content };
+}
+
+async function nextGuideCode() {
+  const guides = await prisma.taskGuide.findMany({
+    select: { guideCode: true },
+  });
+  const highestNumber = guides.reduce((highest, guide) => {
+    const match = /^G(\d+)$/.exec(guide.guideCode);
+    return match ? Math.max(highest, Number(match[1])) : highest;
+  }, 0);
+  return `G${String(highestNumber + 1).padStart(3, "0")}`;
 }
 
 export async function createTaskGuide(formData: FormData) {
   const userId = await requireAdmin();
   const values = guideValues(formData);
-  const existing = await prisma.taskGuide.findUnique({
-    where: { taskType: values.taskType },
-    select: { id: true },
-  });
-  if (existing) throw new Error("A guide already exists for this task type.");
-  await prisma.taskGuide.create({
-    data: { ...values, createdById: userId },
-  });
+  let created = false;
+  for (let attempt = 0; attempt < 3 && !created; attempt += 1) {
+    try {
+      await prisma.taskGuide.create({
+        data: {
+          ...values,
+          guideCode: await nextGuideCode(),
+          createdById: userId,
+        },
+      });
+      created = true;
+    } catch (error) {
+      const isCodeCollision =
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002";
+      if (!isCodeCollision || attempt === 2) throw error;
+    }
+  }
   revalidatePath("/task-guides");
 }
 
