@@ -74,6 +74,10 @@ function sortedTaskBreakdown(row: AssistantRow) {
   );
 }
 
+function unfinishedTaskTotal(row: AssistantRow) {
+  return row.unfinishedTasks.reduce((total, item) => total + item.count, 0);
+}
+
 export function AssistantsTable({
   rows,
   canManage,
@@ -150,6 +154,17 @@ export function AssistantsTable({
       }
       return { ...current, [userId]: willShow };
     });
+  }
+
+  function prefillTaskFilters(row: AssistantRow) {
+    if (typeof window === "undefined") return;
+    const searchValue = row.name || row.email;
+    window.sessionStorage.setItem("research:/tasks:tasks:q", searchValue);
+    window.sessionStorage.setItem(
+      "research:/tasks:tasks:status",
+      "IN_PROGRESS,CHECKING,NEED_CLARIFY,OVERDUE",
+    );
+    window.sessionStorage.removeItem("research:/tasks:tasks:page");
   }
 
   function openEdit(row: AssistantRow) {
@@ -286,8 +301,13 @@ export function AssistantsTable({
                   <RolePill role={user.assistantRole} />
                 </td>
                 <td className="px-3 py-3 text-sm leading-5 text-[#243047] dark:text-[#E4E4E4]">
-                  {user.unfinishedTasks.length > 0 ? (
-                    <div className="grid gap-1">
+                  {unfinishedTaskTotal(user) > 0 ? (
+                    <Link
+                      href="/tasks"
+                      onClick={() => prefillTaskFilters(user)}
+                      className="research-allow-transform grid gap-1 text-left outline-none transition-[color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:text-[#1F7180] focus-visible:text-[#1F7180] focus-visible:ring-0 active:translate-y-0 active:scale-[0.985] dark:hover:text-[#A8DADC] dark:focus-visible:text-[#A8DADC]"
+                      aria-label={`Open unfinished tasks for ${user.name || user.email}`}
+                    >
                       {sortedTaskBreakdown(user).map((item) => (
                         <span key={item.status} className="block">
                           <span className="font-normal text-[#1F2937] dark:text-[#E4E4E4]">
@@ -298,7 +318,7 @@ export function AssistantsTable({
                           </span>
                         </span>
                       ))}
-                    </div>
+                    </Link>
                   ) : (
                     <span className="text-[#6C778D] dark:text-[#B0B0B0]">
                       No unfinished task

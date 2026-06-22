@@ -45,7 +45,6 @@ import {
 } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import {
-  displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
 import { FinishTaskForm } from "./FinishTaskForm";
@@ -290,8 +289,45 @@ function taskTypeMeta(taskType: string | null, category: string | null) {
 
 function DetailSeparator() {
   return (
-    <span className="px-1 text-[#A0A8B5] dark:text-[#777777]" aria-hidden>
+    <span className="px-2 text-[#A0A8B5] dark:text-[#777777]" aria-hidden>
       |
+    </span>
+  );
+}
+
+function displayRole(roles: Role[]) {
+  if (roles.includes(Role.ADMIN)) return "Admin";
+  if (roles.includes(Role.CHIEF_ASSISTANT)) return "Chief assistant";
+  if (roles.includes(Role.ASSISTANT)) return "Assistant";
+  if (roles.includes(Role.RESEARCHER)) return "Researcher";
+  if (roles.includes(Role.LECTURER)) return "Lecturer";
+  return (
+    roles[0]
+      ?.replace("_", " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (letter) => letter.toUpperCase()) || "User"
+  );
+}
+
+function TaskPersonLine({
+  person,
+}: {
+  person: { name: string | null; email: string; roles: Role[] };
+}) {
+  return (
+    <span className="flex min-w-0 items-start gap-3">
+      <UserRound className="research-task-icon-motion mt-0.5 h-4 w-4 flex-none text-amber-700 dark:text-amber-300" />
+      <span className="min-w-0 leading-tight">
+        <span className="flex min-w-0 flex-wrap items-center text-sm font-normal text-[#1F2937] dark:text-[#E4E4E4]">
+          <span className="min-w-0 truncate">
+            {displayResearchPersonName(person)}
+          </span>
+          <DetailSeparator />
+          <span className="text-xs text-[#667085] dark:text-[#B0B0B0]">
+            {displayRole(person.roles)}
+          </span>
+        </span>
+      </span>
     </span>
   );
 }
@@ -409,7 +445,8 @@ export default async function TaskDetailPage({
       reportFileSize: true,
       reportUploadedAt: true,
       reportUploadedById: true,
-      createdBy: { select: { name: true, email: true } },
+      createdBy: { select: { name: true, email: true, roles: true } },
+      checker: { select: { name: true, email: true, roles: true } },
       project: {
         select: {
           id: true,
@@ -1253,29 +1290,42 @@ export default async function TaskDetailPage({
             </div>
           )}
 
-          <section className="grid gap-3 border-t border-[#444444] p-5">
-            <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-              Assignees
-            </h2>
-            <div className="grid max-w-2xl gap-3 sm:grid-cols-2">
-              {task.assignments.map((assignment) => (
-                <div
-                  key={assignment.id}
-                  className="border-t border-[#444444] pt-3"
-                >
-                  <span className="flex min-w-0 items-start gap-3">
-                    <UserRound className="research-task-icon-motion mt-0.5 h-4 w-4 flex-none text-amber-700 dark:text-amber-300" />
-                    <span className="min-w-0 leading-tight">
-                      <span className="block truncate text-sm font-normal text-[#E4E4E4]">
-                        {displayResearchPersonName(assignment.user)}
-                      </span>
-                      <span className="block truncate text-xs text-[#B0B0B0]">
-                        {displayResearchEmail(assignment.user.email)}
-                      </span>
-                    </span>
-                  </span>
-                </div>
-              ))}
+          <section className="grid gap-5 border-t border-[#444444] p-5 md:grid-cols-3">
+            <div className="grid gap-3">
+              <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                Assignees
+              </h2>
+              <div className="divide-y divide-[#D8D0C2] border-t border-[#D8D0C2] dark:divide-[#444444] dark:border-[#444444]">
+                {task.assignments.length > 0 ? (
+                  task.assignments.map((assignment) => (
+                    <div key={assignment.id} className="py-3">
+                      <TaskPersonLine person={assignment.user} />
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-3 text-sm text-[#667085] dark:text-[#B0B0B0]">
+                    No assignee
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-3">
+              <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                Checker
+              </h2>
+              <div className="border-t border-[#D8D0C2] py-3 dark:border-[#444444]">
+                <TaskPersonLine person={task.checker ?? task.createdBy} />
+              </div>
+            </div>
+
+            <div className="grid gap-3">
+              <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                Assigner
+              </h2>
+              <div className="border-t border-[#D8D0C2] py-3 dark:border-[#444444]">
+                <TaskPersonLine person={task.createdBy} />
+              </div>
             </div>
           </section>
         </div>

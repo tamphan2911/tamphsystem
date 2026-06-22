@@ -172,7 +172,7 @@ export function RelatedResearchTasksTable({
 
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
-      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+      <div className="research-related-tasks-toolbar flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
           onChange={updateQuery}

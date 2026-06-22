@@ -4779,6 +4779,10 @@ html.research-theme-transitioning
   animation: research-sortable-table-settle 180ms ease-out;
 }
 
+.research-site-root.research-theme-light .research-related-tasks-toolbar {
+  background-color: #f7f4ed !important;
+}
+
 @keyframes research-sortable-table-settle {
   from {
     opacity: 0.82;
