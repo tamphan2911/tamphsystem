@@ -105,6 +105,8 @@ model User {
   suggestedConferences            SuggestedConference[]        @relation("SuggestedConferenceCreator")
   approvedSuggestedJournals       SuggestedJournal[]           @relation("SuggestedJournalApprover")
   approvedSuggestedConferences    SuggestedConference[]        @relation("SuggestedConferenceApprover")
+  declinedSuggestedJournals       SuggestedJournal[]           @relation("SuggestedJournalDecliner")
+  declinedSuggestedConferences    SuggestedConference[]        @relation("SuggestedConferenceDecliner")
   sentResearchAuthorNotifications ResearchAuthorNotification[] @relation("ResearchAuthorNotificationSender")
   createdOrganizedProjects        OrganizedProject[]           @relation("OrganizedProjectCreator")
   createdJournals                 Journal[]                    @relation("JournalCreator")
@@ -301,6 +303,7 @@ enum ConferenceSubmissionStatus {
 enum SuggestedVenueStatus {
   PENDING
   APPROVED
+  DECLINED
 }
 
 enum CurrencyCode {
@@ -613,6 +616,9 @@ model SuggestedConference {
   status           SuggestedVenueStatus @default(APPROVED)
   approvedAt       DateTime?
   approvedById     String?
+  declinedAt       DateTime?
+  declinedById     String?
+  declineReason    String?
   requiresApproval Boolean              @default(false)
   createdById      String?
   createdAt        DateTime             @default(now())
@@ -621,10 +627,12 @@ model SuggestedConference {
   conference Conference?     @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
   createdBy  User?           @relation("SuggestedConferenceCreator", fields: [createdById], references: [id], onDelete: SetNull)
   approvedBy User?           @relation("SuggestedConferenceApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  declinedBy User?           @relation("SuggestedConferenceDecliner", fields: [declinedById], references: [id], onDelete: SetNull)
 
   @@unique([projectId, conferenceId])
   @@index([projectId, status])
   @@index([approvedById])
+  @@index([declinedById])
 }
 
 model ConferenceSubmission {
@@ -718,6 +726,9 @@ model SuggestedJournal {
   status           SuggestedVenueStatus @default(APPROVED)
   approvedAt       DateTime?
   approvedById     String?
+  declinedAt       DateTime?
+  declinedById     String?
+  declineReason    String?
   requiresApproval Boolean              @default(false)
   createdById      String?
   createdAt        DateTime             @default(now())
@@ -726,10 +737,12 @@ model SuggestedJournal {
   journal    Journal?        @relation(fields: [journalId], references: [id], onDelete: Cascade)
   createdBy  User?           @relation("SuggestedJournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
   approvedBy User?           @relation("SuggestedJournalApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  declinedBy User?           @relation("SuggestedJournalDecliner", fields: [declinedById], references: [id], onDelete: SetNull)
 
   @@unique([projectId, journalId])
   @@index([projectId, status])
   @@index([approvedById])
+  @@index([declinedById])
 }
 
 model AcademicReview {

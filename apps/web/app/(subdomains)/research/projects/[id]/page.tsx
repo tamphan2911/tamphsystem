@@ -685,6 +685,7 @@ export default async function ProjectDetailPage({
           ? displayResearchEmail(createdBy.email)
           : "Unknown email",
         requiresApproval: suggestion.requiresApproval,
+        declineReason: suggestion.declineReason ?? undefined,
         approvedByName: approvedBy
           ? displayResearchPersonName(approvedBy) || "Unknown user"
           : undefined,
@@ -694,9 +695,14 @@ export default async function ProjectDetailPage({
         venueState:
           suggestion.status === "PENDING"
             ? { state: "pendingApproval" }
-            : journal
-              ? suggestedJournalState(journal.id)
-              : { state: "pendingApproval" },
+            : suggestion.status === "DECLINED"
+              ? {
+                  state: "declined",
+                  declineReason: suggestion.declineReason ?? undefined,
+                }
+              : journal
+                ? suggestedJournalState(journal.id)
+                : { state: "pendingApproval" },
       }),
     );
   const allConferenceOptions: SuggestedConferenceOption[] = conferences.map(
@@ -760,6 +766,7 @@ export default async function ProjectDetailPage({
           ? displayResearchEmail(createdBy.email)
           : "Unknown email",
         requiresApproval: suggestion.requiresApproval,
+        declineReason: suggestion.declineReason ?? undefined,
         approvedByName: approvedBy
           ? displayResearchPersonName(approvedBy) || "Unknown user"
           : undefined,
@@ -769,9 +776,14 @@ export default async function ProjectDetailPage({
         venueState:
           suggestion.status === "PENDING"
             ? { state: "pendingApproval" }
-            : conference
-              ? suggestedConferenceState(conference.id)
-              : { state: "pendingApproval" },
+            : suggestion.status === "DECLINED"
+              ? {
+                  state: "declined",
+                  declineReason: suggestion.declineReason ?? undefined,
+                }
+              : conference
+                ? suggestedConferenceState(conference.id)
+                : { state: "pendingApproval" },
       }),
     );
   const taskAssigneeOptions: TaskAssigneeOption[] = taskAssignees.map(

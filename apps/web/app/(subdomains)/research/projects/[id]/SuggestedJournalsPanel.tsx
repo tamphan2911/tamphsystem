@@ -6,6 +6,7 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Ban,
   Check,
   ChevronDown,
   ClipboardList,
@@ -23,6 +24,8 @@ import {
   approveSuggestedConference,
   approveSuggestedJournal,
   createResearchTask,
+  declineSuggestedConference,
+  declineSuggestedJournal,
   deleteSuggestedConference,
   deleteSuggestedJournal,
 } from "../../actions";
@@ -78,6 +81,7 @@ export type SuggestedJournalOption = {
   requiresApproval?: boolean;
   approvedByName?: string;
   approvedByEmail?: string;
+  declineReason?: string;
   venueState?: SuggestedVenueState;
 };
 
@@ -109,6 +113,7 @@ export type SuggestedConferenceOption = {
   requiresApproval?: boolean;
   approvedByName?: string;
   approvedByEmail?: string;
+  declineReason?: string;
   venueState?: SuggestedVenueState;
 };
 
@@ -123,8 +128,10 @@ export type SuggestedVenueState = {
     | "accepted"
     | "published"
     | "pendingApproval"
+    | "declined"
     | "blocked";
   publishedAt?: string;
+  declineReason?: string;
 };
 
 export type TaskAssigneeOption = {
@@ -180,6 +187,8 @@ export function SuggestedJournalsPanel({
   const [assignVenue, setAssignVenue] = useState<Venue | null>(null);
   const [deleteVenue, setDeleteVenue] = useState<Venue | null>(null);
   const [approveVenue, setApproveVenue] = useState<Venue | null>(null);
+  const [declineConfirmOpen, setDeclineConfirmOpen] = useState(false);
+  const [declineReason, setDeclineReason] = useState("");
   const [selectedAddVenue, setSelectedAddVenue] = useState<Venue | null>(null);
   const [approvalVenue, setApprovalVenue] = useState<Venue | null>(null);
   const [freeVenueName, setFreeVenueName] = useState("");
@@ -196,7 +205,7 @@ export function SuggestedJournalsPanel({
   const [selectedCheckerId, setSelectedCheckerId] = useState("");
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [taskMode, setTaskMode] = useState<"submit" | "other">("submit");
-  const { showSuccess } = useResearchToast();
+  const { showError, showSuccess } = useResearchToast();
   const accountDropdownRef = useRef<HTMLDivElement>(null);
   const assistantDropdownRef = useRef<HTMLDivElement>(null);
   const checkerDropdownRef = useRef<HTMLDivElement>(null);
@@ -444,6 +453,45 @@ export function SuggestedJournalsPanel({
       showSuccess({
         title: "Venue suggestion approved",
         detail: `${approveVenue.item.name} can now be used for submission tasks.`,
+      });
+      router.refresh();
+    });
+  }
+
+  function declineSuggestion() {
+    if (!approveVenue) return;
+    const reason = declineReason.trim();
+    if (!reason) {
+      showError({
+        title: "Decline reason required",
+        detail: "Enter the reason before confirming this decision.",
+      });
+      return;
+    }
+
+    const venue = approveVenue;
+    startTransition(async () => {
+      const result =
+        venue.kind === "journal"
+          ? await declineSuggestedJournal(projectId, venue.item.id, reason)
+          : await declineSuggestedConference(projectId, venue.item.id, reason);
+      if (!result.ok) {
+        showError({
+          title: "Suggestion was not declined",
+          detail: result.message || "Please refresh the page and try again.",
+        });
+        return;
+      }
+
+      setDeclineConfirmOpen(false);
+      setDeclineReason("");
+      setApproveVenue(null);
+      setApprovalVenue(null);
+      setJournalQuery("");
+      setConferenceQuery("");
+      showSuccess({
+        title: "Venue suggestion declined",
+        detail: `${venue.item.name} remains listed with its declined status. The suggester has been notified.`,
       });
       router.refresh();
     });
@@ -780,6 +828,8 @@ export function SuggestedJournalsPanel({
           onClose={() => {
             setApproveVenue(null);
             setApprovalVenue(null);
+            setDeclineConfirmOpen(false);
+            setDeclineReason("");
             setJournalQuery("");
             setConferenceQuery("");
           }}
@@ -788,13 +838,23 @@ export function SuggestedJournalsPanel({
           maxWidth="max-w-2xl"
           bodyClassName="px-5 py-4"
           headerActions={
-            <ResearchButton
-              form="approve-suggested-venue-form"
-              disabled={!approveVenue.item.venueId && !approvalVenue}
-            >
-              <Check className="h-4 w-4" />
-              Approve
-            </ResearchButton>
+            <div className="flex items-center gap-2">
+              <ResearchButton
+                type="button"
+                tone="danger"
+                onClick={() => setDeclineConfirmOpen(true)}
+              >
+                <Ban className="h-4 w-4" />
+                Decline
+              </ResearchButton>
+              <ResearchButton
+                form="approve-suggested-venue-form"
+                disabled={!approveVenue.item.venueId && !approvalVenue}
+              >
+                <Check className="h-4 w-4" />
+                Approve
+              </ResearchButton>
+            </div>
           }
         >
           <form
@@ -841,7 +901,8 @@ export function SuggestedJournalsPanel({
                   }}
                   onSelect={(venue) => {
                     setApprovalVenue(venue);
-                    if (venue.kind === "journal") setJournalQuery(venue.item.name);
+                    if (venue.kind === "journal")
+                      setJournalQuery(venue.item.name);
                     else setConferenceQuery(venue.item.name);
                   }}
                   onClear={() => {
@@ -854,6 +915,49 @@ export function SuggestedJournalsPanel({
             )}
           </form>
         </ResearchModal>
+      )}
+
+      {approveVenue && (
+        <ResearchConfirmDialog
+          open={declineConfirmOpen}
+          title="Decline venue suggestion?"
+          confirmLabel={isPending ? "Declining..." : "Confirm decline"}
+          confirmIcon={<Ban className="h-4 w-4" />}
+          isConfirming={isPending}
+          confirmDisabled={!declineReason.trim()}
+          tone="danger"
+          onCancel={() => {
+            setDeclineConfirmOpen(false);
+            setDeclineReason("");
+          }}
+          onConfirm={declineSuggestion}
+        >
+          <p>
+            Decline{" "}
+            <span className="font-normal text-slate-950 dark:text-[#E4E4E4]">
+              {approveVenue.item.name}
+            </span>
+            ? The suggestion will remain visible with a declined badge.
+          </p>
+          <label className="grid gap-1.5">
+            <span className="text-xs font-normal uppercase tracking-wide text-slate-600 dark:text-[#B0B0B0]">
+              Reason to suggester
+            </span>
+            <textarea
+              autoFocus
+              required
+              rows={4}
+              value={declineReason}
+              onChange={(event) => setDeclineReason(event.target.value)}
+              placeholder="Explain why this venue is not suitable for the research."
+              className={researchTextareaClass}
+            />
+          </label>
+          <p className="text-xs text-slate-500 dark:text-[#8F98A8]">
+            This reason will be included in the notification sent to the person
+            who suggested the venue.
+          </p>
+        </ResearchConfirmDialog>
       )}
 
       {assignVenue && (
@@ -1850,6 +1954,18 @@ function venueStateMeta(state: SuggestedVenueState) {
         "border-amber-200 bg-amber-50 text-amber-700 dark:border-[#7A6338] dark:bg-[#242118] dark:text-[#FFD68A]",
       tooltip:
         "This venue suggestion is waiting for approval before a submission task can be assigned.",
+    };
+  }
+  if (state.state === "declined") {
+    return {
+      cardClass:
+        "border-rose-200 bg-rose-50/45 hover:border-rose-300 hover:bg-rose-50/70 dark:border-rose-900/60 dark:bg-rose-950/20 dark:hover:border-rose-800 dark:hover:bg-rose-950/30",
+      badge: "Declined",
+      badgeClass:
+        "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800/70 dark:bg-rose-950/35 dark:text-rose-300",
+      tooltip: state.declineReason
+        ? `This venue suggestion was declined. Reason: ${state.declineReason}`
+        : "This venue suggestion was declined.",
     };
   }
   if (state.state === "published") {

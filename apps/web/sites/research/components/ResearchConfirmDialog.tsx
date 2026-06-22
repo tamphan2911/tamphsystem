@@ -37,6 +37,7 @@ export function ResearchConfirmDialog({
   children,
   confirmLabel,
   isConfirming = false,
+  confirmDisabled = false,
   tone = "danger",
   icon,
   confirmIcon,
@@ -49,6 +50,7 @@ export function ResearchConfirmDialog({
   children?: ReactNode;
   confirmLabel: string;
   isConfirming?: boolean;
+  confirmDisabled?: boolean;
   tone?: ConfirmTone;
   icon?: ReactNode;
   confirmIcon?: ReactNode;
@@ -103,7 +105,7 @@ export function ResearchConfirmDialog({
         <div className="flex justify-end border-t border-slate-200 px-6 py-4 dark:border-[#444444]">
           <ResearchButton
             type="button"
-            disabled={isConfirming}
+            disabled={isConfirming || confirmDisabled}
             onClick={onConfirm}
             tone={
               tone === "danger"

@@ -5189,6 +5189,9 @@ export async function addSuggestedJournal(
           requiresApproval: !canApprove,
           approvedAt: canApprove ? new Date() : null,
           approvedById: canApprove ? user.id : null,
+          declinedAt: null,
+          declinedById: null,
+          declineReason: null,
           venueName: venueName ?? venue?.name ?? null,
           venueLink,
         },
@@ -5287,6 +5290,9 @@ export async function addSuggestedConference(
           requiresApproval: !canApprove,
           approvedAt: canApprove ? new Date() : null,
           approvedById: canApprove ? user.id : null,
+          declinedAt: null,
+          declinedById: null,
+          declineReason: null,
           venueName: venueName ?? venue?.name ?? null,
           venueLink,
         },
@@ -5504,6 +5510,9 @@ export async function approveSuggestedJournal(
       requiresApproval: true,
       approvedAt: new Date(),
       approvedById: user.id,
+      declinedAt: null,
+      declinedById: null,
+      declineReason: null,
     },
   });
 
@@ -5570,6 +5579,9 @@ export async function approveSuggestedConference(
       requiresApproval: true,
       approvedAt: new Date(),
       approvedById: user.id,
+      declinedAt: null,
+      declinedById: null,
+      declineReason: null,
     },
   });
 
@@ -5593,6 +5605,148 @@ export async function approveSuggestedConference(
 
   revalidatePath(`/projects/${projectId}`);
   revalidatePath("/suggestions");
+}
+
+export async function declineSuggestedJournal(
+  projectId: string,
+  suggestionId: string,
+  reason: string,
+) {
+  const user = await requireCurrentUser();
+  if (
+    !(await canApproveVenueSuggestionForResearch(
+      projectId,
+      user.id,
+      user.roles,
+    ))
+  ) {
+    redirect("/401");
+  }
+
+  const declineReason = reason.trim();
+  if (!declineReason) {
+    return { ok: false, message: "Enter a reason for declining this venue." };
+  }
+
+  const suggestion = await prisma.suggestedJournal.findUnique({
+    where: { id: suggestionId },
+    select: {
+      projectId: true,
+      status: true,
+      venueName: true,
+      createdById: true,
+      journal: { select: { name: true } },
+    },
+  });
+  if (!suggestion || suggestion.projectId !== projectId) {
+    return { ok: false, message: "Venue suggestion was not found." };
+  }
+  if (suggestion.status !== SuggestedVenueStatus.PENDING) {
+    return { ok: false, message: "Only pending suggestions can be declined." };
+  }
+
+  await prisma.suggestedJournal.update({
+    where: { id: suggestionId },
+    data: {
+      status: SuggestedVenueStatus.DECLINED,
+      declinedAt: new Date(),
+      declinedById: user.id,
+      declineReason,
+      approvedAt: null,
+      approvedById: null,
+    },
+  });
+
+  if (suggestion.createdById) {
+    const venueName =
+      suggestion.journal?.name ?? suggestion.venueName ?? "Journal";
+    await notifyUsers({
+      userIds: [suggestion.createdById],
+      excludeUserId: user.id,
+      type: "VENUE_SUGGESTION_DECLINED",
+      title: "Venue suggestion declined",
+      summary: venueName,
+      body: `Your journal suggestion was declined. Reason: ${declineReason}`,
+      href: `/projects/${projectId}`,
+      entityType: "suggestedVenue",
+      entityId: suggestionId,
+    });
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/suggestions");
+  return { ok: true };
+}
+
+export async function declineSuggestedConference(
+  projectId: string,
+  suggestionId: string,
+  reason: string,
+) {
+  const user = await requireCurrentUser();
+  if (
+    !(await canApproveVenueSuggestionForResearch(
+      projectId,
+      user.id,
+      user.roles,
+    ))
+  ) {
+    redirect("/401");
+  }
+
+  const declineReason = reason.trim();
+  if (!declineReason) {
+    return { ok: false, message: "Enter a reason for declining this venue." };
+  }
+
+  const suggestion = await prisma.suggestedConference.findUnique({
+    where: { id: suggestionId },
+    select: {
+      projectId: true,
+      status: true,
+      venueName: true,
+      createdById: true,
+      conference: { select: { name: true } },
+    },
+  });
+  if (!suggestion || suggestion.projectId !== projectId) {
+    return { ok: false, message: "Venue suggestion was not found." };
+  }
+  if (suggestion.status !== SuggestedVenueStatus.PENDING) {
+    return { ok: false, message: "Only pending suggestions can be declined." };
+  }
+
+  await prisma.suggestedConference.update({
+    where: { id: suggestionId },
+    data: {
+      status: SuggestedVenueStatus.DECLINED,
+      declinedAt: new Date(),
+      declinedById: user.id,
+      declineReason,
+      approvedAt: null,
+      approvedById: null,
+    },
+  });
+
+  if (suggestion.createdById) {
+    const venueName =
+      suggestion.conference?.name ?? suggestion.venueName ?? "Conference";
+    await notifyUsers({
+      userIds: [suggestion.createdById],
+      excludeUserId: user.id,
+      type: "VENUE_SUGGESTION_DECLINED",
+      title: "Venue suggestion declined",
+      summary: venueName,
+      body: `Your conference suggestion was declined. Reason: ${declineReason}`,
+      href: `/projects/${projectId}`,
+      entityType: "suggestedVenue",
+      entityId: suggestionId,
+    });
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/suggestions");
+  return { ok: true };
 }
 
 async function createSubmissionAfterTaskApproval(
