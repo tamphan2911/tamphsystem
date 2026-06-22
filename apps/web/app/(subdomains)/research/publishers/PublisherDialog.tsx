@@ -30,13 +30,6 @@ export type PublisherFormValues = {
   website?: string;
   note?: string;
   usesSingleAccount?: boolean;
-  publisherAccount?: {
-    id: string;
-    username: string;
-    password: string;
-    email: string;
-    note: string;
-  } | null;
 };
 
 export function PublisherDialog({
@@ -53,6 +46,7 @@ export function PublisherDialog({
   const toast = useResearchToast();
   const router = useRouter();
   const isEdit = mode === "edit";
+  const canCreatePublisherAccount = mode === "create" && !initialValues;
   const [usesSingleAccount, setUsesSingleAccount] = useState(
     Boolean(initialValues?.usesSingleAccount),
   );
@@ -181,15 +175,8 @@ export function PublisherDialog({
             </span>
           </label>
 
-          {!isEdit && usesSingleAccount ? (
+          {canCreatePublisherAccount && usesSingleAccount ? (
             <section className="research-dropdown-panel grid gap-4 border-t border-[#444444] pt-5">
-              {initialValues?.publisherAccount?.id ? (
-                <input
-                  type="hidden"
-                  name="publisherAccountId"
-                  value={initialValues.publisherAccount.id}
-                />
-              ) : null}
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="block">
                   <span className="sr-only">Publisher account login ID</span>
@@ -197,7 +184,6 @@ export function PublisherDialog({
                     <input
                       name="accountUsername"
                       required
-                      defaultValue={initialValues?.publisherAccount?.username}
                       placeholder="Publisher account login ID (*)"
                     />
                     <AtSign aria-hidden="true" />
@@ -209,7 +195,6 @@ export function PublisherDialog({
                     <input
                       name="accountPassword"
                       required
-                      defaultValue={initialValues?.publisherAccount?.password}
                       placeholder="Publisher account password (*)"
                     />
                     <LockKeyhole aria-hidden="true" />
@@ -221,7 +206,6 @@ export function PublisherDialog({
                     <input
                       name="accountEmail"
                       type="email"
-                      defaultValue={initialValues?.publisherAccount?.email}
                       placeholder="Optional email used for this account"
                     />
                     <Mail aria-hidden="true" />
@@ -232,7 +216,6 @@ export function PublisherDialog({
                   <span className="research-auth-input-shell">
                     <input
                       name="accountNote"
-                      defaultValue={initialValues?.publisherAccount?.note}
                       placeholder="Optional recovery note or login URL"
                     />
                     <FileText aria-hidden="true" />
