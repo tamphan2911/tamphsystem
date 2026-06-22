@@ -3410,25 +3410,21 @@ export async function updatePublisher(publisherId: string, formData: FormData) {
   });
   if (duplicate) throw new Error("A publisher with this name already exists.");
   const usesSingleAccount = formData.get("usesSingleAccount") === "on";
-  const accountUsername = optionalString(formData.get("accountUsername"));
-  const accountPassword = optionalString(formData.get("accountPassword"));
-  if (usesSingleAccount && (!accountUsername || !accountPassword)) {
+  const linkedPublisherAccounts = await prisma.publisherAccount.count({
+    where: {
+      publisherId,
+      accountType: PublisherAccountType.PUBLISHER,
+    },
+  });
+  if (usesSingleAccount && linkedPublisherAccounts === 0) {
     throw new Error(
-      "Enter the publisher account login ID and password before saving.",
+      "Add a publisher-wide account from Accounts before enabling this policy.",
     );
   }
-  if (!usesSingleAccount) {
-    const linkedPublisherAccounts = await prisma.publisherAccount.count({
-      where: {
-        publisherId,
-        accountType: PublisherAccountType.PUBLISHER,
-      },
-    });
-    if (linkedPublisherAccounts > 0) {
-      throw new Error(
-        "Delete or reassign the publisher-wide account before switching to separate journal accounts.",
-      );
-    }
+  if (!usesSingleAccount && linkedPublisherAccounts > 0) {
+    throw new Error(
+      "Delete or reassign the publisher-wide account before switching to separate journal accounts.",
+    );
   }
 
   await prisma.$transaction(async (tx) => {
@@ -3446,56 +3442,6 @@ export async function updatePublisher(publisherId: string, formData: FormData) {
       where: { publisherId },
       data: { publisher: cleanedName },
     });
-    if (usesSingleAccount && accountUsername && accountPassword) {
-      const requestedAccountId = optionalString(
-        formData.get("publisherAccountId"),
-      );
-      const currentAccount = requestedAccountId
-        ? await tx.publisherAccount.findFirst({
-            where: {
-              id: requestedAccountId,
-              publisherId,
-              accountType: PublisherAccountType.PUBLISHER,
-            },
-            select: { id: true },
-          })
-        : await tx.publisherAccount.findFirst({
-            where: {
-              publisherId,
-              accountType: PublisherAccountType.PUBLISHER,
-            },
-            orderBy: [{ updatedAt: "desc" }],
-            select: { id: true },
-          });
-      const account = currentAccount
-        ? await tx.publisherAccount.update({
-            where: { id: currentAccount.id },
-            data: {
-              username: accountUsername,
-              password: accountPassword,
-              email: optionalString(formData.get("accountEmail")),
-              note: optionalString(formData.get("accountNote")),
-              journalId: null,
-            },
-          })
-        : await tx.publisherAccount.create({
-            data: {
-              username: accountUsername,
-              password: accountPassword,
-              email: optionalString(formData.get("accountEmail")),
-              note: optionalString(formData.get("accountNote")),
-              accountType: PublisherAccountType.PUBLISHER,
-              publisherId,
-            },
-          });
-      await mergeMatchingPublisherAccounts(
-        tx,
-        account.id,
-        publisherId,
-        accountUsername,
-        accountPassword,
-      );
-    }
   });
 
   revalidatePath("/publishers");

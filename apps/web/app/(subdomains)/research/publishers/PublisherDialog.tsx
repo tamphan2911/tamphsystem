@@ -181,7 +181,7 @@ export function PublisherDialog({
             </span>
           </label>
 
-          {usesSingleAccount ? (
+          {!isEdit && usesSingleAccount ? (
             <section className="research-dropdown-panel grid gap-4 border-t border-[#444444] pt-5">
               {initialValues?.publisherAccount?.id ? (
                 <input
