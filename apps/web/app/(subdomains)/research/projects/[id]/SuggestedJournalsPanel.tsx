@@ -3,7 +3,7 @@
 import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 
 import { useMemo, useRef, useState, useTransition } from "react";
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   Check,
@@ -1527,9 +1527,22 @@ function VenueCard({
   const canDelete = isAdmin && !disabled && state.state === "idle";
   const showActions = canAssign || canDelete;
 
+  function handleCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (!canApprove || (event.key !== "Enter" && event.key !== " ")) return;
+    event.preventDefault();
+    onApprove();
+  }
+
   return (
     <div
-      className={`group relative cursor-default border p-3 text-sm transition hover:-translate-y-0.5 hover:shadow-md ${meta.cardClass}`}
+      role={canApprove ? "button" : undefined}
+      tabIndex={canApprove ? 0 : undefined}
+      aria-label={
+        canApprove ? "Review venue suggestion for approval" : undefined
+      }
+      onClick={canApprove ? onApprove : undefined}
+      onKeyDown={handleCardKeyDown}
+      className={`group relative border p-3 text-sm transition duration-180 ease-out hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/30 ${canApprove ? "cursor-pointer active:translate-y-0 active:scale-[0.99]" : "cursor-default"} ${meta.cardClass}`}
     >
       {showActions ? (
         <div className="absolute right-2 top-2 flex translate-y-1 gap-1 opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
@@ -1581,16 +1594,6 @@ function VenueCard({
                 ) : null}
               </span>
             </IconHint>
-            {canApprove ? (
-              <button
-                type="button"
-                onClick={onApprove}
-                className="research-allow-transform mt-2 inline-flex w-full cursor-pointer items-center justify-center gap-1 border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-normal uppercase tracking-wide text-emerald-700 transition duration-180 ease-out hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/20 active:translate-y-0 active:scale-95 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:border-emerald-400/40 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-200"
-              >
-                <Check className="h-3.5 w-3.5" />
-                Approve
-              </button>
-            ) : null}
           </div>
         ) : meta.tooltip ? (
           <div className="flex-none">
@@ -1621,7 +1624,7 @@ function venueStateMeta(state: SuggestedVenueState) {
   if (state.state === "pendingApproval") {
     return {
       cardClass:
-        "border-amber-200 bg-amber-50/45 hover:bg-amber-50 dark:border-[#5A4A2C] dark:bg-[#2F2B24]",
+        "border-amber-200 bg-amber-50/45 hover:border-amber-300 hover:bg-amber-50 dark:border-[#5A4A2C] dark:bg-[#2F2B24] dark:hover:border-[#806A3D] dark:hover:bg-[#383225]",
       badge: "Waiting approval",
       badgeClass:
         "border-amber-200 bg-amber-50 text-amber-700 dark:border-[#7A6338] dark:bg-[#242118] dark:text-[#FFD68A]",
@@ -1632,7 +1635,7 @@ function venueStateMeta(state: SuggestedVenueState) {
   if (state.state === "published") {
     return {
       cardClass:
-        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
+        "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838]",
       badge: "Published",
       badgeClass:
         "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-[#444444] dark:bg-[#202020] dark:text-[#A8DADC]",
@@ -1642,7 +1645,7 @@ function venueStateMeta(state: SuggestedVenueState) {
   if (state.state === "accepted") {
     return {
       cardClass:
-        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
+        "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838]",
       badge: "Accepted",
       badgeClass:
         "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-[#444444] dark:bg-[#202020] dark:text-[#A8DADC]",
@@ -1652,7 +1655,7 @@ function venueStateMeta(state: SuggestedVenueState) {
   if (state.state === "reviewing") {
     return {
       cardClass:
-        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
+        "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838]",
       badge: "Reviewing",
       badgeClass:
         "border-violet-200 bg-violet-50 text-violet-700 dark:border-[#444444] dark:bg-[#202020] dark:text-[#B39CD0]",
@@ -1662,7 +1665,7 @@ function venueStateMeta(state: SuggestedVenueState) {
   if (state.state === "submitted") {
     return {
       cardClass:
-        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
+        "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838]",
       badge: "Submitted",
       badgeClass:
         "border-rose-200 bg-rose-50 text-rose-700 dark:border-[#444444] dark:bg-[#202020] dark:text-[#FFC1CC]",
@@ -1672,7 +1675,7 @@ function venueStateMeta(state: SuggestedVenueState) {
   if (state.state === "assigned") {
     return {
       cardClass:
-        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
+        "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838]",
       badge: "Assigned",
       badgeClass:
         "border-rose-200 bg-rose-50 text-rose-700 dark:border-[#444444] dark:bg-[#202020] dark:text-[#FFC1CC]",
@@ -1683,7 +1686,7 @@ function venueStateMeta(state: SuggestedVenueState) {
   if (state.state === "rejected") {
     return {
       cardClass:
-        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
+        "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838]",
       badge: null,
       badgeClass: "",
       tooltip:
@@ -1693,7 +1696,7 @@ function venueStateMeta(state: SuggestedVenueState) {
   if (state.state === "withdrawn") {
     return {
       cardClass:
-        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
+        "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838]",
       badge: "Withdraw",
       badgeClass:
         "border-rose-200 bg-rose-50 text-rose-700 dark:border-[#444444] dark:bg-[#202020] dark:text-rose-300",
@@ -1704,7 +1707,7 @@ function venueStateMeta(state: SuggestedVenueState) {
   if (state.state === "blocked") {
     return {
       cardClass:
-        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
+        "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838]",
       badge: null,
       badgeClass: "",
       tooltip:
@@ -1713,7 +1716,7 @@ function venueStateMeta(state: SuggestedVenueState) {
   }
   return {
     cardClass:
-      "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#2C2C2C] dark:hover:bg-[#383838]",
+      "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#2C2C2C] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838]",
     badge: null,
     badgeClass: "",
     tooltip: "",
