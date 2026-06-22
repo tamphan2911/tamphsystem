@@ -352,19 +352,24 @@ export function JournalDialogForm({
         ? "INTERNATIONAL"
         : "",
   );
+  const initialPublisher = useMemo<PublisherPickerItem | null>(() => {
+    const normalizedName = initialValues?.publisher?.trim().toLowerCase();
+    return (
+      publishers.find(
+        (publisher) => publisher.id === initialValues?.publisherId,
+      ) ??
+      publishers.find(
+        (publisher) => publisher.name.trim().toLowerCase() === normalizedName,
+      ) ??
+      null
+    );
+  }, [initialValues?.publisher, initialValues?.publisherId, publishers]);
   const [selectedPublisher, setSelectedPublisher] =
-    useState<PublisherPickerItem | null>(() => {
-      const normalizedName = initialValues?.publisher?.trim().toLowerCase();
-      return (
-        publishers.find(
-          (publisher) => publisher.id === initialValues?.publisherId,
-        ) ??
-        publishers.find(
-          (publisher) => publisher.name.trim().toLowerCase() === normalizedName,
-        ) ??
-        null
-      );
-    });
+    useState<PublisherPickerItem | null>(initialPublisher);
+
+  useEffect(() => {
+    if (isOpen) setSelectedPublisher(initialPublisher);
+  }, [initialPublisher, isOpen]);
 
   useEffect(() => {
     if (!warning) return;
@@ -817,7 +822,7 @@ export function JournalDialogForm({
 
         {!isEdit &&
         selectedPublisher &&
-        !selectedPublisher.usesSingleAccount ? (
+        selectedPublisher.usesSingleAccount === false ? (
           <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
             <div className="grid gap-4 md:grid-cols-2">
               <JournalInput
