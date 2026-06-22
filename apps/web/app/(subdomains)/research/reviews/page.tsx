@@ -114,10 +114,10 @@ export default async function AcademicReviewsPage() {
     id: journal.id,
     name: journal.name,
     publisher: journal.publisher ?? "",
-    accounts: [
-      ...journal.accounts,
-      ...(journal.publisherRecord?.accounts ?? []),
-    ].map((account) => ({
+    accounts: (journal.publisherRecord?.usesSingleAccount
+      ? (journal.publisherRecord.accounts ?? [])
+      : journal.accounts
+    ).map((account) => ({
       id: account.id,
       username: account.username,
       password: account.password,

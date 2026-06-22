@@ -763,6 +763,7 @@ export default async function TaskDetailPage({
             type: true,
             publisher: true,
             publisherId: true,
+            publisherRecord: { select: { usesSingleAccount: true } },
             rank: true,
             localRank: true,
             issn: true,
@@ -847,25 +848,33 @@ export default async function TaskDetailPage({
         .join(" - "),
     })),
   ];
-  const accountOptions = accounts.flatMap((account) =>
-    account.journalId
-      ? [
-          {
-            id: account.id,
-            journalId: account.journalId,
-            username: account.username,
-            email: account.email ?? "",
-          },
-        ]
-      : journals
-          .filter((journal) => journal.publisherId === account.publisherId)
-          .map((journal) => ({
-            id: account.id,
-            journalId: journal.id,
-            username: account.username,
-            email: account.email ?? "",
-          })),
-  );
+  const accountOptions = accounts.flatMap((account) => {
+    if (account.journalId) {
+      const journal = journals.find((item) => item.id === account.journalId);
+      return journal?.publisherRecord?.usesSingleAccount
+        ? []
+        : [
+            {
+              id: account.id,
+              journalId: account.journalId,
+              username: account.username,
+              email: account.email ?? "",
+            },
+          ];
+    }
+    return journals
+      .filter(
+        (journal) =>
+          journal.publisherId === account.publisherId &&
+          journal.publisherRecord?.usesSingleAccount,
+      )
+      .map((journal) => ({
+        id: account.id,
+        journalId: journal.id,
+        username: account.username,
+        email: account.email ?? "",
+      }));
+  });
   const reviewOptions = reviews.map((review) => ({
     id: review.id,
     title: review.manuscriptTitle,

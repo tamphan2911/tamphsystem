@@ -13,6 +13,7 @@ export type PublisherPickerItem = {
   name: string;
   alias: string;
   country: string;
+  usesSingleAccount?: boolean;
 };
 
 export function PublisherPicker({
@@ -20,11 +21,17 @@ export function PublisherPicker({
   initialPublisherId,
   initialPublisherName,
   required = true,
+  showLabel = true,
+  placeholder,
+  onSelectionChange,
 }: {
   publishers: PublisherPickerItem[];
   initialPublisherId?: string | null;
   initialPublisherName?: string | null;
   required?: boolean;
+  showLabel?: boolean;
+  placeholder?: string;
+  onSelectionChange?: (publisher: PublisherPickerItem | null) => void;
 }) {
   const options = useMemo<ResearchSearchPickerOption<PublisherPickerItem>[]>(
     () =>
@@ -78,7 +85,7 @@ export function PublisherPicker({
   return (
     <ResearchSearchPicker
       name="publisherId"
-      label="Publisher"
+      label={showLabel ? "Publisher" : undefined}
       required={required}
       selected={selected}
       query={query}
@@ -86,13 +93,17 @@ export function PublisherPicker({
       onSelect={(option) => {
         setSelected(option);
         setQuery("");
+        onSelectionChange?.(option.data ?? null);
       }}
       onClear={() => {
         setSelected(null);
         setQuery("");
+        onSelectionChange?.(null);
       }}
       options={filteredOptions}
-      placeholder="Search publisher by name, alias, country, or ID..."
+      placeholder={
+        placeholder ?? "Search publisher by name, alias, country, or ID..."
+      }
       emptyText="No publisher matches this search. Add it from Publishers first."
       renderOption={(option) => (
         <span className="flex min-w-0 flex-1 items-start gap-3 px-3 py-0.5">

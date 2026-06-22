@@ -193,6 +193,7 @@ export default async function JournalDetailPage({
         name: true,
         alias: true,
         country: true,
+        usesSingleAccount: true,
       },
     }),
   ]);
@@ -280,10 +281,9 @@ export default async function JournalDetailPage({
     },
   );
 
-  const journalAccounts = [
-    ...journal.accounts,
-    ...(journal.publisherRecord?.accounts ?? []),
-  ];
+  const journalAccounts = journal.publisherRecord?.usesSingleAccount
+    ? (journal.publisherRecord.accounts ?? [])
+    : journal.accounts;
   const accountRows: JournalAccountRow[] = journalAccounts.map((account) => ({
     id: account.id,
     username: account.username,

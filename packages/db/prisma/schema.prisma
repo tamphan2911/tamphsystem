@@ -693,16 +693,17 @@ model Journal {
 }
 
 model Publisher {
-  id             String   @id @default(uuid())
-  publisherCode  String   @unique
-  name           String
-  normalizedName String   @unique
-  alias          String?
-  country        String?
-  website        String?
-  note           String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                String   @id @default(uuid())
+  publisherCode     String   @unique
+  name              String
+  normalizedName    String   @unique
+  alias             String?
+  country           String?
+  website           String?
+  note              String?
+  usesSingleAccount Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   journals Journal[]
   accounts PublisherAccount[]

@@ -62,6 +62,7 @@ export default async function JournalsPage() {
         name: true,
         alias: true,
         country: true,
+        usesSingleAccount: true,
       },
     }),
   ]);

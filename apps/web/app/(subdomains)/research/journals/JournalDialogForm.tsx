@@ -352,6 +352,19 @@ export function JournalDialogForm({
         ? "INTERNATIONAL"
         : "",
   );
+  const [selectedPublisher, setSelectedPublisher] =
+    useState<PublisherPickerItem | null>(() => {
+      const normalizedName = initialValues?.publisher?.trim().toLowerCase();
+      return (
+        publishers.find(
+          (publisher) => publisher.id === initialValues?.publisherId,
+        ) ??
+        publishers.find(
+          (publisher) => publisher.name.trim().toLowerCase() === normalizedName,
+        ) ??
+        null
+      );
+    });
 
   useEffect(() => {
     if (!warning) return;
@@ -502,7 +515,7 @@ export function JournalDialogForm({
             <JournalInput
               name="name"
               defaultValue={initialValues?.name}
-              placeholder="Official journal name"
+              placeholder="Official journal name (*)"
               icon={<BookOpen aria-hidden="true" className="text-[#A8DADC]" />}
             />
             <div className="grid gap-4 md:grid-cols-2">
@@ -510,6 +523,9 @@ export function JournalDialogForm({
                 publishers={publishers}
                 initialPublisherId={initialValues?.publisherId}
                 initialPublisherName={initialValues?.publisher}
+                showLabel={false}
+                placeholder="Search and choose the publisher (*)"
+                onSelectionChange={setSelectedPublisher}
               />
               <CountryPicker
                 value={selectedCountry}
@@ -520,7 +536,7 @@ export function JournalDialogForm({
               <JournalInput
                 name="issn"
                 defaultValue={initialValues?.issn}
-                placeholder="ISSN, for example 1234-5678"
+                placeholder="ISSN, for example 1234-5678 (*)"
                 icon={<Hash aria-hidden="true" className="text-[#F4D47A]" />}
               />
               <JournalInput
@@ -716,7 +732,7 @@ export function JournalDialogForm({
                   min="0"
                   step="0.01"
                   defaultValue={initialValues?.apc}
-                  placeholder="APC amount"
+                  placeholder="APC amount (*)"
                   icon={
                     <DollarSign aria-hidden="true" className="text-[#9ED6B5]" />
                   }
@@ -799,7 +815,9 @@ export function JournalDialogForm({
           </div>
         </section>
 
-        {!isEdit ? (
+        {!isEdit &&
+        selectedPublisher &&
+        !selectedPublisher.usesSingleAccount ? (
           <section className="border-t border-slate-200 pt-5 dark:border-slate-800">
             <div className="grid gap-4 md:grid-cols-2">
               <JournalInput

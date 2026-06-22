@@ -289,10 +289,10 @@ export default async function SubmissionsPage() {
       label: journal.publisher
         ? `${journal.name} - ${journal.publisher}`
         : journal.name,
-      accounts: [
-        ...journal.accounts,
-        ...(journal.publisherRecord?.accounts ?? []),
-      ].map((account) => ({
+      accounts: (journal.publisherRecord?.usesSingleAccount
+        ? (journal.publisherRecord.accounts ?? [])
+        : journal.accounts
+      ).map((account) => ({
         id: account.id,
         label: account.email
           ? `${account.username} - ${account.email}`

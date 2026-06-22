@@ -741,7 +741,7 @@ async function publisherSelection(formData: FormData) {
   if (!publisherId) return null;
   return prisma.publisher.findUnique({
     where: { id: publisherId },
-    select: { id: true, name: true },
+    select: { id: true, name: true, usesSingleAccount: true },
   });
 }
 
@@ -2707,10 +2707,11 @@ export async function createJournal(formData: FormData) {
   const accountPassword = optionalString(formData.get("accountPassword"));
   const accountEmail = optionalString(formData.get("accountEmail"));
   const accountNote = optionalString(formData.get("accountNote"));
-  const shouldCreateAccount = Boolean(accountUsername);
   const publisher = await publisherSelection(formData);
   if (!publisher)
     throw new Error("Choose a publisher before saving the journal.");
+  const shouldCreateAccount =
+    Boolean(accountUsername) && !publisher.usesSingleAccount;
 
   await prisma.$transaction(async (tx) => {
     const journal = await tx.journal.create({
@@ -2755,7 +2756,7 @@ export async function createJournal(formData: FormData) {
       },
     });
 
-    if (accountUsername) {
+    if (accountUsername && !publisher.usesSingleAccount) {
       await tx.publisherAccount.create({
         data: {
           username: accountUsername,
@@ -3147,23 +3148,20 @@ async function mergeMatchingPublisherAccounts(
 async function journalAccountIds(journalId: string) {
   const journal = await prisma.journal.findUnique({
     where: { id: journalId },
-    select: { publisherId: true },
+    select: {
+      publisherId: true,
+      publisherRecord: { select: { usesSingleAccount: true } },
+    },
   });
   if (!journal) return [];
   return prisma.publisherAccount.findMany({
-    where: {
-      OR: [
-        { accountType: PublisherAccountType.JOURNAL, journalId },
-        ...(journal.publisherId
-          ? [
-              {
-                accountType: PublisherAccountType.PUBLISHER,
-                publisherId: journal.publisherId,
-              },
-            ]
-          : []),
-      ],
-    },
+    where:
+      journal.publisherRecord?.usesSingleAccount && journal.publisherId
+        ? {
+            accountType: PublisherAccountType.PUBLISHER,
+            publisherId: journal.publisherId,
+          }
+        : { accountType: PublisherAccountType.JOURNAL, journalId },
     select: { id: true },
   });
 }
@@ -3221,6 +3219,15 @@ export async function createPublisherAccount(formData: FormData) {
   const username = optionalString(formData.get("username")) ?? "new-account";
   const password = optionalString(formData.get("password")) ?? "";
   await prisma.$transaction(async (tx) => {
+    if (
+      scope.accountType === PublisherAccountType.PUBLISHER &&
+      scope.publisherId
+    ) {
+      await tx.publisher.update({
+        where: { id: scope.publisherId },
+        data: { usesSingleAccount: true },
+      });
+    }
     const account = await tx.publisherAccount.create({
       data: {
         username,
@@ -3263,6 +3270,15 @@ export async function updatePublisherAccount(
   const username = optionalString(formData.get("username")) ?? "new-account";
   const password = optionalString(formData.get("password")) ?? "";
   await prisma.$transaction(async (tx) => {
+    if (
+      scope.accountType === PublisherAccountType.PUBLISHER &&
+      scope.publisherId
+    ) {
+      await tx.publisher.update({
+        where: { id: scope.publisherId },
+        data: { usesSingleAccount: true },
+      });
+    }
     await tx.publisherAccount.update({
       where: { id: accountId },
       data: {
@@ -3299,8 +3315,30 @@ export async function deletePublisherAccount(accountId: string) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
 
-  await prisma.publisherAccount.delete({
-    where: { id: accountId },
+  await prisma.$transaction(async (tx) => {
+    const account = await tx.publisherAccount.findUnique({
+      where: { id: accountId },
+      select: { accountType: true, publisherId: true },
+    });
+    if (!account) return;
+    await tx.publisherAccount.delete({ where: { id: accountId } });
+    if (
+      account.accountType === PublisherAccountType.PUBLISHER &&
+      account.publisherId
+    ) {
+      const remainingAccounts = await tx.publisherAccount.count({
+        where: {
+          publisherId: account.publisherId,
+          accountType: PublisherAccountType.PUBLISHER,
+        },
+      });
+      if (remainingAccounts === 0) {
+        await tx.publisher.update({
+          where: { id: account.publisherId },
+          data: { usesSingleAccount: false },
+        });
+      }
+    }
   });
 
   revalidatePath("/accounts");
@@ -3321,18 +3359,37 @@ export async function createPublisher(formData: FormData) {
     select: { id: true },
   });
   if (existing) throw new Error("A publisher with this name already exists.");
-  const alias = optionalString(formData.get("alias"));
-
-  await prisma.publisher.create({
-    data: {
-      publisherCode: await generatePublisherCode(cleanedName, alias),
-      name: cleanedName,
-      normalizedName,
-      alias,
-      country: optionalString(formData.get("country")),
-      website: optionalString(formData.get("website")),
-      note: optionalString(formData.get("note")),
-    },
+  const usesSingleAccount = formData.get("usesSingleAccount") === "on";
+  const accountUsername = optionalString(formData.get("accountUsername"));
+  const accountPassword = optionalString(formData.get("accountPassword"));
+  if (usesSingleAccount && (!accountUsername || !accountPassword)) {
+    throw new Error(
+      "Enter the publisher account login ID and password before saving.",
+    );
+  }
+  await prisma.$transaction(async (tx) => {
+    const publisher = await tx.publisher.create({
+      data: {
+        publisherCode: await generatePublisherCode(cleanedName, null),
+        name: cleanedName,
+        normalizedName,
+        usesSingleAccount,
+        website: optionalString(formData.get("website")),
+        note: optionalString(formData.get("note")),
+      },
+    });
+    if (usesSingleAccount && accountUsername && accountPassword) {
+      await tx.publisherAccount.create({
+        data: {
+          username: accountUsername,
+          password: accountPassword,
+          email: optionalString(formData.get("accountEmail")),
+          note: optionalString(formData.get("accountNote")),
+          accountType: PublisherAccountType.PUBLISHER,
+          publisherId: publisher.id,
+        },
+      });
+    }
   });
 
   revalidatePath("/publishers");
@@ -3352,6 +3409,27 @@ export async function updatePublisher(publisherId: string, formData: FormData) {
     select: { id: true },
   });
   if (duplicate) throw new Error("A publisher with this name already exists.");
+  const usesSingleAccount = formData.get("usesSingleAccount") === "on";
+  const accountUsername = optionalString(formData.get("accountUsername"));
+  const accountPassword = optionalString(formData.get("accountPassword"));
+  if (usesSingleAccount && (!accountUsername || !accountPassword)) {
+    throw new Error(
+      "Enter the publisher account login ID and password before saving.",
+    );
+  }
+  if (!usesSingleAccount) {
+    const linkedPublisherAccounts = await prisma.publisherAccount.count({
+      where: {
+        publisherId,
+        accountType: PublisherAccountType.PUBLISHER,
+      },
+    });
+    if (linkedPublisherAccounts > 0) {
+      throw new Error(
+        "Delete or reassign the publisher-wide account before switching to separate journal accounts.",
+      );
+    }
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.publisher.update({
@@ -3359,8 +3437,7 @@ export async function updatePublisher(publisherId: string, formData: FormData) {
       data: {
         name: cleanedName,
         normalizedName,
-        alias: optionalString(formData.get("alias")),
-        country: optionalString(formData.get("country")),
+        usesSingleAccount,
         website: optionalString(formData.get("website")),
         note: optionalString(formData.get("note")),
       },
@@ -3369,6 +3446,56 @@ export async function updatePublisher(publisherId: string, formData: FormData) {
       where: { publisherId },
       data: { publisher: cleanedName },
     });
+    if (usesSingleAccount && accountUsername && accountPassword) {
+      const requestedAccountId = optionalString(
+        formData.get("publisherAccountId"),
+      );
+      const currentAccount = requestedAccountId
+        ? await tx.publisherAccount.findFirst({
+            where: {
+              id: requestedAccountId,
+              publisherId,
+              accountType: PublisherAccountType.PUBLISHER,
+            },
+            select: { id: true },
+          })
+        : await tx.publisherAccount.findFirst({
+            where: {
+              publisherId,
+              accountType: PublisherAccountType.PUBLISHER,
+            },
+            orderBy: [{ updatedAt: "desc" }],
+            select: { id: true },
+          });
+      const account = currentAccount
+        ? await tx.publisherAccount.update({
+            where: { id: currentAccount.id },
+            data: {
+              username: accountUsername,
+              password: accountPassword,
+              email: optionalString(formData.get("accountEmail")),
+              note: optionalString(formData.get("accountNote")),
+              journalId: null,
+            },
+          })
+        : await tx.publisherAccount.create({
+            data: {
+              username: accountUsername,
+              password: accountPassword,
+              email: optionalString(formData.get("accountEmail")),
+              note: optionalString(formData.get("accountNote")),
+              accountType: PublisherAccountType.PUBLISHER,
+              publisherId,
+            },
+          });
+      await mergeMatchingPublisherAccounts(
+        tx,
+        account.id,
+        publisherId,
+        accountUsername,
+        accountPassword,
+      );
+    }
   });
 
   revalidatePath("/publishers");

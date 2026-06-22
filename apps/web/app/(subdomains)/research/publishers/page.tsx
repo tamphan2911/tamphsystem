@@ -17,6 +17,11 @@ export default async function PublishersPage() {
   const publishers = await prisma.publisher.findMany({
     include: {
       _count: { select: { accounts: true } },
+      accounts: {
+        where: { accountType: "PUBLISHER" },
+        orderBy: [{ updatedAt: "desc" }],
+        take: 1,
+      },
       journals: {
         select: {
           _count: { select: { submissions: true, accounts: true } },
@@ -33,6 +38,16 @@ export default async function PublishersPage() {
     country: publisher.country ?? "",
     website: publisher.website ?? "",
     note: publisher.note ?? "",
+    usesSingleAccount: publisher.usesSingleAccount,
+    publisherAccount: publisher.accounts[0]
+      ? {
+          id: publisher.accounts[0].id,
+          username: publisher.accounts[0].username,
+          password: publisher.accounts[0].password,
+          email: publisher.accounts[0].email ?? "",
+          note: publisher.accounts[0].note ?? "",
+        }
+      : null,
     journals: publisher.journals.length,
     submissions: publisher.journals.reduce(
       (sum, journal) => sum + journal._count.submissions,

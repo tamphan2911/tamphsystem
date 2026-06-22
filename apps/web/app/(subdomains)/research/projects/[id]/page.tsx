@@ -639,10 +639,10 @@ export default async function ProjectDetailPage({
       hasApcOption: journal.hasApcOption,
       submissionFee: journal.submissionFee ?? "",
       submissionFeeCurrency: journal.submissionFeeCurrency,
-      accounts: [
-        ...journal.accounts,
-        ...(journal.publisherRecord?.accounts ?? []),
-      ].map((account) => ({
+      accounts: (journal.publisherRecord?.usesSingleAccount
+        ? (journal.publisherRecord.accounts ?? [])
+        : journal.accounts
+      ).map((account) => ({
         id: account.id,
         journalId: account.journalId ?? "",
         username: account.username,
@@ -669,16 +669,15 @@ export default async function ProjectDetailPage({
         hasApcOption: journal?.hasApcOption ?? false,
         submissionFee: journal?.submissionFee ?? "",
         submissionFeeCurrency: journal?.submissionFeeCurrency ?? "USD",
-        accounts:
-          [
-            ...(journal?.accounts ?? []),
-            ...(journal?.publisherRecord?.accounts ?? []),
-          ].map((account) => ({
-            id: account.id,
-            journalId: account.journalId ?? "",
-            username: account.username,
-            email: account.email ?? "",
-          })) ?? [],
+        accounts: (journal?.publisherRecord?.usesSingleAccount
+          ? (journal.publisherRecord.accounts ?? [])
+          : (journal?.accounts ?? [])
+        ).map((account) => ({
+          id: account.id,
+          journalId: account.journalId ?? "",
+          username: account.username,
+          email: account.email ?? "",
+        })),
         suggestedByName: createdBy
           ? displayResearchPersonName(createdBy) || "Unknown user"
           : "Unknown user",
@@ -911,10 +910,10 @@ export default async function ProjectDetailPage({
       issn: journal.issn ?? "",
       publisher: journal.publisher ?? "",
       rank: journal.rank ?? "",
-      accounts: [
-        ...journal.accounts,
-        ...(journal.publisherRecord?.accounts ?? []),
-      ].map((account) => ({
+      accounts: (journal.publisherRecord?.usesSingleAccount
+        ? (journal.publisherRecord.accounts ?? [])
+        : journal.accounts
+      ).map((account) => ({
         id: account.id,
         journalId: account.journalId ?? "",
         username: account.username,

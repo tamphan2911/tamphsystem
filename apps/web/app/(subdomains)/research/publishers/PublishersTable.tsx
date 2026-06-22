@@ -24,6 +24,14 @@ export type PublisherRow = {
   country: string;
   website: string;
   note: string;
+  usesSingleAccount: boolean;
+  publisherAccount: {
+    id: string;
+    username: string;
+    password: string;
+    email: string;
+    note: string;
+  } | null;
   journals: number;
   submissions: number;
   accounts: number;
@@ -114,14 +122,7 @@ export function PublishersTable({
     const needle = query.trim().toLowerCase();
     if (!needle) return rows;
     return rows.filter((row) =>
-      [
-        row.publisherCode,
-        row.name,
-        row.alias,
-        row.country,
-        row.website,
-        row.note,
-      ]
+      [row.publisherCode, row.name, row.website, row.note]
         .join(" ")
         .toLowerCase()
         .includes(needle),
@@ -138,17 +139,16 @@ export function PublishersTable({
             setQuery(value);
             pagination.setPage(1);
           }}
-          placeholder="Search publisher, ID, alias, country..."
+          placeholder="Search publisher, ID, website, or note..."
         />
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[62rem] table-fixed text-left">
+        <table className="w-full min-w-[54rem] table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase text-[#B0B0B0]">
             <tr>
               <th className="w-[11%] px-4 py-3">Publisher ID</th>
               <th className="px-4 py-3">Publisher</th>
-              <th className="w-[12%] px-3 py-3">Alias</th>
-              <th className="w-[12%] px-3 py-3">Country</th>
+              <th className="w-[15%] px-3 py-3">Account policy</th>
               <th className="w-[9%] px-3 py-3 text-center">Journals</th>
               <th className="w-[9%] px-3 py-3 text-center">Submits</th>
               <th className="w-[9%] px-3 py-3 text-center">Accounts</th>
@@ -176,22 +176,31 @@ export function PublishersTable({
                     {publisher.note || "No note"}
                   </p>
                 </td>
-                <td className="px-3 py-3 text-sm text-[#B0B0B0]">
-                  {publisher.alias || "-"}
-                </td>
-                <td className="px-3 py-3 text-sm text-[#B0B0B0]">
-                  {publisher.country || "-"}
+                <td className="px-3 py-3 align-top text-xs text-[#B0B0B0]">
+                  {publisher.usesSingleAccount
+                    ? "One publisher account"
+                    : "Separate journal accounts"}
                 </td>
                 <td className="px-3 py-3 text-center text-sm text-[#E4E4E4]">
-                  {publisher.journals}
+                  <Link
+                    href={`/journals?q=${encodeURIComponent(publisher.name)}`}
+                    className="research-allow-transform inline-flex text-cyan-700 transition-[color,transform] hover:-translate-y-0.5 hover:text-cyan-800 active:translate-y-0 active:scale-95 dark:text-cyan-300 dark:hover:text-cyan-200"
+                  >
+                    {publisher.journals}
+                  </Link>
                 </td>
                 <td className="px-3 py-3 text-center text-sm text-[#E4E4E4]">
                   {publisher.submissions}
                 </td>
                 <td className="px-3 py-3 text-center text-sm text-[#E4E4E4]">
-                  {publisher.accounts}
+                  <Link
+                    href={`/accounts?q=${encodeURIComponent(publisher.name)}&scope=${publisher.usesSingleAccount ? "PUBLISHER" : "JOURNAL"}`}
+                    className="research-allow-transform inline-flex text-violet-700 transition-[color,transform] hover:-translate-y-0.5 hover:text-violet-800 active:translate-y-0 active:scale-95 dark:text-violet-300 dark:hover:text-violet-200"
+                  >
+                    {publisher.accounts}
+                  </Link>
                 </td>
-                <td className="px-2 py-3 text-center">
+                <td className="px-2 py-3 text-center align-top">
                   {publisher.website ? (
                     <IconHint label="Open publisher website">
                       <Link
@@ -207,14 +216,14 @@ export function PublishersTable({
                     <Building2 className="mx-auto h-4 w-4 text-[#666666]" />
                   )}
                 </td>
-                <td className="px-2 py-3 text-center">
+                <td className="px-2 py-3 text-center align-top">
                   <PublisherDialog
                     mode="edit"
                     submitAction={updateAction.bind(null, publisher.id)}
                     initialValues={publisher}
                   />
                 </td>
-                <td className="px-2 py-3 text-center">
+                <td className="px-2 py-3 text-center align-top">
                   <DeletePublisherButton
                     publisher={publisher}
                     deleteAction={deleteAction}
@@ -224,10 +233,10 @@ export function PublishersTable({
             ))}
             {pagination.total === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-2">
+                <td colSpan={9} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No publishers match the current search."
-                    detail="Try another publisher name, ID, alias, country, or website."
+                    detail="Try another publisher name, ID, website, or note."
                   />
                 </td>
               </tr>

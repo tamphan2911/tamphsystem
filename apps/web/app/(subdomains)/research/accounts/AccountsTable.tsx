@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { KeyRound, Send, Trash2 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
@@ -141,10 +141,20 @@ export function AccountsTable({
   isAdmin: boolean;
   deleteAction: (accountId: string) => Promise<void>;
 }) {
+  const searchParams = useSearchParams();
   const [query, setQuery] = usePersistentTableValue("accounts:q", "");
   const [accountTab, setAccountTab] = usePersistentTableValue<
     "JOURNAL" | "PUBLISHER"
   >("accounts:scope", "JOURNAL");
+
+  useEffect(() => {
+    const requestedQuery = searchParams.get("q");
+    const requestedScope = searchParams.get("scope");
+    if (requestedQuery !== null) setQuery(requestedQuery);
+    if (requestedScope === "JOURNAL" || requestedScope === "PUBLISHER") {
+      setAccountTab(requestedScope);
+    }
+  }, [searchParams, setAccountTab, setQuery]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
