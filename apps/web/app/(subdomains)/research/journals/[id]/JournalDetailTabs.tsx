@@ -220,7 +220,7 @@ function JournalSubmissionsTable({
         <table className="w-full table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
-              <th className="w-[7rem] px-3 py-3">Submission ID</th>
+              <th className="w-[7rem] px-3 py-3">ID</th>
               <th className="px-3 py-3">Submission</th>
               <th className="w-[7rem] px-3 py-3">Status</th>
               <th className="w-[13rem] px-3 py-3">Timeline</th>
