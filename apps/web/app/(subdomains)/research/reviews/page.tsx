@@ -45,6 +45,21 @@ export default async function AcademicReviewsPage() {
           },
           orderBy: [{ updatedAt: "desc" }],
         },
+        publisherRecord: {
+          include: {
+            accounts: {
+              where: { accountType: "PUBLISHER" },
+              select: {
+                id: true,
+                username: true,
+                password: true,
+                email: true,
+                note: true,
+              },
+              orderBy: [{ updatedAt: "desc" }],
+            },
+          },
+        },
       },
     }),
   ]);
@@ -99,7 +114,10 @@ export default async function AcademicReviewsPage() {
     id: journal.id,
     name: journal.name,
     publisher: journal.publisher ?? "",
-    accounts: journal.accounts.map((account) => ({
+    accounts: [
+      ...journal.accounts,
+      ...(journal.publisherRecord?.accounts ?? []),
+    ].map((account) => ({
       id: account.id,
       username: account.username,
       password: account.password,

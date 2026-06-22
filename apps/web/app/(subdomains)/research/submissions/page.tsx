@@ -104,6 +104,15 @@ export default async function SubmissionsPage() {
           select: { id: true, username: true, email: true },
           orderBy: { username: "asc" },
         },
+        publisherRecord: {
+          include: {
+            accounts: {
+              where: { accountType: "PUBLISHER" },
+              select: { id: true, username: true, email: true },
+              orderBy: { username: "asc" },
+            },
+          },
+        },
       },
       orderBy: { name: "asc" },
     }),
@@ -280,7 +289,10 @@ export default async function SubmissionsPage() {
       label: journal.publisher
         ? `${journal.name} - ${journal.publisher}`
         : journal.name,
-      accounts: journal.accounts.map((account) => ({
+      accounts: [
+        ...journal.accounts,
+        ...(journal.publisherRecord?.accounts ?? []),
+      ].map((account) => ({
         id: account.id,
         label: account.email
           ? `${account.username} - ${account.email}`

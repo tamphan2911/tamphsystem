@@ -1,22 +1,17 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AtSign, KeyRound, Link2, Loader2, Mail, Pencil } from "lucide-react";
 import { updatePublisherAccount } from "../../actions";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
-import {
-  ResearchSearchPicker,
-  type ResearchSearchPickerOption,
-} from "@/sites/research/components/ResearchSearchPicker";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
-
-type JournalOption = {
-  id: string;
-  name: string;
-  publisher: string;
-};
+import type { PublisherPickerItem } from "@/sites/research/components/PublisherPicker";
+import {
+  AccountScopeFields,
+  type AccountJournalOption,
+} from "../AccountScopeFields";
 
 type AccountValues = {
   id: string;
@@ -24,51 +19,27 @@ type AccountValues = {
   password: string;
   email: string;
   note: string;
-  journal: JournalOption | null;
+  accountType: "JOURNAL" | "PUBLISHER";
+  journal: AccountJournalOption | null;
+  publisherId: string;
+  publisherName: string;
 };
 
 export function EditAccountDialog({
   account,
   journals,
+  publishers,
 }: {
   account: AccountValues;
-  journals: JournalOption[];
+  journals: AccountJournalOption[];
+  publishers: PublisherPickerItem[];
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const toast = useResearchToast();
-  const [journalQuery, setJournalQuery] = useState("");
-  const [selectedJournal, setSelectedJournal] = useState<JournalOption | null>(
-    account.journal,
-  );
-
-  const journalOptions = useMemo<ResearchSearchPickerOption<JournalOption>[]>(
-    () => {
-      const needle = journalQuery.trim().toLowerCase();
-      if (!needle) return [];
-      return journals
-        .filter((journal) =>
-          [journal.name, journal.publisher]
-            .join(" ")
-            .toLowerCase()
-            .includes(needle),
-        )
-        .slice(0, 20)
-        .map((journal) => ({
-          id: journal.id,
-          label: journal.name,
-          description: journal.publisher,
-          data: journal,
-        }));
-    },
-    [journalQuery, journals],
-  );
-
   function closeDialog() {
     setOpen(false);
-    setJournalQuery("");
-    setSelectedJournal(account.journal);
   }
 
   return (
@@ -160,6 +131,16 @@ export function EditAccountDialog({
                 <Mail aria-hidden="true" />
               </span>
             </label>
+            <div className="md:col-span-2">
+              <AccountScopeFields
+                journals={journals}
+                publishers={publishers}
+                initialPublisherAccount={account.accountType === "PUBLISHER"}
+                initialJournal={account.journal}
+                initialPublisherId={account.publisherId}
+                initialPublisherName={account.publisherName}
+              />
+            </div>
             <label className="block md:col-span-2">
               <span className="sr-only">Account notes</span>
               <span className="research-auth-input-shell">
@@ -171,37 +152,6 @@ export function EditAccountDialog({
                 <Link2 aria-hidden="true" />
               </span>
             </label>
-            <div className="md:col-span-2">
-              <ResearchSearchPicker
-                name="journalId"
-                selected={
-                  selectedJournal
-                    ? {
-                        id: selectedJournal.id,
-                        label: selectedJournal.name,
-                        description: selectedJournal.publisher,
-                        data: selectedJournal,
-                      }
-                    : null
-                }
-                query={journalQuery}
-                onQueryChange={(value) => {
-                  setJournalQuery(value);
-                  setSelectedJournal(null);
-                }}
-                onSelect={(option) => {
-                  setSelectedJournal(option.data as JournalOption);
-                  setJournalQuery("");
-                }}
-                onClear={() => {
-                  setSelectedJournal(null);
-                  setJournalQuery("");
-                }}
-                options={journalOptions}
-                placeholder="Search and choose the journal this account belongs to"
-                emptyText="No journal matches this search."
-              />
-            </div>
           </div>
         </form>
       </ResearchModal>

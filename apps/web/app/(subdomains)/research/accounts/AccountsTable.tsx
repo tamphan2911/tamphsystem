@@ -22,8 +22,10 @@ export type AccountRow = {
   password: string;
   email: string;
   note: string;
+  accountType: "JOURNAL" | "PUBLISHER";
   journalId: string;
   journalName: string;
+  publisherId: string;
   publisher: string;
   submissions: number;
 };
@@ -140,6 +142,9 @@ export function AccountsTable({
   deleteAction: (accountId: string) => Promise<void>;
 }) {
   const [query, setQuery] = usePersistentTableValue("accounts:q", "");
+  const [accountTab, setAccountTab] = usePersistentTableValue<
+    "JOURNAL" | "PUBLISHER"
+  >("accounts:scope", "JOURNAL");
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -153,9 +158,11 @@ export function AccountsTable({
       ]
         .join(" ")
         .toLowerCase();
-      return !needle || haystack.includes(needle);
+      return (
+        row.accountType === accountTab && (!needle || haystack.includes(needle))
+      );
     });
-  }, [query, rows]);
+  }, [accountTab, query, rows]);
 
   const pagination = useTablePagination(filtered, 10, 1, "accounts");
 
@@ -164,14 +171,38 @@ export function AccountsTable({
     pagination.setPage(1);
   }
 
+  function updateAccountTab(value: "JOURNAL" | "PUBLISHER") {
+    setAccountTab(value);
+    pagination.setPage(1);
+  }
+
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
-      <div className="border-b border-[#444444] bg-[#2C2C2C] py-3">
+      <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 md:flex-row md:items-center md:justify-between">
         <TableSearchInput
           value={query}
           onChange={updateQuery}
-          placeholder="Search accounts, email, journal..."
+          placeholder="Search accounts, email, journal, publisher..."
         />
+        <div className="journal-detail-tabs grid w-full flex-none grid-cols-2 border border-[#444444] bg-[#242424] p-1 md:w-auto md:min-w-72">
+          {(
+            [
+              ["JOURNAL", "Journal accounts"],
+              ["PUBLISHER", "Publisher accounts"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              data-active={accountTab === value}
+              aria-pressed={accountTab === value}
+              onClick={() => updateAccountTab(value)}
+              className="journal-detail-tab-button cursor-pointer rounded-none px-4 py-2.5 text-center text-xs font-normal"
+            >
+              <span className="relative z-10 whitespace-nowrap">{label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="overflow-hidden">
@@ -235,7 +266,7 @@ export function AccountsTable({
                       {account.journalName}
                     </Link>
                   ) : (
-                    "Publisher-wide"
+                    "All journals"
                   )}
                 </td>
                 <td className="px-3 py-3 text-xs text-[#B0B0B0]">

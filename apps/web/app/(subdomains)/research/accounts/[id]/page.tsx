@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AtSign, KeyRound, LockKeyhole, Send } from "lucide-react";
-import { prisma, JournalApprovalStatus, ResearchTaskStatus, Role } from "@repo/db";
+import {
+  prisma,
+  JournalApprovalStatus,
+  ResearchTaskStatus,
+  Role,
+} from "@repo/db";
 import { auth } from "../../../../../auth";
 import {
   SubmissionsTable,
@@ -69,13 +74,15 @@ export default async function AccountDetailPage({
   if (!userId) redirect("/login");
   const isAdmin =
     roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
-  const [account, journals] = await Promise.all([
+  const [account, journals, publishers] = await Promise.all([
     prisma.publisherAccount.findUnique({
       where: { id },
       include: {
         journal: true,
+        publisher: true,
         submissions: {
           include: {
+            journal: true,
             project: {
               include: {
                 leadResearcher: true,
@@ -103,6 +110,9 @@ export default async function AccountDetailPage({
       orderBy: [{ name: "asc" }],
       select: { id: true, name: true, publisher: true },
     }),
+    prisma.publisher.findMany({
+      orderBy: [{ name: "asc" }],
+    }),
   ]);
 
   if (!account) notFound();
@@ -120,9 +130,9 @@ export default async function AccountDetailPage({
       code:
         submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
       kind: "journal",
-      venueId: account.journalId ?? submission.journalId,
-      venueName: account.journal?.name ?? "Journal not recorded",
-      metaLine: account.journal?.publisher ?? "",
+      venueId: submission.journalId,
+      venueName: submission.journal.name,
+      metaLine: submission.journal.publisher ?? "",
       projectId: submission.project.id,
       projectTitle: submission.project.title,
       projectAuthors: authorLine(submission.project),
@@ -131,10 +141,10 @@ export default async function AccountDetailPage({
       projectRegisterStatus: submission.project.registerStatus,
       projectRegistration: submission.project.universityRegistration ?? "",
       canViewRegistrationClaim: false,
-      apc: account.journal?.apc ?? "",
-      apcCurrency: account.journal?.apcCurrency ?? "USD",
-      submissionFee: account.journal?.submissionFee ?? "",
-      submissionFeeCurrency: account.journal?.submissionFeeCurrency ?? "USD",
+      apc: submission.journal.apc ?? "",
+      apcCurrency: submission.journal.apcCurrency,
+      submissionFee: submission.journal.submissionFee ?? "",
+      submissionFeeCurrency: submission.journal.submissionFeeCurrency,
       accountId: account.id,
       account: account.username,
       accountEmail: account.email ?? "",
@@ -175,6 +185,9 @@ export default async function AccountDetailPage({
                   password: account.password,
                   email: account.email ?? "",
                   note: account.note ?? "",
+                  accountType: account.accountType,
+                  publisherId: account.publisherId ?? "",
+                  publisherName: account.publisher?.name ?? "",
                   journal: account.journal
                     ? {
                         id: account.journal.id,
@@ -187,6 +200,13 @@ export default async function AccountDetailPage({
                   id: journal.id,
                   name: journal.name,
                   publisher: journal.publisher ?? "",
+                }))}
+                publishers={publishers.map((publisher) => ({
+                  id: publisher.id,
+                  publisherCode: publisher.publisherCode,
+                  name: publisher.name,
+                  alias: publisher.alias ?? "",
+                  country: publisher.country ?? "",
                 }))}
               />
             )}
@@ -207,6 +227,8 @@ export default async function AccountDetailPage({
             >
               {account.journal.name}
             </Link>
+          ) : account.publisher?.name ? (
+            `${account.publisher.name} publisher account`
           ) : (
             "Publisher-wide account"
           )}

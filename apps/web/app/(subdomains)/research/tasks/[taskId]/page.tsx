@@ -22,7 +22,12 @@ import {
   Send,
   UserRound,
 } from "lucide-react";
-import { prisma, JournalApprovalStatus, ResearchTaskStatus, Role } from "@repo/db";
+import {
+  prisma,
+  JournalApprovalStatus,
+  ResearchTaskStatus,
+  Role,
+} from "@repo/db";
 import { auth } from "../../../../../auth";
 import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
 import {
@@ -757,15 +762,24 @@ export default async function TaskDetailPage({
             name: true,
             type: true,
             publisher: true,
+            publisherId: true,
             rank: true,
             localRank: true,
             issn: true,
           },
         }),
         prisma.publisherAccount.findMany({
-          where: { journalId: { not: null } },
+          where: {
+            OR: [{ journalId: { not: null } }, { publisherId: { not: null } }],
+          },
           orderBy: [{ updatedAt: "desc" }, { username: "asc" }],
-          select: { id: true, journalId: true, username: true, email: true },
+          select: {
+            id: true,
+            journalId: true,
+            publisherId: true,
+            username: true,
+            email: true,
+          },
         }),
         prisma.conference.findMany({
           orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
@@ -833,14 +847,25 @@ export default async function TaskDetailPage({
         .join(" - "),
     })),
   ];
-  const accountOptions = accounts
-    .filter((account) => Boolean(account.journalId))
-    .map((account) => ({
-      id: account.id,
-      journalId: account.journalId ?? "",
-      username: account.username,
-      email: account.email ?? "",
-    }));
+  const accountOptions = accounts.flatMap((account) =>
+    account.journalId
+      ? [
+          {
+            id: account.id,
+            journalId: account.journalId,
+            username: account.username,
+            email: account.email ?? "",
+          },
+        ]
+      : journals
+          .filter((journal) => journal.publisherId === account.publisherId)
+          .map((journal) => ({
+            id: account.id,
+            journalId: journal.id,
+            username: account.username,
+            email: account.email ?? "",
+          })),
+  );
   const reviewOptions = reviews.map((review) => ({
     id: review.id,
     title: review.manuscriptTitle,

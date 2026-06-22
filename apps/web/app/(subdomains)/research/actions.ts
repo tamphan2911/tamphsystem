@@ -35,6 +35,7 @@ import {
   ProposalStatus,
   ProposalType,
   Prisma,
+  PublisherAccountType,
   ResearchAuthorNotificationType,
   ResearchTaskCategory,
   ResearchTaskStatus,
@@ -2761,7 +2762,9 @@ export async function createJournal(formData: FormData) {
           password: accountPassword ?? "",
           email: accountEmail,
           note: accountNote,
+          accountType: PublisherAccountType.JOURNAL,
           journalId: journal.id,
+          publisherId: publisher.id,
         },
       });
     }
@@ -3105,17 +3108,142 @@ export async function unlockConference(conferenceId: string) {
   revalidatePath(`/conferences/${conferenceId}`);
 }
 
+async function mergeMatchingPublisherAccounts(
+  tx: Prisma.TransactionClient,
+  survivorId: string,
+  publisherId: string,
+  username: string,
+  password: string,
+) {
+  const duplicates = await tx.publisherAccount.findMany({
+    where: {
+      id: { not: survivorId },
+      publisherId,
+      username: { equals: username, mode: "insensitive" },
+      password,
+    },
+    select: { id: true },
+  });
+  const duplicateIds = duplicates.map((account) => account.id);
+  if (duplicateIds.length === 0) return;
+
+  await tx.researchSubmission.updateMany({
+    where: { accountId: { in: duplicateIds } },
+    data: { accountId: survivorId },
+  });
+  await tx.academicReview.updateMany({
+    where: { accountId: { in: duplicateIds } },
+    data: { accountId: survivorId },
+  });
+  await tx.researchTask.updateMany({
+    where: { accountId: { in: duplicateIds } },
+    data: { accountId: survivorId },
+  });
+  await tx.publisherAccount.deleteMany({
+    where: { id: { in: duplicateIds } },
+  });
+}
+
+async function journalAccountIds(journalId: string) {
+  const journal = await prisma.journal.findUnique({
+    where: { id: journalId },
+    select: { publisherId: true },
+  });
+  if (!journal) return [];
+  return prisma.publisherAccount.findMany({
+    where: {
+      OR: [
+        { accountType: PublisherAccountType.JOURNAL, journalId },
+        ...(journal.publisherId
+          ? [
+              {
+                accountType: PublisherAccountType.PUBLISHER,
+                publisherId: journal.publisherId,
+              },
+            ]
+          : []),
+      ],
+    },
+    select: { id: true },
+  });
+}
+
+async function accountBelongsToJournal(accountId: string, journalId: string) {
+  const accounts = await journalAccountIds(journalId);
+  return accounts.some((account) => account.id === accountId);
+}
+
+async function publisherAccountScope(formData: FormData): Promise<{
+  accountType: PublisherAccountType;
+  journalId: string | null;
+  publisherId: string | null;
+}> {
+  const isPublisherAccount = formData.get("isPublisherAccount") === "on";
+  if (isPublisherAccount) {
+    const publisherId = optionalString(formData.get("publisherId"));
+    const publisher = publisherId
+      ? await prisma.publisher.findUnique({
+          where: { id: publisherId },
+          select: { id: true },
+        })
+      : null;
+    if (!publisher) {
+      throw new Error("Choose the publisher that uses this account.");
+    }
+    return {
+      accountType: PublisherAccountType.PUBLISHER,
+      journalId: null,
+      publisherId: publisher.id,
+    };
+  }
+
+  const journalId = optionalString(formData.get("journalId"));
+  const journal = journalId
+    ? await prisma.journal.findUnique({
+        where: { id: journalId },
+        select: { id: true, publisherId: true },
+      })
+    : null;
+  if (!journal) {
+    throw new Error("Choose the journal that uses this account.");
+  }
+  return {
+    accountType: PublisherAccountType.JOURNAL,
+    journalId: journal.id,
+    publisherId: journal.publisherId,
+  };
+}
+
 export async function createPublisherAccount(formData: FormData) {
   await requireCurrentUser();
+  const scope = await publisherAccountScope(formData);
 
-  await prisma.publisherAccount.create({
-    data: {
-      username: optionalString(formData.get("username")) ?? "new-account",
-      password: optionalString(formData.get("password")) ?? "",
-      email: optionalString(formData.get("email")),
-      note: optionalString(formData.get("note")),
-      journalId: optionalString(formData.get("journalId")),
-    },
+  const username = optionalString(formData.get("username")) ?? "new-account";
+  const password = optionalString(formData.get("password")) ?? "";
+  await prisma.$transaction(async (tx) => {
+    const account = await tx.publisherAccount.create({
+      data: {
+        username,
+        password,
+        email: optionalString(formData.get("email")),
+        note: optionalString(formData.get("note")),
+        accountType: scope.accountType,
+        journalId: scope.journalId,
+        publisherId: scope.publisherId,
+      },
+    });
+    if (
+      scope.accountType === PublisherAccountType.PUBLISHER &&
+      scope.publisherId
+    ) {
+      await mergeMatchingPublisherAccounts(
+        tx,
+        account.id,
+        scope.publisherId,
+        username,
+        password,
+      );
+    }
   });
 
   revalidatePath("/accounts");
@@ -3130,16 +3258,35 @@ export async function updatePublisherAccount(
 ) {
   const user = await requireCurrentUser();
   requireResearchAdmin(user.roles);
+  const scope = await publisherAccountScope(formData);
 
-  await prisma.publisherAccount.update({
-    where: { id: accountId },
-    data: {
-      username: optionalString(formData.get("username")) ?? "new-account",
-      password: optionalString(formData.get("password")) ?? "",
-      email: optionalString(formData.get("email")),
-      note: optionalString(formData.get("note")),
-      journalId: optionalString(formData.get("journalId")),
-    },
+  const username = optionalString(formData.get("username")) ?? "new-account";
+  const password = optionalString(formData.get("password")) ?? "";
+  await prisma.$transaction(async (tx) => {
+    await tx.publisherAccount.update({
+      where: { id: accountId },
+      data: {
+        username,
+        password,
+        email: optionalString(formData.get("email")),
+        note: optionalString(formData.get("note")),
+        accountType: scope.accountType,
+        journalId: scope.journalId,
+        publisherId: scope.publisherId,
+      },
+    });
+    if (
+      scope.accountType === PublisherAccountType.PUBLISHER &&
+      scope.publisherId
+    ) {
+      await mergeMatchingPublisherAccounts(
+        tx,
+        accountId,
+        scope.publisherId,
+        username,
+        password,
+      );
+    }
   });
 
   revalidatePath("/accounts");
@@ -3234,12 +3381,17 @@ export async function deletePublisher(publisherId: string) {
 
   const publisher = await prisma.publisher.findUnique({
     where: { id: publisherId },
-    select: { _count: { select: { journals: true } } },
+    select: { _count: { select: { journals: true, accounts: true } } },
   });
   if (!publisher) return;
   if (publisher._count.journals > 0) {
     throw new Error(
       "Move or delete the associated journals before deleting this publisher.",
+    );
+  }
+  if (publisher._count.accounts > 0) {
+    throw new Error(
+      "Move or delete the publisher accounts before deleting this publisher.",
     );
   }
   await prisma.publisher.delete({ where: { id: publisherId } });
@@ -3329,11 +3481,7 @@ export async function createAcademicReview(formData: FormData) {
   if (!journalId || !accountId) {
     return { ok: false, reason: "MISSING_ACCOUNT" };
   }
-  const account = await prisma.publisherAccount.findFirst({
-    where: { id: accountId, journalId },
-    select: { id: true },
-  });
-  if (!account) {
+  if (!(await accountBelongsToJournal(accountId, journalId))) {
     return { ok: false, reason: "ACCOUNT_NOT_FOR_JOURNAL" };
   }
   const status = optionalString(formData.get("status")) ?? "ACCEPTED";
@@ -3764,10 +3912,7 @@ export async function createResearchTask(formData: FormData) {
   }
 
   if (taskType === ResearchTaskType.SUBMIT_RESEARCH && journalId) {
-    const journalAccounts = await prisma.publisherAccount.findMany({
-      where: { journalId },
-      select: { id: true },
-    });
+    const journalAccounts = await journalAccountIds(journalId);
     if (!accountId && journalAccounts.length === 1) {
       accountId = journalAccounts[0]?.id ?? null;
     }
@@ -4040,11 +4185,9 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   }
 
   if (accountId && taskType === ResearchTaskType.SUBMIT_RESEARCH) {
-    const account = await prisma.publisherAccount.findFirst({
-      where: { id: accountId, journalId },
-      select: { id: true },
-    });
-    if (!account) return { ok: false, reason: "ACCOUNT_NOT_FOR_JOURNAL" };
+    if (!journalId || !(await accountBelongsToJournal(accountId, journalId))) {
+      return { ok: false, reason: "ACCOUNT_NOT_FOR_JOURNAL" };
+    }
   }
 
   if (
@@ -4816,11 +4959,7 @@ export async function updateSubmissionDetails(formData: FormData) {
 
       const accountId = optionalString(formData.get("accountId"));
       if (accountId) {
-        const account = await prisma.publisherAccount.findFirst({
-          where: { id: accountId, journalId: venueId },
-          select: { id: true },
-        });
-        if (!account) {
+        if (!(await accountBelongsToJournal(accountId, venueId))) {
           return {
             ok: false,
             message: "The selected account does not belong to this journal.",

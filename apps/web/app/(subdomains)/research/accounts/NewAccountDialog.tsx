@@ -1,54 +1,36 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { AtSign, KeyRound, Link2, Loader2, Mail, PlusCircle } from "lucide-react";
+import { useState, useTransition } from "react";
+import {
+  AtSign,
+  KeyRound,
+  Link2,
+  Loader2,
+  Mail,
+  PlusCircle,
+} from "lucide-react";
 import { createPublisherAccount } from "../actions";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import type { PublisherPickerItem } from "@/sites/research/components/PublisherPicker";
 import {
-  ResearchSearchPicker,
-  type ResearchSearchPickerOption,
-} from "@/sites/research/components/ResearchSearchPicker";
+  AccountScopeFields,
+  type AccountJournalOption,
+} from "./AccountScopeFields";
 
-type JournalOption = {
-  id: string;
-  name: string;
-  publisher: string;
-};
-
-export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
+export function NewAccountDialog({
+  journals,
+  publishers,
+}: {
+  journals: AccountJournalOption[];
+  publishers: PublisherPickerItem[];
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const toast = useResearchToast();
-  const [journalQuery, setJournalQuery] = useState("");
-  const [selectedJournal, setSelectedJournal] = useState<JournalOption | null>(
-    null,
-  );
-
-  const journalResults = useMemo(() => {
-    const needle = journalQuery.trim().toLowerCase();
-    if (!needle) return [];
-    return journals
-      .filter((journal) => journal.name.toLowerCase().includes(needle))
-      .slice(0, 20);
-  }, [journalQuery, journals]);
-
-  const journalOptions = useMemo<ResearchSearchPickerOption<JournalOption>[]>(
-    () =>
-      journalResults.map((journal) => ({
-        id: journal.id,
-        label: journal.name,
-        description: journal.publisher,
-        data: journal,
-      })),
-    [journalResults],
-  );
-
   function closeDialog() {
     setIsOpen(false);
-    setJournalQuery("");
-    setSelectedJournal(null);
   }
 
   return (
@@ -144,6 +126,9 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
                 <Mail aria-hidden="true" />
               </span>
             </label>
+            <div className="md:col-span-2">
+              <AccountScopeFields journals={journals} publishers={publishers} />
+            </div>
             <label className="block md:col-span-2">
               <span className="sr-only">Account notes</span>
               <span className="research-auth-input-shell">
@@ -154,38 +139,6 @@ export function NewAccountDialog({ journals }: { journals: JournalOption[] }) {
                 <Link2 aria-hidden="true" />
               </span>
             </label>
-            <div className="md:col-span-2">
-              <ResearchSearchPicker
-                name="journalId"
-                selected={
-                  selectedJournal
-                    ? {
-                        id: selectedJournal.id,
-                        label: selectedJournal.name,
-                        description: selectedJournal.publisher,
-                        data: selectedJournal,
-                      }
-                    : null
-                }
-                query={journalQuery}
-                onQueryChange={(value) => {
-                  setJournalQuery(value);
-                  setSelectedJournal(null);
-                }}
-                onSelect={(option) => {
-                  const journal = option.data as JournalOption;
-                  setSelectedJournal(journal);
-                  setJournalQuery("");
-                }}
-                onClear={() => {
-                  setSelectedJournal(null);
-                  setJournalQuery("");
-                }}
-                options={journalOptions}
-                placeholder="Search and choose the journal this account belongs to"
-                emptyText="No journal matches this search."
-              />
-            </div>
           </div>
         </form>
       </ResearchModal>

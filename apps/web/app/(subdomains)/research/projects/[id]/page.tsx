@@ -313,7 +313,17 @@ export default async function ProjectDetailPage({
         suggestedJournals: {
           include: {
             journal: {
-              include: { accounts: { orderBy: [{ updatedAt: "desc" }] } },
+              include: {
+                accounts: { orderBy: [{ updatedAt: "desc" }] },
+                publisherRecord: {
+                  include: {
+                    accounts: {
+                      where: { accountType: "PUBLISHER" },
+                      orderBy: [{ updatedAt: "desc" }],
+                    },
+                  },
+                },
+              },
             },
             createdBy: { select: { name: true, email: true } },
             approvedBy: { select: { name: true, email: true } },
@@ -353,7 +363,17 @@ export default async function ProjectDetailPage({
     }),
     prisma.journal.findMany({
       where: { approvalStatus: JournalApprovalStatus.APPROVED },
-      include: { accounts: { orderBy: [{ updatedAt: "desc" }] } },
+      include: {
+        accounts: { orderBy: [{ updatedAt: "desc" }] },
+        publisherRecord: {
+          include: {
+            accounts: {
+              where: { accountType: "PUBLISHER" },
+              orderBy: [{ updatedAt: "desc" }],
+            },
+          },
+        },
+      },
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
     }),
     prisma.conference.findMany({
@@ -619,7 +639,10 @@ export default async function ProjectDetailPage({
       hasApcOption: journal.hasApcOption,
       submissionFee: journal.submissionFee ?? "",
       submissionFeeCurrency: journal.submissionFeeCurrency,
-      accounts: journal.accounts.map((account) => ({
+      accounts: [
+        ...journal.accounts,
+        ...(journal.publisherRecord?.accounts ?? []),
+      ].map((account) => ({
         id: account.id,
         journalId: account.journalId ?? "",
         username: account.username,
@@ -647,7 +670,10 @@ export default async function ProjectDetailPage({
         submissionFee: journal?.submissionFee ?? "",
         submissionFeeCurrency: journal?.submissionFeeCurrency ?? "USD",
         accounts:
-          journal?.accounts.map((account) => ({
+          [
+            ...(journal?.accounts ?? []),
+            ...(journal?.publisherRecord?.accounts ?? []),
+          ].map((account) => ({
             id: account.id,
             journalId: account.journalId ?? "",
             username: account.username,
@@ -885,7 +911,10 @@ export default async function ProjectDetailPage({
       issn: journal.issn ?? "",
       publisher: journal.publisher ?? "",
       rank: journal.rank ?? "",
-      accounts: journal.accounts.map((account) => ({
+      accounts: [
+        ...journal.accounts,
+        ...(journal.publisherRecord?.accounts ?? []),
+      ].map((account) => ({
         id: account.id,
         journalId: account.journalId ?? "",
         username: account.username,

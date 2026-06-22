@@ -140,6 +140,22 @@ export default async function JournalDetailPage({
           include: { _count: { select: { submissions: true } } },
           orderBy: [{ updatedAt: "desc" }],
         },
+        publisherRecord: {
+          include: {
+            accounts: {
+              where: isAdmin
+                ? { accountType: "PUBLISHER" }
+                : isAssistant && userId
+                  ? {
+                      accountType: "PUBLISHER",
+                      tasks: { some: { assignments: { some: { userId } } } },
+                    }
+                  : { id: "__no_access__" },
+              include: { _count: { select: { submissions: true } } },
+              orderBy: [{ updatedAt: "desc" }],
+            },
+          },
+        },
         reviews: {
           where:
             isAdmin && userId
@@ -264,7 +280,11 @@ export default async function JournalDetailPage({
     },
   );
 
-  const accountRows: JournalAccountRow[] = journal.accounts.map((account) => ({
+  const journalAccounts = [
+    ...journal.accounts,
+    ...(journal.publisherRecord?.accounts ?? []),
+  ];
+  const accountRows: JournalAccountRow[] = journalAccounts.map((account) => ({
     id: account.id,
     username: account.username,
     password: account.password,
@@ -581,7 +601,7 @@ export default async function JournalDetailPage({
           accounts={accountRows}
           reviews={reviewRows}
           submissionCount={journal._count.submissions}
-          accountCount={journal._count.accounts}
+          accountCount={accountRows.length}
           reviewCount={journal._count.reviews}
           showManagementTabs={isAdmin || isAssistant}
           linkSubmissions={isAdmin}

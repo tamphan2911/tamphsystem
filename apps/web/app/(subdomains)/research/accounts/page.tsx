@@ -1,5 +1,10 @@
 import { redirect } from "next/navigation";
-import { prisma, JournalApprovalStatus, ResearchTaskStatus, Role } from "@repo/db";
+import {
+  prisma,
+  JournalApprovalStatus,
+  ResearchTaskStatus,
+  Role,
+} from "@repo/db";
 import { auth } from "../../../../auth";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { deletePublisherAccount } from "../actions";
@@ -18,7 +23,7 @@ export default async function PublisherAccountsPage() {
   const canDelete = roles.includes(Role.ADMIN);
   if (!userId) redirect("/login");
 
-  const [accounts, journals] = await Promise.all([
+  const [accounts, journals, publishers] = await Promise.all([
     prisma.publisherAccount.findMany({
       where: isAdmin
         ? {}
@@ -37,6 +42,7 @@ export default async function PublisherAccountsPage() {
           },
       include: {
         journal: true,
+        publisher: true,
         _count: { select: { submissions: true } },
       },
       orderBy: { updatedAt: "desc" },
@@ -44,6 +50,9 @@ export default async function PublisherAccountsPage() {
     prisma.journal.findMany({
       where: { approvalStatus: JournalApprovalStatus.APPROVED },
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
+    }),
+    prisma.publisher.findMany({
+      orderBy: [{ name: "asc" }],
     }),
   ]);
 
@@ -55,17 +64,28 @@ export default async function PublisherAccountsPage() {
     password: account.password,
     email: account.email ?? "",
     note: account.note ?? "",
+    accountType: account.accountType,
     journalId: account.journalId ?? "",
     journalName: account.journal?.name ?? "",
-    publisher: account.journal?.publisher ?? "",
+    publisherId: account.publisherId ?? account.journal?.publisherId ?? "",
+    publisher: account.publisher?.name ?? account.journal?.publisher ?? "",
     submissions: account._count.submissions,
   }));
 
-  const publisherWide = accounts.filter((account) => !account.journalId).length;
+  const publisherWide = accounts.filter(
+    (account) => account.accountType === "PUBLISHER",
+  ).length;
   const journalOptions = journals.map((journal) => ({
     id: journal.id,
     name: journal.name,
     publisher: journal.publisher ?? "",
+  }));
+  const publisherOptions = publishers.map((publisher) => ({
+    id: publisher.id,
+    publisherCode: publisher.publisherCode,
+    name: publisher.name,
+    alias: publisher.alias ?? "",
+    country: publisher.country ?? "",
   }));
 
   const stats = [
@@ -110,7 +130,12 @@ export default async function PublisherAccountsPage() {
             ))}
           </div>
           <div className="flex flex-none items-center">
-            {isAdmin && <NewAccountDialog journals={journalOptions} />}
+            {isAdmin && (
+              <NewAccountDialog
+                journals={journalOptions}
+                publishers={publisherOptions}
+              />
+            )}
           </div>
         </div>
       </ResearchPageHeaderPortal>

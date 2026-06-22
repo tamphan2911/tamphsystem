@@ -57,19 +57,20 @@ function DeletePublisherButton({
         open={open}
         title="Delete this publisher?"
         description={
-          publisher.journals > 0
-            ? `${publisher.name} is still connected to ${publisher.journals} journal${publisher.journals === 1 ? "" : "s"}.`
+          publisher.journals > 0 || publisher.accounts > 0
+            ? `${publisher.name} is still connected to journals or publisher accounts.`
             : `This will remove ${publisher.name} from the publisher list.`
         }
         confirmLabel={deleting ? "Deleting..." : "Delete publisher"}
         isConfirming={deleting}
         onCancel={() => setOpen(false)}
         onConfirm={async () => {
-          if (publisher.journals > 0) {
+          if (publisher.journals > 0 || publisher.accounts > 0) {
             setOpen(false);
             toast.showError({
               title: "Publisher is still in use",
-              detail: `Move or delete the ${publisher.journals} associated journal${publisher.journals === 1 ? "" : "s"} before deleting this publisher.`,
+              detail:
+                "Move or delete the associated journals and publisher accounts before deleting this publisher.",
             });
             return;
           }

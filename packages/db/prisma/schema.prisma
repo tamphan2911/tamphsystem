@@ -63,6 +63,11 @@ enum JournalApprovalStatus {
   PENDING_APPROVAL
 }
 
+enum PublisherAccountType {
+  JOURNAL
+  PUBLISHER
+}
+
 model User {
   id                            String    @id @default(uuid())
   email                         String    @unique
@@ -644,36 +649,36 @@ model ConferenceSubmission {
 }
 
 model Journal {
-  id                    String       @id @default(uuid())
+  id                    String                @id @default(uuid())
   name                  String
   issn                  String?
   field                 String?
-  fields                String[]     @default([])
-  type                  JournalType  @default(INTERNATIONAL)
+  fields                String[]              @default([])
+  type                  JournalType           @default(INTERNATIONAL)
   rank                  String? // Q1, Q2, Q3, Q4
   localRank             String?
   issuesPerYear         Int?
-  isFavorite            Boolean      @default(false)
-  isInterest            Boolean      @default(false)
+  isFavorite            Boolean               @default(false)
+  isInterest            Boolean               @default(false)
   publisher             String?
   publisherId           String?
   country               String?
   apc                   String?
-  apcCurrency           CurrencyCode @default(USD)
-  hasApcOption          Boolean      @default(false)
+  apcCurrency           CurrencyCode          @default(USD)
+  hasApcOption          Boolean               @default(false)
   submissionFee         String?
-  submissionFeeCurrency CurrencyCode @default(USD)
+  submissionFeeCurrency CurrencyCode          @default(USD)
   homepageLink          String?
   submissionLink        String?
   scimagoLink           String?
   scopusLink            String?
   note                  String?
   approvalStatus        JournalApprovalStatus @default(APPROVED)
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @default(now()) @updatedAt
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @default(now()) @updatedAt
 
-  createdById String?
-  createdBy   User?   @relation("JournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdById     String?
+  createdBy       User?      @relation("JournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
   publisherRecord Publisher? @relation(fields: [publisherId], references: [id], onDelete: SetNull)
 
   submissions ResearchSubmission[]
@@ -700,6 +705,7 @@ model Publisher {
   updatedAt      DateTime @updatedAt
 
   journals Journal[]
+  accounts PublisherAccount[]
 }
 
 model SuggestedJournal {
@@ -830,19 +836,26 @@ model ResearchTaskClarification {
 }
 
 model PublisherAccount {
-  id        String   @id @default(uuid())
-  username  String
-  password  String // Stored in plain/reversible text for personal tracking
-  email     String?
-  note      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  journalId String?
-  journal   Journal? @relation(fields: [journalId], references: [id], onDelete: SetNull)
+  id          String               @id @default(uuid())
+  username    String
+  password    String // Stored in plain/reversible text for personal tracking
+  email       String?
+  note        String?
+  accountType PublisherAccountType @default(JOURNAL)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @default(now()) @updatedAt
+  journalId   String?
+  journal     Journal?             @relation(fields: [journalId], references: [id], onDelete: SetNull)
+  publisherId String?
+  publisher   Publisher?           @relation(fields: [publisherId], references: [id], onDelete: SetNull)
 
   submissions ResearchSubmission[]
   reviews     AcademicReview[]
   tasks       ResearchTask[]       @relation("ResearchTaskAccount")
+
+  @@index([journalId])
+  @@index([publisherId])
+  @@index([accountType])
 }
 
 model ResearchSubmission {

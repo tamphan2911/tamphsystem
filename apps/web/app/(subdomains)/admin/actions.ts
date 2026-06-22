@@ -7,6 +7,7 @@ import { auth } from "../../../auth";
 import {
   prisma,
   ClaimStatus,
+  PublisherAccountType,
   QuestionType,
   ResearchStage,
   Role,
@@ -335,13 +336,23 @@ export async function createAdminJournal(formData: FormData) {
 export async function createAdminPublisherAccount(formData: FormData) {
   await requireAdmin();
 
+  const journalId = optionalString(formData.get("journalId"));
+  const journal = journalId
+    ? await prisma.journal.findUnique({
+        where: { id: journalId },
+        select: { id: true, publisherId: true },
+      })
+    : null;
+
   await prisma.publisherAccount.create({
     data: {
       username: optionalString(formData.get("username")) ?? "new-account",
       password: optionalString(formData.get("password")) ?? "",
       email: optionalString(formData.get("email")),
       note: optionalString(formData.get("note")),
-      journalId: optionalString(formData.get("journalId")),
+      accountType: PublisherAccountType.JOURNAL,
+      journalId: journal?.id,
+      publisherId: journal?.publisherId,
     },
   });
 
