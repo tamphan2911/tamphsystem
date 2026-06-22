@@ -1525,7 +1525,7 @@ function VenueCard({
   const canApprove =
     canApproveSuggestion && !disabled && state.state === "pendingApproval";
   const canDelete = isAdmin && !disabled && state.state === "idle";
-  const showActions = canAssign || canApprove || canDelete;
+  const showActions = canAssign || canDelete;
 
   return (
     <div
@@ -1542,18 +1542,6 @@ function VenueCard({
                 className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
               >
                 <Send className="h-4 w-4" />
-              </button>
-            </IconHint>
-          )}
-          {canApprove && (
-            <IconHint label="Approve venue suggestion">
-              <button
-                type="button"
-                onClick={onApprove}
-                aria-label="Approve venue suggestion"
-                className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
-              >
-                <Check className="h-4 w-4" />
               </button>
             </IconHint>
           )}
@@ -1579,7 +1567,7 @@ function VenueCard({
         </div>
         {meta.badge ? (
           <div
-            className={`flex-none transition ${showActions ? "group-hover:opacity-0" : ""}`}
+            className={`flex-none transition ${showActions && !canApprove ? "group-hover:opacity-0" : ""}`}
           >
             <IconHint label={meta.tooltip || meta.badge} position="bottom">
               <span
@@ -1593,6 +1581,16 @@ function VenueCard({
                 ) : null}
               </span>
             </IconHint>
+            {canApprove ? (
+              <button
+                type="button"
+                onClick={onApprove}
+                className="research-allow-transform mt-2 inline-flex w-full cursor-pointer items-center justify-center gap-1 border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-normal uppercase tracking-wide text-emerald-700 transition duration-180 ease-out hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/20 active:translate-y-0 active:scale-95 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:border-emerald-400/40 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-200"
+              >
+                <Check className="h-3.5 w-3.5" />
+                Approve
+              </button>
+            ) : null}
           </div>
         ) : meta.tooltip ? (
           <div className="flex-none">

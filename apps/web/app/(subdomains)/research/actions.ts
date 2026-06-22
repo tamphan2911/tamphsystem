@@ -4900,7 +4900,6 @@ export async function approveSuggestedJournal(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
   if (
     !(await canApproveVenueSuggestionForResearch(
       projectId,
@@ -4966,7 +4965,6 @@ export async function approveSuggestedConference(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
   if (
     !(await canApproveVenueSuggestionForResearch(
       projectId,
