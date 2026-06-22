@@ -7,7 +7,7 @@ import { JournalsTable, type JournalRow } from "./JournalsTable";
 import { NewJournalDialog } from "./NewJournalDialog";
 import {
   accessibleJournalWhere,
-  hasUnrestrictedVenueAccess,
+  staffJournalAccessWhere,
 } from "@/sites/research/lib/venueAccess";
 import {
   assignedResearchReviewWhere,
@@ -23,9 +23,9 @@ export default async function JournalsPage() {
     []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
   const canDelete = roles.includes(Role.ADMIN);
-  const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
-  const journalWhere = unrestrictedAccess
-    ? {}
+  const staffAccessWhere = staffJournalAccessWhere(roles);
+  const journalWhere = staffAccessWhere
+    ? staffAccessWhere
     : userId
       ? accessibleJournalWhere(userId)
       : { id: "__no_access__" };

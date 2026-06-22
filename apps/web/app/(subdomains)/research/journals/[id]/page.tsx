@@ -30,7 +30,7 @@ import {
 import {
   accessibleJournalWhere,
   associatedResearchWhere,
-  hasUnrestrictedVenueAccess,
+  staffJournalAccessWhere,
 } from "@/sites/research/lib/venueAccess";
 import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
 import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
@@ -93,12 +93,12 @@ export default async function JournalDetailPage({
     roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
   const canViewAllRegistrationClaims =
     isAdmin || roles.includes(Role.CHIEF_ASSISTANT);
-  const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
+  const staffAccessWhere = staffJournalAccessWhere(roles);
   const scopedProjectWhere = userId
     ? associatedResearchWhere(userId, registrationIdentityValues)
     : { id: "__no_access__" };
-  const journalAccessWhere = unrestrictedAccess
-    ? {}
+  const journalAccessWhere = staffAccessWhere
+    ? staffAccessWhere
     : userId
       ? accessibleJournalWhere(userId, registrationIdentityValues)
       : { id: "__no_access__" };
