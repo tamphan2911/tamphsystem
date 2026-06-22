@@ -231,10 +231,8 @@ export function ResearchShell({
     return window.localStorage.getItem(sidebarStateKey) === "true";
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [theme, setTheme] = useState<ResearchTheme>(() => {
-    if (typeof window === "undefined") return "dark";
-    return initialResearchTheme();
-  });
+  const [theme, setTheme] = useState<ResearchTheme>("dark");
+  const themeInitializedRef = useRef(false);
 
   function handleThemeChange(nextTheme: ResearchTheme) {
     if (nextTheme === theme) return;
@@ -244,6 +242,13 @@ export function ResearchShell({
   }
 
   useLayoutEffect(() => {
+    if (!themeInitializedRef.current) {
+      themeInitializedRef.current = true;
+      const initialTheme = initialResearchTheme();
+      applyResearchTheme(initialTheme);
+      setTheme(initialTheme);
+      return;
+    }
     applyResearchTheme(theme);
   }, [theme]);
 
