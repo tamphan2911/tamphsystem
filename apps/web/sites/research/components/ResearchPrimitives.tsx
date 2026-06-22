@@ -79,6 +79,9 @@ export function ResearchButton({
   size?: "sm" | "md";
 }) {
   const [isClickLoading, setIsClickLoading] = useState(false);
+  const clickLoadingDelayRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const clickLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -87,6 +90,10 @@ export function ResearchButton({
   const isDisabled = Boolean(disabled || isClickLoading);
 
   function clearClickLoading() {
+    if (clickLoadingDelayRef.current) {
+      clearTimeout(clickLoadingDelayRef.current);
+      clickLoadingDelayRef.current = null;
+    }
     if (clickLoadingTimeoutRef.current) {
       clearTimeout(clickLoadingTimeoutRef.current);
       clickLoadingTimeoutRef.current = null;
@@ -132,7 +139,13 @@ export function ResearchButton({
           return;
         }
 
-        startClickLoading();
+        if (clickLoadingDelayRef.current) {
+          clearTimeout(clickLoadingDelayRef.current);
+        }
+        clickLoadingDelayRef.current = setTimeout(() => {
+          clickLoadingDelayRef.current = null;
+          startClickLoading();
+        }, 0);
 
         if (
           clickResult &&
