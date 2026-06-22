@@ -4775,3 +4775,24 @@ html.research-theme-transitioning
     animation: none;
   }
 }
+.research-site-root .research-sortable-table-body {
+  animation: research-sortable-table-settle 180ms ease-out;
+}
+
+@keyframes research-sortable-table-settle {
+  from {
+    opacity: 0.82;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .research-site-root .research-sortable-table-body {
+    animation: none;
+  }
+}

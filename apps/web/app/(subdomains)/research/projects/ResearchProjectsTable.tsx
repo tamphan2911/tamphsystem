@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
+  ArrowDownAZ,
+  ArrowDownNarrowWide,
+  ArrowDownUp,
+  ArrowUpNarrowWide,
   BadgeCheck,
   Ban,
   BookMarked,
@@ -60,6 +64,13 @@ export type ResearchProjectRow = {
   hasSubmittedSubmission: boolean;
   hasAcceptedSubmission: boolean;
 };
+
+type SortColumn = "stage" | "claim" | "registration" | "submit";
+type SortDirection = "asc" | "desc";
+type SortState = {
+  column: SortColumn;
+  direction: SortDirection;
+} | null;
 
 const stages = [
   "ALL",
@@ -183,6 +194,96 @@ function registrationLabel(status: string) {
   if (status === "SUBMITTED") return "Submitted";
   if (status === "PREPARING") return "Plan";
   return "Not registered";
+}
+
+function registrationSortLabel(row: ResearchProjectRow) {
+  const label = registrationLabel(row.registerStatus);
+  const registerName = row.registerName.trim();
+  return row.registerStatus !== "NOT_REGISTERED" && registerName
+    ? `${label} - ${registerName}`
+    : label;
+}
+
+function parseSortValue(value: string): SortState {
+  const [column, direction] = value.split(":");
+  if (
+    (column === "stage" ||
+      column === "claim" ||
+      column === "registration" ||
+      column === "submit") &&
+    (direction === "asc" || direction === "desc")
+  ) {
+    return { column, direction };
+  }
+  return null;
+}
+
+function stringifySortValue(sort: SortState) {
+  return sort ? `${sort.column}:${sort.direction}` : "NONE";
+}
+
+function nextSortState(current: SortState, column: SortColumn): SortState {
+  if (column === "claim" || column === "registration") {
+    if (current?.column === column) return null;
+    return { column, direction: "asc" };
+  }
+
+  if (current?.column !== column) return { column, direction: "desc" };
+  if (current.direction === "desc") return { column, direction: "asc" };
+  return null;
+}
+
+function sortHint(column: SortColumn, current: SortState) {
+  const next = nextSortState(current, column);
+  if (!next) return "Clear sorting";
+  if (column === "claim") return "Sort claims alphabetically";
+  if (column === "registration") return "Sort registrations alphabetically";
+  if (column === "stage") {
+    return next.direction === "desc"
+      ? "Sort by unfinished tasks: high to low"
+      : "Sort by unfinished tasks: low to high";
+  }
+  return next.direction === "desc"
+    ? "Sort submissions: high to low"
+    : "Sort submissions: low to high";
+}
+
+function SortHeaderButton({
+  column,
+  sort,
+  onChange,
+}: {
+  column: SortColumn;
+  sort: SortState;
+  onChange: (column: SortColumn) => void;
+}) {
+  const active = sort?.column === column;
+  const Icon =
+    active && sort.direction === "desc"
+      ? ArrowDownNarrowWide
+      : active && sort.direction === "asc"
+        ? column === "claim" || column === "registration"
+          ? ArrowDownAZ
+          : ArrowUpNarrowWide
+        : ArrowDownUp;
+
+  return (
+    <IconHint label={sortHint(column, sort)}>
+      <button
+        type="button"
+        aria-label={sortHint(column, sort)}
+        aria-pressed={active}
+        onClick={() => onChange(column)}
+        className={`research-allow-transform inline-flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 shadow-none outline-none transition-[color,filter,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
+          active
+            ? "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+            : "text-slate-500 hover:text-slate-900 dark:text-[#8F98A8] dark:hover:text-[#E4E4E4]"
+        }`}
+      >
+        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+      </button>
+    </IconHint>
+  );
 }
 
 function registrationClass(status: string) {
@@ -432,6 +533,11 @@ export function ResearchProjectsTable({
     "projects:registration",
     "ALL",
   );
+  const [sortValue, setSortValue] = usePersistentTableValue(
+    "projects:sort",
+    "NONE",
+  );
+  const sort = useMemo(() => parseSortValue(sortValue), [sortValue]);
   const selectedStages = useMemo(
     () => selectedFilterValues(stageValue, stages),
     [stageValue],
@@ -492,7 +598,45 @@ export function ResearchProjectsTable({
     showRegistrationClaim,
   ]);
 
-  const pagination = useTablePagination(filtered, 10, 1, "projects");
+  const sortedRows = useMemo(() => {
+    if (!sort) return filtered;
+
+    return filtered
+      .map((row, index) => ({ row, index }))
+      .sort((left, right) => {
+        let comparison = 0;
+
+        if (sort.column === "stage") {
+          comparison = left.row.activeTasks - right.row.activeTasks;
+        } else if (sort.column === "submit") {
+          comparison = left.row.submissions - right.row.submissions;
+        } else if (sort.column === "claim") {
+          comparison = claimLabel(left.row.claimStatus).localeCompare(
+            claimLabel(right.row.claimStatus),
+            undefined,
+            { sensitivity: "base" },
+          );
+        } else {
+          comparison = registrationSortLabel(left.row).localeCompare(
+            registrationSortLabel(right.row),
+            undefined,
+            { sensitivity: "base" },
+          );
+        }
+
+        if (comparison === 0) return left.index - right.index;
+        return sort.direction === "desc" ? -comparison : comparison;
+      })
+      .map(({ row }) => row);
+  }, [filtered, sort]);
+
+  const pagination = useTablePagination(sortedRows, 10, 1, "projects");
+
+  function updateSort(column: SortColumn) {
+    const next = nextSortState(sort, column);
+    setSortValue(stringifySortValue(next));
+    pagination.setPage(1);
+  }
 
   function updateQuery(value: string) {
     setQuery(value);
@@ -570,14 +714,50 @@ export function ResearchProjectsTable({
             <tr>
               <th className="w-[5.75rem] px-3 py-3">ID</th>
               <th className="px-3 py-3">Research</th>
-              <th className="w-[4.5rem] px-3 py-3">Stage</th>
+              <th className="w-[5.75rem] px-3 py-3">
+                <span className="inline-flex items-center gap-1.5">
+                  Stage
+                  <SortHeaderButton
+                    column="stage"
+                    sort={sort}
+                    onChange={updateSort}
+                  />
+                </span>
+              </th>
               {showRegistrationClaim && (
                 <>
-                  <th className="w-[4.5rem] px-3 py-3">Claim</th>
-                  <th className="w-[12rem] px-3 py-3">Registration</th>
+                  <th className="w-[5.75rem] px-3 py-3">
+                    <span className="inline-flex items-center gap-1.5">
+                      Claim
+                      <SortHeaderButton
+                        column="claim"
+                        sort={sort}
+                        onChange={updateSort}
+                      />
+                    </span>
+                  </th>
+                  <th className="w-[12rem] px-3 py-3">
+                    <span className="inline-flex items-center gap-1.5">
+                      Registration
+                      <SortHeaderButton
+                        column="registration"
+                        sort={sort}
+                        onChange={updateSort}
+                      />
+                    </span>
+                  </th>
                 </>
               )}
-              <th className="w-[5rem] px-3 py-3 text-center">Submit</th>
+              <th className="w-[5.75rem] px-3 py-3 text-center">
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  Submit
+                  <SortHeaderButton
+                    column="submit"
+                    sort={sort}
+                    onChange={updateSort}
+                  />
+                </span>
+              </th>
               {isAdmin && deleteAction && (
                 <th className="w-14 px-3 py-3 text-center">
                   <span className="sr-only">Delete</span>
@@ -585,7 +765,10 @@ export function ResearchProjectsTable({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#444444]">
+          <tbody
+            key={sortValue}
+            className="research-sortable-table-body divide-y divide-[#444444]"
+          >
             {pagination.pagedRows.map((row) => (
               <tr
                 key={row.id}
