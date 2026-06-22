@@ -82,30 +82,37 @@ export function CreateSubmissionTaskDialog({
   projectTitle,
   venues,
   assistants,
+  checkers = [],
+  canChooseChecker = false,
   disabled = false,
 }: {
   projectId: string;
   projectTitle: string;
   venues: SubmissionTaskVenueOption[];
   assistants: SubmissionTaskAssigneeOption[];
+  checkers?: SubmissionTaskAssigneeOption[];
+  canChooseChecker?: boolean;
   disabled?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [dueDate, setDueDate] = useState(defaultResearchTaskDueDate);
   const [venueQuery, setVenueQuery] = useState("");
   const [assistantQuery, setAssistantQuery] = useState("");
+  const [checkerQuery, setCheckerQuery] = useState("");
   const [selectedVenue, setSelectedVenue] =
     useState<SubmissionTaskVenueOption | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [selectedAssistantIds, setSelectedAssistantIds] = useState<string[]>(
     [],
   );
+  const [selectedCheckerId, setSelectedCheckerId] = useState("");
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [addAccountOpen, setAddAccountOpen] = useState(false);
   const venueDropdownRef = useRef<HTMLDivElement>(null);
   const accountDropdownRef = useRef<HTMLDivElement>(null);
   const assistantDropdownRef = useRef<HTMLDivElement>(null);
+  const checkerDropdownRef = useRef<HTMLDivElement>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { showSuccess } = useResearchToast();
@@ -172,6 +179,20 @@ export function CreateSubmissionTaskDialog({
       .slice(0, 12);
   }, [assistantQuery, assistants, selectedAssistantIds]);
 
+  const checkerResults = useMemo(() => {
+    const needle = checkerQuery.trim().toLowerCase();
+    if (!needle || !canChooseChecker) return [];
+    return checkers
+      .filter((checker) => checker.id !== selectedCheckerId)
+      .filter((checker) =>
+        [checker.name, checker.email, checker.id, ...checker.roles]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 12);
+  }, [canChooseChecker, checkerQuery, checkers, selectedCheckerId]);
+
   const selectedAssistants = useMemo(
     () =>
       selectedAssistantIds.flatMap((id) => {
@@ -179,6 +200,10 @@ export function CreateSubmissionTaskDialog({
         return assistant ? [assistant] : [];
       }),
     [assistants, selectedAssistantIds],
+  );
+  const selectedChecker = useMemo(
+    () => checkers.find((checker) => checker.id === selectedCheckerId) ?? null,
+    [checkers, selectedCheckerId],
   );
 
   const selectedAccount =
@@ -193,12 +218,16 @@ export function CreateSubmissionTaskDialog({
   function reset() {
     setVenueQuery("");
     setAssistantQuery("");
+    setCheckerQuery("");
     setSelectedVenue(null);
     setSelectedAccountId("");
     setSelectedAssistantIds(defaultAssistantId ? [defaultAssistantId] : []);
+    setSelectedCheckerId("");
     setAccountOpen(false);
     setAddAccountOpen(false);
     setAllowReportUpload(false);
+    setSelectedCheckerId("");
+    setCheckerQuery("");
     setDueDate(defaultResearchTaskDueDate());
   }
 
@@ -226,6 +255,11 @@ export function CreateSubmissionTaskDialog({
         : [...current, id],
     );
     setAssistantQuery("");
+  }
+
+  function selectChecker(id: string) {
+    setSelectedCheckerId(id);
+    setCheckerQuery("");
   }
 
   useEffect(() => {
@@ -390,6 +424,9 @@ export function CreateSubmissionTaskDialog({
             {selectedAssistantIds.map((id) => (
               <input key={id} type="hidden" name="assigneeIds" value={id} />
             ))}
+            {canChooseChecker && (
+              <input type="hidden" name="checkerId" value={selectedCheckerId} />
+            )}
             <input
               type="hidden"
               name="allowAssigneeReportUpload"
@@ -629,58 +666,129 @@ export function CreateSubmissionTaskDialog({
                 </div>
               )}
               <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
-                <div ref={assistantDropdownRef} className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    value={assistantQuery}
-                    onChange={(event) => setAssistantQuery(event.target.value)}
-                    placeholder="Search assistant or admin..."
-                    className={`${researchSearchFieldClass} pl-9`}
-                  />
-                </div>
-                <FloatingDropdownPortal
-                  anchorRef={assistantDropdownRef}
-                  open={Boolean(assistantQuery.trim())}
-                  maxWidth={820}
-                  maxPanelHeight={272}
-                >
-                  <div className={`${researchDropdownPanelClass} grid`}>
-                    <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
-                      {assistantResults.map((assistant) => {
-                        return (
-                          <button
-                            key={assistant.id}
-                            type="button"
-                            onClick={() => toggleAssistant(assistant.id)}
-                            className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
-                          >
-                            <span className="flex min-w-0 items-center gap-3 px-3">
-                              <UserRound className="h-4 w-4 flex-none text-slate-400" />
-                              <span className="min-w-0">
-                                <span className="block truncate text-sm font-normal">
-                                  {displayResearchPersonName(assistant)}
-                                </span>
-                                <span className="block truncate text-xs text-[#B0B0B0]">
-                                  {displayResearchEmail(assistant.email)}
+                <div className="grid gap-4">
+                  <div ref={assistantDropdownRef} className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      value={assistantQuery}
+                      onChange={(event) =>
+                        setAssistantQuery(event.target.value)
+                      }
+                      placeholder="Search task assignees by name, email, ID, or role (*)"
+                      className={`${researchSearchFieldClass} pl-9`}
+                    />
+                  </div>
+                  <FloatingDropdownPortal
+                    anchorRef={assistantDropdownRef}
+                    open={Boolean(assistantQuery.trim())}
+                    maxWidth={820}
+                    maxPanelHeight={272}
+                  >
+                    <div className={`${researchDropdownPanelClass} grid`}>
+                      <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
+                        {assistantResults.map((assistant) => {
+                          return (
+                            <button
+                              key={assistant.id}
+                              type="button"
+                              onClick={() => toggleAssistant(assistant.id)}
+                              className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
+                            >
+                              <span className="flex min-w-0 items-center gap-3 px-3">
+                                <UserRound className="h-4 w-4 flex-none text-slate-400" />
+                                <span className="min-w-0">
+                                  <span className="block truncate text-sm font-normal">
+                                    {displayResearchPersonName(assistant)}
+                                  </span>
+                                  <span className="block truncate text-xs text-[#B0B0B0]">
+                                    {displayResearchEmail(assistant.email)}
+                                  </span>
                                 </span>
                               </span>
-                            </span>
-                          </button>
-                        );
-                      })}
-                      {assistantQuery.trim() &&
-                        assistantResults.length === 0 && (
-                          <p className="py-10 text-center text-sm text-[#B0B0B0]">
-                            No user matches this search.
-                          </p>
-                        )}
+                            </button>
+                          );
+                        })}
+                        {assistantQuery.trim() &&
+                          assistantResults.length === 0 && (
+                            <p className="py-10 text-center text-sm text-[#B0B0B0]">
+                              No user matches this search.
+                            </p>
+                          )}
+                      </div>
                     </div>
-                  </div>
-                </FloatingDropdownPortal>
-                <ReportUploadPermissionField
-                  checked={allowReportUpload}
-                  onChange={setAllowReportUpload}
-                />
+                  </FloatingDropdownPortal>
+                  {canChooseChecker && (
+                    <section className="grid gap-3">
+                      {selectedChecker ? (
+                        <button
+                          type="button"
+                          onClick={() => selectChecker("")}
+                          className="inline-flex w-fit cursor-pointer items-center gap-2 border border-[#d9d0c3] bg-[#f8f5f0] px-2.5 py-1.5 text-xs text-[#243047] transition hover:border-[#A8DADC] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#A8DADC] dark:hover:bg-[#303030]"
+                        >
+                          {displayResearchPersonName(selectedChecker)}
+                          <span className="text-[#6C778D] dark:text-[#B0B0B0]">
+                            Chief assistant checker
+                          </span>
+                          <X className="h-3.5 w-3.5 text-[#6C778D] dark:text-[#B0B0B0]" />
+                        </button>
+                      ) : null}
+                      <div ref={checkerDropdownRef} className="relative">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                          value={checkerQuery}
+                          onChange={(event) =>
+                            setCheckerQuery(event.target.value)
+                          }
+                          placeholder="Search chief assistant checker (optional)"
+                          className={`${researchSearchFieldClass} pl-9`}
+                        />
+                      </div>
+                      <FloatingDropdownPortal
+                        anchorRef={checkerDropdownRef}
+                        open={Boolean(checkerQuery.trim())}
+                        maxWidth={820}
+                        maxPanelHeight={272}
+                      >
+                        <div className={`${researchDropdownPanelClass} grid`}>
+                          <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
+                            {checkerResults.map((checker) => (
+                              <button
+                                key={checker.id}
+                                type="button"
+                                onClick={() => selectChecker(checker.id)}
+                                className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
+                              >
+                                <span className="flex min-w-0 items-center gap-3 px-3">
+                                  <UserRound className="h-4 w-4 flex-none text-slate-400" />
+                                  <span className="min-w-0">
+                                    <span className="block truncate text-sm font-normal">
+                                      {displayResearchPersonName(checker)}
+                                    </span>
+                                    <span className="block truncate text-xs text-[#B0B0B0]">
+                                      {displayResearchEmail(checker.email)}
+                                    </span>
+                                  </span>
+                                </span>
+                              </button>
+                            ))}
+                            {checkerQuery.trim() &&
+                              checkerResults.length === 0 && (
+                                <p className="py-10 text-center text-sm text-[#B0B0B0]">
+                                  No chief assistant matches this search.
+                                </p>
+                              )}
+                          </div>
+                        </div>
+                      </FloatingDropdownPortal>
+                    </section>
+                  )}
+                </div>
+                <div className="lg:pt-0">
+                  <ReportUploadPermissionField
+                    checked={allowReportUpload}
+                    onChange={setAllowReportUpload}
+                  />
+                </div>
               </div>
             </section>
 

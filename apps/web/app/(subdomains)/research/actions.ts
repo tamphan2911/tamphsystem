@@ -1052,6 +1052,7 @@ function scopedTaskWhere(taskId: string, userId: string) {
     id: taskId,
     OR: [
       { createdById: userId },
+      { checkerId: userId },
       { assignments: { some: { userId } } },
       {
         project: {
@@ -1125,6 +1126,57 @@ async function taskAssigneesAreSelectableByUser({
   });
 
   return selectableAssigneeCount === uniqueAssigneeIds.length;
+}
+
+async function taskCheckerIsSelectableByAdmin({
+  checkerId,
+  user,
+}: {
+  checkerId: string | null;
+  user: { roles: Role[] };
+}) {
+  if (!checkerId) return true;
+  if (!user.roles.includes(Role.ADMIN)) return false;
+
+  const checkerCount = await prisma.user.count({
+    where: {
+      id: checkerId,
+      activeSites: { has: "research" },
+      roles: { has: Role.CHIEF_ASSISTANT },
+    },
+  });
+
+  return checkerCount === 1;
+}
+
+async function notifyTaskAdminsAndChecker({
+  taskId,
+  userIds,
+  type,
+  title,
+  summary,
+  body,
+  excludeUserId,
+}: {
+  taskId: string;
+  userIds: Array<string | null | undefined>;
+  type: string;
+  title: string;
+  summary: string;
+  body?: string;
+  excludeUserId?: string;
+}) {
+  await notifyUsers({
+    userIds: userIds.filter((id): id is string => Boolean(id)),
+    type,
+    title,
+    summary,
+    body,
+    href: `/tasks/${taskId}`,
+    entityType: "task",
+    entityId: taskId,
+    excludeUserId,
+  });
 }
 
 async function notifyUsers({
@@ -3488,6 +3540,11 @@ export async function createResearchTask(formData: FormData) {
     return { ok: false, reason: "INACTIVE_RESEARCH_ASSIGNEE" };
   }
 
+  const checkerId = optionalString(formData.get("checkerId"));
+  if (!(await taskCheckerIsSelectableByAdmin({ checkerId, user }))) {
+    return { ok: false, reason: "INVALID_CHECKER" };
+  }
+
   const taskType = taskTypeFromForm(formData.get("taskType"));
   if (!taskType) return { ok: false, reason: "MISSING_ASSOCIATION" };
   const projectId = optionalString(formData.get("projectId"));
@@ -3633,6 +3690,7 @@ export async function createResearchTask(formData: FormData) {
       reviewId,
       accountId,
       allowAssigneeReportUpload,
+      checkerId,
       dueDate: researchTaskDueDate(optionalString(formData.get("dueDate"))),
       createdById: user.id,
       ...(taskFile?.ok ? taskFile.data : {}),
@@ -3645,6 +3703,7 @@ export async function createResearchTask(formData: FormData) {
       title: true,
       description: true,
       createdById: true,
+      checkerId: true,
       assignments: {
         select: { user: { select: { email: true } } },
       },
@@ -3680,6 +3739,19 @@ export async function createResearchTask(formData: FormData) {
     taskId: task.id,
     actionLabel: "Open task",
   });
+  if (task.checkerId) {
+    await notifyUsers({
+      userIds: [task.checkerId],
+      type: "TASK_CHECKER_ASSIGNED",
+      title: "Task checker assigned",
+      summary: task.title,
+      body: "Admin assigned you as checker for this task. You can review clarification requests, approve completion, request redo, revoke, and edit this task.",
+      href: `/tasks/${task.id}`,
+      entityType: "task",
+      entityId: task.id,
+      excludeUserId: user.id,
+    });
+  }
 
   revalidatePath("/tasks");
   if (projectId) revalidatePath(`/projects/${projectId}`);
@@ -3701,6 +3773,8 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       organizedProjectId: true,
       reviewId: true,
       status: true,
+      createdById: true,
+      checkerId: true,
       assignments: { select: { userId: true } },
     },
   });
@@ -3731,6 +3805,20 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   if (!(await taskAssigneesAreSelectableByUser({ assigneeIds, user }))) {
     return { ok: false, reason: "INACTIVE_RESEARCH_ASSIGNEE" };
   }
+
+  const requestedCheckerId = optionalString(formData.get("checkerId"));
+  if (
+    user.roles.includes(Role.ADMIN) &&
+    !(await taskCheckerIsSelectableByAdmin({
+      checkerId: requestedCheckerId,
+      user,
+    }))
+  ) {
+    return { ok: false, reason: "INVALID_CHECKER" };
+  }
+  const checkerId = user.roles.includes(Role.ADMIN)
+    ? requestedCheckerId
+    : currentTask.checkerId;
 
   const taskType = taskTypeFromForm(formData.get("taskType"));
   if (!taskType) return { ok: false, reason: "MISSING_ASSOCIATION" };
@@ -3882,6 +3970,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
             : null,
         reviewId: taskType === ResearchTaskType.REVIEW ? reviewId : null,
         allowAssigneeReportUpload,
+        checkerId,
         ...(!allowAssigneeReportUpload
           ? {
               reportFileName: null,
@@ -3948,6 +4037,45 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     });
   }
 
+  if (checkerId && checkerId !== currentTask.checkerId) {
+    await notifyUsers({
+      userIds: [checkerId],
+      type: "TASK_CHECKER_ASSIGNED",
+      title: "Task checker assigned",
+      summary: task.title,
+      body: "Admin assigned you as checker for this task. You can review clarification requests, approve completion, request redo, revoke, and edit this task.",
+      href: `/tasks/${task.id}`,
+      entityType: "task",
+      entityId: task.id,
+      excludeUserId: user.id,
+    });
+  }
+  if (currentTask.checkerId && !checkerId) {
+    await notifyUsers({
+      userIds: [currentTask.checkerId],
+      type: "TASK_CHECKER_REMOVED",
+      title: "Task checker removed",
+      summary: task.title,
+      body: "Admin removed you as checker for this task.",
+      href: `/tasks/${task.id}`,
+      entityType: "task",
+      entityId: task.id,
+      excludeUserId: user.id,
+    });
+  }
+  await notifyTaskAdminsAndChecker({
+    taskId,
+    userIds: [
+      currentTask.createdById,
+      user.roles.includes(Role.ADMIN) ? checkerId : currentTask.checkerId,
+    ],
+    type: "TASK_UPDATED_REVIEWER_NOTICE",
+    title: "Task updated",
+    summary: task.title,
+    body: "Task details, associations, or assignees were updated by another task manager.",
+    excludeUserId: user.id,
+  });
+
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
   if (currentTask.projectId)
@@ -3970,7 +4098,7 @@ export async function revokeResearchTask(taskId: string) {
 
   const currentTask = await prisma.researchTask.findUnique({
     where: { id: taskId },
-    select: { createdById: true },
+    select: { createdById: true, checkerId: true },
   });
   if (!currentTask) return;
   if (!isAdmin && currentTask.createdById !== user.id) redirect("/401");
@@ -3986,6 +4114,8 @@ export async function revokeResearchTask(taskId: string) {
     select: {
       projectId: true,
       title: true,
+      createdById: true,
+      checkerId: true,
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
       },
@@ -4012,6 +4142,16 @@ export async function revokeResearchTask(taskId: string) {
     taskTitle: task.title,
     taskId,
     actionLabel: "View task",
+  });
+
+  await notifyTaskAdminsAndChecker({
+    taskId,
+    userIds: [task.createdById, task.checkerId],
+    type: "TASK_REVOKED_REVIEWER_NOTICE",
+    title: "Task revoked",
+    summary: task.title,
+    body: "This task was revoked by another task manager.",
+    excludeUserId: user.id,
   });
 
   revalidatePath("/tasks");
@@ -5227,6 +5367,7 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
       status: true,
       title: true,
       createdById: true,
+      checkerId: true,
       createdBy: { select: { email: true } },
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
@@ -5267,7 +5408,9 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
   });
 
   await notifyUsers({
-    userIds: [task.createdById],
+    userIds: [task.createdById, task.checkerId].filter(
+      (id): id is string => Boolean(id),
+    ),
     type: "TASK_READY_FOR_CHECK",
     title: "Task ready for check",
     summary: task.title,
@@ -5314,6 +5457,7 @@ export async function uploadResearchTaskReport(
       allowAssigneeReportUpload: true,
       status: true,
       createdById: true,
+      checkerId: true,
       assignments: { select: { userId: true } },
     },
   });
@@ -5386,7 +5530,9 @@ export async function uploadResearchTaskReport(
   });
 
   await notifyUsers({
-    userIds: [task.createdById],
+    userIds: [task.createdById, task.checkerId].filter(
+      (id): id is string => Boolean(id),
+    ),
     type: "TASK_REPORT_UPLOADED",
     title: "Task report uploaded",
     summary: task.title,
@@ -5542,6 +5688,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       status: true,
       title: true,
       createdById: true,
+      checkerId: true,
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
       },
@@ -5626,6 +5773,15 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     taskTitle: task.title,
     taskId,
     actionLabel: "View task",
+  });
+  await notifyTaskAdminsAndChecker({
+    taskId,
+    userIds: [task.createdById, task.checkerId],
+    type: "TASK_COMPLETED_REVIEWER_NOTICE",
+    title: "Task approved as complete",
+    summary: task.title,
+    body: "This task was approved as complete by another task manager.",
+    excludeUserId: user.id,
   });
 }
 
@@ -5774,6 +5930,7 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
       id: true,
       title: true,
       createdById: true,
+      checkerId: true,
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
       },
@@ -5832,6 +5989,17 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
     taskId,
     actionLabel: "Open task",
   });
+  await notifyTaskAdminsAndChecker({
+    taskId,
+    userIds: [task.createdById, task.checkerId],
+    type: "TASK_REDO_REVIEWER_NOTICE",
+    title: "Task revision requested",
+    summary: task.title,
+    body: reason
+      ? `Revision was requested by another task manager. Note: ${reason}`
+      : "Revision was requested by another task manager.",
+    excludeUserId: user.id,
+  });
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
 }
@@ -5848,6 +6016,7 @@ export async function requestTaskClarification(
     select: {
       title: true,
       createdById: true,
+      checkerId: true,
       status: true,
       createdBy: { select: { email: true } },
       assignments: { select: { userId: true } },
@@ -5880,7 +6049,9 @@ export async function requestTaskClarification(
     data: { status: ResearchTaskStatus.NEED_CLARIFY },
   });
   await notifyUsers({
-    userIds: [task.createdById],
+    userIds: [task.createdById, task.checkerId].filter(
+      (id): id is string => Boolean(id),
+    ),
     type: "TASK_CLARIFICATION_REQUESTED",
     title: "Clarification requested",
     summary: task.title,
@@ -5918,6 +6089,7 @@ export async function answerTaskClarification(
     select: {
       title: true,
       createdById: true,
+      checkerId: true,
       status: true,
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
@@ -5968,6 +6140,15 @@ export async function answerTaskClarification(
     taskTitle: task.title,
     taskId,
     actionLabel: "Open task",
+  });
+  await notifyTaskAdminsAndChecker({
+    taskId,
+    userIds: [task.createdById, task.checkerId],
+    type: "TASK_CLARIFICATION_ANSWERED_REVIEWER_NOTICE",
+    title: "Clarification answered",
+    summary: task.title,
+    body: `A task manager answered the clarification request: ${answer}`,
+    excludeUserId: user.id,
   });
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);

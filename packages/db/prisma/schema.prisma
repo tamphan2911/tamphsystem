@@ -93,6 +93,7 @@ model User {
   researchAuthorEntries           ResearchProjectAuthor[]
   registeredResearch              ResearchProject[]            @relation("ResearchRegistrationUser")
   createdResearchTasks            ResearchTask[]               @relation("ResearchTaskCreator")
+  checkedResearchTasks            ResearchTask[]               @relation("ResearchTaskChecker")
   assignedResearchTasks           ResearchTaskAssignment[]     @relation("ResearchTaskAssignee")
   researchNotifications           ResearchNotification[]
   suggestedJournals               SuggestedJournal[]           @relation("SuggestedJournalCreator")
@@ -756,7 +757,9 @@ model ResearchTask {
   updatedAt                 DateTime              @updatedAt
 
   createdById        String
+  checkerId          String?
   createdBy          User              @relation("ResearchTaskCreator", fields: [createdById], references: [id])
+  checker            User?             @relation("ResearchTaskChecker", fields: [checkerId], references: [id], onDelete: SetNull)
   projectId          String?
   organizedProjectId String?
   journalId          String?
@@ -773,6 +776,8 @@ model ResearchTask {
 
   assignments    ResearchTaskAssignment[]
   clarifications ResearchTaskClarification[]
+
+  @@index([checkerId])
 }
 
 model ResearchTaskAssignment {

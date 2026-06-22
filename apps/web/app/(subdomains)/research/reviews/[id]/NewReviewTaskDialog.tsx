@@ -51,15 +51,21 @@ export function NewReviewTaskDialog({
   manuscriptTitle,
   journalName,
   assignees,
+  checkers = [],
+  canChooseChecker = false,
 }: {
   reviewId: string;
   manuscriptTitle: string;
   journalName: string;
   assignees: TaskAssigneeOption[];
+  checkers?: TaskAssigneeOption[];
+  canChooseChecker?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [assigneeQuery, setAssigneeQuery] = useState("");
+  const [checkerQuery, setCheckerQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedCheckerId, setSelectedCheckerId] = useState("");
   const [dueDate, setDueDate] = useState(defaultResearchTaskDueDate);
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -78,6 +84,20 @@ export function NewReviewTaskDialog({
       .slice(0, 12);
   }, [assigneeQuery, assignees]);
 
+  const filteredCheckers = useMemo(() => {
+    const needle = checkerQuery.trim().toLowerCase();
+    if (!needle || !canChooseChecker) return [];
+    return checkers
+      .filter((user) => user.id !== selectedCheckerId)
+      .filter((user) =>
+        [user.name, user.email, user.id, ...user.roles]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 12);
+  }, [canChooseChecker, checkerQuery, checkers, selectedCheckerId]);
+
   const selectedAssigneeItems: SearchPanelItem[] = assignees
     .filter((user) => selectedIds.includes(user.id))
     .map((user) => ({
@@ -92,7 +112,9 @@ export function NewReviewTaskDialog({
 
   function reset() {
     setAssigneeQuery("");
+    setCheckerQuery("");
     setSelectedIds([]);
+    setSelectedCheckerId("");
     setDueDate(defaultResearchTaskDueDate());
     setAllowReportUpload(false);
   }
@@ -106,6 +128,11 @@ export function NewReviewTaskDialog({
     setAssigneeQuery("");
   }
 
+  function selectChecker(id: string) {
+    setSelectedCheckerId(id);
+    setCheckerQuery("");
+  }
+
   function submitTask(formData: FormData) {
     startTransition(async () => {
       const result = await createResearchTask(formData);
@@ -117,6 +144,8 @@ export function NewReviewTaskDialog({
               ? "This review is already submitted or closed, so it cannot receive a new task."
               : result?.reason === "INACTIVE_RESEARCH_ASSIGNEE"
                 ? "Choose only users who have activated their research-site account."
+                : result?.reason === "INVALID_CHECKER"
+                  ? "Choose a chief assistant as checker, or leave checker empty."
                 : result?.reason === "TASK_FILE_TOO_LARGE"
                   ? "Task file must be 2 MB or smaller."
                   : result?.reason === "TASK_FILE_REJECTED"
@@ -174,6 +203,9 @@ export function NewReviewTaskDialog({
           {selectedIds.map((id) => (
             <input key={id} type="hidden" name="assigneeIds" value={id} />
           ))}
+          {canChooseChecker && (
+            <input type="hidden" name="checkerId" value={selectedCheckerId} />
+          )}
 
           <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
             <label className="grid gap-1.5">
@@ -220,27 +252,67 @@ export function NewReviewTaskDialog({
 
           <TaskAttachmentField />
 
-          <SearchPanel
-            query={assigneeQuery}
-            setQuery={setAssigneeQuery}
-            placeholder="Search active research users by name, email, ID, or role (*)"
-            selectedItems={selectedAssigneeItems}
-            items={filteredAssignees.map((user) => ({
-              id: user.id,
-              title: displayResearchPersonName(user),
-              meta: [displayResearchEmail(user.email), user.roles.join(", ")]
-                .filter(Boolean)
-                .join(" - "),
-              selected: selectedIds.includes(user.id),
-              onClick: () => toggleAssignee(user.id),
-            }))}
-            sideControl={
+          <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
+            <div className="grid gap-4">
+              <SearchPanel
+                query={assigneeQuery}
+                setQuery={setAssigneeQuery}
+                placeholder="Search task assignees by name, email, ID, or role (*)"
+                selectedItems={selectedAssigneeItems}
+                items={filteredAssignees.map((user) => ({
+                  id: user.id,
+                  title: displayResearchPersonName(user),
+                  meta: [
+                    displayResearchEmail(user.email),
+                    user.roles.join(", "),
+                  ]
+                    .filter(Boolean)
+                    .join(" - "),
+                  selected: selectedIds.includes(user.id),
+                  onClick: () => toggleAssignee(user.id),
+                }))}
+              />
+              {canChooseChecker && (
+                <SearchPanel
+                  query={checkerQuery}
+                  setQuery={setCheckerQuery}
+                  placeholder="Search chief assistant checker by name, email, or ID (optional)"
+                  selectedItems={checkers
+                    .filter((user) => user.id === selectedCheckerId)
+                    .map((user) => ({
+                      id: user.id,
+                      title: displayResearchPersonName(user),
+                      meta: [
+                        displayResearchEmail(user.email),
+                        "Chief assistant checker",
+                      ]
+                        .filter(Boolean)
+                        .join(" - "),
+                      selected: true,
+                      onClick: () => selectChecker(""),
+                    }))}
+                  items={filteredCheckers.map((user) => ({
+                    id: user.id,
+                    title: displayResearchPersonName(user),
+                    meta: [
+                      displayResearchEmail(user.email),
+                      "Chief assistant checker",
+                    ]
+                      .filter(Boolean)
+                      .join(" - "),
+                    selected: selectedCheckerId === user.id,
+                    onClick: () => selectChecker(user.id),
+                  }))}
+                />
+              )}
+            </div>
+            <div className="lg:pt-0">
               <ReportUploadPermissionField
                 checked={allowReportUpload}
                 onChange={setAllowReportUpload}
               />
-            }
-          />
+            </div>
+          </div>
         </form>
       </ResearchModal>
     </>

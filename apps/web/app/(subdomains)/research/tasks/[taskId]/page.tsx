@@ -389,6 +389,7 @@ export default async function TaskDetailPage({
       createdAt: true,
       updatedAt: true,
       createdById: true,
+      checkerId: true,
       projectId: true,
       organizedProjectId: true,
       journalId: true,
@@ -501,6 +502,7 @@ export default async function TaskDetailPage({
     (assignment) => assignment.userId === userId,
   );
   const isAssigner = task.createdById === userId;
+  const isChecker = task.checkerId === userId;
   const isAssignee = Boolean(myAssignment);
   const selfAssigned = isAssigner && isAssignee;
   const isRelatedResearchTask =
@@ -518,6 +520,7 @@ export default async function TaskDetailPage({
   const canAccessAsChiefAssistant =
     isChiefAssistant &&
     (isAssigner ||
+      isChecker ||
       isAssignee ||
       Boolean(isRelatedResearchTask) ||
       Boolean(isRelatedOrganizedProjectTask));
@@ -733,6 +736,7 @@ export default async function TaskDetailPage({
     conferences,
     reviews,
     organizedProjects,
+    checkerUsers,
   ] = canEdit
     ? await Promise.all([
         prisma.user.findMany({
@@ -783,9 +787,23 @@ export default async function TaskDetailPage({
           orderBy: [{ updatedAt: "desc" }],
           select: { id: true, title: true, referenceCode: true, status: true },
         }),
+        prisma.user.findMany({
+          where: {
+            activeSites: { has: "research" },
+            roles: { has: Role.CHIEF_ASSISTANT },
+          },
+          orderBy: [{ name: "asc" }, { email: "asc" }],
+          select: { id: true, name: true, email: true, roles: true },
+        }),
       ])
-    : [[], [], [], [], [], [], []];
+    : [[], [], [], [], [], [], [], []];
   const assignees = assigneeUsers.map((user) => ({
+    id: user.id,
+    name: user.name ?? "",
+    email: user.email,
+    roles: user.roles,
+  }));
+  const checkerOptions = checkerUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
     email: user.email,
@@ -969,6 +987,7 @@ export default async function TaskDetailPage({
                           reviewId: task.reviewId ?? "",
                           organizedProjectId: task.organizedProjectId ?? "",
                           accountId: task.accountId ?? "",
+                          checkerId: task.checkerId ?? "",
                           allowAssigneeReportUpload:
                             task.allowAssigneeReportUpload,
                           assigneeIds: task.assignments.map(
@@ -982,6 +1001,8 @@ export default async function TaskDetailPage({
                         reviewOptions={reviewOptions}
                         organizedProjectOptions={organizedProjectOptions}
                         submissionOptions={submissionOptions}
+                        checkerOptions={checkerOptions}
+                        canChooseChecker={isRootAdmin}
                       />
                     )}
                     {canUseReminder && (

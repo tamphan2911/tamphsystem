@@ -135,6 +135,8 @@ export function NewTaskDialog({
   reviewOptions,
   organizedProjectOptions,
   submissionOptions = [],
+  checkerOptions = [],
+  canChooseChecker = false,
   initialMode = "submit",
   initialResearch = null,
   initialTitle = "",
@@ -148,6 +150,8 @@ export function NewTaskDialog({
   reviewOptions: TaskReviewOption[];
   organizedProjectOptions: TaskOrganizedProjectOption[];
   submissionOptions?: TaskSubmissionOption[];
+  checkerOptions?: TaskAssigneeOption[];
+  canChooseChecker?: boolean;
   initialMode?: TaskMode;
   initialResearch?: TaskResearchOption | null;
   initialTitle?: string;
@@ -157,6 +161,7 @@ export function NewTaskDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<TaskMode>(initialMode);
   const [assigneeQuery, setAssigneeQuery] = useState("");
+  const [checkerQuery, setCheckerQuery] = useState("");
   const [researchQuery, setResearchQuery] = useState("");
   const [venueQuery, setVenueQuery] = useState("");
   const [accountQuery, setAccountQuery] = useState("");
@@ -165,6 +170,7 @@ export function NewTaskDialog({
   const [submissionQuery, setSubmissionQuery] = useState("");
   const [dueDate, setDueDate] = useState(defaultResearchTaskDueDate);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedCheckerId, setSelectedCheckerId] = useState("");
   const [selectedResearch, setSelectedResearch] =
     useState<TaskResearchOption | null>(initialResearch);
   const [selectedVenue, setSelectedVenue] = useState<TaskVenueOption | null>(
@@ -194,6 +200,20 @@ export function NewTaskDialog({
       })
       .slice(0, 12);
   }, [assigneeQuery, assignees]);
+
+  const filteredCheckers = useMemo(() => {
+    const needle = checkerQuery.trim().toLowerCase();
+    if (!needle || !canChooseChecker) return [];
+    return checkerOptions
+      .filter((user) => user.id !== selectedCheckerId)
+      .filter((user) =>
+        [user.name, user.email, user.id, ...user.roles]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 10);
+  }, [canChooseChecker, checkerOptions, checkerQuery, selectedCheckerId]);
 
   const filteredResearch = useMemo(() => {
     const needle = researchQuery.trim().toLowerCase();
@@ -323,6 +343,7 @@ export function NewTaskDialog({
   function reset() {
     setMode(initialMode);
     setAssigneeQuery("");
+    setCheckerQuery("");
     setResearchQuery("");
     setVenueQuery("");
     setAccountQuery("");
@@ -331,6 +352,7 @@ export function NewTaskDialog({
     setSubmissionQuery("");
     setDueDate(defaultResearchTaskDueDate());
     setSelectedIds([]);
+    setSelectedCheckerId("");
     setSelectedResearch(initialResearch);
     setSelectedVenue(null);
     setSelectedAccountId("");
@@ -347,6 +369,11 @@ export function NewTaskDialog({
         : [...current, id],
     );
     setAssigneeQuery("");
+  }
+
+  function selectChecker(id: string) {
+    setSelectedCheckerId(id);
+    setCheckerQuery("");
   }
 
   function selectResearch(project: TaskResearchOption) {
@@ -447,6 +474,8 @@ export function NewTaskDialog({
                         ? "Choose a project that is not completed."
                         : result?.reason === "INACTIVE_RESEARCH_ASSIGNEE"
                           ? "Choose only users who have activated their research-site account."
+                          : result?.reason === "INVALID_CHECKER"
+                            ? "Choose a chief assistant as checker, or leave checker empty."
                           : result?.reason === "ACTIVE_SUBMISSION_TASK_EXISTS"
                             ? "An active submission task already exists for this research and venue."
                             : result?.reason === "ACCOUNT_NOT_FOR_JOURNAL"
@@ -572,6 +601,9 @@ export function NewTaskDialog({
           {selectedIds.map((id) => (
             <input key={id} type="hidden" name="assigneeIds" value={id} />
           ))}
+          {canChooseChecker && (
+            <input type="hidden" name="checkerId" value={selectedCheckerId} />
+          )}
           <input
             type="hidden"
             name="allowAssigneeReportUpload"
@@ -941,28 +973,70 @@ export function NewTaskDialog({
 
           <TaskAttachmentField />
 
-          <SearchPanel
-            query={assigneeQuery}
-            setQuery={setAssigneeQuery}
-            placeholder="Search active research users by name, email, ID, or role (*)"
-            selectedItems={selectedAssigneeItems}
-            items={filteredAssignees.map((user) => ({
-              id: user.id,
-              title: displayResearchPersonName(user),
-              meta: [displayResearchEmail(user.email), user.roles.join(", ")]
-                .filter(Boolean)
-                .join(" - "),
-              icon: <UserRound className="h-4 w-4" />,
-              selected: selectedIds.includes(user.id),
-              onClick: () => toggleAssignee(user.id),
-            }))}
-            sideControl={
+          <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
+            <div className="grid gap-4">
+              <SearchPanel
+                query={assigneeQuery}
+                setQuery={setAssigneeQuery}
+                placeholder="Search task assignees by name, email, ID, or role (*)"
+                selectedItems={selectedAssigneeItems}
+                items={filteredAssignees.map((user) => ({
+                  id: user.id,
+                  title: displayResearchPersonName(user),
+                  meta: [
+                    displayResearchEmail(user.email),
+                    user.roles.join(", "),
+                  ]
+                    .filter(Boolean)
+                    .join(" - "),
+                  icon: <UserRound className="h-4 w-4" />,
+                  selected: selectedIds.includes(user.id),
+                  onClick: () => toggleAssignee(user.id),
+                }))}
+              />
+              {canChooseChecker && (
+                <SearchPanel
+                  query={checkerQuery}
+                  setQuery={setCheckerQuery}
+                  placeholder="Search chief assistant checker by name, email, or ID (optional)"
+                  selectedItems={checkerOptions
+                    .filter((user) => user.id === selectedCheckerId)
+                    .map((user) => ({
+                      id: user.id,
+                      title: displayResearchPersonName(user),
+                      meta: [
+                        displayResearchEmail(user.email),
+                        "Chief assistant checker",
+                      ]
+                        .filter(Boolean)
+                        .join(" - "),
+                      icon: <UserRound className="h-4 w-4" />,
+                      selected: true,
+                      onClick: () => selectChecker(""),
+                    }))}
+                  items={filteredCheckers.map((user) => ({
+                    id: user.id,
+                    title: displayResearchPersonName(user),
+                    meta: [
+                      displayResearchEmail(user.email),
+                      "Chief assistant checker",
+                    ]
+                      .filter(Boolean)
+                      .join(" - "),
+                    icon: <UserRound className="h-4 w-4" />,
+                    selected: selectedCheckerId === user.id,
+                    onClick: () => selectChecker(user.id),
+                  }))}
+                />
+              )}
+            </div>
+            <div className="lg:pt-0">
               <ReportUploadPermissionField
                 checked={allowReportUpload}
                 onChange={setAllowReportUpload}
               />
-            }
-          />
+            </div>
+          </div>
         </form>
       </ResearchModal>
     </>

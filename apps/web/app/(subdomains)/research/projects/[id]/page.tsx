@@ -285,6 +285,7 @@ export default async function ProjectDetailPage({
     journals,
     conferences,
     taskAssignees,
+    checkerUsers,
     authorUsers,
     fundingInstitutions,
   ] = await Promise.all([
@@ -367,6 +368,19 @@ export default async function ProjectDetailPage({
         email: true,
         additionalEmails: true,
         affiliation: true,
+        roles: true,
+      },
+    }),
+    prisma.user.findMany({
+      where: {
+        activeSites: { has: "research" },
+        roles: { has: Role.CHIEF_ASSISTANT },
+      },
+      orderBy: [{ name: "asc" }, { email: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        email: true,
         roles: true,
       },
     }),
@@ -743,6 +757,12 @@ export default async function ProjectDetailPage({
       roles: user.roles,
     }),
   );
+  const taskCheckerOptions: TaskAssigneeOption[] = checkerUsers.map((user) => ({
+    id: user.id,
+    name: user.name ?? "",
+    email: user.email,
+    roles: user.roles,
+  }));
   const authorOptions: AuthorOption[] = authorUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -1049,6 +1069,8 @@ export default async function ProjectDetailPage({
                     reviewOptions={[]}
                     organizedProjectOptions={[]}
                     submissionOptions={generalTaskSubmissionOptions}
+                    checkerOptions={taskCheckerOptions}
+                    canChooseChecker={isRootAdmin}
                     initialMode="other"
                     initialResearch={currentResearchTaskOption}
                     triggerVariant="other"
@@ -1500,6 +1522,8 @@ export default async function ProjectDetailPage({
                       reviewOptions={[]}
                       organizedProjectOptions={[]}
                       submissionOptions={generalTaskSubmissionOptions}
+                      checkerOptions={taskCheckerOptions}
+                      canChooseChecker={isRootAdmin}
                       initialMode="production"
                       initialResearch={currentResearchTaskOption}
                       triggerVariant="production"
@@ -1583,6 +1607,8 @@ export default async function ProjectDetailPage({
                 projectTitle={project.title}
                 venues={venueOptions}
                 assistants={taskAssigneeOptions}
+                checkers={taskCheckerOptions}
+                canChooseChecker={isRootAdmin}
                 disabled={researchContentLocked}
               />
             ) : (
@@ -1612,6 +1638,8 @@ export default async function ProjectDetailPage({
           conferences={allConferenceOptions}
           suggestedConferences={suggestedConferenceOptions}
           assistants={taskAssigneeOptions}
+          checkers={taskCheckerOptions}
+          canChooseChecker={isRootAdmin}
           isAdmin={isAdmin}
           canAssignTask={canCreateSubmitOrOtherTask}
           canApproveSuggestion={canApproveVenueSuggestion}
@@ -1626,6 +1654,8 @@ export default async function ProjectDetailPage({
                 reviewOptions={[]}
                 organizedProjectOptions={[]}
                 submissionOptions={generalTaskSubmissionOptions}
+                checkerOptions={taskCheckerOptions}
+                canChooseChecker={isRootAdmin}
                 initialMode="other"
                 initialResearch={currentResearchTaskOption}
                 initialTitle={`Suggest venue for research "${project.title}"`}

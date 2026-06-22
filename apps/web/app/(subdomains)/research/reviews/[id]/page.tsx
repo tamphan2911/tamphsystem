@@ -151,7 +151,7 @@ export default async function ReviewDetailPage({
         NOT: { id: userId },
       };
 
-  const [review, assigneeUsers] = await Promise.all([
+  const [review, assigneeUsers, checkerUsers] = await Promise.all([
     prisma.academicReview.findFirst({
       where: { id, ...accessibleResearchReviewWhere(roles, userId) },
       include: {
@@ -178,6 +178,16 @@ export default async function ReviewDetailPage({
     canManageTasks
       ? prisma.user.findMany({
           where: assigneeWhere,
+          orderBy: [{ name: "asc" }, { email: "asc" }],
+          select: { id: true, name: true, email: true, roles: true },
+        })
+      : Promise.resolve([]),
+    canManageTasks
+      ? prisma.user.findMany({
+          where: {
+            activeSites: { has: "research" },
+            roles: { has: Role.CHIEF_ASSISTANT },
+          },
           orderBy: [{ name: "asc" }, { email: "asc" }],
           select: { id: true, name: true, email: true, roles: true },
         })
@@ -215,6 +225,12 @@ export default async function ReviewDetailPage({
     },
   ].filter((item) => Boolean(item.href));
   const assignees = assigneeUsers.map((user) => ({
+    id: user.id,
+    name: user.name ?? "",
+    email: displayResearchEmail(user.email),
+    roles: user.roles,
+  }));
+  const checkers = checkerUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
     email: displayResearchEmail(user.email),
@@ -331,6 +347,8 @@ export default async function ReviewDetailPage({
                 manuscriptTitle={review.manuscriptTitle}
                 journalName={review.journal.name}
                 assignees={assignees}
+                checkers={checkers}
+                canChooseChecker={roles.includes(Role.ADMIN)}
               />
             ) : null
           }

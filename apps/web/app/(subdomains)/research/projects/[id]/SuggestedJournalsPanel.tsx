@@ -146,6 +146,8 @@ export function SuggestedJournalsPanel({
   conferences,
   suggestedConferences,
   assistants,
+  checkers = [],
+  canChooseChecker = false,
   isAdmin,
   canAssignTask,
   canApproveSuggestion,
@@ -160,6 +162,8 @@ export function SuggestedJournalsPanel({
   conferences: SuggestedConferenceOption[];
   suggestedConferences: SuggestedConferenceOption[];
   assistants: TaskAssigneeOption[];
+  checkers?: TaskAssigneeOption[];
+  canChooseChecker?: boolean;
   isAdmin: boolean;
   canAssignTask: boolean;
   canApproveSuggestion: boolean;
@@ -183,16 +187,19 @@ export function SuggestedJournalsPanel({
   const [journalQuery, setJournalQuery] = useState("");
   const [conferenceQuery, setConferenceQuery] = useState("");
   const [assistantQuery, setAssistantQuery] = useState("");
+  const [checkerQuery, setCheckerQuery] = useState("");
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [accountOpen, setAccountOpen] = useState(false);
   const [selectedAssistantIds, setSelectedAssistantIds] = useState<string[]>(
     [],
   );
+  const [selectedCheckerId, setSelectedCheckerId] = useState("");
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [taskMode, setTaskMode] = useState<"submit" | "other">("submit");
   const { showSuccess } = useResearchToast();
   const accountDropdownRef = useRef<HTMLDivElement>(null);
   const assistantDropdownRef = useRef<HTMLDivElement>(null);
+  const checkerDropdownRef = useRef<HTMLDivElement>(null);
 
   function showProductionIncomplete() {
     showSuccess({
@@ -275,6 +282,20 @@ export function SuggestedJournalsPanel({
       .slice(0, 12);
   }, [assistantQuery, assistants, selectedAssistantIds]);
 
+  const checkerResults = useMemo(() => {
+    const needle = checkerQuery.trim().toLowerCase();
+    if (!needle || !canChooseChecker) return [];
+    return checkers
+      .filter((checker) => checker.id !== selectedCheckerId)
+      .filter((checker) =>
+        [checker.name, checker.email, checker.id, ...checker.roles]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 12);
+  }, [canChooseChecker, checkerQuery, checkers, selectedCheckerId]);
+
   const selectedAssistants = useMemo(
     () =>
       selectedAssistantIds.flatMap((id) => {
@@ -282,6 +303,10 @@ export function SuggestedJournalsPanel({
         return assistant ? [assistant] : [];
       }),
     [assistants, selectedAssistantIds],
+  );
+  const selectedChecker = useMemo(
+    () => checkers.find((checker) => checker.id === selectedCheckerId) ?? null,
+    [checkers, selectedCheckerId],
   );
 
   const assignJournalAccounts =
@@ -304,6 +329,11 @@ export function SuggestedJournalsPanel({
         : [...current, id],
     );
     setAssistantQuery("");
+  }
+
+  function selectChecker(id: string) {
+    setSelectedCheckerId(id);
+    setCheckerQuery("");
   }
 
   function closeAddVenue() {
@@ -458,6 +488,8 @@ export function SuggestedJournalsPanel({
       setAssignVenue(null);
       setSelectedAssistantIds([]);
       setAssistantQuery("");
+      setSelectedCheckerId("");
+      setCheckerQuery("");
       setSelectedAccountId("");
       setAccountOpen(false);
       setTaskMode("submit");
@@ -477,6 +509,8 @@ export function SuggestedJournalsPanel({
     setAccountOpen(false);
     setAssistantQuery("");
     setAllowReportUpload(false);
+    setSelectedCheckerId("");
+    setCheckerQuery("");
     setAssignVenue(venue);
   }
 
@@ -880,6 +914,8 @@ export function SuggestedJournalsPanel({
             setAssignVenue(null);
             setSelectedAssistantIds([]);
             setAssistantQuery("");
+            setSelectedCheckerId("");
+            setCheckerQuery("");
             setSelectedAccountId("");
             setAccountOpen(false);
             setTaskMode("submit");
@@ -912,6 +948,9 @@ export function SuggestedJournalsPanel({
             {selectedAssistantIds.map((id) => (
               <input key={id} type="hidden" name="assigneeIds" value={id} />
             ))}
+            {canChooseChecker && (
+              <input type="hidden" name="checkerId" value={selectedCheckerId} />
+            )}
             <input
               type="hidden"
               name="allowAssigneeReportUpload"
@@ -1128,56 +1167,127 @@ export function SuggestedJournalsPanel({
                 </div>
               ) : null}
               <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
-                <div ref={assistantDropdownRef} className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6C778D] dark:text-[#B0B0B0]" />
-                  <input
-                    value={assistantQuery}
-                    onChange={(event) => setAssistantQuery(event.target.value)}
-                    placeholder="Search assistants or admin by name, email, ID, or role (*)"
-                    className={`${researchSearchFieldClass} pl-9`}
-                  />
-                </div>
-                <FloatingDropdownPortal
-                  anchorRef={assistantDropdownRef}
-                  open={Boolean(assistantQuery.trim())}
-                  maxWidth={820}
-                  maxPanelHeight={232}
-                >
-                  <div className={researchDropdownPanelClass}>
-                    <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
-                      {assistantResults.map((assistant) => (
-                        <button
-                          key={assistant.id}
-                          type="button"
-                          onClick={() => toggleAssistant(assistant.id)}
-                          className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
-                        >
-                          <span className="flex min-w-0 items-center gap-3 px-3">
-                            <UserRound className="h-4 w-4 flex-none text-[#6C778D] dark:text-[#B0B0B0]" />
-                            <span className="min-w-0">
-                              <span className="block truncate text-sm font-normal">
-                                {displayResearchPersonName(assistant)}
-                              </span>
-                              <span className="block truncate text-xs text-[#6C778D] dark:text-[#B0B0B0]">
-                                {displayResearchEmail(assistant.email)}
+                <div className="grid gap-4">
+                  <div ref={assistantDropdownRef} className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6C778D] dark:text-[#B0B0B0]" />
+                    <input
+                      value={assistantQuery}
+                      onChange={(event) =>
+                        setAssistantQuery(event.target.value)
+                      }
+                      placeholder="Search task assignees by name, email, ID, or role (*)"
+                      className={`${researchSearchFieldClass} pl-9`}
+                    />
+                  </div>
+                  <FloatingDropdownPortal
+                    anchorRef={assistantDropdownRef}
+                    open={Boolean(assistantQuery.trim())}
+                    maxWidth={820}
+                    maxPanelHeight={232}
+                  >
+                    <div className={researchDropdownPanelClass}>
+                      <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
+                        {assistantResults.map((assistant) => (
+                          <button
+                            key={assistant.id}
+                            type="button"
+                            onClick={() => toggleAssistant(assistant.id)}
+                            className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
+                          >
+                            <span className="flex min-w-0 items-center gap-3 px-3">
+                              <UserRound className="h-4 w-4 flex-none text-[#6C778D] dark:text-[#B0B0B0]" />
+                              <span className="min-w-0">
+                                <span className="block truncate text-sm font-normal">
+                                  {displayResearchPersonName(assistant)}
+                                </span>
+                                <span className="block truncate text-xs text-[#6C778D] dark:text-[#B0B0B0]">
+                                  {displayResearchEmail(assistant.email)}
+                                </span>
                               </span>
                             </span>
-                          </span>
-                        </button>
-                      ))}
-                      {assistantQuery.trim() &&
-                      assistantResults.length === 0 ? (
-                        <p className="py-10 text-center text-sm text-[#6C778D] dark:text-[#B0B0B0]">
-                          No user matches this search.
-                        </p>
-                      ) : null}
+                          </button>
+                        ))}
+                        {assistantQuery.trim() &&
+                        assistantResults.length === 0 ? (
+                          <p className="py-10 text-center text-sm text-[#6C778D] dark:text-[#B0B0B0]">
+                            No user matches this search.
+                          </p>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                </FloatingDropdownPortal>
-                <ReportUploadPermissionField
-                  checked={allowReportUpload}
-                  onChange={setAllowReportUpload}
-                />
+                  </FloatingDropdownPortal>
+                  {canChooseChecker ? (
+                    <section className="grid gap-3">
+                      {selectedChecker ? (
+                        <button
+                          type="button"
+                          onClick={() => selectChecker("")}
+                          className="inline-flex w-fit cursor-pointer items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-2.5 py-1.5 text-xs text-[#243047] transition hover:border-[#A8DADC] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#A8DADC]"
+                        >
+                          {displayResearchPersonName(selectedChecker)}
+                          <span className="text-[#6C778D] dark:text-[#B0B0B0]">
+                            Chief assistant checker
+                          </span>
+                          <X className="h-3.5 w-3.5 text-[#6C778D] dark:text-[#B0B0B0]" />
+                        </button>
+                      ) : null}
+                      <div ref={checkerDropdownRef} className="relative">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6C778D] dark:text-[#B0B0B0]" />
+                        <input
+                          value={checkerQuery}
+                          onChange={(event) =>
+                            setCheckerQuery(event.target.value)
+                          }
+                          placeholder="Search chief assistant checker (optional)"
+                          className={`${researchSearchFieldClass} pl-9`}
+                        />
+                      </div>
+                      <FloatingDropdownPortal
+                        anchorRef={checkerDropdownRef}
+                        open={Boolean(checkerQuery.trim())}
+                        maxWidth={820}
+                        maxPanelHeight={232}
+                      >
+                        <div className={researchDropdownPanelClass}>
+                          <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
+                            {checkerResults.map((checker) => (
+                              <button
+                                key={checker.id}
+                                type="button"
+                                onClick={() => selectChecker(checker.id)}
+                                className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
+                              >
+                                <span className="flex min-w-0 items-center gap-3 px-3">
+                                  <UserRound className="h-4 w-4 flex-none text-[#6C778D] dark:text-[#B0B0B0]" />
+                                  <span className="min-w-0">
+                                    <span className="block truncate text-sm font-normal">
+                                      {displayResearchPersonName(checker)}
+                                    </span>
+                                    <span className="block truncate text-xs text-[#6C778D] dark:text-[#B0B0B0]">
+                                      {displayResearchEmail(checker.email)}
+                                    </span>
+                                  </span>
+                                </span>
+                              </button>
+                            ))}
+                            {checkerQuery.trim() &&
+                            checkerResults.length === 0 ? (
+                              <p className="py-10 text-center text-sm text-[#6C778D] dark:text-[#B0B0B0]">
+                                No chief assistant matches this search.
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                      </FloatingDropdownPortal>
+                    </section>
+                  ) : null}
+                </div>
+                <div className="lg:pt-0">
+                  <ReportUploadPermissionField
+                    checked={allowReportUpload}
+                    onChange={setAllowReportUpload}
+                  />
+                </div>
               </div>
             </section>
           </form>
