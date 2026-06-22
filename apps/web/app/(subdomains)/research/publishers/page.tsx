@@ -16,7 +16,11 @@ export default async function PublishersPage() {
 
   const publishers = await prisma.publisher.findMany({
     include: {
-      _count: { select: { accounts: true } },
+      _count: {
+        select: {
+          accounts: { where: { accountType: "PUBLISHER" } },
+        },
+      },
       accounts: {
         where: { accountType: "PUBLISHER" },
         orderBy: [{ updatedAt: "desc" }],
@@ -53,12 +57,12 @@ export default async function PublishersPage() {
       (sum, journal) => sum + journal._count.submissions,
       0,
     ),
-    accounts:
-      publisher._count.accounts +
-      publisher.journals.reduce(
-        (sum, journal) => sum + journal._count.accounts,
-        0,
-      ),
+    accounts: publisher.usesSingleAccount
+      ? publisher._count.accounts
+      : publisher.journals.reduce(
+          (sum, journal) => sum + journal._count.accounts,
+          0,
+        ),
   }));
 
   return (
