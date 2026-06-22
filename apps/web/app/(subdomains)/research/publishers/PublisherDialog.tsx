@@ -148,18 +148,25 @@ export function PublisherDialog({
                 className={researchFieldClass}
               />
             </label>
-            <label className="flex cursor-pointer items-center gap-3 self-end border border-[#444444] px-3 py-3 text-sm text-[#E4E4E4]">
-              <input
-                name="usesSingleAccount"
-                type="checkbox"
-                checked={usesSingleAccount}
-                onChange={(event) => setUsesSingleAccount(event.target.checked)}
-                className="peer sr-only"
-              />
-              <span className="inline-flex h-5 w-5 flex-none items-center justify-center border border-[#666666] text-transparent transition-colors peer-checked:border-violet-500 peer-checked:bg-violet-500 peer-checked:text-white dark:peer-checked:border-violet-300 dark:peer-checked:bg-violet-300 dark:peer-checked:text-[#202020]">
-                <Check className="h-3.5 w-3.5" />
+            <label className="grid cursor-pointer gap-1.5 text-sm font-normal text-slate-800 dark:text-[#E4E4E4]">
+              <span className="text-xs uppercase text-slate-500 dark:text-[#B0B0B0]">
+                Account policy
               </span>
-              <span className="leading-5">One account for all journals</span>
+              <span className="flex h-12 items-center gap-3 border border-slate-200 bg-white px-3 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#2C2C2C] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838]">
+                <input
+                  name="usesSingleAccount"
+                  type="checkbox"
+                  checked={usesSingleAccount}
+                  onChange={(event) =>
+                    setUsesSingleAccount(event.target.checked)
+                  }
+                  className="peer sr-only"
+                />
+                <span className="inline-flex h-5 w-5 flex-none items-center justify-center border border-slate-400 text-transparent transition-colors peer-checked:border-violet-600 peer-checked:bg-violet-600 peer-checked:text-white dark:border-[#666666] dark:peer-checked:border-violet-300 dark:peer-checked:bg-violet-300 dark:peer-checked:text-[#202020]">
+                  <Check className="h-3.5 w-3.5" />
+                </span>
+                <span className="leading-5">One account for all journals</span>
+              </span>
             </label>
           </div>
           <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
