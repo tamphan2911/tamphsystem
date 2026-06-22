@@ -22,6 +22,9 @@ import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
   IconHint,
   ResearchButton,
+  researchDropdownItemClass,
+  researchDropdownItemIdleClass,
+  researchDropdownPanelClass,
   researchSearchFieldClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import {
@@ -339,7 +342,7 @@ export function AuthorsPicker({
           />
         ))}
 
-        <div className="border border-[#444444] bg-[#2C2C2C] p-3">
+        <div className="border border-[#d8d0c3] bg-[#f8f6ef] p-3 dark:border-[#444444] dark:bg-[#2C2C2C]">
           <div ref={searchRef} className="relative">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#B0B0B0]"
@@ -360,7 +363,7 @@ export function AuthorsPicker({
               open={!disabled && focused && query.trim().length > 0}
               maxWidth={640}
             >
-              <div className="overflow-hidden rounded-none border border-[#5A5A5A] bg-[#2C2C2C] shadow-xl shadow-black/35">
+              <div className={researchDropdownPanelClass}>
                 <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
                   {results.length > 0 ? (
                     results.map((user) => (
@@ -369,16 +372,16 @@ export function AuthorsPicker({
                         type="button"
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => addAuthor(user)}
-                        className="flex w-full cursor-pointer items-center gap-3 rounded-none border-y border-transparent px-3 py-2 text-left transition first:border-t-transparent last:border-b-transparent hover:border-[#5A5A5A] first:hover:border-t-transparent last:hover:border-b-transparent hover:bg-[#383838]"
+                        className={`${researchDropdownItemClass} ${researchDropdownItemIdleClass} cursor-pointer items-center px-3`}
                       >
-                        <span className="inline-flex h-9 w-9 flex-none items-center justify-center border border-[#444444] bg-[#202020] text-[#A8DADC]">
+                        <span className="inline-flex h-9 w-5 flex-none items-center justify-center text-[#1F7180] dark:text-[#A8DADC]">
                           <UserRound className="h-4 w-4" aria-hidden="true" />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-normal text-[#E4E4E4]">
+                          <span className="block truncate text-sm font-normal text-slate-800 dark:text-[#E4E4E4]">
                             {authorName(user)}
                           </span>
-                          <span className="block truncate text-xs font-normal text-[#B0B0B0]">
+                          <span className="block truncate text-xs font-normal text-slate-500 dark:text-[#B0B0B0]">
                             {[
                               user.role,
                               displayResearchEmail(user.email),
@@ -389,13 +392,13 @@ export function AuthorsPicker({
                           </span>
                         </span>
                         <Check
-                          className="h-4 w-4 flex-none text-[#A8DADC]"
+                          className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]"
                           aria-hidden="true"
                         />
                       </button>
                     ))
                   ) : (
-                    <div className="px-3 py-8 text-center text-sm font-normal text-[#B0B0B0]">
+                    <div className="px-3 py-8 text-center text-sm font-normal text-slate-500 dark:text-[#B0B0B0]">
                       No users match this search.
                     </div>
                   )}
