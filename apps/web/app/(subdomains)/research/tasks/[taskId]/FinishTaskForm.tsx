@@ -4,7 +4,10 @@ import { useRef, useState, useTransition } from "react";
 import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
-import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchButton,
+  researchTextareaClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import { researchDateValue } from "@/sites/research/lib/date-time";
 
 export function FinishTaskForm({
@@ -20,6 +23,7 @@ export function FinishTaskForm({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [submissionDate, setSubmissionDate] = useState(researchDateValue);
+  const [completionMessage, setCompletionMessage] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const isReadyMode = mode === "ready";
@@ -60,7 +64,10 @@ export function FinishTaskForm({
 
       <ResearchModal
         open={isOpen}
-        onClose={() => setIsOpen(false)}
+        onClose={() => {
+          setIsOpen(false);
+          setCompletionMessage("");
+        }}
         title={title}
         description={description}
         icon={<Icon className="h-5 w-5" />}
@@ -106,6 +113,26 @@ export function FinishTaskForm({
                 onChange={setSubmissionDate}
                 required
               />
+            </label>
+          ) : null}
+          {!isReadyMode ? (
+            <label className="grid gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-[#B0B0B0]">
+                Message to assignees
+              </span>
+              <textarea
+                name="completionMessage"
+                form={formId}
+                rows={4}
+                maxLength={2000}
+                value={completionMessage}
+                onChange={(event) => setCompletionMessage(event.target.value)}
+                placeholder="Add a note about the approved work or next steps."
+                className={researchTextareaClass}
+              />
+              <span className="text-xs text-slate-400 dark:text-[#777777]">
+                This note will be included in the task-completed notification.
+              </span>
             </label>
           ) : null}
         </div>

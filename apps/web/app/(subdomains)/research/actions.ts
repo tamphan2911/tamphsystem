@@ -6206,6 +6206,9 @@ export async function deleteResearchUploadedFile(
 
 export async function finishResearchTask(taskId: string, formData?: FormData) {
   const user = await requireCurrentUser();
+  const completionMessage = optionalString(
+    formData?.get("completionMessage") ?? null,
+  )?.slice(0, 2000);
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
     select: {
@@ -6289,7 +6292,9 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     type: "TASK_COMPLETED",
     title: "Task completed",
     summary: task.title,
-    body: "The assigner reviewed and approved this task as complete.",
+    body: completionMessage
+      ? `The assigner reviewed and approved this task as complete. Completion note: ${completionMessage}`
+      : "The assigner reviewed and approved this task as complete.",
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,
