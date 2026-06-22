@@ -148,7 +148,7 @@ export default async function AccountDetailPage({
   );
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4">
+    <div className="mx-auto max-w-7xl space-y-4">
       <ResearchPageHeaderPortal>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#E4E4E4]">
