@@ -13,7 +13,7 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
 });
 
-const SHARED_SITE_FAVICON = "/research-favicon.png?v=20260531a1";
+const SHARED_SITE_FAVICON = "/research-favicon.png?v=20260622a1";
 
 export async function generateMetadata(): Promise<Metadata> {
   const host = (await headers()).get("host") || "";
