@@ -1338,9 +1338,13 @@ function JournalCard({
       onDelete={onDelete}
       assignLabel="Assign journal submission task"
       deleteLabel="Delete suggested journal"
-      title={<p className="font-normal text-[#E4E4E4]">{journal.name}</p>}
+      title={
+        <p className="font-normal text-slate-900 dark:text-[#E4E4E4]">
+          {journal.name}
+        </p>
+      }
     >
-      <p className="mt-1 text-xs text-[#B0B0B0]">
+      <p className="mt-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
         {journal.field || "No field"} - {journal.rank || "No rank"} -{" "}
         {journal.publisher || "No publisher"}
       </p>
@@ -1390,12 +1394,16 @@ function ConferenceCard({
       onDelete={onDelete}
       assignLabel="Assign conference submission task"
       deleteLabel="Delete suggested conference"
-      title={<p className="font-normal text-[#E4E4E4]">{conference.name}</p>}
+      title={
+        <p className="font-normal text-slate-900 dark:text-[#E4E4E4]">
+          {conference.name}
+        </p>
+      }
     >
-      <p className="mt-1 text-xs text-[#B0B0B0]">
+      <p className="mt-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
         {conference.type || "No type"} - {conference.theme || "No theme"}
       </p>
-      <p className="mt-2 text-xs font-normal text-[#B0B0B0]">
+      <p className="mt-2 text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
         {[conference.time, conference.location].filter(Boolean).join(" - ") ||
           "Time/location not set"}
       </p>
@@ -1467,12 +1475,15 @@ function VenueFees({
 
 function SuggestedByLine({ name, role }: { name?: string; role?: string }) {
   return (
-    <p className="mt-3 border-t border-[#444444] pt-2 text-xs text-[#B0B0B0]">
+    <p className="mt-3 border-t border-slate-200 pt-2 text-xs text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0]">
       Suggested by{" "}
-      <span className="font-normal text-[#E4E4E4]">
+      <span className="font-normal text-slate-900 dark:text-[#E4E4E4]">
         {name || "Unknown user"}
       </span>
-      <span className="text-[#B0B0B0]"> · {role || "Unknown role"}</span>
+      <span className="text-[#667085] dark:text-[#B0B0B0]">
+        {" "}
+        · {role || "Unknown role"}
+      </span>
     </p>
   );
 }
@@ -1611,57 +1622,70 @@ function shortDate(value: string) {
 function venueStateMeta(state: SuggestedVenueState) {
   if (state.state === "pendingApproval") {
     return {
-      cardClass: "border-[#5A4A2C] bg-[#2F2B24]",
+      cardClass:
+        "border-amber-200 bg-amber-50/45 hover:bg-amber-50 dark:border-[#5A4A2C] dark:bg-[#2F2B24]",
       badge: "Waiting approval",
-      badgeClass: "border-[#7A6338] bg-[#242118] text-[#FFD68A]",
+      badgeClass:
+        "border-amber-200 bg-amber-50 text-amber-700 dark:border-[#7A6338] dark:bg-[#242118] dark:text-[#FFD68A]",
       tooltip:
         "This venue suggestion is waiting for approval before a submission task can be assigned.",
     };
   }
   if (state.state === "published") {
     return {
-      cardClass: "border-[#444444] bg-[#303030]",
+      cardClass:
+        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
       badge: "Published",
-      badgeClass: "border-[#444444] bg-[#202020] text-[#A8DADC]",
+      badgeClass:
+        "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-[#444444] dark:bg-[#202020] dark:text-[#A8DADC]",
       tooltip: "This venue has a published submission. Congratulations.",
     };
   }
   if (state.state === "accepted") {
     return {
-      cardClass: "border-[#444444] bg-[#303030]",
+      cardClass:
+        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
       badge: "Accepted",
-      badgeClass: "border-[#444444] bg-[#202020] text-[#A8DADC]",
+      badgeClass:
+        "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-[#444444] dark:bg-[#202020] dark:text-[#A8DADC]",
       tooltip: "This venue has an accepted submission. Congratulations.",
     };
   }
   if (state.state === "reviewing") {
     return {
-      cardClass: "border-[#444444] bg-[#303030]",
+      cardClass:
+        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
       badge: "Reviewing",
-      badgeClass: "border-[#444444] bg-[#202020] text-[#B39CD0]",
+      badgeClass:
+        "border-violet-200 bg-violet-50 text-violet-700 dark:border-[#444444] dark:bg-[#202020] dark:text-[#B39CD0]",
       tooltip: "This venue has a submission in reviewing process, let wait.",
     };
   }
   if (state.state === "submitted") {
     return {
-      cardClass: "border-[#444444] bg-[#303030]",
+      cardClass:
+        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
       badge: "Submitted",
-      badgeClass: "border-[#444444] bg-[#202020] text-[#FFC1CC]",
+      badgeClass:
+        "border-rose-200 bg-rose-50 text-rose-700 dark:border-[#444444] dark:bg-[#202020] dark:text-[#FFC1CC]",
       tooltip: "This venue already has a submission, please wait.",
     };
   }
   if (state.state === "assigned") {
     return {
-      cardClass: "border-[#444444] bg-[#303030]",
+      cardClass:
+        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
       badge: "Assigned",
-      badgeClass: "border-[#444444] bg-[#202020] text-[#FFC1CC]",
+      badgeClass:
+        "border-rose-200 bg-rose-50 text-rose-700 dark:border-[#444444] dark:bg-[#202020] dark:text-[#FFC1CC]",
       tooltip:
         "This venue already has an assigned task to submit, please wait.",
     };
   }
   if (state.state === "rejected") {
     return {
-      cardClass: "border-[#444444] bg-[#303030]",
+      cardClass:
+        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
       badge: null,
       badgeClass: "",
       tooltip:
@@ -1670,16 +1694,19 @@ function venueStateMeta(state: SuggestedVenueState) {
   }
   if (state.state === "withdrawn") {
     return {
-      cardClass: "border-[#444444] bg-[#303030]",
+      cardClass:
+        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
       badge: "Withdraw",
-      badgeClass: "border-[#444444] bg-[#202020] text-rose-300",
+      badgeClass:
+        "border-rose-200 bg-rose-50 text-rose-700 dark:border-[#444444] dark:bg-[#202020] dark:text-rose-300",
       tooltip:
         "The submission to this venue was withdrawn. You could assign another venue or create a new submission path.",
     };
   }
   if (state.state === "blocked") {
     return {
-      cardClass: "border-[#444444] bg-[#303030]",
+      cardClass:
+        "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030]",
       badge: null,
       badgeClass: "",
       tooltip:
@@ -1687,7 +1714,8 @@ function venueStateMeta(state: SuggestedVenueState) {
     };
   }
   return {
-    cardClass: "border-[#444444] bg-[#2C2C2C] hover:bg-[#383838]",
+    cardClass:
+      "border-slate-200 bg-white hover:bg-slate-50 dark:border-[#444444] dark:bg-[#2C2C2C] dark:hover:bg-[#383838]",
     badge: null,
     badgeClass: "",
     tooltip: "",
