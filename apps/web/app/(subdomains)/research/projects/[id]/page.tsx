@@ -66,7 +66,6 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
-import { defaultSuggestVenueTaskDescription } from "@/sites/research/lib/task-description";
 
 export const dynamic = "force-dynamic";
 
@@ -294,6 +293,7 @@ export default async function ProjectDetailPage({
     checkerUsers,
     authorUsers,
     fundingInstitutions,
+    taskGuides,
   ] = await Promise.all([
     prisma.researchProject.findUnique({
       where: { id },
@@ -425,6 +425,10 @@ export default async function ProjectDetailPage({
     prisma.fundingInstitution.findMany({
       orderBy: [{ name: "asc" }],
       select: { id: true, name: true, shortName: true, country: true },
+    }),
+    prisma.taskGuide.findMany({
+      orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
+      select: { id: true, guideCode: true, title: true, content: true },
     }),
   ]);
 
@@ -1121,6 +1125,7 @@ export default async function ProjectDetailPage({
                     organizedProjectOptions={[]}
                     submissionOptions={generalTaskSubmissionOptions}
                     checkerOptions={taskCheckerOptions}
+                    taskGuideOptions={taskGuides}
                     canChooseChecker={isRootAdmin}
                     initialMode="other"
                     initialResearch={currentResearchTaskOption}
@@ -1576,6 +1581,7 @@ export default async function ProjectDetailPage({
                       organizedProjectOptions={[]}
                       submissionOptions={generalTaskSubmissionOptions}
                       checkerOptions={taskCheckerOptions}
+                      taskGuideOptions={taskGuides}
                       canChooseChecker={isRootAdmin}
                       initialMode="production"
                       initialResearch={currentResearchTaskOption}
@@ -1661,6 +1667,7 @@ export default async function ProjectDetailPage({
                 venues={venueOptions}
                 assistants={taskAssigneeOptions}
                 checkers={taskCheckerOptions}
+                taskGuideOptions={taskGuides}
                 canChooseChecker={isRootAdmin}
                 disabled={researchContentLocked}
               />
@@ -1692,6 +1699,7 @@ export default async function ProjectDetailPage({
           suggestedConferences={suggestedConferenceOptions}
           assistants={taskAssigneeOptions}
           checkers={taskCheckerOptions}
+          taskGuideOptions={taskGuides}
           canChooseChecker={isRootAdmin}
           isAdmin={isAdmin}
           canAssignTask={canCreateSubmitOrOtherTask}
@@ -1708,11 +1716,11 @@ export default async function ProjectDetailPage({
                 organizedProjectOptions={[]}
                 submissionOptions={generalTaskSubmissionOptions}
                 checkerOptions={taskCheckerOptions}
+                taskGuideOptions={taskGuides}
                 canChooseChecker={isRootAdmin}
                 initialMode="other"
                 initialResearch={currentResearchTaskOption}
                 initialTitle={`Suggest venue for research "${project.title}"`}
-                initialDescription={defaultSuggestVenueTaskDescription}
                 triggerVariant="other"
               />
             ) : null

@@ -88,6 +88,7 @@ export default async function ResearchTasksPage() {
     reviews,
     organizedProjects,
     checkerUsers,
+    taskGuides,
   ] = canManageTasks
     ? await Promise.all([
         prisma.user.findMany({
@@ -154,8 +155,12 @@ export default async function ResearchTasksPage() {
           orderBy: [{ name: "asc" }, { email: "asc" }],
           select: { id: true, name: true, email: true, roles: true },
         }),
+        prisma.taskGuide.findMany({
+          orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
+          select: { id: true, guideCode: true, title: true, content: true },
+        }),
       ])
-    : [[], [], [], [], [], [], [], []];
+    : [[], [], [], [], [], [], [], [], []];
 
   const assignees: TaskAssigneeOption[] = assigneeUsers.map((user) => ({
     id: user.id,
@@ -297,6 +302,7 @@ export default async function ResearchTasksPage() {
               organizedProjectOptions={organizedProjectOptions}
               submissionOptions={submissionOptions}
               checkerOptions={checkerOptions}
+              taskGuideOptions={taskGuides}
               canChooseChecker={isRootAdmin}
             />
           ) : null

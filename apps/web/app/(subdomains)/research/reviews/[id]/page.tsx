@@ -105,7 +105,9 @@ function taskStatusClass(status: string) {
 }
 
 function taskCode(task: { id: string; taskCode: string | null }) {
-  return task.taskCode || task.id.replaceAll("-", "").slice(0, 10).toUpperCase();
+  return (
+    task.taskCode || task.id.replaceAll("-", "").slice(0, 10).toUpperCase()
+  );
 }
 
 function taskTypeLabel(value: string | null, category: string | null) {
@@ -151,7 +153,7 @@ export default async function ReviewDetailPage({
         NOT: { id: userId },
       };
 
-  const [review, assigneeUsers, checkerUsers] = await Promise.all([
+  const [review, assigneeUsers, checkerUsers, taskGuides] = await Promise.all([
     prisma.academicReview.findFirst({
       where: { id, ...accessibleResearchReviewWhere(roles, userId) },
       include: {
@@ -190,6 +192,12 @@ export default async function ReviewDetailPage({
           },
           orderBy: [{ name: "asc" }, { email: "asc" }],
           select: { id: true, name: true, email: true, roles: true },
+        })
+      : Promise.resolve([]),
+    canManageTasks
+      ? prisma.taskGuide.findMany({
+          orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
+          select: { id: true, guideCode: true, title: true, content: true },
         })
       : Promise.resolve([]),
   ]);
@@ -313,7 +321,11 @@ export default async function ReviewDetailPage({
               {externalLinks.length > 0 ? (
                 <div className="flex flex-none items-center gap-2">
                   {externalLinks.map((item) => (
-                    <IconHint key={item.label} label={item.label} position="bottom">
+                    <IconHint
+                      key={item.label}
+                      label={item.label}
+                      position="bottom"
+                    >
                       <a
                         href={item.href as string}
                         target="_blank"
@@ -348,6 +360,7 @@ export default async function ReviewDetailPage({
                 journalName={review.journal.name}
                 assignees={assignees}
                 checkers={checkers}
+                taskGuideOptions={taskGuides}
                 canChooseChecker={roles.includes(Role.ADMIN)}
               />
             ) : null

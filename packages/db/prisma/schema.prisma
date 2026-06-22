@@ -823,6 +823,7 @@ model ResearchTask {
 
   assignments    ResearchTaskAssignment[]
   clarifications ResearchTaskClarification[]
+  guides         TaskGuide[]                 @relation("ResearchTaskGuides")
 
   @@index([checkerId])
 }
@@ -836,7 +837,8 @@ model TaskGuide {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy User? @relation("TaskGuideCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy User?          @relation("TaskGuideCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  tasks     ResearchTask[] @relation("ResearchTaskGuides")
 
   @@index([createdById])
   @@index([updatedAt])

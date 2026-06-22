@@ -52,8 +52,11 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
-import { defaultSubmitTaskDescription } from "@/sites/research/lib/task-description";
 import { defaultResearchTaskDueDate } from "@/sites/research/lib/task-date";
+import {
+  TaskGuidePicker,
+  type TaskGuideOption,
+} from "../../tasks/TaskGuidePicker";
 import {
   currencySymbol,
   formatResearchNumber,
@@ -155,6 +158,7 @@ export function SuggestedJournalsPanel({
   suggestedConferences,
   assistants,
   checkers = [],
+  taskGuideOptions = [],
   canChooseChecker = false,
   isAdmin,
   canAssignTask,
@@ -171,6 +175,7 @@ export function SuggestedJournalsPanel({
   suggestedConferences: SuggestedConferenceOption[];
   assistants: TaskAssigneeOption[];
   checkers?: TaskAssigneeOption[];
+  taskGuideOptions?: TaskGuideOption[];
   canChooseChecker?: boolean;
   isAdmin: boolean;
   canAssignTask: boolean;
@@ -204,6 +209,9 @@ export function SuggestedJournalsPanel({
     [],
   );
   const [selectedCheckerId, setSelectedCheckerId] = useState("");
+  const [selectedTaskGuideIds, setSelectedTaskGuideIds] = useState<string[]>(
+    [],
+  );
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [taskMode, setTaskMode] = useState<"submit" | "other">("submit");
   const { showError, showSuccess } = useResearchToast();
@@ -1197,12 +1205,16 @@ export function SuggestedJournalsPanel({
                 key={taskMode}
                 name="description"
                 rows={3}
-                defaultValue={
-                  taskMode === "submit" ? defaultSubmitTaskDescription : ""
-                }
+                placeholder="Description, expected output, files, or notes"
                 className={researchTextareaClass}
               />
             </label>
+
+            <TaskGuidePicker
+              guides={taskGuideOptions}
+              selectedIds={selectedTaskGuideIds}
+              onChange={setSelectedTaskGuideIds}
+            />
 
             <section className="grid gap-3">
               {selectedAssistants.length > 0 ? (

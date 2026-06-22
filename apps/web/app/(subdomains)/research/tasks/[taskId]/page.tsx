@@ -55,7 +55,7 @@ import {
 } from "./TaskClarificationPanel";
 import { TaskReportPanel } from "./TaskReportPanel";
 import { TaskReminderButton } from "./TaskReminderButton";
-import { TaskGuideButton } from "./TaskGuideButton";
+import { TaskGuideIcons } from "../TaskGuidePicker";
 
 export const dynamic = "force-dynamic";
 
@@ -443,6 +443,10 @@ export default async function TaskDetailPage({
       reportFileName: true,
       reportFileSize: true,
       reportUploadedAt: true,
+      guides: {
+        select: { id: true, guideCode: true, title: true, content: true },
+        orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
+      },
       reportUploadedById: true,
       createdBy: { select: { name: true, email: true, roles: true } },
       checker: { select: { name: true, email: true, roles: true } },
@@ -1260,7 +1264,7 @@ export default async function TaskDetailPage({
                 <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                   Task content
                 </h2>
-                <TaskGuideButton />
+                <TaskGuideIcons guides={task.guides} />
               </div>
               <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#B0B0B0]">
                 {task.description || "No task note."}

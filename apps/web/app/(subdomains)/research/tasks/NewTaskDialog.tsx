@@ -42,8 +42,8 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
-import { defaultSubmitTaskDescription } from "@/sites/research/lib/task-description";
 import { defaultResearchTaskDueDate } from "@/sites/research/lib/task-date";
+import { TaskGuidePicker, type TaskGuideOption } from "./TaskGuidePicker";
 
 export type TaskAssigneeOption = {
   id: string;
@@ -136,11 +136,11 @@ export function NewTaskDialog({
   organizedProjectOptions,
   submissionOptions = [],
   checkerOptions = [],
+  taskGuideOptions = [],
   canChooseChecker = false,
   initialMode = "submit",
   initialResearch = null,
   initialTitle = "",
-  initialDescription = "",
   triggerVariant = "default",
 }: {
   assignees: TaskAssigneeOption[];
@@ -151,11 +151,11 @@ export function NewTaskDialog({
   organizedProjectOptions: TaskOrganizedProjectOption[];
   submissionOptions?: TaskSubmissionOption[];
   checkerOptions?: TaskAssigneeOption[];
+  taskGuideOptions?: TaskGuideOption[];
   canChooseChecker?: boolean;
   initialMode?: TaskMode;
   initialResearch?: TaskResearchOption | null;
   initialTitle?: string;
-  initialDescription?: string;
   triggerVariant?: TaskTriggerVariant;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -171,6 +171,9 @@ export function NewTaskDialog({
   const [dueDate, setDueDate] = useState(defaultResearchTaskDueDate);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCheckerId, setSelectedCheckerId] = useState("");
+  const [selectedTaskGuideIds, setSelectedTaskGuideIds] = useState<string[]>(
+    [],
+  );
   const [selectedResearch, setSelectedResearch] =
     useState<TaskResearchOption | null>(initialResearch);
   const [selectedVenue, setSelectedVenue] = useState<TaskVenueOption | null>(
@@ -476,17 +479,17 @@ export function NewTaskDialog({
                           ? "Choose only users who have activated their research-site account."
                           : result?.reason === "INVALID_CHECKER"
                             ? "Choose a chief assistant as checker, or leave checker empty."
-                          : result?.reason === "ACTIVE_SUBMISSION_TASK_EXISTS"
-                            ? "An active submission task already exists for this research and venue."
-                            : result?.reason === "ACCOUNT_NOT_FOR_JOURNAL"
-                              ? "Choose an account that belongs to the selected journal."
-                              : result?.reason === "ACCOUNT_REQUIRED"
-                                ? "Choose the journal account for this submission task."
-                                : result?.reason === "TASK_FILE_TOO_LARGE"
-                                  ? "Task file must be 2 MB or smaller."
-                                  : result?.reason === "TASK_FILE_REJECTED"
-                                    ? "Upload the task file as PDF, DOC, DOCX, or XLSX."
-                                    : "Please check the task details and try again.",
+                            : result?.reason === "ACTIVE_SUBMISSION_TASK_EXISTS"
+                              ? "An active submission task already exists for this research and venue."
+                              : result?.reason === "ACCOUNT_NOT_FOR_JOURNAL"
+                                ? "Choose an account that belongs to the selected journal."
+                                : result?.reason === "ACCOUNT_REQUIRED"
+                                  ? "Choose the journal account for this submission task."
+                                  : result?.reason === "TASK_FILE_TOO_LARGE"
+                                    ? "Task file must be 2 MB or smaller."
+                                    : result?.reason === "TASK_FILE_REJECTED"
+                                      ? "Upload the task file as PDF, DOC, DOCX, or XLSX."
+                                      : "Please check the task details and try again.",
         });
         return;
       }
@@ -957,19 +960,21 @@ export function NewTaskDialog({
 
           <label className="grid gap-1.5">
             <textarea
-              key={`${mode}-${initialDescription}`}
+              key={mode}
               name="description"
               rows={3}
               aria-label="Description"
               placeholder="Description, expected output, files, or notes"
-              defaultValue={
-                mode === "submit"
-                  ? defaultSubmitTaskDescription
-                  : initialDescription
-              }
+              defaultValue=""
               className={researchTextareaClass}
             />
           </label>
+
+          <TaskGuidePicker
+            guides={taskGuideOptions}
+            selectedIds={selectedTaskGuideIds}
+            onChange={setSelectedTaskGuideIds}
+          />
 
           <TaskAttachmentField />
 

@@ -4065,6 +4065,7 @@ export async function createResearchTask(formData: FormData) {
 
   const taskType = taskTypeFromForm(formData.get("taskType"));
   if (!taskType) return { ok: false, reason: "MISSING_ASSOCIATION" };
+  const taskGuideIds = orderedUniqueStrings(formData.getAll("taskGuideIds"));
   const projectId = optionalString(formData.get("projectId"));
   const organizedProjectId = optionalString(formData.get("organizedProjectId"));
   const journalId = optionalString(formData.get("journalId"));
@@ -4212,6 +4213,9 @@ export async function createResearchTask(formData: FormData) {
       assignments: {
         create: assigneeIds.map((userId) => ({ userId })),
       },
+      guides: {
+        connect: taskGuideIds.map((id) => ({ id })),
+      },
     },
     select: {
       id: true,
@@ -4337,6 +4341,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
 
   const taskType = taskTypeFromForm(formData.get("taskType"));
   if (!taskType) return { ok: false, reason: "MISSING_ASSOCIATION" };
+  const taskGuideIds = orderedUniqueStrings(formData.getAll("taskGuideIds"));
   const projectId = optionalString(formData.get("projectId"));
   const organizedProjectId = optionalString(formData.get("organizedProjectId"));
   const journalId = optionalString(formData.get("journalId"));
@@ -4495,6 +4500,9 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
             }
           : {}),
         dueDate: researchTaskDueDate(optionalString(formData.get("dueDate"))),
+        ...(formData.has("taskGuideIds")
+          ? { guides: { set: taskGuideIds.map((id) => ({ id })) } }
+          : {}),
       },
       select: { id: true, title: true, description: true },
     });

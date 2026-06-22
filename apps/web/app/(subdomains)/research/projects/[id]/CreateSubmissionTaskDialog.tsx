@@ -35,8 +35,11 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
-import { defaultSubmitTaskDescription } from "@/sites/research/lib/task-description";
 import { defaultResearchTaskDueDate } from "@/sites/research/lib/task-date";
+import {
+  TaskGuidePicker,
+  type TaskGuideOption,
+} from "../../tasks/TaskGuidePicker";
 
 export type SubmissionTaskAccountOption = {
   id: string;
@@ -83,6 +86,7 @@ export function CreateSubmissionTaskDialog({
   venues,
   assistants,
   checkers = [],
+  taskGuideOptions = [],
   canChooseChecker = false,
   disabled = false,
 }: {
@@ -91,6 +95,7 @@ export function CreateSubmissionTaskDialog({
   venues: SubmissionTaskVenueOption[];
   assistants: SubmissionTaskAssigneeOption[];
   checkers?: SubmissionTaskAssigneeOption[];
+  taskGuideOptions?: TaskGuideOption[];
   canChooseChecker?: boolean;
   disabled?: boolean;
 }) {
@@ -106,6 +111,9 @@ export function CreateSubmissionTaskDialog({
     [],
   );
   const [selectedCheckerId, setSelectedCheckerId] = useState("");
+  const [selectedTaskGuideIds, setSelectedTaskGuideIds] = useState<string[]>(
+    [],
+  );
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [addAccountOpen, setAddAccountOpen] = useState(false);
@@ -797,10 +805,16 @@ export function CreateSubmissionTaskDialog({
               <textarea
                 name="description"
                 rows={3}
-                defaultValue={defaultSubmitTaskDescription}
+                placeholder="Description, expected output, files, or notes"
                 className={researchTextareaClass}
               />
             </label>
+
+            <TaskGuidePicker
+              guides={taskGuideOptions}
+              selectedIds={selectedTaskGuideIds}
+              onChange={setSelectedTaskGuideIds}
+            />
 
             <TaskAttachmentField />
           </form>

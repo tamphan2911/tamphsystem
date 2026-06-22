@@ -37,6 +37,10 @@ import {
 } from "@/sites/research/lib/display";
 import type { TaskAssigneeOption } from "../../tasks/NewTaskDialog";
 import { defaultResearchTaskDueDate } from "@/sites/research/lib/task-date";
+import {
+  TaskGuidePicker,
+  type TaskGuideOption,
+} from "../../tasks/TaskGuidePicker";
 
 type SearchPanelItem = {
   id: string;
@@ -52,6 +56,7 @@ export function NewReviewTaskDialog({
   journalName,
   assignees,
   checkers = [],
+  taskGuideOptions = [],
   canChooseChecker = false,
 }: {
   reviewId: string;
@@ -59,6 +64,7 @@ export function NewReviewTaskDialog({
   journalName: string;
   assignees: TaskAssigneeOption[];
   checkers?: TaskAssigneeOption[];
+  taskGuideOptions?: TaskGuideOption[];
   canChooseChecker?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -66,6 +72,9 @@ export function NewReviewTaskDialog({
   const [checkerQuery, setCheckerQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCheckerId, setSelectedCheckerId] = useState("");
+  const [selectedTaskGuideIds, setSelectedTaskGuideIds] = useState<string[]>(
+    [],
+  );
   const [dueDate, setDueDate] = useState(defaultResearchTaskDueDate);
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -146,11 +155,11 @@ export function NewReviewTaskDialog({
                 ? "Choose only users who have activated their research-site account."
                 : result?.reason === "INVALID_CHECKER"
                   ? "Choose a chief assistant as checker, or leave checker empty."
-                : result?.reason === "TASK_FILE_TOO_LARGE"
-                  ? "Task file must be 2 MB or smaller."
-                  : result?.reason === "TASK_FILE_REJECTED"
-                    ? "Upload the task file as PDF, DOC, DOCX, or XLSX."
-                    : "Please check the task details and try again.",
+                  : result?.reason === "TASK_FILE_TOO_LARGE"
+                    ? "Task file must be 2 MB or smaller."
+                    : result?.reason === "TASK_FILE_REJECTED"
+                      ? "Upload the task file as PDF, DOC, DOCX, or XLSX."
+                      : "Please check the task details and try again.",
         });
         return;
       }
@@ -249,6 +258,12 @@ export function NewReviewTaskDialog({
               className={researchTextareaClass}
             />
           </label>
+
+          <TaskGuidePicker
+            guides={taskGuideOptions}
+            selectedIds={selectedTaskGuideIds}
+            onChange={setSelectedTaskGuideIds}
+          />
 
           <TaskAttachmentField />
 
