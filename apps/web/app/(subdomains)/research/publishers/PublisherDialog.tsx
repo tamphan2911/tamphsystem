@@ -64,6 +64,7 @@ export function PublisherDialog({
           type="button"
           label="Edit publisher"
           tone="blue"
+          className="!h-5 !w-5 items-start"
           onClick={() => setOpen(true)}
         >
           <Pencil className="h-4 w-4" />

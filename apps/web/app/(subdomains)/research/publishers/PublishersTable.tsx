@@ -55,7 +55,7 @@ function DeletePublisherButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="research-allow-transform inline-flex h-8 w-8 items-center justify-center border-0 bg-transparent text-rose-700 transition hover:-translate-y-0.5 hover:bg-transparent hover:text-rose-800 active:translate-y-0 active:scale-95 dark:text-rose-300 dark:hover:text-rose-200"
+          className="research-allow-transform inline-flex h-5 w-5 items-start justify-center border-0 bg-transparent text-rose-700 transition hover:-translate-y-0.5 hover:bg-transparent hover:text-rose-800 active:translate-y-0 active:scale-95 dark:text-rose-300 dark:hover:text-rose-200"
           aria-label={`Delete ${publisher.name}`}
         >
           <Trash2 className="h-4 w-4" />
@@ -217,17 +217,21 @@ export function PublishersTable({
                   )}
                 </td>
                 <td className="px-2 py-3 text-center align-top">
-                  <PublisherDialog
-                    mode="edit"
-                    submitAction={updateAction.bind(null, publisher.id)}
-                    initialValues={publisher}
-                  />
+                  <div className="flex items-start justify-center">
+                    <PublisherDialog
+                      mode="edit"
+                      submitAction={updateAction.bind(null, publisher.id)}
+                      initialValues={publisher}
+                    />
+                  </div>
                 </td>
                 <td className="px-2 py-3 text-center align-top">
-                  <DeletePublisherButton
-                    publisher={publisher}
-                    deleteAction={deleteAction}
-                  />
+                  <div className="flex items-start justify-center">
+                    <DeletePublisherButton
+                      publisher={publisher}
+                      deleteAction={deleteAction}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}
