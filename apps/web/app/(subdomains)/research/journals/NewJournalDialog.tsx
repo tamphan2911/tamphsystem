@@ -5,8 +5,13 @@ import { PlusCircle } from "lucide-react";
 import { createJournal } from "../actions";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import { JournalDialogForm } from "./JournalDialogForm";
+import type { PublisherPickerItem } from "@/sites/research/components/PublisherPicker";
 
-export function NewJournalDialog() {
+export function NewJournalDialog({
+  publishers,
+}: {
+  publishers: PublisherPickerItem[];
+}) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -25,6 +30,7 @@ export function NewJournalDialog() {
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         submitAction={createJournal}
+        publishers={publishers}
       />
     </>
   );

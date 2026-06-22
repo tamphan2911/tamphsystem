@@ -197,9 +197,7 @@ export async function updateAdminSessionContent(formData: FormData) {
     data: {
       title: optionalString(formData.get("title")) ?? "Untitled session",
       type:
-        type && Object.values(SessionType).includes(type)
-          ? type
-          : undefined,
+        type && Object.values(SessionType).includes(type) ? type : undefined,
       year: optionalNumber(formData.get("year")),
       content: optionalString(formData.get("content")),
       videoUrl: optionalString(formData.get("videoUrl")),
@@ -307,13 +305,24 @@ export async function createAdminResearchProject(formData: FormData) {
 export async function createAdminJournal(formData: FormData) {
   await requireAdmin();
 
+  const publisherId = optionalString(formData.get("publisherId"));
+  const publisher = publisherId
+    ? await prisma.publisher.findUnique({
+        where: { id: publisherId },
+        select: { id: true, name: true },
+      })
+    : null;
+  if (!publisher)
+    throw new Error("Choose a publisher before adding the journal.");
+
   await prisma.journal.create({
     data: {
       name: optionalString(formData.get("name")) ?? "Untitled journal",
       issn: optionalString(formData.get("issn")),
       field: optionalString(formData.get("field")),
       rank: optionalString(formData.get("rank")),
-      publisher: optionalString(formData.get("publisher")),
+      publisherId: publisher.id,
+      publisher: publisher.name,
       apc: optionalString(formData.get("apc")),
       submissionFee: optionalString(formData.get("submissionFee")),
       note: optionalString(formData.get("note")),

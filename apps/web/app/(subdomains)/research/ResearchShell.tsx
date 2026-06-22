@@ -27,6 +27,12 @@ const navItems = [
     rootAdminOnly: true,
   },
   {
+    href: "/publishers",
+    label: "Publishers",
+    icon: "publishers" as const,
+    rootAdminOnly: true,
+  },
+  {
     href: "/proposals",
     label: "Proposals",
     icon: "proposals" as const,

@@ -656,6 +656,7 @@ model Journal {
   isFavorite            Boolean      @default(false)
   isInterest            Boolean      @default(false)
   publisher             String?
+  publisherId           String?
   country               String?
   apc                   String?
   apcCurrency           CurrencyCode @default(USD)
@@ -673,6 +674,7 @@ model Journal {
 
   createdById String?
   createdBy   User?   @relation("JournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  publisherRecord Publisher? @relation(fields: [publisherId], references: [id], onDelete: SetNull)
 
   submissions ResearchSubmission[]
   accounts    PublisherAccount[]
@@ -681,7 +683,23 @@ model Journal {
   tasks       ResearchTask[]
 
   @@index([createdById])
+  @@index([publisherId])
   @@index([approvalStatus])
+}
+
+model Publisher {
+  id             String   @id @default(uuid())
+  publisherCode  String   @unique
+  name           String
+  normalizedName String   @unique
+  alias          String?
+  country        String?
+  website        String?
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  journals Journal[]
 }
 
 model SuggestedJournal {

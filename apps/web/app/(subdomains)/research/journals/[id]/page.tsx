@@ -103,7 +103,7 @@ export default async function JournalDetailPage({
       ? accessibleJournalWhere(userId, registrationIdentityValues)
       : { id: "__no_access__" };
 
-  const [currentUser, journal, creatorUsers] = await Promise.all([
+  const [currentUser, journal, creatorUsers, publishers] = await Promise.all([
     userId
       ? prisma.user.findUnique({
           where: { id: userId },
@@ -169,6 +169,16 @@ export default async function JournalDetailPage({
           select: { id: true, name: true, email: true },
         })
       : Promise.resolve([]),
+    prisma.publisher.findMany({
+      orderBy: [{ name: "asc" }],
+      select: {
+        id: true,
+        publisherCode: true,
+        name: true,
+        alias: true,
+        country: true,
+      },
+    }),
   ]);
 
   if (!journal) notFound();
@@ -372,6 +382,11 @@ export default async function JournalDetailPage({
                 {canEditVenue && (
                   <EditJournalDialog
                     journalId={journal.id}
+                    publishers={publishers.map((publisher) => ({
+                      ...publisher,
+                      alias: publisher.alias ?? "",
+                      country: publisher.country ?? "",
+                    }))}
                     journal={{
                       name: journal.name,
                       issn: journal.issn,
@@ -383,6 +398,7 @@ export default async function JournalDetailPage({
                       issuesPerYear: journal.issuesPerYear,
                       isFavorite: journal.isFavorite,
                       isInterest: journal.isInterest,
+                      publisherId: journal.publisherId,
                       publisher: journal.publisher,
                       country: journal.country,
                       apc: journal.apc,

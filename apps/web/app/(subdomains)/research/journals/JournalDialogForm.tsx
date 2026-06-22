@@ -7,7 +7,6 @@ import {
   AtSign,
   BookmarkCheck,
   BookOpen,
-  Building2,
   CalendarDays,
   Check,
   DollarSign,
@@ -33,6 +32,10 @@ import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSele
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchNumberInput } from "@/sites/research/components/ResearchNumberInput";
 import {
+  PublisherPicker,
+  type PublisherPickerItem,
+} from "@/sites/research/components/PublisherPicker";
+import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
 } from "@/sites/research/components/ResearchSearchPicker";
@@ -56,6 +59,7 @@ export type JournalFormValues = {
   issuesPerYear?: number | string | null;
   isFavorite?: boolean | null;
   isInterest?: boolean | null;
+  publisherId?: string | null;
   publisher?: string | null;
   country?: string | null;
   apc?: string | null;
@@ -314,16 +318,19 @@ export function JournalDialogForm({
   onClose,
   submitAction,
   initialValues,
+  publishers,
 }: {
   mode: "create" | "edit";
   isOpen: boolean;
   onClose: () => void;
-  submitAction: (
-    formData: FormData,
-  ) => Promise<{ pendingApproval?: boolean } | void> | {
-    pendingApproval?: boolean;
-  } | void;
+  submitAction: (formData: FormData) =>
+    | Promise<{ pendingApproval?: boolean } | void>
+    | {
+        pendingApproval?: boolean;
+      }
+    | void;
   initialValues?: JournalFormValues;
+  publishers: PublisherPickerItem[];
 }) {
   const toast = useResearchToast();
   const [isPending, startTransition] = useTransition();
@@ -420,7 +427,7 @@ export function JournalDialogForm({
           const missingFields = (
             [
               ["name", "journal name"],
-              ["publisher", "publisher"],
+              ["publisherId", "publisher"],
               ["issn", "ISSN"],
               ["apc", "APC"],
             ] as const
@@ -499,13 +506,10 @@ export function JournalDialogForm({
               icon={<BookOpen aria-hidden="true" className="text-[#A8DADC]" />}
             />
             <div className="grid gap-4 md:grid-cols-2">
-              <JournalInput
-                name="publisher"
-                defaultValue={initialValues?.publisher}
-                placeholder="Publisher name, for example Elsevier"
-                icon={
-                  <Building2 aria-hidden="true" className="text-[#B39CD0]" />
-                }
+              <PublisherPicker
+                publishers={publishers}
+                initialPublisherId={initialValues?.publisherId}
+                initialPublisherName={initialValues?.publisher}
               />
               <CountryPicker
                 value={selectedCountry}

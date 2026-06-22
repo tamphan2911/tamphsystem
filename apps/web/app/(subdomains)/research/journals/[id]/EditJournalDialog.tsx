@@ -8,13 +8,16 @@ import {
   JournalDialogForm,
   type JournalFormValues,
 } from "../JournalDialogForm";
+import type { PublisherPickerItem } from "@/sites/research/components/PublisherPicker";
 
 export function EditJournalDialog({
   journalId,
   journal,
+  publishers,
 }: {
   journalId: string;
   journal: JournalFormValues;
+  publishers: PublisherPickerItem[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -37,6 +40,7 @@ export function EditJournalDialog({
         onClose={() => setIsOpen(false)}
         initialValues={journal}
         submitAction={(formData) => updateJournal(journalId, formData)}
+        publishers={publishers}
       />
     </>
   );

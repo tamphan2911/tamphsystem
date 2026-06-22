@@ -701,6 +701,68 @@ async function generateFunderCode(name: string, alias: string | null) {
   return `${base}${crypto.randomUUID().replaceAll("-", "").slice(0, 4).toUpperCase()}`;
 }
 
+function normalizedPublisherName(name: string) {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function publisherCodeBase(name: string, alias: string | null) {
+  const source = alias || name;
+  const words = source
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const code =
+    words.length > 1
+      ? words.map((word) => word[0]).join("")
+      : words[0]?.slice(0, 6);
+  return (code && code.length >= 2 ? code : "PUB").slice(0, 8);
+}
+
+async function generatePublisherCode(name: string, alias: string | null) {
+  const base = publisherCodeBase(name, alias);
+  for (let index = 0; index < 100; index += 1) {
+    const code = index === 0 ? base : `${base}${index + 1}`;
+    const existing = await prisma.publisher.findUnique({
+      where: { publisherCode: code },
+      select: { id: true },
+    });
+    if (!existing) return code;
+  }
+  return `${base}${crypto.randomUUID().replaceAll("-", "").slice(0, 4).toUpperCase()}`;
+}
+
+async function publisherSelection(formData: FormData) {
+  const publisherId = optionalString(formData.get("publisherId"));
+  if (!publisherId) return null;
+  return prisma.publisher.findUnique({
+    where: { id: publisherId },
+    select: { id: true, name: true },
+  });
+}
+
+async function ensurePublisherByName(name: string | null) {
+  if (!name) return null;
+  const cleanedName = name.trim().replace(/\s+/g, " ");
+  const normalizedName = normalizedPublisherName(cleanedName);
+  const existing = await prisma.publisher.findUnique({
+    where: { normalizedName },
+    select: { id: true, name: true },
+  });
+  if (existing) return existing;
+  return prisma.publisher.create({
+    data: {
+      publisherCode: await generatePublisherCode(cleanedName, null),
+      name: cleanedName,
+      normalizedName,
+    },
+    select: { id: true, name: true },
+  });
+}
+
 const productionStepLabels = [
   "Idea forming",
   "Data collection",
@@ -1637,11 +1699,13 @@ export async function reviewProposal(formData: FormData) {
         identifier: proposal.identifier,
       });
       if (duplicateMessage) throw new Error(duplicateMessage);
+      const publisher = await ensurePublisherByName(proposal.organization);
       const journal = await prisma.journal.create({
         data: {
           name: proposal.title,
           issn: proposal.identifier,
-          publisher: proposal.organization,
+          publisherId: publisher?.id,
+          publisher: publisher?.name ?? proposal.organization,
           homepageLink: proposal.website,
           note: [proposal.description, proposal.notes]
             .filter(Boolean)
@@ -2643,6 +2707,9 @@ export async function createJournal(formData: FormData) {
   const accountEmail = optionalString(formData.get("accountEmail"));
   const accountNote = optionalString(formData.get("accountNote"));
   const shouldCreateAccount = Boolean(accountUsername);
+  const publisher = await publisherSelection(formData);
+  if (!publisher)
+    throw new Error("Choose a publisher before saving the journal.");
 
   await prisma.$transaction(async (tx) => {
     const journal = await tx.journal.create({
@@ -2663,7 +2730,8 @@ export async function createJournal(formData: FormData) {
         issuesPerYear: positiveIntFromForm(formData.get("issuesPerYear")),
         isFavorite: formData.get("isFavorite") === "on",
         isInterest: formData.get("isInterest") === "on",
-        publisher: optionalString(formData.get("publisher")),
+        publisherId: publisher.id,
+        publisher: publisher.name,
         country: optionalString(formData.get("country")),
         apc: optionalString(formData.get("apc")),
         apcCurrency:
@@ -2721,6 +2789,9 @@ export async function updateJournal(journalId: string, formData: FormData) {
   const legacyField = optionalString(formData.get("field"));
   const journalType =
     enumValue(JournalType, formData.get("type")) ?? JournalType.INTERNATIONAL;
+  const publisher = await publisherSelection(formData);
+  if (!publisher)
+    throw new Error("Choose a publisher before saving the journal.");
 
   await prisma.journal.update({
     where: { id: journalId },
@@ -2741,7 +2812,8 @@ export async function updateJournal(journalId: string, formData: FormData) {
       issuesPerYear: positiveIntFromForm(formData.get("issuesPerYear")),
       isFavorite: formData.get("isFavorite") === "on",
       isInterest: formData.get("isInterest") === "on",
-      publisher: optionalString(formData.get("publisher")),
+      publisherId: publisher.id,
+      publisher: publisher.name,
       country: optionalString(formData.get("country")),
       apc: optionalString(formData.get("apc")),
       apcCurrency:
@@ -3086,6 +3158,92 @@ export async function deletePublisherAccount(accountId: string) {
 
   revalidatePath("/accounts");
   revalidatePath("/submissions");
+  revalidatePath("/journals");
+}
+
+export async function createPublisher(formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const name = optionalString(formData.get("name"));
+  if (!name) throw new Error("Publisher name is required.");
+  const cleanedName = name.replace(/\s+/g, " ");
+  const normalizedName = normalizedPublisherName(cleanedName);
+  const existing = await prisma.publisher.findUnique({
+    where: { normalizedName },
+    select: { id: true },
+  });
+  if (existing) throw new Error("A publisher with this name already exists.");
+  const alias = optionalString(formData.get("alias"));
+
+  await prisma.publisher.create({
+    data: {
+      publisherCode: await generatePublisherCode(cleanedName, alias),
+      name: cleanedName,
+      normalizedName,
+      alias,
+      country: optionalString(formData.get("country")),
+      website: optionalString(formData.get("website")),
+      note: optionalString(formData.get("note")),
+    },
+  });
+
+  revalidatePath("/publishers");
+  revalidatePath("/journals");
+}
+
+export async function updatePublisher(publisherId: string, formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const name = optionalString(formData.get("name"));
+  if (!name) throw new Error("Publisher name is required.");
+  const cleanedName = name.replace(/\s+/g, " ");
+  const normalizedName = normalizedPublisherName(cleanedName);
+  const duplicate = await prisma.publisher.findFirst({
+    where: { normalizedName, NOT: { id: publisherId } },
+    select: { id: true },
+  });
+  if (duplicate) throw new Error("A publisher with this name already exists.");
+
+  await prisma.$transaction(async (tx) => {
+    await tx.publisher.update({
+      where: { id: publisherId },
+      data: {
+        name: cleanedName,
+        normalizedName,
+        alias: optionalString(formData.get("alias")),
+        country: optionalString(formData.get("country")),
+        website: optionalString(formData.get("website")),
+        note: optionalString(formData.get("note")),
+      },
+    });
+    await tx.journal.updateMany({
+      where: { publisherId },
+      data: { publisher: cleanedName },
+    });
+  });
+
+  revalidatePath("/publishers");
+  revalidatePath("/journals");
+}
+
+export async function deletePublisher(publisherId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const publisher = await prisma.publisher.findUnique({
+    where: { id: publisherId },
+    select: { _count: { select: { journals: true } } },
+  });
+  if (!publisher) return;
+  if (publisher._count.journals > 0) {
+    throw new Error(
+      "Move or delete the associated journals before deleting this publisher.",
+    );
+  }
+  await prisma.publisher.delete({ where: { id: publisherId } });
+  revalidatePath("/publishers");
   revalidatePath("/journals");
 }
 
@@ -5415,8 +5573,8 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
   });
 
   await notifyUsers({
-    userIds: [task.createdById, task.checkerId].filter(
-      (id): id is string => Boolean(id),
+    userIds: [task.createdById, task.checkerId].filter((id): id is string =>
+      Boolean(id),
     ),
     type: "TASK_READY_FOR_CHECK",
     title: "Task ready for check",
@@ -5537,8 +5695,8 @@ export async function uploadResearchTaskReport(
   });
 
   await notifyUsers({
-    userIds: [task.createdById, task.checkerId].filter(
-      (id): id is string => Boolean(id),
+    userIds: [task.createdById, task.checkerId].filter((id): id is string =>
+      Boolean(id),
     ),
     type: "TASK_REPORT_UPLOADED",
     title: "Task report uploaded",
@@ -6056,8 +6214,8 @@ export async function requestTaskClarification(
     data: { status: ResearchTaskStatus.NEED_CLARIFY },
   });
   await notifyUsers({
-    userIds: [task.createdById, task.checkerId].filter(
-      (id): id is string => Boolean(id),
+    userIds: [task.createdById, task.checkerId].filter((id): id is string =>
+      Boolean(id),
     ),
     type: "TASK_CLARIFICATION_REQUESTED",
     title: "Clarification requested",

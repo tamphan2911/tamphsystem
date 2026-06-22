@@ -34,7 +34,7 @@ export default async function JournalsPage() {
     : userId
       ? assignedResearchReviewWhere(userId)
       : { id: "__no_access__" };
-  const [journals, currentUser] = await Promise.all([
+  const [journals, currentUser, publishers] = await Promise.all([
     prisma.journal.findMany({
       where: journalWhere,
       include: {
@@ -54,6 +54,16 @@ export default async function JournalsPage() {
           select: { emailVerified: true, canManageResearchVenues: true },
         })
       : Promise.resolve(null),
+    prisma.publisher.findMany({
+      orderBy: [{ name: "asc" }],
+      select: {
+        id: true,
+        publisherCode: true,
+        name: true,
+        alias: true,
+        country: true,
+      },
+    }),
   ]);
 
   const activeSubmissionStatuses = new Set([
@@ -108,7 +118,13 @@ export default async function JournalsPage() {
           </p>
           <div className="flex flex-none items-center">
             {isAdmin || currentUser?.canManageResearchVenues ? (
-              <NewJournalDialog />
+              <NewJournalDialog
+                publishers={publishers.map((publisher) => ({
+                  ...publisher,
+                  alias: publisher.alias ?? "",
+                  country: publisher.country ?? "",
+                }))}
+              />
             ) : (
               <ProposalDialog
                 type="JOURNAL"
