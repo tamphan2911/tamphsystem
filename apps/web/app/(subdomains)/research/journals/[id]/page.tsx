@@ -12,10 +12,7 @@ import { auth } from "../../../../../auth";
 import { CountryFlag } from "@/sites/research/components/CountryFlag";
 import { formatMoney } from "@/sites/research/lib/currency";
 import { countryName } from "@/sites/research/lib/countries";
-import {
-  displayResearchEmail,
-  displayResearchPersonName,
-} from "@/sites/research/lib/display";
+import { displayResearchPersonName } from "@/sites/research/lib/display";
 import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import {
@@ -42,6 +39,40 @@ export const dynamic = "force-dynamic";
 
 function dateText(value: Date | null) {
   return value ? researchDateTimeFormat("en-GB").format(value) : "";
+}
+
+function externalUrl(
+  value: string | null | undefined,
+  fallbackOrigin?: string,
+) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  const candidate =
+    trimmed.startsWith("/") && fallbackOrigin
+      ? `${fallbackOrigin}${trimmed}`
+      : /^[a-z][a-z\d+.-]*:\/\//i.test(trimmed)
+        ? trimmed
+        : `https://${trimmed}`;
+  try {
+    const url = new URL(candidate);
+    return url.protocol === "http:" || url.protocol === "https:"
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function creatorRole(roles: Role[]) {
+  if (roles.includes(Role.ADMIN)) return "Admin";
+  if (roles.includes(Role.CHIEF_ASSISTANT)) return "Chief assistant";
+  if (roles.includes(Role.ASSISTANT)) return "Assistant";
+  if (roles.includes(Role.RESEARCHER)) return "Researcher";
+  if (roles.includes(Role.LECTURER)) return "Lecturer";
+  if (roles.includes(Role.MODERATOR)) return "Moderator";
+  if (roles.includes(Role.STUDENT)) return "Student";
+  return "User";
 }
 
 export default async function JournalDetailPage({
@@ -82,50 +113,57 @@ export default async function JournalDetailPage({
     prisma.journal.findFirst({
       where: { AND: [{ id }, journalAccessWhere] },
       include: {
-      submissions: {
-        where: isAdmin ? {} : { project: scopedProjectWhere },
-        include: {
-          project: {
-            include: {
-              leadResearcher: true,
-              registrationUser: true,
-              authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
-              authorEntries: {
-                include: { user: true },
-                orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        submissions: {
+          where: isAdmin ? {} : { project: scopedProjectWhere },
+          include: {
+            project: {
+              include: {
+                leadResearcher: true,
+                registrationUser: true,
+                authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
+                authorEntries: {
+                  include: { user: true },
+                  orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+                },
               },
             },
+            account: { select: { id: true, username: true, email: true } },
           },
-          account: { select: { id: true, username: true, email: true } },
+          orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
         },
-        orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
-      },
-      accounts: {
-        where: isAdmin
-          ? {}
-          : isAssistant && userId
-            ? { tasks: { some: { assignments: { some: { userId } } } } }
-            : { id: "__no_access__" },
-        include: { _count: { select: { submissions: true } } },
-        orderBy: [{ updatedAt: "desc" }],
-      },
-      reviews: {
-        where:
-          isAdmin && userId
+        accounts: {
+          where: isAdmin
             ? {}
             : isAssistant && userId
-              ? accessibleResearchReviewWhere(roles, userId)
+              ? { tasks: { some: { assignments: { some: { userId } } } } }
               : { id: "__no_access__" },
-        orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
-      },
-      createdBy: { select: { id: true, name: true, email: true } },
-      _count: { select: { submissions: true, accounts: true, reviews: true } },
+          include: { _count: { select: { submissions: true } } },
+          orderBy: [{ updatedAt: "desc" }],
+        },
+        reviews: {
+          where:
+            isAdmin && userId
+              ? {}
+              : isAssistant && userId
+                ? accessibleResearchReviewWhere(roles, userId)
+                : { id: "__no_access__" },
+          orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
+        },
+        createdBy: {
+          select: { id: true, name: true, email: true, roles: true },
+        },
+        _count: {
+          select: { submissions: true, accounts: true, reviews: true },
+        },
       },
     }),
     isAdmin
       ? prisma.user.findMany({
           where: {
-            OR: [{ activeSites: { has: "research" } }, { roles: { has: Role.ADMIN } }],
+            OR: [
+              { activeSites: { has: "research" } },
+              { roles: { has: Role.ADMIN } },
+            ],
           },
           orderBy: [{ name: "asc" }, { email: "asc" }],
           select: { id: true, name: true, email: true },
@@ -241,30 +279,34 @@ export default async function JournalDetailPage({
 
   const externalLinks = [
     {
-      href: journal.homepageLink,
+      href: externalUrl(journal.homepageLink),
       label: "Open homepage",
+      missingLabel: "Homepage link not recorded",
       icon: Globe2,
-      tone: "border-blue-100 bg-blue-50 text-blue-600 hover:border-blue-200 hover:bg-blue-100 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50",
+      tone: "text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200",
     },
     {
-      href: journal.submissionLink,
+      href: externalUrl(journal.submissionLink),
       label: "Open submission portal",
+      missingLabel: "Submission portal link not recorded",
       icon: Send,
-      tone: "border-sky-100 bg-sky-50 text-sky-600 hover:border-sky-200 hover:bg-sky-100 dark:border-sky-900/70 dark:bg-sky-950/40 dark:text-sky-300 dark:hover:bg-sky-900/50",
+      tone: "text-cyan-700 hover:text-cyan-800 dark:text-cyan-300 dark:hover:text-cyan-200",
     },
     {
-      href: journal.scimagoLink,
+      href: externalUrl(journal.scimagoLink, "https://www.scimagojr.com"),
       label: "Open Scimago profile",
+      missingLabel: "Scimago link not recorded",
       icon: BarChart3,
-      tone: "border-emerald-100 bg-emerald-50 text-emerald-600 hover:border-emerald-200 hover:bg-emerald-100 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50",
+      tone: "text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200",
     },
     {
-      href: journal.scopusLink,
+      href: externalUrl(journal.scopusLink, "https://www.scopus.com"),
       label: "Open Scopus profile",
+      missingLabel: "Scopus link not recorded",
       icon: Database,
-      tone: "border-violet-100 bg-violet-50 text-violet-600 hover:border-violet-200 hover:bg-violet-100 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-300 dark:hover:bg-violet-900/50",
+      tone: "text-violet-700 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200",
     },
-  ].filter((item) => Boolean(item.href));
+  ];
   const journalFields =
     journal.fields.length > 0
       ? journal.fields
@@ -294,54 +336,39 @@ export default async function JournalDetailPage({
                   Need approval
                 </span>
               ) : null}
-              <div className="flex flex-none items-center gap-2">
-                <IconHint
-                  label={
-                    journal.isFavorite ? "Favorite journal" : "Not favorite"
-                  }
-                  position="bottom"
-                >
-                  <Star
-                    className={`h-4 w-4 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
-                      journal.isFavorite ? "text-amber-400" : "text-[#777777]"
-                    }`}
-                    aria-hidden="true"
-                  />
-                </IconHint>
-                <IconHint
-                  label={
-                    journal.isInterest
-                      ? "Journal of interest"
-                      : "Not marked as interest"
-                  }
-                  position="bottom"
-                >
-                  <BookmarkCheck
-                    className={`h-4 w-4 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:text-[#A8DADC] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.22)] ${
-                      journal.isInterest ? "text-sky-400" : "text-[#777777]"
-                    }`}
-                    aria-hidden="true"
-                  />
-                </IconHint>
-              </div>
               <div className="flex flex-none items-center gap-1">
-                {externalLinks.map((item) => (
-                  <IconHint
-                    key={item.label}
-                    label={item.label}
-                    position="bottom"
-                  >
-                    <a
-                      href={item.href as string}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="research-clickable-icon research-allow-transform inline-flex h-8 w-8 items-center justify-center rounded-none border-0 bg-transparent text-[#B0B0B0] shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none focus-visible:ring-0"
-                      aria-label={item.label}
+                {externalLinks.map((item) => {
+                  const iconClass = "h-[15px] w-[15px]";
+                  const controlClass =
+                    "research-clickable-icon research-allow-transform inline-flex h-8 w-8 items-center justify-center rounded-none border-0 bg-transparent shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95";
+
+                  return (
+                    <IconHint
+                      key={item.label}
+                      label={item.href ? item.label : item.missingLabel}
+                      position="bottom"
                     >
-                      <item.icon className="h-[15px] w-[15px]" />
-                    </a>
-                  </IconHint>
-                ))}
+                      {item.href ? (
+                        <a
+                          href={item.href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`${controlClass} ${item.tone}`}
+                          aria-label={item.label}
+                        >
+                          <item.icon className={iconClass} />
+                        </a>
+                      ) : (
+                        <span
+                          className="inline-flex h-8 w-8 cursor-default items-center justify-center border-0 bg-transparent text-slate-400 shadow-none dark:text-[#666666]"
+                          aria-disabled="true"
+                        >
+                          <item.icon className={iconClass} />
+                        </span>
+                      )}
+                    </IconHint>
+                  );
+                })}
                 {canEditVenue && (
                   <EditJournalDialog
                     journalId={journal.id}
@@ -407,7 +434,7 @@ export default async function JournalDetailPage({
 
       <div className="mx-auto max-w-7xl space-y-5">
         <section className="space-y-5 px-1">
-          <dl className="grid gap-4 border-t border-[#3A3A3A] pt-4 text-sm md:grid-cols-3">
+          <dl className="grid gap-4 text-sm md:grid-cols-3">
             <div>
               <dt className="text-xs font-bold uppercase text-slate-400">
                 Area
@@ -422,33 +449,70 @@ export default async function JournalDetailPage({
                   : "-"}
               </dd>
             </div>
-            <div>
-              <dt className="text-xs font-bold uppercase text-slate-400">
-                APC
-              </dt>
-              <dd className="mt-1 text-base font-normal text-[#A8DADC]">
-                {formatMoney(journal.apc, journal.apcCurrency)}
-                {journal.hasApcOption ? " (Option)" : ""}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-bold uppercase text-slate-400">
-                Submission Fee
-              </dt>
-              <dd className="mt-1 text-base font-normal text-[#A8DADC]">
-                {formatMoney(
-                  journal.submissionFee,
-                  journal.submissionFeeCurrency,
-                )}
-              </dd>
-            </div>
-            <div className="md:col-span-2">
-              <dt className="text-xs font-bold uppercase text-slate-400">
-                Note
-              </dt>
-              <dd className="mt-1 max-w-4xl text-sm leading-5 text-[#B0B0B0]">
-                {journal.note || "No note recorded."}
-              </dd>
+            <div className="grid gap-4 md:col-span-2 md:grid-cols-3">
+              <div>
+                <dt className="text-xs font-bold uppercase text-slate-400">
+                  APC
+                </dt>
+                <dd className="mt-1 text-base font-normal text-[#A8DADC]">
+                  {formatMoney(journal.apc, journal.apcCurrency)}
+                  {journal.hasApcOption ? " (Option)" : ""}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-bold uppercase text-slate-400">
+                  Submission Fee
+                </dt>
+                <dd className="mt-1 text-base font-normal text-[#A8DADC]">
+                  {formatMoney(
+                    journal.submissionFee,
+                    journal.submissionFeeCurrency,
+                  )}
+                </dd>
+              </div>
+              <div className="grid gap-2">
+                <div
+                  className={`flex min-w-0 items-center gap-3 border p-3 ${
+                    journal.isFavorite
+                      ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/50 dark:bg-amber-500/10 dark:text-amber-300"
+                      : "border-slate-200 bg-white text-slate-400 dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#666666]"
+                  }`}
+                >
+                  <Star className="h-4 w-4 flex-none" aria-hidden="true" />
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold">
+                      Favorite journal
+                    </span>
+                    <span className="mt-0.5 block text-[11px] font-normal opacity-80">
+                      {journal.isFavorite
+                        ? "Marked as a preferred venue."
+                        : "Not marked as preferred."}
+                    </span>
+                  </span>
+                </div>
+                <div
+                  className={`flex min-w-0 items-center gap-3 border p-3 ${
+                    journal.isInterest
+                      ? "border-cyan-300 bg-cyan-50 text-cyan-700 dark:border-cyan-500/50 dark:bg-cyan-500/10 dark:text-cyan-300"
+                      : "border-slate-200 bg-white text-slate-400 dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#666666]"
+                  }`}
+                >
+                  <BookmarkCheck
+                    className="h-4 w-4 flex-none"
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold">
+                      Journal of interest
+                    </span>
+                    <span className="mt-0.5 block text-[11px] font-normal opacity-80">
+                      {journal.isInterest
+                        ? "Tracked for future submissions."
+                        : "Not tracked for future use."}
+                    </span>
+                  </span>
+                </div>
+              </div>
             </div>
             <div>
               <dt className="flex items-center gap-2 text-xs font-bold uppercase text-slate-400">
@@ -468,20 +532,29 @@ export default async function JournalDetailPage({
                   </>
                 ) : null}
               </dt>
-              <dd className="mt-1 space-y-1 text-sm leading-5 text-[#B0B0B0]">
+              <dd className="mt-1 text-sm leading-5 text-[#B0B0B0]">
                 {journal.createdBy ? (
-                  <>
-                    <span className="block text-[#E4E4E4]">
+                  <span className="flex flex-wrap items-center gap-2 text-[#E4E4E4]">
+                    <span>
                       {displayResearchPersonName(journal.createdBy) ||
                         "Unnamed user"}
                     </span>
-                    <span className="block break-all">
-                      {displayResearchEmail(journal.createdBy.email)}
+                    <span className="text-[#777777]" aria-hidden="true">
+                      |
                     </span>
-                  </>
+                    <span>{creatorRole(journal.createdBy.roles)}</span>
+                  </span>
                 ) : (
                   <span className="block">Not recorded.</span>
                 )}
+              </dd>
+            </div>
+            <div className="md:col-span-2">
+              <dt className="text-xs font-bold uppercase text-slate-400">
+                Note
+              </dt>
+              <dd className="mt-1 max-w-4xl text-sm leading-5 text-[#B0B0B0]">
+                {journal.note || "No note recorded."}
               </dd>
             </div>
           </dl>
