@@ -75,6 +75,7 @@ export type SuggestedJournalOption = {
   hasApcOption: boolean;
   submissionFee: string;
   submissionFeeCurrency: string;
+  note: string;
   accounts: SuggestedJournalAccountOption[];
   suggestedByName?: string;
   suggestedByEmail?: string;
@@ -1632,6 +1633,14 @@ function JournalCard({
             submissionFee={journal.submissionFee}
             submissionFeeCurrency={journal.submissionFeeCurrency}
           />
+          {journal.note.trim() ? (
+            <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+              <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
+                Note:
+              </span>{" "}
+              {journal.note}
+            </p>
+          ) : null}
         </>
       ) : (
         <p className="mt-2 text-xs font-normal text-amber-700 dark:text-[#E8C47A]">

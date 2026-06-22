@@ -639,6 +639,7 @@ export default async function ProjectDetailPage({
       hasApcOption: journal.hasApcOption,
       submissionFee: journal.submissionFee ?? "",
       submissionFeeCurrency: journal.submissionFeeCurrency,
+      note: journal.note ?? "",
       accounts: (journal.publisherRecord?.usesSingleAccount
         ? (journal.publisherRecord.accounts ?? [])
         : journal.accounts
@@ -669,6 +670,7 @@ export default async function ProjectDetailPage({
         hasApcOption: journal?.hasApcOption ?? false,
         submissionFee: journal?.submissionFee ?? "",
         submissionFeeCurrency: journal?.submissionFeeCurrency ?? "USD",
+        note: journal?.note ?? "",
         accounts: (journal?.publisherRecord?.usesSingleAccount
           ? (journal.publisherRecord.accounts ?? [])
           : (journal?.accounts ?? [])
