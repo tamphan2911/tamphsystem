@@ -69,14 +69,47 @@ export function ResearchButton({
   size = "md",
   className,
   children,
+  onClick,
+  disabled,
+  type,
+  form,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   tone?: ButtonTone;
   size?: "sm" | "md";
 }) {
+  const [isClickLoading, setIsClickLoading] = useState(false);
+  const isSubmitButton =
+    type !== "button" && (type === "submit" || Boolean(form));
+  const isDisabled = Boolean(disabled || isClickLoading);
+
+  useEffect(() => {
+    if (!disabled) setIsClickLoading(false);
+  }, [disabled]);
+
   return (
     <button
       {...props}
+      type={type}
+      form={form}
+      disabled={isDisabled}
+      aria-busy={isClickLoading || undefined}
+      onClick={(event) => {
+        onClick?.(event);
+        if (event.defaultPrevented || !isSubmitButton || disabled) return;
+
+        const relatedForm = form
+          ? document.getElementById(form)
+          : event.currentTarget.form;
+        if (
+          relatedForm instanceof HTMLFormElement &&
+          !relatedForm.checkValidity()
+        ) {
+          return;
+        }
+
+        setIsClickLoading(true);
+      }}
       className={cx(
         "inline-flex cursor-pointer items-center justify-center gap-2 rounded-none border text-sm font-normal shadow-sm outline-none transition duration-150 ease-out hover:shadow-md focus:ring-2 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:shadow-sm motion-reduce:transition-none",
         size === "sm" ? "h-9 px-3" : "h-10 px-4",
@@ -84,6 +117,12 @@ export function ResearchButton({
         className,
       )}
     >
+      {isClickLoading ? (
+        <span
+          className="h-3.5 w-3.5 flex-none animate-spin rounded-full border-2 border-current border-t-transparent"
+          aria-hidden="true"
+        />
+      ) : null}
       {children}
     </button>
   );
