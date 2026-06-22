@@ -2764,17 +2764,24 @@ export async function updateJournal(journalId: string, formData: FormData) {
   revalidatePath(`/journals/${journalId}`);
 }
 
-export async function approveJournal(journalId: string) {
+export async function updateJournalApprovalStatus(
+  journalId: string,
+  status: JournalApprovalStatus,
+) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
 
   await prisma.journal.update({
     where: { id: journalId },
-    data: { approvalStatus: JournalApprovalStatus.APPROVED },
+    data: { approvalStatus: status },
   });
 
   revalidatePath("/journals");
   revalidatePath(`/journals/${journalId}`);
+}
+
+export async function approveJournal(journalId: string) {
+  await updateJournalApprovalStatus(journalId, JournalApprovalStatus.APPROVED);
 }
 
 export async function updateJournalCreator(

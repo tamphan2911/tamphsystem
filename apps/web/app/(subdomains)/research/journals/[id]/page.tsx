@@ -26,8 +26,8 @@ import {
 } from "./JournalDetailTabs";
 import { EditJournalDialog } from "./EditJournalDialog";
 import {
-  ApproveJournalButton,
   EditJournalCreatorButton,
+  JournalApprovalToggleButton,
   type JournalCreatorOption,
 } from "./JournalApprovalActions";
 import {
@@ -371,12 +371,6 @@ export default async function JournalDetailPage({
                     }}
                   />
                 )}
-                {isAdmin && approvalPending ? (
-                  <ApproveJournalButton
-                    journalId={journal.id}
-                    journalName={journal.name}
-                  />
-                ) : null}
               </div>
             </div>
             <p className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-xs font-normal text-[#B0B0B0]">
@@ -460,11 +454,18 @@ export default async function JournalDetailPage({
               <dt className="flex items-center gap-2 text-xs font-bold uppercase text-slate-400">
                 <span>Added by</span>
                 {isAdmin ? (
-                  <EditJournalCreatorButton
-                    journalId={journal.id}
-                    users={creatorOptions}
-                    currentCreatorId={journal.createdById ?? ""}
-                  />
+                  <>
+                    <EditJournalCreatorButton
+                      journalId={journal.id}
+                      users={creatorOptions}
+                      currentCreatorId={journal.createdById ?? ""}
+                    />
+                    <JournalApprovalToggleButton
+                      journalId={journal.id}
+                      journalName={journal.name}
+                      approvalStatus={journal.approvalStatus}
+                    />
+                  </>
                 ) : null}
               </dt>
               <dd className="mt-1 space-y-1 text-sm leading-5 text-[#B0B0B0]">
