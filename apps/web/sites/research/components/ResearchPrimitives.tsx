@@ -79,13 +79,37 @@ export function ResearchButton({
   size?: "sm" | "md";
 }) {
   const [isClickLoading, setIsClickLoading] = useState(false);
+  const clickLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const isSubmitButton =
     type !== "button" && (type === "submit" || Boolean(form));
   const isDisabled = Boolean(disabled || isClickLoading);
 
+  function clearClickLoading() {
+    if (clickLoadingTimeoutRef.current) {
+      clearTimeout(clickLoadingTimeoutRef.current);
+      clickLoadingTimeoutRef.current = null;
+    }
+    setIsClickLoading(false);
+  }
+
+  function startClickLoading() {
+    setIsClickLoading(true);
+    if (clickLoadingTimeoutRef.current) {
+      clearTimeout(clickLoadingTimeoutRef.current);
+    }
+    clickLoadingTimeoutRef.current = setTimeout(() => {
+      setIsClickLoading(false);
+      clickLoadingTimeoutRef.current = null;
+    }, 8000);
+  }
+
   useEffect(() => {
-    if (!disabled) setIsClickLoading(false);
+    if (!disabled) clearClickLoading();
   }, [disabled]);
+
+  useEffect(() => () => clearClickLoading(), []);
 
   return (
     <button
@@ -95,7 +119,7 @@ export function ResearchButton({
       disabled={isDisabled}
       aria-busy={isClickLoading || undefined}
       onClick={(event) => {
-        onClick?.(event);
+        const clickResult = onClick?.(event);
         if (event.defaultPrevented || !isSubmitButton || disabled) return;
 
         const relatedForm = form
@@ -108,7 +132,14 @@ export function ResearchButton({
           return;
         }
 
-        setIsClickLoading(true);
+        startClickLoading();
+
+        if (
+          clickResult &&
+          typeof (clickResult as Promise<unknown>).finally === "function"
+        ) {
+          (clickResult as Promise<unknown>).finally(clearClickLoading);
+        }
       }}
       className={cx(
         "inline-flex cursor-pointer items-center justify-center gap-2 rounded-none border text-sm font-normal shadow-sm outline-none transition duration-150 ease-out hover:shadow-md focus:ring-2 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:shadow-sm motion-reduce:transition-none",
