@@ -153,8 +153,8 @@ export function TaskClarificationPanel({
                       content={item.answer}
                     />
                   ) : (
-                    <div className="ml-auto max-w-[88%] rounded-none border border-amber-500/30 bg-amber-500/10 px-4 py-3 sm:max-w-[76%]">
-                      <p className="text-xs font-bold uppercase tracking-wide text-amber-300">
+                    <div className="ml-auto max-w-[88%] rounded-none border border-amber-200 bg-amber-50/70 px-4 py-3 sm:max-w-[76%] dark:border-amber-500/30 dark:bg-amber-500/10">
+                      <p className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
                         Pending feedback
                       </p>
                       {canAnswer ? (
@@ -163,7 +163,7 @@ export function TaskClarificationPanel({
                           action={answerAction}
                         />
                       ) : (
-                        <p className="mt-1 text-sm leading-6 text-[#B0B0B0]">
+                        <p className="mt-1 text-sm leading-6 text-[#667085] dark:text-[#B0B0B0]">
                           The assigner or an admin has not replied to this
                           request yet.
                         </p>
