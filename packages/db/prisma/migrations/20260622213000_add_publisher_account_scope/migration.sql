@@ -42,7 +42,9 @@ WITH ranked_accounts AS (
         account."password"
     ) AS "duplicateCount"
   FROM "PublisherAccount" AS account
+  JOIN "Publisher" AS publisher ON publisher."id" = account."publisherId"
   WHERE account."publisherId" IS NOT NULL
+    AND publisher."usesSingleAccount" = TRUE
 )
 SELECT "id", "survivorId", "publisherId"
 FROM ranked_accounts
