@@ -99,6 +99,7 @@ model User {
   registeredResearch              ResearchProject[]            @relation("ResearchRegistrationUser")
   createdResearchTasks            ResearchTask[]               @relation("ResearchTaskCreator")
   checkedResearchTasks            ResearchTask[]               @relation("ResearchTaskChecker")
+  createdTaskGuides               TaskGuide[]                  @relation("TaskGuideCreator")
   assignedResearchTasks           ResearchTaskAssignment[]     @relation("ResearchTaskAssignee")
   researchNotifications           ResearchNotification[]
   suggestedJournals               SuggestedJournal[]           @relation("SuggestedJournalCreator")
@@ -816,6 +817,21 @@ model ResearchTask {
   clarifications ResearchTaskClarification[]
 
   @@index([checkerId])
+}
+
+model TaskGuide {
+  id          String           @id @default(uuid())
+  taskType    ResearchTaskType @unique
+  title       String
+  content     String
+  createdById String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  createdBy User? @relation("TaskGuideCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([createdById])
+  @@index([updatedAt])
 }
 
 model ResearchTaskAssignment {

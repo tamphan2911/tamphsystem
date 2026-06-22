@@ -45,6 +45,12 @@ const navItems = [
     requiresTaskAccess: true,
   },
   {
+    href: "/task-guides",
+    label: "Task Guides",
+    icon: "taskGuides" as const,
+    rootAdminOnly: true,
+  },
+  {
     href: "/task-reports",
     label: "Uploaded Files",
     icon: "taskReports" as const,

@@ -25,6 +25,7 @@ import {
 import {
   prisma,
   JournalApprovalStatus,
+  ResearchTaskType,
   ResearchTaskStatus,
   Role,
 } from "@repo/db";
@@ -44,9 +45,7 @@ import {
   researchLinkClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
-import {
-  displayResearchPersonName,
-} from "@/sites/research/lib/display";
+import { displayResearchPersonName } from "@/sites/research/lib/display";
 import { FinishTaskForm } from "./FinishTaskForm";
 import { RevokeTaskForm } from "./RevokeTaskForm";
 import { ClarificationRequestForm, RedoTaskForm } from "./TaskWorkflowForms";
@@ -57,6 +56,7 @@ import {
 } from "./TaskClarificationPanel";
 import { TaskReportPanel } from "./TaskReportPanel";
 import { TaskReminderButton } from "./TaskReminderButton";
+import { TaskGuideButton } from "./TaskGuideButton";
 
 export const dynamic = "force-dynamic";
 
@@ -568,6 +568,12 @@ export default async function TaskDetailPage({
       Boolean(isRelatedOrganizedProjectTask));
   const canManageThisTask = isRootAdmin || canAccessAsChiefAssistant;
   if (!canManageThisTask && !isAssigner && !isAssignee) notFound();
+
+  const effectiveTaskType = task.taskType ?? ResearchTaskType.OTHER;
+  const taskGuide = await prisma.taskGuide.findUnique({
+    where: { taskType: effectiveTaskType },
+    select: { title: true, content: true },
+  });
 
   const associatedJournalSubmission =
     task.projectId && task.journalId
@@ -1257,9 +1263,15 @@ export default async function TaskDetailPage({
 
           <div className="grid items-start gap-5 border-t border-[#444444] p-5 md:grid-cols-2">
             <section>
-              <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                Task content
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                  Task content
+                </h2>
+                <TaskGuideButton
+                  taskType={effectiveTaskType}
+                  guide={taskGuide}
+                />
+              </div>
               <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#B0B0B0]">
                 {task.description || "No task note."}
               </p>

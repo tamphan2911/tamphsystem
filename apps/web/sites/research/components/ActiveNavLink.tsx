@@ -17,6 +17,7 @@ import {
   KeyRound,
   Landmark,
   Lightbulb,
+  NotebookText,
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
@@ -29,6 +30,7 @@ const icons = {
   reviews: ClipboardCheck,
   submissions: FileCheck2,
   tasks: ClipboardList,
+  taskGuides: NotebookText,
   taskReports: FileArchive,
   conferences: CalendarDays,
   organizedProjects: Building2,
