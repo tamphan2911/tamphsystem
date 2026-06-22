@@ -31,10 +31,7 @@ function scopedTaskWhere(userId: string) {
       },
       {
         organizedProject: {
-          OR: [
-            { createdById: userId },
-            { members: { some: { userId } } },
-          ],
+          OR: [{ createdById: userId }, { members: { some: { userId } } }],
         },
       },
     ],
@@ -117,6 +114,7 @@ export async function GET() {
       where,
       include: {
         createdBy: { select: { name: true, email: true } },
+        checker: { select: { name: true, email: true } },
         assignments: {
           include: {
             user: {
@@ -153,6 +151,11 @@ export async function GET() {
       createdAt: task.createdAt.toISOString(),
       updatedAt: task.updatedAt.toISOString(),
       createdBy: task.createdBy.name || task.createdBy.email,
+      checker:
+        task.checker?.name ||
+        task.checker?.email ||
+        task.createdBy.name ||
+        task.createdBy.email,
       assignments: task.assignments.map((assignment) => ({
         id: assignment.id,
         userId: assignment.userId,

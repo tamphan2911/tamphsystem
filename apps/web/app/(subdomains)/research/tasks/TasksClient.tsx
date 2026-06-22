@@ -62,6 +62,7 @@ type TaskRow = {
   createdAt: string;
   updatedAt: string;
   createdBy: string;
+  checker: string;
   assignments: TaskAssignment[];
 };
 
@@ -487,6 +488,7 @@ export function TasksClient({
         task.category,
         statusMeta(task).label,
         task.createdBy,
+        task.checker,
         ...task.assignments.flatMap((item) => [
           item.userName,
           item.userEmail,
@@ -691,6 +693,9 @@ export function TasksClient({
                           {status.detail}
                         </p>
                       )}
+                      <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                        checker: {task.checker}
+                      </p>
                     </td>
                     {canDelete && (
                       <td className="px-2 py-3 text-center align-top">
