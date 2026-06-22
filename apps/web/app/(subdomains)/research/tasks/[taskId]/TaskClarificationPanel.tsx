@@ -95,19 +95,19 @@ export function TaskClarificationPanel({
             </div>
             {latest ? (
               <>
-                <p className="mt-2 text-xs font-normal leading-5 text-[#B0B0B0]">
+                <p className="mt-2 text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
                   Latest update from {personName(latest.requestedBy)} -{" "}
                   {formatDateTime(latest.createdAt)}
                 </p>
-                <p className="mt-2 line-clamp-2 text-sm font-normal leading-6 text-[#E4E4E4]">
+                <p className="mt-2 line-clamp-2 text-sm font-normal leading-6 text-slate-900 dark:text-[#E4E4E4]">
                   {latest.question}
                 </p>
                 {latest.answer ? (
-                  <p className="mt-2 line-clamp-2 border-l border-[#A8DADC] pl-3 text-sm leading-6 text-[#B0B0B0]">
+                  <p className="mt-2 line-clamp-2 border-l border-cyan-600/40 pl-3 text-sm leading-6 text-[#667085] dark:border-[#A8DADC] dark:text-[#B0B0B0]">
                     {latest.answer}
                   </p>
                 ) : (
-                  <p className="mt-2 text-xs font-normal text-amber-300">
+                  <p className="mt-2 text-xs font-normal text-amber-700 dark:text-amber-300">
                     Waiting for assigner or admin feedback.
                   </p>
                 )}
