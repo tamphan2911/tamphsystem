@@ -74,7 +74,10 @@ export type SuggestedJournalOption = {
   submissionFeeCurrency: string;
   accounts: SuggestedJournalAccountOption[];
   suggestedByName?: string;
-  suggestedByRole?: string;
+  suggestedByEmail?: string;
+  requiresApproval?: boolean;
+  approvedByName?: string;
+  approvedByEmail?: string;
   venueState?: SuggestedVenueState;
 };
 
@@ -102,7 +105,10 @@ export type SuggestedConferenceOption = {
   submissionFee: string;
   submissionFeeCurrency: string;
   suggestedByName?: string;
-  suggestedByRole?: string;
+  suggestedByEmail?: string;
+  requiresApproval?: boolean;
+  approvedByName?: string;
+  approvedByEmail?: string;
   venueState?: SuggestedVenueState;
 };
 
@@ -1344,20 +1350,42 @@ function JournalCard({
         </p>
       }
     >
-      <p className="mt-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
-        {journal.field || "No field"} - {journal.rank || "No rank"} -{" "}
-        {journal.publisher || "No publisher"}
-      </p>
-      <VenueFees
-        apc={journal.apc}
-        apcCurrency={journal.apcCurrency}
-        hasApcOption={journal.hasApcOption}
-        submissionFee={journal.submissionFee}
-        submissionFeeCurrency={journal.submissionFeeCurrency}
-      />
-      <SuggestedByLine
+      {journal.venueId ? (
+        <>
+          <p className="mt-1 whitespace-normal break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+            {journal.field || "No field"}
+          </p>
+          <p className="mt-1 flex flex-wrap items-center text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+            <span>{journal.publisher || "No publisher"}</span>
+            <span
+              className="px-2 text-[#98A2B3] dark:text-[#777777]"
+              aria-hidden="true"
+            >
+              |
+            </span>
+            <span>{journal.rank || "No rank"}</span>
+          </p>
+          <VenueFees
+            apc={journal.apc}
+            apcCurrency={journal.apcCurrency}
+            hasApcOption={journal.hasApcOption}
+            submissionFee={journal.submissionFee}
+            submissionFeeCurrency={journal.submissionFeeCurrency}
+          />
+        </>
+      ) : (
+        <p className="mt-2 text-xs font-normal text-amber-700 dark:text-[#E8C47A]">
+          Journal not in system
+        </p>
+      )}
+      <VenueAttribution
         name={journal.suggestedByName}
-        role={journal.suggestedByRole}
+        email={journal.suggestedByEmail}
+        showApproval={
+          Boolean(journal.requiresApproval) && journal.status === "APPROVED"
+        }
+        approvedByName={journal.approvedByName}
+        approvedByEmail={journal.approvedByEmail}
       />
     </VenueCard>
   );
@@ -1413,9 +1441,15 @@ function ConferenceCard({
         submissionFee={conference.submissionFee}
         submissionFeeCurrency={conference.submissionFeeCurrency}
       />
-      <SuggestedByLine
+      <VenueAttribution
         name={conference.suggestedByName}
-        role={conference.suggestedByRole}
+        email={conference.suggestedByEmail}
+        showApproval={
+          Boolean(conference.requiresApproval) &&
+          conference.status === "APPROVED"
+        }
+        approvedByName={conference.approvedByName}
+        approvedByEmail={conference.approvedByEmail}
       />
     </VenueCard>
   );
@@ -1473,18 +1507,36 @@ function VenueFees({
   );
 }
 
-function SuggestedByLine({ name, role }: { name?: string; role?: string }) {
+function VenueAttribution({
+  name,
+  email,
+  showApproval,
+  approvedByName,
+  approvedByEmail,
+}: {
+  name?: string;
+  email?: string;
+  showApproval: boolean;
+  approvedByName?: string;
+  approvedByEmail?: string;
+}) {
   return (
-    <p className="mt-3 border-t border-slate-200 pt-2 text-xs text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0]">
-      Suggested by{" "}
-      <span className="font-normal text-slate-900 dark:text-[#E4E4E4]">
-        {name || "Unknown user"}
-      </span>
-      <span className="text-[#667085] dark:text-[#B0B0B0]">
-        {" "}
-        · {role || "Unknown role"}
-      </span>
-    </p>
+    <div className="mt-3 space-y-1 border-t border-slate-200 pt-2 text-xs leading-5 text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0]">
+      <p className="whitespace-normal break-words">
+        Suggested by{" "}
+        <span className="font-normal text-slate-900 dark:text-[#E4E4E4]">
+          {name || "Unknown user"} - {email || "Unknown email"}
+        </span>
+      </p>
+      {showApproval && approvedByName && approvedByEmail ? (
+        <p className="whitespace-normal break-words">
+          Approved by{" "}
+          <span className="font-normal text-slate-900 dark:text-[#E4E4E4]">
+            {approvedByName} - {approvedByEmail}
+          </span>
+        </p>
+      ) : null}
+    </div>
   );
 }
 

@@ -4669,6 +4669,7 @@ export async function addSuggestedJournal(
         update: {
           createdById: user.id,
           status,
+          requiresApproval: !canApprove,
           approvedAt: canApprove ? new Date() : null,
           approvedById: canApprove ? user.id : null,
           venueName: venueName ?? venue?.name ?? null,
@@ -4679,6 +4680,7 @@ export async function addSuggestedJournal(
           journalId,
           createdById: user.id,
           status,
+          requiresApproval: !canApprove,
           approvedAt: canApprove ? new Date() : null,
           approvedById: canApprove ? user.id : null,
           venueName: venueName ?? venue?.name ?? null,
@@ -4690,6 +4692,7 @@ export async function addSuggestedJournal(
           projectId,
           createdById: user.id,
           status: SuggestedVenueStatus.PENDING,
+          requiresApproval: true,
           venueName,
           venueLink,
         },
@@ -4764,6 +4767,7 @@ export async function addSuggestedConference(
         update: {
           createdById: user.id,
           status,
+          requiresApproval: !canApprove,
           approvedAt: canApprove ? new Date() : null,
           approvedById: canApprove ? user.id : null,
           venueName: venueName ?? venue?.name ?? null,
@@ -4774,6 +4778,7 @@ export async function addSuggestedConference(
           conferenceId,
           createdById: user.id,
           status,
+          requiresApproval: !canApprove,
           approvedAt: canApprove ? new Date() : null,
           approvedById: canApprove ? user.id : null,
           venueName: venueName ?? venue?.name ?? null,
@@ -4785,6 +4790,7 @@ export async function addSuggestedConference(
           projectId,
           createdById: user.id,
           status: SuggestedVenueStatus.PENDING,
+          requiresApproval: true,
           venueName,
           venueLink,
         },
@@ -4978,6 +4984,7 @@ export async function approveSuggestedJournal(
     data: {
       journalId: linkedJournalId,
       status: SuggestedVenueStatus.APPROVED,
+      requiresApproval: true,
       approvedAt: new Date(),
       approvedById: user.id,
     },
@@ -5043,6 +5050,7 @@ export async function approveSuggestedConference(
     data: {
       conferenceId: linkedConferenceId,
       status: SuggestedVenueStatus.APPROVED,
+      requiresApproval: true,
       approvedAt: new Date(),
       approvedById: user.id,
     },

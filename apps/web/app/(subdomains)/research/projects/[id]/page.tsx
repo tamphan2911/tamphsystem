@@ -314,14 +314,16 @@ export default async function ProjectDetailPage({
             journal: {
               include: { accounts: { orderBy: [{ updatedAt: "desc" }] } },
             },
-            createdBy: { select: { name: true, email: true, roles: true } },
+            createdBy: { select: { name: true, email: true } },
+            approvedBy: { select: { name: true, email: true } },
           },
           orderBy: { createdAt: "desc" },
         },
         suggestedConferences: {
           include: {
             conference: true,
-            createdBy: { select: { name: true, email: true, roles: true } },
+            createdBy: { select: { name: true, email: true } },
+            approvedBy: { select: { name: true, email: true } },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -593,7 +595,9 @@ export default async function ProjectDetailPage({
       venueLink: journal.homepageLink ?? journal.submissionLink ?? "",
       status: "APPROVED",
       issn: journal.issn ?? "",
-      field: journal.field ?? "",
+      field: journal.fields.length
+        ? journal.fields.join(", ")
+        : (journal.field ?? ""),
       rank: journal.rank ?? "",
       publisher: journal.publisher ?? "",
       apc: journal.apc ?? "",
@@ -610,41 +614,52 @@ export default async function ProjectDetailPage({
     }),
   );
   const suggestedJournalOptions: SuggestedJournalOption[] =
-    project.suggestedJournals.map(({ journal, createdBy, ...suggestion }) => ({
-      id: suggestion.id,
-      venueId: journal?.id ?? "",
-      name: journal?.name ?? suggestion.venueName ?? "Unnamed journal",
-      venueLink: suggestion.venueLink ?? "",
-      status: suggestion.status,
-      issn: journal?.issn ?? "",
-      field: journal?.field ?? "",
-      rank: journal?.rank ?? "",
-      publisher: journal?.publisher ?? "",
-      apc: journal?.apc ?? "",
-      apcCurrency: journal?.apcCurrency ?? "USD",
-      hasApcOption: journal?.hasApcOption ?? false,
-      submissionFee: journal?.submissionFee ?? "",
-      submissionFeeCurrency: journal?.submissionFeeCurrency ?? "USD",
-      accounts:
-        journal?.accounts.map((account) => ({
-          id: account.id,
-          journalId: account.journalId ?? "",
-          username: account.username,
-          email: account.email ?? "",
-        })) ?? [],
-      suggestedByName: createdBy
-        ? displayResearchPersonName(createdBy) || "Unknown user"
-        : "Unknown user",
-      suggestedByRole: createdBy
-        ? displayRole(createdBy.roles)
-        : "Unknown role",
-      venueState:
-        suggestion.status === "PENDING"
-          ? { state: "pendingApproval" }
-          : journal
-            ? suggestedJournalState(journal.id)
-            : { state: "pendingApproval" },
-    }));
+    project.suggestedJournals.map(
+      ({ journal, createdBy, approvedBy, ...suggestion }) => ({
+        id: suggestion.id,
+        venueId: journal?.id ?? "",
+        name: journal?.name ?? suggestion.venueName ?? "Unnamed journal",
+        venueLink: suggestion.venueLink ?? "",
+        status: suggestion.status,
+        issn: journal?.issn ?? "",
+        field: journal?.fields.length
+          ? journal.fields.join(", ")
+          : (journal?.field ?? ""),
+        rank: journal?.rank ?? "",
+        publisher: journal?.publisher ?? "",
+        apc: journal?.apc ?? "",
+        apcCurrency: journal?.apcCurrency ?? "USD",
+        hasApcOption: journal?.hasApcOption ?? false,
+        submissionFee: journal?.submissionFee ?? "",
+        submissionFeeCurrency: journal?.submissionFeeCurrency ?? "USD",
+        accounts:
+          journal?.accounts.map((account) => ({
+            id: account.id,
+            journalId: account.journalId ?? "",
+            username: account.username,
+            email: account.email ?? "",
+          })) ?? [],
+        suggestedByName: createdBy
+          ? displayResearchPersonName(createdBy) || "Unknown user"
+          : "Unknown user",
+        suggestedByEmail: createdBy
+          ? displayResearchEmail(createdBy.email)
+          : "Unknown email",
+        requiresApproval: suggestion.requiresApproval,
+        approvedByName: approvedBy
+          ? displayResearchPersonName(approvedBy) || "Unknown user"
+          : undefined,
+        approvedByEmail: approvedBy
+          ? displayResearchEmail(approvedBy.email)
+          : undefined,
+        venueState:
+          suggestion.status === "PENDING"
+            ? { state: "pendingApproval" }
+            : journal
+              ? suggestedJournalState(journal.id)
+              : { state: "pendingApproval" },
+      }),
+    );
   const allConferenceOptions: SuggestedConferenceOption[] = conferences.map(
     (conference) => ({
       id: conference.id,
@@ -675,7 +690,7 @@ export default async function ProjectDetailPage({
   );
   const suggestedConferenceOptions: SuggestedConferenceOption[] =
     project.suggestedConferences.map(
-      ({ conference, createdBy, ...suggestion }) => ({
+      ({ conference, createdBy, approvedBy, ...suggestion }) => ({
         id: suggestion.id,
         venueId: conference?.id ?? "",
         name: conference?.name ?? suggestion.venueName ?? "Unnamed conference",
@@ -702,9 +717,16 @@ export default async function ProjectDetailPage({
         suggestedByName: createdBy
           ? displayResearchPersonName(createdBy) || "Unknown user"
           : "Unknown user",
-        suggestedByRole: createdBy
-          ? displayRole(createdBy.roles)
-          : "Unknown role",
+        suggestedByEmail: createdBy
+          ? displayResearchEmail(createdBy.email)
+          : "Unknown email",
+        requiresApproval: suggestion.requiresApproval,
+        approvedByName: approvedBy
+          ? displayResearchPersonName(approvedBy) || "Unknown user"
+          : undefined,
+        approvedByEmail: approvedBy
+          ? displayResearchEmail(approvedBy.email)
+          : undefined,
         venueState:
           suggestion.status === "PENDING"
             ? { state: "pendingApproval" }

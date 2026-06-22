@@ -97,6 +97,8 @@ model User {
   researchNotifications           ResearchNotification[]
   suggestedJournals               SuggestedJournal[]           @relation("SuggestedJournalCreator")
   suggestedConferences            SuggestedConference[]        @relation("SuggestedConferenceCreator")
+  approvedSuggestedJournals       SuggestedJournal[]           @relation("SuggestedJournalApprover")
+  approvedSuggestedConferences    SuggestedConference[]        @relation("SuggestedConferenceApprover")
   sentResearchAuthorNotifications ResearchAuthorNotification[] @relation("ResearchAuthorNotificationSender")
   createdOrganizedProjects        OrganizedProject[]           @relation("OrganizedProjectCreator")
   createdJournals                 Journal[]                    @relation("JournalCreator")
@@ -597,23 +599,26 @@ model Conference {
 }
 
 model SuggestedConference {
-  id           String               @id @default(uuid())
-  projectId    String
-  conferenceId String?
-  venueName    String?
-  venueLink    String?
-  status       SuggestedVenueStatus @default(APPROVED)
-  approvedAt   DateTime?
-  approvedById String?
-  createdById  String?
-  createdAt    DateTime             @default(now())
+  id               String               @id @default(uuid())
+  projectId        String
+  conferenceId     String?
+  venueName        String?
+  venueLink        String?
+  status           SuggestedVenueStatus @default(APPROVED)
+  approvedAt       DateTime?
+  approvedById     String?
+  requiresApproval Boolean              @default(false)
+  createdById      String?
+  createdAt        DateTime             @default(now())
 
   project    ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
   conference Conference?     @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
   createdBy  User?           @relation("SuggestedConferenceCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  approvedBy User?           @relation("SuggestedConferenceApprover", fields: [approvedById], references: [id], onDelete: SetNull)
 
   @@unique([projectId, conferenceId])
   @@index([projectId, status])
+  @@index([approvedById])
 }
 
 model ConferenceSubmission {
@@ -679,23 +684,26 @@ model Journal {
 }
 
 model SuggestedJournal {
-  id           String               @id @default(uuid())
-  projectId    String
-  journalId    String?
-  venueName    String?
-  venueLink    String?
-  status       SuggestedVenueStatus @default(APPROVED)
-  approvedAt   DateTime?
-  approvedById String?
-  createdById  String?
-  createdAt    DateTime             @default(now())
+  id               String               @id @default(uuid())
+  projectId        String
+  journalId        String?
+  venueName        String?
+  venueLink        String?
+  status           SuggestedVenueStatus @default(APPROVED)
+  approvedAt       DateTime?
+  approvedById     String?
+  requiresApproval Boolean              @default(false)
+  createdById      String?
+  createdAt        DateTime             @default(now())
 
-  project   ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  journal   Journal?        @relation(fields: [journalId], references: [id], onDelete: Cascade)
-  createdBy User?           @relation("SuggestedJournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  project    ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  journal    Journal?        @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  createdBy  User?           @relation("SuggestedJournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  approvedBy User?           @relation("SuggestedJournalApprover", fields: [approvedById], references: [id], onDelete: SetNull)
 
   @@unique([projectId, journalId])
   @@index([projectId, status])
+  @@index([approvedById])
 }
 
 model AcademicReview {
