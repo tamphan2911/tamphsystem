@@ -22,7 +22,7 @@ import {
   Send,
   UserRound,
 } from "lucide-react";
-import { prisma, ResearchTaskStatus, Role } from "@repo/db";
+import { prisma, JournalApprovalStatus, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
 import {
@@ -746,6 +746,7 @@ export default async function TaskDetailPage({
           select: { id: true, researchCode: true, title: true, stage: true },
         }),
         prisma.journal.findMany({
+          where: { approvalStatus: JournalApprovalStatus.APPROVED },
           orderBy: [{ name: "asc" }],
           select: {
             id: true,

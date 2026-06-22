@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AtSign, KeyRound, LockKeyhole, Send } from "lucide-react";
-import { prisma, ResearchTaskStatus, Role } from "@repo/db";
+import { prisma, JournalApprovalStatus, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import {
   SubmissionsTable,
@@ -99,6 +99,7 @@ export default async function AccountDetailPage({
       },
     }),
     prisma.journal.findMany({
+      where: { approvalStatus: JournalApprovalStatus.APPROVED },
       orderBy: [{ name: "asc" }],
       select: { id: true, name: true, publisher: true },
     }),

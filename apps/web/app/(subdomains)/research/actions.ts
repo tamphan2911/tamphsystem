@@ -25,6 +25,7 @@ import {
   ConferenceType,
   ConferenceSubmissionStatus,
   CurrencyCode,
+  JournalApprovalStatus,
   JournalType,
   RegistrationStatus,
   ResearchStage,
@@ -2580,6 +2581,7 @@ export async function setResearchAuthorsLock(
 export async function createJournal(formData: FormData) {
   const user = await requireCurrentUser();
   requireVenueCreator(user);
+  const isAdmin = user.roles.includes(Role.ADMIN);
   const fields = orderedUniqueStrings(formData.getAll("fields"));
   const legacyField = optionalString(formData.get("field"));
   const journalType =
@@ -2625,6 +2627,9 @@ export async function createJournal(formData: FormData) {
         scimagoLink: optionalString(formData.get("scimagoLink")),
         scopusLink: optionalString(formData.get("scopusLink")),
         note: optionalString(formData.get("note")),
+        approvalStatus: isAdmin
+          ? JournalApprovalStatus.APPROVED
+          : JournalApprovalStatus.PENDING_APPROVAL,
         createdById: user.id,
       },
     });
@@ -2644,11 +2649,22 @@ export async function createJournal(formData: FormData) {
 
   revalidatePath("/journals");
   if (shouldCreateAccount) revalidatePath("/accounts");
+  return { pendingApproval: !isAdmin };
 }
 
 export async function updateJournal(journalId: string, formData: FormData) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  const journal = await prisma.journal.findUnique({
+    where: { id: journalId },
+    select: { approvalStatus: true, createdById: true },
+  });
+  if (!journal) return;
+  const canEdit =
+    user.roles.includes(Role.ADMIN) ||
+    (user.canManageResearchVenues &&
+      journal.createdById === user.id &&
+      journal.approvalStatus === JournalApprovalStatus.PENDING_APPROVAL);
+  if (!canEdit) redirect("/401");
   const fields = orderedUniqueStrings(formData.getAll("fields"));
   const legacyField = optionalString(formData.get("field"));
   const journalType =
@@ -2690,6 +2706,36 @@ export async function updateJournal(journalId: string, formData: FormData) {
       scopusLink: optionalString(formData.get("scopusLink")),
       note: optionalString(formData.get("note")),
     },
+  });
+
+  revalidatePath("/journals");
+  revalidatePath(`/journals/${journalId}`);
+}
+
+export async function approveJournal(journalId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.journal.update({
+    where: { id: journalId },
+    data: { approvalStatus: JournalApprovalStatus.APPROVED },
+  });
+
+  revalidatePath("/journals");
+  revalidatePath(`/journals/${journalId}`);
+}
+
+export async function updateJournalCreator(
+  journalId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+  const createdById = optionalString(formData.get("createdById"));
+
+  await prisma.journal.update({
+    where: { id: journalId },
+    data: { createdById },
   });
 
   revalidatePath("/journals");

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { prisma, ResearchTaskStatus, Role } from "@repo/db";
+import { prisma, JournalApprovalStatus, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { deletePublisherAccount } from "../actions";
@@ -42,6 +42,7 @@ export default async function PublisherAccountsPage() {
       orderBy: { updatedAt: "desc" },
     }),
     prisma.journal.findMany({
+      where: { approvalStatus: JournalApprovalStatus.APPROVED },
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
     }),
   ]);

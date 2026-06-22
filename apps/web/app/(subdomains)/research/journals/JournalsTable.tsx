@@ -48,6 +48,7 @@ export type JournalRow = {
   apc: string;
   apcCurrency: string;
   hasApcOption: boolean;
+  approvalStatus: string;
   submissionFee: string;
   submissionFeeCurrency: string;
   note: string;
@@ -245,6 +246,9 @@ export function JournalsTable({
         row.publisher,
         countryName(row.country),
         row.apc,
+        row.approvalStatus === "PENDING_APPROVAL"
+          ? "need approval pending approval waiting approve"
+          : "approved",
         row.hasApcOption ? "option paid free route" : "",
         row.submissionFee,
         row.note,
@@ -489,6 +493,11 @@ export function JournalsTable({
                     showIcon={false}
                     option={journal.hasApcOption}
                   />
+                  {journal.approvalStatus === "PENDING_APPROVAL" ? (
+                    <span className="mt-2 inline-flex border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+                      Need approval
+                    </span>
+                  ) : null}
                 </td>
                 <td className="px-4 py-3 text-sm text-[#B0B0B0]">
                   <MoneyIndicator

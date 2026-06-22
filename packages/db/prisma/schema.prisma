@@ -58,6 +58,11 @@ enum JournalType {
   LOCAL
 }
 
+enum JournalApprovalStatus {
+  APPROVED
+  PENDING_APPROVAL
+}
+
 model User {
   id                            String    @id @default(uuid())
   email                         String    @unique
@@ -656,6 +661,7 @@ model Journal {
   scimagoLink           String?
   scopusLink            String?
   note                  String?
+  approvalStatus        JournalApprovalStatus @default(APPROVED)
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @default(now()) @updatedAt
 
@@ -669,6 +675,7 @@ model Journal {
   tasks       ResearchTask[]
 
   @@index([createdById])
+  @@index([approvalStatus])
 }
 
 model SuggestedJournal {

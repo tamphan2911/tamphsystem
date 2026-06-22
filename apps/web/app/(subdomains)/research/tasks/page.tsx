@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { prisma, ResearchTaskStatus, Role } from "@repo/db";
+import { prisma, JournalApprovalStatus, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { deleteResearchTask } from "../actions";
 import {
@@ -95,6 +95,7 @@ export default async function ResearchTasksPage() {
           select: { id: true, researchCode: true, title: true, stage: true },
         }),
         prisma.journal.findMany({
+          where: { approvalStatus: JournalApprovalStatus.APPROVED },
           orderBy: [{ name: "asc" }],
           select: {
             id: true,

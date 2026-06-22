@@ -318,7 +318,11 @@ export function JournalDialogForm({
   mode: "create" | "edit";
   isOpen: boolean;
   onClose: () => void;
-  submitAction: (formData: FormData) => Promise<void> | void;
+  submitAction: (
+    formData: FormData,
+  ) => Promise<{ pendingApproval?: boolean } | void> | {
+    pendingApproval?: boolean;
+  } | void;
   initialValues?: JournalFormValues;
 }) {
   const toast = useResearchToast();
@@ -457,13 +461,18 @@ export function JournalDialogForm({
           }
           setWarning("");
           startTransition(async () => {
-            await submitAction(formData);
+            const result = await submitAction(formData);
+            const pendingApproval = Boolean(
+              result && "pendingApproval" in result && result.pendingApproval,
+            );
             closeDialog();
             toast.showSuccess({
               title: isEdit ? "Journal details updated" : "Journal added",
               detail: isEdit
                 ? "The journal profile is saved with the latest details."
-                : "The new journal is saved and ready to use.",
+                : pendingApproval
+                  ? "The new journal is saved and waiting for admin approval."
+                  : "The new journal is saved and ready to use.",
             });
           });
         }}

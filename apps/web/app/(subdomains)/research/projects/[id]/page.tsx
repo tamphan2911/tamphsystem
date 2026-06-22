@@ -14,7 +14,12 @@ import {
   Rocket,
   SearchCheck,
 } from "lucide-react";
-import { prisma, ResearchTaskStatus, Role } from "@repo/db";
+import {
+  prisma,
+  JournalApprovalStatus,
+  ResearchTaskStatus,
+  Role,
+} from "@repo/db";
 import { auth } from "../../../../../auth";
 import { updateResearchProject } from "../../actions";
 import { SubmissionsTable, type SubmissionRow } from "./SubmissionsTable";
@@ -344,6 +349,7 @@ export default async function ProjectDetailPage({
       },
     }),
     prisma.journal.findMany({
+      where: { approvalStatus: JournalApprovalStatus.APPROVED },
       include: { accounts: { orderBy: [{ updatedAt: "desc" }] } },
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
     }),

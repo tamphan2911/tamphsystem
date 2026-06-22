@@ -7,7 +7,7 @@ import {
   Send,
   Star,
 } from "lucide-react";
-import { prisma, Role } from "@repo/db";
+import { prisma, JournalApprovalStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { CountryFlag } from "@/sites/research/components/CountryFlag";
 import { formatMoney } from "@/sites/research/lib/currency";
@@ -25,6 +25,11 @@ import {
   type JournalSubmissionRow,
 } from "./JournalDetailTabs";
 import { EditJournalDialog } from "./EditJournalDialog";
+import {
+  ApproveJournalButton,
+  EditJournalCreatorButton,
+  type JournalCreatorOption,
+} from "./JournalApprovalActions";
 import {
   accessibleJournalWhere,
   associatedResearchWhere,
@@ -57,7 +62,6 @@ export default async function JournalDetailPage({
     roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
   const canViewAllRegistrationClaims =
     isAdmin || roles.includes(Role.CHIEF_ASSISTANT);
-  const canEditVenue = isAdmin;
   const unrestrictedAccess = hasUnrestrictedVenueAccess(roles);
   const scopedProjectWhere = userId
     ? associatedResearchWhere(userId, registrationIdentityValues)
@@ -68,9 +72,16 @@ export default async function JournalDetailPage({
       ? accessibleJournalWhere(userId, registrationIdentityValues)
       : { id: "__no_access__" };
 
-  const journal = await prisma.journal.findFirst({
-    where: { AND: [{ id }, journalAccessWhere] },
-    include: {
+  const [currentUser, journal, creatorUsers] = await Promise.all([
+    userId
+      ? prisma.user.findUnique({
+          where: { id: userId },
+          select: { canManageResearchVenues: true },
+        })
+      : Promise.resolve(null),
+    prisma.journal.findFirst({
+      where: { AND: [{ id }, journalAccessWhere] },
+      include: {
       submissions: {
         where: isAdmin ? {} : { project: scopedProjectWhere },
         include: {
@@ -107,12 +118,35 @@ export default async function JournalDetailPage({
               : { id: "__no_access__" },
         orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
       },
-      createdBy: { select: { name: true, email: true } },
+      createdBy: { select: { id: true, name: true, email: true } },
       _count: { select: { submissions: true, accounts: true, reviews: true } },
-    },
-  });
+      },
+    }),
+    isAdmin
+      ? prisma.user.findMany({
+          where: {
+            OR: [{ activeSites: { has: "research" } }, { roles: { has: Role.ADMIN } }],
+          },
+          orderBy: [{ name: "asc" }, { email: "asc" }],
+          select: { id: true, name: true, email: true },
+        })
+      : Promise.resolve([]),
+  ]);
 
   if (!journal) notFound();
+  const approvalPending =
+    journal.approvalStatus === JournalApprovalStatus.PENDING_APPROVAL;
+  const canEditVenue =
+    isAdmin ||
+    (approvalPending &&
+      Boolean(currentUser?.canManageResearchVenues) &&
+      Boolean(userId) &&
+      journal.createdById === userId);
+  const creatorOptions: JournalCreatorOption[] = creatorUsers.map((user) => ({
+    id: user.id,
+    name: user.name ?? "",
+    email: user.email,
+  }));
 
   const submissionRows: JournalSubmissionRow[] = journal.submissions.map(
     (submission) => {
@@ -255,6 +289,11 @@ export default async function JournalDetailPage({
               <h1 className="min-w-0 truncate text-[16px] font-normal leading-6 text-[#E4E4E4] xl:text-[16px]">
                 {journal.name}
               </h1>
+              {approvalPending ? (
+                <span className="flex-none border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+                  Need approval
+                </span>
+              ) : null}
               <div className="flex flex-none items-center gap-2">
                 <IconHint
                   label={
@@ -332,6 +371,12 @@ export default async function JournalDetailPage({
                     }}
                   />
                 )}
+                {isAdmin && approvalPending ? (
+                  <ApproveJournalButton
+                    journalId={journal.id}
+                    journalName={journal.name}
+                  />
+                ) : null}
               </div>
             </div>
             <p className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-xs font-normal text-[#B0B0B0]">
@@ -412,8 +457,15 @@ export default async function JournalDetailPage({
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-bold uppercase text-slate-400">
-                Added by
+              <dt className="flex items-center gap-2 text-xs font-bold uppercase text-slate-400">
+                <span>Added by</span>
+                {isAdmin ? (
+                  <EditJournalCreatorButton
+                    journalId={journal.id}
+                    users={creatorOptions}
+                    currentCreatorId={journal.createdById ?? ""}
+                  />
+                ) : null}
               </dt>
               <dd className="mt-1 space-y-1 text-sm leading-5 text-[#B0B0B0]">
                 {journal.createdBy ? (

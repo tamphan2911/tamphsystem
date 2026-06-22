@@ -86,6 +86,7 @@ export default async function JournalsPage() {
     apc: journal.apc ?? "",
     apcCurrency: journal.apcCurrency,
     hasApcOption: journal.hasApcOption,
+    approvalStatus: journal.approvalStatus,
     submissionFee: journal.submissionFee ?? "",
     submissionFeeCurrency: journal.submissionFeeCurrency,
     note: journal.note ?? "",
