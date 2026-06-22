@@ -230,6 +230,8 @@ export function ResearchBasicEditDialog({
   canEditRegistrationClaim,
   disabled = false,
   disabledReason,
+  initialOpen = false,
+  lockUntilSaved = false,
 }: {
   action: (formData: FormData) => Promise<void>;
   values: ResearchBasicValues;
@@ -242,8 +244,10 @@ export function ResearchBasicEditDialog({
   canEditRegistrationClaim: boolean;
   disabled?: boolean;
   disabledReason?: string;
+  initialOpen?: boolean;
+  lockUntilSaved?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   const [isPending, startTransition] = useTransition();
   const toast = useResearchToast();
 
@@ -260,7 +264,9 @@ export function ResearchBasicEditDialog({
       />
       <DialogShell
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          if (!lockUntilSaved) setOpen(false);
+        }}
         icon={<FileText className="h-5 w-5" />}
         title="Edit research information"
         detail="Update title, notes, registration, and claim information."

@@ -261,6 +261,7 @@ model QuizAttempt {
 // ---------------------------------------------
 
 enum ResearchStage {
+  PENDING
   PRODUCTION
   SUBMITTING
   REVIEW
@@ -343,6 +344,7 @@ enum ResearchTaskCategory {
 }
 
 enum OrganizedProjectStatus {
+  PENDING
   PLANNED
   ACTIVE
   COMPLETED
@@ -404,6 +406,7 @@ model ResearchProject {
   tasks                 ResearchTask[]
   authorNotifications   ResearchAuthorNotification[]
   organizedProjectLinks OrganizedProjectResearch[]
+  sourceProposal        Proposal?                    @relation("ProposalCreatedResearch")
 
   @@index([registrationUserId])
   @@index([fundingInstitutionId])
@@ -437,9 +440,10 @@ model OrganizedProject {
   fundingInstitutionId String?
   fundingInstitution   FundingInstitution? @relation(fields: [fundingInstitutionId], references: [id], onDelete: SetNull)
 
-  members  OrganizedProjectMember[]
-  research OrganizedProjectResearch[]
-  tasks    ResearchTask[]
+  members        OrganizedProjectMember[]
+  research       OrganizedProjectResearch[]
+  tasks          ResearchTask[]
+  sourceProposal Proposal?                  @relation("ProposalCreatedProject")
 
   @@index([status])
   @@index([projectType])
@@ -550,30 +554,34 @@ model ResearchProjectAuthor {
 }
 
 model Proposal {
-  id              String         @id @default(uuid())
-  type            ProposalType
-  status          ProposalStatus @default(NEW)
-  title           String
-  description     String
-  contactInfo     String?
-  notes           String?
-  identifier      String?
-  organization    String?
-  location        String?
-  website         String?
-  venueType       String?
-  decisionComment String?
-  decidedAt       DateTime?
-  decidedById     String?
-  supportFileName String?
-  supportFileType String?
-  supportFileSize Int?
-  supportFileData Bytes?
-  submittedById   String
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id                        String         @id @default(uuid())
+  type                      ProposalType
+  status                    ProposalStatus @default(NEW)
+  title                     String
+  description               String
+  contactInfo               String?
+  notes                     String?
+  identifier                String?
+  organization              String?
+  location                  String?
+  website                   String?
+  venueType                 String?
+  decisionComment           String?
+  decidedAt                 DateTime?
+  decidedById               String?
+  supportFileName           String?
+  supportFileType           String?
+  supportFileSize           Int?
+  supportFileData           Bytes?
+  submittedById             String
+  createdResearchProjectId  String?        @unique
+  createdOrganizedProjectId String?        @unique
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
 
-  submittedBy User @relation("ProposalSubmitter", fields: [submittedById], references: [id], onDelete: Cascade)
+  submittedBy             User              @relation("ProposalSubmitter", fields: [submittedById], references: [id], onDelete: Cascade)
+  createdResearchProject  ResearchProject?  @relation("ProposalCreatedResearch", fields: [createdResearchProjectId], references: [id], onDelete: SetNull)
+  createdOrganizedProject OrganizedProject? @relation("ProposalCreatedProject", fields: [createdOrganizedProjectId], references: [id], onDelete: SetNull)
 
   @@index([type, status, createdAt])
   @@index([submittedById, createdAt])

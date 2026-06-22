@@ -1,8 +1,11 @@
 import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 import { redirect } from "next/navigation";
-import { prisma, Role } from "@repo/db";
+import { prisma, ProposalType, Role } from "@repo/db";
 import { auth } from "../../../../auth";
-import { deleteOrganizedProject } from "../actions";
+import {
+  deleteOrganizedProject,
+  ensureAcceptedProposalRecords,
+} from "../actions";
 import { ProposalDialog } from "@/sites/research/components/ProposalDialog";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { NewOrganizedProjectDialog } from "./NewOrganizedProjectDialog";
@@ -38,6 +41,7 @@ function durationLabel(months: number | null) {
 }
 
 export default async function OrganizedProjectsPage() {
+  await ensureAcceptedProposalRecords(ProposalType.PROJECT);
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!session || !userId) redirect("/login");
@@ -178,9 +182,7 @@ export default async function OrganizedProjectsPage() {
                 <span className="font-normal text-[#B0B0B0]">
                   {item.label}:{" "}
                 </span>
-                <span className="font-normal text-[#E4E4E4]">
-                  {item.value}
-                </span>
+                <span className="font-normal text-[#E4E4E4]">{item.value}</span>
               </div>
             ))}
           </div>

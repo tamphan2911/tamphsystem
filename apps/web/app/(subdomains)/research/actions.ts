@@ -1054,6 +1054,127 @@ async function generateResearchCode(
   return `${yearPrefix}${String(maxNumber + 1).padStart(2, "0")}`;
 }
 
+type AcceptedProposalRecord = Prisma.ProposalGetPayload<{
+  include: {
+    submittedBy: { select: { id: true; name: true; email: true } };
+  };
+}>;
+
+function proposalCombinedNote(
+  proposal: Pick<AcceptedProposalRecord, "description" | "notes">,
+) {
+  return [proposal.description, proposal.notes].filter(Boolean).join("\n\n");
+}
+
+async function createPendingRecordFromProposal(
+  proposal: AcceptedProposalRecord,
+) {
+  if (proposal.type === ProposalType.RESEARCH) {
+    if (proposal.createdResearchProjectId) {
+      return `/projects/${proposal.createdResearchProjectId}`;
+    }
+
+    const created = await prisma.researchProject.create({
+      data: {
+        title: proposal.title,
+        researchCode: await generateResearchCode(),
+        abstract: proposalCombinedNote(proposal),
+        sharedFolderUrl: proposal.website,
+        stage: ResearchStage.PENDING,
+        leadResearcherId: proposal.submittedById,
+        authors: { connect: [{ id: proposal.submittedById }] },
+        authorEntries: {
+          create: [
+            {
+              userId: proposal.submittedById,
+              position: 0,
+              selectedEmail: proposal.submittedBy.email,
+              isCorresponding: true,
+            },
+          ],
+        },
+      },
+      select: { id: true },
+    });
+
+    await prisma.proposal.update({
+      where: { id: proposal.id },
+      data: { createdResearchProjectId: created.id },
+    });
+
+    return `/projects/${created.id}`;
+  }
+
+  if (proposal.type === ProposalType.PROJECT) {
+    if (proposal.createdOrganizedProjectId) {
+      return `/organized-projects/${proposal.createdOrganizedProjectId}`;
+    }
+
+    const created = await prisma.organizedProject.create({
+      data: {
+        title: proposal.title,
+        organizer: proposal.organization,
+        referenceCode: proposal.identifier,
+        description: proposal.description,
+        sharedFolderUrl: proposal.website,
+        note: proposal.notes,
+        status: OrganizedProjectStatus.PENDING,
+        createdById: proposal.submittedById,
+        members: {
+          create: [
+            {
+              userId: proposal.submittedById,
+              position: 0,
+              selectedEmail: proposal.submittedBy.email,
+              isTeamLead: true,
+            },
+          ],
+        },
+      },
+      select: { id: true },
+    });
+
+    await prisma.proposal.update({
+      where: { id: proposal.id },
+      data: { createdOrganizedProjectId: created.id },
+    });
+
+    return `/organized-projects/${created.id}`;
+  }
+
+  return `/proposals/${proposal.id}`;
+}
+
+export async function ensureAcceptedProposalRecords(type?: ProposalType) {
+  const proposalTypes = type
+    ? [type]
+    : [ProposalType.RESEARCH, ProposalType.PROJECT];
+  const proposals = await prisma.proposal.findMany({
+    where: {
+      status: ProposalStatus.ACCEPTED,
+      type: { in: proposalTypes },
+      OR: [
+        {
+          type: ProposalType.RESEARCH,
+          createdResearchProjectId: null,
+        },
+        {
+          type: ProposalType.PROJECT,
+          createdOrganizedProjectId: null,
+        },
+      ],
+    },
+    include: {
+      submittedBy: { select: { id: true, name: true, email: true } },
+    },
+    orderBy: { updatedAt: "asc" },
+  });
+
+  for (const proposal of proposals) {
+    await createPendingRecordFromProposal(proposal);
+  }
+}
+
 async function requireCurrentUser() {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
@@ -1716,6 +1837,15 @@ export async function reviewProposal(formData: FormData) {
         select: { id: true },
       });
       createdHref = `/journals/${journal.id}`;
+    } else if (
+      proposal.type === ProposalType.RESEARCH ||
+      proposal.type === ProposalType.PROJECT
+    ) {
+      await createPendingRecordFromProposal(proposal);
+      createdHref =
+        proposal.type === ProposalType.RESEARCH
+          ? "/projects"
+          : "/organized-projects";
     }
   }
 
@@ -1763,6 +1893,8 @@ export async function reviewProposal(formData: FormData) {
   revalidatePath("/notifications");
   revalidatePath("/conferences");
   revalidatePath("/journals");
+  revalidatePath("/projects");
+  revalidatePath("/organized-projects");
 }
 
 export async function createResearchProject(formData: FormData) {

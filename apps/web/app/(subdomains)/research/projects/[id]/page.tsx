@@ -6,6 +6,7 @@ import {
   Download,
   ExternalLink,
   FolderOpen,
+  Hourglass,
   ListTodo,
   Send,
   CheckCircle2,
@@ -103,6 +104,11 @@ const claimOptions = [
 ];
 
 const stageStyles = {
+  PENDING: {
+    label: "Pending",
+    icon: Hourglass,
+    className: "text-amber-700 dark:text-amber-300",
+  },
   PRODUCTION: {
     label: "Production",
     icon: FileText,
@@ -488,6 +494,9 @@ export default async function ProjectDetailPage({
     !isRegistrationUser &&
     !hasAssignedResearchTask
   ) {
+    notFound();
+  }
+  if (project.stage === "PENDING" && !isRootAdmin) {
     notFound();
   }
   const canViewRegistrationClaim = isAdmin || isRegistrationUser;
@@ -1143,6 +1152,8 @@ export default async function ProjectDetailPage({
                     canEditRegistrationClaim={isRootAdmin}
                     disabled={researchContentLocked}
                     disabledReason="Research information is locked after accepted or published submission"
+                    initialOpen={project.stage === "PENDING" && isRootAdmin}
+                    lockUntilSaved={project.stage === "PENDING" && isRootAdmin}
                   />
                 )}
                 {isRootAdmin && (

@@ -26,7 +26,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { prisma, Role } from "@repo/db";
+import { prisma, OrganizedProjectStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import {
   researchLinkClass,
@@ -83,6 +83,13 @@ function durationLabel(months: number | null) {
 }
 
 function statusMeta(status: string) {
+  if (status === "PENDING") {
+    return {
+      label: "Pending",
+      icon: CalendarClock,
+      className: "text-[#A06716] dark:text-[#F4D47A]",
+    };
+  }
   if (status === "COMPLETED") {
     return {
       label: "Completed",
@@ -357,6 +364,7 @@ export default async function OrganizedProjectDetailPage({
     currentUser?.roles ??
     (((session?.user as { roles?: Role[] } | undefined)?.roles ??
       []) as Role[]);
+  const isRootAdmin = currentRoles.includes(Role.ADMIN);
   const [project, users, researchOptions, fundingInstitutions] =
     await Promise.all([
       prisma.organizedProject.findUnique({
@@ -487,6 +495,9 @@ export default async function OrganizedProjectDetailPage({
     project.createdBy?.id === currentUserId ||
     project.members.some((member) => member.userId === currentUserId) ||
     Boolean(assignedResearchEditTask);
+  if (project.status === OrganizedProjectStatus.PENDING && !isRootAdmin) {
+    notFound();
+  }
   if (!canViewProject) notFound();
   const canEditResearchAssociated =
     canEditProject || Boolean(assignedResearchEditTask);
@@ -569,6 +580,14 @@ export default async function OrganizedProjectDetailPage({
                   research={researchDefaults}
                   fundingInstitutions={fundingOptions}
                   formId="project-info-edit-form-header"
+                  initialOpen={
+                    project.status === OrganizedProjectStatus.PENDING &&
+                    isRootAdmin
+                  }
+                  lockUntilSaved={
+                    project.status === OrganizedProjectStatus.PENDING &&
+                    isRootAdmin
+                  }
                 />
               )}
             </div>

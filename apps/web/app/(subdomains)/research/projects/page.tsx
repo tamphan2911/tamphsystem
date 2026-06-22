@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
-import { prisma, Role } from "@repo/db";
+import { prisma, ProposalType, Role } from "@repo/db";
 import { auth } from "../../../../auth";
-import { deleteResearchProject } from "../actions";
+import {
+  deleteResearchProject,
+  ensureAcceptedProposalRecords,
+} from "../actions";
 import { ProposalDialog } from "@/sites/research/components/ProposalDialog";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { NewResearchDialog } from "./NewResearchDialog";
@@ -78,6 +81,7 @@ async function ensureResearchCodes() {
 }
 
 export default async function ProjectsDashboard() {
+  await ensureAcceptedProposalRecords(ProposalType.RESEARCH);
   await ensureResearchCodes();
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;

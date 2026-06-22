@@ -68,6 +68,13 @@ function statusLabel(status: string) {
 }
 
 function statusMeta(status: string) {
+  if (status === "PENDING") {
+    return {
+      label: "Pending",
+      icon: CalendarClock,
+      className: "text-amber-700 dark:text-amber-300",
+    };
+  }
   if (status === "COMPLETED") {
     return {
       label: "Completed",

@@ -20,6 +20,7 @@ import {
   FileClock,
   FileSearch,
   FlaskConical,
+  Hourglass,
   Send,
   SendHorizontal,
   ShieldCheck,
@@ -74,6 +75,7 @@ type SortState = {
 
 const stages = [
   "ALL",
+  "PENDING",
   "PRODUCTION",
   "NEED_SUBMIT",
   "SUBMITTED",
@@ -106,6 +108,7 @@ function selectedFilterValues(value: string, options: string[]) {
 function stageLabel(stage: string) {
   const labels: Record<string, string> = {
     PRODUCTION: "Production",
+    PENDING: "Pending",
     NEED_SUBMIT: "Need submit",
     SUBMITTED: "Submitted",
     SUBMITTING: "Submitted",
@@ -129,6 +132,7 @@ function stageFilterKey(row: ResearchProjectRow) {
 
 function statusClass(stage: string) {
   if (stage === "PUBLISHED" || stage === "ACCEPTED") return "text-[#A8DADC]";
+  if (stage === "PENDING") return "text-amber-700 dark:text-amber-300";
   if (stage === "REVIEW" || stage === "SUBMITTING" || stage === "SUBMITTED")
     return "text-[#B39CD0]";
   return "text-[#FFC1CC]";
@@ -150,6 +154,7 @@ function stageTooltip(row: ResearchProjectRow) {
 
 function stageIcon(stage: string) {
   if (stage === "PUBLISHED") return BookOpenCheck;
+  if (stage === "PENDING") return Hourglass;
   if (stage === "ACCEPTED") return BadgeCheck;
   if (stage === "REVIEW") return FileSearch;
   if (

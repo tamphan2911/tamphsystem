@@ -252,6 +252,8 @@ export function ProjectInfoEditDialog({
   research,
   fundingInstitutions,
   formId = "project-info-edit-form",
+  initialOpen = false,
+  lockUntilSaved = false,
 }: {
   action: (formData: FormData) => Promise<void>;
   info: ProjectInfo;
@@ -259,8 +261,10 @@ export function ProjectInfoEditDialog({
   research: ResearchResultOption[];
   fundingInstitutions: FundingInstitutionOption[];
   formId?: string;
+  initialOpen?: boolean;
+  lockUntilSaved?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   const [financial, setFinancial] = useState(info.financialClaimStatus);
   const [isPending, startTransition] = useTransition();
   const toast = useResearchToast();
@@ -273,7 +277,9 @@ export function ProjectInfoEditDialog({
       />
       <DialogShell
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          if (!lockUntilSaved) setOpen(false);
+        }}
         icon={<Building2 className="h-5 w-5" />}
         title="Edit project information"
         detail="Update project identity, funding, duration, status, and internal notes."
@@ -354,7 +360,9 @@ export function ProjectInfoEditDialog({
               <ResearchFormSelect
                 name="status"
                 defaultValue={
-                  info.status === "ARCHIVED" ? "PLANNED" : info.status
+                  info.status === "ARCHIVED" || info.status === "PENDING"
+                    ? "PLANNED"
+                    : info.status
                 }
                 ariaLabel="Choose project status"
                 options={[
