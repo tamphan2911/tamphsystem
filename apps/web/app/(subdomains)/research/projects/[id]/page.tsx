@@ -449,11 +449,13 @@ export default async function ProjectDetailPage({
     notFound();
   }
   const canViewRegistrationClaim = isAdmin || isRegistrationUser;
-  const canEditResearchInfo = isAdmin || isCorrespondingAuthor || isFirstAuthor;
+  const canEditResearchInfo =
+    isRootAdmin || isCorrespondingAuthor || isFirstAuthor;
   const canEditResearch = isAdmin || isCorrespondingAuthor;
   const canManageResearchTasks =
     isRootAdmin || isFirstAuthor || isCorrespondingAuthor;
-  const canSendAuthorEmails = isAdmin || isFirstAuthor || isCorrespondingAuthor;
+  const canSendAuthorEmails =
+    isRootAdmin || isFirstAuthor || isCorrespondingAuthor;
   const canSuggestVenue =
     isAdmin || isProjectAuthor || hasUnfinishedAssignedResearchTask;
 
@@ -1036,23 +1038,21 @@ export default async function ProjectDetailPage({
                     />
                   </span>
                 </IconHint>
-                <ResearchBasicEditDialog
-                  action={updateAction}
-                  values={researchBasicValues}
-                  authors={defaultAuthors}
-                  completedProductionSteps={completedProductionStepValues}
-                  users={authorOptions}
-                  fundingInstitutions={fundingInstitutionOptions}
-                  registerOptions={registerOptions}
-                  claimOptions={claimOptions}
-                  canEditRegistrationClaim={isAdmin}
-                  disabled={!canEditResearchInfo || researchContentLocked}
-                  disabledReason={
-                    researchContentLocked
-                      ? "Research information is locked after accepted or published submission"
-                      : "Only admin, first author, or corresponding author can edit research information"
-                  }
-                />
+                {canEditResearchInfo && (
+                  <ResearchBasicEditDialog
+                    action={updateAction}
+                    values={researchBasicValues}
+                    authors={defaultAuthors}
+                    completedProductionSteps={completedProductionStepValues}
+                    users={authorOptions}
+                    fundingInstitutions={fundingInstitutionOptions}
+                    registerOptions={registerOptions}
+                    claimOptions={claimOptions}
+                    canEditRegistrationClaim={isRootAdmin}
+                    disabled={researchContentLocked}
+                    disabledReason="Research information is locked after accepted or published submission"
+                  />
+                )}
                 {isRootAdmin && (
                   <ResearchContentLockButton
                     projectId={project.id}
@@ -1386,20 +1386,18 @@ export default async function ProjectDetailPage({
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <ResearchAuthorsEditDialog
-                      action={updateAction}
-                      values={researchBasicValues}
-                      authors={defaultAuthors}
-                      completedProductionSteps={completedProductionStepValues}
-                      users={authorOptions}
-                      allowPendingEmail={isAdmin}
-                      disabled={!canEditResearch || authorsLocked}
-                      disabledReason={
-                        authorsLocked
-                          ? "Authors are locked after the research was accepted"
-                          : "Only admin or the corresponding author can edit authors"
-                      }
-                    />
+                    {canEditResearchInfo && (
+                      <ResearchAuthorsEditDialog
+                        action={updateAction}
+                        values={researchBasicValues}
+                        authors={defaultAuthors}
+                        completedProductionSteps={completedProductionStepValues}
+                        users={authorOptions}
+                        allowPendingEmail={isRootAdmin}
+                        disabled={authorsLocked}
+                        disabledReason="Authors are locked after the research was accepted"
+                      />
+                    )}
                     {canSendAuthorEmails && (
                       <AuthorNotificationActions
                         projectId={project.id}
