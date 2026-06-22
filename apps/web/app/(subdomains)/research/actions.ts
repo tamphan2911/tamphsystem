@@ -1593,6 +1593,7 @@ export async function reviewProposal(formData: FormData) {
           note: [proposal.description, proposal.notes]
             .filter(Boolean)
             .join("\n\n"),
+          createdById: user.id,
         },
         select: { id: true },
       });
@@ -2624,6 +2625,7 @@ export async function createJournal(formData: FormData) {
         scimagoLink: optionalString(formData.get("scimagoLink")),
         scopusLink: optionalString(formData.get("scopusLink")),
         note: optionalString(formData.get("note")),
+        createdById: user.id,
       },
     });
 

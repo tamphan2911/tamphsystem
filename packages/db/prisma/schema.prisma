@@ -94,6 +94,7 @@ model User {
   suggestedConferences            SuggestedConference[]        @relation("SuggestedConferenceCreator")
   sentResearchAuthorNotifications ResearchAuthorNotification[] @relation("ResearchAuthorNotificationSender")
   createdOrganizedProjects        OrganizedProject[]           @relation("OrganizedProjectCreator")
+  createdJournals                 Journal[]                    @relation("JournalCreator")
   organizedProjectMemberships     OrganizedProjectMember[]
   submittedProposals              Proposal[]                   @relation("ProposalSubmitter")
   requestedTaskClarifications     ResearchTaskClarification[]  @relation("TaskClarificationRequester")
@@ -658,11 +659,16 @@ model Journal {
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @default(now()) @updatedAt
 
+  createdById String?
+  createdBy   User?   @relation("JournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
   submissions ResearchSubmission[]
   accounts    PublisherAccount[]
   reviews     AcademicReview[]
   suggestions SuggestedJournal[]
   tasks       ResearchTask[]
+
+  @@index([createdById])
 }
 
 model SuggestedJournal {

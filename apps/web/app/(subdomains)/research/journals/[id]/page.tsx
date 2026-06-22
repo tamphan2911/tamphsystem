@@ -12,7 +12,10 @@ import { auth } from "../../../../../auth";
 import { CountryFlag } from "@/sites/research/components/CountryFlag";
 import { formatMoney } from "@/sites/research/lib/currency";
 import { countryName } from "@/sites/research/lib/countries";
-import { displayResearchPersonName } from "@/sites/research/lib/display";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import {
@@ -104,6 +107,7 @@ export default async function JournalDetailPage({
               : { id: "__no_access__" },
         orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
       },
+      createdBy: { select: { name: true, email: true } },
       _count: { select: { submissions: true, accounts: true, reviews: true } },
     },
   });
@@ -399,12 +403,32 @@ export default async function JournalDetailPage({
                 )}
               </dd>
             </div>
-            <div className="md:col-span-3">
+            <div className="md:col-span-2">
               <dt className="text-xs font-bold uppercase text-slate-400">
                 Note
               </dt>
               <dd className="mt-1 max-w-4xl text-sm leading-5 text-[#B0B0B0]">
                 {journal.note || "No note recorded."}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-bold uppercase text-slate-400">
+                Added by
+              </dt>
+              <dd className="mt-1 space-y-1 text-sm leading-5 text-[#B0B0B0]">
+                {journal.createdBy ? (
+                  <>
+                    <span className="block text-[#E4E4E4]">
+                      {displayResearchPersonName(journal.createdBy) ||
+                        "Unnamed user"}
+                    </span>
+                    <span className="block break-all">
+                      {displayResearchEmail(journal.createdBy.email)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="block">Not recorded.</span>
+                )}
               </dd>
             </div>
           </dl>
