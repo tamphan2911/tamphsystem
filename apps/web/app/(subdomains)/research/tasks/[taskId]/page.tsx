@@ -67,7 +67,7 @@ import {
   TaskJournalResults,
   type TaskJournalResult,
 } from "./TaskJournalResults";
-import { TaskGuideIcons } from "../TaskGuidePicker";
+import { TaskGuideIcons, type TaskGuideOption } from "../TaskGuidePicker";
 import {
   TaskSuggestedReviewerButton,
   TaskSuggestedReviewersTable,
@@ -1599,6 +1599,7 @@ export default async function TaskDetailPage({
     reviews,
     organizedProjects,
     checkerUsers,
+    taskGuideOptions,
   ] = canEdit
     ? await Promise.all([
         prisma.user.findMany({
@@ -1667,8 +1668,12 @@ export default async function TaskDetailPage({
           orderBy: [{ name: "asc" }, { email: "asc" }],
           select: { id: true, name: true, email: true, roles: true },
         }),
+        prisma.taskGuide.findMany({
+          orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
+          select: { id: true, guideCode: true, title: true, content: true },
+        }),
       ])
-    : [[], [], [], [], [], [], [], []];
+    : [[], [], [], [], [], [], [], [], []];
   const assignees = assigneeUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -1886,6 +1891,7 @@ export default async function TaskDetailPage({
                           assigneeIds: task.assignments.map(
                             (assignment) => assignment.userId,
                           ),
+                          guideIds: task.guides.map((guide) => guide.id),
                         }}
                         assignees={assignees}
                         researchOptions={researchOptions}
@@ -1895,6 +1901,7 @@ export default async function TaskDetailPage({
                         organizedProjectOptions={organizedProjectOptions}
                         submissionOptions={submissionOptions}
                         checkerOptions={checkerOptions}
+                        taskGuideOptions={taskGuideOptions as TaskGuideOption[]}
                         canChooseChecker={isRootAdmin}
                       />
                     )}

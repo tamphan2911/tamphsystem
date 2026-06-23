@@ -41,6 +41,7 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import { TaskGuidePicker, type TaskGuideOption } from "../TaskGuidePicker";
 import type {
   TaskAssigneeOption,
   TaskAccountOption,
@@ -77,6 +78,7 @@ type EditableTask = {
   checkerId: string;
   allowAssigneeReportUpload: boolean;
   assigneeIds: string[];
+  guideIds: string[];
 };
 
 type SearchPanelItem = {
@@ -185,6 +187,7 @@ export function EditTaskDialog({
   organizedProjectOptions,
   submissionOptions = [],
   checkerOptions = [],
+  taskGuideOptions = [],
   canChooseChecker = false,
 }: {
   task: EditableTask;
@@ -196,6 +199,7 @@ export function EditTaskDialog({
   organizedProjectOptions: TaskOrganizedProjectOption[];
   submissionOptions?: TaskSubmissionOption[];
   checkerOptions?: TaskAssigneeOption[];
+  taskGuideOptions?: TaskGuideOption[];
   canChooseChecker?: boolean;
 }) {
   const initialMode = modeFromTaskType(task.taskType);
@@ -241,6 +245,9 @@ export function EditTaskDialog({
   const [submissionQuery, setSubmissionQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>(task.assigneeIds);
   const [selectedCheckerId, setSelectedCheckerId] = useState(task.checkerId);
+  const [selectedTaskGuideIds, setSelectedTaskGuideIds] = useState<string[]>(
+    task.guideIds,
+  );
   const [selectedResearch, setSelectedResearch] =
     useState<TaskResearchOption | null>(initialResearch);
   const [selectedVenue, setSelectedVenue] = useState<TaskVenueOption | null>(
@@ -523,6 +530,7 @@ export function EditTaskDialog({
     setSelectedTaskType(task.taskType);
     setSelectedIds(task.assigneeIds);
     setSelectedCheckerId(task.checkerId);
+    setSelectedTaskGuideIds(task.guideIds);
     setSelectedResearch(initialResearch);
     setSelectedVenue(initialVenue);
     setSelectedAccountId(task.accountId);
@@ -969,6 +977,12 @@ export function EditTaskDialog({
               className={researchTextareaClass}
             />
           </label>
+
+          <TaskGuidePicker
+            guides={taskGuideOptions}
+            selectedIds={selectedTaskGuideIds}
+            onChange={setSelectedTaskGuideIds}
+          />
 
           <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
             <SearchPanel
