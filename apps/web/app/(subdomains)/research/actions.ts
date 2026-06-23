@@ -494,6 +494,7 @@ function taskTypeCanBeCreatedByResearchAuthor(taskType: ResearchTaskType) {
     taskType === ResearchTaskType.SUBMIT_RESEARCH ||
     taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
     taskType === ResearchTaskType.PRODUCTION ||
+    taskType === ResearchTaskType.SUGGEST_VENUE ||
     taskType === ResearchTaskType.OTHER
   );
 }
@@ -579,7 +580,8 @@ async function taskAssociationIsSelectable({
   if (
     (taskType === ResearchTaskType.SUBMIT_RESEARCH ||
       taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
-      taskType === ResearchTaskType.PRODUCTION) &&
+      taskType === ResearchTaskType.PRODUCTION ||
+      taskType === ResearchTaskType.SUGGEST_VENUE) &&
     projectId
   ) {
     const project = await prisma.researchProject.findUnique({
@@ -4092,6 +4094,7 @@ export async function createResearchTask(formData: FormData) {
     (taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
       (!projectId || !conferenceId)) ||
     (taskType === ResearchTaskType.PRODUCTION && !projectId) ||
+    (taskType === ResearchTaskType.SUGGEST_VENUE && !projectId) ||
     (taskType === ResearchTaskType.REVIEW && !reviewId) ||
     (taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED &&
       !organizedProjectId)
@@ -4354,6 +4357,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     taskType === ResearchTaskType.SUBMIT_RESEARCH ||
     taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
     taskType === ResearchTaskType.PRODUCTION ||
+    taskType === ResearchTaskType.SUGGEST_VENUE ||
     taskType === ResearchTaskType.OTHER
       ? projectId
       : null;
@@ -4369,6 +4373,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     (taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
       (!effectiveProjectId || !conferenceId)) ||
     (taskType === ResearchTaskType.PRODUCTION && !effectiveProjectId) ||
+    (taskType === ResearchTaskType.SUGGEST_VENUE && !effectiveProjectId) ||
     (taskType === ResearchTaskType.REVIEW && !reviewId) ||
     (taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED &&
       !effectiveOrganizedProjectId)

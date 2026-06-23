@@ -50,7 +50,13 @@ import type {
   TaskVenueOption,
 } from "../NewTaskDialog";
 
-type TaskMode = "submit" | "production" | "review" | "project" | "other";
+type TaskMode =
+  | "submit"
+  | "production"
+  | "suggestVenue"
+  | "review"
+  | "project"
+  | "other";
 
 type EditableTask = {
   id: string;
@@ -89,6 +95,7 @@ function modeFromTaskType(taskType: string): TaskMode {
     return "submit";
   }
   if (taskType === "PRODUCTION") return "production";
+  if (taskType === "SUGGEST_VENUE") return "suggestVenue";
   if (taskType === "REVIEW") return "review";
   if (
     taskType === "PROJECT_PRODUCTION" ||
@@ -484,7 +491,8 @@ export function EditTaskDialog({
     });
   }
 
-  const needsResearch = mode === "submit" || mode === "production";
+  const needsResearch =
+    mode === "submit" || mode === "production" || mode === "suggestVenue";
   const showsResearch = needsResearch || mode === "other";
   const selectedResearchMatchesMode =
     !needsResearch ||
@@ -586,6 +594,11 @@ export function EditTaskDialog({
             <>
               <input type="hidden" name="taskType" value="PRODUCTION" />
               <input type="hidden" name="category" value="Production" />
+            </>
+          )}
+          {mode === "suggestVenue" && (
+            <>
+              <input type="hidden" name="taskType" value="SUGGEST_VENUE" />
             </>
           )}
           {mode === "review" && selectedReview && (

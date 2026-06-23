@@ -85,6 +85,7 @@ const taskTypeFilterValues = [
   "ALL",
   "SUBMIT",
   "PRODUCTION",
+  "SUGGEST_VENUE",
   "REVIEW",
   "PROJECT",
   "OTHER",
@@ -139,6 +140,12 @@ function taskTypeLines(task: TaskRow) {
       subtypeLabel: type === "SUBMIT_CONFERENCE" ? "Conference" : "Journal",
     };
   }
+  if (type === "SUGGEST_VENUE") {
+    return {
+      typeLabel: "Suggest venue",
+      subtypeLabel: "Research",
+    };
+  }
   if (type === "PROJECT_PRODUCTION" || type === "PROJECT_RESEARCH_ASSOCIATED") {
     return { typeLabel: "Project", subtypeLabel: "" };
   }
@@ -160,6 +167,7 @@ function taskTypeFilterValue(task: TaskRow) {
     return "PROJECT";
   }
   if (task.taskType === "PRODUCTION") return "PRODUCTION";
+  if (task.taskType === "SUGGEST_VENUE") return "SUGGEST_VENUE";
   if (task.taskType === "REVIEW") return "REVIEW";
   return "OTHER";
 }

@@ -98,8 +98,14 @@ export type TaskSubmissionOption = {
   status: string;
 };
 
-export type TaskMode = "submit" | "production" | "review" | "project" | "other";
-type TaskTriggerVariant = "default" | "other" | "production";
+export type TaskMode =
+  | "submit"
+  | "production"
+  | "suggestVenue"
+  | "review"
+  | "project"
+  | "other";
+type TaskTriggerVariant = "default" | "other" | "production" | "suggestVenue";
 type SearchPanelItem = {
   id: string;
   title: string;
@@ -117,6 +123,7 @@ const closedProjectStatuses = new Set(["COMPLETED"]);
 function modeLabel(mode: TaskMode) {
   if (mode === "submit") return "Submit";
   if (mode === "production") return "Production";
+  if (mode === "suggestVenue") return "Suggest venue";
   if (mode === "review") return "Review";
   if (mode === "project") return "Project";
   return "Other";
@@ -410,7 +417,10 @@ export function NewTaskDialog({
 
   function changeMode(nextMode: TaskMode) {
     setMode(nextMode);
-    if (nextMode === "other" && selectedVenue?.kind === "conference") {
+    if (
+      (nextMode === "other" && selectedVenue?.kind === "conference") ||
+      (nextMode !== "submit" && nextMode !== "other")
+    ) {
       setSelectedVenue(null);
       setVenueQuery("");
       setSelectedAccountId("");
@@ -502,7 +512,8 @@ export function NewTaskDialog({
     });
   }
 
-  const needsResearch = mode === "submit" || mode === "production";
+  const needsResearch =
+    mode === "submit" || mode === "production" || mode === "suggestVenue";
   const showsResearch = needsResearch || mode === "other";
   const fixedResearch = triggerVariant !== "default" && initialResearch;
   const selectedResearchMatchesMode =
@@ -555,7 +566,9 @@ export function NewTaskDialog({
           label={
             triggerVariant === "production"
               ? "Create production task"
-              : "Create other task"
+              : triggerVariant === "suggestVenue"
+                ? "Create suggest venue task"
+                : "Create other task"
           }
           position="bottom"
         >
@@ -565,12 +578,16 @@ export function NewTaskDialog({
             className={`research-allow-transform inline-flex h-5 w-5 flex-none cursor-pointer items-center justify-center border-0 bg-transparent shadow-none transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 active:translate-y-0 active:scale-90 ${
               triggerVariant === "production"
                 ? "text-[#B85C78] hover:text-[#8F3E59] dark:text-[#FFC1CC] dark:hover:text-[#FFD7DF]"
-                : "text-[#70549B] hover:text-[#563B7E] dark:text-[#B39CD0] dark:hover:text-[#D0BCE5]"
+                : triggerVariant === "suggestVenue"
+                  ? "text-[#1F7180] hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
+                  : "text-[#70549B] hover:text-[#563B7E] dark:text-[#B39CD0] dark:hover:text-[#D0BCE5]"
             }`}
             aria-label={
               triggerVariant === "production"
                 ? "Create production task"
-                : "Create other task"
+                : triggerVariant === "suggestVenue"
+                  ? "Create suggest venue task"
+                  : "Create other task"
             }
           >
             <ClipboardPlus className="h-4 w-4" strokeWidth={1.8} />
@@ -584,9 +601,11 @@ export function NewTaskDialog({
         title={
           triggerVariant === "production"
             ? "Create Production Task"
-            : triggerVariant === "other"
-              ? "Create Other Task"
-              : "Assign Task"
+            : triggerVariant === "suggestVenue"
+              ? "Create Suggest Venue Task"
+              : triggerVariant === "other"
+                ? "Create Other Task"
+                : "Assign Task"
         }
         icon={<ClipboardList className="h-5 w-5" />}
         maxWidth="max-w-5xl"
@@ -644,6 +663,11 @@ export function NewTaskDialog({
             <>
               <input type="hidden" name="taskType" value="PRODUCTION" />
               <input type="hidden" name="category" value="Production" />
+            </>
+          )}
+          {mode === "suggestVenue" && (
+            <>
+              <input type="hidden" name="taskType" value="SUGGEST_VENUE" />
             </>
           )}
           {mode === "review" && selectedReview && (
@@ -710,10 +734,17 @@ export function NewTaskDialog({
           {triggerVariant === "default" && (
             <div
               data-research-toggle-tabs="true"
-              className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020] sm:grid-cols-5"
+              className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020] sm:grid-cols-3 lg:grid-cols-6"
             >
               {(
-                ["submit", "production", "review", "project", "other"] as const
+                [
+                  "submit",
+                  "production",
+                  "suggestVenue",
+                  "review",
+                  "project",
+                  "other",
+                ] as const
               ).map((item) => (
                 <button
                   key={item}

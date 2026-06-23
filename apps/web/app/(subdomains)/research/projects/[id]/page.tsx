@@ -1718,10 +1718,10 @@ export default async function ProjectDetailPage({
                 checkerOptions={taskCheckerOptions}
                 taskGuideOptions={taskGuides}
                 canChooseChecker={isRootAdmin}
-                initialMode="other"
+                initialMode="suggestVenue"
                 initialResearch={currentResearchTaskOption}
                 initialTitle={`Suggest venue for research "${project.title}"`}
-                triggerVariant="other"
+                triggerVariant="suggestVenue"
               />
             ) : null
           }

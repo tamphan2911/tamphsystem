@@ -268,6 +268,13 @@ function taskTypeMeta(taskType: string | null, category: string | null) {
       className: "text-[#FFC1CC]",
     };
   }
+  if (taskType === "SUGGEST_VENUE") {
+    return {
+      label: "Suggest venue",
+      icon: CircleHelp,
+      className: "text-[#86C5B8]",
+    };
+  }
   if (taskType === "REVIEW") {
     return {
       label: "Review",
