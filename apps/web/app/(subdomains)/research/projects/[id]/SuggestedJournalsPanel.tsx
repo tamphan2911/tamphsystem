@@ -17,6 +17,8 @@ import {
   UserRound,
   X,
   Info,
+  Pencil,
+  Save,
 } from "lucide-react";
 import {
   addSuggestedConference,
@@ -28,6 +30,8 @@ import {
   declineSuggestedJournal,
   deleteSuggestedConference,
   deleteSuggestedJournal,
+  updateSuggestedConference,
+  updateSuggestedJournal,
 } from "../../actions";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
@@ -191,6 +195,13 @@ export function SuggestedJournalsPanel({
   );
   const [addOpen, setAddOpen] = useState(false);
   const [assignVenue, setAssignVenue] = useState<Venue | null>(null);
+  const [editVenue, setEditVenue] = useState<Venue | null>(null);
+  const [selectedEditVenue, setSelectedEditVenue] = useState<Venue | null>(
+    null,
+  );
+  const [editVenueName, setEditVenueName] = useState("");
+  const [editVenueLink, setEditVenueLink] = useState("");
+  const [editVenueQuery, setEditVenueQuery] = useState("");
   const [deleteVenue, setDeleteVenue] = useState<Venue | null>(null);
   const [approveVenue, setApproveVenue] = useState<Venue | null>(null);
   const [declineConfirmOpen, setDeclineConfirmOpen] = useState(false);
@@ -281,6 +292,61 @@ export function SuggestedJournalsPanel({
       .slice(0, 12);
   }, [conferenceQuery, conferences, suggestedConferenceIds]);
 
+  const editVenueResults = useMemo(() => {
+    if (!editVenue) return [];
+    const needle = editVenueQuery.trim().toLowerCase();
+    if (!needle) return [];
+    if (editVenue.kind === "journal") {
+      return journals
+        .filter(
+          (journal) =>
+            journal.id === editVenue.item.venueId ||
+            !suggestedJournalIds.has(journal.id),
+        )
+        .filter((journal) =>
+          [
+            journal.name,
+            journal.issn,
+            journal.field,
+            journal.rank,
+            journal.publisher,
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(needle),
+        )
+        .slice(0, 12)
+        .map((item) => ({ kind: "journal" as const, item }));
+    }
+    return conferences
+      .filter(
+        (conference) =>
+          conference.id === editVenue.item.venueId ||
+          !suggestedConferenceIds.has(conference.id),
+      )
+      .filter((conference) =>
+        [
+          conference.name,
+          conference.type,
+          conference.theme,
+          conference.location,
+          conference.organizer,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 12)
+      .map((item) => ({ kind: "conference" as const, item }));
+  }, [
+    conferences,
+    editVenue,
+    editVenueQuery,
+    journals,
+    suggestedConferenceIds,
+    suggestedJournalIds,
+  ]);
+
   const assistantResults = useMemo(() => {
     const needle = assistantQuery.trim().toLowerCase();
     if (!needle) return [];
@@ -361,6 +427,79 @@ export function SuggestedJournalsPanel({
     setSelectedAddVenue(null);
     setFreeVenueName("");
     setFreeVenueLink("");
+  }
+
+  function openEditVenue(venue: Venue) {
+    const linkedVenue =
+      venue.kind === "journal"
+        ? journals.find((item) => item.id === venue.item.venueId)
+        : conferences.find((item) => item.id === venue.item.venueId);
+    setEditVenue(venue);
+    setSelectedEditVenue(
+      linkedVenue
+        ? venue.kind === "journal"
+          ? {
+              kind: "journal",
+              item: linkedVenue as SuggestedJournalOption,
+            }
+          : {
+              kind: "conference",
+              item: linkedVenue as SuggestedConferenceOption,
+            }
+        : null,
+    );
+    setEditVenueName(venue.item.name);
+    setEditVenueLink(venue.item.venueLink);
+    setEditVenueQuery("");
+  }
+
+  function closeEditVenue() {
+    setEditVenue(null);
+    setSelectedEditVenue(null);
+    setEditVenueName("");
+    setEditVenueLink("");
+    setEditVenueQuery("");
+  }
+
+  function saveEditedVenue() {
+    if (!editVenue) return;
+    const formData = new FormData();
+    formData.set("venueName", editVenueName.trim());
+    formData.set("venueLink", editVenueLink.trim());
+    if (editVenue.kind === "journal" && selectedEditVenue?.kind === "journal") {
+      formData.set("journalId", selectedEditVenue.item.venueId);
+    }
+    if (
+      editVenue.kind === "conference" &&
+      selectedEditVenue?.kind === "conference"
+    ) {
+      formData.set("conferenceId", selectedEditVenue.item.venueId);
+    }
+
+    startTransition(async () => {
+      const result =
+        editVenue.kind === "journal"
+          ? await updateSuggestedJournal(projectId, editVenue.item.id, formData)
+          : await updateSuggestedConference(
+              projectId,
+              editVenue.item.id,
+              formData,
+            );
+      if (!result?.ok) {
+        showError({
+          title: "Suggested venue was not updated",
+          detail: result?.message ?? "Check the venue details and try again.",
+        });
+        return;
+      }
+      const venueName = editVenueName.trim() || editVenue.item.name;
+      closeEditVenue();
+      showSuccess({
+        title: "Suggested venue updated",
+        detail: `${venueName} was updated successfully.`,
+      });
+      router.refresh();
+    });
   }
 
   function addJournal(journalId?: string) {
@@ -615,6 +754,7 @@ export function SuggestedJournalsPanel({
               isAdmin={isAdmin}
               canAssignTask={canAssignTask}
               canApproveSuggestion={canApproveSuggestion}
+              canEditVenue={canSuggestVenue}
               disabled={disabled}
               onAssign={() =>
                 openSubmitTask({ kind: "journal", item: journal })
@@ -622,6 +762,7 @@ export function SuggestedJournalsPanel({
               onApprove={() =>
                 setApproveVenue({ kind: "journal", item: journal })
               }
+              onEdit={() => openEditVenue({ kind: "journal", item: journal })}
               onDelete={() =>
                 setDeleteVenue({ kind: "journal", item: journal })
               }
@@ -637,12 +778,16 @@ export function SuggestedJournalsPanel({
               isAdmin={isAdmin}
               canAssignTask={canAssignTask}
               canApproveSuggestion={canApproveSuggestion}
+              canEditVenue={canSuggestVenue}
               disabled={disabled}
               onAssign={() =>
                 openSubmitTask({ kind: "conference", item: conference })
               }
               onApprove={() =>
                 setApproveVenue({ kind: "conference", item: conference })
+              }
+              onEdit={() =>
+                openEditVenue({ kind: "conference", item: conference })
               }
               onDelete={() =>
                 setDeleteVenue({ kind: "conference", item: conference })
@@ -815,6 +960,102 @@ export function SuggestedJournalsPanel({
                 </ResultList>
               </>
             )}
+          </div>
+        </ResearchModal>
+      )}
+
+      {editVenue && (
+        <ResearchModal
+          open={Boolean(editVenue)}
+          onClose={closeEditVenue}
+          title="Edit suggested venue"
+          description={`Update the ${editVenue.kind} suggestion for this research.`}
+          icon={<Pencil className="h-5 w-5" />}
+          maxWidth="max-w-2xl"
+          bodyClassName="min-h-[22rem] px-5 py-4"
+          headerActions={
+            <ResearchButton
+              type="button"
+              onClick={saveEditedVenue}
+              disabled={
+                isPending ||
+                (!selectedEditVenue &&
+                  !editVenueName.trim() &&
+                  !editVenueLink.trim())
+              }
+            >
+              <Save className="h-4 w-4" />
+              {isPending ? "Saving..." : "Save changes"}
+            </ResearchButton>
+          }
+        >
+          <div className="grid gap-4">
+            <SearchBox
+              value={editVenueQuery}
+              onChange={setEditVenueQuery}
+              placeholder={
+                editVenue.kind === "journal"
+                  ? "Search journal name, ISSN, rank, or publisher..."
+                  : "Search conference, organizer, theme, or location..."
+              }
+            />
+            <SelectedVenuePill
+              venue={selectedEditVenue}
+              onClear={() => setSelectedEditVenue(null)}
+            />
+            <ResultList
+              query={editVenueQuery}
+              idleText={`Search to link another ${editVenue.kind}, or edit the information below.`}
+              emptyText={`No ${editVenue.kind} matches this search.`}
+            >
+              {editVenueResults.map((venue) => (
+                <button
+                  key={venue.item.id}
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => {
+                    setSelectedEditVenue(venue);
+                    setEditVenueName(venue.item.name);
+                    setEditVenueLink(venue.item.venueLink);
+                    setEditVenueQuery("");
+                  }}
+                  className={resultButtonClass(false)}
+                >
+                  <span className="block text-sm font-normal text-[#E4E4E4]">
+                    {venue.item.name}
+                  </span>
+                  <span className="mt-1 block text-xs text-[#B0B0B0]">
+                    {venue.kind === "journal"
+                      ? [
+                          venue.item.issn || "No ISSN",
+                          venue.item.rank || "No rank",
+                          venue.item.publisher || "No publisher",
+                        ].join(" - ")
+                      : [
+                          venue.item.type || "No type",
+                          venue.item.theme || "No theme",
+                          venue.item.location || "No location",
+                        ].join(" - ")}
+                  </span>
+                </button>
+              ))}
+            </ResultList>
+            <div className="grid gap-4 md:grid-cols-2">
+              <input
+                value={editVenueName}
+                onChange={(event) => setEditVenueName(event.target.value)}
+                placeholder={`${editVenue.kind === "journal" ? "Journal" : "Conference"} name`}
+                aria-label="Suggested venue name"
+                className={researchFieldClass}
+              />
+              <input
+                value={editVenueLink}
+                onChange={(event) => setEditVenueLink(event.target.value)}
+                placeholder="Venue URL"
+                aria-label="Suggested venue URL"
+                className={researchFieldClass}
+              />
+            </div>
           </div>
         </ResearchModal>
       )}
@@ -1591,18 +1832,22 @@ function JournalCard({
   isAdmin,
   canAssignTask,
   canApproveSuggestion,
+  canEditVenue,
   disabled,
   onAssign,
   onApprove,
+  onEdit,
   onDelete,
 }: {
   journal: SuggestedJournalOption;
   isAdmin: boolean;
   canAssignTask: boolean;
   canApproveSuggestion: boolean;
+  canEditVenue: boolean;
   disabled: boolean;
   onAssign: () => void;
   onApprove: () => void;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -1610,10 +1855,12 @@ function JournalCard({
       isAdmin={isAdmin}
       canAssignTask={canAssignTask}
       canApproveSuggestion={canApproveSuggestion}
+      canEditVenue={canEditVenue}
       disabled={disabled}
       state={journal.venueState ?? { state: "idle" }}
       onAssign={onAssign}
       onApprove={onApprove}
+      onEdit={onEdit}
       onDelete={onDelete}
       assignLabel="Assign journal submission task"
       deleteLabel="Delete suggested journal"
@@ -1677,18 +1924,22 @@ function ConferenceCard({
   isAdmin,
   canAssignTask,
   canApproveSuggestion,
+  canEditVenue,
   disabled,
   onAssign,
   onApprove,
+  onEdit,
   onDelete,
 }: {
   conference: SuggestedConferenceOption;
   isAdmin: boolean;
   canAssignTask: boolean;
   canApproveSuggestion: boolean;
+  canEditVenue: boolean;
   disabled: boolean;
   onAssign: () => void;
   onApprove: () => void;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -1696,10 +1947,12 @@ function ConferenceCard({
       isAdmin={isAdmin}
       canAssignTask={canAssignTask}
       canApproveSuggestion={canApproveSuggestion}
+      canEditVenue={canEditVenue}
       disabled={disabled}
       state={conference.venueState ?? { state: "idle" }}
       onAssign={onAssign}
       onApprove={onApprove}
+      onEdit={onEdit}
       onDelete={onDelete}
       assignLabel="Assign conference submission task"
       deleteLabel="Delete suggested conference"
@@ -1837,10 +2090,12 @@ function VenueCard({
   isAdmin,
   canAssignTask,
   canApproveSuggestion,
+  canEditVenue,
   disabled,
   state,
   onAssign,
   onApprove,
+  onEdit,
   onDelete,
   assignLabel,
   deleteLabel,
@@ -1850,10 +2105,12 @@ function VenueCard({
   isAdmin: boolean;
   canAssignTask: boolean;
   canApproveSuggestion: boolean;
+  canEditVenue: boolean;
   disabled: boolean;
   state: SuggestedVenueState;
   onAssign: () => void;
   onApprove: () => void;
+  onEdit: () => void;
   onDelete: () => void;
   assignLabel: string;
   deleteLabel: string;
@@ -1869,8 +2126,14 @@ function VenueCard({
       state.state === "withdrawn");
   const canApprove =
     canApproveSuggestion && !disabled && state.state === "pendingApproval";
+  const canEdit =
+    canEditVenue &&
+    !disabled &&
+    ["idle", "pendingApproval", "declined", "rejected", "withdrawn"].includes(
+      state.state,
+    );
   const canDelete = isAdmin && !disabled && state.state === "idle";
-  const showActions = canAssign || canDelete;
+  const showActions = canEdit || canAssign || canDelete;
 
   function handleCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (!canApprove || (event.key !== "Enter" && event.key !== " ")) return;
@@ -1891,6 +2154,21 @@ function VenueCard({
     >
       {showActions ? (
         <div className="absolute right-2 top-2 flex translate-y-1 gap-1 opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
+          {canEdit && (
+            <IconHint label="Edit suggested venue">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onEdit();
+                }}
+                aria-label="Edit suggested venue"
+                className="research-allow-transform inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-violet-500 outline-none transition-[color,transform] duration-180 hover:-translate-y-0.5 hover:text-violet-700 active:translate-y-0 active:scale-90 focus-visible:ring-2 focus-visible:ring-violet-400/35 dark:text-violet-300 dark:hover:text-violet-200"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            </IconHint>
+          )}
           {canAssign && (
             <IconHint label={assignLabel}>
               <button
@@ -1919,13 +2197,13 @@ function VenueCard({
       ) : null}
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div
-          className={`min-w-0 flex-1 ${showActions && !meta.badge ? "pr-24" : ""}`}
+          className={`min-w-0 flex-1 ${showActions && !meta.badge ? "pr-28" : ""}`}
         >
           {title}
         </div>
         {meta.badge ? (
           <div
-            className={`flex-none transition ${showActions && !canApprove ? "group-hover:opacity-0" : ""}`}
+            className={`flex-none transition ${showActions ? "group-hover:opacity-0" : ""}`}
           >
             <IconHint label={meta.tooltip || meta.badge} position="bottom">
               <span

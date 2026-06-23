@@ -5483,6 +5483,93 @@ export async function addSuggestedJournal(
   revalidatePath("/suggestions");
 }
 
+export async function updateSuggestedJournal(
+  projectId: string,
+  suggestionId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  if (!(await canSuggestVenueForResearch(projectId, user.id, user.roles))) {
+    redirect("/401");
+  }
+  if (await researchContentIsLocked(projectId)) {
+    return { ok: false, message: "Unlock the research before editing venues." };
+  }
+
+  const suggestion = await prisma.suggestedJournal.findFirst({
+    where: { id: suggestionId, projectId },
+    select: { journalId: true, status: true, taskId: true },
+  });
+  if (!suggestion) {
+    return { ok: false, message: "Journal suggestion was not found." };
+  }
+
+  const journalId = optionalString(formData.get("journalId"));
+  const venueName = optionalString(formData.get("venueName"));
+  const venueLink = optionalString(formData.get("venueLink"));
+  if (!journalId && !venueName && !venueLink) {
+    return { ok: false, message: "Enter a venue name, link, or journal." };
+  }
+  if (
+    journalId &&
+    !(await prisma.journal.count({ where: { id: journalId } }))
+  ) {
+    return { ok: false, message: "The selected journal was not found." };
+  }
+
+  const linkChanged = journalId !== suggestion.journalId;
+  const resetForReview =
+    linkChanged || suggestion.status === SuggestedVenueStatus.DECLINED;
+  const canApproveChangedLink =
+    journalId &&
+    suggestion.status === SuggestedVenueStatus.APPROVED &&
+    (await canApproveVenueSuggestionForResearch(
+      projectId,
+      user.id,
+      user.roles,
+    ));
+
+  try {
+    await prisma.suggestedJournal.update({
+      where: { id: suggestionId },
+      data: {
+        journalId,
+        venueName,
+        venueLink,
+        ...(resetForReview
+          ? {
+              status: canApproveChangedLink
+                ? SuggestedVenueStatus.APPROVED
+                : SuggestedVenueStatus.PENDING,
+              requiresApproval: !canApproveChangedLink,
+              approvedAt: canApproveChangedLink ? new Date() : null,
+              approvedById: canApproveChangedLink ? user.id : null,
+              declinedAt: null,
+              declinedById: null,
+              declineReason: null,
+            }
+          : {}),
+      },
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return {
+        ok: false,
+        message: "This journal is already suggested for the research.",
+      };
+    }
+    throw error;
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
+  revalidatePath("/suggestions");
+  return { ok: true };
+}
+
 export async function deleteSuggestedJournal(
   projectId: string,
   suggestionId: string,
@@ -5593,6 +5680,93 @@ export async function addSuggestedConference(
   revalidatePath(`/projects/${projectId}`);
   if (taskId) revalidatePath(`/tasks/${taskId}`);
   revalidatePath("/suggestions");
+}
+
+export async function updateSuggestedConference(
+  projectId: string,
+  suggestionId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  if (!(await canSuggestVenueForResearch(projectId, user.id, user.roles))) {
+    redirect("/401");
+  }
+  if (await researchContentIsLocked(projectId)) {
+    return { ok: false, message: "Unlock the research before editing venues." };
+  }
+
+  const suggestion = await prisma.suggestedConference.findFirst({
+    where: { id: suggestionId, projectId },
+    select: { conferenceId: true, status: true, taskId: true },
+  });
+  if (!suggestion) {
+    return { ok: false, message: "Conference suggestion was not found." };
+  }
+
+  const conferenceId = optionalString(formData.get("conferenceId"));
+  const venueName = optionalString(formData.get("venueName"));
+  const venueLink = optionalString(formData.get("venueLink"));
+  if (!conferenceId && !venueName && !venueLink) {
+    return { ok: false, message: "Enter a venue name, link, or conference." };
+  }
+  if (
+    conferenceId &&
+    !(await prisma.conference.count({ where: { id: conferenceId } }))
+  ) {
+    return { ok: false, message: "The selected conference was not found." };
+  }
+
+  const linkChanged = conferenceId !== suggestion.conferenceId;
+  const resetForReview =
+    linkChanged || suggestion.status === SuggestedVenueStatus.DECLINED;
+  const canApproveChangedLink =
+    conferenceId &&
+    suggestion.status === SuggestedVenueStatus.APPROVED &&
+    (await canApproveVenueSuggestionForResearch(
+      projectId,
+      user.id,
+      user.roles,
+    ));
+
+  try {
+    await prisma.suggestedConference.update({
+      where: { id: suggestionId },
+      data: {
+        conferenceId,
+        venueName,
+        venueLink,
+        ...(resetForReview
+          ? {
+              status: canApproveChangedLink
+                ? SuggestedVenueStatus.APPROVED
+                : SuggestedVenueStatus.PENDING,
+              requiresApproval: !canApproveChangedLink,
+              approvedAt: canApproveChangedLink ? new Date() : null,
+              approvedById: canApproveChangedLink ? user.id : null,
+              declinedAt: null,
+              declinedById: null,
+              declineReason: null,
+            }
+          : {}),
+      },
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return {
+        ok: false,
+        message: "This conference is already suggested for the research.",
+      };
+    }
+    throw error;
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
+  revalidatePath("/suggestions");
+  return { ok: true };
 }
 
 async function canSuggestVenueForResearch(
