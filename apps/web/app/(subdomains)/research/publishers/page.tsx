@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "../../../../auth";
 import { prisma, Role } from "@repo/db";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
+import { staffPublisherAccessWhere } from "@/sites/research/lib/venueAccess";
 import {
   approvePublisher,
   createPublisher,
@@ -15,11 +16,15 @@ export const dynamic = "force-dynamic";
 
 export default async function PublishersPage() {
   const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
-  if (!roles.includes(Role.ADMIN)) redirect("/401");
+  const isAdmin = roles.includes(Role.ADMIN);
+  const publisherWhere = staffPublisherAccessWhere(roles, userId);
+  if (!publisherWhere) redirect("/401");
 
   const publishers = await prisma.publisher.findMany({
+    where: publisherWhere,
     include: {
       _count: {
         select: {
@@ -78,11 +83,14 @@ export default async function PublishersPage() {
           <p className="truncate text-sm font-normal uppercase text-[#E4E4E4]">
             Publisher List
           </p>
-          <PublisherDialog mode="create" submitAction={createPublisher} />
+          {isAdmin ? (
+            <PublisherDialog mode="create" submitAction={createPublisher} />
+          ) : null}
         </div>
       </ResearchPageHeaderPortal>
       <PublishersTable
         rows={rows}
+        isAdmin={isAdmin}
         approveAction={approvePublisher}
         updateAction={updatePublisher}
         deleteAction={deletePublisher}

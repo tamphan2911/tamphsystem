@@ -3,7 +3,13 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, CheckCircle2, ExternalLink, Loader2, Trash2 } from "lucide-react";
+import {
+  Building2,
+  CheckCircle2,
+  ExternalLink,
+  Loader2,
+  Trash2,
+} from "lucide-react";
 import {
   IconHint,
   TablePagination,
@@ -174,11 +180,13 @@ function ApprovePublisherButton({
 
 export function PublishersTable({
   rows,
+  isAdmin,
   approveAction,
   updateAction,
   deleteAction,
 }: {
   rows: PublisherRow[];
+  isAdmin: boolean;
   approveAction: (publisherId: string) => Promise<void>;
   updateAction: (publisherId: string, formData: FormData) => Promise<void>;
   deleteAction: (publisherId: string) => Promise<void>;
@@ -220,10 +228,14 @@ export function PublishersTable({
               <th className="w-[9%] px-3 py-3 text-center">Submits</th>
               <th className="w-[9%] px-3 py-3 text-center">Accounts</th>
               <th className="w-[6%] px-2 py-3 text-center">Web</th>
-              <th className="w-[6%] px-2 py-3 text-center">Edit</th>
-              <th className="w-[6%] px-2 py-3 text-center">
-                <span className="sr-only">Delete</span>
-              </th>
+              {isAdmin ? (
+                <>
+                  <th className="w-[6%] px-2 py-3 text-center">Edit</th>
+                  <th className="w-[6%] px-2 py-3 text-center">
+                    <span className="sr-only">Delete</span>
+                  </th>
+                </>
+              ) : null}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#444444]">
@@ -289,28 +301,32 @@ export function PublishersTable({
                     <Building2 className="mx-auto h-4 w-4 text-[#666666]" />
                   )}
                 </td>
-                <td className="px-2 py-3 text-center align-top">
-                  <div className="flex items-start justify-center">
-                    <PublisherDialog
-                      mode="edit"
-                      submitAction={updateAction.bind(null, publisher.id)}
-                      initialValues={publisher}
-                    />
-                  </div>
-                </td>
-                <td className="px-2 py-3 text-center align-top">
-                  <div className="flex items-start justify-center">
-                    <DeletePublisherButton
-                      publisher={publisher}
-                      deleteAction={deleteAction}
-                    />
-                  </div>
-                </td>
+                {isAdmin ? (
+                  <>
+                    <td className="px-2 py-3 text-center align-top">
+                      <div className="flex items-start justify-center">
+                        <PublisherDialog
+                          mode="edit"
+                          submitAction={updateAction.bind(null, publisher.id)}
+                          initialValues={publisher}
+                        />
+                      </div>
+                    </td>
+                    <td className="px-2 py-3 text-center align-top">
+                      <div className="flex items-start justify-center">
+                        <DeletePublisherButton
+                          publisher={publisher}
+                          deleteAction={deleteAction}
+                        />
+                      </div>
+                    </td>
+                  </>
+                ) : null}
               </tr>
             ))}
             {pagination.total === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-2">
+                <td colSpan={isAdmin ? 10 : 8} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No publishers match the current search."
                     detail="Try another publisher name, ID, website, or note."

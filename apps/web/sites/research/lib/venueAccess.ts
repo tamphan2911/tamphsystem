@@ -11,10 +11,29 @@ export function hasUnrestrictedVenueAccess(roles: Role[]) {
 
 export function staffJournalAccessWhere(
   roles: Role[],
+  userId?: string,
 ): Prisma.JournalWhereInput | null {
   if (roles.includes(Role.ADMIN)) return {};
   if (roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT)) {
-    return { approvalStatus: JournalApprovalStatus.APPROVED };
+    return {
+      OR: [
+        { approvalStatus: JournalApprovalStatus.APPROVED },
+        ...(userId && roles.includes(Role.CHIEF_ASSISTANT)
+          ? [{ resultTask: { checkerId: userId } }]
+          : []),
+      ],
+    };
+  }
+  return null;
+}
+
+export function staffPublisherAccessWhere(
+  roles: Role[],
+  userId?: string,
+): Prisma.PublisherWhereInput | null {
+  if (roles.includes(Role.ADMIN)) return {};
+  if (userId && roles.includes(Role.CHIEF_ASSISTANT)) {
+    return { journals: { some: { resultTask: { checkerId: userId } } } };
   }
   return null;
 }
@@ -60,6 +79,7 @@ export function accessibleJournalWhere(
     OR: [
       { submissions: { some: { project } } },
       { suggestions: { some: { project } } },
+      { resultTask: { checkerId: userId } },
     ],
   };
 }

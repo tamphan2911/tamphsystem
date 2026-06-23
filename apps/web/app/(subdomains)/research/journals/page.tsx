@@ -23,7 +23,7 @@ export default async function JournalsPage() {
     []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
   const canDelete = roles.includes(Role.ADMIN);
-  const staffAccessWhere = staffJournalAccessWhere(roles);
+  const staffAccessWhere = staffJournalAccessWhere(roles, userId);
   const journalWhere = staffAccessWhere
     ? staffAccessWhere
     : userId

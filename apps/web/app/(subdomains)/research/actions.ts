@@ -757,6 +757,28 @@ async function publisherSelection(formData: FormData) {
   });
 }
 
+async function isCheckerForJournalResult(userId: string, journalId: string) {
+  const journal = await prisma.journal.findFirst({
+    where: { id: journalId, resultTask: { checkerId: userId } },
+    select: { id: true },
+  });
+  return Boolean(journal);
+}
+
+async function isCheckerForPublisherJournalResult(
+  userId: string,
+  publisherId: string,
+) {
+  const publisher = await prisma.publisher.findFirst({
+    where: {
+      id: publisherId,
+      journals: { some: { resultTask: { checkerId: userId } } },
+    },
+    select: { id: true },
+  });
+  return Boolean(publisher);
+}
+
 async function ensurePublisherByName(name: string | null) {
   if (!name) return null;
   const cleanedName = name.trim().replace(/\s+/g, " ");
@@ -3133,7 +3155,12 @@ export async function updateJournalApprovalStatus(
   status: JournalApprovalStatus,
 ) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  const isAdmin = user.roles.includes(Role.ADMIN);
+  const canApproveAsChecker =
+    status === JournalApprovalStatus.APPROVED &&
+    (await isCheckerForJournalResult(user.id, journalId));
+  if (!isAdmin && !canApproveAsChecker) redirect("/401");
+  if (!isAdmin && status !== JournalApprovalStatus.APPROVED) redirect("/401");
 
   if (status === JournalApprovalStatus.APPROVED) {
     await approveJournalWithWorkflow(journalId, user.id);
@@ -4129,7 +4156,10 @@ export async function createPublisher(formData: FormData) {
 
 export async function approvePublisher(publisherId: string) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  const canApprove =
+    user.roles.includes(Role.ADMIN) ||
+    (await isCheckerForPublisherJournalResult(user.id, publisherId));
+  if (!canApprove) redirect("/401");
 
   await prisma.publisher.update({
     where: { id: publisherId },

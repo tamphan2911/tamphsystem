@@ -30,7 +30,7 @@ const navItems = [
     href: "/publishers",
     label: "Publishers",
     icon: "publishers" as const,
-    rootAdminOnly: true,
+    requiresPublisherAccess: true,
   },
   {
     href: "/proposals",
@@ -217,6 +217,7 @@ export function ResearchShell({
   canSeeTasks,
   canSeeAccounts,
   canSeeReviews,
+  canSeePublishers,
   unopenedProposalCount,
 }: {
   children: React.ReactNode;
@@ -228,6 +229,7 @@ export function ResearchShell({
   canSeeTasks: boolean;
   canSeeAccounts: boolean;
   canSeeReviews: boolean;
+  canSeePublishers: boolean;
   unopenedProposalCount: number;
 }) {
   const pathname = usePathname();
@@ -356,6 +358,8 @@ export function ResearchShell({
       return canSeeTasks || isAssistant;
     if ("requiresReviewAccess" in item && item.requiresReviewAccess)
       return canSeeReviews;
+    if ("requiresPublisherAccess" in item && item.requiresPublisherAccess)
+      return canSeePublishers;
     if ("requiresAccountAccess" in item && item.requiresAccountAccess)
       return canSeeAccounts;
     return true;

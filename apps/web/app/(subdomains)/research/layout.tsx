@@ -41,12 +41,14 @@ export default async function ResearchLayout({
   let canSeeAccounts = isResearchAdmin;
   let canSeeReviews = isResearchAdmin;
   let canSeeTasks = isResearchAdmin;
+  let canSeePublishers = isRootAdmin;
   let unopenedProposalCount = 0;
   if (userId) {
     const [
       assignedTaskCount,
       unfinishedAccountTaskCount,
       assignedReviewTaskCount,
+      checkedPublisherCount,
     ] = await Promise.all([
       isResearchAdmin
         ? Promise.resolve(0)
@@ -75,6 +77,13 @@ export default async function ResearchLayout({
               assignments: { some: { userId } },
             },
           }),
+      isRootAdmin
+        ? Promise.resolve(0)
+        : prisma.publisher.count({
+            where: {
+              journals: { some: { resultTask: { checkerId: userId } } },
+            },
+          }),
     ]);
     if (
       !userActiveSites?.includes("research") &&
@@ -85,6 +94,7 @@ export default async function ResearchLayout({
     canSeeAccounts = isResearchAdmin || unfinishedAccountTaskCount > 0;
     canSeeReviews = isRootAdmin || assignedReviewTaskCount > 0;
     canSeeTasks = isResearchAdmin || assignedTaskCount > 0;
+    canSeePublishers = isRootAdmin || checkedPublisherCount > 0;
     if (isResearchAdmin) {
       unopenedProposalCount = await prisma.proposal.count({
         where: { status: ProposalStatus.NEW },
@@ -105,6 +115,7 @@ export default async function ResearchLayout({
         canSeeTasks={canSeeTasks}
         canSeeAccounts={canSeeAccounts}
         canSeeReviews={canSeeReviews}
+        canSeePublishers={canSeePublishers}
         unopenedProposalCount={unopenedProposalCount}
       >
         {children}

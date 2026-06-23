@@ -93,7 +93,7 @@ export default async function JournalDetailPage({
     roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
   const canViewAllRegistrationClaims =
     isAdmin || roles.includes(Role.CHIEF_ASSISTANT);
-  const staffAccessWhere = staffJournalAccessWhere(roles);
+  const staffAccessWhere = staffJournalAccessWhere(roles, userId);
   const scopedProjectWhere = userId
     ? associatedResearchWhere(userId, registrationIdentityValues)
     : { id: "__no_access__" };
@@ -168,6 +168,7 @@ export default async function JournalDetailPage({
         createdBy: {
           select: { id: true, name: true, email: true, roles: true },
         },
+        resultTask: { select: { checkerId: true } },
         _count: {
           select: { submissions: true, accounts: true, reviews: true },
         },
@@ -207,6 +208,11 @@ export default async function JournalDetailPage({
       Boolean(currentUser?.canManageResearchVenues) &&
       Boolean(userId) &&
       journal.createdById === userId);
+  const canApproveVenue =
+    isAdmin ||
+    (approvalPending &&
+      Boolean(userId) &&
+      journal.resultTask?.checkerId === userId);
   const creatorOptions: JournalCreatorOption[] = creatorUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -554,18 +560,18 @@ export default async function JournalDetailPage({
               <dt className="flex items-center gap-2 text-xs font-bold uppercase text-slate-400">
                 <span>Added by</span>
                 {isAdmin ? (
-                  <>
-                    <EditJournalCreatorButton
-                      journalId={journal.id}
-                      users={creatorOptions}
-                      currentCreatorId={journal.createdById ?? ""}
-                    />
-                    <JournalApprovalToggleButton
-                      journalId={journal.id}
-                      journalName={journal.name}
-                      approvalStatus={journal.approvalStatus}
-                    />
-                  </>
+                  <EditJournalCreatorButton
+                    journalId={journal.id}
+                    users={creatorOptions}
+                    currentCreatorId={journal.createdById ?? ""}
+                  />
+                ) : null}
+                {canApproveVenue ? (
+                  <JournalApprovalToggleButton
+                    journalId={journal.id}
+                    journalName={journal.name}
+                    approvalStatus={journal.approvalStatus}
+                  />
                 ) : null}
               </dt>
               <dd className="mt-1 text-sm leading-5 text-[#B0B0B0]">
