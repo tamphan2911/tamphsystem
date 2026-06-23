@@ -209,6 +209,7 @@ export function SuggestedJournalsPanel({
   const [declineConfirmOpen, setDeclineConfirmOpen] = useState(false);
   const [journalTaskConfirmOpen, setJournalTaskConfirmOpen] = useState(false);
   const [autoCreateJournalTask, setAutoCreateJournalTask] = useState(true);
+  const [autoCreateSubmitTask, setAutoCreateSubmitTask] = useState(true);
   const [declineReason, setDeclineReason] = useState("");
   const [selectedAddVenue, setSelectedAddVenue] = useState<Venue | null>(null);
   const [approvalVenue, setApprovalVenue] = useState<Venue | null>(null);
@@ -414,6 +415,7 @@ export function SuggestedJournalsPanel({
   );
   const approvalUsesJournalTask =
     isUnlinkedJournalApproval && autoCreateJournalTask;
+  const approvalCanCreateSubmitTask = Boolean(approveVenue?.item.venueId);
 
   function toggleAssistant(id: string) {
     setSelectedAssistantIds((current) =>
@@ -585,6 +587,11 @@ export function SuggestedJournalsPanel({
     if (!approveVenue) return;
     startTransition(async () => {
       let taskCreated = false;
+      let submitTaskCreated = false;
+      let submitTaskLinked = false;
+      if (approvalCanCreateSubmitTask && autoCreateSubmitTask) {
+        formData.set("createSubmitTask", "true");
+      }
       if (approveVenue.kind === "journal") {
         if (approvalVenue?.kind === "journal") {
           formData.set("journalId", approvalVenue.item.venueId);
@@ -595,15 +602,19 @@ export function SuggestedJournalsPanel({
           formData,
         );
         taskCreated = Boolean(result?.taskCreated);
+        submitTaskCreated = Boolean(result?.submitTaskCreated);
+        submitTaskLinked = Boolean(result?.submitTaskLinked);
       } else {
         if (approvalVenue?.kind === "conference") {
           formData.set("conferenceId", approvalVenue.item.venueId);
         }
-        await approveSuggestedConference(
+        const result = await approveSuggestedConference(
           projectId,
           approveVenue.item.id,
           formData,
         );
+        submitTaskCreated = Boolean(result?.submitTaskCreated);
+        submitTaskLinked = Boolean(result?.submitTaskLinked);
       }
       setApproveVenue(null);
       setApprovalVenue(null);
@@ -611,13 +622,22 @@ export function SuggestedJournalsPanel({
       setConferenceQuery("");
       setJournalTaskConfirmOpen(false);
       setAutoCreateJournalTask(true);
+      setAutoCreateSubmitTask(true);
       showSuccess({
         title: taskCreated
           ? "Journal task assigned"
-          : "Venue suggestion approved",
+          : submitTaskCreated
+            ? "Venue approved and submit task assigned"
+            : submitTaskLinked
+              ? "Venue approved and linked to submit task"
+              : "Venue suggestion approved",
         detail: taskCreated
           ? `An Add Journal task was assigned for ${approveVenue.item.name}. The suggestion remains pending until the journal is approved.`
-          : `${approveVenue.item.name} can now be used for submission tasks.`,
+          : submitTaskCreated
+            ? `A submit task was assigned to the user who suggested ${approveVenue.item.name}.`
+            : submitTaskLinked
+              ? `${approveVenue.item.name} is linked to the existing unfinished submit task.`
+              : `${approveVenue.item.name} can now be used for submission tasks.`,
       });
       router.refresh();
     });
@@ -629,6 +649,7 @@ export function SuggestedJournalsPanel({
     setJournalQuery("");
     setConferenceQuery("");
     setAutoCreateJournalTask(venue.kind === "journal" && !venue.item.venueId);
+    setAutoCreateSubmitTask(true);
     setJournalTaskConfirmOpen(false);
   }
 
@@ -1115,6 +1136,7 @@ export function SuggestedJournalsPanel({
             setDeclineConfirmOpen(false);
             setJournalTaskConfirmOpen(false);
             setAutoCreateJournalTask(true);
+            setAutoCreateSubmitTask(true);
             setDeclineReason("");
             setJournalQuery("");
             setConferenceQuery("");
@@ -1255,6 +1277,27 @@ export function SuggestedJournalsPanel({
                 )}
               </>
             )}
+            {approvalCanCreateSubmitTask ? (
+              <label className="flex cursor-pointer items-start gap-3 border border-[#D8D0C2] bg-[#FFFDF8] px-3 py-3 text-sm text-[#475467] transition hover:border-[#1F7180]/45 hover:bg-[#F8FBFA] dark:border-[#444444] dark:bg-[#202020] dark:text-[#D0D0D0] dark:hover:border-[#A8DADC]/45 dark:hover:bg-[#262626]">
+                <input
+                  type="checkbox"
+                  checked={autoCreateSubmitTask}
+                  onChange={(event) =>
+                    setAutoCreateSubmitTask(event.target.checked)
+                  }
+                  className="mt-0.5 h-4 w-4 flex-none accent-[#1F7180]"
+                />
+                <span className="min-w-0">
+                  <span className="block font-normal text-slate-900 dark:text-[#E4E4E4]">
+                    Assign submit task automatically
+                  </span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-500 dark:text-[#B0B0B0]">
+                    The task will be assigned to the suggester, with the same
+                    assigner and checker as the suggested-venue task.
+                  </span>
+                </span>
+              </label>
+            ) : null}
           </form>
         </ResearchModal>
       )}

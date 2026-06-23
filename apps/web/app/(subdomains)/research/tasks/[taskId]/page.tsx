@@ -772,6 +772,57 @@ export default async function TaskDetailPage({
       allowAssigneeReportUpload: true,
       journalTargetCount: true,
       journalCreationSuggestion: { select: { id: true } },
+      journalSubmissionSuggestion: {
+        select: {
+          id: true,
+          venueName: true,
+          venueLink: true,
+          status: true,
+          declineReason: true,
+          createdAt: true,
+          journal: {
+            select: {
+              name: true,
+              issn: true,
+              publisher: true,
+              rank: true,
+              localRank: true,
+              apc: true,
+              apcCurrency: true,
+              submissionFee: true,
+              submissionFeeCurrency: true,
+              note: true,
+              homepageLink: true,
+            },
+          },
+        },
+      },
+      conferenceSubmissionSuggestion: {
+        select: {
+          id: true,
+          venueName: true,
+          venueLink: true,
+          status: true,
+          declineReason: true,
+          createdAt: true,
+          conference: {
+            select: {
+              name: true,
+              type: true,
+              organizer: true,
+              location: true,
+              startDate: true,
+              endDate: true,
+              apc: true,
+              apcCurrency: true,
+              submissionFee: true,
+              submissionFeeCurrency: true,
+              note: true,
+              website: true,
+            },
+          },
+        },
+      },
       reportFileName: true,
       reportFileSize: true,
       reportUploadedAt: true,
@@ -1387,6 +1438,44 @@ export default async function TaskDetailPage({
         suggestion.venueLink ?? suggestion.journal?.homepageLink ?? null,
       createdAt: suggestion.createdAt,
     })),
+    ...(task.journalSubmissionSuggestion
+      ? [
+          {
+            id: task.journalSubmissionSuggestion.id,
+            kind: "journal" as const,
+            name:
+              task.journalSubmissionSuggestion.journal?.name ??
+              task.journalSubmissionSuggestion.venueName ??
+              "Unnamed journal",
+            status: task.journalSubmissionSuggestion.status,
+            meta: [
+              task.journalSubmissionSuggestion.journal?.issn
+                ? `ISSN ${task.journalSubmissionSuggestion.journal.issn}`
+                : null,
+              task.journalSubmissionSuggestion.journal?.publisher,
+              task.journalSubmissionSuggestion.journal?.rank ??
+                task.journalSubmissionSuggestion.journal?.localRank,
+            ]
+              .filter(Boolean)
+              .join(" - "),
+            apc: task.journalSubmissionSuggestion.journal?.apc ?? null,
+            apcCurrency:
+              task.journalSubmissionSuggestion.journal?.apcCurrency ?? "USD",
+            submissionFee:
+              task.journalSubmissionSuggestion.journal?.submissionFee ?? null,
+            submissionFeeCurrency:
+              task.journalSubmissionSuggestion.journal?.submissionFeeCurrency ??
+              "USD",
+            note: task.journalSubmissionSuggestion.journal?.note ?? null,
+            declineReason: task.journalSubmissionSuggestion.declineReason,
+            venueLink:
+              task.journalSubmissionSuggestion.venueLink ??
+              task.journalSubmissionSuggestion.journal?.homepageLink ??
+              null,
+            createdAt: task.journalSubmissionSuggestion.createdAt,
+          },
+        ]
+      : []),
     ...task.suggestedConferences.map((suggestion) => ({
       id: suggestion.id,
       kind: "conference" as const,
@@ -1418,6 +1507,49 @@ export default async function TaskDetailPage({
       venueLink: suggestion.venueLink ?? suggestion.conference?.website ?? null,
       createdAt: suggestion.createdAt,
     })),
+    ...(task.conferenceSubmissionSuggestion
+      ? [
+          {
+            id: task.conferenceSubmissionSuggestion.id,
+            kind: "conference" as const,
+            name:
+              task.conferenceSubmissionSuggestion.conference?.name ??
+              task.conferenceSubmissionSuggestion.venueName ??
+              "Unnamed conference",
+            status: task.conferenceSubmissionSuggestion.status,
+            meta: [
+              task.conferenceSubmissionSuggestion.conference?.organizer,
+              task.conferenceSubmissionSuggestion.conference?.type,
+              task.conferenceSubmissionSuggestion.conference?.location,
+              task.conferenceSubmissionSuggestion.conference
+                ? conferenceTime(
+                    task.conferenceSubmissionSuggestion.conference.startDate,
+                    task.conferenceSubmissionSuggestion.conference.endDate,
+                  )
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" - "),
+            apc: task.conferenceSubmissionSuggestion.conference?.apc ?? null,
+            apcCurrency:
+              task.conferenceSubmissionSuggestion.conference?.apcCurrency ??
+              "USD",
+            submissionFee:
+              task.conferenceSubmissionSuggestion.conference?.submissionFee ??
+              null,
+            submissionFeeCurrency:
+              task.conferenceSubmissionSuggestion.conference
+                ?.submissionFeeCurrency ?? "USD",
+            note: task.conferenceSubmissionSuggestion.conference?.note ?? null,
+            declineReason: task.conferenceSubmissionSuggestion.declineReason,
+            venueLink:
+              task.conferenceSubmissionSuggestion.venueLink ??
+              task.conferenceSubmissionSuggestion.conference?.website ??
+              null,
+            createdAt: task.conferenceSubmissionSuggestion.createdAt,
+          },
+        ]
+      : []),
   ].sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime());
   const hasTaskResultPanel =
     Boolean(submissionInfo) || suggestedVenueResults.length > 0;

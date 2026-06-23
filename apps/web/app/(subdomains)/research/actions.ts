@@ -3547,6 +3547,278 @@ async function accountBelongsToJournal(accountId: string, journalId: string) {
   return accounts.some((account) => account.id === accountId);
 }
 
+async function createSubmitTaskForSuggestedJournalApproval({
+  projectId,
+  suggestionId,
+  journalId,
+  approverId,
+  suggestedById,
+  suggestedByEmail,
+  originalTask,
+}: {
+  projectId: string;
+  suggestionId: string;
+  journalId: string;
+  approverId: string;
+  suggestedById: string;
+  suggestedByEmail: string;
+  originalTask: { createdById: string; checkerId: string | null } | null;
+}) {
+  const existingTask = await prisma.researchTask.findFirst({
+    where: {
+      taskType: ResearchTaskType.SUBMIT_RESEARCH,
+      projectId,
+      journalId,
+      status: {
+        notIn: [ResearchTaskStatus.COMPLETED, ResearchTaskStatus.REVOKED],
+      },
+    },
+    select: { id: true, title: true },
+  });
+  if (existingTask) {
+    await prisma.suggestedJournal.update({
+      where: { id: suggestionId },
+      data: { submissionTaskId: existingTask.id },
+    });
+    return {
+      taskId: existingTask.id,
+      taskTitle: existingTask.title,
+      created: false,
+    };
+  }
+
+  const [project, journal, guide, accounts] = await Promise.all([
+    prisma.researchProject.findUnique({
+      where: { id: projectId },
+      select: { title: true },
+    }),
+    prisma.journal.findUnique({
+      where: { id: journalId },
+      select: { name: true },
+    }),
+    prisma.taskGuide.findUnique({
+      where: { guideCode: "G002" },
+      select: { id: true },
+    }),
+    journalAccountIds(journalId),
+  ]);
+  if (!project || !journal) {
+    throw new Error("The linked research or journal was not found.");
+  }
+
+  const taskTitle = `Submit "${project.title}" to ${journal.name}`;
+  const taskDescription = [
+    "Submit this research to the approved suggested journal.",
+    `Research: ${project.title}`,
+    `Journal: ${journal.name}`,
+  ].join("\n");
+  const task = await prisma.$transaction(async (tx) => {
+    const createdTask = await tx.researchTask.create({
+      data: {
+        title: taskTitle,
+        taskCode: await generateTaskCode(),
+        description: taskDescription,
+        category: ResearchTaskCategory.SUBMITTING,
+        taskType: ResearchTaskType.SUBMIT_RESEARCH,
+        status: ResearchTaskStatus.IN_PROGRESS,
+        projectId,
+        journalId,
+        accountId: accounts.length === 1 ? accounts[0]?.id : null,
+        dueDate: researchTaskDueDate(researchDateValue(new Date(), 7)),
+        createdById: originalTask?.createdById ?? approverId,
+        checkerId: originalTask?.checkerId ?? null,
+        assignments: { create: { userId: suggestedById } },
+        ...(guide ? { guides: { connect: { id: guide.id } } } : {}),
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        checkerId: true,
+      },
+    });
+    await tx.suggestedJournal.update({
+      where: { id: suggestionId },
+      data: { submissionTaskId: createdTask.id },
+    });
+    return createdTask;
+  });
+
+  await notifyUsers({
+    userIds: [suggestedById],
+    type: "TASK_ASSIGNED",
+    title: "Task assigned",
+    summary: task.title,
+    body: task.description
+      ? `Assigned to you. Note: ${task.description}`
+      : "Assigned to you.",
+    href: `/tasks/${task.id}`,
+    entityType: "task",
+    entityId: task.id,
+    excludeUserId: approverId,
+  });
+  await sendTaskEmail({
+    to: [suggestedByEmail],
+    subject: `Task assigned: ${task.title}`,
+    heading: "Task assigned",
+    intro: "A submit task was created from your approved venue suggestion.",
+    detail: task.description ?? undefined,
+    taskTitle: task.title,
+    taskId: task.id,
+    actionLabel: "Open task",
+  });
+  if (task.checkerId) {
+    await notifyUsers({
+      userIds: [task.checkerId],
+      type: "TASK_CHECKER_ASSIGNED",
+      title: "Task checker assigned",
+      summary: task.title,
+      body: "Admin assigned you as checker for this submit task.",
+      href: `/tasks/${task.id}`,
+      entityType: "task",
+      entityId: task.id,
+      excludeUserId: approverId,
+    });
+  }
+
+  return { taskId: task.id, taskTitle: task.title, created: true };
+}
+
+async function createSubmitTaskForSuggestedConferenceApproval({
+  projectId,
+  suggestionId,
+  conferenceId,
+  approverId,
+  suggestedById,
+  suggestedByEmail,
+  originalTask,
+}: {
+  projectId: string;
+  suggestionId: string;
+  conferenceId: string;
+  approverId: string;
+  suggestedById: string;
+  suggestedByEmail: string;
+  originalTask: { createdById: string; checkerId: string | null } | null;
+}) {
+  const existingTask = await prisma.researchTask.findFirst({
+    where: {
+      taskType: ResearchTaskType.SUBMIT_CONFERENCE,
+      projectId,
+      conferenceId,
+      status: {
+        notIn: [ResearchTaskStatus.COMPLETED, ResearchTaskStatus.REVOKED],
+      },
+    },
+    select: { id: true, title: true },
+  });
+  if (existingTask) {
+    await prisma.suggestedConference.update({
+      where: { id: suggestionId },
+      data: { submissionTaskId: existingTask.id },
+    });
+    return {
+      taskId: existingTask.id,
+      taskTitle: existingTask.title,
+      created: false,
+    };
+  }
+
+  const [project, conference, guide] = await Promise.all([
+    prisma.researchProject.findUnique({
+      where: { id: projectId },
+      select: { title: true },
+    }),
+    prisma.conference.findUnique({
+      where: { id: conferenceId },
+      select: { name: true },
+    }),
+    prisma.taskGuide.findUnique({
+      where: { guideCode: "G002" },
+      select: { id: true },
+    }),
+  ]);
+  if (!project || !conference) {
+    throw new Error("The linked research or conference was not found.");
+  }
+
+  const taskTitle = `Submit "${project.title}" to ${conference.name}`;
+  const taskDescription = [
+    "Submit this research to the approved suggested conference.",
+    `Research: ${project.title}`,
+    `Conference: ${conference.name}`,
+  ].join("\n");
+  const task = await prisma.$transaction(async (tx) => {
+    const createdTask = await tx.researchTask.create({
+      data: {
+        title: taskTitle,
+        taskCode: await generateTaskCode(),
+        description: taskDescription,
+        category: ResearchTaskCategory.SUBMITTING,
+        taskType: ResearchTaskType.SUBMIT_CONFERENCE,
+        status: ResearchTaskStatus.IN_PROGRESS,
+        projectId,
+        conferenceId,
+        dueDate: researchTaskDueDate(researchDateValue(new Date(), 7)),
+        createdById: originalTask?.createdById ?? approverId,
+        checkerId: originalTask?.checkerId ?? null,
+        assignments: { create: { userId: suggestedById } },
+        ...(guide ? { guides: { connect: { id: guide.id } } } : {}),
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        checkerId: true,
+      },
+    });
+    await tx.suggestedConference.update({
+      where: { id: suggestionId },
+      data: { submissionTaskId: createdTask.id },
+    });
+    return createdTask;
+  });
+
+  await notifyUsers({
+    userIds: [suggestedById],
+    type: "TASK_ASSIGNED",
+    title: "Task assigned",
+    summary: task.title,
+    body: task.description
+      ? `Assigned to you. Note: ${task.description}`
+      : "Assigned to you.",
+    href: `/tasks/${task.id}`,
+    entityType: "task",
+    entityId: task.id,
+    excludeUserId: approverId,
+  });
+  await sendTaskEmail({
+    to: [suggestedByEmail],
+    subject: `Task assigned: ${task.title}`,
+    heading: "Task assigned",
+    intro: "A submit task was created from your approved venue suggestion.",
+    detail: task.description ?? undefined,
+    taskTitle: task.title,
+    taskId: task.id,
+    actionLabel: "Open task",
+  });
+  if (task.checkerId) {
+    await notifyUsers({
+      userIds: [task.checkerId],
+      type: "TASK_CHECKER_ASSIGNED",
+      title: "Task checker assigned",
+      summary: task.title,
+      body: "Admin assigned you as checker for this submit task.",
+      href: `/tasks/${task.id}`,
+      entityType: "task",
+      entityId: task.id,
+      excludeUserId: approverId,
+    });
+  }
+
+  return { taskId: task.id, taskTitle: task.title, created: true };
+}
+
 async function publisherAccountScope(formData: FormData): Promise<{
   accountType: PublisherAccountType;
   journalId: string | null;
@@ -6217,6 +6489,7 @@ export async function approveSuggestedJournal(
       createdById: true,
       taskId: true,
       journalCreationTaskId: true,
+      submissionTaskId: true,
       createdBy: { select: { email: true } },
       project: { select: { title: true } },
       task: { select: { createdById: true, checkerId: true } },
@@ -6322,6 +6595,7 @@ export async function approveSuggestedJournal(
   if (!linkedJournalId) {
     throw new Error("Choose the journal in the system before approving.");
   }
+  const createSubmitTask = formData.get("createSubmitTask") === "true";
 
   await prisma.suggestedJournal.update({
     where: { id: suggestionId },
@@ -6336,6 +6610,19 @@ export async function approveSuggestedJournal(
       declineReason: null,
     },
   });
+
+  const submitTaskResult =
+    createSubmitTask && suggestion.createdById && suggestion.createdBy
+      ? await createSubmitTaskForSuggestedJournalApproval({
+          projectId,
+          suggestionId,
+          journalId: linkedJournalId,
+          approverId: user.id,
+          suggestedById: suggestion.createdById,
+          suggestedByEmail: suggestion.createdBy.email,
+          originalTask: suggestion.task,
+        })
+      : null;
 
   const linkedJournal = await prisma.journal.findUnique({
     where: { id: linkedJournalId },
@@ -6357,8 +6644,15 @@ export async function approveSuggestedJournal(
 
   revalidatePath(`/projects/${projectId}`);
   if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
+  if (submitTaskResult?.taskId)
+    revalidatePath(`/tasks/${submitTaskResult.taskId}`);
   revalidatePath("/suggestions");
-  return { taskCreated: false };
+  return {
+    taskCreated: false,
+    submitTaskCreated: submitTaskResult?.created ?? false,
+    submitTaskLinked: Boolean(submitTaskResult && !submitTaskResult.created),
+    submitTaskId: submitTaskResult?.taskId,
+  };
 }
 
 export async function approveSuggestedConference(
@@ -6385,6 +6679,9 @@ export async function approveSuggestedConference(
       venueName: true,
       createdById: true,
       taskId: true,
+      submissionTaskId: true,
+      createdBy: { select: { email: true } },
+      task: { select: { createdById: true, checkerId: true } },
     },
   });
   if (!suggestion || suggestion.projectId !== projectId) return;
@@ -6394,6 +6691,7 @@ export async function approveSuggestedConference(
   if (!linkedConferenceId) {
     throw new Error("Choose the conference in the system before approving.");
   }
+  const createSubmitTask = formData.get("createSubmitTask") === "true";
 
   await prisma.suggestedConference.update({
     where: { id: suggestionId },
@@ -6408,6 +6706,19 @@ export async function approveSuggestedConference(
       declineReason: null,
     },
   });
+
+  const submitTaskResult =
+    createSubmitTask && suggestion.createdById && suggestion.createdBy
+      ? await createSubmitTaskForSuggestedConferenceApproval({
+          projectId,
+          suggestionId,
+          conferenceId: linkedConferenceId,
+          approverId: user.id,
+          suggestedById: suggestion.createdById,
+          suggestedByEmail: suggestion.createdBy.email,
+          originalTask: suggestion.task,
+        })
+      : null;
 
   const linkedConference = await prisma.conference.findUnique({
     where: { id: linkedConferenceId },
@@ -6429,7 +6740,15 @@ export async function approveSuggestedConference(
 
   revalidatePath(`/projects/${projectId}`);
   if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
+  if (submitTaskResult?.taskId)
+    revalidatePath(`/tasks/${submitTaskResult.taskId}`);
   revalidatePath("/suggestions");
+  return {
+    taskCreated: false,
+    submitTaskCreated: submitTaskResult?.created ?? false,
+    submitTaskLinked: Boolean(submitTaskResult && !submitTaskResult.created),
+    submitTaskId: submitTaskResult?.taskId,
+  };
 }
 
 export async function declineSuggestedJournal(
