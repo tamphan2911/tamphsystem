@@ -134,6 +134,14 @@ function researchMatchesMode(project: TaskResearchOption, mode: TaskMode) {
   return true;
 }
 
+function defaultTaskGuideIdsForMode(mode: TaskMode, guides: TaskGuideOption[]) {
+  const guideCode =
+    mode === "submit" ? "G002" : mode === "suggestVenue" ? "G001" : null;
+  if (!guideCode) return [];
+  const guide = guides.find((item) => item.guideCode === guideCode);
+  return guide ? [guide.id] : [];
+}
+
 export function NewTaskDialog({
   assignees,
   researchOptions,
@@ -179,7 +187,7 @@ export function NewTaskDialog({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCheckerId, setSelectedCheckerId] = useState("");
   const [selectedTaskGuideIds, setSelectedTaskGuideIds] = useState<string[]>(
-    [],
+    () => defaultTaskGuideIdsForMode(initialMode, taskGuideOptions),
   );
   const [selectedResearch, setSelectedResearch] =
     useState<TaskResearchOption | null>(initialResearch);
@@ -363,6 +371,9 @@ export function NewTaskDialog({
     setDueDate(defaultResearchTaskDueDate());
     setSelectedIds([]);
     setSelectedCheckerId("");
+    setSelectedTaskGuideIds(
+      defaultTaskGuideIdsForMode(initialMode, taskGuideOptions),
+    );
     setSelectedResearch(initialResearch);
     setSelectedVenue(null);
     setSelectedAccountId("");
@@ -417,6 +428,9 @@ export function NewTaskDialog({
 
   function changeMode(nextMode: TaskMode) {
     setMode(nextMode);
+    setSelectedTaskGuideIds(
+      defaultTaskGuideIdsForMode(nextMode, taskGuideOptions),
+    );
     if (
       (nextMode === "other" && selectedVenue?.kind === "conference") ||
       (nextMode !== "submit" && nextMode !== "other")
