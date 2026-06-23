@@ -19,6 +19,7 @@ import {
   Lightbulb,
   NotebookText,
   ShieldCheck,
+  UserRoundSearch,
   UsersRound,
 } from "lucide-react";
 
@@ -31,6 +32,7 @@ const icons = {
   submissions: FileCheck2,
   tasks: ClipboardList,
   taskGuides: NotebookText,
+  suggestedReviewers: UserRoundSearch,
   taskReports: FileArchive,
   conferences: CalendarDays,
   organizedProjects: Building2,

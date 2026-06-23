@@ -4613,6 +4613,65 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   return { ok: true };
 }
 
+export async function updateTaskSuggestedReviewers(
+  taskId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  const reviewerIds = orderedUniqueStrings(formData.getAll("reviewerIds"));
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      taskType: true,
+      status: true,
+      createdById: true,
+      checkerId: true,
+      journalId: true,
+    },
+  });
+
+  if (!task) return { ok: false, reason: "NOT_FOUND" };
+  if (
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    return { ok: false, reason: "TASK_CLOSED" };
+  }
+  if (task.taskType !== ResearchTaskType.SUBMIT_RESEARCH || !task.journalId) {
+    return { ok: false, reason: "NOT_JOURNAL_SUBMIT_TASK" };
+  }
+
+  const canManage =
+    user.roles.includes(Role.ADMIN) ||
+    task.createdById === user.id ||
+    task.checkerId === user.id;
+  if (!canManage) redirect("/401");
+
+  if (reviewerIds.length > 0) {
+    const reviewerCount = await prisma.suggestedReviewer.count({
+      where: { id: { in: reviewerIds } },
+    });
+    if (reviewerCount !== reviewerIds.length) {
+      return { ok: false, reason: "INVALID_REVIEWER" };
+    }
+  }
+
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: {
+      suggestedReviewers: {
+        set: reviewerIds.map((id) => ({ id })),
+      },
+    },
+  });
+
+  revalidatePath(`/tasks/${taskId}`);
+  revalidatePath("/tasks");
+  return { ok: true };
+}
+
 export async function revokeResearchTask(taskId: string) {
   const user = await requireCurrentUser();
   const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);

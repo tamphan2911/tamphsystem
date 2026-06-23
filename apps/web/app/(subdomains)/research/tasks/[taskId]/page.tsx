@@ -38,6 +38,7 @@ import {
   requestTaskRedo,
   revokeResearchTask,
   sendTaskReminderEmail,
+  updateTaskSuggestedReviewers,
 } from "../../actions";
 import {
   IconHint,
@@ -56,6 +57,11 @@ import {
 import { TaskReportPanel } from "./TaskReportPanel";
 import { TaskReminderButton } from "./TaskReminderButton";
 import { TaskGuideIcons } from "../TaskGuidePicker";
+import {
+  TaskSuggestedReviewerButton,
+  TaskSuggestedReviewersTable,
+  type SuggestedReviewerOption,
+} from "./TaskSuggestedReviewers";
 
 export const dynamic = "force-dynamic";
 
@@ -447,6 +453,16 @@ export default async function TaskDetailPage({
         select: { id: true, guideCode: true, title: true, content: true },
         orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
       },
+      suggestedReviewers: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          institution: true,
+          bio: true,
+        },
+        orderBy: [{ name: "asc" }, { email: "asc" }],
+      },
       reportUploadedById: true,
       createdBy: { select: { name: true, email: true, roles: true } },
       checker: { select: { name: true, email: true, roles: true } },
@@ -725,6 +741,44 @@ export default async function TaskDetailPage({
               : null;
   const canAnswerClarification = !isClosed && (isAdmin || isAssigner);
   const reportEnabled = task.allowAssigneeReportUpload;
+  const isJournalSubmitTask =
+    task.taskType === "SUBMIT_RESEARCH" && Boolean(task.journal);
+  const canManageSuggestedReviewers =
+    isJournalSubmitTask &&
+    !isClosed &&
+    (isRootAdmin || isAssigner || isChecker);
+  const suggestedReviewerAction = updateTaskSuggestedReviewers.bind(
+    null,
+    task.id,
+  );
+  const selectedSuggestedReviewers: SuggestedReviewerOption[] =
+    task.suggestedReviewers.map((reviewer) => ({
+      id: reviewer.id,
+      name: reviewer.name,
+      email: reviewer.email,
+      institution: reviewer.institution ?? "",
+      bio: reviewer.bio ?? "",
+    }));
+  const reviewerOptions: SuggestedReviewerOption[] = canManageSuggestedReviewers
+    ? (
+        await prisma.suggestedReviewer.findMany({
+          orderBy: [{ name: "asc" }, { email: "asc" }],
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            institution: true,
+            bio: true,
+          },
+        })
+      ).map((reviewer) => ({
+        id: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
+        institution: reviewer.institution ?? "",
+        bio: reviewer.bio ?? "",
+      }))
+    : selectedSuggestedReviewers;
   const canUploadReport =
     reportEnabled && !isClosed && isAssignee && !isAssigner;
   const canDownloadReport =
@@ -1200,8 +1254,15 @@ export default async function TaskDetailPage({
               )}
               {task.journal && (
                 <div className="min-w-0">
-                  <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                    Journal
+                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                    <span>Journal</span>
+                    {canManageSuggestedReviewers ? (
+                      <TaskSuggestedReviewerButton
+                        reviewers={reviewerOptions}
+                        selectedReviewers={selectedSuggestedReviewers}
+                        action={suggestedReviewerAction}
+                      />
+                    ) : null}
                   </div>
                   <div className="mt-2 flex min-w-0 items-center gap-2">
                     <Link
@@ -1278,6 +1339,14 @@ export default async function TaskDetailPage({
               className=""
             />
           </div>
+
+          {isJournalSubmitTask && selectedSuggestedReviewers.length > 0 ? (
+            <div className="border-t border-[#D8D0C2] p-5 dark:border-[#444444]">
+              <TaskSuggestedReviewersTable
+                reviewers={selectedSuggestedReviewers}
+              />
+            </div>
+          ) : null}
 
           {reportEnabled && (
             <div className="border-t border-[#444444] p-5">

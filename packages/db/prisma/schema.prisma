@@ -100,6 +100,7 @@ model User {
   createdResearchTasks            ResearchTask[]               @relation("ResearchTaskCreator")
   checkedResearchTasks            ResearchTask[]               @relation("ResearchTaskChecker")
   createdTaskGuides               TaskGuide[]                  @relation("TaskGuideCreator")
+  createdSuggestedReviewers       SuggestedReviewer[]          @relation("SuggestedReviewerCreator")
   assignedResearchTasks           ResearchTaskAssignment[]     @relation("ResearchTaskAssignee")
   researchNotifications           ResearchNotification[]
   suggestedJournals               SuggestedJournal[]           @relation("SuggestedJournalCreator")
@@ -821,11 +822,30 @@ model ResearchTask {
   review             AcademicReview?   @relation(fields: [reviewId], references: [id], onDelete: SetNull)
   account            PublisherAccount? @relation("ResearchTaskAccount", fields: [accountId], references: [id], onDelete: SetNull)
 
-  assignments    ResearchTaskAssignment[]
-  clarifications ResearchTaskClarification[]
-  guides         TaskGuide[]                 @relation("ResearchTaskGuides")
+  assignments        ResearchTaskAssignment[]
+  clarifications     ResearchTaskClarification[]
+  guides             TaskGuide[]                 @relation("ResearchTaskGuides")
+  suggestedReviewers SuggestedReviewer[]         @relation("ResearchTaskSuggestedReviewers")
 
   @@index([checkerId])
+}
+
+model SuggestedReviewer {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  institution String?
+  bio         String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User?          @relation("SuggestedReviewerCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  tasks     ResearchTask[] @relation("ResearchTaskSuggestedReviewers")
+
+  @@index([name])
+  @@index([institution])
+  @@index([updatedAt])
 }
 
 model TaskGuide {

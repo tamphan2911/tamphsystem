@@ -51,6 +51,12 @@ const navItems = [
     rootAdminOnly: true,
   },
   {
+    href: "/suggested-reviewers",
+    label: "Suggested Reviewers",
+    icon: "suggestedReviewers" as const,
+    rootAdminOnly: true,
+  },
+  {
     href: "/task-reports",
     label: "Uploaded Files",
     icon: "taskReports" as const,
