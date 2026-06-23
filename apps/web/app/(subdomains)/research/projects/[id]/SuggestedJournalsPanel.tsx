@@ -864,7 +864,7 @@ export function SuggestedJournalsPanel({
               isAdmin={isAdmin}
               canAssignTask={canAssignTask}
               canApproveSuggestion={canApproveSuggestion}
-              canEditVenue={canSuggestVenue}
+              canEditVenue={canApproveSuggestion}
               disabled={disabled}
               onAssign={() =>
                 openSubmitTask({ kind: "journal", item: journal })
@@ -888,7 +888,7 @@ export function SuggestedJournalsPanel({
               isAdmin={isAdmin}
               canAssignTask={canAssignTask}
               canApproveSuggestion={canApproveSuggestion}
-              canEditVenue={canSuggestVenue}
+              canEditVenue={canApproveSuggestion}
               disabled={disabled}
               onAssign={() =>
                 openSubmitTask({ kind: "conference", item: conference })

@@ -510,6 +510,9 @@ export default async function ProjectDetailPage({
   const canEditResearch = isAdmin || isCorrespondingAuthor;
   const canManageResearchTasks =
     isRootAdmin || isFirstAuthor || isCorrespondingAuthor;
+  const isSuggestVenueTaskAssigner = project.tasks.some(
+    (task) => task.taskType === "SUGGEST_VENUE" && task.createdById === userId,
+  );
   const canSendAuthorEmails =
     isRootAdmin || isFirstAuthor || isCorrespondingAuthor;
   const canSuggestVenue =
@@ -562,7 +565,9 @@ export default async function ProjectDetailPage({
   const canCreateSubmitOrOtherTask =
     canManageResearchTasks && !researchContentLocked;
   const canCreateProductionTask = canCreateSubmitOrOtherTask;
-  const canApproveVenueSuggestion = canCreateSubmitOrOtherTask;
+  const canApproveVenueSuggestion =
+    (isRootAdmin || isChiefAssistant || isSuggestVenueTaskAssigner) &&
+    !researchContentLocked;
   const authorNames =
     hydratedAuthorEntries.length > 0
       ? hydratedAuthorEntries.map(

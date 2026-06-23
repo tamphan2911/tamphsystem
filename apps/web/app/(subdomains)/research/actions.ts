@@ -6597,22 +6597,20 @@ async function canApproveVenueSuggestionForResearch(
   userId: string,
   roles: Role[],
 ) {
-  if (roles.includes(Role.ADMIN)) return true;
+  if (roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT)) {
+    return true;
+  }
   const project = await prisma.researchProject.findUnique({
     where: { id: projectId },
     select: {
-      leadResearcherId: true,
-      authorEntries: {
-        where: { OR: [{ position: 0 }, { isCorresponding: true }] },
-        select: { userId: true },
+      tasks: {
+        where: { taskType: ResearchTaskType.SUGGEST_VENUE },
+        select: { createdById: true },
       },
     },
   });
   if (!project) return false;
-  return (
-    project.leadResearcherId === userId ||
-    project.authorEntries.some((entry) => entry.userId === userId)
-  );
+  return project.tasks.some((task) => task.createdById === userId);
 }
 
 async function notifyVenueSuggestionApprovalNeeded({
