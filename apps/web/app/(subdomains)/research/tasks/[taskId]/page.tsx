@@ -771,6 +771,7 @@ export default async function TaskDetailPage({
       taskFileSize: true,
       allowAssigneeReportUpload: true,
       journalTargetCount: true,
+      journalCreationSuggestion: { select: { id: true } },
       reportFileName: true,
       reportFileSize: true,
       reportUploadedAt: true,
@@ -1212,14 +1213,17 @@ export default async function TaskDetailPage({
   const isClosed =
     task.status === ResearchTaskStatus.COMPLETED ||
     task.status === ResearchTaskStatus.REVOKED;
+  const isAutomatedJournalTask = Boolean(task.journalCreationSuggestion);
   const canMarkReady =
     !isClosed &&
+    !isAutomatedJournalTask &&
     isAssignee &&
     !selfAssigned &&
     task.status !== ResearchTaskStatus.CHECKING &&
     task.status !== ResearchTaskStatus.NEED_CLARIFY;
   const canApprove =
     !isClosed &&
+    !isAutomatedJournalTask &&
     !isAssignee &&
     (isAdmin || isAssigner) &&
     (selfAssigned || isAdmin || task.status === ResearchTaskStatus.CHECKING);

@@ -701,6 +701,7 @@ export default async function ProjectDetailPage({
           : "Unknown email",
         requiresApproval: suggestion.requiresApproval,
         declineReason: suggestion.declineReason ?? undefined,
+        journalCreationPending: Boolean(suggestion.journalCreationTaskId),
         approvedByName: approvedBy
           ? displayResearchPersonName(approvedBy) || "Unknown user"
           : undefined,
@@ -709,7 +710,9 @@ export default async function ProjectDetailPage({
           : undefined,
         venueState:
           suggestion.status === "PENDING"
-            ? { state: "pendingApproval" }
+            ? suggestion.journalCreationTaskId
+              ? { state: "addingJournal" }
+              : { state: "pendingApproval" }
             : suggestion.status === "DECLINED"
               ? {
                   state: "declined",

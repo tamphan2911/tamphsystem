@@ -3010,13 +3010,7 @@ export async function approveTaskJournal(taskId: string, journalId: string) {
   });
   if (!journal) throw new Error("Task journal was not found.");
 
-  await prisma.journal.update({
-    where: { id: journalId },
-    data: { approvalStatus: JournalApprovalStatus.APPROVED },
-  });
-  revalidatePath("/journals");
-  revalidatePath(`/journals/${journalId}`);
-  revalidatePath(`/tasks/${taskId}`);
+  await approveJournalWithWorkflow(journalId, user.id);
 }
 
 export async function updateJournal(journalId: string, formData: FormData) {
@@ -3091,6 +3085,11 @@ export async function updateJournalApprovalStatus(
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
 
+  if (status === JournalApprovalStatus.APPROVED) {
+    await approveJournalWithWorkflow(journalId, user.id);
+    return;
+  }
+
   const journal = await prisma.journal.update({
     where: { id: journalId },
     data: { approvalStatus: status },
@@ -3100,6 +3099,135 @@ export async function updateJournalApprovalStatus(
   revalidatePath("/journals");
   revalidatePath(`/journals/${journalId}`);
   if (journal.resultTaskId) revalidatePath(`/tasks/${journal.resultTaskId}`);
+}
+
+async function approveJournalWithWorkflow(
+  journalId: string,
+  approvedById: string,
+) {
+  const completedAt = new Date();
+  const result = await prisma.$transaction(async (tx) => {
+    const journal = await tx.journal.findUnique({
+      where: { id: journalId },
+      select: {
+        id: true,
+        name: true,
+        resultTaskId: true,
+        resultTask: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            assignments: { select: { userId: true } },
+            journalCreationSuggestion: {
+              select: { id: true, projectId: true, createdById: true },
+            },
+          },
+        },
+      },
+    });
+    if (!journal) throw new Error("Journal was not found.");
+
+    await tx.journal.update({
+      where: { id: journalId },
+      data: { approvalStatus: JournalApprovalStatus.APPROVED },
+    });
+
+    const workflowTask = journal.resultTask;
+    const suggestion = workflowTask?.journalCreationSuggestion;
+    if (
+      !workflowTask ||
+      !suggestion ||
+      workflowTask.status === ResearchTaskStatus.REVOKED
+    ) {
+      return {
+        journalName: journal.name,
+        taskId: journal.resultTaskId,
+        workflow: null,
+      };
+    }
+
+    await tx.researchTask.update({
+      where: { id: workflowTask.id },
+      data: {
+        status: ResearchTaskStatus.COMPLETED,
+        completedAt,
+        completedById: approvedById,
+        completionMessage:
+          "Journal approved. The linked venue suggestion was approved automatically.",
+        revokedAt: null,
+        revokedById: null,
+        revokeReason: null,
+        adminViewedAt: null,
+        assignments: {
+          updateMany: {
+            where: { finishedAt: null },
+            data: { finishedAt: completedAt },
+          },
+        },
+      },
+    });
+    await tx.suggestedJournal.update({
+      where: { id: suggestion.id },
+      data: {
+        journalId,
+        status: SuggestedVenueStatus.APPROVED,
+        requiresApproval: true,
+        approvedAt: completedAt,
+        approvedById,
+        declinedAt: null,
+        declinedById: null,
+        declineReason: null,
+      },
+    });
+
+    return {
+      journalName: journal.name,
+      taskId: workflowTask.id,
+      workflow: {
+        taskTitle: workflowTask.title,
+        suggestionId: suggestion.id,
+        projectId: suggestion.projectId,
+        suggesterId: suggestion.createdById,
+        assigneeIds: workflowTask.assignments.map(
+          (assignment) => assignment.userId,
+        ),
+      },
+    };
+  });
+
+  revalidatePath("/journals");
+  revalidatePath(`/journals/${journalId}`);
+  if (result.taskId) revalidatePath(`/tasks/${result.taskId}`);
+  if (result.workflow) {
+    revalidatePath("/tasks");
+    revalidatePath(`/projects/${result.workflow.projectId}`);
+    revalidatePath("/suggestions");
+    await notifyUsers({
+      userIds: result.workflow.assigneeIds,
+      type: "TASK_COMPLETED",
+      title: "Task completed automatically",
+      summary: result.workflow.taskTitle,
+      body: `${result.journalName} was approved. The journal task and linked venue suggestion are now complete.`,
+      href: `/tasks/${result.taskId}`,
+      entityType: "task",
+      entityId: result.taskId,
+      excludeUserId: approvedById,
+    });
+    if (result.workflow.suggesterId) {
+      await notifyUsers({
+        userIds: [result.workflow.suggesterId],
+        type: "VENUE_SUGGESTION_APPROVED",
+        title: "Venue suggestion approved",
+        summary: result.journalName,
+        body: "The journal was added and approved, so your venue suggestion is now approved.",
+        href: `/projects/${result.workflow.projectId}`,
+        entityType: "suggestedVenue",
+        entityId: result.workflow.suggestionId,
+        excludeUserId: approvedById,
+      });
+    }
+  }
 }
 
 export async function approveJournal(journalId: string) {
@@ -6085,11 +6213,109 @@ export async function approveSuggestedJournal(
       projectId: true,
       journalId: true,
       venueName: true,
+      venueLink: true,
       createdById: true,
       taskId: true,
+      journalCreationTaskId: true,
+      createdBy: { select: { email: true } },
+      project: { select: { title: true } },
+      task: { select: { createdById: true, checkerId: true } },
     },
   });
   if (!suggestion || suggestion.projectId !== projectId) return;
+
+  const createJournalTask =
+    formData.get("createJournalTask") === "true" && !suggestion.journalId;
+  if (createJournalTask) {
+    if (!suggestion.createdById || !suggestion.createdBy) {
+      throw new Error("The venue suggester is not available for assignment.");
+    }
+    const suggesterId = suggestion.createdById;
+    if (suggestion.journalCreationTaskId) {
+      return {
+        taskCreated: true,
+        taskId: suggestion.journalCreationTaskId,
+      };
+    }
+    const guide = await prisma.taskGuide.findUnique({
+      where: { guideCode: "G003" },
+      select: { id: true },
+    });
+    if (!guide) {
+      throw new Error("Task guide G003 is not available.");
+    }
+    const venueName = suggestion.venueName ?? "New suggested journal";
+    const venueLink = suggestion.venueLink ?? "No venue link provided";
+    const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const taskTitle = `Add journal: ${venueName}`;
+    const taskCode = await generateTaskCode();
+    const taskDescription = [
+      "Add this suggested journal to the site system.",
+      `Journal: ${venueName}`,
+      `Link: ${venueLink}`,
+      `Research: ${suggestion.project.title}`,
+    ].join("\n");
+    const task = await prisma.$transaction(async (tx) => {
+      const createdTask = await tx.researchTask.create({
+        data: {
+          title: taskTitle,
+          taskCode,
+          description: taskDescription,
+          taskType: ResearchTaskType.ADD_JOURNAL,
+          status: ResearchTaskStatus.IN_PROGRESS,
+          dueDate,
+          journalTargetCount: 1,
+          createdById: suggestion.task?.createdById ?? user.id,
+          checkerId: suggestion.task?.checkerId ?? null,
+          assignments: { create: { userId: suggesterId } },
+          guides: { connect: { id: guide.id } },
+        },
+        select: { id: true },
+      });
+      await tx.suggestedJournal.update({
+        where: { id: suggestionId },
+        data: {
+          journalCreationTaskId: createdTask.id,
+          status: SuggestedVenueStatus.PENDING,
+          requiresApproval: true,
+          approvedAt: null,
+          approvedById: null,
+          declinedAt: null,
+          declinedById: null,
+          declineReason: null,
+        },
+      });
+      return createdTask;
+    });
+
+    await notifyUsers({
+      userIds: [suggesterId],
+      type: "TASK_ASSIGNED",
+      title: "Task assigned",
+      summary: taskTitle,
+      body: taskDescription,
+      href: `/tasks/${task.id}`,
+      entityType: "task",
+      entityId: task.id,
+      excludeUserId: user.id,
+    });
+    await sendTaskEmail({
+      to: [suggestion.createdBy.email],
+      subject: `Task assigned: ${taskTitle}`,
+      heading: "Task assigned",
+      intro: "A journal suggestion needs to be added to the site system.",
+      detail: taskDescription,
+      taskTitle,
+      taskId: task.id,
+      actionLabel: "Open task",
+    });
+
+    revalidatePath("/tasks");
+    revalidatePath(`/tasks/${task.id}`);
+    revalidatePath(`/projects/${projectId}`);
+    revalidatePath("/suggestions");
+    return { taskCreated: true, taskId: task.id };
+  }
 
   const linkedJournalId =
     suggestion.journalId ?? optionalString(formData.get("journalId"));
@@ -6132,6 +6358,7 @@ export async function approveSuggestedJournal(
   revalidatePath(`/projects/${projectId}`);
   if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
   revalidatePath("/suggestions");
+  return { taskCreated: false };
 }
 
 export async function approveSuggestedConference(
@@ -6501,6 +6728,7 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
       title: true,
       createdById: true,
       checkerId: true,
+      journalCreationSuggestion: { select: { id: true } },
       createdBy: { select: { email: true } },
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
@@ -6509,6 +6737,7 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
   });
 
   if (!task) return;
+  if (task.journalCreationSuggestion) return;
   if (
     task.status === ResearchTaskStatus.COMPLETED ||
     task.status === ResearchTaskStatus.REVOKED
@@ -6825,6 +7054,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       title: true,
       createdById: true,
       checkerId: true,
+      journalCreationSuggestion: { select: { id: true } },
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
       },
@@ -6832,6 +7062,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
   });
 
   if (!task) return;
+  if (task.journalCreationSuggestion) return;
   const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);
   if (
     task.status === ResearchTaskStatus.COMPLETED ||

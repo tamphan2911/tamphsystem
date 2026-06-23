@@ -742,32 +742,35 @@ model Publisher {
 }
 
 model SuggestedJournal {
-  id               String               @id @default(uuid())
-  projectId        String
-  taskId           String?
-  journalId        String?
-  venueName        String?
-  venueLink        String?
-  status           SuggestedVenueStatus @default(APPROVED)
-  approvedAt       DateTime?
-  approvedById     String?
-  declinedAt       DateTime?
-  declinedById     String?
-  declineReason    String?
-  requiresApproval Boolean              @default(false)
-  createdById      String?
-  createdAt        DateTime             @default(now())
+  id                    String               @id @default(uuid())
+  projectId             String
+  taskId                String?
+  journalCreationTaskId String?              @unique
+  journalId             String?
+  venueName             String?
+  venueLink             String?
+  status                SuggestedVenueStatus @default(APPROVED)
+  approvedAt            DateTime?
+  approvedById          String?
+  declinedAt            DateTime?
+  declinedById          String?
+  declineReason         String?
+  requiresApproval      Boolean              @default(false)
+  createdById           String?
+  createdAt             DateTime             @default(now())
 
-  project    ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  task       ResearchTask?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
-  journal    Journal?        @relation(fields: [journalId], references: [id], onDelete: Cascade)
-  createdBy  User?           @relation("SuggestedJournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  approvedBy User?           @relation("SuggestedJournalApprover", fields: [approvedById], references: [id], onDelete: SetNull)
-  declinedBy User?           @relation("SuggestedJournalDecliner", fields: [declinedById], references: [id], onDelete: SetNull)
+  project             ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task                ResearchTask?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  journalCreationTask ResearchTask?   @relation("SuggestedJournalCreationTask", fields: [journalCreationTaskId], references: [id], onDelete: SetNull)
+  journal             Journal?        @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  createdBy           User?           @relation("SuggestedJournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  approvedBy          User?           @relation("SuggestedJournalApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  declinedBy          User?           @relation("SuggestedJournalDecliner", fields: [declinedById], references: [id], onDelete: SetNull)
 
   @@unique([projectId, journalId])
   @@index([projectId, status])
   @@index([taskId])
+  @@index([journalCreationTaskId])
   @@index([approvedById])
   @@index([declinedById])
 }
@@ -850,13 +853,14 @@ model ResearchTask {
   review             AcademicReview?   @relation(fields: [reviewId], references: [id], onDelete: SetNull)
   account            PublisherAccount? @relation("ResearchTaskAccount", fields: [accountId], references: [id], onDelete: SetNull)
 
-  assignments          ResearchTaskAssignment[]
-  clarifications       ResearchTaskClarification[]
-  guides               TaskGuide[]                 @relation("ResearchTaskGuides")
-  suggestedReviewers   SuggestedReviewer[]         @relation("ResearchTaskSuggestedReviewers")
-  suggestedJournals    SuggestedJournal[]
-  suggestedConferences SuggestedConference[]
-  addedJournals        Journal[]                   @relation("ResearchTaskAddedJournals")
+  assignments               ResearchTaskAssignment[]
+  clarifications            ResearchTaskClarification[]
+  guides                    TaskGuide[]                 @relation("ResearchTaskGuides")
+  suggestedReviewers        SuggestedReviewer[]         @relation("ResearchTaskSuggestedReviewers")
+  suggestedJournals         SuggestedJournal[]
+  suggestedConferences      SuggestedConference[]
+  addedJournals             Journal[]                   @relation("ResearchTaskAddedJournals")
+  journalCreationSuggestion SuggestedJournal?           @relation("SuggestedJournalCreationTask")
 
   @@index([checkerId])
   @@index([completedById])

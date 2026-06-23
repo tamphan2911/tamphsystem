@@ -90,6 +90,7 @@ export type SuggestedJournalOption = {
   approvedByName?: string;
   approvedByEmail?: string;
   declineReason?: string;
+  journalCreationPending?: boolean;
   venueState?: SuggestedVenueState;
 };
 
@@ -136,6 +137,7 @@ export type SuggestedVenueState = {
     | "accepted"
     | "published"
     | "pendingApproval"
+    | "addingJournal"
     | "declined"
     | "blocked";
   publishedAt?: string;
@@ -205,6 +207,8 @@ export function SuggestedJournalsPanel({
   const [deleteVenue, setDeleteVenue] = useState<Venue | null>(null);
   const [approveVenue, setApproveVenue] = useState<Venue | null>(null);
   const [declineConfirmOpen, setDeclineConfirmOpen] = useState(false);
+  const [journalTaskConfirmOpen, setJournalTaskConfirmOpen] = useState(false);
+  const [autoCreateJournalTask, setAutoCreateJournalTask] = useState(true);
   const [declineReason, setDeclineReason] = useState("");
   const [selectedAddVenue, setSelectedAddVenue] = useState<Venue | null>(null);
   const [approvalVenue, setApprovalVenue] = useState<Venue | null>(null);
@@ -405,6 +409,11 @@ export function SuggestedJournalsPanel({
     taskMode === "submit" &&
     assignVenue?.kind === "journal" &&
     assignJournalAccounts.length > 1;
+  const isUnlinkedJournalApproval = Boolean(
+    approveVenue?.kind === "journal" && !approveVenue.item.venueId,
+  );
+  const approvalUsesJournalTask =
+    isUnlinkedJournalApproval && autoCreateJournalTask;
 
   function toggleAssistant(id: string) {
     setSelectedAssistantIds((current) =>
@@ -575,15 +584,17 @@ export function SuggestedJournalsPanel({
   function approveSuggestion(formData: FormData) {
     if (!approveVenue) return;
     startTransition(async () => {
+      let taskCreated = false;
       if (approveVenue.kind === "journal") {
         if (approvalVenue?.kind === "journal") {
           formData.set("journalId", approvalVenue.item.venueId);
         }
-        await approveSuggestedJournal(
+        const result = await approveSuggestedJournal(
           projectId,
           approveVenue.item.id,
           formData,
         );
+        taskCreated = Boolean(result?.taskCreated);
       } else {
         if (approvalVenue?.kind === "conference") {
           formData.set("conferenceId", approvalVenue.item.venueId);
@@ -598,12 +609,35 @@ export function SuggestedJournalsPanel({
       setApprovalVenue(null);
       setJournalQuery("");
       setConferenceQuery("");
+      setJournalTaskConfirmOpen(false);
+      setAutoCreateJournalTask(true);
       showSuccess({
-        title: "Venue suggestion approved",
-        detail: `${approveVenue.item.name} can now be used for submission tasks.`,
+        title: taskCreated
+          ? "Journal task assigned"
+          : "Venue suggestion approved",
+        detail: taskCreated
+          ? `An Add Journal task was assigned for ${approveVenue.item.name}. The suggestion remains pending until the journal is approved.`
+          : `${approveVenue.item.name} can now be used for submission tasks.`,
       });
       router.refresh();
     });
+  }
+
+  function openVenueApproval(venue: Venue) {
+    setApproveVenue(venue);
+    setApprovalVenue(null);
+    setJournalQuery("");
+    setConferenceQuery("");
+    setAutoCreateJournalTask(venue.kind === "journal" && !venue.item.venueId);
+    setJournalTaskConfirmOpen(false);
+  }
+
+  function confirmJournalTaskApproval() {
+    if (!approveVenue || approveVenue.kind !== "journal") return;
+    const formData = new FormData();
+    formData.set("createJournalTask", "true");
+    setJournalTaskConfirmOpen(false);
+    approveSuggestion(formData);
   }
 
   function declineSuggestion() {
@@ -760,7 +794,7 @@ export function SuggestedJournalsPanel({
                 openSubmitTask({ kind: "journal", item: journal })
               }
               onApprove={() =>
-                setApproveVenue({ kind: "journal", item: journal })
+                openVenueApproval({ kind: "journal", item: journal })
               }
               onEdit={() => openEditVenue({ kind: "journal", item: journal })}
               onDelete={() =>
@@ -784,7 +818,7 @@ export function SuggestedJournalsPanel({
                 openSubmitTask({ kind: "conference", item: conference })
               }
               onApprove={() =>
-                setApproveVenue({ kind: "conference", item: conference })
+                openVenueApproval({ kind: "conference", item: conference })
               }
               onEdit={() =>
                 openEditVenue({ kind: "conference", item: conference })
@@ -1079,6 +1113,8 @@ export function SuggestedJournalsPanel({
             setApproveVenue(null);
             setApprovalVenue(null);
             setDeclineConfirmOpen(false);
+            setJournalTaskConfirmOpen(false);
+            setAutoCreateJournalTask(true);
             setDeclineReason("");
             setJournalQuery("");
             setConferenceQuery("");
@@ -1098,8 +1134,26 @@ export function SuggestedJournalsPanel({
                 Decline
               </ResearchButton>
               <ResearchButton
-                form="approve-suggested-venue-form"
-                disabled={!approveVenue.item.venueId && !approvalVenue}
+                type={approvalUsesJournalTask ? "button" : "submit"}
+                form={
+                  approvalUsesJournalTask
+                    ? undefined
+                    : "approve-suggested-venue-form"
+                }
+                onClick={
+                  approvalUsesJournalTask
+                    ? () => setJournalTaskConfirmOpen(true)
+                    : undefined
+                }
+                disabled={
+                  isPending ||
+                  (isUnlinkedJournalApproval &&
+                    !autoCreateJournalTask &&
+                    approvalVenue?.kind !== "journal") ||
+                  (!approveVenue.item.venueId &&
+                    approveVenue.kind === "conference" &&
+                    approvalVenue?.kind !== "conference")
+                }
               >
                 <Check className="h-4 w-4" />
                 Approve
@@ -1129,42 +1183,105 @@ export function SuggestedJournalsPanel({
             </div>
             {!approveVenue.item.venueId && (
               <>
-                <p className="text-sm text-[#B0B0B0]">
-                  This venue is not linked to a system record yet. Add it to the
-                  journal or conference list first, then choose it here before
-                  approving.
-                </p>
-                <ApprovalVenuePicker
-                  kind={approveVenue.kind}
-                  query={
-                    approveVenue.kind === "journal"
-                      ? journalQuery
-                      : conferenceQuery
-                  }
-                  selectedVenue={approvalVenue}
-                  journals={journalResults}
-                  conferences={conferenceResults}
-                  onQueryChange={(value) => {
-                    if (approveVenue.kind === "journal") setJournalQuery(value);
-                    else setConferenceQuery(value);
-                    setApprovalVenue(null);
-                  }}
-                  onSelect={(venue) => {
-                    setApprovalVenue(venue);
-                    if (venue.kind === "journal")
-                      setJournalQuery(venue.item.name);
-                    else setConferenceQuery(venue.item.name);
-                  }}
-                  onClear={() => {
-                    setApprovalVenue(null);
-                    if (approveVenue.kind === "journal") setJournalQuery("");
-                    else setConferenceQuery("");
-                  }}
-                />
+                {approveVenue.kind === "journal" ? (
+                  <label className="flex cursor-pointer items-start gap-3 border border-sky-200 bg-sky-50 px-3 py-3 text-sm text-slate-700 transition hover:border-sky-300 dark:border-sky-800/60 dark:bg-sky-950/20 dark:text-[#D0D0D0] dark:hover:border-sky-700">
+                    <input
+                      type="checkbox"
+                      checked={autoCreateJournalTask}
+                      onChange={(event) => {
+                        setAutoCreateJournalTask(event.target.checked);
+                        if (event.target.checked) {
+                          setApprovalVenue(null);
+                          setJournalQuery("");
+                        }
+                      }}
+                      className="mt-0.5 h-4 w-4 flex-none accent-[#1F7180]"
+                    />
+                    <span className="min-w-0">
+                      <span className="block font-normal text-slate-900 dark:text-[#E4E4E4]">
+                        Assign an Add Journal task automatically
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-slate-500 dark:text-[#B0B0B0]">
+                        The suggestion stays pending until the assistant adds
+                        the journal and that journal is approved.
+                      </span>
+                    </span>
+                  </label>
+                ) : null}
+
+                {!autoCreateJournalTask ||
+                approveVenue.kind === "conference" ? (
+                  <>
+                    <p className="text-sm text-[#B0B0B0]">
+                      Link this suggestion to an existing {approveVenue.kind}
+                      before approving it.
+                    </p>
+                    <ApprovalVenuePicker
+                      kind={approveVenue.kind}
+                      query={
+                        approveVenue.kind === "journal"
+                          ? journalQuery
+                          : conferenceQuery
+                      }
+                      selectedVenue={approvalVenue}
+                      journals={journalResults}
+                      conferences={conferenceResults}
+                      onQueryChange={(value) => {
+                        if (approveVenue.kind === "journal")
+                          setJournalQuery(value);
+                        else setConferenceQuery(value);
+                        setApprovalVenue(null);
+                      }}
+                      onSelect={(venue) => {
+                        setApprovalVenue(venue);
+                        setAutoCreateJournalTask(false);
+                        if (venue.kind === "journal")
+                          setJournalQuery(venue.item.name);
+                        else setConferenceQuery(venue.item.name);
+                      }}
+                      onClear={() => {
+                        setApprovalVenue(null);
+                        if (approveVenue.kind === "journal")
+                          setJournalQuery("");
+                        else setConferenceQuery("");
+                      }}
+                    />
+                  </>
+                ) : (
+                  <p className="text-xs leading-5 text-sky-700 dark:text-sky-200">
+                    Approval will create a one-journal task due tomorrow and
+                    assign it to the venue suggester using guide G003.
+                  </p>
+                )}
               </>
             )}
           </form>
         </ResearchModal>
+      )}
+
+      {approveVenue && (
+        <ResearchConfirmDialog
+          open={journalTaskConfirmOpen}
+          title="Assign an Add Journal task?"
+          confirmLabel={isPending ? "Assigning..." : "Assign task"}
+          confirmIcon={<Check className="h-4 w-4" />}
+          isConfirming={isPending}
+          onCancel={() => setJournalTaskConfirmOpen(false)}
+          onConfirm={confirmJournalTaskApproval}
+        >
+          <p>
+            This will assign a one-day Add Journal task to the assistant who
+            suggested{" "}
+            <span className="font-normal text-slate-950 dark:text-[#E4E4E4]">
+              {approveVenue.item.name}
+            </span>
+            .
+          </p>
+          <p className="text-xs leading-5 text-slate-500 dark:text-[#8F98A8]">
+            Guide G003 will be attached. The venue suggestion remains pending
+            until the journal is added and approved.
+          </p>
+        </ResearchConfirmDialog>
       )}
 
       {approveVenue && (
@@ -2244,6 +2361,17 @@ function shortDate(value: string) {
 }
 
 function venueStateMeta(state: SuggestedVenueState) {
+  if (state.state === "addingJournal") {
+    return {
+      cardClass:
+        "border-sky-200 bg-sky-50/55 hover:border-sky-300 hover:bg-sky-50 dark:border-sky-800/60 dark:bg-sky-950/20 dark:hover:border-sky-700 dark:hover:bg-sky-950/30",
+      badge: "Pending journal adding",
+      badgeClass:
+        "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-700/70 dark:bg-sky-950/35 dark:text-sky-200",
+      tooltip:
+        "An Add Journal task is in progress. This suggestion will be approved automatically after the new journal is approved.",
+    };
+  }
   if (state.state === "pendingApproval") {
     return {
       cardClass:
