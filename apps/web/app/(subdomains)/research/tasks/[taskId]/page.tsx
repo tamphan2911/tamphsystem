@@ -344,6 +344,53 @@ function TaskPersonLine({
   );
 }
 
+function TaskResultBlock({
+  result,
+}: {
+  result: {
+    kind: "approved" | "revoked";
+    date: Date | null;
+    note: string | null;
+    actor: { name: string | null; email: string; roles: Role[] } | null;
+  };
+}) {
+  const Icon = result.kind === "approved" ? CheckCircle2 : Ban;
+  const title = result.kind === "approved" ? "Approved as complete" : "Revoked";
+  const noteFallback =
+    result.kind === "approved"
+      ? "No approval note recorded."
+      : "No revoke reason recorded.";
+
+  return (
+    <div className="mt-3 border-t border-[#D8D0C2] pt-3 text-xs leading-5 text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0]">
+      <div className="flex items-center gap-2 font-semibold text-[#1F2937] dark:text-[#E4E4E4]">
+        <Icon
+          className={`h-3.5 w-3.5 ${
+            result.kind === "approved"
+              ? "text-emerald-700 dark:text-emerald-300"
+              : "text-rose-700 dark:text-rose-300"
+          }`}
+        />
+        <span>{title}</span>
+      </div>
+      <div className="mt-1 flex flex-wrap items-center">
+        {result.actor ? (
+          <>
+            <span>{displayResearchPersonName(result.actor)}</span>
+            <DetailSeparator />
+            <span>{displayRole(result.actor.roles)}</span>
+          </>
+        ) : (
+          <span>Updater not recorded</span>
+        )}
+        <DetailSeparator />
+        <span>{formatDate(result.date)}</span>
+      </div>
+      <p className="mt-1 whitespace-pre-wrap">{result.note || noteFallback}</p>
+    </div>
+  );
+}
+
 function AccountLine({
   account,
 }: {
@@ -518,7 +565,11 @@ export default async function TaskDetailPage({
       status: true,
       dueDate: true,
       completedAt: true,
+      completedById: true,
+      completionMessage: true,
       revokedAt: true,
+      revokedById: true,
+      revokeReason: true,
       createdAt: true,
       updatedAt: true,
       createdById: true,
@@ -553,6 +604,8 @@ export default async function TaskDetailPage({
       reportUploadedById: true,
       createdBy: { select: { name: true, email: true, roles: true } },
       checker: { select: { name: true, email: true, roles: true } },
+      completedBy: { select: { name: true, email: true, roles: true } },
+      revokedBy: { select: { name: true, email: true, roles: true } },
       project: {
         select: {
           id: true,
@@ -821,6 +874,32 @@ export default async function TaskDetailPage({
   }
 
   const meta = statusMeta(task);
+  const taskResult =
+    task.status === ResearchTaskStatus.COMPLETED
+      ? {
+          kind: "approved" as const,
+          date: task.completedAt,
+          note: task.completionMessage,
+          actorId: task.completedById,
+          actor: task.completedBy,
+        }
+      : task.status === ResearchTaskStatus.REVOKED
+        ? {
+            kind: "revoked" as const,
+            date: task.revokedAt,
+            note: task.revokeReason,
+            actorId: task.revokedById,
+            actor: task.revokedBy,
+          }
+        : null;
+  const checkerPerson = task.checker ?? task.createdBy;
+  const resultUnderChecker = Boolean(
+    taskResult &&
+    (taskResult.actorId === task.checkerId ||
+      task.checkerId === task.createdById ||
+      (!task.checkerId && taskResult.actorId === task.createdById) ||
+      (!taskResult.actorId && !task.checkerId)),
+  );
   const taskType = taskTypeMeta(task.taskType, task.category);
   const TaskTypeIcon = taskType.icon;
   const statusIcon = statusIconMeta(task, meta.label);
@@ -1559,7 +1638,10 @@ export default async function TaskDetailPage({
                 Checker
               </h2>
               <div className="border-t border-[#D8D0C2] py-3 dark:border-[#444444]">
-                <TaskPersonLine person={task.checker ?? task.createdBy} />
+                <TaskPersonLine person={checkerPerson} />
+                {taskResult && resultUnderChecker ? (
+                  <TaskResultBlock result={taskResult} />
+                ) : null}
               </div>
             </div>
 
@@ -1569,6 +1651,9 @@ export default async function TaskDetailPage({
               </h2>
               <div className="border-t border-[#D8D0C2] py-3 dark:border-[#444444]">
                 <TaskPersonLine person={task.createdBy} />
+                {taskResult && !resultUnderChecker ? (
+                  <TaskResultBlock result={taskResult} />
+                ) : null}
               </div>
             </div>
           </section>

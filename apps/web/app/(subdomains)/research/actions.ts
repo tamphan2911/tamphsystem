@@ -4698,7 +4698,11 @@ export async function revokeResearchTask(taskId: string, formData?: FormData) {
     data: {
       status: ResearchTaskStatus.REVOKED,
       revokedAt: new Date(),
+      revokedBy: { connect: { id: user.id } },
+      revokeReason: reason,
       completedAt: null,
+      completedBy: { disconnect: true },
+      completionMessage: null,
       adminViewedAt: null,
     },
     select: {
@@ -6473,7 +6477,11 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     data: {
       status: ResearchTaskStatus.COMPLETED,
       completedAt,
+      completedBy: { connect: { id: user.id } },
+      completionMessage,
       revokedAt: null,
+      revokedBy: { disconnect: true },
+      revokeReason: null,
       adminViewedAt: null,
       project:
         task.taskType === ResearchTaskType.PRODUCTION && task.projectId
