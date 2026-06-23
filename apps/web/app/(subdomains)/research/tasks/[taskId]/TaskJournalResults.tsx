@@ -28,6 +28,7 @@ import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
   currencySymbol,
   formatResearchNumber,
+  normalizeResearchNumberInput,
 } from "@/sites/research/lib/currency";
 import {
   approveTaskJournal,
@@ -476,6 +477,23 @@ function JournalResultCard({
   const approved = journal.approvalStatus === "APPROVED";
   const publisherPending =
     journal.publisherApprovalStatus === "PENDING_APPROVAL";
+  const apc = journalMoneyMeta(journal.apc, journal.apcCurrency, "apc");
+  const fee = journalMoneyMeta(
+    journal.submissionFee,
+    journal.submissionFeeCurrency,
+    "fee",
+  );
+  const metaItems = [
+    journal.issn || "No ISSN",
+    journal.publisher,
+    journal.rank,
+    journal.country,
+  ].filter(Boolean);
+  const addedByParts = journal.createdBy
+    .split("|")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
   return (
     <article className="relative min-h-56 border border-[#D8D0C2] bg-[#FFFDF8] p-4 dark:border-[#444444] dark:bg-[#262626]">
       <div className="flex items-start justify-between gap-3">
@@ -514,14 +532,12 @@ function JournalResultCard({
         {journal.name}
       </Link>
       <p className="mt-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-        {[
-          journal.issn || "No ISSN",
-          journal.publisher,
-          journal.rank,
-          journal.country,
-        ]
-          .filter(Boolean)
-          .join(" - ")}
+        {metaItems.map((item, index) => (
+          <span key={`${item}-${index}`} className="inline-flex items-center">
+            {index > 0 ? <JournalResultSeparator /> : null}
+            <span>{item}</span>
+          </span>
+        ))}
       </p>
       {journal.fields.length ? (
         <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
@@ -529,14 +545,11 @@ function JournalResultCard({
         </p>
       ) : null}
       <p className="mt-2 text-xs text-[#667085] dark:text-[#B0B0B0]">
-        APC: {currencySymbol(journal.apcCurrency)}{" "}
-        {formatResearchNumber(journal.apc) || "0"}
-        {journal.submissionFee ? (
-          <>
-            {" | "}Fee: {currencySymbol(journal.submissionFeeCurrency)}{" "}
-            {formatResearchNumber(journal.submissionFee)}
-          </>
-        ) : null}
+        <span>APC: </span>
+        <span className={apc.className}>{apc.label}</span>
+        <JournalResultSeparator />
+        <span>Fee: </span>
+        <span className={fee.className}>{fee.label}</span>
       </p>
       {publisherPending ? (
         <p className="mt-2 border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs leading-5 text-amber-800 dark:border-amber-400/25 dark:bg-amber-950/30 dark:text-amber-200">
@@ -550,8 +563,51 @@ function JournalResultCard({
         </p>
       ) : null}
       <p className="mt-3 border-t border-[#E5DED2] pt-2 text-[11px] text-[#8C95A4] dark:border-[#444444] dark:text-[#777777]">
-        Added by {journal.createdBy}
+        Added by{" "}
+        {addedByParts.length > 1
+          ? addedByParts.map((part, index) => (
+              <span
+                key={`${part}-${index}`}
+                className="inline-flex items-center"
+              >
+                {index > 0 ? <JournalResultSeparator /> : null}
+                <span>{part}</span>
+              </span>
+            ))
+          : journal.createdBy}
       </p>
     </article>
+  );
+}
+
+function journalMoneyMeta(
+  amount: string,
+  currency: string,
+  kind: "apc" | "fee",
+) {
+  const normalized = normalizeResearchNumberInput(amount);
+  const value = Number(normalized || 0);
+  const isFree = !Number.isFinite(value) || value <= 0;
+  const isHigh = value > 1000;
+  if (isFree) {
+    return {
+      label: "free",
+      className: "font-normal text-emerald-700 dark:text-emerald-300",
+    };
+  }
+  return {
+    label: `${currencySymbol(currency)} ${formatResearchNumber(amount)}`,
+    className:
+      kind === "fee" || isHigh
+        ? "font-normal text-rose-700 dark:text-rose-300"
+        : "font-normal text-[#344054] dark:text-[#E4E4E4]",
+  };
+}
+
+function JournalResultSeparator() {
+  return (
+    <span className="px-1.5 text-[#98A2B3] dark:text-[#777777]" aria-hidden>
+      |
+    </span>
   );
 }
