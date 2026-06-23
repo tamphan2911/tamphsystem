@@ -361,6 +361,86 @@ function AccountLine({
   );
 }
 
+type TaskSubmissionInfo = {
+  kind: "journal" | "conference";
+  id: string;
+  code: string;
+  status: string;
+  submittedAt: Date | null;
+  acceptedAt: Date | null;
+  rejectedAt: Date | null;
+  withdrawnAt: Date | null;
+  publishedAt: Date | null;
+  updatedAt: Date | null;
+  articleUrl?: string | null;
+  note?: string | null;
+};
+
+function SubmissionInfoPanel({
+  submission,
+}: {
+  submission: TaskSubmissionInfo;
+}) {
+  const dateRows = [
+    ["Submitted", submission.submittedAt],
+    ["Accepted", submission.acceptedAt],
+    ["Rejected", submission.rejectedAt],
+    ["Withdrawn", submission.withdrawnAt],
+    ["Published", submission.publishedAt],
+    ["Updated", submission.updatedAt],
+  ].filter((row): row is [string, Date] => Boolean(row[1]));
+
+  return (
+    <div className="min-w-0">
+      <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+        Submission
+      </div>
+      <div className="mt-2 flex min-w-0 items-center gap-2">
+        <Link
+          href={`/submissions/${submission.id}`}
+          className={`min-w-0 text-sm ${researchLinkClass}`}
+        >
+          {submission.code}
+        </Link>
+        {submission.articleUrl ? (
+          <ExternalVenueLink
+            href={submission.articleUrl}
+            label="Open article"
+            className="text-[#B0B0B0] hover:text-[#A8DADC]"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </ExternalVenueLink>
+        ) : null}
+      </div>
+      <p className="mt-1 flex flex-wrap items-center text-xs text-[#B0B0B0]">
+        <span>
+          {submission.kind === "journal"
+            ? "Journal submission"
+            : "Conference submission"}
+        </span>
+        <DetailSeparator />
+        <span>Status: {submission.status.replaceAll("_", " ")}</span>
+      </p>
+      {dateRows.length > 0 ? (
+        <div className="mt-2 grid gap-1 text-xs leading-5 text-[#B0B0B0]">
+          {dateRows.map(([label, value]) => (
+            <div key={label} className="flex flex-wrap items-center">
+              <span>
+                {label}: {formatDate(value)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {submission.note ? (
+        <p className="mt-2 text-xs leading-5 text-[#B0B0B0]">
+          {submission.note}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function journalMetaLine(journal: {
   publisher: string | null;
   rank: string | null;
@@ -605,6 +685,16 @@ export default async function TaskDetailPage({
             },
           },
           select: {
+            id: true,
+            submissionCode: true,
+            status: true,
+            submittedAt: true,
+            acceptedAt: true,
+            rejectedAt: true,
+            withdrawnAt: true,
+            publishedAt: true,
+            articleUrl: true,
+            updatedAt: true,
             account: {
               select: {
                 id: true,
@@ -616,9 +706,70 @@ export default async function TaskDetailPage({
           },
         })
       : null;
+  const associatedConferenceSubmission =
+    task.projectId && task.conferenceId
+      ? await prisma.conferenceSubmission.findUnique({
+          where: {
+            conferenceId_researchProjectId: {
+              conferenceId: task.conferenceId,
+              researchProjectId: task.projectId,
+            },
+          },
+          select: {
+            id: true,
+            submissionCode: true,
+            status: true,
+            submittedAt: true,
+            acceptedAt: true,
+            rejectedAt: true,
+            withdrawnAt: true,
+            publishedAt: true,
+            note: true,
+            updatedAt: true,
+          },
+        })
+      : null;
   const journalAccount = associatedJournalSubmission
     ? associatedJournalSubmission.account
     : task.account;
+  const submissionInfo: TaskSubmissionInfo | null =
+    task.status === ResearchTaskStatus.COMPLETED &&
+    task.taskType === "SUBMIT_RESEARCH" &&
+    associatedJournalSubmission
+      ? {
+          kind: "journal",
+          id: associatedJournalSubmission.id,
+          code:
+            associatedJournalSubmission.submissionCode ??
+            associatedJournalSubmission.id.slice(0, 8).toUpperCase(),
+          status: associatedJournalSubmission.status,
+          submittedAt: associatedJournalSubmission.submittedAt,
+          acceptedAt: associatedJournalSubmission.acceptedAt,
+          rejectedAt: associatedJournalSubmission.rejectedAt,
+          withdrawnAt: associatedJournalSubmission.withdrawnAt,
+          publishedAt: associatedJournalSubmission.publishedAt,
+          updatedAt: associatedJournalSubmission.updatedAt,
+          articleUrl: associatedJournalSubmission.articleUrl,
+        }
+      : task.status === ResearchTaskStatus.COMPLETED &&
+          task.taskType === "SUBMIT_CONFERENCE" &&
+          associatedConferenceSubmission
+        ? {
+            kind: "conference",
+            id: associatedConferenceSubmission.id,
+            code:
+              associatedConferenceSubmission.submissionCode ??
+              associatedConferenceSubmission.id.slice(0, 8).toUpperCase(),
+            status: associatedConferenceSubmission.status,
+            submittedAt: associatedConferenceSubmission.submittedAt,
+            acceptedAt: associatedConferenceSubmission.acceptedAt,
+            rejectedAt: associatedConferenceSubmission.rejectedAt,
+            withdrawnAt: associatedConferenceSubmission.withdrawnAt,
+            publishedAt: associatedConferenceSubmission.publishedAt,
+            updatedAt: associatedConferenceSubmission.updatedAt,
+            note: associatedConferenceSubmission.note,
+          }
+        : null;
 
   let taskClarifications = task.clarifications;
   const demoRequester = task.assignments.find(
@@ -1211,118 +1362,129 @@ export default async function TaskDetailPage({
           </div>
           {hasAssociatedItems && (
             <div className="grid gap-5 p-5 md:grid-cols-2">
-              {task.project && (
-                <div className="min-w-0 md:col-span-2">
-                  <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                    Research
-                  </div>
-                  <Link
-                    href={`/projects/${task.project.id}`}
-                    className="research-journal-name-link mt-2 block w-full border-0 bg-transparent p-0 text-sm font-normal text-[#1F7180] shadow-none outline-none hover:border-0 hover:bg-transparent hover:shadow-none focus-visible:border-0 focus-visible:bg-transparent focus-visible:ring-0 dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+              <div
+                className={submissionInfo ? "grid min-w-0 gap-5" : "contents"}
+              >
+                {task.project && (
+                  <div
+                    className={
+                      submissionInfo ? "min-w-0" : "min-w-0 md:col-span-2"
+                    }
                   >
-                    {task.project.title}
-                  </Link>
-                  <p className="mt-1 w-full text-xs leading-5 text-[#B0B0B0]">
-                    {researchAuthors(task.project)}
-                  </p>
-                </div>
-              )}
-              {task.organizedProject && (
-                <div className="min-w-0">
-                  <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                    Project
+                    <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                      Research
+                    </div>
+                    <Link
+                      href={`/projects/${task.project.id}`}
+                      className="research-journal-name-link mt-2 block w-full border-0 bg-transparent p-0 text-sm font-normal text-[#1F7180] shadow-none outline-none hover:border-0 hover:bg-transparent hover:shadow-none focus-visible:border-0 focus-visible:bg-transparent focus-visible:ring-0 dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+                    >
+                      {task.project.title}
+                    </Link>
+                    <p className="mt-1 w-full text-xs leading-5 text-[#B0B0B0]">
+                      {researchAuthors(task.project)}
+                    </p>
                   </div>
-                  <Link
-                    href={`/organized-projects/${task.organizedProject.id}`}
-                    className={`mt-2 block min-w-0 text-sm ${researchLinkClass}`}
-                  >
-                    {task.organizedProject.title}
-                  </Link>
-                  <p className="mt-1 text-xs text-[#B0B0B0]">
-                    {task.organizedProject.referenceCode || "No project ID"}
-                  </p>
-                </div>
-              )}
-              {task.review && (
-                <div className="min-w-0">
-                  <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                    Review
+                )}
+                {task.organizedProject && (
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                      Project
+                    </div>
+                    <Link
+                      href={`/organized-projects/${task.organizedProject.id}`}
+                      className={`mt-2 block min-w-0 text-sm ${researchLinkClass}`}
+                    >
+                      {task.organizedProject.title}
+                    </Link>
+                    <p className="mt-1 text-xs text-[#B0B0B0]">
+                      {task.organizedProject.referenceCode || "No project ID"}
+                    </p>
                   </div>
-                  <Link
-                    href={`/reviews/${task.review.id}`}
-                    className={`mt-2 block min-w-0 text-sm ${researchLinkClass}`}
-                  >
-                    {task.review.manuscriptTitle}
-                  </Link>
-                  <p className="mt-1 text-xs text-[#B0B0B0]">
-                    {task.review.journal.name} - {task.review.status}
-                  </p>
-                </div>
-              )}
-              {task.journal && (
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                    <span>Journal</span>
-                    {canManageSuggestedReviewers ? (
-                      <TaskSuggestedReviewerButton
-                        reviewers={reviewerOptions}
-                        selectedReviewers={selectedSuggestedReviewers}
-                        action={suggestedReviewerAction}
+                )}
+                {task.review && (
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                      Review
+                    </div>
+                    <Link
+                      href={`/reviews/${task.review.id}`}
+                      className={`mt-2 block min-w-0 text-sm ${researchLinkClass}`}
+                    >
+                      {task.review.manuscriptTitle}
+                    </Link>
+                    <p className="mt-1 text-xs text-[#B0B0B0]">
+                      {task.review.journal.name} - {task.review.status}
+                    </p>
+                  </div>
+                )}
+                {task.journal && (
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                      <span>Journal</span>
+                      {canManageSuggestedReviewers ? (
+                        <TaskSuggestedReviewerButton
+                          reviewers={reviewerOptions}
+                          selectedReviewers={selectedSuggestedReviewers}
+                          action={suggestedReviewerAction}
+                        />
+                      ) : null}
+                    </div>
+                    <div className="mt-2 flex min-w-0 items-center gap-2">
+                      <Link
+                        href={`/journals/${task.journal.id}`}
+                        className={`min-w-0 text-sm ${researchLinkClass}`}
+                      >
+                        {task.journal.name}
+                      </Link>
+                      <VenueLinks
+                        homepage={task.journal.homepageLink}
+                        submission={journalSubmissionLink}
                       />
-                    ) : null}
+                    </div>
+                    <p className="mt-1 text-xs text-[#B0B0B0]">
+                      {journalMetaLine(task.journal)}
+                    </p>
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
+                      <KeyRound className="h-3.5 w-3.5 text-amber-500" />
+                      <AccountLine account={journalAccount} />
+                    </p>
                   </div>
-                  <div className="mt-2 flex min-w-0 items-center gap-2">
-                    <Link
-                      href={`/journals/${task.journal.id}`}
-                      className={`min-w-0 text-sm ${researchLinkClass}`}
-                    >
-                      {task.journal.name}
-                    </Link>
-                    <VenueLinks
-                      homepage={task.journal.homepageLink}
-                      submission={journalSubmissionLink}
-                    />
+                )}
+                {task.conference && (
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
+                      Conference
+                    </div>
+                    <div className="mt-2 flex min-w-0 items-center gap-2">
+                      <Link
+                        href={`/conferences/${task.conference.id}`}
+                        className={`min-w-0 text-sm ${researchLinkClass}`}
+                      >
+                        {task.conference.name}
+                      </Link>
+                      <VenueLinks
+                        homepage={task.conference.website}
+                        submission={conferenceSubmissionLink}
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-[#B0B0B0]">
+                      {task.conference.type || "No type"} -{" "}
+                      {task.conference.location || "No location"} -{" "}
+                      {conferenceTime(
+                        task.conference.startDate,
+                        task.conference.endDate,
+                      )}
+                    </p>
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
+                      <KeyRound className="h-3.5 w-3.5 text-amber-500" />
+                      <AccountLine account={task.account} />
+                    </p>
                   </div>
-                  <p className="mt-1 text-xs text-[#B0B0B0]">
-                    {journalMetaLine(task.journal)}
-                  </p>
-                  <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
-                    <KeyRound className="h-3.5 w-3.5 text-amber-500" />
-                    <AccountLine account={journalAccount} />
-                  </p>
-                </div>
-              )}
-              {task.conference && (
-                <div className="min-w-0">
-                  <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-                    Conference
-                  </div>
-                  <div className="mt-2 flex min-w-0 items-center gap-2">
-                    <Link
-                      href={`/conferences/${task.conference.id}`}
-                      className={`min-w-0 text-sm ${researchLinkClass}`}
-                    >
-                      {task.conference.name}
-                    </Link>
-                    <VenueLinks
-                      homepage={task.conference.website}
-                      submission={conferenceSubmissionLink}
-                    />
-                  </div>
-                  <p className="mt-1 text-xs text-[#B0B0B0]">
-                    {task.conference.type || "No type"} -{" "}
-                    {task.conference.location || "No location"} -{" "}
-                    {conferenceTime(
-                      task.conference.startDate,
-                      task.conference.endDate,
-                    )}
-                  </p>
-                  <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
-                    <KeyRound className="h-3.5 w-3.5 text-amber-500" />
-                    <AccountLine account={task.account} />
-                  </p>
-                </div>
-              )}
+                )}
+              </div>
+              {submissionInfo ? (
+                <SubmissionInfoPanel submission={submissionInfo} />
+              ) : null}
             </div>
           )}
 
