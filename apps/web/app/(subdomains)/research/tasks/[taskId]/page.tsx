@@ -47,7 +47,10 @@ import {
   researchLinkClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
-import { displayResearchPersonName } from "@/sites/research/lib/display";
+import {
+  displayResearchEmail,
+  displayResearchPersonName,
+} from "@/sites/research/lib/display";
 import {
   currencySymbol,
   formatResearchNumber,
@@ -934,13 +937,23 @@ export default async function TaskDetailPage({
           publisher: true,
           rank: true,
           localRank: true,
+          type: true,
+          issuesPerYear: true,
+          isFavorite: true,
+          isInterest: true,
+          publisherId: true,
           fields: true,
           field: true,
           country: true,
           apc: true,
           apcCurrency: true,
+          hasApcOption: true,
           submissionFee: true,
           submissionFeeCurrency: true,
+          homepageLink: true,
+          submissionLink: true,
+          scimagoLink: true,
+          scopusLink: true,
           note: true,
           approvalStatus: true,
           publisherRecord: { select: { approvalStatus: true } },
@@ -1424,6 +1437,12 @@ export default async function TaskDetailPage({
               issn: journal.issn ?? "",
               publisher: journal.publisher ?? "",
               rank: journal.rank ?? journal.localRank ?? "",
+              type: journal.type,
+              localRank: journal.localRank ?? "",
+              issuesPerYear: journal.issuesPerYear,
+              isFavorite: journal.isFavorite,
+              isInterest: journal.isInterest,
+              publisherId: journal.publisherId ?? "",
               fields: journal.fields.length
                 ? journal.fields
                 : journal.field
@@ -1435,14 +1454,24 @@ export default async function TaskDetailPage({
               country: journal.country ?? "",
               apc: journal.apc ?? "",
               apcCurrency: journal.apcCurrency,
+              hasApcOption: journal.hasApcOption,
               submissionFee: journal.submissionFee ?? "",
               submissionFeeCurrency: journal.submissionFeeCurrency,
+              homepageLink: journal.homepageLink ?? "",
+              submissionLink: journal.submissionLink ?? "",
+              scimagoLink: journal.scimagoLink ?? "",
+              scopusLink: journal.scopusLink ?? "",
               note: journal.note ?? "",
               approvalStatus: journal.approvalStatus,
               publisherApprovalStatus:
                 journal.publisherRecord?.approvalStatus ?? "APPROVED",
               createdBy: journal.createdBy
-                ? displayResearchPersonName(journal.createdBy)
+                ? [
+                    displayResearchPersonName(journal.createdBy),
+                    displayResearchEmail(journal.createdBy.email),
+                  ]
+                    .filter(Boolean)
+                    .join(" | ")
                 : "Unknown user",
             },
           ],
