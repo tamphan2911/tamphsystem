@@ -289,6 +289,7 @@ export function NewReviewTaskDialog({
               />
               {canChooseChecker && (
                 <SearchPanel
+                  selectionMode="single"
                   query={checkerQuery}
                   setQuery={setCheckerQuery}
                   placeholder="Search chief assistant checker by name, email, or ID (optional)"
@@ -377,6 +378,7 @@ function TaskAttachmentField() {
 }
 
 function SearchPanel({
+  selectionMode = "multi",
   query,
   setQuery,
   placeholder,
@@ -384,6 +386,7 @@ function SearchPanel({
   items,
   sideControl,
 }: {
+  selectionMode?: "single" | "multi";
   query: string;
   setQuery: (value: string) => void;
   placeholder: string;
@@ -393,11 +396,14 @@ function SearchPanel({
 }) {
   const [focused, setFocused] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const showDropdown = focused && query.trim().length > 0;
+  const singleSelectedItem =
+    selectionMode === "single" ? selectedItems[0] : undefined;
+  const showDropdown =
+    !singleSelectedItem && focused && query.trim().length > 0;
 
   return (
     <section className="grid gap-3">
-      {selectedItems.length > 0 && (
+      {selectionMode === "multi" && selectedItems.length > 0 && (
         <div className="grid gap-2">
           {selectedItems.map((item) => (
             <SelectedSearchItem key={item.id} item={item} />
@@ -412,15 +418,23 @@ function SearchPanel({
         }
       >
         <div ref={wrapperRef} className="relative z-30">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onFocus={() => setFocused(true)}
-            onBlur={() => window.setTimeout(() => setFocused(false), 120)}
-            placeholder={placeholder}
-            className={`${researchSearchFieldClass} pl-9`}
-          />
+          {singleSelectedItem ? (
+            <SelectedSearchField item={singleSelectedItem} />
+          ) : (
+            <div
+              className={`${researchSearchFieldClass} flex items-center gap-3 px-3`}
+            >
+              <Search className="h-4 w-4 flex-none text-slate-400" />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => window.setTimeout(() => setFocused(false), 120)}
+                placeholder={placeholder}
+                className="h-full min-w-0 flex-1 bg-transparent text-sm text-[#243047] placeholder:text-[#9AA3B4] outline-none dark:text-[#E4E4E4] dark:placeholder:text-[#6F6F6F]"
+              />
+            </div>
+          )}
 
           <FloatingDropdownPortal
             anchorRef={wrapperRef}
@@ -471,6 +485,36 @@ function SearchPanel({
         {sideControl}
       </div>
     </section>
+  );
+}
+
+function SelectedSearchField({ item }: { item: SearchPanelItem }) {
+  return (
+    <div
+      className={`${researchSearchFieldClass} flex h-auto min-h-[3rem] items-center gap-3 px-3 py-2`}
+    >
+      <span className="flex-none text-[#1F7180] dark:text-[#A8DADC]">
+        <UserRound className="h-4 w-4" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-normal leading-5 text-[#1F2937] dark:text-[#E4E4E4]">
+          {item.title}
+        </span>
+        {item.meta ? (
+          <span className="mt-0.5 block truncate text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+            {item.meta}
+          </span>
+        ) : null}
+      </span>
+      <button
+        type="button"
+        onClick={item.onClick}
+        aria-label={`Clear ${item.title}`}
+        className="group/icon -mr-1 flex h-8 w-8 flex-none items-center justify-center text-[#667085] transition hover:scale-105 hover:text-[#1F7180] active:scale-95 dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
   );
 }
 
