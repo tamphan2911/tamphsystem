@@ -9,8 +9,10 @@ import type { PublisherPickerItem } from "@/sites/research/components/PublisherP
 
 export function NewJournalDialog({
   publishers,
+  duplicateJournals = [],
 }: {
   publishers: PublisherPickerItem[];
+  duplicateJournals?: { id: string; name: string; issn?: string | null }[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -31,6 +33,7 @@ export function NewJournalDialog({
         onClose={() => setIsOpen(false)}
         submitAction={createJournal}
         publishers={publishers}
+        duplicateJournals={duplicateJournals}
       />
     </>
   );

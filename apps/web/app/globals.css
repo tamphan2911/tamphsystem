@@ -3209,6 +3209,17 @@ html[data-auth-leaving="reset"]
   transform: translateY(-1px);
 }
 
+.research-auth-input-shell[data-duplicate="true"] {
+  border-color: #f0a6b5 !important;
+  background: rgba(127, 29, 29, 0.16) !important;
+}
+
+.research-auth-input-shell[data-duplicate="true"]:hover,
+.research-auth-input-shell[data-duplicate="true"]:focus-within {
+  border-color: #f7b7c4 !important;
+  background: rgba(127, 29, 29, 0.2) !important;
+}
+
 .research-auth-input-shell input {
   height: 100%;
   width: 100%;
@@ -3490,6 +3501,19 @@ html[data-research-theme="light"]
   border-color: #c4b9aa !important;
   background: #fffdf8 !important;
   box-shadow: none !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field[data-duplicate="true"],
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field[data-duplicate="true"]:hover,
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-auth-input-shell.journal-form-field[data-duplicate="true"]:focus-within {
+  border-color: #e88da0 !important;
+  background: #fff1f3 !important;
 }
 
 html[data-research-theme="light"]

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import type { ReactNode } from "react";
+import type { ChangeEvent, FocusEvent, ReactNode } from "react";
 import {
   AlertTriangle,
   AtSign,
@@ -105,6 +105,9 @@ function JournalInput({
   min,
   step,
   className = "",
+  duplicate = false,
+  onBlur,
+  onChange,
 }: {
   name: string;
   placeholder: string;
@@ -114,10 +117,14 @@ function JournalInput({
   min?: string;
   step?: string;
   className?: string;
+  duplicate?: boolean;
+  onBlur?: (event: FocusEvent<HTMLInputElement>) => void;
+  onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <span
       className={`research-auth-input-shell journal-form-field ${className}`}
+      data-duplicate={duplicate ? "true" : undefined}
     >
       {type === "number" ? (
         <ResearchNumberInput
@@ -138,6 +145,9 @@ function JournalInput({
           defaultValue={defaultValue ?? ""}
           placeholder={placeholder}
           aria-label={placeholder}
+          aria-invalid={duplicate ? "true" : undefined}
+          onBlur={onBlur}
+          onChange={onChange}
         />
       )}
       {icon}
@@ -153,6 +163,17 @@ function initialFields(values?: JournalFormValues) {
         .map((field) => field.trim())
         .filter(Boolean)
     : [];
+}
+
+function normalizeJournalName(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function normalizeJournalIssn(value: string) {
+  return value
+    .trim()
+    .replace(/[\s-]+/g, "")
+    .toLowerCase();
 }
 
 function CountryPicker({
@@ -319,6 +340,7 @@ export function JournalDialogForm({
   submitAction,
   initialValues,
   publishers,
+  duplicateJournals = [],
 }: {
   mode: "create" | "edit";
   isOpen: boolean;
@@ -331,12 +353,17 @@ export function JournalDialogForm({
     | void;
   initialValues?: JournalFormValues;
   publishers: PublisherPickerItem[];
+  duplicateJournals?: { id: string; name: string; issn?: string | null }[];
 }) {
   const toast = useResearchToast();
   const [isPending, startTransition] = useTransition();
   const [fieldQuery, setFieldQuery] = useState("");
   const [isFieldPickerOpen, setIsFieldPickerOpen] = useState(false);
   const [warning, setWarning] = useState("");
+  const [duplicateWarning, setDuplicateWarning] = useState<{
+    name?: string;
+    issn?: string;
+  }>({});
   const warningRef = useRef<HTMLDivElement>(null);
   const fieldPickerRef = useRef<HTMLDivElement>(null);
   const [selectedFields, setSelectedFields] = useState<string[]>(() =>
@@ -366,6 +393,21 @@ export function JournalDialogForm({
   }, [initialValues?.publisher, initialValues?.publisherId, publishers]);
   const [selectedPublisher, setSelectedPublisher] =
     useState<PublisherPickerItem | null>(initialPublisher);
+
+  const duplicateIndex = useMemo(
+    () =>
+      duplicateJournals.map((journal) => ({
+        id: journal.id,
+        name: journal.name,
+        normalizedName: normalizeJournalName(journal.name),
+        normalizedIssn: normalizeJournalIssn(journal.issn ?? ""),
+      })),
+    [duplicateJournals],
+  );
+  const duplicateMessages = [
+    duplicateWarning.name,
+    duplicateWarning.issn,
+  ].filter(Boolean);
 
   useEffect(() => {
     if (isOpen) setSelectedPublisher(initialPublisher);
@@ -413,8 +455,43 @@ export function JournalDialogForm({
     : "Add basic identity, fees, and source links.";
   const closeDialog = () => {
     setWarning("");
+    setDuplicateWarning({});
     onClose();
   };
+
+  function checkDuplicateName(value: string) {
+    if (isEdit) return;
+    const normalized = normalizeJournalName(value);
+    if (!normalized) {
+      setDuplicateWarning((current) => ({ ...current, name: undefined }));
+      return;
+    }
+    const duplicate = duplicateIndex.find(
+      (journal) => journal.normalizedName === normalized,
+    );
+    setDuplicateWarning((current) => ({
+      ...current,
+      name: duplicate
+        ? `Journal name already exists: ${duplicate.name}.`
+        : undefined,
+    }));
+  }
+
+  function checkDuplicateIssn(value: string) {
+    if (isEdit) return;
+    const normalized = normalizeJournalIssn(value);
+    if (!normalized) {
+      setDuplicateWarning((current) => ({ ...current, issn: undefined }));
+      return;
+    }
+    const duplicate = duplicateIndex.find(
+      (journal) => journal.normalizedIssn === normalized,
+    );
+    setDuplicateWarning((current) => ({
+      ...current,
+      issn: duplicate ? `ISSN already exists in ${duplicate.name}.` : undefined,
+    }));
+  }
 
   return (
     <ResearchModal
@@ -425,16 +502,26 @@ export function JournalDialogForm({
       icon={<BookOpen className="h-5 w-5" />}
       maxWidth="max-w-4xl"
       headerActions={
-        <ResearchButton form="journal-form" disabled={isPending}>
-          {isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : isEdit ? (
-            <Save className="h-4 w-4" />
-          ) : (
-            <PlusCircle className="h-4 w-4" />
-          )}
-          {isEdit ? "Save changes" : "Add Journal"}
-        </ResearchButton>
+        <>
+          {duplicateMessages.length > 0 ? (
+            <div className="hidden max-w-[22rem] items-start gap-2 border border-rose-200 bg-rose-50 px-3 py-2 text-left text-xs font-normal leading-5 text-rose-800 shadow-none lg:flex dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-200">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-none" />
+              <span className="line-clamp-2">
+                {duplicateMessages.join(" ")}
+              </span>
+            </div>
+          ) : null}
+          <ResearchButton form="journal-form" disabled={isPending}>
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isEdit ? (
+              <Save className="h-4 w-4" />
+            ) : (
+              <PlusCircle className="h-4 w-4" />
+            )}
+            {isEdit ? "Save changes" : "Add Journal"}
+          </ResearchButton>
+        </>
       }
     >
       <form
@@ -459,6 +546,10 @@ export function JournalDialogForm({
                 .map(([, label]) => label)
                 .join(", ")} before saving this journal.`,
             );
+            return;
+          }
+          if (duplicateMessages.length > 0) {
+            setWarning(duplicateMessages.join(" "));
             return;
           }
           if (!isEdit) {
@@ -508,6 +599,12 @@ export function JournalDialogForm({
         ))}
         <section className="grid gap-4">
           <div className="grid gap-4">
+            {duplicateMessages.length > 0 ? (
+              <div className="flex items-start gap-2 border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm font-normal text-rose-800 dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-200 lg:hidden">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{duplicateMessages.join(" ")}</span>
+              </div>
+            ) : null}
             {warning ? (
               <div
                 ref={warningRef}
@@ -522,6 +619,14 @@ export function JournalDialogForm({
               defaultValue={initialValues?.name}
               placeholder="Official journal name (*)"
               icon={<BookOpen aria-hidden="true" className="text-[#A8DADC]" />}
+              duplicate={Boolean(duplicateWarning.name)}
+              onBlur={(event) => checkDuplicateName(event.currentTarget.value)}
+              onChange={() =>
+                setDuplicateWarning((current) => ({
+                  ...current,
+                  name: undefined,
+                }))
+              }
             />
             <div className="grid gap-4 md:grid-cols-2">
               <PublisherPicker
@@ -543,6 +648,16 @@ export function JournalDialogForm({
                 defaultValue={initialValues?.issn}
                 placeholder="ISSN, for example 1234-5678 (*)"
                 icon={<Hash aria-hidden="true" className="text-[#F4D47A]" />}
+                duplicate={Boolean(duplicateWarning.issn)}
+                onBlur={(event) =>
+                  checkDuplicateIssn(event.currentTarget.value)
+                }
+                onChange={() =>
+                  setDuplicateWarning((current) => ({
+                    ...current,
+                    issn: undefined,
+                  }))
+                }
               />
               <JournalInput
                 name="issuesPerYear"

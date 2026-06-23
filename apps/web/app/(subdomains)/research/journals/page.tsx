@@ -34,38 +34,43 @@ export default async function JournalsPage() {
     : userId
       ? assignedResearchReviewWhere(userId)
       : { id: "__no_access__" };
-  const [journals, currentUser, publishers] = await Promise.all([
-    prisma.journal.findMany({
-      where: journalWhere,
-      include: {
-        submissions: { select: { status: true } },
-        _count: {
-          select: {
-            accounts: true,
-            reviews: { where: reviewCountWhere },
+  const [journals, currentUser, publishers, duplicateJournals] =
+    await Promise.all([
+      prisma.journal.findMany({
+        where: journalWhere,
+        include: {
+          submissions: { select: { status: true } },
+          _count: {
+            select: {
+              accounts: true,
+              reviews: { where: reviewCountWhere },
+            },
           },
         },
-      },
-      orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
-    }),
-    userId
-      ? prisma.user.findUnique({
-          where: { id: userId },
-          select: { emailVerified: true, canManageResearchVenues: true },
-        })
-      : Promise.resolve(null),
-    prisma.publisher.findMany({
-      orderBy: [{ name: "asc" }],
-      select: {
-        id: true,
-        publisherCode: true,
-        name: true,
-        alias: true,
-        country: true,
-        usesSingleAccount: true,
-      },
-    }),
-  ]);
+        orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
+      }),
+      userId
+        ? prisma.user.findUnique({
+            where: { id: userId },
+            select: { emailVerified: true, canManageResearchVenues: true },
+          })
+        : Promise.resolve(null),
+      prisma.publisher.findMany({
+        orderBy: [{ name: "asc" }],
+        select: {
+          id: true,
+          publisherCode: true,
+          name: true,
+          alias: true,
+          country: true,
+          usesSingleAccount: true,
+        },
+      }),
+      prisma.journal.findMany({
+        orderBy: [{ name: "asc" }],
+        select: { id: true, name: true, issn: true },
+      }),
+    ]);
 
   const activeSubmissionStatuses = new Set([
     "PENDING",
@@ -125,6 +130,7 @@ export default async function JournalsPage() {
                   alias: publisher.alias ?? "",
                   country: publisher.country ?? "",
                 }))}
+                duplicateJournals={duplicateJournals}
               />
             ) : (
               <ProposalDialog
