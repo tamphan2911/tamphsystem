@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   CircleOff,
   Clock3,
+  Hourglass,
   RotateCcw,
   ShieldCheck,
   Trash2,
@@ -71,7 +72,7 @@ function statusMeta(status: string) {
   if (status === "PENDING") {
     return {
       label: "Pending",
-      icon: CalendarClock,
+      icon: Hourglass,
       className: "text-amber-700 dark:text-amber-300",
     };
   }

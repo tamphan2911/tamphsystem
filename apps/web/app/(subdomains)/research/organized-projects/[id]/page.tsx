@@ -17,6 +17,7 @@ import {
   FlaskConical,
   FolderOpen,
   GraduationCap,
+  Hourglass,
   Landmark,
   Mail,
   RotateCcw,
@@ -86,7 +87,7 @@ function statusMeta(status: string) {
   if (status === "PENDING") {
     return {
       label: "Pending",
-      icon: CalendarClock,
+      icon: Hourglass,
       className: "text-[#A06716] dark:text-[#F4D47A]",
     };
   }

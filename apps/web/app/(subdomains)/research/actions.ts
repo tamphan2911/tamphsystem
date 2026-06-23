@@ -4672,9 +4672,13 @@ export async function updateTaskSuggestedReviewers(
   return { ok: true };
 }
 
-export async function revokeResearchTask(taskId: string) {
+export async function revokeResearchTask(taskId: string, formData?: FormData) {
   const user = await requireCurrentUser();
   const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);
+  const reason = optionalString(formData?.get("reason") ?? null);
+  const reasonLine = reason
+    ? `Reason: ${reason}`
+    : "No revoke reason provided.";
 
   const currentTask = await prisma.researchTask.findUnique({
     where: { id: taskId },
@@ -4707,7 +4711,9 @@ export async function revokeResearchTask(taskId: string) {
     type: "TASK_REVOKED",
     title: "Task revoked",
     summary: task.title,
-    body: "This task was revoked.",
+    body: reason
+      ? `This task was revoked. ${reasonLine}`
+      : "This task was revoked.",
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,
@@ -4719,6 +4725,7 @@ export async function revokeResearchTask(taskId: string) {
     heading: "Task revoked",
     intro:
       "A task assigned to you has been revoked by the assigner. You do not need to continue this task unless a new task is assigned.",
+    detail: reasonLine,
     taskTitle: task.title,
     taskId,
     actionLabel: "View task",
@@ -4730,7 +4737,9 @@ export async function revokeResearchTask(taskId: string) {
     type: "TASK_REVOKED_REVIEWER_NOTICE",
     title: "Task revoked",
     summary: task.title,
-    body: "This task was revoked by another task manager.",
+    body: reason
+      ? `This task was revoked by another task manager. ${reasonLine}`
+      : "This task was revoked by another task manager.",
     excludeUserId: user.id,
   });
 
