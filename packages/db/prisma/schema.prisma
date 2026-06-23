@@ -625,6 +625,7 @@ model Conference {
 model SuggestedConference {
   id               String               @id @default(uuid())
   projectId        String
+  taskId           String?
   conferenceId     String?
   venueName        String?
   venueLink        String?
@@ -639,6 +640,7 @@ model SuggestedConference {
   createdAt        DateTime             @default(now())
 
   project    ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task       ResearchTask?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
   conference Conference?     @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
   createdBy  User?           @relation("SuggestedConferenceCreator", fields: [createdById], references: [id], onDelete: SetNull)
   approvedBy User?           @relation("SuggestedConferenceApprover", fields: [approvedById], references: [id], onDelete: SetNull)
@@ -646,6 +648,7 @@ model SuggestedConference {
 
   @@unique([projectId, conferenceId])
   @@index([projectId, status])
+  @@index([taskId])
   @@index([approvedById])
   @@index([declinedById])
 }
@@ -735,6 +738,7 @@ model Publisher {
 model SuggestedJournal {
   id               String               @id @default(uuid())
   projectId        String
+  taskId           String?
   journalId        String?
   venueName        String?
   venueLink        String?
@@ -749,6 +753,7 @@ model SuggestedJournal {
   createdAt        DateTime             @default(now())
 
   project    ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task       ResearchTask?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
   journal    Journal?        @relation(fields: [journalId], references: [id], onDelete: Cascade)
   createdBy  User?           @relation("SuggestedJournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
   approvedBy User?           @relation("SuggestedJournalApprover", fields: [approvedById], references: [id], onDelete: SetNull)
@@ -756,6 +761,7 @@ model SuggestedJournal {
 
   @@unique([projectId, journalId])
   @@index([projectId, status])
+  @@index([taskId])
   @@index([approvedById])
   @@index([declinedById])
 }
@@ -837,10 +843,12 @@ model ResearchTask {
   review             AcademicReview?   @relation(fields: [reviewId], references: [id], onDelete: SetNull)
   account            PublisherAccount? @relation("ResearchTaskAccount", fields: [accountId], references: [id], onDelete: SetNull)
 
-  assignments        ResearchTaskAssignment[]
-  clarifications     ResearchTaskClarification[]
-  guides             TaskGuide[]                 @relation("ResearchTaskGuides")
-  suggestedReviewers SuggestedReviewer[]         @relation("ResearchTaskSuggestedReviewers")
+  assignments          ResearchTaskAssignment[]
+  clarifications       ResearchTaskClarification[]
+  guides               TaskGuide[]                 @relation("ResearchTaskGuides")
+  suggestedReviewers   SuggestedReviewer[]         @relation("ResearchTaskSuggestedReviewers")
+  suggestedJournals    SuggestedJournal[]
+  suggestedConferences SuggestedConference[]
 
   @@index([checkerId])
   @@index([completedById])

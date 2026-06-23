@@ -47,6 +47,11 @@ import {
 } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { displayResearchPersonName } from "@/sites/research/lib/display";
+import {
+  currencySymbol,
+  formatResearchNumber,
+  normalizeResearchNumberInput,
+} from "@/sites/research/lib/currency";
 import { FinishTaskForm } from "./FinishTaskForm";
 import { RevokeTaskForm } from "./RevokeTaskForm";
 import { ClarificationRequestForm, RedoTaskForm } from "./TaskWorkflowForms";
@@ -541,6 +546,119 @@ function SubmissionInfoPanel({
   );
 }
 
+type TaskSuggestedVenueInfo = {
+  id: string;
+  kind: "journal" | "conference";
+  name: string;
+  status: string;
+  meta: string;
+  apc: string | null;
+  apcCurrency: string;
+  submissionFee: string | null;
+  submissionFeeCurrency: string;
+  note: string | null;
+  declineReason: string | null;
+  venueLink: string | null;
+  createdAt: Date;
+};
+
+function taskVenueMoney(amount: string | null, currency: string) {
+  const normalized = normalizeResearchNumberInput(amount);
+  if (!normalized || Number(normalized) === 0) return "Free";
+  return `${currencySymbol(currency)}${formatResearchNumber(normalized)}`;
+}
+
+function suggestedVenueStatusClass(status: string) {
+  if (status === "APPROVED") {
+    return "border-emerald-300 bg-emerald-100 text-emerald-800 dark:border-emerald-300/35 dark:bg-emerald-950/35 dark:text-emerald-200";
+  }
+  if (status === "DECLINED") {
+    return "border-rose-300 bg-rose-100 text-rose-800 dark:border-rose-300/35 dark:bg-rose-950/35 dark:text-rose-200";
+  }
+  return "border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-300/35 dark:bg-amber-950/35 dark:text-amber-200";
+}
+
+function SuggestedVenueResultsPanel({
+  venues,
+}: {
+  venues: TaskSuggestedVenueInfo[];
+}) {
+  return (
+    <aside className="min-w-0 self-start border border-[#D8D0C2] bg-[#FFFDF8] dark:border-[#444444] dark:bg-[#262626]">
+      <div className="flex items-center justify-between gap-3 border-b border-[#D8D0C2] px-4 py-3 dark:border-[#444444]">
+        <div className="flex items-center gap-2 text-xs font-normal uppercase tracking-wide text-[#1F7180] dark:text-[#A8DADC]">
+          <CircleHelp className="h-3.5 w-3.5" />
+          Suggested venue results
+        </div>
+        <span className="text-xs text-[#667085] dark:text-[#B0B0B0]">
+          {venues.length}
+        </span>
+      </div>
+      <div className="divide-y divide-[#E5DED2] dark:divide-[#444444]">
+        {venues.map((venue) => (
+          <article key={`${venue.kind}-${venue.id}`} className="min-w-0 p-4">
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] uppercase text-[#667085] dark:text-[#8F8F8F]">
+                  {venue.kind}
+                </p>
+                <p className="mt-1 break-words text-sm leading-5 text-[#1F2937] dark:text-[#E4E4E4]">
+                  {venue.name}
+                </p>
+              </div>
+              <span
+                className={`flex-none border px-2 py-1 text-[10px] uppercase ${suggestedVenueStatusClass(venue.status)}`}
+              >
+                {venue.status.replaceAll("_", " ")}
+              </span>
+            </div>
+            {venue.meta ? (
+              <p className="mt-2 break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                {venue.meta}
+              </p>
+            ) : null}
+            <div className="mt-2 flex flex-wrap items-center gap-y-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
+              <span>APC: {taskVenueMoney(venue.apc, venue.apcCurrency)}</span>
+              <DetailSeparator />
+              <span>
+                Fee:{" "}
+                {taskVenueMoney(
+                  venue.submissionFee,
+                  venue.submissionFeeCurrency,
+                )}
+              </span>
+              <DetailSeparator />
+              <span>Suggested: {formatDate(venue.createdAt)}</span>
+              {venue.venueLink ? (
+                <>
+                  <DetailSeparator />
+                  <ExternalVenueLink
+                    href={venue.venueLink}
+                    label={`Open ${venue.name}`}
+                    className="text-[#1F7180] hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </ExternalVenueLink>
+                </>
+              ) : null}
+            </div>
+            {venue.note ? (
+              <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                Note: {venue.note}
+              </p>
+            ) : null}
+            {venue.declineReason ? (
+              <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-rose-700 dark:text-rose-300">
+                Decline reason: {venue.declineReason}
+              </p>
+            ) : null}
+          </article>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
 function journalMetaLine(journal: {
   publisher: string | null;
   rank: string | null;
@@ -656,6 +774,59 @@ export default async function TaskDetailPage({
           bio: true,
         },
         orderBy: [{ name: "asc" }, { email: "asc" }],
+      },
+      suggestedJournals: {
+        select: {
+          id: true,
+          venueName: true,
+          venueLink: true,
+          status: true,
+          declineReason: true,
+          createdAt: true,
+          journal: {
+            select: {
+              name: true,
+              issn: true,
+              publisher: true,
+              rank: true,
+              localRank: true,
+              apc: true,
+              apcCurrency: true,
+              submissionFee: true,
+              submissionFeeCurrency: true,
+              note: true,
+              homepageLink: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      },
+      suggestedConferences: {
+        select: {
+          id: true,
+          venueName: true,
+          venueLink: true,
+          status: true,
+          declineReason: true,
+          createdAt: true,
+          conference: {
+            select: {
+              name: true,
+              type: true,
+              organizer: true,
+              location: true,
+              startDate: true,
+              endDate: true,
+              apc: true,
+              apcCurrency: true,
+              submissionFee: true,
+              submissionFeeCurrency: true,
+              note: true,
+              website: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "asc" },
       },
       reportUploadedById: true,
       createdBy: { select: { name: true, email: true, roles: true } },
@@ -1101,6 +1272,64 @@ export default async function TaskDetailPage({
     task.journal ||
     task.conference,
   );
+  const suggestedVenueResults: TaskSuggestedVenueInfo[] = [
+    ...task.suggestedJournals.map((suggestion) => ({
+      id: suggestion.id,
+      kind: "journal" as const,
+      name:
+        suggestion.journal?.name ?? suggestion.venueName ?? "Unnamed journal",
+      status: suggestion.status,
+      meta: [
+        suggestion.journal?.issn ? `ISSN ${suggestion.journal.issn}` : null,
+        suggestion.journal?.publisher,
+        suggestion.journal?.rank ?? suggestion.journal?.localRank,
+      ]
+        .filter(Boolean)
+        .join(" - "),
+      apc: suggestion.journal?.apc ?? null,
+      apcCurrency: suggestion.journal?.apcCurrency ?? "USD",
+      submissionFee: suggestion.journal?.submissionFee ?? null,
+      submissionFeeCurrency: suggestion.journal?.submissionFeeCurrency ?? "USD",
+      note: suggestion.journal?.note ?? null,
+      declineReason: suggestion.declineReason,
+      venueLink:
+        suggestion.venueLink ?? suggestion.journal?.homepageLink ?? null,
+      createdAt: suggestion.createdAt,
+    })),
+    ...task.suggestedConferences.map((suggestion) => ({
+      id: suggestion.id,
+      kind: "conference" as const,
+      name:
+        suggestion.conference?.name ??
+        suggestion.venueName ??
+        "Unnamed conference",
+      status: suggestion.status,
+      meta: [
+        suggestion.conference?.organizer,
+        suggestion.conference?.type,
+        suggestion.conference?.location,
+        suggestion.conference
+          ? conferenceTime(
+              suggestion.conference.startDate,
+              suggestion.conference.endDate,
+            )
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" - "),
+      apc: suggestion.conference?.apc ?? null,
+      apcCurrency: suggestion.conference?.apcCurrency ?? "USD",
+      submissionFee: suggestion.conference?.submissionFee ?? null,
+      submissionFeeCurrency:
+        suggestion.conference?.submissionFeeCurrency ?? "USD",
+      note: suggestion.conference?.note ?? null,
+      declineReason: suggestion.declineReason,
+      venueLink: suggestion.venueLink ?? suggestion.conference?.website ?? null,
+      createdAt: suggestion.createdAt,
+    })),
+  ].sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime());
+  const hasTaskResultPanel =
+    Boolean(submissionInfo) || suggestedVenueResults.length > 0;
   const scopedResearchWhere = isRootAdmin
     ? {}
     : {
@@ -1517,12 +1746,14 @@ export default async function TaskDetailPage({
           {hasAssociatedItems && (
             <div className="grid gap-5 p-5 md:grid-cols-2">
               <div
-                className={submissionInfo ? "grid min-w-0 gap-5" : "contents"}
+                className={
+                  hasTaskResultPanel ? "grid min-w-0 gap-5" : "contents"
+                }
               >
                 {task.project && (
                   <div
                     className={
-                      submissionInfo ? "min-w-0" : "min-w-0 md:col-span-2"
+                      hasTaskResultPanel ? "min-w-0" : "min-w-0 md:col-span-2"
                     }
                   >
                     <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
@@ -1638,6 +1869,8 @@ export default async function TaskDetailPage({
               </div>
               {submissionInfo ? (
                 <SubmissionInfoPanel submission={submissionInfo} />
+              ) : suggestedVenueResults.length > 0 ? (
+                <SuggestedVenueResultsPanel venues={suggestedVenueResults} />
               ) : null}
             </div>
           )}

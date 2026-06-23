@@ -5374,6 +5374,25 @@ export async function deleteSubmission(formData: FormData) {
   return { ok: false, message: "Submission type is not valid." };
 }
 
+async function unfinishedSuggestVenueTaskIdForUser(
+  projectId: string,
+  userId: string,
+) {
+  const task = await prisma.researchTask.findFirst({
+    where: {
+      projectId,
+      taskType: ResearchTaskType.SUGGEST_VENUE,
+      status: {
+        notIn: [ResearchTaskStatus.COMPLETED, ResearchTaskStatus.REVOKED],
+      },
+      assignments: { some: { userId } },
+    },
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    select: { id: true },
+  });
+  return task?.id ?? null;
+}
+
 export async function addSuggestedJournal(
   projectId: string,
   formData: FormData,
@@ -5388,6 +5407,7 @@ export async function addSuggestedJournal(
   const venueLink = optionalString(formData.get("venueLink"));
   if (!journalId && !venueName && !venueLink) return;
   if (await researchContentIsLocked(projectId)) return;
+  const taskId = await unfinishedSuggestVenueTaskIdForUser(projectId, user.id);
 
   const canApprove =
     journalId &&
@@ -5420,6 +5440,7 @@ export async function addSuggestedJournal(
           declineReason: null,
           venueName: venueName ?? venue?.name ?? null,
           venueLink,
+          ...(taskId ? { taskId } : {}),
         },
         create: {
           projectId,
@@ -5431,6 +5452,7 @@ export async function addSuggestedJournal(
           approvedById: canApprove ? user.id : null,
           venueName: venueName ?? venue?.name ?? null,
           venueLink,
+          taskId,
         },
       })
     : await prisma.suggestedJournal.create({
@@ -5441,6 +5463,7 @@ export async function addSuggestedJournal(
           requiresApproval: true,
           venueName,
           venueLink,
+          taskId,
         },
       });
 
@@ -5456,6 +5479,7 @@ export async function addSuggestedJournal(
   }
 
   revalidatePath(`/projects/${projectId}`);
+  if (taskId) revalidatePath(`/tasks/${taskId}`);
   revalidatePath("/suggestions");
 }
 
@@ -5467,11 +5491,17 @@ export async function deleteSuggestedJournal(
   requireAdmin(user.roles);
   if (await researchContentIsLocked(projectId)) return;
 
+  const suggestion = await prisma.suggestedJournal.findFirst({
+    where: { projectId, id: suggestionId },
+    select: { taskId: true },
+  });
+
   await prisma.suggestedJournal.deleteMany({
     where: { projectId, id: suggestionId },
   });
 
   revalidatePath(`/projects/${projectId}`);
+  if (suggestion?.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
   revalidatePath("/suggestions");
 }
 
@@ -5489,6 +5519,7 @@ export async function addSuggestedConference(
   const venueLink = optionalString(formData.get("venueLink"));
   if (!conferenceId && !venueName && !venueLink) return;
   if (await researchContentIsLocked(projectId)) return;
+  const taskId = await unfinishedSuggestVenueTaskIdForUser(projectId, user.id);
 
   const canApprove =
     conferenceId &&
@@ -5521,6 +5552,7 @@ export async function addSuggestedConference(
           declineReason: null,
           venueName: venueName ?? venue?.name ?? null,
           venueLink,
+          ...(taskId ? { taskId } : {}),
         },
         create: {
           projectId,
@@ -5532,6 +5564,7 @@ export async function addSuggestedConference(
           approvedById: canApprove ? user.id : null,
           venueName: venueName ?? venue?.name ?? null,
           venueLink,
+          taskId,
         },
       })
     : await prisma.suggestedConference.create({
@@ -5542,6 +5575,7 @@ export async function addSuggestedConference(
           requiresApproval: true,
           venueName,
           venueLink,
+          taskId,
         },
       });
 
@@ -5557,6 +5591,7 @@ export async function addSuggestedConference(
   }
 
   revalidatePath(`/projects/${projectId}`);
+  if (taskId) revalidatePath(`/tasks/${taskId}`);
   revalidatePath("/suggestions");
 }
 
@@ -5687,11 +5722,17 @@ export async function deleteSuggestedConference(
   requireAdmin(user.roles);
   if (await researchContentIsLocked(projectId)) return;
 
+  const suggestion = await prisma.suggestedConference.findFirst({
+    where: { projectId, id: suggestionId },
+    select: { taskId: true },
+  });
+
   await prisma.suggestedConference.deleteMany({
     where: { projectId, id: suggestionId },
   });
 
   revalidatePath(`/projects/${projectId}`);
+  if (suggestion?.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
   revalidatePath("/suggestions");
 }
 
@@ -5718,6 +5759,7 @@ export async function approveSuggestedJournal(
       journalId: true,
       venueName: true,
       createdById: true,
+      taskId: true,
     },
   });
   if (!suggestion || suggestion.projectId !== projectId) return;
@@ -5761,6 +5803,7 @@ export async function approveSuggestedJournal(
   }
 
   revalidatePath(`/projects/${projectId}`);
+  if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
   revalidatePath("/suggestions");
 }
 
@@ -5787,6 +5830,7 @@ export async function approveSuggestedConference(
       conferenceId: true,
       venueName: true,
       createdById: true,
+      taskId: true,
     },
   });
   if (!suggestion || suggestion.projectId !== projectId) return;
@@ -5830,6 +5874,7 @@ export async function approveSuggestedConference(
   }
 
   revalidatePath(`/projects/${projectId}`);
+  if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
   revalidatePath("/suggestions");
 }
 
@@ -5861,6 +5906,7 @@ export async function declineSuggestedJournal(
       status: true,
       venueName: true,
       createdById: true,
+      taskId: true,
       journal: { select: { name: true } },
     },
   });
@@ -5900,6 +5946,7 @@ export async function declineSuggestedJournal(
   }
 
   revalidatePath(`/projects/${projectId}`);
+  if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
   revalidatePath("/suggestions");
   return { ok: true };
 }
@@ -5932,6 +5979,7 @@ export async function declineSuggestedConference(
       status: true,
       venueName: true,
       createdById: true,
+      taskId: true,
       conference: { select: { name: true } },
     },
   });
@@ -5971,6 +6019,7 @@ export async function declineSuggestedConference(
   }
 
   revalidatePath(`/projects/${projectId}`);
+  if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
   revalidatePath("/suggestions");
   return { ok: true };
 }
