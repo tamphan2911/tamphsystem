@@ -480,7 +480,7 @@ function SubmissionInfoPanel({
 }: {
   submission: TaskSubmissionInfo;
 }) {
-  const dateRows = [
+  const dateItems = [
     ["Submitted", submission.submittedAt],
     ["Accepted", submission.acceptedAt],
     ["Rejected", submission.rejectedAt],
@@ -490,53 +490,70 @@ function SubmissionInfoPanel({
   ].filter((row): row is [string, Date] => Boolean(row[1]));
 
   return (
-    <div className="min-w-0">
-      <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
-        Submission
+    <aside className="min-w-0 border border-emerald-200 bg-emerald-50/80 p-4 dark:border-emerald-300/35 dark:bg-emerald-950/20">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-normal uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Submission result
+          </div>
+          <Link
+            href={`/submissions/${submission.id}`}
+            className="research-clickable-icon mt-2 block min-w-0 text-sm font-normal leading-6 text-[#1F2937] transition-[color,text-shadow,transform] duration-180 ease-out hover:text-emerald-700 hover:[text-shadow:0_0_0.55rem_rgba(4,120,87,0.16)] active:scale-[0.99] dark:text-[#E4E4E4] dark:hover:text-emerald-200"
+          >
+            Completed submission record
+          </Link>
+        </div>
+        <div className="flex flex-none items-center gap-2">
+          {submission.articleUrl ? (
+            <ExternalVenueLink
+              href={submission.articleUrl}
+              label="Open article"
+              className="text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </ExternalVenueLink>
+          ) : null}
+          <IconHint label="Open submission" position="bottom">
+            <Link
+              href={`/submissions/${submission.id}`}
+              className="research-clickable-icon research-allow-transform inline-flex h-5 w-5 items-center justify-center border-0 bg-transparent text-emerald-700 shadow-none outline-none transition-[color,transform,filter] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-emerald-800 hover:shadow-none active:scale-95 dark:text-emerald-300 dark:hover:text-emerald-200"
+              aria-label="Open submission"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Link>
+          </IconHint>
+        </div>
       </div>
-      <div className="mt-2 flex min-w-0 items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-y-1 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
         <Link
           href={`/submissions/${submission.id}`}
-          className={`min-w-0 text-sm ${researchLinkClass}`}
+          className="research-clickable-icon text-emerald-700 transition hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
         >
-          {submission.code}
+          ID: {submission.code}
         </Link>
-        {submission.articleUrl ? (
-          <ExternalVenueLink
-            href={submission.articleUrl}
-            label="Open article"
-            className="text-[#B0B0B0] hover:text-[#A8DADC]"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </ExternalVenueLink>
-        ) : null}
-      </div>
-      <p className="mt-1 flex flex-wrap items-center text-xs text-[#B0B0B0]">
-        <span>
-          {submission.kind === "journal"
-            ? "Journal submission"
-            : "Conference submission"}
-        </span>
         <DetailSeparator />
         <span>Status: {submission.status.replaceAll("_", " ")}</span>
-      </p>
-      {dateRows.length > 0 ? (
-        <div className="mt-2 grid gap-1 text-xs leading-5 text-[#B0B0B0]">
-          {dateRows.map(([label, value]) => (
-            <div key={label} className="flex flex-wrap items-center">
+        {dateItems.length > 0 ? <DetailSeparator /> : null}
+        {dateItems.length > 0 ? (
+          dateItems.map(([label, value], index) => (
+            <span key={label} className="inline-flex items-center">
+              {index > 0 ? <DetailSeparator /> : null}
               <span>
                 {label}: {formatDate(value)}
               </span>
-            </div>
-          ))}
+            </span>
+          ))
+        ) : (
+          <span>No submission date recorded</span>
+        )}
+      </div>
+      {submission.note ? (
+        <div className="mt-3 border-t border-emerald-200 pt-3 text-xs leading-5 text-[#667085] dark:border-emerald-300/25 dark:text-[#B0B0B0]">
+          {submission.note}
         </div>
       ) : null}
-      {submission.note ? (
-        <p className="mt-2 text-xs leading-5 text-[#B0B0B0]">
-          {submission.note}
-        </p>
-      ) : null}
-    </div>
+    </aside>
   );
 }
 
@@ -951,10 +968,10 @@ export default async function TaskDetailPage({
   const checkerPerson = task.checker ?? task.createdBy;
   const resultUnderChecker = Boolean(
     taskResult &&
-      (taskResult.actorId === task.checkerId ||
-        task.checkerId === task.createdById ||
-        (!task.checkerId && taskResult.actorId === task.createdById) ||
-        (!taskResult.actorId && !task.checkerId)),
+    (taskResult.actorId === task.checkerId ||
+      task.checkerId === task.createdById ||
+      (!task.checkerId && taskResult.actorId === task.createdById) ||
+      (!taskResult.actorId && !task.checkerId)),
   );
   const redoInfo =
     task.status !== ResearchTaskStatus.COMPLETED &&
@@ -969,10 +986,10 @@ export default async function TaskDetailPage({
       : null;
   const redoUnderChecker = Boolean(
     redoInfo &&
-      (redoInfo.actorId === task.checkerId ||
-        task.checkerId === task.createdById ||
-        (!task.checkerId && redoInfo.actorId === task.createdById) ||
-        (!redoInfo.actorId && !task.checkerId)),
+    (redoInfo.actorId === task.checkerId ||
+      task.checkerId === task.createdById ||
+      (!task.checkerId && redoInfo.actorId === task.createdById) ||
+      (!redoInfo.actorId && !task.checkerId)),
   );
   const taskType = taskTypeMeta(task.taskType, task.category);
   const TaskTypeIcon = taskType.icon;
