@@ -208,13 +208,49 @@ function EmptyJournalSlot({
   onAdd: () => void;
   onLink: () => void;
 }) {
+  const canOpenSlot = canLinkExisting || canAdd;
+  const openSlot = () => {
+    if (canLinkExisting) {
+      onLink();
+      return;
+    }
+    if (canAdd) onAdd();
+  };
+
   return (
-    <article className="group relative min-h-56 border border-dashed border-[#CFC6B8] bg-[#FBF9F4] p-4 text-left transition-[border-color,background-color,transform] duration-180 hover:-translate-y-0.5 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:border-[#4A4A4A] dark:bg-[#262626] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838]">
+    <article
+      className={`group relative min-h-56 border border-dashed border-[#CFC6B8] bg-[#FBF9F4] p-4 text-left transition-[border-color,background-color,transform] duration-180 hover:-translate-y-0.5 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:border-[#4A4A4A] dark:bg-[#262626] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838] ${
+        canOpenSlot ? "cursor-pointer" : ""
+      }`}
+      role={canOpenSlot ? "button" : undefined}
+      tabIndex={canOpenSlot ? 0 : undefined}
+      onClick={canOpenSlot ? openSlot : undefined}
+      onKeyDown={
+        canOpenSlot
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openSlot();
+              }
+            }
+          : undefined
+      }
+      aria-label={
+        canLinkExisting
+          ? `Link existing journal to journal ${position + 1}`
+          : canAdd
+            ? `Add journal ${position + 1}`
+            : undefined
+      }
+    >
       {canLinkExisting ? (
         <IconHint label="Link existing journal to this slot">
           <button
             type="button"
-            onClick={onLink}
+            onClick={(event) => {
+              event.stopPropagation();
+              onLink();
+            }}
             className="research-allow-transform absolute right-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center border-0 bg-transparent text-cyan-700 opacity-0 outline-none transition-[color,opacity,transform] duration-180 hover:-translate-y-0.5 hover:bg-transparent hover:text-cyan-800 group-hover:opacity-100 focus-visible:opacity-100 active:translate-y-0 active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-100"
             aria-label="Link existing journal to this slot"
           >
@@ -239,7 +275,10 @@ function EmptyJournalSlot({
         {canAdd ? (
           <button
             type="button"
-            onClick={onAdd}
+            onClick={(event) => {
+              event.stopPropagation();
+              onAdd();
+            }}
             className="cursor-pointer border-0 bg-transparent p-0 text-left text-inherit outline-none transition-colors hover:text-[#1F7180] focus-visible:text-[#1F7180] dark:hover:text-[#A8DADC] dark:focus-visible:text-[#A8DADC]"
           >
             Add journal
