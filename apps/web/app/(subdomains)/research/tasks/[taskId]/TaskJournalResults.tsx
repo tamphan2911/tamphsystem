@@ -1,19 +1,39 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { BookOpen, Plus, ShieldAlert, ShieldCheck } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import {
+  BookOpen,
+  LinkIcon,
+  Loader2,
+  Plus,
+  SearchCheck,
+  ShieldAlert,
+  ShieldCheck,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { JournalDialogForm } from "../../journals/JournalDialogForm";
 import type { PublisherPickerItem } from "@/sites/research/components/PublisherPicker";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
-import { IconHint } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import {
+  IconHint,
+  ResearchButton,
+} from "@/sites/research/components/ResearchPrimitives";
+import {
+  ResearchSearchPicker,
+  type ResearchSearchPickerOption,
+} from "@/sites/research/components/ResearchSearchPicker";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
   currencySymbol,
   formatResearchNumber,
 } from "@/sites/research/lib/currency";
-import { approveTaskJournal, createJournalForTaskSlot } from "../../actions";
+import {
+  approveTaskJournal,
+  createJournalForTaskSlot,
+  linkJournalToTaskSlot,
+} from "../../actions";
 
 export type TaskJournalResult = {
   id: string;
@@ -34,22 +54,38 @@ export type TaskJournalResult = {
   createdBy: string;
 };
 
+export type LinkableTaskJournal = {
+  id: string;
+  name: string;
+  issn: string;
+  publisher: string;
+  rank: string;
+  fields: string[];
+  country: string;
+  approvalStatus: string;
+};
+
 export function TaskJournalResults({
   taskId,
   targetCount,
   journals,
   publishers,
+  linkableJournals,
   canAdd,
   canApprove,
+  canLinkExisting,
 }: {
   taskId: string;
   targetCount: number;
   journals: TaskJournalResult[];
   publishers: PublisherPickerItem[];
+  linkableJournals: LinkableTaskJournal[];
   canAdd: boolean;
   canApprove: boolean;
+  canLinkExisting: boolean;
 }) {
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
+  const [linkSlot, setLinkSlot] = useState<number | null>(null);
   const [approvalJournal, setApprovalJournal] =
     useState<TaskJournalResult | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -89,7 +125,9 @@ export function TaskJournalResults({
               key={position}
               position={position}
               canAdd={canAdd}
+              canLinkExisting={canLinkExisting}
               onAdd={() => setActiveSlot(position)}
+              onLink={() => setLinkSlot(position)}
             />
           );
         })}
@@ -110,6 +148,13 @@ export function TaskJournalResults({
           return result;
         }}
         publishers={publishers}
+      />
+
+      <LinkExistingJournalDialog
+        taskId={taskId}
+        slot={linkSlot}
+        journals={linkableJournals}
+        onClose={() => setLinkSlot(null)}
       />
 
       <ResearchConfirmDialog
@@ -153,19 +198,30 @@ export function TaskJournalResults({
 function EmptyJournalSlot({
   position,
   canAdd,
+  canLinkExisting,
   onAdd,
+  onLink,
 }: {
   position: number;
   canAdd: boolean;
+  canLinkExisting: boolean;
   onAdd: () => void;
+  onLink: () => void;
 }) {
   return (
-    <button
-      type="button"
-      disabled={!canAdd}
-      onClick={onAdd}
-      className="group grid min-h-56 grid-rows-[auto_1fr_auto] border border-dashed border-[#CFC6B8] bg-[#FBF9F4] p-4 text-left transition-[border-color,background-color,transform] duration-180 hover:-translate-y-0.5 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] active:translate-y-0 active:scale-[0.99] disabled:cursor-default disabled:hover:translate-y-0 disabled:hover:border-[#CFC6B8] disabled:hover:bg-[#FBF9F4] dark:border-[#4A4A4A] dark:bg-[#262626] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838] dark:disabled:hover:border-[#4A4A4A] dark:disabled:hover:bg-[#262626]"
-    >
+    <article className="group relative min-h-56 border border-dashed border-[#CFC6B8] bg-[#FBF9F4] p-4 text-left transition-[border-color,background-color,transform] duration-180 hover:-translate-y-0.5 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:border-[#4A4A4A] dark:bg-[#262626] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838]">
+      {canLinkExisting ? (
+        <IconHint label="Link existing journal to this slot">
+          <button
+            type="button"
+            onClick={onLink}
+            className="research-allow-transform absolute right-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center border-0 bg-transparent text-cyan-700 opacity-0 outline-none transition-[color,opacity,transform] duration-180 hover:-translate-y-0.5 hover:bg-transparent hover:text-cyan-800 group-hover:opacity-100 focus-visible:opacity-100 active:translate-y-0 active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-100"
+            aria-label="Link existing journal to this slot"
+          >
+            <LinkIcon className="h-4 w-4" />
+          </button>
+        </IconHint>
+      ) : null}
       <div className="flex items-center justify-between gap-3">
         <span className="text-[11px] uppercase text-[#8C95A4] dark:text-[#777777]">
           Journal {position + 1}
@@ -180,9 +236,192 @@ function EmptyJournalSlot({
       </div>
       <span className="flex items-center gap-2 text-xs text-[#667085] group-hover:text-[#1F7180] dark:text-[#8F8F8F] dark:group-hover:text-[#A8DADC]">
         <Plus className="h-3.5 w-3.5" />
-        {canAdd ? "Add journal" : "Waiting for assignee"}
+        {canAdd ? (
+          <button
+            type="button"
+            onClick={onAdd}
+            className="cursor-pointer border-0 bg-transparent p-0 text-left text-inherit outline-none transition-colors hover:text-[#1F7180] focus-visible:text-[#1F7180] dark:hover:text-[#A8DADC] dark:focus-visible:text-[#A8DADC]"
+          >
+            Add journal
+          </button>
+        ) : canLinkExisting ? (
+          "Ready for admin link"
+        ) : (
+          "Waiting for assignee"
+        )}
       </span>
-    </button>
+    </article>
+  );
+}
+
+function LinkExistingJournalDialog({
+  taskId,
+  slot,
+  journals,
+  onClose,
+}: {
+  taskId: string;
+  slot: number | null;
+  journals: LinkableTaskJournal[];
+  onClose: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [selectedJournal, setSelectedJournal] =
+    useState<LinkableTaskJournal | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const toast = useResearchToast();
+  const filteredJournals = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return journals.slice(0, 8);
+    return journals
+      .filter((journal) =>
+        [
+          journal.name,
+          journal.issn,
+          journal.publisher,
+          journal.rank,
+          journal.country,
+          ...journal.fields,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 8);
+  }, [journals, query]);
+  const options = useMemo<ResearchSearchPickerOption<LinkableTaskJournal>[]>(
+    () =>
+      filteredJournals.map((journal) => ({
+        id: journal.id,
+        label: journal.name,
+        description: [
+          journal.issn || "No ISSN",
+          journal.publisher,
+          journal.rank,
+          journal.country,
+        ]
+          .filter(Boolean)
+          .join(" | "),
+        data: journal,
+      })),
+    [filteredJournals],
+  );
+  const open = slot !== null;
+  const closeDialog = () => {
+    setSelectedJournal(null);
+    setQuery("");
+    onClose();
+  };
+
+  return (
+    <ResearchModal
+      open={open}
+      onClose={closeDialog}
+      title="Link journal result"
+      icon={<SearchCheck className="h-5 w-5" />}
+      maxWidth="max-w-2xl"
+      headerActions={
+        <ResearchButton
+          type="button"
+          disabled={isPending || !selectedJournal || slot === null}
+          onClick={() => {
+            if (!selectedJournal || slot === null) return;
+            startTransition(async () => {
+              try {
+                const result = await linkJournalToTaskSlot(
+                  taskId,
+                  slot,
+                  selectedJournal.id,
+                );
+                toast.showSuccess({
+                  title: "Journal linked",
+                  detail: `${result.journalName} is now linked to journal ${slot + 1}.`,
+                });
+                closeDialog();
+                router.refresh();
+              } catch (error) {
+                toast.showError({
+                  title: "Journal could not be linked",
+                  detail:
+                    error instanceof Error
+                      ? error.message
+                      : "Choose another journal and try again.",
+                });
+              }
+            });
+          }}
+        >
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <LinkIcon className="h-4 w-4" />
+          )}
+          Link journal
+        </ResearchButton>
+      }
+    >
+      <div className="grid gap-5">
+        <ResearchSearchPicker
+          label="Journal"
+          required
+          selected={
+            selectedJournal
+              ? {
+                  id: selectedJournal.id,
+                  label: selectedJournal.name,
+                  description: [
+                    selectedJournal.issn || "No ISSN",
+                    selectedJournal.publisher,
+                    selectedJournal.rank,
+                  ]
+                    .filter(Boolean)
+                    .join(" | "),
+                  data: selectedJournal,
+                }
+              : null
+          }
+          query={query}
+          onQueryChange={(nextQuery) => {
+            setQuery(nextQuery);
+            setSelectedJournal(null);
+          }}
+          onSelect={(option) => {
+            setSelectedJournal(option.data ?? null);
+            setQuery("");
+          }}
+          onClear={() => {
+            setSelectedJournal(null);
+            setQuery("");
+          }}
+          options={options}
+          placeholder="Search journal by name, ISSN, publisher, rank, or field..."
+          emptyText="No unlinked journal matches this search."
+        />
+        {selectedJournal ? (
+          <section className="border border-[#D8D0C2] bg-[#FFFDF8] p-4 dark:border-[#444444] dark:bg-[#262626]">
+            <p className="break-words text-sm font-normal leading-5 text-[#1F2937] dark:text-[#E4E4E4]">
+              {selectedJournal.name}
+            </p>
+            <p className="mt-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+              {[
+                selectedJournal.issn || "No ISSN",
+                selectedJournal.publisher,
+                selectedJournal.rank,
+                selectedJournal.country,
+              ]
+                .filter(Boolean)
+                .join(" | ")}
+            </p>
+            {selectedJournal.fields.length ? (
+              <p className="mt-1 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                {selectedJournal.fields.join("; ")}
+              </p>
+            ) : null}
+          </section>
+        ) : null}
+      </div>
+    </ResearchModal>
   );
 }
 

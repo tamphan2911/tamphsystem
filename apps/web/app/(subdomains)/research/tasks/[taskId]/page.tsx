@@ -65,6 +65,7 @@ import { TaskReportPanel } from "./TaskReportPanel";
 import { TaskReminderButton } from "./TaskReminderButton";
 import {
   TaskJournalResults,
+  type LinkableTaskJournal,
   type TaskJournalResult,
 } from "./TaskJournalResults";
 import { TaskGuideIcons, type TaskGuideOption } from "../TaskGuidePicker";
@@ -1057,6 +1058,43 @@ export default async function TaskDetailPage({
             usesSingleAccount: true,
           },
         })
+      : [];
+  const linkableTaskJournals: LinkableTaskJournal[] =
+    task.taskType === "ADD_JOURNAL" && isRootAdmin
+      ? (
+          await prisma.journal.findMany({
+            where: { resultTaskId: null },
+            orderBy: [{ name: "asc" }],
+            select: {
+              id: true,
+              name: true,
+              issn: true,
+              publisher: true,
+              rank: true,
+              localRank: true,
+              fields: true,
+              field: true,
+              country: true,
+              approvalStatus: true,
+            },
+          })
+        ).map((journal) => ({
+          id: journal.id,
+          name: journal.name,
+          issn: journal.issn ?? "",
+          publisher: journal.publisher ?? "",
+          rank: journal.rank ?? journal.localRank ?? "",
+          fields: journal.fields.length
+            ? journal.fields
+            : journal.field
+              ? journal.field
+                  .split(";")
+                  .map((field) => field.trim())
+                  .filter(Boolean)
+              : [],
+          country: journal.country ?? "",
+          approvalStatus: journal.approvalStatus,
+        }))
       : [];
 
   const associatedJournalSubmission =
@@ -2119,8 +2157,10 @@ export default async function TaskDetailPage({
                 alias: publisher.alias ?? "",
                 country: publisher.country ?? "",
               }))}
+              linkableJournals={linkableTaskJournals}
               canAdd={canAddTaskJournals}
               canApprove={canApproveTaskJournals}
+              canLinkExisting={isRootAdmin}
             />
           ) : null}
 

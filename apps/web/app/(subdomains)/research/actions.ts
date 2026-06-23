@@ -2995,6 +2995,51 @@ export async function createJournalForTaskSlot(
   }
 }
 
+export async function linkJournalToTaskSlot(
+  taskId: string,
+  resultPosition: number,
+  journalId: string,
+) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: { id: true, taskType: true, journalTargetCount: true },
+  });
+  if (!task || task.taskType !== ResearchTaskType.ADD_JOURNAL) {
+    throw new Error("This task cannot receive journal results.");
+  }
+  const targetCount = Math.max(1, task.journalTargetCount ?? 1);
+  if (resultPosition < 0 || resultPosition >= targetCount) {
+    throw new Error("This journal result slot is not available.");
+  }
+  const occupied = await prisma.journal.count({
+    where: { resultTaskId: taskId, resultPosition },
+  });
+  if (occupied) throw new Error("This journal result slot is already filled.");
+
+  const journal = await prisma.journal.findUnique({
+    where: { id: journalId },
+    select: { id: true, resultTaskId: true, name: true },
+  });
+  if (!journal) throw new Error("Choose a journal before linking.");
+  if (journal.resultTaskId) {
+    throw new Error("This journal is already linked to a task slot.");
+  }
+
+  await prisma.journal.update({
+    where: { id: journalId },
+    data: { resultTaskId: taskId, resultPosition },
+  });
+
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+  revalidatePath("/journals");
+  revalidatePath(`/journals/${journalId}`);
+  return { journalName: journal.name };
+}
+
 export async function approveTaskJournal(taskId: string, journalId: string) {
   const user = await requireCurrentUser();
   const task = await prisma.researchTask.findUnique({
