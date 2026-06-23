@@ -80,6 +80,11 @@ const defaultSubmissionTaskAssigneeEmail = "tamphan.ntc@gmail.com";
 
 const inputClass = researchFieldClass;
 
+function defaultSubmissionTaskGuideIds(guides: TaskGuideOption[]) {
+  const guide = guides.find((item) => item.guideCode === "G002");
+  return guide ? [guide.id] : [];
+}
+
 export function CreateSubmissionTaskDialog({
   projectId,
   projectTitle,
@@ -112,7 +117,7 @@ export function CreateSubmissionTaskDialog({
   );
   const [selectedCheckerId, setSelectedCheckerId] = useState("");
   const [selectedTaskGuideIds, setSelectedTaskGuideIds] = useState<string[]>(
-    [],
+    () => defaultSubmissionTaskGuideIds(taskGuideOptions),
   );
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -237,12 +242,14 @@ export function CreateSubmissionTaskDialog({
     setSelectedCheckerId("");
     setCheckerQuery("");
     setDueDate(defaultResearchTaskDueDate());
+    setSelectedTaskGuideIds(defaultSubmissionTaskGuideIds(taskGuideOptions));
   }
 
   function openDialog() {
     setSelectedAssistantIds(defaultAssistantId ? [defaultAssistantId] : []);
     setAllowReportUpload(false);
     setDueDate(defaultResearchTaskDueDate());
+    setSelectedTaskGuideIds(defaultSubmissionTaskGuideIds(taskGuideOptions));
     setIsOpen(true);
   }
 
@@ -278,6 +285,15 @@ export function CreateSubmissionTaskDialog({
       setSelectedAccountId(selectedVenue.accounts.at(0)?.id ?? "");
     }
   }, [selectedVenue]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedTaskGuideIds((current) =>
+      current.length > 0
+        ? current
+        : defaultSubmissionTaskGuideIds(taskGuideOptions),
+    );
+  }, [isOpen, taskGuideOptions]);
 
   function submitTask(formData: FormData) {
     if (!selectedVenue) return;
@@ -487,33 +503,33 @@ export function CreateSubmissionTaskDialog({
               <div ref={venueDropdownRef} className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
-                  value={venueQuery}
+                  value={selectedVenue ? selectedVenue.name : venueQuery}
                   onChange={(event) => {
                     setVenueQuery(event.target.value);
                     setSelectedVenue(null);
-                  }}
-                  placeholder="Search journal name, ISSN, conference name, ISBN..."
-                  className={`${researchSearchFieldClass} pl-9`}
-                />
-              </div>
-              {selectedVenue && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedVenue(null);
                     setSelectedAccountId("");
                   }}
-                  className="inline-flex w-fit cursor-pointer items-center gap-2 border border-[#444444] bg-[#202020] px-2.5 py-1.5 text-xs text-[#E4E4E4] transition hover:border-[#A8DADC] hover:bg-[#303030]"
-                >
-                  {selectedVenue.name}
-                  <span className="text-[#B0B0B0]" aria-hidden="true">
-                    ×
-                  </span>
-                </button>
-              )}
+                  placeholder="Search journal name, ISSN, conference name, ISBN..."
+                  className={`${researchSearchFieldClass} pl-9 ${selectedVenue ? "pr-10" : ""}`}
+                />
+                {selectedVenue ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedVenue(null);
+                      setVenueQuery("");
+                      setSelectedAccountId("");
+                    }}
+                    className="research-allow-transform absolute right-3 top-1/2 inline-flex h-5 w-5 -translate-y-1/2 items-center justify-center border-0 bg-transparent text-[#6C778D] shadow-none transition hover:bg-transparent hover:text-[#1F7180] focus-visible:ring-0 active:scale-95 dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+                    aria-label="Clear selected venue"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
               <FloatingDropdownPortal
                 anchorRef={venueDropdownRef}
-                open={Boolean(venueQuery.trim())}
+                open={Boolean(venueQuery.trim()) && !selectedVenue}
                 maxWidth={820}
                 maxPanelHeight={272}
               >
@@ -727,33 +743,37 @@ export function CreateSubmissionTaskDialog({
                   </FloatingDropdownPortal>
                   {canChooseChecker && (
                     <section className="grid gap-3">
-                      {selectedChecker ? (
-                        <button
-                          type="button"
-                          onClick={() => selectChecker("")}
-                          className="inline-flex w-fit cursor-pointer items-center gap-2 border border-[#d9d0c3] bg-[#f8f5f0] px-2.5 py-1.5 text-xs text-[#243047] transition hover:border-[#A8DADC] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#A8DADC] dark:hover:bg-[#303030]"
-                        >
-                          {displayResearchPersonName(selectedChecker)}
-                          <span className="text-[#6C778D] dark:text-[#B0B0B0]">
-                            Chief assistant checker
-                          </span>
-                          <X className="h-3.5 w-3.5 text-[#6C778D] dark:text-[#B0B0B0]" />
-                        </button>
-                      ) : null}
                       <div ref={checkerDropdownRef} className="relative">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                         <input
-                          value={checkerQuery}
-                          onChange={(event) =>
-                            setCheckerQuery(event.target.value)
+                          value={
+                            selectedChecker
+                              ? displayResearchPersonName(selectedChecker)
+                              : checkerQuery
                           }
+                          onChange={(event) => {
+                            setCheckerQuery(event.target.value);
+                            setSelectedCheckerId("");
+                          }}
                           placeholder="Search chief assistant checker (optional)"
-                          className={`${researchSearchFieldClass} pl-9`}
+                          className={`${researchSearchFieldClass} pl-9 ${
+                            selectedChecker ? "pr-10" : ""
+                          }`}
                         />
+                        {selectedChecker ? (
+                          <button
+                            type="button"
+                            onClick={() => selectChecker("")}
+                            className="research-allow-transform absolute right-3 top-1/2 inline-flex h-5 w-5 -translate-y-1/2 items-center justify-center border-0 bg-transparent text-[#6C778D] shadow-none transition hover:bg-transparent hover:text-[#1F7180] focus-visible:ring-0 active:scale-95 dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+                            aria-label="Clear selected checker"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        ) : null}
                       </div>
                       <FloatingDropdownPortal
                         anchorRef={checkerDropdownRef}
-                        open={Boolean(checkerQuery.trim())}
+                        open={Boolean(checkerQuery.trim()) && !selectedChecker}
                         maxWidth={820}
                         maxPanelHeight={272}
                       >
