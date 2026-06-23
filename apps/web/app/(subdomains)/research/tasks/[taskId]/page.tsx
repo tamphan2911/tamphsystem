@@ -1704,8 +1704,8 @@ export default async function TaskDetailPage({
             </div>
           )}
 
-          <section className="grid gap-5 border-t border-[#444444] p-5 md:grid-cols-3">
-            <div className="grid gap-3">
+          <section className="grid items-start gap-5 border-t border-[#444444] p-5 md:grid-cols-3">
+            <div className="grid content-start gap-3">
               <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Assignees
               </h2>
@@ -1724,7 +1724,7 @@ export default async function TaskDetailPage({
               </div>
             </div>
 
-            <div className="grid gap-3">
+            <div className="grid content-start gap-3">
               <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Checker
               </h2>
@@ -1739,7 +1739,7 @@ export default async function TaskDetailPage({
               </div>
             </div>
 
-            <div className="grid gap-3">
+            <div className="grid content-start gap-3">
               <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Assigner
               </h2>
