@@ -3204,7 +3204,9 @@ async function approveJournalWithWorkflow(
           select: {
             id: true,
             title: true,
+            taskType: true,
             status: true,
+            journalTargetCount: true,
             assignments: { select: { userId: true } },
             journalCreationSuggestion: {
               select: { id: true, projectId: true, createdById: true },
@@ -3238,11 +3240,7 @@ async function approveJournalWithWorkflow(
 
     const workflowTask = journal.resultTask;
     const suggestion = workflowTask?.journalCreationSuggestion;
-    if (
-      !workflowTask ||
-      !suggestion ||
-      workflowTask.status === ResearchTaskStatus.REVOKED
-    ) {
+    if (!workflowTask || workflowTask.status === ResearchTaskStatus.REVOKED) {
       return {
         journalName: journal.name,
         taskId: journal.resultTaskId,
@@ -3250,51 +3248,75 @@ async function approveJournalWithWorkflow(
       };
     }
 
-    await tx.researchTask.update({
-      where: { id: workflowTask.id },
-      data: {
-        status: ResearchTaskStatus.COMPLETED,
-        completedAt,
-        completedById: approvedById,
-        completionMessage:
-          "Journal approved. The linked venue suggestion was approved automatically.",
-        revokedAt: null,
-        revokedById: null,
-        revokeReason: null,
-        adminViewedAt: null,
-        assignments: {
-          updateMany: {
-            where: { finishedAt: null },
-            data: { finishedAt: completedAt },
+    const taskJournals = await tx.journal.findMany({
+      where: { resultTaskId: workflowTask.id },
+      select: { approvalStatus: true },
+    });
+    const targetCount = Math.max(1, workflowTask.journalTargetCount ?? 1);
+    const taskReadyToComplete =
+      workflowTask.taskType === ResearchTaskType.ADD_JOURNAL &&
+      taskJournals.length >= targetCount &&
+      taskJournals.every(
+        (taskJournal) =>
+          taskJournal.approvalStatus === JournalApprovalStatus.APPROVED,
+      );
+    const taskCompleted =
+      taskReadyToComplete &&
+      workflowTask.status !== ResearchTaskStatus.COMPLETED;
+    const completionNote =
+      "All requested journals were approved, so this add-journal task was completed automatically.";
+
+    if (taskCompleted) {
+      await tx.researchTask.update({
+        where: { id: workflowTask.id },
+        data: {
+          status: ResearchTaskStatus.COMPLETED,
+          completedAt,
+          completedById: approvedById,
+          completionMessage: completionNote,
+          revokedAt: null,
+          revokedById: null,
+          revokeReason: null,
+          adminViewedAt: null,
+          assignments: {
+            updateMany: {
+              where: { finishedAt: null },
+              data: { finishedAt: completedAt },
+            },
           },
         },
-      },
-    });
-    await tx.suggestedJournal.update({
-      where: { id: suggestion.id },
-      data: {
-        journalId,
-        status: SuggestedVenueStatus.APPROVED,
-        requiresApproval: true,
-        approvedAt: completedAt,
-        approvedById,
-        declinedAt: null,
-        declinedById: null,
-        declineReason: null,
-      },
-    });
+      });
+    }
+
+    if (suggestion) {
+      await tx.suggestedJournal.update({
+        where: { id: suggestion.id },
+        data: {
+          journalId,
+          status: SuggestedVenueStatus.APPROVED,
+          requiresApproval: true,
+          approvedAt: completedAt,
+          approvedById,
+          declinedAt: null,
+          declinedById: null,
+          declineReason: null,
+        },
+      });
+    }
 
     return {
       journalName: journal.name,
       taskId: workflowTask.id,
       workflow: {
         taskTitle: workflowTask.title,
-        suggestionId: suggestion.id,
-        projectId: suggestion.projectId,
-        suggesterId: suggestion.createdById,
+        suggestionId: suggestion?.id ?? null,
+        projectId: suggestion?.projectId ?? null,
+        suggesterId: suggestion?.createdById ?? null,
         assigneeIds: workflowTask.assignments.map(
           (assignment) => assignment.userId,
         ),
+        taskCompleted,
+        completionNote: taskCompleted ? completionNote : null,
       },
     };
   });
@@ -3302,21 +3324,42 @@ async function approveJournalWithWorkflow(
   revalidatePath("/journals");
   revalidatePath(`/journals/${journalId}`);
   if (result.taskId) revalidatePath(`/tasks/${result.taskId}`);
-  if (result.workflow) {
+  if (result.workflow?.taskCompleted || result.workflow?.suggestionId) {
     revalidatePath("/tasks");
-    revalidatePath(`/projects/${result.workflow.projectId}`);
+    if (result.workflow.projectId)
+      revalidatePath(`/projects/${result.workflow.projectId}`);
     revalidatePath("/suggestions");
     const recipientIds = new Set(result.workflow.assigneeIds);
     if (result.workflow.suggesterId) {
       recipientIds.add(result.workflow.suggesterId);
     }
+    const body = [
+      `${result.journalName} was approved.`,
+      result.workflow.suggestionId
+        ? "The linked venue suggestion is now approved."
+        : null,
+      result.workflow.completionNote
+        ? `${result.workflow.taskTitle} was completed automatically. ${result.workflow.completionNote}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
     await notifyUsers({
       userIds: Array.from(recipientIds),
       type: "VENUE_SUGGESTION_APPROVED",
-      title: "Venue approved and task completed",
+      title:
+        result.workflow.suggestionId && result.workflow.taskCompleted
+          ? "Venue approved and task completed"
+          : result.workflow.taskCompleted
+            ? "Add journal task completed"
+            : "Venue suggestion approved",
       summary: result.journalName,
-      body: `${result.journalName} was approved. The linked venue suggestion is approved, and ${result.workflow.taskTitle} was completed automatically.`,
-      href: `/tasks/${result.taskId}`,
+      body,
+      href: result.workflow.taskCompleted
+        ? `/tasks/${result.taskId}`
+        : result.workflow.projectId
+          ? `/projects/${result.workflow.projectId}`
+          : `/tasks/${result.taskId}`,
       entityType: "task",
       entityId: result.taskId,
       excludeUserId: approvedById,
