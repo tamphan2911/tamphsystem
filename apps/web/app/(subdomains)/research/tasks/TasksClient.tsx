@@ -482,13 +482,6 @@ export function TasksClient({
     };
   }, [isAdmin, loadTasks]);
 
-  const peopleCount = useMemo(() => {
-    const names = new Set<string>();
-    tasks.forEach((task) =>
-      task.assignments.forEach((assignment) => names.add(assignment.userName)),
-    );
-    return names.size;
-  }, [tasks]);
   const [taskTypes, setTaskTypes] = usePersistentMultiFilter(
     "tasks:type",
     taskTypeFilterValues,
@@ -512,14 +505,14 @@ export function TasksClient({
     },
     {
       value: "related",
-      label: "Related items",
+      label: "Related to me",
       count: tasks.filter((task) => task.scope.relatedToMyItems).length,
     },
     ...(isChiefAssistant
       ? [
           {
             value: "checker" as const,
-            label: "Checking",
+            label: "As checker",
             count: tasks.filter((task) => task.scope.checkerForMe).length,
           },
         ]
@@ -586,44 +579,31 @@ export function TasksClient({
     pagination.setPage(1);
   }
 
-  const stats = [
-    {
-      label: "Tasks",
-      value: tasks.length,
-    },
-    {
-      label: "Active",
-      value: tasks.filter(
-        (task) => task.status !== "COMPLETED" && task.status !== "REVOKED",
-      ).length,
-    },
-    {
-      label: "Done",
-      value: tasks.filter((task) => task.status === "COMPLETED").length,
-    },
-    {
-      label: "People",
-      value: peopleCount,
-    },
-  ];
-
   return (
     <div className="space-y-4">
       <ResearchPageHeaderPortal>
         <div className="flex w-full min-w-0 items-center justify-between gap-4">
-          <div className="grid min-w-0 border border-[#444444] bg-[#2C2C2C] sm:grid-cols-4">
-            {stats.map((item, index) => (
-              <div
-                key={item.label}
-                className={`whitespace-nowrap px-3 py-2 text-sm text-[#E4E4E4] ${
-                  index > 0 ? "border-l border-[#444444]" : ""
-                }`}
+          <div
+            className={`journal-detail-tabs grid min-w-0 flex-1 grid-cols-2 border border-[#444444] bg-[#242424] p-1 text-center lg:max-w-2xl ${
+              scopeTabs.length > 2 ? "lg:grid-cols-3" : "lg:grid-cols-2"
+            }`}
+          >
+            {scopeTabs.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                data-active={activeScopeTab === tab.value}
+                aria-pressed={activeScopeTab === tab.value}
+                onClick={() => updateScopeTab(tab.value)}
+                className="journal-detail-tab-button cursor-pointer rounded-none px-4 py-3 text-left"
               >
-                <span className="font-normal text-[#B0B0B0]">
-                  {item.label}:{" "}
+                <span className="relative z-10 flex items-center justify-between gap-2">
+                  <span className="truncate text-[11px] font-normal uppercase tracking-wide">
+                    {tab.label}
+                  </span>
+                  <span className="text-base font-normal">{tab.count}</span>
                 </span>
-                <span className="font-normal text-[#E4E4E4]">{item.value}</span>
-              </div>
+              </button>
             ))}
           </div>
           <div className="flex flex-none items-center">{action}</div>
@@ -638,30 +618,6 @@ export function TasksClient({
               onChange={updateQuery}
               placeholder="Search task, assistant, category..."
             />
-            <div className="flex min-w-0 border border-[#D8D0C2] bg-[#F7F4ED] dark:border-[#444444] dark:bg-[#202020]">
-              {scopeTabs.map((tab, index) => {
-                const isActive = activeScopeTab === tab.value;
-                return (
-                  <button
-                    key={tab.value}
-                    type="button"
-                    onClick={() => updateScopeTab(tab.value)}
-                    className={`research-clickable-icon flex min-w-0 items-center justify-between gap-3 px-3 py-2 text-xs font-normal uppercase tracking-wide transition-[background-color,color,border-color,transform] duration-180 ease-out active:scale-[0.99] ${
-                      index > 0
-                        ? "border-l border-[#D8D0C2] dark:border-[#444444]"
-                        : ""
-                    } ${
-                      isActive
-                        ? "bg-[#D6F0F2] text-[#1F2937] dark:bg-[#A8DADC] dark:text-[#202020]"
-                        : "text-[#667085] hover:bg-[#EFE9DD] hover:text-[#1F2937] dark:text-[#B0B0B0] dark:hover:bg-[#2C2C2C] dark:hover:text-[#E4E4E4]"
-                    }`}
-                  >
-                    <span className="truncate">{tab.label}</span>
-                    <span className="text-current">{tab.count}</span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
             <MultiFilterSelect
@@ -682,10 +638,12 @@ export function TasksClient({
                 label:
                   value === "ALL"
                     ? "All status"
-                    : value
-                        .toLowerCase()
-                        .replaceAll("_", " ")
-                        .replace(/^\w/, (letter) => letter.toUpperCase()),
+                    : value === "CHECKING"
+                      ? "Ready to check"
+                      : value
+                          .toLowerCase()
+                          .replaceAll("_", " ")
+                          .replace(/^\w/, (letter) => letter.toUpperCase()),
               }))}
             />
           </div>
