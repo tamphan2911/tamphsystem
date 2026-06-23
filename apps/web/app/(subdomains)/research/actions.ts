@@ -3855,8 +3855,9 @@ export async function assignResearchAssistant(formData: FormData) {
   const userId = optionalString(formData.get("userId"));
   const password = optionalString(formData.get("password"));
   const role = formData.get("assistantRole");
-  const canManageResearchVenues =
-    formData.get("canManageResearchVenues") === "true";
+  const canManageResearchVenues = formData.has("canManageResearchVenues")
+    ? formData.get("canManageResearchVenues") === "true"
+    : true;
   if (!userId || (role !== Role.ASSISTANT && role !== Role.CHIEF_ASSISTANT))
     return;
 

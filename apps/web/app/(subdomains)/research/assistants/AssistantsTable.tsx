@@ -414,13 +414,19 @@ export function AssistantsTable({
                 active={editRole === "ASSISTANT"}
                 title="Assistant"
                 icon={<ShieldCheck className="h-5 w-5" />}
-                onClick={() => setEditRole("ASSISTANT")}
+                onClick={() => {
+                  setEditRole("ASSISTANT");
+                  setEditCanManageVenues(true);
+                }}
               />
               <RoleChoice
                 active={editRole === "CHIEF_ASSISTANT"}
                 title="Chief Assistant"
                 icon={<Crown className="h-5 w-5" />}
-                onClick={() => setEditRole("CHIEF_ASSISTANT")}
+                onClick={() => {
+                  setEditRole("CHIEF_ASSISTANT");
+                  setEditCanManageVenues(true);
+                }}
               />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">

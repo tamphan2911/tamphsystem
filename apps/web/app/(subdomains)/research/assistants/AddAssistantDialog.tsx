@@ -40,7 +40,7 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
   const [query, setQuery] = useState("");
   const [selectedUserId, setSelectedUserId] = useState("");
   const [assistantRole, setAssistantRole] = useState("ASSISTANT");
-  const [canManageVenues, setCanManageVenues] = useState(false);
+  const [canManageVenues, setCanManageVenues] = useState(true);
   const selectedUser = users.find((user) => user.id === selectedUserId) ?? null;
 
   const filtered = useMemo(() => {
@@ -78,7 +78,7 @@ export function AddAssistantDialog({ users }: { users: AssistantCandidate[] }) {
     setQuery("");
     setSelectedUserId("");
     setAssistantRole("ASSISTANT");
-    setCanManageVenues(false);
+    setCanManageVenues(true);
   }
 
   function handleSubmit(formData: FormData) {
