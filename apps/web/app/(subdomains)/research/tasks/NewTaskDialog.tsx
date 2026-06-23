@@ -102,6 +102,7 @@ export type TaskMode =
   | "submit"
   | "production"
   | "suggestVenue"
+  | "addJournal"
   | "review"
   | "project"
   | "other";
@@ -124,6 +125,7 @@ function modeLabel(mode: TaskMode) {
   if (mode === "submit") return "Submit";
   if (mode === "production") return "Production";
   if (mode === "suggestVenue") return "Suggest venue";
+  if (mode === "addJournal") return "Add journal";
   if (mode === "review") return "Review";
   if (mode === "project") return "Project";
   return "Other";
@@ -203,6 +205,7 @@ export function NewTaskDialog({
   const [selectedSubmission, setSelectedSubmission] =
     useState<TaskSubmissionOption | null>(null);
   const [allowReportUpload, setAllowReportUpload] = useState(false);
+  const [journalTargetCount, setJournalTargetCount] = useState("1");
   const [isPending, startTransition] = useTransition();
   const { showSuccess, showError } = useResearchToast();
 
@@ -381,6 +384,7 @@ export function NewTaskDialog({
     setSelectedOrganizedProject(null);
     setSelectedSubmission(null);
     setAllowReportUpload(false);
+    setJournalTargetCount("1");
   }
 
   function toggleAssignee(id: string) {
@@ -509,11 +513,14 @@ export function NewTaskDialog({
                                 ? "Choose an account that belongs to the selected journal."
                                 : result?.reason === "ACCOUNT_REQUIRED"
                                   ? "Choose the journal account for this submission task."
-                                  : result?.reason === "TASK_FILE_TOO_LARGE"
-                                    ? "Task file must be 2 MB or smaller."
-                                    : result?.reason === "TASK_FILE_REJECTED"
-                                      ? "Upload the task file as PDF, DOC, DOCX, or XLSX."
-                                      : "Please check the task details and try again.",
+                                  : result?.reason ===
+                                      "INVALID_JOURNAL_TARGET_COUNT"
+                                    ? "Enter a journal target between 1 and 30."
+                                    : result?.reason === "TASK_FILE_TOO_LARGE"
+                                      ? "Task file must be 2 MB or smaller."
+                                      : result?.reason === "TASK_FILE_REJECTED"
+                                        ? "Upload the task file as PDF, DOC, DOCX, or XLSX."
+                                        : "Please check the task details and try again.",
         });
         return;
       }
@@ -550,6 +557,8 @@ export function NewTaskDialog({
       : false);
   const canSubmit =
     selectedIds.length > 0 &&
+    (mode !== "addJournal" ||
+      (Number(journalTargetCount) >= 1 && Number(journalTargetCount) <= 30)) &&
     selectedResearchMatchesMode &&
     selectedVenueMatchesMode &&
     (!submitAccountRequired || Boolean(selectedAccountId)) &&
@@ -684,6 +693,16 @@ export function NewTaskDialog({
               <input type="hidden" name="taskType" value="SUGGEST_VENUE" />
             </>
           )}
+          {mode === "addJournal" && (
+            <>
+              <input type="hidden" name="taskType" value="ADD_JOURNAL" />
+              <input
+                type="hidden"
+                name="journalTargetCount"
+                value={journalTargetCount}
+              />
+            </>
+          )}
           {mode === "review" && selectedReview && (
             <>
               <input type="hidden" name="taskType" value="REVIEW" />
@@ -748,13 +767,14 @@ export function NewTaskDialog({
           {triggerVariant === "default" && (
             <div
               data-research-toggle-tabs="true"
-              className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020] sm:grid-cols-3 lg:grid-cols-6"
+              className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020] sm:grid-cols-4 lg:grid-cols-7"
             >
               {(
                 [
                   "submit",
                   "production",
                   "suggestVenue",
+                  "addJournal",
                   "review",
                   "project",
                   "other",
@@ -777,6 +797,24 @@ export function NewTaskDialog({
               ))}
             </div>
           )}
+
+          {mode === "addJournal" ? (
+            <label className="grid gap-1.5">
+              <span className="text-xs font-normal uppercase text-[#667085] dark:text-[#B0B0B0]">
+                Journals to add
+              </span>
+              <input
+                type="number"
+                min="1"
+                max="30"
+                step="1"
+                value={journalTargetCount}
+                onChange={(event) => setJournalTargetCount(event.target.value)}
+                placeholder="Number of journals"
+                className={inputClass}
+              />
+            </label>
+          ) : null}
 
           {fixedResearch ? (
             <section className="grid gap-2">

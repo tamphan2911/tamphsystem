@@ -55,6 +55,7 @@ type TaskMode =
   | "submit"
   | "production"
   | "suggestVenue"
+  | "addJournal"
   | "review"
   | "project"
   | "other";
@@ -68,6 +69,7 @@ type EditableTask = {
   taskType: string;
   projectId: string;
   journalId: string;
+  journalTargetCount: number | null;
   conferenceId: string;
   reviewId: string;
   organizedProjectId: string;
@@ -92,6 +94,7 @@ const taskTypeOptions = [
   { value: "SUBMIT_CONFERENCE", label: "Submit to conference" },
   { value: "PRODUCTION", label: "Research production" },
   { value: "SUGGEST_VENUE", label: "Suggest venue" },
+  { value: "ADD_JOURNAL", label: "Add journal" },
   { value: "REVIEW", label: "Academic review" },
   { value: "PROJECT_PRODUCTION", label: "Project production" },
   {
@@ -110,6 +113,7 @@ function modeFromTaskType(taskType: string): TaskMode {
   }
   if (taskType === "PRODUCTION") return "production";
   if (taskType === "SUGGEST_VENUE") return "suggestVenue";
+  if (taskType === "ADD_JOURNAL") return "addJournal";
   if (taskType === "REVIEW") return "review";
   if (
     taskType === "PROJECT_PRODUCTION" ||
@@ -158,6 +162,15 @@ function detailForFailure(reason?: string) {
   }
   if (reason === "TASK_CLOSED") {
     return "Completed or revoked tasks cannot be edited.";
+  }
+  if (reason === "INVALID_JOURNAL_TARGET_COUNT") {
+    return "Enter a journal target between 1 and 30.";
+  }
+  if (reason === "TASK_HAS_JOURNAL_RESULTS") {
+    return "Remove the added journal results before changing this task type.";
+  }
+  if (reason === "JOURNAL_TARGET_BELOW_RESULTS") {
+    return "The target cannot be lower than the highest filled journal slot.";
   }
   return "Please check the task details and try again.";
 }
@@ -243,6 +256,9 @@ export function EditTaskDialog({
     useState<TaskSubmissionOption | null>(initialSubmission);
   const [allowReportUpload, setAllowReportUpload] = useState(
     task.allowAssigneeReportUpload,
+  );
+  const [journalTargetCount, setJournalTargetCount] = useState(
+    String(task.journalTargetCount ?? 1),
   );
   const [isPending, startTransition] = useTransition();
   const { showSuccess, showError } = useResearchToast();
@@ -514,6 +530,7 @@ export function EditTaskDialog({
     setSelectedOrganizedProject(initialOrganizedProject);
     setSelectedSubmission(initialSubmission);
     setAllowReportUpload(task.allowAssigneeReportUpload);
+    setJournalTargetCount(String(task.journalTargetCount ?? 1));
     setIsOpen(true);
   }
 
@@ -569,6 +586,8 @@ export function EditTaskDialog({
       : !requiresOrganizedProject);
   const canSubmit =
     selectedIds.length > 0 &&
+    (mode !== "addJournal" ||
+      (Number(journalTargetCount) >= 1 && Number(journalTargetCount) <= 30)) &&
     selectedResearchMatchesMode &&
     selectedVenueMatchesMode &&
     selectedReviewIsOpen &&
@@ -688,6 +707,23 @@ export function EditTaskDialog({
               ) : null}
             </>
           )}
+          {mode === "addJournal" ? (
+            <label className="grid gap-1.5">
+              <span className="text-xs font-normal uppercase text-[#667085] dark:text-[#B0B0B0]">
+                Journals to add
+              </span>
+              <input
+                type="number"
+                name="journalTargetCount"
+                min="1"
+                max="30"
+                step="1"
+                value={journalTargetCount}
+                onChange={(event) => setJournalTargetCount(event.target.value)}
+                className={inputClass}
+              />
+            </label>
+          ) : null}
 
           <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
             <label className="grid gap-1.5">

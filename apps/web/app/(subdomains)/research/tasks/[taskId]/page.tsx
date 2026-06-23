@@ -9,6 +9,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
   Ban,
+  BookPlus,
   CheckCircle2,
   ClipboardList,
   Clock3,
@@ -62,6 +63,10 @@ import {
 } from "./TaskClarificationPanel";
 import { TaskReportPanel } from "./TaskReportPanel";
 import { TaskReminderButton } from "./TaskReminderButton";
+import {
+  TaskJournalResults,
+  type TaskJournalResult,
+} from "./TaskJournalResults";
 import { TaskGuideIcons } from "../TaskGuidePicker";
 import {
   TaskSuggestedReviewerButton,
@@ -295,6 +300,13 @@ function taskTypeMeta(taskType: string | null, category: string | null) {
       label: "Suggest venue",
       icon: CircleHelp,
       className: "text-[#86C5B8]",
+    };
+  }
+  if (taskType === "ADD_JOURNAL") {
+    return {
+      label: "Add journal",
+      icon: BookPlus,
+      className: "text-emerald-300",
     };
   }
   if (taskType === "REVIEW") {
@@ -758,6 +770,7 @@ export default async function TaskDetailPage({
       taskFileName: true,
       taskFileSize: true,
       allowAssigneeReportUpload: true,
+      journalTargetCount: true,
       reportFileName: true,
       reportFileSize: true,
       reportUploadedAt: true,
@@ -827,6 +840,28 @@ export default async function TaskDetailPage({
           },
         },
         orderBy: { createdAt: "asc" },
+      },
+      addedJournals: {
+        select: {
+          id: true,
+          resultPosition: true,
+          name: true,
+          issn: true,
+          publisher: true,
+          rank: true,
+          localRank: true,
+          fields: true,
+          field: true,
+          country: true,
+          apc: true,
+          apcCurrency: true,
+          submissionFee: true,
+          submissionFeeCurrency: true,
+          note: true,
+          approvalStatus: true,
+          createdBy: { select: { name: true, email: true } },
+        },
+        orderBy: { resultPosition: "asc" },
       },
       reportUploadedById: true,
       createdBy: { select: { name: true, email: true, roles: true } },
@@ -955,6 +990,21 @@ export default async function TaskDetailPage({
       Boolean(isRelatedOrganizedProjectTask));
   const canManageThisTask = isRootAdmin || canAccessAsChiefAssistant;
   if (!canManageThisTask && !isAssigner && !isAssignee) notFound();
+
+  const taskJournalPublishers =
+    task.taskType === "ADD_JOURNAL"
+      ? await prisma.publisher.findMany({
+          orderBy: [{ name: "asc" }],
+          select: {
+            id: true,
+            publisherCode: true,
+            name: true,
+            alias: true,
+            country: true,
+            usesSingleAccount: true,
+          },
+        })
+      : [];
 
   const associatedJournalSubmission =
     task.projectId && task.journalId
@@ -1232,6 +1282,43 @@ export default async function TaskDetailPage({
   const suggestedReviewerAction = updateTaskSuggestedReviewers.bind(
     null,
     task.id,
+  );
+  const isAddJournalTask = task.taskType === "ADD_JOURNAL";
+  const canAddTaskJournals = isAddJournalTask && !isClosed && isAssignee;
+  const canApproveTaskJournals =
+    isAddJournalTask && (isRootAdmin || isAssigner || isChecker);
+  const taskJournalResults: TaskJournalResult[] = task.addedJournals.flatMap(
+    (journal) =>
+      journal.resultPosition === null
+        ? []
+        : [
+            {
+              id: journal.id,
+              resultPosition: journal.resultPosition,
+              name: journal.name,
+              issn: journal.issn ?? "",
+              publisher: journal.publisher ?? "",
+              rank: journal.rank ?? journal.localRank ?? "",
+              fields: journal.fields.length
+                ? journal.fields
+                : journal.field
+                  ? journal.field
+                      .split(";")
+                      .map((field) => field.trim())
+                      .filter(Boolean)
+                  : [],
+              country: journal.country ?? "",
+              apc: journal.apc ?? "",
+              apcCurrency: journal.apcCurrency,
+              submissionFee: journal.submissionFee ?? "",
+              submissionFeeCurrency: journal.submissionFeeCurrency,
+              note: journal.note ?? "",
+              approvalStatus: journal.approvalStatus,
+              createdBy: journal.createdBy
+                ? displayResearchPersonName(journal.createdBy)
+                : "Unknown user",
+            },
+          ],
   );
   const selectedSuggestedReviewers: SuggestedReviewerOption[] =
     task.suggestedReviewers.map((reviewer) => ({
@@ -1652,6 +1739,7 @@ export default async function TaskDetailPage({
                           taskType: task.taskType ?? "OTHER",
                           projectId: task.projectId ?? "",
                           journalId: task.journalId ?? "",
+                          journalTargetCount: task.journalTargetCount,
                           conferenceId: task.conferenceId ?? "",
                           reviewId: task.reviewId ?? "",
                           organizedProjectId: task.organizedProjectId ?? "",
@@ -1874,6 +1962,21 @@ export default async function TaskDetailPage({
               ) : null}
             </div>
           )}
+
+          {isAddJournalTask ? (
+            <TaskJournalResults
+              taskId={task.id}
+              targetCount={Math.max(1, task.journalTargetCount ?? 1)}
+              journals={taskJournalResults}
+              publishers={taskJournalPublishers.map((publisher) => ({
+                ...publisher,
+                alias: publisher.alias ?? "",
+                country: publisher.country ?? "",
+              }))}
+              canAdd={canAddTaskJournals}
+              canApprove={canApproveTaskJournals}
+            />
+          ) : null}
 
           <div className="grid items-start gap-5 border-t border-[#444444] p-5 md:grid-cols-2">
             <section>

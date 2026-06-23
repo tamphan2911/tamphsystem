@@ -335,6 +335,7 @@ enum ResearchTaskType {
   SUBMIT_CONFERENCE
   PRODUCTION
   SUGGEST_VENUE
+  ADD_JOURNAL
   REVIEW
   PROJECT_PRODUCTION
   PROJECT_RESEARCH_ASSOCIATED
@@ -704,8 +705,11 @@ model Journal {
   updatedAt             DateTime              @default(now()) @updatedAt
 
   createdById     String?
-  createdBy       User?      @relation("JournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  publisherRecord Publisher? @relation(fields: [publisherId], references: [id], onDelete: SetNull)
+  resultTaskId    String?
+  resultPosition  Int?
+  createdBy       User?         @relation("JournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  resultTask      ResearchTask? @relation("ResearchTaskAddedJournals", fields: [resultTaskId], references: [id], onDelete: SetNull)
+  publisherRecord Publisher?    @relation(fields: [publisherId], references: [id], onDelete: SetNull)
 
   submissions ResearchSubmission[]
   accounts    PublisherAccount[]
@@ -713,9 +717,11 @@ model Journal {
   suggestions SuggestedJournal[]
   tasks       ResearchTask[]
 
+  @@unique([resultTaskId, resultPosition])
   @@index([createdById])
   @@index([publisherId])
   @@index([approvalStatus])
+  @@index([resultTaskId])
 }
 
 model Publisher {
@@ -813,6 +819,7 @@ model ResearchTask {
   taskFileSize              Int?
   taskFileData              Bytes?
   allowAssigneeReportUpload Boolean               @default(false)
+  journalTargetCount        Int?
   reportFileName            String?
   reportFileType            String?
   reportFileSize            Int?
@@ -849,6 +856,7 @@ model ResearchTask {
   suggestedReviewers   SuggestedReviewer[]         @relation("ResearchTaskSuggestedReviewers")
   suggestedJournals    SuggestedJournal[]
   suggestedConferences SuggestedConference[]
+  addedJournals        Journal[]                   @relation("ResearchTaskAddedJournals")
 
   @@index([checkerId])
   @@index([completedById])

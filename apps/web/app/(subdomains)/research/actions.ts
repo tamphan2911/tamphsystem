@@ -514,7 +514,10 @@ async function canCreateResearchTaskForProject({
 }) {
   if (user.roles.includes(Role.ADMIN)) return true;
   if (user.roles.includes(Role.CHIEF_ASSISTANT)) {
-    if (taskType === ResearchTaskType.REVIEW) {
+    if (
+      taskType === ResearchTaskType.REVIEW ||
+      taskType === ResearchTaskType.ADD_JOURNAL
+    ) {
       return true;
     }
     if (
@@ -2831,10 +2834,19 @@ export async function setResearchAuthorsLock(
   revalidatePath(`/projects/${projectId}`);
 }
 
-export async function createJournal(formData: FormData) {
-  const user = await requireCurrentUser();
-  requireVenueCreator(user);
-  const isAdmin = user.roles.includes(Role.ADMIN);
+async function createJournalRecord({
+  formData,
+  createdById,
+  approvalStatus,
+  resultTaskId,
+  resultPosition,
+}: {
+  formData: FormData;
+  createdById: string;
+  approvalStatus: JournalApprovalStatus;
+  resultTaskId?: string;
+  resultPosition?: number;
+}) {
   const fields = orderedUniqueStrings(formData.getAll("fields"));
   const legacyField = optionalString(formData.get("field"));
   const journalType =
@@ -2849,7 +2861,7 @@ export async function createJournal(formData: FormData) {
   const shouldCreateAccount =
     Boolean(accountUsername) && !publisher.usesSingleAccount;
 
-  await prisma.$transaction(async (tx) => {
+  const journal = await prisma.$transaction(async (tx) => {
     const journal = await tx.journal.create({
       data: {
         name: optionalString(formData.get("name")) ?? "Untitled journal",
@@ -2885,10 +2897,10 @@ export async function createJournal(formData: FormData) {
         scimagoLink: optionalString(formData.get("scimagoLink")),
         scopusLink: optionalString(formData.get("scopusLink")),
         note: optionalString(formData.get("note")),
-        approvalStatus: isAdmin
-          ? JournalApprovalStatus.APPROVED
-          : JournalApprovalStatus.PENDING_APPROVAL,
-        createdById: user.id,
+        approvalStatus,
+        createdById,
+        resultTaskId,
+        resultPosition,
       },
     });
 
@@ -2905,6 +2917,22 @@ export async function createJournal(formData: FormData) {
         },
       });
     }
+    return journal;
+  });
+
+  return { journal, shouldCreateAccount };
+}
+
+export async function createJournal(formData: FormData) {
+  const user = await requireCurrentUser();
+  requireVenueCreator(user);
+  const isAdmin = user.roles.includes(Role.ADMIN);
+  const { shouldCreateAccount } = await createJournalRecord({
+    formData,
+    createdById: user.id,
+    approvalStatus: isAdmin
+      ? JournalApprovalStatus.APPROVED
+      : JournalApprovalStatus.PENDING_APPROVAL,
   });
 
   revalidatePath("/journals");
@@ -2912,11 +2940,90 @@ export async function createJournal(formData: FormData) {
   return { pendingApproval: !isAdmin };
 }
 
+export async function createJournalForTaskSlot(
+  taskId: string,
+  resultPosition: number,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  const task = await prisma.researchTask.findFirst({
+    where: {
+      id: taskId,
+      taskType: ResearchTaskType.ADD_JOURNAL,
+      status: {
+        notIn: [ResearchTaskStatus.COMPLETED, ResearchTaskStatus.REVOKED],
+      },
+      assignments: { some: { userId: user.id } },
+    },
+    select: { id: true, journalTargetCount: true },
+  });
+  if (!task) redirect("/401");
+  const targetCount = task.journalTargetCount ?? 0;
+  if (resultPosition < 0 || resultPosition >= targetCount) {
+    throw new Error("This journal result slot is not available.");
+  }
+  const occupied = await prisma.journal.count({
+    where: { resultTaskId: taskId, resultPosition },
+  });
+  if (occupied) throw new Error("This journal result slot is already filled.");
+
+  try {
+    const { shouldCreateAccount } = await createJournalRecord({
+      formData,
+      createdById: user.id,
+      approvalStatus: JournalApprovalStatus.PENDING_APPROVAL,
+      resultTaskId: taskId,
+      resultPosition,
+    });
+    revalidatePath("/journals");
+    revalidatePath(`/tasks/${taskId}`);
+    if (shouldCreateAccount) revalidatePath("/accounts");
+    return { pendingApproval: true };
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw new Error("This journal result slot is already filled.");
+    }
+    throw error;
+  }
+}
+
+export async function approveTaskJournal(taskId: string, journalId: string) {
+  const user = await requireCurrentUser();
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: { createdById: true, checkerId: true },
+  });
+  if (
+    !task ||
+    (!user.roles.includes(Role.ADMIN) &&
+      task.createdById !== user.id &&
+      task.checkerId !== user.id)
+  ) {
+    redirect("/401");
+  }
+  const journal = await prisma.journal.findFirst({
+    where: { id: journalId, resultTaskId: taskId },
+    select: { id: true },
+  });
+  if (!journal) throw new Error("Task journal was not found.");
+
+  await prisma.journal.update({
+    where: { id: journalId },
+    data: { approvalStatus: JournalApprovalStatus.APPROVED },
+  });
+  revalidatePath("/journals");
+  revalidatePath(`/journals/${journalId}`);
+  revalidatePath(`/tasks/${taskId}`);
+}
+
 export async function updateJournal(journalId: string, formData: FormData) {
   const user = await requireCurrentUser();
   const journal = await prisma.journal.findUnique({
     where: { id: journalId },
-    select: { approvalStatus: true, createdById: true },
+    select: { approvalStatus: true, createdById: true, resultTaskId: true },
   });
   if (!journal) return;
   const canEdit =
@@ -2974,6 +3081,7 @@ export async function updateJournal(journalId: string, formData: FormData) {
 
   revalidatePath("/journals");
   revalidatePath(`/journals/${journalId}`);
+  if (journal.resultTaskId) revalidatePath(`/tasks/${journal.resultTaskId}`);
 }
 
 export async function updateJournalApprovalStatus(
@@ -2983,13 +3091,15 @@ export async function updateJournalApprovalStatus(
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
 
-  await prisma.journal.update({
+  const journal = await prisma.journal.update({
     where: { id: journalId },
     data: { approvalStatus: status },
+    select: { resultTaskId: true },
   });
 
   revalidatePath("/journals");
   revalidatePath(`/journals/${journalId}`);
+  if (journal.resultTaskId) revalidatePath(`/tasks/${journal.resultTaskId}`);
 }
 
 export async function approveJournal(journalId: string) {
@@ -3021,6 +3131,7 @@ export async function deleteJournal(journalId: string) {
     where: { id: journalId },
     select: {
       name: true,
+      resultTaskId: true,
       _count: {
         select: { submissions: true, suggestions: true, reviews: true },
       },
@@ -3054,6 +3165,7 @@ export async function deleteJournal(journalId: string) {
   });
 
   revalidatePath("/journals");
+  if (journal.resultTaskId) revalidatePath(`/tasks/${journal.resultTaskId}`);
 }
 
 export async function deleteConference(conferenceId: string) {
@@ -4079,6 +4191,16 @@ export async function createResearchTask(formData: FormData) {
   let accountId = optionalString(formData.get("accountId"));
   const allowAssigneeReportUpload =
     formData.get("allowAssigneeReportUpload") === "true";
+  const journalTargetCount =
+    taskType === ResearchTaskType.ADD_JOURNAL
+      ? positiveIntFromForm(formData.get("journalTargetCount"))
+      : null;
+  if (
+    taskType === ResearchTaskType.ADD_JOURNAL &&
+    (!journalTargetCount || journalTargetCount > 30)
+  ) {
+    return { ok: false, reason: "INVALID_JOURNAL_TARGET_COUNT" };
+  }
 
   if (
     !(await canCreateResearchTaskForProject({
@@ -4212,6 +4334,7 @@ export async function createResearchTask(formData: FormData) {
       reviewId,
       accountId,
       allowAssigneeReportUpload,
+      journalTargetCount,
       checkerId,
       dueDate: researchTaskDueDate(optionalString(formData.get("dueDate"))),
       createdById: user.id,
@@ -4300,6 +4423,8 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       status: true,
       createdById: true,
       checkerId: true,
+      taskType: true,
+      addedJournals: { select: { resultPosition: true } },
       assignments: { select: { userId: true } },
     },
   });
@@ -4356,6 +4481,33 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   const accountId = optionalString(formData.get("accountId"));
   const allowAssigneeReportUpload =
     formData.get("allowAssigneeReportUpload") === "true";
+  const journalTargetCount =
+    taskType === ResearchTaskType.ADD_JOURNAL
+      ? positiveIntFromForm(formData.get("journalTargetCount"))
+      : null;
+  if (
+    taskType === ResearchTaskType.ADD_JOURNAL &&
+    (!journalTargetCount || journalTargetCount > 30)
+  ) {
+    return { ok: false, reason: "INVALID_JOURNAL_TARGET_COUNT" };
+  }
+  const highestFilledJournalPosition = currentTask.addedJournals.reduce(
+    (highest, journal) => Math.max(highest, journal.resultPosition ?? -1),
+    -1,
+  );
+  if (
+    currentTask.addedJournals.length > 0 &&
+    taskType !== ResearchTaskType.ADD_JOURNAL
+  ) {
+    return { ok: false, reason: "TASK_HAS_JOURNAL_RESULTS" };
+  }
+  if (
+    taskType === ResearchTaskType.ADD_JOURNAL &&
+    journalTargetCount !== null &&
+    journalTargetCount <= highestFilledJournalPosition
+  ) {
+    return { ok: false, reason: "JOURNAL_TARGET_BELOW_RESULTS" };
+  }
   const effectiveProjectId =
     taskType === ResearchTaskType.SUBMIT_RESEARCH ||
     taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
@@ -4502,6 +4654,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
             : null,
         reviewId: taskType === ResearchTaskType.REVIEW ? reviewId : null,
         allowAssigneeReportUpload,
+        journalTargetCount,
         checkerId,
         ...(!allowAssigneeReportUpload
           ? {
