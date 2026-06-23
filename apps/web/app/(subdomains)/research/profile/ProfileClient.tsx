@@ -182,6 +182,7 @@ function displayTaskCode(task: ProfileTaskRow) {
 
 function taskStatusLabel(status: string) {
   if (status === "OPEN" || status === "IN_PROGRESS") return "In progress";
+  if (status === "REVISION_REQUESTED") return "Revision requested";
   if (status === "NEED_CLARIFY") return "Need clarify";
   if (status === "CHECKING") return "Checking";
   if (status === "COMPLETED") return "Completed";
@@ -229,6 +230,13 @@ function profileTaskStatusMeta(task: ProfileTaskRow) {
       label: "Checking",
       detail: "Waiting assigner check",
       detailClassName: "text-violet-600 dark:text-violet-300",
+    };
+  }
+  if (task.status === "REVISION_REQUESTED") {
+    return {
+      label: "Revision requested",
+      detail: "Waiting assignee revision",
+      detailClassName: "text-orange-700 dark:text-orange-300",
     };
   }
   if (task.status === "NEED_CLARIFY") {
@@ -289,6 +297,7 @@ function matchesDashboardStatus(
   return (
     (task.status === "OPEN" ||
       task.status === "IN_PROGRESS" ||
+      task.status === "REVISION_REQUESTED" ||
       task.status === "CHECKING" ||
       task.status === "NEED_CLARIFY") &&
     !isOverdue(task)

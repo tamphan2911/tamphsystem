@@ -18,6 +18,7 @@ import {
   FileText,
   Globe2,
   KeyRound,
+  RotateCcw,
   SearchCheck,
   Send,
   UserRound,
@@ -152,6 +153,15 @@ function statusMeta(task: {
     };
   }
 
+  if (task.status === "REVISION_REQUESTED") {
+    return {
+      label: "Revision requested",
+      detail: "Waiting assignee revision",
+      tone: "amber" as const,
+      timeTone: "amber" as const,
+    };
+  }
+
   if (task.status === "NEED_CLARIFY") {
     return {
       label: "Need clarify",
@@ -213,6 +223,13 @@ function statusIconMeta(
       icon: SearchCheck,
       className:
         "text-violet-700 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200",
+    };
+  }
+
+  if (task.status === "REVISION_REQUESTED") {
+    return {
+      icon: RotateCcw,
+      className: "text-orange-700 dark:text-orange-300",
     };
   }
 
@@ -387,6 +404,41 @@ function TaskResultBlock({
         <span>{formatDate(result.date)}</span>
       </div>
       <p className="mt-1 whitespace-pre-wrap">{result.note || noteFallback}</p>
+    </div>
+  );
+}
+
+function TaskRedoBlock({
+  redo,
+}: {
+  redo: {
+    date: Date | null;
+    note: string | null;
+    actor: { name: string | null; email: string; roles: Role[] } | null;
+  };
+}) {
+  return (
+    <div className="mt-3 border-t border-[#D8D0C2] pt-3 text-xs leading-5 text-[#7A4B00] dark:border-[#444444] dark:text-orange-200">
+      <div className="flex items-center gap-2 font-semibold text-orange-700 dark:text-orange-300">
+        <RotateCcw className="h-3.5 w-3.5" />
+        <span>Revision requested</span>
+      </div>
+      <div className="mt-1 flex flex-wrap items-center text-[#667085] dark:text-[#B0B0B0]">
+        {redo.actor ? (
+          <>
+            <span>{displayResearchPersonName(redo.actor)}</span>
+            <DetailSeparator />
+            <span>{displayRole(redo.actor.roles)}</span>
+          </>
+        ) : (
+          <span>Requester not recorded</span>
+        )}
+        <DetailSeparator />
+        <span>{formatDate(redo.date)}</span>
+      </div>
+      <p className="mt-1 whitespace-pre-wrap">
+        {redo.note || "No revision note recorded."}
+      </p>
     </div>
   );
 }
@@ -567,6 +619,9 @@ export default async function TaskDetailPage({
       completedAt: true,
       completedById: true,
       completionMessage: true,
+      redoRequestedAt: true,
+      redoRequestedById: true,
+      redoReason: true,
       revokedAt: true,
       revokedById: true,
       revokeReason: true,
@@ -605,6 +660,7 @@ export default async function TaskDetailPage({
       createdBy: { select: { name: true, email: true, roles: true } },
       checker: { select: { name: true, email: true, roles: true } },
       completedBy: { select: { name: true, email: true, roles: true } },
+      redoRequestedBy: { select: { name: true, email: true, roles: true } },
       revokedBy: { select: { name: true, email: true, roles: true } },
       project: {
         select: {
@@ -895,10 +951,28 @@ export default async function TaskDetailPage({
   const checkerPerson = task.checker ?? task.createdBy;
   const resultUnderChecker = Boolean(
     taskResult &&
-    (taskResult.actorId === task.checkerId ||
-      task.checkerId === task.createdById ||
-      (!task.checkerId && taskResult.actorId === task.createdById) ||
-      (!taskResult.actorId && !task.checkerId)),
+      (taskResult.actorId === task.checkerId ||
+        task.checkerId === task.createdById ||
+        (!task.checkerId && taskResult.actorId === task.createdById) ||
+        (!taskResult.actorId && !task.checkerId)),
+  );
+  const redoInfo =
+    task.status !== ResearchTaskStatus.COMPLETED &&
+    task.status !== ResearchTaskStatus.REVOKED &&
+    task.redoRequestedAt
+      ? {
+          date: task.redoRequestedAt,
+          note: task.redoReason,
+          actorId: task.redoRequestedById,
+          actor: task.redoRequestedBy,
+        }
+      : null;
+  const redoUnderChecker = Boolean(
+    redoInfo &&
+      (redoInfo.actorId === task.checkerId ||
+        task.checkerId === task.createdById ||
+        (!task.checkerId && redoInfo.actorId === task.createdById) ||
+        (!redoInfo.actorId && !task.checkerId)),
   );
   const taskType = taskTypeMeta(task.taskType, task.category);
   const TaskTypeIcon = taskType.icon;
@@ -1642,6 +1716,9 @@ export default async function TaskDetailPage({
                 {taskResult && resultUnderChecker ? (
                   <TaskResultBlock result={taskResult} />
                 ) : null}
+                {redoInfo && redoUnderChecker ? (
+                  <TaskRedoBlock redo={redoInfo} />
+                ) : null}
               </div>
             </div>
 
@@ -1653,6 +1730,9 @@ export default async function TaskDetailPage({
                 <TaskPersonLine person={task.createdBy} />
                 {taskResult && !resultUnderChecker ? (
                   <TaskResultBlock result={taskResult} />
+                ) : null}
+                {redoInfo && !redoUnderChecker ? (
+                  <TaskRedoBlock redo={redoInfo} />
                 ) : null}
               </div>
             </div>

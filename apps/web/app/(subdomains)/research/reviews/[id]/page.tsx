@@ -86,6 +86,7 @@ function reviewStatusMeta(status: string) {
 
 function taskStatusLabel(status: string) {
   if (status === "IN_PROGRESS") return "In progress";
+  if (status === "REVISION_REQUESTED") return "Revision requested";
   if (status === "NEED_CLARIFY") return "Need clarify";
   return status
     .toLowerCase()
@@ -98,6 +99,8 @@ function taskStatusClass(status: string) {
     return "bg-emerald-500/10 text-emerald-200 ring-emerald-500/20";
   if (status === "CHECKING")
     return "bg-violet-500/10 text-violet-200 ring-violet-500/20";
+  if (status === "REVISION_REQUESTED")
+    return "bg-orange-500/10 text-orange-200 ring-orange-500/20";
   if (status === "NEED_CLARIFY")
     return "bg-amber-500/10 text-amber-200 ring-amber-500/20";
   if (status === "REVOKED") return "bg-[#383838] text-[#E4E4E4] ring-[#555555]";

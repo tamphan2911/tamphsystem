@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   CircleHelp,
   Clock3,
+  RotateCcw,
   SearchCheck,
 } from "lucide-react";
 import {
@@ -94,6 +95,15 @@ function statusMeta(row: RelatedResearchTaskRow): {
       icon: SearchCheck,
       className:
         "text-violet-700 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-200",
+    };
+  }
+  if (row.status === "REVISION_REQUESTED") {
+    return {
+      value: "REVISION_REQUESTED",
+      label: "Revision requested",
+      icon: RotateCcw,
+      className:
+        "text-orange-700 dark:text-orange-300 hover:text-orange-800 dark:hover:text-orange-200",
     };
   }
   if (row.status === "NEED_CLARIFY") {
@@ -185,6 +195,7 @@ export function RelatedResearchTasksTable({
           options={[
             { value: "ALL", label: "All statuses" },
             { value: "IN_PROGRESS", label: "In progress" },
+            { value: "REVISION_REQUESTED", label: "Revision requested" },
             { value: "OVERDUE", label: "Overdue" },
             { value: "CHECKING", label: "Checking" },
             { value: "NEED_CLARIFY", label: "Need clarify" },

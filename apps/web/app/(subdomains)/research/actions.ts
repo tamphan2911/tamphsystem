@@ -399,6 +399,8 @@ async function sendTaskEmail({
 
 function taskStatusEmailLabel(status: ResearchTaskStatus) {
   if (status === ResearchTaskStatus.IN_PROGRESS) return "In progress";
+  if (status === ResearchTaskStatus.REVISION_REQUESTED)
+    return "Revision requested";
   if (status === ResearchTaskStatus.NEED_CLARIFY) return "Need clarification";
   if (status === ResearchTaskStatus.CHECKING)
     return "Waiting for assigner check";
@@ -6705,8 +6707,13 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
   await prisma.researchTask.update({
     where: { id: taskId },
     data: {
-      status: ResearchTaskStatus.IN_PROGRESS,
+      status: ResearchTaskStatus.REVISION_REQUESTED,
       completedAt: null,
+      completedBy: { disconnect: true },
+      completionMessage: null,
+      redoRequestedAt: new Date(),
+      redoRequestedBy: { connect: { id: user.id } },
+      redoReason: reason,
       adminViewedAt: null,
       assignments: { updateMany: { where: {}, data: { finishedAt: null } } },
     },

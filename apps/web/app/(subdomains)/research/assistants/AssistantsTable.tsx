@@ -54,6 +54,7 @@ export type AssistantRow = {
 const unfinishedTaskStatusOrder = [
   "OPEN",
   "IN_PROGRESS",
+  "REVISION_REQUESTED",
   "CHECKING",
   "NEED_CLARIFY",
 ];
@@ -61,6 +62,7 @@ const unfinishedTaskStatusOrder = [
 function taskStatusLabel(status: string) {
   if (status === "OPEN") return "open";
   if (status === "IN_PROGRESS") return "in progress";
+  if (status === "REVISION_REQUESTED") return "revision requested";
   if (status === "CHECKING") return "checking";
   if (status === "NEED_CLARIFY") return "need clarify";
   return status.toLowerCase().replaceAll("_", " ");
@@ -162,7 +164,7 @@ export function AssistantsTable({
     window.sessionStorage.setItem("research:/tasks:tasks:q", searchValue);
     window.sessionStorage.setItem(
       "research:/tasks:tasks:status",
-      "IN_PROGRESS,CHECKING,NEED_CLARIFY,OVERDUE",
+      "IN_PROGRESS,REVISION_REQUESTED,CHECKING,NEED_CLARIFY,OVERDUE",
     );
     window.sessionStorage.removeItem("research:/tasks:tasks:page");
   }

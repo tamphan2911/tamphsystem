@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   CircleHelp,
   Clock3,
+  RotateCcw,
   SearchCheck,
   Trash2,
 } from "lucide-react";
@@ -74,6 +75,7 @@ type TaskRow = {
 const taskStatusValues = [
   "ALL",
   "IN_PROGRESS",
+  "REVISION_REQUESTED",
   "CHECKING",
   "NEED_CLARIFY",
   "OVERDUE",
@@ -242,6 +244,17 @@ function statusMeta(task: TaskRow) {
     };
   }
 
+  if (task.status === "REVISION_REQUESTED") {
+    return {
+      label: "Revision requested",
+      detail: "Waiting assignee revision",
+      dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
+      className:
+        "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-300/40 dark:bg-orange-950/25 dark:text-orange-300",
+      detailClassName: "text-orange-700 dark:text-orange-300",
+    };
+  }
+
   if (task.status === "NEED_CLARIFY") {
     return {
       label: "Need clarify",
@@ -307,6 +320,14 @@ function statusIconMeta(task: TaskRow): {
     };
   }
 
+  if (task.status === "REVISION_REQUESTED") {
+    return {
+      icon: RotateCcw,
+      className:
+        "text-orange-700 hover:text-orange-800 dark:text-orange-300 dark:hover:text-orange-200",
+    };
+  }
+
   if (task.status === "NEED_CLARIFY") {
     return {
       icon: CircleHelp,
@@ -331,7 +352,11 @@ function statusIconMeta(task: TaskRow): {
 }
 
 function derivedStatus(task: TaskRow) {
-  if (task.status === "CHECKING" || task.status === "NEED_CLARIFY") {
+  if (
+    task.status === "CHECKING" ||
+    task.status === "NEED_CLARIFY" ||
+    task.status === "REVISION_REQUESTED"
+  ) {
     return task.status;
   }
   const label = statusMeta(task).label;
@@ -640,6 +665,8 @@ export function TasksClient({
                     ? "All status"
                     : value === "CHECKING"
                       ? "Ready to check"
+                      : value === "REVISION_REQUESTED"
+                        ? "Revision requested"
                       : value
                           .toLowerCase()
                           .replaceAll("_", " ")

@@ -100,6 +100,7 @@ model User {
   createdResearchTasks            ResearchTask[]               @relation("ResearchTaskCreator")
   checkedResearchTasks            ResearchTask[]               @relation("ResearchTaskChecker")
   completedResearchTasks          ResearchTask[]               @relation("ResearchTaskCompleter")
+  redoRequestedResearchTasks      ResearchTask[]               @relation("ResearchTaskRedoRequester")
   revokedResearchTasks            ResearchTask[]               @relation("ResearchTaskRevoker")
   createdTaskGuides               TaskGuide[]                  @relation("TaskGuideCreator")
   createdSuggestedReviewers       SuggestedReviewer[]          @relation("SuggestedReviewerCreator")
@@ -322,6 +323,7 @@ enum CurrencyCode {
 enum ResearchTaskStatus {
   OPEN
   IN_PROGRESS
+  REVISION_REQUESTED
   CHECKING
   NEED_CLARIFY
   COMPLETED
@@ -793,6 +795,9 @@ model ResearchTask {
   completedAt               DateTime?
   completedById             String?
   completionMessage         String?
+  redoRequestedAt           DateTime?
+  redoRequestedById         String?
+  redoReason                String?
   revokedAt                 DateTime?
   revokedById               String?
   revokeReason              String?
@@ -816,6 +821,7 @@ model ResearchTask {
   createdBy          User              @relation("ResearchTaskCreator", fields: [createdById], references: [id])
   checker            User?             @relation("ResearchTaskChecker", fields: [checkerId], references: [id], onDelete: SetNull)
   completedBy        User?             @relation("ResearchTaskCompleter", fields: [completedById], references: [id], onDelete: SetNull)
+  redoRequestedBy    User?             @relation("ResearchTaskRedoRequester", fields: [redoRequestedById], references: [id], onDelete: SetNull)
   revokedBy          User?             @relation("ResearchTaskRevoker", fields: [revokedById], references: [id], onDelete: SetNull)
   projectId          String?
   organizedProjectId String?
@@ -838,6 +844,7 @@ model ResearchTask {
 
   @@index([checkerId])
   @@index([completedById])
+  @@index([redoRequestedById])
   @@index([revokedById])
 }
 
