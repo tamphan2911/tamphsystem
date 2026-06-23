@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Download,
+  ExternalLink,
   FileText,
   FolderGit2,
   Phone,
@@ -124,6 +125,117 @@ function DetailItem({
   );
 }
 
+function AssociatedRecordCard({
+  proposal,
+}: {
+  proposal: {
+    status: ProposalStatus;
+    createdResearchProject: {
+      id: string;
+      title: string;
+      researchCode: string | null;
+      stage: string;
+      updatedAt: Date;
+      leadResearcher: { name: string | null; email: string };
+    } | null;
+    createdOrganizedProject: {
+      id: string;
+      title: string;
+      referenceCode: string | null;
+      status: string;
+      projectType: string;
+      updatedAt: Date;
+      createdBy: { name: string | null; email: string } | null;
+    } | null;
+  };
+}) {
+  if (proposal.status !== ProposalStatus.ACCEPTED) return null;
+
+  const record = proposal.createdResearchProject
+    ? {
+        label: "Associated research",
+        href: `/projects/${proposal.createdResearchProject.id}`,
+        title: proposal.createdResearchProject.title,
+        code: proposal.createdResearchProject.researchCode || "No research ID",
+        state: label(proposal.createdResearchProject.stage),
+        ownerLabel: "Lead",
+        owner: proposal.createdResearchProject.leadResearcher,
+        meta: `Updated ${longDate(proposal.createdResearchProject.updatedAt)}`,
+        icon: FolderGit2,
+        iconClass: "text-amber-700 dark:text-amber-300",
+      }
+    : proposal.createdOrganizedProject
+      ? {
+          label: "Associated project",
+          href: `/organized-projects/${proposal.createdOrganizedProject.id}`,
+          title: proposal.createdOrganizedProject.title,
+          code:
+            proposal.createdOrganizedProject.referenceCode || "No project ID",
+          state: `${label(proposal.createdOrganizedProject.status)} | ${label(
+            proposal.createdOrganizedProject.projectType,
+          )}`,
+          ownerLabel: "Owner",
+          owner: proposal.createdOrganizedProject.createdBy,
+          meta: `Updated ${longDate(proposal.createdOrganizedProject.updatedAt)}`,
+          icon: Building2,
+          iconClass: "text-violet-700 dark:text-violet-300",
+        }
+      : null;
+
+  if (!record) return null;
+  const Icon = record.icon;
+
+  return (
+    <aside className="min-w-0 border border-[#D8D0C2] bg-[#F7F4ED] p-4 dark:border-[#444444] dark:bg-[#242424]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
+            <Icon className={`h-3.5 w-3.5 ${record.iconClass}`} />
+            {record.label}
+          </div>
+          <a
+            href={record.href}
+            className="research-clickable-icon mt-2 block min-w-0 text-sm font-normal leading-6 text-[#1F2937] transition-[color,text-shadow,transform] duration-180 ease-out hover:text-[#1F7180] hover:[text-shadow:0_0_0.55rem_rgba(31,113,128,0.16)] active:scale-[0.99] dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]"
+          >
+            {record.title}
+          </a>
+        </div>
+        <IconHint
+          label={`Open ${record.label.toLowerCase()}`}
+          position="bottom"
+        >
+          <a
+            href={record.href}
+            className="research-clickable-icon research-allow-transform inline-flex h-5 w-5 flex-none items-center justify-center border-0 bg-transparent text-[#1F7180] shadow-none outline-none transition-[color,transform,filter] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-200"
+            aria-label={`Open ${record.label.toLowerCase()}`}
+          >
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </IconHint>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-y-1 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+        <span>{record.code}</span>
+        <span className="px-2 text-[#A0A8B5] dark:text-[#777777]">|</span>
+        <span>{record.state}</span>
+      </div>
+      <div className="mt-3 border-t border-[#D8D0C2] pt-3 text-xs leading-5 text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0]">
+        <span className="block uppercase tracking-wide">
+          {record.ownerLabel}
+        </span>
+        <span className="mt-1 block text-sm text-[#1F2937] dark:text-[#E4E4E4]">
+          {record.owner ? displayResearchPersonName(record.owner) : "Not set"}
+        </span>
+        {record.owner?.email ? (
+          <span className="block break-all">
+            {displayResearchEmail(record.owner.email)}
+          </span>
+        ) : null}
+        <span className="mt-2 block">{record.meta}</span>
+      </div>
+    </aside>
+  );
+}
+
 function HeaderIcon({
   label,
   className,
@@ -168,6 +280,27 @@ export default async function ProposalDetailPage({
           roles: true,
         },
       },
+      createdResearchProject: {
+        select: {
+          id: true,
+          title: true,
+          researchCode: true,
+          stage: true,
+          updatedAt: true,
+          leadResearcher: { select: { name: true, email: true } },
+        },
+      },
+      createdOrganizedProject: {
+        select: {
+          id: true,
+          title: true,
+          referenceCode: true,
+          status: true,
+          projectType: true,
+          updatedAt: true,
+          createdBy: { select: { name: true, email: true } },
+        },
+      },
     },
   });
 
@@ -189,6 +322,11 @@ export default async function ProposalDetailPage({
   const status = statusMeta(visibleStatus);
   const StatusIcon = status.icon;
   const hasFile = Boolean(proposal.supportFileName);
+  const hasAssociatedAcceptedRecord =
+    proposal.status === ProposalStatus.ACCEPTED &&
+    Boolean(
+      proposal.createdResearchProject || proposal.createdOrganizedProject,
+    );
 
   return (
     <>
@@ -236,13 +374,20 @@ export default async function ProposalDetailPage({
             <span>Submitted {longDate(proposal.createdAt)}</span>
           </div>
 
-          <div className={`${sectionDividerClass} p-5`}>
-            <h2 className="text-sm font-normal text-[#252525] dark:text-[#E4E4E4]">
-              Proposal description
-            </h2>
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#4B5565] dark:text-[#B0B0B0]">
-              {proposal.description}
-            </p>
+          <div
+            className={`${sectionDividerClass} grid gap-5 p-5 ${
+              hasAssociatedAcceptedRecord ? "lg:grid-cols-2" : ""
+            }`}
+          >
+            <div className="min-w-0">
+              <h2 className="text-sm font-normal text-[#252525] dark:text-[#E4E4E4]">
+                Proposal description
+              </h2>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#4B5565] dark:text-[#B0B0B0]">
+                {proposal.description}
+              </p>
+            </div>
+            <AssociatedRecordCard proposal={proposal} />
           </div>
 
           <div
