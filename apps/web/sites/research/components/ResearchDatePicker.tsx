@@ -223,7 +223,7 @@ export function ResearchDatePicker({
         className={cx(
           researchFieldClass,
           className,
-          "box-border flex h-12 min-h-12 w-full items-center justify-between gap-2 p-0 disabled:cursor-not-allowed",
+          "box-border flex h-12 min-h-12 w-full items-center justify-between gap-2 overflow-hidden p-0 disabled:cursor-not-allowed",
           open &&
             "border-[#7FBFC5] bg-[#F8F6EF] dark:border-[#A8DADC] dark:bg-[#383838]",
         )}
@@ -263,7 +263,7 @@ export function ResearchDatePicker({
               setDateValue("");
               setManualText("");
             }}
-            className="inline-flex h-10 w-8 flex-none cursor-pointer items-center justify-center text-[#8C95A4] transition hover:text-[#1F2937] dark:text-[#777777] dark:hover:text-[#E4E4E4]"
+            className="inline-flex h-10 w-8 flex-none cursor-pointer items-center justify-center border-0 bg-transparent text-[#8C95A4] shadow-none outline-none transition hover:bg-transparent hover:text-[#1F2937] dark:text-[#777777] dark:hover:bg-transparent dark:hover:text-[#E4E4E4]"
           >
             <X className="h-4 w-4" />
           </button>
@@ -275,7 +275,7 @@ export function ResearchDatePicker({
           disabled={disabled}
           onClick={() => setOpen((current) => !current)}
           aria-label="Open date picker"
-          className="inline-flex h-10 w-9 flex-none cursor-pointer items-center justify-center text-[#667085] transition hover:text-[#1F7180] disabled:cursor-not-allowed dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+          className="inline-flex h-10 w-9 flex-none cursor-pointer items-center justify-center border-0 bg-transparent text-[#667085] shadow-none outline-none transition hover:bg-transparent hover:text-[#1F7180] disabled:cursor-not-allowed dark:text-[#B0B0B0] dark:hover:bg-transparent dark:hover:text-[#A8DADC]"
         >
           <ChevronDownIcon open={open} />
         </button>

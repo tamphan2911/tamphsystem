@@ -4305,10 +4305,10 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   });
   if (!currentTask) return { ok: false, reason: "NOT_FOUND" };
   if (!(await canManageTaskAsResearchAdmin(taskId, user))) redirect("/401");
-  if (
+  const isClosedTask =
     currentTask.status === ResearchTaskStatus.COMPLETED ||
-    currentTask.status === ResearchTaskStatus.REVOKED
-  ) {
+    currentTask.status === ResearchTaskStatus.REVOKED;
+  if (isClosedTask && !user.roles.includes(Role.ADMIN)) {
     return { ok: false, reason: "TASK_CLOSED" };
   }
 
@@ -4385,6 +4385,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   }
 
   if (
+    !isClosedTask &&
     effectiveProjectId &&
     taskType !== ResearchTaskType.OTHER &&
     (await researchContentIsLocked(effectiveProjectId))
@@ -4392,12 +4393,14 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     return { ok: false, reason: "RESEARCH_LOCKED" };
   }
 
-  const associationBlockReason = await taskAssociationIsSelectable({
-    taskType,
-    projectId: effectiveProjectId,
-    reviewId,
-    organizedProjectId: effectiveOrganizedProjectId,
-  });
+  const associationBlockReason = isClosedTask
+    ? null
+    : await taskAssociationIsSelectable({
+        taskType,
+        projectId: effectiveProjectId,
+        reviewId,
+        organizedProjectId: effectiveOrganizedProjectId,
+      });
   if (associationBlockReason) {
     return { ok: false, reason: associationBlockReason };
   }
@@ -4409,6 +4412,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   }
 
   if (
+    !isClosedTask &&
     effectiveProjectId &&
     (taskType === ResearchTaskType.SUBMIT_RESEARCH ||
       taskType === ResearchTaskType.SUBMIT_CONFERENCE) &&
@@ -4418,6 +4422,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   }
 
   if (
+    !isClosedTask &&
     taskType === ResearchTaskType.SUBMIT_RESEARCH &&
     effectiveProjectId &&
     journalId
@@ -4440,6 +4445,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   }
 
   if (
+    !isClosedTask &&
     taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
     effectiveProjectId &&
     conferenceId

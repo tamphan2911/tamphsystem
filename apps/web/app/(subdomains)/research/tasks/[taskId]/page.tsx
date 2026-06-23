@@ -1015,7 +1015,8 @@ export default async function TaskDetailPage({
     task.status !== ResearchTaskStatus.NEED_CLARIFY &&
     !hasOpenMyClarification;
   const canRevoke = !isClosed && !isAssignee && (isAdmin || isAssigner);
-  const canEdit = !isClosed && !isAssignee && isAdmin;
+  const canEdit =
+    !isAssignee && (isRootAdmin || (!isClosed && isChiefAssistant));
   const canUseReminder = !isAssignee && (isAdmin || isAssigner);
   const reminderBlock =
     task.assignments.length === 0
@@ -1415,6 +1416,7 @@ export default async function TaskDetailPage({
                       <EditTaskDialog
                         task={{
                           id: task.id,
+                          status: task.status,
                           title: task.title,
                           description: task.description ?? "",
                           dueDate: dateInputValue(task.dueDate),

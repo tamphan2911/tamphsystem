@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { updateResearchTask } from "../../actions";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
+import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
@@ -60,6 +61,7 @@ type TaskMode =
 
 type EditableTask = {
   id: string;
+  status: string;
   title: string;
   description: string;
   dueDate: string;
@@ -85,7 +87,19 @@ type SearchPanelItem = {
 };
 
 const inputClass = researchFieldClass;
-const dateInputClass = researchFieldClass;
+const taskTypeOptions = [
+  { value: "SUBMIT_RESEARCH", label: "Submit to journal" },
+  { value: "SUBMIT_CONFERENCE", label: "Submit to conference" },
+  { value: "PRODUCTION", label: "Research production" },
+  { value: "SUGGEST_VENUE", label: "Suggest venue" },
+  { value: "REVIEW", label: "Academic review" },
+  { value: "PROJECT_PRODUCTION", label: "Project production" },
+  {
+    value: "PROJECT_RESEARCH_ASSOCIATED",
+    label: "Project research associated",
+  },
+  { value: "OTHER", label: "Other task" },
+] as const;
 const finishedResearchStages = new Set(["ACCEPTED", "PUBLISHED"]);
 const closedReviewStatuses = new Set(["SUBMITTED", "DECLINED", "CANCELLED"]);
 const closedProjectStatuses = new Set(["COMPLETED"]);
@@ -198,13 +212,10 @@ export function EditTaskDialog({
       : null;
 
   const [isOpen, setIsOpen] = useState(false);
-  const mode = initialMode;
-  const projectTaskType =
-    task.taskType === "PROJECT_RESEARCH_ASSOCIATED"
-      ? "PROJECT_RESEARCH_ASSOCIATED"
-      : "PROJECT_PRODUCTION";
+  const [selectedTaskType, setSelectedTaskType] = useState(task.taskType);
+  const mode = modeFromTaskType(selectedTaskType);
   const projectCategory =
-    task.taskType === "PROJECT_RESEARCH_ASSOCIATED"
+    selectedTaskType === "PROJECT_RESEARCH_ASSOCIATED"
       ? "Research production"
       : "Production";
   const [assigneeQuery, setAssigneeQuery] = useState("");
@@ -235,6 +246,7 @@ export function EditTaskDialog({
   );
   const [isPending, startTransition] = useTransition();
   const { showSuccess, showError } = useResearchToast();
+  const isClosedTask = task.status === "COMPLETED" || task.status === "REVOKED";
 
   const filteredAssignees = useMemo(() => {
     const needle = assigneeQuery.trim().toLowerCase();
@@ -268,14 +280,14 @@ export function EditTaskDialog({
     if (!needle) return [];
     return researchOptions
       .filter((project) => {
-        if (!researchMatchesMode(project, mode)) return false;
+        if (!isClosedTask && !researchMatchesMode(project, mode)) return false;
         return [project.title, project.code, project.stage, project.id]
           .join(" ")
           .toLowerCase()
           .includes(needle);
       })
       .slice(0, 10);
-  }, [mode, researchOptions, researchQuery]);
+  }, [isClosedTask, mode, researchOptions, researchQuery]);
 
   const filteredVenues = useMemo(() => {
     const needle = venueQuery.trim().toLowerCase();
@@ -283,41 +295,57 @@ export function EditTaskDialog({
     return venueOptions
       .filter((venue) => {
         if (mode === "other" && venue.kind !== "journal") return false;
+        if (
+          selectedTaskType === "SUBMIT_RESEARCH" &&
+          venue.kind !== "journal"
+        ) {
+          return false;
+        }
+        if (
+          selectedTaskType === "SUBMIT_CONFERENCE" &&
+          venue.kind !== "conference"
+        ) {
+          return false;
+        }
         return [venue.name, venue.meta, venue.kind, venue.id]
           .join(" ")
           .toLowerCase()
           .includes(needle);
       })
       .slice(0, 10);
-  }, [mode, venueOptions, venueQuery]);
+  }, [mode, selectedTaskType, venueOptions, venueQuery]);
 
   const filteredReviews = useMemo(() => {
     const needle = reviewQuery.trim().toLowerCase();
     if (!needle) return [];
     return reviewOptions
       .filter((review) => {
-        if (closedReviewStatuses.has(review.status)) return false;
+        if (!isClosedTask && closedReviewStatuses.has(review.status)) {
+          return false;
+        }
         return [review.title, review.journal, review.status, review.id]
           .join(" ")
           .toLowerCase()
           .includes(needle);
       })
       .slice(0, 10);
-  }, [reviewOptions, reviewQuery]);
+  }, [isClosedTask, reviewOptions, reviewQuery]);
 
   const filteredOrganizedProjects = useMemo(() => {
     const needle = organizedProjectQuery.trim().toLowerCase();
     if (!needle) return [];
     return organizedProjectOptions
       .filter((project) => {
-        if (closedProjectStatuses.has(project.status)) return false;
+        if (!isClosedTask && closedProjectStatuses.has(project.status)) {
+          return false;
+        }
         return [project.title, project.code, project.status, project.id]
           .join(" ")
           .toLowerCase()
           .includes(needle);
       })
       .slice(0, 10);
-  }, [organizedProjectOptions, organizedProjectQuery]);
+  }, [isClosedTask, organizedProjectOptions, organizedProjectQuery]);
 
   const filteredSubmissions = useMemo(() => {
     const needle = submissionQuery.trim().toLowerCase();
@@ -378,6 +406,22 @@ export function EditTaskDialog({
       setAccountQuery("");
     }
   }, [journalAccounts, selectedAccountId, selectedVenue]);
+
+  useEffect(() => {
+    const venueMatchesTaskType =
+      !selectedVenue ||
+      (selectedTaskType === "SUBMIT_RESEARCH" &&
+        selectedVenue.kind === "journal") ||
+      (selectedTaskType === "SUBMIT_CONFERENCE" &&
+        selectedVenue.kind === "conference") ||
+      mode === "other";
+    if (!venueMatchesTaskType) {
+      setSelectedVenue(null);
+      setVenueQuery("");
+      setSelectedAccountId("");
+      setAccountQuery("");
+    }
+  }, [mode, selectedTaskType, selectedVenue]);
 
   function toggleAssignee(id: string) {
     setSelectedIds((current) =>
@@ -460,6 +504,7 @@ export function EditTaskDialog({
     setReviewQuery("");
     setOrganizedProjectQuery("");
     setSubmissionQuery("");
+    setSelectedTaskType(task.taskType);
     setSelectedIds(task.assigneeIds);
     setSelectedCheckerId(task.checkerId);
     setSelectedResearch(initialResearch);
@@ -496,21 +541,31 @@ export function EditTaskDialog({
   const showsResearch = needsResearch || mode === "other";
   const selectedResearchMatchesMode =
     !needsResearch ||
-    (selectedResearch ? researchMatchesMode(selectedResearch, mode) : false);
+    (selectedResearch
+      ? isClosedTask || researchMatchesMode(selectedResearch, mode)
+      : false);
   const showsVenue = mode === "submit" || mode === "other";
   const needsVenue = mode === "submit";
-  const selectedVenueMatchesMode = !needsVenue || Boolean(selectedVenue);
+  const selectedVenueMatchesMode =
+    !needsVenue ||
+    (selectedTaskType === "SUBMIT_RESEARCH" &&
+      selectedVenue?.kind === "journal") ||
+    (selectedTaskType === "SUBMIT_CONFERENCE" &&
+      selectedVenue?.kind === "conference");
   const needsReview = mode === "review";
   const selectedReviewIsOpen =
     !needsReview ||
-    (selectedReview ? !closedReviewStatuses.has(selectedReview.status) : false);
+    (selectedReview
+      ? isClosedTask || !closedReviewStatuses.has(selectedReview.status)
+      : false);
   const showsOrganizedProject = mode === "project";
   const requiresOrganizedProject =
-    task.taskType === "PROJECT_RESEARCH_ASSOCIATED";
+    selectedTaskType === "PROJECT_RESEARCH_ASSOCIATED";
   const selectedOrganizedProjectIsOpen =
     !showsOrganizedProject ||
     (selectedOrganizedProject
-      ? !closedProjectStatuses.has(selectedOrganizedProject.status)
+      ? isClosedTask ||
+        !closedProjectStatuses.has(selectedOrganizedProject.status)
       : !requiresOrganizedProject);
   const canSubmit =
     selectedIds.length > 0 &&
@@ -565,11 +620,25 @@ export function EditTaskDialog({
           {selectedResearch && (
             <input type="hidden" name="projectId" value={selectedResearch.id} />
           )}
-          {mode === "submit" && selectedVenue?.kind === "journal" && (
+          {mode === "submit" && (
             <>
-              <input type="hidden" name="taskType" value="SUBMIT_RESEARCH" />
-              <input type="hidden" name="journalId" value={selectedVenue.id} />
-              {selectedAccountId && (
+              {selectedTaskType === "SUBMIT_RESEARCH" &&
+                selectedVenue?.kind === "journal" && (
+                  <input
+                    type="hidden"
+                    name="journalId"
+                    value={selectedVenue.id}
+                  />
+                )}
+              {selectedTaskType === "SUBMIT_CONFERENCE" &&
+                selectedVenue?.kind === "conference" && (
+                  <input
+                    type="hidden"
+                    name="conferenceId"
+                    value={selectedVenue.id}
+                  />
+                )}
+              {selectedTaskType === "SUBMIT_RESEARCH" && selectedAccountId && (
                 <input
                   type="hidden"
                   name="accountId"
@@ -579,37 +648,18 @@ export function EditTaskDialog({
               <input type="hidden" name="category" value="Submit research" />
             </>
           )}
-          {mode === "submit" && selectedVenue?.kind === "conference" && (
-            <>
-              <input type="hidden" name="taskType" value="SUBMIT_CONFERENCE" />
-              <input
-                type="hidden"
-                name="conferenceId"
-                value={selectedVenue.id}
-              />
-              <input type="hidden" name="category" value="Submit research" />
-            </>
-          )}
           {mode === "production" && (
             <>
-              <input type="hidden" name="taskType" value="PRODUCTION" />
               <input type="hidden" name="category" value="Production" />
-            </>
-          )}
-          {mode === "suggestVenue" && (
-            <>
-              <input type="hidden" name="taskType" value="SUGGEST_VENUE" />
             </>
           )}
           {mode === "review" && selectedReview && (
             <>
-              <input type="hidden" name="taskType" value="REVIEW" />
               <input type="hidden" name="reviewId" value={selectedReview.id} />
             </>
           )}
           {mode === "project" && (
             <>
-              <input type="hidden" name="taskType" value={projectTaskType} />
               {selectedOrganizedProject && (
                 <input
                   type="hidden"
@@ -622,7 +672,6 @@ export function EditTaskDialog({
           )}
           {mode === "other" && (
             <>
-              <input type="hidden" name="taskType" value="OTHER" />
               {selectedVenue?.kind === "journal" ? (
                 <input
                   type="hidden"
@@ -656,7 +705,6 @@ export function EditTaskDialog({
                 name="dueDate"
                 defaultValue={task.dueDate}
                 placeholder="Due date"
-                className={dateInputClass}
               />
             </label>
           </div>
@@ -887,27 +935,13 @@ export function EditTaskDialog({
           </label>
 
           <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
-            <div className="grid gap-4">
-              <SearchPanel
-                query={assigneeQuery}
-                setQuery={setAssigneeQuery}
-                placeholder="Search task assignees by name, email, ID, or role (*)"
-                selectedItems={assignees
-                  .filter((user) => selectedIds.includes(user.id))
-                  .map((user) => ({
-                    id: user.id,
-                    title: displayResearchPersonName(user),
-                    meta: [
-                      displayResearchEmail(user.email),
-                      user.roles.join(", "),
-                    ]
-                      .filter(Boolean)
-                      .join(" - "),
-                    icon: <UserRound className="h-4 w-4" />,
-                    selected: true,
-                    onClick: () => toggleAssignee(user.id),
-                  }))}
-                items={filteredAssignees.map((user) => ({
+            <SearchPanel
+              query={assigneeQuery}
+              setQuery={setAssigneeQuery}
+              placeholder="Search task assignees by name, email, ID, or role (*)"
+              selectedItems={assignees
+                .filter((user) => selectedIds.includes(user.id))
+                .map((user) => ({
                   id: user.id,
                   title: displayResearchPersonName(user),
                   meta: [
@@ -920,29 +954,33 @@ export function EditTaskDialog({
                   selected: selectedIds.includes(user.id),
                   onClick: () => toggleAssignee(user.id),
                 }))}
-              />
-              {canChooseChecker && (
-                <SearchPanel
-                  selectionMode="single"
-                  query={checkerQuery}
-                  setQuery={setCheckerQuery}
-                  placeholder="Search chief assistant checker by name, email, or ID (optional)"
-                  selectedItems={checkerOptions
-                    .filter((user) => user.id === selectedCheckerId)
-                    .map((user) => ({
-                      id: user.id,
-                      title: displayResearchPersonName(user),
-                      meta: [
-                        displayResearchEmail(user.email),
-                        "Chief assistant checker",
-                      ]
-                        .filter(Boolean)
-                        .join(" - "),
-                      icon: <UserRound className="h-4 w-4" />,
-                      selected: true,
-                      onClick: () => selectChecker(""),
-                    }))}
-                  items={filteredCheckers.map((user) => ({
+              items={filteredAssignees.map((user) => ({
+                id: user.id,
+                title: displayResearchPersonName(user),
+                meta: [displayResearchEmail(user.email), user.roles.join(", ")]
+                  .filter(Boolean)
+                  .join(" - "),
+                icon: <UserRound className="h-4 w-4" />,
+                selected: selectedIds.includes(user.id),
+                onClick: () => toggleAssignee(user.id),
+              }))}
+            />
+            <ReportUploadPermissionField
+              checked={allowReportUpload}
+              onChange={setAllowReportUpload}
+            />
+          </div>
+
+          <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
+            {canChooseChecker ? (
+              <SearchPanel
+                selectionMode="single"
+                query={checkerQuery}
+                setQuery={setCheckerQuery}
+                placeholder="Search chief assistant checker by name, email, or ID (optional)"
+                selectedItems={checkerOptions
+                  .filter((user) => user.id === selectedCheckerId)
+                  .map((user) => ({
                     id: user.id,
                     title: displayResearchPersonName(user),
                     meta: [
@@ -952,18 +990,33 @@ export function EditTaskDialog({
                       .filter(Boolean)
                       .join(" - "),
                     icon: <UserRound className="h-4 w-4" />,
-                    selected: selectedCheckerId === user.id,
-                    onClick: () => selectChecker(user.id),
+                    selected: true,
+                    onClick: () => selectChecker(""),
                   }))}
-                />
-              )}
-            </div>
-            <div className="lg:pt-0">
-              <ReportUploadPermissionField
-                checked={allowReportUpload}
-                onChange={setAllowReportUpload}
+                items={filteredCheckers.map((user) => ({
+                  id: user.id,
+                  title: displayResearchPersonName(user),
+                  meta: [
+                    displayResearchEmail(user.email),
+                    "Chief assistant checker",
+                  ]
+                    .filter(Boolean)
+                    .join(" - "),
+                  icon: <UserRound className="h-4 w-4" />,
+                  selected: selectedCheckerId === user.id,
+                  onClick: () => selectChecker(user.id),
+                }))}
               />
-            </div>
+            ) : (
+              <div />
+            )}
+            <ResearchFormSelect
+              name="taskType"
+              defaultValue={selectedTaskType}
+              ariaLabel="Task type"
+              options={taskTypeOptions}
+              onValueChange={setSelectedTaskType}
+            />
           </div>
         </form>
       </ResearchModal>
