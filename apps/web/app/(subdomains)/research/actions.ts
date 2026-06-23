@@ -5946,6 +5946,49 @@ async function unfinishedSuggestVenueTaskIdForUser(
   return task?.id ?? null;
 }
 
+async function validateSuggestedVenueTaskLink({
+  projectId,
+  currentTaskId,
+  nextTaskId,
+}: {
+  projectId: string;
+  currentTaskId: string | null;
+  nextTaskId: string | null;
+}) {
+  if (currentTaskId && currentTaskId !== nextTaskId) {
+    const currentTask = await prisma.researchTask.findUnique({
+      where: { id: currentTaskId },
+      select: { status: true },
+    });
+    if (currentTask?.status === ResearchTaskStatus.COMPLETED) {
+      return {
+        ok: false as const,
+        message:
+          "This suggestion is linked to a completed suggest venue task, so the task link cannot be changed.",
+      };
+    }
+  }
+
+  if (!nextTaskId) return { ok: true as const };
+
+  const nextTask = await prisma.researchTask.findFirst({
+    where: {
+      id: nextTaskId,
+      projectId,
+      taskType: ResearchTaskType.SUGGEST_VENUE,
+    },
+    select: { id: true },
+  });
+  if (!nextTask) {
+    return {
+      ok: false as const,
+      message: "Choose a suggest venue task from this research.",
+    };
+  }
+
+  return { ok: true as const };
+}
+
 export async function addSuggestedJournal(
   projectId: string,
   formData: FormData,
@@ -6057,22 +6100,44 @@ export async function updateSuggestedJournal(
     return { ok: false, message: "Journal suggestion was not found." };
   }
 
-  const journalId = optionalString(formData.get("journalId"));
-  const venueName = optionalString(formData.get("venueName"));
-  const venueLink = optionalString(formData.get("venueLink"));
-  if (!journalId && !venueName && !venueLink) {
-    return { ok: false, message: "Enter a venue name, link, or journal." };
+  const hasJournalId = formData.has("journalId");
+  const hasVenueName = formData.has("venueName");
+  const hasVenueLink = formData.has("venueLink");
+  const hasTaskId = formData.has("taskId");
+  const journalId = hasJournalId
+    ? optionalString(formData.get("journalId"))
+    : suggestion.journalId;
+  const venueName = hasVenueName
+    ? optionalString(formData.get("venueName"))
+    : undefined;
+  const venueLink = hasVenueLink
+    ? optionalString(formData.get("venueLink"))
+    : undefined;
+  const taskId = hasTaskId ? optionalString(formData.get("taskId")) : null;
+  if (!hasJournalId && !hasVenueName && !hasVenueLink && !hasTaskId) {
+    return { ok: false, message: "Update the venue or linked task." };
   }
   if (
+    hasJournalId &&
     journalId &&
     !(await prisma.journal.count({ where: { id: journalId } }))
   ) {
     return { ok: false, message: "The selected journal was not found." };
   }
+  if (hasTaskId) {
+    const taskValidation = await validateSuggestedVenueTaskLink({
+      projectId,
+      currentTaskId: suggestion.taskId,
+      nextTaskId: taskId,
+    });
+    if (!taskValidation.ok) return taskValidation;
+  }
 
-  const linkChanged = journalId !== suggestion.journalId;
+  const linkChanged = hasJournalId && journalId !== suggestion.journalId;
+  const venueChanged = hasJournalId || hasVenueName || hasVenueLink;
   const resetForReview =
-    linkChanged || suggestion.status === SuggestedVenueStatus.DECLINED;
+    linkChanged ||
+    (venueChanged && suggestion.status === SuggestedVenueStatus.DECLINED);
   const canApproveChangedLink =
     journalId &&
     suggestion.status === SuggestedVenueStatus.APPROVED &&
@@ -6086,9 +6151,10 @@ export async function updateSuggestedJournal(
     await prisma.suggestedJournal.update({
       where: { id: suggestionId },
       data: {
-        journalId,
-        venueName,
-        venueLink,
+        ...(hasJournalId ? { journalId } : {}),
+        ...(hasVenueName ? { venueName } : {}),
+        ...(hasVenueLink ? { venueLink } : {}),
+        ...(hasTaskId ? { taskId } : {}),
         ...(resetForReview
           ? {
               status: canApproveChangedLink
@@ -6119,6 +6185,7 @@ export async function updateSuggestedJournal(
 
   revalidatePath(`/projects/${projectId}`);
   if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
+  if (hasTaskId && taskId) revalidatePath(`/tasks/${taskId}`);
   revalidatePath("/suggestions");
   return { ok: true };
 }
@@ -6256,22 +6323,45 @@ export async function updateSuggestedConference(
     return { ok: false, message: "Conference suggestion was not found." };
   }
 
-  const conferenceId = optionalString(formData.get("conferenceId"));
-  const venueName = optionalString(formData.get("venueName"));
-  const venueLink = optionalString(formData.get("venueLink"));
-  if (!conferenceId && !venueName && !venueLink) {
-    return { ok: false, message: "Enter a venue name, link, or conference." };
+  const hasConferenceId = formData.has("conferenceId");
+  const hasVenueName = formData.has("venueName");
+  const hasVenueLink = formData.has("venueLink");
+  const hasTaskId = formData.has("taskId");
+  const conferenceId = hasConferenceId
+    ? optionalString(formData.get("conferenceId"))
+    : suggestion.conferenceId;
+  const venueName = hasVenueName
+    ? optionalString(formData.get("venueName"))
+    : undefined;
+  const venueLink = hasVenueLink
+    ? optionalString(formData.get("venueLink"))
+    : undefined;
+  const taskId = hasTaskId ? optionalString(formData.get("taskId")) : null;
+  if (!hasConferenceId && !hasVenueName && !hasVenueLink && !hasTaskId) {
+    return { ok: false, message: "Update the venue or linked task." };
   }
   if (
+    hasConferenceId &&
     conferenceId &&
     !(await prisma.conference.count({ where: { id: conferenceId } }))
   ) {
     return { ok: false, message: "The selected conference was not found." };
   }
+  if (hasTaskId) {
+    const taskValidation = await validateSuggestedVenueTaskLink({
+      projectId,
+      currentTaskId: suggestion.taskId,
+      nextTaskId: taskId,
+    });
+    if (!taskValidation.ok) return taskValidation;
+  }
 
-  const linkChanged = conferenceId !== suggestion.conferenceId;
+  const linkChanged =
+    hasConferenceId && conferenceId !== suggestion.conferenceId;
+  const venueChanged = hasConferenceId || hasVenueName || hasVenueLink;
   const resetForReview =
-    linkChanged || suggestion.status === SuggestedVenueStatus.DECLINED;
+    linkChanged ||
+    (venueChanged && suggestion.status === SuggestedVenueStatus.DECLINED);
   const canApproveChangedLink =
     conferenceId &&
     suggestion.status === SuggestedVenueStatus.APPROVED &&
@@ -6285,9 +6375,10 @@ export async function updateSuggestedConference(
     await prisma.suggestedConference.update({
       where: { id: suggestionId },
       data: {
-        conferenceId,
-        venueName,
-        venueLink,
+        ...(hasConferenceId ? { conferenceId } : {}),
+        ...(hasVenueName ? { venueName } : {}),
+        ...(hasVenueLink ? { venueLink } : {}),
+        ...(hasTaskId ? { taskId } : {}),
         ...(resetForReview
           ? {
               status: canApproveChangedLink
@@ -6318,6 +6409,7 @@ export async function updateSuggestedConference(
 
   revalidatePath(`/projects/${projectId}`);
   if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
+  if (hasTaskId && taskId) revalidatePath(`/tasks/${taskId}`);
   revalidatePath("/suggestions");
   return { ok: true };
 }

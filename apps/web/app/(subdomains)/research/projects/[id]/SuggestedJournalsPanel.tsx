@@ -91,6 +91,8 @@ export type SuggestedJournalOption = {
   approvedByEmail?: string;
   declineReason?: string;
   journalCreationPending?: boolean;
+  taskId?: string;
+  linkedTask?: SuggestedVenueTaskOption;
   venueState?: SuggestedVenueState;
 };
 
@@ -123,7 +125,17 @@ export type SuggestedConferenceOption = {
   approvedByName?: string;
   approvedByEmail?: string;
   declineReason?: string;
+  taskId?: string;
+  linkedTask?: SuggestedVenueTaskOption;
   venueState?: SuggestedVenueState;
+};
+
+export type SuggestedVenueTaskOption = {
+  id: string;
+  taskCode: string;
+  title: string;
+  status: string;
+  assignees: string;
 };
 
 export type SuggestedVenueState = {
@@ -162,6 +174,7 @@ export function SuggestedJournalsPanel({
   suggested,
   conferences,
   suggestedConferences,
+  taskOptions,
   assistants,
   checkers = [],
   taskGuideOptions = [],
@@ -179,6 +192,7 @@ export function SuggestedJournalsPanel({
   suggested: SuggestedJournalOption[];
   conferences: SuggestedConferenceOption[];
   suggestedConferences: SuggestedConferenceOption[];
+  taskOptions: SuggestedVenueTaskOption[];
   assistants: TaskAssigneeOption[];
   checkers?: TaskAssigneeOption[];
   taskGuideOptions?: TaskGuideOption[];
@@ -204,6 +218,9 @@ export function SuggestedJournalsPanel({
   const [editVenueName, setEditVenueName] = useState("");
   const [editVenueLink, setEditVenueLink] = useState("");
   const [editVenueQuery, setEditVenueQuery] = useState("");
+  const [editTaskQuery, setEditTaskQuery] = useState("");
+  const [selectedEditTask, setSelectedEditTask] =
+    useState<SuggestedVenueTaskOption | null>(null);
   const [deleteVenue, setDeleteVenue] = useState<Venue | null>(null);
   const [approveVenue, setApproveVenue] = useState<Venue | null>(null);
   const [declineConfirmOpen, setDeclineConfirmOpen] = useState(false);
@@ -352,6 +369,21 @@ export function SuggestedJournalsPanel({
     suggestedJournalIds,
   ]);
 
+  const editTaskResults = useMemo(() => {
+    if (!editVenue) return [];
+    const needle = editTaskQuery.trim().toLowerCase();
+    if (!needle) return [];
+    return taskOptions
+      .filter((task) => task.id !== selectedEditTask?.id)
+      .filter((task) =>
+        [task.taskCode, task.title, task.status, task.assignees, task.id]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 12);
+  }, [editTaskQuery, editVenue, selectedEditTask?.id, taskOptions]);
+
   const assistantResults = useMemo(() => {
     const needle = assistantQuery.trim().toLowerCase();
     if (!needle) return [];
@@ -397,6 +429,8 @@ export function SuggestedJournalsPanel({
     () => checkers.find((checker) => checker.id === selectedCheckerId) ?? null,
     [checkers, selectedCheckerId],
   );
+  const editVenueHasSystemLink = Boolean(editVenue?.item.venueId);
+  const editTaskLocked = selectedEditTask?.status === "COMPLETED";
 
   const assignJournalAccounts =
     assignVenue?.kind === "journal" ? assignVenue.item.accounts : [];
@@ -462,6 +496,8 @@ export function SuggestedJournalsPanel({
     setEditVenueName(venue.item.name);
     setEditVenueLink(venue.item.venueLink);
     setEditVenueQuery("");
+    setSelectedEditTask(venue.item.linkedTask ?? null);
+    setEditTaskQuery("");
   }
 
   function closeEditVenue() {
@@ -470,22 +506,30 @@ export function SuggestedJournalsPanel({
     setEditVenueName("");
     setEditVenueLink("");
     setEditVenueQuery("");
+    setSelectedEditTask(null);
+    setEditTaskQuery("");
   }
 
   function saveEditedVenue() {
     if (!editVenue) return;
     const formData = new FormData();
-    formData.set("venueName", editVenueName.trim());
-    formData.set("venueLink", editVenueLink.trim());
-    if (editVenue.kind === "journal" && selectedEditVenue?.kind === "journal") {
-      formData.set("journalId", selectedEditVenue.item.venueId);
+    if (!editVenue.item.venueId) {
+      formData.set("venueName", editVenueName.trim());
+      formData.set("venueLink", editVenueLink.trim());
+      if (
+        editVenue.kind === "journal" &&
+        selectedEditVenue?.kind === "journal"
+      ) {
+        formData.set("journalId", selectedEditVenue.item.venueId);
+      }
+      if (
+        editVenue.kind === "conference" &&
+        selectedEditVenue?.kind === "conference"
+      ) {
+        formData.set("conferenceId", selectedEditVenue.item.venueId);
+      }
     }
-    if (
-      editVenue.kind === "conference" &&
-      selectedEditVenue?.kind === "conference"
-    ) {
-      formData.set("conferenceId", selectedEditVenue.item.venueId);
-    }
+    formData.set("taskId", selectedEditTask?.id ?? "");
 
     startTransition(async () => {
       const result =
@@ -1034,7 +1078,8 @@ export function SuggestedJournalsPanel({
               onClick={saveEditedVenue}
               disabled={
                 isPending ||
-                (!selectedEditVenue &&
+                (!selectedEditTask &&
+                  !selectedEditVenue &&
                   !editVenueName.trim() &&
                   !editVenueLink.trim())
               }
@@ -1045,72 +1090,129 @@ export function SuggestedJournalsPanel({
           }
         >
           <div className="grid gap-4">
-            <SearchBox
-              value={editVenueQuery}
-              onChange={setEditVenueQuery}
-              placeholder={
-                editVenue.kind === "journal"
-                  ? "Search journal name, ISSN, rank, or publisher..."
-                  : "Search conference, organizer, theme, or location..."
-              }
-            />
-            <SelectedVenuePill
-              venue={selectedEditVenue}
-              onClear={() => setSelectedEditVenue(null)}
-            />
-            <ResultList
-              query={editVenueQuery}
-              idleText={`Search to link another ${editVenue.kind}, or edit the information below.`}
-              emptyText={`No ${editVenue.kind} matches this search.`}
-            >
-              {editVenueResults.map((venue) => (
-                <button
-                  key={venue.item.id}
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => {
-                    setSelectedEditVenue(venue);
-                    setEditVenueName(venue.item.name);
-                    setEditVenueLink(venue.item.venueLink);
-                    setEditVenueQuery("");
-                  }}
-                  className={resultButtonClass(false)}
+            {editVenueHasSystemLink ? (
+              <FixedVenueSummary venue={editVenue} />
+            ) : (
+              <>
+                <SearchBox
+                  value={editVenueQuery}
+                  onChange={setEditVenueQuery}
+                  placeholder={
+                    editVenue.kind === "journal"
+                      ? "Search journal name, ISSN, rank, or publisher..."
+                      : "Search conference, organizer, theme, or location..."
+                  }
+                />
+                <SelectedVenuePill
+                  venue={selectedEditVenue}
+                  onClear={() => setSelectedEditVenue(null)}
+                />
+                <ResultList
+                  query={editVenueQuery}
+                  idleText={`Search to link another ${editVenue.kind}, or edit the information below.`}
+                  emptyText={`No ${editVenue.kind} matches this search.`}
                 >
-                  <span className="block text-sm font-normal text-[#E4E4E4]">
-                    {venue.item.name}
-                  </span>
-                  <span className="mt-1 block text-xs text-[#B0B0B0]">
-                    {venue.kind === "journal"
-                      ? [
-                          venue.item.issn || "No ISSN",
-                          venue.item.rank || "No rank",
-                          venue.item.publisher || "No publisher",
-                        ].join(" - ")
-                      : [
-                          venue.item.type || "No type",
-                          venue.item.theme || "No theme",
-                          venue.item.location || "No location",
-                        ].join(" - ")}
-                  </span>
-                </button>
-              ))}
-            </ResultList>
-            <div className="grid gap-4 md:grid-cols-2">
-              <input
-                value={editVenueName}
-                onChange={(event) => setEditVenueName(event.target.value)}
-                placeholder={`${editVenue.kind === "journal" ? "Journal" : "Conference"} name`}
-                aria-label="Suggested venue name"
-                className={researchFieldClass}
+                  {editVenueResults.map((venue) => (
+                    <button
+                      key={venue.item.id}
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => {
+                        setSelectedEditVenue(venue);
+                        setEditVenueName(venue.item.name);
+                        setEditVenueLink(venue.item.venueLink);
+                        setEditVenueQuery("");
+                      }}
+                      className={resultButtonClass(false)}
+                    >
+                      <span className="block text-sm font-normal text-[#E4E4E4]">
+                        {venue.item.name}
+                      </span>
+                      <span className="mt-1 block text-xs text-[#B0B0B0]">
+                        {venue.kind === "journal"
+                          ? [
+                              venue.item.issn || "No ISSN",
+                              venue.item.rank || "No rank",
+                              venue.item.publisher || "No publisher",
+                            ].join(" - ")
+                          : [
+                              venue.item.type || "No type",
+                              venue.item.theme || "No theme",
+                              venue.item.location || "No location",
+                            ].join(" - ")}
+                      </span>
+                    </button>
+                  ))}
+                </ResultList>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <input
+                    value={editVenueName}
+                    onChange={(event) => setEditVenueName(event.target.value)}
+                    placeholder={`${editVenue.kind === "journal" ? "Journal" : "Conference"} name`}
+                    aria-label="Suggested venue name"
+                    className={researchFieldClass}
+                  />
+                  <input
+                    value={editVenueLink}
+                    onChange={(event) => setEditVenueLink(event.target.value)}
+                    placeholder="Venue URL"
+                    aria-label="Suggested venue URL"
+                    className={researchFieldClass}
+                  />
+                </div>
+              </>
+            )}
+
+            <section className="grid gap-2 border-t border-[#D8D0C2] pt-4 dark:border-[#444444]">
+              <span className="text-xs font-normal uppercase tracking-wide text-[#6C778D] dark:text-[#B0B0B0]">
+                Suggest venue task
+              </span>
+              <SelectedTaskPill
+                task={selectedEditTask}
+                locked={editTaskLocked}
+                onClear={() => setSelectedEditTask(null)}
               />
-              <input
-                value={editVenueLink}
-                onChange={(event) => setEditVenueLink(event.target.value)}
-                placeholder="Venue URL"
-                aria-label="Suggested venue URL"
-                className={researchFieldClass}
-              />
-            </div>
+              {!editTaskLocked ? (
+                <>
+                  <SearchBox
+                    value={editTaskQuery}
+                    onChange={setEditTaskQuery}
+                    placeholder="Search suggest venue task by title, ID, assignee, or status..."
+                  />
+                  <ResultList
+                    query={editTaskQuery}
+                    idleText="Search to connect this suggestion to one suggest venue task."
+                    emptyText="No suggest venue task matches this search."
+                  >
+                    {editTaskResults.map((task) => (
+                      <button
+                        key={task.id}
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => {
+                          setSelectedEditTask(task);
+                          setEditTaskQuery("");
+                        }}
+                        className={resultButtonClass(false)}
+                      >
+                        <span className="block text-sm font-normal text-[#E4E4E4]">
+                          {task.title}
+                        </span>
+                        <span className="mt-1 block text-xs text-[#B0B0B0]">
+                          {task.taskCode} - {task.status.replaceAll("_", " ")}
+                          {task.assignees ? ` - ${task.assignees}` : ""}
+                        </span>
+                      </button>
+                    ))}
+                  </ResultList>
+                </>
+              ) : (
+                <p className="text-xs leading-5 text-[#6C778D] dark:text-[#B0B0B0]">
+                  This linked task is complete, so the task connection cannot be
+                  changed.
+                </p>
+              )}
+            </section>
           </div>
         </ResearchModal>
       )}
@@ -1920,6 +2022,81 @@ function SelectedVenuePill({
           <X className="h-4 w-4" />
         </button>
       </IconHint>
+    </div>
+  );
+}
+
+function FixedVenueSummary({ venue }: { venue: Venue }) {
+  const details =
+    venue.kind === "journal"
+      ? [
+          venue.item.issn || "No ISSN",
+          venue.item.field || "No field",
+          venue.item.publisher || "No publisher",
+          venue.item.rank || "No rank",
+        ]
+      : [
+          venue.item.type || "No type",
+          venue.item.theme || "No theme",
+          venue.item.location || "No location",
+          venue.item.organizer || "No organizer",
+        ];
+
+  return (
+    <div className="border border-[#D8D0C2] bg-[#FFFDF8] px-3 py-3 text-sm dark:border-[#444444] dark:bg-[#202020]">
+      <span className="text-xs font-normal uppercase tracking-wide text-[#6C778D] dark:text-[#B0B0B0]">
+        Linked {venue.kind}
+      </span>
+      <p className="mt-1 break-words text-sm font-normal text-[#243047] dark:text-[#E4E4E4]">
+        {venue.item.name}
+      </p>
+      <p className="mt-1 break-words text-xs leading-5 text-[#6C778D] dark:text-[#B0B0B0]">
+        {details.join(" - ")}
+      </p>
+    </div>
+  );
+}
+
+function SelectedTaskPill({
+  task,
+  locked,
+  onClear,
+}: {
+  task: SuggestedVenueTaskOption | null;
+  locked: boolean;
+  onClear: () => void;
+}) {
+  if (!task) {
+    return (
+      <div className="border border-dashed border-[#D8D0C2] bg-[#FFFDF8] px-3 py-3 text-sm text-[#6C778D] dark:border-[#444444] dark:bg-[#202020] dark:text-[#B0B0B0]">
+        No suggest venue task connected.
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3 border border-[#D8D0C2] bg-[#FFFDF8] px-3 py-2 dark:border-[#444444] dark:bg-[#202020]">
+      <span className="min-w-0">
+        <span className="block truncate text-sm font-normal text-[#243047] dark:text-[#E4E4E4]">
+          {task.title}
+        </span>
+        <span className="block truncate text-xs text-[#6C778D] dark:text-[#B0B0B0]">
+          {task.taskCode} - {task.status.replaceAll("_", " ")}
+          {task.assignees ? ` - ${task.assignees}` : ""}
+        </span>
+      </span>
+      {!locked ? (
+        <IconHint label="Clear task connection">
+          <button
+            type="button"
+            onClick={onClear}
+            aria-label="Clear selected task"
+            className="inline-flex h-8 w-8 flex-none cursor-pointer items-center justify-center border-0 bg-transparent text-[#6C778D] transition hover:text-[#1F7180] dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </IconHint>
+      ) : null}
     </div>
   );
 }

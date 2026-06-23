@@ -32,6 +32,7 @@ import {
   SuggestedJournalsPanel,
   type SuggestedConferenceOption,
   type SuggestedJournalOption,
+  type SuggestedVenueTaskOption,
   type SuggestedVenueState,
   type TaskAssigneeOption,
 } from "./SuggestedJournalsPanel";
@@ -595,6 +596,22 @@ export default async function ProjectDetailPage({
   const activeSubmitTasks = project.tasks.filter(
     (task) => task.status !== "COMPLETED" && task.status !== "REVOKED",
   );
+  const suggestVenueTaskOptions: SuggestedVenueTaskOption[] = project.tasks
+    .filter((task) => task.taskType === "SUGGEST_VENUE")
+    .map((task) => ({
+      id: task.id,
+      taskCode:
+        task.taskCode ?? task.id.replaceAll("-", "").slice(0, 10).toUpperCase(),
+      title: task.title,
+      status: task.status,
+      assignees: task.assignments
+        .map((assignment) => displayResearchPersonName(assignment.user))
+        .filter(Boolean)
+        .join(", "),
+    }));
+  const suggestVenueTaskById = new Map(
+    suggestVenueTaskOptions.map((task) => [task.id, task]),
+  );
   const suggestedJournalState = (journalId: string): SuggestedVenueState => {
     const submission = project.submissions.find(
       (item) => item.journalId === journalId,
@@ -702,6 +719,10 @@ export default async function ProjectDetailPage({
         requiresApproval: suggestion.requiresApproval,
         declineReason: suggestion.declineReason ?? undefined,
         journalCreationPending: Boolean(suggestion.journalCreationTaskId),
+        taskId: suggestion.taskId ?? undefined,
+        linkedTask: suggestion.taskId
+          ? suggestVenueTaskById.get(suggestion.taskId)
+          : undefined,
         approvedByName: approvedBy
           ? displayResearchPersonName(approvedBy) || "Unknown user"
           : undefined,
@@ -785,6 +806,10 @@ export default async function ProjectDetailPage({
           : "Unknown email",
         requiresApproval: suggestion.requiresApproval,
         declineReason: suggestion.declineReason ?? undefined,
+        taskId: suggestion.taskId ?? undefined,
+        linkedTask: suggestion.taskId
+          ? suggestVenueTaskById.get(suggestion.taskId)
+          : undefined,
         approvedByName: approvedBy
           ? displayResearchPersonName(approvedBy) || "Unknown user"
           : undefined,
@@ -1700,6 +1725,7 @@ export default async function ProjectDetailPage({
           suggested={suggestedJournalOptions}
           conferences={allConferenceOptions}
           suggestedConferences={suggestedConferenceOptions}
+          taskOptions={suggestVenueTaskOptions}
           assistants={taskAssigneeOptions}
           checkers={taskCheckerOptions}
           taskGuideOptions={taskGuides}
