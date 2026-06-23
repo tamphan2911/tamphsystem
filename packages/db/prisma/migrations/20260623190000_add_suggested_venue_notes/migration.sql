@@ -1,0 +1,2 @@
+ALTER TABLE "SuggestedJournal" ADD COLUMN IF NOT EXISTS "note" TEXT;
+ALTER TABLE "SuggestedConference" ADD COLUMN IF NOT EXISTS "note" TEXT;

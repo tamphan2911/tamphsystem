@@ -670,6 +670,7 @@ export default async function ProjectDetailPage({
       submissionFee: journal.submissionFee ?? "",
       submissionFeeCurrency: journal.submissionFeeCurrency,
       note: journal.note ?? "",
+      venueNote: "",
       accounts: (journal.publisherRecord?.usesSingleAccount
         ? (journal.publisherRecord.accounts ?? [])
         : journal.accounts
@@ -701,6 +702,7 @@ export default async function ProjectDetailPage({
         submissionFee: journal?.submissionFee ?? "",
         submissionFeeCurrency: journal?.submissionFeeCurrency ?? "USD",
         note: journal?.note ?? "",
+        venueNote: suggestion.note ?? "",
         accounts: (journal?.publisherRecord?.usesSingleAccount
           ? (journal.publisherRecord.accounts ?? [])
           : (journal?.accounts ?? [])
@@ -770,6 +772,8 @@ export default async function ProjectDetailPage({
       apcCurrency: conference.apcCurrency,
       submissionFee: conference.submissionFee ?? "",
       submissionFeeCurrency: conference.submissionFeeCurrency,
+      note: conference.note ?? "",
+      venueNote: "",
     }),
   );
   const suggestedConferenceOptions: SuggestedConferenceOption[] =
@@ -798,6 +802,8 @@ export default async function ProjectDetailPage({
         apcCurrency: conference?.apcCurrency ?? "USD",
         submissionFee: conference?.submissionFee ?? "",
         submissionFeeCurrency: conference?.submissionFeeCurrency ?? "USD",
+        note: conference?.note ?? "",
+        venueNote: suggestion.note ?? "",
         suggestedByName: createdBy
           ? displayResearchPersonName(createdBy) || "Unknown user"
           : "Unknown user",

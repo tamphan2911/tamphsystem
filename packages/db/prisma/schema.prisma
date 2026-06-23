@@ -631,6 +631,7 @@ model SuggestedConference {
   conferenceId     String?
   venueName        String?
   venueLink        String?
+  note             String?
   status           SuggestedVenueStatus @default(APPROVED)
   approvedAt       DateTime?
   approvedById     String?
@@ -756,6 +757,7 @@ model SuggestedJournal {
   journalId             String?
   venueName             String?
   venueLink             String?
+  note                  String?
   status                SuggestedVenueStatus @default(APPROVED)
   approvedAt            DateTime?
   approvedById          String?

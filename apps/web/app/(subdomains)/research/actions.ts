@@ -6097,6 +6097,7 @@ export async function addSuggestedJournal(
   const journalId = optionalString(formData.get("journalId"));
   const venueName = optionalString(formData.get("venueName"));
   const venueLink = optionalString(formData.get("venueLink"));
+  const note = optionalString(formData.get("note"));
   if (!journalId && !venueName && !venueLink) return;
   if (await researchContentIsLocked(projectId)) return;
   const taskId = await unfinishedSuggestVenueTaskIdForUser(projectId, user.id);
@@ -6132,6 +6133,7 @@ export async function addSuggestedJournal(
           declineReason: null,
           venueName: venueName ?? venue?.name ?? null,
           venueLink,
+          note,
           ...(taskId ? { taskId } : {}),
         },
         create: {
@@ -6144,6 +6146,7 @@ export async function addSuggestedJournal(
           approvedById: canApprove ? user.id : null,
           venueName: venueName ?? venue?.name ?? null,
           venueLink,
+          note,
           taskId,
         },
       })
@@ -6155,6 +6158,7 @@ export async function addSuggestedJournal(
           requiresApproval: true,
           venueName,
           venueLink,
+          note,
           taskId,
         },
       });
@@ -6199,6 +6203,7 @@ export async function updateSuggestedJournal(
   const hasJournalId = formData.has("journalId");
   const hasVenueName = formData.has("venueName");
   const hasVenueLink = formData.has("venueLink");
+  const hasNote = formData.has("note");
   const hasTaskId = formData.has("taskId");
   const journalId = hasJournalId
     ? optionalString(formData.get("journalId"))
@@ -6209,8 +6214,15 @@ export async function updateSuggestedJournal(
   const venueLink = hasVenueLink
     ? optionalString(formData.get("venueLink"))
     : undefined;
+  const note = hasNote ? optionalString(formData.get("note")) : undefined;
   const taskId = hasTaskId ? optionalString(formData.get("taskId")) : null;
-  if (!hasJournalId && !hasVenueName && !hasVenueLink && !hasTaskId) {
+  if (
+    !hasJournalId &&
+    !hasVenueName &&
+    !hasVenueLink &&
+    !hasNote &&
+    !hasTaskId
+  ) {
     return { ok: false, message: "Update the venue or linked task." };
   }
   if (
@@ -6250,6 +6262,7 @@ export async function updateSuggestedJournal(
         ...(hasJournalId ? { journalId } : {}),
         ...(hasVenueName ? { venueName } : {}),
         ...(hasVenueLink ? { venueLink } : {}),
+        ...(hasNote ? { note } : {}),
         ...(hasTaskId ? { taskId } : {}),
         ...(resetForReview
           ? {
@@ -6320,6 +6333,7 @@ export async function addSuggestedConference(
   const conferenceId = optionalString(formData.get("conferenceId"));
   const venueName = optionalString(formData.get("venueName"));
   const venueLink = optionalString(formData.get("venueLink"));
+  const note = optionalString(formData.get("note"));
   if (!conferenceId && !venueName && !venueLink) return;
   if (await researchContentIsLocked(projectId)) return;
   const taskId = await unfinishedSuggestVenueTaskIdForUser(projectId, user.id);
@@ -6355,6 +6369,7 @@ export async function addSuggestedConference(
           declineReason: null,
           venueName: venueName ?? venue?.name ?? null,
           venueLink,
+          note,
           ...(taskId ? { taskId } : {}),
         },
         create: {
@@ -6367,6 +6382,7 @@ export async function addSuggestedConference(
           approvedById: canApprove ? user.id : null,
           venueName: venueName ?? venue?.name ?? null,
           venueLink,
+          note,
           taskId,
         },
       })
@@ -6378,6 +6394,7 @@ export async function addSuggestedConference(
           requiresApproval: true,
           venueName,
           venueLink,
+          note,
           taskId,
         },
       });
@@ -6422,6 +6439,7 @@ export async function updateSuggestedConference(
   const hasConferenceId = formData.has("conferenceId");
   const hasVenueName = formData.has("venueName");
   const hasVenueLink = formData.has("venueLink");
+  const hasNote = formData.has("note");
   const hasTaskId = formData.has("taskId");
   const conferenceId = hasConferenceId
     ? optionalString(formData.get("conferenceId"))
@@ -6432,8 +6450,15 @@ export async function updateSuggestedConference(
   const venueLink = hasVenueLink
     ? optionalString(formData.get("venueLink"))
     : undefined;
+  const note = hasNote ? optionalString(formData.get("note")) : undefined;
   const taskId = hasTaskId ? optionalString(formData.get("taskId")) : null;
-  if (!hasConferenceId && !hasVenueName && !hasVenueLink && !hasTaskId) {
+  if (
+    !hasConferenceId &&
+    !hasVenueName &&
+    !hasVenueLink &&
+    !hasNote &&
+    !hasTaskId
+  ) {
     return { ok: false, message: "Update the venue or linked task." };
   }
   if (
@@ -6474,6 +6499,7 @@ export async function updateSuggestedConference(
         ...(hasConferenceId ? { conferenceId } : {}),
         ...(hasVenueName ? { venueName } : {}),
         ...(hasVenueLink ? { venueLink } : {}),
+        ...(hasNote ? { note } : {}),
         ...(hasTaskId ? { taskId } : {}),
         ...(resetForReview
           ? {

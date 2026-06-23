@@ -83,6 +83,7 @@ export type SuggestedJournalOption = {
   submissionFee: string;
   submissionFeeCurrency: string;
   note: string;
+  venueNote: string;
   accounts: SuggestedJournalAccountOption[];
   suggestedByName?: string;
   suggestedByEmail?: string;
@@ -119,6 +120,8 @@ export type SuggestedConferenceOption = {
   apcCurrency: string;
   submissionFee: string;
   submissionFeeCurrency: string;
+  note: string;
+  venueNote: string;
   suggestedByName?: string;
   suggestedByEmail?: string;
   requiresApproval?: boolean;
@@ -217,6 +220,7 @@ export function SuggestedJournalsPanel({
   );
   const [editVenueName, setEditVenueName] = useState("");
   const [editVenueLink, setEditVenueLink] = useState("");
+  const [editVenueNote, setEditVenueNote] = useState("");
   const [editVenueQuery, setEditVenueQuery] = useState("");
   const [editTaskQuery, setEditTaskQuery] = useState("");
   const [selectedEditTask, setSelectedEditTask] =
@@ -232,6 +236,7 @@ export function SuggestedJournalsPanel({
   const [approvalVenue, setApprovalVenue] = useState<Venue | null>(null);
   const [freeVenueName, setFreeVenueName] = useState("");
   const [freeVenueLink, setFreeVenueLink] = useState("");
+  const [freeVenueNote, setFreeVenueNote] = useState("");
   const [journalQuery, setJournalQuery] = useState("");
   const [conferenceQuery, setConferenceQuery] = useState("");
   const [assistantQuery, setAssistantQuery] = useState("");
@@ -472,6 +477,7 @@ export function SuggestedJournalsPanel({
     setSelectedAddVenue(null);
     setFreeVenueName("");
     setFreeVenueLink("");
+    setFreeVenueNote("");
   }
 
   function openEditVenue(venue: Venue) {
@@ -495,6 +501,7 @@ export function SuggestedJournalsPanel({
     );
     setEditVenueName(venue.item.name);
     setEditVenueLink(venue.item.venueLink);
+    setEditVenueNote(venue.item.venueNote);
     setEditVenueQuery("");
     setSelectedEditTask(venue.item.linkedTask ?? null);
     setEditTaskQuery("");
@@ -505,6 +512,7 @@ export function SuggestedJournalsPanel({
     setSelectedEditVenue(null);
     setEditVenueName("");
     setEditVenueLink("");
+    setEditVenueNote("");
     setEditVenueQuery("");
     setSelectedEditTask(null);
     setEditTaskQuery("");
@@ -529,6 +537,7 @@ export function SuggestedJournalsPanel({
         formData.set("conferenceId", selectedEditVenue.item.venueId);
       }
     }
+    formData.set("note", editVenueNote.trim());
     formData.set("taskId", selectedEditTask?.id ?? "");
 
     startTransition(async () => {
@@ -563,6 +572,7 @@ export function SuggestedJournalsPanel({
     if (journalId) formData.set("journalId", journalId);
     if (freeVenueName.trim()) formData.set("venueName", freeVenueName.trim());
     if (freeVenueLink.trim()) formData.set("venueLink", freeVenueLink.trim());
+    if (freeVenueNote.trim()) formData.set("note", freeVenueNote.trim());
     startTransition(async () => {
       await addSuggestedJournal(projectId, formData);
       closeAddVenue();
@@ -582,6 +592,7 @@ export function SuggestedJournalsPanel({
     if (conferenceId) formData.set("conferenceId", conferenceId);
     if (freeVenueName.trim()) formData.set("venueName", freeVenueName.trim());
     if (freeVenueLink.trim()) formData.set("venueLink", freeVenueLink.trim());
+    if (freeVenueNote.trim()) formData.set("note", freeVenueNote.trim());
     startTransition(async () => {
       await addSuggestedConference(projectId, formData);
       closeAddVenue();
@@ -969,6 +980,13 @@ export function SuggestedJournalsPanel({
                     kind="journal"
                   />
                 )}
+                <textarea
+                  value={freeVenueNote}
+                  onChange={(event) => setFreeVenueNote(event.target.value)}
+                  placeholder="Note for this suggested venue, for example why it fits this research, submission timing, or special reminder..."
+                  aria-label="Suggested venue note"
+                  className={`${researchTextareaClass} min-h-24`}
+                />
                 <ResultList
                   query={journalQuery}
                   idleText="Search and select one journal."
@@ -1024,6 +1042,13 @@ export function SuggestedJournalsPanel({
                     kind="conference"
                   />
                 )}
+                <textarea
+                  value={freeVenueNote}
+                  onChange={(event) => setFreeVenueNote(event.target.value)}
+                  placeholder="Note for this suggested venue, for example why it fits this research, deadline timing, or special reminder..."
+                  aria-label="Suggested venue note"
+                  className={`${researchTextareaClass} min-h-24`}
+                />
                 <ResultList
                   query={conferenceQuery}
                   idleText="Search and select one conference."
@@ -1162,6 +1187,14 @@ export function SuggestedJournalsPanel({
                 </div>
               </>
             )}
+
+            <textarea
+              value={editVenueNote}
+              onChange={(event) => setEditVenueNote(event.target.value)}
+              placeholder="Note for this suggested venue..."
+              aria-label="Suggested venue note"
+              className={`${researchTextareaClass} min-h-24`}
+            />
 
             <section className="grid gap-2 border-t border-[#D8D0C2] pt-4 dark:border-[#444444]">
               <span className="text-xs font-normal uppercase tracking-wide text-[#6C778D] dark:text-[#B0B0B0]">
@@ -2232,7 +2265,7 @@ function JournalCard({
           {journal.note.trim() ? (
             <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
               <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
-                Note:
+                Journal note:
               </span>{" "}
               {journal.note}
             </p>
@@ -2252,6 +2285,14 @@ function JournalCard({
         approvedByName={journal.approvedByName}
         approvedByEmail={journal.approvedByEmail}
       />
+      {journal.venueNote.trim() ? (
+        <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+          <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
+            Note:
+          </span>{" "}
+          {journal.venueNote}
+        </p>
+      ) : null}
     </VenueCard>
   );
 }
@@ -2312,6 +2353,14 @@ function ConferenceCard({
         submissionFee={conference.submissionFee}
         submissionFeeCurrency={conference.submissionFeeCurrency}
       />
+      {conference.note.trim() ? (
+        <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+          <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
+            Conference note:
+          </span>{" "}
+          {conference.note}
+        </p>
+      ) : null}
       <VenueAttribution
         name={conference.suggestedByName}
         email={conference.suggestedByEmail}
@@ -2322,6 +2371,14 @@ function ConferenceCard({
         approvedByName={conference.approvedByName}
         approvedByEmail={conference.approvedByEmail}
       />
+      {conference.venueNote.trim() ? (
+        <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+          <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
+            Note:
+          </span>{" "}
+          {conference.venueNote}
+        </p>
+      ) : null}
     </VenueCard>
   );
 }
@@ -2345,7 +2402,8 @@ function VenueFees({
   const apcIsHigh = apcValue > 1000;
   const normalizedFee = normalizeResearchNumberInput(submissionFee);
   const feeValue = Number(normalizedFee || 0);
-  const hasSubmissionFee = Number.isFinite(feeValue) && feeValue > 0;
+  const feeIsFree = !Number.isFinite(feeValue) || feeValue <= 0;
+  const feeIsHigh = feeValue > 1000;
 
   return (
     <p className="mt-2 flex flex-wrap items-center gap-x-1 text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
@@ -2364,16 +2422,23 @@ function VenueFees({
           : `${currencySymbol(apcCurrency)} ${formatResearchNumber(apc)}`}
       </span>
       {hasApcOption ? <span>- Option</span> : null}
-      {hasSubmissionFee ? (
-        <>
-          <span className="mx-1 text-[#98A2B3] dark:text-[#777777]">|</span>
-          <span>Fee:</span>
-          <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
-            {currencySymbol(submissionFeeCurrency)}{" "}
-            {formatResearchNumber(submissionFee)}
-          </span>
-        </>
-      ) : null}
+      <span className="mx-1 text-[#98A2B3] dark:text-[#777777]">|</span>
+      <span>Fee:</span>
+      <span
+        className={
+          feeIsFree
+            ? "font-normal text-emerald-700 dark:text-emerald-300"
+            : feeIsHigh
+              ? "font-normal text-rose-700 dark:text-rose-300"
+              : "font-normal text-[#344054] dark:text-[#E4E4E4]"
+        }
+      >
+        {feeIsFree
+          ? "free"
+          : `${currencySymbol(submissionFeeCurrency)} ${formatResearchNumber(
+              submissionFee,
+            )}`}
+      </span>
     </p>
   );
 }

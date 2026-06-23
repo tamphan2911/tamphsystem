@@ -569,7 +569,8 @@ type TaskSuggestedVenueInfo = {
   apcCurrency: string;
   submissionFee: string | null;
   submissionFeeCurrency: string;
-  note: string | null;
+  journalNote: string | null;
+  venueNote: string | null;
   declineReason: string | null;
   venueLink: string | null;
   createdAt: Date;
@@ -579,6 +580,16 @@ function taskVenueMoney(amount: string | null, currency: string) {
   const normalized = normalizeResearchNumberInput(amount);
   if (!normalized || Number(normalized) === 0) return "Free";
   return `${currencySymbol(currency)}${formatResearchNumber(normalized)}`;
+}
+
+function taskVenueMoneyClass(amount: string | null) {
+  const normalized = normalizeResearchNumberInput(amount);
+  const value = Number(normalized || 0);
+  if (!Number.isFinite(value) || value <= 0) {
+    return "text-emerald-700 dark:text-emerald-300";
+  }
+  if (value > 1000) return "text-rose-700 dark:text-rose-300";
+  return "text-[#344054] dark:text-[#E4E4E4]";
 }
 
 function suggestedVenueStatusClass(status: string) {
@@ -634,14 +645,21 @@ function SuggestedVenueResultsPanel({
               </p>
             ) : null}
             <div className="mt-2 flex flex-wrap items-center gap-y-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
-              <span>APC: {taskVenueMoney(venue.apc, venue.apcCurrency)}</span>
+              <span>
+                APC:{" "}
+                <span className={taskVenueMoneyClass(venue.apc)}>
+                  {taskVenueMoney(venue.apc, venue.apcCurrency)}
+                </span>
+              </span>
               <DetailSeparator />
               <span>
                 Fee:{" "}
-                {taskVenueMoney(
-                  venue.submissionFee,
-                  venue.submissionFeeCurrency,
-                )}
+                <span className={taskVenueMoneyClass(venue.submissionFee)}>
+                  {taskVenueMoney(
+                    venue.submissionFee,
+                    venue.submissionFeeCurrency,
+                  )}
+                </span>
               </span>
               <DetailSeparator />
               <span>Suggested: {formatDate(venue.createdAt)}</span>
@@ -658,9 +676,15 @@ function SuggestedVenueResultsPanel({
                 </>
               ) : null}
             </div>
-            {venue.note ? (
+            {venue.journalNote ? (
               <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                Note: {venue.note}
+                {venue.kind === "journal" ? "Journal note" : "Conference note"}
+                : {venue.journalNote}
+              </p>
+            ) : null}
+            {venue.venueNote ? (
+              <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                Venue note: {venue.venueNote}
               </p>
             ) : null}
             {venue.declineReason ? (
@@ -781,6 +805,7 @@ export default async function TaskDetailPage({
           id: true,
           venueName: true,
           venueLink: true,
+          note: true,
           status: true,
           declineReason: true,
           createdAt: true,
@@ -806,6 +831,7 @@ export default async function TaskDetailPage({
           id: true,
           venueName: true,
           venueLink: true,
+          note: true,
           status: true,
           declineReason: true,
           createdAt: true,
@@ -849,6 +875,7 @@ export default async function TaskDetailPage({
           id: true,
           venueName: true,
           venueLink: true,
+          note: true,
           status: true,
           declineReason: true,
           createdAt: true,
@@ -875,6 +902,7 @@ export default async function TaskDetailPage({
           id: true,
           venueName: true,
           venueLink: true,
+          note: true,
           status: true,
           declineReason: true,
           createdAt: true,
@@ -1476,7 +1504,8 @@ export default async function TaskDetailPage({
       apcCurrency: suggestion.journal?.apcCurrency ?? "USD",
       submissionFee: suggestion.journal?.submissionFee ?? null,
       submissionFeeCurrency: suggestion.journal?.submissionFeeCurrency ?? "USD",
-      note: suggestion.journal?.note ?? null,
+      journalNote: suggestion.journal?.note ?? null,
+      venueNote: suggestion.note ?? null,
       declineReason: suggestion.declineReason,
       venueLink:
         suggestion.venueLink ?? suggestion.journal?.homepageLink ?? null,
@@ -1510,7 +1539,9 @@ export default async function TaskDetailPage({
             submissionFeeCurrency:
               task.journalSubmissionSuggestion.journal?.submissionFeeCurrency ??
               "USD",
-            note: task.journalSubmissionSuggestion.journal?.note ?? null,
+            journalNote:
+              task.journalSubmissionSuggestion.journal?.note ?? null,
+            venueNote: task.journalSubmissionSuggestion.note ?? null,
             declineReason: task.journalSubmissionSuggestion.declineReason,
             venueLink:
               task.journalSubmissionSuggestion.venueLink ??
@@ -1546,7 +1577,8 @@ export default async function TaskDetailPage({
       submissionFee: suggestion.conference?.submissionFee ?? null,
       submissionFeeCurrency:
         suggestion.conference?.submissionFeeCurrency ?? "USD",
-      note: suggestion.conference?.note ?? null,
+      journalNote: suggestion.conference?.note ?? null,
+      venueNote: suggestion.note ?? null,
       declineReason: suggestion.declineReason,
       venueLink: suggestion.venueLink ?? suggestion.conference?.website ?? null,
       createdAt: suggestion.createdAt,
@@ -1584,7 +1616,9 @@ export default async function TaskDetailPage({
             submissionFeeCurrency:
               task.conferenceSubmissionSuggestion.conference
                 ?.submissionFeeCurrency ?? "USD",
-            note: task.conferenceSubmissionSuggestion.conference?.note ?? null,
+            journalNote:
+              task.conferenceSubmissionSuggestion.conference?.note ?? null,
+            venueNote: task.conferenceSubmissionSuggestion.note ?? null,
             declineReason: task.conferenceSubmissionSuggestion.declineReason,
             venueLink:
               task.conferenceSubmissionSuggestion.venueLink ??
