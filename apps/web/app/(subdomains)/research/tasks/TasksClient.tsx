@@ -63,6 +63,11 @@ type TaskRow = {
   updatedAt: string;
   createdBy: string;
   checker: string;
+  scope: {
+    assignedToMe: boolean;
+    relatedToMyItems: boolean;
+    checkerForMe: boolean;
+  };
   assignments: TaskAssignment[];
 };
 
@@ -84,6 +89,8 @@ const taskTypeFilterValues = [
   "PROJECT",
   "OTHER",
 ];
+
+type TaskScopeTab = "assigned" | "related" | "checker";
 
 function formatDate(value: string | null) {
   if (!value) return "-";
@@ -398,17 +405,23 @@ function DeleteTaskButton({
 
 export function TasksClient({
   isAdmin,
+  isChiefAssistant,
   canDelete,
   deleteAction,
   action,
 }: {
   isAdmin: boolean;
+  isChiefAssistant: boolean;
   canDelete: boolean;
   deleteAction: (taskId: string) => Promise<void>;
   action?: ReactNode;
 }) {
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [query, setQuery] = usePersistentTableValue("tasks:q", "");
+  const [scopeTab, setScopeTab] = usePersistentTableValue(
+    "tasks:scope",
+    "assigned",
+  );
   const [statuses, setStatuses] = usePersistentMultiFilter(
     "tasks:status",
     taskStatusValues,
@@ -472,10 +485,48 @@ export function TasksClient({
     "tasks:type",
     taskTypeFilterValues,
   );
+  const activeScopeTab: TaskScopeTab =
+    scopeTab === "checker" && !isChiefAssistant
+      ? "assigned"
+      : scopeTab === "related" || scopeTab === "checker"
+        ? scopeTab
+        : "assigned";
+
+  const scopeTabs: Array<{
+    value: TaskScopeTab;
+    label: string;
+    count: number;
+  }> = [
+    {
+      value: "assigned",
+      label: "Assigned to me",
+      count: tasks.filter((task) => task.scope.assignedToMe).length,
+    },
+    {
+      value: "related",
+      label: "Related items",
+      count: tasks.filter((task) => task.scope.relatedToMyItems).length,
+    },
+    ...(isChiefAssistant
+      ? [
+          {
+            value: "checker" as const,
+            label: "Checking",
+            count: tasks.filter((task) => task.scope.checkerForMe).length,
+          },
+        ]
+      : []),
+  ];
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return tasks.filter((task) => {
+      const matchesScope =
+        activeScopeTab === "assigned"
+          ? task.scope.assignedToMe
+          : activeScopeTab === "related"
+            ? task.scope.relatedToMyItems
+            : task.scope.checkerForMe;
       const matchesStatus =
         statuses.length === 0 || statuses.includes(derivedStatus(task));
       const matchesType =
@@ -498,14 +549,22 @@ export function TasksClient({
         .join(" ")
         .toLowerCase();
       return (
-        matchesStatus && matchesType && (!needle || haystack.includes(needle))
+        matchesScope &&
+        matchesStatus &&
+        matchesType &&
+        (!needle || haystack.includes(needle))
       );
     });
-  }, [query, statuses, taskTypes, tasks]);
+  }, [activeScopeTab, query, statuses, taskTypes, tasks]);
   const pagination = useTablePagination(filtered, 10, 1, "tasks");
 
   function updateQuery(value: string) {
     setQuery(value);
+    pagination.setPage(1);
+  }
+
+  function updateScopeTab(value: TaskScopeTab) {
+    setScopeTab(value);
     pagination.setPage(1);
   }
 
@@ -565,11 +624,37 @@ export function TasksClient({
 
       <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
         <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
-          <TableSearchInput
-            value={query}
-            onChange={updateQuery}
-            placeholder="Search task, assistant, category..."
-          />
+          <div className="flex min-w-0 flex-1 flex-col gap-2 lg:flex-row lg:items-center">
+            <TableSearchInput
+              value={query}
+              onChange={updateQuery}
+              placeholder="Search task, assistant, category..."
+            />
+            <div className="flex min-w-0 border border-[#D8D0C2] bg-[#F7F4ED] dark:border-[#444444] dark:bg-[#202020]">
+              {scopeTabs.map((tab, index) => {
+                const isActive = activeScopeTab === tab.value;
+                return (
+                  <button
+                    key={tab.value}
+                    type="button"
+                    onClick={() => updateScopeTab(tab.value)}
+                    className={`research-clickable-icon flex min-w-0 items-center justify-between gap-3 px-3 py-2 text-xs font-normal uppercase tracking-wide transition-[background-color,color,border-color,transform] duration-180 ease-out active:scale-[0.99] ${
+                      index > 0
+                        ? "border-l border-[#D8D0C2] dark:border-[#444444]"
+                        : ""
+                    } ${
+                      isActive
+                        ? "bg-[#D6F0F2] text-[#1F2937] dark:bg-[#A8DADC] dark:text-[#202020]"
+                        : "text-[#667085] hover:bg-[#EFE9DD] hover:text-[#1F2937] dark:text-[#B0B0B0] dark:hover:bg-[#2C2C2C] dark:hover:text-[#E4E4E4]"
+                    }`}
+                  >
+                    <span className="truncate">{tab.label}</span>
+                    <span className="text-current">{tab.count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
             <MultiFilterSelect
               values={taskTypes}

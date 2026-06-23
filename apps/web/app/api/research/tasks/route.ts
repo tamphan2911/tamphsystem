@@ -6,6 +6,7 @@ function scopedTaskWhere(userId: string) {
   return {
     OR: [
       { createdById: userId },
+      { checkerId: userId },
       { assignments: { some: { userId } } },
       {
         project: {
@@ -99,15 +100,8 @@ export async function GET() {
     data: { status: ResearchTaskStatus.IN_PROGRESS },
   });
 
-  const where = isRootAdmin
-    ? {}
-    : isChiefAssistant
-      ? scopedTaskWhere(userId)
-      : {
-          assignments: {
-            some: { userId },
-          },
-        };
+  const relatedTaskWhere = scopedTaskWhere(userId);
+  const where = isRootAdmin ? {} : relatedTaskWhere;
 
   const [tasks, notificationCount] = await Promise.all([
     prisma.researchTask.findMany({
@@ -115,6 +109,30 @@ export async function GET() {
       include: {
         createdBy: { select: { name: true, email: true } },
         checker: { select: { name: true, email: true } },
+        project: {
+          select: {
+            leadResearcherId: true,
+            registrationUserId: true,
+            authors: { select: { id: true } },
+            authorEntries: { select: { userId: true } },
+            organizedProjectLinks: {
+              select: {
+                organizedProject: {
+                  select: {
+                    createdById: true,
+                    members: { select: { userId: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        organizedProject: {
+          select: {
+            createdById: true,
+            members: { select: { userId: true } },
+          },
+        },
         assignments: {
           include: {
             user: {
@@ -136,34 +154,70 @@ export async function GET() {
 
   return NextResponse.json({
     notificationCount,
-    tasks: tasks.map((task) => ({
-      id: task.id,
-      taskCode: task.taskCode,
-      title: task.title,
-      description: task.description ?? "",
-      category: task.category ?? "",
-      taskType: task.taskType ?? "",
-      status: task.status,
-      dueDate: task.dueDate?.toISOString() ?? null,
-      completedAt: task.completedAt?.toISOString() ?? null,
-      revokedAt: task.revokedAt?.toISOString() ?? null,
-      adminViewedAt: task.adminViewedAt?.toISOString() ?? null,
-      createdAt: task.createdAt.toISOString(),
-      updatedAt: task.updatedAt.toISOString(),
-      createdBy: task.createdBy.name || task.createdBy.email,
-      checker:
-        task.checker?.name ||
-        task.checker?.email ||
-        task.createdBy.name ||
-        task.createdBy.email,
-      assignments: task.assignments.map((assignment) => ({
-        id: assignment.id,
-        userId: assignment.userId,
-        userName: assignment.user.name || assignment.user.email,
-        userEmail: assignment.user.email,
-        userRoles: assignment.user.roles,
-        finishedAt: assignment.finishedAt?.toISOString() ?? null,
-      })),
-    })),
+    tasks: tasks.map((task) => {
+      const assignedToMe = task.assignments.some(
+        (assignment) => assignment.userId === userId,
+      );
+      const checkerForMe = task.checkerId === userId;
+      const relatedToResearch =
+        task.project?.leadResearcherId === userId ||
+        task.project?.registrationUserId === userId ||
+        task.project?.authors.some((author) => author.id === userId) ||
+        task.project?.authorEntries.some((entry) => entry.userId === userId) ||
+        task.project?.organizedProjectLinks.some(
+          ({ organizedProject }) =>
+            organizedProject.createdById === userId ||
+            organizedProject.members.some((member) => member.userId === userId),
+        );
+      const relatedToOrganizedProject =
+        task.organizedProject?.createdById === userId ||
+        task.organizedProject?.members.some(
+          (member) => member.userId === userId,
+        );
+      const createdByMe = task.createdById === userId;
+
+      return {
+        id: task.id,
+        taskCode: task.taskCode,
+        title: task.title,
+        description: task.description ?? "",
+        category: task.category ?? "",
+        taskType: task.taskType ?? "",
+        status: task.status,
+        dueDate: task.dueDate?.toISOString() ?? null,
+        completedAt: task.completedAt?.toISOString() ?? null,
+        revokedAt: task.revokedAt?.toISOString() ?? null,
+        adminViewedAt: task.adminViewedAt?.toISOString() ?? null,
+        createdAt: task.createdAt.toISOString(),
+        updatedAt: task.updatedAt.toISOString(),
+        createdBy: task.createdBy.name || task.createdBy.email,
+        checker:
+          task.checker?.name ||
+          task.checker?.email ||
+          task.createdBy.name ||
+          task.createdBy.email,
+        scope: {
+          assignedToMe,
+          checkerForMe,
+          relatedToMyItems:
+            Boolean(
+              isRootAdmin ||
+              createdByMe ||
+              relatedToResearch ||
+              relatedToOrganizedProject,
+            ) &&
+            !assignedToMe &&
+            !checkerForMe,
+        },
+        assignments: task.assignments.map((assignment) => ({
+          id: assignment.id,
+          userId: assignment.userId,
+          userName: assignment.user.name || assignment.user.email,
+          userEmail: assignment.user.email,
+          userRoles: assignment.user.roles,
+          finishedAt: assignment.finishedAt?.toISOString() ?? null,
+        })),
+      };
+    }),
   });
 }
