@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Building2 } from "lucide-react";
+import { Building2, PlusCircle } from "lucide-react";
 import {
   ResearchSearchPicker,
   type ResearchSearchPickerOption,
@@ -14,6 +14,7 @@ export type PublisherPickerItem = {
   alias: string;
   country: string;
   usesSingleAccount?: boolean;
+  approvalStatus?: string;
 };
 
 export function PublisherPicker({
@@ -24,6 +25,7 @@ export function PublisherPicker({
   showLabel = true,
   placeholder,
   onSelectionChange,
+  onCreatePublisherRequest,
 }: {
   publishers: PublisherPickerItem[];
   initialPublisherId?: string | null;
@@ -32,6 +34,7 @@ export function PublisherPicker({
   showLabel?: boolean;
   placeholder?: string;
   onSelectionChange?: (publisher: PublisherPickerItem | null) => void;
+  onCreatePublisherRequest?: (query: string) => void;
 }) {
   const options = useMemo<ResearchSearchPickerOption<PublisherPickerItem>[]>(
     () =>
@@ -81,6 +84,24 @@ export function PublisherPicker({
       })
       .slice(0, 4);
   }, [options, query]);
+  const pickerOptions = useMemo(() => {
+    const needle = query.trim();
+    if (!needle || !onCreatePublisherRequest) return filteredOptions;
+    const normalizedNeedle = needle.toLowerCase();
+    const hasExactMatch = options.some(
+      (option) => option.label.trim().toLowerCase() === normalizedNeedle,
+    );
+    if (hasExactMatch) return filteredOptions;
+    return [
+      ...filteredOptions,
+      {
+        id: "__add_publisher__",
+        label: `Add new publisher "${needle}"`,
+        description: "Create this publisher without leaving the journal form",
+        meta: "Pending approval",
+      },
+    ];
+  }, [filteredOptions, onCreatePublisherRequest, options, query]);
 
   return (
     <ResearchSearchPicker
@@ -91,6 +112,10 @@ export function PublisherPicker({
       query={query}
       onQueryChange={setQuery}
       onSelect={(option) => {
+        if (option.id === "__add_publisher__") {
+          onCreatePublisherRequest?.(query.trim());
+          return;
+        }
         setSelected(option);
         setQuery("");
         onSelectionChange?.(option.data ?? null);
@@ -100,14 +125,18 @@ export function PublisherPicker({
         setQuery("");
         onSelectionChange?.(null);
       }}
-      options={filteredOptions}
+      options={pickerOptions}
       placeholder={
         placeholder ?? "Search publisher by name, alias, country, or ID..."
       }
       emptyText="No publisher matches this search. Add it from Publishers first."
       renderOption={(option) => (
         <span className="flex min-w-0 flex-1 items-start gap-3 px-3 py-0.5">
-          <Building2 className="mt-0.5 h-4 w-4 flex-none text-violet-600 dark:text-violet-300" />
+          {option.id === "__add_publisher__" ? (
+            <PlusCircle className="mt-0.5 h-4 w-4 flex-none text-teal-700 dark:text-[#A8DADC]" />
+          ) : (
+            <Building2 className="mt-0.5 h-4 w-4 flex-none text-violet-600 dark:text-violet-300" />
+          )}
           <span className="min-w-0 flex-1">
             <span className="block whitespace-normal break-words text-sm font-normal">
               {option.label}

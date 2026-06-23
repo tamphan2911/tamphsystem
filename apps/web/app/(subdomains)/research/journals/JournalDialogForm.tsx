@@ -47,6 +47,8 @@ import {
   researchDropdownPanelClass,
   ResearchButton,
 } from "@/sites/research/components/ResearchPrimitives";
+import { createPublisher } from "../actions";
+import { PublisherDialog } from "../publishers/PublisherDialog";
 
 export type JournalFormValues = {
   name?: string;
@@ -360,6 +362,8 @@ export function JournalDialogForm({
   const [fieldQuery, setFieldQuery] = useState("");
   const [isFieldPickerOpen, setIsFieldPickerOpen] = useState(false);
   const [warning, setWarning] = useState("");
+  const [publisherDialogOpen, setPublisherDialogOpen] = useState(false);
+  const [publisherDraftName, setPublisherDraftName] = useState("");
   const [duplicateWarning, setDuplicateWarning] = useState<{
     name?: string;
     issn?: string;
@@ -379,18 +383,29 @@ export function JournalDialogForm({
         ? "INTERNATIONAL"
         : "",
   );
+  const [createdPublishers, setCreatedPublishers] = useState<
+    PublisherPickerItem[]
+  >([]);
+  const publisherOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return [...createdPublishers, ...publishers].filter((publisher) => {
+      if (seen.has(publisher.id)) return false;
+      seen.add(publisher.id);
+      return true;
+    });
+  }, [createdPublishers, publishers]);
   const initialPublisher = useMemo<PublisherPickerItem | null>(() => {
     const normalizedName = initialValues?.publisher?.trim().toLowerCase();
     return (
-      publishers.find(
+      publisherOptions.find(
         (publisher) => publisher.id === initialValues?.publisherId,
       ) ??
-      publishers.find(
+      publisherOptions.find(
         (publisher) => publisher.name.trim().toLowerCase() === normalizedName,
       ) ??
       null
     );
-  }, [initialValues?.publisher, initialValues?.publisherId, publishers]);
+  }, [initialValues?.publisher, initialValues?.publisherId, publisherOptions]);
   const [selectedPublisher, setSelectedPublisher] =
     useState<PublisherPickerItem | null>(initialPublisher);
 
@@ -494,36 +509,37 @@ export function JournalDialogForm({
   }
 
   return (
-    <ResearchModal
-      open={isOpen}
-      onClose={closeDialog}
-      title={title}
-      description={detail}
-      icon={<BookOpen className="h-5 w-5" />}
-      maxWidth="max-w-4xl"
-      headerActions={
-        <>
-          {duplicateMessages.length > 0 ? (
-            <div className="hidden max-w-[22rem] items-start gap-2 border border-rose-200 bg-rose-50 px-3 py-2 text-left text-xs font-normal leading-5 text-rose-800 shadow-none lg:flex dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-200">
-              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-none" />
-              <span className="line-clamp-2">
-                {duplicateMessages.join(" ")}
-              </span>
-            </div>
-          ) : null}
-          <ResearchButton form="journal-form" disabled={isPending}>
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : isEdit ? (
-              <Save className="h-4 w-4" />
-            ) : (
-              <PlusCircle className="h-4 w-4" />
-            )}
-            {isEdit ? "Save changes" : "Add Journal"}
-          </ResearchButton>
-        </>
-      }
-    >
+    <>
+      <ResearchModal
+        open={isOpen}
+        onClose={closeDialog}
+        title={title}
+        description={detail}
+        icon={<BookOpen className="h-5 w-5" />}
+        maxWidth="max-w-4xl"
+        headerActions={
+          <>
+            {duplicateMessages.length > 0 ? (
+              <div className="hidden max-w-[22rem] items-start gap-2 border border-rose-200 bg-rose-50 px-3 py-2 text-left text-xs font-normal leading-5 text-rose-800 shadow-none lg:flex dark:border-rose-900/70 dark:bg-rose-950/35 dark:text-rose-200">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-none" />
+                <span className="line-clamp-2">
+                  {duplicateMessages.join(" ")}
+                </span>
+              </div>
+            ) : null}
+            <ResearchButton form="journal-form" disabled={isPending}>
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isEdit ? (
+                <Save className="h-4 w-4" />
+              ) : (
+                <PlusCircle className="h-4 w-4" />
+              )}
+              {isEdit ? "Save changes" : "Add Journal"}
+            </ResearchButton>
+          </>
+        }
+      >
       <form
         id="journal-form"
         onSubmit={(event) => {
@@ -630,12 +646,21 @@ export function JournalDialogForm({
             />
             <div className="grid gap-4 md:grid-cols-2">
               <PublisherPicker
-                publishers={publishers}
-                initialPublisherId={initialValues?.publisherId}
-                initialPublisherName={initialValues?.publisher}
+                key={selectedPublisher?.id ?? "empty-publisher"}
+                publishers={publisherOptions}
+                initialPublisherId={
+                  selectedPublisher?.id ?? initialValues?.publisherId
+                }
+                initialPublisherName={
+                  selectedPublisher?.name ?? initialValues?.publisher
+                }
                 showLabel={false}
                 placeholder="Search and choose the publisher (*)"
                 onSelectionChange={setSelectedPublisher}
+                onCreatePublisherRequest={(query) => {
+                  setPublisherDraftName(query);
+                  setPublisherDialogOpen(true);
+                }}
               />
               <CountryPicker
                 value={selectedCountry}
@@ -971,6 +996,22 @@ export function JournalDialogForm({
           </section>
         ) : null}
       </form>
-    </ResearchModal>
+      </ResearchModal>
+      <PublisherDialog
+        mode="create"
+        submitAction={createPublisher}
+        hideTrigger
+        open={publisherDialogOpen}
+        onOpenChange={setPublisherDialogOpen}
+        initialValues={{ name: publisherDraftName }}
+        onSaved={(result) => {
+          const publisher =
+            result && "publisher" in result ? result.publisher : undefined;
+          if (!publisher) return;
+          setCreatedPublishers((current) => [publisher, ...current]);
+          setSelectedPublisher(publisher);
+        }}
+      />
+    </>
   );
 }

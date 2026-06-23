@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, ExternalLink, Trash2 } from "lucide-react";
+import { Building2, CheckCircle2, ExternalLink, Loader2, Trash2 } from "lucide-react";
 import {
   IconHint,
   TablePagination,
@@ -25,6 +25,7 @@ export type PublisherRow = {
   website: string;
   note: string;
   usesSingleAccount: boolean;
+  approvalStatus: string;
   publisherAccount: {
     id: string;
     username: string;
@@ -108,12 +109,77 @@ function DeletePublisherButton({
   );
 }
 
+function ApprovePublisherButton({
+  publisher,
+  approveAction,
+}: {
+  publisher: PublisherRow;
+  approveAction: (publisherId: string) => Promise<void>;
+}) {
+  const [approving, setApproving] = useState(false);
+  const toast = useResearchToast();
+  const router = useRouter();
+
+  if (publisher.approvalStatus === "APPROVED") {
+    return (
+      <span className="inline-flex border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] uppercase text-emerald-700 dark:border-emerald-400/25 dark:bg-emerald-950/30 dark:text-emerald-200">
+        Approved
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center justify-center gap-2">
+      <span className="border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] uppercase text-amber-700 dark:border-amber-400/25 dark:bg-amber-950/30 dark:text-amber-200">
+        Pending
+      </span>
+      <IconHint label={`Approve ${publisher.name}`}>
+        <button
+          type="button"
+          disabled={approving}
+          onClick={async () => {
+            setApproving(true);
+            try {
+              await approveAction(publisher.id);
+              toast.showSuccess({
+                title: "Publisher approved",
+                detail: `${publisher.name} can now be used by approved journals.`,
+              });
+              router.refresh();
+            } catch (error) {
+              toast.showError({
+                title: "Publisher could not be approved",
+                detail:
+                  error instanceof Error
+                    ? error.message
+                    : "Try again after checking the publisher details.",
+              });
+            } finally {
+              setApproving(false);
+            }
+          }}
+          className="research-allow-transform inline-flex h-5 w-5 items-center justify-center border-0 bg-transparent text-emerald-700 transition hover:-translate-y-0.5 hover:bg-transparent hover:text-emerald-800 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 dark:text-emerald-300 dark:hover:text-emerald-200"
+          aria-label={`Approve ${publisher.name}`}
+        >
+          {approving ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4" />
+          )}
+        </button>
+      </IconHint>
+    </span>
+  );
+}
+
 export function PublishersTable({
   rows,
+  approveAction,
   updateAction,
   deleteAction,
 }: {
   rows: PublisherRow[];
+  approveAction: (publisherId: string) => Promise<void>;
   updateAction: (publisherId: string, formData: FormData) => Promise<void>;
   deleteAction: (publisherId: string) => Promise<void>;
 }) {
@@ -149,6 +215,7 @@ export function PublishersTable({
               <th className="w-[11%] px-4 py-3">Publisher ID</th>
               <th className="px-4 py-3">Publisher</th>
               <th className="w-[15%] px-3 py-3">Account policy</th>
+              <th className="w-[11%] px-3 py-3 text-center">Status</th>
               <th className="w-[9%] px-3 py-3 text-center">Journals</th>
               <th className="w-[9%] px-3 py-3 text-center">Submits</th>
               <th className="w-[9%] px-3 py-3 text-center">Accounts</th>
@@ -180,6 +247,12 @@ export function PublishersTable({
                   {publisher.usesSingleAccount
                     ? "One publisher account"
                     : "Separate journal accounts"}
+                </td>
+                <td className="px-3 py-3 text-center align-top">
+                  <ApprovePublisherButton
+                    publisher={publisher}
+                    approveAction={approveAction}
+                  />
                 </td>
                 <td className="px-3 py-3 text-center text-sm text-[#E4E4E4]">
                   <Link
@@ -237,7 +310,7 @@ export function PublishersTable({
             ))}
             {pagination.total === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-2">
+                <td colSpan={10} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No publishers match the current search."
                     detail="Try another publisher name, ID, website, or note."

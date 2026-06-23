@@ -748,7 +748,12 @@ async function publisherSelection(formData: FormData) {
   if (!publisherId) return null;
   return prisma.publisher.findUnique({
     where: { id: publisherId },
-    select: { id: true, name: true, usesSingleAccount: true },
+    select: {
+      id: true,
+      name: true,
+      usesSingleAccount: true,
+      approvalStatus: true,
+    },
   });
 }
 
@@ -3127,6 +3132,22 @@ async function approveJournalWithWorkflow(
       },
     });
     if (!journal) throw new Error("Journal was not found.");
+    const publisher = journal.id
+      ? await tx.publisher.findFirst({
+          where: {
+            journals: { some: { id: journal.id } },
+          },
+          select: { name: true, approvalStatus: true },
+        })
+      : null;
+    if (
+      publisher &&
+      publisher.approvalStatus !== JournalApprovalStatus.APPROVED
+    ) {
+      throw new Error(
+        `Approve publisher "${publisher.name}" before approving this journal.`,
+      );
+    }
 
     await tx.journal.update({
       where: { id: journalId },
@@ -3996,7 +4017,8 @@ export async function deletePublisherAccount(accountId: string) {
 
 export async function createPublisher(formData: FormData) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  requireVenueCreator(user);
+  const isAdmin = user.roles.includes(Role.ADMIN);
 
   const name = optionalString(formData.get("name"));
   if (!name) throw new Error("Publisher name is required.");
@@ -4015,13 +4037,16 @@ export async function createPublisher(formData: FormData) {
       "Enter the publisher account login ID and password before saving.",
     );
   }
-  await prisma.$transaction(async (tx) => {
+  const publisher = await prisma.$transaction(async (tx) => {
     const publisher = await tx.publisher.create({
       data: {
         publisherCode: await generatePublisherCode(cleanedName, null),
         name: cleanedName,
         normalizedName,
         usesSingleAccount,
+        approvalStatus: isAdmin
+          ? JournalApprovalStatus.APPROVED
+          : JournalApprovalStatus.PENDING_APPROVAL,
         website: optionalString(formData.get("website")),
         note: optionalString(formData.get("note")),
       },
@@ -4038,6 +4063,32 @@ export async function createPublisher(formData: FormData) {
         },
       });
     }
+    return publisher;
+  });
+
+  revalidatePath("/publishers");
+  revalidatePath("/journals");
+  return {
+    publisher: {
+      id: publisher.id,
+      publisherCode: publisher.publisherCode,
+      name: publisher.name,
+      alias: publisher.alias ?? "",
+      country: publisher.country ?? "",
+      usesSingleAccount: publisher.usesSingleAccount,
+      approvalStatus: publisher.approvalStatus,
+    },
+    pendingApproval: !isAdmin,
+  };
+}
+
+export async function approvePublisher(publisherId: string) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  await prisma.publisher.update({
+    where: { id: publisherId },
+    data: { approvalStatus: JournalApprovalStatus.APPROVED },
   });
 
   revalidatePath("/publishers");

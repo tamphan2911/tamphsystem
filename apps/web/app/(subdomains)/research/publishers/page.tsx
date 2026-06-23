@@ -2,7 +2,12 @@ import { redirect } from "next/navigation";
 import { auth } from "../../../../auth";
 import { prisma, Role } from "@repo/db";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
-import { createPublisher, deletePublisher, updatePublisher } from "../actions";
+import {
+  approvePublisher,
+  createPublisher,
+  deletePublisher,
+  updatePublisher,
+} from "../actions";
 import { PublisherDialog } from "./PublisherDialog";
 import { PublishersTable, type PublisherRow } from "./PublishersTable";
 
@@ -43,6 +48,7 @@ export default async function PublishersPage() {
     website: publisher.website ?? "",
     note: publisher.note ?? "",
     usesSingleAccount: publisher.usesSingleAccount,
+    approvalStatus: publisher.approvalStatus,
     publisherAccount: publisher.accounts[0]
       ? {
           id: publisher.accounts[0].id,
@@ -77,6 +83,7 @@ export default async function PublishersPage() {
       </ResearchPageHeaderPortal>
       <PublishersTable
         rows={rows}
+        approveAction={approvePublisher}
         updateAction={updatePublisher}
         deleteAction={deletePublisher}
       />

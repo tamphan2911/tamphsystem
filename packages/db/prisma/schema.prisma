@@ -737,11 +737,14 @@ model Publisher {
   website           String?
   note              String?
   usesSingleAccount Boolean  @default(false)
+  approvalStatus    JournalApprovalStatus @default(APPROVED)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   journals Journal[]
   accounts PublisherAccount[]
+
+  @@index([approvalStatus])
 }
 
 model SuggestedJournal {

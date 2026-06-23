@@ -52,12 +52,22 @@ export function ApproveJournalButton({
       disabled={isPending}
       onClick={() => {
         startTransition(async () => {
-          await approveJournal(journalId);
-          toast.showSuccess({
-            title: "Journal approved",
-            detail: `${journalName} is now available across the research site.`,
-          });
-          router.refresh();
+          try {
+            await approveJournal(journalId);
+            toast.showSuccess({
+              title: "Journal approved",
+              detail: `${journalName} is now available across the research site.`,
+            });
+            router.refresh();
+          } catch (error) {
+            toast.showError({
+              title: "Journal could not be approved",
+              detail:
+                error instanceof Error
+                  ? error.message
+                  : "Check the linked publisher and try again.",
+            });
+          }
         });
       }}
     >
@@ -93,15 +103,25 @@ export function JournalApprovalToggleButton({
 
   function submit() {
     startTransition(async () => {
-      await updateJournalApprovalStatus(journalId, nextStatus);
-      setIsOpen(false);
-      toast.showSuccess({
-        title: isApproved ? "Journal marked unapproved" : "Journal approved",
-        detail: isApproved
-          ? `${journalName} is now waiting for admin approval and will not appear in journal pickers.`
-          : `${journalName} is now approved and available across the research site.`,
-      });
-      router.refresh();
+      try {
+        await updateJournalApprovalStatus(journalId, nextStatus);
+        setIsOpen(false);
+        toast.showSuccess({
+          title: isApproved ? "Journal marked unapproved" : "Journal approved",
+          detail: isApproved
+            ? `${journalName} is now waiting for admin approval and will not appear in journal pickers.`
+            : `${journalName} is now approved and available across the research site.`,
+        });
+        router.refresh();
+      } catch (error) {
+        toast.showError({
+          title: "Journal could not be approved",
+          detail:
+            error instanceof Error
+              ? error.message
+              : "Check the linked publisher and try again.",
+        });
+      }
     });
   }
 

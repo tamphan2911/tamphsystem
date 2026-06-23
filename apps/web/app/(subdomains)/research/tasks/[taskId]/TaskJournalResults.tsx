@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { BookOpen, Plus, ShieldCheck } from "lucide-react";
+import { BookOpen, Plus, ShieldAlert, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { JournalDialogForm } from "../../journals/JournalDialogForm";
@@ -30,6 +30,7 @@ export type TaskJournalResult = {
   submissionFeeCurrency: string;
   note: string;
   approvalStatus: string;
+  publisherApprovalStatus?: string;
   createdBy: string;
 };
 
@@ -125,13 +126,23 @@ export function TaskJournalResults({
         onConfirm={() => {
           if (!approvalJournal) return;
           startTransition(async () => {
-            await approveTaskJournal(taskId, approvalJournal.id);
-            toast.showSuccess({
-              title: "Journal approved",
-              detail: `${approvalJournal.name} is now approved and available.`,
-            });
-            setApprovalJournal(null);
-            router.refresh();
+            try {
+              await approveTaskJournal(taskId, approvalJournal.id);
+              toast.showSuccess({
+                title: "Journal approved",
+                detail: `${approvalJournal.name} is now approved and available.`,
+              });
+              setApprovalJournal(null);
+              router.refresh();
+            } catch (error) {
+              toast.showError({
+                title: "Journal could not be approved",
+                detail:
+                  error instanceof Error
+                    ? error.message
+                    : "Approve the linked publisher first, then try again.",
+              });
+            }
           });
         }}
       />
@@ -185,6 +196,8 @@ function JournalResultCard({
   onApprove: () => void;
 }) {
   const approved = journal.approvalStatus === "APPROVED";
+  const publisherPending =
+    journal.publisherApprovalStatus === "PENDING_APPROVAL";
   return (
     <article className="relative min-h-56 border border-[#D8D0C2] bg-[#FFFDF8] p-4 dark:border-[#444444] dark:bg-[#262626]">
       <div className="flex items-start justify-between gap-3">
@@ -197,7 +210,7 @@ function JournalResultCard({
         >
           {approved ? "Approved" : "Pending approval"}
         </span>
-        {canApprove ? (
+        {canApprove && !publisherPending ? (
           <IconHint label="Approve journal">
             <button
               type="button"
@@ -207,6 +220,12 @@ function JournalResultCard({
             >
               <ShieldCheck className="h-4 w-4" />
             </button>
+          </IconHint>
+        ) : canApprove && publisherPending ? (
+          <IconHint label="Approve publisher before approving this journal">
+            <span className="inline-flex h-7 w-7 items-center justify-center text-amber-700 dark:text-amber-300">
+              <ShieldAlert className="h-4 w-4" />
+            </span>
           </IconHint>
         ) : null}
       </div>
@@ -241,6 +260,12 @@ function JournalResultCard({
           </>
         ) : null}
       </p>
+      {publisherPending ? (
+        <p className="mt-2 border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs leading-5 text-amber-800 dark:border-amber-400/25 dark:bg-amber-950/30 dark:text-amber-200">
+          Publisher pending approval. Approve the publisher before approving
+          this journal.
+        </p>
+      ) : null}
       {journal.note ? (
         <p className="mt-2 line-clamp-2 whitespace-pre-wrap text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
           Note: {journal.note}

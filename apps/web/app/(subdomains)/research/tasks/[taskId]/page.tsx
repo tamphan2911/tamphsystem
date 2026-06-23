@@ -911,6 +911,7 @@ export default async function TaskDetailPage({
           submissionFeeCurrency: true,
           note: true,
           approvalStatus: true,
+          publisherRecord: { select: { approvalStatus: true } },
           createdBy: { select: { name: true, email: true } },
         },
         orderBy: { resultPosition: "asc" },
@@ -1369,6 +1370,8 @@ export default async function TaskDetailPage({
               submissionFeeCurrency: journal.submissionFeeCurrency,
               note: journal.note ?? "",
               approvalStatus: journal.approvalStatus,
+              publisherApprovalStatus:
+                journal.publisherRecord?.approvalStatus ?? "APPROVED",
               createdBy: journal.createdBy
                 ? displayResearchPersonName(journal.createdBy)
                 : "Unknown user",

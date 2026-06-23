@@ -32,28 +32,54 @@ export type PublisherFormValues = {
   usesSingleAccount?: boolean;
 };
 
+export type PublisherSaveResult = {
+  publisher?: {
+    id: string;
+    publisherCode: string;
+    name: string;
+    alias: string;
+    country: string;
+    usesSingleAccount?: boolean;
+    approvalStatus?: string;
+  };
+  pendingApproval?: boolean;
+} | void;
+
 export function PublisherDialog({
   mode,
   submitAction,
   initialValues,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
+  onSaved,
 }: {
   mode: "create" | "edit";
-  submitAction: (formData: FormData) => Promise<void>;
+  submitAction: (formData: FormData) => Promise<PublisherSaveResult>;
   initialValues?: PublisherFormValues;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+  onSaved?: (result: PublisherSaveResult) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const toast = useResearchToast();
   const router = useRouter();
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (nextOpen: boolean) => {
+    onOpenChange?.(nextOpen);
+    if (controlledOpen === undefined) setInternalOpen(nextOpen);
+  };
   const isEdit = mode === "edit";
-  const canCreatePublisherAccount = mode === "create" && !initialValues;
+  const canCreatePublisherAccount = mode === "create";
   const [usesSingleAccount, setUsesSingleAccount] = useState(
     Boolean(initialValues?.usesSingleAccount),
   );
 
   return (
     <>
-      {isEdit ? (
+      {!hideTrigger && isEdit ? (
         <ResearchIconButton
           type="button"
           label="Edit publisher"
@@ -63,12 +89,12 @@ export function PublisherDialog({
         >
           <Pencil className="h-4 w-4" />
         </ResearchIconButton>
-      ) : (
+      ) : !hideTrigger ? (
         <ResearchButton type="button" onClick={() => setOpen(true)}>
           <PlusCircle className="h-4 w-4" />
           New Publisher
         </ResearchButton>
-      )}
+      ) : null}
 
       <ResearchModal
         open={open}
@@ -101,14 +127,17 @@ export function PublisherDialog({
             const formData = new FormData(event.currentTarget);
             startTransition(async () => {
               try {
-                await submitAction(formData);
+                const result = await submitAction(formData);
                 setOpen(false);
+                onSaved?.(result);
                 router.refresh();
                 toast.showSuccess({
                   title: isEdit ? "Publisher updated" : "Publisher added",
                   detail: isEdit
                     ? "The publisher information and linked journal names were updated."
-                    : "The publisher is ready to be selected in journal forms.",
+                    : result && "pendingApproval" in result && result.pendingApproval
+                      ? "The publisher is saved, selected, and waiting for approval."
+                      : "The publisher is ready to be selected in journal forms.",
                 });
               } catch (error) {
                 toast.showError({
