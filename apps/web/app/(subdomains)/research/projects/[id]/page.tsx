@@ -724,6 +724,7 @@ export default async function ProjectDetailPage({
           ? displayResearchEmail(createdBy.email)
           : "Unknown email",
         requiresApproval: suggestion.requiresApproval,
+        approvalNote: suggestion.approvalNote ?? undefined,
         declineReason: suggestion.declineReason ?? undefined,
         journalCreationPending: Boolean(suggestion.journalCreationTaskId),
         taskId: suggestion.taskId ?? undefined,
@@ -816,6 +817,7 @@ export default async function ProjectDetailPage({
           ? displayResearchEmail(createdBy.email)
           : "Unknown email",
         requiresApproval: suggestion.requiresApproval,
+        approvalNote: suggestion.approvalNote ?? undefined,
         declineReason: suggestion.declineReason ?? undefined,
         taskId: suggestion.taskId ?? undefined,
         linkedTask: suggestion.taskId

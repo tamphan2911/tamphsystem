@@ -40,6 +40,11 @@ export type SuggestionRow = {
   createdAtSort: number;
 };
 
+type DeleteSuggestionResult = {
+  ok: boolean;
+  message?: string;
+};
+
 function typeClass(kind: SuggestionKind) {
   if (kind === "Journal") {
     return "text-[#1F7180] hover:text-[#155864] dark:text-[#8FCFD1] dark:hover:text-[#C9F0F2]";
@@ -53,11 +58,14 @@ function DeleteSuggestionButton({
   deleteConferenceAction,
 }: {
   suggestion: SuggestionRow;
-  deleteJournalAction: (projectId: string, journalId: string) => Promise<void>;
+  deleteJournalAction: (
+    projectId: string,
+    journalId: string,
+  ) => Promise<DeleteSuggestionResult>;
   deleteConferenceAction: (
     projectId: string,
     conferenceId: string,
-  ) => Promise<void>;
+  ) => Promise<DeleteSuggestionResult>;
 }) {
   const router = useRouter();
   const toast = useResearchToast();
@@ -87,16 +95,24 @@ function DeleteSuggestionButton({
         onConfirm={async () => {
           setIsDeleting(true);
           try {
-            if (suggestion.kind === "Journal") {
-              await deleteJournalAction(
-                suggestion.projectId,
-                suggestion.venueId,
-              );
-            } else {
-              await deleteConferenceAction(
-                suggestion.projectId,
-                suggestion.venueId,
-              );
+            const result =
+              suggestion.kind === "Journal"
+                ? await deleteJournalAction(
+                    suggestion.projectId,
+                    suggestion.venueId,
+                  )
+                : await deleteConferenceAction(
+                    suggestion.projectId,
+                    suggestion.venueId,
+                  );
+            if (!result.ok) {
+              toast.showError({
+                title: "Could not delete suggestion",
+                detail:
+                  result.message ||
+                  "The suggestion was not removed. Please refresh the page and try again.",
+              });
+              return;
             }
             setIsOpen(false);
             router.refresh();
@@ -136,11 +152,14 @@ export function SuggestionsTable({
   deleteConferenceAction,
 }: {
   rows: SuggestionRow[];
-  deleteJournalAction: (projectId: string, journalId: string) => Promise<void>;
+  deleteJournalAction: (
+    projectId: string,
+    journalId: string,
+  ) => Promise<DeleteSuggestionResult>;
   deleteConferenceAction: (
     projectId: string,
     conferenceId: string,
-  ) => Promise<void>;
+  ) => Promise<DeleteSuggestionResult>;
 }) {
   const [query, setQuery] = usePersistentTableValue("suggestions:q", "");
   const suggestionKinds = ["ALL", "Journal", "Conference"];

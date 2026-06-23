@@ -635,6 +635,7 @@ model SuggestedConference {
   status           SuggestedVenueStatus @default(APPROVED)
   approvedAt       DateTime?
   approvedById     String?
+  approvalNote     String?
   declinedAt       DateTime?
   declinedById     String?
   declineReason    String?
@@ -729,18 +730,18 @@ model Journal {
 }
 
 model Publisher {
-  id                String   @id @default(uuid())
-  publisherCode     String   @unique
+  id                String                @id @default(uuid())
+  publisherCode     String                @unique
   name              String
-  normalizedName    String   @unique
+  normalizedName    String                @unique
   alias             String?
   country           String?
   website           String?
   note              String?
-  usesSingleAccount Boolean  @default(false)
+  usesSingleAccount Boolean               @default(false)
   approvalStatus    JournalApprovalStatus @default(APPROVED)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 
   journals Journal[]
   accounts PublisherAccount[]
@@ -761,6 +762,7 @@ model SuggestedJournal {
   status                SuggestedVenueStatus @default(APPROVED)
   approvedAt            DateTime?
   approvedById          String?
+  approvalNote          String?
   declinedAt            DateTime?
   declinedById          String?
   declineReason         String?

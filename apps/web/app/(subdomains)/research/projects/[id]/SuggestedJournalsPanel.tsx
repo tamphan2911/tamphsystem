@@ -90,6 +90,7 @@ export type SuggestedJournalOption = {
   requiresApproval?: boolean;
   approvedByName?: string;
   approvedByEmail?: string;
+  approvalNote?: string;
   declineReason?: string;
   journalCreationPending?: boolean;
   taskId?: string;
@@ -127,6 +128,7 @@ export type SuggestedConferenceOption = {
   requiresApproval?: boolean;
   approvedByName?: string;
   approvedByEmail?: string;
+  approvalNote?: string;
   declineReason?: string;
   taskId?: string;
   linkedTask?: SuggestedVenueTaskOption;
@@ -624,15 +626,23 @@ export function SuggestedJournalsPanel({
     if (!deleteVenue) return;
     const removedVenueName = deleteVenue.item.name;
     startTransition(async () => {
-      if (deleteVenue.kind === "journal") {
-        await deleteSuggestedJournal(projectId, deleteVenue.item.id);
-      } else {
-        await deleteSuggestedConference(projectId, deleteVenue.item.id);
+      const result =
+        deleteVenue.kind === "journal"
+          ? await deleteSuggestedJournal(projectId, deleteVenue.item.id)
+          : await deleteSuggestedConference(projectId, deleteVenue.item.id);
+      if (!result?.ok) {
+        showError({
+          title: "Suggested venue was not removed",
+          detail:
+            result?.message ||
+            "Please refresh the page and check linked submissions before trying again.",
+        });
+        return;
       }
       setDeleteVenue(null);
       showSuccess({
         title: "Suggested venue removed",
-        detail: `${removedVenueName} was removed from this research suggested venues.`,
+        detail: `${removedVenueName} and its linked draft submission/task records were removed where possible.`,
       });
       router.refresh();
     });
@@ -1254,7 +1264,7 @@ export function SuggestedJournalsPanel({
         <ResearchConfirmDialog
           open={Boolean(deleteVenue)}
           title="Remove suggestion?"
-          description={`Remove ${deleteVenue.item.name} from suggested venues for this research?`}
+          description={`Remove ${deleteVenue.item.name} from suggested venues for this research? Linked submit tasks and draft submissions created from this suggestion will also be removed. Accepted or published submissions will block deletion.`}
           confirmLabel="Remove suggestion"
           isConfirming={isPending}
           onCancel={() => setDeleteVenue(null)}
@@ -1433,6 +1443,19 @@ export function SuggestedJournalsPanel({
                 </span>
               </label>
             ) : null}
+            {!approvalUsesJournalTask ? (
+              <label className="grid gap-1.5">
+                <span className="text-xs font-normal uppercase tracking-wide text-slate-600 dark:text-[#B0B0B0]">
+                  Approval note
+                </span>
+                <textarea
+                  name="approvalNote"
+                  rows={3}
+                  placeholder="Optional note about this approval, for example why this venue fits the research or what to watch during submission."
+                  className={researchTextareaClass}
+                />
+              </label>
+            ) : null}
           </form>
         </ResearchModal>
       )}
@@ -1486,7 +1509,7 @@ export function SuggestedJournalsPanel({
           </p>
           <label className="grid gap-1.5">
             <span className="text-xs font-normal uppercase tracking-wide text-slate-600 dark:text-[#B0B0B0]">
-              Reason to suggester
+              Decline note
             </span>
             <textarea
               autoFocus
@@ -2285,6 +2308,11 @@ function JournalCard({
         approvedByName={journal.approvedByName}
         approvedByEmail={journal.approvedByEmail}
       />
+      <VenueDecisionNote
+        status={journal.status}
+        approvalNote={journal.approvalNote}
+        declineReason={journal.declineReason}
+      />
       {journal.venueNote.trim() ? (
         <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
           <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
@@ -2370,6 +2398,11 @@ function ConferenceCard({
         }
         approvedByName={conference.approvedByName}
         approvedByEmail={conference.approvedByEmail}
+      />
+      <VenueDecisionNote
+        status={conference.status}
+        approvalNote={conference.approvalNote}
+        declineReason={conference.declineReason}
       />
       {conference.venueNote.trim() ? (
         <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
@@ -2480,6 +2513,33 @@ function VenueAttribution({
   );
 }
 
+function VenueDecisionNote({
+  status,
+  approvalNote,
+  declineReason,
+}: {
+  status: string;
+  approvalNote?: string;
+  declineReason?: string;
+}) {
+  const note =
+    status === "APPROVED"
+      ? approvalNote?.trim()
+      : status === "DECLINED"
+        ? declineReason?.trim()
+        : "";
+  if (!note) return null;
+
+  return (
+    <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+      <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
+        {status === "APPROVED" ? "Approval note:" : "Decline note:"}
+      </span>{" "}
+      {note}
+    </p>
+  );
+}
+
 function AttributionSeparator() {
   return (
     <span className="px-1.5 text-[#98A2B3] dark:text-[#777777]" aria-hidden>
@@ -2534,7 +2594,7 @@ function VenueCard({
     ["idle", "pendingApproval", "declined", "rejected", "withdrawn"].includes(
       state.state,
     );
-  const canDelete = isAdmin && !disabled && state.state === "idle";
+  const canDelete = isAdmin && !disabled;
   const showActions = canEdit || canAssign || canDelete;
 
   function handleCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {

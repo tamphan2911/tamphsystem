@@ -6335,20 +6335,73 @@ export async function deleteSuggestedJournal(
 ) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
-  if (await researchContentIsLocked(projectId)) return;
+  if (await researchContentIsLocked(projectId)) {
+    return {
+      ok: false,
+      message: "Unlock this research before deleting a suggested venue.",
+    };
+  }
 
   const suggestion = await prisma.suggestedJournal.findFirst({
     where: { projectId, id: suggestionId },
-    select: { taskId: true },
+    select: {
+      taskId: true,
+      submissionTaskId: true,
+      journalCreationTaskId: true,
+      journalId: true,
+    },
   });
+  if (!suggestion) {
+    return { ok: false, message: "Suggested venue was not found." };
+  }
 
-  await prisma.suggestedJournal.deleteMany({
-    where: { projectId, id: suggestionId },
+  const linkedSubmission = suggestion.journalId
+    ? await prisma.researchSubmission.findUnique({
+        where: {
+          researchProjectId_journalId: {
+            researchProjectId: projectId,
+            journalId: suggestion.journalId,
+          },
+        },
+        select: { id: true, status: true },
+      })
+    : null;
+  if (
+    linkedSubmission &&
+    (linkedSubmission.status === SubmissionStatus.ACCEPTED ||
+      linkedSubmission.status === SubmissionStatus.PUBLISHED)
+  ) {
+    return {
+      ok: false,
+      message:
+        "This suggested venue cannot be deleted because its submission is accepted or published.",
+    };
+  }
+
+  const taskIds = [
+    suggestion.submissionTaskId,
+    suggestion.journalCreationTaskId,
+  ].filter((id): id is string => Boolean(id));
+
+  await prisma.$transaction(async (tx) => {
+    if (linkedSubmission) {
+      await tx.researchSubmission.delete({
+        where: { id: linkedSubmission.id },
+      });
+    }
+    await tx.suggestedJournal.delete({ where: { id: suggestionId } });
+    if (taskIds.length > 0) {
+      await tx.researchTask.deleteMany({ where: { id: { in: taskIds } } });
+    }
   });
 
   revalidatePath(`/projects/${projectId}`);
   if (suggestion?.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
+  for (const taskId of taskIds) revalidatePath(`/tasks/${taskId}`);
+  revalidatePath("/tasks");
+  revalidatePath("/submissions");
   revalidatePath("/suggestions");
+  return { ok: true };
 }
 
 export async function addSuggestedConference(
@@ -6689,20 +6742,70 @@ export async function deleteSuggestedConference(
 ) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
-  if (await researchContentIsLocked(projectId)) return;
+  if (await researchContentIsLocked(projectId)) {
+    return {
+      ok: false,
+      message: "Unlock this research before deleting a suggested venue.",
+    };
+  }
 
   const suggestion = await prisma.suggestedConference.findFirst({
     where: { projectId, id: suggestionId },
-    select: { taskId: true },
+    select: {
+      taskId: true,
+      submissionTaskId: true,
+      conferenceId: true,
+    },
   });
+  if (!suggestion) {
+    return { ok: false, message: "Suggested venue was not found." };
+  }
 
-  await prisma.suggestedConference.deleteMany({
-    where: { projectId, id: suggestionId },
+  const linkedSubmission = suggestion.conferenceId
+    ? await prisma.conferenceSubmission.findUnique({
+        where: {
+          conferenceId_researchProjectId: {
+            conferenceId: suggestion.conferenceId,
+            researchProjectId: projectId,
+          },
+        },
+        select: { id: true, status: true },
+      })
+    : null;
+  if (
+    linkedSubmission &&
+    (linkedSubmission.status === ConferenceSubmissionStatus.ACCEPTED ||
+      linkedSubmission.status === ConferenceSubmissionStatus.PUBLISHED)
+  ) {
+    return {
+      ok: false,
+      message:
+        "This suggested venue cannot be deleted because its submission is accepted or published.",
+    };
+  }
+
+  await prisma.$transaction(async (tx) => {
+    if (linkedSubmission) {
+      await tx.conferenceSubmission.delete({
+        where: { id: linkedSubmission.id },
+      });
+    }
+    await tx.suggestedConference.delete({ where: { id: suggestionId } });
+    if (suggestion.submissionTaskId) {
+      await tx.researchTask.delete({
+        where: { id: suggestion.submissionTaskId },
+      });
+    }
   });
 
   revalidatePath(`/projects/${projectId}`);
   if (suggestion?.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
+  if (suggestion.submissionTaskId)
+    revalidatePath(`/tasks/${suggestion.submissionTaskId}`);
+  revalidatePath("/tasks");
+  revalidatePath("/submissions");
   revalidatePath("/suggestions");
+  return { ok: true };
 }
 
 export async function approveSuggestedJournal(
@@ -6838,6 +6941,7 @@ export async function approveSuggestedJournal(
     throw new Error("Choose the journal in the system before approving.");
   }
   const createSubmitTask = formData.get("createSubmitTask") === "true";
+  const approvalNote = optionalString(formData.get("approvalNote"));
 
   await prisma.suggestedJournal.update({
     where: { id: suggestionId },
@@ -6847,6 +6951,7 @@ export async function approveSuggestedJournal(
       requiresApproval: true,
       approvedAt: new Date(),
       approvedById: user.id,
+      approvalNote,
       declinedAt: null,
       declinedById: null,
       declineReason: null,
@@ -6934,6 +7039,7 @@ export async function approveSuggestedConference(
     throw new Error("Choose the conference in the system before approving.");
   }
   const createSubmitTask = formData.get("createSubmitTask") === "true";
+  const approvalNote = optionalString(formData.get("approvalNote"));
 
   await prisma.suggestedConference.update({
     where: { id: suggestionId },
@@ -6943,6 +7049,7 @@ export async function approveSuggestedConference(
       requiresApproval: true,
       approvedAt: new Date(),
       approvedById: user.id,
+      approvalNote,
       declinedAt: null,
       declinedById: null,
       declineReason: null,
@@ -7039,6 +7146,7 @@ export async function declineSuggestedJournal(
       declinedAt: new Date(),
       declinedById: user.id,
       declineReason,
+      approvalNote: null,
       approvedAt: null,
       approvedById: null,
     },
@@ -7112,6 +7220,7 @@ export async function declineSuggestedConference(
       declinedAt: new Date(),
       declinedById: user.id,
       declineReason,
+      approvalNote: null,
       approvedAt: null,
       approvedById: null,
     },
