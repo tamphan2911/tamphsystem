@@ -3,9 +3,9 @@
 import { useMemo, useState, useTransition } from "react";
 import {
   BookOpen,
+  GitBranch,
   LinkIcon,
   Loader2,
-  Pencil,
   Plus,
   SearchCheck,
   ShieldAlert,
@@ -13,10 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  JournalDialogForm,
-  type JournalFormValues,
-} from "../../journals/JournalDialogForm";
+import { JournalDialogForm } from "../../journals/JournalDialogForm";
 import type { PublisherPickerItem } from "@/sites/research/components/PublisherPicker";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
@@ -38,7 +35,6 @@ import {
   approveTaskJournal,
   createJournalForTaskSlot,
   linkJournalToTaskSlot,
-  updateJournal,
 } from "../../actions";
 
 export type TaskJournalResult = {
@@ -103,9 +99,6 @@ export function TaskJournalResults({
 }) {
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [linkSlot, setLinkSlot] = useState<number | null>(null);
-  const [editJournal, setEditJournal] = useState<TaskJournalResult | null>(
-    null,
-  );
   const [approvalJournal, setApprovalJournal] =
     useState<TaskJournalResult | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -139,7 +132,7 @@ export function TaskJournalResults({
                 canApprove && journal.approvalStatus === "PENDING_APPROVAL"
               }
               canEdit={canLinkExisting}
-              onEdit={() => setEditJournal(journal)}
+              onRelink={() => setLinkSlot(position)}
               onApprove={() => setApprovalJournal(journal)}
             />
           ) : (
@@ -177,21 +170,6 @@ export function TaskJournalResults({
         slot={linkSlot}
         journals={linkableJournals}
         onClose={() => setLinkSlot(null)}
-      />
-
-      <JournalDialogForm
-        mode="edit"
-        isOpen={Boolean(editJournal)}
-        onClose={() => setEditJournal(null)}
-        initialValues={
-          editJournal ? taskJournalToFormValues(editJournal) : undefined
-        }
-        submitAction={async (formData) => {
-          if (!editJournal) return;
-          await updateJournal(editJournal.id, formData);
-          router.refresh();
-        }}
-        publishers={publishers}
       />
 
       <ResearchConfirmDialog
@@ -505,13 +483,13 @@ function JournalResultCard({
   journal,
   canEdit,
   canApprove,
-  onEdit,
+  onRelink,
   onApprove,
 }: {
   journal: TaskJournalResult;
   canEdit: boolean;
   canApprove: boolean;
-  onEdit: () => void;
+  onRelink: () => void;
   onApprove: () => void;
 }) {
   const approved = journal.approvalStatus === "APPROVED";
@@ -548,34 +526,34 @@ function JournalResultCard({
         </span>
         <div className="flex flex-none items-center gap-1">
           {canEdit ? (
-            <IconHint label="Edit linked journal">
+            <IconHint label="Choose a different linked journal">
               <button
                 type="button"
-                onClick={onEdit}
+                onClick={onRelink}
                 className="research-allow-transform inline-flex h-7 w-7 items-center justify-center border-0 bg-transparent text-violet-600 transition-[color,transform] hover:-translate-y-0.5 hover:text-violet-800 active:translate-y-0 active:scale-90 dark:text-violet-300 dark:hover:text-violet-200"
-                aria-label="Edit linked journal"
+                aria-label="Choose a different linked journal"
               >
-                <Pencil className="h-4 w-4" />
+                <GitBranch className="h-4 w-4" />
               </button>
             </IconHint>
           ) : null}
           {canApprove && !publisherPending ? (
-          <IconHint label="Approve journal">
-            <button
-              type="button"
-              onClick={onApprove}
-              className="research-allow-transform inline-flex h-7 w-7 items-center justify-center border-0 bg-transparent text-emerald-600 transition-[color,transform] hover:-translate-y-0.5 hover:text-emerald-800 active:translate-y-0 active:scale-90 dark:text-emerald-300 dark:hover:text-emerald-200"
-              aria-label="Approve journal"
-            >
-              <ShieldCheck className="h-4 w-4" />
-            </button>
-          </IconHint>
+            <IconHint label="Approve journal">
+              <button
+                type="button"
+                onClick={onApprove}
+                className="research-allow-transform inline-flex h-7 w-7 items-center justify-center border-0 bg-transparent text-emerald-600 transition-[color,transform] hover:-translate-y-0.5 hover:text-emerald-800 active:translate-y-0 active:scale-90 dark:text-emerald-300 dark:hover:text-emerald-200"
+                aria-label="Approve journal"
+              >
+                <ShieldCheck className="h-4 w-4" />
+              </button>
+            </IconHint>
           ) : canApprove && publisherPending ? (
-          <IconHint label="Approve publisher before approving this journal">
-            <span className="inline-flex h-7 w-7 items-center justify-center text-amber-700 dark:text-amber-300">
-              <ShieldAlert className="h-4 w-4" />
-            </span>
-          </IconHint>
+            <IconHint label="Approve publisher before approving this journal">
+              <span className="inline-flex h-7 w-7 items-center justify-center text-amber-700 dark:text-amber-300">
+                <ShieldAlert className="h-4 w-4" />
+              </span>
+            </IconHint>
           ) : null}
         </div>
       </div>
@@ -612,7 +590,7 @@ function JournalResultCard({
         </p>
       ) : null}
       {journal.note ? (
-        <p className="mt-2 line-clamp-2 whitespace-pre-wrap text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+        <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
           Note: {journal.note}
         </p>
       ) : null}
@@ -632,34 +610,6 @@ function JournalResultCard({
       </p>
     </article>
   );
-}
-
-function taskJournalToFormValues(journal: TaskJournalResult): JournalFormValues {
-  return {
-    name: journal.name,
-    issn: journal.issn,
-    fields: journal.fields,
-    field: journal.fields.join("; "),
-    type: journal.type,
-    rank: journal.rank,
-    localRank: journal.localRank,
-    issuesPerYear: journal.issuesPerYear,
-    isFavorite: journal.isFavorite,
-    isInterest: journal.isInterest,
-    publisherId: journal.publisherId,
-    publisher: journal.publisher,
-    country: journal.country,
-    apc: journal.apc,
-    apcCurrency: journal.apcCurrency,
-    hasApcOption: journal.hasApcOption,
-    submissionFee: journal.submissionFee,
-    submissionFeeCurrency: journal.submissionFeeCurrency,
-    homepageLink: journal.homepageLink,
-    submissionLink: journal.submissionLink,
-    scimagoLink: journal.scimagoLink,
-    scopusLink: journal.scopusLink,
-    note: journal.note,
-  };
 }
 
 function journalMoneyMeta(

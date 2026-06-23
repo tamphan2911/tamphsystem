@@ -3036,28 +3036,38 @@ export async function linkJournalToTaskSlot(
   if (resultPosition < 0 || resultPosition >= targetCount) {
     throw new Error("This journal result slot is not available.");
   }
-  const occupied = await prisma.journal.count({
+  const existingSlotJournal = await prisma.journal.findFirst({
     where: { resultTaskId: taskId, resultPosition },
+    select: { id: true },
   });
-  if (occupied) throw new Error("This journal result slot is already filled.");
 
   const journal = await prisma.journal.findUnique({
     where: { id: journalId },
     select: { id: true, resultTaskId: true, name: true },
   });
   if (!journal) throw new Error("Choose a journal before linking.");
-  if (journal.resultTaskId) {
+  if (journal.resultTaskId && journal.id !== existingSlotJournal?.id) {
     throw new Error("This journal is already linked to a task slot.");
   }
 
-  await prisma.journal.update({
-    where: { id: journalId },
-    data: { resultTaskId: taskId, resultPosition },
+  await prisma.$transaction(async (tx) => {
+    if (existingSlotJournal && existingSlotJournal.id !== journalId) {
+      await tx.journal.update({
+        where: { id: existingSlotJournal.id },
+        data: { resultTaskId: null, resultPosition: null },
+      });
+    }
+    await tx.journal.update({
+      where: { id: journalId },
+      data: { resultTaskId: taskId, resultPosition },
+    });
   });
 
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
   revalidatePath("/journals");
+  if (existingSlotJournal)
+    revalidatePath(`/journals/${existingSlotJournal.id}`);
   revalidatePath(`/journals/${journalId}`);
   return { journalName: journal.name };
 }
