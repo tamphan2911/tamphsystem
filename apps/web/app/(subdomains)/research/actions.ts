@@ -3306,30 +3306,21 @@ async function approveJournalWithWorkflow(
     revalidatePath("/tasks");
     revalidatePath(`/projects/${result.workflow.projectId}`);
     revalidatePath("/suggestions");
+    const recipientIds = new Set(result.workflow.assigneeIds);
+    if (result.workflow.suggesterId) {
+      recipientIds.add(result.workflow.suggesterId);
+    }
     await notifyUsers({
-      userIds: result.workflow.assigneeIds,
-      type: "TASK_COMPLETED",
-      title: "Task completed automatically",
-      summary: result.workflow.taskTitle,
-      body: `${result.journalName} was approved. The journal task and linked venue suggestion are now complete.`,
+      userIds: Array.from(recipientIds),
+      type: "VENUE_SUGGESTION_APPROVED",
+      title: "Venue approved and task completed",
+      summary: result.journalName,
+      body: `${result.journalName} was approved. The linked venue suggestion is approved, and ${result.workflow.taskTitle} was completed automatically.`,
       href: `/tasks/${result.taskId}`,
       entityType: "task",
       entityId: result.taskId,
       excludeUserId: approvedById,
     });
-    if (result.workflow.suggesterId) {
-      await notifyUsers({
-        userIds: [result.workflow.suggesterId],
-        type: "VENUE_SUGGESTION_APPROVED",
-        title: "Venue suggestion approved",
-        summary: result.journalName,
-        body: "The journal was added and approved, so your venue suggestion is now approved.",
-        href: `/projects/${result.workflow.projectId}`,
-        entityType: "suggestedVenue",
-        entityId: result.workflow.suggestionId,
-        excludeUserId: approvedById,
-      });
-    }
   }
 }
 
@@ -3650,13 +3641,28 @@ async function accountBelongsToJournal(accountId: string, journalId: string) {
   return accounts.some((account) => account.id === accountId);
 }
 
+type SuggestedVenueSubmitTaskResult = {
+  taskId: string;
+  taskTitle: string;
+  taskDescription: string | null;
+  checkerId: string | null;
+  created: boolean;
+};
+
+type AutoCompletedSuggestVenueTask = {
+  taskId: string;
+  taskTitle: string;
+  note: string;
+  assigneeIds: string[];
+  assigneeEmails: string[];
+};
+
 async function createSubmitTaskForSuggestedJournalApproval({
   projectId,
   suggestionId,
   journalId,
   approverId,
   suggestedById,
-  suggestedByEmail,
   originalTask,
 }: {
   projectId: string;
@@ -3664,9 +3670,8 @@ async function createSubmitTaskForSuggestedJournalApproval({
   journalId: string;
   approverId: string;
   suggestedById: string;
-  suggestedByEmail: string;
   originalTask: { createdById: string; checkerId: string | null } | null;
-}) {
+}): Promise<SuggestedVenueSubmitTaskResult> {
   const existingTask = await prisma.researchTask.findFirst({
     where: {
       taskType: ResearchTaskType.SUBMIT_RESEARCH,
@@ -3686,6 +3691,8 @@ async function createSubmitTaskForSuggestedJournalApproval({
     return {
       taskId: existingTask.id,
       taskTitle: existingTask.title,
+      taskDescription: null,
+      checkerId: null,
       created: false,
     };
   }
@@ -3747,29 +3754,6 @@ async function createSubmitTaskForSuggestedJournalApproval({
     return createdTask;
   });
 
-  await notifyUsers({
-    userIds: [suggestedById],
-    type: "TASK_ASSIGNED",
-    title: "Task assigned",
-    summary: task.title,
-    body: task.description
-      ? `Assigned to you. Note: ${task.description}`
-      : "Assigned to you.",
-    href: `/tasks/${task.id}`,
-    entityType: "task",
-    entityId: task.id,
-    excludeUserId: approverId,
-  });
-  await sendTaskEmail({
-    to: [suggestedByEmail],
-    subject: `Task assigned: ${task.title}`,
-    heading: "Task assigned",
-    intro: "A submit task was created from your approved venue suggestion.",
-    detail: task.description ?? undefined,
-    taskTitle: task.title,
-    taskId: task.id,
-    actionLabel: "Open task",
-  });
   if (task.checkerId) {
     await notifyUsers({
       userIds: [task.checkerId],
@@ -3784,7 +3768,13 @@ async function createSubmitTaskForSuggestedJournalApproval({
     });
   }
 
-  return { taskId: task.id, taskTitle: task.title, created: true };
+  return {
+    taskId: task.id,
+    taskTitle: task.title,
+    taskDescription: task.description,
+    checkerId: task.checkerId,
+    created: true,
+  };
 }
 
 async function createSubmitTaskForSuggestedConferenceApproval({
@@ -3793,7 +3783,6 @@ async function createSubmitTaskForSuggestedConferenceApproval({
   conferenceId,
   approverId,
   suggestedById,
-  suggestedByEmail,
   originalTask,
 }: {
   projectId: string;
@@ -3801,9 +3790,8 @@ async function createSubmitTaskForSuggestedConferenceApproval({
   conferenceId: string;
   approverId: string;
   suggestedById: string;
-  suggestedByEmail: string;
   originalTask: { createdById: string; checkerId: string | null } | null;
-}) {
+}): Promise<SuggestedVenueSubmitTaskResult> {
   const existingTask = await prisma.researchTask.findFirst({
     where: {
       taskType: ResearchTaskType.SUBMIT_CONFERENCE,
@@ -3823,6 +3811,8 @@ async function createSubmitTaskForSuggestedConferenceApproval({
     return {
       taskId: existingTask.id,
       taskTitle: existingTask.title,
+      taskDescription: null,
+      checkerId: null,
       created: false,
     };
   }
@@ -3882,29 +3872,6 @@ async function createSubmitTaskForSuggestedConferenceApproval({
     return createdTask;
   });
 
-  await notifyUsers({
-    userIds: [suggestedById],
-    type: "TASK_ASSIGNED",
-    title: "Task assigned",
-    summary: task.title,
-    body: task.description
-      ? `Assigned to you. Note: ${task.description}`
-      : "Assigned to you.",
-    href: `/tasks/${task.id}`,
-    entityType: "task",
-    entityId: task.id,
-    excludeUserId: approverId,
-  });
-  await sendTaskEmail({
-    to: [suggestedByEmail],
-    subject: `Task assigned: ${task.title}`,
-    heading: "Task assigned",
-    intro: "A submit task was created from your approved venue suggestion.",
-    detail: task.description ?? undefined,
-    taskTitle: task.title,
-    taskId: task.id,
-    actionLabel: "Open task",
-  });
   if (task.checkerId) {
     await notifyUsers({
       userIds: [task.checkerId],
@@ -3919,7 +3886,181 @@ async function createSubmitTaskForSuggestedConferenceApproval({
     });
   }
 
-  return { taskId: task.id, taskTitle: task.title, created: true };
+  return {
+    taskId: task.id,
+    taskTitle: task.title,
+    taskDescription: task.description,
+    checkerId: task.checkerId,
+    created: true,
+  };
+}
+
+async function completeSuggestVenueTaskIfReady(
+  taskId: string | null | undefined,
+  completedById: string,
+): Promise<AutoCompletedSuggestVenueTask | null> {
+  if (!taskId) return null;
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      title: true,
+      taskType: true,
+      status: true,
+      assignments: {
+        select: {
+          userId: true,
+          user: { select: { email: true } },
+        },
+      },
+    },
+  });
+
+  if (!task || task.taskType !== ResearchTaskType.SUGGEST_VENUE) return null;
+  if (
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    return null;
+  }
+
+  const [pendingJournals, pendingConferences] = await Promise.all([
+    prisma.suggestedJournal.count({
+      where: { taskId, status: { not: SuggestedVenueStatus.APPROVED } },
+    }),
+    prisma.suggestedConference.count({
+      where: { taskId, status: { not: SuggestedVenueStatus.APPROVED } },
+    }),
+  ]);
+
+  if (pendingJournals + pendingConferences > 0) return null;
+
+  const completedAt = new Date();
+  const note =
+    "All venue suggestions for this task were approved, so the task was completed automatically.";
+
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: {
+      status: ResearchTaskStatus.COMPLETED,
+      completedAt,
+      completedBy: { connect: { id: completedById } },
+      completionMessage: note,
+      revokedAt: null,
+      revokedBy: { disconnect: true },
+      revokeReason: null,
+      adminViewedAt: null,
+      assignments: {
+        updateMany: {
+          where: { finishedAt: null },
+          data: { finishedAt: completedAt },
+        },
+      },
+    },
+  });
+
+  return {
+    taskId,
+    taskTitle: task.title,
+    note,
+    assigneeIds: task.assignments.map((assignment) => assignment.userId),
+    assigneeEmails: task.assignments.map((assignment) => assignment.user.email),
+  };
+}
+
+async function notifyMergedSuggestedVenueApproval({
+  projectId,
+  suggestionId,
+  venueKind,
+  venueName,
+  approverId,
+  suggestedById,
+  suggestedByEmail,
+  approvalNote,
+  submitTask,
+  completedSuggestTask,
+}: {
+  projectId: string;
+  suggestionId: string;
+  venueKind: "journal" | "conference";
+  venueName: string;
+  approverId: string;
+  suggestedById: string | null;
+  suggestedByEmail: string | null | undefined;
+  approvalNote: string | null | undefined;
+  submitTask: SuggestedVenueSubmitTaskResult | null;
+  completedSuggestTask: AutoCompletedSuggestVenueTask | null;
+}) {
+  const notificationUserIds = new Set<string>();
+  if (suggestedById) notificationUserIds.add(suggestedById);
+  completedSuggestTask?.assigneeIds.forEach((userId) =>
+    notificationUserIds.add(userId),
+  );
+
+  const lines = [`${venueName} was approved as a suggested ${venueKind}.`];
+  if (approvalNote) lines.push(`Approval note: ${approvalNote}`);
+  if (submitTask?.created) {
+    lines.push(`A submit task was assigned: ${submitTask.taskTitle}.`);
+  } else if (submitTask) {
+    lines.push(
+      `The suggestion was linked to an existing submit task: ${submitTask.taskTitle}.`,
+    );
+  }
+  if (completedSuggestTask) {
+    lines.push(
+      `${completedSuggestTask.taskTitle} was approved as complete automatically. ${completedSuggestTask.note}`,
+    );
+  }
+
+  const title =
+    submitTask?.created && completedSuggestTask
+      ? "Venue approved, submit task assigned, and task completed"
+      : submitTask?.created
+        ? "Venue approved and submit task assigned"
+        : completedSuggestTask
+          ? "Venue approved and suggest venue task completed"
+          : "Venue suggestion approved";
+  const href = submitTask?.taskId
+    ? `/tasks/${submitTask.taskId}`
+    : completedSuggestTask
+      ? `/tasks/${completedSuggestTask.taskId}`
+      : `/projects/${projectId}`;
+
+  await notifyUsers({
+    userIds: Array.from(notificationUserIds),
+    excludeUserId: approverId,
+    type: "VENUE_SUGGESTION_APPROVED",
+    title,
+    summary: venueName,
+    body: lines.join("\n"),
+    href,
+    entityType: "suggestedVenue",
+    entityId: suggestionId,
+  });
+
+  if (!submitTask?.created && !completedSuggestTask) return;
+
+  const emailRecipients = new Set<string>();
+  if (suggestedByEmail) emailRecipients.add(suggestedByEmail);
+  completedSuggestTask?.assigneeEmails.forEach((email) =>
+    emailRecipients.add(email),
+  );
+  const emailTaskId = submitTask?.taskId ?? completedSuggestTask?.taskId;
+  const emailTaskTitle =
+    submitTask?.taskTitle ?? completedSuggestTask?.taskTitle;
+  if (!emailTaskId || !emailTaskTitle) return;
+
+  await sendTaskEmail({
+    to: Array.from(emailRecipients),
+    subject: title,
+    heading: title,
+    intro: "A suggested venue update is ready in Research Hub.",
+    detail: lines.join("\n"),
+    taskTitle: emailTaskTitle,
+    taskId: emailTaskId,
+    actionLabel: "Open task",
+  });
 }
 
 async function publisherAccountScope(formData: FormData): Promise<{
@@ -6976,7 +7117,6 @@ export async function approveSuggestedJournal(
           journalId: linkedJournalId,
           approverId: user.id,
           suggestedById: suggestion.createdById,
-          suggestedByEmail: suggestion.createdBy.email,
           originalTask: suggestion.task,
         })
       : null;
@@ -6986,18 +7126,23 @@ export async function approveSuggestedJournal(
     select: { name: true },
   });
 
-  if (suggestion.createdById) {
-    await notifyUsers({
-      userIds: [suggestion.createdById],
-      excludeUserId: user.id,
-      type: "VENUE_SUGGESTION_APPROVED",
-      title: "Venue suggestion approved",
-      summary: linkedJournal?.name ?? suggestion.venueName ?? "Journal",
-      href: `/projects/${projectId}`,
-      entityType: "suggestedVenue",
-      entityId: suggestionId,
-    });
-  }
+  const completedSuggestTask = await completeSuggestVenueTaskIfReady(
+    suggestion.taskId,
+    user.id,
+  );
+
+  await notifyMergedSuggestedVenueApproval({
+    projectId,
+    suggestionId,
+    venueKind: "journal",
+    venueName: linkedJournal?.name ?? suggestion.venueName ?? "Journal",
+    approverId: user.id,
+    suggestedById: suggestion.createdById,
+    suggestedByEmail: suggestion.createdBy?.email,
+    approvalNote,
+    submitTask: submitTaskResult,
+    completedSuggestTask,
+  });
 
   revalidatePath(`/projects/${projectId}`);
   if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
@@ -7009,6 +7154,7 @@ export async function approveSuggestedJournal(
     submitTaskCreated: submitTaskResult?.created ?? false,
     submitTaskLinked: Boolean(submitTaskResult && !submitTaskResult.created),
     submitTaskId: submitTaskResult?.taskId,
+    suggestVenueTaskCompleted: Boolean(completedSuggestTask),
   };
 }
 
@@ -7038,6 +7184,7 @@ export async function approveSuggestedConference(
       taskId: true,
       submissionTaskId: true,
       createdBy: { select: { email: true } },
+      project: { select: { title: true } },
       task: { select: { createdById: true, checkerId: true } },
     },
   });
@@ -7074,7 +7221,6 @@ export async function approveSuggestedConference(
           conferenceId: linkedConferenceId,
           approverId: user.id,
           suggestedById: suggestion.createdById,
-          suggestedByEmail: suggestion.createdBy.email,
           originalTask: suggestion.task,
         })
       : null;
@@ -7084,18 +7230,23 @@ export async function approveSuggestedConference(
     select: { name: true },
   });
 
-  if (suggestion.createdById) {
-    await notifyUsers({
-      userIds: [suggestion.createdById],
-      excludeUserId: user.id,
-      type: "VENUE_SUGGESTION_APPROVED",
-      title: "Venue suggestion approved",
-      summary: linkedConference?.name ?? suggestion.venueName ?? "Conference",
-      href: `/projects/${projectId}`,
-      entityType: "suggestedVenue",
-      entityId: suggestionId,
-    });
-  }
+  const completedSuggestTask = await completeSuggestVenueTaskIfReady(
+    suggestion.taskId,
+    user.id,
+  );
+
+  await notifyMergedSuggestedVenueApproval({
+    projectId,
+    suggestionId,
+    venueKind: "conference",
+    venueName: linkedConference?.name ?? suggestion.venueName ?? "Conference",
+    approverId: user.id,
+    suggestedById: suggestion.createdById,
+    suggestedByEmail: suggestion.createdBy?.email,
+    approvalNote,
+    submitTask: submitTaskResult,
+    completedSuggestTask,
+  });
 
   revalidatePath(`/projects/${projectId}`);
   if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
@@ -7107,6 +7258,7 @@ export async function approveSuggestedConference(
     submitTaskCreated: submitTaskResult?.created ?? false,
     submitTaskLinked: Boolean(submitTaskResult && !submitTaskResult.created),
     submitTaskId: submitTaskResult?.taskId,
+    suggestVenueTaskCompleted: Boolean(completedSuggestTask),
   };
 }
 
