@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Download,
   ExternalLink,
+  FileSearch,
   FileText,
   FolderGit2,
   Phone,
@@ -91,6 +92,12 @@ function statusMeta(status: ProposalStatus) {
     return {
       icon: XCircle,
       className: "text-rose-700 dark:text-rose-300",
+    };
+  }
+  if (status === ProposalStatus.REVIEWING) {
+    return {
+      icon: FileSearch,
+      className: "text-sky-700 dark:text-sky-300",
     };
   }
   return {

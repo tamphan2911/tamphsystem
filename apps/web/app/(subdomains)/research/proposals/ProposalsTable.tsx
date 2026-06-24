@@ -8,6 +8,7 @@ import {
   Building2,
   CheckCircle2,
   FileQuestion,
+  FileSearch,
   FileText,
   FolderGit2,
   Trash2,
@@ -62,6 +63,9 @@ function statusClass(status: string) {
   if (status === "ACCEPTED") {
     return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
   }
+  if (status === "REVIEWING") {
+    return "bg-sky-50 text-sky-700 ring-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-900";
+  }
   if (status === "DECLINED") {
     return "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900";
   }
@@ -70,6 +74,7 @@ function statusClass(status: string) {
 
 function statusIcon(status: string) {
   if (status === "ACCEPTED") return CheckCircle2;
+  if (status === "REVIEWING") return FileSearch;
   if (status === "DECLINED") return XCircle;
   return FolderGit2;
 }
@@ -347,15 +352,9 @@ export function ProposalsTable({
                 </td>
                 <td className="px-2 py-3 text-center align-top">
                   <IconChip
-                    icon={statusIcon(
-                      proposal.status === "REVIEWING" ? "NEW" : proposal.status,
-                    )}
-                    label={label(
-                      proposal.status === "REVIEWING" ? "NEW" : proposal.status,
-                    )}
-                    className={statusClass(
-                      proposal.status === "REVIEWING" ? "NEW" : proposal.status,
-                    )}
+                    icon={statusIcon(proposal.status)}
+                    label={label(proposal.status)}
+                    className={statusClass(proposal.status)}
                   />
                 </td>
                 <td className="px-3 py-3 text-xs leading-5 text-[#B0B0B0]">
