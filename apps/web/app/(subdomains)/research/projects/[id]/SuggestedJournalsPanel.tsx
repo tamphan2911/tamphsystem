@@ -225,6 +225,7 @@ export function SuggestedJournalsPanel({
   const [editVenueNote, setEditVenueNote] = useState("");
   const [editVenueQuery, setEditVenueQuery] = useState("");
   const [editTaskQuery, setEditTaskQuery] = useState("");
+  const editTaskSearchRef = useRef<HTMLDivElement>(null);
   const [selectedEditTask, setSelectedEditTask] =
     useState<SuggestedVenueTaskOption | null>(null);
   const [deleteVenue, setDeleteVenue] = useState<Venue | null>(null);
@@ -1217,37 +1218,57 @@ export function SuggestedJournalsPanel({
               />
               {!editTaskLocked ? (
                 <>
-                  <SearchBox
-                    value={editTaskQuery}
-                    onChange={setEditTaskQuery}
-                    placeholder="Search suggest venue task by title, ID, assignee, or status..."
-                  />
-                  <ResultList
-                    query={editTaskQuery}
-                    idleText="Search to connect this suggestion to one suggest venue task."
-                    emptyText="No suggest venue task matches this search."
-                  >
-                    {editTaskResults.map((task) => (
-                      <button
-                        key={task.id}
-                        type="button"
-                        disabled={isPending}
-                        onClick={() => {
-                          setSelectedEditTask(task);
-                          setEditTaskQuery("");
-                        }}
-                        className={resultButtonClass(false)}
-                      >
-                        <span className="block text-sm font-normal text-[#E4E4E4]">
-                          {task.title}
-                        </span>
-                        <span className="mt-1 block text-xs text-[#B0B0B0]">
-                          {task.taskCode} - {task.status.replaceAll("_", " ")}
-                          {task.assignees ? ` - ${task.assignees}` : ""}
-                        </span>
-                      </button>
-                    ))}
-                  </ResultList>
+                  <div ref={editTaskSearchRef} className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8C95A4] dark:text-[#B0B0B0]" />
+                    <input
+                      value={editTaskQuery}
+                      onChange={(event) => setEditTaskQuery(event.target.value)}
+                      placeholder="Search suggest venue task by title, ID, assignee, or status..."
+                      className={`${researchSearchFieldClass} pl-9`}
+                    />
+                    <FloatingDropdownPortal
+                      anchorRef={editTaskSearchRef}
+                      open={editTaskQuery.trim().length > 0}
+                      maxPanelHeight={224}
+                    >
+                      <div className={researchDropdownPanelClass}>
+                        <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
+                          {editTaskResults.length > 0 ? (
+                            editTaskResults.map((task) => (
+                              <button
+                                key={task.id}
+                                type="button"
+                                disabled={isPending}
+                                onClick={() => {
+                                  setSelectedEditTask(task);
+                                  setEditTaskQuery("");
+                                }}
+                                className={`${researchDropdownItemClass} ${researchDropdownItemIdleClass} justify-start px-3`}
+                              >
+                                <ClipboardList className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-sm">
+                                    {task.title}
+                                  </span>
+                                  <span className="block truncate text-xs text-[#667085] dark:text-[#B0B0B0]">
+                                    {task.taskCode} -{" "}
+                                    {task.status.replaceAll("_", " ")}
+                                    {task.assignees
+                                      ? ` - ${task.assignees}`
+                                      : ""}
+                                  </span>
+                                </span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-3 py-3 text-sm text-[#667085] dark:text-[#B0B0B0]">
+                              No suggest venue task matches this search.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </FloatingDropdownPortal>
+                  </div>
                 </>
               ) : (
                 <p className="text-xs leading-5 text-[#6C778D] dark:text-[#B0B0B0]">
