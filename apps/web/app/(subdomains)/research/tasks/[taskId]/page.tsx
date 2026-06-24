@@ -39,6 +39,7 @@ import {
   answerTaskClarification,
   finishResearchTask,
   markResearchTaskReadyForCheck,
+  requestAssigneeClarification,
   requestTaskClarification,
   requestTaskRedo,
   revokeResearchTask,
@@ -61,7 +62,11 @@ import {
 } from "@/sites/research/lib/currency";
 import { FinishTaskForm } from "./FinishTaskForm";
 import { RevokeTaskForm } from "./RevokeTaskForm";
-import { ClarificationRequestForm, RedoTaskForm } from "./TaskWorkflowForms";
+import {
+  AssigneeClarificationRequestForm,
+  ClarificationRequestForm,
+  RedoTaskForm,
+} from "./TaskWorkflowForms";
 import { EditTaskDialog } from "./EditTaskDialog";
 import {
   TaskClarificationPanel,
@@ -1308,7 +1313,7 @@ export default async function TaskDetailPage({
       },
       clarifications: {
         include: {
-          requestedBy: { select: { name: true, email: true } },
+          requestedBy: { select: { id: true, name: true, email: true } },
           answeredBy: { select: { name: true, email: true } },
         },
         orderBy: { createdAt: "desc" },
@@ -1613,7 +1618,7 @@ export default async function TaskDetailPage({
     taskClarifications = await prisma.researchTaskClarification.findMany({
       where: { taskId: task.id },
       include: {
-        requestedBy: { select: { name: true, email: true } },
+        requestedBy: { select: { id: true, name: true, email: true } },
         answeredBy: { select: { name: true, email: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -1674,11 +1679,14 @@ export default async function TaskDetailPage({
   const redoAction = requestTaskRedo.bind(null, task.id);
   const reminderAction = sendTaskReminderEmail.bind(null, task.id);
   const clarificationAction = requestTaskClarification.bind(null, task.id);
+  const assigneeClarificationAction = requestAssigneeClarification.bind(
+    null,
+    task.id,
+  );
   const clarificationAnswerAction = answerTaskClarification.bind(null, task.id);
   const revokeAction = revokeResearchTask.bind(null, task.id);
-  const hasOpenMyClarification = taskClarifications.some(
-    (clarification) =>
-      clarification.requestedById === userId && !clarification.answer,
+  const hasOpenClarification = taskClarifications.some(
+    (clarification) => !clarification.answer,
   );
   const isClosed =
     task.status === ResearchTaskStatus.COMPLETED ||
@@ -1708,7 +1716,12 @@ export default async function TaskDetailPage({
     !selfAssigned &&
     task.status !== ResearchTaskStatus.CHECKING &&
     task.status !== ResearchTaskStatus.NEED_CLARIFY &&
-    !hasOpenMyClarification;
+    !hasOpenClarification;
+  const canRequestAssigneeClarification =
+    !isClosed &&
+    (isRootAdmin || isAssigner || isChecker) &&
+    task.status === ResearchTaskStatus.CHECKING &&
+    !hasOpenClarification;
   const canRevoke = !isClosed && !isAssignee && (isAdmin || isAssigner);
   const canEdit =
     !isAssignee && (isRootAdmin || (!isClosed && isChiefAssistant));
@@ -1746,7 +1759,8 @@ export default async function TaskDetailPage({
                     "Assignees are waiting for clarification feedback from the assigner. Please answer the clarification request before sending finish reminders.",
                 }
               : null;
-  const canAnswerClarification = !isClosed && (isAdmin || isAssigner);
+  const canAnswerClarification =
+    !isClosed && (isRootAdmin || isAssigner || isChecker || isAssignee);
   const reportEnabled = task.allowAssigneeReportUpload;
   const isJournalSubmitTask =
     task.taskType === "SUBMIT_RESEARCH" && Boolean(task.journal);
@@ -2508,6 +2522,7 @@ export default async function TaskDetailPage({
       createdAt: clarification.createdAt.toISOString(),
       answeredAt: clarification.answeredAt?.toISOString() ?? null,
       requestedBy: {
+        id: clarification.requestedBy.id,
         name: clarification.requestedBy.name ?? "",
         email: clarification.requestedBy.email,
       },
@@ -2637,10 +2652,16 @@ export default async function TaskDetailPage({
           canApprove ||
           canRedo ||
           canRequestClarification ||
+          canRequestAssigneeClarification ||
           canRevoke) && (
           <div className="flex flex-col justify-end gap-2 sm:flex-row sm:items-center">
             {canRevoke && <RevokeTaskForm action={revokeAction} />}
             {canRedo && <RedoTaskForm action={redoAction} />}
+            {canRequestAssigneeClarification && (
+              <AssigneeClarificationRequestForm
+                action={assigneeClarificationAction}
+              />
+            )}
             {canRequestClarification && (
               <ClarificationRequestForm action={clarificationAction} />
             )}
@@ -2883,6 +2904,7 @@ export default async function TaskDetailPage({
             <TaskClarificationPanel
               clarifications={clarificationItems}
               canAnswer={canAnswerClarification}
+              currentUserId={userId}
               answerAction={clarificationAnswerAction}
               className=""
             />

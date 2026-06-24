@@ -9000,7 +9000,7 @@ export async function requestTaskClarification(
       createdBy: { select: { email: true } },
       assignments: { select: { userId: true } },
       clarifications: {
-        where: { requestedById: user.id, answer: null },
+        where: { answer: null },
         select: { id: true },
         take: 1,
       },
@@ -9070,18 +9070,31 @@ export async function answerTaskClarification(
       createdById: true,
       checkerId: true,
       status: true,
+      createdBy: { select: { email: true } },
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
+      },
+      clarifications: {
+        where: { id: clarificationId },
+        select: { requestedById: true },
+        take: 1,
       },
     },
   });
   if (!task) return;
-  if (
-    !(await canManageTaskAsResearchAdmin(taskId, user)) &&
-    task.createdById !== user.id
-  ) {
-    redirect("/401");
-  }
+  const clarification = task.clarifications[0];
+  if (!clarification || clarification.requestedById === user.id) return;
+  const requesterIsAssignee = task.assignments.some(
+    (assignment) => assignment.userId === clarification.requestedById,
+  );
+  const userIsAssignee = task.assignments.some(
+    (assignment) => assignment.userId === user.id,
+  );
+  const userCanManage =
+    (await canManageTaskAsResearchAdmin(taskId, user)) ||
+    task.createdById === user.id ||
+    task.checkerId === user.id;
+  if (requesterIsAssignee ? !userCanManage : !userIsAssignee) redirect("/401");
   if (
     task.status === ResearchTaskStatus.COMPLETED ||
     task.status === ResearchTaskStatus.REVOKED
@@ -9096,14 +9109,121 @@ export async function answerTaskClarification(
   if (updated.count === 0) return;
   await prisma.researchTask.update({
     where: { id: taskId },
-    data: { status: ResearchTaskStatus.IN_PROGRESS },
+    data: {
+      status: requesterIsAssignee
+        ? ResearchTaskStatus.IN_PROGRESS
+        : ResearchTaskStatus.CHECKING,
+    },
+  });
+  if (requesterIsAssignee) {
+    await notifyUsers({
+      userIds: task.assignments.map((assignment) => assignment.userId),
+      type: "TASK_CLARIFICATION_ANSWERED",
+      title: "Clarification answered",
+      summary: task.title,
+      body: answer,
+      href: `/tasks/${taskId}`,
+      entityType: "task",
+      entityId: taskId,
+      excludeUserId: user.id,
+    });
+    await sendTaskEmail({
+      to: task.assignments.map((assignment) => assignment.user.email),
+      subject: `Clarification answered: ${task.title}`,
+      heading: "Clarification answered",
+      intro:
+        "The assigner, checker, or admin has answered a clarification request for this task. Please review the answer and continue the work.",
+      detail: answer,
+      taskTitle: task.title,
+      taskId,
+      actionLabel: "Open task",
+    });
+    await notifyTaskAdminsAndChecker({
+      taskId,
+      userIds: [task.createdById, task.checkerId],
+      type: "TASK_CLARIFICATION_ANSWERED_REVIEWER_NOTICE",
+      title: "Clarification answered",
+      summary: task.title,
+      body: `A task manager answered the clarification request: ${answer}`,
+      excludeUserId: user.id,
+    });
+  } else {
+    await notifyTaskAdminsAndChecker({
+      taskId,
+      userIds: [task.createdById, task.checkerId],
+      type: "TASK_ASSIGNEE_CLARIFICATION_ANSWERED",
+      title: "Assignee answered clarification",
+      summary: task.title,
+      body: `The assignee answered the clarification request. The task is ready for check again: ${answer}`,
+      excludeUserId: user.id,
+    });
+    await sendTaskEmail({
+      to: [task.createdBy.email],
+      subject: `Clarification answered: ${task.title}`,
+      heading: "Assignee answered clarification",
+      intro:
+        "An assignee answered the clarification request. The task is ready for checking again.",
+      detail: answer,
+      taskTitle: task.title,
+      taskId,
+      actionLabel: "Review task",
+    });
+  }
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+}
+
+export async function requestAssigneeClarification(
+  taskId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  const question = optionalString(formData.get("question"));
+  if (!question) return;
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      title: true,
+      createdById: true,
+      checkerId: true,
+      status: true,
+      createdBy: { select: { email: true } },
+      assignments: {
+        select: { userId: true, user: { select: { email: true } } },
+      },
+      clarifications: {
+        where: { answer: null },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  });
+  if (!task) return;
+  const canManage =
+    (await canManageTaskAsResearchAdmin(taskId, user)) ||
+    task.createdById === user.id ||
+    task.checkerId === user.id;
+  if (!canManage) redirect("/401");
+  if (
+    task.status !== ResearchTaskStatus.CHECKING ||
+    task.clarifications.length > 0
+  ) {
+    return;
+  }
+
+  await prisma.researchTaskClarification.create({
+    data: { taskId, requestedById: user.id, question },
+  });
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: { status: ResearchTaskStatus.NEED_CLARIFY },
   });
   await notifyUsers({
     userIds: task.assignments.map((assignment) => assignment.userId),
-    type: "TASK_CLARIFICATION_ANSWERED",
-    title: "Clarification answered",
+    type: "TASK_ASSIGNEE_CLARIFICATION_REQUESTED",
+    title: "Clarification needed",
     summary: task.title,
-    body: answer,
+    body: `The task reviewer needs your clarification before this task can be approved: ${question}`,
     href: `/tasks/${taskId}`,
     entityType: "task",
     entityId: taskId,
@@ -9111,22 +9231,22 @@ export async function answerTaskClarification(
   });
   await sendTaskEmail({
     to: task.assignments.map((assignment) => assignment.user.email),
-    subject: `Clarification answered: ${task.title}`,
-    heading: "Clarification answered",
+    subject: `Clarification needed: ${task.title}`,
+    heading: "Clarification needed before approval",
     intro:
-      "The assigner or an admin has answered a clarification request for this task. Please review the answer and continue the work.",
-    detail: answer,
+      "The assigner, checker, or admin needs more information before this task can be approved. Please answer the request in the task conversation.",
+    detail: question,
     taskTitle: task.title,
     taskId,
-    actionLabel: "Open task",
+    actionLabel: "Answer request",
   });
   await notifyTaskAdminsAndChecker({
     taskId,
     userIds: [task.createdById, task.checkerId],
-    type: "TASK_CLARIFICATION_ANSWERED_REVIEWER_NOTICE",
-    title: "Clarification answered",
+    type: "TASK_ASSIGNEE_CLARIFICATION_REVIEWER_NOTICE",
+    title: "Clarification requested from assignee",
     summary: task.title,
-    body: `A task manager answered the clarification request: ${answer}`,
+    body: `A task manager requested clarification from the assignee: ${question}`,
     excludeUserId: user.id,
   });
   revalidatePath("/tasks");

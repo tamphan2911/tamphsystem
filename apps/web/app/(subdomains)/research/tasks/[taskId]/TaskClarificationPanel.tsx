@@ -20,6 +20,7 @@ export type TaskClarificationItem = {
   createdAt: string;
   answeredAt: string | null;
   requestedBy: {
+    id: string;
     name: string;
     email: string;
   };
@@ -47,11 +48,13 @@ function formatDateTime(value: string | null) {
 export function TaskClarificationPanel({
   clarifications,
   canAnswer,
+  currentUserId,
   answerAction,
   className = "border-t border-[#444444] pt-5",
 }: {
   clarifications: TaskClarificationItem[];
   canAnswer: boolean;
+  currentUserId: string;
   answerAction: (formData: FormData) => void | Promise<void>;
   className?: string;
 }) {
@@ -108,7 +111,7 @@ export function TaskClarificationPanel({
                   </p>
                 ) : (
                   <p className="mt-2 text-xs font-normal text-amber-700 dark:text-amber-300">
-                    Waiting for assigner or admin feedback.
+                    Waiting for reply.
                   </p>
                 )}
               </>
@@ -158,14 +161,19 @@ export function TaskClarificationPanel({
                         Pending feedback
                       </p>
                       {canAnswer ? (
-                        <AnswerForm
-                          clarificationId={item.id}
-                          action={answerAction}
-                        />
+                        item.requestedBy.id !== currentUserId ? (
+                          <AnswerForm
+                            clarificationId={item.id}
+                            action={answerAction}
+                          />
+                        ) : (
+                          <p className="mt-1 text-sm leading-6 text-[#667085] dark:text-[#B0B0B0]">
+                            Waiting for the other side to answer this request.
+                          </p>
+                        )
                       ) : (
                         <p className="mt-1 text-sm leading-6 text-[#667085] dark:text-[#B0B0B0]">
-                          The assigner or an admin has not replied to this
-                          request yet.
+                          This request is waiting for a reply.
                         </p>
                       )}
                     </div>

@@ -227,6 +227,27 @@ export function ClarificationRequestForm({
   );
 }
 
+export function AssigneeClarificationRequestForm({
+  action,
+}: {
+  action: (formData: FormData) => void | Promise<void>;
+}) {
+  return (
+    <TextModalForm
+      action={action}
+      buttonLabel="Ask clarify"
+      title="Ask assignee for clarification?"
+      description="The task will move to Need clarify until the assignee answers this request."
+      fieldName="question"
+      fieldLabel="Clarification request"
+      placeholder="Write what the assignee needs to clarify before this task can be approved."
+      confirmLabel="Send request"
+      tone="amber"
+      helperText="After sending this request, the task will wait for the assignee to answer. When they answer, the task returns to Ready for check."
+    />
+  );
+}
+
 export function ClarificationAnswerForm({
   action,
 }: {
