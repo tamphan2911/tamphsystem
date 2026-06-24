@@ -85,6 +85,10 @@ const taskStatusValues = [
   "REVOKED",
 ];
 
+const unfinishedTaskStatusValues = taskStatusValues.filter(
+  (value) => value !== "ALL" && value !== "COMPLETED" && value !== "REVOKED",
+);
+
 const taskTypeFilterValues = [
   "ALL",
   "SUBMIT",
@@ -484,6 +488,10 @@ export function TasksClient({
     "tasks:status",
     taskStatusValues,
   );
+  const [unfinishedOnly, setUnfinishedOnly] = useState(false);
+  const [statusBeforeUnfinished, setStatusBeforeUnfinished] = useState<
+    string[] | null
+  >(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
@@ -620,7 +628,23 @@ export function TasksClient({
   }
 
   function updateStatuses(values: string[]) {
+    if (unfinishedOnly) {
+      setUnfinishedOnly(false);
+      setStatusBeforeUnfinished(null);
+    }
     setStatuses(values);
+    pagination.setPage(1);
+  }
+
+  function toggleUnfinishedOnly(checked: boolean) {
+    setUnfinishedOnly(checked);
+    if (checked) {
+      setStatusBeforeUnfinished(statuses);
+      setStatuses(unfinishedTaskStatusValues);
+    } else {
+      setStatuses(statusBeforeUnfinished ?? []);
+      setStatusBeforeUnfinished(null);
+    }
     pagination.setPage(1);
   }
 
@@ -670,6 +694,19 @@ export function TasksClient({
             />
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
+            <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 transition-colors duration-150 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white">
+              <input
+                type="checkbox"
+                checked={unfinishedOnly}
+                onChange={(event) =>
+                  toggleUnfinishedOnly(event.currentTarget.checked)
+                }
+                className="h-4 w-4 cursor-pointer rounded-none border-slate-300 text-sky-700 accent-[#1F7180] dark:border-[#666666] dark:accent-[#A8DADC]"
+              />
+              <IconHint label="Selects every status except completed and revoked. Turn it off to restore your previous status filter.">
+                <span className="whitespace-nowrap text-left">Unfinished</span>
+              </IconHint>
+            </label>
             <MultiFilterSelect
               values={taskTypes}
               onChange={updateTaskTypes}
