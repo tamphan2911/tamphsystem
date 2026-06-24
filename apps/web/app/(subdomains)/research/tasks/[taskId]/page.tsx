@@ -389,8 +389,10 @@ function displayRole(roles: Role[]) {
 
 function TaskPersonLine({
   person,
+  showEmail = false,
 }: {
   person: { name: string | null; email: string; roles: Role[] };
+  showEmail?: boolean;
 }) {
   return (
     <span className="flex min-w-0 items-start gap-3">
@@ -405,6 +407,11 @@ function TaskPersonLine({
             {displayRole(person.roles)}
           </span>
         </span>
+        {showEmail ? (
+          <span className="mt-1 block min-w-0 break-all text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
+            {person.email}
+          </span>
+        ) : null}
       </span>
     </span>
   );
@@ -2915,7 +2922,7 @@ export default async function TaskDetailPage({
                 {task.assignments.length > 0 ? (
                   task.assignments.map((assignment) => (
                     <div key={assignment.id} className="py-3">
-                      <TaskPersonLine person={assignment.user} />
+                      <TaskPersonLine person={assignment.user} showEmail />
                     </div>
                   ))
                 ) : (
