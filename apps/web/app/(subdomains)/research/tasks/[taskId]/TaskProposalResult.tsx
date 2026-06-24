@@ -322,7 +322,7 @@ export function TaskProposalResult({
           if (canCreate) setOpen(true);
         }}
         className={`group min-h-44 border border-dashed border-[#CFC6B8] bg-[#FBF9F4] p-4 text-left transition-[border-color,background-color,transform] duration-180 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:border-[#4A4A4A] dark:bg-[#262626] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838] ${
-          fullWidth ? "w-full md:col-span-3" : "w-full"
+          fullWidth ? "w-full md:col-span-2" : "w-full"
         } ${
           canCreate || canManageAssociation
             ? "cursor-pointer hover:-translate-y-0.5"
@@ -629,7 +629,7 @@ export function TaskProposalResult({
         </h2>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         {proposals.length > 0 ? (
           <>
             {proposals.map((proposal) => (
