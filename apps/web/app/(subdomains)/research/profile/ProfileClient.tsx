@@ -26,6 +26,7 @@ import {
 import { updateResearchPassword, updateResearchProfile } from "./actions";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
   IconHint,
@@ -51,6 +52,7 @@ type ResearchProfileUser = {
   additionalEmails: string[];
   affiliation: string;
   avatarUrl: string | null;
+  researchThemePreference: string;
   emailVerified: string | null;
   roles: string[];
   createdAt: string;
@@ -777,6 +779,33 @@ export function ProfileClient({
             <span className="text-xs font-normal text-[#B0B0B0]">
               These emails are only for research contact choices. Login still
               uses your main email.
+            </span>
+          </label>
+          <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
+            <span className="inline-flex items-center gap-1 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+              <span>Theme preference</span>
+            </span>
+            <ResearchFormSelect
+              name="researchThemePreference"
+              defaultValue={
+                ["system", "light", "dark"].includes(
+                  user.researchThemePreference,
+                )
+                  ? user.researchThemePreference
+                  : "system"
+              }
+              ariaLabel="Theme preference"
+              options={[
+                { value: "system", label: "System" },
+                { value: "light", label: "Light" },
+                { value: "dark", label: "Dark" },
+              ]}
+            />
+            <span className="text-xs font-normal leading-5 text-[#B0B0B0]">
+              System follows the research site schedule automatically: light
+              mode from 6:00 AM to 6:00 PM in Hanoi time, then dark mode
+              overnight. Choose Light or Dark to keep that theme active at all
+              times, regardless of the time of day.
             </span>
           </label>
         </form>

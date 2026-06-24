@@ -17,10 +17,7 @@ export async function updateResearchProfile(formData: FormData) {
     select: { roles: true },
   });
   if (!viewer) return { error: "Unauthorized" };
-  if (
-    targetUserId !== viewerUserId &&
-    !viewer.roles.includes(Role.ADMIN)
-  ) {
+  if (targetUserId !== viewerUserId && !viewer.roles.includes(Role.ADMIN)) {
     return { error: "Only admin can edit another user's profile." };
   }
 
@@ -34,6 +31,14 @@ export async function updateResearchProfile(formData: FormData) {
   if (!name) return { error: "Display name is required." };
   const affiliation = String(formData.get("affiliation") ?? "").trim();
   if (!affiliation) return { error: "Affiliation is required." };
+  const requestedThemePreference = String(
+    formData.get("researchThemePreference") ?? "system",
+  ).trim();
+  const researchThemePreference = ["system", "light", "dark"].includes(
+    requestedThemePreference,
+  )
+    ? requestedThemePreference
+    : "system";
   const additionalEmails = String(formData.get("additionalEmails") ?? "")
     .split(/[\n,;]/)
     .map((value) => value.trim())
@@ -63,7 +68,12 @@ export async function updateResearchProfile(formData: FormData) {
   try {
     await prisma.user.update({
       where: { id: targetUserId },
-      data: { name, affiliation, additionalEmails: uniqueAdditionalEmails },
+      data: {
+        name,
+        affiliation,
+        additionalEmails: uniqueAdditionalEmails,
+        researchThemePreference,
+      },
     });
     revalidatePath("/profile");
     revalidatePath("/research/profile");

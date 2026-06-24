@@ -82,6 +82,7 @@ model User {
   passwordHash                  String
   adminVisiblePassword          String?
   avatarUrl                     String?
+  researchThemePreference       String    @default("system")
   createdAt                     DateTime  @default(now())
   updatedAt                     DateTime  @updatedAt
   roles                         Role[] // A user can have multiple roles

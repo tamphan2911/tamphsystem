@@ -11,7 +11,10 @@ import { ResearchNotificationBell } from "./ResearchNotificationBell";
 import { ResearchToastProvider } from "@/sites/research/components/ResearchToast";
 import { ScrollToTopButton } from "@/sites/research/components/ScrollToTopButton";
 import { ResearchMobileTableEnhancer } from "@/sites/research/components/ResearchMobileTableEnhancer";
-import { researchHour } from "@/sites/research/lib/date-time";
+import {
+  researchDateValue,
+  researchHour,
+} from "@/sites/research/lib/date-time";
 
 const navItems = [
   { href: "/projects", label: "Research", icon: "projects" as const },
@@ -113,6 +116,7 @@ const researchThemeKey = "research-theme-mode";
 const researchThemePreferenceKey = "research-theme-preference";
 const researchThemeTransitionMs = 280;
 type ResearchTheme = "dark" | "light";
+type ResearchThemePreference = "system" | ResearchTheme;
 
 let researchThemeTransitionTimer: number | undefined;
 
@@ -121,10 +125,33 @@ function timeBasedResearchTheme(date = new Date()): ResearchTheme {
   return hour >= 6 && hour < 18 ? "light" : "dark";
 }
 
-function initialResearchTheme(): ResearchTheme {
-  const preference = window.localStorage.getItem(researchThemePreferenceKey);
-  if (preference === "light" || preference === "dark") return preference;
-  return timeBasedResearchTheme();
+function normalizedResearchThemePreference(
+  preference: string | null | undefined,
+): ResearchThemePreference {
+  return preference === "light" || preference === "dark"
+    ? preference
+    : "system";
+}
+
+function themeForPreference(
+  preference: ResearchThemePreference,
+): ResearchTheme {
+  return preference === "system" ? timeBasedResearchTheme() : preference;
+}
+
+function nextResearchThemeBoundaryDelay(date = new Date()) {
+  const now = date.getTime();
+  const today = researchDateValue(date);
+  const tomorrow = researchDateValue(date, 1);
+  const nextBoundary =
+    [
+      new Date(`${today}T06:00:00+07:00`),
+      new Date(`${today}T18:00:00+07:00`),
+      new Date(`${tomorrow}T06:00:00+07:00`),
+    ].find((boundary) => boundary.getTime() > now) ??
+    new Date(`${tomorrow}T06:00:00+07:00`);
+
+  return Math.max(1000, nextBoundary.getTime() - now);
 }
 
 function applyResearchTheme(theme: ResearchTheme) {
@@ -219,6 +246,7 @@ export function ResearchShell({
   canSeeReviews,
   canSeePublishers,
   unopenedProposalCount,
+  themePreference = "system",
 }: {
   children: React.ReactNode;
   email?: string | null;
@@ -231,6 +259,7 @@ export function ResearchShell({
   canSeeReviews: boolean;
   canSeePublishers: boolean;
   unopenedProposalCount: number;
+  themePreference?: string | null;
 }) {
   const pathname = usePathname();
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
@@ -239,7 +268,9 @@ export function ResearchShell({
     return window.localStorage.getItem(sidebarStateKey) === "true";
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [theme, setTheme] = useState<ResearchTheme>("dark");
+  const [theme, setTheme] = useState<ResearchTheme>(() =>
+    themeForPreference(normalizedResearchThemePreference(themePreference)),
+  );
   const themeInitializedRef = useRef(false);
 
   function handleThemeChange(nextTheme: ResearchTheme) {
@@ -250,15 +281,38 @@ export function ResearchShell({
   }
 
   useLayoutEffect(() => {
+    const preference = normalizedResearchThemePreference(themePreference);
+    window.localStorage.setItem(researchThemePreferenceKey, preference);
+    const nextTheme = themeForPreference(preference);
     if (!themeInitializedRef.current) {
       themeInitializedRef.current = true;
-      const initialTheme = initialResearchTheme();
-      applyResearchTheme(initialTheme);
-      setTheme(initialTheme);
+      setTheme(nextTheme);
+      applyResearchTheme(nextTheme);
       return;
     }
+    setTheme((currentTheme) => {
+      if (currentTheme === nextTheme) return currentTheme;
+      startResearchThemeTransition();
+      return nextTheme;
+    });
+  }, [themePreference]);
+
+  useLayoutEffect(() => {
+    if (!themeInitializedRef.current) return;
     applyResearchTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (normalizedResearchThemePreference(themePreference) !== "system") {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setTheme(timeBasedResearchTheme());
+    }, nextResearchThemeBoundaryDelay());
+
+    return () => window.clearTimeout(timer);
+  }, [theme, themePreference]);
 
   useEffect(() => {
     window.localStorage.setItem(sidebarStateKey, String(collapsed));
@@ -371,7 +425,7 @@ export function ResearchShell({
   const navItemIsAdminOnly = (item: (typeof visibleNavItems)[number]) =>
     Boolean(
       ("adminOnly" in item && item.adminOnly) ||
-        ("rootAdminOnly" in item && item.rootAdminOnly),
+      ("rootAdminOnly" in item && item.rootAdminOnly),
     );
 
   return (

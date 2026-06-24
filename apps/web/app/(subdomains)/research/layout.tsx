@@ -26,14 +26,16 @@ export default async function ResearchLayout({
   let roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   let userActiveSites: string[] | null = null;
+  let researchThemePreference = "system";
   if (userId) {
     const currentUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { roles: true, activeSites: true },
+      select: { roles: true, activeSites: true, researchThemePreference: true },
     });
     if (currentUser) {
       roles = currentUser.roles;
       userActiveSites = currentUser.activeSites;
+      researchThemePreference = currentUser.researchThemePreference;
     }
   }
   const isRootAdmin = roles.includes(Role.ADMIN);
@@ -117,6 +119,7 @@ export default async function ResearchLayout({
         canSeeReviews={canSeeReviews}
         canSeePublishers={canSeePublishers}
         unopenedProposalCount={unopenedProposalCount}
+        themePreference={researchThemePreference}
       >
         {children}
       </ResearchShell>
