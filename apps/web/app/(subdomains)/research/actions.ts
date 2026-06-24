@@ -4933,6 +4933,10 @@ export async function createResearchTask(formData: FormData) {
   const organizedProjectId = optionalString(formData.get("organizedProjectId"));
   const journalId = optionalString(formData.get("journalId"));
   const conferenceId = optionalString(formData.get("conferenceId"));
+  const suggestedJournalId = optionalString(formData.get("suggestedJournalId"));
+  const suggestedConferenceId = optionalString(
+    formData.get("suggestedConferenceId"),
+  );
   const reviewId = optionalString(formData.get("reviewId"));
   let accountId = optionalString(formData.get("accountId"));
   const allowAssigneeReportUpload =
@@ -5109,6 +5113,40 @@ export async function createResearchTask(formData: FormData) {
     await prisma.academicReview.update({
       where: { id: reviewId },
       data: { status: "IN_PROGRESS" },
+    });
+  }
+
+  if (
+    taskType === ResearchTaskType.SUBMIT_RESEARCH &&
+    projectId &&
+    journalId &&
+    suggestedJournalId
+  ) {
+    await prisma.suggestedJournal.updateMany({
+      where: {
+        id: suggestedJournalId,
+        projectId,
+        journalId,
+        OR: [{ submissionTaskId: null }, { submissionTaskId: task.id }],
+      },
+      data: { submissionTaskId: task.id },
+    });
+  }
+
+  if (
+    taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
+    projectId &&
+    conferenceId &&
+    suggestedConferenceId
+  ) {
+    await prisma.suggestedConference.updateMany({
+      where: {
+        id: suggestedConferenceId,
+        projectId,
+        conferenceId,
+        OR: [{ submissionTaskId: null }, { submissionTaskId: task.id }],
+      },
+      data: { submissionTaskId: task.id },
     });
   }
 

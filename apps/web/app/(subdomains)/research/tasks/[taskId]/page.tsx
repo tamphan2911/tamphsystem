@@ -29,6 +29,7 @@ import {
   prisma,
   JournalApprovalStatus,
   ResearchTaskStatus,
+  ResearchTaskType,
   Role,
 } from "@repo/db";
 import { auth } from "../../../../../auth";
@@ -1064,6 +1065,78 @@ export default async function TaskDetailPage({
   });
 
   if (!task) notFound();
+  const linkedJournalSubmissionSuggestion =
+    task.journalSubmissionSuggestion ??
+    (task.taskType === ResearchTaskType.SUBMIT_RESEARCH &&
+    task.projectId &&
+    task.journalId
+      ? await prisma.suggestedJournal.findFirst({
+          where: { projectId: task.projectId, journalId: task.journalId },
+          select: {
+            id: true,
+            venueName: true,
+            venueLink: true,
+            note: true,
+            status: true,
+            declineReason: true,
+            createdAt: true,
+            journal: {
+              select: {
+                name: true,
+                issn: true,
+                publisher: true,
+                rank: true,
+                localRank: true,
+                apc: true,
+                apcCurrency: true,
+                submissionFee: true,
+                submissionFeeCurrency: true,
+                note: true,
+                homepageLink: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        })
+      : null);
+  const linkedConferenceSubmissionSuggestion =
+    task.conferenceSubmissionSuggestion ??
+    (task.taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
+    task.projectId &&
+    task.conferenceId
+      ? await prisma.suggestedConference.findFirst({
+          where: {
+            projectId: task.projectId,
+            conferenceId: task.conferenceId,
+          },
+          select: {
+            id: true,
+            venueName: true,
+            venueLink: true,
+            note: true,
+            status: true,
+            declineReason: true,
+            createdAt: true,
+            conference: {
+              select: {
+                name: true,
+                type: true,
+                organizer: true,
+                location: true,
+                startDate: true,
+                endDate: true,
+                apc: true,
+                apcCurrency: true,
+                submissionFee: true,
+                submissionFeeCurrency: true,
+                note: true,
+                website: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        })
+      : null);
   const myAssignment = task.assignments.find(
     (assignment) => assignment.userId === userId,
   );
@@ -1551,42 +1624,43 @@ export default async function TaskDetailPage({
         suggestion.venueLink ?? suggestion.journal?.homepageLink ?? null,
       createdAt: suggestion.createdAt,
     })),
-    ...(task.journalSubmissionSuggestion
+    ...(linkedJournalSubmissionSuggestion
       ? [
           {
-            id: task.journalSubmissionSuggestion.id,
+            id: linkedJournalSubmissionSuggestion.id,
             kind: "journal" as const,
             name:
-              task.journalSubmissionSuggestion.journal?.name ??
-              task.journalSubmissionSuggestion.venueName ??
+              linkedJournalSubmissionSuggestion.journal?.name ??
+              linkedJournalSubmissionSuggestion.venueName ??
               "Unnamed journal",
-            status: task.journalSubmissionSuggestion.status,
+            status: linkedJournalSubmissionSuggestion.status,
             meta: [
-              task.journalSubmissionSuggestion.journal?.issn
-                ? `ISSN ${task.journalSubmissionSuggestion.journal.issn}`
+              linkedJournalSubmissionSuggestion.journal?.issn
+                ? `ISSN ${linkedJournalSubmissionSuggestion.journal.issn}`
                 : null,
-              task.journalSubmissionSuggestion.journal?.publisher,
-              task.journalSubmissionSuggestion.journal?.rank ??
-                task.journalSubmissionSuggestion.journal?.localRank,
+              linkedJournalSubmissionSuggestion.journal?.publisher,
+              linkedJournalSubmissionSuggestion.journal?.rank ??
+                linkedJournalSubmissionSuggestion.journal?.localRank,
             ]
               .filter(Boolean)
               .join(" - "),
-            apc: task.journalSubmissionSuggestion.journal?.apc ?? null,
+            apc: linkedJournalSubmissionSuggestion.journal?.apc ?? null,
             apcCurrency:
-              task.journalSubmissionSuggestion.journal?.apcCurrency ?? "USD",
+              linkedJournalSubmissionSuggestion.journal?.apcCurrency ?? "USD",
             submissionFee:
-              task.journalSubmissionSuggestion.journal?.submissionFee ?? null,
+              linkedJournalSubmissionSuggestion.journal?.submissionFee ?? null,
             submissionFeeCurrency:
-              task.journalSubmissionSuggestion.journal?.submissionFeeCurrency ??
+              linkedJournalSubmissionSuggestion.journal
+                ?.submissionFeeCurrency ??
               "USD",
-            journalNote: task.journalSubmissionSuggestion.journal?.note ?? null,
-            venueNote: task.journalSubmissionSuggestion.note ?? null,
-            declineReason: task.journalSubmissionSuggestion.declineReason,
+            journalNote: linkedJournalSubmissionSuggestion.journal?.note ?? null,
+            venueNote: linkedJournalSubmissionSuggestion.note ?? null,
+            declineReason: linkedJournalSubmissionSuggestion.declineReason,
             venueLink:
-              task.journalSubmissionSuggestion.venueLink ??
-              task.journalSubmissionSuggestion.journal?.homepageLink ??
+              linkedJournalSubmissionSuggestion.venueLink ??
+              linkedJournalSubmissionSuggestion.journal?.homepageLink ??
               null,
-            createdAt: task.journalSubmissionSuggestion.createdAt,
+            createdAt: linkedJournalSubmissionSuggestion.createdAt,
           },
         ]
       : []),
@@ -1622,62 +1696,63 @@ export default async function TaskDetailPage({
       venueLink: suggestion.venueLink ?? suggestion.conference?.website ?? null,
       createdAt: suggestion.createdAt,
     })),
-    ...(task.conferenceSubmissionSuggestion
+    ...(linkedConferenceSubmissionSuggestion
       ? [
           {
-            id: task.conferenceSubmissionSuggestion.id,
+            id: linkedConferenceSubmissionSuggestion.id,
             kind: "conference" as const,
             name:
-              task.conferenceSubmissionSuggestion.conference?.name ??
-              task.conferenceSubmissionSuggestion.venueName ??
+              linkedConferenceSubmissionSuggestion.conference?.name ??
+              linkedConferenceSubmissionSuggestion.venueName ??
               "Unnamed conference",
-            status: task.conferenceSubmissionSuggestion.status,
+            status: linkedConferenceSubmissionSuggestion.status,
             meta: [
-              task.conferenceSubmissionSuggestion.conference?.organizer,
-              task.conferenceSubmissionSuggestion.conference?.type,
-              task.conferenceSubmissionSuggestion.conference?.location,
-              task.conferenceSubmissionSuggestion.conference
+              linkedConferenceSubmissionSuggestion.conference?.organizer,
+              linkedConferenceSubmissionSuggestion.conference?.type,
+              linkedConferenceSubmissionSuggestion.conference?.location,
+              linkedConferenceSubmissionSuggestion.conference
                 ? conferenceTime(
-                    task.conferenceSubmissionSuggestion.conference.startDate,
-                    task.conferenceSubmissionSuggestion.conference.endDate,
+                    linkedConferenceSubmissionSuggestion.conference.startDate,
+                    linkedConferenceSubmissionSuggestion.conference.endDate,
                   )
                 : null,
             ]
               .filter(Boolean)
               .join(" - "),
-            apc: task.conferenceSubmissionSuggestion.conference?.apc ?? null,
+            apc: linkedConferenceSubmissionSuggestion.conference?.apc ?? null,
             apcCurrency:
-              task.conferenceSubmissionSuggestion.conference?.apcCurrency ??
+              linkedConferenceSubmissionSuggestion.conference?.apcCurrency ??
               "USD",
             submissionFee:
-              task.conferenceSubmissionSuggestion.conference?.submissionFee ??
+              linkedConferenceSubmissionSuggestion.conference?.submissionFee ??
               null,
             submissionFeeCurrency:
-              task.conferenceSubmissionSuggestion.conference
+              linkedConferenceSubmissionSuggestion.conference
                 ?.submissionFeeCurrency ?? "USD",
             journalNote:
-              task.conferenceSubmissionSuggestion.conference?.note ?? null,
-            venueNote: task.conferenceSubmissionSuggestion.note ?? null,
-            declineReason: task.conferenceSubmissionSuggestion.declineReason,
+              linkedConferenceSubmissionSuggestion.conference?.note ?? null,
+            venueNote: linkedConferenceSubmissionSuggestion.note ?? null,
+            declineReason: linkedConferenceSubmissionSuggestion.declineReason,
             venueLink:
-              task.conferenceSubmissionSuggestion.venueLink ??
-              task.conferenceSubmissionSuggestion.conference?.website ??
+              linkedConferenceSubmissionSuggestion.venueLink ??
+              linkedConferenceSubmissionSuggestion.conference?.website ??
               null,
-            createdAt: task.conferenceSubmissionSuggestion.createdAt,
+            createdAt: linkedConferenceSubmissionSuggestion.createdAt,
           },
         ]
       : []),
   ].sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime());
   const isSuggestVenueTask = task.taskType === "SUGGEST_VENUE";
   const linkedSubmitSuggestedVenue =
-    task.taskType === "SUBMIT_RESEARCH" && task.journalSubmissionSuggestion
-      ? (task.journalSubmissionSuggestion.journal?.name ??
-        task.journalSubmissionSuggestion.venueName ??
+    task.taskType === ResearchTaskType.SUBMIT_RESEARCH &&
+    linkedJournalSubmissionSuggestion
+      ? (linkedJournalSubmissionSuggestion.journal?.name ??
+        linkedJournalSubmissionSuggestion.venueName ??
         "suggested journal")
-      : task.taskType === "SUBMIT_CONFERENCE" &&
-          task.conferenceSubmissionSuggestion
-        ? (task.conferenceSubmissionSuggestion.conference?.name ??
-          task.conferenceSubmissionSuggestion.venueName ??
+      : task.taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
+          linkedConferenceSubmissionSuggestion
+        ? (linkedConferenceSubmissionSuggestion.conference?.name ??
+          linkedConferenceSubmissionSuggestion.venueName ??
           "suggested conference")
         : null;
   const hasTaskResultPanel =

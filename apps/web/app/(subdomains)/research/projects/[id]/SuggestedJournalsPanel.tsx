@@ -1592,13 +1592,25 @@ export function SuggestedJournalsPanel({
                     value={selectedAccountId}
                   />
                 ) : null}
+                <input
+                  type="hidden"
+                  name="suggestedJournalId"
+                  value={assignVenue.item.id}
+                />
               </>
             ) : (
-              <input
-                type="hidden"
-                name="conferenceId"
-                value={assignVenue.item.venueId}
-              />
+              <>
+                <input
+                  type="hidden"
+                  name="conferenceId"
+                  value={assignVenue.item.venueId}
+                />
+                <input
+                  type="hidden"
+                  name="suggestedConferenceId"
+                  value={assignVenue.item.id}
+                />
+              </>
             )}
             <input
               type="hidden"
