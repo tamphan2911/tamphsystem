@@ -52,7 +52,11 @@ export type TaskProposalResultItem = {
     code: string;
     stage: string;
     authors: string;
-    updatedAt: string;
+    createdAt: string;
+    acceptedAt: string;
+    publishedAt: string;
+    acceptedVenue: string;
+    publishedVenue: string;
   } | null;
   createdProject: {
     id: string;
@@ -63,7 +67,8 @@ export type TaskProposalResultItem = {
     organizer: string;
     owner: string;
     members: string;
-    updatedAt: string;
+    createdAt: string;
+    finishedAt: string;
   } | null;
 };
 
@@ -154,6 +159,14 @@ function label(value: string) {
     .toLowerCase()
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function ResultSeparator() {
+  return (
+    <span className="px-2 text-[#A0A8B5] dark:text-[#777777]" aria-hidden>
+      |
+    </span>
+  );
 }
 
 export function TaskProposalResult({
@@ -355,11 +368,21 @@ export function TaskProposalResult({
         key={proposal.id}
         className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]"
       >
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="mb-1 text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
-              {typeLabel}
-            </p>
+            <div className="mb-1 flex min-w-0 items-start justify-between gap-3">
+              <p className="text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
+                {typeLabel}
+              </p>
+              <span
+                className={`inline-flex flex-none items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${statusClass(
+                  proposal.status,
+                )}`}
+              >
+                <StatusIcon className="h-3.5 w-3.5" />
+                {label(proposal.status)}
+              </span>
+            </div>
             <Link
               href={`/proposals/${proposal.id}`}
               onClick={(event) => event.stopPropagation()}
@@ -374,20 +397,12 @@ export function TaskProposalResult({
                 : ""}
             </p>
           </div>
-          <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${statusClass(
-              proposal.status,
-            )}`}
-          >
-            <StatusIcon className="h-3.5 w-3.5" />
-            {label(proposal.status)}
-          </span>
         </div>
-        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#475467] dark:text-[#B0B0B0]">
+        <p className="mt-3 line-clamp-2 whitespace-pre-wrap text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
           {proposal.description || "No proposal description."}
         </p>
         <div className="mt-3 grid gap-2 text-xs text-[#667085] dark:text-[#B0B0B0]">
-          <span>{proposal.createdAt}</span>
+          <span>Created date: {proposal.createdAt}</span>
           {proposal.fileName ? (
             <a
               href={`/api/research/proposals/${proposal.id}/file`}
@@ -422,16 +437,34 @@ export function TaskProposalResult({
 
   function createdResearchCard(proposal: TaskProposalResultItem) {
     if (!proposal.createdResearch) return null;
+    const dateItems = [
+      ["created", proposal.createdResearch.createdAt],
+      ["accepted", proposal.createdResearch.acceptedAt],
+      ["published", proposal.createdResearch.publishedAt],
+    ].filter((item): item is [string, string] => Boolean(item[1]));
+    const venueLine =
+      proposal.createdResearch.publishedVenue ||
+      proposal.createdResearch.acceptedVenue;
     return (
       <article
         key={`${proposal.id}-research`}
         className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]"
       >
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="mb-1 text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
-              Research result
-            </p>
+            <div className="mb-1 flex min-w-0 items-start justify-between gap-3">
+              <p className="text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
+                Research result
+              </p>
+              <span
+                className={`inline-flex flex-none items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${researchStageClass(
+                  proposal.createdResearch.stage,
+                )}`}
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                {label(proposal.createdResearch.stage)}
+              </span>
+            </div>
             <Link
               href={`/projects/${proposal.createdResearch.id}`}
               className="block break-words text-sm font-normal leading-6 text-[#1F7180] transition hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
@@ -439,14 +472,6 @@ export function TaskProposalResult({
               {proposal.createdResearch.title}
             </Link>
           </div>
-          <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${researchStageClass(
-              proposal.createdResearch.stage,
-            )}`}
-          >
-            <Link2 className="h-3.5 w-3.5" />
-            {label(proposal.createdResearch.stage)}
-          </span>
         </div>
         <div className="mt-3 grid gap-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
           <span>
@@ -458,7 +483,24 @@ export function TaskProposalResult({
           <span className="break-words">
             Authors: {proposal.createdResearch.authors || "-"}
           </span>
-          <span>Updated: {proposal.createdResearch.updatedAt}</span>
+          {venueLine ? (
+            <span className="break-words">
+              {proposal.createdResearch.publishedVenue
+                ? "Published in"
+                : "Accepted in"}
+              : {venueLine}
+            </span>
+          ) : null}
+          <span className="flex flex-wrap items-center gap-y-1">
+            {dateItems.map(([itemLabel, value], index) => (
+              <span key={itemLabel} className="inline-flex items-center">
+                {index > 0 ? <ResultSeparator /> : null}
+                <span>
+                  {itemLabel}: {value}
+                </span>
+              </span>
+            ))}
+          </span>
         </div>
       </article>
     );
@@ -466,16 +508,30 @@ export function TaskProposalResult({
 
   function createdProjectCard(proposal: TaskProposalResultItem) {
     if (!proposal.createdProject) return null;
+    const dateItems = [
+      ["created", proposal.createdProject.createdAt],
+      ["finished", proposal.createdProject.finishedAt],
+    ].filter((item): item is [string, string] => Boolean(item[1]));
     return (
       <article
         key={`${proposal.id}-project`}
         className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]"
       >
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="mb-1 text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
-              Project result
-            </p>
+            <div className="mb-1 flex min-w-0 items-start justify-between gap-3">
+              <p className="text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
+                Project result
+              </p>
+              <span
+                className={`inline-flex flex-none items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${projectStatusClass(
+                  proposal.createdProject.status,
+                )}`}
+              >
+                <Building2 className="h-3.5 w-3.5" />
+                {label(proposal.createdProject.status)}
+              </span>
+            </div>
             <Link
               href={`/organized-projects/${proposal.createdProject.id}`}
               className="block break-words text-sm font-normal leading-6 text-[#1F7180] transition hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
@@ -483,14 +539,6 @@ export function TaskProposalResult({
               {proposal.createdProject.title}
             </Link>
           </div>
-          <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${projectStatusClass(
-              proposal.createdProject.status,
-            )}`}
-          >
-            <Building2 className="h-3.5 w-3.5" />
-            {label(proposal.createdProject.status)}
-          </span>
         </div>
         <div className="mt-3 grid gap-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
           <span>
@@ -500,16 +548,27 @@ export function TaskProposalResult({
             </span>
           </span>
           <span>Type: {label(proposal.createdProject.projectType)}</span>
-          <span className="break-words">
-            Funder: {proposal.createdProject.organizer || "-"}
-          </span>
+          {proposal.createdProject.organizer ? (
+            <span className="break-words">
+              Funder: {proposal.createdProject.organizer}
+            </span>
+          ) : null}
           <span className="break-words">
             Members:{" "}
             {proposal.createdProject.members ||
               proposal.createdProject.owner ||
               "-"}
           </span>
-          <span>Updated: {proposal.createdProject.updatedAt}</span>
+          <span className="flex flex-wrap items-center gap-y-1">
+            {dateItems.map(([itemLabel, value], index) => (
+              <span key={itemLabel} className="inline-flex items-center">
+                {index > 0 ? <ResultSeparator /> : null}
+                <span>
+                  {itemLabel}: {value}
+                </span>
+              </span>
+            ))}
+          </span>
         </div>
       </article>
     );
@@ -573,7 +632,7 @@ export function TaskProposalResult({
       <div className="grid gap-4 md:grid-cols-3">
         {proposals.length > 0 ? (
           <>
-            {proposals.map((proposal, index) => (
+            {proposals.map((proposal) => (
               <div key={proposal.id} className="contents">
                 {proposalAttemptCard(proposal)}
                 {createdResearchCard(proposal)}

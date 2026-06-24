@@ -747,6 +747,13 @@ function journalMetaLine(journal: {
   return `${journal.publisher || "No publisher"} - ${rankLabel}`;
 }
 
+function resultLabel(value: string) {
+  return value
+    .toLowerCase()
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 function researchAuthors(project: {
   leadResearcher: { name: string | null; email: string };
   authors: { name: string | null; email: string }[];
@@ -771,7 +778,107 @@ function researchAuthors(project: {
             `${displayResearchPersonName(project.leadResearcher)}*`,
             project.coAuthors,
           ].filter(Boolean);
-  return names.join("; ");
+  return names.join(", ");
+}
+
+function taskResultJournalVenue(submission: {
+  journal: {
+    name: string;
+    publisher: string | null;
+    rank: string | null;
+    localRank: string | null;
+    type: string;
+  };
+}) {
+  return `${submission.journal.name} - ${journalMetaLine(submission.journal)}`;
+}
+
+function taskResultConferenceVenue(submission: {
+  conference: {
+    name: string;
+    organizer: string | null;
+    type: string | null;
+    location: string | null;
+  };
+}) {
+  return [
+    submission.conference.name,
+    submission.conference.organizer,
+    submission.conference.type ? resultLabel(submission.conference.type) : null,
+    submission.conference.location,
+  ]
+    .filter(Boolean)
+    .join(" - ");
+}
+
+function taskResultResearchSubmissionInfo(project: {
+  submissions: {
+    status: string;
+    acceptedAt: Date | null;
+    publishedAt: Date | null;
+    submittedAt: Date | null;
+    updatedAt: Date;
+    journal: {
+      name: string;
+      publisher: string | null;
+      rank: string | null;
+      localRank: string | null;
+      type: string;
+    };
+  }[];
+  conferenceSubmissions: {
+    status: string;
+    acceptedAt: Date | null;
+    publishedAt: Date | null;
+    submittedAt: Date | null;
+    updatedAt: Date;
+    conference: {
+      name: string;
+      organizer: string | null;
+      type: string | null;
+      location: string | null;
+    };
+  }[];
+}) {
+  const publishedJournal = project.submissions.find(
+    (submission) => submission.status === "PUBLISHED",
+  );
+  const publishedConference = project.conferenceSubmissions.find(
+    (submission) => submission.status === "PUBLISHED",
+  );
+  const acceptedJournal = project.submissions.find(
+    (submission) =>
+      submission.status === "ACCEPTED" || submission.status === "PUBLISHED",
+  );
+  const acceptedConference = project.conferenceSubmissions.find(
+    (submission) =>
+      submission.status === "ACCEPTED" || submission.status === "PUBLISHED",
+  );
+  const publishedFallback = acceptedJournal?.publishedAt
+    ? acceptedJournal
+    : acceptedConference?.publishedAt
+      ? acceptedConference
+      : null;
+  const published =
+    publishedJournal ?? publishedConference ?? publishedFallback;
+  const accepted = acceptedJournal ?? acceptedConference ?? null;
+
+  return {
+    acceptedAt: accepted?.acceptedAt ? formatDate(accepted.acceptedAt) : "",
+    publishedAt: published?.publishedAt
+      ? formatDate(published.publishedAt)
+      : "",
+    acceptedVenue: accepted
+      ? "journal" in accepted
+        ? taskResultJournalVenue(accepted)
+        : taskResultConferenceVenue(accepted)
+      : "",
+    publishedVenue: published
+      ? "journal" in published
+        ? taskResultJournalVenue(published)
+        : taskResultConferenceVenue(published)
+      : "",
+  };
 }
 
 export default async function TaskDetailPage({
@@ -1022,7 +1129,7 @@ export default async function TaskDetailPage({
               title: true,
               researchCode: true,
               stage: true,
-              updatedAt: true,
+              createdAt: true,
               coAuthors: true,
               leadResearcher: { select: { name: true, email: true } },
               authors: {
@@ -1036,6 +1143,45 @@ export default async function TaskDetailPage({
                 },
                 orderBy: [{ position: "asc" }, { createdAt: "asc" }],
               },
+              submissions: {
+                where: { status: { in: ["ACCEPTED", "PUBLISHED"] } },
+                select: {
+                  status: true,
+                  acceptedAt: true,
+                  publishedAt: true,
+                  submittedAt: true,
+                  updatedAt: true,
+                  journal: {
+                    select: {
+                      name: true,
+                      publisher: true,
+                      rank: true,
+                      localRank: true,
+                      type: true,
+                    },
+                  },
+                },
+                orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
+              },
+              conferenceSubmissions: {
+                where: { status: { in: ["ACCEPTED", "PUBLISHED"] } },
+                select: {
+                  status: true,
+                  acceptedAt: true,
+                  publishedAt: true,
+                  submittedAt: true,
+                  updatedAt: true,
+                  conference: {
+                    select: {
+                      name: true,
+                      organizer: true,
+                      type: true,
+                      location: true,
+                    },
+                  },
+                },
+                orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
+              },
             },
           },
           createdOrganizedProject: {
@@ -1046,7 +1192,8 @@ export default async function TaskDetailPage({
               status: true,
               projectType: true,
               organizer: true,
-              updatedAt: true,
+              createdAt: true,
+              endDate: true,
               fundingInstitution: { select: { name: true } },
               createdBy: { select: { name: true, email: true } },
               members: {
@@ -1696,7 +1843,7 @@ export default async function TaskDetailPage({
                 title: true,
                 researchCode: true,
                 stage: true,
-                updatedAt: true,
+                createdAt: true,
                 coAuthors: true,
                 leadResearcher: { select: { name: true, email: true } },
                 authors: {
@@ -1710,6 +1857,45 @@ export default async function TaskDetailPage({
                   },
                   orderBy: [{ position: "asc" }, { createdAt: "asc" }],
                 },
+                submissions: {
+                  where: { status: { in: ["ACCEPTED", "PUBLISHED"] } },
+                  select: {
+                    status: true,
+                    acceptedAt: true,
+                    publishedAt: true,
+                    submittedAt: true,
+                    updatedAt: true,
+                    journal: {
+                      select: {
+                        name: true,
+                        publisher: true,
+                        rank: true,
+                        localRank: true,
+                        type: true,
+                      },
+                    },
+                  },
+                  orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
+                },
+                conferenceSubmissions: {
+                  where: { status: { in: ["ACCEPTED", "PUBLISHED"] } },
+                  select: {
+                    status: true,
+                    acceptedAt: true,
+                    publishedAt: true,
+                    submittedAt: true,
+                    updatedAt: true,
+                    conference: {
+                      select: {
+                        name: true,
+                        organizer: true,
+                        type: true,
+                        location: true,
+                      },
+                    },
+                  },
+                  orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
+                },
               },
             },
             createdOrganizedProject: {
@@ -1720,7 +1906,8 @@ export default async function TaskDetailPage({
                 status: true,
                 projectType: true,
                 organizer: true,
-                updatedAt: true,
+                createdAt: true,
+                endDate: true,
                 fundingInstitution: { select: { name: true } },
                 createdBy: { select: { name: true, email: true } },
                 members: {
@@ -1740,56 +1927,68 @@ export default async function TaskDetailPage({
     ...linkedAssociationProposals,
   ];
   const taskProposalResults: TaskProposalResultItem[] =
-    proposalResultsForDisplay.map((proposal) => ({
-      id: proposal.id,
-      type: proposal.type === "PROJECT" ? "PROJECT" : "RESEARCH",
-      status: proposal.status,
-      title: proposal.title,
-      description: proposal.description,
-      contactInfo: proposal.contactInfo ?? "",
-      notes: proposal.notes ?? "",
-      fileName: proposal.supportFileName ?? "",
-      fileSize: fileSizeLabel(proposal.supportFileSize),
-      decisionComment: proposal.decisionComment ?? "",
-      createdAt: formatDate(proposal.createdAt),
-      submittedBy: displayResearchPersonName(proposal.submittedBy),
-      submittedByEmail: displayResearchEmail(proposal.submittedBy.email),
-      createdResearch: proposal.createdResearchProject
-        ? {
-            id: proposal.createdResearchProject.id,
-            title: proposal.createdResearchProject.title,
-            code: proposal.createdResearchProject.researchCode ?? "",
-            stage: proposal.createdResearchProject.stage,
-            authors: researchAuthors(proposal.createdResearchProject),
-            updatedAt: formatDate(proposal.createdResearchProject.updatedAt),
-          }
-        : null,
-      createdProject: proposal.createdOrganizedProject
-        ? {
-            id: proposal.createdOrganizedProject.id,
-            title: proposal.createdOrganizedProject.title,
-            code: proposal.createdOrganizedProject.referenceCode ?? "",
-            status: proposal.createdOrganizedProject.status,
-            projectType: proposal.createdOrganizedProject.projectType,
-            organizer:
-              proposal.createdOrganizedProject.fundingInstitution?.name ??
-              proposal.createdOrganizedProject.organizer ??
-              "",
-            owner: proposal.createdOrganizedProject.createdBy
-              ? displayResearchPersonName(
-                  proposal.createdOrganizedProject.createdBy,
-                )
-              : "",
-            members: proposal.createdOrganizedProject.members
-              .map((member) => {
-                const name = displayResearchPersonName(member.user);
-                return member.isTeamLead ? `${name}*` : name;
-              })
-              .join("; "),
-            updatedAt: formatDate(proposal.createdOrganizedProject.updatedAt),
-          }
-        : null,
-    }));
+    proposalResultsForDisplay.map((proposal) => {
+      const researchSubmissionInfo = proposal.createdResearchProject
+        ? taskResultResearchSubmissionInfo(proposal.createdResearchProject)
+        : null;
+      return {
+        id: proposal.id,
+        type: proposal.type === "PROJECT" ? "PROJECT" : "RESEARCH",
+        status: proposal.status,
+        title: proposal.title,
+        description: proposal.description,
+        contactInfo: proposal.contactInfo ?? "",
+        notes: proposal.notes ?? "",
+        fileName: proposal.supportFileName ?? "",
+        fileSize: fileSizeLabel(proposal.supportFileSize),
+        decisionComment: proposal.decisionComment ?? "",
+        createdAt: formatDate(proposal.createdAt),
+        submittedBy: displayResearchPersonName(proposal.submittedBy),
+        submittedByEmail: displayResearchEmail(proposal.submittedBy.email),
+        createdResearch: proposal.createdResearchProject
+          ? {
+              id: proposal.createdResearchProject.id,
+              title: proposal.createdResearchProject.title,
+              code: proposal.createdResearchProject.researchCode ?? "",
+              stage: proposal.createdResearchProject.stage,
+              authors: researchAuthors(proposal.createdResearchProject),
+              createdAt: formatDate(proposal.createdResearchProject.createdAt),
+              acceptedAt: researchSubmissionInfo?.acceptedAt ?? "",
+              publishedAt: researchSubmissionInfo?.publishedAt ?? "",
+              acceptedVenue: researchSubmissionInfo?.acceptedVenue ?? "",
+              publishedVenue: researchSubmissionInfo?.publishedVenue ?? "",
+            }
+          : null,
+        createdProject: proposal.createdOrganizedProject
+          ? {
+              id: proposal.createdOrganizedProject.id,
+              title: proposal.createdOrganizedProject.title,
+              code: proposal.createdOrganizedProject.referenceCode ?? "",
+              status: proposal.createdOrganizedProject.status,
+              projectType: proposal.createdOrganizedProject.projectType,
+              organizer:
+                proposal.createdOrganizedProject.fundingInstitution?.name ??
+                proposal.createdOrganizedProject.organizer ??
+                "",
+              owner: proposal.createdOrganizedProject.createdBy
+                ? displayResearchPersonName(
+                    proposal.createdOrganizedProject.createdBy,
+                  )
+                : "",
+              members: proposal.createdOrganizedProject.members
+                .map((member) => {
+                  const name = displayResearchPersonName(member.user);
+                  return member.isTeamLead ? `${name}*` : name;
+                })
+                .join(", "),
+              createdAt: formatDate(proposal.createdOrganizedProject.createdAt),
+              finishedAt: proposal.createdOrganizedProject.endDate
+                ? formatDate(proposal.createdOrganizedProject.endDate)
+                : "",
+            }
+          : null,
+      };
+    });
   const selectedSuggestedReviewers: SuggestedReviewerOption[] =
     task.suggestedReviewers.map((reviewer) => ({
       id: reviewer.id,
