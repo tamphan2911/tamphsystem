@@ -2635,7 +2635,10 @@ function VenueCard({
             <IconHint label={assignLabel}>
               <button
                 type="button"
-                onClick={onAssign}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onAssign();
+                }}
                 aria-label={assignLabel}
                 className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-[#A8DADC] focus-visible:ring-2 focus-visible:ring-[#A8DADC]/35"
               >
@@ -2647,7 +2650,10 @@ function VenueCard({
             <IconHint label={deleteLabel}>
               <button
                 type="button"
-                onClick={onDelete}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDelete();
+                }}
                 aria-label={deleteLabel}
                 className="inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] outline-none transition hover:text-rose-300 focus-visible:ring-2 focus-visible:ring-rose-300/35"
               >
