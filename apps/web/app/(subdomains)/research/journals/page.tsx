@@ -46,6 +46,15 @@ export default async function JournalsPage() {
               reviews: { where: reviewCountWhere },
             },
           },
+          publisherRecord: {
+            select: {
+              usesSingleAccount: true,
+              accounts: {
+                where: { accountType: "PUBLISHER" },
+                select: { id: true },
+              },
+            },
+          },
         },
         orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
       }),
@@ -78,42 +87,54 @@ export default async function JournalsPage() {
     "REVISION",
   ]);
   const publishedSubmissionStatuses = new Set(["ACCEPTED", "PUBLISHED"]);
-  const rows: JournalRow[] = journals.map((journal) => ({
-    id: journal.id,
-    name: journal.name,
-    issn: journal.issn ?? "",
-    fields:
-      journal.fields.length > 0
-        ? journal.fields
-        : journal.field
-          ? journal.field
-              .split(";")
-              .map((field) => field.trim())
-              .filter(Boolean)
-          : [],
-    type: journal.type,
-    rank: journal.rank ?? "",
-    localRank: journal.localRank ?? "",
-    issuesPerYear: journal.issuesPerYear,
-    isFavorite: journal.isFavorite,
-    isInterest: journal.isInterest,
-    publisher: journal.publisher ?? "",
-    country: journal.country ?? "",
-    apc: journal.apc ?? "",
-    apcCurrency: journal.apcCurrency,
-    hasApcOption: journal.hasApcOption,
-    approvalStatus: journal.approvalStatus,
-    submissionFee: journal.submissionFee ?? "",
-    submissionFeeCurrency: journal.submissionFeeCurrency,
-    note: journal.note ?? "",
-    ongoingSubmissions: journal.submissions.filter((submission) =>
-      activeSubmissionStatuses.has(submission.status),
-    ).length,
-    publishedSubmissions: journal.submissions.filter((submission) =>
-      publishedSubmissionStatuses.has(submission.status),
-    ).length,
-    reviews: journal._count.reviews,
-  }));
+  const rows: JournalRow[] = journals.map((journal) => {
+    const usesPublisherAccount = Boolean(
+      journal.publisherRecord?.usesSingleAccount,
+    );
+    const publisherAccountCount = journal.publisherRecord?.accounts.length ?? 0;
+    const accountCount = usesPublisherAccount
+      ? publisherAccountCount
+      : journal._count.accounts;
+
+    return {
+      id: journal.id,
+      name: journal.name,
+      issn: journal.issn ?? "",
+      fields:
+        journal.fields.length > 0
+          ? journal.fields
+          : journal.field
+            ? journal.field
+                .split(";")
+                .map((field) => field.trim())
+                .filter(Boolean)
+            : [],
+      type: journal.type,
+      rank: journal.rank ?? "",
+      localRank: journal.localRank ?? "",
+      issuesPerYear: journal.issuesPerYear,
+      isFavorite: journal.isFavorite,
+      isInterest: journal.isInterest,
+      publisher: journal.publisher ?? "",
+      country: journal.country ?? "",
+      apc: journal.apc ?? "",
+      apcCurrency: journal.apcCurrency,
+      hasApcOption: journal.hasApcOption,
+      approvalStatus: journal.approvalStatus,
+      submissionFee: journal.submissionFee ?? "",
+      submissionFeeCurrency: journal.submissionFeeCurrency,
+      note: journal.note ?? "",
+      hasAssociatedAccount: accountCount > 0,
+      usesPublisherAccount,
+      ongoingSubmissions: journal.submissions.filter((submission) =>
+        activeSubmissionStatuses.has(submission.status),
+      ).length,
+      publishedSubmissions: journal.submissions.filter((submission) =>
+        publishedSubmissionStatuses.has(submission.status),
+      ).length,
+      reviews: journal._count.reviews,
+    };
+  });
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">

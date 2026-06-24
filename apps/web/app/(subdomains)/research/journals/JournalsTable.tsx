@@ -52,6 +52,8 @@ export type JournalRow = {
   submissionFee: string;
   submissionFeeCurrency: string;
   note: string;
+  hasAssociatedAccount: boolean;
+  usesPublisherAccount: boolean;
   ongoingSubmissions: number;
   publishedSubmissions: number;
   reviews: number;
@@ -200,6 +202,9 @@ export function JournalsTable({
   const [interestValue, setInterestValue] = useState(
     () => searchParams.get("interest") ?? "ALL",
   );
+  const [noAccountOnly, setNoAccountOnly] = useState(
+    () => isAdmin && searchParams.get("noAccount") === "1",
+  );
 
   const fieldOptions = useMemo(
     () => [
@@ -234,6 +239,8 @@ export function JournalsTable({
       const matchesInterest =
         interestStatuses.length === 0 ||
         interestStatuses.includes(row.isInterest ? "YES" : "NO");
+      const matchesAccount =
+        !isAdmin || !noAccountOnly || !row.hasAssociatedAccount;
       const haystack = [
         row.name,
         row.issn,
@@ -251,6 +258,11 @@ export function JournalsTable({
           : "approved",
         row.hasApcOption ? "option paid free route" : "",
         row.submissionFee,
+        row.hasAssociatedAccount
+          ? row.usesPublisherAccount
+            ? "publisher account"
+            : "journal account"
+          : "no account without account missing account",
         row.note,
       ]
         .join(" ")
@@ -259,10 +271,19 @@ export function JournalsTable({
         matchesField &&
         matchesFavorite &&
         matchesInterest &&
+        matchesAccount &&
         (!needle || haystack.includes(needle))
       );
     });
-  }, [favoriteStatuses, fields, interestStatuses, query, rows]);
+  }, [
+    favoriteStatuses,
+    fields,
+    interestStatuses,
+    isAdmin,
+    noAccountOnly,
+    query,
+    rows,
+  ]);
 
   const initialPage = Number(searchParams.get("page") ?? "1");
   const pagination = useTablePagination(
@@ -278,12 +299,15 @@ export function JournalsTable({
       params.set("favorite", favoriteStatuses.join(","));
     if (interestStatuses.length > 0)
       params.set("interest", interestStatuses.join(","));
+    if (isAdmin && noAccountOnly) params.set("noAccount", "1");
     if (pagination.page > 1) params.set("page", String(pagination.page));
     return params.toString() ? `${pathname}?${params.toString()}` : pathname;
   }, [
     favoriteStatuses,
     fields,
     interestStatuses,
+    isAdmin,
+    noAccountOnly,
     pagination.page,
     pathname,
     query,
@@ -301,6 +325,11 @@ export function JournalsTable({
 
   function updateInterestStatuses(values: string[]) {
     setInterestValue(values.length > 0 ? values.join(",") : "ALL");
+    pagination.setPage(1);
+  }
+
+  function updateNoAccountOnly(checked: boolean) {
+    setNoAccountOnly(checked);
     pagination.setPage(1);
   }
 
@@ -346,6 +375,21 @@ export function JournalsTable({
               { value: "NO", label: "Not interested" },
             ]}
           />
+          {isAdmin ? (
+            <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-3 text-sm font-normal text-[#243047] transition-colors duration-150 hover:border-[#C7BFAF] hover:bg-[#F7F4ED] hover:text-[#111827] sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white">
+              <input
+                type="checkbox"
+                checked={noAccountOnly}
+                onChange={(event) =>
+                  updateNoAccountOnly(event.currentTarget.checked)
+                }
+                className="h-4 w-4 cursor-pointer rounded-none border-[#D8D0C2] accent-[#1F7180] dark:border-[#666666] dark:accent-[#A8DADC]"
+              />
+              <IconHint label="Show journals without a journal account. If the publisher uses one shared account, journals are shown here when that publisher has no account.">
+                <span className="whitespace-nowrap text-left">No account</span>
+              </IconHint>
+            </label>
+          ) : null}
         </div>
       </div>
 
