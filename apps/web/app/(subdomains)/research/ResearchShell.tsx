@@ -377,12 +377,12 @@ export function ResearchShell({
         }`}
       >
         <aside
-          className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#3D3D3D] bg-[#2C2C2C] transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none ${
+          className={`fixed inset-y-0 left-0 z-40 hidden h-dvh max-h-dvh min-h-0 overflow-hidden border-r border-[#3D3D3D] bg-[#2C2C2C] transition-[width] duration-300 ease-out lg:flex lg:flex-col motion-reduce:transition-none ${
             collapsed ? "w-20" : "w-72"
           }`}
         >
           <div
-            className={`flex h-20 items-center border-b border-[#3A3A3A] bg-[#303030] px-4 transition-all duration-300 motion-reduce:transition-none ${collapsed ? "justify-center" : "gap-3"}`}
+            className={`flex h-20 flex-none items-center border-b border-[#3A3A3A] bg-[#303030] px-4 transition-all duration-300 motion-reduce:transition-none ${collapsed ? "justify-center" : "gap-3"}`}
           >
             <div
               className={`min-w-0 overflow-hidden transition-all duration-300 motion-reduce:transition-none ${collapsed ? "w-0 opacity-0" : "w-44 opacity-100"}`}
@@ -415,7 +415,7 @@ export function ResearchShell({
           </div>
 
           <nav
-            className={`flex-1 pt-0 transition-all duration-300 motion-reduce:transition-none ${collapsed ? "overflow-visible pb-3" : "overflow-hidden pb-3"}`}
+            className={`min-h-0 flex-1 overflow-y-auto overscroll-contain pt-0 transition-all duration-300 motion-reduce:transition-none ${collapsed ? "overflow-x-visible pb-3" : "overflow-x-hidden pb-3"}`}
           >
             {visibleNavItems.map((item) => (
               <ActiveNavLink
