@@ -369,13 +369,13 @@ export function TaskProposalResult({
         className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]"
       >
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="mb-1 flex min-w-0 items-start justify-between gap-3">
-              <p className="text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex min-w-0 items-baseline justify-between gap-3">
+              <p className="text-[11px] leading-5 uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
                 {typeLabel}
               </p>
               <span
-                className={`inline-flex flex-none items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${statusClass(
+                className={`inline-flex flex-none items-center gap-1.5 px-2.5 py-1 text-[11px] leading-none ring-1 ${statusClass(
                   proposal.status,
                 )}`}
               >
@@ -451,13 +451,13 @@ export function TaskProposalResult({
         className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]"
       >
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="mb-1 flex min-w-0 items-start justify-between gap-3">
-              <p className="text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex min-w-0 items-baseline justify-between gap-3">
+              <p className="text-[11px] leading-5 uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
                 Research result
               </p>
               <span
-                className={`inline-flex flex-none items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${researchStageClass(
+                className={`inline-flex flex-none items-center gap-1.5 px-2.5 py-1 text-[11px] leading-none ring-1 ${researchStageClass(
                   proposal.createdResearch.stage,
                 )}`}
               >
@@ -518,13 +518,13 @@ export function TaskProposalResult({
         className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]"
       >
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="mb-1 flex min-w-0 items-start justify-between gap-3">
-              <p className="text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex min-w-0 items-baseline justify-between gap-3">
+              <p className="text-[11px] leading-5 uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
                 Project result
               </p>
               <span
-                className={`inline-flex flex-none items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${projectStatusClass(
+                className={`inline-flex flex-none items-center gap-1.5 px-2.5 py-1 text-[11px] leading-none ring-1 ${projectStatusClass(
                   proposal.createdProject.status,
                 )}`}
               >
