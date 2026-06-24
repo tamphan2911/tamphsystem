@@ -1661,8 +1661,86 @@ export default async function TaskDetailPage({
             },
           ],
   );
+  const linkedAssociationProposals =
+    isProposalTask &&
+    task.proposalResults.length === 0 &&
+    (task.projectId || task.organizedProjectId)
+      ? await prisma.proposal.findMany({
+          where: {
+            OR: [
+              ...(task.projectId
+                ? [{ createdResearchProjectId: task.projectId }]
+                : []),
+              ...(task.organizedProjectId
+                ? [{ createdOrganizedProjectId: task.organizedProjectId }]
+                : []),
+            ],
+          },
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            type: true,
+            status: true,
+            title: true,
+            description: true,
+            contactInfo: true,
+            notes: true,
+            supportFileName: true,
+            supportFileSize: true,
+            decisionComment: true,
+            createdAt: true,
+            submittedBy: { select: { name: true, email: true } },
+            createdResearchProject: {
+              select: {
+                id: true,
+                title: true,
+                researchCode: true,
+                stage: true,
+                updatedAt: true,
+                coAuthors: true,
+                leadResearcher: { select: { name: true, email: true } },
+                authors: {
+                  select: { id: true, name: true, email: true },
+                  orderBy: [{ name: "asc" }, { email: "asc" }],
+                },
+                authorEntries: {
+                  select: {
+                    isCorresponding: true,
+                    user: { select: { name: true, email: true } },
+                  },
+                  orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+                },
+              },
+            },
+            createdOrganizedProject: {
+              select: {
+                id: true,
+                title: true,
+                referenceCode: true,
+                status: true,
+                projectType: true,
+                organizer: true,
+                updatedAt: true,
+                fundingInstitution: { select: { name: true } },
+                createdBy: { select: { name: true, email: true } },
+                members: {
+                  select: {
+                    isTeamLead: true,
+                    user: { select: { name: true, email: true } },
+                  },
+                  orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+                },
+              },
+            },
+          },
+        })
+      : [];
+  const proposalResultsForDisplay = [
+    ...task.proposalResults,
+    ...linkedAssociationProposals,
+  ];
   const taskProposalResults: TaskProposalResultItem[] =
-    task.proposalResults.map((proposal) => ({
+    proposalResultsForDisplay.map((proposal) => ({
       id: proposal.id,
       type: proposal.type === "PROJECT" ? "PROJECT" : "RESEARCH",
       status: proposal.status,
