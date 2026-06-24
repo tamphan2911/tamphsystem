@@ -67,6 +67,9 @@ import {
   normalizeResearchNumberInput,
 } from "@/sites/research/lib/currency";
 
+const defaultTaskDescription =
+  "Read the the general guide by click on icons right above.";
+
 export type SuggestedJournalOption = {
   id: string;
   venueId: string;
@@ -1824,6 +1827,7 @@ export function SuggestedJournalsPanel({
                 name="description"
                 rows={3}
                 placeholder="Description, expected output, files, or notes"
+                defaultValue={defaultTaskDescription}
                 className={researchTextareaClass}
               />
             </label>

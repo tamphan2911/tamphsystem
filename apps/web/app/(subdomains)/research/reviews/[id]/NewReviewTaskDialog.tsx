@@ -55,6 +55,9 @@ function defaultReviewTaskGuideIds(guides: TaskGuideOption[]) {
   return guide ? [guide.id] : [];
 }
 
+const defaultTaskDescription =
+  "Read the the general guide by click on icons right above.";
+
 export function NewReviewTaskDialog({
   reviewId,
   manuscriptTitle,
@@ -261,6 +264,7 @@ export function NewReviewTaskDialog({
               rows={3}
               aria-label="Description"
               placeholder="Description, expected output, files, or notes"
+              defaultValue={defaultTaskDescription}
               className={researchTextareaClass}
             />
           </label>

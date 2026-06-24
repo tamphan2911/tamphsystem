@@ -126,6 +126,8 @@ type SearchPanelItem = {
 };
 
 const inputClass = researchFieldClass;
+const defaultTaskDescription =
+  "Read the the general guide by click on icons right above.";
 const finishedResearchStages = new Set(["ACCEPTED", "PUBLISHED"]);
 const closedReviewStatuses = new Set(["SUBMITTED", "DECLINED", "CANCELLED"]);
 const closedProjectStatuses = new Set(["COMPLETED"]);
@@ -1188,7 +1190,7 @@ export function NewTaskDialog({
               rows={3}
               aria-label="Description"
               placeholder="Description, expected output, files, or notes"
-              defaultValue=""
+              defaultValue={defaultTaskDescription}
               className={researchTextareaClass}
             />
           </label>

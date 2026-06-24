@@ -79,6 +79,8 @@ export type SubmissionTaskAssigneeOption = {
 const defaultSubmissionTaskAssigneeEmail = "tamphan.ntc@gmail.com";
 
 const inputClass = researchFieldClass;
+const defaultTaskDescription =
+  "Read the the general guide by click on icons right above.";
 
 function defaultSubmissionTaskGuideIds(guides: TaskGuideOption[]) {
   const guide = guides.find((item) => item.guideCode === "G002");
@@ -826,6 +828,7 @@ export function CreateSubmissionTaskDialog({
                 name="description"
                 rows={3}
                 placeholder="Description, expected output, files, or notes"
+                defaultValue={defaultTaskDescription}
                 className={researchTextareaClass}
               />
             </label>

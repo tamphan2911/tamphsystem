@@ -187,7 +187,7 @@ function proposalTaskScopeFromForm(value: FormDataEntryValue | null) {
 }
 
 const DEFAULT_TASK_DESCRIPTION =
-  'Read general instruction by icons next to "Task content"';
+  "Read the the general guide by click on icons right above.";
 
 function defaultTaskGuideCodeForTask({
   taskType,
@@ -4365,11 +4365,7 @@ async function createSubmitTaskForSuggestedJournalApproval({
   }
 
   const taskTitle = `Submit "${project.title}" to ${journal.name}`;
-  const taskDescription = [
-    "Submit this research to the approved suggested journal.",
-    `Research: ${project.title}`,
-    `Journal: ${journal.name}`,
-  ].join("\n");
+  const taskDescription = DEFAULT_TASK_DESCRIPTION;
   const task = await prisma.$transaction(async (tx) => {
     const createdTask = await tx.researchTask.create({
       data: {
@@ -4484,11 +4480,7 @@ async function createSubmitTaskForSuggestedConferenceApproval({
   }
 
   const taskTitle = `Submit "${project.title}" to ${conference.name}`;
-  const taskDescription = [
-    "Submit this research to the approved suggested conference.",
-    `Research: ${project.title}`,
-    `Conference: ${conference.name}`,
-  ].join("\n");
+  const taskDescription = DEFAULT_TASK_DESCRIPTION;
   const task = await prisma.$transaction(async (tx) => {
     const createdTask = await tx.researchTask.create({
       data: {
@@ -7737,16 +7729,10 @@ export async function approveSuggestedJournal(
       throw new Error("Task guide G003 is not available.");
     }
     const venueName = suggestion.venueName ?? "New suggested journal";
-    const venueLink = suggestion.venueLink ?? "No venue link provided";
     const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const taskTitle = `Add journal: ${venueName}`;
     const taskCode = await generateTaskCode();
-    const taskDescription = [
-      "Add this suggested journal to the site system.",
-      `Journal: ${venueName}`,
-      `Link: ${venueLink}`,
-      `Research: ${suggestion.project.title}`,
-    ].join("\n");
+    const taskDescription = DEFAULT_TASK_DESCRIPTION;
     const task = await prisma.$transaction(async (tx) => {
       const createdTask = await tx.researchTask.create({
         data: {
