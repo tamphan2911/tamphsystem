@@ -702,7 +702,7 @@ export default async function ProposalDetailPage({
           </div>
 
           <div
-            className={`${sectionDividerClass} grid gap-5 p-5 ${
+            className={`${sectionDividerClass} grid items-start gap-5 p-5 ${
               hasAssociatedAcceptedRecord ? "lg:grid-cols-2" : ""
             }`}
           >
