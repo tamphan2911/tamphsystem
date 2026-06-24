@@ -16,10 +16,8 @@ import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfi
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import {
   IconHint,
-  MultiFilterSelect,
   TablePagination,
   TableSearchInput,
-  parseMultiFilterValue,
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
@@ -29,8 +27,6 @@ import {
   formatResearchNumber,
 } from "@/sites/research/lib/currency";
 import { countryName } from "@/sites/research/lib/countries";
-
-const binaryFilterOptions = ["ALL", "YES", "NO"];
 
 export type JournalRow = {
   id: string;
@@ -193,52 +189,21 @@ export function JournalsTable({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
-  const [fieldValue, setFieldValue] = useState(
-    () => searchParams.get("field") ?? "ALL",
+  const [favoriteOnly, setFavoriteOnly] = useState(
+    () => searchParams.get("favorite") === "1",
   );
-  const [favoriteValue, setFavoriteValue] = useState(
-    () => searchParams.get("favorite") ?? "ALL",
-  );
-  const [interestValue, setInterestValue] = useState(
-    () => searchParams.get("interest") ?? "ALL",
+  const [interestOnly, setInterestOnly] = useState(
+    () => searchParams.get("interest") === "1",
   );
   const [noAccountOnly, setNoAccountOnly] = useState(
     () => isAdmin && searchParams.get("noAccount") === "1",
   );
 
-  const fieldOptions = useMemo(
-    () => [
-      "ALL",
-      ...Array.from(
-        new Set(rows.flatMap((row) => row.fields).filter(Boolean)),
-      ).sort(),
-    ],
-    [rows],
-  );
-  const fields = useMemo(
-    () => parseMultiFilterValue(fieldValue, fieldOptions),
-    [fieldOptions, fieldValue],
-  );
-  const favoriteStatuses = useMemo(
-    () => parseMultiFilterValue(favoriteValue, binaryFilterOptions),
-    [favoriteValue],
-  );
-  const interestStatuses = useMemo(
-    () => parseMultiFilterValue(interestValue, binaryFilterOptions),
-    [interestValue],
-  );
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
-      const matchesField =
-        fields.length === 0 ||
-        fields.some((field) => row.fields.includes(field));
-      const matchesFavorite =
-        favoriteStatuses.length === 0 ||
-        favoriteStatuses.includes(row.isFavorite ? "YES" : "NO");
-      const matchesInterest =
-        interestStatuses.length === 0 ||
-        interestStatuses.includes(row.isInterest ? "YES" : "NO");
+      const matchesFavorite = !favoriteOnly || row.isFavorite;
+      const matchesInterest = !interestOnly || row.isInterest;
       const matchesAccount =
         !isAdmin || !noAccountOnly || !row.hasAssociatedAccount;
       const haystack = [
@@ -268,22 +233,13 @@ export function JournalsTable({
         .join(" ")
         .toLowerCase();
       return (
-        matchesField &&
         matchesFavorite &&
         matchesInterest &&
         matchesAccount &&
         (!needle || haystack.includes(needle))
       );
     });
-  }, [
-    favoriteStatuses,
-    fields,
-    interestStatuses,
-    isAdmin,
-    noAccountOnly,
-    query,
-    rows,
-  ]);
+  }, [favoriteOnly, interestOnly, isAdmin, noAccountOnly, query, rows]);
 
   const initialPage = Number(searchParams.get("page") ?? "1");
   const pagination = useTablePagination(
@@ -294,18 +250,14 @@ export function JournalsTable({
   const currentListPath = useMemo(() => {
     const params = new URLSearchParams();
     if (query.trim()) params.set("q", query.trim());
-    if (fields.length > 0) params.set("field", fields.join(","));
-    if (favoriteStatuses.length > 0)
-      params.set("favorite", favoriteStatuses.join(","));
-    if (interestStatuses.length > 0)
-      params.set("interest", interestStatuses.join(","));
+    if (favoriteOnly) params.set("favorite", "1");
+    if (interestOnly) params.set("interest", "1");
     if (isAdmin && noAccountOnly) params.set("noAccount", "1");
     if (pagination.page > 1) params.set("page", String(pagination.page));
     return params.toString() ? `${pathname}?${params.toString()}` : pathname;
   }, [
-    favoriteStatuses,
-    fields,
-    interestStatuses,
+    favoriteOnly,
+    interestOnly,
     isAdmin,
     noAccountOnly,
     pagination.page,
@@ -313,18 +265,13 @@ export function JournalsTable({
     query,
   ]);
 
-  function updateFields(values: string[]) {
-    setFieldValue(values.length > 0 ? values.join(",") : "ALL");
+  function updateFavoriteOnly(checked: boolean) {
+    setFavoriteOnly(checked);
     pagination.setPage(1);
   }
 
-  function updateFavoriteStatuses(values: string[]) {
-    setFavoriteValue(values.length > 0 ? values.join(",") : "ALL");
-    pagination.setPage(1);
-  }
-
-  function updateInterestStatuses(values: string[]) {
-    setInterestValue(values.length > 0 ? values.join(",") : "ALL");
+  function updateInterestOnly(checked: boolean) {
+    setInterestOnly(checked);
     pagination.setPage(1);
   }
 
@@ -343,38 +290,35 @@ export function JournalsTable({
         <TableSearchInput
           value={query}
           onChange={setQuery}
-          placeholder="Search journals, ISSN, publisher..."
+          placeholder="Search journals, ISSN, field, publisher..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <MultiFilterSelect
-            values={fields}
-            onChange={updateFields}
-            ariaLabel="Filter by field"
-            options={fieldOptions.map((item) => ({
-              value: item,
-              label: item === "ALL" ? "All fields" : item,
-            }))}
-          />
-          <MultiFilterSelect
-            values={favoriteStatuses}
-            onChange={updateFavoriteStatuses}
-            ariaLabel="Filter by favorite"
-            options={[
-              { value: "ALL", label: "All favorite status" },
-              { value: "YES", label: "Favorite" },
-              { value: "NO", label: "Not favorite" },
-            ]}
-          />
-          <MultiFilterSelect
-            values={interestStatuses}
-            onChange={updateInterestStatuses}
-            ariaLabel="Filter by interest"
-            options={[
-              { value: "ALL", label: "All interest status" },
-              { value: "YES", label: "Interested" },
-              { value: "NO", label: "Not interested" },
-            ]}
-          />
+          <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-3 text-sm font-normal text-[#243047] transition-colors duration-150 hover:border-[#C7BFAF] hover:bg-[#F7F4ED] hover:text-[#111827] sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white">
+            <input
+              type="checkbox"
+              checked={favoriteOnly}
+              onChange={(event) =>
+                updateFavoriteOnly(event.currentTarget.checked)
+              }
+              className="h-4 w-4 cursor-pointer rounded-none border-[#D8D0C2] accent-[#1F7180] dark:border-[#666666] dark:accent-[#A8DADC]"
+            />
+            <IconHint label="Show favorite journals only">
+              <span className="whitespace-nowrap text-left">Fav</span>
+            </IconHint>
+          </label>
+          <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-3 text-sm font-normal text-[#243047] transition-colors duration-150 hover:border-[#C7BFAF] hover:bg-[#F7F4ED] hover:text-[#111827] sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white">
+            <input
+              type="checkbox"
+              checked={interestOnly}
+              onChange={(event) =>
+                updateInterestOnly(event.currentTarget.checked)
+              }
+              className="h-4 w-4 cursor-pointer rounded-none border-[#D8D0C2] accent-[#1F7180] dark:border-[#666666] dark:accent-[#A8DADC]"
+            />
+            <IconHint label="Show journals of interest only">
+              <span className="whitespace-nowrap text-left">Interest</span>
+            </IconHint>
+          </label>
           {isAdmin ? (
             <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-3 text-sm font-normal text-[#243047] transition-colors duration-150 hover:border-[#C7BFAF] hover:bg-[#F7F4ED] hover:text-[#111827] sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white">
               <input
