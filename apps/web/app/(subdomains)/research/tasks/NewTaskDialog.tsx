@@ -597,15 +597,15 @@ export function NewTaskDialog({
   }
 
   const needsResearch =
-    mode === "submit" ||
-    mode === "production" ||
-    mode === "suggestVenue" ||
+    mode === "submit" || mode === "production" || mode === "suggestVenue";
+  const showsResearch =
+    needsResearch ||
+    mode === "other" ||
     (mode === "proposal" && proposalScope === "research");
-  const showsResearch = needsResearch || mode === "other";
   const fixedResearch = triggerVariant !== "default" && initialResearch;
-  const selectedResearchMatchesMode =
-    !needsResearch ||
-    (selectedResearch ? researchMatchesMode(selectedResearch, mode) : false);
+  const selectedResearchMatchesMode = selectedResearch
+    ? researchMatchesMode(selectedResearch, mode)
+    : !needsResearch;
   const showsVenue =
     mode === "submit" || (mode === "other" && triggerVariant === "default");
   const needsVenue = mode === "submit";
@@ -630,11 +630,7 @@ export function NewTaskDialog({
     selectedVenueMatchesMode &&
     (!submitAccountRequired || Boolean(selectedAccountId)) &&
     selectedReviewIsOpen &&
-    selectedOrganizedProjectIsOpen &&
-    (mode !== "proposal" ||
-      (proposalScope === "research"
-        ? Boolean(selectedResearch)
-        : Boolean(selectedOrganizedProject)));
+    selectedOrganizedProjectIsOpen;
   const selectedAssigneeItems: SearchPanelItem[] = assignees
     .filter((user) => selectedIds.includes(user.id))
     .map((user) => ({
@@ -1101,7 +1097,7 @@ export function NewTaskDialog({
                 setQuery={setOrganizedProjectQuery}
                 placeholder={
                   mode === "proposal" && proposalScope === "project"
-                    ? "Search project by title, ID, or status (*)"
+                    ? "Search project by title, ID, or status (optional)"
                     : "Search project by title, ID, or status (optional)"
                 }
                 selectedItems={

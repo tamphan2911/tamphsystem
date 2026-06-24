@@ -1704,7 +1704,8 @@ export async function submitProposal(formData: FormData) {
         ok: false,
         reason: "TASK_FORBIDDEN",
         title: "Proposal task not available",
-        detail: "Only the task assignee can create the proposal from this task.",
+        detail:
+          "Only the task assignee can create the proposal from this task.",
       };
     }
     if (task.proposalResult) {
@@ -5094,9 +5095,6 @@ export async function createResearchTask(formData: FormData) {
       (!projectId || !conferenceId)) ||
     (taskType === ResearchTaskType.PRODUCTION && !projectId) ||
     (taskType === ResearchTaskType.SUGGEST_VENUE && !projectId) ||
-    (taskType === ResearchTaskType.PROPOSAL &&
-      !projectId &&
-      !organizedProjectId) ||
     (taskType === ResearchTaskType.REVIEW && !reviewId) ||
     (taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED &&
       !organizedProjectId)
@@ -5417,10 +5415,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   ) {
     return { ok: false, reason: "TASK_HAS_JOURNAL_RESULTS" };
   }
-  if (
-    currentTask.proposalResult &&
-    taskType !== ResearchTaskType.PROPOSAL
-  ) {
+  if (currentTask.proposalResult && taskType !== ResearchTaskType.PROPOSAL) {
     return { ok: false, reason: "TASK_HAS_PROPOSAL_RESULT" };
   }
   if (
@@ -5453,9 +5448,6 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       (!effectiveProjectId || !conferenceId)) ||
     (taskType === ResearchTaskType.PRODUCTION && !effectiveProjectId) ||
     (taskType === ResearchTaskType.SUGGEST_VENUE && !effectiveProjectId) ||
-    (taskType === ResearchTaskType.PROPOSAL &&
-      !effectiveProjectId &&
-      !effectiveOrganizedProjectId) ||
     (taskType === ResearchTaskType.REVIEW && !reviewId) ||
     (taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED &&
       !effectiveOrganizedProjectId)

@@ -625,16 +625,14 @@ export function EditTaskDialog({
   );
 
   const needsResearch =
-    mode === "submit" ||
-    mode === "production" ||
-    mode === "suggestVenue" ||
+    mode === "submit" || mode === "production" || mode === "suggestVenue";
+  const showsResearch =
+    needsResearch ||
+    mode === "other" ||
     (mode === "proposal" && proposalScope === "research");
-  const showsResearch = needsResearch || mode === "other";
-  const selectedResearchMatchesMode =
-    !needsResearch ||
-    (selectedResearch
-      ? isClosedTask || researchMatchesMode(selectedResearch, mode)
-      : false);
+  const selectedResearchMatchesMode = selectedResearch
+    ? isClosedTask || researchMatchesMode(selectedResearch, mode)
+    : !needsResearch;
   const showsVenue = mode === "submit" || mode === "other";
   const needsVenue = mode === "submit";
   const selectedVenueMatchesMode =
@@ -666,11 +664,7 @@ export function EditTaskDialog({
     selectedResearchMatchesMode &&
     selectedVenueMatchesMode &&
     selectedReviewIsOpen &&
-    selectedOrganizedProjectIsOpen &&
-    (mode !== "proposal" ||
-      (proposalScope === "research"
-        ? Boolean(selectedResearch)
-        : Boolean(selectedOrganizedProject)));
+    selectedOrganizedProjectIsOpen;
 
   return (
     <>
@@ -1037,8 +1031,7 @@ export function EditTaskDialog({
                 query={organizedProjectQuery}
                 setQuery={setOrganizedProjectQuery}
                 placeholder={
-                  requiresOrganizedProject ||
-                  (mode === "proposal" && proposalScope === "project")
+                  requiresOrganizedProject
                     ? "Search project by title, ID, or status (*)"
                     : "Search project by title, ID, or status (optional)"
                 }
