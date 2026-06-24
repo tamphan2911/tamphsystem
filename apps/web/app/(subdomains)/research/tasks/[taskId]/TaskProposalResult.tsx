@@ -4,6 +4,7 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  Building2,
   CheckCircle2,
   FileText,
   FolderGit2,
@@ -51,6 +52,17 @@ export type TaskProposalResultItem = {
     code: string;
     stage: string;
     authors: string;
+    updatedAt: string;
+  } | null;
+  createdProject: {
+    id: string;
+    title: string;
+    code: string;
+    status: string;
+    projectType: string;
+    organizer: string;
+    owner: string;
+    members: string;
     updatedAt: string;
   } | null;
 };
@@ -123,6 +135,19 @@ function researchStageClass(stage: string) {
     return "bg-sky-50 text-sky-700 ring-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-900";
   }
   return "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-900/45 dark:text-slate-300 dark:ring-slate-700";
+}
+
+function projectStatusClass(status: string) {
+  if (status === "COMPLETED") {
+    return "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900";
+  }
+  if (status === "ACTIVE") {
+    return "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900";
+  }
+  if (status === "PENDING") {
+    return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
+  }
+  return "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900";
 }
 
 function label(value: string) {
@@ -408,6 +433,51 @@ export function TaskProposalResult({
                   Authors: {proposal.createdResearch.authors || "-"}
                 </span>
                 <span>Updated: {proposal.createdResearch.updatedAt}</span>
+              </div>
+            </article>
+          ) : null}
+
+          {proposal.createdProject ? (
+            <article className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="mb-1 text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
+                    Project result
+                  </p>
+                  <Link
+                    href={`/organized-projects/${proposal.createdProject.id}`}
+                    className="block break-words text-sm font-normal leading-6 text-[#1F7180] transition hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
+                  >
+                    {proposal.createdProject.title}
+                  </Link>
+                </div>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${projectStatusClass(
+                    proposal.createdProject.status,
+                  )}`}
+                >
+                  <Building2 className="h-3.5 w-3.5" />
+                  {label(proposal.createdProject.status)}
+                </span>
+              </div>
+              <div className="mt-3 grid gap-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                <span>
+                  Project ID:{" "}
+                  <span className="font-mono text-[#344054] dark:text-[#E4E4E4]">
+                    {proposal.createdProject.code || "Not assigned"}
+                  </span>
+                </span>
+                <span>Type: {label(proposal.createdProject.projectType)}</span>
+                <span className="break-words">
+                  Funder: {proposal.createdProject.organizer || "-"}
+                </span>
+                <span className="break-words">
+                  Members:{" "}
+                  {proposal.createdProject.members ||
+                    proposal.createdProject.owner ||
+                    "-"}
+                </span>
+                <span>Updated: {proposal.createdProject.updatedAt}</span>
               </div>
             </article>
           ) : null}

@@ -1035,6 +1035,26 @@ export default async function TaskDetailPage({
               },
             },
           },
+          createdOrganizedProject: {
+            select: {
+              id: true,
+              title: true,
+              referenceCode: true,
+              status: true,
+              projectType: true,
+              organizer: true,
+              updatedAt: true,
+              fundingInstitution: { select: { name: true } },
+              createdBy: { select: { name: true, email: true } },
+              members: {
+                select: {
+                  isTeamLead: true,
+                  user: { select: { name: true, email: true } },
+                },
+                orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+              },
+            },
+          },
         },
       },
       reportUploadedById: true,
@@ -1667,6 +1687,36 @@ export default async function TaskDetailPage({
               ),
               updatedAt: formatDate(
                 task.proposalResult.createdResearchProject.updatedAt,
+              ),
+            }
+          : null,
+        createdProject: task.proposalResult.createdOrganizedProject
+          ? {
+              id: task.proposalResult.createdOrganizedProject.id,
+              title: task.proposalResult.createdOrganizedProject.title,
+              code:
+                task.proposalResult.createdOrganizedProject.referenceCode ?? "",
+              status: task.proposalResult.createdOrganizedProject.status,
+              projectType:
+                task.proposalResult.createdOrganizedProject.projectType,
+              organizer:
+                task.proposalResult.createdOrganizedProject.fundingInstitution
+                  ?.name ??
+                task.proposalResult.createdOrganizedProject.organizer ??
+                "",
+              owner: task.proposalResult.createdOrganizedProject.createdBy
+                ? displayResearchPersonName(
+                    task.proposalResult.createdOrganizedProject.createdBy,
+                  )
+                : "",
+              members: task.proposalResult.createdOrganizedProject.members
+                .map((member) => {
+                  const name = displayResearchPersonName(member.user);
+                  return member.isTeamLead ? `${name}*` : name;
+                })
+                .join("; "),
+              updatedAt: formatDate(
+                task.proposalResult.createdOrganizedProject.updatedAt,
               ),
             }
           : null,
