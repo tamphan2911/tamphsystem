@@ -636,6 +636,8 @@ function SuggestedVenueResultsPanel({
 }: {
   venues: TaskSuggestedVenueInfo[];
 }) {
+  const hasMultipleVenues = venues.length > 1;
+
   return (
     <aside className="min-w-0 self-start border border-[#D8D0C2] bg-[#FFFDF8] dark:border-[#444444] dark:bg-[#262626]">
       <div className="flex items-center justify-between gap-3 border-b border-[#D8D0C2] px-4 py-3 dark:border-[#444444]">
@@ -647,11 +649,13 @@ function SuggestedVenueResultsPanel({
           {venues.length}
         </span>
       </div>
-      <div className="grid md:grid-cols-2">
+      <div className={`grid ${hasMultipleVenues ? "md:grid-cols-2" : ""}`}>
         {venues.map((venue) => (
           <article
             key={`${venue.kind}-${venue.id}`}
-            className="min-w-0 border-b border-[#E5DED2] p-4 last:border-b-0 dark:border-[#444444] md:odd:border-r md:even:last:border-b-0"
+            className={`min-w-0 border-b border-[#E5DED2] p-4 last:border-b-0 dark:border-[#444444] ${
+              hasMultipleVenues ? "md:odd:border-r md:even:last:border-b-0" : ""
+            }`}
           >
             <div className="flex min-w-0 items-start justify-between gap-3">
               <div className="min-w-0">
@@ -1854,6 +1858,8 @@ export default async function TaskDetailPage({
     (isSuggestVenueTask && suggestedVenueResults.length > 0);
   const hasSuggestedVenueResultPanel =
     isSuggestVenueTask && !submissionInfo && suggestedVenueResults.length > 0;
+  const hasSingleSuggestedVenueResult =
+    hasSuggestedVenueResultPanel && suggestedVenueResults.length === 1;
   const scopedResearchWhere = isRootAdmin
     ? {}
     : {
@@ -2297,9 +2303,11 @@ export default async function TaskDetailPage({
           {hasAssociatedItems && (
             <div
               className={`grid gap-5 p-5 ${
-                hasSuggestedVenueResultPanel
-                  ? "md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]"
-                  : "md:grid-cols-2"
+                hasSingleSuggestedVenueResult
+                  ? "md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]"
+                  : hasSuggestedVenueResultPanel
+                    ? "md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]"
+                    : "md:grid-cols-2"
               }`}
             >
               <div
