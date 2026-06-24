@@ -1013,6 +1013,28 @@ export default async function TaskDetailPage({
           decisionComment: true,
           createdAt: true,
           submittedBy: { select: { name: true, email: true } },
+          createdResearchProject: {
+            select: {
+              id: true,
+              title: true,
+              researchCode: true,
+              stage: true,
+              updatedAt: true,
+              coAuthors: true,
+              leadResearcher: { select: { name: true, email: true } },
+              authors: {
+                select: { id: true, name: true, email: true },
+                orderBy: [{ name: "asc" }, { email: "asc" }],
+              },
+              authorEntries: {
+                select: {
+                  isCorresponding: true,
+                  user: { select: { name: true, email: true } },
+                },
+                orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+              },
+            },
+          },
         },
       },
       reportUploadedById: true,
@@ -1633,6 +1655,21 @@ export default async function TaskDetailPage({
         submittedByEmail: displayResearchEmail(
           task.proposalResult.submittedBy.email,
         ),
+        createdResearch: task.proposalResult.createdResearchProject
+          ? {
+              id: task.proposalResult.createdResearchProject.id,
+              title: task.proposalResult.createdResearchProject.title,
+              code:
+                task.proposalResult.createdResearchProject.researchCode ?? "",
+              stage: task.proposalResult.createdResearchProject.stage,
+              authors: researchAuthors(
+                task.proposalResult.createdResearchProject,
+              ),
+              updatedAt: formatDate(
+                task.proposalResult.createdResearchProject.updatedAt,
+              ),
+            }
+          : null,
       }
     : null;
   const selectedSuggestedReviewers: SuggestedReviewerOption[] =
