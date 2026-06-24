@@ -15,10 +15,11 @@ import {
   SearchCheck,
 } from "lucide-react";
 import {
-  FilterSelect,
   IconHint,
+  MultiFilterSelect,
   TablePagination,
   TableSearchInput,
+  parseMultiFilterValue,
   usePersistentTableValue,
   useTablePagination,
 } from "@/sites/research/components/TableControls";
@@ -133,6 +134,29 @@ function statusMeta(row: RelatedResearchTaskRow): {
   };
 }
 
+const relatedTaskStatusOptions = [
+  "ALL",
+  "IN_PROGRESS",
+  "REVISION_REQUESTED",
+  "OVERDUE",
+  "CHECKING",
+  "NEED_CLARIFY",
+  "COMPLETED",
+  "REVOKED",
+];
+
+const unfinishedRelatedTaskStatuses = relatedTaskStatusOptions.filter(
+  (value) => value !== "ALL" && value !== "COMPLETED" && value !== "REVOKED",
+);
+
+function statusFilterLabel(value: string) {
+  if (value === "ALL") return "All statuses";
+  if (value === "CHECKING") return "Checking";
+  if (value === "NEED_CLARIFY") return "Need clarify";
+  if (value === "REVISION_REQUESTED") return "Revision requested";
+  return sentenceCase(value);
+}
+
 export function RelatedResearchTasksTable({
   projectId,
   rows,
@@ -142,16 +166,26 @@ export function RelatedResearchTasksTable({
 }) {
   const storageKey = `research-related-tasks:${projectId}`;
   const [query, setQuery] = usePersistentTableValue(`${storageKey}:q`, "");
-  const [status, setStatus] = usePersistentTableValue(
+  const [statusValue, setStatusValue] = usePersistentTableValue(
     `${storageKey}:status`,
-    "IN_PROGRESS",
+    unfinishedRelatedTaskStatuses.join(","),
+  );
+  const statuses = useMemo(
+    () => parseMultiFilterValue(statusValue, relatedTaskStatusOptions),
+    [statusValue],
+  );
+  const effectiveStatuses = useMemo(
+    () => (statusValue === "ALL" ? [] : statuses),
+    [statusValue, statuses],
   );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const meta = statusMeta(row);
-      const matchesStatus = status === "ALL" || meta.value === status;
+      const matchesStatus =
+        effectiveStatuses.length === 0 ||
+        effectiveStatuses.includes(meta.value);
       const haystack = [
         taskId(row),
         row.title,
@@ -167,7 +201,7 @@ export function RelatedResearchTasksTable({
         .toLowerCase();
       return matchesStatus && (!needle || haystack.includes(needle));
     });
-  }, [query, rows, status]);
+  }, [effectiveStatuses, query, rows]);
   const pagination = useTablePagination(filtered, 10, 1, storageKey);
 
   function updateQuery(value: string) {
@@ -175,8 +209,8 @@ export function RelatedResearchTasksTable({
     pagination.setPage(1);
   }
 
-  function updateStatus(value: string) {
-    setStatus(value);
+  function updateStatuses(values: string[]) {
+    setStatusValue(values.length > 0 ? values.join(",") : "ALL");
     pagination.setPage(1);
   }
 
@@ -188,20 +222,14 @@ export function RelatedResearchTasksTable({
           onChange={updateQuery}
           placeholder="Search task, assignee, status..."
         />
-        <FilterSelect
-          value={status}
-          onChange={updateStatus}
+        <MultiFilterSelect
+          values={statuses}
+          onChange={updateStatuses}
           ariaLabel="Filter related tasks by status"
-          options={[
-            { value: "ALL", label: "All statuses" },
-            { value: "IN_PROGRESS", label: "In progress" },
-            { value: "REVISION_REQUESTED", label: "Revision requested" },
-            { value: "OVERDUE", label: "Overdue" },
-            { value: "CHECKING", label: "Checking" },
-            { value: "NEED_CLARIFY", label: "Need clarify" },
-            { value: "COMPLETED", label: "Completed" },
-            { value: "REVOKED", label: "Revoked" },
-          ]}
+          options={relatedTaskStatusOptions.map((value) => ({
+            value,
+            label: statusFilterLabel(value),
+          }))}
         />
       </div>
 
