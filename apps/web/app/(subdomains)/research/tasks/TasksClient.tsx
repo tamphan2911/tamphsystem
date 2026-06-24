@@ -4,7 +4,7 @@ import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -491,11 +491,17 @@ export function TasksClient({
     "tasks:status",
     taskStatusValues,
   );
-  const [unfinishedOnly, setUnfinishedOnly] = useState(false);
+  const hasStoredTaskStatus =
+    typeof window !== "undefined" &&
+    window.sessionStorage.getItem("research:/tasks:tasks:status") !== null;
+  const [unfinishedOnlyValue, setUnfinishedOnlyValue] = usePersistentTableValue(
+    "tasks:unfinished",
+    isAdmin && !hasStoredTaskStatus ? "true" : "false",
+  );
+  const unfinishedOnly = unfinishedOnlyValue === "true";
   const [statusBeforeUnfinished, setStatusBeforeUnfinished] = useState<
     string[] | null
   >(null);
-  const adminDefaultsApplied = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
@@ -560,30 +566,35 @@ export function TasksClient({
         : "assigned";
 
   useEffect(() => {
-    if (!isAdmin || adminDefaultsApplied.current) return;
-    adminDefaultsApplied.current = true;
+    if (!isAdmin) return;
     const hasTaskPrefill =
       typeof window !== "undefined" &&
       window.sessionStorage.getItem("research:/tasks:tasks:prefill") ===
         "person-unfinished";
     if (hasTaskPrefill) {
       window.sessionStorage.removeItem("research:/tasks:tasks:prefill");
-    } else {
-      setQuery("");
-    }
-    setTaskTypes([]);
-    setStatusBeforeUnfinished(null);
-
-    if (activeHeaderTab === "need_action") {
-      setUnfinishedOnly(false);
-      setStatuses(adminNeedActionStatusValues);
+      setUnfinishedOnlyValue("true");
+      setStatuses(unfinishedTaskStatusValues);
       return;
     }
 
-    setUnfinishedOnly(true);
-    setStatusBeforeUnfinished([]);
-    setStatuses(unfinishedTaskStatusValues);
-  }, [activeHeaderTab, isAdmin, setQuery, setStatuses, setTaskTypes]);
+    if (activeHeaderTab === "need_action") {
+      setUnfinishedOnlyValue("false");
+      if (statuses.length === 0) setStatuses(adminNeedActionStatusValues);
+      return;
+    }
+
+    if (unfinishedOnly && statuses.length === 0) {
+      setStatuses(unfinishedTaskStatusValues);
+    }
+  }, [
+    activeHeaderTab,
+    isAdmin,
+    setStatuses,
+    setUnfinishedOnlyValue,
+    statuses.length,
+    unfinishedOnly,
+  ]);
 
   const scopeTabs: Array<{
     value: TaskHeaderTab;
@@ -686,19 +697,19 @@ export function TasksClient({
     setStatusBeforeUnfinished(null);
 
     if (value === "need_action") {
-      setUnfinishedOnly(false);
+      setUnfinishedOnlyValue("false");
       setStatuses(adminNeedActionStatusValues);
       return;
     }
 
-    setUnfinishedOnly(true);
+    setUnfinishedOnlyValue("true");
     setStatusBeforeUnfinished([]);
     setStatuses(unfinishedTaskStatusValues);
   }
 
   function updateStatuses(values: string[]) {
     if (unfinishedOnly) {
-      setUnfinishedOnly(false);
+      setUnfinishedOnlyValue("false");
       setStatusBeforeUnfinished(null);
     }
     setStatuses(values);
@@ -706,7 +717,7 @@ export function TasksClient({
   }
 
   function toggleUnfinishedOnly(checked: boolean) {
-    setUnfinishedOnly(checked);
+    setUnfinishedOnlyValue(checked ? "true" : "false");
     if (checked) {
       setStatusBeforeUnfinished(statuses);
       setStatuses(unfinishedTaskStatusValues);

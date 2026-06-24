@@ -191,6 +191,7 @@ export function AssistantsTable({
       "research:/tasks:tasks:status",
       unfinishedTaskFilterStatuses.join(","),
     );
+    window.sessionStorage.setItem("research:/tasks:tasks:unfinished", "true");
     window.sessionStorage.setItem(
       "research:/tasks:tasks:type",
       allTaskTypeFilterValues.join(","),
