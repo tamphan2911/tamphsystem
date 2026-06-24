@@ -116,6 +116,7 @@ model User {
   sentResearchAuthorNotifications ResearchAuthorNotification[] @relation("ResearchAuthorNotificationSender")
   createdOrganizedProjects        OrganizedProject[]           @relation("OrganizedProjectCreator")
   createdJournals                 Journal[]                    @relation("JournalCreator")
+  createdPublishers               Publisher[]                  @relation("PublisherCreator")
   organizedProjectMemberships     OrganizedProjectMember[]
   submittedProposals              Proposal[]                   @relation("ProposalSubmitter")
   requestedTaskClarifications     ResearchTaskClarification[]  @relation("TaskClarificationRequester")
@@ -750,12 +751,15 @@ model Publisher {
   note              String?
   usesSingleAccount Boolean               @default(false)
   approvalStatus    JournalApprovalStatus @default(APPROVED)
+  createdById       String?
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
 
-  journals Journal[]
-  accounts PublisherAccount[]
+  createdBy User?              @relation("PublisherCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  journals  Journal[]
+  accounts  PublisherAccount[]
 
+  @@index([createdById])
   @@index([approvalStatus])
 }
 

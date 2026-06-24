@@ -20,7 +20,17 @@ export default async function PublishersPage() {
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
-  const publisherWhere = staffPublisherAccessWhere(roles, userId);
+  const currentUser = userId
+    ? await prisma.user.findUnique({
+        where: { id: userId },
+        select: { canManageResearchVenues: true },
+      })
+    : null;
+  const publisherWhere = staffPublisherAccessWhere(
+    roles,
+    userId,
+    currentUser?.canManageResearchVenues ?? false,
+  );
   if (!publisherWhere) redirect("/401");
 
   const publishers = await prisma.publisher.findMany({

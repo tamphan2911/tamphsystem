@@ -4918,6 +4918,7 @@ export async function createPublisher(formData: FormData) {
         approvalStatus: isAdmin
           ? JournalApprovalStatus.APPROVED
           : JournalApprovalStatus.PENDING_APPROVAL,
+        createdById: user.id,
         website: optionalString(formData.get("website")),
         note: optionalString(formData.get("note")),
       },

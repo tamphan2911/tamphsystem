@@ -14,13 +14,12 @@ export function staffJournalAccessWhere(
   userId?: string,
 ): Prisma.JournalWhereInput | null {
   if (roles.includes(Role.ADMIN)) return {};
-  if (roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT)) {
+  if (roles.includes(Role.CHIEF_ASSISTANT)) return {};
+  if (roles.includes(Role.ASSISTANT)) {
     return {
       OR: [
         { approvalStatus: JournalApprovalStatus.APPROVED },
-        ...(userId && roles.includes(Role.CHIEF_ASSISTANT)
-          ? [{ resultTask: { checkerId: userId } }]
-          : []),
+        ...(userId ? [{ createdById: userId }] : []),
       ],
     };
   }
@@ -30,11 +29,11 @@ export function staffJournalAccessWhere(
 export function staffPublisherAccessWhere(
   roles: Role[],
   userId?: string,
+  canManageResearchVenues = false,
 ): Prisma.PublisherWhereInput | null {
   if (roles.includes(Role.ADMIN)) return {};
-  if (userId && roles.includes(Role.CHIEF_ASSISTANT)) {
-    return { journals: { some: { resultTask: { checkerId: userId } } } };
-  }
+  if (roles.includes(Role.CHIEF_ASSISTANT)) return {};
+  if (userId && canManageResearchVenues) return { createdById: userId };
   return null;
 }
 
@@ -80,6 +79,7 @@ export function accessibleJournalWhere(
       { submissions: { some: { project } } },
       { suggestions: { some: { project } } },
       { resultTask: { checkerId: userId } },
+      { createdById: userId },
     ],
   };
 }
