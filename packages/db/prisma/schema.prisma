@@ -344,6 +344,11 @@ enum ResearchTaskType {
   OTHER
 }
 
+enum ProposalTaskScope {
+  RESEARCH
+  PROJECT
+}
+
 enum ResearchTaskCategory {
   SUBMITTING          @map("Submitting")
   SUBMIT_RESEARCH     @map("Submit research")
@@ -864,6 +869,7 @@ model ResearchTask {
   reviewId           String?
   accountId          String?
   taskType           ResearchTaskType?
+  proposalScope      ProposalTaskScope @default(RESEARCH)
   project            ResearchProject?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
   organizedProject   OrganizedProject? @relation(fields: [organizedProjectId], references: [id], onDelete: SetNull)
   journal            Journal?          @relation(fields: [journalId], references: [id], onDelete: SetNull)

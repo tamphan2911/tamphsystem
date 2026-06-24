@@ -778,6 +778,11 @@ export function NewTaskDialog({
           {mode === "proposal" && (
             <>
               <input type="hidden" name="taskType" value="PROPOSAL" />
+              <input
+                type="hidden"
+                name="proposalScope"
+                value={proposalScope === "project" ? "PROJECT" : "RESEARCH"}
+              />
               {proposalScope === "project" && selectedOrganizedProject ? (
                 <input
                   type="hidden"

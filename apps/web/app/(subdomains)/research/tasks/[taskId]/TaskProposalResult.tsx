@@ -69,13 +69,11 @@ export function TaskProposalResult({
   taskId,
   proposal,
   proposalType,
-  defaultTitle,
   canCreate,
 }: {
   taskId: string;
   proposal: TaskProposalResultItem | null;
   proposalType: "RESEARCH" | "PROJECT";
-  defaultTitle: string;
   canCreate: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -199,7 +197,9 @@ export function TaskProposalResult({
             if (canCreate) setOpen(true);
           }}
           className={`group min-h-44 w-full border border-dashed border-[#CFC6B8] bg-[#FBF9F4] p-4 text-left transition-[border-color,background-color,transform] duration-180 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:border-[#4A4A4A] dark:bg-[#262626] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838] ${
-            canCreate ? "cursor-pointer hover:-translate-y-0.5" : "cursor-default"
+            canCreate
+              ? "cursor-pointer hover:-translate-y-0.5"
+              : "cursor-default"
           }`}
         >
           <div className="flex h-full min-h-36 flex-col items-center justify-center gap-3 text-center">
@@ -225,10 +225,7 @@ export function TaskProposalResult({
         icon={<FolderGit2 className="h-5 w-5" />}
         maxWidth="max-w-3xl"
         headerActions={
-          <ResearchButton
-            form="task-proposal-form"
-            disabled={isPending}
-          >
+          <ResearchButton form="task-proposal-form" disabled={isPending}>
             {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -257,8 +254,12 @@ export function TaskProposalResult({
             <input
               name="title"
               required
-              defaultValue={defaultTitle}
               className={researchFieldClass}
+              placeholder={
+                proposalType === "PROJECT"
+                  ? "Project proposal title (*)"
+                  : "Research proposal title (*)"
+              }
             />
           </label>
           <label className={researchLabelClass}>

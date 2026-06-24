@@ -71,6 +71,7 @@ type EditableTask = {
   description: string;
   dueDate: string;
   taskType: string;
+  proposalScope: "RESEARCH" | "PROJECT";
   projectId: string;
   journalId: string;
   journalTargetCount: number | null;
@@ -250,7 +251,7 @@ export function EditTaskDialog({
         ) ?? null)
       : null;
   const initialProposalScope: ProposalScope =
-    task.organizedProjectId && !task.projectId ? "project" : "research";
+    task.proposalScope === "PROJECT" ? "project" : "research";
 
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTaskType, setSelectedTaskType] = useState(task.taskType);
@@ -768,14 +769,23 @@ export function EditTaskDialog({
               <input type="hidden" name="category" value={projectCategory} />
             </>
           )}
+          {mode === "proposal" ? (
+            <input
+              type="hidden"
+              name="proposalScope"
+              value={proposalScope === "project" ? "PROJECT" : "RESEARCH"}
+            />
+          ) : null}
           {mode === "proposal" &&
           proposalScope === "project" &&
           selectedOrganizedProject ? (
-            <input
-              type="hidden"
-              name="organizedProjectId"
-              value={selectedOrganizedProject.id}
-            />
+            <>
+              <input
+                type="hidden"
+                name="organizedProjectId"
+                value={selectedOrganizedProject.id}
+              />
+            </>
           ) : null}
           {mode === "other" && (
             <>

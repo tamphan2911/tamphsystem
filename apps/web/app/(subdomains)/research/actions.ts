@@ -32,6 +32,7 @@ import {
   OrganizedProjectStatus,
   OrganizedProjectFinancialClaimStatus,
   OrganizedProjectType,
+  ProposalTaskScope,
   ProposalStatus,
   ProposalType,
   Prisma,
@@ -175,6 +176,10 @@ function taskCategoryFromForm(value: FormDataEntryValue | null) {
 
 function taskTypeFromForm(value: FormDataEntryValue | null) {
   return enumValue(ResearchTaskType, value);
+}
+
+function proposalTaskScopeFromForm(value: FormDataEntryValue | null) {
+  return enumValue(ProposalTaskScope, value) ?? ProposalTaskScope.RESEARCH;
 }
 
 const DEFAULT_TASK_DESCRIPTION =
@@ -1676,6 +1681,7 @@ export async function submitProposal(formData: FormData) {
         status: true,
         projectId: true,
         organizedProjectId: true,
+        proposalScope: true,
         proposalResult: { select: { id: true } },
         assignments: { select: { userId: true } },
       },
@@ -1716,12 +1722,11 @@ export async function submitProposal(formData: FormData) {
         detail: "This proposal task already has a linked proposal.",
       };
     }
-    const expectedType = task.projectId
-      ? ProposalType.RESEARCH
-      : task.organizedProjectId
+    const expectedType =
+      task.proposalScope === ProposalTaskScope.PROJECT
         ? ProposalType.PROJECT
-        : null;
-    if (!expectedType || type !== expectedType) {
+        : ProposalType.RESEARCH;
+    if (type !== expectedType) {
       return {
         ok: false,
         reason: "TASK_TYPE_MISMATCH",
@@ -1903,7 +1908,11 @@ export async function updateProposalTaskAssociation(
     if (!research) return { ok: false, reason: "ASSOCIATION_NOT_FOUND" };
     await prisma.researchTask.update({
       where: { id: taskId },
-      data: { projectId: associationId, organizedProjectId: null },
+      data: {
+        projectId: associationId,
+        organizedProjectId: null,
+        proposalScope: ProposalTaskScope.RESEARCH,
+      },
     });
   } else {
     const project = await prisma.organizedProject.findUnique({
@@ -1913,7 +1922,11 @@ export async function updateProposalTaskAssociation(
     if (!project) return { ok: false, reason: "ASSOCIATION_NOT_FOUND" };
     await prisma.researchTask.update({
       where: { id: taskId },
-      data: { organizedProjectId: associationId, projectId: null },
+      data: {
+        organizedProjectId: associationId,
+        projectId: null,
+        proposalScope: ProposalTaskScope.PROJECT,
+      },
     });
   }
 
@@ -5103,6 +5116,9 @@ export async function createResearchTask(formData: FormData) {
 
   const taskType = taskTypeFromForm(formData.get("taskType"));
   if (!taskType) return { ok: false, reason: "MISSING_ASSOCIATION" };
+  const proposalScope = proposalTaskScopeFromForm(
+    formData.get("proposalScope"),
+  );
   const taskGuideIds = orderedUniqueStrings(formData.getAll("taskGuideIds"));
   const projectId = optionalString(formData.get("projectId"));
   const organizedProjectId = optionalString(formData.get("organizedProjectId"));
@@ -5254,6 +5270,10 @@ export async function createResearchTask(formData: FormData) {
         optionalString(formData.get("description")) ?? DEFAULT_TASK_DESCRIPTION,
       category: taskCategoryFromForm(formData.get("category")),
       taskType,
+      proposalScope:
+        taskType === ResearchTaskType.PROPOSAL
+          ? proposalScope
+          : ProposalTaskScope.RESEARCH,
       status: ResearchTaskStatus.IN_PROGRESS,
       projectId,
       organizedProjectId,
@@ -5436,6 +5456,9 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
 
   const taskType = taskTypeFromForm(formData.get("taskType"));
   if (!taskType) return { ok: false, reason: "MISSING_ASSOCIATION" };
+  const proposalScope = proposalTaskScopeFromForm(
+    formData.get("proposalScope"),
+  );
   const taskGuideIds = orderedUniqueStrings(formData.getAll("taskGuideIds"));
   const projectId = optionalString(formData.get("projectId"));
   const organizedProjectId = optionalString(formData.get("organizedProjectId"));
@@ -5611,6 +5634,10 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
           DEFAULT_TASK_DESCRIPTION,
         category: taskCategoryFromForm(formData.get("category")),
         taskType,
+        proposalScope:
+          taskType === ResearchTaskType.PROPOSAL
+            ? proposalScope
+            : ProposalTaskScope.RESEARCH,
         projectId: effectiveProjectId,
         organizedProjectId: effectiveOrganizedProjectId,
         journalId:

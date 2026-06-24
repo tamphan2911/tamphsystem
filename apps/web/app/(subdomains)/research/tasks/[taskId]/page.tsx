@@ -827,6 +827,7 @@ export default async function TaskDetailPage({
       reviewId: true,
       accountId: true,
       taskType: true,
+      proposalScope: true,
       taskFileName: true,
       taskFileSize: true,
       isUrgent: true,
@@ -1558,7 +1559,8 @@ export default async function TaskDetailPage({
   );
   const isAddJournalTask = task.taskType === "ADD_JOURNAL";
   const isProposalTask = task.taskType === ResearchTaskType.PROPOSAL;
-  const proposalTaskType = task.organizedProjectId ? "PROJECT" : "RESEARCH";
+  const proposalTaskType =
+    task.proposalScope === "PROJECT" ? "PROJECT" : "RESEARCH";
   const canAddTaskJournals = isAddJournalTask && !isClosed && isAssignee;
   const canApproveTaskJournals =
     isAddJournalTask && (isRootAdmin || isAssigner || isChecker);
@@ -2189,6 +2191,7 @@ export default async function TaskDetailPage({
                           description: task.description ?? "",
                           dueDate: dateInputValue(task.dueDate),
                           taskType: task.taskType ?? "OTHER",
+                          proposalScope: task.proposalScope,
                           projectId: task.projectId ?? "",
                           journalId: task.journalId ?? "",
                           journalTargetCount: task.journalTargetCount,
@@ -2478,7 +2481,6 @@ export default async function TaskDetailPage({
               taskId={task.id}
               proposal={taskProposalResult}
               proposalType={proposalTaskType}
-              defaultTitle={task.title}
               canCreate={!isClosed && isAssignee && !taskProposalResult}
             />
           ) : null}
