@@ -202,30 +202,6 @@ export function TaskGuidePicker({
 
   return (
     <section className="grid gap-2">
-      {selectedGuides.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {selectedGuides.map((guide) => (
-            <span
-              key={guide.id}
-              className="inline-flex max-w-full items-center gap-2 border border-[#d8d0c3] bg-[#f7f4ed] px-3 py-2 text-xs text-[#1F2937] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4]"
-            >
-              <ScrollText className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
-              <span className="min-w-0 truncate">
-                {guide.guideCode} - {guide.title}
-              </span>
-              <button
-                type="button"
-                aria-label={`Remove ${guide.title}`}
-                onClick={() => removeGuide(guide.id)}
-                className="research-clickable-icon research-allow-transform flex-none border-0 bg-transparent p-0 text-[#667085] hover:text-rose-600 dark:text-[#B0B0B0] dark:hover:text-rose-300"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </span>
-          ))}
-        </div>
-      ) : null}
-
       <div ref={wrapperRef} className="relative">
         <div
           className={`${researchSearchFieldClass} flex items-center gap-3 px-3`}
@@ -277,6 +253,30 @@ export function TaskGuidePicker({
           </div>
         </FloatingDropdownPortal>
       </div>
+
+      {selectedGuides.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {selectedGuides.map((guide) => (
+            <span
+              key={guide.id}
+              className="inline-flex max-w-full items-center gap-2 border border-[#d8d0c3] bg-[#f7f4ed] px-3 py-2 text-xs text-[#1F2937] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4]"
+            >
+              <ScrollText className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+              <span className="min-w-0 truncate">
+                {guide.guideCode} - {guide.title}
+              </span>
+              <button
+                type="button"
+                aria-label={`Remove ${guide.title}`}
+                onClick={() => removeGuide(guide.id)}
+                className="research-clickable-icon research-allow-transform flex-none border-0 bg-transparent p-0 text-[#667085] hover:text-rose-600 dark:text-[#B0B0B0] dark:hover:text-rose-300"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       {selectedIds.map((id) => (
         <input key={id} type="hidden" name="taskGuideIds" value={id} />
