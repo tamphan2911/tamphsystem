@@ -325,7 +325,7 @@ export function TaskProposalResult({
           if (canCreate) setOpen(true);
         }}
         className={`group min-h-44 border border-dashed border-[#CFC6B8] bg-[#FBF9F4] p-4 text-left transition-[border-color,background-color,transform] duration-180 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:border-[#4A4A4A] dark:bg-[#262626] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838] ${
-          fullWidth ? "w-full md:col-span-2" : "w-full"
+          fullWidth ? "w-full md:col-span-3" : "w-full"
         } ${
           canCreate || canManageAssociation
             ? "cursor-pointer hover:-translate-y-0.5"
@@ -387,7 +387,7 @@ export function TaskProposalResult({
           }
         }}
         className={`border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4] ${
-          fullWidth ? "md:col-span-2" : ""
+          fullWidth ? "md:col-span-3" : ""
         } ${
           canManageAssociation
             ? "cursor-pointer transition duration-180 hover:-translate-y-0.5 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838]"
@@ -609,31 +609,33 @@ export function TaskProposalResult({
         </h2>
       </div>
 
-      {proposals.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {proposals.map((proposal, index) => (
-            <div
-              key={proposal.id}
-              className={
-                index === 0 && proposal.status === "DECLINED"
-                  ? "contents md:[&>*:first-child]:col-span-2"
-                  : "contents"
-              }
-            >
-              {proposalAttemptCard(
-                proposal,
-                index === 0 && proposal.status === "DECLINED",
-              )}
-              {createdResearchCard(proposal)}
-              {createdProjectCard(proposal)}
-            </div>
-          ))}
-          {linkedAssociationCard()}
-          {showProposalSlot ? emptyProposalSlot(false) : null}
-        </div>
-      ) : (
-        emptyProposalSlot(true)
-      )}
+      <div className="grid gap-4 md:grid-cols-3">
+        {proposals.length > 0 ? (
+          <>
+            {proposals.map((proposal, index) => (
+              <div
+                key={proposal.id}
+                className={
+                  index === 0 && proposal.status === "DECLINED"
+                    ? "contents md:[&>*:first-child]:col-span-3"
+                    : "contents"
+                }
+              >
+                {proposalAttemptCard(
+                  proposal,
+                  index === 0 && proposal.status === "DECLINED",
+                )}
+                {createdResearchCard(proposal)}
+                {createdProjectCard(proposal)}
+              </div>
+            ))}
+            {linkedAssociationCard()}
+            {showProposalSlot ? emptyProposalSlot(false) : null}
+          </>
+        ) : (
+          emptyProposalSlot(false)
+        )}
+      </div>
 
       <ResearchModal
         open={open}
