@@ -1894,10 +1894,15 @@ export async function updateProposalTaskAssociation(
 
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
-    select: { id: true, taskType: true },
+    select: { id: true, taskType: true, proposalScope: true },
   });
   if (!task || task.taskType !== ResearchTaskType.PROPOSAL) {
     return { ok: false, reason: "TASK_NOT_FOUND" };
+  }
+  const expectedAssociationType =
+    task.proposalScope === ProposalTaskScope.PROJECT ? "project" : "research";
+  if (associationType !== expectedAssociationType) {
+    return { ok: false, reason: "TASK_TYPE_MISMATCH" };
   }
 
   if (associationType === "research") {
@@ -1911,7 +1916,6 @@ export async function updateProposalTaskAssociation(
       data: {
         projectId: associationId,
         organizedProjectId: null,
-        proposalScope: ProposalTaskScope.RESEARCH,
       },
     });
   } else {
@@ -1925,7 +1929,6 @@ export async function updateProposalTaskAssociation(
       data: {
         organizedProjectId: associationId,
         projectId: null,
-        proposalScope: ProposalTaskScope.PROJECT,
       },
     });
   }

@@ -74,14 +74,11 @@ import {
   type TaskJournalResult,
 } from "./TaskJournalResults";
 import {
+  type ProposalResultProjectOption,
+  type ProposalResultResearchOption,
   TaskProposalResult,
   type TaskProposalResultItem,
 } from "./TaskProposalResult";
-import {
-  TaskProposalAssociationLink,
-  type ProposalAssociationProjectOption,
-  type ProposalAssociationResearchOption,
-} from "./TaskProposalAssociationLink";
 import { TaskGuideIcons, type TaskGuideOption } from "../TaskGuidePicker";
 import {
   TaskSuggestedReviewerButton,
@@ -1689,12 +1686,12 @@ export default async function TaskDetailPage({
         }
       : null;
   const hasAssociatedItems = Boolean(
-    isProposalTask ||
-    task.project ||
-    task.organizedProject ||
-    task.review ||
-    task.journal ||
-    task.conference,
+    !isProposalTask &&
+    (task.project ||
+      task.organizedProject ||
+      task.review ||
+      task.journal ||
+      task.conference),
   );
   const suggestedVenueResults: TaskSuggestedVenueInfo[] = [
     ...task.suggestedJournals.map((suggestion) => ({
@@ -1996,7 +1993,7 @@ export default async function TaskDetailPage({
     email: user.email,
     roles: user.roles,
   }));
-  const researchOptions: ProposalAssociationResearchOption[] = projects.map(
+  const researchOptions: ProposalResultResearchOption[] = projects.map(
     (project) => ({
       id: project.id,
       title: project.title,
@@ -2055,7 +2052,7 @@ export default async function TaskDetailPage({
     journal: review.journal.name,
     status: review.status,
   }));
-  const organizedProjectOptions: ProposalAssociationProjectOption[] =
+  const organizedProjectOptions: ProposalResultProjectOption[] =
     organizedProjects.map((project) => ({
       id: project.id,
       title: project.title,
@@ -2310,21 +2307,6 @@ export default async function TaskDetailPage({
                   hasTaskResultPanel ? "grid min-w-0 gap-5" : "contents"
                 }
               >
-                {isProposalTask ? (
-                  <div
-                    className={
-                      hasTaskResultPanel ? "min-w-0" : "min-w-0 md:col-span-2"
-                    }
-                  >
-                    <TaskProposalAssociationLink
-                      taskId={task.id}
-                      currentAssociation={currentProposalAssociation}
-                      researchOptions={researchOptions}
-                      projectOptions={organizedProjectOptions}
-                      canManage={isRootAdmin}
-                    />
-                  </div>
-                ) : null}
                 {!isProposalTask && task.project && (
                   <div
                     className={
@@ -2482,6 +2464,10 @@ export default async function TaskDetailPage({
               proposal={taskProposalResult}
               proposalType={proposalTaskType}
               canCreate={!isClosed && isAssignee && !taskProposalResult}
+              canManageAssociation={isRootAdmin}
+              currentAssociation={currentProposalAssociation}
+              researchOptions={researchOptions}
+              projectOptions={organizedProjectOptions}
             />
           ) : null}
 

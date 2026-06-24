@@ -1,24 +1,32 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
   FileText,
   FolderGit2,
+  Link2,
   Loader2,
   Plus,
+  Search,
   Send,
+  X,
   XCircle,
 } from "lucide-react";
-import { submitProposal } from "../../actions";
+import { submitProposal, updateProposalTaskAssociation } from "../../actions";
+import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 import { ResearchFileUpload } from "@/sites/research/components/ResearchFileUpload";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   ResearchButton,
+  researchDropdownItemClass,
+  researchDropdownItemIdleClass,
+  researchDropdownPanelClass,
   researchFieldClass,
   researchLabelClass,
+  researchSearchFieldClass,
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
@@ -39,8 +47,39 @@ export type TaskProposalResultItem = {
   submittedByEmail: string;
 };
 
+export type ProposalResultResearchOption = {
+  id: string;
+  title: string;
+  code: string;
+  stage: string;
+};
+
+export type ProposalResultProjectOption = {
+  id: string;
+  title: string;
+  code: string;
+  status: string;
+};
+
+export type ProposalResultAssociation = {
+  type: "research" | "project";
+  id: string;
+  title: string;
+  meta: string;
+};
+
 const maxFileSize = 2 * 1024 * 1024;
 const allowedExtensions = [".doc", ".docx", ".pdf"];
+
+function associationMeta(option: {
+  code: string;
+  stage?: string;
+  status?: string;
+}) {
+  return [option.code, option.stage ?? option.status]
+    .filter(Boolean)
+    .join(" - ");
+}
 
 function statusClass(status: string) {
   if (status === "ACCEPTED") {
@@ -70,21 +109,104 @@ export function TaskProposalResult({
   proposal,
   proposalType,
   canCreate,
+  canManageAssociation,
+  currentAssociation,
+  researchOptions,
+  projectOptions,
 }: {
   taskId: string;
   proposal: TaskProposalResultItem | null;
   proposalType: "RESEARCH" | "PROJECT";
   canCreate: boolean;
+  canManageAssociation: boolean;
+  currentAssociation: ProposalResultAssociation | null;
+  researchOptions: ProposalResultResearchOption[];
+  projectOptions: ProposalResultProjectOption[];
 }) {
   const [open, setOpen] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
   const [warning, setWarning] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [isLinkPending, startLinkTransition] = useTransition();
+  const [linkQuery, setLinkQuery] = useState("");
+  const [selectedAssociation, setSelectedAssociation] =
+    useState<ProposalResultAssociation | null>(currentAssociation);
   const formRef = useRef<HTMLFormElement>(null);
+  const linkSearchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const toast = useResearchToast();
   const StatusIcon = proposal ? statusIcon(proposal.status) : FolderGit2;
   const typeLabel =
     proposalType === "PROJECT" ? "Project proposal" : "Research proposal";
+  const associationType = proposalType === "PROJECT" ? "project" : "research";
+  const associationLabel = proposalType === "PROJECT" ? "project" : "research";
+  const associationResults = useMemo(() => {
+    const needle = linkQuery.trim().toLowerCase();
+    if (!needle) return [];
+    if (proposalType === "PROJECT") {
+      return projectOptions
+        .filter((option) =>
+          [option.title, option.code, option.status, option.id]
+            .join(" ")
+            .toLowerCase()
+            .includes(needle),
+        )
+        .slice(0, 8)
+        .map((option) => ({
+          type: "project" as const,
+          id: option.id,
+          title: option.title,
+          meta: associationMeta(option),
+        }));
+    }
+    return researchOptions
+      .filter((option) =>
+        [option.title, option.code, option.stage, option.id]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 8)
+      .map((option) => ({
+        type: "research" as const,
+        id: option.id,
+        title: option.title,
+        meta: associationMeta(option),
+      }));
+  }, [linkQuery, projectOptions, proposalType, researchOptions]);
+
+  function openLinkPicker() {
+    if (!canManageAssociation) return;
+    setSelectedAssociation(currentAssociation);
+    setLinkQuery("");
+    setLinkOpen(true);
+  }
+
+  function saveAssociation() {
+    if (!selectedAssociation || isLinkPending) return;
+    const formData = new FormData();
+    formData.set("associationType", associationType);
+    formData.set("associationId", selectedAssociation.id);
+    startLinkTransition(async () => {
+      const result = await updateProposalTaskAssociation(taskId, formData);
+      if (!result?.ok) {
+        toast.showError({
+          title: "Linked item was not updated",
+          detail:
+            result?.reason === "ASSOCIATION_NOT_FOUND"
+              ? `The selected ${associationLabel} could not be found.`
+              : `Choose one ${associationLabel} and try again.`,
+        });
+        return;
+      }
+      setLinkOpen(false);
+      toast.showSuccess({
+        title: "Linked item updated",
+        detail: `This proposal task is now connected to the selected ${associationLabel}.`,
+      });
+      router.refresh();
+    });
+  }
 
   function createProposal(formData: FormData) {
     if (isPending) return;
@@ -141,11 +263,30 @@ export function TaskProposalResult({
       </div>
 
       {proposal ? (
-        <article className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]">
+        <article
+          role={canManageAssociation ? "button" : undefined}
+          tabIndex={canManageAssociation ? 0 : undefined}
+          onClick={openLinkPicker}
+          onKeyDown={(event) => {
+            if (
+              canManageAssociation &&
+              (event.key === "Enter" || event.key === " ")
+            ) {
+              event.preventDefault();
+              openLinkPicker();
+            }
+          }}
+          className={`border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4] ${
+            canManageAssociation
+              ? "cursor-pointer transition duration-180 hover:-translate-y-0.5 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838]"
+              : ""
+          }`}
+        >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <Link
                 href={`/proposals/${proposal.id}`}
+                onClick={(event) => event.stopPropagation()}
                 className="block text-sm font-normal leading-6 text-[#1F7180] transition hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
               >
                 {proposal.title}
@@ -188,16 +329,30 @@ export function TaskProposalResult({
                 Decision note: {proposal.decisionComment}
               </span>
             ) : null}
+            <span>
+              Linked {associationLabel}:{" "}
+              {currentAssociation ? (
+                <span className="text-[#1F7180] dark:text-[#A8DADC]">
+                  {currentAssociation.title}
+                </span>
+              ) : (
+                "Not linked"
+              )}
+            </span>
           </div>
         </article>
       ) : (
         <button
           type="button"
           onClick={() => {
+            if (canManageAssociation) {
+              openLinkPicker();
+              return;
+            }
             if (canCreate) setOpen(true);
           }}
           className={`group min-h-44 w-full border border-dashed border-[#CFC6B8] bg-[#FBF9F4] p-4 text-left transition-[border-color,background-color,transform] duration-180 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:border-[#4A4A4A] dark:bg-[#262626] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838] ${
-            canCreate
+            canCreate || canManageAssociation
               ? "cursor-pointer hover:-translate-y-0.5"
               : "cursor-default"
           }`}
@@ -207,13 +362,26 @@ export function TaskProposalResult({
               <Plus className="h-5 w-5" />
             </span>
             <span className="text-sm font-normal text-[#243047] dark:text-[#E4E4E4]">
-              {canCreate ? `Create ${typeLabel}` : "Proposal not created yet"}
+              {canManageAssociation
+                ? currentAssociation
+                  ? `Change linked ${associationLabel}`
+                  : `Link ${associationLabel} to this task`
+                : canCreate
+                  ? `Create ${typeLabel}`
+                  : "Proposal not created yet"}
             </span>
             <span className="max-w-md text-xs leading-5 text-[#667085] dark:text-[#9CA3AF]">
-              {canCreate
-                ? "Create the proposal from this task. The proposal will be linked here after submission."
-                : "The assignee can create the proposal from this task."}
+              {canManageAssociation
+                ? `Admin can connect this ${typeLabel.toLowerCase()} task to one ${associationLabel}.`
+                : canCreate
+                  ? "Create the proposal from this task. The proposal will be linked here after submission."
+                  : "The assignee can create the proposal from this task."}
             </span>
+            {currentAssociation ? (
+              <span className="max-w-md truncate text-xs text-[#1F7180] dark:text-[#A8DADC]">
+                {currentAssociation.title}
+              </span>
+            ) : null}
           </div>
         </button>
       )}
@@ -304,6 +472,110 @@ export function TaskProposalResult({
             />
           </label>
         </form>
+      </ResearchModal>
+
+      <ResearchModal
+        open={linkOpen}
+        onClose={() => setLinkOpen(false)}
+        title={
+          currentAssociation
+            ? `Change linked ${associationLabel}`
+            : `Link ${associationLabel}`
+        }
+        icon={<Link2 className="h-5 w-5" />}
+        maxWidth="max-w-2xl"
+        headerActions={
+          <ResearchButton
+            type="button"
+            onClick={saveAssociation}
+            disabled={!selectedAssociation || isLinkPending}
+          >
+            {isLinkPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Link2 className="h-4 w-4" />
+            )}
+            {isLinkPending ? "Saving..." : "Save link"}
+          </ResearchButton>
+        }
+      >
+        <div className="grid gap-4">
+          {selectedAssociation ? (
+            <div className="flex max-w-full items-center justify-between gap-3 overflow-hidden border border-[#D8D0C2] bg-[#FFFDF8] px-3 py-2 dark:border-[#444444] dark:bg-[#202020]">
+              <span className="min-w-0 flex-1 overflow-hidden">
+                <span className="block truncate text-sm text-[#243047] dark:text-[#E4E4E4]">
+                  {selectedAssociation.title}
+                </span>
+                <span className="block truncate text-xs text-[#667085] dark:text-[#B0B0B0]">
+                  {selectedAssociation.meta}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedAssociation(null)}
+                className="research-clickable-icon flex-none text-[#667085] hover:text-[#B33E5C] dark:text-[#B0B0B0] dark:hover:text-[#FF9DAE]"
+                aria-label={`Clear selected ${associationLabel}`}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : null}
+
+          <div ref={linkSearchRef} className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8C95A4] dark:text-[#B0B0B0]" />
+            <input
+              value={linkQuery}
+              onChange={(event) => setLinkQuery(event.target.value)}
+              placeholder={
+                proposalType === "PROJECT"
+                  ? "Search project by title, ID, or status..."
+                  : "Search research by title, ID, or stage..."
+              }
+              className={`${researchSearchFieldClass} pl-9`}
+            />
+            <FloatingDropdownPortal
+              anchorRef={linkSearchRef}
+              open={linkQuery.trim().length > 0}
+              maxPanelHeight={224}
+            >
+              <div className={researchDropdownPanelClass}>
+                <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
+                  {associationResults.length > 0 ? (
+                    associationResults.map((item) => {
+                      const Icon =
+                        item.type === "research" ? FileText : FolderGit2;
+                      return (
+                        <button
+                          key={`${item.type}-${item.id}`}
+                          type="button"
+                          onClick={() => {
+                            setSelectedAssociation(item);
+                            setLinkQuery("");
+                          }}
+                          className={`${researchDropdownItemClass} ${researchDropdownItemIdleClass} justify-start px-3`}
+                        >
+                          <Icon className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm">
+                              {item.title}
+                            </span>
+                            <span className="block truncate text-xs text-[#667085] dark:text-[#B0B0B0]">
+                              {item.meta}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <div className="px-3 py-3 text-sm text-[#667085] dark:text-[#B0B0B0]">
+                      No matching {associationLabel} found.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </FloatingDropdownPortal>
+          </div>
+        </div>
       </ResearchModal>
     </section>
   );
