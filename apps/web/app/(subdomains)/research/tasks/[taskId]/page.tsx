@@ -9,7 +9,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
   Ban,
-  BookPlus,
+  BookOpenText,
   CheckCircle2,
   ClipboardList,
   Clock3,
@@ -19,6 +19,7 @@ import {
   FileText,
   Globe2,
   KeyRound,
+  MapPinned,
   RotateCcw,
   SearchCheck,
   Send,
@@ -302,15 +303,17 @@ function taskTypeMeta(taskType: string | null, category: string | null) {
   if (taskType === "SUGGEST_VENUE") {
     return {
       label: "Suggest venue",
-      icon: CircleHelp,
-      className: "text-[#86C5B8]",
+      icon: MapPinned,
+      className:
+        "text-[#A06716] hover:text-[#7A4D10] dark:text-[#F4D47A] dark:hover:text-amber-200",
     };
   }
   if (taskType === "ADD_JOURNAL") {
     return {
       label: "Add journal",
-      icon: BookPlus,
-      className: "text-emerald-300",
+      icon: BookOpenText,
+      className:
+        "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-200",
     };
   }
   if (taskType === "REVIEW") {
@@ -539,7 +542,8 @@ function SubmissionInfoPanel({
         </span>
         <DetailSeparator />
         <span>Status: {submission.status.replaceAll("_", " ")}</span>
-        {dateItems.length > 0 ? <DetailSeparator /> : null}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-y-1 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
         {dateItems.length > 0 ? (
           dateItems.map(([label, value], index) => (
             <span key={label} className="inline-flex items-center">
@@ -681,8 +685,8 @@ function SuggestedVenueResultsPanel({
             </div>
             {venue.journalNote ? (
               <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                {venue.kind === "journal" ? "Journal note" : "Conference note"}
-                : {venue.journalNote}
+                {venue.kind === "journal" ? "Journal note" : "Conference note"}:{" "}
+                {venue.journalNote}
               </p>
             ) : null}
             {venue.venueNote ? (
@@ -1140,6 +1144,13 @@ export default async function TaskDetailPage({
           approvalStatus: journal.approvalStatus,
         }))
       : [];
+  const taskDuplicateJournals =
+    task.taskType === "ADD_JOURNAL"
+      ? await prisma.journal.findMany({
+          orderBy: [{ name: "asc" }],
+          select: { id: true, name: true, issn: true },
+        })
+      : [];
 
   const associatedJournalSubmission =
     task.projectId && task.journalId
@@ -1568,8 +1579,7 @@ export default async function TaskDetailPage({
             submissionFeeCurrency:
               task.journalSubmissionSuggestion.journal?.submissionFeeCurrency ??
               "USD",
-            journalNote:
-              task.journalSubmissionSuggestion.journal?.note ?? null,
+            journalNote: task.journalSubmissionSuggestion.journal?.note ?? null,
             venueNote: task.journalSubmissionSuggestion.note ?? null,
             declineReason: task.journalSubmissionSuggestion.declineReason,
             venueLink:
@@ -1658,10 +1668,23 @@ export default async function TaskDetailPage({
         ]
       : []),
   ].sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime());
+  const isSuggestVenueTask = task.taskType === "SUGGEST_VENUE";
+  const linkedSubmitSuggestedVenue =
+    task.taskType === "SUBMIT_RESEARCH" && task.journalSubmissionSuggestion
+      ? (task.journalSubmissionSuggestion.journal?.name ??
+        task.journalSubmissionSuggestion.venueName ??
+        "suggested journal")
+      : task.taskType === "SUBMIT_CONFERENCE" &&
+          task.conferenceSubmissionSuggestion
+        ? (task.conferenceSubmissionSuggestion.conference?.name ??
+          task.conferenceSubmissionSuggestion.venueName ??
+          "suggested conference")
+        : null;
   const hasTaskResultPanel =
-    Boolean(submissionInfo) || suggestedVenueResults.length > 0;
+    Boolean(submissionInfo) ||
+    (isSuggestVenueTask && suggestedVenueResults.length > 0);
   const hasSuggestedVenueResultPanel =
-    !submissionInfo && suggestedVenueResults.length > 0;
+    isSuggestVenueTask && !submissionInfo && suggestedVenueResults.length > 0;
   const scopedResearchWhere = isRootAdmin
     ? {}
     : {
@@ -2114,6 +2137,14 @@ export default async function TaskDetailPage({
                     <p className="mt-1 w-full text-xs leading-5 text-[#B0B0B0]">
                       {researchAuthors(task.project)}
                     </p>
+                    {linkedSubmitSuggestedVenue ? (
+                      <p className="mt-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                        This submit task is linked to suggested venue:{" "}
+                        <span className="text-[#1F7180] dark:text-[#A8DADC]">
+                          {linkedSubmitSuggestedVenue}
+                        </span>
+                      </p>
+                    ) : null}
                   </div>
                 )}
                 {task.organizedProject && (
@@ -2215,7 +2246,7 @@ export default async function TaskDetailPage({
               </div>
               {submissionInfo ? (
                 <SubmissionInfoPanel submission={submissionInfo} />
-              ) : suggestedVenueResults.length > 0 ? (
+              ) : hasSuggestedVenueResultPanel ? (
                 <SuggestedVenueResultsPanel venues={suggestedVenueResults} />
               ) : null}
             </div>
@@ -2232,6 +2263,7 @@ export default async function TaskDetailPage({
                 country: publisher.country ?? "",
               }))}
               linkableJournals={linkableTaskJournals}
+              duplicateJournals={taskDuplicateJournals}
               canAdd={canAddTaskJournals}
               canApprove={canApproveTaskJournals}
               canLinkExisting={isRootAdmin}

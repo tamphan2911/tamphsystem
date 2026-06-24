@@ -109,11 +109,11 @@ export function ResearchSearchPicker<T = unknown>({
               renderSelected(selected)
             ) : (
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-bold text-[#E4E4E4]">
+                <span className="block truncate text-sm font-bold text-[#1F2937] dark:text-[#E4E4E4]">
                   {selected.label}
                 </span>
                 {(selected.description || selected.meta) && (
-                  <span className="block truncate text-xs font-medium text-[#B0B0B0]">
+                  <span className="block truncate text-xs font-medium text-[#667085] dark:text-[#B0B0B0]">
                     {selected.description || selected.meta}
                   </span>
                 )}
@@ -136,7 +136,9 @@ export function ResearchSearchPicker<T = unknown>({
           <div className="relative">
             <Search
               className={`pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition duration-200 ease-out ${
-                focused || query.trim() ? "text-[#A8DADC]" : "text-[#5A5A5A]"
+                focused || query.trim()
+                  ? "text-[#1F7180] dark:text-[#A8DADC]"
+                  : "text-[#8C95A4] dark:text-[#5A5A5A]"
               }`}
               aria-hidden="true"
             />

@@ -177,6 +177,9 @@ function taskTypeFromForm(value: FormDataEntryValue | null) {
   return enumValue(ResearchTaskType, value);
 }
 
+const DEFAULT_TASK_DESCRIPTION =
+  'Read general instruction by icons next to "Task content"';
+
 function dateFromForm(value: FormDataEntryValue | null) {
   const text = optionalString(value);
   return text ? new Date(text) : null;
@@ -2878,6 +2881,8 @@ async function createJournalRecord({
   const legacyField = optionalString(formData.get("field"));
   const journalType =
     enumValue(JournalType, formData.get("type")) ?? JournalType.INTERNATIONAL;
+  const name = optionalString(formData.get("name")) ?? "Untitled journal";
+  const issn = optionalString(formData.get("issn"));
   const accountUsername = optionalString(formData.get("accountUsername"));
   const accountPassword = optionalString(formData.get("accountPassword"));
   const accountEmail = optionalString(formData.get("accountEmail"));
@@ -2887,12 +2892,33 @@ async function createJournalRecord({
     throw new Error("Choose a publisher before saving the journal.");
   const shouldCreateAccount =
     Boolean(accountUsername) && !publisher.usesSingleAccount;
+  const duplicateFilters: Prisma.JournalWhereInput[] = [
+    { name: { equals: name, mode: Prisma.QueryMode.insensitive } },
+  ];
+  if (issn) {
+    duplicateFilters.push({
+      issn: { equals: issn, mode: Prisma.QueryMode.insensitive },
+    });
+  }
+  const duplicateJournal = await prisma.journal.findFirst({
+    where: {
+      OR: duplicateFilters,
+    },
+    select: { name: true, issn: true },
+  });
+  if (duplicateJournal) {
+    throw new Error(
+      duplicateJournal.issn && issn
+        ? `ISSN already exists in ${duplicateJournal.name}.`
+        : `Journal name already exists: ${duplicateJournal.name}.`,
+    );
+  }
 
   const journal = await prisma.$transaction(async (tx) => {
     const journal = await tx.journal.create({
       data: {
-        name: optionalString(formData.get("name")) ?? "Untitled journal",
-        issn: optionalString(formData.get("issn")),
+        name,
+        issn,
         field: fields.length > 0 ? fields.join("; ") : legacyField,
         fields,
         type: journalType,
@@ -5043,7 +5069,8 @@ export async function createResearchTask(formData: FormData) {
     data: {
       title: optionalString(formData.get("title")) ?? "Untitled task",
       taskCode: await generateTaskCode(),
-      description: optionalString(formData.get("description")),
+      description:
+        optionalString(formData.get("description")) ?? DEFAULT_TASK_DESCRIPTION,
       category: taskCategoryFromForm(formData.get("category")),
       taskType,
       status: ResearchTaskStatus.IN_PROGRESS,
@@ -5355,7 +5382,9 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       where: { id: taskId },
       data: {
         title: optionalString(formData.get("title")) ?? "Untitled task",
-        description: optionalString(formData.get("description")),
+        description:
+          optionalString(formData.get("description")) ??
+          DEFAULT_TASK_DESCRIPTION,
         category: taskCategoryFromForm(formData.get("category")),
         taskType,
         projectId: effectiveProjectId,

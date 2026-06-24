@@ -84,6 +84,7 @@ export function TaskJournalResults({
   journals,
   publishers,
   linkableJournals,
+  duplicateJournals,
   canAdd,
   canApprove,
   canLinkExisting,
@@ -93,6 +94,7 @@ export function TaskJournalResults({
   journals: TaskJournalResult[];
   publishers: PublisherPickerItem[];
   linkableJournals: LinkableTaskJournal[];
+  duplicateJournals: { id: string; name: string; issn?: string | null }[];
   canAdd: boolean;
   canApprove: boolean;
   canLinkExisting: boolean;
@@ -163,6 +165,7 @@ export function TaskJournalResults({
           return result;
         }}
         publishers={publishers}
+        duplicateJournals={duplicateJournals}
       />
 
       <LinkExistingJournalDialog

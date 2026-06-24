@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import {
   BookOpenText,
   Check,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 import {
   IconHint,
   ResearchButton,
@@ -71,6 +72,7 @@ export function TaskSuggestedReviewerButton({
     selectedReviewers.map((reviewer) => reviewer.id),
   );
   const [isPending, startTransition] = useTransition();
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   const selected = useMemo(
     () =>
@@ -85,7 +87,7 @@ export function TaskSuggestedReviewerButton({
     return reviewers
       .filter((reviewer) => !selectedIds.includes(reviewer.id))
       .filter((reviewer) => reviewerText(reviewer).includes(needle))
-      .slice(0, 20);
+      .slice(0, 8);
   }, [query, reviewers, selectedIds]);
 
   function resetFromSaved() {
@@ -197,49 +199,56 @@ export function TaskSuggestedReviewerButton({
             </p>
           )}
 
-          <div className="relative">
-            <div className={researchSearchFieldClass}>
+          <div ref={pickerRef} className="relative">
+            <div
+              className={`${researchSearchFieldClass} flex items-center gap-3 px-3`}
+            >
               <UserRoundPlus className="h-4 w-4 flex-none text-[#6F5AA8] dark:text-[#C8B6E2]" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search reviewer by name, email, institution..."
-                className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-[#5A5A5A]"
+                className="h-full min-w-0 flex-1 bg-transparent text-sm text-[#1F2937] outline-none placeholder:text-slate-400 dark:text-[#E4E4E4] dark:placeholder:text-[#5A5A5A]"
                 disabled={isPending}
               />
             </div>
-            {results.length > 0 ? (
-              <div
-                className={`${researchDropdownPanelClass} absolute left-0 right-0 top-[calc(100%+0.35rem)] z-[80] max-h-[13.5rem] overflow-y-auto`}
-              >
-                {results.map((reviewer) => (
-                  <button
-                    key={reviewer.id}
-                    type="button"
-                    onClick={() => addReviewer(reviewer.id)}
-                    className={`${researchDropdownItemClass} ${researchDropdownItemIdleClass} px-3`}
-                    disabled={isPending}
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm">
-                        {reviewer.name}
-                      </span>
-                      <span className="block truncate text-xs text-[#667085] dark:text-[#B0B0B0]">
-                        {[reviewer.email, reviewer.institution]
-                          .filter(Boolean)
-                          .join(" - ")}
-                      </span>
-                    </span>
-                  </button>
-                ))}
+            <FloatingDropdownPortal
+              anchorRef={pickerRef}
+              open={query.trim().length > 0 && !isPending}
+              maxPanelHeight={224}
+            >
+              <div className={researchDropdownPanelClass}>
+                <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
+                  {results.length > 0 ? (
+                    results.map((reviewer) => (
+                      <button
+                        key={reviewer.id}
+                        type="button"
+                        onClick={() => addReviewer(reviewer.id)}
+                        className={`${researchDropdownItemClass} ${researchDropdownItemIdleClass} justify-start px-3`}
+                        disabled={isPending}
+                      >
+                        <UsersRound className="h-4 w-4 flex-none text-[#6F5AA8] dark:text-[#C8B6E2]" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm">
+                            {reviewer.name}
+                          </span>
+                          <span className="block truncate text-xs text-[#667085] dark:text-[#B0B0B0]">
+                            {[reviewer.email, reviewer.institution]
+                              .filter(Boolean)
+                              .join(" - ")}
+                          </span>
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-3 text-sm text-[#667085] dark:text-[#B0B0B0]">
+                      No reviewer matches this search.
+                    </div>
+                  )}
+                </div>
               </div>
-            ) : query.trim() ? (
-              <div
-                className={`${researchDropdownPanelClass} absolute left-0 right-0 top-[calc(100%+0.35rem)] z-[80] px-3 py-3 text-sm text-[#667085] dark:text-[#B0B0B0]`}
-              >
-                No reviewer matches this search.
-              </div>
-            ) : null}
+            </FloatingDropdownPortal>
           </div>
         </div>
       </ResearchModal>

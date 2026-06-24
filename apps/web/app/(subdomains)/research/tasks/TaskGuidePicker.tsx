@@ -1,15 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   BookOpenText,
   ClipboardCheck,
   FileSearch,
   Lightbulb,
+  MapPinned,
   Route,
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   IconHint,
@@ -31,31 +33,59 @@ const defaultGuideIconStyle: {
   className: string;
 } = {
   icon: BookOpenText,
-  className: "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC]",
+  className:
+    "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-200",
 };
 
 const guideIconStyles: Array<{
   icon: LucideIcon;
   className: string;
 }> = [
+  {
+    icon: MapPinned,
+    className:
+      "text-[#A06716] hover:text-[#7A4D10] dark:text-[#F4D47A] dark:hover:text-amber-200",
+  },
   defaultGuideIconStyle,
   {
     icon: ClipboardCheck,
-    className: "text-[#2F8F62] hover:text-[#226A49] dark:text-[#9ED6B5]",
+    className:
+      "text-[#2F8F62] hover:text-[#226A49] dark:text-[#9ED6B5] dark:hover:text-emerald-200",
   },
   {
     icon: FileSearch,
-    className: "text-[#6F5AA8] hover:text-[#57458A] dark:text-[#C8B6E2]",
+    className:
+      "text-[#6F5AA8] hover:text-[#57458A] dark:text-[#C8B6E2] dark:hover:text-violet-200",
   },
   {
     icon: Route,
-    className: "text-[#A06716] hover:text-[#7A4D10] dark:text-[#F4D47A]",
+    className:
+      "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-200",
   },
   {
     icon: Lightbulb,
-    className: "text-[#B33E5C] hover:text-[#8E2F48] dark:text-[#F0A6B5]",
+    className:
+      "text-[#B33E5C] hover:text-[#8E2F48] dark:text-[#F0A6B5] dark:hover:text-rose-200",
   },
 ];
+
+function guideIconMetaForGuide(guide: TaskGuideOption, index: number) {
+  if (guide.guideCode === "G001") {
+    return {
+      icon: MapPinned,
+      className:
+        "text-[#A06716] hover:text-[#7A4D10] dark:text-[#F4D47A] dark:hover:text-amber-200",
+    };
+  }
+  if (guide.guideCode === "G003") {
+    return {
+      icon: BookOpenText,
+      className:
+        "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-200",
+    };
+  }
+  return guideIconMeta(index);
+}
 
 function guideIconMeta(index: number) {
   return (
@@ -96,7 +126,7 @@ export function TaskGuideIcons({ guides }: { guides: TaskGuideOption[] }) {
     <>
       <span className="inline-flex items-center gap-1">
         {guides.map((guide, index) => {
-          const meta = guideIconMeta(index);
+          const meta = guideIconMetaForGuide(guide, index);
           const Icon = meta.icon;
           return (
             <IconHint key={guide.id} label={guide.title}>
@@ -127,6 +157,7 @@ export function TaskGuidePicker({
   onChange: (ids: string[]) => void;
 }) {
   const [query, setQuery] = useState("");
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const selectedGuides = useMemo(
     () =>
       selectedIds.flatMap(
@@ -145,7 +176,7 @@ export function TaskGuidePicker({
           .toLowerCase()
           .includes(needle),
       )
-      .slice(0, 12);
+      .slice(0, 8);
   }, [guides, query, selectedIds]);
 
   function addGuide(id: string) {
@@ -183,7 +214,7 @@ export function TaskGuidePicker({
         </div>
       ) : null}
 
-      <div className="relative">
+      <div ref={wrapperRef} className="relative">
         <div
           className={`${researchSearchFieldClass} flex items-center gap-3 px-3`}
         >
@@ -195,34 +226,44 @@ export function TaskGuidePicker({
             className="h-full min-w-0 flex-1 bg-transparent text-sm text-[#1F2937] outline-none placeholder:text-slate-400 dark:text-[#E4E4E4] dark:placeholder:text-[#5A5A5A]"
           />
         </div>
-        {results.length > 0 ? (
-          <div
-            className={`${researchDropdownPanelClass} absolute left-0 right-0 top-[calc(100%+0.35rem)] z-[80] max-h-[13.5rem] overflow-y-auto`}
-          >
-            {results.map((guide) => (
-              <button
-                key={guide.id}
-                type="button"
-                onClick={() => addGuide(guide.id)}
-                className={`${researchDropdownItemClass} ${researchDropdownItemIdleClass} px-3`}
-              >
-                <BookOpenText className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
-                <span className="min-w-0">
-                  <span className="block truncate text-sm">{guide.title}</span>
-                  <span className="block truncate text-xs text-[#667085] dark:text-[#B0B0B0]">
-                    {guide.guideCode}
-                  </span>
-                </span>
-              </button>
-            ))}
+        <FloatingDropdownPortal
+          anchorRef={wrapperRef}
+          open={query.trim().length > 0}
+          maxPanelHeight={224}
+        >
+          <div className={researchDropdownPanelClass}>
+            <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
+              {results.length > 0 ? (
+                results.map((guide, index) => {
+                  const meta = guideIconMetaForGuide(guide, index);
+                  const Icon = meta.icon;
+                  return (
+                    <button
+                      key={guide.id}
+                      type="button"
+                      onClick={() => addGuide(guide.id)}
+                      className={`${researchDropdownItemClass} ${researchDropdownItemIdleClass} justify-start px-3`}
+                    >
+                      <Icon className={`h-4 w-4 flex-none ${meta.className}`} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm">
+                          {guide.title}
+                        </span>
+                        <span className="block truncate text-xs text-[#667085] dark:text-[#B0B0B0]">
+                          {guide.guideCode}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="px-3 py-3 text-sm text-[#667085] dark:text-[#B0B0B0]">
+                  No guide matches this search.
+                </div>
+              )}
+            </div>
           </div>
-        ) : query.trim() ? (
-          <div
-            className={`${researchDropdownPanelClass} absolute left-0 right-0 top-[calc(100%+0.35rem)] z-[80] px-3 py-3 text-sm text-[#667085] dark:text-[#B0B0B0]`}
-          >
-            No guide matches this search.
-          </div>
-        ) : null}
+        </FloatingDropdownPortal>
       </div>
 
       {selectedIds.map((id) => (
