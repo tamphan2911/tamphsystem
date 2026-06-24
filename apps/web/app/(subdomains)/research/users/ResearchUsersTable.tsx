@@ -133,6 +133,10 @@ export function ResearchUsersTable({
   const { showSuccess, showError } = useResearchToast();
   const [query, setQuery] = usePersistentTableValue("users:q", "");
   const [role, setRole] = usePersistentTableValue("users:role", "ALL");
+  const [unfinishedOnly, setUnfinishedOnly] = usePersistentTableValue(
+    "users:unfinished",
+    "false",
+  );
   const [editing, setEditing] = useState<ResearchUserRow | null>(null);
   const [deleting, setDeleting] = useState<ResearchUserRow | null>(null);
   const [visiblePasswordId, setVisiblePasswordId] = useState<string | null>(
@@ -144,6 +148,8 @@ export function ResearchUsersTable({
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const matchesRole = role === "ALL" || row.roles.includes(role);
+      const matchesUnfinished =
+        unfinishedOnly !== "true" || unfinishedTaskTotal(row) > 0;
       const haystack = [
         row.name,
         row.email,
@@ -153,9 +159,13 @@ export function ResearchUsersTable({
       ]
         .join(" ")
         .toLowerCase();
-      return matchesRole && (!needle || haystack.includes(needle));
+      return (
+        matchesRole &&
+        matchesUnfinished &&
+        (!needle || haystack.includes(needle))
+      );
     });
-  }, [query, role, rows]);
+  }, [query, role, rows, unfinishedOnly]);
 
   const pagination = useTablePagination(filtered, 12, 1, "users");
 
@@ -166,6 +176,11 @@ export function ResearchUsersTable({
 
   function updateRole(value: string) {
     setRole(value);
+    pagination.setPage(1);
+  }
+
+  function updateUnfinishedOnly(checked: boolean) {
+    setUnfinishedOnly(checked ? "true" : "false");
     pagination.setPage(1);
   }
 
@@ -233,6 +248,19 @@ export function ResearchUsersTable({
           placeholder="Search name, email, affiliation, role..."
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
+          <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 transition-colors duration-150 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white">
+            <input
+              type="checkbox"
+              checked={unfinishedOnly === "true"}
+              onChange={(event) =>
+                updateUnfinishedOnly(event.currentTarget.checked)
+              }
+              className="h-4 w-4 cursor-pointer rounded-none border-slate-300 text-sky-700 accent-[#1F7180] dark:border-[#666666] dark:accent-[#A8DADC]"
+            />
+            <IconHint label="Show only users who currently have unfinished tasks.">
+              <span className="whitespace-nowrap text-left">Unfinished</span>
+            </IconHint>
+          </label>
           <FilterSelect
             value={role}
             onChange={updateRole}
