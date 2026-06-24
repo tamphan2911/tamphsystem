@@ -307,11 +307,11 @@ function statusMeta(task: TaskRow) {
     detail: due ? `${durationText(remainingMs ?? 0)} left` : "No due date",
     dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
     className:
-      "border-sky-200 bg-sky-50 text-sky-700 dark:border-[#A8DADC]/40 dark:bg-[#A8DADC]/10 dark:text-[#A8DADC]",
+      "border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-300/40 dark:bg-yellow-950/25 dark:text-yellow-200",
     detailClassName:
       remainingMs !== null && remainingMs < 24 * 60 * 60 * 1000
         ? "font-semibold text-[#B64F48] dark:text-[#FFB4A2]"
-        : "text-[#B0B0B0]",
+        : "text-yellow-700 dark:text-yellow-300",
   };
 }
 
@@ -372,7 +372,7 @@ function statusIconMeta(task: TaskRow): {
   return {
     icon: Clock3,
     className:
-      "text-indigo-700 hover:text-indigo-800 dark:text-violet-300 dark:hover:text-violet-200",
+      "text-yellow-700 hover:text-yellow-800 dark:text-yellow-300 dark:hover:text-yellow-200",
   };
 }
 
