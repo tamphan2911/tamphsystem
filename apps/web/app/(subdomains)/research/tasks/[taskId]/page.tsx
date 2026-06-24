@@ -28,6 +28,7 @@ import {
 import {
   prisma,
   JournalApprovalStatus,
+  ProposalType,
   ResearchTaskStatus,
   ResearchTaskType,
   Role,
@@ -75,6 +76,7 @@ import {
 } from "./TaskJournalResults";
 import {
   type ProposalResultProjectOption,
+  type ProposalResultProposalOption,
   type ProposalResultResearchOption,
   TaskProposalResult,
   type TaskProposalResultItem,
@@ -1982,6 +1984,7 @@ export default async function TaskDetailPage({
     organizedProjects,
     checkerUsers,
     taskGuideOptions,
+    proposalsForLinking,
   ] = canLoadTaskFormOptions
     ? await Promise.all([
         prisma.user.findMany({
@@ -2060,8 +2063,25 @@ export default async function TaskDetailPage({
             importantNote: true,
           },
         }),
+        prisma.proposal.findMany({
+          where: {
+            taskId: null,
+            type:
+              proposalTaskType === "PROJECT"
+                ? ProposalType.PROJECT
+                : ProposalType.RESEARCH,
+          },
+          orderBy: [{ createdAt: "desc" }],
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            createdAt: true,
+            submittedBy: { select: { name: true, email: true } },
+          },
+        }),
       ])
-    : [[], [], [], [], [], [], [], [], []];
+    : [[], [], [], [], [], [], [], [], [], []];
   const assignees = assigneeUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -2139,6 +2159,15 @@ export default async function TaskDetailPage({
       title: project.title,
       code: project.referenceCode ?? "",
       status: project.status,
+    }));
+  const proposalLinkOptions: ProposalResultProposalOption[] =
+    proposalsForLinking.map((proposal) => ({
+      id: proposal.id,
+      title: proposal.title,
+      status: proposal.status,
+      submittedBy: displayResearchPersonName(proposal.submittedBy),
+      submittedByEmail: displayResearchEmail(proposal.submittedBy.email),
+      createdAt: formatDate(proposal.createdAt),
     }));
   const projectIds = projects.map((project) => project.id);
   const [journalSubmissions, conferenceSubmissions] =
@@ -2549,8 +2578,7 @@ export default async function TaskDetailPage({
               canCreate={!isClosed && isAssignee}
               canManageAssociation={isRootAdmin}
               currentAssociation={currentProposalAssociation}
-              researchOptions={researchOptions}
-              projectOptions={organizedProjectOptions}
+              proposalOptions={proposalLinkOptions}
             />
           ) : null}
 

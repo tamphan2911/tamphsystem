@@ -16,7 +16,7 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-import { submitProposal, updateProposalTaskAssociation } from "../../actions";
+import { linkProposalToTask, submitProposal } from "../../actions";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 import { ResearchFileUpload } from "@/sites/research/components/ResearchFileUpload";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
@@ -81,6 +81,15 @@ export type ProposalResultProjectOption = {
   status: string;
 };
 
+export type ProposalResultProposalOption = {
+  id: string;
+  title: string;
+  status: string;
+  submittedBy: string;
+  submittedByEmail: string;
+  createdAt: string;
+};
+
 export type ProposalResultAssociation = {
   type: "research" | "project";
   id: string;
@@ -90,16 +99,6 @@ export type ProposalResultAssociation = {
 
 const maxFileSize = 2 * 1024 * 1024;
 const allowedExtensions = [".doc", ".docx", ".pdf"];
-
-function associationMeta(option: {
-  code: string;
-  stage?: string;
-  status?: string;
-}) {
-  return [option.code, option.stage ?? option.status]
-    .filter(Boolean)
-    .join(" - ");
-}
 
 function statusClass(status: string) {
   if (status === "ACCEPTED") {
@@ -164,8 +163,7 @@ export function TaskProposalResult({
   canCreate,
   canManageAssociation,
   currentAssociation,
-  researchOptions,
-  projectOptions,
+  proposalOptions,
 }: {
   taskId: string;
   proposals: TaskProposalResultItem[];
@@ -173,8 +171,7 @@ export function TaskProposalResult({
   canCreate: boolean;
   canManageAssociation: boolean;
   currentAssociation: ProposalResultAssociation | null;
-  researchOptions: ProposalResultResearchOption[];
-  projectOptions: ProposalResultProjectOption[];
+  proposalOptions: ProposalResultProposalOption[];
 }) {
   const [open, setOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
@@ -182,15 +179,14 @@ export function TaskProposalResult({
   const [isPending, startTransition] = useTransition();
   const [isLinkPending, startLinkTransition] = useTransition();
   const [linkQuery, setLinkQuery] = useState("");
-  const [selectedAssociation, setSelectedAssociation] =
-    useState<ProposalResultAssociation | null>(currentAssociation);
+  const [selectedProposal, setSelectedProposal] =
+    useState<ProposalResultProposalOption | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const linkSearchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const toast = useResearchToast();
   const typeLabel =
     proposalType === "PROJECT" ? "Project proposal" : "Research proposal";
-  const associationType = proposalType === "PROJECT" ? "project" : "research";
   const associationLabel = proposalType === "PROJECT" ? "project" : "research";
   const canAddAnotherProposal =
     proposals.length === 0 ||
@@ -200,69 +196,57 @@ export function TaskProposalResult({
   const hasCreatedResult = proposals.some(
     (proposal) => proposal.createdResearch || proposal.createdProject,
   );
-  const associationResults = useMemo(() => {
+  const proposalResults = useMemo(() => {
     const needle = linkQuery.trim().toLowerCase();
     if (!needle) return [];
-    if (proposalType === "PROJECT") {
-      return projectOptions
-        .filter((option) =>
-          [option.title, option.code, option.status, option.id]
-            .join(" ")
-            .toLowerCase()
-            .includes(needle),
-        )
-        .slice(0, 8)
-        .map((option) => ({
-          type: "project" as const,
-          id: option.id,
-          title: option.title,
-          meta: associationMeta(option),
-        }));
-    }
-    return researchOptions
+    return proposalOptions
       .filter((option) =>
-        [option.title, option.code, option.stage, option.id]
+        [
+          option.title,
+          option.status,
+          option.id,
+          option.submittedBy,
+          option.submittedByEmail,
+        ]
           .join(" ")
           .toLowerCase()
           .includes(needle),
       )
-      .slice(0, 8)
-      .map((option) => ({
-        type: "research" as const,
-        id: option.id,
-        title: option.title,
-        meta: associationMeta(option),
-      }));
-  }, [linkQuery, projectOptions, proposalType, researchOptions]);
+      .slice(0, 8);
+  }, [linkQuery, proposalOptions]);
 
   function openLinkPicker() {
     if (!canManageAssociation) return;
-    setSelectedAssociation(currentAssociation);
+    setSelectedProposal(null);
     setLinkQuery("");
     setLinkOpen(true);
   }
 
-  function saveAssociation() {
-    if (!selectedAssociation || isLinkPending) return;
+  function saveProposalLink() {
+    if (!selectedProposal || isLinkPending) return;
     const formData = new FormData();
-    formData.set("associationType", associationType);
-    formData.set("associationId", selectedAssociation.id);
+    formData.set("proposalId", selectedProposal.id);
     startLinkTransition(async () => {
-      const result = await updateProposalTaskAssociation(taskId, formData);
+      const result = await linkProposalToTask(taskId, formData);
       if (!result?.ok) {
+        const detail =
+          result?.reason === "PROPOSAL_ALREADY_LINKED"
+            ? "That proposal is already linked to another task."
+            : result?.reason === "TASK_TYPE_MISMATCH"
+              ? `Choose a ${typeLabel.toLowerCase()} for this task.`
+              : result?.reason === "TASK_ALREADY_FILLED"
+                ? "This task already has a proposal that is waiting for review or approved."
+                : "Choose one available proposal and try again.";
         toast.showError({
-          title: "Linked item was not updated",
-          detail:
-            result?.reason === "ASSOCIATION_NOT_FOUND"
-              ? `The selected ${associationLabel} could not be found.`
-              : `Choose one ${associationLabel} and try again.`,
+          title: "Proposal was not linked",
+          detail,
         });
         return;
       }
       setLinkOpen(false);
       toast.showSuccess({
-        title: "Linked item updated",
-        detail: `This proposal task is now connected to the selected ${associationLabel}.`,
+        title: "Proposal linked",
+        detail: "The selected proposal is now shown in this task.",
       });
       router.refresh();
     });
@@ -338,9 +322,7 @@ export function TaskProposalResult({
           </span>
           <span className="text-sm font-normal text-[#243047] dark:text-[#E4E4E4]">
             {canManageAssociation
-              ? currentAssociation
-                ? `Change linked ${associationLabel}`
-                : `Link ${associationLabel} to this task`
+              ? `Link existing ${typeLabel}`
               : canCreate
                 ? proposals.length > 0
                   ? `Create another ${typeLabel}`
@@ -349,7 +331,7 @@ export function TaskProposalResult({
           </span>
           <span className="max-w-md text-xs leading-5 text-[#667085] dark:text-[#9CA3AF]">
             {canManageAssociation
-              ? `Admin can connect this ${typeLabel.toLowerCase()} task to one ${associationLabel}.`
+              ? `Admin can connect this task to an existing ${typeLabel.toLowerCase()}.`
               : canCreate
                 ? proposals.length > 0
                   ? "The previous proposal was declined. Create the next attempt from this task."
@@ -728,18 +710,14 @@ export function TaskProposalResult({
       <ResearchModal
         open={linkOpen}
         onClose={() => setLinkOpen(false)}
-        title={
-          currentAssociation
-            ? `Change linked ${associationLabel}`
-            : `Link ${associationLabel}`
-        }
+        title={`Link existing ${typeLabel.toLowerCase()}`}
         icon={<Link2 className="h-5 w-5" />}
         maxWidth="max-w-2xl"
         headerActions={
           <ResearchButton
             type="button"
-            onClick={saveAssociation}
-            disabled={!selectedAssociation || isLinkPending}
+            onClick={saveProposalLink}
+            disabled={!selectedProposal || isLinkPending}
           >
             {isLinkPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -751,21 +729,24 @@ export function TaskProposalResult({
         }
       >
         <div className="grid gap-4">
-          {selectedAssociation ? (
+          {selectedProposal ? (
             <div className="flex max-w-full items-center justify-between gap-3 overflow-hidden border border-[#D8D0C2] bg-[#FFFDF8] px-3 py-2 dark:border-[#444444] dark:bg-[#202020]">
               <span className="min-w-0 flex-1 overflow-hidden">
                 <span className="block truncate text-sm text-[#243047] dark:text-[#E4E4E4]">
-                  {selectedAssociation.title}
+                  {selectedProposal.title}
                 </span>
                 <span className="block truncate text-xs text-[#667085] dark:text-[#B0B0B0]">
-                  {selectedAssociation.meta}
+                  {label(selectedProposal.status)}
+                  {selectedProposal.submittedBy
+                    ? ` | ${selectedProposal.submittedBy}`
+                    : ""}
                 </span>
               </span>
               <button
                 type="button"
-                onClick={() => setSelectedAssociation(null)}
+                onClick={() => setSelectedProposal(null)}
                 className="research-clickable-icon flex-none text-[#667085] hover:text-[#B33E5C] dark:text-[#B0B0B0] dark:hover:text-[#FF9DAE]"
-                aria-label={`Clear selected ${associationLabel}`}
+                aria-label="Clear selected proposal"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -777,11 +758,7 @@ export function TaskProposalResult({
             <input
               value={linkQuery}
               onChange={(event) => setLinkQuery(event.target.value)}
-              placeholder={
-                proposalType === "PROJECT"
-                  ? "Search project by title, ID, or status..."
-                  : "Search research by title, ID, or stage..."
-              }
+              placeholder={`Search ${typeLabel.toLowerCase()} by title, status, proposer, or ID...`}
               className={`${researchSearchFieldClass} pl-9`}
             />
             <FloatingDropdownPortal
@@ -791,16 +768,16 @@ export function TaskProposalResult({
             >
               <div className={researchDropdownPanelClass}>
                 <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
-                  {associationResults.length > 0 ? (
-                    associationResults.map((item) => {
+                  {proposalResults.length > 0 ? (
+                    proposalResults.map((item) => {
                       const Icon =
-                        item.type === "research" ? FileText : FolderGit2;
+                        proposalType === "PROJECT" ? Building2 : FileText;
                       return (
                         <button
-                          key={`${item.type}-${item.id}`}
+                          key={item.id}
                           type="button"
                           onClick={() => {
-                            setSelectedAssociation(item);
+                            setSelectedProposal(item);
                             setLinkQuery("");
                           }}
                           className={`${researchDropdownItemClass} ${researchDropdownItemIdleClass} justify-start px-3`}
@@ -811,7 +788,9 @@ export function TaskProposalResult({
                               {item.title}
                             </span>
                             <span className="block truncate text-xs text-[#667085] dark:text-[#B0B0B0]">
-                              {item.meta}
+                              {label(item.status)}
+                              {item.submittedBy ? ` | ${item.submittedBy}` : ""}
+                              {item.createdAt ? ` | ${item.createdAt}` : ""}
                             </span>
                           </span>
                         </button>
@@ -819,7 +798,7 @@ export function TaskProposalResult({
                     })
                   ) : (
                     <div className="px-3 py-3 text-sm text-[#667085] dark:text-[#B0B0B0]">
-                      No matching {associationLabel} found.
+                      No available {typeLabel.toLowerCase()} found.
                     </div>
                   )}
                 </div>

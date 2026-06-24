@@ -2155,6 +2155,70 @@ export async function updateProposalTaskAssociation(
   return { ok: true };
 }
 
+export async function linkProposalToTask(taskId: string, formData: FormData) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const proposalId = optionalString(formData.get("proposalId"));
+  if (!proposalId) return { ok: false, reason: "MISSING_PROPOSAL" };
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      taskType: true,
+      status: true,
+      proposalScope: true,
+      proposalResults: { select: { id: true, status: true } },
+    },
+  });
+  if (!task || task.taskType !== ResearchTaskType.PROPOSAL) {
+    return { ok: false, reason: "TASK_NOT_FOUND" };
+  }
+  if (
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    return { ok: false, reason: "TASK_CLOSED" };
+  }
+
+  const proposal = await prisma.proposal.findUnique({
+    where: { id: proposalId },
+    select: { id: true, type: true, taskId: true },
+  });
+  if (!proposal) return { ok: false, reason: "PROPOSAL_NOT_FOUND" };
+  if (proposal.taskId && proposal.taskId !== task.id) {
+    return { ok: false, reason: "PROPOSAL_ALREADY_LINKED" };
+  }
+
+  const expectedType =
+    task.proposalScope === ProposalTaskScope.PROJECT
+      ? ProposalType.PROJECT
+      : ProposalType.RESEARCH;
+  if (proposal.type !== expectedType) {
+    return { ok: false, reason: "TASK_TYPE_MISMATCH" };
+  }
+
+  const hasActiveProposal = task.proposalResults.some(
+    (item) =>
+      item.id !== proposal.id && item.status !== ProposalStatus.DECLINED,
+  );
+  if (hasActiveProposal) {
+    return { ok: false, reason: "TASK_ALREADY_FILLED" };
+  }
+
+  await prisma.proposal.update({
+    where: { id: proposal.id },
+    data: { taskId: task.id },
+  });
+
+  revalidatePath(`/tasks/${task.id}`);
+  revalidatePath(`/proposals/${proposal.id}`);
+  revalidatePath("/proposals");
+  revalidatePath("/tasks");
+  return { ok: true };
+}
+
 export async function deleteProposal(proposalId: string) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
