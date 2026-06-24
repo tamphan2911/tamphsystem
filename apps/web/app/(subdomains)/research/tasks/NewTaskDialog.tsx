@@ -152,9 +152,25 @@ function researchMatchesMode(project: TaskResearchOption, mode: TaskMode) {
   return true;
 }
 
-function defaultTaskGuideIdsForMode(mode: TaskMode, guides: TaskGuideOption[]) {
+function defaultTaskGuideIdsForMode(
+  mode: TaskMode,
+  guides: TaskGuideOption[],
+  proposalScope: ProposalScope = "research",
+) {
   const guideCode =
-    mode === "submit" ? "G002" : mode === "suggestVenue" ? "G001" : null;
+    mode === "submit"
+      ? "G002"
+      : mode === "suggestVenue"
+        ? "G001"
+        : mode === "addJournal"
+          ? "G003"
+          : mode === "proposal"
+            ? proposalScope === "project"
+              ? "G005"
+              : "G004"
+            : mode === "review"
+              ? "G013"
+              : null;
   if (!guideCode) return [];
   const guide = guides.find((item) => item.guideCode === guideCode);
   return guide ? [guide.id] : [];
@@ -457,10 +473,14 @@ export function NewTaskDialog({
     }
   }
 
-  function changeMode(nextMode: TaskMode) {
+  function changeMode(nextMode: TaskMode, nextProposalScope = proposalScope) {
     setMode(nextMode);
     setSelectedTaskGuideIds(
-      defaultTaskGuideIdsForMode(nextMode, taskGuideOptions),
+      defaultTaskGuideIdsForMode(
+        nextMode,
+        taskGuideOptions,
+        nextProposalScope,
+      ),
     );
     if (
       (nextMode === "other" && selectedVenue?.kind === "conference") ||
@@ -490,12 +510,12 @@ export function NewTaskDialog({
 
   function changeTaskChoice(choice: TaskModeChoice) {
     if (choice === "researchProposal") {
-      changeMode("proposal");
+      changeMode("proposal", "research");
       changeProposalScope("research");
       return;
     }
     if (choice === "projectProposal") {
-      changeMode("proposal");
+      changeMode("proposal", "project");
       changeProposalScope("project");
       return;
     }
@@ -514,6 +534,11 @@ export function NewTaskDialog({
 
   function changeProposalScope(nextScope: ProposalScope) {
     setProposalScope(nextScope);
+    if (mode === "proposal") {
+      setSelectedTaskGuideIds(
+        defaultTaskGuideIdsForMode("proposal", taskGuideOptions, nextScope),
+      );
+    }
     if (nextScope === "research") {
       setSelectedOrganizedProject(null);
       setOrganizedProjectQuery("");

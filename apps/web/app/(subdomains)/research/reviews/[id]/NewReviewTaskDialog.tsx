@@ -50,6 +50,11 @@ type SearchPanelItem = {
   onClick: () => void;
 };
 
+function defaultReviewTaskGuideIds(guides: TaskGuideOption[]) {
+  const guide = guides.find((item) => item.guideCode === "G013");
+  return guide ? [guide.id] : [];
+}
+
 export function NewReviewTaskDialog({
   reviewId,
   manuscriptTitle,
@@ -73,7 +78,7 @@ export function NewReviewTaskDialog({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCheckerId, setSelectedCheckerId] = useState("");
   const [selectedTaskGuideIds, setSelectedTaskGuideIds] = useState<string[]>(
-    [],
+    () => defaultReviewTaskGuideIds(taskGuideOptions),
   );
   const [dueDate, setDueDate] = useState(defaultResearchTaskDueDate);
   const [allowReportUpload, setAllowReportUpload] = useState(false);
@@ -124,6 +129,7 @@ export function NewReviewTaskDialog({
     setCheckerQuery("");
     setSelectedIds([]);
     setSelectedCheckerId("");
+    setSelectedTaskGuideIds(defaultReviewTaskGuideIds(taskGuideOptions));
     setDueDate(defaultResearchTaskDueDate());
     setAllowReportUpload(false);
   }

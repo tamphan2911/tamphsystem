@@ -185,6 +185,44 @@ function proposalTaskScopeFromForm(value: FormDataEntryValue | null) {
 const DEFAULT_TASK_DESCRIPTION =
   'Read general instruction by icons next to "Task content"';
 
+function defaultTaskGuideCodeForTask({
+  taskType,
+  proposalScope,
+}: {
+  taskType: ResearchTaskType;
+  proposalScope: ProposalTaskScope;
+}) {
+  if (taskType === ResearchTaskType.SUGGEST_VENUE) return "G001";
+  if (
+    taskType === ResearchTaskType.SUBMIT_RESEARCH ||
+    taskType === ResearchTaskType.SUBMIT_CONFERENCE
+  ) {
+    return "G002";
+  }
+  if (taskType === ResearchTaskType.ADD_JOURNAL) return "G003";
+  if (taskType === ResearchTaskType.PROPOSAL) {
+    return proposalScope === ProposalTaskScope.PROJECT ? "G005" : "G004";
+  }
+  if (taskType === ResearchTaskType.REVIEW) return "G013";
+  return null;
+}
+
+async function defaultTaskGuideIdsForTask({
+  taskType,
+  proposalScope,
+}: {
+  taskType: ResearchTaskType;
+  proposalScope: ProposalTaskScope;
+}) {
+  const guideCode = defaultTaskGuideCodeForTask({ taskType, proposalScope });
+  if (!guideCode) return [];
+  const guide = await prisma.taskGuide.findUnique({
+    where: { guideCode },
+    select: { id: true },
+  });
+  return guide ? [guide.id] : [];
+}
+
 function dateFromForm(value: FormDataEntryValue | null) {
   const text = optionalString(value);
   return text ? new Date(text) : null;
@@ -5264,6 +5302,10 @@ export async function createResearchTask(formData: FormData) {
   if (taskFile?.ok === false) {
     return { ok: false, reason: taskFile.reason };
   }
+  const resolvedTaskGuideIds =
+    taskGuideIds.length > 0
+      ? taskGuideIds
+      : await defaultTaskGuideIdsForTask({ taskType, proposalScope });
 
   const task = await prisma.researchTask.create({
     data: {
@@ -5295,7 +5337,7 @@ export async function createResearchTask(formData: FormData) {
         create: assigneeIds.map((userId) => ({ userId })),
       },
       guides: {
-        connect: taskGuideIds.map((id) => ({ id })),
+        connect: resolvedTaskGuideIds.map((id) => ({ id })),
       },
     },
     select: {
