@@ -2,12 +2,12 @@
 
 import { useMemo, useRef, useState } from "react";
 import {
-  BookOpenText,
   ClipboardCheck,
   FileSearch,
   Lightbulb,
   MapPinned,
   Route,
+  ScrollText,
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -32,7 +32,7 @@ const defaultGuideIconStyle: {
   icon: LucideIcon;
   className: string;
 } = {
-  icon: BookOpenText,
+  icon: ScrollText,
   className:
     "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-200",
 };
@@ -79,7 +79,7 @@ function guideIconMetaForGuide(guide: TaskGuideOption, index: number) {
   }
   if (guide.guideCode === "G003") {
     return {
-      icon: BookOpenText,
+      icon: ScrollText,
       className:
         "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-200",
     };
@@ -197,7 +197,7 @@ export function TaskGuidePicker({
               key={guide.id}
               className="inline-flex max-w-full items-center gap-2 border border-[#d8d0c3] bg-[#f7f4ed] px-3 py-2 text-xs text-[#1F2937] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4]"
             >
-              <BookOpenText className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+              <ScrollText className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
               <span className="min-w-0 truncate">
                 {guide.guideCode} - {guide.title}
               </span>
@@ -218,7 +218,7 @@ export function TaskGuidePicker({
         <div
           className={`${researchSearchFieldClass} flex items-center gap-3 px-3`}
         >
-          <BookOpenText className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+          <ScrollText className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
