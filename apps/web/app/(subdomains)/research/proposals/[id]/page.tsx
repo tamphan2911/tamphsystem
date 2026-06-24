@@ -44,6 +44,15 @@ function longDate(value: Date | null) {
   }).format(value);
 }
 
+function shortDate(value: Date | null | undefined) {
+  if (!value) return "";
+  return researchDateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  }).format(value);
+}
+
 function fileSizeLabel(value: number | null) {
   if (!value) return "";
   if (value < 1024) return `${value} B`;
@@ -116,6 +125,66 @@ function displayStatus(status: ProposalStatus) {
   return status;
 }
 
+function researchAuthorNames(project: {
+  leadResearcher: { name: string | null; email: string };
+  authors: { name: string | null; email: string }[];
+  authorEntries: {
+    isCorresponding: boolean;
+    user: { name: string | null; email: string };
+  }[];
+  coAuthors: string | null;
+}) {
+  const names =
+    project.authorEntries.length > 0
+      ? project.authorEntries.map(
+          (entry) =>
+            `${displayResearchPersonName(entry.user)}${entry.isCorresponding ? "*" : ""}`,
+        )
+      : project.authors.length > 0
+        ? project.authors.map(
+            (author, index) =>
+              `${displayResearchPersonName(author)}${index === 0 ? "*" : ""}`,
+          )
+        : [
+            `${displayResearchPersonName(project.leadResearcher)}*`,
+            project.coAuthors,
+          ].filter(Boolean);
+
+  return names.join("; ");
+}
+
+function correspondingAuthorEmails(project: {
+  leadResearcher: { email: string };
+  authors: { email: string }[];
+  authorEntries: {
+    isCorresponding: boolean;
+    user: { email: string };
+  }[];
+}) {
+  const emails =
+    project.authorEntries.length > 0
+      ? project.authorEntries
+          .filter((entry) => entry.isCorresponding)
+          .map((entry) => displayResearchEmail(entry.user.email))
+      : project.authors.length > 0
+        ? project.authors[0]?.email
+          ? [displayResearchEmail(project.authors[0].email)]
+          : []
+        : [displayResearchEmail(project.leadResearcher.email)];
+
+  return emails.filter(Boolean).join("; ");
+}
+
+function journalRankLabel(journal: {
+  type?: string | null;
+  rank?: string | null;
+  localRank?: string | null;
+}) {
+  return journal.type === "LOCAL"
+    ? journal.localRank || "No local rank"
+    : journal.rank || "No rank";
+}
+
 function DetailItem({
   icon,
   label,
@@ -149,7 +218,38 @@ function AssociatedRecordCard({
       researchCode: string | null;
       stage: string;
       updatedAt: Date;
+      coAuthors: string | null;
       leadResearcher: { name: string | null; email: string };
+      authors: { name: string | null; email: string }[];
+      authorEntries: {
+        isCorresponding: boolean;
+        user: { name: string | null; email: string };
+      }[];
+      submissions: {
+        status: string;
+        submittedAt: Date | null;
+        acceptedAt: Date | null;
+        publishedAt: Date | null;
+        journal: {
+          name: string;
+          publisher: string | null;
+          rank: string | null;
+          localRank: string | null;
+          type: string | null;
+        };
+      }[];
+      conferenceSubmissions: {
+        status: string;
+        submittedAt: Date | null;
+        acceptedAt: Date | null;
+        publishedAt: Date | null;
+        conference: {
+          name: string;
+          organizer: string | null;
+          type: string | null;
+          location: string | null;
+        };
+      }[];
     } | null;
     createdOrganizedProject: {
       id: string;
@@ -164,36 +264,145 @@ function AssociatedRecordCard({
 }) {
   if (proposal.status !== ProposalStatus.ACCEPTED) return null;
 
-  const record = proposal.createdResearchProject
+  if (proposal.createdResearchProject) {
+    const research = proposal.createdResearchProject;
+    const highlightedJournalSubmission =
+      research.submissions.find(
+        (submission) => submission.status === "PUBLISHED",
+      ) ??
+      research.submissions.find(
+        (submission) => submission.status === "ACCEPTED",
+      );
+    const highlightedConferenceSubmission = highlightedJournalSubmission
+      ? null
+      : research.conferenceSubmissions.find(
+          (submission) =>
+            submission.status === "PUBLISHED" ||
+            submission.status === "ACCEPTED",
+        );
+    const acceptedAt =
+      highlightedJournalSubmission?.acceptedAt ??
+      highlightedConferenceSubmission?.acceptedAt ??
+      null;
+    const publishedAt =
+      highlightedJournalSubmission?.publishedAt ??
+      highlightedConferenceSubmission?.publishedAt ??
+      null;
+    const isAccepted =
+      research.stage === "ACCEPTED" ||
+      highlightedJournalSubmission?.status === "ACCEPTED" ||
+      highlightedConferenceSubmission?.status === "ACCEPTED" ||
+      Boolean(acceptedAt);
+    const isPublished =
+      research.stage === "PUBLISHED" ||
+      highlightedJournalSubmission?.status === "PUBLISHED" ||
+      highlightedConferenceSubmission?.status === "PUBLISHED" ||
+      Boolean(publishedAt);
+    const venueLine = highlightedJournalSubmission
+      ? [
+          highlightedJournalSubmission.journal.name,
+          highlightedJournalSubmission.journal.publisher || "No publisher",
+          journalRankLabel(highlightedJournalSubmission.journal),
+        ].join(" - ")
+      : highlightedConferenceSubmission
+        ? [
+            highlightedConferenceSubmission.conference.name,
+            highlightedConferenceSubmission.conference.organizer ||
+              "No organizer",
+            highlightedConferenceSubmission.conference.type || "No type",
+            highlightedConferenceSubmission.conference.location ||
+              "No location",
+          ].join(" - ")
+        : "";
+    const authors = researchAuthorNames(research);
+    const correspondingEmails = correspondingAuthorEmails(research);
+
+    return (
+      <aside className="min-w-0 border border-[#D8D0C2] bg-[#F7F4ED] p-4 dark:border-[#444444] dark:bg-[#242424]">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
+              <FolderGit2 className="h-3.5 w-3.5 text-amber-700 dark:text-amber-300" />
+              Associated research
+            </div>
+            <a
+              href={`/projects/${research.id}`}
+              className="research-clickable-icon mt-2 block min-w-0 text-sm font-normal leading-6 text-[#1F2937] transition-[color,text-shadow,transform] duration-180 ease-out hover:text-[#1F7180] hover:[text-shadow:0_0_0.55rem_rgba(31,113,128,0.16)] active:scale-[0.99] dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]"
+            >
+              {research.title}
+            </a>
+          </div>
+          <IconHint label="Open associated research" position="bottom">
+            <a
+              href={`/projects/${research.id}`}
+              className="research-clickable-icon research-allow-transform inline-flex h-5 w-5 flex-none items-center justify-center border-0 bg-transparent text-[#1F7180] shadow-none outline-none transition-[color,transform,filter] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-200"
+              aria-label="Open associated research"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </IconHint>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-y-1 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+          <span>{research.researchCode || "No research ID"}</span>
+          {isAccepted ? (
+            <>
+              <span className="px-2 text-[#A0A8B5] dark:text-[#777777]">|</span>
+              <span className="text-emerald-700 dark:text-emerald-300">
+                {acceptedAt ? `Accepted: ${shortDate(acceptedAt)}` : "Accepted"}
+              </span>
+            </>
+          ) : null}
+          {isPublished ? (
+            <>
+              <span className="px-2 text-[#A0A8B5] dark:text-[#777777]">|</span>
+              <span className="text-blue-700 dark:text-blue-300">
+                {publishedAt
+                  ? `Published: ${shortDate(publishedAt)}`
+                  : "Published"}
+              </span>
+            </>
+          ) : null}
+          {!isAccepted && !isPublished ? (
+            <>
+              <span className="px-2 text-[#A0A8B5] dark:text-[#777777]">|</span>
+              <span>{label(research.stage)}</span>
+            </>
+          ) : null}
+        </div>
+        {venueLine ? (
+          <p className="mt-1 break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+            {venueLine}
+          </p>
+        ) : null}
+        <div className="mt-3 border-t border-[#D8D0C2] pt-3 text-xs leading-5 text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0]">
+          <span className="block uppercase tracking-wide">Authors</span>
+          <span className="mt-1 block whitespace-normal break-words text-sm text-[#1F2937] dark:text-[#E4E4E4]">
+            {authors || "Not set"}
+          </span>
+          <span className="mt-2 block break-all">
+            Corresponding author email: {correspondingEmails || "-"}
+          </span>
+        </div>
+      </aside>
+    );
+  }
+
+  const record = proposal.createdOrganizedProject
     ? {
-        label: "Associated research",
-        href: `/projects/${proposal.createdResearchProject.id}`,
-        title: proposal.createdResearchProject.title,
-        code: proposal.createdResearchProject.researchCode || "No research ID",
-        state: label(proposal.createdResearchProject.stage),
-        ownerLabel: "Lead",
-        owner: proposal.createdResearchProject.leadResearcher,
-        meta: `Updated ${longDate(proposal.createdResearchProject.updatedAt)}`,
-        icon: FolderGit2,
-        iconClass: "text-amber-700 dark:text-amber-300",
+        label: "Associated project",
+        href: `/organized-projects/${proposal.createdOrganizedProject.id}`,
+        title: proposal.createdOrganizedProject.title,
+        code: proposal.createdOrganizedProject.referenceCode || "No project ID",
+        state: `${label(proposal.createdOrganizedProject.status)} | ${label(
+          proposal.createdOrganizedProject.projectType,
+        )}`,
+        ownerLabel: "Owner",
+        owner: proposal.createdOrganizedProject.createdBy,
+        meta: `Updated ${longDate(proposal.createdOrganizedProject.updatedAt)}`,
+        icon: Building2,
+        iconClass: "text-violet-700 dark:text-violet-300",
       }
-    : proposal.createdOrganizedProject
-      ? {
-          label: "Associated project",
-          href: `/organized-projects/${proposal.createdOrganizedProject.id}`,
-          title: proposal.createdOrganizedProject.title,
-          code:
-            proposal.createdOrganizedProject.referenceCode || "No project ID",
-          state: `${label(proposal.createdOrganizedProject.status)} | ${label(
-            proposal.createdOrganizedProject.projectType,
-          )}`,
-          ownerLabel: "Owner",
-          owner: proposal.createdOrganizedProject.createdBy,
-          meta: `Updated ${longDate(proposal.createdOrganizedProject.updatedAt)}`,
-          icon: Building2,
-          iconClass: "text-violet-700 dark:text-violet-300",
-        }
-      : null;
+    : null;
 
   if (!record) return null;
   const Icon = record.icon;
@@ -315,7 +524,56 @@ export default async function ProposalDetailPage({
           researchCode: true,
           stage: true,
           updatedAt: true,
+          coAuthors: true,
           leadResearcher: { select: { name: true, email: true } },
+          authors: {
+            select: { name: true, email: true },
+            orderBy: [{ name: "asc" }, { email: "asc" }],
+          },
+          authorEntries: {
+            select: {
+              isCorresponding: true,
+              user: { select: { name: true, email: true } },
+            },
+            orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          },
+          submissions: {
+            where: { status: { in: ["ACCEPTED", "PUBLISHED"] } },
+            select: {
+              status: true,
+              submittedAt: true,
+              acceptedAt: true,
+              publishedAt: true,
+              journal: {
+                select: {
+                  name: true,
+                  publisher: true,
+                  rank: true,
+                  localRank: true,
+                  type: true,
+                },
+              },
+            },
+            orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
+          },
+          conferenceSubmissions: {
+            where: { status: { in: ["ACCEPTED", "PUBLISHED"] } },
+            select: {
+              status: true,
+              submittedAt: true,
+              acceptedAt: true,
+              publishedAt: true,
+              conference: {
+                select: {
+                  name: true,
+                  organizer: true,
+                  type: true,
+                  location: true,
+                },
+              },
+            },
+            orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
+          },
         },
       },
       createdOrganizedProject: {
