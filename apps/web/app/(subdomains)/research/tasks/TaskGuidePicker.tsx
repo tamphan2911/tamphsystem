@@ -3,9 +3,9 @@
 import { useMemo, useRef, useState } from "react";
 import {
   ClipboardCheck,
+  ClipboardList,
   FileSearch,
   Lightbulb,
-  MapPinned,
   Route,
   ScrollText,
   X,
@@ -42,7 +42,7 @@ const guideIconStyles: Array<{
   className: string;
 }> = [
   {
-    icon: MapPinned,
+    icon: ClipboardList,
     className:
       "text-[#A06716] hover:text-[#7A4D10] dark:text-[#F4D47A] dark:hover:text-amber-200",
   },
@@ -72,7 +72,7 @@ const guideIconStyles: Array<{
 function guideIconMetaForGuide(guide: TaskGuideOption, index: number) {
   if (guide.guideCode === "G001") {
     return {
-      icon: MapPinned,
+      icon: ClipboardList,
       className:
         "text-[#A06716] hover:text-[#7A4D10] dark:text-[#F4D47A] dark:hover:text-amber-200",
     };
