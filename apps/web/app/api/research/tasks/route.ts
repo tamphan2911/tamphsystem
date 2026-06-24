@@ -190,6 +190,7 @@ export async function GET() {
               : "research"
             : null,
         status: task.status,
+        isUrgent: task.isUrgent,
         dueDate: task.dueDate?.toISOString() ?? null,
         completedAt: task.completedAt?.toISOString() ?? null,
         revokedAt: task.revokedAt?.toISOString() ?? null,

@@ -80,6 +80,7 @@ type EditableTask = {
   accountId: string;
   checkerId: string;
   allowAssigneeReportUpload: boolean;
+  isUrgent: boolean;
   assigneeIds: string[];
   guideIds: string[];
 };
@@ -289,6 +290,7 @@ export function EditTaskDialog({
   const [allowReportUpload, setAllowReportUpload] = useState(
     task.allowAssigneeReportUpload,
   );
+  const [isUrgent, setIsUrgent] = useState(task.isUrgent);
   const [journalTargetCount, setJournalTargetCount] = useState(
     String(task.journalTargetCount ?? 1),
   );
@@ -564,6 +566,7 @@ export function EditTaskDialog({
     setSelectedSubmission(initialSubmission);
     setProposalScope(initialProposalScope);
     setAllowReportUpload(task.allowAssigneeReportUpload);
+    setIsUrgent(task.isUrgent);
     setJournalTargetCount(String(task.journalTargetCount ?? 1));
     setIsOpen(true);
   }
@@ -711,6 +714,11 @@ export function EditTaskDialog({
             type="hidden"
             name="allowAssigneeReportUpload"
             value={allowReportUpload ? "true" : "false"}
+          />
+          <input
+            type="hidden"
+            name="isUrgent"
+            value={isUrgent ? "true" : "false"}
           />
           <input type="hidden" name="taskType" value={selectedTaskType} />
           {selectedResearch && (
@@ -1081,11 +1089,14 @@ export function EditTaskDialog({
             />
           </label>
 
-          <TaskGuidePicker
-            guides={taskGuideOptions}
-            selectedIds={selectedTaskGuideIds}
-            onChange={setSelectedTaskGuideIds}
-          />
+          <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
+            <TaskGuidePicker
+              guides={taskGuideOptions}
+              selectedIds={selectedTaskGuideIds}
+              onChange={setSelectedTaskGuideIds}
+            />
+            <UrgentTaskField checked={isUrgent} onChange={setIsUrgent} />
+          </div>
 
           <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
             <SearchPanel
@@ -1253,6 +1264,26 @@ function ReportUploadPermissionField({
       <span className="min-w-0 leading-5">
         Allow assignee to upload task report
       </span>
+    </label>
+  );
+}
+
+function UrgentTaskField({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex min-h-[52px] cursor-pointer items-center gap-3 border border-[#D8D0C2] bg-[#FFFDF8] px-4 py-3 text-sm text-[#243047] transition hover:border-[#E88DA0] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#FF9DAE]">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="h-4 w-4 flex-none accent-[#B33E5C]"
+      />
+      <span className="min-w-0 leading-5">Mark this task as urgent</span>
     </label>
   );
 }

@@ -838,6 +838,7 @@ model ResearchTask {
   taskFileType              String?
   taskFileSize              Int?
   taskFileData              Bytes?
+  isUrgent                  Boolean               @default(false)
   allowAssigneeReportUpload Boolean               @default(false)
   journalTargetCount        Int?
   reportFileName            String?

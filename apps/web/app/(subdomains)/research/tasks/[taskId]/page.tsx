@@ -824,6 +824,7 @@ export default async function TaskDetailPage({
       taskType: true,
       taskFileName: true,
       taskFileSize: true,
+      isUrgent: true,
       allowAssigneeReportUpload: true,
       journalTargetCount: true,
       journalCreationSuggestion: { select: { id: true } },
@@ -2163,6 +2164,7 @@ export default async function TaskDetailPage({
                           checkerId: task.checkerId ?? "",
                           allowAssigneeReportUpload:
                             task.allowAssigneeReportUpload,
+                          isUrgent: task.isUrgent,
                           assigneeIds: task.assignments.map(
                             (assignment) => assignment.userId,
                           ),
@@ -2248,6 +2250,14 @@ export default async function TaskDetailPage({
                 </span>
               </>
             )}
+            {task.isUrgent ? (
+              <>
+                <DetailSeparator />
+                <span className="font-normal uppercase tracking-wide text-[#B33E5C] dark:text-[#FF9DAE]">
+                  Urgent
+                </span>
+              </>
+            ) : null}
           </div>
           {hasAssociatedItems && (
             <div

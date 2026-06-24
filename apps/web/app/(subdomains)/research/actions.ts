@@ -5064,6 +5064,7 @@ export async function createResearchTask(formData: FormData) {
   let accountId = optionalString(formData.get("accountId"));
   const allowAssigneeReportUpload =
     formData.get("allowAssigneeReportUpload") === "true";
+  const isUrgent = formData.get("isUrgent") === "true";
   const journalTargetCount =
     taskType === ResearchTaskType.ADD_JOURNAL
       ? positiveIntFromForm(formData.get("journalTargetCount"))
@@ -5211,6 +5212,7 @@ export async function createResearchTask(formData: FormData) {
       conferenceId,
       reviewId,
       accountId,
+      isUrgent,
       allowAssigneeReportUpload,
       journalTargetCount,
       checkerId,
@@ -5394,6 +5396,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   const accountId = optionalString(formData.get("accountId"));
   const allowAssigneeReportUpload =
     formData.get("allowAssigneeReportUpload") === "true";
+  const isUrgent = formData.get("isUrgent") === "true";
   const journalTargetCount =
     taskType === ResearchTaskType.ADD_JOURNAL
       ? positiveIntFromForm(formData.get("journalTargetCount"))
@@ -5580,6 +5583,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
             ? conferenceId
             : null,
         reviewId: taskType === ResearchTaskType.REVIEW ? reviewId : null,
+        isUrgent,
         allowAssigneeReportUpload,
         journalTargetCount,
         checkerId,

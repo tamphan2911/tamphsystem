@@ -58,6 +58,7 @@ type TaskRow = {
   taskType: string;
   proposalScope: "research" | "project" | null;
   status: string;
+  isUrgent: boolean;
   dueDate: string | null;
   completedAt: string | null;
   revokedAt: string | null;
@@ -778,6 +779,11 @@ export function TasksClient({
                       ) : (
                         <div className="text-[#777777]">Unassigned</div>
                       )}
+                      {task.isUrgent ? (
+                        <p className="mt-1 text-[11px] font-normal uppercase tracking-wide text-[#B33E5C] dark:text-[#FF9DAE]">
+                          Urgent
+                        </p>
+                      ) : null}
                     </td>
                     <td className="px-3 py-3 align-top">
                       {status.dateLines.map((line) => (

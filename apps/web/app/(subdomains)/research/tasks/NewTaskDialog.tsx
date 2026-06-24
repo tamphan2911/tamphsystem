@@ -217,9 +217,9 @@ export function NewTaskDialog({
     useState<TaskOrganizedProjectOption | null>(null);
   const [selectedSubmission, setSelectedSubmission] =
     useState<TaskSubmissionOption | null>(null);
-  const [proposalScope, setProposalScope] =
-    useState<ProposalScope>("research");
+  const [proposalScope, setProposalScope] = useState<ProposalScope>("research");
   const [allowReportUpload, setAllowReportUpload] = useState(false);
+  const [isUrgent, setIsUrgent] = useState(false);
   const [journalTargetCount, setJournalTargetCount] = useState("1");
   const [isPending, startTransition] = useTransition();
   const { showSuccess, showError } = useResearchToast();
@@ -400,6 +400,7 @@ export function NewTaskDialog({
     setSelectedSubmission(null);
     setProposalScope("research");
     setAllowReportUpload(false);
+    setIsUrgent(false);
     setJournalTargetCount("1");
   }
 
@@ -723,6 +724,11 @@ export function NewTaskDialog({
             type="hidden"
             name="allowAssigneeReportUpload"
             value={allowReportUpload ? "true" : "false"}
+          />
+          <input
+            type="hidden"
+            name="isUrgent"
+            value={isUrgent ? "true" : "false"}
           />
           {selectedResearch && (
             <input type="hidden" name="projectId" value={selectedResearch.id} />
@@ -1146,11 +1152,14 @@ export function NewTaskDialog({
             />
           </label>
 
-          <TaskGuidePicker
-            guides={taskGuideOptions}
-            selectedIds={selectedTaskGuideIds}
-            onChange={setSelectedTaskGuideIds}
-          />
+          <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
+            <TaskGuidePicker
+              guides={taskGuideOptions}
+              selectedIds={selectedTaskGuideIds}
+              onChange={setSelectedTaskGuideIds}
+            />
+            <UrgentTaskField checked={isUrgent} onChange={setIsUrgent} />
+          </div>
 
           <TaskAttachmentField />
 
@@ -1243,6 +1252,26 @@ function ReportUploadPermissionField({
       <span className="min-w-0 leading-5">
         Allow assignee to upload task report
       </span>
+    </label>
+  );
+}
+
+function UrgentTaskField({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex min-h-[52px] cursor-pointer items-center gap-3 border border-[#D8D0C2] bg-[#FFFDF8] px-4 py-3 text-sm text-[#243047] transition hover:border-[#E88DA0] dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4] dark:hover:border-[#FF9DAE]">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="h-4 w-4 flex-none accent-[#B33E5C]"
+      />
+      <span className="min-w-0 leading-5">Mark this task as urgent</span>
     </label>
   );
 }

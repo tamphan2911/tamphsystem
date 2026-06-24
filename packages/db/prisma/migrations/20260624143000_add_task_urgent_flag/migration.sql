@@ -1,0 +1,1 @@
+ALTER TABLE "ResearchTask" ADD COLUMN "isUrgent" BOOLEAN NOT NULL DEFAULT false;
