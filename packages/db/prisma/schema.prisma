@@ -336,6 +336,7 @@ enum ResearchTaskType {
   PRODUCTION
   SUGGEST_VENUE
   ADD_JOURNAL
+  PROPOSAL
   REVIEW
   PROJECT_PRODUCTION
   PROJECT_RESEARCH_ASSOCIATED
@@ -581,12 +582,14 @@ model Proposal {
   supportFileSize           Int?
   supportFileData           Bytes?
   submittedById             String
+  taskId                    String?        @unique
   createdResearchProjectId  String?        @unique
   createdOrganizedProjectId String?        @unique
   createdAt                 DateTime       @default(now())
   updatedAt                 DateTime       @updatedAt
 
   submittedBy             User              @relation("ProposalSubmitter", fields: [submittedById], references: [id], onDelete: Cascade)
+  task                    ResearchTask?      @relation("ResearchTaskProposal", fields: [taskId], references: [id], onDelete: SetNull)
   createdResearchProject  ResearchProject?  @relation("ProposalCreatedResearch", fields: [createdResearchProjectId], references: [id], onDelete: SetNull)
   createdOrganizedProject OrganizedProject? @relation("ProposalCreatedProject", fields: [createdOrganizedProjectId], references: [id], onDelete: SetNull)
 
@@ -876,6 +879,7 @@ model ResearchTask {
   journalCreationSuggestion      SuggestedJournal?           @relation("SuggestedJournalCreationTask")
   journalSubmissionSuggestion    SuggestedJournal?           @relation("SuggestedJournalSubmissionTask")
   conferenceSubmissionSuggestion SuggestedConference?        @relation("SuggestedConferenceSubmissionTask")
+  proposalResult                 Proposal?                   @relation("ResearchTaskProposal")
 
   @@index([checkerId])
   @@index([completedById])

@@ -57,9 +57,11 @@ type TaskMode =
   | "production"
   | "suggestVenue"
   | "addJournal"
+  | "proposal"
   | "review"
   | "project"
   | "other";
+type ProposalScope = "research" | "project";
 
 type EditableTask = {
   id: string;
@@ -97,6 +99,7 @@ const taskTypeOptions = [
   { value: "PRODUCTION", label: "Research production" },
   { value: "SUGGEST_VENUE", label: "Suggest venue" },
   { value: "ADD_JOURNAL", label: "Add journal" },
+  { value: "PROPOSAL", label: "Proposal" },
   { value: "REVIEW", label: "Academic review" },
   { value: "PROJECT_PRODUCTION", label: "Project production" },
   {
@@ -116,6 +119,7 @@ function modeFromTaskType(taskType: string): TaskMode {
   if (taskType === "PRODUCTION") return "production";
   if (taskType === "SUGGEST_VENUE") return "suggestVenue";
   if (taskType === "ADD_JOURNAL") return "addJournal";
+  if (taskType === "PROPOSAL") return "proposal";
   if (taskType === "REVIEW") return "review";
   if (
     taskType === "PROJECT_PRODUCTION" ||
@@ -170,6 +174,9 @@ function detailForFailure(reason?: string) {
   }
   if (reason === "TASK_HAS_JOURNAL_RESULTS") {
     return "Remove the added journal results before changing this task type.";
+  }
+  if (reason === "TASK_HAS_PROPOSAL_RESULT") {
+    return "Remove the linked proposal before changing this task type.";
   }
   if (reason === "JOURNAL_TARGET_BELOW_RESULTS") {
     return "The target cannot be lower than the highest filled journal slot.";
@@ -227,6 +234,8 @@ export function EditTaskDialog({
                 option.venueId === task.conferenceId)),
         ) ?? null)
       : null;
+  const initialProposalScope: ProposalScope =
+    task.organizedProjectId && !task.projectId ? "project" : "research";
 
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTaskType, setSelectedTaskType] = useState(task.taskType);
@@ -261,6 +270,8 @@ export function EditTaskDialog({
     useState<TaskOrganizedProjectOption | null>(initialOrganizedProject);
   const [selectedSubmission, setSelectedSubmission] =
     useState<TaskSubmissionOption | null>(initialSubmission);
+  const [proposalScope, setProposalScope] =
+    useState<ProposalScope>(initialProposalScope);
   const [allowReportUpload, setAllowReportUpload] = useState(
     task.allowAssigneeReportUpload,
   );
@@ -537,6 +548,7 @@ export function EditTaskDialog({
     setSelectedReview(initialReview);
     setSelectedOrganizedProject(initialOrganizedProject);
     setSelectedSubmission(initialSubmission);
+    setProposalScope(initialProposalScope);
     setAllowReportUpload(task.allowAssigneeReportUpload);
     setJournalTargetCount(String(task.journalTargetCount ?? 1));
     setIsOpen(true);
@@ -561,8 +573,22 @@ export function EditTaskDialog({
     });
   }
 
+  function changeProposalScope(nextScope: ProposalScope) {
+    setProposalScope(nextScope);
+    if (nextScope === "research") {
+      setSelectedOrganizedProject(null);
+      setOrganizedProjectQuery("");
+    } else {
+      setSelectedResearch(null);
+      setResearchQuery("");
+    }
+  }
+
   const needsResearch =
-    mode === "submit" || mode === "production" || mode === "suggestVenue";
+    mode === "submit" ||
+    mode === "production" ||
+    mode === "suggestVenue" ||
+    (mode === "proposal" && proposalScope === "research");
   const showsResearch = needsResearch || mode === "other";
   const selectedResearchMatchesMode =
     !needsResearch ||
@@ -583,7 +609,8 @@ export function EditTaskDialog({
     (selectedReview
       ? isClosedTask || !closedReviewStatuses.has(selectedReview.status)
       : false);
-  const showsOrganizedProject = mode === "project";
+  const showsOrganizedProject =
+    mode === "project" || (mode === "proposal" && proposalScope === "project");
   const requiresOrganizedProject =
     selectedTaskType === "PROJECT_RESEARCH_ASSOCIATED";
   const selectedOrganizedProjectIsOpen =
@@ -599,7 +626,11 @@ export function EditTaskDialog({
     selectedResearchMatchesMode &&
     selectedVenueMatchesMode &&
     selectedReviewIsOpen &&
-    selectedOrganizedProjectIsOpen;
+    selectedOrganizedProjectIsOpen &&
+    (mode !== "proposal" ||
+      (proposalScope === "research"
+        ? Boolean(selectedResearch)
+        : Boolean(selectedOrganizedProject)));
 
   return (
     <>
@@ -697,6 +728,15 @@ export function EditTaskDialog({
               <input type="hidden" name="category" value={projectCategory} />
             </>
           )}
+          {mode === "proposal" &&
+          proposalScope === "project" &&
+          selectedOrganizedProject ? (
+            <input
+              type="hidden"
+              name="organizedProjectId"
+              value={selectedOrganizedProject.id}
+            />
+          ) : null}
           {mode === "other" && (
             <>
               {selectedVenue?.kind === "journal" ? (
@@ -731,6 +771,30 @@ export function EditTaskDialog({
                 className={inputClass}
               />
             </label>
+          ) : null}
+
+          {mode === "proposal" ? (
+            <div
+              data-research-toggle-tabs="true"
+              className="grid w-full max-w-md grid-cols-2 border border-[#D8D0C2] bg-[#F8F5F0] dark:border-[#444444] dark:bg-[#202020]"
+            >
+              {(["research", "project"] as const).map((scope) => (
+                <button
+                  key={scope}
+                  type="button"
+                  onClick={() => changeProposalScope(scope)}
+                  data-research-toggle-tab="true"
+                  data-active={proposalScope === scope}
+                  className={`cursor-pointer border-r border-[#D8D0C2] px-3 py-2 text-sm font-normal capitalize transition last:border-r-0 dark:border-[#303030] ${
+                    proposalScope === scope
+                      ? "bg-[#E9F4F5] text-[#1F7180] dark:bg-[#383838] dark:text-[#A8DADC]"
+                      : "text-[#667085] hover:bg-[#F0ECE4] hover:text-[#243047] dark:text-[#B0B0B0] dark:hover:bg-[#303030] dark:hover:text-[#E4E4E4]"
+                  }`}
+                >
+                  {scope} proposal
+                </button>
+              ))}
+            </div>
           ) : null}
 
           <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
@@ -927,7 +991,8 @@ export function EditTaskDialog({
                 query={organizedProjectQuery}
                 setQuery={setOrganizedProjectQuery}
                 placeholder={
-                  requiresOrganizedProject
+                  requiresOrganizedProject ||
+                  (mode === "proposal" && proposalScope === "project")
                     ? "Search project by title, ID, or status (*)"
                     : "Search project by title, ID, or status (optional)"
                 }

@@ -89,6 +89,7 @@ const taskTypeFilterValues = [
   "PRODUCTION",
   "SUGGEST_VENUE",
   "ADD_JOURNAL",
+  "PROPOSAL",
   "REVIEW",
   "PROJECT",
   "OTHER",
@@ -152,6 +153,9 @@ function taskTypeLines(task: TaskRow) {
   if (type === "ADD_JOURNAL") {
     return { typeLabel: "Add journal", subtypeLabel: "" };
   }
+  if (type === "PROPOSAL") {
+    return { typeLabel: "Proposal", subtypeLabel: "" };
+  }
   if (type === "PROJECT_PRODUCTION" || type === "PROJECT_RESEARCH_ASSOCIATED") {
     return { typeLabel: "Project", subtypeLabel: "" };
   }
@@ -175,6 +179,7 @@ function taskTypeFilterValue(task: TaskRow) {
   if (task.taskType === "PRODUCTION") return "PRODUCTION";
   if (task.taskType === "SUGGEST_VENUE") return "SUGGEST_VENUE";
   if (task.taskType === "ADD_JOURNAL") return "ADD_JOURNAL";
+  if (task.taskType === "PROPOSAL") return "PROPOSAL";
   if (task.taskType === "REVIEW") return "REVIEW";
   return "OTHER";
 }

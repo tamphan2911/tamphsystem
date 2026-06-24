@@ -73,6 +73,10 @@ import {
   type LinkableTaskJournal,
   type TaskJournalResult,
 } from "./TaskJournalResults";
+import {
+  TaskProposalResult,
+  type TaskProposalResultItem,
+} from "./TaskProposalResult";
 import { TaskGuideIcons, type TaskGuideOption } from "../TaskGuidePicker";
 import {
   TaskSuggestedReviewerButton,
@@ -94,6 +98,13 @@ function formatDate(value: Date | null) {
     month: "2-digit",
     year: "2-digit",
   }).format(value);
+}
+
+function fileSizeLabel(value: number | null) {
+  if (!value) return "";
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function conferenceTime(start: Date | null, end: Date | null) {
@@ -315,6 +326,14 @@ function taskTypeMeta(taskType: string | null, category: string | null) {
       icon: BookOpenText,
       className:
         "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-200",
+    };
+  }
+  if (taskType === "PROPOSAL") {
+    return {
+      label: "Proposal",
+      icon: ClipboardList,
+      className:
+        "text-[#70549B] hover:text-[#563B7E] dark:text-[#B39CD0] dark:hover:text-[#D0BCE5]",
     };
   }
   if (taskType === "REVIEW") {
@@ -966,6 +985,22 @@ export default async function TaskDetailPage({
         },
         orderBy: { resultPosition: "asc" },
       },
+      proposalResult: {
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          title: true,
+          description: true,
+          contactInfo: true,
+          notes: true,
+          supportFileName: true,
+          supportFileSize: true,
+          decisionComment: true,
+          createdAt: true,
+          submittedBy: { select: { name: true, email: true } },
+        },
+      },
       reportUploadedById: true,
       createdBy: { select: { name: true, email: true, roles: true } },
       checker: { select: { name: true, email: true, roles: true } },
@@ -1506,6 +1541,8 @@ export default async function TaskDetailPage({
     task.id,
   );
   const isAddJournalTask = task.taskType === "ADD_JOURNAL";
+  const isProposalTask = task.taskType === ResearchTaskType.PROPOSAL;
+  const proposalTaskType = task.organizedProjectId ? "PROJECT" : "RESEARCH";
   const canAddTaskJournals = isAddJournalTask && !isClosed && isAssignee;
   const canApproveTaskJournals =
     isAddJournalTask && (isRootAdmin || isAssigner || isChecker);
@@ -1557,9 +1594,28 @@ export default async function TaskDetailPage({
                     .filter(Boolean)
                     .join(" | ")
                 : "Unknown user",
-            },
-          ],
+          },
+        ],
   );
+  const taskProposalResult: TaskProposalResultItem | null = task.proposalResult
+    ? {
+        id: task.proposalResult.id,
+        type: task.proposalResult.type === "PROJECT" ? "PROJECT" : "RESEARCH",
+        status: task.proposalResult.status,
+        title: task.proposalResult.title,
+        description: task.proposalResult.description,
+        contactInfo: task.proposalResult.contactInfo ?? "",
+        notes: task.proposalResult.notes ?? "",
+        fileName: task.proposalResult.supportFileName ?? "",
+        fileSize: fileSizeLabel(task.proposalResult.supportFileSize),
+        decisionComment: task.proposalResult.decisionComment ?? "",
+        createdAt: formatDate(task.proposalResult.createdAt),
+        submittedBy: displayResearchPersonName(task.proposalResult.submittedBy),
+        submittedByEmail: displayResearchEmail(
+          task.proposalResult.submittedBy.email,
+        ),
+      }
+    : null;
   const selectedSuggestedReviewers: SuggestedReviewerOption[] =
     task.suggestedReviewers.map((reviewer) => ({
       id: reviewer.id,
@@ -2342,6 +2398,16 @@ export default async function TaskDetailPage({
               canAdd={canAddTaskJournals}
               canApprove={canApproveTaskJournals}
               canLinkExisting={isRootAdmin}
+            />
+          ) : null}
+
+          {isProposalTask ? (
+            <TaskProposalResult
+              taskId={task.id}
+              proposal={taskProposalResult}
+              proposalType={proposalTaskType}
+              defaultTitle={task.title}
+              canCreate={!isClosed && isAssignee && !taskProposalResult}
             />
           ) : null}
 

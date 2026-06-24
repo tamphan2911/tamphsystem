@@ -103,10 +103,12 @@ export type TaskMode =
   | "production"
   | "suggestVenue"
   | "addJournal"
+  | "proposal"
   | "review"
   | "project"
   | "other";
 type TaskTriggerVariant = "default" | "other" | "production" | "suggestVenue";
+type ProposalScope = "research" | "project";
 type SearchPanelItem = {
   id: string;
   title: string;
@@ -126,6 +128,7 @@ function modeLabel(mode: TaskMode) {
   if (mode === "production") return "Production";
   if (mode === "suggestVenue") return "Suggest venue";
   if (mode === "addJournal") return "Add journal";
+  if (mode === "proposal") return "Proposal";
   if (mode === "review") return "Review";
   if (mode === "project") return "Project";
   return "Other";
@@ -204,6 +207,8 @@ export function NewTaskDialog({
     useState<TaskOrganizedProjectOption | null>(null);
   const [selectedSubmission, setSelectedSubmission] =
     useState<TaskSubmissionOption | null>(null);
+  const [proposalScope, setProposalScope] =
+    useState<ProposalScope>("research");
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [journalTargetCount, setJournalTargetCount] = useState("1");
   const [isPending, startTransition] = useTransition();
@@ -383,6 +388,7 @@ export function NewTaskDialog({
     setSelectedReview(null);
     setSelectedOrganizedProject(null);
     setSelectedSubmission(null);
+    setProposalScope("research");
     setAllowReportUpload(false);
     setJournalTargetCount("1");
   }
@@ -447,6 +453,28 @@ export function NewTaskDialog({
     if (nextMode !== "other") {
       setSelectedSubmission(null);
       setSubmissionQuery("");
+    }
+    if (nextMode !== "proposal") {
+      setProposalScope("research");
+    }
+    if (nextMode === "proposal") {
+      setSelectedVenue(null);
+      setVenueQuery("");
+      setSelectedAccountId("");
+      setAccountQuery("");
+      setSelectedReview(null);
+      setReviewQuery("");
+    }
+  }
+
+  function changeProposalScope(nextScope: ProposalScope) {
+    setProposalScope(nextScope);
+    if (nextScope === "research") {
+      setSelectedOrganizedProject(null);
+      setOrganizedProjectQuery("");
+    } else {
+      setSelectedResearch(null);
+      setResearchQuery("");
     }
   }
 
@@ -534,7 +562,10 @@ export function NewTaskDialog({
   }
 
   const needsResearch =
-    mode === "submit" || mode === "production" || mode === "suggestVenue";
+    mode === "submit" ||
+    mode === "production" ||
+    mode === "suggestVenue" ||
+    (mode === "proposal" && proposalScope === "research");
   const showsResearch = needsResearch || mode === "other";
   const fixedResearch = triggerVariant !== "default" && initialResearch;
   const selectedResearchMatchesMode =
@@ -548,7 +579,8 @@ export function NewTaskDialog({
   const selectedReviewIsOpen =
     !needsReview ||
     (selectedReview ? !closedReviewStatuses.has(selectedReview.status) : false);
-  const showsOrganizedProject = mode === "project";
+  const showsOrganizedProject =
+    mode === "project" || (mode === "proposal" && proposalScope === "project");
   const selectedOrganizedProjectIsOpen =
     !showsOrganizedProject ||
     !selectedOrganizedProject ||
@@ -563,7 +595,11 @@ export function NewTaskDialog({
     selectedVenueMatchesMode &&
     (!submitAccountRequired || Boolean(selectedAccountId)) &&
     selectedReviewIsOpen &&
-    selectedOrganizedProjectIsOpen;
+    selectedOrganizedProjectIsOpen &&
+    (mode !== "proposal" ||
+      (proposalScope === "research"
+        ? Boolean(selectedResearch)
+        : Boolean(selectedOrganizedProject)));
   const selectedAssigneeItems: SearchPanelItem[] = assignees
     .filter((user) => selectedIds.includes(user.id))
     .map((user) => ({
@@ -703,6 +739,18 @@ export function NewTaskDialog({
               />
             </>
           )}
+          {mode === "proposal" && (
+            <>
+              <input type="hidden" name="taskType" value="PROPOSAL" />
+              {proposalScope === "project" && selectedOrganizedProject ? (
+                <input
+                  type="hidden"
+                  name="organizedProjectId"
+                  value={selectedOrganizedProject.id}
+                />
+              ) : null}
+            </>
+          )}
           {mode === "review" && selectedReview && (
             <>
               <input type="hidden" name="taskType" value="REVIEW" />
@@ -767,7 +815,7 @@ export function NewTaskDialog({
           {triggerVariant === "default" && (
             <div
               data-research-toggle-tabs="true"
-              className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020] sm:grid-cols-4 lg:grid-cols-7"
+              className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020] sm:grid-cols-4 lg:grid-cols-8"
             >
               {(
                 [
@@ -775,6 +823,7 @@ export function NewTaskDialog({
                   "production",
                   "suggestVenue",
                   "addJournal",
+                  "proposal",
                   "review",
                   "project",
                   "other",
@@ -814,6 +863,30 @@ export function NewTaskDialog({
                 className={inputClass}
               />
             </label>
+          ) : null}
+
+          {mode === "proposal" ? (
+            <div
+              data-research-toggle-tabs="true"
+              className="grid w-full max-w-md grid-cols-2 border border-[#D8D0C2] bg-[#F8F5F0] dark:border-[#444444] dark:bg-[#202020]"
+            >
+              {(["research", "project"] as const).map((scope) => (
+                <button
+                  key={scope}
+                  type="button"
+                  onClick={() => changeProposalScope(scope)}
+                  data-research-toggle-tab="true"
+                  data-active={proposalScope === scope}
+                  className={`cursor-pointer border-r border-[#D8D0C2] px-3 py-2 text-sm font-normal capitalize transition last:border-r-0 dark:border-[#303030] ${
+                    proposalScope === scope
+                      ? "bg-[#E9F4F5] text-[#1F7180] dark:bg-[#383838] dark:text-[#A8DADC]"
+                      : "text-[#667085] hover:bg-[#F0ECE4] hover:text-[#243047] dark:text-[#B0B0B0] dark:hover:bg-[#303030] dark:hover:text-[#E4E4E4]"
+                  }`}
+                >
+                  {scope} proposal
+                </button>
+              ))}
+            </div>
           ) : null}
 
           {fixedResearch ? (
@@ -1009,7 +1082,11 @@ export function NewTaskDialog({
                 selectionMode="single"
                 query={organizedProjectQuery}
                 setQuery={setOrganizedProjectQuery}
-                placeholder="Search project by title, ID, or status (optional)"
+                placeholder={
+                  mode === "proposal" && proposalScope === "project"
+                    ? "Search project by title, ID, or status (*)"
+                    : "Search project by title, ID, or status (optional)"
+                }
                 selectedItems={
                   selectedOrganizedProject
                     ? [

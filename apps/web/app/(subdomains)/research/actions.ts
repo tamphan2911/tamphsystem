@@ -500,6 +500,7 @@ function taskTypeCanBeCreatedByResearchAuthor(taskType: ResearchTaskType) {
     taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
     taskType === ResearchTaskType.PRODUCTION ||
     taskType === ResearchTaskType.SUGGEST_VENUE ||
+    taskType === ResearchTaskType.PROPOSAL ||
     taskType === ResearchTaskType.OTHER
   );
 }
@@ -519,7 +520,8 @@ async function canCreateResearchTaskForProject({
   if (user.roles.includes(Role.CHIEF_ASSISTANT)) {
     if (
       taskType === ResearchTaskType.REVIEW ||
-      taskType === ResearchTaskType.ADD_JOURNAL
+      taskType === ResearchTaskType.ADD_JOURNAL ||
+      taskType === ResearchTaskType.PROPOSAL
     ) {
       return true;
     }
@@ -589,7 +591,8 @@ async function taskAssociationIsSelectable({
     (taskType === ResearchTaskType.SUBMIT_RESEARCH ||
       taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
       taskType === ResearchTaskType.PRODUCTION ||
-      taskType === ResearchTaskType.SUGGEST_VENUE) &&
+      taskType === ResearchTaskType.SUGGEST_VENUE ||
+      taskType === ResearchTaskType.PROPOSAL) &&
     projectId
   ) {
     const project = await prisma.researchProject.findUnique({
@@ -620,7 +623,8 @@ async function taskAssociationIsSelectable({
 
   if (
     (taskType === ResearchTaskType.PROJECT_PRODUCTION ||
-      taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED) &&
+      taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED ||
+      taskType === ResearchTaskType.PROPOSAL) &&
     organizedProjectId
   ) {
     const project = await prisma.organizedProject.findUnique({
@@ -1643,6 +1647,7 @@ export async function submitProposal(formData: FormData) {
   const location = optionalString(formData.get("location"));
   const website = optionalString(formData.get("website"));
   const venueType = optionalString(formData.get("venueType"));
+  const taskId = optionalString(formData.get("taskId"));
   const file = formData.get("supportFile");
 
   if (!type || !title || (type !== ProposalType.JOURNAL && !description)) {
@@ -1654,6 +1659,79 @@ export async function submitProposal(formData: FormData) {
         type === ProposalType.JOURNAL
           ? "Please add the journal title before sending."
           : "Please add a title and proposal description before sending.",
+    };
+  }
+
+  let linkedTask: {
+    id: string;
+    projectId: string | null;
+    organizedProjectId: string | null;
+  } | null = null;
+  if (taskId) {
+    const task = await prisma.researchTask.findUnique({
+      where: { id: taskId },
+      select: {
+        id: true,
+        taskType: true,
+        status: true,
+        projectId: true,
+        organizedProjectId: true,
+        proposalResult: { select: { id: true } },
+        assignments: { select: { userId: true } },
+      },
+    });
+    if (!task || task.taskType !== ResearchTaskType.PROPOSAL) {
+      return {
+        ok: false,
+        reason: "TASK_NOT_FOUND",
+        title: "Proposal task not available",
+        detail: "This task cannot receive a proposal.",
+      };
+    }
+    if (
+      task.status === ResearchTaskStatus.COMPLETED ||
+      task.status === ResearchTaskStatus.REVOKED
+    ) {
+      return {
+        ok: false,
+        reason: "TASK_CLOSED",
+        title: "Proposal task is closed",
+        detail: "This task is already completed or revoked.",
+      };
+    }
+    if (!task.assignments.some((assignment) => assignment.userId === user.id)) {
+      return {
+        ok: false,
+        reason: "TASK_FORBIDDEN",
+        title: "Proposal task not available",
+        detail: "Only the task assignee can create the proposal from this task.",
+      };
+    }
+    if (task.proposalResult) {
+      return {
+        ok: false,
+        reason: "TASK_ALREADY_FILLED",
+        title: "Proposal already linked",
+        detail: "This proposal task already has a linked proposal.",
+      };
+    }
+    const expectedType = task.projectId
+      ? ProposalType.RESEARCH
+      : task.organizedProjectId
+        ? ProposalType.PROJECT
+        : null;
+    if (!expectedType || type !== expectedType) {
+      return {
+        ok: false,
+        reason: "TASK_TYPE_MISMATCH",
+        title: "Proposal type does not match task",
+        detail: "Create the proposal type requested by this task.",
+      };
+    }
+    linkedTask = {
+      id: task.id,
+      projectId: task.projectId,
+      organizedProjectId: task.organizedProjectId,
     };
   }
 
@@ -1739,6 +1817,7 @@ export async function submitProposal(formData: FormData) {
       website,
       venueType,
       submittedById: user.id,
+      taskId: linkedTask?.id,
       ...supportFile,
     },
   });
@@ -1777,6 +1856,7 @@ export async function submitProposal(formData: FormData) {
   });
 
   revalidatePath("/proposals");
+  if (linkedTask) revalidatePath(`/tasks/${linkedTask.id}`);
   revalidatePath(
     type === ProposalType.PROJECT
       ? "/organized-projects"
@@ -1817,7 +1897,17 @@ export async function reviewProposal(formData: FormData) {
 
   const proposal = await prisma.proposal.findUnique({
     where: { id: proposalId },
-    include: { submittedBy: { select: { id: true, name: true, email: true } } },
+    include: {
+      submittedBy: { select: { id: true, name: true, email: true } },
+      task: {
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          assignments: { select: { userId: true } },
+        },
+      },
+    },
   });
   if (!proposal) throw new Error("Proposal not found.");
   if (
@@ -1895,6 +1985,38 @@ export async function reviewProposal(formData: FormData) {
       decidedById: user.id,
     },
   });
+  const linkedTask = proposal.task;
+  const proposalTaskCompleted =
+    status === ProposalStatus.ACCEPTED &&
+    linkedTask &&
+    linkedTask.status !== ResearchTaskStatus.COMPLETED &&
+    linkedTask.status !== ResearchTaskStatus.REVOKED;
+  if (proposalTaskCompleted) {
+    const completedAt = new Date();
+    await prisma.researchTask.update({
+      where: { id: linkedTask.id },
+      data: {
+        status: ResearchTaskStatus.COMPLETED,
+        completedAt,
+        completedById: user.id,
+        completionMessage:
+          "The linked proposal was approved, so this proposal task was completed automatically.",
+        redoRequestedAt: null,
+        redoRequestedById: null,
+        redoReason: null,
+        revokedAt: null,
+        revokedById: null,
+        revokeReason: null,
+        adminViewedAt: null,
+        assignments: {
+          updateMany: {
+            where: { finishedAt: null },
+            data: { finishedAt: completedAt },
+          },
+        },
+      },
+    });
+  }
 
   const accepted = status === ProposalStatus.ACCEPTED;
   const statusLabel = accepted ? "approved" : "declined";
@@ -1927,6 +2049,7 @@ export async function reviewProposal(formData: FormData) {
 
   revalidatePath("/proposals");
   revalidatePath(`/proposals/${proposal.id}`);
+  if (proposal.taskId) revalidatePath(`/tasks/${proposal.taskId}`);
   revalidatePath("/notifications");
   revalidatePath("/conferences");
   revalidatePath("/journals");
@@ -4970,6 +5093,9 @@ export async function createResearchTask(formData: FormData) {
       (!projectId || !conferenceId)) ||
     (taskType === ResearchTaskType.PRODUCTION && !projectId) ||
     (taskType === ResearchTaskType.SUGGEST_VENUE && !projectId) ||
+    (taskType === ResearchTaskType.PROPOSAL &&
+      !projectId &&
+      !organizedProjectId) ||
     (taskType === ResearchTaskType.REVIEW && !reviewId) ||
     (taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED &&
       !organizedProjectId)
@@ -4980,6 +5106,7 @@ export async function createResearchTask(formData: FormData) {
   if (
     projectId &&
     taskType !== ResearchTaskType.OTHER &&
+    taskType !== ResearchTaskType.PROPOSAL &&
     (await researchContentIsLocked(projectId))
   ) {
     return { ok: false, reason: "RESEARCH_LOCKED" };
@@ -5210,6 +5337,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       checkerId: true,
       taskType: true,
       addedJournals: { select: { resultPosition: true } },
+      proposalResult: { select: { id: true } },
       assignments: { select: { userId: true } },
     },
   });
@@ -5287,6 +5415,12 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     return { ok: false, reason: "TASK_HAS_JOURNAL_RESULTS" };
   }
   if (
+    currentTask.proposalResult &&
+    taskType !== ResearchTaskType.PROPOSAL
+  ) {
+    return { ok: false, reason: "TASK_HAS_PROPOSAL_RESULT" };
+  }
+  if (
     taskType === ResearchTaskType.ADD_JOURNAL &&
     journalTargetCount !== null &&
     journalTargetCount <= highestFilledJournalPosition
@@ -5298,12 +5432,14 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     taskType === ResearchTaskType.SUBMIT_CONFERENCE ||
     taskType === ResearchTaskType.PRODUCTION ||
     taskType === ResearchTaskType.SUGGEST_VENUE ||
+    taskType === ResearchTaskType.PROPOSAL ||
     taskType === ResearchTaskType.OTHER
       ? projectId
       : null;
   const effectiveOrganizedProjectId =
     taskType === ResearchTaskType.PROJECT_PRODUCTION ||
-    taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED
+    taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED ||
+    (taskType === ResearchTaskType.PROPOSAL && !projectId)
       ? organizedProjectId
       : null;
 
@@ -5314,6 +5450,9 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       (!effectiveProjectId || !conferenceId)) ||
     (taskType === ResearchTaskType.PRODUCTION && !effectiveProjectId) ||
     (taskType === ResearchTaskType.SUGGEST_VENUE && !effectiveProjectId) ||
+    (taskType === ResearchTaskType.PROPOSAL &&
+      !effectiveProjectId &&
+      !effectiveOrganizedProjectId) ||
     (taskType === ResearchTaskType.REVIEW && !reviewId) ||
     (taskType === ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED &&
       !effectiveOrganizedProjectId)
@@ -5325,6 +5464,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     !isClosedTask &&
     effectiveProjectId &&
     taskType !== ResearchTaskType.OTHER &&
+    taskType !== ResearchTaskType.PROPOSAL &&
     (await researchContentIsLocked(effectiveProjectId))
   ) {
     return { ok: false, reason: "RESEARCH_LOCKED" };
