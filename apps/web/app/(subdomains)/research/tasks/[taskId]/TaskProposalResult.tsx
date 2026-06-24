@@ -197,6 +197,9 @@ export function TaskProposalResult({
     proposals.every((proposal) => proposal.status === "DECLINED");
   const showProposalSlot =
     canAddAnotherProposal && (canCreate || canManageAssociation);
+  const hasCreatedResult = proposals.some(
+    (proposal) => proposal.createdResearch || proposal.createdProject,
+  );
   const associationResults = useMemo(() => {
     const needle = linkQuery.trim().toLowerCase();
     if (!needle) return [];
@@ -394,7 +397,7 @@ export function TaskProposalResult({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="mb-1 text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
-              Proposal result
+              {typeLabel}
             </p>
             <Link
               href={`/proposals/${proposal.id}`}
@@ -551,6 +554,52 @@ export function TaskProposalResult({
     );
   }
 
+  function linkedAssociationCard() {
+    if (!currentAssociation || hasCreatedResult) return null;
+    const href =
+      currentAssociation.type === "research"
+        ? `/projects/${currentAssociation.id}`
+        : `/organized-projects/${currentAssociation.id}`;
+    const Icon = currentAssociation.type === "research" ? FileText : Building2;
+    const title =
+      currentAssociation.type === "research"
+        ? "Linked research"
+        : "Linked project";
+    const idLabel =
+      currentAssociation.type === "research" ? "Research ID" : "Project ID";
+
+    return (
+      <article className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="mb-1 text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
+              {title}
+            </p>
+            <Link
+              href={href}
+              className="block break-words text-sm font-normal leading-6 text-[#1F7180] transition hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
+            >
+              {currentAssociation.title}
+            </Link>
+          </div>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-[#1F7180] ring-1 ring-[#B9D7D8] dark:text-[#A8DADC] dark:ring-[#365A60]">
+            <Icon className="h-3.5 w-3.5" />
+            Linked
+          </span>
+        </div>
+        <div className="mt-3 grid gap-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+          <span>
+            {idLabel}:{" "}
+            <span className="font-mono text-[#344054] dark:text-[#E4E4E4]">
+              {currentAssociation.meta || "Not assigned"}
+            </span>
+          </span>
+          <span>Updated after proposal approval or manual link changes.</span>
+        </div>
+      </article>
+    );
+  }
+
   return (
     <section className="border-t border-[#D8D0C2] p-5 dark:border-[#444444]">
       <div className="mb-4 flex items-center gap-2">
@@ -579,6 +628,7 @@ export function TaskProposalResult({
               {createdProjectCard(proposal)}
             </div>
           ))}
+          {linkedAssociationCard()}
           {showProposalSlot ? emptyProposalSlot(false) : null}
         </div>
       ) : (
