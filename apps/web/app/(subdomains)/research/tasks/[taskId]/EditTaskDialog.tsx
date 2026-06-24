@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -99,7 +100,8 @@ const taskTypeOptions = [
   { value: "PRODUCTION", label: "Research production" },
   { value: "SUGGEST_VENUE", label: "Suggest venue" },
   { value: "ADD_JOURNAL", label: "Add journal" },
-  { value: "PROPOSAL", label: "Proposal" },
+  { value: "PROPOSAL_RESEARCH", label: "Research proposal" },
+  { value: "PROPOSAL_PROJECT", label: "Project proposal" },
   { value: "REVIEW", label: "Academic review" },
   { value: "PROJECT_PRODUCTION", label: "Project production" },
   {
@@ -128,6 +130,18 @@ function modeFromTaskType(taskType: string): TaskMode {
     return "project";
   }
   return "other";
+}
+
+function taskTypeChoiceFromTask(
+  taskType: string,
+  proposalScope: ProposalScope,
+) {
+  if (taskType === "PROPOSAL") {
+    return proposalScope === "project"
+      ? "PROPOSAL_PROJECT"
+      : "PROPOSAL_RESEARCH";
+  }
+  return taskType;
 }
 
 function researchMatchesMode(project: TaskResearchOption, mode: TaskMode) {
@@ -584,6 +598,29 @@ export function EditTaskDialog({
     }
   }
 
+  const changeTaskTypeChoice = useCallback((nextChoice: string) => {
+    if (nextChoice === "PROPOSAL_RESEARCH") {
+      setSelectedTaskType("PROPOSAL");
+      setProposalScope("research");
+      setSelectedOrganizedProject(null);
+      setOrganizedProjectQuery("");
+      return;
+    }
+    if (nextChoice === "PROPOSAL_PROJECT") {
+      setSelectedTaskType("PROPOSAL");
+      setProposalScope("project");
+      setSelectedResearch(null);
+      setResearchQuery("");
+      return;
+    }
+    setSelectedTaskType(nextChoice);
+  }, []);
+
+  const selectedTaskTypeChoice = taskTypeChoiceFromTask(
+    selectedTaskType,
+    proposalScope,
+  );
+
   const needsResearch =
     mode === "submit" ||
     mode === "production" ||
@@ -675,6 +712,7 @@ export function EditTaskDialog({
             name="allowAssigneeReportUpload"
             value={allowReportUpload ? "true" : "false"}
           />
+          <input type="hidden" name="taskType" value={selectedTaskType} />
           {selectedResearch && (
             <input type="hidden" name="projectId" value={selectedResearch.id} />
           )}
@@ -1126,11 +1164,11 @@ export function EditTaskDialog({
               <div />
             )}
             <ResearchFormSelect
-              name="taskType"
-              defaultValue={selectedTaskType}
+              name="taskTypeChoice"
+              defaultValue={selectedTaskTypeChoice}
               ariaLabel="Task type"
               options={taskTypeOptions}
-              onValueChange={setSelectedTaskType}
+              onValueChange={changeTaskTypeChoice}
             />
           </div>
         </form>

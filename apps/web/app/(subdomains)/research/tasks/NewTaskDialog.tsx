@@ -109,6 +109,10 @@ export type TaskMode =
   | "other";
 type TaskTriggerVariant = "default" | "other" | "production" | "suggestVenue";
 type ProposalScope = "research" | "project";
+type TaskModeChoice =
+  | Exclude<TaskMode, "proposal">
+  | "researchProposal"
+  | "projectProposal";
 type SearchPanelItem = {
   id: string;
   title: string;
@@ -132,6 +136,12 @@ function modeLabel(mode: TaskMode) {
   if (mode === "review") return "Review";
   if (mode === "project") return "Project";
   return "Other";
+}
+
+function taskChoiceLabel(choice: TaskModeChoice) {
+  if (choice === "researchProposal") return "Research proposal";
+  if (choice === "projectProposal") return "Project proposal";
+  return modeLabel(choice);
 }
 
 function researchMatchesMode(project: TaskResearchOption, mode: TaskMode) {
@@ -465,6 +475,30 @@ export function NewTaskDialog({
       setSelectedReview(null);
       setReviewQuery("");
     }
+  }
+
+  function changeTaskChoice(choice: TaskModeChoice) {
+    if (choice === "researchProposal") {
+      changeMode("proposal");
+      changeProposalScope("research");
+      return;
+    }
+    if (choice === "projectProposal") {
+      changeMode("proposal");
+      changeProposalScope("project");
+      return;
+    }
+    changeMode(choice);
+  }
+
+  function taskChoiceIsActive(choice: TaskModeChoice) {
+    if (choice === "researchProposal") {
+      return mode === "proposal" && proposalScope === "research";
+    }
+    if (choice === "projectProposal") {
+      return mode === "proposal" && proposalScope === "project";
+    }
+    return mode === choice;
   }
 
   function changeProposalScope(nextScope: ProposalScope) {
@@ -815,7 +849,7 @@ export function NewTaskDialog({
           {triggerVariant === "default" && (
             <div
               data-research-toggle-tabs="true"
-              className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020] sm:grid-cols-4 lg:grid-cols-8"
+              className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020] sm:grid-cols-3 lg:grid-cols-9"
             >
               {(
                 [
@@ -823,7 +857,8 @@ export function NewTaskDialog({
                   "production",
                   "suggestVenue",
                   "addJournal",
-                  "proposal",
+                  "researchProposal",
+                  "projectProposal",
                   "review",
                   "project",
                   "other",
@@ -832,16 +867,16 @@ export function NewTaskDialog({
                 <button
                   key={item}
                   type="button"
-                  onClick={() => changeMode(item)}
+                  onClick={() => changeTaskChoice(item)}
                   data-research-toggle-tab="true"
-                  data-active={mode === item}
+                  data-active={taskChoiceIsActive(item)}
                   className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
-                    mode === item
+                    taskChoiceIsActive(item)
                       ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
                       : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
                   }`}
                 >
-                  {modeLabel(item)}
+                  {taskChoiceLabel(item)}
                 </button>
               ))}
             </div>
@@ -863,30 +898,6 @@ export function NewTaskDialog({
                 className={inputClass}
               />
             </label>
-          ) : null}
-
-          {mode === "proposal" ? (
-            <div
-              data-research-toggle-tabs="true"
-              className="grid w-full max-w-md grid-cols-2 border border-[#D8D0C2] bg-[#F8F5F0] dark:border-[#444444] dark:bg-[#202020]"
-            >
-              {(["research", "project"] as const).map((scope) => (
-                <button
-                  key={scope}
-                  type="button"
-                  onClick={() => changeProposalScope(scope)}
-                  data-research-toggle-tab="true"
-                  data-active={proposalScope === scope}
-                  className={`cursor-pointer border-r border-[#D8D0C2] px-3 py-2 text-sm font-normal capitalize transition last:border-r-0 dark:border-[#303030] ${
-                    proposalScope === scope
-                      ? "bg-[#E9F4F5] text-[#1F7180] dark:bg-[#383838] dark:text-[#A8DADC]"
-                      : "text-[#667085] hover:bg-[#F0ECE4] hover:text-[#243047] dark:text-[#B0B0B0] dark:hover:bg-[#303030] dark:hover:text-[#E4E4E4]"
-                  }`}
-                >
-                  {scope} proposal
-                </button>
-              ))}
-            </div>
           ) : null}
 
           {fixedResearch ? (

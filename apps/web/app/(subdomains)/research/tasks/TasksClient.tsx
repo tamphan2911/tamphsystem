@@ -56,6 +56,7 @@ type TaskRow = {
   description: string;
   category: string;
   taskType: string;
+  proposalScope: "research" | "project" | null;
   status: string;
   dueDate: string | null;
   completedAt: string | null;
@@ -89,7 +90,8 @@ const taskTypeFilterValues = [
   "PRODUCTION",
   "SUGGEST_VENUE",
   "ADD_JOURNAL",
-  "PROPOSAL",
+  "PROPOSAL_RESEARCH",
+  "PROPOSAL_PROJECT",
   "REVIEW",
   "PROJECT",
   "OTHER",
@@ -154,7 +156,13 @@ function taskTypeLines(task: TaskRow) {
     return { typeLabel: "Add journal", subtypeLabel: "" };
   }
   if (type === "PROPOSAL") {
-    return { typeLabel: "Proposal", subtypeLabel: "" };
+    return {
+      typeLabel:
+        task.proposalScope === "project"
+          ? "Project proposal"
+          : "Research proposal",
+      subtypeLabel: "",
+    };
   }
   if (type === "PROJECT_PRODUCTION" || type === "PROJECT_RESEARCH_ASSOCIATED") {
     return { typeLabel: "Project", subtypeLabel: "" };
@@ -179,13 +187,19 @@ function taskTypeFilterValue(task: TaskRow) {
   if (task.taskType === "PRODUCTION") return "PRODUCTION";
   if (task.taskType === "SUGGEST_VENUE") return "SUGGEST_VENUE";
   if (task.taskType === "ADD_JOURNAL") return "ADD_JOURNAL";
-  if (task.taskType === "PROPOSAL") return "PROPOSAL";
+  if (task.taskType === "PROPOSAL") {
+    return task.proposalScope === "project"
+      ? "PROPOSAL_PROJECT"
+      : "PROPOSAL_RESEARCH";
+  }
   if (task.taskType === "REVIEW") return "REVIEW";
   return "OTHER";
 }
 
 function taskTypeFilterLabel(value: string) {
   if (value === "ALL") return "All types";
+  if (value === "PROPOSAL_RESEARCH") return "Research proposal";
+  if (value === "PROPOSAL_PROJECT") return "Project proposal";
   return titleCase(value);
 }
 
