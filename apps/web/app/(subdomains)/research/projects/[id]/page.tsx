@@ -1205,7 +1205,6 @@ export default async function ProjectDetailPage({
                     disabled={researchContentLocked}
                     disabledReason="Research information is locked after accepted or published submission"
                     initialOpen={project.stage === "PENDING" && isRootAdmin}
-                    lockUntilSaved={project.stage === "PENDING" && isRootAdmin}
                   />
                 )}
                 {isRootAdmin && (
