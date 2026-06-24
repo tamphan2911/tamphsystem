@@ -46,7 +46,61 @@ export type ResearchUserRow = {
   emailVerified: string | null;
   createdAt: string;
   updatedAt: string;
+  unfinishedTasks: {
+    status: string;
+    count: number;
+  }[];
 };
+
+const unfinishedTaskStatusOrder = [
+  "OPEN",
+  "IN_PROGRESS",
+  "REVISION_REQUESTED",
+  "CHECKING",
+  "NEED_CLARIFY",
+];
+
+const unfinishedTaskFilterStatuses = [
+  "IN_PROGRESS",
+  "REVISION_REQUESTED",
+  "CHECKING",
+  "NEED_CLARIFY",
+  "OVERDUE",
+];
+
+const allTaskTypeFilterValues = [
+  "ALL",
+  "SUBMIT",
+  "PRODUCTION",
+  "SUGGEST_VENUE",
+  "ADD_JOURNAL",
+  "PROPOSAL_RESEARCH",
+  "PROPOSAL_PROJECT",
+  "REVIEW",
+  "PROJECT",
+  "OTHER",
+];
+
+function taskStatusLabel(status: string) {
+  if (status === "OPEN") return "open";
+  if (status === "IN_PROGRESS") return "in progress";
+  if (status === "REVISION_REQUESTED") return "revision requested";
+  if (status === "CHECKING") return "checking";
+  if (status === "NEED_CLARIFY") return "need clarify";
+  return status.toLowerCase().replaceAll("_", " ");
+}
+
+function sortedTaskBreakdown(row: ResearchUserRow) {
+  return [...row.unfinishedTasks].sort(
+    (left, right) =>
+      unfinishedTaskStatusOrder.indexOf(left.status) -
+      unfinishedTaskStatusOrder.indexOf(right.status),
+  );
+}
+
+function unfinishedTaskTotal(row: ResearchUserRow) {
+  return row.unfinishedTasks.reduce((total, item) => total + item.count, 0);
+}
 
 function formatDate(value: string | null) {
   if (!value) return "-";
@@ -115,6 +169,21 @@ export function ResearchUsersTable({
     pagination.setPage(1);
   }
 
+  function prefillTaskFilters(row: ResearchUserRow) {
+    if (typeof window === "undefined") return;
+    const searchValue = row.name || row.email;
+    window.sessionStorage.setItem("research:/tasks:tasks:q", searchValue);
+    window.sessionStorage.setItem(
+      "research:/tasks:tasks:status",
+      unfinishedTaskFilterStatuses.join(","),
+    );
+    window.sessionStorage.setItem(
+      "research:/tasks:tasks:type",
+      allTaskTypeFilterValues.join(","),
+    );
+    window.sessionStorage.removeItem("research:/tasks:tasks:page");
+  }
+
   function submitEdit(formData: FormData) {
     const target = editing;
     startTransition(async () => {
@@ -181,12 +250,13 @@ export function ResearchUsersTable({
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="w-[27%] px-4 py-3">User</th>
-              <th className="w-[18%] px-3 py-3">Affiliation</th>
-              <th className="w-[16%] px-3 py-3">Roles</th>
-              <th className="w-[14%] px-3 py-3">Password</th>
-              <th className="w-[9%] px-3 py-3">Email</th>
-              <th className="w-[8%] px-3 py-3">Joined</th>
-              <th className="w-[8%] px-2 py-3 text-right">
+              <th className="w-[15%] px-3 py-3">Affiliation</th>
+              <th className="w-[14%] px-3 py-3">Roles</th>
+              <th className="w-[12%] px-3 py-3">Password</th>
+              <th className="w-[13%] px-3 py-3">Unfinished tasks</th>
+              <th className="w-[8%] px-3 py-3">Email</th>
+              <th className="w-[6%] px-3 py-3">Joined</th>
+              <th className="w-[5%] px-2 py-3 text-right">
                 <span className="sr-only">Action</span>
               </th>
             </tr>
@@ -254,6 +324,31 @@ export function ResearchUsersTable({
                       </button>
                     </div>
                   </td>
+                  <td className="px-3 py-3 text-sm leading-5 text-[#243047] dark:text-[#E4E4E4]">
+                    {unfinishedTaskTotal(user) > 0 ? (
+                      <Link
+                        href="/tasks"
+                        onClick={() => prefillTaskFilters(user)}
+                        className="research-allow-transform grid gap-1 text-left outline-none transition-[color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:text-[#1F7180] focus-visible:text-[#1F7180] focus-visible:ring-0 active:translate-y-0 active:scale-[0.985] dark:hover:text-[#A8DADC] dark:focus-visible:text-[#A8DADC]"
+                        aria-label={`Open unfinished tasks for ${user.name || user.email}`}
+                      >
+                        {sortedTaskBreakdown(user).map((item) => (
+                          <span key={item.status} className="block">
+                            <span className="font-normal text-[#1F2937] dark:text-[#E4E4E4]">
+                              {item.count}
+                            </span>{" "}
+                            <span className="text-[#6C778D] dark:text-[#B0B0B0]">
+                              {taskStatusLabel(item.status)}
+                            </span>
+                          </span>
+                        ))}
+                      </Link>
+                    ) : (
+                      <span className="text-[#6C778D] dark:text-[#B0B0B0]">
+                        No unfinished task
+                      </span>
+                    )}
+                  </td>
                   <td className="px-3 py-3 text-sm align-top">
                     {(() => {
                       const hasEmail = Boolean(user.email.trim());
@@ -312,7 +407,7 @@ export function ResearchUsersTable({
             })}
             {pagination.total === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-2">
+                <td colSpan={8} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No research users match the current filters."
                     detail="Try another name, email, role, or activation filter."

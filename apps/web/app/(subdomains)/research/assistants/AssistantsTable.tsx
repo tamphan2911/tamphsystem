@@ -59,6 +59,27 @@ const unfinishedTaskStatusOrder = [
   "NEED_CLARIFY",
 ];
 
+const unfinishedTaskFilterStatuses = [
+  "IN_PROGRESS",
+  "REVISION_REQUESTED",
+  "CHECKING",
+  "NEED_CLARIFY",
+  "OVERDUE",
+];
+
+const allTaskTypeFilterValues = [
+  "ALL",
+  "SUBMIT",
+  "PRODUCTION",
+  "SUGGEST_VENUE",
+  "ADD_JOURNAL",
+  "PROPOSAL_RESEARCH",
+  "PROPOSAL_PROJECT",
+  "REVIEW",
+  "PROJECT",
+  "OTHER",
+];
+
 function taskStatusLabel(status: string) {
   if (status === "OPEN") return "open";
   if (status === "IN_PROGRESS") return "in progress";
@@ -164,7 +185,11 @@ export function AssistantsTable({
     window.sessionStorage.setItem("research:/tasks:tasks:q", searchValue);
     window.sessionStorage.setItem(
       "research:/tasks:tasks:status",
-      "IN_PROGRESS,REVISION_REQUESTED,CHECKING,NEED_CLARIFY,OVERDUE",
+      unfinishedTaskFilterStatuses.join(","),
+    );
+    window.sessionStorage.setItem(
+      "research:/tasks:tasks:type",
+      allTaskTypeFilterValues.join(","),
     );
     window.sessionStorage.removeItem("research:/tasks:tasks:page");
   }

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { prisma, Role } from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { displayResearchEmail } from "@/sites/research/lib/display";
@@ -31,6 +31,37 @@ export default async function ResearchUsersPage() {
     },
   });
 
+  const taskAssignments = await prisma.researchTaskAssignment.findMany({
+    where: {
+      userId: { in: users.map((user) => user.id) },
+      task: {
+        status: {
+          notIn: [ResearchTaskStatus.COMPLETED, ResearchTaskStatus.REVOKED],
+        },
+      },
+    },
+    select: {
+      userId: true,
+      task: {
+        select: {
+          status: true,
+        },
+      },
+    },
+  });
+
+  const taskBreakdowns = new Map<string, Map<ResearchTaskStatus, number>>();
+  taskAssignments.forEach((assignment) => {
+    const breakdown =
+      taskBreakdowns.get(assignment.userId) ??
+      new Map<ResearchTaskStatus, number>();
+    breakdown.set(
+      assignment.task.status,
+      (breakdown.get(assignment.task.status) ?? 0) + 1,
+    );
+    taskBreakdowns.set(assignment.userId, breakdown);
+  });
+
   const rows: ResearchUserRow[] = users.map((user) => {
     const email = displayResearchEmail(user.email);
     return {
@@ -44,6 +75,12 @@ export default async function ResearchUsersPage() {
       emailVerified: email ? (user.emailVerified?.toISOString() ?? null) : null,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
+      unfinishedTasks: Array.from(taskBreakdowns.get(user.id) ?? []).map(
+        ([status, count]) => ({
+          status,
+          count,
+        }),
+      ),
     };
   });
   const stats = [
