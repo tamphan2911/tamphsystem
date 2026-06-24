@@ -2253,7 +2253,14 @@ export async function reviewProposal(formData: FormData) {
           id: true,
           title: true,
           status: true,
-          assignments: { select: { userId: true } },
+          createdById: true,
+          checkerId: true,
+          assignments: {
+            select: {
+              userId: true,
+              user: { select: { email: true } },
+            },
+          },
         },
       },
     },
@@ -2265,6 +2272,22 @@ export async function reviewProposal(formData: FormData) {
   ) {
     throw new Error("This proposal has already been reviewed.");
   }
+
+  const accepted = status === ProposalStatus.ACCEPTED;
+  const statusLabel = accepted ? "approved" : "declined";
+  const proposalType = proposal.type
+    .toLowerCase()
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const adminNote = comment ?? "No additional admin note was added.";
+  const proposalTaskNote =
+    status === ProposalStatus.ACCEPTED
+      ? comment
+        ? `The linked ${proposalType.toLowerCase()} was approved. This task was completed automatically. Admin note: ${comment}`
+        : `The linked ${proposalType.toLowerCase()} was approved. This task was completed automatically.`
+      : comment
+        ? `The linked ${proposalType.toLowerCase()} was declined. This task was sent back for revision automatically. Admin note: ${comment}`
+        : `The linked ${proposalType.toLowerCase()} was declined. This task was sent back for revision automatically. Please revise and submit a new proposal from this task.`;
 
   let createdHref = `/proposals/${proposal.id}`;
   if (status === ProposalStatus.ACCEPTED) {
@@ -2317,11 +2340,7 @@ export async function reviewProposal(formData: FormData) {
       proposal.type === ProposalType.RESEARCH ||
       proposal.type === ProposalType.PROJECT
     ) {
-      await createPendingRecordFromProposal(proposal);
-      createdHref =
-        proposal.type === ProposalType.RESEARCH
-          ? "/projects"
-          : "/organized-projects";
+      createdHref = await createPendingRecordFromProposal(proposal);
     }
   }
 
@@ -2348,8 +2367,7 @@ export async function reviewProposal(formData: FormData) {
         status: ResearchTaskStatus.COMPLETED,
         completedAt,
         completedById: user.id,
-        completionMessage:
-          "The linked proposal was approved, so this proposal task was completed automatically.",
+        completionMessage: proposalTaskNote,
         redoRequestedAt: null,
         redoRequestedById: null,
         redoReason: null,
@@ -2366,39 +2384,128 @@ export async function reviewProposal(formData: FormData) {
       },
     });
   }
+  const proposalTaskRedo =
+    status === ProposalStatus.DECLINED &&
+    linkedTask &&
+    linkedTask.status !== ResearchTaskStatus.REVOKED;
+  if (proposalTaskRedo) {
+    const redoRequestedAt = new Date();
+    await prisma.researchTask.update({
+      where: { id: linkedTask.id },
+      data: {
+        status: ResearchTaskStatus.REVISION_REQUESTED,
+        completedAt: null,
+        completedById: null,
+        completionMessage: null,
+        redoRequestedAt,
+        redoRequestedById: user.id,
+        redoReason: proposalTaskNote,
+        revokedAt: null,
+        revokedById: null,
+        revokeReason: null,
+        adminViewedAt: null,
+        assignments: {
+          updateMany: {
+            where: {},
+            data: { finishedAt: null },
+          },
+        },
+      },
+    });
+    await prisma.researchTaskClarification.create({
+      data: {
+        taskId: linkedTask.id,
+        requestedById: user.id,
+        answeredById: user.id,
+        question: "Revision requested",
+        answer: proposalTaskNote,
+        answeredAt: redoRequestedAt,
+      },
+    });
+  }
 
-  const accepted = status === ProposalStatus.ACCEPTED;
-  const statusLabel = accepted ? "approved" : "declined";
-  const proposalType = proposal.type
-    .toLowerCase()
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-  const adminNote = comment ?? "No additional admin note was added.";
+  const mergedAutomaticTaskWorkflow =
+    (proposalTaskCompleted || proposalTaskRedo) &&
+    (proposal.type === ProposalType.RESEARCH ||
+      proposal.type === ProposalType.PROJECT) &&
+    linkedTask;
   const emailDecisionSummary = `Your ${proposalType.toLowerCase()} "${proposal.title}" was ${statusLabel}.`;
-  await notifyUsers({
-    userIds: [proposal.submittedById],
-    type: accepted ? "PROPOSAL_ACCEPTED" : "PROPOSAL_DECLINED",
-    title: `Proposal feedback: ${statusLabel}`,
-    summary: proposal.title,
-    body: `Decision: ${statusLabel}.\nType: ${proposalType}.\nAdmin note: ${adminNote}`,
-    href: accepted ? createdHref : "/notifications",
-    entityType: "proposal",
-    entityId: reviewed.id,
-  });
+  if (mergedAutomaticTaskWorkflow) {
+    const taskHref = `/tasks/${linkedTask.id}`;
+    const href = accepted ? createdHref : taskHref;
+    const workflowSummary = accepted
+      ? "The linked proposal task was completed automatically."
+      : "The linked proposal task was sent back for revision automatically.";
+    const notificationTitle = accepted
+      ? "Proposal approved and task completed"
+      : "Proposal declined and task needs revision";
+    const notificationBody = [
+      `Decision: ${statusLabel}.`,
+      `Type: ${proposalType}.`,
+      `Task: ${linkedTask.title}.`,
+      workflowSummary,
+      `Admin note: ${adminNote}`,
+    ].join("\n");
+    const mergedUserIds = [
+      proposal.submittedById,
+      linkedTask.createdById,
+      linkedTask.checkerId,
+      ...linkedTask.assignments.map((assignment) => assignment.userId),
+    ].filter((id): id is string => Boolean(id));
+    const mergedEmails = [
+      proposal.submittedBy.email,
+      ...linkedTask.assignments.map((assignment) => assignment.user.email),
+    ];
 
-  await sendProposalEmail({
-    to: [proposal.submittedBy.email],
-    subject: `Feedback on your Research Hub proposal`,
-    heading: `Proposal ${statusLabel}`,
-    intro: `${emailDecisionSummary} Thank you for sharing this proposal with Research Hub.`,
-    detail: `Proposal type: ${proposalType}\nProposal description: ${proposal.description}\n\nAdmin note: ${adminNote}`,
-    actionHref: `${researchBaseUrl()}${accepted ? createdHref : "/notifications"}`,
-    actionLabel: accepted ? "View item" : "View notification",
-  });
+    await notifyUsers({
+      userIds: mergedUserIds,
+      type: accepted
+        ? "PROPOSAL_ACCEPTED_TASK_COMPLETED"
+        : "PROPOSAL_DECLINED_TASK_REDO",
+      title: notificationTitle,
+      summary: proposal.title,
+      body: notificationBody,
+      href,
+      entityType: "proposal",
+      entityId: reviewed.id,
+    });
+
+    await sendProposalEmail({
+      to: mergedEmails,
+      subject: notificationTitle,
+      heading: notificationTitle,
+      intro: `${emailDecisionSummary} ${workflowSummary}`,
+      detail: `Proposal type: ${proposalType}\nTask: ${linkedTask.title}\nProposal description: ${proposal.description}\n\nAdmin note: ${adminNote}`,
+      actionHref: `${researchBaseUrl()}${href}`,
+      actionLabel: accepted ? "View result" : "Open task",
+    });
+  } else {
+    await notifyUsers({
+      userIds: [proposal.submittedById],
+      type: accepted ? "PROPOSAL_ACCEPTED" : "PROPOSAL_DECLINED",
+      title: `Proposal feedback: ${statusLabel}`,
+      summary: proposal.title,
+      body: `Decision: ${statusLabel}.\nType: ${proposalType}.\nAdmin note: ${adminNote}`,
+      href: accepted ? createdHref : "/notifications",
+      entityType: "proposal",
+      entityId: reviewed.id,
+    });
+
+    await sendProposalEmail({
+      to: [proposal.submittedBy.email],
+      subject: `Feedback on your Research Hub proposal`,
+      heading: `Proposal ${statusLabel}`,
+      intro: `${emailDecisionSummary} Thank you for sharing this proposal with Research Hub.`,
+      detail: `Proposal type: ${proposalType}\nProposal description: ${proposal.description}\n\nAdmin note: ${adminNote}`,
+      actionHref: `${researchBaseUrl()}${accepted ? createdHref : "/notifications"}`,
+      actionLabel: accepted ? "View item" : "View notification",
+    });
+  }
 
   revalidatePath("/proposals");
   revalidatePath(`/proposals/${proposal.id}`);
   if (proposal.taskId) revalidatePath(`/tasks/${proposal.taskId}`);
+  if (proposalTaskCompleted || proposalTaskRedo) revalidatePath("/tasks");
   revalidatePath("/notifications");
   revalidatePath("/conferences");
   revalidatePath("/journals");
