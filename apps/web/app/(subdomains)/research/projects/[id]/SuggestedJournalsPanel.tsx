@@ -2,7 +2,7 @@
 
 import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -134,6 +134,11 @@ export type SuggestedConferenceOption = {
   linkedTask?: SuggestedVenueTaskOption;
   venueState?: SuggestedVenueState;
 };
+
+function defaultSubmitTaskGuideIds(guides: TaskGuideOption[]) {
+  const guide = guides.find((item) => item.guideCode === "G002");
+  return guide ? [guide.id] : [];
+}
 
 export type SuggestedVenueTaskOption = {
   id: string;
@@ -810,6 +815,7 @@ export function SuggestedJournalsPanel({
       setSelectedAccountId("");
       setAccountOpen(false);
       setTaskMode("submit");
+      setSelectedTaskGuideIds(defaultSubmitTaskGuideIds(taskGuideOptions));
       setAllowReportUpload(false);
       router.refresh();
     });
@@ -828,8 +834,18 @@ export function SuggestedJournalsPanel({
     setAllowReportUpload(false);
     setSelectedCheckerId("");
     setCheckerQuery("");
+    setSelectedTaskGuideIds(defaultSubmitTaskGuideIds(taskGuideOptions));
     setAssignVenue(venue);
   }
+
+  useEffect(() => {
+    if (!assignVenue || taskMode !== "submit") return;
+    setSelectedTaskGuideIds((current) =>
+      current.length > 0
+        ? current
+        : defaultSubmitTaskGuideIds(taskGuideOptions),
+    );
+  }, [assignVenue, taskGuideOptions, taskMode]);
 
   const assignName = assignVenue?.item.name ?? "";
   const assignKind = assignVenue?.kind ?? "journal";
@@ -1561,6 +1577,9 @@ export function SuggestedJournalsPanel({
             setSelectedAccountId("");
             setAccountOpen(false);
             setTaskMode("submit");
+            setSelectedTaskGuideIds(
+              defaultSubmitTaskGuideIds(taskGuideOptions),
+            );
             setAllowReportUpload(false);
           }}
           title="Assign task"
@@ -1658,7 +1677,14 @@ export function SuggestedJournalsPanel({
                 <button
                   key={mode}
                   type="button"
-                  onClick={() => setTaskMode(mode)}
+                  onClick={() => {
+                    setTaskMode(mode);
+                    setSelectedTaskGuideIds(
+                      mode === "submit"
+                        ? defaultSubmitTaskGuideIds(taskGuideOptions)
+                        : [],
+                    );
+                  }}
                   data-research-toggle-tab="true"
                   data-active={taskMode === mode}
                   className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${

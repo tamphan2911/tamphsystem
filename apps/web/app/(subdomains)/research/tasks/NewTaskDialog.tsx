@@ -347,6 +347,15 @@ export function NewTaskDialog({
     }
   }, [journalAccounts, selectedAccountId, selectedVenue]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedTaskGuideIds((current) =>
+      current.length > 0
+        ? current
+        : defaultTaskGuideIdsForMode(mode, taskGuideOptions, proposalScope),
+    );
+  }, [isOpen, mode, proposalScope, taskGuideOptions]);
+
   const filteredReviews = useMemo(() => {
     const needle = reviewQuery.trim().toLowerCase();
     if (!needle) return [];
@@ -476,11 +485,7 @@ export function NewTaskDialog({
   function changeMode(nextMode: TaskMode, nextProposalScope = proposalScope) {
     setMode(nextMode);
     setSelectedTaskGuideIds(
-      defaultTaskGuideIdsForMode(
-        nextMode,
-        taskGuideOptions,
-        nextProposalScope,
-      ),
+      defaultTaskGuideIdsForMode(nextMode, taskGuideOptions, nextProposalScope),
     );
     if (
       (nextMode === "other" && selectedVenue?.kind === "conference") ||
