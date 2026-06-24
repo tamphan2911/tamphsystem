@@ -1871,6 +1871,57 @@ export async function submitProposal(formData: FormData) {
   return { ok: true };
 }
 
+export async function updateProposalTaskAssociation(
+  taskId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  requireAdmin(user.roles);
+
+  const associationType = optionalString(formData.get("associationType"));
+  const associationId = optionalString(formData.get("associationId"));
+  if (
+    !associationId ||
+    (associationType !== "research" && associationType !== "project")
+  ) {
+    return { ok: false, reason: "MISSING_ASSOCIATION" };
+  }
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: { id: true, taskType: true },
+  });
+  if (!task || task.taskType !== ResearchTaskType.PROPOSAL) {
+    return { ok: false, reason: "TASK_NOT_FOUND" };
+  }
+
+  if (associationType === "research") {
+    const research = await prisma.researchProject.findUnique({
+      where: { id: associationId },
+      select: { id: true },
+    });
+    if (!research) return { ok: false, reason: "ASSOCIATION_NOT_FOUND" };
+    await prisma.researchTask.update({
+      where: { id: taskId },
+      data: { projectId: associationId, organizedProjectId: null },
+    });
+  } else {
+    const project = await prisma.organizedProject.findUnique({
+      where: { id: associationId },
+      select: { id: true },
+    });
+    if (!project) return { ok: false, reason: "ASSOCIATION_NOT_FOUND" };
+    await prisma.researchTask.update({
+      where: { id: taskId },
+      data: { organizedProjectId: associationId, projectId: null },
+    });
+  }
+
+  revalidatePath(`/tasks/${taskId}`);
+  revalidatePath("/tasks");
+  return { ok: true };
+}
+
 export async function deleteProposal(proposalId: string) {
   const user = await requireCurrentUser();
   requireAdmin(user.roles);

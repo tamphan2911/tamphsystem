@@ -77,6 +77,11 @@ import {
   TaskProposalResult,
   type TaskProposalResultItem,
 } from "./TaskProposalResult";
+import {
+  TaskProposalAssociationLink,
+  type ProposalAssociationProjectOption,
+  type ProposalAssociationResearchOption,
+} from "./TaskProposalAssociationLink";
 import { TaskGuideIcons, type TaskGuideOption } from "../TaskGuidePicker";
 import {
   TaskSuggestedReviewerButton,
@@ -1018,6 +1023,8 @@ export default async function TaskDetailPage({
         select: {
           id: true,
           title: true,
+          researchCode: true,
+          stage: true,
           coAuthors: true,
           leadResearcherId: true,
           leadResearcher: { select: { name: true, email: true } },
@@ -1050,6 +1057,7 @@ export default async function TaskDetailPage({
           id: true,
           title: true,
           referenceCode: true,
+          status: true,
           createdById: true,
           members: { select: { userId: true } },
         },
@@ -1502,6 +1510,7 @@ export default async function TaskDetailPage({
   const canRevoke = !isClosed && !isAssignee && (isAdmin || isAssigner);
   const canEdit =
     !isAssignee && (isRootAdmin || (!isClosed && isChiefAssistant));
+  const canLoadTaskFormOptions = canEdit || isRootAdmin;
   const canUseReminder = !isAssignee && (isAdmin || isAssigner);
   const reminderBlock =
     task.assignments.length === 0
@@ -1655,7 +1664,30 @@ export default async function TaskDetailPage({
     reportEnabled && !isClosed && isAssignee && !isAssigner;
   const canDownloadReport =
     reportEnabled && Boolean(task.reportFileName) && (isAdmin || isAssigner);
+  const currentProposalAssociation = task.project
+    ? {
+        type: "research" as const,
+        id: task.project.id,
+        title: task.project.title,
+        meta: [task.project.researchCode ?? "", task.project.stage]
+          .filter(Boolean)
+          .join(" - "),
+      }
+    : task.organizedProject
+      ? {
+          type: "project" as const,
+          id: task.organizedProject.id,
+          title: task.organizedProject.title,
+          meta: [
+            task.organizedProject.referenceCode ?? "",
+            task.organizedProject.status,
+          ]
+            .filter(Boolean)
+            .join(" - "),
+        }
+      : null;
   const hasAssociatedItems = Boolean(
+    isProposalTask ||
     task.project ||
     task.organizedProject ||
     task.review ||
@@ -1870,7 +1902,7 @@ export default async function TaskDetailPage({
     organizedProjects,
     checkerUsers,
     taskGuideOptions,
-  ] = canEdit
+  ] = canLoadTaskFormOptions
     ? await Promise.all([
         prisma.user.findMany({
           where: assigneeWhere,
@@ -1962,12 +1994,14 @@ export default async function TaskDetailPage({
     email: user.email,
     roles: user.roles,
   }));
-  const researchOptions = projects.map((project) => ({
-    id: project.id,
-    title: project.title,
-    code: project.researchCode ?? "",
-    stage: project.stage,
-  }));
+  const researchOptions: ProposalAssociationResearchOption[] = projects.map(
+    (project) => ({
+      id: project.id,
+      title: project.title,
+      code: project.researchCode ?? "",
+      stage: project.stage,
+    }),
+  );
   const venueOptions = [
     ...journals.map((journal) => ({
       kind: "journal" as const,
@@ -2019,15 +2053,16 @@ export default async function TaskDetailPage({
     journal: review.journal.name,
     status: review.status,
   }));
-  const organizedProjectOptions = organizedProjects.map((project) => ({
-    id: project.id,
-    title: project.title,
-    code: project.referenceCode ?? "",
-    status: project.status,
-  }));
+  const organizedProjectOptions: ProposalAssociationProjectOption[] =
+    organizedProjects.map((project) => ({
+      id: project.id,
+      title: project.title,
+      code: project.referenceCode ?? "",
+      status: project.status,
+    }));
   const projectIds = projects.map((project) => project.id);
   const [journalSubmissions, conferenceSubmissions] =
-    canEdit && projectIds.length > 0
+    canLoadTaskFormOptions && projectIds.length > 0
       ? await Promise.all([
           prisma.researchSubmission.findMany({
             where: { researchProjectId: { in: projectIds } },
@@ -2272,7 +2307,22 @@ export default async function TaskDetailPage({
                   hasTaskResultPanel ? "grid min-w-0 gap-5" : "contents"
                 }
               >
-                {task.project && (
+                {isProposalTask ? (
+                  <div
+                    className={
+                      hasTaskResultPanel ? "min-w-0" : "min-w-0 md:col-span-2"
+                    }
+                  >
+                    <TaskProposalAssociationLink
+                      taskId={task.id}
+                      currentAssociation={currentProposalAssociation}
+                      researchOptions={researchOptions}
+                      projectOptions={organizedProjectOptions}
+                      canManage={isRootAdmin}
+                    />
+                  </div>
+                ) : null}
+                {!isProposalTask && task.project && (
                   <div
                     className={
                       hasTaskResultPanel ? "min-w-0" : "min-w-0 md:col-span-2"
@@ -2300,7 +2350,7 @@ export default async function TaskDetailPage({
                     ) : null}
                   </div>
                 )}
-                {task.organizedProject && (
+                {!isProposalTask && task.organizedProject && (
                   <div className="min-w-0">
                     <div className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                       Project
