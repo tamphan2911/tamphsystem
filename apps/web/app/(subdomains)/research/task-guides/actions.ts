@@ -20,9 +20,11 @@ async function requireAdmin() {
 function guideValues(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const content = String(formData.get("content") ?? "").trim();
+  const importantNote =
+    String(formData.get("importantNote") ?? "").trim() || null;
   if (!title) throw new Error("Enter a guide title.");
   if (!content) throw new Error("Enter the guide content.");
-  return { title, content };
+  return { title, content, importantNote };
 }
 
 async function nextGuideCode() {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookOpenText, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   IconHint,
@@ -17,6 +17,7 @@ export type TaskGuideRow = {
   guideCode: string;
   title: string;
   content: string;
+  importantNote: string;
   updatedAt: string;
   createdBy: string;
 };
@@ -93,7 +94,7 @@ export function TaskGuidesTable({
     const needle = query.trim().toLowerCase();
     if (!needle) return rows;
     return rows.filter((row) =>
-      [row.guideCode, row.title, row.content]
+      [row.guideCode, row.title, row.content, row.importantNote]
         .join(" ")
         .toLowerCase()
         .includes(needle),
@@ -140,6 +141,11 @@ export function TaskGuidesTable({
                   <p className="mt-1 line-clamp-3 whitespace-pre-line break-words text-xs leading-5 text-slate-500 dark:text-[#B0B0B0]">
                     {guide.content}
                   </p>
+                  {guide.importantNote ? (
+                    <p className="mt-2 line-clamp-2 border-l-2 border-amber-400 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900 dark:border-amber-300/60 dark:bg-amber-950/25 dark:text-amber-100">
+                      {guide.importantNote}
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-[11px] text-slate-400 dark:text-[#777777]">
                     Created by {guide.createdBy}
                   </p>

@@ -26,6 +26,7 @@ export type TaskGuideOption = {
   guideCode: string;
   title: string;
   content: string;
+  importantNote?: string | null;
 };
 
 const defaultGuideIconStyle: {
@@ -111,8 +112,19 @@ function GuideContentModal({
       icon={<Icon className="h-5 w-5" />}
       maxWidth="max-w-3xl"
     >
-      <div className="max-h-[65vh] overflow-y-auto whitespace-pre-wrap border border-[#d8d0c3] bg-[#f7f4ed] p-4 text-sm leading-6 text-[#1F2937] dark:border-[#444444] dark:bg-[#202020] dark:text-[#B0B0B0]">
-        {guide?.content}
+      <div className="max-h-[65vh] overflow-y-auto border border-[#d8d0c3] bg-[#fbf9f4] p-4 text-sm leading-6 text-[#1F2937] dark:border-[#444444] dark:bg-[#202020] dark:text-[#D6D6D6]">
+        {guide?.importantNote ? (
+          <section className="mb-4 border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950 dark:border-amber-300/30 dark:bg-amber-950/25 dark:text-amber-100">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-200">
+              <Lightbulb className="h-4 w-4" />
+              Important note
+            </div>
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
+              {guide.importantNote}
+            </p>
+          </section>
+        ) : null}
+        <div className="whitespace-pre-wrap">{guide?.content}</div>
       </div>
     </ResearchModal>
   );
@@ -171,7 +183,7 @@ export function TaskGuidePicker({
     return guides
       .filter((guide) => !selectedIds.includes(guide.id))
       .filter((guide) =>
-        [guide.guideCode, guide.title, guide.content]
+        [guide.guideCode, guide.title, guide.content, guide.importantNote]
           .join(" ")
           .toLowerCase()
           .includes(needle),

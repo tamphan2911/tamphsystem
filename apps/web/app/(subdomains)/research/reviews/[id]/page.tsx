@@ -200,7 +200,13 @@ export default async function ReviewDetailPage({
     canManageTasks
       ? prisma.taskGuide.findMany({
           orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
-          select: { id: true, guideCode: true, title: true, content: true },
+          select: {
+            id: true,
+            guideCode: true,
+            title: true,
+            content: true,
+            importantNote: true,
+          },
         })
       : Promise.resolve([]),
   ]);

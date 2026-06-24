@@ -24,6 +24,7 @@ export default async function TaskGuidesPage() {
     guideCode: guide.guideCode,
     title: guide.title,
     content: guide.content,
+    importantNote: guide.importantNote ?? "",
     updatedAt: researchDateTimeFormat("en-GB", {
       day: "2-digit",
       month: "2-digit",

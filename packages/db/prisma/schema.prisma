@@ -589,7 +589,7 @@ model Proposal {
   updatedAt                 DateTime       @updatedAt
 
   submittedBy             User              @relation("ProposalSubmitter", fields: [submittedById], references: [id], onDelete: Cascade)
-  task                    ResearchTask?      @relation("ResearchTaskProposal", fields: [taskId], references: [id], onDelete: SetNull)
+  task                    ResearchTask?     @relation("ResearchTaskProposal", fields: [taskId], references: [id], onDelete: SetNull)
   createdResearchProject  ResearchProject?  @relation("ProposalCreatedResearch", fields: [createdResearchProjectId], references: [id], onDelete: SetNull)
   createdOrganizedProject OrganizedProject? @relation("ProposalCreatedProject", fields: [createdOrganizedProjectId], references: [id], onDelete: SetNull)
 
@@ -906,13 +906,14 @@ model SuggestedReviewer {
 }
 
 model TaskGuide {
-  id          String   @id @default(uuid())
-  guideCode   String   @unique
-  title       String
-  content     String
-  createdById String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())
+  guideCode     String   @unique
+  title         String
+  content       String
+  importantNote String?
+  createdById   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   createdBy User?          @relation("TaskGuideCreator", fields: [createdById], references: [id], onDelete: SetNull)
   tasks     ResearchTask[] @relation("ResearchTaskGuides")

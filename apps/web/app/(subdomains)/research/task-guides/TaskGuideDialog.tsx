@@ -16,6 +16,7 @@ export type TaskGuideFormValues = {
   guideCode: string;
   title: string;
   content: string;
+  importantNote: string;
 };
 
 export function TaskGuideDialog({
@@ -134,6 +135,18 @@ export function TaskGuideDialog({
               defaultValue={initialValues?.content}
               placeholder="Write the instructions, checks, links, and notes for this guide."
               className={`${researchTextareaClass} min-h-72 whitespace-pre-wrap`}
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm">
+            <span className="text-xs uppercase text-slate-500 dark:text-[#B0B0B0]">
+              Important note
+            </span>
+            <textarea
+              name="importantNote"
+              rows={4}
+              defaultValue={initialValues?.importantNote}
+              placeholder="Optional. Add a short warning, priority, or point that should stand out when the guide is opened."
+              className={`${researchTextareaClass} min-h-28 whitespace-pre-wrap border-amber-200 bg-amber-50/60 text-amber-950 placeholder:text-amber-700/50 focus:border-amber-400 dark:border-amber-300/30 dark:bg-amber-950/20 dark:text-amber-100 dark:placeholder:text-amber-200/35`}
             />
           </label>
         </form>

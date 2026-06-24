@@ -884,7 +884,13 @@ export default async function TaskDetailPage({
       reportFileSize: true,
       reportUploadedAt: true,
       guides: {
-        select: { id: true, guideCode: true, title: true, content: true },
+        select: {
+          id: true,
+          guideCode: true,
+          title: true,
+          content: true,
+          importantNote: true,
+        },
         orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
       },
       suggestedReviewers: {
@@ -1594,8 +1600,8 @@ export default async function TaskDetailPage({
                     .filter(Boolean)
                     .join(" | ")
                 : "Unknown user",
-          },
-        ],
+            },
+          ],
   );
   const taskProposalResult: TaskProposalResultItem | null = task.proposalResult
     ? {
@@ -1707,9 +1713,9 @@ export default async function TaskDetailPage({
               linkedJournalSubmissionSuggestion.journal?.submissionFee ?? null,
             submissionFeeCurrency:
               linkedJournalSubmissionSuggestion.journal
-                ?.submissionFeeCurrency ??
-              "USD",
-            journalNote: linkedJournalSubmissionSuggestion.journal?.note ?? null,
+                ?.submissionFeeCurrency ?? "USD",
+            journalNote:
+              linkedJournalSubmissionSuggestion.journal?.note ?? null,
             venueNote: linkedJournalSubmissionSuggestion.note ?? null,
             declineReason: linkedJournalSubmissionSuggestion.declineReason,
             venueLink:
@@ -1933,7 +1939,13 @@ export default async function TaskDetailPage({
         }),
         prisma.taskGuide.findMany({
           orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
-          select: { id: true, guideCode: true, title: true, content: true },
+          select: {
+            id: true,
+            guideCode: true,
+            title: true,
+            content: true,
+            importantNote: true,
+          },
         }),
       ])
     : [[], [], [], [], [], [], [], [], []];
