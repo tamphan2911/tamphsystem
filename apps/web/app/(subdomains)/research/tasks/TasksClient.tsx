@@ -4,7 +4,7 @@ import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -89,6 +89,8 @@ const unfinishedTaskStatusValues = taskStatusValues.filter(
   (value) => value !== "ALL" && value !== "COMPLETED" && value !== "REVOKED",
 );
 
+const adminNeedActionStatusValues = ["NEED_CLARIFY", "CHECKING"];
+
 const taskTypeFilterValues = [
   "ALL",
   "SUBMIT",
@@ -103,6 +105,7 @@ const taskTypeFilterValues = [
 ];
 
 type TaskScopeTab = "assigned" | "related" | "checker";
+type TaskHeaderTab = TaskScopeTab | "all" | "need_action";
 
 function formatDate(value: string | null) {
   if (!value) return "-";
@@ -492,6 +495,7 @@ export function TasksClient({
   const [statusBeforeUnfinished, setStatusBeforeUnfinished] = useState<
     string[] | null
   >(null);
+  const adminDefaultsApplied = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
@@ -544,50 +548,99 @@ export function TasksClient({
     "tasks:type",
     taskTypeFilterValues,
   );
-  const activeScopeTab: TaskScopeTab =
-    scopeTab === "checker" && !isChiefAssistant
+
+  const activeHeaderTab: TaskHeaderTab = isAdmin
+    ? scopeTab === "need_action"
+      ? "need_action"
+      : "all"
+    : scopeTab === "checker" && !isChiefAssistant
       ? "assigned"
       : scopeTab === "related" || scopeTab === "checker"
         ? scopeTab
         : "assigned";
 
+  useEffect(() => {
+    if (!isAdmin || adminDefaultsApplied.current) return;
+    adminDefaultsApplied.current = true;
+    const hasTaskPrefill =
+      typeof window !== "undefined" &&
+      window.sessionStorage.getItem("research:/tasks:tasks:prefill") ===
+        "person-unfinished";
+    if (hasTaskPrefill) {
+      window.sessionStorage.removeItem("research:/tasks:tasks:prefill");
+    } else {
+      setQuery("");
+    }
+    setTaskTypes([]);
+    setStatusBeforeUnfinished(null);
+
+    if (activeHeaderTab === "need_action") {
+      setUnfinishedOnly(false);
+      setStatuses(adminNeedActionStatusValues);
+      return;
+    }
+
+    setUnfinishedOnly(true);
+    setStatusBeforeUnfinished([]);
+    setStatuses(unfinishedTaskStatusValues);
+  }, [activeHeaderTab, isAdmin, setQuery, setStatuses, setTaskTypes]);
+
   const scopeTabs: Array<{
-    value: TaskScopeTab;
+    value: TaskHeaderTab;
     label: string;
     count: number;
-  }> = [
-    {
-      value: "assigned",
-      label: "Assigned to me",
-      count: tasks.filter((task) => task.scope.assignedToMe).length,
-    },
-    {
-      value: "related",
-      label: "Related to me",
-      count: tasks.filter((task) => task.scope.relatedToMyItems).length,
-    },
-    ...(isChiefAssistant
-      ? [
-          {
-            value: "checker" as const,
-            label: "As checker",
-            count: tasks.filter((task) => task.scope.checkerForMe).length,
-          },
-        ]
-      : []),
-  ];
+  }> = isAdmin
+    ? [
+        {
+          value: "all",
+          label: "All tasks",
+          count: tasks.length,
+        },
+        {
+          value: "need_action",
+          label: "Need actions",
+          count: tasks.filter((task) =>
+            adminNeedActionStatusValues.includes(derivedStatus(task)),
+          ).length,
+        },
+      ]
+    : [
+        {
+          value: "assigned",
+          label: "Assigned to me",
+          count: tasks.filter((task) => task.scope.assignedToMe).length,
+        },
+        {
+          value: "related",
+          label: "Related to me",
+          count: tasks.filter((task) => task.scope.relatedToMyItems).length,
+        },
+        ...(isChiefAssistant
+          ? [
+              {
+                value: "checker" as const,
+                label: "As checker",
+                count: tasks.filter((task) => task.scope.checkerForMe).length,
+              },
+            ]
+          : []),
+      ];
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return tasks.filter((task) => {
-      const matchesScope =
-        activeScopeTab === "assigned"
+      const taskStatus = derivedStatus(task);
+      const matchesScope = isAdmin
+        ? activeHeaderTab === "need_action"
+          ? adminNeedActionStatusValues.includes(taskStatus)
+          : true
+        : activeHeaderTab === "assigned"
           ? task.scope.assignedToMe
-          : activeScopeTab === "related"
+          : activeHeaderTab === "related"
             ? task.scope.relatedToMyItems
             : task.scope.checkerForMe;
       const matchesStatus =
-        statuses.length === 0 || statuses.includes(derivedStatus(task));
+        statuses.length === 0 || statuses.includes(taskStatus);
       const matchesType =
         taskTypes.length === 0 || taskTypes.includes(taskTypeFilterValue(task));
       const haystack = [
@@ -614,7 +667,7 @@ export function TasksClient({
         (!needle || haystack.includes(needle))
       );
     });
-  }, [activeScopeTab, query, statuses, taskTypes, tasks]);
+  }, [activeHeaderTab, isAdmin, query, statuses, taskTypes, tasks]);
   const pagination = useTablePagination(filtered, 10, 1, "tasks");
 
   function updateQuery(value: string) {
@@ -622,9 +675,25 @@ export function TasksClient({
     pagination.setPage(1);
   }
 
-  function updateScopeTab(value: TaskScopeTab) {
+  function updateScopeTab(value: TaskHeaderTab) {
     setScopeTab(value);
     pagination.setPage(1);
+
+    if (!isAdmin) return;
+
+    setQuery("");
+    setTaskTypes([]);
+    setStatusBeforeUnfinished(null);
+
+    if (value === "need_action") {
+      setUnfinishedOnly(false);
+      setStatuses(adminNeedActionStatusValues);
+      return;
+    }
+
+    setUnfinishedOnly(true);
+    setStatusBeforeUnfinished([]);
+    setStatuses(unfinishedTaskStatusValues);
   }
 
   function updateStatuses(values: string[]) {
@@ -666,8 +735,8 @@ export function TasksClient({
               <button
                 key={tab.value}
                 type="button"
-                data-active={activeScopeTab === tab.value}
-                aria-pressed={activeScopeTab === tab.value}
+                data-active={activeHeaderTab === tab.value}
+                aria-pressed={activeHeaderTab === tab.value}
                 onClick={() => updateScopeTab(tab.value)}
                 className="journal-detail-tab-button cursor-pointer rounded-none px-4 py-3 text-left"
               >

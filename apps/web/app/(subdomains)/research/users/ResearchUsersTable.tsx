@@ -187,6 +187,10 @@ export function ResearchUsersTable({
   function prefillTaskFilters(row: ResearchUserRow) {
     if (typeof window === "undefined") return;
     const searchValue = row.name || row.email;
+    window.sessionStorage.setItem(
+      "research:/tasks:tasks:prefill",
+      "person-unfinished",
+    );
     window.sessionStorage.setItem("research:/tasks:tasks:q", searchValue);
     window.sessionStorage.setItem(
       "research:/tasks:tasks:status",
