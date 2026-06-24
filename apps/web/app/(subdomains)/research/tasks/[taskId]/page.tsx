@@ -999,7 +999,8 @@ export default async function TaskDetailPage({
         },
         orderBy: { resultPosition: "asc" },
       },
-      proposalResult: {
+      proposalResults: {
+        orderBy: { createdAt: "asc" },
         select: {
           id: true,
           type: true,
@@ -1658,70 +1659,57 @@ export default async function TaskDetailPage({
             },
           ],
   );
-  const taskProposalResult: TaskProposalResultItem | null = task.proposalResult
-    ? {
-        id: task.proposalResult.id,
-        type: task.proposalResult.type === "PROJECT" ? "PROJECT" : "RESEARCH",
-        status: task.proposalResult.status,
-        title: task.proposalResult.title,
-        description: task.proposalResult.description,
-        contactInfo: task.proposalResult.contactInfo ?? "",
-        notes: task.proposalResult.notes ?? "",
-        fileName: task.proposalResult.supportFileName ?? "",
-        fileSize: fileSizeLabel(task.proposalResult.supportFileSize),
-        decisionComment: task.proposalResult.decisionComment ?? "",
-        createdAt: formatDate(task.proposalResult.createdAt),
-        submittedBy: displayResearchPersonName(task.proposalResult.submittedBy),
-        submittedByEmail: displayResearchEmail(
-          task.proposalResult.submittedBy.email,
-        ),
-        createdResearch: task.proposalResult.createdResearchProject
-          ? {
-              id: task.proposalResult.createdResearchProject.id,
-              title: task.proposalResult.createdResearchProject.title,
-              code:
-                task.proposalResult.createdResearchProject.researchCode ?? "",
-              stage: task.proposalResult.createdResearchProject.stage,
-              authors: researchAuthors(
-                task.proposalResult.createdResearchProject,
-              ),
-              updatedAt: formatDate(
-                task.proposalResult.createdResearchProject.updatedAt,
-              ),
-            }
-          : null,
-        createdProject: task.proposalResult.createdOrganizedProject
-          ? {
-              id: task.proposalResult.createdOrganizedProject.id,
-              title: task.proposalResult.createdOrganizedProject.title,
-              code:
-                task.proposalResult.createdOrganizedProject.referenceCode ?? "",
-              status: task.proposalResult.createdOrganizedProject.status,
-              projectType:
-                task.proposalResult.createdOrganizedProject.projectType,
-              organizer:
-                task.proposalResult.createdOrganizedProject.fundingInstitution
-                  ?.name ??
-                task.proposalResult.createdOrganizedProject.organizer ??
-                "",
-              owner: task.proposalResult.createdOrganizedProject.createdBy
-                ? displayResearchPersonName(
-                    task.proposalResult.createdOrganizedProject.createdBy,
-                  )
-                : "",
-              members: task.proposalResult.createdOrganizedProject.members
-                .map((member) => {
-                  const name = displayResearchPersonName(member.user);
-                  return member.isTeamLead ? `${name}*` : name;
-                })
-                .join("; "),
-              updatedAt: formatDate(
-                task.proposalResult.createdOrganizedProject.updatedAt,
-              ),
-            }
-          : null,
-      }
-    : null;
+  const taskProposalResults: TaskProposalResultItem[] =
+    task.proposalResults.map((proposal) => ({
+      id: proposal.id,
+      type: proposal.type === "PROJECT" ? "PROJECT" : "RESEARCH",
+      status: proposal.status,
+      title: proposal.title,
+      description: proposal.description,
+      contactInfo: proposal.contactInfo ?? "",
+      notes: proposal.notes ?? "",
+      fileName: proposal.supportFileName ?? "",
+      fileSize: fileSizeLabel(proposal.supportFileSize),
+      decisionComment: proposal.decisionComment ?? "",
+      createdAt: formatDate(proposal.createdAt),
+      submittedBy: displayResearchPersonName(proposal.submittedBy),
+      submittedByEmail: displayResearchEmail(proposal.submittedBy.email),
+      createdResearch: proposal.createdResearchProject
+        ? {
+            id: proposal.createdResearchProject.id,
+            title: proposal.createdResearchProject.title,
+            code: proposal.createdResearchProject.researchCode ?? "",
+            stage: proposal.createdResearchProject.stage,
+            authors: researchAuthors(proposal.createdResearchProject),
+            updatedAt: formatDate(proposal.createdResearchProject.updatedAt),
+          }
+        : null,
+      createdProject: proposal.createdOrganizedProject
+        ? {
+            id: proposal.createdOrganizedProject.id,
+            title: proposal.createdOrganizedProject.title,
+            code: proposal.createdOrganizedProject.referenceCode ?? "",
+            status: proposal.createdOrganizedProject.status,
+            projectType: proposal.createdOrganizedProject.projectType,
+            organizer:
+              proposal.createdOrganizedProject.fundingInstitution?.name ??
+              proposal.createdOrganizedProject.organizer ??
+              "",
+            owner: proposal.createdOrganizedProject.createdBy
+              ? displayResearchPersonName(
+                  proposal.createdOrganizedProject.createdBy,
+                )
+              : "",
+            members: proposal.createdOrganizedProject.members
+              .map((member) => {
+                const name = displayResearchPersonName(member.user);
+                return member.isTeamLead ? `${name}*` : name;
+              })
+              .join("; "),
+            updatedAt: formatDate(proposal.createdOrganizedProject.updatedAt),
+          }
+        : null,
+    }));
   const selectedSuggestedReviewers: SuggestedReviewerOption[] =
     task.suggestedReviewers.map((reviewer) => ({
       id: reviewer.id,
@@ -2556,9 +2544,9 @@ export default async function TaskDetailPage({
           {isProposalTask ? (
             <TaskProposalResult
               taskId={task.id}
-              proposal={taskProposalResult}
+              proposals={taskProposalResults}
               proposalType={proposalTaskType}
-              canCreate={!isClosed && isAssignee && !taskProposalResult}
+              canCreate={!isClosed && isAssignee}
               canManageAssociation={isRootAdmin}
               currentAssociation={currentProposalAssociation}
               researchOptions={researchOptions}

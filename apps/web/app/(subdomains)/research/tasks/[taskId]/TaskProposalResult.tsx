@@ -159,7 +159,7 @@ function label(value: string) {
 
 export function TaskProposalResult({
   taskId,
-  proposal,
+  proposals,
   proposalType,
   canCreate,
   canManageAssociation,
@@ -168,7 +168,7 @@ export function TaskProposalResult({
   projectOptions,
 }: {
   taskId: string;
-  proposal: TaskProposalResultItem | null;
+  proposals: TaskProposalResultItem[];
   proposalType: "RESEARCH" | "PROJECT";
   canCreate: boolean;
   canManageAssociation: boolean;
@@ -188,11 +188,15 @@ export function TaskProposalResult({
   const linkSearchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const toast = useResearchToast();
-  const StatusIcon = proposal ? statusIcon(proposal.status) : FolderGit2;
   const typeLabel =
     proposalType === "PROJECT" ? "Project proposal" : "Research proposal";
   const associationType = proposalType === "PROJECT" ? "project" : "research";
   const associationLabel = proposalType === "PROJECT" ? "project" : "research";
+  const canAddAnotherProposal =
+    proposals.length === 0 ||
+    proposals.every((proposal) => proposal.status === "DECLINED");
+  const showProposalSlot =
+    canAddAnotherProposal && (canCreate || canManageAssociation);
   const associationResults = useMemo(() => {
     const needle = linkQuery.trim().toLowerCase();
     if (!needle) return [];
@@ -306,6 +310,247 @@ export function TaskProposalResult({
     });
   }
 
+  function emptyProposalSlot(fullWidth: boolean) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          if (canManageAssociation) {
+            openLinkPicker();
+            return;
+          }
+          if (canCreate) setOpen(true);
+        }}
+        className={`group min-h-44 border border-dashed border-[#CFC6B8] bg-[#FBF9F4] p-4 text-left transition-[border-color,background-color,transform] duration-180 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:border-[#4A4A4A] dark:bg-[#262626] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838] ${
+          fullWidth ? "w-full md:col-span-2" : "w-full"
+        } ${
+          canCreate || canManageAssociation
+            ? "cursor-pointer hover:-translate-y-0.5"
+            : "cursor-default"
+        }`}
+      >
+        <div className="flex h-full min-h-36 flex-col items-center justify-center gap-3 text-center">
+          <span className="inline-flex h-10 w-10 items-center justify-center border border-[#D8D0C2] bg-[#FFFDF8] text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#A8DADC]">
+            <Plus className="h-5 w-5" />
+          </span>
+          <span className="text-sm font-normal text-[#243047] dark:text-[#E4E4E4]">
+            {canManageAssociation
+              ? currentAssociation
+                ? `Change linked ${associationLabel}`
+                : `Link ${associationLabel} to this task`
+              : canCreate
+                ? proposals.length > 0
+                  ? `Create another ${typeLabel}`
+                  : `Create ${typeLabel}`
+                : "Proposal not created yet"}
+          </span>
+          <span className="max-w-md text-xs leading-5 text-[#667085] dark:text-[#9CA3AF]">
+            {canManageAssociation
+              ? `Admin can connect this ${typeLabel.toLowerCase()} task to one ${associationLabel}.`
+              : canCreate
+                ? proposals.length > 0
+                  ? "The previous proposal was declined. Create the next attempt from this task."
+                  : "Create the proposal from this task. The proposal will be linked here after submission."
+                : "The assignee can create the proposal from this task."}
+          </span>
+          {currentAssociation ? (
+            <span className="max-w-md truncate text-xs text-[#1F7180] dark:text-[#A8DADC]">
+              {currentAssociation.title}
+            </span>
+          ) : null}
+        </div>
+      </button>
+    );
+  }
+
+  function proposalAttemptCard(
+    proposal: TaskProposalResultItem,
+    fullWidth: boolean,
+  ) {
+    const StatusIcon = statusIcon(proposal.status);
+    return (
+      <article
+        key={proposal.id}
+        role={canManageAssociation ? "button" : undefined}
+        tabIndex={canManageAssociation ? 0 : undefined}
+        onClick={openLinkPicker}
+        onKeyDown={(event) => {
+          if (
+            canManageAssociation &&
+            (event.key === "Enter" || event.key === " ")
+          ) {
+            event.preventDefault();
+            openLinkPicker();
+          }
+        }}
+        className={`border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4] ${
+          fullWidth ? "md:col-span-2" : ""
+        } ${
+          canManageAssociation
+            ? "cursor-pointer transition duration-180 hover:-translate-y-0.5 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838]"
+            : ""
+        }`}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="mb-1 text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
+              Proposal result
+            </p>
+            <Link
+              href={`/proposals/${proposal.id}`}
+              onClick={(event) => event.stopPropagation()}
+              className="block text-sm font-normal leading-6 text-[#1F7180] transition hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
+            >
+              {proposal.title}
+            </Link>
+            <p className="mt-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
+              {proposal.submittedBy}
+              {proposal.submittedByEmail
+                ? ` | ${proposal.submittedByEmail}`
+                : ""}
+            </p>
+          </div>
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${statusClass(
+              proposal.status,
+            )}`}
+          >
+            <StatusIcon className="h-3.5 w-3.5" />
+            {label(proposal.status)}
+          </span>
+        </div>
+        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#475467] dark:text-[#B0B0B0]">
+          {proposal.description || "No proposal description."}
+        </p>
+        <div className="mt-3 grid gap-2 text-xs text-[#667085] dark:text-[#B0B0B0]">
+          <span>{proposal.createdAt}</span>
+          {proposal.fileName ? (
+            <a
+              href={`/api/research/proposals/${proposal.id}/file`}
+              className="inline-flex w-fit items-center gap-2 text-[#1F7180] transition hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              {proposal.fileName}
+              {fileSizeLabel(proposal.fileSize)}
+            </a>
+          ) : (
+            <span>No support file.</span>
+          )}
+          {proposal.decisionComment ? (
+            <span className="whitespace-pre-wrap">
+              Decision note: {proposal.decisionComment}
+            </span>
+          ) : null}
+          <span>
+            Linked {associationLabel}:{" "}
+            {currentAssociation ? (
+              <span className="text-[#1F7180] dark:text-[#A8DADC]">
+                {currentAssociation.title}
+              </span>
+            ) : (
+              "Not linked"
+            )}
+          </span>
+        </div>
+      </article>
+    );
+  }
+
+  function createdResearchCard(proposal: TaskProposalResultItem) {
+    if (!proposal.createdResearch) return null;
+    return (
+      <article
+        key={`${proposal.id}-research`}
+        className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="mb-1 text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
+              Research result
+            </p>
+            <Link
+              href={`/projects/${proposal.createdResearch.id}`}
+              className="block break-words text-sm font-normal leading-6 text-[#1F7180] transition hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
+            >
+              {proposal.createdResearch.title}
+            </Link>
+          </div>
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${researchStageClass(
+              proposal.createdResearch.stage,
+            )}`}
+          >
+            <Link2 className="h-3.5 w-3.5" />
+            {label(proposal.createdResearch.stage)}
+          </span>
+        </div>
+        <div className="mt-3 grid gap-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+          <span>
+            Research ID:{" "}
+            <span className="font-mono text-[#344054] dark:text-[#E4E4E4]">
+              {proposal.createdResearch.code || "Not assigned"}
+            </span>
+          </span>
+          <span className="break-words">
+            Authors: {proposal.createdResearch.authors || "-"}
+          </span>
+          <span>Updated: {proposal.createdResearch.updatedAt}</span>
+        </div>
+      </article>
+    );
+  }
+
+  function createdProjectCard(proposal: TaskProposalResultItem) {
+    if (!proposal.createdProject) return null;
+    return (
+      <article
+        key={`${proposal.id}-project`}
+        className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="mb-1 text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
+              Project result
+            </p>
+            <Link
+              href={`/organized-projects/${proposal.createdProject.id}`}
+              className="block break-words text-sm font-normal leading-6 text-[#1F7180] transition hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
+            >
+              {proposal.createdProject.title}
+            </Link>
+          </div>
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${projectStatusClass(
+              proposal.createdProject.status,
+            )}`}
+          >
+            <Building2 className="h-3.5 w-3.5" />
+            {label(proposal.createdProject.status)}
+          </span>
+        </div>
+        <div className="mt-3 grid gap-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+          <span>
+            Project ID:{" "}
+            <span className="font-mono text-[#344054] dark:text-[#E4E4E4]">
+              {proposal.createdProject.code || "Not assigned"}
+            </span>
+          </span>
+          <span>Type: {label(proposal.createdProject.projectType)}</span>
+          <span className="break-words">
+            Funder: {proposal.createdProject.organizer || "-"}
+          </span>
+          <span className="break-words">
+            Members:{" "}
+            {proposal.createdProject.members ||
+              proposal.createdProject.owner ||
+              "-"}
+          </span>
+          <span>Updated: {proposal.createdProject.updatedAt}</span>
+        </div>
+      </article>
+    );
+  }
+
   return (
     <section className="border-t border-[#D8D0C2] p-5 dark:border-[#444444]">
       <div className="mb-4 flex items-center gap-2">
@@ -315,216 +560,29 @@ export function TaskProposalResult({
         </h2>
       </div>
 
-      {proposal ? (
+      {proposals.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
-          <article
-            role={canManageAssociation ? "button" : undefined}
-            tabIndex={canManageAssociation ? 0 : undefined}
-            onClick={openLinkPicker}
-            onKeyDown={(event) => {
-              if (
-                canManageAssociation &&
-                (event.key === "Enter" || event.key === " ")
-              ) {
-                event.preventDefault();
-                openLinkPicker();
+          {proposals.map((proposal, index) => (
+            <div
+              key={proposal.id}
+              className={
+                index === 0 && proposal.status === "DECLINED"
+                  ? "contents md:[&>*:first-child]:col-span-2"
+                  : "contents"
               }
-            }}
-            className={`border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4] ${
-              canManageAssociation
-                ? "cursor-pointer transition duration-180 hover:-translate-y-0.5 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838]"
-                : ""
-            }`}
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="mb-1 text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
-                  Proposal result
-                </p>
-                <Link
-                  href={`/proposals/${proposal.id}`}
-                  onClick={(event) => event.stopPropagation()}
-                  className="block text-sm font-normal leading-6 text-[#1F7180] transition hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
-                >
-                  {proposal.title}
-                </Link>
-                <p className="mt-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
-                  {proposal.submittedBy}
-                  {proposal.submittedByEmail
-                    ? ` | ${proposal.submittedByEmail}`
-                    : ""}
-                </p>
-              </div>
-              <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${statusClass(
-                  proposal.status,
-                )}`}
-              >
-                <StatusIcon className="h-3.5 w-3.5" />
-                {label(proposal.status)}
-              </span>
-            </div>
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#475467] dark:text-[#B0B0B0]">
-              {proposal.description || "No proposal description."}
-            </p>
-            <div className="mt-3 grid gap-2 text-xs text-[#667085] dark:text-[#B0B0B0]">
-              <span>{proposal.createdAt}</span>
-              {proposal.fileName ? (
-                <a
-                  href={`/api/research/proposals/${proposal.id}/file`}
-                  className="inline-flex w-fit items-center gap-2 text-[#1F7180] transition hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                  {proposal.fileName}
-                  {fileSizeLabel(proposal.fileSize)}
-                </a>
-              ) : (
-                <span>No support file.</span>
+            >
+              {proposalAttemptCard(
+                proposal,
+                index === 0 && proposal.status === "DECLINED",
               )}
-              {proposal.decisionComment ? (
-                <span className="whitespace-pre-wrap">
-                  Decision note: {proposal.decisionComment}
-                </span>
-              ) : null}
-              <span>
-                Linked {associationLabel}:{" "}
-                {currentAssociation ? (
-                  <span className="text-[#1F7180] dark:text-[#A8DADC]">
-                    {currentAssociation.title}
-                  </span>
-                ) : (
-                  "Not linked"
-                )}
-              </span>
+              {createdResearchCard(proposal)}
+              {createdProjectCard(proposal)}
             </div>
-          </article>
-
-          {proposal.createdResearch ? (
-            <article className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="mb-1 text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
-                    Research result
-                  </p>
-                  <Link
-                    href={`/projects/${proposal.createdResearch.id}`}
-                    className="block break-words text-sm font-normal leading-6 text-[#1F7180] transition hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
-                  >
-                    {proposal.createdResearch.title}
-                  </Link>
-                </div>
-                <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${researchStageClass(
-                    proposal.createdResearch.stage,
-                  )}`}
-                >
-                  <Link2 className="h-3.5 w-3.5" />
-                  {label(proposal.createdResearch.stage)}
-                </span>
-              </div>
-              <div className="mt-3 grid gap-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                <span>
-                  Research ID:{" "}
-                  <span className="font-mono text-[#344054] dark:text-[#E4E4E4]">
-                    {proposal.createdResearch.code || "Not assigned"}
-                  </span>
-                </span>
-                <span className="break-words">
-                  Authors: {proposal.createdResearch.authors || "-"}
-                </span>
-                <span>Updated: {proposal.createdResearch.updatedAt}</span>
-              </div>
-            </article>
-          ) : null}
-
-          {proposal.createdProject ? (
-            <article className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="mb-1 text-[11px] uppercase tracking-wide text-[#667085] dark:text-[#8F8F8F]">
-                    Project result
-                  </p>
-                  <Link
-                    href={`/organized-projects/${proposal.createdProject.id}`}
-                    className="block break-words text-sm font-normal leading-6 text-[#1F7180] transition hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
-                  >
-                    {proposal.createdProject.title}
-                  </Link>
-                </div>
-                <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs ring-1 ${projectStatusClass(
-                    proposal.createdProject.status,
-                  )}`}
-                >
-                  <Building2 className="h-3.5 w-3.5" />
-                  {label(proposal.createdProject.status)}
-                </span>
-              </div>
-              <div className="mt-3 grid gap-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                <span>
-                  Project ID:{" "}
-                  <span className="font-mono text-[#344054] dark:text-[#E4E4E4]">
-                    {proposal.createdProject.code || "Not assigned"}
-                  </span>
-                </span>
-                <span>Type: {label(proposal.createdProject.projectType)}</span>
-                <span className="break-words">
-                  Funder: {proposal.createdProject.organizer || "-"}
-                </span>
-                <span className="break-words">
-                  Members:{" "}
-                  {proposal.createdProject.members ||
-                    proposal.createdProject.owner ||
-                    "-"}
-                </span>
-                <span>Updated: {proposal.createdProject.updatedAt}</span>
-              </div>
-            </article>
-          ) : null}
+          ))}
+          {showProposalSlot ? emptyProposalSlot(false) : null}
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => {
-            if (canManageAssociation) {
-              openLinkPicker();
-              return;
-            }
-            if (canCreate) setOpen(true);
-          }}
-          className={`group min-h-44 w-full border border-dashed border-[#CFC6B8] bg-[#FBF9F4] p-4 text-left transition-[border-color,background-color,transform] duration-180 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:border-[#4A4A4A] dark:bg-[#262626] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838] ${
-            canCreate || canManageAssociation
-              ? "cursor-pointer hover:-translate-y-0.5"
-              : "cursor-default"
-          }`}
-        >
-          <div className="flex h-full min-h-36 flex-col items-center justify-center gap-3 text-center">
-            <span className="inline-flex h-10 w-10 items-center justify-center border border-[#D8D0C2] bg-[#FFFDF8] text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#A8DADC]">
-              <Plus className="h-5 w-5" />
-            </span>
-            <span className="text-sm font-normal text-[#243047] dark:text-[#E4E4E4]">
-              {canManageAssociation
-                ? currentAssociation
-                  ? `Change linked ${associationLabel}`
-                  : `Link ${associationLabel} to this task`
-                : canCreate
-                  ? `Create ${typeLabel}`
-                  : "Proposal not created yet"}
-            </span>
-            <span className="max-w-md text-xs leading-5 text-[#667085] dark:text-[#9CA3AF]">
-              {canManageAssociation
-                ? `Admin can connect this ${typeLabel.toLowerCase()} task to one ${associationLabel}.`
-                : canCreate
-                  ? "Create the proposal from this task. The proposal will be linked here after submission."
-                  : "The assignee can create the proposal from this task."}
-            </span>
-            {currentAssociation ? (
-              <span className="max-w-md truncate text-xs text-[#1F7180] dark:text-[#A8DADC]">
-                {currentAssociation.title}
-              </span>
-            ) : null}
-          </div>
-        </button>
+        emptyProposalSlot(true)
       )}
 
       <ResearchModal

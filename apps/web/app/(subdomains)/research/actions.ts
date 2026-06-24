@@ -1724,7 +1724,7 @@ export async function submitProposal(formData: FormData) {
         projectId: true,
         organizedProjectId: true,
         proposalScope: true,
-        proposalResult: { select: { id: true } },
+        proposalResults: { select: { id: true, status: true } },
         assignments: { select: { userId: true } },
       },
     });
@@ -1756,12 +1756,16 @@ export async function submitProposal(formData: FormData) {
           "Only the task assignee can create the proposal from this task.",
       };
     }
-    if (task.proposalResult) {
+    const hasActiveProposal = task.proposalResults.some(
+      (proposal) => proposal.status !== ProposalStatus.DECLINED,
+    );
+    if (hasActiveProposal) {
       return {
         ok: false,
         reason: "TASK_ALREADY_FILLED",
         title: "Proposal already linked",
-        detail: "This proposal task already has a linked proposal.",
+        detail:
+          "This proposal task already has a proposal that is waiting for review or approved.",
       };
     }
     const expectedType =
@@ -5628,7 +5632,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       checkerId: true,
       taskType: true,
       addedJournals: { select: { resultPosition: true } },
-      proposalResult: { select: { id: true } },
+      proposalResults: { select: { id: true } },
       assignments: { select: { userId: true } },
     },
   });
@@ -5709,7 +5713,10 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   ) {
     return { ok: false, reason: "TASK_HAS_JOURNAL_RESULTS" };
   }
-  if (currentTask.proposalResult && taskType !== ResearchTaskType.PROPOSAL) {
+  if (
+    currentTask.proposalResults.length > 0 &&
+    taskType !== ResearchTaskType.PROPOSAL
+  ) {
     return { ok: false, reason: "TASK_HAS_PROPOSAL_RESULT" };
   }
   if (

@@ -588,7 +588,7 @@ model Proposal {
   supportFileSize           Int?
   supportFileData           Bytes?
   submittedById             String
-  taskId                    String?        @unique
+  taskId                    String?
   createdResearchProjectId  String?        @unique
   createdOrganizedProjectId String?        @unique
   createdAt                 DateTime       @default(now())
@@ -601,6 +601,7 @@ model Proposal {
 
   @@index([type, status, createdAt])
   @@index([submittedById, createdAt])
+  @@index([taskId, createdAt])
 }
 
 model Conference {
@@ -887,7 +888,7 @@ model ResearchTask {
   journalCreationSuggestion      SuggestedJournal?           @relation("SuggestedJournalCreationTask")
   journalSubmissionSuggestion    SuggestedJournal?           @relation("SuggestedJournalSubmissionTask")
   conferenceSubmissionSuggestion SuggestedConference?        @relation("SuggestedConferenceSubmissionTask")
-  proposalResult                 Proposal?                   @relation("ResearchTaskProposal")
+  proposalResults                Proposal[]                  @relation("ResearchTaskProposal")
 
   @@index([checkerId])
   @@index([completedById])
