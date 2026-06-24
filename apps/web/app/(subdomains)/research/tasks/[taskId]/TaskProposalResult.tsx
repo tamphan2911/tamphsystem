@@ -348,33 +348,12 @@ export function TaskProposalResult({
     );
   }
 
-  function proposalAttemptCard(
-    proposal: TaskProposalResultItem,
-    fullWidth: boolean,
-  ) {
+  function proposalAttemptCard(proposal: TaskProposalResultItem) {
     const StatusIcon = statusIcon(proposal.status);
     return (
       <article
         key={proposal.id}
-        role={canManageAssociation ? "button" : undefined}
-        tabIndex={canManageAssociation ? 0 : undefined}
-        onClick={openLinkPicker}
-        onKeyDown={(event) => {
-          if (
-            canManageAssociation &&
-            (event.key === "Enter" || event.key === " ")
-          ) {
-            event.preventDefault();
-            openLinkPicker();
-          }
-        }}
-        className={`border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4] ${
-          fullWidth ? "md:col-span-3" : ""
-        } ${
-          canManageAssociation
-            ? "cursor-pointer transition duration-180 hover:-translate-y-0.5 hover:border-[#7FBFC5] hover:bg-[#F3F8F6] dark:hover:border-[#A8DADC] dark:hover:bg-[#303838]"
-            : ""
-        }`}
+        className="border border-[#D8D0C2] bg-[#FBF9F4] p-4 text-[#243047] dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]"
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -595,18 +574,8 @@ export function TaskProposalResult({
         {proposals.length > 0 ? (
           <>
             {proposals.map((proposal, index) => (
-              <div
-                key={proposal.id}
-                className={
-                  index === 0 && proposal.status === "DECLINED"
-                    ? "contents md:[&>*:first-child]:col-span-3"
-                    : "contents"
-                }
-              >
-                {proposalAttemptCard(
-                  proposal,
-                  index === 0 && proposal.status === "DECLINED",
-                )}
+              <div key={proposal.id} className="contents">
+                {proposalAttemptCard(proposal)}
                 {createdResearchCard(proposal)}
                 {createdProjectCard(proposal)}
               </div>
