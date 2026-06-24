@@ -641,7 +641,7 @@ export function ProfileClient({
             <ProposalsTable
               rows={proposalRows}
               isAdmin={false}
-              linkTitleToDetail={false}
+              linkTitleToDetail
             />
           )}
         </section>

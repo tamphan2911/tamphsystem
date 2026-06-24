@@ -5,6 +5,10 @@ import {
   researchDateValue,
   researchYear,
 } from "@/sites/research/lib/date-time";
+import {
+  canAccessAllResearchProposals,
+  proposalIsOpenForEditing,
+} from "@/sites/research/lib/proposalAccess";
 import { researchTaskDueDate } from "@/sites/research/lib/task-date";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -1911,6 +1915,177 @@ export async function submitProposal(formData: FormData) {
           : "/projects",
   );
   revalidatePath("/notifications");
+  return { ok: true };
+}
+
+export async function updateProposal(formData: FormData) {
+  const user = await requireCurrentUser();
+  const proposalId = optionalString(formData.get("proposalId"));
+  if (!proposalId) {
+    return {
+      ok: false,
+      title: "Proposal not found",
+      detail: "Refresh the page and try again.",
+    };
+  }
+
+  const proposal = await prisma.proposal.findUnique({
+    where: { id: proposalId },
+    select: {
+      id: true,
+      type: true,
+      status: true,
+      submittedById: true,
+      task: {
+        select: {
+          createdById: true,
+          checkerId: true,
+          assignments: { select: { userId: true } },
+        },
+      },
+    },
+  });
+  if (!proposal) {
+    return {
+      ok: false,
+      title: "Proposal not found",
+      detail: "This proposal is no longer available.",
+    };
+  }
+
+  const canAccess =
+    canAccessAllResearchProposals(user.roles) ||
+    proposal.submittedById === user.id ||
+    proposal.task?.createdById === user.id ||
+    proposal.task?.checkerId === user.id ||
+    Boolean(
+      proposal.task?.assignments.some(
+        (assignment) => assignment.userId === user.id,
+      ),
+    );
+  if (!canAccess) {
+    return {
+      ok: false,
+      title: "Proposal not available",
+      detail: "You can only edit proposals related to your account.",
+    };
+  }
+  if (!proposalIsOpenForEditing(proposal.status)) {
+    return {
+      ok: false,
+      title: "Proposal cannot be edited",
+      detail: "Accepted or declined proposals can no longer be changed.",
+    };
+  }
+
+  const title = optionalString(formData.get("title"));
+  const description = optionalString(formData.get("description"));
+  const contactInfo = optionalString(formData.get("contactInfo"));
+  const notes = optionalString(formData.get("notes"));
+  const identifier = optionalString(formData.get("identifier"));
+  const organization = optionalString(formData.get("organization"));
+  const location = optionalString(formData.get("location"));
+  const website = optionalString(formData.get("website"));
+  const venueType = optionalString(formData.get("venueType"));
+  const file = formData.get("supportFile");
+
+  if (!title || (proposal.type !== ProposalType.JOURNAL && !description)) {
+    return {
+      ok: false,
+      title: "Proposal needs more detail",
+      detail:
+        proposal.type === ProposalType.JOURNAL
+          ? "Please add the journal title before saving."
+          : "Please add a title and proposal description before saving.",
+    };
+  }
+
+  if (
+    (proposal.type === ProposalType.CONFERENCE ||
+      proposal.type === ProposalType.JOURNAL) &&
+    !identifier
+  ) {
+    return {
+      ok: false,
+      title:
+        proposal.type === ProposalType.CONFERENCE
+          ? "ISBN required"
+          : "ISSN required",
+      detail:
+        proposal.type === ProposalType.CONFERENCE
+          ? "Please add the conference ISBN before saving."
+          : "Please add the journal ISSN before saving.",
+    };
+  }
+
+  const duplicateMessage = await venueProposalDuplicateMessage({
+    type: proposal.type,
+    title,
+    identifier,
+  });
+  if (duplicateMessage) {
+    return {
+      ok: false,
+      title: "Already in the list",
+      detail: duplicateMessage,
+    };
+  }
+
+  let supportFile:
+    | {
+        supportFileName: string;
+        supportFileType: string;
+        supportFileSize: number;
+        supportFileData: Buffer;
+      }
+    | undefined;
+  if (file instanceof File && file.size > 0) {
+    const extension = file.name.toLowerCase().split(".").pop();
+    const allowedByMime = proposalFileTypes.has(file.type);
+    const allowedByExtension =
+      extension === "pdf" || extension === "doc" || extension === "docx";
+    if (!allowedByMime && !allowedByExtension) {
+      return {
+        ok: false,
+        title: "Support file rejected",
+        detail: "Upload only .doc, .docx, or .pdf files.",
+      };
+    }
+    if (file.size > proposalMaxFileSize) {
+      return {
+        ok: false,
+        title: "Support file is too large",
+        detail: "The support file must be 2 MB or smaller.",
+      };
+    }
+    supportFile = {
+      supportFileName: file.name,
+      supportFileType:
+        file.type || proposalFileTypesByExtension.get(extension ?? "") || "",
+      supportFileSize: file.size,
+      supportFileData: Buffer.from(await file.arrayBuffer()),
+    };
+  }
+
+  await prisma.proposal.update({
+    where: { id: proposal.id },
+    data: {
+      title,
+      description: description ?? "",
+      contactInfo,
+      notes,
+      identifier,
+      organization,
+      location,
+      website,
+      venueType,
+      ...supportFile,
+    },
+  });
+
+  revalidatePath("/proposals");
+  revalidatePath(`/proposals/${proposal.id}`);
+  if (proposal.task) revalidatePath("/tasks");
   return { ok: true };
 }
 

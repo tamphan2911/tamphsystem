@@ -39,7 +39,7 @@ const navItems = [
     href: "/proposals",
     label: "Proposals",
     icon: "proposals" as const,
-    rootAdminOnly: true,
+    requiresProposalAccess: true,
   },
   {
     href: "/tasks",
@@ -245,6 +245,7 @@ export function ResearchShell({
   canSeeAccounts,
   canSeeReviews,
   canSeePublishers,
+  canSeeProposals,
   unopenedProposalCount,
   themePreference = "system",
 }: {
@@ -258,6 +259,7 @@ export function ResearchShell({
   canSeeAccounts: boolean;
   canSeeReviews: boolean;
   canSeePublishers: boolean;
+  canSeeProposals: boolean;
   unopenedProposalCount: number;
   themePreference?: string | null;
 }) {
@@ -414,6 +416,8 @@ export function ResearchShell({
       return canSeeReviews;
     if ("requiresPublisherAccess" in item && item.requiresPublisherAccess)
       return canSeePublishers;
+    if ("requiresProposalAccess" in item && item.requiresProposalAccess)
+      return canSeeProposals;
     if ("requiresAccountAccess" in item && item.requiresAccountAccess)
       return canSeeAccounts;
     return true;

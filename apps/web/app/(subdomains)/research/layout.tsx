@@ -6,6 +6,10 @@ import { redirect } from "next/navigation";
 import { ResearchShell } from "./ResearchShell";
 import { displayResearchEmail } from "@/sites/research/lib/display";
 import { ResearchDesktopOnly } from "@/sites/research/components/ResearchDesktopOnly";
+import {
+  canAccessAllResearchProposals,
+  relatedResearchProposalWhere,
+} from "@/sites/research/lib/proposalAccess";
 
 export default async function ResearchLayout({
   children,
@@ -44,6 +48,7 @@ export default async function ResearchLayout({
   let canSeeReviews = isResearchAdmin;
   let canSeeTasks = isResearchAdmin;
   let canSeePublishers = isRootAdmin;
+  let canSeeProposals = canAccessAllResearchProposals(roles);
   let unopenedProposalCount = 0;
   if (userId) {
     const [
@@ -51,6 +56,7 @@ export default async function ResearchLayout({
       unfinishedAccountTaskCount,
       assignedReviewTaskCount,
       checkedPublisherCount,
+      relatedProposalCount,
     ] = await Promise.all([
       isResearchAdmin
         ? Promise.resolve(0)
@@ -86,6 +92,11 @@ export default async function ResearchLayout({
               journals: { some: { resultTask: { checkerId: userId } } },
             },
           }),
+      canAccessAllResearchProposals(roles)
+        ? Promise.resolve(0)
+        : prisma.proposal.count({
+            where: relatedResearchProposalWhere({ userId, roles }),
+          }),
     ]);
     if (
       !userActiveSites?.includes("research") &&
@@ -97,7 +108,9 @@ export default async function ResearchLayout({
     canSeeReviews = isRootAdmin || assignedReviewTaskCount > 0;
     canSeeTasks = isResearchAdmin || assignedTaskCount > 0;
     canSeePublishers = isRootAdmin || checkedPublisherCount > 0;
-    if (isResearchAdmin) {
+    canSeeProposals =
+      canAccessAllResearchProposals(roles) || relatedProposalCount > 0;
+    if (canAccessAllResearchProposals(roles)) {
       unopenedProposalCount = await prisma.proposal.count({
         where: { status: ProposalStatus.NEW },
       });
@@ -118,6 +131,7 @@ export default async function ResearchLayout({
         canSeeAccounts={canSeeAccounts}
         canSeeReviews={canSeeReviews}
         canSeePublishers={canSeePublishers}
+        canSeeProposals={canSeeProposals}
         unopenedProposalCount={unopenedProposalCount}
         themePreference={researchThemePreference}
       >

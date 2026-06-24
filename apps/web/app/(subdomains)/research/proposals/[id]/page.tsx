@@ -11,6 +11,7 @@ import {
   FileSearch,
   FileText,
   FolderGit2,
+  Pencil,
   Phone,
   UserRound,
   XCircle,
@@ -18,12 +19,17 @@ import {
 import { prisma, ProposalStatus, ProposalType, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { ProposalFeedbackButton } from "./ProposalFeedbackButton";
+import { ProposalEditButton } from "./ProposalEditButton";
 import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import {
+  canAccessAllResearchProposals,
+  proposalIsOpenForEditing,
+} from "@/sites/research/lib/proposalAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -272,9 +278,17 @@ export default async function ProposalDetailPage({
 }) {
   const { id } = await params;
   const session = await auth();
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
-    []) as Role[];
-  if (!roles.includes(Role.ADMIN)) redirect("/401");
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) redirect("/login");
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: true },
+  });
+  const roles =
+    currentUser?.roles ??
+    (((session?.user as { roles?: Role[] } | undefined)?.roles ??
+      []) as Role[]);
+  const canAccessAll = canAccessAllResearchProposals(roles);
 
   const proposal = await prisma.proposal.findUnique({
     where: { id },
@@ -285,6 +299,13 @@ export default async function ProposalDetailPage({
           name: true,
           email: true,
           roles: true,
+        },
+      },
+      task: {
+        select: {
+          createdById: true,
+          checkerId: true,
+          assignments: { select: { userId: true } },
         },
       },
       createdResearchProject: {
@@ -312,7 +333,19 @@ export default async function ProposalDetailPage({
   });
 
   if (!proposal) notFound();
-  if (proposal.status === ProposalStatus.NEW) {
+  const canAccessProposal =
+    canAccessAll ||
+    proposal.submittedById === userId ||
+    proposal.task?.createdById === userId ||
+    proposal.task?.checkerId === userId ||
+    Boolean(
+      proposal.task?.assignments.some(
+        (assignment) => assignment.userId === userId,
+      ),
+    );
+  if (!canAccessProposal) redirect("/401");
+
+  if (canAccessAll && proposal.status === ProposalStatus.NEW) {
     await prisma.proposal.update({
       where: { id: proposal.id },
       data: { status: ProposalStatus.REVIEWING },
@@ -334,6 +367,7 @@ export default async function ProposalDetailPage({
     Boolean(
       proposal.createdResearchProject || proposal.createdOrganizedProject,
     );
+  const canEditProposal = proposalIsOpenForEditing(effectiveStatus);
 
   return (
     <>
@@ -354,14 +388,42 @@ export default async function ProposalDetailPage({
                 >
                   <StatusIcon className="h-4 w-4" aria-hidden="true" />
                 </HeaderIcon>
-                <ProposalFeedbackButton
-                  proposalId={proposal.id}
-                  proposalTitle={proposal.title}
-                  disabled={
-                    effectiveStatus === ProposalStatus.ACCEPTED ||
-                    effectiveStatus === ProposalStatus.DECLINED
-                  }
-                />
+                {canEditProposal ? (
+                  <ProposalEditButton
+                    proposal={{
+                      id: proposal.id,
+                      type: proposal.type,
+                      title: proposal.title,
+                      description: proposal.description,
+                      contactInfo: proposal.contactInfo ?? "",
+                      notes: proposal.notes ?? "",
+                      identifier: proposal.identifier ?? "",
+                      organization: proposal.organization ?? "",
+                      location: proposal.location ?? "",
+                      website: proposal.website ?? "",
+                      venueType: proposal.venueType ?? "",
+                      supportFileName: proposal.supportFileName ?? "",
+                      supportFileSize: fileSizeLabel(proposal.supportFileSize),
+                    }}
+                  />
+                ) : (
+                  <HeaderIcon
+                    label="Proposal can no longer be edited"
+                    className="text-[#667085] dark:text-[#B0B0B0]"
+                  >
+                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                  </HeaderIcon>
+                )}
+                {canAccessAll ? (
+                  <ProposalFeedbackButton
+                    proposalId={proposal.id}
+                    proposalTitle={proposal.title}
+                    disabled={
+                      effectiveStatus === ProposalStatus.ACCEPTED ||
+                      effectiveStatus === ProposalStatus.DECLINED
+                    }
+                  />
+                ) : null}
               </span>
             </div>
           </div>

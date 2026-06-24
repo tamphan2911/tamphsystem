@@ -50,7 +50,7 @@ export type ProposalRow = {
 };
 
 const typeOptions = ["ALL", "RESEARCH", "PROJECT", "CONFERENCE", "JOURNAL"];
-const statusOptions = ["ALL", "NEW", "ACCEPTED", "DECLINED"];
+const statusOptions = ["ALL", "NEW", "REVIEWING", "ACCEPTED", "DECLINED"];
 
 function label(value: string) {
   return value
@@ -210,10 +210,9 @@ export function ProposalsTable({
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
-      const rowStatus = row.status === "REVIEWING" ? "NEW" : row.status;
       const matchesType = types.length === 0 || types.includes(row.type);
       const matchesStatus =
-        statuses.length === 0 || statuses.includes(rowStatus);
+        statuses.length === 0 || statuses.includes(row.status);
       const haystack = [
         row.title,
         row.description,

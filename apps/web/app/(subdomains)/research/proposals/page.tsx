@@ -9,6 +9,10 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import {
+  canAccessAllResearchProposals,
+  relatedResearchProposalWhere,
+} from "@/sites/research/lib/proposalAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -29,16 +33,26 @@ function fileSizeLabel(value: number | null) {
 
 export default async function ProposalsPage() {
   const session = await auth();
-  const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
-    []) as Role[];
-  if (!roles.includes(Role.ADMIN)) redirect("/401");
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) redirect("/login");
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: true },
+  });
+  const roles =
+    currentUser?.roles ??
+    (((session?.user as { roles?: Role[] } | undefined)?.roles ??
+      []) as Role[]);
+  const canAccessAll = canAccessAllResearchProposals(roles);
 
   const proposals = await prisma.proposal.findMany({
+    where: relatedResearchProposalWhere({ userId, roles }),
     include: {
       submittedBy: { select: { name: true, email: true } },
     },
     orderBy: { updatedAt: "desc" },
   });
+  if (!canAccessAll && proposals.length === 0) redirect("/401");
 
   const rows: ProposalRow[] = proposals.map((proposal) => ({
     id: proposal.id,
@@ -111,7 +125,11 @@ export default async function ProposalsPage() {
         </div>
       </ResearchPageHeaderPortal>
 
-      <ProposalsTable rows={rows} isAdmin deleteAction={deleteProposal} />
+      <ProposalsTable
+        rows={rows}
+        isAdmin={canAccessAll}
+        deleteAction={canAccessAll ? deleteProposal : undefined}
+      />
     </div>
   );
 }
