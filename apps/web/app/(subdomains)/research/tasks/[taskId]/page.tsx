@@ -197,8 +197,8 @@ function statusMeta(task: {
     return {
       label: "Need clarify",
       detail: "Waiting for assigner answer",
-      tone: "amber" as const,
-      timeTone: "amber" as const,
+      tone: "cyan" as const,
+      timeTone: "cyan" as const,
     };
   }
 
@@ -268,7 +268,7 @@ function statusIconMeta(
     return {
       icon: CircleHelp,
       className:
-        "text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200",
+        "text-cyan-700 hover:text-cyan-800 dark:text-cyan-300 dark:hover:text-cyan-200",
     };
   }
 
@@ -288,13 +288,14 @@ function statusIconMeta(
 }
 
 function timeTextClass(
-  tone: "emerald" | "rose" | "blue" | "slate" | "violet" | "amber",
+  tone: "emerald" | "rose" | "blue" | "slate" | "violet" | "amber" | "cyan",
 ) {
   if (tone === "emerald") return "research-task-time-emerald";
   if (tone === "rose") return "research-task-time-rose";
   if (tone === "blue") return "research-task-time-blue";
   if (tone === "violet") return "research-task-time-violet";
   if (tone === "amber") return "research-task-time-amber";
+  if (tone === "cyan") return "research-task-time-cyan";
   return "research-task-time-slate";
 }
 

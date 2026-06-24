@@ -286,8 +286,8 @@ function statusMeta(task: TaskRow) {
       detail: "Waiting assigner answer",
       dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
       className:
-        "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-300/40 dark:bg-amber-950/25 dark:text-amber-200",
-      detailClassName: "text-amber-700 dark:text-amber-300",
+        "border-cyan-200 bg-cyan-50 text-cyan-800 dark:border-cyan-300/40 dark:bg-cyan-950/25 dark:text-cyan-200",
+      detailClassName: "text-cyan-700 dark:text-cyan-300",
     };
   }
 
@@ -357,7 +357,7 @@ function statusIconMeta(task: TaskRow): {
     return {
       icon: CircleHelp,
       className:
-        "text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200",
+        "text-cyan-700 hover:text-cyan-800 dark:text-cyan-300 dark:hover:text-cyan-200",
     };
   }
 

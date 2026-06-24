@@ -954,6 +954,10 @@ textarea:focus-visible {
   color: #f4d47a !important;
 }
 
+.research-site-root .research-task-time-cyan {
+  color: #7dd3c7 !important;
+}
+
 .research-site-root .research-task-time-slate {
   color: #b8bec8 !important;
 }
@@ -1183,6 +1187,10 @@ html[data-research-theme="light"]
 
 .research-site-root.research-theme-light .research-task-time-amber {
   color: #a06716 !important;
+}
+
+.research-site-root.research-theme-light .research-task-time-cyan {
+  color: #0f766e !important;
 }
 
 .research-site-root.research-theme-light .research-task-time-slate {
