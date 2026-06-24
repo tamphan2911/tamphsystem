@@ -42,7 +42,10 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
-import { defaultResearchTaskDueDate } from "@/sites/research/lib/task-date";
+import {
+  defaultResearchTaskDueDate,
+  urgentResearchTaskDueDate,
+} from "@/sites/research/lib/task-date";
 import { TaskGuidePicker, type TaskGuideOption } from "./TaskGuidePicker";
 
 export type TaskAssigneeOption = {
@@ -402,6 +405,13 @@ export function NewTaskDialog({
     setAllowReportUpload(false);
     setIsUrgent(false);
     setJournalTargetCount("1");
+  }
+
+  function toggleUrgentTask(checked: boolean) {
+    setIsUrgent(checked);
+    setDueDate(
+      checked ? urgentResearchTaskDueDate() : defaultResearchTaskDueDate(),
+    );
   }
 
   function toggleAssignee(id: string) {
@@ -1159,7 +1169,7 @@ export function NewTaskDialog({
               selectedIds={selectedTaskGuideIds}
               onChange={setSelectedTaskGuideIds}
             />
-            <UrgentTaskField checked={isUrgent} onChange={setIsUrgent} />
+            <UrgentTaskField checked={isUrgent} onChange={toggleUrgentTask} />
           </div>
 
           <TaskAttachmentField />

@@ -4,6 +4,10 @@ export function defaultResearchTaskDueDate(referenceDate = new Date()) {
   return researchDateValue(referenceDate, 7);
 }
 
+export function urgentResearchTaskDueDate(referenceDate = new Date()) {
+  return researchDateValue(referenceDate, 1);
+}
+
 export function researchTaskDueDate(value: string | null | undefined) {
   const match = value?.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return null;
