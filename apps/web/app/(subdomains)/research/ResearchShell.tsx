@@ -368,6 +368,11 @@ export function ResearchShell({
     visibleNavItems.find(
       (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
     ) ?? visibleNavItems[0];
+  const navItemIsAdminOnly = (item: (typeof visibleNavItems)[number]) =>
+    Boolean(
+      ("adminOnly" in item && item.adminOnly) ||
+        ("rootAdminOnly" in item && item.rootAdminOnly),
+    );
 
   return (
     <ResearchToastProvider>
@@ -424,7 +429,7 @@ export function ResearchShell({
                 label={item.label}
                 icon={item.icon}
                 collapsed={collapsed}
-                adminOnly={Boolean("adminOnly" in item && item.adminOnly)}
+                adminOnly={navItemIsAdminOnly(item)}
                 badgeCount={
                   item.href === "/proposals" ? unopenedProposalCount : 0
                 }
@@ -477,9 +482,7 @@ export function ResearchShell({
                           href={item.href}
                           label={item.label}
                           icon={item.icon}
-                          adminOnly={Boolean(
-                            "adminOnly" in item && item.adminOnly,
-                          )}
+                          adminOnly={navItemIsAdminOnly(item)}
                           badgeCount={
                             item.href === "/proposals"
                               ? unopenedProposalCount

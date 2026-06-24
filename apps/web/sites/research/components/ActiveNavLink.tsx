@@ -101,9 +101,13 @@ export function ActiveNavLink({
           {displayLabel}
         </span>
       )}
-      {!collapsed && adminOnly && !isActive && (
-        <span className="border border-[#444444] px-1.5 py-0.5 text-[9px] font-normal uppercase tracking-wide text-[#FFC1CC]">
-          Admin
+      {!collapsed && adminOnly && (
+        <span
+          title="Admin only"
+          className="ml-auto inline-flex h-5 w-5 flex-none items-center justify-center text-[#FFC1CC] transition-[color,transform] duration-200 ease-out group-hover/navlink:scale-110 group-hover/navlink:text-[#F0A6B5] dark:text-[#F0A6B5] dark:group-hover/navlink:text-[#FFC1CC]"
+        >
+          <ShieldCheck className="h-3.5 w-3.5" strokeWidth={1.8} />
+          <span className="sr-only">Admin only</span>
         </span>
       )}
       {badgeCount > 0 && (
