@@ -1711,6 +1711,10 @@ export async function submitProposal(formData: FormData) {
 
   let linkedTask: {
     id: string;
+    title: string;
+    createdById: string;
+    checkerId: string | null;
+    createdByEmail: string;
     projectId: string | null;
     organizedProjectId: string | null;
   } | null = null;
@@ -1719,12 +1723,16 @@ export async function submitProposal(formData: FormData) {
       where: { id: taskId },
       select: {
         id: true,
+        title: true,
         taskType: true,
         status: true,
+        createdById: true,
+        checkerId: true,
         projectId: true,
         organizedProjectId: true,
         proposalScope: true,
         proposalResults: { select: { id: true, status: true } },
+        createdBy: { select: { email: true } },
         assignments: { select: { userId: true } },
       },
     });
@@ -1782,6 +1790,10 @@ export async function submitProposal(formData: FormData) {
     }
     linkedTask = {
       id: task.id,
+      title: task.title,
+      createdById: task.createdById,
+      checkerId: task.checkerId,
+      createdByEmail: task.createdBy.email,
       projectId: task.projectId,
       organizedProjectId: task.organizedProjectId,
     };
@@ -1874,6 +1886,51 @@ export async function submitProposal(formData: FormData) {
     },
   });
 
+  if (linkedTask) {
+    const finishedAt = new Date();
+    await prisma.researchTask.update({
+      where: { id: linkedTask.id },
+      data: {
+        status: ResearchTaskStatus.CHECKING,
+        completedAt: null,
+        revokedAt: null,
+        adminViewedAt: null,
+        assignments: {
+          updateMany: {
+            where: { userId: user.id },
+            data: { finishedAt },
+          },
+        },
+      },
+    });
+
+    await notifyUsers({
+      userIds: [linkedTask.createdById, linkedTask.checkerId].filter(
+        (id): id is string => Boolean(id),
+      ),
+      type: "TASK_READY_FOR_CHECK",
+      title: "Task ready for check",
+      summary: linkedTask.title,
+      body: `${type === ProposalType.PROJECT ? "Project" : "Research"} proposal "${title}" was created from this task and linked automatically. The task is now ready for review.`,
+      href: `/tasks/${linkedTask.id}`,
+      entityType: "task",
+      entityId: linkedTask.id,
+      excludeUserId: user.id,
+    });
+
+    await sendTaskEmail({
+      to: [linkedTask.createdByEmail],
+      subject: `Task ready for review: ${linkedTask.title}`,
+      heading: "Task ready for checking",
+      intro:
+        "A proposal was created from the task and linked automatically. Please review the proposal result and either approve completion or send it back for revision.",
+      taskTitle: linkedTask.title,
+      taskId: linkedTask.id,
+      actionLabel: "Review task",
+      detail: `Linked proposal: ${title}`,
+    });
+  }
+
   const admins = await prisma.user.findMany({
     where: { roles: { has: Role.ADMIN }, activeSites: { has: "research" } },
     select: { id: true },
@@ -1908,7 +1965,10 @@ export async function submitProposal(formData: FormData) {
   });
 
   revalidatePath("/proposals");
-  if (linkedTask) revalidatePath(`/tasks/${linkedTask.id}`);
+  if (linkedTask) {
+    revalidatePath("/tasks");
+    revalidatePath(`/tasks/${linkedTask.id}`);
+  }
   revalidatePath(
     type === ProposalType.PROJECT
       ? "/organized-projects"
