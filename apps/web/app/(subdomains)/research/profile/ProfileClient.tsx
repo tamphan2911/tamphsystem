@@ -71,6 +71,7 @@ type ProfileTaskRow = {
   description: string;
   category: string;
   status: string;
+  clarifyDirection: "ASSIGNEE_TO_MANAGER" | "MANAGER_TO_ASSIGNEE" | null;
   taskType: string;
   dueDate: string | null;
   completedAt: string | null;
@@ -244,7 +245,10 @@ function profileTaskStatusMeta(task: ProfileTaskRow) {
   if (task.status === "NEED_CLARIFY") {
     return {
       label: "Need clarify",
-      detail: "Waiting assigner answer",
+      detail:
+        task.clarifyDirection === "MANAGER_TO_ASSIGNEE"
+          ? "Waiting assignee answer"
+          : "Waiting task manager answer",
       detailClassName: "text-amber-700 dark:text-amber-300",
     };
   }

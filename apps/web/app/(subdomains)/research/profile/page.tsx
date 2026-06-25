@@ -218,6 +218,13 @@ export default async function ResearchProfilePage({
             completedAt: true,
             createdAt: true,
             updatedAt: true,
+            assignments: { select: { userId: true } },
+            clarifications: {
+              where: { answer: null },
+              select: { requestedById: true },
+              orderBy: { createdAt: "desc" },
+              take: 1,
+            },
           },
         },
       },
@@ -335,20 +342,32 @@ export default async function ResearchProfilePage({
     createdAt: shortDate(proposal.createdAt),
   }));
 
-  const taskRows = taskAssignments.map((assignment) => ({
-    id: assignment.task.id,
-    taskCode: assignment.task.taskCode,
-    title: assignment.task.title,
-    description: assignment.task.description ?? "",
-    category: assignment.task.category ?? "",
-    status: assignment.task.status,
-    taskType: assignment.task.taskType ?? "OTHER",
-    dueDate: assignment.task.dueDate?.toISOString() ?? null,
-    completedAt: assignment.task.completedAt?.toISOString() ?? null,
-    finishedAt: assignment.finishedAt?.toISOString() ?? null,
-    createdAt: assignment.task.createdAt.toISOString(),
-    updatedAt: assignment.task.updatedAt.toISOString(),
-  }));
+  const taskRows = taskAssignments.map((assignment) => {
+    const openClarification = assignment.task.clarifications[0] ?? null;
+    const clarifyDirection = openClarification
+      ? assignment.task.assignments.some(
+          (taskAssignment) =>
+            taskAssignment.userId === openClarification.requestedById,
+        )
+        ? ("ASSIGNEE_TO_MANAGER" as const)
+        : ("MANAGER_TO_ASSIGNEE" as const)
+      : null;
+    return {
+      id: assignment.task.id,
+      taskCode: assignment.task.taskCode,
+      title: assignment.task.title,
+      description: assignment.task.description ?? "",
+      category: assignment.task.category ?? "",
+      status: assignment.task.status,
+      clarifyDirection,
+      taskType: assignment.task.taskType ?? "OTHER",
+      dueDate: assignment.task.dueDate?.toISOString() ?? null,
+      completedAt: assignment.task.completedAt?.toISOString() ?? null,
+      finishedAt: assignment.finishedAt?.toISOString() ?? null,
+      createdAt: assignment.task.createdAt.toISOString(),
+      updatedAt: assignment.task.updatedAt.toISOString(),
+    };
+  });
 
   return (
     <ProfileClient

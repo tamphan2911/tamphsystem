@@ -359,6 +359,12 @@ export default async function ProjectDetailPage({
               },
               orderBy: { createdAt: "asc" },
             },
+            clarifications: {
+              where: { answer: null },
+              select: { requestedById: true },
+              orderBy: { createdAt: "desc" },
+              take: 1,
+            },
           },
           orderBy: [
             { status: "asc" },
@@ -1120,21 +1126,33 @@ export default async function ProjectDetailPage({
     })),
   ];
   const relatedTaskRows: RelatedResearchTaskRow[] = project.tasks.map(
-    (task) => ({
-      id: task.id,
-      taskCode: task.taskCode,
-      title: task.title,
-      description: task.description ?? "",
-      status: task.status,
-      taskType: task.taskType ?? task.category ?? "TASK",
-      dueDate: task.dueDate?.toISOString() ?? null,
-      createdAt: task.createdAt.toISOString(),
-      assignments: task.assignments.map((assignment) => ({
-        id: assignment.id,
-        name: assignment.user.name || assignment.user.email,
-        email: displayResearchEmail(assignment.user.email),
-      })),
-    }),
+    (task) => {
+      const openClarification = task.clarifications[0] ?? null;
+      const clarifyDirection = openClarification
+        ? task.assignments.some(
+            (assignment) =>
+              assignment.userId === openClarification.requestedById,
+          )
+          ? "ASSIGNEE_TO_MANAGER"
+          : "MANAGER_TO_ASSIGNEE"
+        : null;
+      return {
+        id: task.id,
+        taskCode: task.taskCode,
+        title: task.title,
+        description: task.description ?? "",
+        status: task.status,
+        clarifyDirection,
+        taskType: task.taskType ?? task.category ?? "TASK",
+        dueDate: task.dueDate?.toISOString() ?? null,
+        createdAt: task.createdAt.toISOString(),
+        assignments: task.assignments.map((assignment) => ({
+          id: assignment.id,
+          name: assignment.user.name || assignment.user.email,
+          email: displayResearchEmail(assignment.user.email),
+        })),
+      };
+    },
   );
   const stageStyle = stageStyles[displayStage];
   const StageIcon = stageStyle.icon;

@@ -79,13 +79,13 @@ function TextModalForm({
       return {
         title: "Clarification request sent",
         detail:
-          "The assigner has been notified and the request is now in this task conversation.",
+          "The task manager has been notified and the request is now in this task conversation.",
       };
     }
     if (tone === "blue") {
       return {
         title: "Feedback sent",
-        detail: "The assignees have been notified and can continue the task.",
+        detail: "The answer has been saved and the task status was updated.",
       };
     }
     return {
@@ -216,13 +216,13 @@ export function ClarificationRequestForm({
       action={action}
       buttonLabel="Need clarify"
       title="Request clarification?"
-      description="The task will move to Need clarify until the assigner answers your request."
+      description="The task will move to Need clarify until the task manager answers your request."
       fieldName="question"
       fieldLabel="Question or instruction request"
       placeholder="Write what you need clarified, including any specific issue blocking the work."
       confirmLabel="Send request"
       tone="amber"
-      helperText="After sending this request, the task will pause in Need clarify. Please wait for the assigner to give feedback before continuing the task."
+      helperText="After sending this request, the task will pause in Need clarify. Please wait for the task manager to give feedback before continuing the task."
     />
   );
 }
@@ -258,10 +258,10 @@ export function ClarificationAnswerForm({
       action={action}
       buttonLabel="Answer"
       title="Answer clarification request?"
-      description="The assignees will receive your answer and the task will return to In progress."
+      description="Your answer will be saved and the task will move to the next workflow step."
       fieldName="answer"
       fieldLabel="Answer"
-      placeholder="Give clear instruction so the assignees can continue the task."
+      placeholder="Write a clear answer to the clarification request."
       confirmLabel="Send answer"
       tone="blue"
     />

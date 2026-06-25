@@ -6326,6 +6326,12 @@ export async function revokeResearchTask(taskId: string, formData?: FormData) {
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
       },
+      clarifications: {
+        where: { answer: null },
+        select: { requestedById: true },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
     },
   });
 
@@ -8791,6 +8797,12 @@ export async function sendTaskReminderEmail(
           user: { select: { name: true, email: true } },
         },
       },
+      clarifications: {
+        where: { answer: null },
+        select: { requestedById: true },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
     },
   });
 
@@ -8831,11 +8843,18 @@ export async function sendTaskReminderEmail(
     };
   }
   if (task.status === ResearchTaskStatus.NEED_CLARIFY) {
+    const openClarification = task.clarifications[0] ?? null;
+    const requesterIsAssignee = openClarification
+      ? task.assignments.some(
+          (assignment) => assignment.userId === openClarification.requestedById,
+        )
+      : true;
     return {
       ok: false,
       title: "Reminder not available",
-      detail:
-        "Assignees are waiting for clarification feedback from the assigner. Please answer the clarification request before sending finish reminders.",
+      detail: requesterIsAssignee
+        ? "Assignees are waiting for clarification feedback from the task manager. Please answer the clarification request before sending finish reminders."
+        : "This task is waiting for the assignee to answer a clarification request before approval.",
     };
   }
 

@@ -24,6 +24,8 @@ export type TaskClarificationItem = {
     name: string;
     email: string;
   };
+  requestedByIsAssignee: boolean;
+  canAnswer: boolean;
   answeredBy: {
     name: string;
     email: string;
@@ -43,6 +45,12 @@ function formatDateTime(value: string | null) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function pendingReplyText(item: TaskClarificationItem) {
+  return item.requestedByIsAssignee
+    ? "Waiting for task manager answer."
+    : "Waiting for assignee answer.";
 }
 
 export function TaskClarificationPanel({
@@ -111,7 +119,7 @@ export function TaskClarificationPanel({
                   </p>
                 ) : (
                   <p className="mt-2 text-xs font-normal text-amber-700 dark:text-amber-300">
-                    Waiting for reply.
+                    {pendingReplyText(latest)}
                   </p>
                 )}
               </>
@@ -128,7 +136,7 @@ export function TaskClarificationPanel({
         open={isOpen}
         onClose={() => setIsOpen(false)}
         title="Request and feedback history"
-        description="Track each assignee request and assigner or admin feedback in order."
+        description="Track assignee clarification requests and task-manager requests to assignees."
         icon={<MessageSquareText className="h-5 w-5" />}
         maxWidth="max-w-3xl"
         bodyClassName="px-5 py-5"
@@ -160,7 +168,7 @@ export function TaskClarificationPanel({
                       <p className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
                         Pending feedback
                       </p>
-                      {canAnswer ? (
+                      {canAnswer && item.canAnswer ? (
                         item.requestedBy.id !== currentUserId ? (
                           <AnswerForm
                             clarificationId={item.id}
@@ -168,12 +176,12 @@ export function TaskClarificationPanel({
                           />
                         ) : (
                           <p className="mt-1 text-sm leading-6 text-[#667085] dark:text-[#B0B0B0]">
-                            Waiting for the other side to answer this request.
+                            {pendingReplyText(item)}
                           </p>
                         )
                       ) : (
                         <p className="mt-1 text-sm leading-6 text-[#667085] dark:text-[#B0B0B0]">
-                          This request is waiting for a reply.
+                          {pendingReplyText(item)}
                         </p>
                       )}
                     </div>

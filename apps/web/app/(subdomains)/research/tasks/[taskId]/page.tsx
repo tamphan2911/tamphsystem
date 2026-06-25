@@ -141,6 +141,7 @@ function statusMeta(task: {
   dueDate: Date | null;
   completedAt: Date | null;
   revokedAt?: Date | null;
+  clarifyDirection?: "ASSIGNEE_TO_MANAGER" | "MANAGER_TO_ASSIGNEE" | null;
 }) {
   const now = new Date();
 
@@ -201,7 +202,10 @@ function statusMeta(task: {
   if (task.status === "NEED_CLARIFY") {
     return {
       label: "Need clarify",
-      detail: "Waiting for assigner answer",
+      detail:
+        task.clarifyDirection === "MANAGER_TO_ASSIGNEE"
+          ? "Waiting for assignee answer"
+          : "Waiting for task manager answer",
       tone: "cyan" as const,
       timeTone: "cyan" as const,
     };
@@ -1625,7 +1629,20 @@ export default async function TaskDetailPage({
     });
   }
 
-  const meta = statusMeta(task);
+  const openClarification = taskClarifications.find(
+    (clarification) => !clarification.answer,
+  );
+  const openClarificationRequestedByAssignee = openClarification
+    ? task.assignments.some(
+        (assignment) => assignment.userId === openClarification.requestedById,
+      )
+    : false;
+  const clarifyDirection = openClarification
+    ? openClarificationRequestedByAssignee
+      ? "ASSIGNEE_TO_MANAGER"
+      : "MANAGER_TO_ASSIGNEE"
+    : null;
+  const meta = statusMeta({ ...task, clarifyDirection });
   const taskResult =
     task.status === ResearchTaskStatus.COMPLETED
       ? {
@@ -1756,7 +1773,9 @@ export default async function TaskDetailPage({
               ? {
                   title: "Reminder not available",
                   detail:
-                    "Assignees are waiting for clarification feedback from the assigner. Please answer the clarification request before sending finish reminders.",
+                    clarifyDirection === "MANAGER_TO_ASSIGNEE"
+                      ? "This task is waiting for the assignee to answer a clarification request before approval."
+                      : "Assignees are waiting for clarification feedback from the task manager. Please answer the clarification request before sending finish reminders.",
                 }
               : null;
   const canAnswerClarification =
@@ -2515,24 +2534,37 @@ export default async function TaskDetailPage({
     })),
   ];
   const clarificationItems: TaskClarificationItem[] = taskClarifications.map(
-    (clarification) => ({
-      id: clarification.id,
-      question: clarification.question,
-      answer: clarification.answer,
-      createdAt: clarification.createdAt.toISOString(),
-      answeredAt: clarification.answeredAt?.toISOString() ?? null,
-      requestedBy: {
-        id: clarification.requestedBy.id,
-        name: clarification.requestedBy.name ?? "",
-        email: clarification.requestedBy.email,
-      },
-      answeredBy: clarification.answeredBy
-        ? {
-            name: clarification.answeredBy.name ?? "",
-            email: clarification.answeredBy.email,
-          }
-        : null,
-    }),
+    (clarification) => {
+      const requestedByIsAssignee = task.assignments.some(
+        (assignment) => assignment.userId === clarification.requestedBy.id,
+      );
+      const canAnswerThisClarification =
+        !clarification.answer &&
+        clarification.requestedBy.id !== userId &&
+        (requestedByIsAssignee
+          ? isRootAdmin || isAssigner || isChecker
+          : isAssignee);
+      return {
+        id: clarification.id,
+        question: clarification.question,
+        answer: clarification.answer,
+        createdAt: clarification.createdAt.toISOString(),
+        answeredAt: clarification.answeredAt?.toISOString() ?? null,
+        requestedBy: {
+          id: clarification.requestedBy.id,
+          name: clarification.requestedBy.name ?? "",
+          email: clarification.requestedBy.email,
+        },
+        requestedByIsAssignee,
+        canAnswer: canAnswerThisClarification,
+        answeredBy: clarification.answeredBy
+          ? {
+              name: clarification.answeredBy.name ?? "",
+              email: clarification.answeredBy.email,
+            }
+          : null,
+      };
+    },
   );
 
   return (

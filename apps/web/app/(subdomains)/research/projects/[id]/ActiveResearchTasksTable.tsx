@@ -31,6 +31,7 @@ export type RelatedResearchTaskRow = {
   title: string;
   description: string;
   status: string;
+  clarifyDirection: "ASSIGNEE_TO_MANAGER" | "MANAGER_TO_ASSIGNEE" | null;
   taskType: string;
   dueDate: string | null;
   createdAt: string;
@@ -110,7 +111,10 @@ function statusMeta(row: RelatedResearchTaskRow): {
   if (row.status === "NEED_CLARIFY") {
     return {
       value: "NEED_CLARIFY",
-      label: "Need clarify",
+      label:
+        row.clarifyDirection === "MANAGER_TO_ASSIGNEE"
+          ? "Need clarify: waiting assignee answer"
+          : "Need clarify: waiting task manager answer",
       icon: CircleHelp,
       className:
         "text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200",

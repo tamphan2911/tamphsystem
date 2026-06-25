@@ -58,6 +58,7 @@ type TaskRow = {
   taskType: string;
   proposalScope: "research" | "project" | null;
   status: string;
+  clarifyDirection: "ASSIGNEE_TO_MANAGER" | "MANAGER_TO_ASSIGNEE" | null;
   isUrgent: boolean;
   dueDate: string | null;
   completedAt: string | null;
@@ -211,6 +212,14 @@ function taskTypeFilterLabel(value: string) {
   return titleCase(value);
 }
 
+function clarificationStatusDetail(
+  direction?: TaskRow["clarifyDirection"] | null,
+) {
+  return direction === "MANAGER_TO_ASSIGNEE"
+    ? "Waiting for assignee answer"
+    : "Waiting for task manager answer";
+}
+
 function statusMeta(task: TaskRow) {
   const due = task.dueDate ? new Date(task.dueDate) : null;
   const completed = task.completedAt ? new Date(task.completedAt) : null;
@@ -290,7 +299,7 @@ function statusMeta(task: TaskRow) {
   if (task.status === "NEED_CLARIFY") {
     return {
       label: "Need clarify",
-      detail: "Waiting assigner answer",
+      detail: clarificationStatusDetail(task.clarifyDirection),
       dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
       className:
         "border-cyan-200 bg-cyan-50 text-cyan-800 dark:border-cyan-300/40 dark:bg-cyan-950/25 dark:text-cyan-200",
@@ -610,9 +619,14 @@ export function TasksClient({
         {
           value: "need_action",
           label: "Need actions",
-          count: tasks.filter((task) =>
-            adminNeedActionStatusValues.includes(derivedStatus(task)),
-          ).length,
+          count: tasks.filter((task) => {
+            const taskStatus = derivedStatus(task);
+            return (
+              taskStatus === "CHECKING" ||
+              (taskStatus === "NEED_CLARIFY" &&
+                task.clarifyDirection !== "MANAGER_TO_ASSIGNEE")
+            );
+          }).length,
         },
       ]
     : [
@@ -643,7 +657,9 @@ export function TasksClient({
       const taskStatus = derivedStatus(task);
       const matchesScope = isAdmin
         ? activeHeaderTab === "need_action"
-          ? adminNeedActionStatusValues.includes(taskStatus)
+          ? taskStatus === "CHECKING" ||
+            (taskStatus === "NEED_CLARIFY" &&
+              task.clarifyDirection !== "MANAGER_TO_ASSIGNEE")
           : true
         : activeHeaderTab === "assigned"
           ? task.scope.assignedToMe

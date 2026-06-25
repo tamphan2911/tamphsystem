@@ -141,6 +141,12 @@ export async function GET() {
           },
           orderBy: { createdAt: "asc" },
         },
+        clarifications: {
+          where: { answer: null },
+          select: { requestedById: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
       },
       orderBy: [
         { dueDate: { sort: "desc", nulls: "last" } },
@@ -175,6 +181,15 @@ export async function GET() {
           (member) => member.userId === userId,
         );
       const createdByMe = task.createdById === userId;
+      const openClarification = task.clarifications[0] ?? null;
+      const clarifyDirection = openClarification
+        ? task.assignments.some(
+            (assignment) =>
+              assignment.userId === openClarification.requestedById,
+          )
+          ? "ASSIGNEE_TO_MANAGER"
+          : "MANAGER_TO_ASSIGNEE"
+        : null;
 
       return {
         id: task.id,
@@ -190,6 +205,7 @@ export async function GET() {
               : "research"
             : null,
         status: task.status,
+        clarifyDirection,
         isUrgent: task.isUrgent,
         dueDate: task.dueDate?.toISOString() ?? null,
         completedAt: task.completedAt?.toISOString() ?? null,
