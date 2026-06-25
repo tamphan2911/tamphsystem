@@ -4,7 +4,7 @@ import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -573,6 +573,7 @@ export function TasksClient({
       : scopeTab === "related" || scopeTab === "checker"
         ? scopeTab
         : "assigned";
+  const previousAdminTabRef = useRef<TaskHeaderTab | null>(null);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -587,13 +588,22 @@ export function TasksClient({
       return;
     }
 
-    if (activeHeaderTab === "need_action") {
+    const previousAdminTab = previousAdminTabRef.current;
+    previousAdminTabRef.current = activeHeaderTab;
+    const enteredNeedActionTab =
+      activeHeaderTab === "need_action" && previousAdminTab !== "need_action";
+
+    if (enteredNeedActionTab) {
       setUnfinishedOnlyValue("false");
-      if (statuses.length === 0) setStatuses(adminNeedActionStatusValues);
+      setStatuses(adminNeedActionStatusValues);
       return;
     }
 
-    if (unfinishedOnly && statuses.length === 0) {
+    if (
+      activeHeaderTab !== "need_action" &&
+      unfinishedOnly &&
+      statuses.length === 0
+    ) {
       setStatuses(unfinishedTaskStatusValues);
     }
   }, [
