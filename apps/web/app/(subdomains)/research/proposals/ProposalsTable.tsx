@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
+  ArrowUpDown,
   BookOpen,
   Building2,
   CheckCircle2,
@@ -49,6 +50,15 @@ export type ProposalRow = {
   createdAt: string;
 };
 
+type SortDirection = "asc" | "desc";
+type ProposalSortKey =
+  | "proposal"
+  | "type"
+  | "status"
+  | "submitted"
+  | "contact"
+  | "file";
+
 const typeOptions = ["ALL", "RESEARCH", "PROJECT", "CONFERENCE", "JOURNAL"];
 const statusOptions = ["ALL", "NEW", "REVIEWING", "ACCEPTED", "DECLINED"];
 
@@ -57,6 +67,20 @@ function label(value: string) {
     .toLowerCase()
     .replace("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function compareProposalText(left: string, right: string) {
+  return left.localeCompare(right, undefined, {
+    sensitivity: "base",
+    numeric: true,
+  });
+}
+
+function compareProposalFile(left: ProposalRow, right: ProposalRow) {
+  return (
+    Number(Boolean(left.fileName)) - Number(Boolean(right.fileName)) ||
+    compareProposalText(left.fileName, right.fileName)
+  );
 }
 
 function statusClass(status: string) {
@@ -206,10 +230,18 @@ export function ProposalsTable({
     "proposals:status",
     statusOptions,
   );
+  const [sortValue, setSortValue] = usePersistentTableValue(
+    "proposals:sort",
+    "proposal:asc",
+  );
+  const [sortKey, sortDirection] = sortValue.split(":") as [
+    ProposalSortKey,
+    SortDirection,
+  ];
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return rows.filter((row) => {
+    const filteredRows = rows.filter((row) => {
       const matchesType = types.length === 0 || types.includes(row.type);
       const matchesStatus =
         statuses.length === 0 || statuses.includes(row.status);
@@ -232,7 +264,26 @@ export function ProposalsTable({
         matchesType && matchesStatus && (!needle || haystack.includes(needle))
       );
     });
-  }, [query, rows, statuses, types]);
+    return filteredRows.sort((left, right) => {
+      let result = 0;
+      if (sortKey === "proposal") {
+        result = compareProposalText(left.title, right.title);
+      } else if (sortKey === "type") {
+        result = compareProposalText(label(left.type), label(right.type));
+      } else if (sortKey === "status") {
+        result = compareProposalText(label(left.status), label(right.status));
+      } else if (sortKey === "submitted") {
+        result =
+          compareProposalText(left.submittedBy, right.submittedBy) ||
+          compareProposalText(left.submittedByEmail, right.submittedByEmail);
+      } else if (sortKey === "contact") {
+        result = compareProposalText(left.contactInfo, right.contactInfo);
+      } else {
+        result = compareProposalFile(left, right);
+      }
+      return sortDirection === "asc" ? result : -result;
+    });
+  }, [query, rows, sortDirection, sortKey, statuses, types]);
 
   const pagination = useTablePagination(filtered, 10, 1, "proposals");
 
@@ -248,6 +299,13 @@ export function ProposalsTable({
 
   function updateStatuses(values: string[]) {
     setStatuses(values);
+    pagination.setPage(1);
+  }
+
+  function updateSort(key: ProposalSortKey) {
+    const nextDirection: SortDirection =
+      sortKey === key && sortDirection === "asc" ? "desc" : "asc";
+    setSortValue(`${key}:${nextDirection}`);
     pagination.setPage(1);
   }
 
@@ -286,12 +344,57 @@ export function ProposalsTable({
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="w-20 px-3 py-3">ID</th>
-              <th className="px-3 py-3">Proposal</th>
-              <th className="w-14 px-2 py-3 text-center">Type</th>
-              <th className="w-14 px-2 py-3 text-center">Status</th>
-              <th className="w-56 px-3 py-3">Submitted</th>
-              <th className="w-24 px-3 py-3">Contact</th>
-              <th className="w-12 px-2 py-3 text-center">File</th>
+              <th className="px-3 py-3">
+                <ProposalSortHeader
+                  label="Proposal"
+                  active={sortKey === "proposal"}
+                  direction={sortDirection}
+                  onClick={() => updateSort("proposal")}
+                />
+              </th>
+              <th className="w-14 px-2 py-3 text-center">
+                <ProposalSortHeader
+                  label="Type"
+                  active={sortKey === "type"}
+                  direction={sortDirection}
+                  onClick={() => updateSort("type")}
+                  centered
+                />
+              </th>
+              <th className="w-14 px-2 py-3 text-center">
+                <ProposalSortHeader
+                  label="Status"
+                  active={sortKey === "status"}
+                  direction={sortDirection}
+                  onClick={() => updateSort("status")}
+                  centered
+                />
+              </th>
+              <th className="w-56 px-3 py-3">
+                <ProposalSortHeader
+                  label="Submitted"
+                  active={sortKey === "submitted"}
+                  direction={sortDirection}
+                  onClick={() => updateSort("submitted")}
+                />
+              </th>
+              <th className="w-24 px-3 py-3">
+                <ProposalSortHeader
+                  label="Contact"
+                  active={sortKey === "contact"}
+                  direction={sortDirection}
+                  onClick={() => updateSort("contact")}
+                />
+              </th>
+              <th className="w-12 px-2 py-3 text-center">
+                <ProposalSortHeader
+                  label="File"
+                  active={sortKey === "file"}
+                  direction={sortDirection}
+                  onClick={() => updateSort("file")}
+                  centered
+                />
+              </th>
               {isAdmin && deleteAction && (
                 <th className="w-12 px-2 py-3 text-center">
                   <span className="sr-only">Delete</span>
@@ -421,5 +524,37 @@ export function ProposalsTable({
         onPageChange={pagination.setPage}
       />
     </div>
+  );
+}
+
+function ProposalSortHeader({
+  label,
+  active,
+  direction,
+  onClick,
+  centered = false,
+}: {
+  label: string;
+  active: boolean;
+  direction: SortDirection;
+  onClick: () => void;
+  centered?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`research-allow-transform inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-xs font-normal uppercase tracking-wide shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none focus-visible:ring-0 active:scale-95 ${
+        centered ? "justify-center" : "justify-start text-left"
+      } ${active ? "text-[#A8DADC]" : "text-[#B0B0B0]"}`}
+    >
+      <span>{label}</span>
+      <ArrowUpDown
+        className={`h-3.5 w-3.5 transition duration-180 ${
+          active && direction === "desc" ? "rotate-180" : ""
+        }`}
+        aria-hidden="true"
+      />
+    </button>
   );
 }

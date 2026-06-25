@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowUpDown,
   BadgeCheck,
   BarChart3,
   BriefcaseBusiness,
@@ -34,7 +35,11 @@ import {
   researchFieldClass,
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
-import { usePersistentTableValue } from "@/sites/research/components/TableControls";
+import {
+  TablePagination,
+  usePersistentTableValue,
+  useTablePagination,
+} from "@/sites/research/components/TableControls";
 import {
   ResearchProjectsTable,
   type ResearchProjectRow,
@@ -93,6 +98,8 @@ type DashboardStatusKey =
   | "completed"
   | "revoked"
   | "overdue";
+type SortDirection = "asc" | "desc";
+type ProfileTaskSortKey = "task" | "type" | "status" | "due";
 
 function roleLabel(role: string) {
   return role
@@ -324,6 +331,19 @@ function dashboardStatusTabs(tasks: ProfileTaskRow[]) {
     value: tasks.filter((task) => matchesDashboardStatus(task, item.key))
       .length,
   }));
+}
+
+function compareNullableText(left: string | null, right: string | null) {
+  return (left || "").localeCompare(right || "", undefined, {
+    sensitivity: "base",
+    numeric: true,
+  });
+}
+
+function compareNullableDate(left: string | null, right: string | null) {
+  const leftTime = left ? new Date(left).getTime() : Number.MAX_SAFE_INTEGER;
+  const rightTime = right ? new Date(right).getTime() : Number.MAX_SAFE_INTEGER;
+  return leftTime - rightTime;
 }
 
 export function ProfileClient({
@@ -841,6 +861,8 @@ function TaskDashboard({
     statusTabs.find((item) => item.key === "overdue")?.value ?? 0;
   const activeCount =
     statusTabs.find((item) => item.key === "active")?.value ?? 0;
+  const revokedCount =
+    statusTabs.find((item) => item.key === "revoked")?.value ?? 0;
 
   return (
     <div className="border border-[#444444] bg-[#2C2C2C]">
@@ -855,7 +877,11 @@ function TaskDashboard({
           </p>
           <p className="mt-1 text-xs text-[#B0B0B0]">
             {activeCount} active task{activeCount === 1 ? "" : "s"} and{" "}
-            {overdueCount} overdue in the selected period.
+            {overdueCount} overdue
+            {revokedCount > 0
+              ? `, with ${revokedCount} revoked task${revokedCount === 1 ? "" : "s"}`
+              : ""}{" "}
+            in the selected period.
           </p>
         </div>
         <div className="grid grid-cols-2 border border-[#444444] bg-[#242424] p-1 md:grid-cols-5">
@@ -915,21 +941,92 @@ function TaskDashboard({
 }
 
 function ProfileTaskTable({ rows }: { rows: ProfileTaskRow[] }) {
+  const [sortValue, setSortValue] = usePersistentTableValue(
+    "profile:task-sort",
+    "due:asc",
+  );
+  const [sortKey, sortDirection] = sortValue.split(":") as [
+    ProfileTaskSortKey,
+    SortDirection,
+  ];
+  const sortedRows = useMemo(() => {
+    return [...rows].sort((left, right) => {
+      let result = 0;
+      if (sortKey === "task") {
+        result = compareNullableText(left.title, right.title);
+      } else if (sortKey === "type") {
+        result = compareNullableText(
+          `${taskTypeLabel(left.taskType)} ${left.category}`,
+          `${taskTypeLabel(right.taskType)} ${right.category}`,
+        );
+      } else if (sortKey === "status") {
+        result = compareNullableText(
+          profileTaskStatusMeta(left).label,
+          profileTaskStatusMeta(right).label,
+        );
+      } else {
+        result = compareNullableDate(left.dueDate, right.dueDate);
+      }
+      return sortDirection === "asc" ? result : -result;
+    });
+  }, [rows, sortDirection, sortKey]);
+  const pagination = useTablePagination(
+    sortedRows,
+    10,
+    1,
+    "profile-dashboard-tasks",
+  );
+
+  function updateSort(key: ProfileTaskSortKey) {
+    const nextDirection: SortDirection =
+      sortKey === key && sortDirection === "asc" ? "desc" : "asc";
+    setSortValue(`${key}:${nextDirection}`);
+    pagination.setPage(1);
+  }
+
   return (
     <div className="mt-4 overflow-hidden border border-[#444444]">
       <table className="w-full table-fixed text-left">
         <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
           <tr>
             <th className="w-[7rem] px-3 py-3">ID</th>
-            <th className="px-3 py-3">Task</th>
-            <th className="w-[9rem] px-3 py-3">Type</th>
-            <th className="w-[10rem] px-3 py-3">Status</th>
-            <th className="w-[8rem] px-3 py-3">Due</th>
+            <th className="px-3 py-3">
+              <ProfileSortHeader
+                label="Task"
+                active={sortKey === "task"}
+                direction={sortDirection}
+                onClick={() => updateSort("task")}
+              />
+            </th>
+            <th className="w-[9rem] px-3 py-3">
+              <ProfileSortHeader
+                label="Type"
+                active={sortKey === "type"}
+                direction={sortDirection}
+                onClick={() => updateSort("type")}
+              />
+            </th>
+            <th className="w-[10rem] px-3 py-3">
+              <ProfileSortHeader
+                label="Status"
+                active={sortKey === "status"}
+                direction={sortDirection}
+                onClick={() => updateSort("status")}
+              />
+            </th>
+            <th className="w-[8rem] px-3 py-3">
+              <ProfileSortHeader
+                label="Due"
+                active={sortKey === "due"}
+                direction={sortDirection}
+                onClick={() => updateSort("due")}
+              />
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[#444444]">
-          {rows.length > 0 ? (
-            rows.map((task) => {
+          {pagination.total > 0 ? (
+            pagination.pagedRows.map((task) => {
               const status = profileTaskStatusMeta(task);
               return (
                 <tr
@@ -996,6 +1093,43 @@ function ProfileTaskTable({ rows }: { rows: ProfileTaskRow[] }) {
           )}
         </tbody>
       </table>
+      <TablePagination
+        page={pagination.page}
+        pageCount={pagination.pageCount}
+        total={pagination.total}
+        pageSize={pagination.pageSize}
+        onPageChange={pagination.setPage}
+      />
     </div>
+  );
+}
+
+function ProfileSortHeader({
+  label,
+  active,
+  direction,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  direction: SortDirection;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`research-allow-transform inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-left text-xs font-normal uppercase tracking-wide shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none focus-visible:ring-0 active:scale-95 ${
+        active ? "text-[#A8DADC]" : "text-[#B0B0B0]"
+      }`}
+    >
+      <span>{label}</span>
+      <ArrowUpDown
+        className={`h-3.5 w-3.5 transition duration-180 ${
+          active && direction === "desc" ? "rotate-180" : ""
+        }`}
+        aria-hidden="true"
+      />
+    </button>
   );
 }

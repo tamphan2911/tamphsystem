@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
+  ArrowUpDown,
   Banknote,
   CalendarClock,
   CheckCircle2,
@@ -63,6 +64,15 @@ export type OrganizedProjectRow = {
   researchCount: number;
   research: OrganizedProjectResearchRow[];
 };
+
+type SortDirection = "asc" | "desc";
+type OrganizedProjectSortKey =
+  | "project"
+  | "status"
+  | "financial"
+  | "funding"
+  | "dates"
+  | "results";
 
 function statusLabel(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
@@ -135,6 +145,30 @@ function financialClaimMeta(status: string) {
 
 function memberName(member: OrganizedProjectMemberRow) {
   return displayResearchPersonName(member);
+}
+
+function compareProjectText(left: string, right: string) {
+  return left.localeCompare(right, undefined, {
+    sensitivity: "base",
+    numeric: true,
+  });
+}
+
+function compareProjectDate(left: string, right: string) {
+  const leftTime = parseProjectDate(left);
+  const rightTime = parseProjectDate(right);
+  return leftTime - rightTime;
+}
+
+function parseProjectDate(value: string) {
+  const [day, month, year] = value.split("/").map(Number);
+  if (!day || !month || !year) return 0;
+  return new Date(year < 100 ? 2000 + year : year, month - 1, day).getTime();
+}
+
+function projectFundingValue(project: OrganizedProjectRow) {
+  const amount = Number.parseFloat(project.fundingAmount || "0");
+  return Number.isFinite(amount) ? amount : 0;
 }
 
 function DeleteProjectButton({
@@ -223,6 +257,14 @@ export function OrganizedProjectsTable({
     "organized-projects:status",
     "ALL",
   );
+  const [sortValue, setSortValue] = usePersistentTableValue(
+    "organized-projects:sort",
+    "project:asc",
+  );
+  const [sortKey, sortDirection] = sortValue.split(":") as [
+    OrganizedProjectSortKey,
+    SortDirection,
+  ];
 
   const statusOptions = useMemo(
     () => [
@@ -240,7 +282,7 @@ export function OrganizedProjectsTable({
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return rows
+    const filteredRows = rows
       .filter((row) => row.status !== "ARCHIVED")
       .filter((row) => {
         const matchesStatus = status === "ALL" || row.status === status;
@@ -269,7 +311,34 @@ export function OrganizedProjectsTable({
           .toLowerCase();
         return matchesStatus && (!needle || haystack.includes(needle));
       });
-  }, [query, rows, status]);
+    return filteredRows.sort((left, right) => {
+      let result = 0;
+      if (sortKey === "project") {
+        result = compareProjectText(left.title, right.title);
+      } else if (sortKey === "status") {
+        result = compareProjectText(
+          statusMeta(left.status).label,
+          statusMeta(right.status).label,
+        );
+      } else if (sortKey === "financial") {
+        result = compareProjectText(
+          financialClaimMeta(left.financialClaimStatus).label,
+          financialClaimMeta(right.financialClaimStatus).label,
+        );
+      } else if (sortKey === "funding") {
+        result =
+          projectFundingValue(left) - projectFundingValue(right) ||
+          compareProjectText(left.organizer, right.organizer);
+      } else if (sortKey === "dates") {
+        result =
+          compareProjectDate(left.startDate, right.startDate) ||
+          compareProjectDate(left.endDate, right.endDate);
+      } else {
+        result = left.researchCount - right.researchCount;
+      }
+      return sortDirection === "asc" ? result : -result;
+    });
+  }, [query, rows, sortDirection, sortKey, status]);
 
   const pagination = useTablePagination(filtered, 10, 1, "organized-projects");
 
@@ -280,6 +349,13 @@ export function OrganizedProjectsTable({
 
   function updateStatus(value: string) {
     setStatus(value);
+    pagination.setPage(1);
+  }
+
+  function updateSort(key: OrganizedProjectSortKey) {
+    const nextDirection: SortDirection =
+      sortKey === key && sortDirection === "asc" ? "desc" : "asc";
+    setSortValue(`${key}:${nextDirection}`);
     pagination.setPage(1);
   }
 
@@ -307,12 +383,57 @@ export function OrganizedProjectsTable({
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="w-[10%] px-3 py-3">Project ID</th>
-              <th className="px-3 py-3">Project</th>
-              <th className="w-[7%] px-2 py-3 text-center">Status</th>
-              <th className="w-[7%] px-2 py-3 text-center">Financial</th>
-              <th className="w-[15%] px-3 py-3">Funding</th>
-              <th className="w-[12%] px-3 py-3">Dates</th>
-              <th className="w-[7%] px-2 py-3 text-center">Results</th>
+              <th className="px-3 py-3">
+                <ProjectSortHeader
+                  label="Project"
+                  active={sortKey === "project"}
+                  direction={sortDirection}
+                  onClick={() => updateSort("project")}
+                />
+              </th>
+              <th className="w-[7%] px-2 py-3 text-center">
+                <ProjectSortHeader
+                  label="Status"
+                  active={sortKey === "status"}
+                  direction={sortDirection}
+                  onClick={() => updateSort("status")}
+                  centered
+                />
+              </th>
+              <th className="w-[7%] px-2 py-3 text-center">
+                <ProjectSortHeader
+                  label="Financial"
+                  active={sortKey === "financial"}
+                  direction={sortDirection}
+                  onClick={() => updateSort("financial")}
+                  centered
+                />
+              </th>
+              <th className="w-[15%] px-3 py-3">
+                <ProjectSortHeader
+                  label="Funding"
+                  active={sortKey === "funding"}
+                  direction={sortDirection}
+                  onClick={() => updateSort("funding")}
+                />
+              </th>
+              <th className="w-[12%] px-3 py-3">
+                <ProjectSortHeader
+                  label="Dates"
+                  active={sortKey === "dates"}
+                  direction={sortDirection}
+                  onClick={() => updateSort("dates")}
+                />
+              </th>
+              <th className="w-[7%] px-2 py-3 text-center">
+                <ProjectSortHeader
+                  label="Results"
+                  active={sortKey === "results"}
+                  direction={sortDirection}
+                  onClick={() => updateSort("results")}
+                  centered
+                />
+              </th>
               {isAdmin && deleteAction && (
                 <th className="w-[5%] px-2 py-3 text-center">
                   <span className="sr-only">Delete</span>
@@ -445,5 +566,37 @@ export function OrganizedProjectsTable({
         onPageChange={pagination.setPage}
       />
     </div>
+  );
+}
+
+function ProjectSortHeader({
+  label,
+  active,
+  direction,
+  onClick,
+  centered = false,
+}: {
+  label: string;
+  active: boolean;
+  direction: SortDirection;
+  onClick: () => void;
+  centered?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`research-allow-transform inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-xs font-normal uppercase tracking-wide shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none focus-visible:ring-0 active:scale-95 ${
+        centered ? "justify-center" : "justify-start text-left"
+      } ${active ? "text-[#A8DADC]" : "text-[#B0B0B0]"}`}
+    >
+      <span>{label}</span>
+      <ArrowUpDown
+        className={`h-3.5 w-3.5 transition duration-180 ${
+          active && direction === "desc" ? "rotate-180" : ""
+        }`}
+        aria-hidden="true"
+      />
+    </button>
   );
 }
