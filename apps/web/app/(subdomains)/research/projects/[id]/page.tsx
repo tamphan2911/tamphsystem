@@ -353,6 +353,8 @@ export default async function ProjectDetailPage({
           include: {
             journal: true,
             conference: true,
+            createdBy: { select: { name: true, email: true } },
+            checker: { select: { name: true, email: true } },
             assignments: {
               include: {
                 user: { select: { name: true, email: true } },
@@ -1145,7 +1147,14 @@ export default async function ProjectDetailPage({
         clarifyDirection,
         taskType: task.taskType ?? task.category ?? "TASK",
         dueDate: task.dueDate?.toISOString() ?? null,
+        completedAt: task.completedAt?.toISOString() ?? null,
+        revokedAt: task.revokedAt?.toISOString() ?? null,
         createdAt: task.createdAt.toISOString(),
+        updatedAt: task.updatedAt.toISOString(),
+        createdBy: displayResearchPersonName(task.createdBy) || "Unassigned",
+        checker: task.checker
+          ? displayResearchPersonName(task.checker) || "Unassigned"
+          : "Unassigned",
         assignments: task.assignments.map((assignment) => ({
           id: assignment.id,
           name: assignment.user.name || assignment.user.email,

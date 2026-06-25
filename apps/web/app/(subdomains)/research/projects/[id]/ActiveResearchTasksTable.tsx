@@ -34,7 +34,12 @@ export type RelatedResearchTaskRow = {
   clarifyDirection: "ASSIGNEE_TO_MANAGER" | "MANAGER_TO_ASSIGNEE" | null;
   taskType: string;
   dueDate: string | null;
+  completedAt: string | null;
+  revokedAt: string | null;
   createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  checker: string;
   assignments: Array<{
     id: string;
     name: string;
@@ -49,6 +54,15 @@ function shortDate(value: string | null) {
     month: "2-digit",
     year: "2-digit",
   }).format(new Date(value));
+}
+
+function durationText(ms: number) {
+  const absolute = Math.abs(ms);
+  const hours = Math.max(1, Math.round(absolute / (1000 * 60 * 60)));
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  const restHours = hours % 24;
+  return restHours > 0 ? `${days}d ${restHours}h` : `${days}d`;
 }
 
 function taskId(row: RelatedResearchTaskRow) {
@@ -135,6 +149,96 @@ function statusMeta(row: RelatedResearchTaskRow): {
     icon: Clock3,
     className:
       "text-sky-700 dark:text-[#A8DADC] hover:text-sky-800 dark:hover:text-[#C7ECEE]",
+  };
+}
+
+function clarificationStatusDetail(
+  direction?: RelatedResearchTaskRow["clarifyDirection"] | null,
+) {
+  return direction === "MANAGER_TO_ASSIGNEE"
+    ? "Waiting for assignee answer"
+    : "Waiting for task manager answer";
+}
+
+function timeMeta(row: RelatedResearchTaskRow) {
+  const due = row.dueDate ? new Date(row.dueDate) : null;
+  const completed = row.completedAt ? new Date(row.completedAt) : null;
+  const now = new Date();
+  const remainingMs = due ? due.getTime() - now.getTime() : null;
+
+  if (row.status === "REVOKED") {
+    return {
+      detail: "",
+      dateLines: [
+        `revoked: ${shortDate(row.revokedAt ?? row.updatedAt)}`,
+        `due: ${shortDate(row.dueDate)}`,
+        `assigned: ${shortDate(row.createdAt)}`,
+      ],
+      detailClassName: "text-[#B0B0B0]",
+    };
+  }
+
+  if (row.status === "COMPLETED") {
+    if (!due || !completed) {
+      return {
+        detail: "Finished",
+        dateLines: completed ? [`finished: ${shortDate(row.completedAt)}`] : [],
+        detailClassName: "text-emerald-600 dark:text-emerald-300",
+      };
+    }
+    if (completed <= due) {
+      return {
+        detail: `${durationText(due.getTime() - completed.getTime())} early`,
+        dateLines: [`finished: ${shortDate(row.completedAt)}`],
+        detailClassName: "text-emerald-600 dark:text-emerald-300",
+      };
+    }
+    return {
+      detail: `${durationText(completed.getTime() - due.getTime())} late`,
+      dateLines: [`finished: ${shortDate(row.completedAt)}`],
+      detailClassName: "text-rose-600 dark:text-rose-300",
+    };
+  }
+
+  if (row.status === "CHECKING") {
+    return {
+      detail: "Waiting assigner check",
+      dateLines: due ? [`due: ${shortDate(row.dueDate)}`] : [],
+      detailClassName: "text-violet-600 dark:text-violet-300",
+    };
+  }
+
+  if (row.status === "REVISION_REQUESTED") {
+    return {
+      detail: "Waiting assignee revision",
+      dateLines: due ? [`due: ${shortDate(row.dueDate)}`] : [],
+      detailClassName: "text-orange-700 dark:text-orange-300",
+    };
+  }
+
+  if (row.status === "NEED_CLARIFY") {
+    return {
+      detail: clarificationStatusDetail(row.clarifyDirection),
+      dateLines: due ? [`due: ${shortDate(row.dueDate)}`] : [],
+      detailClassName: "text-cyan-700 dark:text-cyan-300",
+    };
+  }
+
+  if (due && now > due) {
+    return {
+      detail: `${durationText(now.getTime() - due.getTime())} late`,
+      dateLines: [],
+      detailClassName: "text-rose-600 dark:text-rose-300",
+    };
+  }
+
+  return {
+    detail: due ? `${durationText(remainingMs ?? 0)} left` : "No due date",
+    dateLines: due ? [`due: ${shortDate(row.dueDate)}`] : [],
+    detailClassName:
+      remainingMs !== null && remainingMs < 24 * 60 * 60 * 1000
+        ? "font-semibold text-[#B64F48] dark:text-[#FFB4A2]"
+        : "text-yellow-700 dark:text-yellow-300",
   };
 }
 
@@ -245,12 +349,13 @@ export function RelatedResearchTasksTable({
               <th className="px-3 py-3">Task</th>
               <th className="w-[7rem] px-3 py-3">Status</th>
               <th className="w-[16rem] px-3 py-3">Assignees</th>
-              <th className="w-[7rem] px-3 py-3">Due date</th>
+              <th className="w-[11rem] px-3 py-3">Time</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((row) => {
               const meta = statusMeta(row);
+              const time = timeMeta(row);
               const StatusIcon = meta.icon;
               return (
                 <tr
@@ -300,8 +405,28 @@ export function RelatedResearchTasksTable({
                         ))
                       : "Unassigned"}
                   </td>
-                  <td className="px-3 py-3 align-top text-xs leading-5 text-[#B0B0B0]">
-                    {shortDate(row.dueDate)}
+                  <td className="px-3 py-3 align-top">
+                    {time.dateLines.map((line) => (
+                      <p
+                        key={line}
+                        className="break-words text-xs font-normal leading-5 text-[#B0B0B0]"
+                      >
+                        {line}
+                      </p>
+                    ))}
+                    {time.detail ? (
+                      <p
+                        className={`max-w-full break-words text-xs font-normal leading-5 ${time.detailClassName}`}
+                      >
+                        {time.detail}
+                      </p>
+                    ) : null}
+                    <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                      checker: {row.checker}
+                    </p>
+                    <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                      Assigner: {row.createdBy}
+                    </p>
                   </td>
                 </tr>
               );
