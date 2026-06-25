@@ -8,7 +8,10 @@ import {
   researchStartOfMonth,
   researchWeekday,
 } from "@/sites/research/lib/date-time";
-import { usePersistentTableValue } from "@/sites/research/components/TableControls";
+import {
+  ResearchSortHeaderButton,
+  usePersistentTableValue,
+} from "@/sites/research/components/TableControls";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import {
   displayResearchEmail,
@@ -53,6 +56,44 @@ type AssistantPerformanceStats = {
   overdue: number;
   revoked: number;
   completionRate: number;
+};
+type AssistantPerformanceSortKey =
+  | "assistant"
+  | "role"
+  | "assigned"
+  | "active"
+  | "completed"
+  | "overdue"
+  | "revoked"
+  | "completion";
+type AssistantPerformanceSortDirection = "asc" | "desc";
+type AssistantPerformanceSort = {
+  key: AssistantPerformanceSortKey;
+  direction: AssistantPerformanceSortDirection;
+};
+
+const assistantPerformanceSortKeys: AssistantPerformanceSortKey[] = [
+  "assistant",
+  "role",
+  "assigned",
+  "active",
+  "completed",
+  "overdue",
+  "revoked",
+  "completion",
+];
+const assistantPerformanceSortLabels: Record<
+  AssistantPerformanceSortKey,
+  string
+> = {
+  assistant: "Assistant",
+  role: "Role",
+  assigned: "Assigned",
+  active: "Active",
+  completed: "Completed",
+  overdue: "Overdue",
+  revoked: "Revoked",
+  completion: "Completion",
 };
 
 function periodLabel(period: PerformancePeriod) {
@@ -117,6 +158,85 @@ function isTaskInPeriod(
 
 function roleLabel(role: string) {
   return role === "CHIEF_ASSISTANT" ? "Chief assistant" : "Assistant";
+}
+
+function compareAssistantPerformanceText(left: string, right: string) {
+  return left.localeCompare(right, undefined, {
+    sensitivity: "base",
+    numeric: true,
+  });
+}
+
+function parseAssistantPerformanceSort(value: string) {
+  const [key, direction] = value.split(":");
+  if (
+    assistantPerformanceSortKeys.includes(key as AssistantPerformanceSortKey) &&
+    (direction === "asc" || direction === "desc")
+  ) {
+    return {
+      key: key as AssistantPerformanceSortKey,
+      direction: direction as AssistantPerformanceSortDirection,
+    };
+  }
+  return null;
+}
+
+function nextAssistantPerformanceSortValue(
+  current: AssistantPerformanceSort | null,
+  key: AssistantPerformanceSortKey,
+) {
+  if (!current || current.key !== key) return `${key}:asc`;
+  if (current.direction === "asc") return `${key}:desc`;
+  return "NONE";
+}
+
+function assistantPerformanceSortHint(
+  key: AssistantPerformanceSortKey,
+  current: AssistantPerformanceSort | null,
+) {
+  const label = assistantPerformanceSortLabels[key];
+  if (!current || current.key !== key) return `Sort ${label} ascending`;
+  if (current.direction === "asc") return `Sort ${label} descending`;
+  return `Clear ${label} sorting`;
+}
+
+function assistantPerformanceSortValue(
+  item: AssistantPerformanceStats,
+  key: AssistantPerformanceSortKey,
+) {
+  if (key === "assistant") {
+    return `${displayResearchPersonName(item.row) || ""} ${displayResearchEmail(item.row.email)}`;
+  }
+  if (key === "role") return roleLabel(item.row.assistantRole);
+  if (key === "assigned") return item.assigned;
+  if (key === "active") return item.active;
+  if (key === "completed") return item.completed;
+  if (key === "overdue") return item.overdue;
+  if (key === "revoked") return item.revoked;
+  return item.completionRate;
+}
+
+function sortAssistantPerformanceStats(
+  stats: AssistantPerformanceStats[],
+  sort: AssistantPerformanceSort | null,
+) {
+  if (!sort) return stats;
+  return stats
+    .map((item, index) => ({ item, index }))
+    .sort((left, right) => {
+      const leftValue = assistantPerformanceSortValue(left.item, sort.key);
+      const rightValue = assistantPerformanceSortValue(right.item, sort.key);
+      const result =
+        typeof leftValue === "number" && typeof rightValue === "number"
+          ? leftValue - rightValue
+          : compareAssistantPerformanceText(
+              String(leftValue),
+              String(rightValue),
+            );
+      if (result !== 0) return sort.direction === "asc" ? result : -result;
+      return left.index - right.index;
+    })
+    .map(({ item }) => item);
 }
 
 function calculateStats(
@@ -450,6 +570,38 @@ function AssistantsClientBase({
   );
 }
 
+function AssistantPerformanceSortHeader({
+  label,
+  column,
+  sort,
+  onChange,
+  align = "left",
+}: {
+  label: string;
+  column: AssistantPerformanceSortKey;
+  sort: AssistantPerformanceSort | null;
+  onChange: (column: AssistantPerformanceSortKey) => void;
+  align?: "left" | "center";
+}) {
+  return (
+    <span
+      className={`flex items-center gap-1.5 ${
+        align === "center" ? "justify-center" : "justify-start"
+      }`}
+    >
+      <span>{label}</span>
+      <ResearchSortHeaderButton
+        column={column}
+        activeColumn={sort?.key ?? null}
+        direction={sort?.key === column ? sort.direction : null}
+        onChange={onChange}
+        hint={assistantPerformanceSortHint(column, sort)}
+        alphabetical={column === "assistant" || column === "role"}
+      />
+    </span>
+  );
+}
+
 function AssistantPerformanceTable({
   rows,
 }: {
@@ -459,7 +611,23 @@ function AssistantPerformanceTable({
     "assistants:performance-period",
     "all",
   );
+  const [sortValue, setSortValue] = usePersistentTableValue(
+    "assistants:performance-sort",
+    "NONE",
+  );
+  const sort = useMemo(
+    () => parseAssistantPerformanceSort(sortValue),
+    [sortValue],
+  );
   const stats = useMemo(() => calculateStats(rows, period), [period, rows]);
+  const sortedStats = useMemo(
+    () => sortAssistantPerformanceStats(stats, sort),
+    [sort, stats],
+  );
+
+  function updateSort(key: AssistantPerformanceSortKey) {
+    setSortValue(nextAssistantPerformanceSortValue(sort, key));
+  }
 
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
@@ -470,7 +638,7 @@ function AssistantPerformanceTable({
         <div className="flex min-w-0 items-center gap-2">
           <button
             type="button"
-            onClick={() => downloadAssistantPerformance(stats, period)}
+            onClick={() => downloadAssistantPerformance(sortedStats, period)}
             className="research-allow-transform inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-[#444444] bg-[#242424] text-[#A8DADC] transition duration-180 ease-out hover:-translate-y-0.5 hover:border-[#666666] hover:bg-[#2C2C2C] hover:text-[#C9F0F2] active:scale-95"
             aria-label="Download current assistant performance report"
             title="Download current view as Excel"
@@ -508,18 +676,80 @@ function AssistantPerformanceTable({
         <table className="w-full table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
-              <th className="w-[24%] px-4 py-3">Assistant</th>
-              <th className="w-[13%] px-3 py-3">Role</th>
-              <th className="w-[10%] px-3 py-3 text-center">Assigned</th>
-              <th className="w-[10%] px-3 py-3 text-center">Active</th>
-              <th className="w-[10%] px-3 py-3 text-center">Completed</th>
-              <th className="w-[10%] px-3 py-3 text-center">Overdue</th>
-              <th className="w-[10%] px-3 py-3 text-center">Revoked</th>
-              <th className="w-[13%] px-3 py-3 text-center">Completion</th>
+              <th className="w-[24%] px-4 py-3">
+                <AssistantPerformanceSortHeader
+                  label="Assistant"
+                  column="assistant"
+                  sort={sort}
+                  onChange={updateSort}
+                />
+              </th>
+              <th className="w-[13%] px-3 py-3">
+                <AssistantPerformanceSortHeader
+                  label="Role"
+                  column="role"
+                  sort={sort}
+                  onChange={updateSort}
+                />
+              </th>
+              <th className="w-[10%] px-3 py-3">
+                <AssistantPerformanceSortHeader
+                  label="Assigned"
+                  column="assigned"
+                  sort={sort}
+                  onChange={updateSort}
+                  align="center"
+                />
+              </th>
+              <th className="w-[10%] px-3 py-3">
+                <AssistantPerformanceSortHeader
+                  label="Active"
+                  column="active"
+                  sort={sort}
+                  onChange={updateSort}
+                  align="center"
+                />
+              </th>
+              <th className="w-[10%] px-3 py-3">
+                <AssistantPerformanceSortHeader
+                  label="Completed"
+                  column="completed"
+                  sort={sort}
+                  onChange={updateSort}
+                  align="center"
+                />
+              </th>
+              <th className="w-[10%] px-3 py-3">
+                <AssistantPerformanceSortHeader
+                  label="Overdue"
+                  column="overdue"
+                  sort={sort}
+                  onChange={updateSort}
+                  align="center"
+                />
+              </th>
+              <th className="w-[10%] px-3 py-3">
+                <AssistantPerformanceSortHeader
+                  label="Revoked"
+                  column="revoked"
+                  sort={sort}
+                  onChange={updateSort}
+                  align="center"
+                />
+              </th>
+              <th className="w-[13%] px-3 py-3">
+                <AssistantPerformanceSortHeader
+                  label="Completion"
+                  column="completion"
+                  sort={sort}
+                  onChange={updateSort}
+                  align="center"
+                />
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#444444]">
-            {stats.map((item) => (
+            {sortedStats.map((item) => (
               <tr
                 key={item.row.id}
                 className="group align-top transition-colors duration-150 hover:bg-[#383838]"
@@ -555,7 +785,7 @@ function AssistantPerformanceTable({
                 </td>
               </tr>
             ))}
-            {stats.length === 0 && (
+            {sortedStats.length === 0 && (
               <tr>
                 <td
                   colSpan={8}
