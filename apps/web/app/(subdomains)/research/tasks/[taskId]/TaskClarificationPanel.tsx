@@ -26,7 +26,21 @@ export type TaskClarificationItem = {
   };
   requestedByIsAssignee: boolean;
   canAnswer: boolean;
+  canAddRequestMessage: boolean;
+  canAddAnswerMessage: boolean;
+  messages: {
+    id: string;
+    body: string;
+    createdAt: string;
+    sender: {
+      id: string;
+      name: string;
+      email: string;
+    };
+    senderIsAssignee: boolean;
+  }[];
   answeredBy: {
+    id: string;
     name: string;
     email: string;
   } | null;
@@ -61,17 +75,55 @@ function pendingAlign(item: TaskClarificationItem) {
   return item.requestedByIsAssignee ? "right" : "left";
 }
 
+function conversationMessages(item: TaskClarificationItem) {
+  return [
+    {
+      id: `${item.id}:question`,
+      at: item.createdAt,
+      sender: item.requestedBy,
+      senderIsAssignee: item.requestedByIsAssignee,
+      content: item.question,
+    },
+    ...item.messages.map((message) => ({
+      id: message.id,
+      at: message.createdAt,
+      sender: message.sender,
+      senderIsAssignee: message.senderIsAssignee,
+      content: message.body,
+    })),
+    ...(item.answer
+      ? [
+          {
+            id: `${item.id}:answer`,
+            at: item.answeredAt ?? "",
+            sender: item.answeredBy ?? {
+              id: "",
+              name: managerFallbackName(item),
+              email: "",
+            },
+            senderIsAssignee: !item.requestedByIsAssignee,
+            content: item.answer,
+          },
+        ]
+      : []),
+  ].sort((left, right) => {
+    const leftTime = left.at ? new Date(left.at).getTime() : 0;
+    const rightTime = right.at ? new Date(right.at).getTime() : 0;
+    return leftTime - rightTime;
+  });
+}
+
 export function TaskClarificationPanel({
   clarifications,
   canAnswer,
-  currentUserId,
-  answerAction,
+  canStartClarification,
+  messageAction,
   className = "border-t border-[#444444] pt-5",
 }: {
   clarifications: TaskClarificationItem[];
   canAnswer: boolean;
-  currentUserId: string;
-  answerAction: (formData: FormData) => void | Promise<void>;
+  canStartClarification: boolean;
+  messageAction: (formData: FormData) => void | Promise<void>;
   className?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -81,6 +133,45 @@ export function TaskClarificationPanel({
     () => [...clarifications].reverse(),
     [clarifications],
   );
+  const composer = useMemo(() => {
+    const active = clarifications[0] ?? null;
+    if (active && !active.answer) {
+      if (active.canAddRequestMessage) {
+        return {
+          mode: "followup",
+          clarificationId: active.id,
+          placeholder: "Add more detail to your clarification request.",
+          buttonLabel: "Send message",
+        };
+      }
+      if (canAnswer && active.canAnswer) {
+        return {
+          mode: "answer",
+          clarificationId: active.id,
+          placeholder: "Answer this clarification request.",
+          buttonLabel: "Send answer",
+        };
+      }
+      return null;
+    }
+    if (active?.answer && active.canAddAnswerMessage) {
+      return {
+        mode: "followup",
+        clarificationId: active.id,
+        placeholder: "Add more detail to your answer.",
+        buttonLabel: "Send message",
+      };
+    }
+    if (canStartClarification) {
+      return {
+        mode: "start",
+        clarificationId: "",
+        placeholder: "Start a new clarification request.",
+        buttonLabel: "Send request",
+      };
+    }
+    return null;
+  }, [canAnswer, canStartClarification, clarifications]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -149,29 +240,21 @@ export function TaskClarificationPanel({
         maxWidth="max-w-3xl"
         bodyClassName="px-5 py-5"
       >
-        <div ref={historyScrollRef} className="max-h-[62vh] overflow-y-auto">
+        <div ref={historyScrollRef} className="max-h-[56vh] overflow-y-auto">
           {timeline.length > 0 ? (
             <div className="space-y-5">
               {timeline.map((item) => (
                 <div key={item.id} className="space-y-3">
-                  <ChatBubble
-                    align={item.requestedByIsAssignee ? "left" : "right"}
-                    label={personName(item.requestedBy)}
-                    time={formatDateTime(item.createdAt)}
-                    content={item.question}
-                  />
-                  {item.answer ? (
+                  {conversationMessages(item).map((message) => (
                     <ChatBubble
-                      align={item.requestedByIsAssignee ? "right" : "left"}
-                      label={
-                        item.answeredBy
-                          ? personName(item.answeredBy)
-                          : managerFallbackName(item)
-                      }
-                      time={formatDateTime(item.answeredAt)}
-                      content={item.answer}
+                      key={message.id}
+                      align={message.senderIsAssignee ? "left" : "right"}
+                      label={personName(message.sender)}
+                      time={formatDateTime(message.at)}
+                      content={message.content}
                     />
-                  ) : (
+                  ))}
+                  {!item.answer ? (
                     <div
                       className={`max-w-[88%] rounded-none border border-amber-200 bg-amber-50/70 px-4 py-3 sm:max-w-[76%] dark:border-amber-500/30 dark:bg-amber-500/10 ${
                         pendingAlign(item) === "right" ? "ml-auto" : ""
@@ -180,24 +263,11 @@ export function TaskClarificationPanel({
                       <p className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
                         Pending feedback
                       </p>
-                      {canAnswer && item.canAnswer ? (
-                        item.requestedBy.id !== currentUserId ? (
-                          <AnswerForm
-                            clarificationId={item.id}
-                            action={answerAction}
-                          />
-                        ) : (
-                          <p className="mt-1 text-sm leading-6 text-[#667085] dark:text-[#B0B0B0]">
-                            {pendingReplyText(item)}
-                          </p>
-                        )
-                      ) : (
-                        <p className="mt-1 text-sm leading-6 text-[#667085] dark:text-[#B0B0B0]">
-                          {pendingReplyText(item)}
-                        </p>
-                      )}
+                      <p className="mt-1 text-sm leading-6 text-[#667085] dark:text-[#B0B0B0]">
+                        {pendingReplyText(item)}
+                      </p>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -210,6 +280,15 @@ export function TaskClarificationPanel({
             </div>
           )}
         </div>
+        {composer ? (
+          <MessageComposer
+            mode={composer.mode}
+            clarificationId={composer.clarificationId}
+            placeholder={composer.placeholder}
+            buttonLabel={composer.buttonLabel}
+            action={messageAction}
+          />
+        ) : null}
       </ResearchModal>
     </section>
   );
@@ -258,15 +337,21 @@ function ChatBubble({
   );
 }
 
-function AnswerForm({
+function MessageComposer({
+  mode,
   clarificationId,
+  placeholder,
+  buttonLabel,
   action,
 }: {
+  mode: string;
   clarificationId: string;
+  placeholder: string;
+  buttonLabel: string;
   action: (formData: FormData) => void | Promise<void>;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const [answer, setAnswer] = useState("");
+  const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const toast = useResearchToast();
@@ -275,38 +360,39 @@ function AnswerForm({
     <form
       ref={formRef}
       action={async (formData) => {
-        const value = String(formData.get("answer") ?? "").trim();
+        const value = String(formData.get("message") ?? "").trim();
         if (!value) {
           toast.showError({
-            title: "Reply required",
-            detail: "Please write a reply before sending it.",
+            title: "Message required",
+            detail: "Please write a message before sending it.",
           });
           return;
         }
         await action(formData);
-        setAnswer("");
+        setMessage("");
         toast.showSuccess({
-          title: "Feedback sent",
+          title: "Message sent",
           detail: "The task conversation has been updated.",
         });
         router.refresh();
       }}
-      className="mt-3 grid gap-3"
+      className="mt-4 grid gap-3 border-t border-slate-200 pt-4 dark:border-[#444444]"
     >
+      <input type="hidden" name="mode" value={mode} />
       <input type="hidden" name="clarificationId" value={clarificationId} />
       <textarea
-        name="answer"
+        name="message"
         required
-        value={answer}
-        onChange={(event) => setAnswer(event.target.value)}
-        rows={4}
-        placeholder="Write a reply for this request."
+        value={message}
+        onChange={(event) => setMessage(event.target.value)}
+        rows={3}
+        placeholder={placeholder}
         className={`${researchTextareaClass} resize-none`}
       />
       <div className="flex justify-end">
         <button
           type="button"
-          disabled={isPending || answer.trim().length === 0}
+          disabled={isPending || message.trim().length === 0}
           onClick={() => {
             startTransition(() => {
               formRef.current?.requestSubmit();
@@ -319,7 +405,7 @@ function AnswerForm({
           ) : (
             <Send className="h-4 w-4" />
           )}
-          Send reply
+          {buttonLabel}
         </button>
       </div>
     </form>

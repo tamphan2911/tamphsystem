@@ -90,37 +90,38 @@ model User {
   canManageResearchVenues       Boolean   @default(false)
 
   // Relations
-  authoredCourses                 Course[]                     @relation("CourseAuthor")
+  authoredCourses                 Course[]                           @relation("CourseAuthor")
   enrollments                     Enrollment[]
   sessionCompletions              SessionCompletion[]
   quizAttempts                    QuizAttempt[]
-  researchProjects                ResearchProject[]            @relation("LeadResearcher")
-  authoredResearch                ResearchProject[]            @relation("ResearchAuthors")
+  researchProjects                ResearchProject[]                  @relation("LeadResearcher")
+  authoredResearch                ResearchProject[]                  @relation("ResearchAuthors")
   researchAuthorEntries           ResearchProjectAuthor[]
-  registeredResearch              ResearchProject[]            @relation("ResearchRegistrationUser")
-  createdResearchTasks            ResearchTask[]               @relation("ResearchTaskCreator")
-  checkedResearchTasks            ResearchTask[]               @relation("ResearchTaskChecker")
-  completedResearchTasks          ResearchTask[]               @relation("ResearchTaskCompleter")
-  redoRequestedResearchTasks      ResearchTask[]               @relation("ResearchTaskRedoRequester")
-  revokedResearchTasks            ResearchTask[]               @relation("ResearchTaskRevoker")
-  createdTaskGuides               TaskGuide[]                  @relation("TaskGuideCreator")
-  createdSuggestedReviewers       SuggestedReviewer[]          @relation("SuggestedReviewerCreator")
-  assignedResearchTasks           ResearchTaskAssignment[]     @relation("ResearchTaskAssignee")
+  registeredResearch              ResearchProject[]                  @relation("ResearchRegistrationUser")
+  createdResearchTasks            ResearchTask[]                     @relation("ResearchTaskCreator")
+  checkedResearchTasks            ResearchTask[]                     @relation("ResearchTaskChecker")
+  completedResearchTasks          ResearchTask[]                     @relation("ResearchTaskCompleter")
+  redoRequestedResearchTasks      ResearchTask[]                     @relation("ResearchTaskRedoRequester")
+  revokedResearchTasks            ResearchTask[]                     @relation("ResearchTaskRevoker")
+  createdTaskGuides               TaskGuide[]                        @relation("TaskGuideCreator")
+  createdSuggestedReviewers       SuggestedReviewer[]                @relation("SuggestedReviewerCreator")
+  assignedResearchTasks           ResearchTaskAssignment[]           @relation("ResearchTaskAssignee")
   researchNotifications           ResearchNotification[]
-  suggestedJournals               SuggestedJournal[]           @relation("SuggestedJournalCreator")
-  suggestedConferences            SuggestedConference[]        @relation("SuggestedConferenceCreator")
-  approvedSuggestedJournals       SuggestedJournal[]           @relation("SuggestedJournalApprover")
-  approvedSuggestedConferences    SuggestedConference[]        @relation("SuggestedConferenceApprover")
-  declinedSuggestedJournals       SuggestedJournal[]           @relation("SuggestedJournalDecliner")
-  declinedSuggestedConferences    SuggestedConference[]        @relation("SuggestedConferenceDecliner")
-  sentResearchAuthorNotifications ResearchAuthorNotification[] @relation("ResearchAuthorNotificationSender")
-  createdOrganizedProjects        OrganizedProject[]           @relation("OrganizedProjectCreator")
-  createdJournals                 Journal[]                    @relation("JournalCreator")
-  createdPublishers               Publisher[]                  @relation("PublisherCreator")
+  suggestedJournals               SuggestedJournal[]                 @relation("SuggestedJournalCreator")
+  suggestedConferences            SuggestedConference[]              @relation("SuggestedConferenceCreator")
+  approvedSuggestedJournals       SuggestedJournal[]                 @relation("SuggestedJournalApprover")
+  approvedSuggestedConferences    SuggestedConference[]              @relation("SuggestedConferenceApprover")
+  declinedSuggestedJournals       SuggestedJournal[]                 @relation("SuggestedJournalDecliner")
+  declinedSuggestedConferences    SuggestedConference[]              @relation("SuggestedConferenceDecliner")
+  sentResearchAuthorNotifications ResearchAuthorNotification[]       @relation("ResearchAuthorNotificationSender")
+  createdOrganizedProjects        OrganizedProject[]                 @relation("OrganizedProjectCreator")
+  createdJournals                 Journal[]                          @relation("JournalCreator")
+  createdPublishers               Publisher[]                        @relation("PublisherCreator")
   organizedProjectMemberships     OrganizedProjectMember[]
-  submittedProposals              Proposal[]                   @relation("ProposalSubmitter")
-  requestedTaskClarifications     ResearchTaskClarification[]  @relation("TaskClarificationRequester")
-  answeredTaskClarifications      ResearchTaskClarification[]  @relation("TaskClarificationAnswerer")
+  submittedProposals              Proposal[]                         @relation("ProposalSubmitter")
+  requestedTaskClarifications     ResearchTaskClarification[]        @relation("TaskClarificationRequester")
+  answeredTaskClarifications      ResearchTaskClarification[]        @relation("TaskClarificationAnswerer")
+  sentTaskClarificationMessages   ResearchTaskClarificationMessage[]
 }
 
 // ---------------------------------------------
@@ -959,11 +960,26 @@ model ResearchTaskClarification {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  task        ResearchTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  requestedBy User         @relation("TaskClarificationRequester", fields: [requestedById], references: [id], onDelete: Cascade)
-  answeredBy  User?        @relation("TaskClarificationAnswerer", fields: [answeredById], references: [id], onDelete: SetNull)
+  task        ResearchTask                       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  requestedBy User                               @relation("TaskClarificationRequester", fields: [requestedById], references: [id], onDelete: Cascade)
+  answeredBy  User?                              @relation("TaskClarificationAnswerer", fields: [answeredById], references: [id], onDelete: SetNull)
+  messages    ResearchTaskClarificationMessage[]
 
   @@index([taskId, createdAt])
+}
+
+model ResearchTaskClarificationMessage {
+  id              String   @id @default(uuid())
+  clarificationId String
+  senderId        String
+  body            String
+  createdAt       DateTime @default(now())
+
+  clarification ResearchTaskClarification @relation(fields: [clarificationId], references: [id], onDelete: Cascade)
+  sender        User                      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([clarificationId, createdAt])
+  @@index([senderId])
 }
 
 model PublisherAccount {

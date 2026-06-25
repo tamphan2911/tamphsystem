@@ -9272,6 +9272,300 @@ export async function requestAssigneeClarification(
   revalidatePath(`/tasks/${taskId}`);
 }
 
+export async function sendTaskClarificationChatMessage(
+  taskId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  const currentUserId = user.id ?? "";
+  if (!currentUserId) redirect("/401");
+
+  const message = optionalString(formData.get("message"));
+  const requestedMode = optionalString(formData.get("mode"));
+  const clarificationId = optionalString(formData.get("clarificationId"));
+  if (!message) return;
+  const checkedMessage = message;
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      title: true,
+      createdById: true,
+      checkerId: true,
+      status: true,
+      createdBy: { select: { email: true } },
+      assignments: {
+        select: { userId: true, user: { select: { email: true } } },
+      },
+      clarifications: {
+        where: clarificationId ? { id: clarificationId } : { answer: null },
+        select: {
+          id: true,
+          requestedById: true,
+          answeredById: true,
+          answer: true,
+          messages: {
+            select: { senderId: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
+  });
+  if (!task) return;
+  const checkedTask = task;
+  if (
+    checkedTask.status === ResearchTaskStatus.COMPLETED ||
+    checkedTask.status === ResearchTaskStatus.REVOKED
+  ) {
+    return;
+  }
+
+  const userIsAssignee = checkedTask.assignments.some(
+    (assignment) => assignment.userId === currentUserId,
+  );
+  const userCanManage =
+    (await canManageTaskAsResearchAdmin(taskId, user)) ||
+    checkedTask.createdById === currentUserId ||
+    checkedTask.checkerId === currentUserId;
+  const clarification = checkedTask.clarifications[0] ?? null;
+  const requesterIsAssignee = clarification
+    ? checkedTask.assignments.some(
+        (assignment) => assignment.userId === clarification.requestedById,
+      )
+    : false;
+  const userIsRequesterSide = clarification
+    ? userIsAssignee === requesterIsAssignee
+    : false;
+  const requestSideExtraCount = clarification
+    ? clarification.messages.filter((item) => {
+        const senderIsAssignee = checkedTask.assignments.some(
+          (assignment) => assignment.userId === item.senderId,
+        );
+        return senderIsAssignee === requesterIsAssignee;
+      }).length
+    : 0;
+  const answerSideExtraCount = clarification
+    ? clarification.messages.filter((item) => {
+        const senderIsAssignee = checkedTask.assignments.some(
+          (assignment) => assignment.userId === item.senderId,
+        );
+        return senderIsAssignee !== requesterIsAssignee;
+      }).length
+    : 0;
+
+  const canStartAssigneeRequest =
+    userIsAssignee &&
+    checkedTask.createdById !== currentUserId &&
+    checkedTask.status !== ResearchTaskStatus.CHECKING &&
+    checkedTask.status !== ResearchTaskStatus.NEED_CLARIFY;
+  const canStartManagerRequest =
+    userCanManage && checkedTask.status === ResearchTaskStatus.CHECKING;
+
+  async function createClarificationRequest() {
+    if (!canStartAssigneeRequest && !canStartManagerRequest) return;
+    if (clarification && !clarification.answer) return;
+
+    await prisma.researchTaskClarification.create({
+      data: { taskId, requestedById: currentUserId, question: checkedMessage },
+    });
+    await prisma.researchTask.update({
+      where: { id: taskId },
+      data: { status: ResearchTaskStatus.NEED_CLARIFY },
+    });
+
+    if (userIsAssignee) {
+      await notifyUsers({
+        userIds: [checkedTask.createdById, checkedTask.checkerId].filter(
+          (id): id is string => Boolean(id),
+        ),
+        type: "TASK_CLARIFICATION_REQUESTED",
+        title: "Clarification requested",
+        summary: checkedTask.title,
+        body: checkedMessage,
+        href: `/tasks/${taskId}`,
+        entityType: "task",
+        entityId: taskId,
+        excludeUserId: currentUserId,
+      });
+      await sendTaskEmail({
+        to: [checkedTask.createdBy.email],
+        subject: `Clarification requested: ${checkedTask.title}`,
+        heading: "Clarification requested",
+        intro:
+          "An assignee requested clarification or additional instruction for this task.",
+        detail: checkedMessage,
+        taskTitle: checkedTask.title,
+        taskId,
+        actionLabel: "Answer request",
+      });
+      return;
+    }
+
+    await notifyUsers({
+      userIds: checkedTask.assignments.map((assignment) => assignment.userId),
+      type: "TASK_ASSIGNEE_CLARIFICATION_REQUESTED",
+      title: "Clarification needed",
+      summary: checkedTask.title,
+      body: `The task reviewer needs your clarification before this task can be approved: ${checkedMessage}`,
+      href: `/tasks/${taskId}`,
+      entityType: "task",
+      entityId: taskId,
+      excludeUserId: currentUserId,
+    });
+    await sendTaskEmail({
+      to: checkedTask.assignments.map((assignment) => assignment.user.email),
+      subject: `Clarification needed: ${checkedTask.title}`,
+      heading: "Clarification needed before approval",
+      intro:
+        "The assigner, checker, or admin needs more information before this task can be approved. Please answer the request in the task conversation.",
+      detail: checkedMessage,
+      taskTitle: checkedTask.title,
+      taskId,
+      actionLabel: "Answer request",
+    });
+    await notifyTaskAdminsAndChecker({
+      taskId,
+      userIds: [checkedTask.createdById, checkedTask.checkerId],
+      type: "TASK_ASSIGNEE_CLARIFICATION_REVIEWER_NOTICE",
+      title: "Clarification requested from assignee",
+      summary: checkedTask.title,
+      body: `A task manager requested clarification from the assignee: ${checkedMessage}`,
+      excludeUserId: currentUserId,
+    });
+  }
+
+  async function createFollowUpMessage() {
+    if (!clarification) return;
+    const canAddRequestFollowUp =
+      !clarification.answer &&
+      clarification.requestedById === currentUserId &&
+      requestSideExtraCount < 2;
+    const canAddAnswerFollowUp =
+      Boolean(clarification.answer) &&
+      !userIsRequesterSide &&
+      clarification.answeredById === currentUserId &&
+      answerSideExtraCount < 2;
+    if (!canAddRequestFollowUp && !canAddAnswerFollowUp) return;
+
+    await prisma.researchTaskClarificationMessage.create({
+      data: {
+        clarificationId: clarification.id,
+        senderId: currentUserId,
+        body: checkedMessage,
+      },
+    });
+    const recipientIds = userIsAssignee
+      ? [checkedTask.createdById, checkedTask.checkerId].filter(
+          (id): id is string => Boolean(id),
+        )
+      : checkedTask.assignments.map((assignment) => assignment.userId);
+    await notifyUsers({
+      userIds: recipientIds,
+      type: "TASK_CLARIFICATION_REQUESTED",
+      title: "Clarification message added",
+      summary: checkedTask.title,
+      body: checkedMessage,
+      href: `/tasks/${taskId}`,
+      entityType: "task",
+      entityId: taskId,
+      excludeUserId: currentUserId,
+    });
+  }
+
+  async function answerClarificationRequest() {
+    if (!clarification || clarification.answer) return;
+    if (userIsRequesterSide) return;
+    if (requesterIsAssignee ? !userCanManage : !userIsAssignee)
+      redirect("/401");
+
+    const updated = await prisma.researchTaskClarification.updateMany({
+      where: { id: clarification.id, taskId, answer: null },
+      data: {
+        answer: checkedMessage,
+        answeredById: currentUserId,
+        answeredAt: new Date(),
+      },
+    });
+    if (updated.count === 0) return;
+    await prisma.researchTask.update({
+      where: { id: taskId },
+      data: {
+        status: requesterIsAssignee
+          ? ResearchTaskStatus.IN_PROGRESS
+          : ResearchTaskStatus.CHECKING,
+      },
+    });
+
+    if (requesterIsAssignee) {
+      await notifyUsers({
+        userIds: checkedTask.assignments.map((assignment) => assignment.userId),
+        type: "TASK_CLARIFICATION_ANSWERED",
+        title: "Clarification answered",
+        summary: checkedTask.title,
+        body: checkedMessage,
+        href: `/tasks/${taskId}`,
+        entityType: "task",
+        entityId: taskId,
+        excludeUserId: currentUserId,
+      });
+      await sendTaskEmail({
+        to: checkedTask.assignments.map((assignment) => assignment.user.email),
+        subject: `Clarification answered: ${checkedTask.title}`,
+        heading: "Clarification answered",
+        intro:
+          "The assigner, checker, or admin has answered a clarification request for this task. Please review the answer and continue the work.",
+        detail: checkedMessage,
+        taskTitle: checkedTask.title,
+        taskId,
+        actionLabel: "Open task",
+      });
+      await notifyTaskAdminsAndChecker({
+        taskId,
+        userIds: [checkedTask.createdById, checkedTask.checkerId],
+        type: "TASK_CLARIFICATION_ANSWERED_REVIEWER_NOTICE",
+        title: "Clarification answered",
+        summary: checkedTask.title,
+        body: `A task manager answered the clarification request: ${checkedMessage}`,
+        excludeUserId: currentUserId,
+      });
+    } else {
+      await notifyTaskAdminsAndChecker({
+        taskId,
+        userIds: [checkedTask.createdById, checkedTask.checkerId],
+        type: "TASK_ASSIGNEE_CLARIFICATION_ANSWERED",
+        title: "Assignee answered clarification",
+        summary: checkedTask.title,
+        body: `The assignee answered the clarification request. The task is ready for check again: ${checkedMessage}`,
+        excludeUserId: currentUserId,
+      });
+      await sendTaskEmail({
+        to: [checkedTask.createdBy.email],
+        subject: `Clarification answered: ${checkedTask.title}`,
+        heading: "Assignee answered clarification",
+        intro:
+          "An assignee answered the clarification request. The task is ready for checking again.",
+        detail: checkedMessage,
+        taskTitle: checkedTask.title,
+        taskId,
+        actionLabel: "Review task",
+      });
+    }
+  }
+
+  if (requestedMode === "start") {
+    await createClarificationRequest();
+  } else if (requestedMode === "followup") {
+    await createFollowUpMessage();
+  } else if (requestedMode === "answer") {
+    await answerClarificationRequest();
+  }
+
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+}
+
 function notificationLabel(type: ResearchAuthorNotificationType) {
   if (type === ResearchAuthorNotificationType.CREATED) return "created";
   if (type === ResearchAuthorNotificationType.PRODUCTION_FINISHED)

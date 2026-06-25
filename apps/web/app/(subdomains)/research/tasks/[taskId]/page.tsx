@@ -36,7 +36,6 @@ import {
 import { auth } from "../../../../../auth";
 import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
 import {
-  answerTaskClarification,
   finishResearchTask,
   markResearchTaskReadyForCheck,
   requestAssigneeClarification,
@@ -44,6 +43,7 @@ import {
   requestTaskRedo,
   revokeResearchTask,
   sendTaskReminderEmail,
+  sendTaskClarificationChatMessage,
   updateTaskSuggestedReviewers,
 } from "../../actions";
 import {
@@ -1318,7 +1318,13 @@ export default async function TaskDetailPage({
       clarifications: {
         include: {
           requestedBy: { select: { id: true, name: true, email: true } },
-          answeredBy: { select: { name: true, email: true } },
+          answeredBy: { select: { id: true, name: true, email: true } },
+          messages: {
+            include: {
+              sender: { select: { id: true, name: true, email: true } },
+            },
+            orderBy: { createdAt: "asc" },
+          },
         },
         orderBy: { createdAt: "desc" },
       },
@@ -1623,7 +1629,13 @@ export default async function TaskDetailPage({
       where: { taskId: task.id },
       include: {
         requestedBy: { select: { id: true, name: true, email: true } },
-        answeredBy: { select: { name: true, email: true } },
+        answeredBy: { select: { id: true, name: true, email: true } },
+        messages: {
+          include: {
+            sender: { select: { id: true, name: true, email: true } },
+          },
+          orderBy: { createdAt: "asc" },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -1700,7 +1712,10 @@ export default async function TaskDetailPage({
     null,
     task.id,
   );
-  const clarificationAnswerAction = answerTaskClarification.bind(null, task.id);
+  const clarificationMessageAction = sendTaskClarificationChatMessage.bind(
+    null,
+    task.id,
+  );
   const revokeAction = revokeResearchTask.bind(null, task.id);
   const hasOpenClarification = taskClarifications.some(
     (clarification) => !clarification.answer,
@@ -2538,12 +2553,32 @@ export default async function TaskDetailPage({
       const requestedByIsAssignee = task.assignments.some(
         (assignment) => assignment.userId === clarification.requestedBy.id,
       );
+      const requestSideExtraCount = clarification.messages.filter((message) => {
+        const senderIsAssignee = task.assignments.some(
+          (assignment) => assignment.userId === message.sender.id,
+        );
+        return senderIsAssignee === requestedByIsAssignee;
+      }).length;
+      const answerSideExtraCount = clarification.messages.filter((message) => {
+        const senderIsAssignee = task.assignments.some(
+          (assignment) => assignment.userId === message.sender.id,
+        );
+        return senderIsAssignee !== requestedByIsAssignee;
+      }).length;
       const canAnswerThisClarification =
         !clarification.answer &&
         clarification.requestedBy.id !== userId &&
         (requestedByIsAssignee
           ? isRootAdmin || isAssigner || isChecker
           : isAssignee);
+      const canAddRequestMessage =
+        !clarification.answer &&
+        clarification.requestedBy.id === userId &&
+        requestSideExtraCount < 2;
+      const canAddAnswerMessage =
+        Boolean(clarification.answer) &&
+        clarification.answeredBy?.id === userId &&
+        answerSideExtraCount < 2;
       return {
         id: clarification.id,
         question: clarification.question,
@@ -2557,8 +2592,24 @@ export default async function TaskDetailPage({
         },
         requestedByIsAssignee,
         canAnswer: canAnswerThisClarification,
+        canAddRequestMessage,
+        canAddAnswerMessage,
+        messages: clarification.messages.map((message) => ({
+          id: message.id,
+          body: message.body,
+          createdAt: message.createdAt.toISOString(),
+          sender: {
+            id: message.sender.id,
+            name: message.sender.name ?? "",
+            email: message.sender.email,
+          },
+          senderIsAssignee: task.assignments.some(
+            (assignment) => assignment.userId === message.sender.id,
+          ),
+        })),
         answeredBy: clarification.answeredBy
           ? {
+              id: clarification.answeredBy.id,
               name: clarification.answeredBy.name ?? "",
               email: clarification.answeredBy.email,
             }
@@ -2936,8 +2987,10 @@ export default async function TaskDetailPage({
             <TaskClarificationPanel
               clarifications={clarificationItems}
               canAnswer={canAnswerClarification}
-              currentUserId={userId}
-              answerAction={clarificationAnswerAction}
+              canStartClarification={
+                canRequestClarification || canRequestAssigneeClarification
+              }
+              messageAction={clarificationMessageAction}
               className=""
             />
           </div>
