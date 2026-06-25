@@ -910,13 +910,18 @@ export function TasksClient({
                         task.assignments.map((assignment) => (
                           <div
                             key={assignment.id}
-                            className="font-normal"
+                            className="space-y-0.5 font-normal"
                             title={displayResearchEmail(assignment.userEmail)}
                           >
-                            {displayResearchPersonName({
-                              name: assignment.userName,
-                              email: assignment.userEmail,
-                            })}
+                            <div>
+                              {displayResearchPersonName({
+                                name: assignment.userName,
+                                email: assignment.userEmail,
+                              })}
+                            </div>
+                            <div className="break-all text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
+                              {displayResearchEmail(assignment.userEmail)}
+                            </div>
                           </div>
                         ))
                       ) : (
