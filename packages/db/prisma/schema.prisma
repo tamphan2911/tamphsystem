@@ -32,6 +32,12 @@ enum ResearchAuthorNotificationType {
   PUBLISHED
 }
 
+enum ResearchFolderAccessRequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
 enum ProposalType {
   RESEARCH
   PROJECT
@@ -97,6 +103,8 @@ model User {
   researchProjects                ResearchProject[]                  @relation("LeadResearcher")
   authoredResearch                ResearchProject[]                  @relation("ResearchAuthors")
   sharedResearchFolders           ResearchProject[]                  @relation("ResearchFolderSharedUsers")
+  researchFolderAccessRequests    ResearchFolderAccessRequest[]      @relation("ResearchFolderAccessRequester")
+  decidedResearchFolderRequests   ResearchFolderAccessRequest[]      @relation("ResearchFolderAccessDecider")
   researchAuthorEntries           ResearchProjectAuthor[]
   registeredResearch              ResearchProject[]                  @relation("ResearchRegistrationUser")
   createdResearchTasks            ResearchTask[]                     @relation("ResearchTaskCreator")
@@ -423,6 +431,7 @@ model ResearchProject {
   suggestedConferences  SuggestedConference[]
   tasks                 ResearchTask[]
   authorNotifications   ResearchAuthorNotification[]
+  folderAccessRequests  ResearchFolderAccessRequest[]
   organizedProjectLinks OrganizedProjectResearch[]
   sourceProposal        Proposal?                    @relation("ProposalCreatedResearch")
 
@@ -533,6 +542,28 @@ model ResearchAuthorNotification {
 
   @@unique([projectId, type])
   @@index([projectId])
+}
+
+model ResearchFolderAccessRequest {
+  id             String                            @id @default(uuid())
+  projectId      String
+  userId         String
+  requesterName  String
+  requesterEmail String
+  requesterRole  String
+  status         ResearchFolderAccessRequestStatus @default(PENDING)
+  note           String?
+  decidedAt      DateTime?
+  decidedById    String?
+  createdAt      DateTime                          @default(now())
+  updatedAt      DateTime                          @updatedAt
+
+  project   ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User            @relation("ResearchFolderAccessRequester", fields: [userId], references: [id], onDelete: Cascade)
+  decidedBy User?           @relation("ResearchFolderAccessDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+
+  @@index([projectId, status, createdAt])
+  @@index([userId, status])
 }
 
 model ResearchNotification {

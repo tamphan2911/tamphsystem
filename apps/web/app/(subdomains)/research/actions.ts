@@ -41,6 +41,7 @@ import {
   ProposalType,
   Prisma,
   PublisherAccountType,
+  ResearchFolderAccessRequestStatus,
   ResearchAuthorNotificationType,
   ResearchTaskCategory,
   ResearchTaskStatus,
@@ -3600,6 +3601,248 @@ export async function updateResearchFolderSharedUsers(
 
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
+}
+
+function researchFolderAccessRoleLabel({
+  isAuthor,
+  isFirstAuthor,
+  isCorrespondingAuthor,
+  isTaskAssignee,
+  isTaskChecker,
+}: {
+  isAuthor: boolean;
+  isFirstAuthor: boolean;
+  isCorrespondingAuthor: boolean;
+  isTaskAssignee: boolean;
+  isTaskChecker: boolean;
+}) {
+  const roles: string[] = [];
+  if (isFirstAuthor) roles.push("First author");
+  else if (isCorrespondingAuthor) roles.push("Corresponding author");
+  else if (isAuthor) roles.push("Author");
+  if (isTaskAssignee) roles.push("Task assignee");
+  if (isTaskChecker) roles.push("Task checker");
+  return roles.join(", ");
+}
+
+export async function requestResearchFolderAccess(projectId: string) {
+  const user = await requireCurrentUser();
+  const [requester, project] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: user.id },
+      select: { name: true, email: true },
+    }),
+    prisma.researchProject.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        title: true,
+        sharedFolderUrl: true,
+        leadResearcherId: true,
+        authors: { select: { id: true } },
+        authorEntries: {
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          select: { userId: true, isCorresponding: true, folderShared: true },
+        },
+        folderSharedUsers: { select: { id: true } },
+        tasks: {
+          select: {
+            checkerId: true,
+            assignments: { select: { userId: true } },
+          },
+        },
+        folderAccessRequests: {
+          where: {
+            userId: user.id,
+            status: ResearchFolderAccessRequestStatus.PENDING,
+          },
+          select: { id: true },
+          take: 1,
+        },
+      },
+    }),
+  ]);
+
+  if (!project || !requester || !project.sharedFolderUrl) redirect("/401");
+  if (user.roles.includes(Role.ADMIN)) return { status: "already-shared" };
+
+  const authorIds = new Set([
+    project.leadResearcherId,
+    ...project.authors.map((author) => author.id),
+    ...project.authorEntries.map((entry) => entry.userId),
+  ]);
+  const authorEntryIndex = project.authorEntries.findIndex(
+    (entry) => entry.userId === user.id,
+  );
+  const authorEntry =
+    authorEntryIndex >= 0 ? project.authorEntries[authorEntryIndex] : null;
+  const isAuthor = authorIds.has(user.id);
+  const isFirstAuthor =
+    project.authorEntries.length > 0
+      ? authorEntryIndex === 0
+      : project.leadResearcherId === user.id;
+  const isCorrespondingAuthor =
+    authorEntry?.isCorresponding ?? project.leadResearcherId === user.id;
+  const isTaskAssignee = project.tasks.some((task) =>
+    task.assignments.some((assignment) => assignment.userId === user.id),
+  );
+  const isTaskChecker = project.tasks.some(
+    (task) => task.checkerId === user.id,
+  );
+  const alreadyShared =
+    Boolean(authorEntry?.folderShared) ||
+    project.folderSharedUsers.some((folderUser) => folderUser.id === user.id);
+
+  if (alreadyShared) return { status: "already-shared" };
+  if (!isAuthor && !isTaskAssignee && !isTaskChecker) redirect("/401");
+  if (project.folderAccessRequests.length > 0) {
+    return { status: "already-requested" };
+  }
+
+  const requesterRole = researchFolderAccessRoleLabel({
+    isAuthor,
+    isFirstAuthor,
+    isCorrespondingAuthor,
+    isTaskAssignee,
+    isTaskChecker,
+  });
+  const request = await prisma.researchFolderAccessRequest.create({
+    data: {
+      projectId,
+      userId: user.id,
+      requesterName: requester.name || requester.email,
+      requesterEmail: requester.email,
+      requesterRole,
+    },
+  });
+
+  await notifyUsers({
+    userIds: await adminUserIds(),
+    type: "RESEARCH_FOLDER_ACCESS_REQUESTED",
+    title: "Shared folder access requested",
+    summary: `${requester.name || requester.email} requested access to a research shared folder.`,
+    body: `Research: ${project.title}\nRole: ${requesterRole}`,
+    href: `/projects/${projectId}`,
+    entityType: "researchFolderAccessRequest",
+    entityId: request.id,
+    excludeUserId: user.id,
+  });
+
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}`);
+  return { status: "requested" };
+}
+
+export async function decideResearchFolderAccessRequest(
+  requestId: string,
+  decision: "APPROVED" | "DECLINED",
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  if (!user.roles.includes(Role.ADMIN)) redirect("/401");
+
+  const note = optionalString(formData.get("note"));
+  const request = await prisma.researchFolderAccessRequest.findUnique({
+    where: { id: requestId },
+    include: {
+      user: { select: { id: true, email: true } },
+      project: {
+        select: {
+          id: true,
+          title: true,
+          authorEntries: { select: { userId: true } },
+          authors: { select: { id: true } },
+        },
+      },
+    },
+  });
+
+  if (!request) return { status: "missing" };
+  if (request.status !== ResearchFolderAccessRequestStatus.PENDING) {
+    return { status: "already-decided" };
+  }
+
+  const nextStatus =
+    decision === "APPROVED"
+      ? ResearchFolderAccessRequestStatus.APPROVED
+      : ResearchFolderAccessRequestStatus.DECLINED;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.researchFolderAccessRequest.update({
+      where: { id: requestId },
+      data: {
+        status: nextStatus,
+        note,
+        decidedAt: new Date(),
+        decidedById: user.id,
+      },
+    });
+
+    if (nextStatus === ResearchFolderAccessRequestStatus.APPROVED) {
+      const authorEntry = request.project.authorEntries.find(
+        (entry) => entry.userId === request.userId,
+      );
+      if (authorEntry) {
+        await tx.researchProjectAuthor.update({
+          where: {
+            projectId_userId: {
+              projectId: request.projectId,
+              userId: request.userId,
+            },
+          },
+          data: { folderShared: true },
+        });
+      } else {
+        await tx.researchProject.update({
+          where: { id: request.projectId },
+          data: {
+            folderSharedUsers: {
+              connect: { id: request.userId },
+            },
+          },
+        });
+      }
+    }
+  });
+
+  const approved = nextStatus === ResearchFolderAccessRequestStatus.APPROVED;
+  const decisionLabel = approved ? "approved" : "declined";
+  const noteLine = note ? `\nNote: ${note}` : "";
+  await notifyUsers({
+    userIds: [request.userId],
+    type: approved
+      ? "RESEARCH_FOLDER_ACCESS_APPROVED"
+      : "RESEARCH_FOLDER_ACCESS_DECLINED",
+    title: approved
+      ? "Shared folder access approved"
+      : "Shared folder access declined",
+    summary: `Your shared folder request was ${decisionLabel}.`,
+    body: `Research: ${request.project.title}${noteLine}`,
+    href: `/projects/${request.projectId}`,
+    entityType: "researchFolderAccessRequest",
+    entityId: request.id,
+    excludeUserId: user.id,
+  });
+
+  await sendProposalEmail({
+    to: [request.user.email],
+    subject: approved
+      ? "Research shared folder access approved"
+      : "Research shared folder access declined",
+    heading: approved
+      ? "Shared folder access approved"
+      : "Shared folder access declined",
+    intro: approved
+      ? "Your request to access the research shared folder has been approved."
+      : "Your request to access the research shared folder has been declined.",
+    detail: `Research: ${request.project.title}${noteLine}`,
+    actionHref: `${researchBaseUrl()}/projects/${request.projectId}`,
+    actionLabel: "Open research",
+  });
+
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${request.projectId}`);
+  return { status: decisionLabel };
 }
 
 async function createJournalRecord({

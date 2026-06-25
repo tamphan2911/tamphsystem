@@ -155,6 +155,9 @@ export default async function ProjectsDashboard() {
             tasks: {
               where: { status: { notIn: ["COMPLETED", "REVOKED"] } },
             },
+            folderAccessRequests: {
+              where: { status: "PENDING" },
+            },
           },
         },
       },
@@ -245,6 +248,7 @@ export default async function ProjectsDashboard() {
       submissions: project._count.submissions,
       publications: project._count.publications,
       activeTasks: project._count.tasks,
+      pendingFolderAccessRequests: project._count.folderAccessRequests,
       updatedAt: researchDateTimeFormat("en-GB").format(project.updatedAt),
       notSubmittedAnywhere:
         !hasSubmissions ||

@@ -19,6 +19,7 @@ import {
   FileCheck2,
   FileClock,
   FileSearch,
+  FolderClock,
   FlaskConical,
   Hourglass,
   Send,
@@ -60,6 +61,7 @@ export type ResearchProjectRow = {
   submissions: number;
   publications: number;
   activeTasks: number;
+  pendingFolderAccessRequests: number;
   updatedAt: string;
   notSubmittedAnywhere: boolean;
   hasSubmittedSubmission: boolean;
@@ -352,6 +354,20 @@ function ActiveTaskCount({
   );
 }
 
+function FolderAccessRequestCount({ count }: { count: number }) {
+  if (count <= 0) return null;
+  const label = `${count} ongoing shared folder access ${count === 1 ? "request" : "requests"}`;
+
+  return (
+    <IconHint label={label}>
+      <span className="research-allow-transform inline-flex min-h-5 min-w-8 items-center justify-center px-1 text-amber-700 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:text-amber-800 hover:drop-shadow-[0_0_0.45rem_rgba(217,119,6,0.22)] dark:text-amber-300 dark:hover:text-amber-200">
+        <FolderClock className="h-4 w-4" aria-hidden="true" />
+        <span className="sr-only">{label}</span>
+      </span>
+    </IconHint>
+  );
+}
+
 function ClaimStatusChip({ status }: { status: string }) {
   const Icon = claimIcon(status);
   const label = claimLabel(status);
@@ -542,6 +558,9 @@ export function ResearchProjectsTable({
     "projects:sort",
     "NONE",
   );
+  const [folderRequestValue, setFolderRequestValue] =
+    usePersistentTableValue("projects:folder-requests", "0");
+  const showFolderRequestsOnly = folderRequestValue === "1";
   const sort = useMemo(() => parseSortValue(sortValue), [sortValue]);
   const selectedStages = useMemo(
     () => selectedFilterValues(stageValue, stages),
@@ -573,6 +592,8 @@ export function ResearchProjectsTable({
         !showRegistrationClaim ||
         selectedRegistrations.length === 0 ||
         selectedRegistrations.includes(row.registerStatus);
+      const matchesFolderRequest =
+        !showFolderRequestsOnly || row.pendingFolderAccessRequests > 0;
       const haystack = [
         row.title,
         row.researchCode,
@@ -591,6 +612,7 @@ export function ResearchProjectsTable({
         matchesStage &&
         matchesClaim &&
         matchesRegistration &&
+        matchesFolderRequest &&
         (!needle || haystack.includes(needle))
       );
     });
@@ -600,6 +622,7 @@ export function ResearchProjectsTable({
     selectedClaims,
     selectedRegistrations,
     selectedStages,
+    showFolderRequestsOnly,
     showRegistrationClaim,
   ]);
 
@@ -663,6 +686,11 @@ export function ResearchProjectsTable({
     pagination.setPage(1);
   }
 
+  function updateFolderRequestFilter(checked: boolean) {
+    setFolderRequestValue(checked ? "1" : "0");
+    pagination.setPage(1);
+  }
+
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
@@ -676,6 +704,17 @@ export function ResearchProjectsTable({
           }
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
+          <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838]">
+            <input
+              type="checkbox"
+              checked={showFolderRequestsOnly}
+              onChange={(event) =>
+                updateFolderRequestFilter(event.target.checked)
+              }
+              className="h-4 w-4 accent-amber-600 dark:accent-amber-300"
+            />
+            <span className="whitespace-nowrap">Folder requests</span>
+          </label>
           <MultiFilterSelect
             values={selectedStages}
             onChange={updateStages}
@@ -815,6 +854,9 @@ export function ResearchProjectsTable({
                     <ActiveTaskCount
                       projectId={row.id}
                       count={row.activeTasks}
+                    />
+                    <FolderAccessRequestCount
+                      count={row.pendingFolderAccessRequests}
                     />
                   </div>
                 </td>

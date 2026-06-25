@@ -19,6 +19,7 @@ import {
 import {
   prisma,
   JournalApprovalStatus,
+  ResearchFolderAccessRequestStatus,
   ResearchTaskStatus,
   Role,
 } from "@repo/db";
@@ -65,6 +66,11 @@ import {
   SharedFolderUsersDialog,
   type FolderSharedUserOption,
 } from "./SharedFolderUsersDialog";
+import { ResearchFolderAccessRequestButton } from "./ResearchFolderAccessRequestButton";
+import {
+  ResearchFolderAccessRequestsDialog,
+  type ResearchFolderAccessRequestRow,
+} from "./ResearchFolderAccessRequestsDialog";
 import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
 import {
   IconHint,
@@ -329,6 +335,19 @@ export default async function ProjectDetailPage({
           orderBy: [{ name: "asc" }, { email: "asc" }],
           select: { id: true, name: true, email: true, roles: true },
         },
+        folderAccessRequests: {
+          orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+          select: {
+            id: true,
+            requesterName: true,
+            requesterEmail: true,
+            requesterRole: true,
+            status: true,
+            note: true,
+            createdAt: true,
+            decidedAt: true,
+          },
+        },
         suggestedJournals: {
           include: {
             journal: {
@@ -492,6 +511,9 @@ export default async function ProjectDetailPage({
   });
   const hasAssignedResearchTask = project.tasks.some((task) =>
     task.assignments.some((assignment) => assignment.userId === userId),
+  );
+  const isTaskCheckerForResearch = project.tasks.some(
+    (task) => task.checkerId === userId,
   );
   const hasUnfinishedAssignedResearchTask = project.tasks.some(
     (task) =>
@@ -1012,6 +1034,30 @@ export default async function ProjectDetailPage({
     isRootAdmin ||
     currentAuthorFolderShared ||
     folderSharedUserIdSet.has(userId);
+  const canViewResearchFolderIcon =
+    Boolean(project.sharedFolderUrl) &&
+    (canOpenResearchFolder ||
+      isProjectAuthor ||
+      hasAssignedResearchTask ||
+      isTaskCheckerForResearch);
+  const canRequestResearchFolderAccess =
+    canViewResearchFolderIcon && !canOpenResearchFolder && !isRootAdmin;
+  const pendingFolderAccessRequests = project.folderAccessRequests.filter(
+    (request) => request.status === ResearchFolderAccessRequestStatus.PENDING,
+  );
+  const folderAccessRequestRows: ResearchFolderAccessRequestRow[] =
+    project.folderAccessRequests.map((request) => ({
+      id: request.id,
+      requesterName: request.requesterName,
+      requesterEmail: displayResearchEmail(request.requesterEmail),
+      requesterRole: request.requesterRole,
+      status: request.status,
+      note: request.note ?? "",
+      createdAt: researchDateTimeFormat("en-GB").format(request.createdAt),
+      decidedAt: request.decidedAt
+        ? researchDateTimeFormat("en-GB").format(request.decidedAt)
+        : "",
+    }));
   const completedProductionStepValues = project.completedProductionSteps;
   const researchBasicValues = {
     title: project.title,
@@ -1249,7 +1295,14 @@ export default async function ProjectDetailPage({
                 {project.title}
               </h1>
               <span className="ml-2 inline-flex items-center gap-2 align-middle">
-                {project.sharedFolderUrl && canOpenResearchFolder ? (
+                {isRootAdmin && pendingFolderAccessRequests.length > 0 ? (
+                  <ResearchFolderAccessRequestsDialog
+                    requests={folderAccessRequestRows}
+                  />
+                ) : null}
+                {project.sharedFolderUrl &&
+                canViewResearchFolderIcon &&
+                canOpenResearchFolder ? (
                   <IconHint label="Open research folder" position="bottom">
                     <a
                       href={project.sharedFolderUrl}
@@ -1261,6 +1314,12 @@ export default async function ProjectDetailPage({
                       <FolderOpen className="h-4 w-4" aria-hidden="true" />
                     </a>
                   </IconHint>
+                ) : project.sharedFolderUrl &&
+                  canRequestResearchFolderAccess ? (
+                  <ResearchFolderAccessRequestButton
+                    projectId={project.id}
+                    researchTitle={project.title}
+                  />
                 ) : null}
                 {canCreateSubmitOrOtherTask ? (
                   <NewTaskDialog
