@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  ArrowDownNarrowWide,
+  ArrowDownUp,
+  ArrowUpNarrowWide,
   BadgeCheck,
   BookmarkCheck,
   ClipboardCheck,
@@ -54,6 +57,69 @@ export type JournalRow = {
   publishedSubmissions: number;
   reviews: number;
 };
+
+type ApcSortDirection = "desc" | "asc";
+
+function parseApcSort(value: string | null): ApcSortDirection | null {
+  return value === "desc" || value === "asc" ? value : null;
+}
+
+function nextApcSort(current: ApcSortDirection | null) {
+  if (!current) return "desc";
+  if (current === "desc") return "asc";
+  return null;
+}
+
+function apcSortHint(current: ApcSortDirection | null) {
+  const next = nextApcSort(current);
+  if (!next) return "Clear APC sorting";
+  return next === "desc" ? "Sort APC high to low" : "Sort APC low to high";
+}
+
+function apcSortValue(amount: string) {
+  const trimmed = amount.trim();
+  if (!trimmed) return 0;
+  const normalized = trimmed
+    .replaceAll(",", "")
+    .replaceAll(" ", "")
+    .replace(/[^\d.-]/g, "");
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function ApcSortButton({
+  sort,
+  onChange,
+}: {
+  sort: ApcSortDirection | null;
+  onChange: () => void;
+}) {
+  const Icon =
+    sort === "desc"
+      ? ArrowDownNarrowWide
+      : sort === "asc"
+        ? ArrowUpNarrowWide
+        : ArrowDownUp;
+
+  return (
+    <IconHint label={apcSortHint(sort)}>
+      <button
+        type="button"
+        aria-label={apcSortHint(sort)}
+        aria-pressed={Boolean(sort)}
+        onClick={onChange}
+        className={`research-allow-transform inline-flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 shadow-none outline-none transition-[color,filter,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
+          sort
+            ? "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+            : "text-slate-500 hover:text-slate-900 dark:text-[#8F98A8] dark:hover:text-[#E4E4E4]"
+        }`}
+      >
+        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+      </button>
+    </IconHint>
+  );
+}
 
 function DeleteJournalButton({
   journal,
@@ -198,6 +264,9 @@ export function JournalsTable({
   const [noAccountOnly, setNoAccountOnly] = useState(
     () => isAdmin && searchParams.get("noAccount") === "1",
   );
+  const [apcSort, setApcSort] = useState<ApcSortDirection | null>(() =>
+    parseApcSort(searchParams.get("apcSort")),
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -241,9 +310,28 @@ export function JournalsTable({
     });
   }, [favoriteOnly, interestOnly, isAdmin, noAccountOnly, query, rows]);
 
+  const sortedRows = useMemo(() => {
+    if (!apcSort) return filtered;
+    return filtered
+      .map((row, index) => ({ row, index }))
+      .sort((left, right) => {
+        const leftValue = apcSortValue(left.row.apc);
+        const rightValue = apcSortValue(right.row.apc);
+        if (leftValue === null && rightValue === null) {
+          return left.index - right.index;
+        }
+        if (leftValue === null) return 1;
+        if (rightValue === null) return -1;
+        const comparison =
+          apcSort === "desc" ? rightValue - leftValue : leftValue - rightValue;
+        return comparison || left.index - right.index;
+      })
+      .map((item) => item.row);
+  }, [apcSort, filtered]);
+
   const initialPage = Number(searchParams.get("page") ?? "1");
   const pagination = useTablePagination(
-    filtered,
+    sortedRows,
     10,
     Number.isFinite(initialPage) && initialPage > 0 ? initialPage : 1,
   );
@@ -253,9 +341,11 @@ export function JournalsTable({
     if (favoriteOnly) params.set("favorite", "1");
     if (interestOnly) params.set("interest", "1");
     if (isAdmin && noAccountOnly) params.set("noAccount", "1");
+    if (apcSort) params.set("apcSort", apcSort);
     if (pagination.page > 1) params.set("page", String(pagination.page));
     return params.toString() ? `${pathname}?${params.toString()}` : pathname;
   }, [
+    apcSort,
     favoriteOnly,
     interestOnly,
     isAdmin,
@@ -277,6 +367,11 @@ export function JournalsTable({
 
   function updateNoAccountOnly(checked: boolean) {
     setNoAccountOnly(checked);
+    pagination.setPage(1);
+  }
+
+  function toggleApcSort() {
+    setApcSort((current) => nextApcSort(current));
     pagination.setPage(1);
   }
 
@@ -351,7 +446,12 @@ export function JournalsTable({
               >
                 Field
               </th>
-              <th className="w-[10%] px-4 py-3">APC</th>
+              <th className="w-[10%] px-4 py-3">
+                <span className="inline-flex items-center gap-1.5">
+                  <span>APC</span>
+                  <ApcSortButton sort={apcSort} onChange={toggleApcSort} />
+                </span>
+              </th>
               <th className="w-[10%] px-4 py-3">Fee</th>
               <th
                 className={
