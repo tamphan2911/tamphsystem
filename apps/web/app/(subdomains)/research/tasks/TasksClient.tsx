@@ -506,6 +506,7 @@ export function TasksClient({
   const [unfinishedOnlyValue, setUnfinishedOnlyValue] = usePersistentTableValue(
     "tasks:unfinished",
     isAdmin && !hasStoredTaskStatus ? "true" : "false",
+    { persistDefaultValue: true },
   );
   const unfinishedOnly = unfinishedOnlyValue === "true";
   const [statusBeforeUnfinished, setStatusBeforeUnfinished] = useState<
@@ -705,7 +706,9 @@ export function TasksClient({
       );
     });
   }, [activeHeaderTab, isAdmin, query, statuses, taskTypes, tasks]);
-  const pagination = useTablePagination(filtered, 10, 1, "tasks");
+  const pagination = useTablePagination(filtered, 10, 1, "tasks", {
+    preservePageWhenEmpty: true,
+  });
 
   function updateQuery(value: string) {
     setQuery(value);
@@ -713,6 +716,8 @@ export function TasksClient({
   }
 
   function updateScopeTab(value: TaskHeaderTab) {
+    if (value === activeHeaderTab) return;
+
     setScopeTab(value);
     pagination.setPage(1);
 

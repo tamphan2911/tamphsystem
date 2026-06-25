@@ -342,6 +342,7 @@ export function useTablePagination<T>(
   pageSize = 10,
   initialPage = 1,
   storageKey?: string,
+  options?: { preservePageWhenEmpty?: boolean },
 ) {
   const pathname = usePathname();
   const resolvedStorageKey = storageKey
@@ -356,8 +357,9 @@ export function useTablePagination<T>(
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
 
   useEffect(() => {
+    if (options?.preservePageWhenEmpty && rows.length === 0) return;
     setPage((current) => Math.min(current, pageCount));
-  }, [pageCount]);
+  }, [options?.preservePageWhenEmpty, pageCount, rows.length]);
 
   useEffect(() => {
     window.sessionStorage.setItem(resolvedStorageKey, String(page));
@@ -374,14 +376,17 @@ export function useTablePagination<T>(
 export function usePersistentTableValue(
   key: string,
   defaultValue: string,
+  options?: { persistDefaultValue?: boolean },
 ): readonly [string, Dispatch<SetStateAction<string>>];
 export function usePersistentTableValue<T extends string>(
   key: string,
   defaultValue: T,
+  options?: { persistDefaultValue?: boolean },
 ): readonly [T, Dispatch<SetStateAction<T>>];
 export function usePersistentTableValue(
   key: string,
   defaultValue: string,
+  options?: { persistDefaultValue?: boolean },
 ) {
   const pathname = usePathname();
   const storageKey = `research:${pathname}:${key}`;
@@ -392,11 +397,15 @@ export function usePersistentTableValue(
 
   useEffect(() => {
     if (value === defaultValue) {
+      if (options?.persistDefaultValue) {
+        window.sessionStorage.setItem(storageKey, value);
+        return;
+      }
       window.sessionStorage.removeItem(storageKey);
       return;
     }
     window.sessionStorage.setItem(storageKey, value);
-  }, [defaultValue, storageKey, value]);
+  }, [defaultValue, options?.persistDefaultValue, storageKey, value]);
 
   return [value, setValue] as const;
 }
