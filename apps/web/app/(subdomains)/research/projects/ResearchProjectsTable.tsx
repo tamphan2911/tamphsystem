@@ -746,9 +746,9 @@ export function ResearchProjectsTable({
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
               <th className="w-[5.75rem] px-3 py-3">ID</th>
-              <th className="px-3 py-3">Research</th>
-              <th className="w-[5.75rem] px-3 py-3">
+              <th className="px-3 py-3">
                 <span className="inline-flex items-center gap-1.5">
+                  Research
                   <IconHint
                     label={
                       showFolderRequestsOnly
@@ -776,6 +776,10 @@ export function ResearchProjectsTable({
                       <FolderClock className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </IconHint>
+                </span>
+              </th>
+              <th className="w-[5.75rem] px-3 py-3">
+                <span className="inline-flex items-center gap-1.5">
                   Stage
                   <SortHeaderButton
                     column="stage"
