@@ -59,25 +59,67 @@ export type JournalRow = {
   reviews: number;
 };
 
-type ApcSortDirection = "desc" | "asc";
+type JournalSortColumn = "apc" | "fee" | "submission" | "accepted" | "review";
+type JournalSortDirection = "desc" | "asc";
+type JournalSortState = {
+  column: JournalSortColumn;
+  direction: JournalSortDirection;
+} | null;
 
-function parseApcSort(value: string | null): ApcSortDirection | null {
+const journalSortLabels: Record<JournalSortColumn, string> = {
+  apc: "APC",
+  fee: "fee",
+  submission: "submissions",
+  accepted: "accepted submissions",
+  review: "reviews",
+};
+
+function parseJournalSortDirection(value: string | null) {
   return value === "desc" || value === "asc" ? value : null;
 }
 
-function nextApcSort(current: ApcSortDirection | null) {
-  if (!current) return "desc";
-  if (current === "desc") return "asc";
+function isJournalSortColumn(value: string): value is JournalSortColumn {
+  return (
+    value === "apc" ||
+    value === "fee" ||
+    value === "submission" ||
+    value === "accepted" ||
+    value === "review"
+  );
+}
+
+function parseJournalSort(value: string | null): JournalSortState {
+  if (!value || value === "NONE") return null;
+  const [column, direction] = value.split(":");
+  if (!column || !direction) return null;
+  if (!isJournalSortColumn(column)) return null;
+  const parsedDirection = parseJournalSortDirection(direction);
+  if (!parsedDirection) return null;
+  return { column, direction: parsedDirection };
+}
+
+function stringifyJournalSort(sort: JournalSortState) {
+  return sort ? `${sort.column}:${sort.direction}` : "NONE";
+}
+
+function nextJournalSortState(
+  current: JournalSortState,
+  column: JournalSortColumn,
+): JournalSortState {
+  if (current?.column !== column) return { column, direction: "desc" };
+  if (current.direction === "desc") return { column, direction: "asc" };
   return null;
 }
 
-function apcSortHint(current: ApcSortDirection | null) {
-  const next = nextApcSort(current);
-  if (!next) return "Clear APC sorting";
-  return next === "desc" ? "Sort APC high to low" : "Sort APC low to high";
+function journalSortHint(column: JournalSortColumn, current: JournalSortState) {
+  const next = nextJournalSortState(current, column);
+  if (!next) return `Clear ${journalSortLabels[column]} sorting`;
+  return next.direction === "desc"
+    ? `Sort ${journalSortLabels[column]} high to low`
+    : `Sort ${journalSortLabels[column]} low to high`;
 }
 
-function apcSortValue(amount: string) {
+function moneySortValue(amount: string) {
   const trimmed = amount.trim();
   if (!trimmed) return 0;
   const normalized = trimmed
@@ -89,29 +131,49 @@ function apcSortValue(amount: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function ApcSortButton({
+function journalSortValue(row: JournalRow, column: JournalSortColumn) {
+  if (column === "apc") return moneySortValue(row.apc);
+  if (column === "fee") return moneySortValue(row.submissionFee);
+  if (column === "submission") return row.ongoingSubmissions;
+  if (column === "accepted") return row.publishedSubmissions;
+  return row.reviews;
+}
+
+function legacyApcSortSetting(pathname: string): JournalSortState {
+  if (typeof window === "undefined") return null;
+  const legacyValue = window.sessionStorage.getItem(
+    `research:${pathname}:journals:apcSort`,
+  );
+  const direction = parseJournalSortDirection(legacyValue);
+  return direction ? { column: "apc", direction } : null;
+}
+
+function JournalSortButton({
+  column,
   sort,
   onChange,
 }: {
-  sort: ApcSortDirection | null;
-  onChange: () => void;
+  column: JournalSortColumn;
+  sort: JournalSortState;
+  onChange: (column: JournalSortColumn) => void;
 }) {
+  const active = sort?.column === column;
   const Icon =
-    sort === "desc"
+    active && sort.direction === "desc"
       ? ArrowDownNarrowWide
-      : sort === "asc"
+      : active && sort.direction === "asc"
         ? ArrowUpNarrowWide
         : ArrowDownUp;
 
   return (
-    <IconHint label={apcSortHint(sort)}>
+    <IconHint label={journalSortHint(column, sort)}>
       <button
         type="button"
-        aria-label={apcSortHint(sort)}
-        aria-pressed={Boolean(sort)}
-        onClick={onChange}
+        aria-label={journalSortHint(column, sort)}
+        aria-pressed={active}
+        onClick={() => onChange(column)}
         className={`research-allow-transform inline-flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 shadow-none outline-none transition-[color,filter,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
-          sort
+          active
             ? "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
             : "text-slate-500 hover:text-slate-900 dark:text-[#8F98A8] dark:hover:text-[#E4E4E4]"
         }`}
@@ -265,12 +327,20 @@ export function JournalsTable({
   const [noAccountOnly, setNoAccountOnly] = useState(
     () => isAdmin && searchParams.get("noAccount") === "1",
   );
-  const initialApcSortValue = parseApcSort(searchParams.get("apcSort"));
-  const [apcSortSetting, setApcSortSetting] = usePersistentTableValue(
-    "journals:apcSort",
-    initialApcSortValue ?? "NONE",
+  const initialLegacyApcSort = parseJournalSortDirection(
+    searchParams.get("apcSort"),
   );
-  const apcSort = parseApcSort(apcSortSetting);
+  const initialSort =
+    parseJournalSort(searchParams.get("sort")) ??
+    (initialLegacyApcSort
+      ? { column: "apc" as const, direction: initialLegacyApcSort }
+      : null) ??
+    legacyApcSortSetting(pathname);
+  const [sortSetting, setSortSetting] = usePersistentTableValue(
+    "journals:sort",
+    stringifyJournalSort(initialSort),
+  );
+  const sort = parseJournalSort(sortSetting);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -315,23 +385,25 @@ export function JournalsTable({
   }, [favoriteOnly, interestOnly, isAdmin, noAccountOnly, query, rows]);
 
   const sortedRows = useMemo(() => {
-    if (!apcSort) return filtered;
+    if (!sort) return filtered;
     return filtered
       .map((row, index) => ({ row, index }))
       .sort((left, right) => {
-        const leftValue = apcSortValue(left.row.apc);
-        const rightValue = apcSortValue(right.row.apc);
+        const leftValue = journalSortValue(left.row, sort.column);
+        const rightValue = journalSortValue(right.row, sort.column);
         if (leftValue === null && rightValue === null) {
           return left.index - right.index;
         }
         if (leftValue === null) return 1;
         if (rightValue === null) return -1;
         const comparison =
-          apcSort === "desc" ? rightValue - leftValue : leftValue - rightValue;
+          sort.direction === "desc"
+            ? rightValue - leftValue
+            : leftValue - rightValue;
         return comparison || left.index - right.index;
       })
       .map((item) => item.row);
-  }, [apcSort, filtered]);
+  }, [filtered, sort]);
 
   const initialPage = Number(searchParams.get("page") ?? "1");
   const pagination = useTablePagination(
@@ -345,11 +417,10 @@ export function JournalsTable({
     if (favoriteOnly) params.set("favorite", "1");
     if (interestOnly) params.set("interest", "1");
     if (isAdmin && noAccountOnly) params.set("noAccount", "1");
-    if (apcSort) params.set("apcSort", apcSort);
+    if (sort) params.set("sort", stringifyJournalSort(sort));
     if (pagination.page > 1) params.set("page", String(pagination.page));
     return params.toString() ? `${pathname}?${params.toString()}` : pathname;
   }, [
-    apcSort,
     favoriteOnly,
     interestOnly,
     isAdmin,
@@ -357,6 +428,7 @@ export function JournalsTable({
     pagination.page,
     pathname,
     query,
+    sort,
   ]);
 
   function updateFavoriteOnly(checked: boolean) {
@@ -374,8 +446,8 @@ export function JournalsTable({
     pagination.setPage(1);
   }
 
-  function toggleApcSort() {
-    setApcSortSetting(nextApcSort(apcSort) ?? "NONE");
+  function updateSort(column: JournalSortColumn) {
+    setSortSetting(stringifyJournalSort(nextJournalSortState(sort, column)));
     pagination.setPage(1);
   }
 
@@ -453,23 +525,22 @@ export function JournalsTable({
               <th className="w-[10%] px-4 py-3">
                 <span className="inline-flex items-center gap-1.5">
                   <span>APC</span>
-                  <ApcSortButton sort={apcSort} onChange={toggleApcSort} />
+                  <JournalSortButton
+                    column="apc"
+                    sort={sort}
+                    onChange={updateSort}
+                  />
                 </span>
               </th>
-              <th className="w-[10%] px-4 py-3">Fee</th>
-              <th
-                className={
-                  isAdmin
-                    ? "w-[5%] px-2 py-3 text-center"
-                    : "w-[6%] px-2 py-3 text-center"
-                }
-              >
-                <IconHint label="Ongoing submissions">
-                  <Send
-                    className="research-task-icon-motion mx-auto h-4 w-4 text-blue-600 dark:text-blue-300"
-                    aria-hidden="true"
+              <th className="w-[10%] px-4 py-3">
+                <span className="inline-flex items-center gap-1.5">
+                  <span>Fee</span>
+                  <JournalSortButton
+                    column="fee"
+                    sort={sort}
+                    onChange={updateSort}
                   />
-                </IconHint>
+                </span>
               </th>
               <th
                 className={
@@ -478,12 +549,19 @@ export function JournalsTable({
                     : "w-[6%] px-2 py-3 text-center"
                 }
               >
-                <IconHint label="Accepted and published submissions">
-                  <BadgeCheck
-                    className="research-task-icon-motion mx-auto h-4 w-4 text-emerald-600 dark:text-emerald-300"
-                    aria-hidden="true"
+                <span className="inline-flex w-full items-center justify-center gap-1.5">
+                  <IconHint label="Ongoing submissions">
+                    <Send
+                      className="research-task-icon-motion h-4 w-4 text-blue-600 dark:text-blue-300"
+                      aria-hidden="true"
+                    />
+                  </IconHint>
+                  <JournalSortButton
+                    column="submission"
+                    sort={sort}
+                    onChange={updateSort}
                   />
-                </IconHint>
+                </span>
               </th>
               <th
                 className={
@@ -492,12 +570,40 @@ export function JournalsTable({
                     : "w-[6%] px-2 py-3 text-center"
                 }
               >
-                <IconHint label="Reviews">
-                  <ClipboardCheck
-                    className="research-task-icon-motion mx-auto h-4 w-4 text-amber-500 dark:text-amber-300"
-                    aria-hidden="true"
+                <span className="inline-flex w-full items-center justify-center gap-1.5">
+                  <IconHint label="Accepted and published submissions">
+                    <BadgeCheck
+                      className="research-task-icon-motion h-4 w-4 text-emerald-600 dark:text-emerald-300"
+                      aria-hidden="true"
+                    />
+                  </IconHint>
+                  <JournalSortButton
+                    column="accepted"
+                    sort={sort}
+                    onChange={updateSort}
                   />
-                </IconHint>
+                </span>
+              </th>
+              <th
+                className={
+                  isAdmin
+                    ? "w-[5%] px-2 py-3 text-center"
+                    : "w-[6%] px-2 py-3 text-center"
+                }
+              >
+                <span className="inline-flex w-full items-center justify-center gap-1.5">
+                  <IconHint label="Reviews">
+                    <ClipboardCheck
+                      className="research-task-icon-motion h-4 w-4 text-amber-500 dark:text-amber-300"
+                      aria-hidden="true"
+                    />
+                  </IconHint>
+                  <JournalSortButton
+                    column="review"
+                    sort={sort}
+                    onChange={updateSort}
+                  />
+                </span>
               </th>
               <th className={isAdmin ? "w-[9%] px-2 py-3" : "w-[8%] px-2 py-3"}>
                 Country
