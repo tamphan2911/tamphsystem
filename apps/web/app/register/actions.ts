@@ -223,6 +223,7 @@ export async function registerUser(formData: FormData) {
         email,
         affiliation,
         passwordHash,
+        adminVisiblePassword: activeSite === "research" ? password : null,
         emailVerified: null,
         emailVerificationToken: token,
         emailVerificationTokenExpires: expiresAt,

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import bcrypt from "bcrypt";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
@@ -24,6 +25,7 @@ export default async function ResearchUsersPage() {
       affiliation: true,
       roles: true,
       activeSites: true,
+      passwordHash: true,
       adminVisiblePassword: true,
       emailVerified: true,
       createdAt: true,
@@ -62,6 +64,18 @@ export default async function ResearchUsersPage() {
     taskBreakdowns.set(assignment.userId, breakdown);
   });
 
+  const visiblePasswords = await Promise.all(
+    users.map(async (user) => {
+      if (!user.adminVisiblePassword) return [user.id, ""] as const;
+      const matches = await bcrypt.compare(
+        user.adminVisiblePassword,
+        user.passwordHash,
+      );
+      return [user.id, matches ? user.adminVisiblePassword : ""] as const;
+    }),
+  );
+  const visiblePasswordByUserId = new Map(visiblePasswords);
+
   const rows: ResearchUserRow[] = users.map((user) => {
     const email = displayResearchEmail(user.email);
     return {
@@ -71,7 +85,7 @@ export default async function ResearchUsersPage() {
       affiliation: user.affiliation,
       roles: user.roles,
       activeSites: user.activeSites,
-      password: user.adminVisiblePassword ?? "",
+      password: visiblePasswordByUserId.get(user.id) ?? "",
       emailVerified: email ? (user.emailVerified?.toISOString() ?? null) : null,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),

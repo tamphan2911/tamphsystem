@@ -124,10 +124,15 @@ export async function updateResearchPassword(formData: FormData) {
   try {
     await prisma.user.update({
       where: { email },
-      data: { passwordHash: await bcrypt.hash(newPassword, 10) },
+      data: {
+        passwordHash: await bcrypt.hash(newPassword, 10),
+        adminVisiblePassword: newPassword,
+      },
     });
     revalidatePath("/profile");
     revalidatePath("/research/profile");
+    revalidatePath("/users");
+    revalidatePath("/assistants");
     return { success: true };
   } catch {
     return { error: "Password could not be updated." };

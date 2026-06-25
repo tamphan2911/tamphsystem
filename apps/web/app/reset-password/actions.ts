@@ -50,6 +50,7 @@ export async function resetPassword(formData: FormData) {
     where: { id: user.id },
     data: {
       passwordHash: await bcrypt.hash(password, 10),
+      adminVisiblePassword: password,
       passwordResetToken: null,
       passwordResetTokenExpires: null,
       emailVerified: new Date(),

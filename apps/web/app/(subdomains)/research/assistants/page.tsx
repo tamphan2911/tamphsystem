@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { assertResearchManager } from "../actions";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
@@ -80,11 +81,23 @@ export default async function AssistantsPage() {
     taskBreakdowns.set(assignment.userId, breakdown);
   });
 
+  const visiblePasswords = await Promise.all(
+    assistantUsers.map(async (user) => {
+      if (!user.adminVisiblePassword) return [user.id, ""] as const;
+      const matches = await bcrypt.compare(
+        user.adminVisiblePassword,
+        user.passwordHash,
+      );
+      return [user.id, matches ? user.adminVisiblePassword : ""] as const;
+    }),
+  );
+  const visiblePasswordByUserId = new Map(visiblePasswords);
+
   const rows: AssistantRow[] = assistantUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
     email: user.email,
-    password: user.adminVisiblePassword ?? "",
+    password: visiblePasswordByUserId.get(user.id) ?? "",
     assistantRole: user.roles.includes(Role.CHIEF_ASSISTANT)
       ? Role.CHIEF_ASSISTANT
       : Role.ASSISTANT,
