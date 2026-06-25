@@ -53,6 +53,14 @@ function pendingReplyText(item: TaskClarificationItem) {
     : "Waiting for assignee answer.";
 }
 
+function managerFallbackName(item: TaskClarificationItem) {
+  return item.requestedByIsAssignee ? "Task manager" : "Assignee";
+}
+
+function pendingAlign(item: TaskClarificationItem) {
+  return item.requestedByIsAssignee ? "right" : "left";
+}
+
 export function TaskClarificationPanel({
   clarifications,
   canAnswer,
@@ -136,7 +144,7 @@ export function TaskClarificationPanel({
         open={isOpen}
         onClose={() => setIsOpen(false)}
         title="Request and feedback history"
-        description="Track assignee clarification requests and task-manager requests to assignees."
+        description="Shared chat for assignee requests and task-manager clarification requests."
         icon={<MessageSquareText className="h-5 w-5" />}
         maxWidth="max-w-3xl"
         bodyClassName="px-5 py-5"
@@ -147,24 +155,28 @@ export function TaskClarificationPanel({
               {timeline.map((item) => (
                 <div key={item.id} className="space-y-3">
                   <ChatBubble
-                    align="left"
+                    align={item.requestedByIsAssignee ? "left" : "right"}
                     label={personName(item.requestedBy)}
                     time={formatDateTime(item.createdAt)}
                     content={item.question}
                   />
                   {item.answer ? (
                     <ChatBubble
-                      align="right"
+                      align={item.requestedByIsAssignee ? "right" : "left"}
                       label={
                         item.answeredBy
                           ? personName(item.answeredBy)
-                          : "Assigner"
+                          : managerFallbackName(item)
                       }
                       time={formatDateTime(item.answeredAt)}
                       content={item.answer}
                     />
                   ) : (
-                    <div className="ml-auto max-w-[88%] rounded-none border border-amber-200 bg-amber-50/70 px-4 py-3 sm:max-w-[76%] dark:border-amber-500/30 dark:bg-amber-500/10">
+                    <div
+                      className={`max-w-[88%] rounded-none border border-amber-200 bg-amber-50/70 px-4 py-3 sm:max-w-[76%] dark:border-amber-500/30 dark:bg-amber-500/10 ${
+                        pendingAlign(item) === "right" ? "ml-auto" : ""
+                      }`}
+                    >
                       <p className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
                         Pending feedback
                       </p>
@@ -220,13 +232,15 @@ function ChatBubble({
       <div
         className={`max-w-[88%] border px-4 py-3 sm:max-w-[76%] ${
           isRight
-            ? "border-[#A8DADC]/40 bg-[#A8DADC]/10 text-[#E4E4E4]"
-            : "border border-[#444444] bg-[#202020] text-[#E4E4E4]"
+            ? "border-sky-200 bg-sky-50 text-slate-900 dark:border-[#A8DADC]/40 dark:bg-[#A8DADC]/10 dark:text-[#E4E4E4]"
+            : "border border-slate-200 bg-white text-slate-900 dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4]"
         }`}
       >
         <div
           className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-normal uppercase tracking-wide ${
-            isRight ? "text-[#A8DADC]" : "text-[#B0B0B0]"
+            isRight
+              ? "text-[#1F7180] dark:text-[#A8DADC]"
+              : "text-[#667085] dark:text-[#B0B0B0]"
           }`}
         >
           <span>{label}</span>
@@ -264,8 +278,8 @@ function AnswerForm({
         const value = String(formData.get("answer") ?? "").trim();
         if (!value) {
           toast.showError({
-            title: "Feedback required",
-            detail: "Please write feedback before sending it to assignees.",
+            title: "Reply required",
+            detail: "Please write a reply before sending it.",
           });
           return;
         }
@@ -286,7 +300,7 @@ function AnswerForm({
         value={answer}
         onChange={(event) => setAnswer(event.target.value)}
         rows={4}
-        placeholder="Write feedback for this request."
+        placeholder="Write a reply for this request."
         className={`${researchTextareaClass} resize-none`}
       />
       <div className="flex justify-end">
@@ -305,7 +319,7 @@ function AnswerForm({
           ) : (
             <Send className="h-4 w-4" />
           )}
-          Send feedback
+          Send reply
         </button>
       </div>
     </form>
