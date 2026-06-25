@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@repo/db";
 import { auth } from "../../../../auth";
+import { deleteExpiredResearchNotifications } from "../../../(subdomains)/research/notifications/retention";
 
 function notificationTypeLabel(type: string) {
   return type
@@ -25,6 +26,8 @@ export async function GET(request: Request) {
   if (!user?.activeSites.includes("research")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  await deleteExpiredResearchNotifications();
 
   const url = new URL(request.url);
   const scope = url.searchParams.get("scope") ?? "all";

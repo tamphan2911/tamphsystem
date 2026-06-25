@@ -16,6 +16,7 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import { deleteExpiredResearchNotifications } from "./retention";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,8 @@ export default async function ResearchNotificationsPage() {
     select: { activeSites: true },
   });
   if (!currentUser?.activeSites.includes("research")) redirect("/401");
+
+  await deleteExpiredResearchNotifications();
 
   if (roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT)) {
     const notifications = await prisma.researchNotification.findMany({

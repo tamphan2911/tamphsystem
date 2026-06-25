@@ -50,6 +50,7 @@ import {
   SubmissionStatus,
   SuggestedVenueStatus,
 } from "@repo/db";
+import { deleteExpiredResearchNotifications } from "./notifications/retention";
 
 export type ResearchAuthorEmailResult = {
   authorName: string;
@@ -1478,6 +1479,8 @@ async function notifyUsers({
     (userId) => userId && userId !== excludeUserId,
   );
   if (recipients.length === 0) return;
+
+  await deleteExpiredResearchNotifications();
 
   await prisma.researchNotification.createMany({
     data: recipients.map((userId) => ({
