@@ -704,17 +704,6 @@ export function ResearchProjectsTable({
           }
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838]">
-            <input
-              type="checkbox"
-              checked={showFolderRequestsOnly}
-              onChange={(event) =>
-                updateFolderRequestFilter(event.target.checked)
-              }
-              className="h-4 w-4 accent-amber-600 dark:accent-amber-300"
-            />
-            <span className="whitespace-nowrap">Folder requests</span>
-          </label>
           <MultiFilterSelect
             values={selectedStages}
             onChange={updateStages}
@@ -760,6 +749,33 @@ export function ResearchProjectsTable({
               <th className="px-3 py-3">Research</th>
               <th className="w-[5.75rem] px-3 py-3">
                 <span className="inline-flex items-center gap-1.5">
+                  <IconHint
+                    label={
+                      showFolderRequestsOnly
+                        ? "Show all research"
+                        : "Show research with ongoing shared folder requests"
+                    }
+                  >
+                    <button
+                      type="button"
+                      aria-pressed={showFolderRequestsOnly}
+                      aria-label={
+                        showFolderRequestsOnly
+                          ? "Show all research"
+                          : "Show research with ongoing shared folder requests"
+                      }
+                      onClick={() =>
+                        updateFolderRequestFilter(!showFolderRequestsOnly)
+                      }
+                      className={`research-allow-transform inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
+                        showFolderRequestsOnly
+                          ? "text-amber-700 drop-shadow-[0_0_0.45rem_rgba(217,119,6,0.22)] hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
+                          : "text-[#667085] hover:text-amber-700 dark:text-[#B0B0B0] dark:hover:text-amber-300"
+                      }`}
+                    >
+                      <FolderClock className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </IconHint>
                   Stage
                   <SortHeaderButton
                     column="stage"
