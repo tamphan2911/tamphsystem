@@ -21,6 +21,7 @@ import {
   IconHint,
   TablePagination,
   TableSearchInput,
+  usePersistentTableValue,
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
@@ -264,9 +265,12 @@ export function JournalsTable({
   const [noAccountOnly, setNoAccountOnly] = useState(
     () => isAdmin && searchParams.get("noAccount") === "1",
   );
-  const [apcSort, setApcSort] = useState<ApcSortDirection | null>(() =>
-    parseApcSort(searchParams.get("apcSort")),
+  const initialApcSortValue = parseApcSort(searchParams.get("apcSort"));
+  const [apcSortSetting, setApcSortSetting] = usePersistentTableValue(
+    "journals:apcSort",
+    initialApcSortValue ?? "NONE",
   );
+  const apcSort = parseApcSort(apcSortSetting);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -371,7 +375,7 @@ export function JournalsTable({
   }
 
   function toggleApcSort() {
-    setApcSort((current) => nextApcSort(current));
+    setApcSortSetting(nextApcSort(apcSort) ?? "NONE");
     pagination.setPage(1);
   }
 
