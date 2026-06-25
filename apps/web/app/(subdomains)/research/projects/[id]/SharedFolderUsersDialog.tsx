@@ -154,7 +154,7 @@ export function SharedFolderUsersDialog({
 
           <div ref={searchRef} className="relative">
             <label className="mb-2 block text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
-              Add chief assistant or task assistant
+              Add task-associated user
             </label>
             <div className="flex h-11 items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-3 text-[#243047] focus-within:border-[#1F7180] dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4]">
               <Search className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
@@ -193,7 +193,7 @@ export function SharedFolderUsersDialog({
                   ))
                 ) : (
                   <div className="px-3 py-8 text-center text-sm text-[#667085] dark:text-[#B0B0B0]">
-                    No eligible users match this search.
+                    No task-associated users match this search.
                   </div>
                 )}
               </div>

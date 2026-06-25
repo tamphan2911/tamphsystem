@@ -3537,6 +3537,7 @@ export async function updateResearchFolderSharedUsers(
       folderSharedUsers: { select: { id: true } },
       tasks: {
         select: {
+          createdById: true,
           checkerId: true,
           assignments: {
             select: { userId: true },
@@ -3567,6 +3568,7 @@ export async function updateResearchFolderSharedUsers(
   const assignedUserIds = new Set(
     project.tasks.flatMap((task) =>
       [
+        task.createdById,
         task.checkerId,
         ...task.assignments.map((assignment) => assignment.userId),
       ].filter((id): id is string => Boolean(id)),
@@ -3583,11 +3585,6 @@ export async function updateResearchFolderSharedUsers(
     where: {
       id: { in: requestedUserIds },
       activeSites: { has: "research" },
-      OR: [
-        { roles: { has: Role.ADMIN } },
-        { roles: { has: Role.CHIEF_ASSISTANT } },
-        { roles: { has: Role.ASSISTANT } },
-      ],
     },
     select: { id: true, roles: true },
   });

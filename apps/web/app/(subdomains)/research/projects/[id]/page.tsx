@@ -384,7 +384,9 @@ export default async function ProjectDetailPage({
           include: {
             journal: true,
             conference: true,
-            createdBy: { select: { name: true, email: true } },
+            createdBy: {
+              select: { id: true, name: true, email: true, roles: true },
+            },
             checker: { select: { name: true, email: true } },
             assignments: {
               include: {
@@ -983,25 +985,13 @@ export default async function ProjectDetailPage({
             ]
           : [];
   const authorIdSet = new Set(defaultAuthors.map((author) => author.id));
-  const taskAssociatedAssistantUsers = project.tasks.flatMap((task) =>
-    task.assignments
-      .map((assignment) => assignment.user)
-      .filter(
-        (taskUser) =>
-          !authorIdSet.has(taskUser.id) &&
-          (taskUser.roles.includes(Role.ASSISTANT) ||
-            taskUser.roles.includes(Role.CHIEF_ASSISTANT)),
-      ),
-  );
+  const taskAssociatedUsers = project.tasks.flatMap((task) => [
+    task.createdBy,
+    ...task.assignments.map((assignment) => assignment.user),
+  ]);
   const folderSharedUserOptionMap = new Map<string, FolderSharedUserOption>();
-  [...checkerUsers, ...taskAssociatedAssistantUsers].forEach((folderUser) => {
+  [...checkerUsers, ...taskAssociatedUsers].forEach((folderUser) => {
     if (authorIdSet.has(folderUser.id)) return;
-    if (
-      !folderUser.roles.includes(Role.ASSISTANT) &&
-      !folderUser.roles.includes(Role.CHIEF_ASSISTANT)
-    ) {
-      return;
-    }
     folderSharedUserOptionMap.set(folderUser.id, {
       id: folderUser.id,
       name: folderUser.name ?? "",
