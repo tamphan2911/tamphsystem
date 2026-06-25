@@ -96,6 +96,7 @@ model User {
   quizAttempts                    QuizAttempt[]
   researchProjects                ResearchProject[]                  @relation("LeadResearcher")
   authoredResearch                ResearchProject[]                  @relation("ResearchAuthors")
+  sharedResearchFolders           ResearchProject[]                  @relation("ResearchFolderSharedUsers")
   researchAuthorEntries           ResearchProjectAuthor[]
   registeredResearch              ResearchProject[]                  @relation("ResearchRegistrationUser")
   createdResearchTasks            ResearchTask[]                     @relation("ResearchTaskCreator")
@@ -409,10 +410,11 @@ model ResearchProject {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  leadResearcherId String
-  leadResearcher   User                    @relation("LeadResearcher", fields: [leadResearcherId], references: [id])
-  authors          User[]                  @relation("ResearchAuthors")
-  authorEntries    ResearchProjectAuthor[]
+  leadResearcherId  String
+  leadResearcher    User                    @relation("LeadResearcher", fields: [leadResearcherId], references: [id])
+  authors           User[]                  @relation("ResearchAuthors")
+  folderSharedUsers User[]                  @relation("ResearchFolderSharedUsers")
+  authorEntries     ResearchProjectAuthor[]
 
   publications          Publication[]
   submissions           ResearchSubmission[]
@@ -559,6 +561,7 @@ model ResearchProjectAuthor {
   position        Int
   selectedEmail   String?
   isCorresponding Boolean  @default(false)
+  folderShared    Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

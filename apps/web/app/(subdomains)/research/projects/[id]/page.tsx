@@ -5,6 +5,7 @@ import {
   Building2,
   Download,
   ExternalLink,
+  FolderCheck,
   FolderOpen,
   Hourglass,
   ListTodo,
@@ -22,7 +23,10 @@ import {
   Role,
 } from "@repo/db";
 import { auth } from "../../../../../auth";
-import { updateResearchProject } from "../../actions";
+import {
+  updateResearchFolderSharedUsers,
+  updateResearchProject,
+} from "../../actions";
 import { SubmissionsTable, type SubmissionRow } from "./SubmissionsTable";
 import {
   RelatedResearchTasksTable,
@@ -57,6 +61,10 @@ import {
   ResearchAuthorsEditDialog,
   ResearchBasicEditDialog,
 } from "./ResearchDetailEditDialogs";
+import {
+  SharedFolderUsersDialog,
+  type FolderSharedUserOption,
+} from "./SharedFolderUsersDialog";
 import { ResearchDetailSection } from "@/sites/research/components/ResearchDetailSection";
 import {
   IconHint,
@@ -317,6 +325,10 @@ export default async function ProjectDetailPage({
         authorEntries: {
           orderBy: [{ position: "asc" }, { createdAt: "asc" }],
         },
+        folderSharedUsers: {
+          orderBy: [{ name: "asc" }, { email: "asc" }],
+          select: { id: true, name: true, email: true, roles: true },
+        },
         suggestedJournals: {
           include: {
             journal: {
@@ -357,7 +369,9 @@ export default async function ProjectDetailPage({
             checker: { select: { name: true, email: true } },
             assignments: {
               include: {
-                user: { select: { name: true, email: true } },
+                user: {
+                  select: { id: true, name: true, email: true, roles: true },
+                },
               },
               orderBy: { createdAt: "asc" },
             },
@@ -533,6 +547,10 @@ export default async function ProjectDetailPage({
     isAdmin || isProjectAuthor || hasUnfinishedAssignedResearchTask;
 
   const updateAction = updateResearchProject.bind(null, project.id);
+  const updateFolderSharedUsersAction = updateResearchFolderSharedUsers.bind(
+    null,
+    project.id,
+  );
   const hasJournalSubmissions = project.submissions.length > 0;
   const displayStage: DisplayStage = hasJournalSubmissions
     ? stageFromJournalSubmissions(project.submissions)
@@ -913,6 +931,7 @@ export default async function ProjectDetailPage({
           affiliation: entry.user.affiliation,
           role: displayRole(entry.user.roles),
           isCorresponding: entry.isCorresponding,
+          folderShared: entry.folderShared,
         }))
       : project.authors.length > 0
         ? project.authors.map((author, index) => ({
@@ -924,6 +943,7 @@ export default async function ProjectDetailPage({
             affiliation: author.affiliation,
             role: displayRole(author.roles),
             isCorresponding: index === 0,
+            folderShared: false,
           }))
         : leadResearcher
           ? [
@@ -936,9 +956,60 @@ export default async function ProjectDetailPage({
                 affiliation: leadResearcher.affiliation,
                 role: displayRole(leadResearcher.roles),
                 isCorresponding: true,
+                folderShared: false,
               },
             ]
           : [];
+  const authorIdSet = new Set(defaultAuthors.map((author) => author.id));
+  const taskAssociatedAssistantUsers = project.tasks.flatMap((task) =>
+    task.assignments
+      .map((assignment) => assignment.user)
+      .filter(
+        (taskUser) =>
+          !authorIdSet.has(taskUser.id) &&
+          (taskUser.roles.includes(Role.ASSISTANT) ||
+            taskUser.roles.includes(Role.CHIEF_ASSISTANT)),
+      ),
+  );
+  const folderSharedUserOptionMap = new Map<string, FolderSharedUserOption>();
+  [...checkerUsers, ...taskAssociatedAssistantUsers].forEach((folderUser) => {
+    if (authorIdSet.has(folderUser.id)) return;
+    if (
+      !folderUser.roles.includes(Role.ASSISTANT) &&
+      !folderUser.roles.includes(Role.CHIEF_ASSISTANT)
+    ) {
+      return;
+    }
+    folderSharedUserOptionMap.set(folderUser.id, {
+      id: folderUser.id,
+      name: folderUser.name ?? "",
+      email: displayResearchEmail(folderUser.email),
+      role: displayRole(folderUser.roles),
+    });
+  });
+  const folderSharedUserOptions = Array.from(
+    folderSharedUserOptionMap.values(),
+  ).sort((left, right) =>
+    (left.name || left.email).localeCompare(right.name || right.email),
+  );
+  const folderSharedUsers = project.folderSharedUsers
+    .filter((folderUser) => !authorIdSet.has(folderUser.id))
+    .map((folderUser) => ({
+      id: folderUser.id,
+      name: folderUser.name ?? "",
+      email: displayResearchEmail(folderUser.email),
+      role: displayRole(folderUser.roles),
+    }));
+  const folderSharedUserIdSet = new Set(
+    project.folderSharedUsers.map((folderUser) => folderUser.id),
+  );
+  const currentAuthorFolderShared = project.authorEntries.some(
+    (entry) => entry.userId === userId && entry.folderShared,
+  );
+  const canOpenResearchFolder =
+    isRootAdmin ||
+    currentAuthorFolderShared ||
+    folderSharedUserIdSet.has(userId);
   const completedProductionStepValues = project.completedProductionSteps;
   const researchBasicValues = {
     title: project.title,
@@ -1176,7 +1247,7 @@ export default async function ProjectDetailPage({
                 {project.title}
               </h1>
               <span className="ml-2 inline-flex items-center gap-2 align-middle">
-                {project.sharedFolderUrl ? (
+                {project.sharedFolderUrl && canOpenResearchFolder ? (
                   <IconHint label="Open research folder" position="bottom">
                     <a
                       href={project.sharedFolderUrl}
@@ -1610,6 +1681,19 @@ export default async function ProjectDetailPage({
                               Corresponding
                             </span>
                           )}
+                          {author.folderShared ? (
+                            <IconHint
+                              label="Google Drive folder shared with this author"
+                              position="bottom"
+                            >
+                              <span className="research-allow-transform inline-flex cursor-help items-center justify-center text-emerald-700 transition duration-180 ease-out hover:-translate-y-0.5 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200">
+                                <FolderCheck
+                                  className="h-3.5 w-3.5"
+                                  aria-hidden="true"
+                                />
+                              </span>
+                            </IconHint>
+                          ) : null}
                         </div>
                         <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs font-normal text-[#B0B0B0] lg:items-center lg:truncate">
                           <Mail
@@ -1634,6 +1718,49 @@ export default async function ProjectDetailPage({
                       </div>
                     </div>
                   ))}
+                </div>
+                <div className="mt-4 border-t border-[#E2D9CC] pt-4 dark:border-[#444444]">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
+                      Google Drive shared users
+                    </h3>
+                    {canEditResearchInfo ? (
+                      <SharedFolderUsersDialog
+                        action={updateFolderSharedUsersAction}
+                        users={folderSharedUserOptions}
+                        selectedUsers={folderSharedUsers}
+                      />
+                    ) : null}
+                  </div>
+                  {folderSharedUsers.length > 0 ? (
+                    <div className="divide-y divide-[#E2D9CC] border-y border-[#E2D9CC] dark:divide-[#444444] dark:border-[#444444]">
+                      {folderSharedUsers.map((folderUser) => (
+                        <div
+                          key={folderUser.id}
+                          className="flex min-w-0 items-start gap-3 py-3"
+                        >
+                          <FolderCheck
+                            className="mt-0.5 h-4 w-4 flex-none text-emerald-700 dark:text-emerald-300"
+                            aria-hidden="true"
+                          />
+                          <p className="min-w-0 break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                            <span className="text-sm text-[#243047] dark:text-[#E4E4E4]">
+                              {folderUser.name || folderUser.email}
+                            </span>{" "}
+                            |{" "}
+                            <span className="break-all">
+                              {folderUser.email}
+                            </span>{" "}
+                            | {folderUser.role}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                      No non-author users are marked as shared yet.
+                    </p>
+                  )}
                 </div>
               </div>
             </ResearchDetailSection>

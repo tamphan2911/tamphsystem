@@ -5,6 +5,7 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
+  FolderCheck,
   MailCheck,
   LockKeyhole,
   Mail,
@@ -44,6 +45,7 @@ export type AuthorOption = {
 
 export type SelectedAuthor = AuthorOption & {
   isCorresponding: boolean;
+  folderShared?: boolean;
 };
 
 function authorName(author: AuthorOption) {
@@ -198,6 +200,7 @@ export function AuthorsPicker({
           ...user,
           selectedEmail: user.selectedEmail || user.email,
           isCorresponding: true,
+          folderShared: false,
         }));
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -242,6 +245,7 @@ export function AuthorsPicker({
         ...user,
         selectedEmail: user.selectedEmail || user.email,
         isCorresponding: current.length === 0,
+        folderShared: false,
       },
     ]);
     setDirty(true);
@@ -296,6 +300,18 @@ export function AuthorsPicker({
     setDirty(true);
   }
 
+  function toggleFolderShared(userId: string) {
+    if (disabled) return;
+    setAuthors((current) =>
+      current.map((author) =>
+        author.id === userId
+          ? { ...author, folderShared: !author.folderShared }
+          : author,
+      ),
+    );
+    setDirty(true);
+  }
+
   function setSelectedEmail(userId: string, email: string) {
     if (disabled) return;
     setAuthors((current) =>
@@ -328,6 +344,16 @@ export function AuthorsPicker({
             value={author.id}
           />
         ))}
+        {authors
+          .filter((author) => author.folderShared)
+          .map((author) => (
+            <input
+              key={`folder-shared-${author.id}`}
+              type="hidden"
+              name="folderSharedAuthorIds"
+              value={author.id}
+            />
+          ))}
         <input
           type="hidden"
           name="correspondingAuthorId"
@@ -411,6 +437,7 @@ export function AuthorsPicker({
             {authors.map((author, index) => {
               const roleLabel = index === 0 ? "First author" : "Author";
               const corresponding = author.isCorresponding;
+              const folderShared = Boolean(author.folderShared);
 
               return (
                 <div key={author.id} className="flex items-center gap-4 py-3">
@@ -471,6 +498,32 @@ export function AuthorsPicker({
                     </p>
                   </div>
 
+                  <IconHint
+                    label={
+                      folderShared
+                        ? "Google Drive folder shared"
+                        : "Mark Google Drive folder as shared"
+                    }
+                    position="bottom"
+                  >
+                    <button
+                      type="button"
+                      aria-label={
+                        folderShared
+                          ? `${authorName(author)} has access to the research folder`
+                          : `Mark research folder shared with ${authorName(author)}`
+                      }
+                      disabled={disabled}
+                      onClick={() => toggleFolderShared(author.id)}
+                      className={`cursor-pointer border-0 bg-transparent p-2 transition disabled:cursor-not-allowed disabled:opacity-30 ${
+                        folderShared
+                          ? "text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
+                          : "text-[#B0B0B0] hover:text-emerald-700 dark:hover:text-emerald-300"
+                      }`}
+                    >
+                      <FolderCheck className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </IconHint>
                   <button
                     type="button"
                     aria-label={`Set ${authorName(author)} as corresponding author`}

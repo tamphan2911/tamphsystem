@@ -3171,6 +3171,7 @@ export async function updateResearchProject(
           userId: true,
           selectedEmail: true,
           isCorresponding: true,
+          folderShared: true,
           user: { select: { name: true, email: true } },
         },
       },
@@ -3234,6 +3235,11 @@ export async function updateResearchProject(
 
   const authorIds = orderedUniqueStrings(formData.getAll("authorUserIds"));
   const selectedAuthorIds = authorIds.length > 0 ? authorIds : [user.id];
+  const folderSharedAuthorIds = new Set(
+    orderedUniqueStrings(formData.getAll("folderSharedAuthorIds")).filter(
+      (id) => selectedAuthorIds.includes(id),
+    ),
+  );
   const correspondingAuthorId =
     optionalString(formData.get("correspondingAuthorId")) ??
     selectedAuthorIds[0];
@@ -3311,7 +3317,16 @@ export async function updateResearchProject(
           position: index,
           selectedEmail: authorContactEmails.get(id),
           isCorresponding: id === correspondingAuthorId,
+          folderShared: folderSharedAuthorIds.has(id),
         })),
+      });
+      await tx.researchProject.update({
+        where: { id: projectId },
+        data: {
+          folderSharedUsers: {
+            disconnect: selectedAuthorIds.map((id) => ({ id })),
+          },
+        },
       });
     }
   });
@@ -3338,6 +3353,7 @@ export async function updateResearchProject(
           userId: true,
           selectedEmail: true,
           isCorresponding: true,
+          folderShared: true,
           user: { select: { name: true, email: true } },
         },
       },
@@ -3497,6 +3513,89 @@ export async function setResearchAuthorsLock(
   await prisma.researchProject.update({
     where: { id: projectId },
     data: { authorsUnlocked: !locked },
+  });
+
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function updateResearchFolderSharedUsers(
+  projectId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: {
+      leadResearcherId: true,
+      authorEntries: {
+        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        select: { userId: true, isCorresponding: true },
+      },
+      authors: { select: { id: true } },
+      tasks: {
+        select: {
+          assignments: {
+            select: { userId: true },
+          },
+        },
+      },
+    },
+  });
+  if (!project) return;
+
+  const isAdmin = user.roles.includes(Role.ADMIN);
+  const isCorrespondingAuthor =
+    project.authorEntries.length > 0
+      ? project.authorEntries.some(
+          (entry) => entry.userId === user.id && entry.isCorresponding,
+        )
+      : project.leadResearcherId === user.id;
+  const isFirstAuthor =
+    project.authorEntries.length > 0
+      ? project.authorEntries[0]?.userId === user.id
+      : project.leadResearcherId === user.id;
+  if (!isAdmin && !isCorrespondingAuthor && !isFirstAuthor) redirect("/401");
+
+  const authorIds = new Set([
+    ...project.authorEntries.map((entry) => entry.userId),
+    ...project.authors.map((author) => author.id),
+  ]);
+  const assignedUserIds = new Set(
+    project.tasks.flatMap((task) =>
+      task.assignments.map((assignment) => assignment.userId),
+    ),
+  );
+  const requestedUserIds = orderedUniqueStrings(
+    formData.getAll("folderSharedUserIds"),
+  ).filter((id) => !authorIds.has(id));
+
+  const allowedUsers = await prisma.user.findMany({
+    where: {
+      id: { in: requestedUserIds },
+      activeSites: { has: "research" },
+      OR: [
+        { roles: { has: Role.CHIEF_ASSISTANT } },
+        { roles: { has: Role.ASSISTANT } },
+      ],
+    },
+    select: { id: true, roles: true },
+  });
+  const allowedUserIds = allowedUsers
+    .filter(
+      (allowedUser) =>
+        allowedUser.roles.includes(Role.CHIEF_ASSISTANT) ||
+        assignedUserIds.has(allowedUser.id),
+    )
+    .map((allowedUser) => allowedUser.id);
+
+  await prisma.researchProject.update({
+    where: { id: projectId },
+    data: {
+      folderSharedUsers: {
+        set: allowedUserIds.map((id) => ({ id })),
+      },
+    },
   });
 
   revalidatePath("/projects");
