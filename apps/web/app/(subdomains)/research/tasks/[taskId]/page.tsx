@@ -1784,13 +1784,12 @@ export default async function TaskDetailPage({
                 detail:
                   "This task is waiting for the assigner to check the submitted work. The next action belongs to the assigner, not the assignees.",
               }
-            : task.status === ResearchTaskStatus.NEED_CLARIFY
+            : task.status === ResearchTaskStatus.NEED_CLARIFY &&
+                clarifyDirection !== "MANAGER_TO_ASSIGNEE"
               ? {
                   title: "Reminder not available",
                   detail:
-                    clarifyDirection === "MANAGER_TO_ASSIGNEE"
-                      ? "This task is waiting for the assignee to answer a clarification request before approval."
-                      : "Assignees are waiting for clarification feedback from the task manager. Please answer the clarification request before sending finish reminders.",
+                    "Assignees are waiting for clarification feedback from the task manager. Please answer the clarification request before sending finish reminders.",
                 }
               : null;
   const canAnswerClarification =

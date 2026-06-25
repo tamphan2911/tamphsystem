@@ -9212,13 +9212,14 @@ export async function sendTaskReminderEmail(
           (assignment) => assignment.userId === openClarification.requestedById,
         )
       : true;
-    return {
-      ok: false,
-      title: "Reminder not available",
-      detail: requesterIsAssignee
-        ? "Assignees are waiting for clarification feedback from the task manager. Please answer the clarification request before sending finish reminders."
-        : "This task is waiting for the assignee to answer a clarification request before approval.",
-    };
+    if (requesterIsAssignee) {
+      return {
+        ok: false,
+        title: "Reminder not available",
+        detail:
+          "Assignees are waiting for clarification feedback from the task manager. Please answer the clarification request before sending finish reminders.",
+      };
+    }
   }
 
   const selectedAssignments = task.assignments.filter((assignment) =>
