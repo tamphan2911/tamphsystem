@@ -203,7 +203,6 @@ export default async function ResearchProfilePage({
       include: {
         submittedBy: { select: { name: true, email: true } },
       },
-      orderBy: { updatedAt: "desc" },
     }),
     prisma.researchTaskAssignment.findMany({
       where: { userId: profileUserId },

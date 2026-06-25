@@ -50,7 +50,6 @@ export default async function ProposalsPage() {
     include: {
       submittedBy: { select: { name: true, email: true } },
     },
-    orderBy: { updatedAt: "desc" },
   });
   if (!canAccessAll && proposals.length === 0) redirect("/401");
 
