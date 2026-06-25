@@ -1807,12 +1807,23 @@ export default async function ProjectDetailPage({
                           <p className="min-w-0 break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
                             <span className="text-sm text-[#243047] dark:text-[#E4E4E4]">
                               {folderUser.name || folderUser.email}
-                            </span>{" "}
-                            |{" "}
+                            </span>
+                            <span
+                              className="px-1.5 text-[#9AA4B2] dark:text-[#777777]"
+                              aria-hidden="true"
+                            >
+                              |
+                            </span>
                             <span className="break-all">
                               {folderUser.email}
-                            </span>{" "}
-                            | {folderUser.role}
+                            </span>
+                            <span
+                              className="px-1.5 text-[#9AA4B2] dark:text-[#777777]"
+                              aria-hidden="true"
+                            >
+                              |
+                            </span>
+                            <span>{folderUser.role}</span>
                           </p>
                         </div>
                       ))}
