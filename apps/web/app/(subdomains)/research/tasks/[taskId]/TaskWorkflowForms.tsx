@@ -176,7 +176,7 @@ function TextModalForm({
             />
           </label>
           {helperText ? (
-            <p className="rounded-none border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-5 text-amber-100">
+            <p className="rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
               {helperText}
             </p>
           ) : null}
