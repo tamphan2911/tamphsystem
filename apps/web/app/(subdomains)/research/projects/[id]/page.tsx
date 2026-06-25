@@ -994,23 +994,21 @@ export default async function ProjectDetailPage({
       ),
   );
   const folderSharedUserOptionMap = new Map<string, FolderSharedUserOption>();
-  [...checkerUsers, ...taskAssignees, ...taskAssociatedAssistantUsers].forEach(
-    (folderUser) => {
-      if (authorIdSet.has(folderUser.id)) return;
-      if (
-        !folderUser.roles.includes(Role.ASSISTANT) &&
-        !folderUser.roles.includes(Role.CHIEF_ASSISTANT)
-      ) {
-        return;
-      }
-      folderSharedUserOptionMap.set(folderUser.id, {
-        id: folderUser.id,
-        name: folderUser.name ?? "",
-        email: displayResearchEmail(folderUser.email),
-        role: displayRole(folderUser.roles),
-      });
-    },
-  );
+  [...checkerUsers, ...taskAssociatedAssistantUsers].forEach((folderUser) => {
+    if (authorIdSet.has(folderUser.id)) return;
+    if (
+      !folderUser.roles.includes(Role.ASSISTANT) &&
+      !folderUser.roles.includes(Role.CHIEF_ASSISTANT)
+    ) {
+      return;
+    }
+    folderSharedUserOptionMap.set(folderUser.id, {
+      id: folderUser.id,
+      name: folderUser.name ?? "",
+      email: displayResearchEmail(folderUser.email),
+      role: displayRole(folderUser.roles),
+    });
+  });
   const folderSharedUserOptions = Array.from(
     folderSharedUserOptionMap.values(),
   ).sort((left, right) =>

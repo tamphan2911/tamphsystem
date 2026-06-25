@@ -3534,8 +3534,10 @@ export async function updateResearchFolderSharedUsers(
         select: { userId: true, isCorresponding: true },
       },
       authors: { select: { id: true } },
+      folderSharedUsers: { select: { id: true } },
       tasks: {
         select: {
+          checkerId: true,
           assignments: {
             select: { userId: true },
           },
@@ -3564,8 +3566,14 @@ export async function updateResearchFolderSharedUsers(
   ]);
   const assignedUserIds = new Set(
     project.tasks.flatMap((task) =>
-      task.assignments.map((assignment) => assignment.userId),
+      [
+        task.checkerId,
+        ...task.assignments.map((assignment) => assignment.userId),
+      ].filter((id): id is string => Boolean(id)),
     ),
+  );
+  const existingSharedUserIds = new Set(
+    project.folderSharedUsers.map((folderUser) => folderUser.id),
   );
   const requestedUserIds = orderedUniqueStrings(
     formData.getAll("folderSharedUserIds"),
@@ -3576,6 +3584,7 @@ export async function updateResearchFolderSharedUsers(
       id: { in: requestedUserIds },
       activeSites: { has: "research" },
       OR: [
+        { roles: { has: Role.ADMIN } },
         { roles: { has: Role.CHIEF_ASSISTANT } },
         { roles: { has: Role.ASSISTANT } },
       ],
@@ -3585,10 +3594,20 @@ export async function updateResearchFolderSharedUsers(
   const allowedUserIds = allowedUsers
     .filter(
       (allowedUser) =>
+        existingSharedUserIds.has(allowedUser.id) ||
         allowedUser.roles.includes(Role.CHIEF_ASSISTANT) ||
+        allowedUser.roles.includes(Role.ADMIN) ||
         assignedUserIds.has(allowedUser.id),
     )
     .map((allowedUser) => allowedUser.id);
+
+  if (allowedUserIds.length !== requestedUserIds.length) {
+    return {
+      ok: false,
+      savedCount: allowedUserIds.length,
+      requestedCount: requestedUserIds.length,
+    };
+  }
 
   await prisma.researchProject.update({
     where: { id: projectId },
@@ -3601,6 +3620,11 @@ export async function updateResearchFolderSharedUsers(
 
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
+  return {
+    ok: true,
+    savedCount: allowedUserIds.length,
+    requestedCount: requestedUserIds.length,
+  };
 }
 
 function researchFolderAccessRoleLabel({

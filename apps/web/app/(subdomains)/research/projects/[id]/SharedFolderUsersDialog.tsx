@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { FolderCheck, Search, UserPlus, X } from "lucide-react";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
@@ -23,10 +24,18 @@ export function SharedFolderUsersDialog({
   users,
   selectedUsers,
 }: {
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<
+    | {
+        ok: boolean;
+        savedCount?: number;
+        requestedCount?: number;
+      }
+    | void
+  >;
   users: FolderSharedUserOption[];
   selectedUsers: FolderSharedUserOption[];
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -36,10 +45,11 @@ export function SharedFolderUsersDialog({
   const [isPending, startTransition] = useTransition();
   const searchRef = useRef<HTMLDivElement>(null);
   const toast = useResearchToast();
-  const usersById = useMemo(
-    () => new Map(users.map((user) => [user.id, user])),
-    [users],
-  );
+  const usersById = useMemo(() => {
+    const map = new Map(users.map((user) => [user.id, user]));
+    selectedUsers.forEach((user) => map.set(user.id, user));
+    return map;
+  }, [selectedUsers, users]);
   const selected = useMemo(
     () =>
       Array.from(selectedIds)
@@ -106,12 +116,29 @@ export function SharedFolderUsersDialog({
           id="research-folder-shared-users-form"
           action={(formData) => {
             startTransition(async () => {
-              await action(formData);
-              setOpen(false);
-              toast.showSuccess({
-                title: "Shared users saved",
-                detail: "Research folder shared-user markers are updated.",
-              });
+              try {
+                const result = await action(formData);
+                if (result && !result.ok) {
+                  toast.showError({
+                    title: "Shared users not saved",
+                    detail:
+                      "The selected users are not eligible for this research folder.",
+                  });
+                  return;
+                }
+                router.refresh();
+                setOpen(false);
+                toast.showSuccess({
+                  title: "Shared users saved",
+                  detail: "Research folder shared-user markers are updated.",
+                });
+              } catch {
+                toast.showError({
+                  title: "Shared users not saved",
+                  detail:
+                    "The shared users could not be updated. Please refresh and try again.",
+                });
+              }
             });
           }}
           className="space-y-5 px-5 py-5"
