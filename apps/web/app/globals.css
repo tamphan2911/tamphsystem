@@ -3062,6 +3062,35 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
   color: #563f8f;
 }
 
+.research-site-root .research-folder-request-alert {
+  animation: research-folder-request-jump 1.35s ease-in-out infinite;
+}
+
+@keyframes research-folder-request-jump {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  35% {
+    transform: translateY(-3px);
+  }
+
+  55% {
+    transform: translateY(0);
+  }
+
+  72% {
+    transform: translateY(-1.5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .research-site-root .research-folder-request-alert {
+    animation: none;
+  }
+}
+
 .research-site-root .research-title-icon-button:active {
   border-color: transparent !important;
   background: transparent !important;

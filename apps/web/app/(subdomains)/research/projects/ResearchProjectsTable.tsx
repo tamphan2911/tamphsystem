@@ -558,9 +558,17 @@ export function ResearchProjectsTable({
     "projects:sort",
     "NONE",
   );
-  const [folderRequestValue, setFolderRequestValue] =
-    usePersistentTableValue("projects:folder-requests", "0");
-  const showFolderRequestsOnly = folderRequestValue === "1";
+  const [folderRequestValue, setFolderRequestValue] = usePersistentTableValue(
+    "projects:folder-requests",
+    "0",
+  );
+  const pendingFolderRequestCount = useMemo(
+    () =>
+      rows.reduce((total, row) => total + row.pendingFolderAccessRequests, 0),
+    [rows],
+  );
+  const hasPendingFolderRequests = pendingFolderRequestCount > 0;
+  const showFolderRequestsOnly = isAdmin && folderRequestValue === "1";
   const sort = useMemo(() => parseSortValue(sortValue), [sortValue]);
   const selectedStages = useMemo(
     () => selectedFilterValues(stageValue, stages),
@@ -749,33 +757,39 @@ export function ResearchProjectsTable({
               <th className="px-3 py-3">
                 <span className="inline-flex items-center gap-1.5">
                   Research
-                  <IconHint
-                    label={
-                      showFolderRequestsOnly
-                        ? "Show all research"
-                        : "Show research with ongoing shared folder requests"
-                    }
-                  >
-                    <button
-                      type="button"
-                      aria-pressed={showFolderRequestsOnly}
-                      aria-label={
+                  {isAdmin && (
+                    <IconHint
+                      label={
                         showFolderRequestsOnly
                           ? "Show all research"
-                          : "Show research with ongoing shared folder requests"
+                          : hasPendingFolderRequests
+                            ? `${pendingFolderRequestCount} ongoing shared folder access ${pendingFolderRequestCount === 1 ? "request" : "requests"}`
+                            : "Show research with ongoing shared folder requests"
                       }
-                      onClick={() =>
-                        updateFolderRequestFilter(!showFolderRequestsOnly)
-                      }
-                      className={`research-allow-transform inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
-                        showFolderRequestsOnly
-                          ? "text-amber-700 drop-shadow-[0_0_0.45rem_rgba(217,119,6,0.22)] hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
-                          : "text-[#667085] hover:text-amber-700 dark:text-[#B0B0B0] dark:hover:text-amber-300"
-                      }`}
                     >
-                      <FolderClock className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  </IconHint>
+                      <button
+                        type="button"
+                        aria-pressed={showFolderRequestsOnly}
+                        aria-label={
+                          showFolderRequestsOnly
+                            ? "Show all research"
+                            : "Show research with ongoing shared folder requests"
+                        }
+                        onClick={() =>
+                          updateFolderRequestFilter(!showFolderRequestsOnly)
+                        }
+                        className={`research-allow-transform inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
+                          showFolderRequestsOnly
+                            ? "text-amber-700 drop-shadow-[0_0_0.45rem_rgba(217,119,6,0.22)] hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
+                            : hasPendingFolderRequests
+                              ? "research-folder-request-alert text-amber-700 drop-shadow-[0_0_0.45rem_rgba(217,119,6,0.26)] hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
+                              : "text-[#667085] hover:text-amber-700 dark:text-[#B0B0B0] dark:hover:text-amber-300"
+                        }`}
+                      >
+                        <FolderClock className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </IconHint>
+                  )}
                 </span>
               </th>
               <th className="w-[5.75rem] px-3 py-3">
