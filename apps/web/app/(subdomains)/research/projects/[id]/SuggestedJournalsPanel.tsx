@@ -973,6 +973,8 @@ export function SuggestedJournalsPanel({
                   onClick={() => {
                     setActiveAddTab(tab);
                     setSelectedAddVenue(null);
+                    setJournalQuery("");
+                    setConferenceQuery("");
                   }}
                   data-research-toggle-tab="true"
                   data-active={activeAddTab === tab}
@@ -989,17 +991,29 @@ export function SuggestedJournalsPanel({
 
             {activeAddTab === "journal" ? (
               <>
-                <SearchBox
-                  value={journalQuery}
-                  onChange={(value) => {
+                <ApprovalVenuePicker
+                  kind="journal"
+                  query={journalQuery}
+                  selectedVenue={
+                    selectedAddVenue?.kind === "journal"
+                      ? selectedAddVenue
+                      : null
+                  }
+                  journals={journalResults}
+                  conferences={[]}
+                  placeholder="Search journal name, ISSN, field, rank, publisher..."
+                  onQueryChange={(value) => {
                     setJournalQuery(value);
                     setSelectedAddVenue(null);
                   }}
-                  placeholder="Search journal name, ISSN, field, rank, publisher..."
-                />
-                <SelectedVenuePill
-                  venue={selectedAddVenue}
-                  onClear={() => setSelectedAddVenue(null)}
+                  onSelect={(venue) => {
+                    setSelectedAddVenue(venue);
+                    setJournalQuery("");
+                  }}
+                  onClear={() => {
+                    setSelectedAddVenue(null);
+                    setJournalQuery("");
+                  }}
                 />
                 {!selectedAddVenue && (
                   <FreeVenueFields
@@ -1017,51 +1031,32 @@ export function SuggestedJournalsPanel({
                   aria-label="Suggested venue note"
                   className={`${researchTextareaClass} min-h-24`}
                 />
-                <ResultList
-                  query={journalQuery}
-                  idleText="Search and select one journal."
-                  emptyText="No journal matches this search."
-                >
-                  {journalResults.map((journal) => (
-                    <button
-                      key={journal.id}
-                      type="button"
-                      disabled={isPending}
-                      onClick={() => {
-                        setSelectedAddVenue({ kind: "journal", item: journal });
-                        setJournalQuery("");
-                      }}
-                      className={resultButtonClass(
-                        selectedAddVenue?.kind === "journal" &&
-                          selectedAddVenue.item.id === journal.id,
-                      )}
-                    >
-                      <span className="block text-sm font-normal text-[#E4E4E4]">
-                        {journal.name}
-                      </span>
-                      <span className="mt-1 block text-xs text-[#B0B0B0]">
-                        {journal.issn || "No ISSN"} -{" "}
-                        {journal.field || "No field"} -{" "}
-                        {journal.rank || "No rank"} -{" "}
-                        {journal.publisher || "No publisher"}
-                      </span>
-                    </button>
-                  ))}
-                </ResultList>
               </>
             ) : (
               <>
-                <SearchBox
-                  value={conferenceQuery}
-                  onChange={(value) => {
+                <ApprovalVenuePicker
+                  kind="conference"
+                  query={conferenceQuery}
+                  selectedVenue={
+                    selectedAddVenue?.kind === "conference"
+                      ? selectedAddVenue
+                      : null
+                  }
+                  journals={[]}
+                  conferences={conferenceResults}
+                  placeholder="Search conference, organizer, theme, location..."
+                  onQueryChange={(value) => {
                     setConferenceQuery(value);
                     setSelectedAddVenue(null);
                   }}
-                  placeholder="Search conference, organizer, theme, location..."
-                />
-                <SelectedVenuePill
-                  venue={selectedAddVenue}
-                  onClear={() => setSelectedAddVenue(null)}
+                  onSelect={(venue) => {
+                    setSelectedAddVenue(venue);
+                    setConferenceQuery("");
+                  }}
+                  onClear={() => {
+                    setSelectedAddVenue(null);
+                    setConferenceQuery("");
+                  }}
                 />
                 {!selectedAddVenue && (
                   <FreeVenueFields
@@ -1079,39 +1074,6 @@ export function SuggestedJournalsPanel({
                   aria-label="Suggested venue note"
                   className={`${researchTextareaClass} min-h-24`}
                 />
-                <ResultList
-                  query={conferenceQuery}
-                  idleText="Search and select one conference."
-                  emptyText="No conference matches this search."
-                >
-                  {conferenceResults.map((conference) => (
-                    <button
-                      key={conference.id}
-                      type="button"
-                      disabled={isPending}
-                      onClick={() => {
-                        setSelectedAddVenue({
-                          kind: "conference",
-                          item: conference,
-                        });
-                        setConferenceQuery("");
-                      }}
-                      className={resultButtonClass(
-                        selectedAddVenue?.kind === "conference" &&
-                          selectedAddVenue.item.id === conference.id,
-                      )}
-                    >
-                      <span className="block text-sm font-normal text-[#E4E4E4]">
-                        {conference.name}
-                      </span>
-                      <span className="mt-1 block text-xs text-[#B0B0B0]">
-                        {conference.type || "No type"} -{" "}
-                        {conference.theme || "No theme"} -{" "}
-                        {conference.location || "No location"}
-                      </span>
-                    </button>
-                  ))}
-                </ResultList>
               </>
             )}
           </div>
@@ -1149,56 +1111,40 @@ export function SuggestedJournalsPanel({
               <FixedVenueSummary venue={editVenue} />
             ) : (
               <>
-                <SearchBox
-                  value={editVenueQuery}
-                  onChange={setEditVenueQuery}
+                <ApprovalVenuePicker
+                  kind={editVenue.kind}
+                  query={editVenueQuery}
+                  selectedVenue={
+                    selectedEditVenue?.kind === editVenue.kind
+                      ? selectedEditVenue
+                      : null
+                  }
+                  journals={editVenueResults
+                    .filter((venue) => venue.kind === "journal")
+                    .map((venue) => venue.item as SuggestedJournalOption)}
+                  conferences={editVenueResults
+                    .filter((venue) => venue.kind === "conference")
+                    .map((venue) => venue.item as SuggestedConferenceOption)}
                   placeholder={
                     editVenue.kind === "journal"
                       ? "Search journal name, ISSN, rank, or publisher..."
                       : "Search conference, organizer, theme, or location..."
                   }
+                  onQueryChange={(value) => {
+                    setEditVenueQuery(value);
+                    setSelectedEditVenue(null);
+                  }}
+                  onSelect={(venue) => {
+                    setSelectedEditVenue(venue);
+                    setEditVenueName(venue.item.name);
+                    setEditVenueLink(venue.item.venueLink);
+                    setEditVenueQuery("");
+                  }}
+                  onClear={() => {
+                    setSelectedEditVenue(null);
+                    setEditVenueQuery("");
+                  }}
                 />
-                <SelectedVenuePill
-                  venue={selectedEditVenue}
-                  onClear={() => setSelectedEditVenue(null)}
-                />
-                <ResultList
-                  query={editVenueQuery}
-                  idleText={`Search to link another ${editVenue.kind}, or edit the information below.`}
-                  emptyText={`No ${editVenue.kind} matches this search.`}
-                >
-                  {editVenueResults.map((venue) => (
-                    <button
-                      key={venue.item.id}
-                      type="button"
-                      disabled={isPending}
-                      onClick={() => {
-                        setSelectedEditVenue(venue);
-                        setEditVenueName(venue.item.name);
-                        setEditVenueLink(venue.item.venueLink);
-                        setEditVenueQuery("");
-                      }}
-                      className={resultButtonClass(false)}
-                    >
-                      <span className="block text-sm font-normal text-[#E4E4E4]">
-                        {venue.item.name}
-                      </span>
-                      <span className="mt-1 block text-xs text-[#B0B0B0]">
-                        {venue.kind === "journal"
-                          ? [
-                              venue.item.issn || "No ISSN",
-                              venue.item.rank || "No rank",
-                              venue.item.publisher || "No publisher",
-                            ].join(" - ")
-                          : [
-                              venue.item.type || "No type",
-                              venue.item.theme || "No theme",
-                              venue.item.location || "No location",
-                            ].join(" - ")}
-                      </span>
-                    </button>
-                  ))}
-                </ResultList>
                 <div className="grid gap-4 md:grid-cols-2">
                   <input
                     value={editVenueName}
@@ -2007,20 +1953,13 @@ function ReportUploadPermissionField({
   );
 }
 
-function resultButtonClass(selected: boolean) {
-  return `cursor-pointer border-t px-3 py-2 text-left transition first:border-t-transparent first:hover:border-t-transparent disabled:cursor-wait ${
-    selected
-      ? "border-[#444444] bg-[#303030]"
-      : "border-transparent bg-[#202020] hover:border-[#444444] hover:bg-[#303030]"
-  }`;
-}
-
 function ApprovalVenuePicker({
   kind,
   query,
   selectedVenue,
   journals,
   conferences,
+  placeholder,
   onQueryChange,
   onSelect,
   onClear,
@@ -2030,6 +1969,7 @@ function ApprovalVenuePicker({
   selectedVenue: Venue | null;
   journals: SuggestedJournalOption[];
   conferences: SuggestedConferenceOption[];
+  placeholder?: string;
   onQueryChange: (value: string) => void;
   onSelect: (venue: Venue) => void;
   onClear: () => void;
@@ -2046,9 +1986,10 @@ function ApprovalVenuePicker({
         onChange={(event) => onQueryChange(event.target.value)}
         readOnly={Boolean(selectedVenue)}
         placeholder={
-          kind === "journal"
+          placeholder ??
+          (kind === "journal"
             ? "Search journal to link..."
-            : "Search conference to link..."
+            : "Search conference to link...")
         }
         className={`${researchSearchFieldClass} pr-10 pl-9`}
       />
@@ -2108,39 +2049,6 @@ function ApprovalVenuePicker({
           </div>
         </div>
       </FloatingDropdownPortal>
-    </div>
-  );
-}
-
-function SelectedVenuePill({
-  venue,
-  onClear,
-}: {
-  venue: Venue | null;
-  onClear: () => void;
-}) {
-  if (!venue) return null;
-
-  return (
-    <div className="flex items-center justify-between gap-3 border border-[#444444] bg-[#202020] px-3 py-2">
-      <span className="min-w-0">
-        <span className="block truncate text-sm font-normal text-[#E4E4E4]">
-          {venue.item.name}
-        </span>
-        <span className="block truncate text-xs text-[#B0B0B0]">
-          Selected {venue.kind}
-        </span>
-      </span>
-      <IconHint label="Clear selection">
-        <button
-          type="button"
-          onClick={onClear}
-          aria-label="Clear selected venue"
-          className="inline-flex h-8 w-8 flex-none cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] transition hover:text-[#A8DADC]"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </IconHint>
     </div>
   );
 }
@@ -2898,59 +2806,6 @@ function venueStateMeta(state: SuggestedVenueState) {
     badgeClass: "",
     tooltip: "",
   };
-}
-
-function ResultList({
-  query,
-  idleText,
-  emptyText,
-  children,
-}: {
-  query: string;
-  idleText: string;
-  emptyText: string;
-  children: ReactNode;
-}) {
-  const hasChildren = Array.isArray(children)
-    ? children.length > 0
-    : Boolean(children);
-  const isSearching = query.trim().length > 0;
-
-  if (!isSearching && !hasChildren) return null;
-
-  return (
-    <div className="grid max-h-[18rem] min-h-[18rem] overflow-y-auto border border-[#444444]">
-      {hasChildren ? (
-        children
-      ) : (
-        <div className="py-10 text-center text-sm text-[#B0B0B0]">
-          {isSearching ? emptyText : idleText}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SearchBox({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <div className="relative">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#B0B0B0]" />
-      <input
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className={`${researchSearchFieldClass} pl-9`}
-      />
-    </div>
-  );
 }
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
