@@ -619,7 +619,7 @@ function ProjectSortHeader({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 ${
+      className={`inline-flex items-center gap-1 ${
         centered ? "justify-center" : ""
       }`}
     >

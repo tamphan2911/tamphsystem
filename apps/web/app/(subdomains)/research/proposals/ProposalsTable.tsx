@@ -51,13 +51,7 @@ export type ProposalRow = {
 };
 
 type SortDirection = "asc" | "desc";
-type ProposalSortKey =
-  | "proposal"
-  | "type"
-  | "status"
-  | "submitted"
-  | "contact"
-  | "file";
+type ProposalSortKey = "proposal" | "type" | "status" | "submitted" | "contact";
 
 const typeOptions = ["ALL", "RESEARCH", "PROJECT", "CONFERENCE", "JOURNAL"];
 const statusOptions = ["ALL", "NEW", "REVIEWING", "ACCEPTED", "DECLINED"];
@@ -76,13 +70,6 @@ function compareProposalText(left: string, right: string) {
   });
 }
 
-function compareProposalFile(left: ProposalRow, right: ProposalRow) {
-  return (
-    Number(Boolean(left.fileName)) - Number(Boolean(right.fileName)) ||
-    compareProposalText(left.fileName, right.fileName)
-  );
-}
-
 function parseProposalSortValue(value: string) {
   const [key, direction] = value.split(":");
   const validKeys: ProposalSortKey[] = [
@@ -91,7 +78,6 @@ function parseProposalSortValue(value: string) {
     "status",
     "submitted",
     "contact",
-    "file",
   ];
   if (
     validKeys.includes(key as ProposalSortKey) &&
@@ -308,8 +294,6 @@ export function ProposalsTable({
           compareProposalText(left.submittedByEmail, right.submittedByEmail);
       } else if (sort.key === "contact") {
         result = compareProposalText(left.contactInfo, right.contactInfo);
-      } else {
-        result = compareProposalFile(left, right);
       }
       return sort.direction === "asc" ? result : -result;
     });
@@ -423,15 +407,7 @@ export function ProposalsTable({
                   alphabetical
                 />
               </th>
-              <th className="w-12 px-2 py-3 text-center">
-                <ProposalSortHeader
-                  label="File"
-                  column="file"
-                  sort={sort}
-                  onChange={updateSort}
-                  centered
-                />
-              </th>
+              <th className="w-12 px-2 py-3 text-center">File</th>
               {isAdmin && deleteAction && (
                 <th className="w-12 px-2 py-3 text-center">
                   <span className="sr-only">Delete</span>
@@ -581,7 +557,7 @@ function ProposalSortHeader({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 ${
+      className={`inline-flex items-center gap-1 ${
         centered ? "justify-center" : ""
       }`}
     >
