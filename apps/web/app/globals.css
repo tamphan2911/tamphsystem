@@ -1383,6 +1383,15 @@ html[data-research-theme="light"]
   color: #1f7180 !important;
 }
 
+.research-site-root.research-theme-light .research-task-workflow-note,
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .research-task-workflow-note {
+  border-color: #e2c176 !important;
+  background-color: #fff7df !important;
+  color: #7a4d10 !important;
+}
+
 html[data-research-theme="light"]
   [data-research-modal-overlay="true"]
   :where(
@@ -1944,8 +1953,7 @@ body:has(.research-site-root) {
   --research-sidebar-link-active-text: #e4e4e4;
   --research-sidebar-link-shadow: inset 0 0 0 1px rgba(168, 218, 220, 0.05);
   --research-sidebar-link-active-shadow:
-    inset 3px 0 0 #a8dadc,
-    inset 0 0 0 1px rgba(168, 218, 220, 0.12);
+    inset 3px 0 0 #a8dadc, inset 0 0 0 1px rgba(168, 218, 220, 0.12);
 }
 
 .research-site-root.research-theme-light {
@@ -1959,8 +1967,7 @@ body:has(.research-site-root) {
   --research-sidebar-link-active-text: #1f2937;
   --research-sidebar-link-shadow: inset 0 0 0 1px rgba(31, 113, 128, 0.04);
   --research-sidebar-link-active-shadow:
-    inset 3px 0 0 #1f7180,
-    inset 0 0 0 1px rgba(31, 113, 128, 0.14);
+    inset 3px 0 0 #1f7180, inset 0 0 0 1px rgba(31, 113, 128, 0.14);
 }
 
 .research-site-root .research-sidebar-link {
@@ -2802,34 +2809,23 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
     overflow-wrap: anywhere;
   }
 
-  #research-page-mobile-header
-    .research-page-header-content
-    .truncate {
+  #research-page-mobile-header .research-page-header-content .truncate {
     overflow: visible;
     white-space: normal;
     text-overflow: clip;
   }
 
-  #research-page-mobile-header
-    .research-page-header-content
-    :where(.grid) {
+  #research-page-mobile-header .research-page-header-content :where(.grid) {
     max-width: 100%;
   }
 
-  #research-page-mobile-header
-    .research-page-header-content
-    > div
-    > .grid {
+  #research-page-mobile-header .research-page-header-content > div > .grid {
     flex: 1 1 100%;
     width: 100%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  #research-page-mobile-header
-    .research-page-header-content
-    > div
-    > .grid
-    > * {
+  #research-page-mobile-header .research-page-header-content > div > .grid > * {
     min-width: 0;
     white-space: normal;
   }
@@ -2867,15 +2863,13 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
     overflow-wrap: anywhere;
   }
 
-  .research-site-root main
-    :where(h1, h2, h3, h4, p, dd, a, span).truncate {
+  .research-site-root main :where(h1, h2, h3, h4, p, dd, a, span).truncate {
     overflow: visible;
     white-space: normal;
     text-overflow: clip;
   }
 
-  .research-site-root main
-    :where(p, span, a, dd)[class*="whitespace-nowrap"] {
+  .research-site-root main :where(p, span, a, dd)[class*="whitespace-nowrap"] {
     white-space: normal;
   }
 
@@ -2934,9 +2928,7 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
     font-size: 0.75rem;
   }
 
-  .research-site-root
-    main
-    :where(div):has(> table.research-mobile-card-table) {
+  .research-site-root main :where(div):has(> table.research-mobile-card-table) {
     overflow: visible;
   }
 
@@ -4638,9 +4630,9 @@ html[data-research-theme="light"]
     a[aria-label]:has(> svg),
     [role="button"][aria-label]:has(> svg),
     .research-allow-transform:has(> svg)
-  ):not([role="option"]):not([role="tab"]):not(
-    .research-select-trigger
-  ):not(.research-filter-select-trigger):not([aria-haspopup="listbox"]) {
+  ):not([role="option"]):not([role="tab"]):not(.research-select-trigger):not(
+    .research-filter-select-trigger
+  ):not([aria-haspopup="listbox"]) {
   border-color: transparent !important;
   background: transparent !important;
   background-color: transparent !important;
@@ -4658,14 +4650,9 @@ html[data-research-theme="light"]
     a[aria-label]:has(> svg),
     [role="button"][aria-label]:has(> svg),
     .research-allow-transform:has(> svg)
-  ):not([role="option"]):not([role="tab"]):not(
-    .research-select-trigger
-  ):not(.research-filter-select-trigger):not([aria-haspopup="listbox"]):is(
-    :hover,
-    :active,
-    :focus,
-    :focus-visible
-  ) {
+  ):not([role="option"]):not([role="tab"]):not(.research-select-trigger):not(
+    .research-filter-select-trigger
+  ):not([aria-haspopup="listbox"]):is(:hover, :active, :focus, :focus-visible) {
   border-color: transparent !important;
   background: transparent !important;
   background-color: transparent !important;
