@@ -43,6 +43,7 @@ export function SharedFolderUsersDialog({
     () => new Set(selectedUsers.map((user) => user.id)),
   );
   const [isPending, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const toast = useResearchToast();
   const usersById = useMemo(() => {
@@ -103,8 +104,8 @@ export function SharedFolderUsersDialog({
         maxWidth="max-w-2xl"
         headerActions={
           <ResearchButton
-            type="submit"
-            form="research-folder-shared-users-form"
+            type="button"
+            onClick={() => formRef.current?.requestSubmit()}
             disabled={isPending}
           >
             <FolderCheck className="h-4 w-4" aria-hidden="true" />
@@ -113,8 +114,11 @@ export function SharedFolderUsersDialog({
         }
       >
         <form
+          ref={formRef}
           id="research-folder-shared-users-form"
-          action={(formData) => {
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
             startTransition(async () => {
               try {
                 const result = await action(formData);
