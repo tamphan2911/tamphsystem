@@ -37,6 +37,17 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
+  if (
+    normalizedHostname === "tamph.com" ||
+    normalizedHostname === "www.tamph.com"
+  ) {
+    const redirectUrl = new URL(url.pathname + url.search, req.url);
+    redirectUrl.protocol = "https:";
+    redirectUrl.hostname = "research.tamph.com";
+    redirectUrl.port = "";
+    return NextResponse.redirect(redirectUrl);
+  }
+
   // 1. Shared Global Routes (do not prefix with subdomains)
   const isAuthRoute =
     url.pathname.startsWith("/login") ||
@@ -56,10 +67,7 @@ export default auth((req) => {
   }
 
   // 2. Root Domain Routing
-  if (
-    normalizedHostname === "tamph.com" ||
-    normalizedHostname === "localhost"
-  ) {
+  if (normalizedHostname === "localhost") {
     // Block direct access to subdomains from the root URL path
     if (
       url.pathname.startsWith("/admin") ||
