@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
-  ArrowUpDown,
   Banknote,
   CalendarClock,
   CheckCircle2,
@@ -20,6 +19,7 @@ import { formatCurrencyCodeMoney } from "@/sites/research/lib/currency";
 import {
   FilterSelect,
   IconHint,
+  ResearchSortHeaderButton,
   TablePagination,
   TableSearchInput,
   useTablePagination,
@@ -171,6 +171,38 @@ function projectFundingValue(project: OrganizedProjectRow) {
   return Number.isFinite(amount) ? amount : 0;
 }
 
+function nextProjectSortValue(
+  currentKey: OrganizedProjectSortKey,
+  currentDirection: SortDirection,
+  key: OrganizedProjectSortKey,
+) {
+  if (currentKey !== key) return `${key}:asc`;
+  if (currentDirection === "asc") return `${key}:desc`;
+  return "NONE";
+}
+
+function parseProjectSortValue(value: string) {
+  const [key, direction] = value.split(":");
+  const validKeys: OrganizedProjectSortKey[] = [
+    "project",
+    "status",
+    "financial",
+    "funding",
+    "dates",
+    "results",
+  ];
+  if (
+    validKeys.includes(key as OrganizedProjectSortKey) &&
+    (direction === "asc" || direction === "desc")
+  ) {
+    return {
+      key: key as OrganizedProjectSortKey,
+      direction: direction as SortDirection,
+    };
+  }
+  return null;
+}
+
 function DeleteProjectButton({
   project,
   deleteAction,
@@ -259,12 +291,9 @@ export function OrganizedProjectsTable({
   );
   const [sortValue, setSortValue] = usePersistentTableValue(
     "organized-projects:sort",
-    "project:asc",
+    "NONE",
   );
-  const [sortKey, sortDirection] = sortValue.split(":") as [
-    OrganizedProjectSortKey,
-    SortDirection,
-  ];
+  const sort = useMemo(() => parseProjectSortValue(sortValue), [sortValue]);
 
   const statusOptions = useMemo(
     () => [
@@ -312,33 +341,34 @@ export function OrganizedProjectsTable({
         return matchesStatus && (!needle || haystack.includes(needle));
       });
     return filteredRows.sort((left, right) => {
+      if (!sort) return 0;
       let result = 0;
-      if (sortKey === "project") {
+      if (sort.key === "project") {
         result = compareProjectText(left.title, right.title);
-      } else if (sortKey === "status") {
+      } else if (sort.key === "status") {
         result = compareProjectText(
           statusMeta(left.status).label,
           statusMeta(right.status).label,
         );
-      } else if (sortKey === "financial") {
+      } else if (sort.key === "financial") {
         result = compareProjectText(
           financialClaimMeta(left.financialClaimStatus).label,
           financialClaimMeta(right.financialClaimStatus).label,
         );
-      } else if (sortKey === "funding") {
+      } else if (sort.key === "funding") {
         result =
           projectFundingValue(left) - projectFundingValue(right) ||
           compareProjectText(left.organizer, right.organizer);
-      } else if (sortKey === "dates") {
+      } else if (sort.key === "dates") {
         result =
           compareProjectDate(left.startDate, right.startDate) ||
           compareProjectDate(left.endDate, right.endDate);
       } else {
         result = left.researchCount - right.researchCount;
       }
-      return sortDirection === "asc" ? result : -result;
+      return sort.direction === "asc" ? result : -result;
     });
-  }, [query, rows, sortDirection, sortKey, status]);
+  }, [query, rows, sort, status]);
 
   const pagination = useTablePagination(filtered, 10, 1, "organized-projects");
 
@@ -353,9 +383,9 @@ export function OrganizedProjectsTable({
   }
 
   function updateSort(key: OrganizedProjectSortKey) {
-    const nextDirection: SortDirection =
-      sortKey === key && sortDirection === "asc" ? "desc" : "asc";
-    setSortValue(`${key}:${nextDirection}`);
+    setSortValue(
+      sort ? nextProjectSortValue(sort.key, sort.direction, key) : `${key}:asc`,
+    );
     pagination.setPage(1);
   }
 
@@ -386,51 +416,54 @@ export function OrganizedProjectsTable({
               <th className="px-3 py-3">
                 <ProjectSortHeader
                   label="Project"
-                  active={sortKey === "project"}
-                  direction={sortDirection}
-                  onClick={() => updateSort("project")}
+                  column="project"
+                  sort={sort}
+                  onChange={updateSort}
+                  alphabetical
                 />
               </th>
               <th className="w-[7%] px-2 py-3 text-center">
                 <ProjectSortHeader
                   label="Status"
-                  active={sortKey === "status"}
-                  direction={sortDirection}
-                  onClick={() => updateSort("status")}
+                  column="status"
+                  sort={sort}
+                  onChange={updateSort}
+                  alphabetical
                   centered
                 />
               </th>
               <th className="w-[7%] px-2 py-3 text-center">
                 <ProjectSortHeader
                   label="Financial"
-                  active={sortKey === "financial"}
-                  direction={sortDirection}
-                  onClick={() => updateSort("financial")}
+                  column="financial"
+                  sort={sort}
+                  onChange={updateSort}
+                  alphabetical
                   centered
                 />
               </th>
               <th className="w-[15%] px-3 py-3">
                 <ProjectSortHeader
                   label="Funding"
-                  active={sortKey === "funding"}
-                  direction={sortDirection}
-                  onClick={() => updateSort("funding")}
+                  column="funding"
+                  sort={sort}
+                  onChange={updateSort}
                 />
               </th>
               <th className="w-[12%] px-3 py-3">
                 <ProjectSortHeader
                   label="Dates"
-                  active={sortKey === "dates"}
-                  direction={sortDirection}
-                  onClick={() => updateSort("dates")}
+                  column="dates"
+                  sort={sort}
+                  onChange={updateSort}
                 />
               </th>
               <th className="w-[7%] px-2 py-3 text-center">
                 <ProjectSortHeader
                   label="Results"
-                  active={sortKey === "results"}
-                  direction={sortDirection}
-                  onClick={() => updateSort("results")}
+                  column="results"
+                  sort={sort}
+                  onChange={updateSort}
                   centered
                 />
               </th>
@@ -571,32 +604,38 @@ export function OrganizedProjectsTable({
 
 function ProjectSortHeader({
   label,
-  active,
-  direction,
-  onClick,
+  column,
+  sort,
+  onChange,
+  alphabetical = false,
   centered = false,
 }: {
   label: string;
-  active: boolean;
-  direction: SortDirection;
-  onClick: () => void;
+  column: OrganizedProjectSortKey;
+  sort: ReturnType<typeof parseProjectSortValue>;
+  onChange: (column: OrganizedProjectSortKey) => void;
+  alphabetical?: boolean;
   centered?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`research-allow-transform inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-xs font-normal uppercase tracking-wide shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none focus-visible:ring-0 active:scale-95 ${
-        centered ? "justify-center" : "justify-start text-left"
-      } ${active ? "text-[#A8DADC]" : "text-[#B0B0B0]"}`}
+    <span
+      className={`inline-flex items-center gap-1.5 ${
+        centered ? "justify-center" : ""
+      }`}
     >
       <span>{label}</span>
-      <ArrowUpDown
-        className={`h-3.5 w-3.5 transition duration-180 ${
-          active && direction === "desc" ? "rotate-180" : ""
-        }`}
-        aria-hidden="true"
+      <ResearchSortHeaderButton
+        column={column}
+        activeColumn={sort?.key ?? null}
+        direction={sort?.key === column ? sort.direction : null}
+        onChange={onChange}
+        hint={
+          sort?.key === column && sort.direction === "desc"
+            ? "Clear sorting"
+            : `Sort by ${label.toLowerCase()}`
+        }
+        alphabetical={alphabetical}
       />
-    </button>
+    </span>
   );
 }

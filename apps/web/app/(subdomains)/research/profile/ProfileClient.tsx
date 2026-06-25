@@ -11,7 +11,6 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowUpDown,
   BadgeCheck,
   BarChart3,
   BriefcaseBusiness,
@@ -36,6 +35,7 @@ import {
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import {
+  ResearchSortHeaderButton,
   TablePagination,
   usePersistentTableValue,
   useTablePagination,
@@ -344,6 +344,31 @@ function compareNullableDate(left: string | null, right: string | null) {
   const leftTime = left ? new Date(left).getTime() : Number.MAX_SAFE_INTEGER;
   const rightTime = right ? new Date(right).getTime() : Number.MAX_SAFE_INTEGER;
   return leftTime - rightTime;
+}
+
+function parseProfileTaskSortValue(value: string) {
+  const [key, direction] = value.split(":");
+  const validKeys: ProfileTaskSortKey[] = ["task", "type", "status", "due"];
+  if (
+    validKeys.includes(key as ProfileTaskSortKey) &&
+    (direction === "asc" || direction === "desc")
+  ) {
+    return {
+      key: key as ProfileTaskSortKey,
+      direction: direction as SortDirection,
+    };
+  }
+  return null;
+}
+
+function nextProfileTaskSortValue(
+  currentKey: ProfileTaskSortKey,
+  currentDirection: SortDirection,
+  key: ProfileTaskSortKey,
+) {
+  if (currentKey !== key) return `${key}:asc`;
+  if (currentDirection === "asc") return `${key}:desc`;
+  return "NONE";
 }
 
 export function ProfileClient({
@@ -943,23 +968,21 @@ function TaskDashboard({
 function ProfileTaskTable({ rows }: { rows: ProfileTaskRow[] }) {
   const [sortValue, setSortValue] = usePersistentTableValue(
     "profile:task-sort",
-    "due:asc",
+    "NONE",
   );
-  const [sortKey, sortDirection] = sortValue.split(":") as [
-    ProfileTaskSortKey,
-    SortDirection,
-  ];
+  const sort = useMemo(() => parseProfileTaskSortValue(sortValue), [sortValue]);
   const sortedRows = useMemo(() => {
     return [...rows].sort((left, right) => {
+      if (!sort) return 0;
       let result = 0;
-      if (sortKey === "task") {
+      if (sort.key === "task") {
         result = compareNullableText(left.title, right.title);
-      } else if (sortKey === "type") {
+      } else if (sort.key === "type") {
         result = compareNullableText(
           `${taskTypeLabel(left.taskType)} ${left.category}`,
           `${taskTypeLabel(right.taskType)} ${right.category}`,
         );
-      } else if (sortKey === "status") {
+      } else if (sort.key === "status") {
         result = compareNullableText(
           profileTaskStatusMeta(left).label,
           profileTaskStatusMeta(right).label,
@@ -967,9 +990,9 @@ function ProfileTaskTable({ rows }: { rows: ProfileTaskRow[] }) {
       } else {
         result = compareNullableDate(left.dueDate, right.dueDate);
       }
-      return sortDirection === "asc" ? result : -result;
+      return sort.direction === "asc" ? result : -result;
     });
-  }, [rows, sortDirection, sortKey]);
+  }, [rows, sort]);
   const pagination = useTablePagination(
     sortedRows,
     10,
@@ -978,9 +1001,11 @@ function ProfileTaskTable({ rows }: { rows: ProfileTaskRow[] }) {
   );
 
   function updateSort(key: ProfileTaskSortKey) {
-    const nextDirection: SortDirection =
-      sortKey === key && sortDirection === "asc" ? "desc" : "asc";
-    setSortValue(`${key}:${nextDirection}`);
+    setSortValue(
+      sort
+        ? nextProfileTaskSortValue(sort.key, sort.direction, key)
+        : `${key}:asc`,
+    );
     pagination.setPage(1);
   }
 
@@ -993,33 +1018,36 @@ function ProfileTaskTable({ rows }: { rows: ProfileTaskRow[] }) {
             <th className="px-3 py-3">
               <ProfileSortHeader
                 label="Task"
-                active={sortKey === "task"}
-                direction={sortDirection}
-                onClick={() => updateSort("task")}
+                column="task"
+                sort={sort}
+                onChange={updateSort}
+                alphabetical
               />
             </th>
             <th className="w-[9rem] px-3 py-3">
               <ProfileSortHeader
                 label="Type"
-                active={sortKey === "type"}
-                direction={sortDirection}
-                onClick={() => updateSort("type")}
+                column="type"
+                sort={sort}
+                onChange={updateSort}
+                alphabetical
               />
             </th>
             <th className="w-[10rem] px-3 py-3">
               <ProfileSortHeader
                 label="Status"
-                active={sortKey === "status"}
-                direction={sortDirection}
-                onClick={() => updateSort("status")}
+                column="status"
+                sort={sort}
+                onChange={updateSort}
+                alphabetical
               />
             </th>
             <th className="w-[8rem] px-3 py-3">
               <ProfileSortHeader
                 label="Due"
-                active={sortKey === "due"}
-                direction={sortDirection}
-                onClick={() => updateSort("due")}
+                column="due"
+                sort={sort}
+                onChange={updateSort}
               />
             </th>
           </tr>
@@ -1106,30 +1134,32 @@ function ProfileTaskTable({ rows }: { rows: ProfileTaskRow[] }) {
 
 function ProfileSortHeader({
   label,
-  active,
-  direction,
-  onClick,
+  column,
+  sort,
+  onChange,
+  alphabetical = false,
 }: {
   label: string;
-  active: boolean;
-  direction: SortDirection;
-  onClick: () => void;
+  column: ProfileTaskSortKey;
+  sort: ReturnType<typeof parseProfileTaskSortValue>;
+  onChange: (column: ProfileTaskSortKey) => void;
+  alphabetical?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`research-allow-transform inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-left text-xs font-normal uppercase tracking-wide shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none focus-visible:ring-0 active:scale-95 ${
-        active ? "text-[#A8DADC]" : "text-[#B0B0B0]"
-      }`}
-    >
+    <span className="inline-flex items-center gap-1.5">
       <span>{label}</span>
-      <ArrowUpDown
-        className={`h-3.5 w-3.5 transition duration-180 ${
-          active && direction === "desc" ? "rotate-180" : ""
-        }`}
-        aria-hidden="true"
+      <ResearchSortHeaderButton
+        column={column}
+        activeColumn={sort?.key ?? null}
+        direction={sort?.key === column ? sort.direction : null}
+        onChange={onChange}
+        hint={
+          sort?.key === column && sort.direction === "desc"
+            ? "Clear sorting"
+            : `Sort by ${label.toLowerCase()}`
+        }
+        alphabetical={alphabetical}
       />
-    </button>
+    </span>
   );
 }

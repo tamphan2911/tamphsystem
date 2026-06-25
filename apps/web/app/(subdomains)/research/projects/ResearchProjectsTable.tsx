@@ -4,10 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
-  ArrowDownAZ,
-  ArrowDownNarrowWide,
-  ArrowDownUp,
-  ArrowUpNarrowWide,
   BadgeCheck,
   Ban,
   BookMarked,
@@ -31,6 +27,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   IconHint,
   MultiFilterSelect,
+  ResearchSortHeaderButton,
   TablePagination,
   TableSearchInput,
   useTablePagination,
@@ -265,31 +262,15 @@ function SortHeaderButton({
   onChange: (column: SortColumn) => void;
 }) {
   const active = sort?.column === column;
-  const Icon =
-    active && sort.direction === "desc"
-      ? ArrowDownNarrowWide
-      : active && sort.direction === "asc"
-        ? column === "claim" || column === "registration"
-          ? ArrowDownAZ
-          : ArrowUpNarrowWide
-        : ArrowDownUp;
-
   return (
-    <IconHint label={sortHint(column, sort)}>
-      <button
-        type="button"
-        aria-label={sortHint(column, sort)}
-        aria-pressed={active}
-        onClick={() => onChange(column)}
-        className={`research-allow-transform inline-flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 shadow-none outline-none transition-[color,filter,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
-          active
-            ? "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
-            : "text-slate-500 hover:text-slate-900 dark:text-[#8F98A8] dark:hover:text-[#E4E4E4]"
-        }`}
-      >
-        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-      </button>
-    </IconHint>
+    <ResearchSortHeaderButton
+      column={column}
+      activeColumn={sort?.column ?? null}
+      direction={active ? (sort?.direction ?? null) : null}
+      onChange={onChange}
+      hint={sortHint(column, sort)}
+      alphabetical={column === "claim" || column === "registration"}
+    />
   );
 }
 
