@@ -952,6 +952,9 @@ export function TasksClient({
                       <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
                         checker: {task.checker}
                       </p>
+                      <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                        Assigner: {task.createdBy}
+                      </p>
                     </td>
                     {canDelete && (
                       <td className="px-2 py-3 text-center align-top">
