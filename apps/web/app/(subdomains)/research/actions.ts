@@ -3675,10 +3675,15 @@ export async function requestResearchFolderAccess(projectId: string) {
         folderAccessRequests: {
           where: {
             userId: user.id,
-            status: ResearchFolderAccessRequestStatus.PENDING,
+            status: {
+              in: [
+                ResearchFolderAccessRequestStatus.PENDING,
+                ResearchFolderAccessRequestStatus.DECLINED,
+              ],
+            },
           },
-          select: { id: true },
-          take: 1,
+          select: { id: true, status: true },
+          orderBy: [{ status: "asc" }, { createdAt: "desc" }],
         },
       },
     }),
@@ -3716,8 +3721,12 @@ export async function requestResearchFolderAccess(projectId: string) {
 
   if (alreadyShared) return { status: "already-shared" };
   if (!isAuthor && !isTaskAssignee && !isTaskChecker) redirect("/401");
-  if (project.folderAccessRequests.length > 0) {
+  const existingRequest = project.folderAccessRequests[0] ?? null;
+  if (existingRequest?.status === ResearchFolderAccessRequestStatus.PENDING) {
     return { status: "already-requested" };
+  }
+  if (existingRequest?.status === ResearchFolderAccessRequestStatus.DECLINED) {
+    return { status: "declined" };
   }
 
   const requesterRole = researchFolderAccessRoleLabel({

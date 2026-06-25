@@ -14,9 +14,15 @@ import { requestResearchFolderAccess } from "../../actions";
 export function ResearchFolderAccessRequestButton({
   projectId,
   researchTitle,
+  requestStatus,
+  requestNote = "",
+  requestDecidedAt = "",
 }: {
   projectId: string;
   researchTitle: string;
+  requestStatus?: "PENDING" | "DECLINED";
+  requestNote?: string;
+  requestDecidedAt?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -35,8 +41,16 @@ export function ResearchFolderAccessRequestButton({
           );
           return;
         }
+        if (result?.status === "declined") {
+          toast.showError(
+            "This shared folder request was declined. A new request cannot be sent.",
+          );
+          return;
+        }
         if (result?.status === "already-shared") {
-          toast.showSuccess("This folder is already marked as shared with you.");
+          toast.showSuccess(
+            "This folder is already marked as shared with you.",
+          );
           return;
         }
         toast.showSuccess("Shared folder access request sent to admin.");
@@ -61,27 +75,48 @@ export function ResearchFolderAccessRequestButton({
       <ResearchModal
         open={open}
         onClose={() => setOpen(false)}
-        title="Request shared folder access"
+        title={
+          requestStatus === "PENDING"
+            ? "Shared folder request in review"
+            : requestStatus === "DECLINED"
+              ? "Shared folder request declined"
+              : "Request shared folder access"
+        }
         icon={<ShieldAlert className="h-5 w-5" aria-hidden="true" />}
         maxWidth="max-w-2xl"
         footer={
-          <div className="flex justify-end">
-            <ResearchButton
-              type="button"
-              onClick={submitRequest}
-              disabled={isPending}
-            >
-              <Send className="h-4 w-4" aria-hidden="true" />
-              Send request
-            </ResearchButton>
-          </div>
+          requestStatus ? null : (
+            <div className="flex justify-end">
+              <ResearchButton
+                type="button"
+                onClick={submitRequest}
+                disabled={isPending}
+              >
+                <Send className="h-4 w-4" aria-hidden="true" />
+                Send request
+              </ResearchButton>
+            </div>
+          )
         }
       >
         <div className="space-y-4 text-sm leading-6 text-slate-600 dark:text-[#B0B0B0]">
-          <p>
-            The Google Drive shared folder for this research is not marked as
-            shared with you yet.
-          </p>
+          {requestStatus === "PENDING" ? (
+            <p>
+              Your shared folder access request is being reviewed by admin.
+              Please wait for admin to respond before taking further action.
+            </p>
+          ) : requestStatus === "DECLINED" ? (
+            <p>
+              Your shared folder access request was declined by admin. This
+              request is closed, and another request cannot be sent from this
+              page.
+            </p>
+          ) : (
+            <p>
+              The Google Drive shared folder for this research is not marked as
+              shared with you yet.
+            </p>
+          )}
           <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700 dark:border-[#444444] dark:bg-[#252525] dark:text-[#E4E4E4]">
             <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-[#B0B0B0]">
               Research
@@ -90,10 +125,23 @@ export function ResearchFolderAccessRequestButton({
               {researchTitle}
             </p>
           </div>
-          <p>
-            Send a request and admin will review whether this folder should be
-            shared with your Google account.
-          </p>
+          {requestStatus === "DECLINED" && requestDecidedAt ? (
+            <p className="text-xs text-slate-500 dark:text-[#8F98A8]">
+              Declined: {requestDecidedAt}
+            </p>
+          ) : null}
+          {requestStatus === "DECLINED" && requestNote ? (
+            <div className="border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700 dark:border-rose-300/30 dark:bg-rose-950/20 dark:text-rose-200">
+              <p className="text-xs uppercase tracking-wide">Admin note</p>
+              <p className="mt-1 whitespace-pre-line">{requestNote}</p>
+            </div>
+          ) : null}
+          {!requestStatus ? (
+            <p>
+              Send a request and admin will review whether this folder should be
+              shared with your Google account.
+            </p>
+          ) : null}
         </div>
       </ResearchModal>
     </>

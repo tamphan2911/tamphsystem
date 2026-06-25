@@ -339,6 +339,7 @@ export default async function ProjectDetailPage({
           orderBy: [{ status: "asc" }, { createdAt: "desc" }],
           select: {
             id: true,
+            userId: true,
             requesterName: true,
             requesterEmail: true,
             requesterRole: true,
@@ -1033,6 +1034,19 @@ export default async function ProjectDetailPage({
   const pendingFolderAccessRequests = project.folderAccessRequests.filter(
     (request) => request.status === ResearchFolderAccessRequestStatus.PENDING,
   );
+  const currentUserFolderAccessRequest = project.folderAccessRequests.find(
+    (request) =>
+      request.userId === userId &&
+      (request.status === ResearchFolderAccessRequestStatus.PENDING ||
+        request.status === ResearchFolderAccessRequestStatus.DECLINED),
+  );
+  const currentUserFolderAccessRequestStatus =
+    currentUserFolderAccessRequest?.status ===
+      ResearchFolderAccessRequestStatus.PENDING ||
+    currentUserFolderAccessRequest?.status ===
+      ResearchFolderAccessRequestStatus.DECLINED
+      ? currentUserFolderAccessRequest.status
+      : undefined;
   const folderAccessRequestRows: ResearchFolderAccessRequestRow[] =
     project.folderAccessRequests.map((request) => ({
       id: request.id,
@@ -1307,6 +1321,15 @@ export default async function ProjectDetailPage({
                   <ResearchFolderAccessRequestButton
                     projectId={project.id}
                     researchTitle={project.title}
+                    requestStatus={currentUserFolderAccessRequestStatus}
+                    requestNote={currentUserFolderAccessRequest?.note ?? ""}
+                    requestDecidedAt={
+                      currentUserFolderAccessRequest?.decidedAt
+                        ? researchDateTimeFormat("en-GB").format(
+                            currentUserFolderAccessRequest.decidedAt,
+                          )
+                        : ""
+                    }
                   />
                 ) : null}
                 {canCreateSubmitOrOtherTask ? (
