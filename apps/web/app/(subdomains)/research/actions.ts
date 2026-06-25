@@ -204,6 +204,7 @@ function defaultTaskGuideCodeForTask({
   ) {
     return "G002";
   }
+  if (taskType === ResearchTaskType.PRODUCTION) return "G014";
   if (taskType === ResearchTaskType.ADD_JOURNAL) return "G003";
   if (taskType === ResearchTaskType.PROPOSAL) {
     return proposalScope === ProposalTaskScope.PROJECT ? "G005" : "G004";

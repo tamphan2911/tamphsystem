@@ -162,17 +162,19 @@ function defaultTaskGuideIdsForMode(
   const guideCode =
     mode === "submit"
       ? "G002"
-      : mode === "suggestVenue"
-        ? "G001"
-        : mode === "addJournal"
-          ? "G003"
-          : mode === "proposal"
-            ? proposalScope === "project"
-              ? "G005"
-              : "G004"
-            : mode === "review"
-              ? "G013"
-              : null;
+      : mode === "production"
+        ? "G014"
+        : mode === "suggestVenue"
+          ? "G001"
+          : mode === "addJournal"
+            ? "G003"
+            : mode === "proposal"
+              ? proposalScope === "project"
+                ? "G005"
+                : "G004"
+              : mode === "review"
+                ? "G013"
+                : null;
   if (!guideCode) return [];
   const guide = guides.find((item) => item.guideCode === guideCode);
   return guide ? [guide.id] : [];
