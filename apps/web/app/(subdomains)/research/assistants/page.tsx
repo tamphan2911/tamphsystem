@@ -1,12 +1,15 @@
 import bcrypt from "bcrypt";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { assertResearchManager } from "../actions";
-import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
-import { AssistantsTable, type AssistantRow } from "./AssistantsTable";
+import type { AssistantRow } from "./AssistantsTable";
 import {
   AddAssistantDialog,
   type AssistantCandidate,
 } from "./AddAssistantDialog";
+import {
+  AssistantsClient,
+  type AssistantPerformanceRow,
+} from "./AssistantsClient";
 
 export const dynamic = "force-dynamic";
 
@@ -53,33 +56,42 @@ export default async function AssistantsPage() {
   const taskAssignments = await prisma.researchTaskAssignment.findMany({
     where: {
       userId: { in: assistantUsers.map((user) => user.id) },
-      task: {
-        status: {
-          notIn: [ResearchTaskStatus.COMPLETED, ResearchTaskStatus.REVOKED],
-        },
-      },
     },
     select: {
       userId: true,
       task: {
         select: {
+          id: true,
           status: true,
+          taskType: true,
+          category: true,
+          dueDate: true,
+          completedAt: true,
+          revokedAt: true,
+          createdAt: true,
+          updatedAt: true,
         },
       },
     },
   });
 
   const taskBreakdowns = new Map<string, Map<ResearchTaskStatus, number>>();
-  taskAssignments.forEach((assignment) => {
-    const breakdown =
-      taskBreakdowns.get(assignment.userId) ??
-      new Map<ResearchTaskStatus, number>();
-    breakdown.set(
-      assignment.task.status,
-      (breakdown.get(assignment.task.status) ?? 0) + 1,
-    );
-    taskBreakdowns.set(assignment.userId, breakdown);
-  });
+  taskAssignments
+    .filter(
+      (assignment) =>
+        assignment.task.status !== ResearchTaskStatus.COMPLETED &&
+        assignment.task.status !== ResearchTaskStatus.REVOKED,
+    )
+    .forEach((assignment) => {
+      const breakdown =
+        taskBreakdowns.get(assignment.userId) ??
+        new Map<ResearchTaskStatus, number>();
+      breakdown.set(
+        assignment.task.status,
+        (breakdown.get(assignment.task.status) ?? 0) + 1,
+      );
+      taskBreakdowns.set(assignment.userId, breakdown);
+    });
 
   const visiblePasswords = await Promise.all(
     assistantUsers.map(async (user) => {
@@ -117,38 +129,48 @@ export default async function AssistantsPage() {
     roles: user.roles,
     canManageResearchVenues: user.canManageResearchVenues,
   }));
-
-  const stats = [
-    {
-      label: "Assistants",
-      value: assistantUsers.length,
-    },
-  ];
+  const performanceTasksByUserId = new Map<
+    string,
+    AssistantPerformanceRow["tasks"]
+  >();
+  taskAssignments.forEach((assignment) => {
+    const tasks = performanceTasksByUserId.get(assignment.userId) ?? [];
+    tasks.push({
+      id: assignment.task.id,
+      status: assignment.task.status,
+      taskType: assignment.task.taskType ?? "",
+      category: assignment.task.category ?? "",
+      dueDate: assignment.task.dueDate?.toISOString() ?? null,
+      completedAt: assignment.task.completedAt?.toISOString() ?? null,
+      revokedAt: assignment.task.revokedAt?.toISOString() ?? null,
+      createdAt: assignment.task.createdAt.toISOString(),
+      updatedAt: assignment.task.updatedAt.toISOString(),
+    });
+    performanceTasksByUserId.set(assignment.userId, tasks);
+  });
+  const performanceRows: AssistantPerformanceRow[] = assistantUsers.map(
+    (user) => ({
+      id: user.id,
+      name: user.name ?? "",
+      email: user.email,
+      assistantRole: user.roles.includes(Role.CHIEF_ASSISTANT)
+        ? Role.CHIEF_ASSISTANT
+        : Role.ASSISTANT,
+      canManageResearchVenues: user.canManageResearchVenues,
+      tasks: performanceTasksByUserId.get(user.id) ?? [],
+    }),
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <ResearchPageHeaderPortal>
-        <div className="flex w-full min-w-0 items-center justify-between gap-4">
-          <div className="grid min-w-0 border border-[#444444] bg-[#2C2C2C]">
-            {stats.map((item) => (
-              <div
-                key={item.label}
-                className="whitespace-nowrap px-3 py-2 text-sm text-[#E4E4E4]"
-              >
-                <span className="font-normal text-[#B0B0B0]">
-                  {item.label}:{" "}
-                </span>
-                <span className="font-normal text-[#E4E4E4]">{item.value}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-none items-center">
-            {canAssignAssistants && <AddAssistantDialog users={candidates} />}
-          </div>
-        </div>
-      </ResearchPageHeaderPortal>
-
-      <AssistantsTable rows={rows} canManage={canAssignAssistants} />
+      <AssistantsClient
+        rows={rows}
+        performanceRows={performanceRows}
+        canManage={canAssignAssistants}
+        action={
+          canAssignAssistants ? <AddAssistantDialog users={candidates} /> : null
+        }
+      />
     </div>
   );
 }
