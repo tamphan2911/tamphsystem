@@ -610,6 +610,7 @@ function SubmissionInfoPanel({
 type TaskSuggestedVenueInfo = {
   id: string;
   kind: "journal" | "conference";
+  journalId: string | null;
   name: string;
   status: string;
   meta: string;
@@ -681,9 +682,20 @@ function SuggestedVenueResultsPanel({
                 <p className="text-[11px] uppercase text-[#667085] dark:text-[#8F8F8F]">
                   {venue.kind}
                 </p>
-                <p className="mt-1 break-words text-sm leading-5 text-[#1F2937] dark:text-[#E4E4E4]">
-                  {venue.name}
-                </p>
+                {venue.kind === "journal" &&
+                venue.journalId &&
+                venue.status === "PENDING" ? (
+                  <Link
+                    href={`/journals/${venue.journalId}`}
+                    className="research-allow-transform mt-1 block break-words text-sm leading-5 text-[#1F2937] transition-[color,transform,opacity] duration-180 hover:-translate-y-0.5 hover:text-[#1F7180] active:translate-y-0 active:scale-[0.99] active:opacity-70 dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]"
+                  >
+                    {venue.name}
+                  </Link>
+                ) : (
+                  <p className="mt-1 break-words text-sm leading-5 text-[#1F2937] dark:text-[#E4E4E4]">
+                    {venue.name}
+                  </p>
+                )}
               </div>
               <span
                 className={`flex-none border px-2 py-1 text-[10px] uppercase ${suggestedVenueStatusClass(venue.status)}`}
@@ -972,6 +984,7 @@ export default async function TaskDetailPage({
           createdAt: true,
           journal: {
             select: {
+              id: true,
               name: true,
               issn: true,
               publisher: true,
@@ -1048,6 +1061,7 @@ export default async function TaskDetailPage({
           createdAt: true,
           journal: {
             select: {
+              id: true,
               name: true,
               issn: true,
               publisher: true,
@@ -1349,6 +1363,7 @@ export default async function TaskDetailPage({
             createdAt: true,
             journal: {
               select: {
+                id: true,
                 name: true,
                 issn: true,
                 publisher: true,
@@ -2110,6 +2125,7 @@ export default async function TaskDetailPage({
     ...task.suggestedJournals.map((suggestion) => ({
       id: suggestion.id,
       kind: "journal" as const,
+      journalId: suggestion.journal?.id ?? null,
       name:
         suggestion.journal?.name ?? suggestion.venueName ?? "Unnamed journal",
       status: suggestion.status,
@@ -2136,6 +2152,7 @@ export default async function TaskDetailPage({
           {
             id: linkedJournalSubmissionSuggestion.id,
             kind: "journal" as const,
+            journalId: linkedJournalSubmissionSuggestion.journal?.id ?? null,
             name:
               linkedJournalSubmissionSuggestion.journal?.name ??
               linkedJournalSubmissionSuggestion.venueName ??
@@ -2174,6 +2191,7 @@ export default async function TaskDetailPage({
     ...task.suggestedConferences.map((suggestion) => ({
       id: suggestion.id,
       kind: "conference" as const,
+      journalId: null,
       name:
         suggestion.conference?.name ??
         suggestion.venueName ??
@@ -2208,6 +2226,7 @@ export default async function TaskDetailPage({
           {
             id: linkedConferenceSubmissionSuggestion.id,
             kind: "conference" as const,
+            journalId: null,
             name:
               linkedConferenceSubmissionSuggestion.conference?.name ??
               linkedConferenceSubmissionSuggestion.venueName ??
