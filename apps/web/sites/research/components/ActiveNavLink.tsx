@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCallback, useState } from "react";
 import {
   BookOpen,
   Building2,
@@ -62,6 +63,7 @@ export function ActiveNavLink({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
+  const [tooltipTop, setTooltipTop] = useState<number | null>(null);
   const isActive =
     pathname === href || (href !== "/" && pathname.startsWith(href));
   const Icon = icons[icon];
@@ -73,6 +75,15 @@ export function ActiveNavLink({
     : adminOnly
       ? "research-sidebar-link-idle research-sidebar-link-admin"
       : "research-sidebar-link-idle";
+  const updateTooltipPosition = useCallback(
+    (target: HTMLElement) => {
+      if (!collapsed) return;
+      const rect = target.getBoundingClientRect();
+      setTooltipTop(rect.top + rect.height / 2);
+    },
+    [collapsed],
+  );
+  const tooltipVisible = collapsed && tooltipTop !== null;
 
   return (
     <Link
@@ -81,6 +92,10 @@ export function ActiveNavLink({
       data-collapsed={collapsed ? "true" : "false"}
       aria-label={collapsed ? displayLabel : undefined}
       onClick={onNavigate}
+      onMouseEnter={(event) => updateTooltipPosition(event.currentTarget)}
+      onMouseLeave={() => setTooltipTop(null)}
+      onFocus={(event) => updateTooltipPosition(event.currentTarget)}
+      onBlur={() => setTooltipTop(null)}
       className={`${baseClass} ${stateClass} ${
         collapsed ? "w-full justify-center px-0" : ""
       }`}
@@ -120,10 +135,17 @@ export function ActiveNavLink({
         </span>
       )}
       {collapsed && (
-        <span className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-50 -translate-y-1/2 -translate-x-1 whitespace-nowrap border border-[#444444] bg-[#2C2C2C] px-3 py-2 text-xs font-normal text-[#E4E4E4] opacity-0 shadow-xl shadow-black/30 transition duration-200 ease-out group-hover/navlink:translate-x-0 group-hover/navlink:opacity-100 group-focus-visible/navlink:translate-x-0 group-focus-visible/navlink:opacity-100 motion-reduce:transition-none">
+        <span
+          className={`pointer-events-none fixed left-[5.75rem] z-[9999] max-w-[calc(100vw-6.5rem)] -translate-y-1/2 whitespace-nowrap border border-[#D8D0C2] bg-white px-3 py-2 text-xs font-normal text-slate-700 shadow-xl shadow-slate-900/12 transition duration-200 ease-out dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:shadow-black/30 motion-reduce:transition-none ${
+            tooltipVisible
+              ? "translate-x-0 opacity-100"
+              : "-translate-x-1 opacity-0"
+          }`}
+          style={{ top: tooltipTop ?? 0 }}
+        >
           {displayLabel}
           {adminOnly && (
-            <span className="ml-2 border border-[#444444] px-1.5 py-0.5 text-[9px] font-normal uppercase tracking-wide text-[#FFC1CC]">
+            <span className="ml-2 border border-[#D8D0C2] px-1.5 py-0.5 text-[9px] font-normal uppercase tracking-wide text-rose-700 dark:border-[#444444] dark:text-[#FFC1CC]">
               Admin
             </span>
           )}
@@ -132,7 +154,7 @@ export function ActiveNavLink({
               {badgeCount > 99 ? "99+" : badgeCount}
             </span>
           )}
-          <span className="absolute right-full top-1/2 h-2.5 w-2.5 -translate-y-1/2 translate-x-1/2 rotate-45 border-b border-l border-[#444444] bg-[#2C2C2C]" />
+          <span className="absolute right-full top-1/2 h-2.5 w-2.5 -translate-y-1/2 translate-x-1/2 rotate-45 border-b border-l border-[#D8D0C2] bg-white dark:border-[#444444] dark:bg-[#2C2C2C]" />
         </span>
       )}
     </Link>
