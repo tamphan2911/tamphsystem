@@ -136,13 +136,13 @@ export function TaskSuggestedReviewerButton({
         type="button"
         label="Manage suggested reviewers"
         tone="violet"
-        className="h-6 w-6"
+        className="h-4 w-4"
         onClick={() => {
           resetFromSaved();
           setOpen(true);
         }}
       >
-        <UserRoundPlus className="h-4 w-4" aria-hidden="true" />
+        <UserRoundPlus className="h-3.5 w-3.5" aria-hidden="true" />
       </ResearchIconButton>
 
       <ResearchModal

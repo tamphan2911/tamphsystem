@@ -146,9 +146,9 @@ export function TaskGuideIcons({ guides }: { guides: TaskGuideOption[] }) {
                 type="button"
                 aria-label={`Open guide: ${guide.title}`}
                 onClick={() => setOpenGuide(guide)}
-                className={`research-clickable-icon research-allow-transform inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent shadow-none outline-none transition-[color,transform,filter] duration-200 ease-out hover:bg-transparent hover:shadow-none focus-visible:ring-0 active:scale-95 ${meta.className}`}
+                className={`research-clickable-icon research-allow-transform inline-flex h-4 w-4 cursor-pointer items-center justify-center border-0 bg-transparent shadow-none outline-none transition-[color,transform,filter] duration-200 ease-out hover:bg-transparent hover:shadow-none focus-visible:ring-0 active:scale-95 ${meta.className}`}
               >
-                <Icon className="h-4 w-4" aria-hidden="true" />
+                <Icon className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
             </IconHint>
           );
