@@ -682,9 +682,7 @@ function SuggestedVenueResultsPanel({
                 <p className="text-[11px] uppercase text-[#667085] dark:text-[#8F8F8F]">
                   {venue.kind}
                 </p>
-                {venue.kind === "journal" &&
-                venue.journalId &&
-                venue.status === "PENDING" ? (
+                {venue.kind === "journal" && venue.journalId ? (
                   <Link
                     href={`/journals/${venue.journalId}`}
                     className="research-allow-transform mt-1 block break-words text-sm leading-5 text-[#1F2937] transition-[color,transform,opacity] duration-180 hover:-translate-y-0.5 hover:text-[#1F7180] active:translate-y-0 active:scale-[0.99] active:opacity-70 dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]"
@@ -1073,6 +1071,28 @@ export default async function TaskDetailPage({
               submissionFeeCurrency: true,
               note: true,
               homepageLink: true,
+            },
+          },
+          journalCreationTask: {
+            select: {
+              addedJournals: {
+                orderBy: { resultPosition: "asc" },
+                take: 1,
+                select: {
+                  id: true,
+                  name: true,
+                  issn: true,
+                  publisher: true,
+                  rank: true,
+                  localRank: true,
+                  apc: true,
+                  apcCurrency: true,
+                  submissionFee: true,
+                  submissionFeeCurrency: true,
+                  note: true,
+                  homepageLink: true,
+                },
+              },
             },
           },
         },
@@ -2122,31 +2142,35 @@ export default async function TaskDetailPage({
       task.conference),
   );
   const suggestedVenueResults: TaskSuggestedVenueInfo[] = [
-    ...task.suggestedJournals.map((suggestion) => ({
-      id: suggestion.id,
-      kind: "journal" as const,
-      journalId: suggestion.journal?.id ?? null,
-      name:
-        suggestion.journal?.name ?? suggestion.venueName ?? "Unnamed journal",
-      status: suggestion.status,
-      meta: [
-        suggestion.journal?.issn ? `ISSN ${suggestion.journal.issn}` : null,
-        suggestion.journal?.publisher,
-        suggestion.journal?.rank ?? suggestion.journal?.localRank,
-      ]
-        .filter(Boolean)
-        .join(" - "),
-      apc: suggestion.journal?.apc ?? null,
-      apcCurrency: suggestion.journal?.apcCurrency ?? "USD",
-      submissionFee: suggestion.journal?.submissionFee ?? null,
-      submissionFeeCurrency: suggestion.journal?.submissionFeeCurrency ?? "USD",
-      journalNote: suggestion.journal?.note ?? null,
-      venueNote: suggestion.note ?? null,
-      declineReason: suggestion.declineReason,
-      venueLink:
-        suggestion.venueLink ?? suggestion.journal?.homepageLink ?? null,
-      createdAt: suggestion.createdAt,
-    })),
+    ...task.suggestedJournals.map((suggestion) => {
+      const journal =
+        suggestion.journal ??
+        suggestion.journalCreationTask?.addedJournals[0] ??
+        null;
+      return {
+        id: suggestion.id,
+        kind: "journal" as const,
+        journalId: journal?.id ?? null,
+        name: journal?.name ?? suggestion.venueName ?? "Unnamed journal",
+        status: suggestion.status,
+        meta: [
+          journal?.issn ? `ISSN ${journal.issn}` : null,
+          journal?.publisher,
+          journal?.rank ?? journal?.localRank,
+        ]
+          .filter(Boolean)
+          .join(" - "),
+        apc: journal?.apc ?? null,
+        apcCurrency: journal?.apcCurrency ?? "USD",
+        submissionFee: journal?.submissionFee ?? null,
+        submissionFeeCurrency: journal?.submissionFeeCurrency ?? "USD",
+        journalNote: journal?.note ?? null,
+        venueNote: suggestion.note ?? null,
+        declineReason: suggestion.declineReason,
+        venueLink: suggestion.venueLink ?? journal?.homepageLink ?? null,
+        createdAt: suggestion.createdAt,
+      };
+    }),
     ...(linkedJournalSubmissionSuggestion
       ? [
           {
