@@ -9,6 +9,9 @@ import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
+  ArrowDownAZ,
+  ArrowUpDown,
+  ArrowUpZA,
   Ban,
   CheckCircle2,
   CircleHelp,
@@ -109,6 +112,7 @@ const taskTypeFilterValues = [
 
 type TaskScopeTab = "assigned" | "related" | "checker";
 type TaskHeaderTab = TaskScopeTab | "all" | "need_action";
+type TimeSortDirection = "none" | "asc" | "desc";
 
 function formatDate(value: string | null) {
   if (!value) return "-";
@@ -510,6 +514,10 @@ export function TasksClient({
     isAdmin && !hasStoredTaskStatus ? "true" : "false",
     { persistDefaultValue: true },
   );
+  const [timeSort, setTimeSort] = usePersistentTableValue<TimeSortDirection>(
+    "tasks:timeSort",
+    "none",
+  );
   const unfinishedOnly = unfinishedOnlyValue === "true";
   const [statusBeforeUnfinished, setStatusBeforeUnfinished] = useState<
     string[] | null
@@ -757,7 +765,32 @@ export function TasksClient({
     taskTypes,
     tasks,
   ]);
-  const pagination = useTablePagination(filtered, 10, 1, "tasks", {
+  const sortedRows = useMemo(() => {
+    if (timeSort === "none") return filtered;
+
+    return filtered
+      .map((task, index) => ({ task, index }))
+      .sort((left, right) => {
+        const leftHasDue = Boolean(left.task.dueDate);
+        const rightHasDue = Boolean(right.task.dueDate);
+        if (leftHasDue !== rightHasDue) return leftHasDue ? -1 : 1;
+        const leftTime = left.task.dueDate
+          ? new Date(left.task.dueDate).getTime()
+          : 0;
+        const rightTime = right.task.dueDate
+          ? new Date(right.task.dueDate).getTime()
+          : 0;
+        const byDue =
+          timeSort === "asc" ? leftTime - rightTime : rightTime - leftTime;
+        if (byDue !== 0) return byDue;
+        const byUpdated =
+          new Date(right.task.updatedAt).getTime() -
+          new Date(left.task.updatedAt).getTime();
+        return byUpdated || left.index - right.index;
+      })
+      .map((item) => item.task);
+  }, [filtered, timeSort]);
+  const pagination = useTablePagination(sortedRows, 10, 1, "tasks", {
     preservePageWhenEmpty: true,
   });
 
@@ -821,7 +854,26 @@ export function TasksClient({
     pagination.setPage(1);
   }
 
+  function toggleTimeSort() {
+    setTimeSort((current) =>
+      current === "none" ? "asc" : current === "asc" ? "desc" : "none",
+    );
+    pagination.setPage(1);
+  }
+
   const adminFilterWidth = isAdmin ? "sm:w-40 lg:w-44" : undefined;
+  const TimeSortIcon =
+    timeSort === "asc"
+      ? ArrowDownAZ
+      : timeSort === "desc"
+        ? ArrowUpZA
+        : ArrowUpDown;
+  const timeSortLabel =
+    timeSort === "asc"
+      ? "Sort time by latest due date"
+      : timeSort === "desc"
+        ? "Clear time sorting"
+        : "Sort time by soonest due date";
 
   return (
     <div className="space-y-4">
@@ -927,7 +979,26 @@ export function TasksClient({
                 <th className="px-3 py-3">Task</th>
                 <th className="w-[7rem] px-3 py-3">Status</th>
                 <th className="w-[9.5rem] px-3 py-3">Assignees</th>
-                <th className="w-[11rem] px-3 py-3">Time</th>
+                <th className="w-[11rem] px-3 py-3">
+                  <span className="flex items-center gap-1.5">
+                    <span>Time</span>
+                    <IconHint label={timeSortLabel}>
+                      <button
+                        type="button"
+                        onClick={toggleTimeSort}
+                        aria-label={timeSortLabel}
+                        aria-pressed={timeSort !== "none"}
+                        className={`research-allow-transform inline-flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${
+                          timeSort === "none"
+                            ? "text-[#8F98A8] hover:text-[#A8DADC]"
+                            : "text-[#A8DADC]"
+                        }`}
+                      >
+                        <TimeSortIcon className="h-3.5 w-3.5" />
+                      </button>
+                    </IconHint>
+                  </span>
+                </th>
                 {canDelete && (
                   <th className="w-12 px-2 py-3 text-center">
                     <span className="sr-only">Delete</span>
