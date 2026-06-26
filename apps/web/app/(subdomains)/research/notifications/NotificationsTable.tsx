@@ -34,6 +34,7 @@ export type NotificationManagementRow = {
   href: string;
   entityType: string;
   entityId: string;
+  emailSent: boolean;
   recipientName: string;
   recipientEmail: string;
   recipientRoles: string;
@@ -63,14 +64,6 @@ function typeClass(type: string) {
     return "text-[#2F8F62] hover:text-[#246F4C] dark:text-[#9CE6C7] dark:hover:text-[#C9F0F2]";
   }
   return "text-slate-600 hover:text-slate-900 dark:text-[#B0B0B0] dark:hover:text-[#E4E4E4]";
-}
-
-function hasEmailDelivery(type: string) {
-  return (
-    type.startsWith("TASK_") ||
-    type === "PROPOSAL_ACCEPTED" ||
-    type === "PROPOSAL_DECLINED"
-  );
 }
 
 function DeleteNotificationButton({
@@ -308,7 +301,6 @@ export function NotificationsTable({
           </thead>
           <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((notification) => {
-              const includesEmail = hasEmailDelivery(notification.type);
               const StatusIcon = notification.readAt ? MailOpen : Mail;
 
               return (
@@ -354,7 +346,7 @@ export function NotificationsTable({
                           </span>
                         </span>
                       </IconHint>
-                      {includesEmail ? (
+                      {notification.emailSent ? (
                         <IconHint
                           label={`Email also sent: ${notification.typeLabel}`}
                         >

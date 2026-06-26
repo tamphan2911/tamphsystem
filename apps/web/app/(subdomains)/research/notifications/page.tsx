@@ -16,17 +16,13 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import {
+  researchNotificationEmailSent,
+  researchNotificationTypeLabel,
+} from "@/sites/research/lib/notifications";
 import { deleteExpiredResearchNotifications } from "./retention";
 
 export const dynamic = "force-dynamic";
-
-function notificationTypeLabel(type: string) {
-  return type
-    .toLowerCase()
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
 
 function shortDate(value: Date | null) {
   if (!value) return "";
@@ -63,24 +59,117 @@ export default async function ResearchNotificationsPage() {
       orderBy: [{ createdAt: "desc" }],
       take: 1000,
     });
+
+    const taskIds = Array.from(
+      new Set(
+        notifications
+          .filter(
+            (notification) =>
+              notification.entityType === "task" && notification.entityId,
+          )
+          .map((notification) => notification.entityId as string),
+      ),
+    );
+    const proposalIds = Array.from(
+      new Set(
+        notifications
+          .filter(
+            (notification) =>
+              notification.entityType === "proposal" && notification.entityId,
+          )
+          .map((notification) => notification.entityId as string),
+      ),
+    );
+    const [tasks, proposals] = await Promise.all([
+      taskIds.length > 0
+        ? prisma.researchTask.findMany({
+            where: { id: { in: taskIds } },
+            select: {
+              id: true,
+              createdById: true,
+              assignments: { select: { userId: true } },
+            },
+          })
+        : [],
+      proposalIds.length > 0
+        ? prisma.proposal.findMany({
+            where: { id: { in: proposalIds } },
+            select: {
+              id: true,
+              submittedById: true,
+              task: {
+                select: {
+                  createdById: true,
+                  assignments: { select: { userId: true } },
+                },
+              },
+            },
+          })
+        : [],
+    ]);
+    const taskById = new Map(
+      tasks.map((task) => [
+        task.id,
+        {
+          createdById: task.createdById,
+          assignmentUserIds: task.assignments.map(
+            (assignment) => assignment.userId,
+          ),
+        },
+      ]),
+    );
+    const proposalById = new Map(
+      proposals.map((proposal) => [
+        proposal.id,
+        {
+          submittedById: proposal.submittedById,
+          task: proposal.task
+            ? {
+                createdById: proposal.task.createdById,
+                assignmentUserIds: proposal.task.assignments.map(
+                  (assignment) => assignment.userId,
+                ),
+              }
+            : null,
+        },
+      ]),
+    );
     const rows: NotificationManagementRow[] = notifications.map(
-      (notification) => ({
-        id: notification.id,
-        type: notification.type,
-        typeLabel: notificationTypeLabel(notification.type),
-        title: notification.title,
-        summary: notification.summary,
-        body: notification.body ?? "",
-        href: notification.href ?? "",
-        entityType: notification.entityType ?? "",
-        entityId: notification.entityId ?? "",
-        recipientName: displayResearchPersonName(notification.user),
-        recipientEmail: displayResearchEmail(notification.user.email),
-        recipientRoles: notification.user.roles.join(", "),
-        readAt: shortDate(notification.readAt),
-        createdAt: shortDate(notification.createdAt),
-        createdAtSort: notification.createdAt.getTime(),
-      }),
+      (notification) => {
+        const task =
+          notification.entityType === "task" && notification.entityId
+            ? taskById.get(notification.entityId)
+            : null;
+        const proposal =
+          notification.entityType === "proposal" && notification.entityId
+            ? proposalById.get(notification.entityId)
+            : null;
+
+        return {
+          id: notification.id,
+          type: notification.type,
+          typeLabel: researchNotificationTypeLabel(notification.type),
+          title: notification.title,
+          summary: notification.summary,
+          body: notification.body ?? "",
+          href: notification.href ?? "",
+          entityType: notification.entityType ?? "",
+          entityId: notification.entityId ?? "",
+          emailSent: researchNotificationEmailSent({
+            type: notification.type,
+            title: notification.title,
+            recipientId: notification.userId,
+            task: task ?? proposal?.task,
+            proposal,
+          }),
+          recipientName: displayResearchPersonName(notification.user),
+          recipientEmail: displayResearchEmail(notification.user.email),
+          recipientRoles: notification.user.roles.join(", "),
+          readAt: shortDate(notification.readAt),
+          createdAt: shortDate(notification.createdAt),
+          createdAtSort: notification.createdAt.getTime(),
+        };
+      },
     );
     const unreadCount = rows.filter((row) => !row.readAt).length;
     const readCount = rows.length - unreadCount;
@@ -141,7 +230,7 @@ export default async function ResearchNotificationsPage() {
   const rows: NotificationCenterItem[] = notifications.map((notification) => ({
     id: notification.id,
     type: notification.type,
-    typeLabel: notificationTypeLabel(notification.type),
+    typeLabel: researchNotificationTypeLabel(notification.type),
     title: notification.title,
     summary: notification.summary,
     body: notification.body ?? "",

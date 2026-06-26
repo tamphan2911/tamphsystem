@@ -5,16 +5,9 @@ import {
   NotificationsCenter,
   type NotificationCenterItem,
 } from "../notifications/NotificationsCenter";
+import { researchNotificationTypeLabel } from "@/sites/research/lib/notifications";
 
 export const dynamic = "force-dynamic";
-
-function notificationTypeLabel(type: string) {
-  return type
-    .toLowerCase()
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
 
 export default async function PersonalNotificationCenterPage() {
   const session = await auth();
@@ -37,7 +30,7 @@ export default async function PersonalNotificationCenterPage() {
   const rows: NotificationCenterItem[] = notifications.map((notification) => ({
     id: notification.id,
     type: notification.type,
-    typeLabel: notificationTypeLabel(notification.type),
+    typeLabel: researchNotificationTypeLabel(notification.type),
     title: notification.title,
     summary: notification.summary,
     body: notification.body ?? "",
