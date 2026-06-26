@@ -134,14 +134,10 @@ export function ActiveNavLink({
           {badgeCount > 99 ? "99+" : badgeCount}
         </span>
       )}
-      {collapsed && (
+      {tooltipVisible && (
         <span
-          className={`pointer-events-none fixed left-[5.75rem] z-[9999] max-w-[calc(100vw-6.5rem)] -translate-y-1/2 whitespace-nowrap border border-[#D8D0C2] bg-white px-3 py-2 text-xs font-normal text-slate-700 shadow-xl shadow-slate-900/12 transition duration-200 ease-out dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:shadow-black/30 motion-reduce:transition-none ${
-            tooltipVisible
-              ? "translate-x-0 opacity-100"
-              : "-translate-x-1 opacity-0"
-          }`}
-          style={{ top: tooltipTop ?? 0 }}
+          className="pointer-events-none fixed left-[5.75rem] z-[9999] max-w-[calc(100vw-6.5rem)] -translate-y-1/2 translate-x-0 whitespace-nowrap border border-[#D8D0C2] bg-white px-3 py-2 text-xs font-normal text-slate-700 opacity-100 shadow-xl shadow-slate-900/12 transition duration-200 ease-out dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:shadow-black/30 motion-reduce:transition-none"
+          style={{ top: tooltipTop }}
         >
           {displayLabel}
           {adminOnly && (
