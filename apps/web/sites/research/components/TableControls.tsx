@@ -228,11 +228,13 @@ export function MultiFilterSelect({
   onChange,
   options,
   ariaLabel,
+  className,
 }: {
   values: string[];
   onChange: (values: string[]) => void;
   options: FilterOption[];
   ariaLabel: string;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -287,7 +289,10 @@ export function MultiFilterSelect({
   return (
     <div
       ref={wrapperRef}
-      className="research-filter-select relative w-full sm:w-52 lg:w-56"
+      className={cx(
+        "research-filter-select relative w-full sm:w-52 lg:w-56",
+        className,
+      )}
     >
       <button
         type="button"

@@ -107,8 +107,8 @@ export async function GET() {
     prisma.researchTask.findMany({
       where,
       include: {
-        createdBy: { select: { name: true, email: true } },
-        checker: { select: { name: true, email: true } },
+        createdBy: { select: { id: true, name: true, email: true } },
+        checker: { select: { id: true, name: true, email: true } },
         project: {
           select: {
             leadResearcherId: true,
@@ -214,11 +214,13 @@ export async function GET() {
         createdAt: task.createdAt.toISOString(),
         updatedAt: task.updatedAt.toISOString(),
         createdBy: task.createdBy.name || task.createdBy.email,
+        checkerId: task.checker?.id ?? task.createdBy.id,
         checker:
           task.checker?.name ||
           task.checker?.email ||
           task.createdBy.name ||
           task.createdBy.email,
+        checkerEmail: task.checker?.email ?? task.createdBy.email,
         scope: {
           assignedToMe,
           checkerForMe,

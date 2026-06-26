@@ -66,7 +66,9 @@ type TaskRow = {
   createdAt: string;
   updatedAt: string;
   createdBy: string;
+  checkerId: string;
   checker: string;
+  checkerEmail: string;
   scope: {
     assignedToMe: boolean;
     relatedToMyItems: boolean;
@@ -564,6 +566,19 @@ export function TasksClient({
     "tasks:type",
     taskTypeFilterValues,
   );
+  const checkerFilterValues = useMemo(
+    () => [
+      "ALL",
+      ...Array.from(new Set(tasks.map((task) => task.checkerId))).filter(
+        Boolean,
+      ),
+    ],
+    [tasks],
+  );
+  const [checkerIds, setCheckerIds] = usePersistentMultiFilter(
+    "tasks:checker",
+    checkerFilterValues,
+  );
 
   const activeHeaderTab: TaskHeaderTab = isAdmin
     ? scopeTab === "need_action"
@@ -586,6 +601,7 @@ export function TasksClient({
       window.sessionStorage.removeItem("research:/tasks:tasks:prefill");
       setUnfinishedOnlyValue("true");
       setStatuses(unfinishedTaskStatusValues);
+      setCheckerIds([]);
       return;
     }
 
@@ -610,6 +626,7 @@ export function TasksClient({
   }, [
     activeHeaderTab,
     isAdmin,
+    setCheckerIds,
     setStatuses,
     setUnfinishedOnlyValue,
     statuses.length,
@@ -662,6 +679,27 @@ export function TasksClient({
           : []),
       ];
 
+  const checkerOptions = useMemo(() => {
+    const byId = new Map<string, { value: string; label: string }>();
+    tasks.forEach((task) => {
+      if (!task.checkerId) return;
+      byId.set(task.checkerId, {
+        value: task.checkerId,
+        label: task.checkerEmail
+          ? `${task.checker} - ${displayResearchEmail(task.checkerEmail)}`
+          : task.checker,
+      });
+    });
+    return [
+      { value: "ALL", label: "All checkers" },
+      ...Array.from(byId.values()).sort((left, right) =>
+        left.label.localeCompare(right.label, undefined, {
+          sensitivity: "base",
+        }),
+      ),
+    ];
+  }, [tasks]);
+
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return tasks.filter((task) => {
@@ -681,6 +719,10 @@ export function TasksClient({
         statuses.length === 0 || statuses.includes(taskStatus);
       const matchesType =
         taskTypes.length === 0 || taskTypes.includes(taskTypeFilterValue(task));
+      const matchesChecker =
+        !isAdmin ||
+        checkerIds.length === 0 ||
+        checkerIds.includes(task.checkerId);
       const haystack = [
         displayTaskId(task),
         task.title,
@@ -702,10 +744,19 @@ export function TasksClient({
         matchesScope &&
         matchesStatus &&
         matchesType &&
+        matchesChecker &&
         (!needle || haystack.includes(needle))
       );
     });
-  }, [activeHeaderTab, isAdmin, query, statuses, taskTypes, tasks]);
+  }, [
+    activeHeaderTab,
+    checkerIds,
+    isAdmin,
+    query,
+    statuses,
+    taskTypes,
+    tasks,
+  ]);
   const pagination = useTablePagination(filtered, 10, 1, "tasks", {
     preservePageWhenEmpty: true,
   });
@@ -725,6 +776,7 @@ export function TasksClient({
 
     setQuery("");
     setTaskTypes([]);
+    setCheckerIds([]);
     setStatusBeforeUnfinished(null);
 
     if (value === "need_action") {
@@ -763,6 +815,13 @@ export function TasksClient({
     setTaskTypes(values);
     pagination.setPage(1);
   }
+
+  function updateCheckers(values: string[]) {
+    setCheckerIds(values);
+    pagination.setPage(1);
+  }
+
+  const adminFilterWidth = isAdmin ? "sm:w-40 lg:w-44" : undefined;
 
   return (
     <div className="space-y-4">
@@ -818,7 +877,17 @@ export function TasksClient({
                 <span className="whitespace-nowrap text-left">Unfinished</span>
               </IconHint>
             </label>
+            {isAdmin ? (
+              <MultiFilterSelect
+                className={adminFilterWidth}
+                values={checkerIds}
+                onChange={updateCheckers}
+                ariaLabel="Filter by checker"
+                options={checkerOptions}
+              />
+            ) : null}
             <MultiFilterSelect
+              className={adminFilterWidth}
               values={taskTypes}
               onChange={updateTaskTypes}
               ariaLabel="Filter by task type"
@@ -828,6 +897,7 @@ export function TasksClient({
               }))}
             />
             <MultiFilterSelect
+              className={adminFilterWidth}
               values={statuses}
               onChange={updateStatuses}
               ariaLabel="Filter by task status"
