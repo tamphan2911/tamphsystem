@@ -1709,6 +1709,9 @@ export default async function TaskDetailPage({
           }
         : null;
   const checkerPerson = task.checker ?? task.createdBy;
+  const showCheckerEmail = Boolean(
+    task.checker && !task.checker.roles.includes(Role.ADMIN),
+  );
   const resultUnderChecker = Boolean(
     taskResult &&
     (taskResult.actorId === task.checkerId ||
@@ -3086,7 +3089,10 @@ export default async function TaskDetailPage({
                 Checker
               </h2>
               <div className="border-t border-[#D8D0C2] py-3 dark:border-[#444444]">
-                <TaskPersonLine person={checkerPerson} />
+                <TaskPersonLine
+                  person={checkerPerson}
+                  showEmail={showCheckerEmail}
+                />
                 {taskResult && resultUnderChecker ? (
                   <TaskResultBlock result={taskResult} />
                 ) : null}
