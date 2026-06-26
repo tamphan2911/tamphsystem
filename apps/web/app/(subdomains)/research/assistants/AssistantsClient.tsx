@@ -19,7 +19,7 @@ import {
 } from "@/sites/research/lib/display";
 import { AssistantsTable, type AssistantRow } from "./AssistantsTable";
 
-type AssistantTab = "assistants" | "performance";
+type AssistantTab = "assistants" | "performance" | "checker";
 type PerformancePeriod =
   | "all"
   | "currentWeek"
@@ -410,6 +410,7 @@ function createZip(files: Array<{ name: string; content: string }>) {
 
 function createAssistantPerformanceWorkbook(
   rows: Array<Array<string | number>>,
+  sheetName = "Assistant Performance",
 ) {
   return createZip([
     {
@@ -433,7 +434,7 @@ function createAssistantPerformanceWorkbook(
       name: "xl/workbook.xml",
       content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <sheets><sheet name="Assistant Performance" sheetId="1" r:id="rId1"/></sheets>
+  <sheets><sheet name="${escapeXml(sheetName)}" sheetId="1" r:id="rId1"/></sheets>
 </workbook>`,
     },
     {
@@ -453,12 +454,13 @@ function createAssistantPerformanceWorkbook(
 function downloadAssistantPerformance(
   stats: AssistantPerformanceStats[],
   period: PerformancePeriod,
+  reportKind: "assistant" | "checker",
 ) {
   const headers = [
     "Assistant",
     "Email",
     "Role",
-    "Assigned",
+    reportKind === "checker" ? "Checked" : "Assigned",
     "Active",
     "Completed",
     "Overdue",
@@ -476,14 +478,17 @@ function downloadAssistantPerformance(
     item.revoked,
     item.completionRate,
   ]);
-  const workbook = createAssistantPerformanceWorkbook([headers, ...bodyRows]);
+  const workbook = createAssistantPerformanceWorkbook(
+    [headers, ...bodyRows],
+    reportKind === "checker" ? "Checker Performance" : "Assistant Performance",
+  );
   const blob = new Blob([workbook], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `assistant-performance-${period}.xlsx`;
+  anchor.download = `${reportKind}-performance-${period}.xlsx`;
   document.body.append(anchor);
   anchor.click();
   anchor.remove();
@@ -492,25 +497,32 @@ function downloadAssistantPerformance(
 
 function AssistantsHeader({
   assistantCount,
-  reportCount,
+  performanceCount,
+  checkerCount,
   action,
   activeTab,
   onTabChange,
 }: {
   assistantCount: number;
-  reportCount: number;
+  performanceCount: number;
+  checkerCount: number;
   action: ReactNode;
   activeTab: AssistantTab;
   onTabChange: (tab: AssistantTab) => void;
 }) {
   const tabs = [
     { key: "assistants" as const, label: "Assistants", value: assistantCount },
-    { key: "performance" as const, label: "Performance", value: reportCount },
+    {
+      key: "performance" as const,
+      label: "Performance",
+      value: performanceCount,
+    },
+    { key: "checker" as const, label: "Checker", value: checkerCount },
   ];
 
   return (
     <div className="flex w-full min-w-0 items-center justify-between gap-4">
-      <div className="journal-detail-tabs grid min-w-0 flex-1 grid-cols-2 border border-[#444444] bg-[#242424] p-1 text-center lg:max-w-2xl">
+      <div className="journal-detail-tabs grid min-w-0 flex-1 grid-cols-3 border border-[#444444] bg-[#242424] p-1 text-center lg:max-w-3xl">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -537,11 +549,13 @@ function AssistantsHeader({
 function AssistantsClientBase({
   rows,
   performanceRows,
+  checkerRows,
   canManage,
   action,
 }: {
   rows: AssistantRow[];
   performanceRows: AssistantPerformanceRow[];
+  checkerRows: AssistantPerformanceRow[];
   canManage: boolean;
   action: ReactNode;
 }) {
@@ -555,14 +569,18 @@ function AssistantsClientBase({
       <ResearchPageHeaderPortal>
         <AssistantsHeader
           assistantCount={rows.length}
-          reportCount={performanceRows.length}
+          performanceCount={performanceRows.length}
+          checkerCount={checkerRows.length}
           action={action}
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
       </ResearchPageHeaderPortal>
-      {activeTab === "performance" ? (
-        <AssistantPerformanceTable rows={performanceRows} />
+      {activeTab === "performance" || activeTab === "checker" ? (
+        <AssistantPerformanceTable
+          rows={activeTab === "checker" ? checkerRows : performanceRows}
+          reportKind={activeTab === "checker" ? "checker" : "assistant"}
+        />
       ) : (
         <AssistantsTable rows={rows} canManage={canManage} />
       )}
@@ -604,15 +622,17 @@ function AssistantPerformanceSortHeader({
 
 function AssistantPerformanceTable({
   rows,
+  reportKind,
 }: {
   rows: AssistantPerformanceRow[];
+  reportKind: "assistant" | "checker";
 }) {
   const [period, setPeriod] = usePersistentTableValue<PerformancePeriod>(
-    "assistants:performance-period",
+    `assistants:${reportKind}-performance-period`,
     "all",
   );
   const [sortValue, setSortValue] = usePersistentTableValue(
-    "assistants:performance-sort",
+    `assistants:${reportKind}-performance-sort`,
     "NONE",
   );
   const sort = useMemo(
@@ -633,14 +653,17 @@ function AssistantPerformanceTable({
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <p className="px-0 text-sm font-normal text-[#B0B0B0]">
-          Assistant performance report for {periodLabel(period).toLowerCase()}.
+          {reportKind === "checker" ? "Checker" : "Assistant"} performance
+          report for {periodLabel(period).toLowerCase()}.
         </p>
         <div className="flex min-w-0 items-center gap-2">
           <button
             type="button"
-            onClick={() => downloadAssistantPerformance(sortedStats, period)}
+            onClick={() =>
+              downloadAssistantPerformance(sortedStats, period, reportKind)
+            }
             className="research-allow-transform inline-flex h-9 w-9 cursor-pointer items-center justify-center border border-[#444444] bg-[#242424] text-[#A8DADC] transition duration-180 ease-out hover:-translate-y-0.5 hover:border-[#666666] hover:bg-[#2C2C2C] hover:text-[#C9F0F2] active:scale-95"
-            aria-label="Download current assistant performance report"
+            aria-label={`Download current ${reportKind} performance report`}
             title="Download current view as Excel"
           >
             <Download className="h-4 w-4" />
@@ -694,7 +717,7 @@ function AssistantPerformanceTable({
               </th>
               <th className="w-[10%] px-3 py-3">
                 <AssistantPerformanceSortHeader
-                  label="Assigned"
+                  label={reportKind === "checker" ? "Checked" : "Assigned"}
                   column="assigned"
                   sort={sort}
                   onChange={updateSort}

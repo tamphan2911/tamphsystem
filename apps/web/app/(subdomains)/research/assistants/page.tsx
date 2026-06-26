@@ -52,28 +52,72 @@ export default async function AssistantsPage() {
       user.roles.includes(Role.ASSISTANT) ||
       user.roles.includes(Role.CHIEF_ASSISTANT),
   );
+  const assistantUserIds = assistantUsers.map((user) => user.id);
 
-  const taskAssignments = await prisma.researchTaskAssignment.findMany({
-    where: {
-      userId: { in: assistantUsers.map((user) => user.id) },
-    },
-    select: {
-      userId: true,
-      task: {
-        select: {
-          id: true,
-          status: true,
-          taskType: true,
-          category: true,
-          dueDate: true,
-          completedAt: true,
-          revokedAt: true,
-          createdAt: true,
-          updatedAt: true,
+  const [taskAssignments, checkerTasks] = await Promise.all([
+    prisma.researchTaskAssignment.findMany({
+      where: {
+        userId: { in: assistantUserIds },
+      },
+      select: {
+        userId: true,
+        task: {
+          select: {
+            id: true,
+            status: true,
+            taskType: true,
+            category: true,
+            dueDate: true,
+            completedAt: true,
+            revokedAt: true,
+            createdAt: true,
+            updatedAt: true,
+          },
         },
       },
-    },
-  });
+    }),
+    prisma.researchTask.findMany({
+      where: {
+        checkerId: { in: assistantUserIds },
+      },
+      select: {
+        checkerId: true,
+        id: true,
+        status: true,
+        taskType: true,
+        category: true,
+        dueDate: true,
+        completedAt: true,
+        revokedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+  ]);
+
+  function performanceTaskFromTask(task: {
+    id: string;
+    status: ResearchTaskStatus;
+    taskType: string | null;
+    category: string | null;
+    dueDate: Date | null;
+    completedAt: Date | null;
+    revokedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }) {
+    return {
+      id: task.id,
+      status: task.status,
+      taskType: task.taskType ?? "",
+      category: task.category ?? "",
+      dueDate: task.dueDate?.toISOString() ?? null,
+      completedAt: task.completedAt?.toISOString() ?? null,
+      revokedAt: task.revokedAt?.toISOString() ?? null,
+      createdAt: task.createdAt.toISOString(),
+      updatedAt: task.updatedAt.toISOString(),
+    };
+  }
 
   const taskBreakdowns = new Map<string, Map<ResearchTaskStatus, number>>();
   taskAssignments
@@ -92,6 +136,27 @@ export default async function AssistantsPage() {
       );
       taskBreakdowns.set(assignment.userId, breakdown);
     });
+
+  const performanceTasksByUserId = new Map<
+    string,
+    AssistantPerformanceRow["tasks"]
+  >();
+  taskAssignments.forEach((assignment) => {
+    const tasks = performanceTasksByUserId.get(assignment.userId) ?? [];
+    tasks.push(performanceTaskFromTask(assignment.task));
+    performanceTasksByUserId.set(assignment.userId, tasks);
+  });
+
+  const checkerTasksByUserId = new Map<
+    string,
+    AssistantPerformanceRow["tasks"]
+  >();
+  checkerTasks.forEach((task) => {
+    if (!task.checkerId) return;
+    const tasks = checkerTasksByUserId.get(task.checkerId) ?? [];
+    tasks.push(performanceTaskFromTask(task));
+    checkerTasksByUserId.set(task.checkerId, tasks);
+  });
 
   const visiblePasswords = await Promise.all(
     assistantUsers.map(async (user) => {
@@ -129,25 +194,6 @@ export default async function AssistantsPage() {
     roles: user.roles,
     canManageResearchVenues: user.canManageResearchVenues,
   }));
-  const performanceTasksByUserId = new Map<
-    string,
-    AssistantPerformanceRow["tasks"]
-  >();
-  taskAssignments.forEach((assignment) => {
-    const tasks = performanceTasksByUserId.get(assignment.userId) ?? [];
-    tasks.push({
-      id: assignment.task.id,
-      status: assignment.task.status,
-      taskType: assignment.task.taskType ?? "",
-      category: assignment.task.category ?? "",
-      dueDate: assignment.task.dueDate?.toISOString() ?? null,
-      completedAt: assignment.task.completedAt?.toISOString() ?? null,
-      revokedAt: assignment.task.revokedAt?.toISOString() ?? null,
-      createdAt: assignment.task.createdAt.toISOString(),
-      updatedAt: assignment.task.updatedAt.toISOString(),
-    });
-    performanceTasksByUserId.set(assignment.userId, tasks);
-  });
   const performanceRows: AssistantPerformanceRow[] = assistantUsers.map(
     (user) => ({
       id: user.id,
@@ -160,12 +206,23 @@ export default async function AssistantsPage() {
       tasks: performanceTasksByUserId.get(user.id) ?? [],
     }),
   );
+  const checkerRows: AssistantPerformanceRow[] = assistantUsers.map((user) => ({
+    id: user.id,
+    name: user.name ?? "",
+    email: user.email,
+    assistantRole: user.roles.includes(Role.CHIEF_ASSISTANT)
+      ? Role.CHIEF_ASSISTANT
+      : Role.ASSISTANT,
+    canManageResearchVenues: user.canManageResearchVenues,
+    tasks: checkerTasksByUserId.get(user.id) ?? [],
+  }));
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <AssistantsClient
         rows={rows}
         performanceRows={performanceRows}
+        checkerRows={checkerRows}
         canManage={canAssignAssistants}
         action={
           canAssignAssistants ? <AddAssistantDialog users={candidates} /> : null
