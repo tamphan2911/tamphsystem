@@ -21,6 +21,7 @@ import {
 } from "../actions";
 import {
   FilterSelect,
+  ResearchSortHeaderButton,
   TablePagination,
   TableSearchInput,
   useTablePagination,
@@ -80,6 +81,13 @@ const allTaskTypeFilterValues = [
   "OTHER",
 ];
 
+type AssistantSortKey = "unfinished";
+type AssistantSortDirection = "asc" | "desc";
+type AssistantSort = {
+  key: AssistantSortKey;
+  direction: AssistantSortDirection;
+};
+
 function taskStatusLabel(status: string) {
   if (status === "OPEN") return "open";
   if (status === "IN_PROGRESS") return "in progress";
@@ -101,6 +109,32 @@ function unfinishedTaskTotal(row: AssistantRow) {
   return row.unfinishedTasks.reduce((total, item) => total + item.count, 0);
 }
 
+function parseAssistantSort(value: string): AssistantSort | null {
+  const [key, direction] = value.split(":");
+  if (key !== "unfinished") return null;
+  if (direction !== "asc" && direction !== "desc") return null;
+  return { key, direction };
+}
+
+function nextAssistantSortValue(sort: AssistantSort | null) {
+  if (!sort || sort.key !== "unfinished") return "unfinished:desc";
+  if (sort.direction === "desc") return "unfinished:asc";
+  return "";
+}
+
+function sortAssistants(rows: AssistantRow[], sort: AssistantSort | null) {
+  if (!sort) return rows;
+  return rows
+    .map((row, index) => ({ row, index }))
+    .sort((left, right) => {
+      const diff =
+        unfinishedTaskTotal(left.row) - unfinishedTaskTotal(right.row);
+      if (diff !== 0) return sort.direction === "asc" ? diff : -diff;
+      return left.index - right.index;
+    })
+    .map((item) => item.row);
+}
+
 export function AssistantsTable({
   rows,
   canManage,
@@ -113,6 +147,11 @@ export function AssistantsTable({
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = usePersistentTableValue("assistants:q", "");
   const [role, setRole] = usePersistentTableValue("assistants:role", "ALL");
+  const [sortValue, setSortValue] = usePersistentTableValue(
+    "assistants:sort",
+    "",
+  );
+  const sort = useMemo(() => parseAssistantSort(sortValue), [sortValue]);
   const [editing, setEditing] = useState<AssistantRow | null>(null);
   const [deleting, setDeleting] = useState<AssistantRow | null>(null);
   const [editRole, setEditRole] = useState("ASSISTANT");
@@ -150,7 +189,8 @@ export function AssistantsTable({
     });
   }, [query, role, rows]);
 
-  const pagination = useTablePagination(filtered, 10, 1, "assistants");
+  const sorted = useMemo(() => sortAssistants(filtered, sort), [filtered, sort]);
+  const pagination = useTablePagination(sorted, 10, 1, "assistants");
 
   function updateQuery(value: string) {
     setQuery(value);
@@ -159,6 +199,11 @@ export function AssistantsTable({
 
   function updateRole(value: string) {
     setRole(value);
+    pagination.setPage(1);
+  }
+
+  function updateSort() {
+    setSortValue(nextAssistantSortValue(sort));
     pagination.setPage(1);
   }
 
@@ -268,7 +313,26 @@ export function AssistantsTable({
               <th className="w-[20%] px-3 py-3">Email</th>
               <th className="w-[15%] px-3 py-3">Password</th>
               <th className="w-[10%] px-3 py-3">Role</th>
-              <th className="w-[13%] px-3 py-3">Unfinished tasks</th>
+              <th className="w-[13%] px-3 py-3">
+                <span className="inline-flex items-center gap-1.5">
+                  <span>Unfinished</span>
+                  <ResearchSortHeaderButton
+                    column="unfinished"
+                    activeColumn={sort?.key ?? null}
+                    direction={
+                      sort?.key === "unfinished" ? sort.direction : null
+                    }
+                    onChange={updateSort}
+                    hint={
+                      !sort
+                        ? "Sort unfinished tasks from high to low"
+                        : sort.direction === "desc"
+                          ? "Sort unfinished tasks from low to high"
+                          : "Clear unfinished task sorting"
+                    }
+                  />
+                </span>
+              </th>
               <th className="w-[11%] px-3 py-3">Jurisdiction</th>
               {canManage && (
                 <th className="w-[8%] px-2 py-3 text-right">
