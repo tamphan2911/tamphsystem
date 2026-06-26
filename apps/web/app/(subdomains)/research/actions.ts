@@ -7510,6 +7510,23 @@ export async function addSuggestedJournal(
       createdById: user.id,
       adminOnly: !journalId,
     });
+  } else if (suggestion.status === SuggestedVenueStatus.APPROVED) {
+    const completedSuggestTask = await completeSuggestVenueTaskIfReady(
+      taskId,
+      user.id,
+    );
+    await notifyMergedSuggestedVenueApproval({
+      projectId,
+      suggestionId: suggestion.id,
+      venueKind: "journal",
+      venueName: venueName ?? venue?.name ?? "Journal",
+      approverId: user.id,
+      suggestedById: user.id,
+      suggestedByEmail: null,
+      approvalNote: null,
+      submitTask: null,
+      completedSuggestTask,
+    });
   }
 
   revalidatePath(`/projects/${projectId}`);
@@ -7798,6 +7815,23 @@ export async function addSuggestedConference(
       kind: "conference",
       createdById: user.id,
       adminOnly: !conferenceId,
+    });
+  } else if (suggestion.status === SuggestedVenueStatus.APPROVED) {
+    const completedSuggestTask = await completeSuggestVenueTaskIfReady(
+      taskId,
+      user.id,
+    );
+    await notifyMergedSuggestedVenueApproval({
+      projectId,
+      suggestionId: suggestion.id,
+      venueKind: "conference",
+      venueName: venueName ?? venue?.name ?? "Conference",
+      approverId: user.id,
+      suggestedById: user.id,
+      suggestedByEmail: null,
+      approvalNote: null,
+      submitTask: null,
+      completedSuggestTask,
     });
   }
 
