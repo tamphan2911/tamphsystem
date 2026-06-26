@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
-import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import {
   createResearchCalendarItem,
   deleteResearchCalendarItem,
@@ -94,19 +93,7 @@ export default async function ResearchCalendarPage({
   }));
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4">
-      <ResearchPageHeaderPortal>
-        <div className="flex min-w-0 items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-normal uppercase text-slate-700 dark:text-[#E4E4E4]">
-              Calendar
-            </p>
-            <p className="mt-1 hidden text-xs text-slate-500 sm:block dark:text-[#B0B0B0]">
-              Manage events and things to do for the research site.
-            </p>
-          </div>
-        </div>
-      </ResearchPageHeaderPortal>
+    <div className="mx-auto h-[calc(100vh-8rem)] max-w-7xl overflow-hidden">
       <ResearchCalendarClient
         initialMonth={monthValue(month)}
         items={rows}
