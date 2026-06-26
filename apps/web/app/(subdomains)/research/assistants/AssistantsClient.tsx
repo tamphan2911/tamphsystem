@@ -46,6 +46,8 @@ export type AssistantPerformanceRow = {
   assistantRole: string;
   canManageResearchVenues: boolean;
   tasks: AssistantPerformanceTask[];
+  associatedResearchTotal: number;
+  associatedResearchAcceptedOrPublished: number;
 };
 
 type AssistantPerformanceStats = {
@@ -56,6 +58,7 @@ type AssistantPerformanceStats = {
   overdue: number;
   revoked: number;
   completionRate: number;
+  acceptanceRate: number;
 };
 type AssistantPerformanceSortKey =
   | "assistant"
@@ -65,7 +68,8 @@ type AssistantPerformanceSortKey =
   | "completed"
   | "overdue"
   | "revoked"
-  | "completion";
+  | "completion"
+  | "acceptance";
 type AssistantPerformanceSortDirection = "asc" | "desc";
 type AssistantPerformanceSort = {
   key: AssistantPerformanceSortKey;
@@ -81,6 +85,7 @@ const assistantPerformanceSortKeys: AssistantPerformanceSortKey[] = [
   "overdue",
   "revoked",
   "completion",
+  "acceptance",
 ];
 const assistantPerformanceSortLabels: Record<
   AssistantPerformanceSortKey,
@@ -94,6 +99,7 @@ const assistantPerformanceSortLabels: Record<
   overdue: "Overdue",
   revoked: "Revoked",
   completion: "Completion",
+  acceptance: "Acceptance",
 };
 
 function periodLabel(period: PerformancePeriod) {
@@ -213,7 +219,8 @@ function assistantPerformanceSortValue(
   if (key === "completed") return item.completed;
   if (key === "overdue") return item.overdue;
   if (key === "revoked") return item.revoked;
-  return item.completionRate;
+  if (key === "completion") return item.completionRate;
+  return item.acceptanceRate;
 }
 
 function sortAssistantPerformanceStats(
@@ -260,6 +267,14 @@ function calculateStats(
       revoked: periodTasks.filter((task) => task.status === "REVOKED").length,
       completionRate:
         assigned === 0 ? 0 : Math.round((completed / assigned) * 100),
+      acceptanceRate:
+        row.associatedResearchTotal === 0
+          ? 0
+          : Math.round(
+              (row.associatedResearchAcceptedOrPublished /
+                row.associatedResearchTotal) *
+                100,
+            ),
     };
   });
 }
@@ -466,18 +481,23 @@ function downloadAssistantPerformance(
     "Overdue",
     "Revoked",
     "Completion rate",
+    ...(reportKind === "assistant" ? ["Acceptance rate"] : []),
   ];
-  const bodyRows: Array<Array<string | number>> = stats.map((item) => [
-    displayResearchPersonName(item.row) || "Unnamed assistant",
-    displayResearchEmail(item.row.email),
-    roleLabel(item.row.assistantRole),
-    item.assigned,
-    item.active,
-    item.completed,
-    item.overdue,
-    item.revoked,
-    item.completionRate,
-  ]);
+  const bodyRows: Array<Array<string | number>> = stats.map((item) => {
+    const baseRow: Array<string | number> = [
+      displayResearchPersonName(item.row) || "Unnamed assistant",
+      displayResearchEmail(item.row.email),
+      roleLabel(item.row.assistantRole),
+      item.assigned,
+      item.active,
+      item.completed,
+      item.overdue,
+      item.revoked,
+      item.completionRate,
+    ];
+    if (reportKind === "assistant") baseRow.push(item.acceptanceRate);
+    return baseRow;
+  });
   const workbook = createAssistantPerformanceWorkbook(
     [headers, ...bodyRows],
     reportKind === "checker" ? "Checker Performance" : "Assistant Performance",
@@ -639,10 +659,13 @@ function AssistantPerformanceTable({
     () => parseAssistantPerformanceSort(sortValue),
     [sortValue],
   );
+  const showAcceptanceRate = reportKind === "assistant";
+  const effectiveSort =
+    !showAcceptanceRate && sort?.key === "acceptance" ? null : sort;
   const stats = useMemo(() => calculateStats(rows, period), [period, rows]);
   const sortedStats = useMemo(
-    () => sortAssistantPerformanceStats(stats, sort),
-    [sort, stats],
+    () => sortAssistantPerformanceStats(stats, effectiveSort),
+    [effectiveSort, stats],
   );
 
   function updateSort(key: AssistantPerformanceSortKey) {
@@ -699,7 +722,9 @@ function AssistantPerformanceTable({
         <table className="w-full table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
-              <th className="w-[24%] px-4 py-3">
+              <th
+                className={`${showAcceptanceRate ? "w-[20%]" : "w-[24%]"} px-4 py-3`}
+              >
                 <AssistantPerformanceSortHeader
                   label="Assistant"
                   column="assistant"
@@ -707,7 +732,9 @@ function AssistantPerformanceTable({
                   onChange={updateSort}
                 />
               </th>
-              <th className="w-[13%] px-3 py-3">
+              <th
+                className={`${showAcceptanceRate ? "w-[10%]" : "w-[13%]"} px-3 py-3`}
+              >
                 <AssistantPerformanceSortHeader
                   label="Role"
                   column="role"
@@ -760,7 +787,9 @@ function AssistantPerformanceTable({
                   align="center"
                 />
               </th>
-              <th className="w-[13%] px-3 py-3">
+              <th
+                className={`${showAcceptanceRate ? "w-[10%]" : "w-[13%]"} px-3 py-3`}
+              >
                 <AssistantPerformanceSortHeader
                   label="Completion"
                   column="completion"
@@ -769,6 +798,17 @@ function AssistantPerformanceTable({
                   align="center"
                 />
               </th>
+              {showAcceptanceRate ? (
+                <th className="w-[10%] px-3 py-3">
+                  <AssistantPerformanceSortHeader
+                    label="Acceptance"
+                    column="acceptance"
+                    sort={sort}
+                    onChange={updateSort}
+                    align="center"
+                  />
+                </th>
+              ) : null}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#444444]">
@@ -806,12 +846,21 @@ function AssistantPerformanceTable({
                 <td className="px-3 py-3 text-center text-sm text-[#A8DADC]">
                   {item.completionRate}%
                 </td>
+                {showAcceptanceRate ? (
+                  <td className="px-3 py-3 text-center text-sm text-emerald-700 dark:text-emerald-300">
+                    {item.acceptanceRate}%
+                    <p className="mt-1 text-[11px] leading-4 text-[#6C778D] dark:text-[#B0B0B0]">
+                      {item.row.associatedResearchAcceptedOrPublished}/
+                      {item.row.associatedResearchTotal}
+                    </p>
+                  </td>
+                ) : null}
               </tr>
             ))}
             {sortedStats.length === 0 && (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={showAcceptanceRate ? 9 : 8}
                   className="px-4 py-8 text-center text-sm text-[#B0B0B0]"
                 >
                   No assistant performance data is available.

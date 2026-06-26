@@ -1,5 +1,12 @@
 import bcrypt from "bcrypt";
-import { prisma, ResearchTaskStatus, Role } from "@repo/db";
+import {
+  ConferenceSubmissionStatus,
+  prisma,
+  ResearchStage,
+  ResearchTaskStatus,
+  Role,
+  SubmissionStatus,
+} from "@repo/db";
 import { assertResearchManager } from "../actions";
 import type { AssistantRow } from "./AssistantsTable";
 import {
@@ -54,46 +61,83 @@ export default async function AssistantsPage() {
   );
   const assistantUserIds = assistantUsers.map((user) => user.id);
 
-  const [taskAssignments, checkerTasks] = await Promise.all([
-    prisma.researchTaskAssignment.findMany({
-      where: {
-        userId: { in: assistantUserIds },
-      },
-      select: {
-        userId: true,
-        task: {
-          select: {
-            id: true,
-            status: true,
-            taskType: true,
-            category: true,
-            dueDate: true,
-            completedAt: true,
-            revokedAt: true,
-            createdAt: true,
-            updatedAt: true,
+  const [taskAssignments, checkerTasks, associatedResearchProjects] =
+    await Promise.all([
+      prisma.researchTaskAssignment.findMany({
+        where: {
+          userId: { in: assistantUserIds },
+        },
+        select: {
+          userId: true,
+          task: {
+            select: {
+              id: true,
+              status: true,
+              taskType: true,
+              category: true,
+              dueDate: true,
+              completedAt: true,
+              revokedAt: true,
+              createdAt: true,
+              updatedAt: true,
+            },
           },
         },
-      },
-    }),
-    prisma.researchTask.findMany({
-      where: {
-        checkerId: { in: assistantUserIds },
-      },
-      select: {
-        checkerId: true,
-        id: true,
-        status: true,
-        taskType: true,
-        category: true,
-        dueDate: true,
-        completedAt: true,
-        revokedAt: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    }),
-  ]);
+      }),
+      prisma.researchTask.findMany({
+        where: {
+          checkerId: { in: assistantUserIds },
+        },
+        select: {
+          checkerId: true,
+          id: true,
+          status: true,
+          taskType: true,
+          category: true,
+          dueDate: true,
+          completedAt: true,
+          revokedAt: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+      prisma.researchProject.findMany({
+        where: {
+          OR: [
+            { authors: { some: { id: { in: assistantUserIds } } } },
+            { authorEntries: { some: { userId: { in: assistantUserIds } } } },
+            {
+              tasks: {
+                some: {
+                  OR: [
+                    { checkerId: { in: assistantUserIds } },
+                    {
+                      assignments: {
+                        some: { userId: { in: assistantUserIds } },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          stage: true,
+          authors: { select: { id: true } },
+          authorEntries: { select: { userId: true } },
+          submissions: { select: { status: true } },
+          conferenceSubmissions: { select: { status: true } },
+          tasks: {
+            select: {
+              checkerId: true,
+              assignments: { select: { userId: true } },
+            },
+          },
+        },
+      }),
+    ]);
 
   function performanceTaskFromTask(task: {
     id: string;
@@ -158,6 +202,46 @@ export default async function AssistantsPage() {
     checkerTasksByUserId.set(task.checkerId, tasks);
   });
 
+  const researchAssociationByUserId = new Map<
+    string,
+    { total: number; acceptedOrPublished: number }
+  >();
+  associatedResearchProjects.forEach((project) => {
+    const associatedIds = new Set<string>();
+    project.authors.forEach((author) => associatedIds.add(author.id));
+    project.authorEntries.forEach((entry) => associatedIds.add(entry.userId));
+    project.tasks.forEach((task) => {
+      if (task.checkerId) associatedIds.add(task.checkerId);
+      task.assignments.forEach((assignment) =>
+        associatedIds.add(assignment.userId),
+      );
+    });
+    const acceptedOrPublished =
+      project.stage === ResearchStage.ACCEPTED ||
+      project.stage === ResearchStage.PUBLISHED ||
+      project.submissions.some(
+        (submission) =>
+          submission.status === SubmissionStatus.ACCEPTED ||
+          submission.status === SubmissionStatus.PUBLISHED,
+      ) ||
+      project.conferenceSubmissions.some(
+        (submission) =>
+          submission.status === ConferenceSubmissionStatus.ACCEPTED ||
+          submission.status === ConferenceSubmissionStatus.PUBLISHED,
+      );
+
+    associatedIds.forEach((userId) => {
+      if (!assistantUserIds.includes(userId)) return;
+      const current = researchAssociationByUserId.get(userId) ?? {
+        total: 0,
+        acceptedOrPublished: 0,
+      };
+      current.total += 1;
+      if (acceptedOrPublished) current.acceptedOrPublished += 1;
+      researchAssociationByUserId.set(userId, current);
+    });
+  });
+
   const visiblePasswords = await Promise.all(
     assistantUsers.map(async (user) => {
       if (!user.adminVisiblePassword) return [user.id, ""] as const;
@@ -204,18 +288,28 @@ export default async function AssistantsPage() {
         : Role.ASSISTANT,
       canManageResearchVenues: user.canManageResearchVenues,
       tasks: performanceTasksByUserId.get(user.id) ?? [],
+      associatedResearchTotal:
+        researchAssociationByUserId.get(user.id)?.total ?? 0,
+      associatedResearchAcceptedOrPublished:
+        researchAssociationByUserId.get(user.id)?.acceptedOrPublished ?? 0,
     }),
   );
-  const checkerRows: AssistantPerformanceRow[] = assistantUsers.map((user) => ({
-    id: user.id,
-    name: user.name ?? "",
-    email: user.email,
-    assistantRole: user.roles.includes(Role.CHIEF_ASSISTANT)
-      ? Role.CHIEF_ASSISTANT
-      : Role.ASSISTANT,
-    canManageResearchVenues: user.canManageResearchVenues,
-    tasks: checkerTasksByUserId.get(user.id) ?? [],
-  }));
+  const checkerRows: AssistantPerformanceRow[] = assistantUsers
+    .map((user) => ({
+      id: user.id,
+      name: user.name ?? "",
+      email: user.email,
+      assistantRole: user.roles.includes(Role.CHIEF_ASSISTANT)
+        ? Role.CHIEF_ASSISTANT
+        : Role.ASSISTANT,
+      canManageResearchVenues: user.canManageResearchVenues,
+      tasks: checkerTasksByUserId.get(user.id) ?? [],
+      associatedResearchTotal:
+        researchAssociationByUserId.get(user.id)?.total ?? 0,
+      associatedResearchAcceptedOrPublished:
+        researchAssociationByUserId.get(user.id)?.acceptedOrPublished ?? 0,
+    }))
+    .filter((row) => row.tasks.length > 0);
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
