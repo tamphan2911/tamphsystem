@@ -2322,8 +2322,7 @@ export default async function TaskDetailPage({
         roles: { has: Role.ASSISTANT },
         NOT: { id: userId },
       };
-  const journalSubmissionLink =
-    task.journal?.submissionLink || firstUrl(task.journal?.note);
+  const journalSubmissionLink = task.journal?.submissionLink;
   const conferenceSubmissionLink = firstUrl(task.conference?.note);
   const [
     assigneeUsers,
