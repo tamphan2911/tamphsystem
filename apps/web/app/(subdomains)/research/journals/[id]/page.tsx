@@ -218,6 +218,19 @@ export default async function JournalDetailPage({
     name: user.name ?? "",
     email: user.email,
   }));
+  const journalAccountOption = {
+    id: journal.id,
+    name: journal.name,
+    publisher: journal.publisher ?? "",
+  };
+  const publisherOptions = publishers.map((publisher) => ({
+    id: publisher.id,
+    publisherCode: publisher.publisherCode,
+    name: publisher.name,
+    alias: publisher.alias ?? "",
+    country: publisher.country ?? "",
+    usesSingleAccount: publisher.usesSingleAccount,
+  }));
 
   const submissionRows: JournalSubmissionRow[] = journal.submissions.map(
     (submission) => {
@@ -606,11 +619,14 @@ export default async function JournalDetailPage({
           submissions={submissionRows}
           accounts={accountRows}
           reviews={reviewRows}
+          journalOption={journalAccountOption}
+          publisherOptions={publisherOptions}
           submissionCount={journal._count.submissions}
           accountCount={accountRows.length}
           reviewCount={journal._count.reviews}
           showManagementTabs={isAdmin || isAssistant}
           linkSubmissions={isAdmin}
+          canAddAccount={isAdmin}
         />
       </div>
     </>

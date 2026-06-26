@@ -10,6 +10,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import { createPublisherAccount } from "../actions";
+import { useRouter } from "next/navigation";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
@@ -22,12 +23,17 @@ import {
 export function NewAccountDialog({
   journals,
   publishers,
+  initialJournal = null,
+  triggerLabel = "New Account",
 }: {
   journals: AccountJournalOption[];
   publishers: PublisherPickerItem[];
+  initialJournal?: AccountJournalOption | null;
+  triggerLabel?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const toast = useResearchToast();
   function closeDialog() {
     setIsOpen(false);
@@ -41,7 +47,7 @@ export function NewAccountDialog({
         className="inline-flex cursor-pointer items-center gap-2 rounded-none border border-amber-200 bg-amber-100/80 px-4 py-2.5 text-sm font-bold text-amber-800 shadow-sm shadow-amber-900/5 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 hover:shadow-md hover:shadow-amber-900/10 focus:outline-none focus:ring-4 focus:ring-amber-200/70 dark:border-amber-700/60 dark:bg-amber-900/35 dark:text-amber-100 dark:hover:border-amber-500/70 dark:hover:bg-amber-800/55 dark:hover:text-white dark:hover:shadow-black/25 dark:focus:ring-amber-700/35"
       >
         <PlusCircle className="h-4 w-4" />
-        New Account
+        {triggerLabel}
       </button>
 
       <ResearchModal
@@ -74,6 +80,7 @@ export function NewAccountDialog({
               try {
                 await createPublisherAccount(formData);
                 closeDialog();
+                router.refresh();
                 toast.showSuccess({
                   title: "Account added",
                   detail: loginId
@@ -127,7 +134,11 @@ export function NewAccountDialog({
               </span>
             </label>
             <div className="md:col-span-2">
-              <AccountScopeFields journals={journals} publishers={publishers} />
+              <AccountScopeFields
+                journals={journals}
+                publishers={publishers}
+                initialJournal={initialJournal}
+              />
             </div>
             <label className="block md:col-span-2">
               <span className="sr-only">Account notes</span>

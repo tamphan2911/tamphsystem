@@ -21,6 +21,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { PublisherPickerItem } from "@/sites/research/components/PublisherPicker";
 import {
   FilterSelect,
   IconHint,
@@ -31,6 +32,8 @@ import {
 } from "@/sites/research/components/TableControls";
 import type { SubmissionRow } from "../../projects/[id]/SubmissionsTable";
 import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
+import { NewAccountDialog } from "../../accounts/NewAccountDialog";
+import type { AccountJournalOption } from "../../accounts/AccountScopeFields";
 
 export type JournalSubmissionRow = SubmissionRow;
 
@@ -377,20 +380,26 @@ export function JournalDetailTabs({
   submissions,
   accounts,
   reviews,
+  journalOption,
+  publisherOptions,
   submissionCount,
   accountCount,
   reviewCount,
   showManagementTabs,
   linkSubmissions,
+  canAddAccount,
 }: {
   submissions: JournalSubmissionRow[];
   accounts: JournalAccountRow[];
   reviews: JournalReviewRow[];
+  journalOption: AccountJournalOption;
+  publisherOptions: PublisherPickerItem[];
   submissionCount: number;
   accountCount: number;
   reviewCount: number;
   showManagementTabs: boolean;
   linkSubmissions: boolean;
+  canAddAccount: boolean;
 }) {
   const [activeTab, setActiveTab] = usePersistentTableValue<TabKey>(
     "journal-detail:tab",
@@ -553,7 +562,18 @@ export function JournalDetailTabs({
               onChange={updateQuery}
               placeholder={`Search ${activeTab}...`}
             />
-            {activeTab !== "accounts" && (
+            {activeTab === "accounts" ? (
+              canAddAccount ? (
+                <div className="flex flex-none justify-end">
+                  <NewAccountDialog
+                    journals={[journalOption]}
+                    publishers={publisherOptions}
+                    initialJournal={journalOption}
+                    triggerLabel="Add Account"
+                  />
+                </div>
+              ) : null
+            ) : (
               <FilterSelect
                 value={status}
                 onChange={updateStatus}
