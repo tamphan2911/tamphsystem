@@ -6671,44 +6671,166 @@ export async function revokeResearchTask(taskId: string, formData?: FormData) {
   const user = await requireCurrentUser();
   const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);
   const reason = optionalString(formData?.get("reason") ?? null);
+  const transferTask = formData?.get("transferTask") === "true";
+  const transferAssigneeIds = orderedUniqueStrings(
+    formData?.getAll("transferAssigneeIds") ?? [],
+  );
   const reasonLine = reason
     ? `Reason: ${reason}`
     : "No revoke reason provided.";
 
   const currentTask = await prisma.researchTask.findUnique({
     where: { id: taskId },
-    select: { createdById: true, checkerId: true },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      category: true,
+      dueDate: true,
+      createdById: true,
+      checkerId: true,
+      projectId: true,
+      organizedProjectId: true,
+      journalId: true,
+      conferenceId: true,
+      reviewId: true,
+      accountId: true,
+      taskType: true,
+      proposalScope: true,
+      taskFileName: true,
+      taskFileType: true,
+      taskFileSize: true,
+      taskFileData: true,
+      isUrgent: true,
+      allowAssigneeReportUpload: true,
+      journalTargetCount: true,
+      assignments: {
+        select: { userId: true },
+      },
+      guides: { select: { id: true } },
+      suggestedReviewers: { select: { id: true } },
+    },
   });
   if (!currentTask) return;
   if (!isAdmin && currentTask.createdById !== user.id) redirect("/401");
 
-  const task = await prisma.researchTask.update({
-    where: { id: taskId },
-    data: {
-      status: ResearchTaskStatus.REVOKED,
-      revokedAt: new Date(),
-      revokedBy: { connect: { id: user.id } },
-      revokeReason: reason,
-      completedAt: null,
-      completedBy: { disconnect: true },
-      completionMessage: null,
-      adminViewedAt: null,
-    },
-    select: {
-      projectId: true,
-      title: true,
-      createdById: true,
-      checkerId: true,
-      assignments: {
-        select: { userId: true, user: { select: { email: true } } },
+  const oldAssigneeIds = currentTask.assignments.map(
+    (assignment) => assignment.userId,
+  );
+  const invalidTransferAssignees = transferAssigneeIds.some((assigneeId) =>
+    oldAssigneeIds.includes(assigneeId),
+  );
+  if (transferTask) {
+    if (transferAssigneeIds.length === 0 || invalidTransferAssignees) {
+      throw new Error(
+        "Choose at least one new assignee who is not already assigned to this task.",
+      );
+    }
+    if (
+      !(await taskAssigneesAreSelectableByUser({
+        assigneeIds: transferAssigneeIds,
+        user,
+      }))
+    ) {
+      throw new Error("Choose only active research-site users as assignees.");
+    }
+  }
+
+  const newTaskCode = transferTask ? await generateTaskCode() : null;
+  const { task, transferredTask } = await prisma.$transaction(async (tx) => {
+    const revokedTask = await tx.researchTask.update({
+      where: { id: taskId },
+      data: {
+        status: ResearchTaskStatus.REVOKED,
+        revokedAt: new Date(),
+        revokedBy: { connect: { id: user.id } },
+        revokeReason: reason,
+        completedAt: null,
+        completedBy: { disconnect: true },
+        completionMessage: null,
+        adminViewedAt: null,
       },
-      clarifications: {
-        where: { answer: null },
-        select: { requestedById: true },
-        orderBy: { createdAt: "desc" },
-        take: 1,
+      select: {
+        projectId: true,
+        title: true,
+        createdById: true,
+        checkerId: true,
+        assignments: {
+          select: { userId: true, user: { select: { email: true } } },
+        },
+        clarifications: {
+          where: { answer: null },
+          select: { requestedById: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
       },
-    },
+    });
+
+    const createdTransferTask =
+      transferTask && newTaskCode
+        ? await tx.researchTask.create({
+            data: {
+              title: currentTask.title,
+              taskCode: newTaskCode,
+              description: currentTask.description,
+              category: currentTask.category,
+              taskType: currentTask.taskType,
+              proposalScope: currentTask.proposalScope,
+              status: ResearchTaskStatus.IN_PROGRESS,
+              projectId: currentTask.projectId,
+              organizedProjectId: currentTask.organizedProjectId,
+              journalId: currentTask.journalId,
+              conferenceId: currentTask.conferenceId,
+              reviewId: currentTask.reviewId,
+              accountId: currentTask.accountId,
+              dueDate: currentTask.dueDate,
+              createdById: currentTask.createdById,
+              checkerId: currentTask.checkerId,
+              taskFileName: currentTask.taskFileName,
+              taskFileType: currentTask.taskFileType,
+              taskFileSize: currentTask.taskFileSize,
+              taskFileData: currentTask.taskFileData,
+              isUrgent: currentTask.isUrgent,
+              allowAssigneeReportUpload: currentTask.allowAssigneeReportUpload,
+              journalTargetCount: currentTask.journalTargetCount,
+              transferredFromTaskId: taskId,
+              assignments: {
+                create: transferAssigneeIds.map((userId) => ({ userId })),
+              },
+              guides:
+                currentTask.guides.length > 0
+                  ? {
+                      connect: currentTask.guides.map((guide) => ({
+                        id: guide.id,
+                      })),
+                    }
+                  : undefined,
+              suggestedReviewers:
+                currentTask.suggestedReviewers.length > 0
+                  ? {
+                      connect: currentTask.suggestedReviewers.map(
+                        (reviewer) => ({
+                          id: reviewer.id,
+                        }),
+                      ),
+                    }
+                  : undefined,
+            },
+            select: {
+              id: true,
+              title: true,
+              assignments: {
+                select: {
+                  userId: true,
+                  user: { select: { email: true, name: true } },
+                },
+              },
+            },
+          })
+        : null;
+
+    return { task: revokedTask, transferredTask: createdTransferTask };
   });
 
   await notifyUsers({
@@ -6736,6 +6858,38 @@ export async function revokeResearchTask(taskId: string, formData?: FormData) {
     actionLabel: "View task",
   });
 
+  if (transferredTask) {
+    const assigneeNames = transferredTask.assignments
+      .map((assignment) => assignment.user.name || assignment.user.email)
+      .join(", ");
+    await notifyUsers({
+      userIds: transferredTask.assignments.map(
+        (assignment) => assignment.userId,
+      ),
+      type: "TASK_ASSIGNED",
+      title: "Task transferred to you",
+      summary: transferredTask.title,
+      body: `This task was transferred from a revoked task. Previous task: ${task.title}.`,
+      href: `/tasks/${transferredTask.id}`,
+      entityType: "task",
+      entityId: transferredTask.id,
+      excludeUserId: user.id,
+    });
+    await sendTaskEmail({
+      to: transferredTask.assignments.map(
+        (assignment) => assignment.user.email,
+      ),
+      subject: `Task transferred: ${transferredTask.title}`,
+      heading: "Task transferred to you",
+      intro:
+        "A revoked task has been transferred and assigned to you as a new task.",
+      detail: `Transferred from: ${task.title}. New assignee${transferredTask.assignments.length === 1 ? "" : "s"}: ${assigneeNames}.`,
+      taskTitle: transferredTask.title,
+      taskId: transferredTask.id,
+      actionLabel: "View new task",
+    });
+  }
+
   await notifyTaskAdminsAndChecker({
     taskId,
     userIds: [task.createdById, task.checkerId],
@@ -6750,6 +6904,7 @@ export async function revokeResearchTask(taskId: string, formData?: FormData) {
 
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
+  if (transferredTask) revalidatePath(`/tasks/${transferredTask.id}`);
   if (task.projectId) revalidatePath(`/projects/${task.projectId}`);
 }
 

@@ -8,6 +8,7 @@ import { notFound, redirect } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
+  ArrowRightLeft,
   Ban,
   BookOpenText,
   CheckCircle2,
@@ -434,6 +435,7 @@ function TaskResultBlock({
     date: Date | null;
     note: string | null;
     actor: { name: string | null; email: string; roles: Role[] } | null;
+    transferredToTask?: TaskTransferReference | null;
   };
 }) {
   const Icon = result.kind === "approved" ? CheckCircle2 : Ban;
@@ -469,6 +471,92 @@ function TaskResultBlock({
         <span>{formatDate(result.date)}</span>
       </div>
       <p className="mt-1 whitespace-pre-wrap">{result.note || noteFallback}</p>
+      {result.kind === "revoked" && result.transferredToTask ? (
+        <div className="mt-3">
+          <TaskTransferSummary
+            label="Transferred to"
+            task={result.transferredToTask}
+            assigneeLabel="New assignees"
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+type TaskTransferReference = {
+  id: string;
+  taskCode: string | null;
+  title: string;
+  assignments: Array<{
+    user: { name: string | null; email: string; roles: Role[] };
+  }>;
+};
+
+function TaskTransferSummary({
+  label,
+  task,
+  assigneeLabel,
+}: {
+  label: string;
+  task: TaskTransferReference;
+  assigneeLabel: string;
+}) {
+  return (
+    <div className="border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 dark:border-[#444444] dark:bg-[#242424]">
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+        <ArrowRightLeft className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+        <span className="font-normal text-slate-700 dark:text-[#E4E4E4]">
+          {label}:
+        </span>
+        <Link
+          href={`/tasks/${task.id}`}
+          className={`${researchLinkClass} min-w-0 break-words text-xs`}
+        >
+          {task.taskCode ? `${task.taskCode} - ` : ""}
+          {task.title}
+        </Link>
+      </div>
+      <p className="mt-1 text-[#667085] dark:text-[#B0B0B0]">
+        {assigneeLabel}:{" "}
+        {task.assignments.length > 0
+          ? task.assignments
+              .map((assignment) => displayResearchPersonName(assignment.user))
+              .join(", ")
+          : "No assignee recorded"}
+      </p>
+    </div>
+  );
+}
+
+function TaskTransferBlock({
+  mode,
+  task,
+  assigneeLabel,
+}: {
+  mode: "from" | "to";
+  task: TaskTransferReference;
+  assigneeLabel: string;
+}) {
+  return (
+    <div className="border-t border-[#444444] p-5">
+      <div className="border border-cyan-200 bg-cyan-50/70 p-4 text-sm text-cyan-900 dark:border-cyan-800/70 dark:bg-cyan-950/25 dark:text-cyan-100">
+        <div className="flex items-center gap-2 font-normal">
+          <ArrowRightLeft className="h-4 w-4 text-[#1F7180] dark:text-[#A8DADC]" />
+          <span>
+            {mode === "from"
+              ? "This task was transferred from a revoked task."
+              : "This revoked task was transferred to a new task."}
+          </span>
+        </div>
+        <div className="mt-3">
+          <TaskTransferSummary
+            label={mode === "from" ? "Transferred from" : "Transferred to"}
+            task={task}
+            assigneeLabel={assigneeLabel}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -953,6 +1041,30 @@ export default async function TaskDetailPage({
       revokedAt: true,
       revokedById: true,
       revokeReason: true,
+      transferredFromTask: {
+        select: {
+          id: true,
+          taskCode: true,
+          title: true,
+          assignments: {
+            select: {
+              user: { select: { name: true, email: true, roles: true } },
+            },
+          },
+        },
+      },
+      transferredToTask: {
+        select: {
+          id: true,
+          taskCode: true,
+          title: true,
+          assignments: {
+            select: {
+              user: { select: { name: true, email: true, roles: true } },
+            },
+          },
+        },
+      },
       createdAt: true,
       updatedAt: true,
       createdById: true,
@@ -1706,8 +1818,10 @@ export default async function TaskDetailPage({
             note: task.revokeReason,
             actorId: task.revokedById,
             actor: task.revokedBy,
+            transferredToTask: task.transferredToTask,
           }
         : null;
+  const transferredFromTask = task.transferredFromTask;
   const checkerPerson = task.checker ?? task.createdBy;
   const showCheckerEmail = Boolean(
     task.checker && !task.checker.roles.includes(Role.ADMIN),
@@ -2782,7 +2896,20 @@ export default async function TaskDetailPage({
           canRequestAssigneeClarification ||
           canRevoke) && (
           <div className="flex flex-col justify-end gap-2 sm:flex-row sm:items-center">
-            {canRevoke && <RevokeTaskForm action={revokeAction} />}
+            {canRevoke && (
+              <RevokeTaskForm
+                action={revokeAction}
+                assigneeOptions={assigneeUsers.map((assignee) => ({
+                  id: assignee.id,
+                  name: assignee.name ?? "",
+                  email: assignee.email,
+                  roles: assignee.roles,
+                }))}
+                currentAssigneeIds={task.assignments.map(
+                  (assignment) => assignment.userId,
+                )}
+              />
+            )}
             {canRedo && <RedoTaskForm action={redoAction} />}
             {canRequestAssigneeClarification && (
               <AssigneeClarificationRequestForm
@@ -3012,6 +3139,14 @@ export default async function TaskDetailPage({
               canManageAssociation={isRootAdmin}
               currentAssociation={currentProposalAssociation}
               proposalOptions={proposalLinkOptions}
+            />
+          ) : null}
+
+          {transferredFromTask ? (
+            <TaskTransferBlock
+              mode="from"
+              task={transferredFromTask}
+              assigneeLabel="Old assignees"
             />
           ) : null}
 
