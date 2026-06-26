@@ -38,6 +38,18 @@ enum ResearchFolderAccessRequestStatus {
   DECLINED
 }
 
+enum ResearchCalendarItemType {
+  EVENT
+  TODO
+}
+
+enum ResearchCalendarItemStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
 enum ProposalType {
   RESEARCH
   PROJECT
@@ -131,6 +143,7 @@ model User {
   requestedTaskClarifications     ResearchTaskClarification[]        @relation("TaskClarificationRequester")
   answeredTaskClarifications      ResearchTaskClarification[]        @relation("TaskClarificationAnswerer")
   sentTaskClarificationMessages   ResearchTaskClarificationMessage[]
+  createdResearchCalendarItems    ResearchCalendarItem[]             @relation("ResearchCalendarItemCreator")
 }
 
 // ---------------------------------------------
@@ -433,7 +446,7 @@ model ResearchProject {
   authorNotifications   ResearchAuthorNotification[]
   folderAccessRequests  ResearchFolderAccessRequest[]
   organizedProjectLinks OrganizedProjectResearch[]
-  sourceProposal        Proposal?                    @relation("ProposalCreatedResearch")
+  sourceProposal        Proposal?                     @relation("ProposalCreatedResearch")
 
   @@index([registrationUserId])
   @@index([fundingInstitutionId])
@@ -583,6 +596,27 @@ model ResearchNotification {
 
   @@index([userId, readAt, createdAt])
   @@index([entityType, entityId])
+}
+
+model ResearchCalendarItem {
+  id          String                     @id @default(uuid())
+  title       String
+  description String?
+  location    String?
+  itemType    ResearchCalendarItemType   @default(EVENT)
+  status      ResearchCalendarItemStatus @default(PLANNED)
+  color       String                     @default("cyan")
+  startAt     DateTime
+  endAt       DateTime?
+  allDay      Boolean                    @default(true)
+  createdAt   DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
+  createdById String
+
+  createdBy User @relation("ResearchCalendarItemCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([startAt, endAt])
+  @@index([createdById, startAt])
 }
 
 model ResearchProjectAuthor {

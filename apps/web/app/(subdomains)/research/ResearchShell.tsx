@@ -567,7 +567,9 @@ export function ResearchShell({
                   email={email}
                   name={name}
                   profileHref="/profile"
+                  calendarHref="/calendar"
                   adminHref="https://admin.tamph.com"
+                  showCalendar={isRootAdmin}
                   showAdminConsole={isRootAdmin}
                   variant="research"
                 />
