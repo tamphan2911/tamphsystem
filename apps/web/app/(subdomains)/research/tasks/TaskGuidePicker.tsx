@@ -4,7 +4,9 @@ import { useMemo, useRef, useState } from "react";
 import {
   ClipboardCheck,
   ClipboardList,
+  Download,
   FileSearch,
+  FileText,
   Lightbulb,
   Route,
   ScrollText,
@@ -27,6 +29,8 @@ export type TaskGuideOption = {
   title: string;
   content: string;
   importantNote?: string | null;
+  supportFileName?: string | null;
+  supportFileSize?: number | null;
 };
 
 const defaultGuideIconStyle: {
@@ -94,6 +98,13 @@ function guideIconMeta(index: number) {
   );
 }
 
+function fileSizeLabel(value: number | null | undefined) {
+  if (!value) return "";
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function GuideContentModal({
   guide,
   onClose,
@@ -125,6 +136,21 @@ function GuideContentModal({
           </section>
         ) : null}
         <div className="whitespace-pre-wrap">{guide?.content}</div>
+        {guide?.supportFileName ? (
+          <a
+            href={`/api/research/task-guides/${guide.id}/file`}
+            className="research-clickable-icon mt-4 inline-flex max-w-full items-center gap-2 border-0 bg-transparent p-0 text-sm font-normal text-[#1F7180] shadow-none transition-[color,text-shadow,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none dark:text-[#A8DADC] dark:hover:text-cyan-200"
+          >
+            <FileText className="h-4 w-4 flex-none" />
+            <span className="min-w-0 truncate">{guide.supportFileName}</span>
+            {guide.supportFileSize ? (
+              <span className="flex-none text-xs text-[#667085] dark:text-[#B0B0B0]">
+                ({fileSizeLabel(guide.supportFileSize)})
+              </span>
+            ) : null}
+            <Download className="h-4 w-4 flex-none" />
+          </a>
+        ) : null}
       </div>
     </ResearchModal>
   );
@@ -183,7 +209,13 @@ export function TaskGuidePicker({
     return guides
       .filter((guide) => !selectedIds.includes(guide.id))
       .filter((guide) =>
-        [guide.guideCode, guide.title, guide.content, guide.importantNote]
+        [
+          guide.guideCode,
+          guide.title,
+          guide.content,
+          guide.importantNote,
+          guide.supportFileName,
+        ]
           .join(" ")
           .toLowerCase()
           .includes(needle),

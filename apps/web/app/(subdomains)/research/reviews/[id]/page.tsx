@@ -206,6 +206,8 @@ export default async function ReviewDetailPage({
             title: true,
             content: true,
             importantNote: true,
+            supportFileName: true,
+            supportFileSize: true,
           },
         })
       : Promise.resolve([]),

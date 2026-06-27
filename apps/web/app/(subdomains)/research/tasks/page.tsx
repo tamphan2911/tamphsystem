@@ -163,6 +163,8 @@ export default async function ResearchTasksPage() {
             title: true,
             content: true,
             importantNote: true,
+            supportFileName: true,
+            supportFileSize: true,
           },
         }),
       ])

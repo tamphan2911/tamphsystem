@@ -10,13 +10,30 @@ import { TaskGuidesTable, type TaskGuideRow } from "./TaskGuidesTable";
 
 export const dynamic = "force-dynamic";
 
+function fileSizeLabel(value: number | null) {
+  if (!value) return "";
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default async function TaskGuidesPage() {
   const session = await auth();
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   if (!roles.includes(Role.ADMIN)) redirect("/401");
   const guides = await prisma.taskGuide.findMany({
-    include: { createdBy: { select: { name: true, email: true } } },
+    select: {
+      id: true,
+      guideCode: true,
+      title: true,
+      content: true,
+      importantNote: true,
+      supportFileName: true,
+      supportFileSize: true,
+      updatedAt: true,
+      createdBy: { select: { name: true, email: true } },
+    },
     orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
   });
   const rows: TaskGuideRow[] = guides.map((guide) => ({
@@ -25,6 +42,8 @@ export default async function TaskGuidesPage() {
     title: guide.title,
     content: guide.content,
     importantNote: guide.importantNote ?? "",
+    supportFileName: guide.supportFileName ?? "",
+    supportFileSize: fileSizeLabel(guide.supportFileSize),
     updatedAt: researchDateTimeFormat("en-GB", {
       day: "2-digit",
       month: "2-digit",

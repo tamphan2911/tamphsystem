@@ -1147,6 +1147,8 @@ export default async function TaskDetailPage({
           title: true,
           content: true,
           importantNote: true,
+          supportFileName: true,
+          supportFileSize: true,
         },
         orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
       },
@@ -2552,6 +2554,8 @@ export default async function TaskDetailPage({
             title: true,
             content: true,
             importantNote: true,
+            supportFileName: true,
+            supportFileSize: true,
           },
         }),
         prisma.proposal.findMany({

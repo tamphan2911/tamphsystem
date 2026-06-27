@@ -5,6 +5,24 @@ import { redirect } from "next/navigation";
 import { Prisma, prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 
+const guideSupportFileTypes = new Map([
+  ["application/pdf", ".pdf"],
+  ["application/msword", ".doc"],
+  [
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".docx",
+  ],
+]);
+const guideSupportFileTypesByExtension = new Map([
+  ["pdf", "application/pdf"],
+  ["doc", "application/msword"],
+  [
+    "docx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ],
+]);
+const guideSupportMaxFileSize = 2 * 1024 * 1024;
+
 async function requireAdmin() {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
@@ -27,6 +45,31 @@ function guideValues(formData: FormData) {
   return { title, content, importantNote };
 }
 
+async function guideSupportFileValues(formData: FormData) {
+  const file = formData.get("supportFile");
+  if (!(file instanceof File) || file.size === 0) return undefined;
+
+  const extension = file.name.toLowerCase().split(".").pop();
+  const allowedByMime = guideSupportFileTypes.has(file.type);
+  const allowedByExtension =
+    Boolean(extension) && guideSupportFileTypesByExtension.has(extension ?? "");
+
+  if (!allowedByMime && !allowedByExtension) {
+    throw new Error("Upload only .doc, .docx, or .pdf support files.");
+  }
+  if (file.size > guideSupportMaxFileSize) {
+    throw new Error("Support file must be 2 MB or smaller.");
+  }
+
+  return {
+    supportFileName: file.name,
+    supportFileType:
+      file.type || guideSupportFileTypesByExtension.get(extension ?? "") || "",
+    supportFileSize: file.size,
+    supportFileData: Buffer.from(await file.arrayBuffer()),
+  };
+}
+
 async function nextGuideCode() {
   const guides = await prisma.taskGuide.findMany({
     select: { guideCode: true },
@@ -41,12 +84,14 @@ async function nextGuideCode() {
 export async function createTaskGuide(formData: FormData) {
   const userId = await requireAdmin();
   const values = guideValues(formData);
+  const supportFile = await guideSupportFileValues(formData);
   let created = false;
   for (let attempt = 0; attempt < 3 && !created; attempt += 1) {
     try {
       await prisma.taskGuide.create({
         data: {
           ...values,
+          ...supportFile,
           guideCode: await nextGuideCode(),
           createdById: userId,
         },
@@ -65,7 +110,11 @@ export async function createTaskGuide(formData: FormData) {
 export async function updateTaskGuide(id: string, formData: FormData) {
   await requireAdmin();
   const values = guideValues(formData);
-  await prisma.taskGuide.update({ where: { id }, data: values });
+  const supportFile = await guideSupportFileValues(formData);
+  await prisma.taskGuide.update({
+    where: { id },
+    data: { ...values, ...supportFile },
+  });
   revalidatePath("/task-guides");
   revalidatePath("/tasks");
 }

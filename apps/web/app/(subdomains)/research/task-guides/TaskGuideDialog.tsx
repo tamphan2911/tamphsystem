@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { BookOpenText, Loader2, Pencil, PlusCircle, Save } from "lucide-react";
+import {
+  BookOpenText,
+  FileText,
+  Loader2,
+  Pencil,
+  PlusCircle,
+  Save,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
@@ -17,6 +24,8 @@ export type TaskGuideFormValues = {
   title: string;
   content: string;
   importantNote: string;
+  supportFileName?: string;
+  supportFileSize?: string;
 };
 
 export function TaskGuideDialog({
@@ -77,6 +86,18 @@ export function TaskGuideDialog({
           className="grid gap-5"
           onSubmit={(event) => {
             event.preventDefault();
+            const form = event.currentTarget;
+            const supportFileInput = form.elements.namedItem(
+              "supportFile",
+            ) as HTMLInputElement | null;
+            const file = supportFileInput?.files?.[0];
+            if (file && file.size > 2 * 1024 * 1024) {
+              toast.showError({
+                title: "Support file is too large",
+                detail: "Upload a Word or PDF file that is 2 MB or smaller.",
+              });
+              return;
+            }
             const formData = new FormData(event.currentTarget);
             startTransition(async () => {
               try {
@@ -148,6 +169,29 @@ export function TaskGuideDialog({
               placeholder="Optional. Add a short warning, priority, or point that should stand out when the guide is opened."
               className={`${researchTextareaClass} min-h-28 whitespace-pre-wrap border-amber-200 bg-amber-50/60 text-amber-950 placeholder:text-amber-700/50 focus:border-amber-400 dark:border-amber-300/30 dark:bg-amber-950/20 dark:text-amber-100 dark:placeholder:text-amber-200/35`}
             />
+          </label>
+          <label className="grid gap-1.5 text-sm">
+            <span className="text-xs uppercase text-slate-500 dark:text-[#B0B0B0]">
+              Support file
+            </span>
+            <span className="flex min-h-12 items-center gap-3 border border-slate-200 bg-white px-3 text-sm text-slate-700 dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4]">
+              <FileText className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+              <input
+                name="supportFile"
+                type="file"
+                accept=".doc,.docx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
+                className="min-w-0 flex-1 cursor-pointer text-sm file:mr-3 file:border-0 file:bg-[#1F7180] file:px-3 file:py-1.5 file:text-sm file:font-normal file:text-white hover:file:bg-[#155864] dark:file:bg-[#A8DADC] dark:file:text-[#1F2937]"
+              />
+            </span>
+            <span className="text-xs leading-5 text-slate-500 dark:text-[#B0B0B0]">
+              {initialValues?.supportFileName
+                ? `Current: ${initialValues.supportFileName}${
+                    initialValues.supportFileSize
+                      ? ` (${initialValues.supportFileSize})`
+                      : ""
+                  }. Optional replacement.`
+                : "Optional. Accepted formats: .doc, .docx, .pdf. Maximum 2 MB."}
+            </span>
           </label>
         </form>
       </ResearchModal>
