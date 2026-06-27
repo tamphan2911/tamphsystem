@@ -659,13 +659,28 @@ export function TasksClient({
     statuses.length,
     unfinishedOnly,
   ]);
+  const initializedNonAdminTabRef = useRef(false);
+  useEffect(() => {
+    if (isAdmin || initializedNonAdminTabRef.current) return;
+    initializedNonAdminTabRef.current = true;
+    if (scopeTab !== "assigned") {
+      setScopeTab("assigned");
+    }
+  }, [isAdmin, scopeTab, setScopeTab]);
+
   const previousNonAdminTabRef = useRef<TaskHeaderTab | null>(null);
 
   useEffect(() => {
     if (isAdmin) return;
     const previousTab = previousNonAdminTabRef.current;
     previousNonAdminTabRef.current = activeHeaderTab;
-    if (activeHeaderTab !== "related" || previousTab === "related") return;
+    if (
+      previousTab === null ||
+      activeHeaderTab !== "related" ||
+      previousTab === "related"
+    ) {
+      return;
+    }
 
     setUnfinishedOnlyValue("false");
     setStatusBeforeUnfinished(null);
