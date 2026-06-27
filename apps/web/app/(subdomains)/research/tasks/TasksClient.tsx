@@ -359,6 +359,22 @@ function statusMeta(task: TaskRow) {
   };
 }
 
+function taskTimeLeftSortValue(task: TaskRow, nowMs: number) {
+  const due = task.dueDate ? new Date(task.dueDate).getTime() : null;
+  if (!due || Number.isNaN(due)) return null;
+
+  if (task.status === "REVOKED") return null;
+
+  if (task.status === "COMPLETED") {
+    const completed = task.completedAt
+      ? new Date(task.completedAt).getTime()
+      : null;
+    return completed && !Number.isNaN(completed) ? due - completed : null;
+  }
+
+  return due - nowMs;
+}
+
 function taskRelationshipLabels(task: TaskRow) {
   const labels: string[] = [];
   if (task.scope.assignedToMe) labels.push("Assigned to me");
@@ -835,22 +851,23 @@ export function TasksClient({
   }, [activeHeaderTab, checkerIds, isAdmin, query, statuses, taskTypes, tasks]);
   const sortedRows = useMemo(() => {
     if (timeSort === "none") return filtered;
+    const nowMs = Date.now();
 
     return filtered
       .map((task, index) => ({ task, index }))
       .sort((left, right) => {
-        const leftHasDue = Boolean(left.task.dueDate);
-        const rightHasDue = Boolean(right.task.dueDate);
-        if (leftHasDue !== rightHasDue) return leftHasDue ? -1 : 1;
-        const leftTime = left.task.dueDate
-          ? new Date(left.task.dueDate).getTime()
-          : 0;
-        const rightTime = right.task.dueDate
-          ? new Date(right.task.dueDate).getTime()
-          : 0;
-        const byDue =
+        const leftTime = taskTimeLeftSortValue(left.task, nowMs);
+        const rightTime = taskTimeLeftSortValue(right.task, nowMs);
+        const leftHasTimeLeft = leftTime !== null;
+        const rightHasTimeLeft = rightTime !== null;
+        if (leftHasTimeLeft !== rightHasTimeLeft)
+          return leftHasTimeLeft ? -1 : 1;
+        if (leftTime === null || rightTime === null) {
+          return left.index - right.index;
+        }
+        const byTimeLeft =
           timeSort === "asc" ? leftTime - rightTime : rightTime - leftTime;
-        if (byDue !== 0) return byDue;
+        if (byTimeLeft !== 0) return byTimeLeft;
         const byUpdated =
           new Date(right.task.updatedAt).getTime() -
           new Date(left.task.updatedAt).getTime();
@@ -945,10 +962,10 @@ export function TasksClient({
         : ArrowUpDown;
   const timeSortLabel =
     timeSort === "asc"
-      ? "Sort time by latest due date"
+      ? "Sort time left from longest to shortest"
       : timeSort === "desc"
         ? "Clear time sorting"
-        : "Sort time by soonest due date";
+        : "Sort time left from shortest to longest";
 
   return (
     <div className="space-y-4">
