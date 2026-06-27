@@ -9581,7 +9581,10 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       createdById: true,
       checkerId: true,
       project: {
-        select: { title: true, completedProductionSteps: true },
+        select: {
+          title: true,
+          completedProductionSteps: true,
+        },
       },
       journalCreationSuggestion: { select: { id: true } },
       assignments: {
@@ -9631,6 +9634,14 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
           )
         : productionStepLabels
       : null;
+  const productionWasComplete = productionStepLabels.every((step) =>
+    task.project?.completedProductionSteps.includes(step),
+  );
+  const productionIsComplete = completedProductionSteps
+    ? productionStepLabels.every((step) =>
+        completedProductionSteps.includes(step),
+      )
+    : false;
   await prisma.researchTask.update({
     where: { id: taskId },
     data: {
@@ -9646,7 +9657,12 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
         task.taskType === ResearchTaskType.PRODUCTION &&
         task.projectId &&
         completedProductionSteps
-          ? { update: { completedProductionSteps } }
+          ? {
+              update: {
+                completedProductionSteps,
+                productionTimelineLocked: productionIsComplete,
+              },
+            }
           : undefined,
       assignments: {
         updateMany: {
@@ -9665,6 +9681,18 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
           : undefined,
     },
   });
+
+  if (task.taskType === ResearchTaskType.PRODUCTION && task.projectId) {
+    await refreshResearchStage(task.projectId, completedProductionSteps ?? []);
+    if (!productionWasComplete && productionIsComplete) {
+      await notifyResearchAuthors(task.projectId, {
+        type: "RESEARCH_PRODUCTION_FINISHED",
+        title: "Research production finished",
+        summary: task.project?.title ?? "Research production is finished.",
+        body: "All production checklist items have been marked complete.",
+      });
+    }
+  }
 
   const nextTask = createNextProductionTask
     ? await createNextProductionWorkflowTask({
