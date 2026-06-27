@@ -224,6 +224,10 @@ export async function GET() {
         scope: {
           assignedToMe,
           checkerForMe,
+          assignerForMe: createdByMe,
+          adminAccess: isRootAdmin,
+          relatedToResearch,
+          relatedToOrganizedProject,
           relatedToMyItems:
             Boolean(
               isRootAdmin ||

@@ -76,6 +76,10 @@ type TaskRow = {
     assignedToMe: boolean;
     relatedToMyItems: boolean;
     checkerForMe: boolean;
+    assignerForMe?: boolean;
+    adminAccess?: boolean;
+    relatedToResearch?: boolean;
+    relatedToOrganizedProject?: boolean;
   };
   assignments: TaskAssignment[];
 };
@@ -335,6 +339,21 @@ function statusMeta(task: TaskRow) {
         ? "font-semibold text-[#B64F48] dark:text-[#FFB4A2]"
         : "text-yellow-700 dark:text-yellow-300",
   };
+}
+
+function taskRelationshipLabels(task: TaskRow) {
+  const labels: string[] = [];
+  if (task.scope.assignedToMe) labels.push("Assigned to me");
+  if (task.scope.checkerForMe) labels.push("Me as checker");
+  if (task.scope.assignerForMe) labels.push("Me as assigner");
+  if (task.scope.relatedToResearch) labels.push("Related to my research");
+  if (task.scope.relatedToOrganizedProject)
+    labels.push("Related to my project");
+  if (task.scope.adminAccess) labels.push("Admin access");
+  if (labels.length === 0 && task.scope.relatedToMyItems) {
+    labels.push("Related to me");
+  }
+  return labels;
 }
 
 function statusIconMeta(task: TaskRow): {
@@ -1023,6 +1042,7 @@ export function TasksClient({
                 const statusIcon = statusIconMeta(task);
                 const StatusIcon = statusIcon.icon;
                 const typeLines = taskTypeLines(task);
+                const relationshipLabels = taskRelationshipLabels(task);
                 return (
                   <tr
                     key={task.id}
@@ -1051,6 +1071,23 @@ export function TasksClient({
                       <p className="mt-1 line-clamp-3 whitespace-pre-line break-words text-xs font-normal leading-5 text-[#B0B0B0]">
                         {task.description || "No description"}
                       </p>
+                      {relationshipLabels.length > 0 ? (
+                        <p className="mt-1 flex flex-wrap items-center text-[11px] font-normal leading-4 text-[#1F7180] dark:text-[#A8DADC]">
+                          {relationshipLabels.map((relationship, index) => (
+                            <span
+                              key={relationship}
+                              className="inline-flex items-center"
+                            >
+                              {index > 0 ? (
+                                <span className="px-2 text-[#A0A8B5] dark:text-[#777777]">
+                                  |
+                                </span>
+                              ) : null}
+                              <span>{relationship}</span>
+                            </span>
+                          ))}
+                        </p>
+                      ) : null}
                     </td>
                     <td className="px-3 py-3 align-top">
                       <IconHint label={status.label}>
