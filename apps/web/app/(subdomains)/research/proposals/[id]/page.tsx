@@ -177,6 +177,38 @@ function taskStatusMeta(status: ResearchTaskStatus) {
   };
 }
 
+function taskStatusDetail(task: {
+  status: ResearchTaskStatus;
+  assignments: { userId?: string | null }[];
+  clarifications?: { requestedById: string | null }[];
+}) {
+  if (task.status === ResearchTaskStatus.NEED_CLARIFY) {
+    const openClarification = task.clarifications?.[0];
+    if (!openClarification) {
+      return "Clarification is open; check the task conversation for the next response.";
+    }
+    const requesterIsAssignee = task.assignments.some(
+      (assignment) => assignment.userId === openClarification.requestedById,
+    );
+    return requesterIsAssignee
+      ? "Waiting for assigner, checker, or admin to answer the assignee."
+      : "Waiting for the assignee to answer the task manager.";
+  }
+  if (task.status === ResearchTaskStatus.CHECKING) {
+    return "Waiting for assigner or checker review.";
+  }
+  if (task.status === ResearchTaskStatus.REVISION_REQUESTED) {
+    return "Waiting for assignee revision.";
+  }
+  if (task.status === ResearchTaskStatus.COMPLETED) {
+    return "Task has been approved as complete.";
+  }
+  if (task.status === ResearchTaskStatus.REVOKED) {
+    return "Task was revoked and no more work is expected.";
+  }
+  return "Waiting for assignee work.";
+}
+
 function researchAuthorNames(project: {
   leadResearcher: { name: string | null; email: string };
   authors: { name: string | null; email: string }[];
@@ -524,13 +556,16 @@ function AssociatedTaskCard({
     createdBy: { name: string | null; email?: string | null };
     checker?: { name: string | null; email?: string | null } | null;
     assignments: {
+      userId?: string | null;
       user?: { name: string | null; email?: string | null } | null;
     }[];
+    clarifications?: { requestedById: string | null }[];
   } | null;
 }) {
   if (!task) return null;
 
   const status = taskStatusMeta(task.status);
+  const statusDetail = taskStatusDetail(task);
   const assignees = task.assignments
     .map((assignment) =>
       assignment.user ? displayResearchPersonName(assignment.user) : "",
@@ -572,6 +607,9 @@ function AssociatedTaskCard({
           className={`inline-flex items-center border px-2 py-0.5 text-[11px] leading-4 ${status.className}`}
         >
           {status.label}
+        </span>
+        <span className="min-w-0 flex-1 basis-full text-[#4B5565] sm:basis-auto dark:text-[#B0B0B0]">
+          {statusDetail}
         </span>
       </div>
       <div className="mt-3 grid gap-3 border-t border-[#D8D0C2] pt-3 text-xs leading-5 text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0] sm:grid-cols-2">
@@ -679,6 +717,12 @@ export default async function ProposalDetailPage({
               userId: true,
               user: { select: { name: true, email: true } },
             },
+          },
+          clarifications: {
+            where: { answer: null },
+            select: { requestedById: true },
+            orderBy: { createdAt: "desc" },
+            take: 1,
           },
         },
       },
