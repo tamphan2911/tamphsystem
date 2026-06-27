@@ -608,6 +608,9 @@ function AssociatedTaskCard({
         >
           {status.label}
         </span>
+        <span className="hidden px-2 text-[#A0A8B5] sm:inline dark:text-[#777777]">
+          |
+        </span>
         <span className="min-w-0 flex-1 basis-full text-[#4B5565] sm:basis-auto dark:text-[#B0B0B0]">
           {statusDetail}
         </span>
