@@ -60,6 +60,7 @@ type TaskRow = {
   description: string;
   category: string;
   taskType: string;
+  productionSubtype: string | null;
   proposalScope: "research" | "project" | null;
   status: string;
   clarifyDirection: "ASSIGNEE_TO_MANAGER" | "MANAGER_TO_ASSIGNEE" | null;
@@ -151,6 +152,16 @@ function titleCase(value: string) {
     .join(" ");
 }
 
+function productionSubtypeLabel(subtype: string | null) {
+  if (subtype === "IDEA_FORMING") return "Idea forming";
+  if (subtype === "DATA_COLLECTION") return "Data collection";
+  if (subtype === "MODELING") return "Modeling";
+  if (subtype === "WRITING") return "Writing";
+  if (subtype === "HUMANIZING") return "Humanizing";
+  if (subtype === "REFERENCES") return "References";
+  return "";
+}
+
 function taskTypeLines(task: TaskRow) {
   const type = task.taskType;
   if (!type) {
@@ -182,6 +193,12 @@ function taskTypeLines(task: TaskRow) {
           ? "Project proposal"
           : "Research proposal",
       subtypeLabel: "",
+    };
+  }
+  if (type === "PRODUCTION") {
+    return {
+      typeLabel: "Production",
+      subtypeLabel: productionSubtypeLabel(task.productionSubtype),
     };
   }
   if (type === "PROJECT_PRODUCTION" || type === "PROJECT_RESEARCH_ASSOCIATED") {
@@ -794,6 +811,7 @@ export function TasksClient({
         task.title,
         task.description,
         task.taskType,
+        productionSubtypeLabel(task.productionSubtype),
         task.category,
         statusMeta(task).label,
         task.createdBy,

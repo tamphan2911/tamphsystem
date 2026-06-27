@@ -368,6 +368,15 @@ enum ResearchTaskType {
   OTHER
 }
 
+enum ResearchProductionSubtype {
+  IDEA_FORMING
+  DATA_COLLECTION
+  MODELING
+  WRITING
+  HUMANIZING
+  REFERENCES
+}
+
 enum ProposalTaskScope {
   RESEARCH
   PROJECT
@@ -934,13 +943,13 @@ model ResearchTask {
 
   createdById         String
   checkerId           String?
-  createdBy           User              @relation("ResearchTaskCreator", fields: [createdById], references: [id])
-  checker             User?             @relation("ResearchTaskChecker", fields: [checkerId], references: [id], onDelete: SetNull)
-  completedBy         User?             @relation("ResearchTaskCompleter", fields: [completedById], references: [id], onDelete: SetNull)
-  redoRequestedBy     User?             @relation("ResearchTaskRedoRequester", fields: [redoRequestedById], references: [id], onDelete: SetNull)
-  revokedBy           User?             @relation("ResearchTaskRevoker", fields: [revokedById], references: [id], onDelete: SetNull)
-  transferredFromTask ResearchTask?     @relation("ResearchTaskTransfer", fields: [transferredFromTaskId], references: [id], onDelete: SetNull)
-  transferredToTask   ResearchTask?     @relation("ResearchTaskTransfer")
+  createdBy           User                       @relation("ResearchTaskCreator", fields: [createdById], references: [id])
+  checker             User?                      @relation("ResearchTaskChecker", fields: [checkerId], references: [id], onDelete: SetNull)
+  completedBy         User?                      @relation("ResearchTaskCompleter", fields: [completedById], references: [id], onDelete: SetNull)
+  redoRequestedBy     User?                      @relation("ResearchTaskRedoRequester", fields: [redoRequestedById], references: [id], onDelete: SetNull)
+  revokedBy           User?                      @relation("ResearchTaskRevoker", fields: [revokedById], references: [id], onDelete: SetNull)
+  transferredFromTask ResearchTask?              @relation("ResearchTaskTransfer", fields: [transferredFromTaskId], references: [id], onDelete: SetNull)
+  transferredToTask   ResearchTask?              @relation("ResearchTaskTransfer")
   projectId           String?
   organizedProjectId  String?
   journalId           String?
@@ -948,13 +957,14 @@ model ResearchTask {
   reviewId            String?
   accountId           String?
   taskType            ResearchTaskType?
-  proposalScope       ProposalTaskScope @default(RESEARCH)
-  project             ResearchProject?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  organizedProject    OrganizedProject? @relation(fields: [organizedProjectId], references: [id], onDelete: SetNull)
-  journal             Journal?          @relation(fields: [journalId], references: [id], onDelete: SetNull)
-  conference          Conference?       @relation(fields: [conferenceId], references: [id], onDelete: SetNull)
-  review              AcademicReview?   @relation(fields: [reviewId], references: [id], onDelete: SetNull)
-  account             PublisherAccount? @relation("ResearchTaskAccount", fields: [accountId], references: [id], onDelete: SetNull)
+  productionSubtype   ResearchProductionSubtype?
+  proposalScope       ProposalTaskScope          @default(RESEARCH)
+  project             ResearchProject?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  organizedProject    OrganizedProject?          @relation(fields: [organizedProjectId], references: [id], onDelete: SetNull)
+  journal             Journal?                   @relation(fields: [journalId], references: [id], onDelete: SetNull)
+  conference          Conference?                @relation(fields: [conferenceId], references: [id], onDelete: SetNull)
+  review              AcademicReview?            @relation(fields: [reviewId], references: [id], onDelete: SetNull)
+  account             PublisherAccount?          @relation("ResearchTaskAccount", fields: [accountId], references: [id], onDelete: SetNull)
 
   assignments                    ResearchTaskAssignment[]
   clarifications                 ResearchTaskClarification[]

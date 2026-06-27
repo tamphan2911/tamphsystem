@@ -198,6 +198,7 @@ export async function GET() {
         description: task.description ?? "",
         category: task.category ?? "",
         taskType: task.taskType ?? "",
+        productionSubtype: task.productionSubtype ?? null,
         proposalScope:
           task.taskType === "PROPOSAL"
             ? task.organizedProjectId && !task.projectId

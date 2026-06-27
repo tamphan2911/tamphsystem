@@ -116,6 +116,13 @@ type TaskModeChoice =
   | Exclude<TaskMode, "proposal">
   | "researchProposal"
   | "projectProposal";
+type ProductionSubtype =
+  | "IDEA_FORMING"
+  | "DATA_COLLECTION"
+  | "MODELING"
+  | "WRITING"
+  | "HUMANIZING"
+  | "REFERENCES";
 type SearchPanelItem = {
   id: string;
   title: string;
@@ -131,6 +138,23 @@ const defaultTaskDescription =
 const finishedResearchStages = new Set(["ACCEPTED", "PUBLISHED"]);
 const closedReviewStatuses = new Set(["SUBMITTED", "DECLINED", "CANCELLED"]);
 const closedProjectStatuses = new Set(["COMPLETED"]);
+const productionSubtypeOptions: Array<{
+  value: ProductionSubtype;
+  label: string;
+  guideCode: string;
+}> = [
+  { value: "IDEA_FORMING", label: "Idea forming", guideCode: "G016" },
+  { value: "DATA_COLLECTION", label: "Data collection", guideCode: "G017" },
+  { value: "MODELING", label: "Modeling", guideCode: "G018" },
+  { value: "WRITING", label: "Writing", guideCode: "G019" },
+  { value: "HUMANIZING", label: "Humanizing", guideCode: "G020" },
+  { value: "REFERENCES", label: "References", guideCode: "G021" },
+];
+
+function guideIdsForCode(guides: TaskGuideOption[], guideCode: string) {
+  const guide = guides.find((item) => item.guideCode === guideCode);
+  return guide ? [guide.id] : [];
+}
 
 function modeLabel(mode: TaskMode) {
   if (mode === "submit") return "Submit";
@@ -158,26 +182,31 @@ function defaultTaskGuideIdsForMode(
   mode: TaskMode,
   guides: TaskGuideOption[],
   proposalScope: ProposalScope = "research",
+  productionSubtype: ProductionSubtype = "IDEA_FORMING",
 ) {
+  if (mode === "production") {
+    return guideIdsForCode(
+      guides,
+      productionSubtypeOptions.find((item) => item.value === productionSubtype)
+        ?.guideCode ?? "G016",
+    );
+  }
   const guideCode =
     mode === "submit"
       ? "G002"
-      : mode === "production"
-        ? "G014"
-        : mode === "suggestVenue"
-          ? "G001"
-          : mode === "addJournal"
-            ? "G003"
-            : mode === "proposal"
-              ? proposalScope === "project"
-                ? "G005"
-                : "G004"
-              : mode === "review"
-                ? "G013"
-                : null;
+      : mode === "suggestVenue"
+        ? "G001"
+        : mode === "addJournal"
+          ? "G003"
+          : mode === "proposal"
+            ? proposalScope === "project"
+              ? "G005"
+              : "G004"
+            : mode === "review"
+              ? "G013"
+              : null;
   if (!guideCode) return [];
-  const guide = guides.find((item) => item.guideCode === guideCode);
-  return guide ? [guide.id] : [];
+  return guideIdsForCode(guides, guideCode);
 }
 
 export function NewTaskDialog({
@@ -241,6 +270,8 @@ export function NewTaskDialog({
   const [selectedSubmission, setSelectedSubmission] =
     useState<TaskSubmissionOption | null>(null);
   const [proposalScope, setProposalScope] = useState<ProposalScope>("research");
+  const [productionSubtype, setProductionSubtype] =
+    useState<ProductionSubtype>("IDEA_FORMING");
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [isUrgent, setIsUrgent] = useState(false);
   const [journalTargetCount, setJournalTargetCount] = useState("1");
@@ -356,9 +387,14 @@ export function NewTaskDialog({
     setSelectedTaskGuideIds((current) =>
       current.length > 0
         ? current
-        : defaultTaskGuideIdsForMode(mode, taskGuideOptions, proposalScope),
+        : defaultTaskGuideIdsForMode(
+            mode,
+            taskGuideOptions,
+            proposalScope,
+            productionSubtype,
+          ),
     );
-  }, [isOpen, mode, proposalScope, taskGuideOptions]);
+  }, [isOpen, mode, productionSubtype, proposalScope, taskGuideOptions]);
 
   const filteredReviews = useMemo(() => {
     const needle = reviewQuery.trim().toLowerCase();
@@ -431,6 +467,7 @@ export function NewTaskDialog({
     setSelectedOrganizedProject(null);
     setSelectedSubmission(null);
     setProposalScope("research");
+    setProductionSubtype("IDEA_FORMING");
     setAllowReportUpload(false);
     setIsUrgent(false);
     setJournalTargetCount("1");
@@ -489,7 +526,12 @@ export function NewTaskDialog({
   function changeMode(nextMode: TaskMode, nextProposalScope = proposalScope) {
     setMode(nextMode);
     setSelectedTaskGuideIds(
-      defaultTaskGuideIdsForMode(nextMode, taskGuideOptions, nextProposalScope),
+      defaultTaskGuideIdsForMode(
+        nextMode,
+        taskGuideOptions,
+        nextProposalScope,
+        productionSubtype,
+      ),
     );
     if (
       (nextMode === "other" && selectedVenue?.kind === "conference") ||
@@ -515,6 +557,18 @@ export function NewTaskDialog({
       setSelectedReview(null);
       setReviewQuery("");
     }
+  }
+
+  function changeProductionSubtype(nextSubtype: ProductionSubtype) {
+    setProductionSubtype(nextSubtype);
+    setSelectedTaskGuideIds(
+      defaultTaskGuideIdsForMode(
+        "production",
+        taskGuideOptions,
+        proposalScope,
+        nextSubtype,
+      ),
+    );
   }
 
   function changeTaskChoice(choice: TaskModeChoice) {
@@ -801,6 +855,11 @@ export function NewTaskDialog({
           {mode === "production" && (
             <>
               <input type="hidden" name="taskType" value="PRODUCTION" />
+              <input
+                type="hidden"
+                name="productionSubtype"
+                value={productionSubtype}
+              />
               <input type="hidden" name="category" value="Production" />
             </>
           )}
@@ -948,6 +1007,30 @@ export function NewTaskDialog({
                 placeholder="Number of journals"
                 className={inputClass}
               />
+            </label>
+          ) : null}
+
+          {mode === "production" ? (
+            <label className="grid gap-1.5">
+              <span className="text-xs font-normal uppercase text-[#667085] dark:text-[#B0B0B0]">
+                Production subtype
+                <span className="research-required-mark">(*)</span>
+              </span>
+              <select
+                value={productionSubtype}
+                onChange={(event) =>
+                  changeProductionSubtype(
+                    event.target.value as ProductionSubtype,
+                  )
+                }
+                className={inputClass}
+              >
+                {productionSubtypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
           ) : null}
 

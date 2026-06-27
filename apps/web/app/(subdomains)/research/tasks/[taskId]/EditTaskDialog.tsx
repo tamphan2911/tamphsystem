@@ -82,6 +82,7 @@ type EditableTask = {
   checkerId: string;
   allowAssigneeReportUpload: boolean;
   isUrgent: boolean;
+  productionSubtype: string | null;
   assigneeIds: string[];
   guideIds: string[];
 };
@@ -115,6 +116,34 @@ const taskTypeOptions = [
 const finishedResearchStages = new Set(["ACCEPTED", "PUBLISHED"]);
 const closedReviewStatuses = new Set(["SUBMITTED", "DECLINED", "CANCELLED"]);
 const closedProjectStatuses = new Set(["COMPLETED"]);
+type ProductionSubtype =
+  | "IDEA_FORMING"
+  | "DATA_COLLECTION"
+  | "MODELING"
+  | "WRITING"
+  | "HUMANIZING"
+  | "REFERENCES";
+const productionSubtypeOptions: Array<{
+  value: ProductionSubtype;
+  label: string;
+  guideCode: string;
+}> = [
+  { value: "IDEA_FORMING", label: "Idea forming", guideCode: "G016" },
+  { value: "DATA_COLLECTION", label: "Data collection", guideCode: "G017" },
+  { value: "MODELING", label: "Modeling", guideCode: "G018" },
+  { value: "WRITING", label: "Writing", guideCode: "G019" },
+  { value: "HUMANIZING", label: "Humanizing", guideCode: "G020" },
+  { value: "REFERENCES", label: "References", guideCode: "G021" },
+];
+
+function isProductionSubtype(value: string | null): value is ProductionSubtype {
+  return productionSubtypeOptions.some((option) => option.value === value);
+}
+
+function guideIdsForCode(guides: TaskGuideOption[], guideCode: string) {
+  const guide = guides.find((item) => item.guideCode === guideCode);
+  return guide ? [guide.id] : [];
+}
 
 function modeFromTaskType(taskType: string): TaskMode {
   if (taskType === "SUBMIT_RESEARCH" || taskType === "SUBMIT_CONFERENCE") {
@@ -288,6 +317,11 @@ export function EditTaskDialog({
     useState<TaskSubmissionOption | null>(initialSubmission);
   const [proposalScope, setProposalScope] =
     useState<ProposalScope>(initialProposalScope);
+  const [productionSubtype, setProductionSubtype] = useState<ProductionSubtype>(
+    isProductionSubtype(task.productionSubtype)
+      ? task.productionSubtype
+      : "IDEA_FORMING",
+  );
   const [allowReportUpload, setAllowReportUpload] = useState(
     task.allowAssigneeReportUpload,
   );
@@ -566,6 +600,11 @@ export function EditTaskDialog({
     setSelectedOrganizedProject(initialOrganizedProject);
     setSelectedSubmission(initialSubmission);
     setProposalScope(initialProposalScope);
+    setProductionSubtype(
+      isProductionSubtype(task.productionSubtype)
+        ? task.productionSubtype
+        : "IDEA_FORMING",
+    );
     setAllowReportUpload(task.allowAssigneeReportUpload);
     setIsUrgent(task.isUrgent);
     setJournalTargetCount(String(task.journalTargetCount ?? 1));
@@ -602,23 +641,47 @@ export function EditTaskDialog({
     }
   }
 
-  const changeTaskTypeChoice = useCallback((nextChoice: string) => {
-    if (nextChoice === "PROPOSAL_RESEARCH") {
-      setSelectedTaskType("PROPOSAL");
-      setProposalScope("research");
-      setSelectedOrganizedProject(null);
-      setOrganizedProjectQuery("");
-      return;
-    }
-    if (nextChoice === "PROPOSAL_PROJECT") {
-      setSelectedTaskType("PROPOSAL");
-      setProposalScope("project");
-      setSelectedResearch(null);
-      setResearchQuery("");
-      return;
-    }
-    setSelectedTaskType(nextChoice);
-  }, []);
+  function changeProductionSubtype(nextSubtype: ProductionSubtype) {
+    setProductionSubtype(nextSubtype);
+    setSelectedTaskGuideIds(
+      guideIdsForCode(
+        taskGuideOptions,
+        productionSubtypeOptions.find((option) => option.value === nextSubtype)
+          ?.guideCode ?? "G016",
+      ),
+    );
+  }
+
+  const changeTaskTypeChoice = useCallback(
+    (nextChoice: string) => {
+      if (nextChoice === "PROPOSAL_RESEARCH") {
+        setSelectedTaskType("PROPOSAL");
+        setProposalScope("research");
+        setSelectedOrganizedProject(null);
+        setOrganizedProjectQuery("");
+        return;
+      }
+      if (nextChoice === "PROPOSAL_PROJECT") {
+        setSelectedTaskType("PROPOSAL");
+        setProposalScope("project");
+        setSelectedResearch(null);
+        setResearchQuery("");
+        return;
+      }
+      if (nextChoice === "PRODUCTION") {
+        setSelectedTaskGuideIds(
+          guideIdsForCode(
+            taskGuideOptions,
+            productionSubtypeOptions.find(
+              (option) => option.value === productionSubtype,
+            )?.guideCode ?? "G016",
+          ),
+        );
+      }
+      setSelectedTaskType(nextChoice);
+    },
+    [productionSubtype, taskGuideOptions],
+  );
 
   const selectedTaskTypeChoice = taskTypeChoiceFromTask(
     selectedTaskType,
@@ -749,6 +812,11 @@ export function EditTaskDialog({
           )}
           {mode === "production" && (
             <>
+              <input
+                type="hidden"
+                name="productionSubtype"
+                value={productionSubtype}
+              />
               <input type="hidden" name="category" value="Production" />
             </>
           )}
@@ -820,6 +888,30 @@ export function EditTaskDialog({
                 onChange={(event) => setJournalTargetCount(event.target.value)}
                 className={inputClass}
               />
+            </label>
+          ) : null}
+
+          {mode === "production" ? (
+            <label className="grid gap-1.5">
+              <span className="text-xs font-normal uppercase text-[#667085] dark:text-[#B0B0B0]">
+                Production subtype
+                <span className="research-required-mark">(*)</span>
+              </span>
+              <select
+                value={productionSubtype}
+                onChange={(event) =>
+                  changeProductionSubtype(
+                    event.target.value as ProductionSubtype,
+                  )
+                }
+                className={inputClass}
+              >
+                {productionSubtypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
           ) : null}
 

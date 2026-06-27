@@ -317,7 +317,31 @@ function timeTextClass(
   return "research-task-time-slate";
 }
 
-function taskTypeMeta(taskType: string | null, category: string | null) {
+function productionSubtypeLabel(subtype: string | null) {
+  if (subtype === "IDEA_FORMING") return "Idea forming";
+  if (subtype === "DATA_COLLECTION") return "Data collection";
+  if (subtype === "MODELING") return "Modeling";
+  if (subtype === "WRITING") return "Writing";
+  if (subtype === "HUMANIZING") return "Humanizing";
+  if (subtype === "REFERENCES") return "References";
+  return "";
+}
+
+function nextProductionTaskLabel(subtype: string | null) {
+  if (subtype === "IDEA_FORMING") return "Data collection";
+  if (subtype === "DATA_COLLECTION") return "Modeling";
+  if (subtype === "MODELING") return "Writing";
+  if (subtype === "WRITING") return "Humanizing";
+  if (subtype === "HUMANIZING") return "References";
+  if (subtype === "REFERENCES") return "Suggest venue";
+  return "";
+}
+
+function taskTypeMeta(
+  taskType: string | null,
+  category: string | null,
+  productionSubtype?: string | null,
+) {
   if (taskType === "SUBMIT_RESEARCH" || taskType === "SUBMIT_CONFERENCE") {
     return {
       label:
@@ -329,8 +353,9 @@ function taskTypeMeta(taskType: string | null, category: string | null) {
     };
   }
   if (taskType === "PRODUCTION") {
+    const subtypeLabel = productionSubtypeLabel(productionSubtype ?? null);
     return {
-      label: "Production",
+      label: subtypeLabel ? `Production - ${subtypeLabel}` : "Production",
       icon: FileText,
       className: "text-[#FFC1CC]",
     };
@@ -1129,6 +1154,7 @@ export default async function TaskDetailPage({
       reviewId: true,
       accountId: true,
       taskType: true,
+      productionSubtype: true,
       proposalScope: true,
       taskFileName: true,
       taskFileSize: true,
@@ -1912,7 +1938,11 @@ export default async function TaskDetailPage({
       (!task.checkerId && redoInfo.actorId === task.createdById) ||
       (!redoInfo.actorId && !task.checkerId)),
   );
-  const taskType = taskTypeMeta(task.taskType, task.category);
+  const taskType = taskTypeMeta(
+    task.taskType,
+    task.category,
+    task.productionSubtype,
+  );
   const TaskTypeIcon = taskType.icon;
   const statusIcon = statusIconMeta(task, meta.label);
   const StatusIcon = statusIcon.icon;
@@ -2910,6 +2940,7 @@ export default async function TaskDetailPage({
                           description: task.description ?? "",
                           dueDate: dateInputValue(task.dueDate),
                           taskType: task.taskType ?? "OTHER",
+                          productionSubtype: task.productionSubtype,
                           proposalScope: task.proposalScope,
                           projectId: task.projectId ?? "",
                           journalId: task.journalId ?? "",
@@ -3001,6 +3032,11 @@ export default async function TaskDetailPage({
                 requiresSubmissionDate={
                   task.taskType === "SUBMIT_RESEARCH" ||
                   task.taskType === "SUBMIT_CONFERENCE"
+                }
+                nextProductionTaskLabel={
+                  task.taskType === "PRODUCTION"
+                    ? nextProductionTaskLabel(task.productionSubtype)
+                    : ""
                 }
               />
             )}

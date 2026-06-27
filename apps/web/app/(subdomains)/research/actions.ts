@@ -43,6 +43,7 @@ import {
   PublisherAccountType,
   ResearchFolderAccessRequestStatus,
   ResearchAuthorNotificationType,
+  ResearchProductionSubtype,
   ResearchTaskCategory,
   ResearchTaskStatus,
   ResearchTaskType,
@@ -184,19 +185,72 @@ function taskTypeFromForm(value: FormDataEntryValue | null) {
   return enumValue(ResearchTaskType, value);
 }
 
+function productionSubtypeFromForm(value: FormDataEntryValue | null) {
+  return enumValue(ResearchProductionSubtype, value);
+}
+
 function proposalTaskScopeFromForm(value: FormDataEntryValue | null) {
   return enumValue(ProposalTaskScope, value) ?? ProposalTaskScope.RESEARCH;
 }
 
 const DEFAULT_TASK_DESCRIPTION =
   "Read the the general guide by click on icons right above.";
+const SUGGEST_VENUE_AFTER_PRODUCTION_DESCRIPTION =
+  "Read the general guide by click on icons right above.\nSuggest 2 venues.";
+
+const productionSubtypeConfig = [
+  {
+    value: ResearchProductionSubtype.IDEA_FORMING,
+    label: "Idea forming",
+    guideCode: "G016",
+  },
+  {
+    value: ResearchProductionSubtype.DATA_COLLECTION,
+    label: "Data collection",
+    guideCode: "G017",
+  },
+  {
+    value: ResearchProductionSubtype.MODELING,
+    label: "Modeling",
+    guideCode: "G018",
+  },
+  {
+    value: ResearchProductionSubtype.WRITING,
+    label: "Writing",
+    guideCode: "G019",
+  },
+  {
+    value: ResearchProductionSubtype.HUMANIZING,
+    label: "Humanizing",
+    guideCode: "G020",
+  },
+  {
+    value: ResearchProductionSubtype.REFERENCES,
+    label: "References",
+    guideCode: "G021",
+  },
+] as const;
+
+function productionSubtypeMeta(subtype: ResearchProductionSubtype | null) {
+  return productionSubtypeConfig.find((item) => item.value === subtype) ?? null;
+}
+
+function nextProductionSubtype(subtype: ResearchProductionSubtype | null) {
+  const index = productionSubtypeConfig.findIndex(
+    (item) => item.value === subtype,
+  );
+  if (index < 0) return null;
+  return productionSubtypeConfig[index + 1]?.value ?? null;
+}
 
 function defaultTaskGuideCodeForTask({
   taskType,
   proposalScope,
+  productionSubtype,
 }: {
   taskType: ResearchTaskType;
   proposalScope: ProposalTaskScope;
+  productionSubtype?: ResearchProductionSubtype | null;
 }) {
   if (taskType === ResearchTaskType.SUGGEST_VENUE) return "G001";
   if (
@@ -205,7 +259,11 @@ function defaultTaskGuideCodeForTask({
   ) {
     return "G002";
   }
-  if (taskType === ResearchTaskType.PRODUCTION) return "G014";
+  if (taskType === ResearchTaskType.PRODUCTION) {
+    return (
+      productionSubtypeMeta(productionSubtype ?? null)?.guideCode ?? "G014"
+    );
+  }
   if (taskType === ResearchTaskType.ADD_JOURNAL) return "G003";
   if (taskType === ResearchTaskType.PROPOSAL) {
     return proposalScope === ProposalTaskScope.PROJECT ? "G005" : "G004";
@@ -217,11 +275,17 @@ function defaultTaskGuideCodeForTask({
 async function defaultTaskGuideIdsForTask({
   taskType,
   proposalScope,
+  productionSubtype,
 }: {
   taskType: ResearchTaskType;
   proposalScope: ProposalTaskScope;
+  productionSubtype?: ResearchProductionSubtype | null;
 }) {
-  const guideCode = defaultTaskGuideCodeForTask({ taskType, proposalScope });
+  const guideCode = defaultTaskGuideCodeForTask({
+    taskType,
+    proposalScope,
+    productionSubtype,
+  });
   if (!guideCode) return [];
   const guide = await prisma.taskGuide.findUnique({
     where: { guideCode },
@@ -6098,6 +6162,11 @@ export async function createResearchTask(formData: FormData) {
   const proposalScope = proposalTaskScopeFromForm(
     formData.get("proposalScope"),
   );
+  const productionSubtype =
+    taskType === ResearchTaskType.PRODUCTION
+      ? (productionSubtypeFromForm(formData.get("productionSubtype")) ??
+        ResearchProductionSubtype.IDEA_FORMING)
+      : null;
   const taskGuideIds = orderedUniqueStrings(formData.getAll("taskGuideIds"));
   const projectId = optionalString(formData.get("projectId"));
   const organizedProjectId = optionalString(formData.get("organizedProjectId"));
@@ -6243,7 +6312,11 @@ export async function createResearchTask(formData: FormData) {
   const resolvedTaskGuideIds =
     taskGuideIds.length > 0
       ? taskGuideIds
-      : await defaultTaskGuideIdsForTask({ taskType, proposalScope });
+      : await defaultTaskGuideIdsForTask({
+          taskType,
+          proposalScope,
+          productionSubtype,
+        });
 
   const task = await prisma.researchTask.create({
     data: {
@@ -6253,6 +6326,7 @@ export async function createResearchTask(formData: FormData) {
         optionalString(formData.get("description")) ?? DEFAULT_TASK_DESCRIPTION,
       category: taskCategoryFromForm(formData.get("category")),
       taskType,
+      productionSubtype,
       proposalScope:
         taskType === ResearchTaskType.PROPOSAL
           ? proposalScope
@@ -6448,6 +6522,11 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   const proposalScope = proposalTaskScopeFromForm(
     formData.get("proposalScope"),
   );
+  const productionSubtype =
+    taskType === ResearchTaskType.PRODUCTION
+      ? (productionSubtypeFromForm(formData.get("productionSubtype")) ??
+        ResearchProductionSubtype.IDEA_FORMING)
+      : null;
   const taskGuideIds = orderedUniqueStrings(formData.getAll("taskGuideIds"));
   const projectId = optionalString(formData.get("projectId"));
   const organizedProjectId = optionalString(formData.get("organizedProjectId"));
@@ -6626,6 +6705,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
           DEFAULT_TASK_DESCRIPTION,
         category: taskCategoryFromForm(formData.get("category")),
         taskType,
+        productionSubtype,
         proposalScope:
           taskType === ResearchTaskType.PROPOSAL
             ? proposalScope
@@ -9392,11 +9472,90 @@ export async function deleteResearchUploadedFile(
   revalidatePath(`/journals/${submission.journalId}`);
 }
 
+async function createNextProductionWorkflowTask({
+  sourceTask,
+  createdById,
+}: {
+  sourceTask: {
+    id: string;
+    projectId: string | null;
+    productionSubtype: ResearchProductionSubtype | null;
+    createdById: string;
+    checkerId: string | null;
+    project: { title: string } | null;
+    assignments: { userId: string; user: { email: string } }[];
+  };
+  createdById: string;
+}) {
+  if (!sourceTask.projectId || sourceTask.assignments.length === 0) {
+    return null;
+  }
+
+  const nextSubtype = nextProductionSubtype(sourceTask.productionSubtype);
+  const nextSubtypeMeta = productionSubtypeMeta(nextSubtype);
+  const isSuggestVenueNext =
+    sourceTask.productionSubtype === ResearchProductionSubtype.REFERENCES;
+  if (!nextSubtypeMeta && !isSuggestVenueNext) return null;
+
+  const nextTaskType = isSuggestVenueNext
+    ? ResearchTaskType.SUGGEST_VENUE
+    : ResearchTaskType.PRODUCTION;
+  const nextTitle = isSuggestVenueNext
+    ? `Suggest venues for ${sourceTask.project?.title ?? "research"}`
+    : `${nextSubtypeMeta?.label ?? "Production"} for ${
+        sourceTask.project?.title ?? "research"
+      }`;
+  const nextDescription = isSuggestVenueNext
+    ? SUGGEST_VENUE_AFTER_PRODUCTION_DESCRIPTION
+    : DEFAULT_TASK_DESCRIPTION;
+  const guideIds = await defaultTaskGuideIdsForTask({
+    taskType: nextTaskType,
+    proposalScope: ProposalTaskScope.RESEARCH,
+    productionSubtype: nextSubtype,
+  });
+
+  return prisma.researchTask.create({
+    data: {
+      title: nextTitle,
+      taskCode: await generateTaskCode(),
+      description: nextDescription,
+      category: isSuggestVenueNext ? null : ResearchTaskCategory.PRODUCTION,
+      taskType: nextTaskType,
+      productionSubtype: isSuggestVenueNext ? null : nextSubtype,
+      proposalScope: ProposalTaskScope.RESEARCH,
+      status: ResearchTaskStatus.IN_PROGRESS,
+      projectId: sourceTask.projectId,
+      checkerId: sourceTask.checkerId,
+      dueDate: researchTaskDueDate(researchDateValue(new Date(), 7)),
+      createdById,
+      assignments: {
+        create: sourceTask.assignments.map((assignment) => ({
+          userId: assignment.userId,
+        })),
+      },
+      guides: {
+        connect: guideIds.map((id) => ({ id })),
+      },
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      checkerId: true,
+      assignments: {
+        select: { user: { select: { email: true } } },
+      },
+    },
+  });
+}
+
 export async function finishResearchTask(taskId: string, formData?: FormData) {
   const user = await requireCurrentUser();
   const completionMessage = optionalString(
     formData?.get("completionMessage") ?? null,
   )?.slice(0, 2000);
+  const createNextProductionTask =
+    formData?.get("createNextProductionTask") === "true";
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
     select: {
@@ -9407,10 +9566,14 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       accountId: true,
       reviewId: true,
       taskType: true,
+      productionSubtype: true,
       status: true,
       title: true,
       createdById: true,
       checkerId: true,
+      project: {
+        select: { title: true, completedProductionSteps: true },
+      },
       journalCreationSuggestion: { select: { id: true } },
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
@@ -9444,6 +9607,21 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
   if (!(await createSubmissionAfterTaskApproval(task, formData))) return;
 
   const completedAt = new Date();
+  const completedProductionStep =
+    task.taskType === ResearchTaskType.PRODUCTION
+      ? productionSubtypeMeta(task.productionSubtype)?.label
+      : null;
+  const completedProductionSteps =
+    task.taskType === ResearchTaskType.PRODUCTION && task.projectId
+      ? completedProductionStep
+        ? Array.from(
+            new Set([
+              ...(task.project?.completedProductionSteps ?? []),
+              completedProductionStep,
+            ]),
+          )
+        : productionStepLabels
+      : null;
   await prisma.researchTask.update({
     where: { id: taskId },
     data: {
@@ -9456,8 +9634,10 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       revokeReason: null,
       adminViewedAt: null,
       project:
-        task.taskType === ResearchTaskType.PRODUCTION && task.projectId
-          ? { update: { completedProductionSteps: productionStepLabels } }
+        task.taskType === ResearchTaskType.PRODUCTION &&
+        task.projectId &&
+        completedProductionSteps
+          ? { update: { completedProductionSteps } }
           : undefined,
       assignments: {
         updateMany: {
@@ -9477,33 +9657,77 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     },
   });
 
+  const nextTask = createNextProductionTask
+    ? await createNextProductionWorkflowTask({
+        sourceTask: task,
+        createdById: task.createdById,
+      })
+    : null;
+
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
+  if (nextTask) revalidatePath(`/tasks/${nextTask.id}`);
+  if (task.projectId) revalidatePath(`/projects/${task.projectId}`);
   if (task.reviewId) revalidatePath(`/reviews/${task.reviewId}`);
 
   await notifyUsers({
     userIds: task.assignments.map((assignment) => assignment.userId),
-    type: "TASK_COMPLETED",
-    title: "Task completed",
-    summary: task.title,
-    body: completionMessage
-      ? `The assigner reviewed and approved this task as complete. Completion note: ${completionMessage}`
-      : "The assigner reviewed and approved this task as complete.",
-    href: `/tasks/${taskId}`,
+    type: nextTask ? "TASK_ASSIGNED" : "TASK_COMPLETED",
+    title: nextTask
+      ? "Task completed and next task assigned"
+      : "Task completed",
+    summary: nextTask ? nextTask.title : task.title,
+    body: nextTask
+      ? `The assigner approved "${task.title}" as complete and automatically assigned the next task: ${nextTask.title}.`
+      : completionMessage
+        ? `The assigner reviewed and approved this task as complete. Completion note: ${completionMessage}`
+        : "The assigner reviewed and approved this task as complete.",
+    href: nextTask ? `/tasks/${nextTask.id}` : `/tasks/${taskId}`,
     entityType: "task",
-    entityId: taskId,
+    entityId: nextTask?.id ?? taskId,
     excludeUserId: user.id,
   });
   await sendTaskEmail({
     to: task.assignments.map((assignment) => assignment.user.email),
-    subject: `Task approved as complete: ${task.title}`,
-    heading: "Task approved as complete",
-    intro:
-      "The assigner reviewed the submitted work and marked the task as complete.",
-    taskTitle: task.title,
-    taskId,
-    actionLabel: "View task",
+    subject: nextTask
+      ? `Task completed and next task assigned: ${nextTask.title}`
+      : `Task approved as complete: ${task.title}`,
+    heading: nextTask
+      ? "Task completed and next task assigned"
+      : "Task approved as complete",
+    intro: nextTask
+      ? "The previous production task was approved and the next workflow task has been assigned automatically."
+      : "The assigner reviewed the submitted work and marked the task as complete.",
+    detail: nextTask
+      ? (nextTask.description ?? undefined)
+      : completionMessage
+        ? `Completion note: ${completionMessage}`
+        : undefined,
+    taskTitle: nextTask ? nextTask.title : task.title,
+    taskId: nextTask?.id ?? taskId,
+    actionLabel: nextTask ? "Open next task" : "View task",
   });
+  if (nextTask) {
+    if (nextTask.checkerId) {
+      await notifyUsers({
+        userIds: [nextTask.checkerId],
+        type: "TASK_CHECKER_ASSIGNED",
+        title: "Task checker assigned",
+        summary: nextTask.title,
+        body: "A follow-up production workflow task was assigned automatically with you as checker.",
+        href: `/tasks/${nextTask.id}`,
+        entityType: "task",
+        entityId: nextTask.id,
+        excludeUserId: user.id,
+      });
+      await sendTaskCheckerAssignedEmail({
+        checkerId: nextTask.checkerId,
+        taskTitle: nextTask.title,
+        taskId: nextTask.id,
+        detail: nextTask.description ?? undefined,
+      });
+    }
+  }
   await notifyTaskAdminsAndChecker({
     taskId,
     userIds: [task.createdById, task.checkerId],

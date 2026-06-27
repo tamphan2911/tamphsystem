@@ -15,15 +15,19 @@ export function FinishTaskForm({
   accountId,
   requiresSubmissionDate = false,
   mode = "approve",
+  nextProductionTaskLabel = "",
 }: {
   action: (formData: FormData) => void | Promise<void>;
   accountId?: string | null;
   requiresSubmissionDate?: boolean;
   mode?: "ready" | "approve";
+  nextProductionTaskLabel?: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [submissionDate, setSubmissionDate] = useState(researchDateValue);
   const [completionMessage, setCompletionMessage] = useState("");
+  const [createNextProductionTask, setCreateNextProductionTask] =
+    useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const isReadyMode = mode === "ready";
@@ -48,6 +52,13 @@ export function FinishTaskForm({
         {accountId ? (
           <input type="hidden" name="accountId" value={accountId} />
         ) : null}
+        {!isReadyMode && nextProductionTaskLabel ? (
+          <input
+            type="hidden"
+            name="createNextProductionTask"
+            value={createNextProductionTask ? "true" : "false"}
+          />
+        ) : null}
         <button
           type="button"
           onClick={() => setIsOpen(true)}
@@ -67,6 +78,7 @@ export function FinishTaskForm({
         onClose={() => {
           setIsOpen(false);
           setCompletionMessage("");
+          setCreateNextProductionTask(false);
         }}
         title={title}
         description={description}
@@ -132,6 +144,22 @@ export function FinishTaskForm({
               />
               <span className="text-xs text-slate-400 dark:text-[#777777]">
                 This note will be included in the task-completed notification.
+              </span>
+            </label>
+          ) : null}
+          {!isReadyMode && nextProductionTaskLabel ? (
+            <label className="flex cursor-pointer items-start gap-3 border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-5 text-[#7A4D10] transition hover:border-[#D8A23A] dark:border-amber-300/30 dark:bg-amber-950/25 dark:text-[#F4D47A]">
+              <input
+                type="checkbox"
+                checked={createNextProductionTask}
+                onChange={(event) =>
+                  setCreateNextProductionTask(event.target.checked)
+                }
+                className="mt-0.5 h-4 w-4 flex-none accent-[#A06716]"
+              />
+              <span>
+                After approval, assign the next task automatically:{" "}
+                <span className="font-semibold">{nextProductionTaskLabel}</span>
               </span>
             </label>
           ) : null}
