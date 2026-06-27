@@ -798,6 +798,15 @@ function SuggestedVenueResultsPanel({
                   >
                     {venue.name}
                   </Link>
+                ) : venue.kind === "journal" && venue.venueLink ? (
+                  <a
+                    href={venue.venueLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="research-allow-transform mt-1 block break-words text-sm leading-5 text-[#1F2937] transition-[color,transform,opacity] duration-180 hover:-translate-y-0.5 hover:text-[#1F7180] active:translate-y-0 active:scale-[0.99] active:opacity-70 dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]"
+                  >
+                    {venue.name}
+                  </a>
                 ) : (
                   <p className="mt-1 break-words text-sm leading-5 text-[#1F2937] dark:text-[#E4E4E4]">
                     {venue.name}
@@ -3043,7 +3052,9 @@ export default async function TaskDetailPage({
                       Research
                     </div>
                     <Link
-                      href={`/projects/${task.project.id}`}
+                      href={`/projects/${task.project.id}${
+                        isSuggestVenueTask ? "#suggested-venues" : ""
+                      }`}
                       className="research-journal-name-link mt-2 block w-full border-0 bg-transparent p-0 text-sm font-normal text-[#1F7180] shadow-none outline-none hover:border-0 hover:bg-transparent hover:shadow-none focus-visible:border-0 focus-visible:bg-transparent focus-visible:ring-0 dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
                     >
                       {task.project.title}

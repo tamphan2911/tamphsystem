@@ -8,18 +8,20 @@ const researchSectionClass =
   "border border-[#444444] bg-[#2C2C2C] p-4 shadow-none sm:p-5";
 
 export function ResearchDetailSection({
+  id,
   title,
   action,
   children,
   className = "",
 }: {
+  id?: string;
   title?: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <section className={cx(researchSectionClass, className)}>
+    <section id={id} className={cx(researchSectionClass, className)}>
       {(title || action) && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           {title ? (

@@ -862,7 +862,7 @@ export function SuggestedJournalsPanel({
   const assignKind = assignVenue?.kind ?? "journal";
 
   return (
-    <ResearchDetailSection>
+    <ResearchDetailSection id="suggested-venues" className="scroll-mt-28">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
