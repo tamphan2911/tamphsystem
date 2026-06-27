@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
+  AlarmClockCheck,
   AlertTriangle,
   ArrowDownAZ,
   ArrowUpDown,
@@ -275,12 +276,12 @@ function statusMeta(task: TaskRow) {
       };
     }
     return {
-      label: "Overdue",
+      label: "Completed overdue",
       detail: `${durationText(completed.getTime() - due.getTime())} late`,
       dateLines: [`finished: ${formatDate(task.completedAt)}`],
       className:
-        "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-300/40 dark:bg-rose-950/25 dark:text-rose-300",
-      detailClassName: "text-rose-600 dark:text-rose-300",
+        "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-300/40 dark:bg-amber-950/25 dark:text-amber-200",
+      detailClassName: "text-[#A06716] dark:text-[#F4D47A]",
     };
   }
 
@@ -371,6 +372,15 @@ function statusIconMeta(task: TaskRow): {
   }
 
   if (task.status === "COMPLETED") {
+    const due = task.dueDate ? new Date(task.dueDate) : null;
+    const completed = task.completedAt ? new Date(task.completedAt) : null;
+    if (due && completed && completed > due) {
+      return {
+        icon: AlarmClockCheck,
+        className:
+          "text-[#A06716] hover:text-[#7A4D10] dark:text-[#F4D47A] dark:hover:text-amber-200",
+      };
+    }
     return {
       icon: CheckCircle2,
       className:
@@ -426,7 +436,9 @@ function derivedStatus(task: TaskRow) {
     return task.status;
   }
   const label = statusMeta(task).label;
-  if (label === "Complete") return "COMPLETED";
+  if (label === "Complete" || label === "Completed overdue") {
+    return "COMPLETED";
+  }
   if (label === "Revoked") return "REVOKED";
   return label.toUpperCase().replace(" ", "_");
 }

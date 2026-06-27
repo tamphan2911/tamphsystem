@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { notFound, redirect } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
+  AlarmClockCheck,
   AlertTriangle,
   ArrowRightLeft,
   Ban,
@@ -175,10 +176,10 @@ function statusMeta(task: {
       };
     }
     return {
-      label: "Overdue",
+      label: "Completed overdue",
       detail: `${durationText(task.completedAt.getTime() - task.dueDate.getTime())} late`,
-      tone: "rose" as const,
-      timeTone: "rose" as const,
+      tone: "amber" as const,
+      timeTone: "amber" as const,
     };
   }
 
@@ -252,6 +253,13 @@ function statusIconMeta(
   }
 
   if (task.status === "COMPLETED") {
+    if (task.dueDate && task.completedAt && task.completedAt > task.dueDate) {
+      return {
+        icon: AlarmClockCheck,
+        className:
+          "text-[#A06716] hover:text-[#7A4D10] dark:text-[#F4D47A] dark:hover:text-amber-200",
+      };
+    }
     return {
       icon: CheckCircle2,
       className:
