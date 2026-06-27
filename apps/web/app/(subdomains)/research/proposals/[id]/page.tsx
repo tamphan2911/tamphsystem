@@ -6,6 +6,8 @@ import {
   Building2,
   CalendarDays,
   CheckCircle2,
+  ClipboardList,
+  Clock3,
   Download,
   ExternalLink,
   FileSearch,
@@ -13,10 +15,17 @@ import {
   FolderGit2,
   Pencil,
   Phone,
+  ShieldCheck,
   UserRound,
   XCircle,
 } from "lucide-react";
-import { prisma, ProposalStatus, ProposalType, Role } from "@repo/db";
+import {
+  prisma,
+  ProposalStatus,
+  ProposalType,
+  ResearchTaskStatus,
+  Role,
+} from "@repo/db";
 import { auth } from "../../../../../auth";
 import { ProposalFeedbackButton } from "./ProposalFeedbackButton";
 import { ProposalEditButton } from "./ProposalEditButton";
@@ -123,6 +132,49 @@ function statusMeta(status: ProposalStatus) {
 
 function displayStatus(status: ProposalStatus) {
   return status;
+}
+
+function taskStatusMeta(status: ResearchTaskStatus) {
+  if (status === ResearchTaskStatus.COMPLETED) {
+    return {
+      label: "Completed",
+      className:
+        "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300",
+    };
+  }
+  if (status === ResearchTaskStatus.REVOKED) {
+    return {
+      label: "Revoked",
+      className:
+        "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300",
+    };
+  }
+  if (status === ResearchTaskStatus.CHECKING) {
+    return {
+      label: "Ready for check",
+      className:
+        "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300",
+    };
+  }
+  if (status === ResearchTaskStatus.NEED_CLARIFY) {
+    return {
+      label: "Need clarify",
+      className:
+        "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 dark:border-fuchsia-500/30 dark:bg-fuchsia-500/10 dark:text-fuchsia-300",
+    };
+  }
+  if (status === ResearchTaskStatus.REVISION_REQUESTED) {
+    return {
+      label: "Revision requested",
+      className:
+        "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300",
+    };
+  }
+  return {
+    label: "In progress",
+    className:
+      "border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-300",
+  };
 }
 
 function researchAuthorNames(project: {
@@ -458,6 +510,105 @@ function AssociatedRecordCard({
   );
 }
 
+function AssociatedTaskCard({
+  task,
+}: {
+  task: {
+    id: string;
+    title: string;
+    taskCode: string | null;
+    taskType: string | null;
+    status: ResearchTaskStatus;
+    dueDate?: Date | null;
+    createdAt?: Date | null;
+    createdBy: { name: string | null; email?: string | null };
+    checker?: { name: string | null; email?: string | null } | null;
+    assignments: {
+      user?: { name: string | null; email?: string | null } | null;
+    }[];
+  } | null;
+}) {
+  if (!task) return null;
+
+  const status = taskStatusMeta(task.status);
+  const assignees = task.assignments
+    .map((assignment) =>
+      assignment.user ? displayResearchPersonName(assignment.user) : "",
+    )
+    .filter(Boolean)
+    .join(", ");
+
+  return (
+    <aside className="min-w-0 border border-[#D8D0C2] bg-[#F7F4ED] p-4 dark:border-[#444444] dark:bg-[#242424]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
+            <ClipboardList className="h-3.5 w-3.5 text-[#1F7180] dark:text-[#A8DADC]" />
+            Associated task
+          </div>
+          <a
+            href={`/tasks/${task.id}`}
+            className="research-clickable-icon mt-2 block min-w-0 text-sm font-normal leading-6 text-[#1F2937] transition-[color,text-shadow,transform] duration-180 ease-out hover:text-[#1F7180] hover:[text-shadow:0_0_0.55rem_rgba(31,113,128,0.16)] active:scale-[0.99] dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]"
+          >
+            {task.title}
+          </a>
+        </div>
+        <IconHint label="Open associated task" position="bottom">
+          <a
+            href={`/tasks/${task.id}`}
+            className="research-clickable-icon research-allow-transform inline-flex h-5 w-5 flex-none items-center justify-center border-0 bg-transparent text-[#1F7180] shadow-none outline-none transition-[color,transform,filter] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-200"
+            aria-label="Open associated task"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </IconHint>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-y-1 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+        <span>{task.taskCode || "No task ID"}</span>
+        <span className="px-2 text-[#A0A8B5] dark:text-[#777777]">|</span>
+        <span>{task.taskType ? label(task.taskType) : "Task"}</span>
+        <span className="px-2 text-[#A0A8B5] dark:text-[#777777]">|</span>
+        <span
+          className={`inline-flex items-center border px-2 py-0.5 text-[11px] leading-4 ${status.className}`}
+        >
+          {status.label}
+        </span>
+      </div>
+      <div className="mt-3 grid gap-3 border-t border-[#D8D0C2] pt-3 text-xs leading-5 text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0] sm:grid-cols-2">
+        <div className="min-w-0">
+          <span className="flex items-center gap-1.5 uppercase tracking-wide">
+            <Clock3 className="h-3.5 w-3.5 text-[#667085] dark:text-[#B0B0B0]" />
+            Time
+          </span>
+          <span className="mt-1 block text-[#1F2937] dark:text-[#E4E4E4]">
+            Created: {shortDate(task.createdAt)}
+          </span>
+          <span className="block">
+            Due: {task.dueDate ? shortDate(task.dueDate) : "Not set"}
+          </span>
+        </div>
+        <div className="min-w-0">
+          <span className="flex items-center gap-1.5 uppercase tracking-wide">
+            <ShieldCheck className="h-3.5 w-3.5 text-[#667085] dark:text-[#B0B0B0]" />
+            People
+          </span>
+          <span className="mt-1 block whitespace-normal break-words text-[#1F2937] dark:text-[#E4E4E4]">
+            Assignee: {assignees || "Not assigned"}
+          </span>
+          <span className="block whitespace-normal break-words">
+            Assigner: {displayResearchPersonName(task.createdBy)}
+          </span>
+          {task.checker ? (
+            <span className="block whitespace-normal break-words">
+              Checker: {displayResearchPersonName(task.checker)}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 function HeaderIcon({
   label,
   className,
@@ -512,9 +663,23 @@ export default async function ProposalDetailPage({
       },
       task: {
         select: {
+          id: true,
+          title: true,
+          taskCode: true,
+          taskType: true,
+          status: true,
+          dueDate: true,
+          createdAt: true,
           createdById: true,
+          createdBy: { select: { name: true, email: true } },
           checkerId: true,
-          assignments: { select: { userId: true } },
+          checker: { select: { name: true, email: true } },
+          assignments: {
+            select: {
+              userId: true,
+              user: { select: { name: true, email: true } },
+            },
+          },
         },
       },
       createdResearchProject: {
@@ -625,6 +790,8 @@ export default async function ProposalDetailPage({
     Boolean(
       proposal.createdResearchProject || proposal.createdOrganizedProject,
     );
+  const hasDescriptionSideContent =
+    Boolean(proposal.task) || hasAssociatedAcceptedRecord;
   const canEditProposal = proposalIsOpenForEditing(effectiveStatus);
 
   return (
@@ -703,7 +870,7 @@ export default async function ProposalDetailPage({
 
           <div
             className={`${sectionDividerClass} grid items-start gap-5 p-5 ${
-              hasAssociatedAcceptedRecord ? "lg:grid-cols-2" : ""
+              hasDescriptionSideContent ? "lg:grid-cols-2" : ""
             }`}
           >
             <div className="min-w-0">
@@ -714,7 +881,12 @@ export default async function ProposalDetailPage({
                 {proposal.description}
               </p>
             </div>
-            <AssociatedRecordCard proposal={proposal} />
+            {hasDescriptionSideContent ? (
+              <div className="min-w-0 space-y-4">
+                <AssociatedTaskCard task={proposal.task} />
+                <AssociatedRecordCard proposal={proposal} />
+              </div>
+            ) : null}
           </div>
 
           <div
