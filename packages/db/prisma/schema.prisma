@@ -841,6 +841,8 @@ model SuggestedJournal {
   journalId             String?
   venueName             String?
   venueLink             String?
+  apc                   String?
+  submissionFee         String?
   note                  String?
   status                SuggestedVenueStatus @default(APPROVED)
   approvedAt            DateTime?

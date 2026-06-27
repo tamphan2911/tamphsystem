@@ -247,6 +247,8 @@ export function SuggestedJournalsPanel({
   const [approvalVenue, setApprovalVenue] = useState<Venue | null>(null);
   const [freeVenueName, setFreeVenueName] = useState("");
   const [freeVenueLink, setFreeVenueLink] = useState("");
+  const [freeJournalApc, setFreeJournalApc] = useState("");
+  const [freeJournalSubmissionFee, setFreeJournalSubmissionFee] = useState("");
   const [freeVenueNote, setFreeVenueNote] = useState("");
   const [journalQuery, setJournalQuery] = useState("");
   const [conferenceQuery, setConferenceQuery] = useState("");
@@ -488,6 +490,8 @@ export function SuggestedJournalsPanel({
     setSelectedAddVenue(null);
     setFreeVenueName("");
     setFreeVenueLink("");
+    setFreeJournalApc("");
+    setFreeJournalSubmissionFee("");
     setFreeVenueNote("");
   }
 
@@ -583,6 +587,10 @@ export function SuggestedJournalsPanel({
     if (journalId) formData.set("journalId", journalId);
     if (freeVenueName.trim()) formData.set("venueName", freeVenueName.trim());
     if (freeVenueLink.trim()) formData.set("venueLink", freeVenueLink.trim());
+    if (freeJournalApc.trim()) formData.set("apc", freeJournalApc.trim());
+    if (freeJournalSubmissionFee.trim()) {
+      formData.set("submissionFee", freeJournalSubmissionFee.trim());
+    }
     if (freeVenueNote.trim()) formData.set("note", freeVenueNote.trim());
     startTransition(async () => {
       await addSuggestedJournal(projectId, formData);
@@ -1016,11 +1024,23 @@ export function SuggestedJournalsPanel({
                   }}
                 />
                 {!selectedAddVenue && (
+                  <p className="text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                    Search the journal list first and pick the journal if it is
+                    already on the site. If it is not available, enter the
+                    journal name, link, and fee information below so the
+                    suggestion can be reviewed and linked later.
+                  </p>
+                )}
+                {!selectedAddVenue && (
                   <FreeVenueFields
                     name={freeVenueName}
                     link={freeVenueLink}
+                    apc={freeJournalApc}
+                    submissionFee={freeJournalSubmissionFee}
                     onNameChange={setFreeVenueName}
                     onLinkChange={setFreeVenueLink}
+                    onApcChange={setFreeJournalApc}
+                    onSubmissionFeeChange={setFreeJournalSubmissionFee}
                     kind="journal"
                   />
                 )}
@@ -2131,14 +2151,22 @@ function SelectedTaskPill({
 function FreeVenueFields({
   name,
   link,
+  apc,
+  submissionFee,
   onNameChange,
   onLinkChange,
+  onApcChange,
+  onSubmissionFeeChange,
   kind,
 }: {
   name: string;
   link: string;
+  apc?: string;
+  submissionFee?: string;
   onNameChange: (value: string) => void;
   onLinkChange: (value: string) => void;
+  onApcChange?: (value: string) => void;
+  onSubmissionFeeChange?: (value: string) => void;
   kind: "journal" | "conference";
 }) {
   return (
@@ -2165,6 +2193,32 @@ function FreeVenueFields({
           className={researchFieldClass}
         />
       </label>
+      {kind === "journal" ? (
+        <>
+          <label className="grid gap-1.5">
+            <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+              APC
+            </span>
+            <input
+              value={apc ?? ""}
+              onChange={(event) => onApcChange?.(event.target.value)}
+              placeholder="Example: free, USD 500, waived"
+              className={researchFieldClass}
+            />
+          </label>
+          <label className="grid gap-1.5">
+            <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+              Submission fee
+            </span>
+            <input
+              value={submissionFee ?? ""}
+              onChange={(event) => onSubmissionFeeChange?.(event.target.value)}
+              placeholder="Example: no fee, USD 50"
+              className={researchFieldClass}
+            />
+          </label>
+        </>
+      ) : null}
     </div>
   );
 }
@@ -2266,9 +2320,19 @@ function JournalCard({
           ) : null}
         </>
       ) : (
-        <p className="mt-2 text-xs font-normal text-amber-700 dark:text-[#E8C47A]">
-          Journal not in system
-        </p>
+        <>
+          <p className="mt-2 text-xs font-normal text-amber-700 dark:text-[#E8C47A]">
+            Journal not in system
+          </p>
+          <VenueFees
+            apc={journal.apc}
+            apcCurrency={journal.apcCurrency}
+            hasApcOption={journal.hasApcOption}
+            submissionFee={journal.submissionFee}
+            submissionFeeCurrency={journal.submissionFeeCurrency}
+            rawTextFees
+          />
+        </>
       )}
       <VenueAttribution
         name={journal.suggestedByName}
@@ -2393,55 +2457,77 @@ function VenueFees({
   hasApcOption = false,
   submissionFee,
   submissionFeeCurrency,
+  rawTextFees = false,
 }: {
   apc: string;
   apcCurrency: string;
   hasApcOption?: boolean;
   submissionFee: string;
   submissionFeeCurrency: string;
+  rawTextFees?: boolean;
 }) {
   const normalizedApc = normalizeResearchNumberInput(apc);
   const apcValue = Number(normalizedApc || 0);
-  const apcIsFree = !Number.isFinite(apcValue) || apcValue <= 0;
+  const apcIsBlank = !apc.trim();
+  const apcIsFree =
+    (!Number.isFinite(apcValue) || apcValue <= 0) &&
+    (!rawTextFees ||
+      !apc.trim() ||
+      /^(free|no fee|none|waived)$/i.test(apc.trim()));
   const apcIsHigh = apcValue > 1000;
   const normalizedFee = normalizeResearchNumberInput(submissionFee);
   const feeValue = Number(normalizedFee || 0);
-  const feeIsFree = !Number.isFinite(feeValue) || feeValue <= 0;
+  const feeIsBlank = !submissionFee.trim();
+  const feeIsFree =
+    (!Number.isFinite(feeValue) || feeValue <= 0) &&
+    (!rawTextFees ||
+      !submissionFee.trim() ||
+      /^(free|no fee|none|waived)$/i.test(submissionFee.trim()));
   const feeIsHigh = feeValue > 1000;
+  const apcLabel = rawTextFees
+    ? apc.trim() || "not provided"
+    : apcIsFree
+      ? "free"
+      : `${currencySymbol(apcCurrency)} ${formatResearchNumber(apc)}`;
+  const submissionFeeLabel = rawTextFees
+    ? submissionFee.trim() || "not provided"
+    : feeIsFree
+      ? "free"
+      : `${currencySymbol(submissionFeeCurrency)} ${formatResearchNumber(
+          submissionFee,
+        )}`;
 
   return (
     <p className="mt-2 flex flex-wrap items-center gap-x-1 text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
       <span>APC:</span>
       <span
         className={
-          apcIsFree
-            ? "font-normal text-emerald-700 dark:text-emerald-300"
-            : apcIsHigh
-              ? "font-normal text-rose-700 dark:text-rose-300"
-              : "font-normal text-[#344054] dark:text-[#E4E4E4]"
+          apcIsBlank
+            ? "font-normal text-[#667085] dark:text-[#B0B0B0]"
+            : apcIsFree
+              ? "font-normal text-emerald-700 dark:text-emerald-300"
+              : apcIsHigh
+                ? "font-normal text-rose-700 dark:text-rose-300"
+                : "font-normal text-[#344054] dark:text-[#E4E4E4]"
         }
       >
-        {apcIsFree
-          ? "free"
-          : `${currencySymbol(apcCurrency)} ${formatResearchNumber(apc)}`}
+        {apcLabel}
       </span>
       {hasApcOption ? <span>- Option</span> : null}
       <span className="mx-1 text-[#98A2B3] dark:text-[#777777]">|</span>
       <span>Fee:</span>
       <span
         className={
-          feeIsFree
-            ? "font-normal text-emerald-700 dark:text-emerald-300"
-            : feeIsHigh
-              ? "font-normal text-rose-700 dark:text-rose-300"
-              : "font-normal text-[#344054] dark:text-[#E4E4E4]"
+          feeIsBlank
+            ? "font-normal text-[#667085] dark:text-[#B0B0B0]"
+            : feeIsFree
+              ? "font-normal text-emerald-700 dark:text-emerald-300"
+              : feeIsHigh
+                ? "font-normal text-rose-700 dark:text-rose-300"
+                : "font-normal text-[#344054] dark:text-[#E4E4E4]"
         }
       >
-        {feeIsFree
-          ? "free"
-          : `${currencySymbol(submissionFeeCurrency)} ${formatResearchNumber(
-              submissionFee,
-            )}`}
+        {submissionFeeLabel}
       </span>
     </p>
   );

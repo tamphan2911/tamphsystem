@@ -706,6 +706,7 @@ type TaskSuggestedVenueInfo = {
   apcCurrency: string;
   submissionFee: string | null;
   submissionFeeCurrency: string;
+  useRawFeeText?: boolean;
   journalNote: string | null;
   venueNote: string | null;
   declineReason: string | null;
@@ -713,13 +714,33 @@ type TaskSuggestedVenueInfo = {
   createdAt: Date;
 };
 
-function taskVenueMoney(amount: string | null, currency: string) {
+function feeTextLooksFree(value: string) {
+  return /^(free|no fee|none|waived)$/i.test(value.trim());
+}
+
+function taskVenueMoney(
+  amount: string | null,
+  currency: string,
+  rawText = false,
+) {
+  if (rawText) return amount?.trim() || "Not provided";
   const normalized = normalizeResearchNumberInput(amount);
   if (!normalized || Number(normalized) === 0) return "Free";
   return `${currencySymbol(currency)}${formatResearchNumber(normalized)}`;
 }
 
-function taskVenueMoneyClass(amount: string | null) {
+function taskVenueMoneyClass(amount: string | null, rawText = false) {
+  if (rawText) {
+    const trimmedAmount = amount?.trim() ?? "";
+    if (!trimmedAmount) return "text-[#667085] dark:text-[#B0B0B0]";
+    if (feeTextLooksFree(trimmedAmount)) {
+      return "text-emerald-700 dark:text-emerald-300";
+    }
+    const normalizedRaw = normalizeResearchNumberInput(trimmedAmount);
+    const rawValue = Number(normalizedRaw || 0);
+    if (rawValue > 1000) return "text-rose-700 dark:text-rose-300";
+    return "text-[#344054] dark:text-[#E4E4E4]";
+  }
   const normalized = normalizeResearchNumberInput(amount);
   const value = Number(normalized || 0);
   if (!Number.isFinite(value) || value <= 0) {
@@ -797,17 +818,32 @@ function SuggestedVenueResultsPanel({
             <div className="mt-2 flex flex-wrap items-center gap-y-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
               <span>
                 APC:{" "}
-                <span className={taskVenueMoneyClass(venue.apc)}>
-                  {taskVenueMoney(venue.apc, venue.apcCurrency)}
+                <span
+                  className={taskVenueMoneyClass(
+                    venue.apc,
+                    venue.useRawFeeText,
+                  )}
+                >
+                  {taskVenueMoney(
+                    venue.apc,
+                    venue.apcCurrency,
+                    venue.useRawFeeText,
+                  )}
                 </span>
               </span>
               <DetailSeparator />
               <span>
                 Fee:{" "}
-                <span className={taskVenueMoneyClass(venue.submissionFee)}>
+                <span
+                  className={taskVenueMoneyClass(
+                    venue.submissionFee,
+                    venue.useRawFeeText,
+                  )}
+                >
                   {taskVenueMoney(
                     venue.submissionFee,
                     venue.submissionFeeCurrency,
+                    venue.useRawFeeText,
                   )}
                 </span>
               </span>
@@ -1088,6 +1124,8 @@ export default async function TaskDetailPage({
           id: true,
           venueName: true,
           venueLink: true,
+          apc: true,
+          submissionFee: true,
           note: true,
           status: true,
           declineReason: true,
@@ -1167,6 +1205,8 @@ export default async function TaskDetailPage({
           id: true,
           venueName: true,
           venueLink: true,
+          apc: true,
+          submissionFee: true,
           note: true,
           status: true,
           declineReason: true,
@@ -1491,6 +1531,8 @@ export default async function TaskDetailPage({
             id: true,
             venueName: true,
             venueLink: true,
+            apc: true,
+            submissionFee: true,
             note: true,
             status: true,
             declineReason: true,
@@ -2279,10 +2321,12 @@ export default async function TaskDetailPage({
         ]
           .filter(Boolean)
           .join(" - "),
-        apc: journal?.apc ?? null,
+        apc: journal?.apc ?? suggestion.apc ?? null,
         apcCurrency: journal?.apcCurrency ?? "USD",
-        submissionFee: journal?.submissionFee ?? null,
+        submissionFee:
+          journal?.submissionFee ?? suggestion.submissionFee ?? null,
         submissionFeeCurrency: journal?.submissionFeeCurrency ?? "USD",
+        useRawFeeText: !journal,
         journalNote: journal?.note ?? null,
         venueNote: suggestion.note ?? null,
         declineReason: suggestion.declineReason,
@@ -2311,14 +2355,20 @@ export default async function TaskDetailPage({
             ]
               .filter(Boolean)
               .join(" - "),
-            apc: linkedJournalSubmissionSuggestion.journal?.apc ?? null,
+            apc:
+              linkedJournalSubmissionSuggestion.journal?.apc ??
+              linkedJournalSubmissionSuggestion.apc ??
+              null,
             apcCurrency:
               linkedJournalSubmissionSuggestion.journal?.apcCurrency ?? "USD",
             submissionFee:
-              linkedJournalSubmissionSuggestion.journal?.submissionFee ?? null,
+              linkedJournalSubmissionSuggestion.journal?.submissionFee ??
+              linkedJournalSubmissionSuggestion.submissionFee ??
+              null,
             submissionFeeCurrency:
               linkedJournalSubmissionSuggestion.journal
                 ?.submissionFeeCurrency ?? "USD",
+            useRawFeeText: !linkedJournalSubmissionSuggestion.journal,
             journalNote:
               linkedJournalSubmissionSuggestion.journal?.note ?? null,
             venueNote: linkedJournalSubmissionSuggestion.note ?? null,

@@ -7760,6 +7760,8 @@ export async function addSuggestedJournal(
   const journalId = optionalString(formData.get("journalId"));
   const venueName = optionalString(formData.get("venueName"));
   const venueLink = optionalString(formData.get("venueLink"));
+  const apc = optionalString(formData.get("apc"));
+  const submissionFee = optionalString(formData.get("submissionFee"));
   const note = optionalString(formData.get("note"));
   if (!journalId && !venueName && !venueLink) return;
   if (await researchContentIsLocked(projectId)) return;
@@ -7821,6 +7823,8 @@ export async function addSuggestedJournal(
           requiresApproval: true,
           venueName,
           venueLink,
+          apc,
+          submissionFee,
           note,
           taskId,
         },
