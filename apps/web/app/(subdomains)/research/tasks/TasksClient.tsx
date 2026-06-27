@@ -671,11 +671,6 @@ export function TasksClient({
           label: "Assigned to me",
           count: tasks.filter((task) => task.scope.assignedToMe).length,
         },
-        {
-          value: "related",
-          label: "Related to me",
-          count: tasks.filter((task) => task.scope.relatedToMyItems).length,
-        },
         ...(isChiefAssistant
           ? [
               {
@@ -685,6 +680,11 @@ export function TasksClient({
               },
             ]
           : []),
+        {
+          value: "related",
+          label: "Related to me",
+          count: tasks.filter((task) => task.scope.relatedToMyItems).length,
+        },
       ];
 
   const checkerOptions = useMemo(() => {
@@ -756,15 +756,7 @@ export function TasksClient({
         (!needle || haystack.includes(needle))
       );
     });
-  }, [
-    activeHeaderTab,
-    checkerIds,
-    isAdmin,
-    query,
-    statuses,
-    taskTypes,
-    tasks,
-  ]);
+  }, [activeHeaderTab, checkerIds, isAdmin, query, statuses, taskTypes, tasks]);
   const sortedRows = useMemo(() => {
     if (timeSort === "none") return filtered;
 
