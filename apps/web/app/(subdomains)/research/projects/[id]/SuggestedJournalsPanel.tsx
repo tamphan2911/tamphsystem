@@ -67,8 +67,7 @@ import {
   normalizeResearchNumberInput,
 } from "@/sites/research/lib/currency";
 
-const defaultTaskDescription =
-  "Read the the general guide by click on icons right above.";
+const defaultTaskDescription = "Read the guide by click on icons right above.";
 
 export type SuggestedJournalOption = {
   id: string;

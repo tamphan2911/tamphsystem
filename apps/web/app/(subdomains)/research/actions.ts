@@ -194,9 +194,11 @@ function proposalTaskScopeFromForm(value: FormDataEntryValue | null) {
 }
 
 const DEFAULT_TASK_DESCRIPTION =
-  "Read the the general guide by click on icons right above.";
-const SUGGEST_VENUE_AFTER_PRODUCTION_DESCRIPTION =
+  "Read the guide by click on icons right above.";
+const SUGGEST_VENUE_TASK_DESCRIPTION =
   "Read the general guide by click on icons right above.\nSuggest 2 venues.";
+const SUGGEST_VENUE_AFTER_PRODUCTION_DESCRIPTION =
+  SUGGEST_VENUE_TASK_DESCRIPTION;
 
 const productionSubtypeConfig = [
   {
@@ -270,6 +272,12 @@ function defaultTaskGuideCodeForTask({
   }
   if (taskType === ResearchTaskType.REVIEW) return "G013";
   return null;
+}
+
+function defaultDescriptionForTask(taskType: ResearchTaskType) {
+  return taskType === ResearchTaskType.SUGGEST_VENUE
+    ? SUGGEST_VENUE_TASK_DESCRIPTION
+    : DEFAULT_TASK_DESCRIPTION;
 }
 
 async function defaultTaskGuideIdsForTask({
@@ -6323,7 +6331,8 @@ export async function createResearchTask(formData: FormData) {
       title: optionalString(formData.get("title")) ?? "Untitled task",
       taskCode: await generateTaskCode(),
       description:
-        optionalString(formData.get("description")) ?? DEFAULT_TASK_DESCRIPTION,
+        optionalString(formData.get("description")) ??
+        defaultDescriptionForTask(taskType),
       category: taskCategoryFromForm(formData.get("category")),
       taskType,
       productionSubtype,
@@ -6702,7 +6711,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
         title: optionalString(formData.get("title")) ?? "Untitled task",
         description:
           optionalString(formData.get("description")) ??
-          DEFAULT_TASK_DESCRIPTION,
+          defaultDescriptionForTask(taskType),
         category: taskCategoryFromForm(formData.get("category")),
         taskType,
         productionSubtype,

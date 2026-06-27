@@ -79,8 +79,7 @@ export type SubmissionTaskAssigneeOption = {
 const defaultSubmissionTaskAssigneeEmail = "tamphan.ntc@gmail.com";
 
 const inputClass = researchFieldClass;
-const defaultTaskDescription =
-  "Read the the general guide by click on icons right above.";
+const defaultTaskDescription = "Read the guide by click on icons right above.";
 
 function defaultSubmissionTaskGuideIds(guides: TaskGuideOption[]) {
   const guide = guides.find((item) => item.guideCode === "G002");

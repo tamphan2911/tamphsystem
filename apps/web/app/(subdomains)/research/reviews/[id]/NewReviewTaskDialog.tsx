@@ -55,8 +55,7 @@ function defaultReviewTaskGuideIds(guides: TaskGuideOption[]) {
   return guide ? [guide.id] : [];
 }
 
-const defaultTaskDescription =
-  "Read the the general guide by click on icons right above.";
+const defaultTaskDescription = "Read the guide by click on icons right above.";
 
 export function NewReviewTaskDialog({
   reviewId,
