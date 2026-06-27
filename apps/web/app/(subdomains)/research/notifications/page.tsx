@@ -87,6 +87,7 @@ export default async function ResearchNotificationsPage() {
             select: {
               id: true,
               createdById: true,
+              checkerId: true,
               assignments: { select: { userId: true } },
             },
           })
@@ -100,6 +101,7 @@ export default async function ResearchNotificationsPage() {
               task: {
                 select: {
                   createdById: true,
+                  checkerId: true,
                   assignments: { select: { userId: true } },
                 },
               },
@@ -112,6 +114,7 @@ export default async function ResearchNotificationsPage() {
         task.id,
         {
           createdById: task.createdById,
+          checkerId: task.checkerId,
           assignmentUserIds: task.assignments.map(
             (assignment) => assignment.userId,
           ),
@@ -126,6 +129,7 @@ export default async function ResearchNotificationsPage() {
           task: proposal.task
             ? {
                 createdById: proposal.task.createdById,
+                checkerId: proposal.task.checkerId,
                 assignmentUserIds: proposal.task.assignments.map(
                   (assignment) => assignment.userId,
                 ),

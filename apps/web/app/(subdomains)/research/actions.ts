@@ -450,6 +450,93 @@ async function sendTaskEmail({
   });
 }
 
+async function sendTaskManagerEmails({
+  assignerEmail,
+  checkerEmail,
+  taskTitle,
+  taskId,
+  detail,
+  assigner,
+  checker,
+}: {
+  assignerEmail: string | null | undefined;
+  checkerEmail: string | null | undefined;
+  taskTitle: string;
+  taskId: string;
+  detail?: string;
+  assigner: {
+    subject: string;
+    heading: string;
+    intro: string;
+    actionLabel: string;
+  };
+  checker: {
+    subject: string;
+    heading: string;
+    intro: string;
+    actionLabel: string;
+  };
+}) {
+  if (assignerEmail) {
+    await sendTaskEmail({
+      to: [assignerEmail],
+      subject: assigner.subject,
+      heading: assigner.heading,
+      intro: assigner.intro,
+      detail,
+      taskTitle,
+      taskId,
+      actionLabel: assigner.actionLabel,
+    });
+  }
+
+  if (
+    checkerEmail &&
+    normalizeEmailAddress(checkerEmail) !== normalizeEmailAddress(assignerEmail)
+  ) {
+    await sendTaskEmail({
+      to: [checkerEmail],
+      subject: checker.subject,
+      heading: checker.heading,
+      intro: checker.intro,
+      detail,
+      taskTitle,
+      taskId,
+      actionLabel: checker.actionLabel,
+    });
+  }
+}
+
+async function sendTaskCheckerAssignedEmail({
+  checkerId,
+  taskTitle,
+  taskId,
+  detail,
+}: {
+  checkerId: string | null | undefined;
+  taskTitle: string;
+  taskId: string;
+  detail?: string;
+}) {
+  if (!checkerId) return;
+  const checker = await prisma.user.findUnique({
+    where: { id: checkerId },
+    select: { email: true },
+  });
+  if (!checker) return;
+  await sendTaskEmail({
+    to: [checker.email],
+    subject: `You are checker for task: ${taskTitle}`,
+    heading: "Task checker assigned",
+    intro:
+      "You have been assigned as the checker for this task. Please monitor the task, answer or review clarification messages when needed, and review the assignee's work when it is ready for check.",
+    detail,
+    taskTitle,
+    taskId,
+    actionLabel: "Review task",
+  });
+}
+
 function taskStatusEmailLabel(status: ResearchTaskStatus) {
   if (status === ResearchTaskStatus.IN_PROGRESS) return "In progress";
   if (status === ResearchTaskStatus.REVISION_REQUESTED)
@@ -1720,6 +1807,7 @@ export async function submitProposal(formData: FormData) {
     createdById: string;
     checkerId: string | null;
     createdByEmail: string;
+    checkerEmail: string | null;
     projectId: string | null;
     organizedProjectId: string | null;
   } | null = null;
@@ -1738,6 +1826,7 @@ export async function submitProposal(formData: FormData) {
         proposalScope: true,
         proposalResults: { select: { id: true, status: true } },
         createdBy: { select: { email: true } },
+        checker: { select: { email: true } },
         assignments: { select: { userId: true } },
       },
     });
@@ -1799,6 +1888,7 @@ export async function submitProposal(formData: FormData) {
       createdById: task.createdById,
       checkerId: task.checkerId,
       createdByEmail: task.createdBy.email,
+      checkerEmail: task.checker?.email ?? null,
       projectId: task.projectId,
       organizedProjectId: task.organizedProjectId,
     };
@@ -1923,16 +2013,26 @@ export async function submitProposal(formData: FormData) {
       excludeUserId: user.id,
     });
 
-    await sendTaskEmail({
-      to: [linkedTask.createdByEmail],
-      subject: `Task ready for review: ${linkedTask.title}`,
-      heading: "Task ready for checking",
-      intro:
-        "A proposal was created from the task and linked automatically. Please review the proposal result and either approve completion or send it back for revision.",
+    await sendTaskManagerEmails({
+      assignerEmail: linkedTask.createdByEmail,
+      checkerEmail: linkedTask.checkerEmail,
       taskTitle: linkedTask.title,
       taskId: linkedTask.id,
-      actionLabel: "Review task",
       detail: `Linked proposal: ${title}`,
+      assigner: {
+        subject: `Task ready for your review: ${linkedTask.title}`,
+        heading: "Task ready for assigner review",
+        intro:
+          "A proposal was created from the task and linked automatically. As the assigner, please review the proposal result and either approve completion or send it back for revision.",
+        actionLabel: "Review task",
+      },
+      checker: {
+        subject: `Task ready for checker review: ${linkedTask.title}`,
+        heading: "Task ready for checker review",
+        intro:
+          "A proposal was created from the task and linked automatically. As the checker, please review the proposal result and confirm whether the task can be approved.",
+        actionLabel: "Check task",
+      },
     });
   }
 
@@ -2320,6 +2420,8 @@ export async function reviewProposal(formData: FormData) {
           status: true,
           createdById: true,
           checkerId: true,
+          createdBy: { select: { email: true } },
+          checker: { select: { email: true } },
           assignments: {
             select: {
               userId: true,
@@ -2517,11 +2619,6 @@ export async function reviewProposal(formData: FormData) {
       linkedTask.checkerId,
       ...linkedTask.assignments.map((assignment) => assignment.userId),
     ].filter((id): id is string => Boolean(id));
-    const mergedEmails = [
-      proposal.submittedBy.email,
-      ...linkedTask.assignments.map((assignment) => assignment.user.email),
-    ];
-
     await notifyUsers({
       userIds: mergedUserIds,
       type: accepted
@@ -2535,8 +2632,58 @@ export async function reviewProposal(formData: FormData) {
       entityId: reviewed.id,
     });
 
+    const emailed = new Set<string>();
+    const unhandledEmails = (emails: Array<string | null | undefined>) =>
+      emails.filter((email): email is string => {
+        const normalized = normalizeEmailAddress(email);
+        if (!normalized || emailed.has(normalized)) return false;
+        emailed.add(normalized);
+        return true;
+      });
+
     await sendProposalEmail({
-      to: mergedEmails,
+      to: unhandledEmails(
+        linkedTask.assignments.map((assignment) => assignment.user.email),
+      ),
+      subject: notificationTitle,
+      heading: accepted
+        ? "Proposal task approved as complete"
+        : "Proposal task needs revision",
+      intro: accepted
+        ? `The linked ${proposalType.toLowerCase()} was approved. Your proposal task was completed automatically.`
+        : `The linked ${proposalType.toLowerCase()} was declined. Your proposal task was sent back for revision automatically.`,
+      detail: `Task: ${linkedTask.title}\nProposal: ${proposal.title}\n\nAdmin note: ${adminNote}`,
+      actionHref: `${researchBaseUrl()}${href}`,
+      actionLabel: accepted ? "View result" : "Open task",
+    });
+    await sendProposalEmail({
+      to: unhandledEmails([linkedTask.createdBy.email]),
+      subject: notificationTitle,
+      heading: accepted
+        ? "Proposal task completed"
+        : "Proposal task sent back for revision",
+      intro: accepted
+        ? `As the assigner, please note that the linked ${proposalType.toLowerCase()} was approved and the task was completed automatically.`
+        : `As the assigner, please note that the linked ${proposalType.toLowerCase()} was declined and the task was sent back for revision automatically.`,
+      detail: `Task: ${linkedTask.title}\nProposal: ${proposal.title}\n\nAdmin note: ${adminNote}`,
+      actionHref: `${researchBaseUrl()}${href}`,
+      actionLabel: accepted ? "View result" : "Open task",
+    });
+    await sendProposalEmail({
+      to: unhandledEmails([linkedTask.checker?.email]),
+      subject: notificationTitle,
+      heading: accepted
+        ? "Proposal task completed"
+        : "Proposal task needs checker attention",
+      intro: accepted
+        ? `As the checker, please note that the linked ${proposalType.toLowerCase()} was approved and the task was completed automatically.`
+        : `As the checker, please note that the linked ${proposalType.toLowerCase()} was declined and the task was sent back for revision automatically.`,
+      detail: `Task: ${linkedTask.title}\nProposal: ${proposal.title}\n\nAdmin note: ${adminNote}`,
+      actionHref: `${researchBaseUrl()}${href}`,
+      actionLabel: accepted ? "View result" : "Open task",
+    });
+    await sendProposalEmail({
+      to: unhandledEmails([proposal.submittedBy.email]),
       subject: notificationTitle,
       heading: notificationTitle,
       intro: `${emailDecisionSummary} ${workflowSummary}`,
@@ -4846,6 +4993,12 @@ async function createSubmitTaskForSuggestedJournalApproval({
       entityId: task.id,
       excludeUserId: approverId,
     });
+    await sendTaskCheckerAssignedEmail({
+      checkerId: task.checkerId,
+      taskTitle: task.title,
+      taskId: task.id,
+      detail: task.description ?? undefined,
+    });
   }
 
   return {
@@ -4959,6 +5112,12 @@ async function createSubmitTaskForSuggestedConferenceApproval({
       entityType: "task",
       entityId: task.id,
       excludeUserId: approverId,
+    });
+    await sendTaskCheckerAssignedEmail({
+      checkerId: task.checkerId,
+      taskTitle: task.title,
+      taskId: task.id,
+      detail: task.description ?? undefined,
     });
   }
 
@@ -6206,6 +6365,12 @@ export async function createResearchTask(formData: FormData) {
       entityId: task.id,
       excludeUserId: user.id,
     });
+    await sendTaskCheckerAssignedEmail({
+      checkerId: task.checkerId,
+      taskTitle: task.title,
+      taskId: task.id,
+      detail: task.description ?? undefined,
+    });
   }
 
   revalidatePath("/tasks");
@@ -6564,6 +6729,11 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       entityType: "task",
       entityId: task.id,
       excludeUserId: user.id,
+    });
+    await sendTaskCheckerAssignedEmail({
+      checkerId,
+      taskTitle: task.title,
+      taskId: task.id,
     });
   }
   if (currentTask.checkerId && !checkerId) {
@@ -8902,6 +9072,7 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
       checkerId: true,
       journalCreationSuggestion: { select: { id: true } },
       createdBy: { select: { email: true } },
+      checker: { select: { email: true } },
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
       },
@@ -8954,15 +9125,25 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
     entityId: taskId,
     excludeUserId: user.id,
   });
-  await sendTaskEmail({
-    to: [task.createdBy.email],
-    subject: `Task ready for review: ${task.title}`,
-    heading: "Task ready for checking",
-    intro:
-      "An assignee has marked the assigned work as finished. Please review the work and either approve completion or send it back for revision.",
+  await sendTaskManagerEmails({
+    assignerEmail: task.createdBy.email,
+    checkerEmail: task.checker?.email ?? null,
     taskTitle: task.title,
     taskId,
-    actionLabel: "Review task",
+    assigner: {
+      subject: `Task ready for your review: ${task.title}`,
+      heading: "Task ready for assigner review",
+      intro:
+        "An assignee has marked the assigned work as finished. As the assigner, please review the work and either approve completion or send it back for revision.",
+      actionLabel: "Review task",
+    },
+    checker: {
+      subject: `Task ready for checker review: ${task.title}`,
+      heading: "Task ready for checker review",
+      intro:
+        "An assignee has marked the assigned work as finished. As the checker, please review the result and confirm whether this task is ready to be approved.",
+      actionLabel: "Check task",
+    },
   });
 
   revalidatePath("/tasks");
@@ -9583,6 +9764,7 @@ export async function requestTaskClarification(
       checkerId: true,
       status: true,
       createdBy: { select: { email: true } },
+      checker: { select: { email: true } },
       assignments: { select: { userId: true } },
       clarifications: {
         where: { answer: null },
@@ -9625,16 +9807,26 @@ export async function requestTaskClarification(
     entityId: taskId,
     excludeUserId: user.id,
   });
-  await sendTaskEmail({
-    to: [task.createdBy.email],
-    subject: `Clarification requested: ${task.title}`,
-    heading: "Clarification requested",
-    intro:
-      "An assignee requested clarification or additional instruction for this task.",
+  await sendTaskManagerEmails({
+    assignerEmail: task.createdBy.email,
+    checkerEmail: task.checker?.email ?? null,
     detail: question,
     taskTitle: task.title,
     taskId,
-    actionLabel: "Answer request",
+    assigner: {
+      subject: `Assignee requested clarification: ${task.title}`,
+      heading: "Assignee requested clarification",
+      intro:
+        "An assignee requested clarification or additional instruction. As the assigner, please answer the request so the work can continue.",
+      actionLabel: "Answer request",
+    },
+    checker: {
+      subject: `Clarification needs checker review: ${task.title}`,
+      heading: "Clarification needs checker review",
+      intro:
+        "An assignee requested clarification or additional instruction. As the checker, please review the request and help answer it if it falls under your review responsibility.",
+      actionLabel: "Review request",
+    },
   });
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
@@ -9656,6 +9848,7 @@ export async function answerTaskClarification(
       checkerId: true,
       status: true,
       createdBy: { select: { email: true } },
+      checker: { select: { email: true } },
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
       },
@@ -9742,16 +9935,26 @@ export async function answerTaskClarification(
       body: `The assignee answered the clarification request. The task is ready for check again: ${answer}`,
       excludeUserId: user.id,
     });
-    await sendTaskEmail({
-      to: [task.createdBy.email],
-      subject: `Clarification answered: ${task.title}`,
-      heading: "Assignee answered clarification",
-      intro:
-        "An assignee answered the clarification request. The task is ready for checking again.",
+    await sendTaskManagerEmails({
+      assignerEmail: task.createdBy.email,
+      checkerEmail: task.checker?.email ?? null,
       detail: answer,
       taskTitle: task.title,
       taskId,
-      actionLabel: "Review task",
+      assigner: {
+        subject: `Assignee answered clarification: ${task.title}`,
+        heading: "Assignee answered clarification",
+        intro:
+          "An assignee answered the clarification request. As the assigner, please review the answer and decide whether the task can proceed to approval.",
+        actionLabel: "Review task",
+      },
+      checker: {
+        subject: `Clarification answer ready for checker: ${task.title}`,
+        heading: "Clarification answer ready for checker",
+        intro:
+          "An assignee answered the clarification request. As the checker, please review the answer and confirm whether the task is ready for approval.",
+        actionLabel: "Check answer",
+      },
     });
   }
   revalidatePath("/tasks");
@@ -9773,6 +9976,7 @@ export async function requestAssigneeClarification(
       checkerId: true,
       status: true,
       createdBy: { select: { email: true } },
+      checker: { select: { email: true } },
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
       },
@@ -9860,6 +10064,7 @@ export async function sendTaskClarificationChatMessage(
       checkerId: true,
       status: true,
       createdBy: { select: { email: true } },
+      checker: { select: { email: true } },
       assignments: {
         select: { userId: true, user: { select: { email: true } } },
       },
@@ -9955,16 +10160,26 @@ export async function sendTaskClarificationChatMessage(
         entityId: taskId,
         excludeUserId: currentUserId,
       });
-      await sendTaskEmail({
-        to: [checkedTask.createdBy.email],
-        subject: `Clarification requested: ${checkedTask.title}`,
-        heading: "Clarification requested",
-        intro:
-          "An assignee requested clarification or additional instruction for this task.",
+      await sendTaskManagerEmails({
+        assignerEmail: checkedTask.createdBy.email,
+        checkerEmail: checkedTask.checker?.email ?? null,
         detail: checkedMessage,
         taskTitle: checkedTask.title,
         taskId,
-        actionLabel: "Answer request",
+        assigner: {
+          subject: `Assignee requested clarification: ${checkedTask.title}`,
+          heading: "Assignee requested clarification",
+          intro:
+            "An assignee requested clarification or additional instruction. As the assigner, please answer the request so the work can continue.",
+          actionLabel: "Answer request",
+        },
+        checker: {
+          subject: `Clarification needs checker review: ${checkedTask.title}`,
+          heading: "Clarification needs checker review",
+          intro:
+            "An assignee requested clarification or additional instruction. As the checker, please review the request and help answer it if it falls under your review responsibility.",
+          actionLabel: "Review request",
+        },
       });
       return;
     }
@@ -10106,16 +10321,26 @@ export async function sendTaskClarificationChatMessage(
         body: `The assignee answered the clarification request. The task is ready for check again: ${checkedMessage}`,
         excludeUserId: currentUserId,
       });
-      await sendTaskEmail({
-        to: [checkedTask.createdBy.email],
-        subject: `Clarification answered: ${checkedTask.title}`,
-        heading: "Assignee answered clarification",
-        intro:
-          "An assignee answered the clarification request. The task is ready for checking again.",
+      await sendTaskManagerEmails({
+        assignerEmail: checkedTask.createdBy.email,
+        checkerEmail: checkedTask.checker?.email ?? null,
         detail: checkedMessage,
         taskTitle: checkedTask.title,
         taskId,
-        actionLabel: "Review task",
+        assigner: {
+          subject: `Assignee answered clarification: ${checkedTask.title}`,
+          heading: "Assignee answered clarification",
+          intro:
+            "An assignee answered the clarification request. As the assigner, please review the answer and decide whether the task can proceed to approval.",
+          actionLabel: "Review task",
+        },
+        checker: {
+          subject: `Clarification answer ready for checker: ${checkedTask.title}`,
+          heading: "Clarification answer ready for checker",
+          intro:
+            "An assignee answered the clarification request. As the checker, please review the answer and confirm whether the task is ready for approval.",
+          actionLabel: "Check answer",
+        },
       });
     }
   }

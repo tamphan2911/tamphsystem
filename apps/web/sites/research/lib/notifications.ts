@@ -69,6 +69,13 @@ const creatorEmailNotificationTypes = new Set([
   "TASK_READY_FOR_CHECK",
 ]);
 
+const checkerEmailNotificationTypes = new Set([
+  "TASK_ASSIGNEE_CLARIFICATION_ANSWERED",
+  "TASK_CHECKER_ASSIGNED",
+  "TASK_CLARIFICATION_REQUESTED",
+  "TASK_READY_FOR_CHECK",
+]);
+
 const directProposalEmailNotificationTypes = new Set([
   "PROPOSAL_ACCEPTED",
   "PROPOSAL_DECLINED",
@@ -91,6 +98,7 @@ export function researchNotificationEmailSent({
   recipientId: string;
   task?: {
     createdById: string;
+    checkerId?: string | null;
     assignmentUserIds: string[];
   } | null;
   proposal?: {
@@ -101,12 +109,20 @@ export function researchNotificationEmailSent({
     return Boolean(task?.assignmentUserIds.includes(recipientId));
   }
 
-  if (creatorEmailNotificationTypes.has(type)) {
+  if (
+    creatorEmailNotificationTypes.has(type) ||
+    checkerEmailNotificationTypes.has(type)
+  ) {
     if (type === "TASK_CLARIFICATION_REQUESTED") {
       const normalizedTitle = title?.trim().toLowerCase() ?? "";
       if (normalizedTitle === "clarification message added") return false;
     }
-    return task?.createdById === recipientId;
+    return (
+      (creatorEmailNotificationTypes.has(type) &&
+        task?.createdById === recipientId) ||
+      (checkerEmailNotificationTypes.has(type) &&
+        task?.checkerId === recipientId)
+    );
   }
 
   if (directProposalEmailNotificationTypes.has(type)) {
@@ -116,6 +132,8 @@ export function researchNotificationEmailSent({
   if (mergedProposalEmailNotificationTypes.has(type)) {
     return (
       proposal?.submittedById === recipientId ||
+      task?.createdById === recipientId ||
+      task?.checkerId === recipientId ||
       Boolean(task?.assignmentUserIds.includes(recipientId))
     );
   }
