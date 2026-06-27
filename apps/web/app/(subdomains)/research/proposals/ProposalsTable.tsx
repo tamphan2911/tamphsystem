@@ -51,7 +51,7 @@ export type ProposalRow = {
 };
 
 type SortDirection = "asc" | "desc";
-type ProposalSortKey = "proposal" | "type" | "status" | "submitted" | "contact";
+type ProposalSortKey = "proposal" | "type" | "status" | "submitted";
 
 const typeOptions = ["ALL", "RESEARCH", "PROJECT", "CONFERENCE", "JOURNAL"];
 const statusOptions = ["ALL", "NEW", "REVIEWING", "ACCEPTED", "DECLINED"];
@@ -77,7 +77,6 @@ function parseProposalSortValue(value: string) {
     "type",
     "status",
     "submitted",
-    "contact",
   ];
   if (
     validKeys.includes(key as ProposalSortKey) &&
@@ -292,8 +291,6 @@ export function ProposalsTable({
         result =
           compareProposalText(left.submittedBy, right.submittedBy) ||
           compareProposalText(left.submittedByEmail, right.submittedByEmail);
-      } else if (sort.key === "contact") {
-        result = compareProposalText(left.contactInfo, right.contactInfo);
       }
       return sort.direction === "asc" ? result : -result;
     });
@@ -370,22 +367,20 @@ export function ProposalsTable({
                 />
               </th>
               <th className="w-14 px-2 py-3 text-center">
-                <ProposalSortHeader
+                <ProposalTextSortHeader
                   label="Type"
                   column="type"
                   sort={sort}
                   onChange={updateSort}
-                  alphabetical
                   centered
                 />
               </th>
               <th className="w-14 px-2 py-3 text-center">
-                <ProposalSortHeader
+                <ProposalTextSortHeader
                   label="Status"
                   column="status"
                   sort={sort}
                   onChange={updateSort}
-                  alphabetical
                   centered
                 />
               </th>
@@ -398,15 +393,7 @@ export function ProposalsTable({
                   alphabetical
                 />
               </th>
-              <th className="w-24 px-3 py-3">
-                <ProposalSortHeader
-                  label="Contact"
-                  column="contact"
-                  sort={sort}
-                  onChange={updateSort}
-                  alphabetical
-                />
-              </th>
+              <th className="w-24 px-3 py-3">Contact</th>
               <th className="w-12 px-2 py-3 text-center">File</th>
               {isAdmin && deleteAction && (
                 <th className="w-12 px-2 py-3 text-center">
@@ -575,5 +562,41 @@ function ProposalSortHeader({
         alphabetical={alphabetical}
       />
     </span>
+  );
+}
+
+function ProposalTextSortHeader({
+  label,
+  column,
+  sort,
+  onChange,
+  centered = false,
+}: {
+  label: string;
+  column: ProposalSortKey;
+  sort: ReturnType<typeof parseProposalSortValue>;
+  onChange: (column: ProposalSortKey) => void;
+  centered?: boolean;
+}) {
+  const active = sort?.key === column;
+  const hint =
+    active && sort?.direction === "desc"
+      ? "Clear sorting"
+      : `Sort by ${label.toLowerCase()}`;
+
+  return (
+    <IconHint label={hint}>
+      <button
+        type="button"
+        onClick={() => onChange(column)}
+        aria-label={hint}
+        aria-pressed={active}
+        className={`research-allow-transform inline-flex cursor-pointer items-center border-0 bg-transparent p-0 text-xs font-normal uppercase tracking-wide shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none ${
+          centered ? "justify-center" : ""
+        } ${active ? "text-[#A8DADC]" : "text-inherit"}`}
+      >
+        {label}
+      </button>
+    </IconHint>
   );
 }
