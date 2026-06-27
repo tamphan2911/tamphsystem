@@ -640,6 +640,18 @@ export function TasksClient({
     statuses.length,
     unfinishedOnly,
   ]);
+  const previousNonAdminTabRef = useRef<TaskHeaderTab | null>(null);
+
+  useEffect(() => {
+    if (isAdmin) return;
+    const previousTab = previousNonAdminTabRef.current;
+    previousNonAdminTabRef.current = activeHeaderTab;
+    if (activeHeaderTab !== "related" || previousTab === "related") return;
+
+    setUnfinishedOnlyValue("false");
+    setStatusBeforeUnfinished(null);
+    setStatuses([]);
+  }, [activeHeaderTab, isAdmin, setStatuses, setUnfinishedOnlyValue]);
 
   const scopeTabs: Array<{
     value: TaskHeaderTab;
@@ -797,7 +809,14 @@ export function TasksClient({
     setScopeTab(value);
     pagination.setPage(1);
 
-    if (!isAdmin) return;
+    if (!isAdmin) {
+      if (value === "related") {
+        setUnfinishedOnlyValue("false");
+        setStatusBeforeUnfinished(null);
+        setStatuses([]);
+      }
+      return;
+    }
 
     setQuery("");
     setTaskTypes([]);

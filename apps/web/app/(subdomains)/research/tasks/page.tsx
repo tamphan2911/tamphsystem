@@ -294,7 +294,7 @@ export default async function ResearchTasksPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <TasksClient
-        isAdmin={canManageTasks}
+        isAdmin={isRootAdmin}
         isChiefAssistant={isChiefAssistant}
         canDelete={isRootAdmin}
         deleteAction={deleteResearchTask}
