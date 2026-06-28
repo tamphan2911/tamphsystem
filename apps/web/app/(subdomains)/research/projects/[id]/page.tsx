@@ -1180,6 +1180,7 @@ export default async function ProjectDetailPage({
       }`,
       apc: submission.journal.apc ?? "",
       apcCurrency: submission.journal.apcCurrency,
+      hasApcOption: submission.journal.hasApcOption,
       submissionFee: submission.journal.submissionFee ?? "",
       submissionFeeCurrency: submission.journal.submissionFeeCurrency,
       account: submission.account?.username ?? "",

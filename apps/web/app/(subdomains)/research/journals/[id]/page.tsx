@@ -282,6 +282,7 @@ export default async function JournalDetailPage({
         canViewRegistrationClaim,
         apc: journal.apc ?? "",
         apcCurrency: journal.apcCurrency,
+        hasApcOption: journal.hasApcOption,
         submissionFee: journal.submissionFee ?? "",
         submissionFeeCurrency: journal.submissionFeeCurrency,
         accountId: submission.account?.id ?? "",

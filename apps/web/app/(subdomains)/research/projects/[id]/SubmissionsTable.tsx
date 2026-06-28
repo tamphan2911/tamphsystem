@@ -64,6 +64,7 @@ export type SubmissionRow = {
   venueDetailLine?: string;
   apc: string;
   apcCurrency: string;
+  hasApcOption?: boolean | null;
   submissionFee: string;
   submissionFeeCurrency: string;
   accountId?: string;
@@ -260,19 +261,42 @@ function formDataFromStatusDraft(draft: StatusDraft) {
   return formData;
 }
 
-function MoneyCell({ amount, currency }: { amount: string; currency: string }) {
-  if (!amount) return <span className="text-[#B0B0B0]">-</span>;
-  if (currency === "USD") {
-    return (
-      <span className="inline-flex items-center gap-1.5">
-        <CircleDollarSign className="research-task-icon-motion h-4 w-4 text-[#A8DADC]" />
-        {formatResearchNumber(amount)}
-      </span>
-    );
-  }
-  return (
-    <span>
+function MoneyCell({
+  amount,
+  currency,
+  apcOption,
+}: {
+  amount: string;
+  currency: string;
+  apcOption?: boolean | null;
+}) {
+  const amountNode = !amount ? (
+    <span className="text-[#667085] dark:text-[#B0B0B0]">-</span>
+  ) : currency === "USD" ? (
+    <span className="inline-flex items-center gap-1.5 text-[#1F2937] dark:text-[#E4E4E4]">
+      <CircleDollarSign className="research-task-icon-motion h-4 w-4 text-[#1F7180] dark:text-[#A8DADC]" />
+      {formatResearchNumber(amount)}
+    </span>
+  ) : (
+    <span className="text-[#1F2937] dark:text-[#E4E4E4]">
       {currencySymbol(currency)} {formatResearchNumber(amount)}
+    </span>
+  );
+
+  return (
+    <span className="grid gap-0.5">
+      {amountNode}
+      {typeof apcOption === "boolean" ? (
+        <span
+          className={
+            apcOption
+              ? "text-[11px] font-normal text-emerald-700 dark:text-emerald-300"
+              : "text-[11px] font-normal text-[#A06716] dark:text-[#F4D47A]"
+          }
+        >
+          {apcOption ? "Option" : "No Option"}
+        </span>
+      ) : null}
     </span>
   );
 }
@@ -944,6 +968,9 @@ export function SubmissionsTable({
                         <MoneyCell
                           amount={row.apc}
                           currency={row.apcCurrency}
+                          apcOption={
+                            row.kind === "journal" ? row.hasApcOption : null
+                          }
                         />
                       </td>
                       <td className="px-3 py-3 text-sm text-[#E4E4E4]">
