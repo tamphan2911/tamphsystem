@@ -21,6 +21,15 @@ const guideSupportFileTypesByExtension = new Map([
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ],
 ]);
+const g006SupportFileTypes = new Map([
+  ...guideSupportFileTypes,
+  ["application/vnd.rar", ".rar"],
+  ["application/x-rar-compressed", ".rar"],
+]);
+const g006SupportFileTypesByExtension = new Map([
+  ...guideSupportFileTypesByExtension,
+  ["rar", "application/vnd.rar"],
+]);
 const guideSupportMaxFileSize = 2 * 1024 * 1024;
 
 async function requireAdmin() {
@@ -47,18 +56,28 @@ function guideValues(formData: FormData) {
 
 async function guideSupportFileValues(
   formData: FormData,
-  options: { unlimitedSize?: boolean } = {},
+  options: { allowRar?: boolean; unlimitedSize?: boolean } = {},
 ) {
   const file = formData.get("supportFile");
   if (!(file instanceof File) || file.size === 0) return undefined;
 
   const extension = file.name.toLowerCase().split(".").pop();
-  const allowedByMime = guideSupportFileTypes.has(file.type);
+  const allowedTypes = options.allowRar
+    ? g006SupportFileTypes
+    : guideSupportFileTypes;
+  const allowedExtensions = options.allowRar
+    ? g006SupportFileTypesByExtension
+    : guideSupportFileTypesByExtension;
+  const allowedByMime = allowedTypes.has(file.type);
   const allowedByExtension =
-    Boolean(extension) && guideSupportFileTypesByExtension.has(extension ?? "");
+    Boolean(extension) && allowedExtensions.has(extension ?? "");
 
   if (!allowedByMime && !allowedByExtension) {
-    throw new Error("Upload only .doc, .docx, or .pdf support files.");
+    throw new Error(
+      options.allowRar
+        ? "Upload only .doc, .docx, .pdf, or .rar support files."
+        : "Upload only .doc, .docx, or .pdf support files.",
+    );
   }
   if (!options.unlimitedSize && file.size > guideSupportMaxFileSize) {
     throw new Error("Support file must be 2 MB or smaller.");
@@ -66,8 +85,7 @@ async function guideSupportFileValues(
 
   return {
     supportFileName: file.name,
-    supportFileType:
-      file.type || guideSupportFileTypesByExtension.get(extension ?? "") || "",
+    supportFileType: file.type || allowedExtensions.get(extension ?? "") || "",
     supportFileSize: file.size,
     supportFileData: Buffer.from(await file.arrayBuffer()),
   };
@@ -118,6 +136,7 @@ export async function updateTaskGuide(id: string, formData: FormData) {
     select: { guideCode: true },
   });
   const supportFile = await guideSupportFileValues(formData, {
+    allowRar: currentGuide?.guideCode === "G006",
     unlimitedSize: currentGuide?.guideCode === "G006",
   });
   await prisma.taskGuide.update({

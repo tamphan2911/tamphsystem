@@ -43,6 +43,12 @@ export function TaskGuideDialog({
   const toast = useResearchToast();
   const isEdit = mode === "edit";
   const hasUnlimitedSupportFileSize = initialValues?.guideCode === "G006";
+  const acceptedSupportFileText = hasUnlimitedSupportFileSize
+    ? ".doc, .docx, .pdf, .rar"
+    : ".doc, .docx, .pdf";
+  const supportFileAccept = hasUnlimitedSupportFileSize
+    ? ".doc,.docx,.pdf,.rar,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,application/vnd.rar,application/x-rar-compressed"
+    : ".doc,.docx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf";
 
   return (
     <>
@@ -184,7 +190,7 @@ export function TaskGuideDialog({
               <input
                 name="supportFile"
                 type="file"
-                accept=".doc,.docx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
+                accept={supportFileAccept}
                 className="min-w-0 flex-1 cursor-pointer text-sm file:mr-3 file:border-0 file:bg-[#1F7180] file:px-3 file:py-1.5 file:text-sm file:font-normal file:text-white hover:file:bg-[#155864] dark:file:bg-[#A8DADC] dark:file:text-[#1F2937]"
               />
             </span>
@@ -197,7 +203,7 @@ export function TaskGuideDialog({
                   }. Optional replacement${
                     hasUnlimitedSupportFileSize ? "" : ", maximum 2 MB"
                   }.`
-                : `Optional. Accepted formats: .doc, .docx, .pdf.${
+                : `Optional. Accepted formats: ${acceptedSupportFileText}.${
                     hasUnlimitedSupportFileSize ? "" : " Maximum 2 MB."
                   }`}
             </span>
