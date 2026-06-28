@@ -85,7 +85,12 @@ type ProfileTaskRow = {
   updatedAt: string;
 };
 
-type TabKey = "dashboard" | "research" | "projects" | "proposals";
+type TabKey =
+  | "dashboard"
+  | "chiefAssistant"
+  | "research"
+  | "projects"
+  | "proposals";
 type PeriodKey =
   | "all"
   | "lastWeek"
@@ -377,6 +382,7 @@ export function ProfileClient({
   projectRows,
   proposalRows,
   taskRows,
+  checkerTaskRows,
   canEditProfile,
   canChangePassword,
 }: {
@@ -385,6 +391,7 @@ export function ProfileClient({
   projectRows: OrganizedProjectRow[];
   proposalRows: ProposalRow[];
   taskRows: ProfileTaskRow[];
+  checkerTaskRows: ProfileTaskRow[];
   canEditProfile: boolean;
   canChangePassword: boolean;
 }) {
@@ -397,6 +404,7 @@ export function ProfileClient({
   const isAssistantProfile = user.roles.some(
     (role) => role === "ASSISTANT" || role === "CHIEF_ASSISTANT",
   );
+  const isChiefAssistantProfile = user.roles.includes("CHIEF_ASSISTANT");
   const [activeTab, setActiveTab] = useState<TabKey>(() =>
     isAssistantProfile ? "dashboard" : "research",
   );
@@ -406,6 +414,13 @@ export function ProfileClient({
   );
   const [dashboardStatus, setDashboardStatus] =
     usePersistentTableValue<DashboardStatusKey>("profile:status", "all");
+  const [checkerPeriod, setCheckerPeriod] =
+    usePersistentTableValue<PeriodKey>("profile:checker-period", "all");
+  const [checkerDashboardStatus, setCheckerDashboardStatus] =
+    usePersistentTableValue<DashboardStatusKey>(
+      "profile:checker-status",
+      "all",
+    );
 
   async function saveProfile(formData: FormData) {
     setIsSaving(true);
@@ -479,6 +494,16 @@ export function ProfileClient({
       value: taskRows.length,
       icon: BarChart3,
     },
+    ...(isChiefAssistantProfile
+      ? [
+          {
+            key: "chiefAssistant" as const,
+            label: "Chief assistant",
+            value: checkerTaskRows.length,
+            icon: ShieldCheck,
+          },
+        ]
+      : []),
     {
       key: "research" as const,
       label: "Research",
@@ -524,6 +549,36 @@ export function ProfileClient({
       : Math.round(
           (periodTasks.filter((task) => task.status === "COMPLETED").length /
             periodTasks.length) *
+            100,
+        );
+  const checkerPeriodTasks = useMemo(
+    () => checkerTaskRows.filter((task) => isTaskInPeriod(task, checkerPeriod)),
+    [checkerPeriod, checkerTaskRows],
+  );
+  const checkerStatusTabs = useMemo(
+    () => dashboardStatusTabs(checkerPeriodTasks),
+    [checkerPeriodTasks],
+  );
+  const filteredCheckerTasks = useMemo(
+    () =>
+      checkerPeriodTasks
+        .filter((task) =>
+          matchesDashboardStatus(task, checkerDashboardStatus),
+        )
+        .sort(
+          (left, right) =>
+            new Date(right.updatedAt).getTime() -
+            new Date(left.updatedAt).getTime(),
+        ),
+    [checkerDashboardStatus, checkerPeriodTasks],
+  );
+  const checkerCompletionRate =
+    checkerPeriodTasks.length === 0
+      ? 0
+      : Math.round(
+          (checkerPeriodTasks.filter((task) => task.status === "COMPLETED")
+            .length /
+            checkerPeriodTasks.length) *
             100,
         );
 
@@ -635,7 +690,11 @@ export function ProfileClient({
         )}
 
         <section className="space-y-3">
-          <div className="journal-detail-tabs grid w-full grid-cols-4 border border-[#444444] bg-[#242424] p-1 text-center">
+          <div
+            className={`journal-detail-tabs grid w-full grid-cols-2 border border-[#444444] bg-[#242424] p-1 text-center ${
+              tabs.length > 4 ? "sm:grid-cols-5" : "sm:grid-cols-4"
+            }`}
+          >
             {tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -666,6 +725,23 @@ export function ProfileClient({
               completionRate={completionRate}
               statusTabs={statusTabs}
               filteredTasks={filteredTasks}
+              tableStorageKey="profile-dashboard-tasks"
+            />
+          )}
+
+          {activeTab === "chiefAssistant" && (
+            <TaskDashboard
+              title="Checker Performance"
+              summaryLabel="checker task"
+              period={checkerPeriod}
+              onPeriodChange={setCheckerPeriod}
+              dashboardStatus={checkerDashboardStatus}
+              onDashboardStatusChange={setCheckerDashboardStatus}
+              total={checkerPeriodTasks.length}
+              completionRate={checkerCompletionRate}
+              statusTabs={checkerStatusTabs}
+              filteredTasks={filteredCheckerTasks}
+              tableStorageKey="profile-checker-dashboard-tasks"
             />
           )}
 
@@ -864,6 +940,8 @@ export function ProfileClient({
 }
 
 function TaskDashboard({
+  title = "Task Performance",
+  summaryLabel = "task",
   period,
   onPeriodChange,
   dashboardStatus,
@@ -872,7 +950,10 @@ function TaskDashboard({
   completionRate,
   statusTabs,
   filteredTasks,
+  tableStorageKey,
 }: {
+  title?: string;
+  summaryLabel?: string;
   period: PeriodKey;
   onPeriodChange: (period: PeriodKey) => void;
   dashboardStatus: DashboardStatusKey;
@@ -881,6 +962,7 @@ function TaskDashboard({
   completionRate: number;
   statusTabs: { key: DashboardStatusKey; label: string; value: number }[];
   filteredTasks: ProfileTaskRow[];
+  tableStorageKey: string;
 }) {
   const overdueCount =
     statusTabs.find((item) => item.key === "overdue")?.value ?? 0;
@@ -894,17 +976,19 @@ function TaskDashboard({
       <div className="flex flex-col gap-3 border-b border-[#444444] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
-            Task Performance
+            {title}
           </p>
           <p className="mt-1 text-sm text-[#E4E4E4]">
-            {total} task{total === 1 ? "" : "s"} tracked - {completionRate}%
-            completion rate
+            {total} {summaryLabel}
+            {total === 1 ? "" : "s"} tracked - {completionRate}% completion
+            rate
           </p>
           <p className="mt-1 text-xs text-[#B0B0B0]">
-            {activeCount} active task{activeCount === 1 ? "" : "s"} and{" "}
+            {activeCount} active {summaryLabel}
+            {activeCount === 1 ? "" : "s"} and{" "}
             {overdueCount} overdue
             {revokedCount > 0
-              ? `, with ${revokedCount} revoked task${revokedCount === 1 ? "" : "s"}`
+              ? `, with ${revokedCount} revoked ${summaryLabel}${revokedCount === 1 ? "" : "s"}`
               : ""}{" "}
             in the selected period.
           </p>
@@ -959,15 +1043,21 @@ function TaskDashboard({
           ))}
         </div>
 
-        <ProfileTaskTable rows={filteredTasks} />
+        <ProfileTaskTable rows={filteredTasks} storageKey={tableStorageKey} />
       </div>
     </div>
   );
 }
 
-function ProfileTaskTable({ rows }: { rows: ProfileTaskRow[] }) {
+function ProfileTaskTable({
+  rows,
+  storageKey,
+}: {
+  rows: ProfileTaskRow[];
+  storageKey: string;
+}) {
   const [sortValue, setSortValue] = usePersistentTableValue(
-    "profile:task-sort",
+    `${storageKey}:sort`,
     "NONE",
   );
   const sort = useMemo(() => parseProfileTaskSortValue(sortValue), [sortValue]);
@@ -997,7 +1087,7 @@ function ProfileTaskTable({ rows }: { rows: ProfileTaskRow[] }) {
     sortedRows,
     10,
     1,
-    "profile-dashboard-tasks",
+    storageKey,
   );
 
   function updateSort(key: ProfileTaskSortKey) {

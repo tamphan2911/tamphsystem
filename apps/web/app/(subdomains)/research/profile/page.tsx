@@ -113,6 +113,7 @@ export default async function ResearchProfilePage({
     organizedProjects,
     proposals,
     taskAssignments,
+    checkerTasks,
   ] = await Promise.all([
     prisma.user.findUnique({
       where: { id: profileUserId },
@@ -231,6 +232,30 @@ export default async function ResearchProfilePage({
         },
       },
       orderBy: { createdAt: "desc" },
+    }),
+    prisma.researchTask.findMany({
+      where: { checkerId: profileUserId },
+      select: {
+        id: true,
+        taskCode: true,
+        title: true,
+        description: true,
+        category: true,
+        status: true,
+        taskType: true,
+        dueDate: true,
+        completedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        assignments: { select: { userId: true, finishedAt: true } },
+        clarifications: {
+          where: { answer: null },
+          select: { requestedById: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
+      orderBy: { updatedAt: "desc" },
     }),
   ]);
 
@@ -371,6 +396,42 @@ export default async function ResearchProfilePage({
       updatedAt: assignment.task.updatedAt.toISOString(),
     };
   });
+  const checkerTaskRows = checkerTasks.map((task) => {
+    const openClarification = task.clarifications[0] ?? null;
+    const clarifyDirection = openClarification
+      ? task.assignments.some(
+          (taskAssignment) =>
+            taskAssignment.userId === openClarification.requestedById,
+        )
+        ? ("ASSIGNEE_TO_MANAGER" as const)
+        : ("MANAGER_TO_ASSIGNEE" as const)
+      : null;
+    const latestFinishedAt = task.assignments.reduce<Date | null>(
+      (latest, assignment) => {
+        if (!assignment.finishedAt) return latest;
+        return !latest || assignment.finishedAt > latest
+          ? assignment.finishedAt
+          : latest;
+      },
+      null,
+    );
+
+    return {
+      id: task.id,
+      taskCode: task.taskCode,
+      title: task.title,
+      description: task.description ?? "",
+      category: task.category ?? "",
+      status: task.status,
+      clarifyDirection,
+      taskType: task.taskType ?? "OTHER",
+      dueDate: task.dueDate?.toISOString() ?? null,
+      completedAt: task.completedAt?.toISOString() ?? null,
+      finishedAt: latestFinishedAt?.toISOString() ?? null,
+      createdAt: task.createdAt.toISOString(),
+      updatedAt: task.updatedAt.toISOString(),
+    };
+  });
 
   return (
     <ProfileClient
@@ -385,6 +446,7 @@ export default async function ResearchProfilePage({
       projectRows={projectRows}
       proposalRows={proposalRows}
       taskRows={taskRows}
+      checkerTaskRows={checkerTaskRows}
       canEditProfile={!viewingAnotherUser || viewer.roles.includes(Role.ADMIN)}
       canChangePassword={!viewingAnotherUser}
     />
