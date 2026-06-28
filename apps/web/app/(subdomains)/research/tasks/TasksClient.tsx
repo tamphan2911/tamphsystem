@@ -10,9 +10,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   AlarmClockCheck,
   AlertTriangle,
-  ArrowDownAZ,
   ArrowUpDown,
-  ArrowUpZA,
   Ban,
   CheckCircle2,
   CircleHelp,
@@ -622,7 +620,12 @@ export function TasksClient({
     "tasks:timeSort",
     "none",
   );
+  const [checkerNeedsActionOnlyValue, setCheckerNeedsActionOnlyValue] =
+    usePersistentTableValue("tasks:checkerNeedsActionOnly", "false", {
+      persistDefaultValue: true,
+    });
   const unfinishedOnly = unfinishedOnlyValue === "true";
+  const checkerNeedsActionOnly = checkerNeedsActionOnlyValue === "true";
   const [statusBeforeUnfinished, setStatusBeforeUnfinished] = useState<
     string[] | null
   >(null);
@@ -865,6 +868,11 @@ export function TasksClient({
         !isAdmin ||
         checkerIds.length === 0 ||
         checkerIds.includes(task.checkerId);
+      const matchesCheckerNeedsAction =
+        !checkerNeedsActionOnly ||
+        !isChiefAssistant ||
+        activeHeaderTab !== "checker" ||
+        Boolean(task.managerAction);
       const haystack = [
         displayTaskId(task),
         task.title,
@@ -888,10 +896,21 @@ export function TasksClient({
         matchesStatus &&
         matchesType &&
         matchesChecker &&
+        matchesCheckerNeedsAction &&
         (!needle || haystack.includes(needle))
       );
     });
-  }, [activeHeaderTab, checkerIds, isAdmin, query, statuses, taskTypes, tasks]);
+  }, [
+    activeHeaderTab,
+    checkerIds,
+    checkerNeedsActionOnly,
+    isAdmin,
+    isChiefAssistant,
+    query,
+    statuses,
+    taskTypes,
+    tasks,
+  ]);
   const sortedRows = useMemo(() => {
     if (timeSort === "none") return filtered;
     const nowMs = Date.now();
@@ -979,6 +998,11 @@ export function TasksClient({
     pagination.setPage(1);
   }
 
+  function toggleCheckerNeedsActionOnly(checked: boolean) {
+    setCheckerNeedsActionOnlyValue(checked ? "true" : "false");
+    pagination.setPage(1);
+  }
+
   function updateTaskTypes(values: string[]) {
     setTaskTypes(values);
     pagination.setPage(1);
@@ -997,12 +1021,7 @@ export function TasksClient({
   }
 
   const adminFilterWidth = isAdmin ? "sm:w-40 lg:w-44" : undefined;
-  const TimeSortIcon =
-    timeSort === "asc"
-      ? ArrowDownAZ
-      : timeSort === "desc"
-        ? ArrowUpZA
-        : ArrowUpDown;
+  const TimeSortIcon = ArrowUpDown;
   const timeSortLabel =
     timeSort === "asc"
       ? "Sort time left from longest to shortest"
@@ -1072,6 +1091,25 @@ export function TasksClient({
                 ariaLabel="Filter by checker"
                 options={checkerOptions}
               />
+            ) : null}
+            {!isAdmin &&
+            isChiefAssistant &&
+            activeHeaderTab === "checker" ? (
+              <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 transition-colors duration-150 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white">
+                <input
+                  type="checkbox"
+                  checked={checkerNeedsActionOnly}
+                  onChange={(event) =>
+                    toggleCheckerNeedsActionOnly(event.currentTarget.checked)
+                  }
+                  className="h-4 w-4 cursor-pointer rounded-none border-slate-300 text-sky-700 accent-[#1F7180] dark:border-[#666666] dark:accent-[#A8DADC]"
+                />
+                <IconHint label="Shows only tasks waiting for checker, assigner, or task manager action.">
+                  <span className="whitespace-nowrap text-left">
+                    Need checker action
+                  </span>
+                </IconHint>
+              </label>
             ) : null}
             <MultiFilterSelect
               className={adminFilterWidth}
