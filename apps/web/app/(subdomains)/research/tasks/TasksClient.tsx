@@ -76,6 +76,7 @@ type TaskRow = {
     label: string;
     startedAt: string;
   } | null;
+  waitingForJournalCreation: boolean;
   scope: {
     assignedToMe: boolean;
     relatedToMyItems: boolean;
@@ -368,6 +369,20 @@ function statusMeta(task: TaskRow) {
         "border-cyan-200 bg-cyan-50 text-cyan-800 dark:border-cyan-300/40 dark:bg-cyan-950/25 dark:text-cyan-200",
       detailClassName: activeDue.detailClassName,
       secondaryDetailClassName: "text-cyan-700 dark:text-cyan-300",
+    };
+  }
+
+  if (task.waitingForJournalCreation) {
+    const activeDue = activeDueMeta(due, remainingMs);
+    return {
+      label: "In progress",
+      detail: activeDue.detail,
+      dateLines: due ? [`Due: ${formatDate(task.dueDate)}`] : [],
+      secondaryDetail: "Waiting for assignee to add journal",
+      className:
+        "border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-300/40 dark:bg-yellow-950/25 dark:text-yellow-200",
+      detailClassName: activeDue.detailClassName,
+      secondaryDetailClassName: "text-[#1F7180] dark:text-[#A8DADC]",
     };
   }
 
@@ -905,6 +920,9 @@ export function TasksClient({
         productionSubtypeLabel(task.productionSubtype),
         task.category,
         statusMeta(task).label,
+        task.waitingForJournalCreation
+          ? "Waiting for assignee to add journal"
+          : "",
         task.createdBy,
         task.checker,
         ...task.assignments.flatMap((item) => [
@@ -1116,9 +1134,7 @@ export function TasksClient({
                 options={checkerOptions}
               />
             ) : null}
-            {!isAdmin &&
-            isChiefAssistant &&
-            activeHeaderTab === "checker" ? (
+            {!isAdmin && isChiefAssistant && activeHeaderTab === "checker" ? (
               <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 transition-colors duration-150 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white">
                 <input
                   type="checkbox"
@@ -1311,8 +1327,7 @@ export function TasksClient({
                           {status.detail}
                         </p>
                       )}
-                      {"secondaryDetail" in status &&
-                      status.secondaryDetail ? (
+                      {"secondaryDetail" in status && status.secondaryDetail ? (
                         <p
                           className={`max-w-full break-words text-xs font-normal leading-5 ${status.secondaryDetailClassName}`}
                         >

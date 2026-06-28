@@ -151,6 +151,14 @@ export async function GET() {
           orderBy: { createdAt: "desc" },
           take: 5,
         },
+        suggestedJournals: {
+          select: {
+            status: true,
+            journalCreationTask: {
+              select: { status: true },
+            },
+          },
+        },
       },
       orderBy: [
         { dueDate: { sort: "desc", nulls: "last" } },
@@ -211,8 +219,7 @@ export async function GET() {
             clarification.answer &&
             clarification.answeredAt &&
             !task.assignments.some(
-              (assignment) =>
-                assignment.userId === clarification.requestedById,
+              (assignment) => assignment.userId === clarification.requestedById,
             ),
         )
         .sort(
@@ -222,17 +229,28 @@ export async function GET() {
         )[0];
       const managerActionStartedAt =
         task.status === ResearchTaskStatus.CHECKING
-          ? [
+          ? ([
               latestFinishedAt,
               latestManagerClarificationAnswer?.answeredAt ?? null,
             ].reduce<Date | null>((latest, value) => {
               if (!value) return latest;
               return !latest || value > latest ? value : latest;
-            }, null) ?? task.updatedAt
+            }, null) ?? task.updatedAt)
           : task.status === ResearchTaskStatus.NEED_CLARIFY &&
               clarifyDirection === "ASSIGNEE_TO_MANAGER"
-            ? openClarification?.createdAt ?? task.updatedAt
+            ? (openClarification?.createdAt ?? task.updatedAt)
             : null;
+      const waitingForJournalCreation =
+        task.taskType === "SUGGEST_VENUE" &&
+        task.suggestedJournals.some(
+          (suggestion) =>
+            suggestion.status === "PENDING" &&
+            suggestion.journalCreationTask &&
+            suggestion.journalCreationTask.status !==
+              ResearchTaskStatus.COMPLETED &&
+            suggestion.journalCreationTask.status !==
+              ResearchTaskStatus.REVOKED,
+        );
 
       return {
         id: task.id,
@@ -274,6 +292,7 @@ export async function GET() {
               startedAt: managerActionStartedAt.toISOString(),
             }
           : null,
+        waitingForJournalCreation,
         scope: {
           assignedToMe,
           checkerForMe,

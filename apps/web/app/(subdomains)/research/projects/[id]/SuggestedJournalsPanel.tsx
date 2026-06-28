@@ -713,7 +713,7 @@ export function SuggestedJournalsPanel({
               ? "Venue approved and linked to submit task"
               : "Venue suggestion approved",
         detail: taskCreated
-          ? `An Add Journal task was assigned for ${approveVenue.item.name}. The suggestion remains pending until the journal is approved.`
+          ? `An Add Journal task was assigned for ${approveVenue.item.name}. The suggest venue task is back in progress while the assignee adds the journal.`
           : submitTaskCreated
             ? `A submit task was assigned to the user who suggested ${approveVenue.item.name}.`
             : submitTaskLinked

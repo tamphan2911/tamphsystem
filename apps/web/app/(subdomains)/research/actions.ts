@@ -4469,7 +4469,12 @@ async function approveJournalWithWorkflow(
             journalTargetCount: true,
             assignments: { select: { userId: true } },
             journalCreationSuggestion: {
-              select: { id: true, projectId: true, createdById: true },
+              select: {
+                id: true,
+                projectId: true,
+                taskId: true,
+                createdById: true,
+              },
             },
           },
         },
@@ -4571,6 +4576,7 @@ async function approveJournalWithWorkflow(
         taskTitle: workflowTask.title,
         suggestionId: suggestion?.id ?? null,
         projectId: suggestion?.projectId ?? null,
+        suggestVenueTaskId: suggestion?.taskId ?? null,
         suggesterId: suggestion?.createdById ?? null,
         assigneeIds: workflowTask.assignments.map(
           (assignment) => assignment.userId,
@@ -4584,6 +4590,15 @@ async function approveJournalWithWorkflow(
   revalidatePath("/journals");
   revalidatePath(`/journals/${journalId}`);
   if (result.taskId) revalidatePath(`/tasks/${result.taskId}`);
+  const completedSuggestTask = result.workflow?.suggestVenueTaskId
+    ? await completeSuggestVenueTaskIfReady(
+        result.workflow.suggestVenueTaskId,
+        approvedById,
+      )
+    : null;
+  if (completedSuggestTask) {
+    revalidatePath(`/tasks/${completedSuggestTask.taskId}`);
+  }
   if (result.workflow?.taskCompleted || result.workflow?.suggestionId) {
     revalidatePath("/tasks");
     if (result.workflow.projectId)
@@ -4593,6 +4608,9 @@ async function approveJournalWithWorkflow(
     if (result.workflow.suggesterId) {
       recipientIds.add(result.workflow.suggesterId);
     }
+    completedSuggestTask?.assigneeIds.forEach((assigneeId) =>
+      recipientIds.add(assigneeId),
+    );
     const body = [
       `${result.journalName} was approved.`,
       result.workflow.suggestionId
@@ -4601,6 +4619,9 @@ async function approveJournalWithWorkflow(
       result.workflow.completionNote
         ? `${result.workflow.taskTitle} was completed automatically. ${result.workflow.completionNote}`
         : null,
+      completedSuggestTask
+        ? `${completedSuggestTask.taskTitle} was approved as complete automatically. ${completedSuggestTask.note}`
+        : null,
     ]
       .filter(Boolean)
       .join("\n");
@@ -4608,11 +4629,15 @@ async function approveJournalWithWorkflow(
       userIds: Array.from(recipientIds),
       type: "VENUE_SUGGESTION_APPROVED",
       title:
-        result.workflow.suggestionId && result.workflow.taskCompleted
-          ? "Venue approved and task completed"
-          : result.workflow.taskCompleted
-            ? "Add journal task completed"
-            : "Venue suggestion approved",
+        completedSuggestTask && result.workflow.taskCompleted
+          ? "Venue approved and tasks completed"
+          : result.workflow.suggestionId && result.workflow.taskCompleted
+            ? "Venue approved and task completed"
+            : completedSuggestTask
+              ? "Venue approved and suggest venue task completed"
+              : result.workflow.taskCompleted
+                ? "Add journal task completed"
+                : "Venue suggestion approved",
       summary: result.journalName,
       body,
       href: result.workflow.taskCompleted
@@ -5276,6 +5301,46 @@ async function completeSuggestVenueTaskIfReady(
     assigneeIds: task.assignments.map((assignment) => assignment.userId),
     assigneeEmails: task.assignments.map((assignment) => assignment.user.email),
   };
+}
+
+async function markSuggestVenueTaskWaitingForJournalCreation(
+  taskId: string | null | undefined,
+) {
+  if (!taskId) return null;
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: { id: true, taskType: true, status: true },
+  });
+  if (!task || task.taskType !== ResearchTaskType.SUGGEST_VENUE) return null;
+  if (
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    return null;
+  }
+
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: {
+      status: ResearchTaskStatus.IN_PROGRESS,
+      completedAt: null,
+      completedById: null,
+      completionMessage: null,
+      redoRequestedAt: null,
+      redoRequestedById: null,
+      redoReason: null,
+      adminViewedAt: null,
+      assignments: {
+        updateMany: {
+          where: {},
+          data: { finishedAt: null },
+        },
+      },
+    },
+  });
+
+  return task.id;
 }
 
 async function markSuggestVenueTaskReadyIfFilled(
@@ -8852,6 +8917,7 @@ export async function approveSuggestedJournal(
       createdBy: { select: { email: true } },
       project: { select: { title: true } },
       task: { select: { createdById: true, checkerId: true } },
+      journalCreationTask: { select: { status: true } },
     },
   });
   if (!suggestion || suggestion.projectId !== projectId) return;
@@ -8864,6 +8930,18 @@ export async function approveSuggestedJournal(
     }
     const suggesterId = suggestion.createdById;
     if (suggestion.journalCreationTaskId) {
+      if (
+        suggestion.journalCreationTask?.status !==
+          ResearchTaskStatus.COMPLETED &&
+        suggestion.journalCreationTask?.status !== ResearchTaskStatus.REVOKED
+      ) {
+        await markSuggestVenueTaskWaitingForJournalCreation(suggestion.taskId);
+        if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
+        revalidatePath("/tasks");
+      }
+      revalidatePath(`/tasks/${suggestion.journalCreationTaskId}`);
+      revalidatePath(`/projects/${projectId}`);
+      revalidatePath("/suggestions");
       return {
         taskCreated: true,
         taskId: suggestion.journalCreationTaskId,
@@ -8913,6 +8991,7 @@ export async function approveSuggestedJournal(
       });
       return createdTask;
     });
+    await markSuggestVenueTaskWaitingForJournalCreation(suggestion.taskId);
 
     await notifyUsers({
       userIds: [suggesterId],
@@ -8938,6 +9017,7 @@ export async function approveSuggestedJournal(
 
     revalidatePath("/tasks");
     revalidatePath(`/tasks/${task.id}`);
+    if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
     revalidatePath(`/projects/${projectId}`);
     revalidatePath("/suggestions");
     return { taskCreated: true, taskId: task.id };

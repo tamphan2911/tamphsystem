@@ -29,6 +29,8 @@ export type TaskSuggestedVenueResult = {
   venueNote: string | null;
   declineReason: string | null;
   venueLink: string | null;
+  journalCreationTaskId?: string | null;
+  journalCreationTaskStatus?: string | null;
   createdAt: string;
 };
 
@@ -228,6 +230,13 @@ export function TaskSuggestedVenueResults({
 }
 
 function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
+  const waitingForJournalCreation =
+    venue.kind === "journal" &&
+    venue.status === "PENDING" &&
+    venue.journalCreationTaskId &&
+    venue.journalCreationTaskStatus !== "COMPLETED" &&
+    venue.journalCreationTaskStatus !== "REVOKED";
+
   return (
     <article className="min-h-52 border border-[#D8D0C2] bg-[#FFFDF8] p-4 dark:border-[#444444] dark:bg-[#262626]">
       <div className="flex min-w-0 items-start justify-between gap-3">
@@ -293,6 +302,14 @@ function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
         >
           Open venue <ExternalLink className="h-3.5 w-3.5" />
         </a>
+      ) : null}
+      {waitingForJournalCreation ? (
+        <Link
+          href={`/tasks/${venue.journalCreationTaskId}`}
+          className="research-allow-transform mt-3 inline-flex items-center gap-1.5 text-xs font-normal text-[#1F7180] transition hover:-translate-y-0.5 hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+        >
+          Waiting for assignee to add journal
+        </Link>
       ) : null}
       {venue.journalNote ? (
         <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">

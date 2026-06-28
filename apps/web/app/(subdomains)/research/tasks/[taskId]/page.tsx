@@ -143,6 +143,7 @@ function statusMeta(task: {
   completedAt: Date | null;
   revokedAt?: Date | null;
   clarifyDirection?: "ASSIGNEE_TO_MANAGER" | "MANAGER_TO_ASSIGNEE" | null;
+  waitingForJournalCreation?: boolean;
 }) {
   const now = new Date();
 
@@ -209,6 +210,15 @@ function statusMeta(task: {
           : "Waiting for task manager answer",
       tone: "cyan" as const,
       timeTone: "cyan" as const,
+    };
+  }
+
+  if (task.waitingForJournalCreation) {
+    return {
+      label: "In progress",
+      detail: "Waiting for assignee to add journal",
+      tone: "blue" as const,
+      timeTone: "blue" as const,
     };
   }
 
@@ -1075,6 +1085,9 @@ export default async function TaskDetailPage({
           },
           journalCreationTask: {
             select: {
+              id: true,
+              title: true,
+              status: true,
               addedJournals: {
                 orderBy: { resultPosition: "asc" },
                 take: 1,
@@ -1693,7 +1706,21 @@ export default async function TaskDetailPage({
       ? "ASSIGNEE_TO_MANAGER"
       : "MANAGER_TO_ASSIGNEE"
     : null;
-  const meta = statusMeta({ ...task, clarifyDirection });
+  const waitingForJournalCreation =
+    task.taskType === ResearchTaskType.SUGGEST_VENUE &&
+    task.suggestedJournals.some(
+      (suggestion) =>
+        suggestion.status === "PENDING" &&
+        suggestion.journalCreationTask &&
+        suggestion.journalCreationTask.status !==
+          ResearchTaskStatus.COMPLETED &&
+        suggestion.journalCreationTask.status !== ResearchTaskStatus.REVOKED,
+    );
+  const meta = statusMeta({
+    ...task,
+    clarifyDirection,
+    waitingForJournalCreation,
+  });
   const taskResult =
     task.status === ResearchTaskStatus.COMPLETED
       ? {
@@ -2184,6 +2211,9 @@ export default async function TaskDetailPage({
         venueNote: suggestion.note ?? null,
         declineReason: suggestion.declineReason,
         venueLink: suggestion.venueLink ?? journal?.homepageLink ?? null,
+        journalCreationTaskId: suggestion.journalCreationTask?.id ?? null,
+        journalCreationTaskStatus:
+          suggestion.journalCreationTask?.status ?? null,
         createdAt: suggestion.createdAt.toISOString(),
       };
     }),
