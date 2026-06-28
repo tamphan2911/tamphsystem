@@ -102,16 +102,30 @@ export function TaskSuggestedVenueResults({
             type="button"
             disabled={!canCreate}
             onClick={() => setDialogOpen(true)}
-            className="research-allow-transform flex min-h-52 cursor-pointer flex-col items-center justify-center border border-dashed border-[#C9BEAD] bg-[#FFFDF8] p-5 text-center transition hover:-translate-y-0.5 hover:border-[#1F7180] hover:bg-[#F8F3EA] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#555555] dark:bg-[#242424] dark:hover:border-[#A8DADC] dark:hover:bg-[#2B2B2B]"
+            className="research-allow-transform group min-h-52 cursor-pointer border border-dashed border-[#C9BEAD] bg-[#FFFDF8] p-4 text-left transition hover:-translate-y-0.5 hover:border-[#1F7180] hover:bg-[#F8F3EA] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#555555] dark:bg-[#242424] dark:hover:border-[#A8DADC] dark:hover:bg-[#2B2B2B]"
           >
-            <span className="flex h-10 w-10 items-center justify-center border border-[#D8D0C2] text-[#1F7180] dark:border-[#444444] dark:text-[#A8DADC]">
-              <Plus className="h-5 w-5" />
+            <span className="flex items-start justify-between gap-3">
+              <span className="min-w-0 flex-1">
+                <span className="block h-3 w-16 bg-[#E5DED2] dark:bg-[#3A3A3A]" />
+                <span className="mt-3 block h-4 w-4/5 bg-[#D8D0C2] transition group-hover:bg-[#C9BEAD] dark:bg-[#444444] dark:group-hover:bg-[#555555]" />
+              </span>
+              <span className="h-6 w-20 flex-none border border-[#E5DED2] bg-[#F3EDE3] dark:border-[#444444] dark:bg-[#333333]" />
             </span>
-            <span className="mt-3 text-sm text-[#1F2937] dark:text-[#E4E4E4]">
-              Add suggested venue
+            <span className="mt-4 block h-3 w-full bg-[#EDE6DA] dark:bg-[#333333]" />
+            <span className="mt-2 block h-3 w-2/3 bg-[#EDE6DA] dark:bg-[#333333]" />
+            <span className="mt-5 grid gap-2">
+              <span className="block h-3 w-28 bg-[#E5DED2] dark:bg-[#3A3A3A]" />
+              <span className="block h-3 w-36 bg-[#E5DED2] dark:bg-[#3A3A3A]" />
+              <span className="block h-3 w-32 bg-[#E5DED2] dark:bg-[#3A3A3A]" />
             </span>
-            <span className="mt-1 text-xs text-[#667085] dark:text-[#8F8F8F]">
-              Slot {activeVenueCount + index + 1}
+            <span className="mt-5 inline-flex items-center gap-2 text-xs text-[#1F7180] transition group-hover:text-[#155967] dark:text-[#A8DADC] dark:group-hover:text-[#C9F0F2]">
+              <span className="flex h-7 w-7 items-center justify-center border border-[#D8D0C2] bg-white dark:border-[#444444] dark:bg-[#202020]">
+                <Plus className="h-4 w-4" />
+              </span>
+              <span>Add suggested venue</span>
+              <span className="text-[#667085] dark:text-[#8F8F8F]">
+                Slot {activeVenueCount + index + 1}
+              </span>
             </span>
           </button>
         ))}
