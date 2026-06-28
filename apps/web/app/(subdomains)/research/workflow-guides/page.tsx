@@ -239,7 +239,7 @@ export default async function WorkflowGuidesPage() {
   }));
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4">
+    <div className="mx-auto h-[calc(100dvh-6rem)] max-w-7xl overflow-hidden">
       <ResearchPageHeaderPortal>
         <div className="flex w-full items-center justify-between gap-4">
           <p className="text-sm font-normal uppercase text-slate-700 dark:text-[#E4E4E4]">

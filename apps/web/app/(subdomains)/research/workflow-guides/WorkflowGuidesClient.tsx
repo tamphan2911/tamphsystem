@@ -2,7 +2,6 @@
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import {
-  ArrowRight,
   Download,
   FileText,
   GitBranch,
@@ -54,6 +53,91 @@ export type WorkflowGuideRow = {
 };
 
 type GuideAction = (formData: FormData) => Promise<void>;
+
+const diagramNodeWidth = 250;
+const diagramNodeHeight = 116;
+const diagramOptionWidth = 180;
+const diagramOptionHeight = 94;
+const diagramStepGap = 90;
+const diagramBranchGap = 24;
+const diagramPadding = 36;
+const diagramMainY = 70;
+const diagramBranchY = 238;
+
+type DiagramLayoutStep = {
+  step: WorkflowStep;
+  index: number;
+  groupX: number;
+  groupWidth: number;
+  nodeX: number;
+  nodeY: number;
+  options: Array<{
+    option: WorkflowOption;
+    x: number;
+    y: number;
+  }>;
+};
+
+function wrappedText(value: string, maxChars: number, maxLines: number) {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length <= maxChars) {
+      current = next;
+      continue;
+    }
+    if (current) lines.push(current);
+    current = word;
+    if (lines.length === maxLines) break;
+  }
+  if (current && lines.length < maxLines) lines.push(current);
+  if (
+    lines.length === maxLines &&
+    words.join(" ").length > lines.join(" ").length
+  ) {
+    const lastLine = lines[maxLines - 1] ?? "";
+    lines[maxLines - 1] = `${lastLine.replace(/\.*$/, "")}...`;
+  }
+  return lines;
+}
+
+function workflowDiagramLayout(steps: WorkflowStep[]) {
+  let cursor = diagramPadding;
+  const layout: DiagramLayoutStep[] = steps.map((step, index) => {
+    const options = step.options ?? [];
+    const branchesWidth =
+      options.length > 0
+        ? options.length * diagramOptionWidth +
+          (options.length - 1) * diagramBranchGap
+        : 0;
+    const groupWidth = Math.max(diagramNodeWidth, branchesWidth);
+    const nodeX = cursor + (groupWidth - diagramNodeWidth) / 2;
+    const optionStartX = cursor + (groupWidth - branchesWidth) / 2;
+    const item: DiagramLayoutStep = {
+      step,
+      index,
+      groupX: cursor,
+      groupWidth,
+      nodeX,
+      nodeY: diagramMainY,
+      options: options.map((option, optionIndex) => ({
+        option,
+        x: optionStartX + optionIndex * (diagramOptionWidth + diagramBranchGap),
+        y: diagramBranchY,
+      })),
+    };
+    cursor += groupWidth + diagramStepGap;
+    return item;
+  });
+  const width = Math.max(760, cursor - diagramStepGap + diagramPadding);
+  const hasBranches = layout.some((item) => item.options.length > 0);
+  const height = hasBranches
+    ? diagramBranchY + diagramOptionHeight + diagramPadding
+    : diagramMainY + diagramNodeHeight + diagramPadding;
+  return { layout, width, height };
+}
 
 function WorkflowGuideDialog({
   mode,
@@ -203,6 +287,11 @@ function WorkflowGuideDialog({
             <span className="text-xs leading-5 text-slate-500 dark:text-[#B0B0B0]">
               Add branches after =&gt; and separate each branch with |.
             </span>
+            <span className="border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-[11px] leading-5 text-slate-600 dark:border-[#444444] dark:bg-[#202020] dark:text-[#B0B0B0]">
+              Example: Branch decision :: Choose based on evidence =&gt; Strong
+              fit: suggest venue | Unclear fit: collect more proof | High risk:
+              reject with note
+            </span>
           </label>
           <label className="grid gap-1.5 text-sm">
             <span className="text-xs uppercase text-slate-500 dark:text-[#B0B0B0]">
@@ -302,6 +391,7 @@ function WorkflowDiagram({ steps }: { steps: WorkflowStep[] }) {
     originX: number;
     originY: number;
   } | null>(null);
+  const diagram = useMemo(() => workflowDiagramLayout(steps), [steps]);
 
   if (steps.length === 0) {
     return (
@@ -313,10 +403,10 @@ function WorkflowDiagram({ steps }: { steps: WorkflowStep[] }) {
 
   return (
     <div
-      className={`relative h-[34rem] overflow-hidden border border-slate-200 bg-slate-50 dark:border-[#444444] dark:bg-[#202020] ${
+      className={`relative h-full overflow-hidden border border-slate-200 bg-slate-50 select-none dark:border-[#444444] dark:bg-[#202020] ${
         dragging ? "cursor-grabbing" : "cursor-grab"
       }`}
-      style={{ touchAction: "none" }}
+      style={{ touchAction: "none", userSelect: "none" }}
       onPointerDown={(event) => {
         if (event.button !== 0) return;
         event.currentTarget.setPointerCapture(event.pointerId);
@@ -349,88 +439,220 @@ function WorkflowDiagram({ steps }: { steps: WorkflowStep[] }) {
       }}
     >
       <div
-        className="absolute left-0 top-0 min-h-full min-w-max p-8 transition-[transform] duration-75"
+        className="absolute left-0 top-0 transition-[transform] duration-75"
         style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
       >
-        <div className="flex items-start gap-8">
-          {steps.map((step, index) => (
-            <div
-              key={`${step.title}-${index}`}
-              className="flex items-start gap-8"
+        <svg
+          role="img"
+          aria-label="Workflow diagram"
+          width={diagram.width}
+          height={diagram.height}
+          viewBox={`0 0 ${diagram.width} ${diagram.height}`}
+          className="block"
+        >
+          <defs>
+            <marker
+              id="workflow-arrow"
+              markerWidth="9"
+              markerHeight="9"
+              refX="7"
+              refY="4.5"
+              orient="auto"
             >
-              <WorkflowTreeStep step={step} index={index} />
-              {index < steps.length - 1 ? (
-                <ArrowRight className="mt-14 h-5 w-5 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+              <path d="M0,1 L7,4.5 L0,8 Z" fill="#1F7180" />
+            </marker>
+            <marker
+              id="workflow-arrow-muted"
+              markerWidth="8"
+              markerHeight="8"
+              refX="6.5"
+              refY="4"
+              orient="auto"
+            >
+              <path d="M0,1 L6.5,4 L0,7 Z" fill="#7AA8AE" />
+            </marker>
+          </defs>
+          <rect
+            x="0"
+            y="0"
+            width={diagram.width}
+            height={diagram.height}
+            fill="transparent"
+          />
+          {diagram.layout.slice(0, -1).map((item, index) => {
+            const next = diagram.layout[index + 1];
+            if (!next) return null;
+            const startX = item.nodeX + diagramNodeWidth;
+            const startY = item.nodeY + diagramNodeHeight / 2;
+            const endX = next.nodeX;
+            const endY = next.nodeY + diagramNodeHeight / 2;
+            const control = Math.min(70, Math.max(36, (endX - startX) / 2));
+            return (
+              <path
+                key={`main-arrow-${item.index}`}
+                d={`M ${startX} ${startY} C ${startX + control} ${startY}, ${endX - control} ${endY}, ${endX} ${endY}`}
+                fill="none"
+                stroke="#1F7180"
+                strokeWidth="2"
+                markerEnd="url(#workflow-arrow)"
+              />
+            );
+          })}
+          {diagram.layout.map((item) => (
+            <g key={`branches-${item.index}`}>
+              {item.options.length > 0 ? (
+                <>
+                  <path
+                    d={`M ${item.nodeX + diagramNodeWidth / 2} ${
+                      item.nodeY + diagramNodeHeight
+                    } L ${item.nodeX + diagramNodeWidth / 2} ${
+                      diagramBranchY - 30
+                    }`}
+                    fill="none"
+                    stroke="#7AA8AE"
+                    strokeWidth="1.5"
+                  />
+                  {(() => {
+                    const firstOption = item.options[0];
+                    const lastOption = item.options[item.options.length - 1];
+                    if (!firstOption || !lastOption) return null;
+                    return (
+                      <path
+                        d={`M ${
+                          firstOption.x + diagramOptionWidth / 2
+                        } ${diagramBranchY - 30} L ${
+                          lastOption.x + diagramOptionWidth / 2
+                        } ${diagramBranchY - 30}`}
+                        fill="none"
+                        stroke="#7AA8AE"
+                        strokeWidth="1.5"
+                      />
+                    );
+                  })()}
+                </>
               ) : null}
-            </div>
+              {item.options.map((branch, branchIndex) => (
+                <path
+                  key={`branch-arrow-${item.index}-${branchIndex}`}
+                  d={`M ${branch.x + diagramOptionWidth / 2} ${
+                    diagramBranchY - 30
+                  } L ${branch.x + diagramOptionWidth / 2} ${branch.y}`}
+                  fill="none"
+                  stroke="#7AA8AE"
+                  strokeWidth="1.5"
+                  markerEnd="url(#workflow-arrow-muted)"
+                />
+              ))}
+            </g>
           ))}
-        </div>
+          {diagram.layout.map((item) => (
+            <WorkflowSvgStep key={`step-${item.index}`} item={item} />
+          ))}
+        </svg>
       </div>
     </div>
   );
 }
 
-function WorkflowTreeStep({
-  step,
-  index,
+function SvgTextBlock({
+  x,
+  y,
+  lines,
+  className,
+  lineHeight = 15,
 }: {
-  step: WorkflowStep;
-  index: number;
+  x: number;
+  y: number;
+  lines: string[];
+  className: string;
+  lineHeight?: number;
 }) {
-  const options = step.options ?? [];
-  const branchWidth = Math.max(18, options.length * 13);
-
   return (
-    <div
-      className="flex flex-none flex-col items-center"
-      style={{ width: `${branchWidth}rem` }}
-    >
-      <div className="w-72 border border-slate-200 bg-white p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-[#1F7180] dark:border-[#444444] dark:bg-[#242424] dark:hover:border-[#A8DADC]">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 flex-none items-center justify-center border border-[#1F7180] text-xs font-normal text-[#1F7180] dark:border-[#A8DADC] dark:text-[#A8DADC]">
-            {index + 1}
-          </span>
-          <p className="min-w-0 truncate text-sm font-normal text-slate-950 dark:text-[#E4E4E4]">
-            {step.title}
-          </p>
-        </div>
-        {step.detail ? (
-          <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-[#B0B0B0]">
-            {step.detail}
-          </p>
-        ) : null}
-      </div>
+    <text x={x} y={y} className={className}>
+      {lines.map((line, index) => (
+        <tspan key={`${line}-${index}`} x={x} dy={index === 0 ? 0 : lineHeight}>
+          {line}
+        </tspan>
+      ))}
+    </text>
+  );
+}
 
-      {options.length > 0 ? (
-        <>
-          <div className="h-5 w-px bg-[#1F7180]/40 dark:bg-[#A8DADC]/45" />
-          <div className="h-px w-[calc(100%-4rem)] bg-[#1F7180]/30 dark:bg-[#A8DADC]/35" />
-          <div
-            className="mt-4 grid gap-3"
-            style={{
-              gridTemplateColumns: `repeat(${options.length}, minmax(11rem, 1fr))`,
-            }}
-          >
-            {options.map((option, optionIndex) => (
-              <div
-                key={`${option.label}-${optionIndex}`}
-                className="relative border border-[#D8D0C2] bg-[#FFFDF8] p-3 dark:border-[#444444] dark:bg-[#2C2C2C]"
-              >
-                <div className="absolute -top-4 left-1/2 h-4 w-px -translate-x-1/2 bg-[#1F7180]/30 dark:bg-[#A8DADC]/35" />
-                <p className="text-xs font-normal uppercase tracking-wide text-[#1F7180] dark:text-[#A8DADC]">
-                  {option.label}
-                </p>
-                {option.detail ? (
-                  <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-[#B0B0B0]">
-                    {option.detail}
-                  </p>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </>
+function WorkflowSvgStep({ item }: { item: DiagramLayoutStep }) {
+  return (
+    <g>
+      <rect
+        x={item.nodeX}
+        y={item.nodeY}
+        width={diagramNodeWidth}
+        height={diagramNodeHeight}
+        rx="0"
+        className="fill-white stroke-[#D8D0C2] dark:fill-[#242424] dark:stroke-[#444444]"
+        strokeWidth="1.5"
+      />
+      <rect
+        x={item.nodeX + 14}
+        y={item.nodeY + 14}
+        width="26"
+        height="26"
+        fill="none"
+        stroke="#1F7180"
+        strokeWidth="1.5"
+      />
+      <text
+        x={item.nodeX + 27}
+        y={item.nodeY + 32}
+        textAnchor="middle"
+        className="fill-[#1F7180] text-[12px] dark:fill-[#A8DADC]"
+      >
+        {item.index + 1}
+      </text>
+      <SvgTextBlock
+        x={item.nodeX + 50}
+        y={item.nodeY + 28}
+        lines={wrappedText(item.step.title, 24, 2)}
+        className="fill-slate-950 text-[13px] dark:fill-[#E4E4E4]"
+        lineHeight={16}
+      />
+      {item.step.detail ? (
+        <SvgTextBlock
+          x={item.nodeX + 14}
+          y={item.nodeY + 64}
+          lines={wrappedText(item.step.detail, 42, 3)}
+          className="fill-slate-600 text-[11px] dark:fill-[#B0B0B0]"
+          lineHeight={15}
+        />
       ) : null}
-    </div>
+      {item.options.map((branch, branchIndex) => (
+        <g key={`${branch.option.label}-${branchIndex}`}>
+          <rect
+            x={branch.x}
+            y={branch.y}
+            width={diagramOptionWidth}
+            height={diagramOptionHeight}
+            rx="0"
+            className="fill-[#FFFDF8] stroke-[#C9BEAD] dark:fill-[#2C2C2C] dark:stroke-[#444444]"
+            strokeWidth="1.3"
+          />
+          <SvgTextBlock
+            x={branch.x + 12}
+            y={branch.y + 24}
+            lines={wrappedText(branch.option.label.toUpperCase(), 20, 2)}
+            className="fill-[#1F7180] text-[10px] tracking-wide dark:fill-[#A8DADC]"
+            lineHeight={13}
+          />
+          {branch.option.detail ? (
+            <SvgTextBlock
+              x={branch.x + 12}
+              y={branch.y + 54}
+              lines={wrappedText(branch.option.detail, 28, 3)}
+              className="fill-slate-600 text-[10px] dark:fill-[#B0B0B0]"
+              lineHeight={13}
+            />
+          ) : null}
+        </g>
+      ))}
+    </g>
   );
 }
 
@@ -470,7 +692,14 @@ export function WorkflowGuidesClient({
         row.title,
         row.content,
         row.supportFileName,
-        ...row.workflow.flatMap((step) => [step.title, step.detail]),
+        ...row.workflow.flatMap((step) => [
+          step.title,
+          step.detail,
+          ...(step.options ?? []).flatMap((option) => [
+            option.label,
+            option.detail,
+          ]),
+        ]),
       ]
         .join(" ")
         .toLowerCase()
@@ -481,8 +710,8 @@ export function WorkflowGuidesClient({
     filtered.find((guide) => guide.id === activeId) ?? filtered[0] ?? null;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[18rem_1fr]">
-      <aside className="border border-slate-200 bg-white dark:border-[#444444] dark:bg-[#2C2C2C]">
+    <div className="grid h-full min-h-0 gap-4 overflow-hidden lg:grid-cols-[18rem_minmax(0,1fr)]">
+      <aside className="min-h-0 border border-slate-200 bg-white dark:border-[#444444] dark:bg-[#2C2C2C]">
         <div className="border-b border-slate-200 py-3 dark:border-[#444444]">
           <TableSearchInput
             value={query}
@@ -490,7 +719,7 @@ export function WorkflowGuidesClient({
             placeholder="Search workflow guides..."
           />
         </div>
-        <div className="max-h-[calc(100vh-17rem)] overflow-y-auto">
+        <div className="max-h-[calc(100dvh-15rem)] overflow-y-auto">
           {filtered.map((guide) => (
             <button
               key={guide.id}
@@ -520,10 +749,10 @@ export function WorkflowGuidesClient({
         </div>
       </aside>
 
-      <section className="min-w-0 border border-slate-200 bg-white dark:border-[#444444] dark:bg-[#2C2C2C]">
+      <section className="min-h-0 min-w-0 overflow-hidden border border-slate-200 bg-white dark:border-[#444444] dark:bg-[#2C2C2C]">
         {activeGuide ? (
-          <div className="p-4">
-            <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 dark:border-[#444444] lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex h-full min-h-0 flex-col p-4">
+            <div className="flex flex-none flex-col gap-3 border-b border-slate-200 pb-4 dark:border-[#444444] lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <GitBranch className="h-4 w-4 text-[#1F7180] dark:text-[#A8DADC]" />
@@ -534,7 +763,7 @@ export function WorkflowGuidesClient({
                 <h2 className="mt-2 text-xl font-normal text-slate-950 dark:text-[#E4E4E4]">
                   {activeGuide.title}
                 </h2>
-                <p className="mt-2 max-w-4xl whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-[#B0B0B0]">
+                <p className="mt-2 line-clamp-3 max-w-4xl whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-[#B0B0B0]">
                   {activeGuide.content}
                 </p>
               </div>
@@ -567,32 +796,13 @@ export function WorkflowGuidesClient({
               </div>
             </div>
 
-            <div className="mt-5">
+            <div className="mt-5 flex min-h-0 flex-1 flex-col">
               <p className="text-xs font-normal uppercase tracking-wide text-slate-500 dark:text-[#B0B0B0]">
                 Interactive workflow
               </p>
-              <div className="mt-3">
+              <div className="mt-3 min-h-0 flex-1">
                 <WorkflowDiagram steps={activeGuide.workflow} />
               </div>
-            </div>
-
-            <div className="mt-5 grid gap-3 md:grid-cols-3">
-              {activeGuide.workflow.map((step, index) => (
-                <div
-                  key={`${step.title}-detail-${index}`}
-                  className="border border-slate-200 bg-slate-50 p-3 dark:border-[#444444] dark:bg-[#242424]"
-                >
-                  <p className="text-xs uppercase text-slate-500 dark:text-[#8F98A8]">
-                    Case {index + 1}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-950 dark:text-[#E4E4E4]">
-                    {step.title}
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-[#B0B0B0]">
-                    {step.detail || "Follow the main content for this step."}
-                  </p>
-                </div>
-              ))}
             </div>
           </div>
         ) : (
