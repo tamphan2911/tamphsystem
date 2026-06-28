@@ -125,6 +125,7 @@ model User {
   redoRequestedResearchTasks      ResearchTask[]                     @relation("ResearchTaskRedoRequester")
   revokedResearchTasks            ResearchTask[]                     @relation("ResearchTaskRevoker")
   createdTaskGuides               TaskGuide[]                        @relation("TaskGuideCreator")
+  createdAssistantWorkflowGuides  AssistantWorkflowGuide[]           @relation("AssistantWorkflowGuideCreator")
   createdSuggestedReviewers       SuggestedReviewer[]                @relation("SuggestedReviewerCreator")
   assignedResearchTasks           ResearchTaskAssignment[]           @relation("ResearchTaskAssignee")
   researchNotifications           ResearchNotification[]
@@ -1019,6 +1020,26 @@ model TaskGuide {
 
   createdBy User?          @relation("TaskGuideCreator", fields: [createdById], references: [id], onDelete: SetNull)
   tasks     ResearchTask[] @relation("ResearchTaskGuides")
+
+  @@index([createdById])
+  @@index([updatedAt])
+}
+
+model AssistantWorkflowGuide {
+  id              String   @id @default(uuid())
+  guideCode       String   @unique
+  title           String
+  content         String
+  workflow        Json?
+  supportFileName String?
+  supportFileType String?
+  supportFileSize Int?
+  supportFileData Bytes?
+  createdById     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  createdBy User? @relation("AssistantWorkflowGuideCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([createdById])
   @@index([updatedAt])

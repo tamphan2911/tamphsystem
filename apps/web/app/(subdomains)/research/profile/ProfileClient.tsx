@@ -20,6 +20,7 @@ import {
   KeyRound,
   Mail,
   Pencil,
+  Route,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
@@ -385,6 +386,7 @@ export function ProfileClient({
   checkerTaskRows,
   canEditProfile,
   canChangePassword,
+  canViewWorkflowGuides,
 }: {
   user: ResearchProfileUser;
   researchRows: ResearchProjectRow[];
@@ -394,6 +396,7 @@ export function ProfileClient({
   checkerTaskRows: ProfileTaskRow[];
   canEditProfile: boolean;
   canChangePassword: boolean;
+  canViewWorkflowGuides: boolean;
 }) {
   const router = useRouter();
   const toast = useResearchToast();
@@ -599,7 +602,7 @@ export function ProfileClient({
                   </span>
                 </IconHint>
               )}
-              {(canEditProfile || canChangePassword) && (
+              {(canViewWorkflowGuides || canEditProfile || canChangePassword) && (
                 <>
                   {canChangePassword && (
                     <IconHint label="Change password" position="bottom">
@@ -611,6 +614,17 @@ export function ProfileClient({
                       >
                         <KeyRound className="h-4 w-4" />
                       </button>
+                    </IconHint>
+                  )}
+                  {canViewWorkflowGuides && (
+                    <IconHint label="Assistant workflow guides" position="bottom">
+                      <Link
+                        href="/workflow-guides"
+                        className="research-allow-transform inline-flex cursor-pointer border-0 bg-transparent p-1 text-[#B0B0B0] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#A8DADC] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95"
+                        aria-label="Open assistant workflow guides"
+                      >
+                        <Route className="h-4 w-4" />
+                      </Link>
                     </IconHint>
                   )}
                   {canEditProfile && (

@@ -54,6 +54,12 @@ const navItems = [
     rootAdminOnly: true,
   },
   {
+    href: "/workflow-guides",
+    label: "Workflow Guides",
+    icon: "workflowGuides" as const,
+    requiresWorkflowGuideAccess: true,
+  },
+  {
     href: "/suggested-reviewers",
     label: "Suggested Reviewers",
     icon: "suggestedReviewers" as const,
@@ -502,6 +508,8 @@ export function ResearchShell({
     if ("adminOnly" in item && item.adminOnly) return isAdmin;
     if ("requiresTaskAccess" in item && item.requiresTaskAccess)
       return canSeeTasks || isAssistant;
+    if ("requiresWorkflowGuideAccess" in item && item.requiresWorkflowGuideAccess)
+      return isAdmin || isAssistant;
     if ("requiresReviewAccess" in item && item.requiresReviewAccess)
       return canSeeReviews;
     if ("requiresPublisherAccess" in item && item.requiresPublisherAccess)
