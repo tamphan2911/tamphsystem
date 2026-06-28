@@ -10,6 +10,42 @@ import {
   canAccessAllResearchProposals,
   relatedResearchProposalWhere,
 } from "@/sites/research/lib/proposalAccess";
+import {
+  normalizedResearchThemePreference,
+  researchThemeKey,
+  researchThemePreferenceKey,
+  themeForPreference,
+  type ResearchTheme,
+  type ResearchThemePreference,
+} from "@/sites/research/lib/theme";
+
+function ResearchThemePrepaintScript({
+  preference,
+  theme,
+}: {
+  preference: ResearchThemePreference;
+  theme: ResearchTheme;
+}) {
+  const script = `
+    (function () {
+      try {
+        var theme = ${JSON.stringify(theme)};
+        var preference = ${JSON.stringify(preference)};
+        var root = document.documentElement;
+        root.classList.toggle("dark", theme === "dark");
+        root.dataset.researchTheme = theme;
+        root.style.colorScheme = theme;
+        try {
+          window.localStorage.setItem(${JSON.stringify(researchThemeKey)}, theme);
+          window.localStorage.setItem(${JSON.stringify(researchThemePreferenceKey)}, preference);
+          window.localStorage.setItem("theme", theme);
+        } catch (storageError) {}
+      } catch (error) {}
+    })();
+  `;
+
+  return <script dangerouslySetInnerHTML={{ __html: script }} />;
+}
 
 export default async function ResearchLayout({
   children,
@@ -117,26 +153,38 @@ export default async function ResearchLayout({
     }
   }
 
+  const normalizedThemePreference = normalizedResearchThemePreference(
+    researchThemePreference,
+  );
+  const initialResearchTheme = themeForPreference(normalizedThemePreference);
+
   return (
-    <ResearchDesktopOnly>
-      <ResearchShell
-        email={displayResearchEmail(session?.user?.email)}
-        name={session?.user?.name}
-        isAdmin={isResearchAdmin}
-        isRootAdmin={isRootAdmin}
-        isAssistant={
-          roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT)
-        }
-        canSeeTasks={canSeeTasks}
-        canSeeAccounts={canSeeAccounts}
-        canSeeReviews={canSeeReviews}
-        canSeePublishers={canSeePublishers}
-        canSeeProposals={canSeeProposals}
-        unopenedProposalCount={unopenedProposalCount}
-        themePreference={researchThemePreference}
-      >
-        {children}
-      </ResearchShell>
-    </ResearchDesktopOnly>
+    <>
+      <ResearchThemePrepaintScript
+        preference={normalizedThemePreference}
+        theme={initialResearchTheme}
+      />
+      <ResearchDesktopOnly>
+        <ResearchShell
+          email={displayResearchEmail(session?.user?.email)}
+          name={session?.user?.name}
+          isAdmin={isResearchAdmin}
+          isRootAdmin={isRootAdmin}
+          isAssistant={
+            roles.includes(Role.ASSISTANT) ||
+            roles.includes(Role.CHIEF_ASSISTANT)
+          }
+          canSeeTasks={canSeeTasks}
+          canSeeAccounts={canSeeAccounts}
+          canSeeReviews={canSeeReviews}
+          canSeePublishers={canSeePublishers}
+          canSeeProposals={canSeeProposals}
+          unopenedProposalCount={unopenedProposalCount}
+          themePreference={researchThemePreference}
+        >
+          {children}
+        </ResearchShell>
+      </ResearchDesktopOnly>
+    </>
   );
 }

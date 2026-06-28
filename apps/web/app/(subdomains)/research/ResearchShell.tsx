@@ -11,10 +11,15 @@ import { ResearchNotificationBell } from "./ResearchNotificationBell";
 import { ResearchToastProvider } from "@/sites/research/components/ResearchToast";
 import { ScrollToTopButton } from "@/sites/research/components/ScrollToTopButton";
 import { ResearchMobileTableEnhancer } from "@/sites/research/components/ResearchMobileTableEnhancer";
+import { researchDateValue } from "@/sites/research/lib/date-time";
 import {
-  researchDateValue,
-  researchHour,
-} from "@/sites/research/lib/date-time";
+  normalizedResearchThemePreference,
+  researchThemeKey,
+  researchThemePreferenceKey,
+  themeForPreference,
+  timeBasedResearchTheme,
+  type ResearchTheme,
+} from "@/sites/research/lib/theme";
 
 const navItems = [
   { href: "/projects", label: "Research", icon: "projects" as const },
@@ -118,33 +123,10 @@ const navItems = [
 ];
 
 const sidebarStateKey = "research-sidebar-collapsed";
-const researchThemeKey = "research-theme-mode";
-const researchThemePreferenceKey = "research-theme-preference";
 const researchScrollStoragePrefix = "research-scroll-position:";
 const researchThemeTransitionMs = 280;
-type ResearchTheme = "dark" | "light";
-type ResearchThemePreference = "system" | ResearchTheme;
 
 let researchThemeTransitionTimer: number | undefined;
-
-function timeBasedResearchTheme(date = new Date()): ResearchTheme {
-  const hour = researchHour(date);
-  return hour >= 6 && hour < 18 ? "light" : "dark";
-}
-
-function normalizedResearchThemePreference(
-  preference: string | null | undefined,
-): ResearchThemePreference {
-  return preference === "light" || preference === "dark"
-    ? preference
-    : "system";
-}
-
-function themeForPreference(
-  preference: ResearchThemePreference,
-): ResearchTheme {
-  return preference === "system" ? timeBasedResearchTheme() : preference;
-}
 
 function nextResearchThemeBoundaryDelay(date = new Date()) {
   const now = date.getTime();
@@ -508,7 +490,10 @@ export function ResearchShell({
     if ("adminOnly" in item && item.adminOnly) return isAdmin;
     if ("requiresTaskAccess" in item && item.requiresTaskAccess)
       return canSeeTasks || isAssistant;
-    if ("requiresWorkflowGuideAccess" in item && item.requiresWorkflowGuideAccess)
+    if (
+      "requiresWorkflowGuideAccess" in item &&
+      item.requiresWorkflowGuideAccess
+    )
       return isAdmin || isAssistant;
     if ("requiresReviewAccess" in item && item.requiresReviewAccess)
       return canSeeReviews;
