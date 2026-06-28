@@ -45,7 +45,10 @@ function guideValues(formData: FormData) {
   return { title, content, importantNote };
 }
 
-async function guideSupportFileValues(formData: FormData) {
+async function guideSupportFileValues(
+  formData: FormData,
+  options: { unlimitedSize?: boolean } = {},
+) {
   const file = formData.get("supportFile");
   if (!(file instanceof File) || file.size === 0) return undefined;
 
@@ -57,7 +60,7 @@ async function guideSupportFileValues(formData: FormData) {
   if (!allowedByMime && !allowedByExtension) {
     throw new Error("Upload only .doc, .docx, or .pdf support files.");
   }
-  if (file.size > guideSupportMaxFileSize) {
+  if (!options.unlimitedSize && file.size > guideSupportMaxFileSize) {
     throw new Error("Support file must be 2 MB or smaller.");
   }
 
@@ -110,7 +113,13 @@ export async function createTaskGuide(formData: FormData) {
 export async function updateTaskGuide(id: string, formData: FormData) {
   await requireAdmin();
   const values = guideValues(formData);
-  const supportFile = await guideSupportFileValues(formData);
+  const currentGuide = await prisma.taskGuide.findUnique({
+    where: { id },
+    select: { guideCode: true },
+  });
+  const supportFile = await guideSupportFileValues(formData, {
+    unlimitedSize: currentGuide?.guideCode === "G006",
+  });
   await prisma.taskGuide.update({
     where: { id },
     data: { ...values, ...supportFile },

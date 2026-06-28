@@ -42,6 +42,7 @@ export function TaskGuideDialog({
   const router = useRouter();
   const toast = useResearchToast();
   const isEdit = mode === "edit";
+  const hasUnlimitedSupportFileSize = initialValues?.guideCode === "G006";
 
   return (
     <>
@@ -91,7 +92,11 @@ export function TaskGuideDialog({
               "supportFile",
             ) as HTMLInputElement | null;
             const file = supportFileInput?.files?.[0];
-            if (file && file.size > 2 * 1024 * 1024) {
+            if (
+              file &&
+              !hasUnlimitedSupportFileSize &&
+              file.size > 2 * 1024 * 1024
+            ) {
               toast.showError({
                 title: "Support file is too large",
                 detail: "Upload a Word or PDF file that is 2 MB or smaller.",
@@ -189,8 +194,12 @@ export function TaskGuideDialog({
                     initialValues.supportFileSize
                       ? ` (${initialValues.supportFileSize})`
                       : ""
-                  }. Optional replacement.`
-                : "Optional. Accepted formats: .doc, .docx, .pdf. Maximum 2 MB."}
+                  }. Optional replacement${
+                    hasUnlimitedSupportFileSize ? "" : ", maximum 2 MB"
+                  }.`
+                : `Optional. Accepted formats: .doc, .docx, .pdf.${
+                    hasUnlimitedSupportFileSize ? "" : " Maximum 2 MB."
+                  }`}
             </span>
           </label>
         </form>
