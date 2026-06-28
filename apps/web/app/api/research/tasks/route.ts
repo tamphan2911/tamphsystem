@@ -142,10 +142,14 @@ export async function GET() {
           orderBy: { createdAt: "asc" },
         },
         clarifications: {
-          where: { answer: null },
-          select: { requestedById: true },
+          select: {
+            requestedById: true,
+            answer: true,
+            answeredAt: true,
+            createdAt: true,
+          },
           orderBy: { createdAt: "desc" },
-          take: 1,
+          take: 5,
         },
       },
       orderBy: [
@@ -181,7 +185,9 @@ export async function GET() {
           (member) => member.userId === userId,
         );
       const createdByMe = task.createdById === userId;
-      const openClarification = task.clarifications[0] ?? null;
+      const openClarification =
+        task.clarifications.find((clarification) => !clarification.answer) ??
+        null;
       const clarifyDirection = openClarification
         ? task.assignments.some(
             (assignment) =>
@@ -190,6 +196,43 @@ export async function GET() {
           ? "ASSIGNEE_TO_MANAGER"
           : "MANAGER_TO_ASSIGNEE"
         : null;
+      const latestFinishedAt = task.assignments.reduce<Date | null>(
+        (latest, assignment) => {
+          if (!assignment.finishedAt) return latest;
+          return !latest || assignment.finishedAt > latest
+            ? assignment.finishedAt
+            : latest;
+        },
+        null,
+      );
+      const latestManagerClarificationAnswer = task.clarifications
+        .filter(
+          (clarification) =>
+            clarification.answer &&
+            clarification.answeredAt &&
+            !task.assignments.some(
+              (assignment) =>
+                assignment.userId === clarification.requestedById,
+            ),
+        )
+        .sort(
+          (left, right) =>
+            (right.answeredAt?.getTime() ?? 0) -
+            (left.answeredAt?.getTime() ?? 0),
+        )[0];
+      const managerActionStartedAt =
+        task.status === ResearchTaskStatus.CHECKING
+          ? [
+              latestFinishedAt,
+              latestManagerClarificationAnswer?.answeredAt ?? null,
+            ].reduce<Date | null>((latest, value) => {
+              if (!value) return latest;
+              return !latest || value > latest ? value : latest;
+            }, null) ?? task.updatedAt
+          : task.status === ResearchTaskStatus.NEED_CLARIFY &&
+              clarifyDirection === "ASSIGNEE_TO_MANAGER"
+            ? openClarification?.createdAt ?? task.updatedAt
+            : null;
 
       return {
         id: task.id,
@@ -222,6 +265,15 @@ export async function GET() {
           task.createdBy.name ||
           task.createdBy.email,
         checkerEmail: task.checker?.email ?? task.createdBy.email,
+        managerAction: managerActionStartedAt
+          ? {
+              label:
+                task.status === ResearchTaskStatus.CHECKING
+                  ? "Check/review"
+                  : "Answer clarification",
+              startedAt: managerActionStartedAt.toISOString(),
+            }
+          : null,
         scope: {
           assignedToMe,
           checkerForMe,

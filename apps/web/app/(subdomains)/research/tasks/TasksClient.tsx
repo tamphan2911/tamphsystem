@@ -74,6 +74,10 @@ type TaskRow = {
   checkerId: string;
   checker: string;
   checkerEmail: string;
+  managerAction: {
+    label: string;
+    startedAt: string;
+  } | null;
   scope: {
     assignedToMe: boolean;
     relatedToMyItems: boolean;
@@ -119,6 +123,7 @@ const taskTypeFilterValues = [
 type TaskScopeTab = "assigned" | "related" | "checker";
 type TaskHeaderTab = TaskScopeTab | "all" | "need_action";
 type TimeSortDirection = "none" | "asc" | "desc";
+const managerActionSlaMs = 24 * 60 * 60 * 1000;
 
 function formatDate(value: string | null) {
   if (!value) return "-";
@@ -373,6 +378,35 @@ function taskTimeLeftSortValue(task: TaskRow, nowMs: number) {
   }
 
   return due - nowMs;
+}
+
+function managerActionMeta(task: TaskRow, nowMs: number) {
+  if (
+    !task.managerAction ||
+    !(
+      task.scope.adminAccess ||
+      task.scope.assignerForMe ||
+      task.scope.checkerForMe
+    )
+  ) {
+    return null;
+  }
+
+  const startedAt = new Date(task.managerAction.startedAt).getTime();
+  if (Number.isNaN(startedAt)) return null;
+
+  const remainingMs = startedAt + managerActionSlaMs - nowMs;
+  const isOverdue = remainingMs < 0;
+
+  return {
+    label: task.managerAction.label,
+    text: isOverdue
+      ? `${durationText(remainingMs)} overdue`
+      : `${durationText(remainingMs)} left`,
+    className: isOverdue
+      ? "text-[#B42318] dark:text-[#FFB4A2]"
+      : "text-[#A06716] dark:text-[#F4D47A]",
+  };
 }
 
 function taskRelationshipLabels(task: TaskRow) {
@@ -1114,6 +1148,7 @@ export function TasksClient({
                 const StatusIcon = statusIcon.icon;
                 const typeLines = taskTypeLines(task);
                 const relationshipLabels = taskRelationshipLabels(task);
+                const managerAction = managerActionMeta(task, Date.now());
                 return (
                   <tr
                     key={task.id}
@@ -1220,6 +1255,18 @@ export function TasksClient({
                       <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
                         Assigner: {task.createdBy}
                       </p>
+                      {managerAction ? (
+                        <div className="mt-2 border-t border-slate-200 pt-2 dark:border-[#555555]">
+                          <p
+                            className={`max-w-full break-words text-xs font-semibold leading-5 ${managerAction.className}`}
+                          >
+                            {managerAction.label}: {managerAction.text}
+                          </p>
+                          <p className="max-w-full break-words text-[11px] font-normal leading-4 text-[#667085] dark:text-[#8F98A8]">
+                            24h manager action window
+                          </p>
+                        </div>
+                      ) : null}
                     </td>
                     {canDelete && (
                       <td className="px-2 py-3 text-center align-top">
