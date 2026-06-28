@@ -263,7 +263,7 @@ function statusMeta(task: TaskRow) {
       detail: "",
       dateLines: [
         `revoked: ${formatDate(task.revokedAt ?? task.updatedAt)}`,
-        `due: ${formatDate(task.dueDate)}`,
+        `Due: ${formatDate(task.dueDate)}`,
         `assigned: ${formatDate(task.createdAt)}`,
       ],
       className:
@@ -309,7 +309,7 @@ function statusMeta(task: TaskRow) {
     return {
       label: "Checking",
       detail: "Waiting assigner check",
-      dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
+      dateLines: due ? [`Due: ${formatDate(task.dueDate)}`] : [],
       className:
         "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-300/40 dark:bg-violet-950/25 dark:text-violet-300",
       detailClassName: "text-violet-600 dark:text-violet-300",
@@ -320,7 +320,7 @@ function statusMeta(task: TaskRow) {
     return {
       label: "Revision requested",
       detail: "Waiting assignee revision",
-      dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
+      dateLines: due ? [`Due: ${formatDate(task.dueDate)}`] : [],
       className:
         "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-300/40 dark:bg-orange-950/25 dark:text-orange-300",
       detailClassName: "text-orange-700 dark:text-orange-300",
@@ -331,7 +331,7 @@ function statusMeta(task: TaskRow) {
     return {
       label: "Need clarify",
       detail: clarificationStatusDetail(task.clarifyDirection),
-      dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
+      dateLines: due ? [`Due: ${formatDate(task.dueDate)}`] : [],
       className:
         "border-cyan-200 bg-cyan-50 text-cyan-800 dark:border-cyan-300/40 dark:bg-cyan-950/25 dark:text-cyan-200",
       detailClassName: "text-cyan-700 dark:text-cyan-300",
@@ -352,7 +352,7 @@ function statusMeta(task: TaskRow) {
   return {
     label: "In progress",
     detail: due ? `${durationText(remainingMs ?? 0)} left` : "No due date",
-    dateLines: due ? [`due: ${formatDate(task.dueDate)}`] : [],
+    dateLines: due ? [`Due: ${formatDate(task.dueDate)}`] : [],
     className:
       "border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-300/40 dark:bg-yellow-950/25 dark:text-yellow-200",
     detailClassName:
@@ -363,32 +363,23 @@ function statusMeta(task: TaskRow) {
 }
 
 function taskTimeLeftSortValue(task: TaskRow, nowMs: number) {
+  if (task.status === "COMPLETED" || task.status === "REVOKED") return null;
+
+  if (task.managerAction) {
+    const startedAt = new Date(task.managerAction.startedAt).getTime();
+    if (!Number.isNaN(startedAt)) {
+      return startedAt + managerActionSlaMs - nowMs;
+    }
+  }
+
   const due = task.dueDate ? new Date(task.dueDate).getTime() : null;
   if (!due || Number.isNaN(due)) return null;
-
-  if (task.status === "REVOKED") return null;
-
-  if (task.status === "COMPLETED") {
-    const completed = task.completedAt
-      ? new Date(task.completedAt).getTime()
-      : null;
-    return completed && !Number.isNaN(completed) ? due - completed : null;
-  }
 
   return due - nowMs;
 }
 
 function managerActionMeta(task: TaskRow, nowMs: number) {
-  if (
-    !task.managerAction ||
-    !(
-      task.scope.adminAccess ||
-      task.scope.assignerForMe ||
-      task.scope.checkerForMe
-    )
-  ) {
-    return null;
-  }
+  if (!task.managerAction) return null;
 
   const startedAt = new Date(task.managerAction.startedAt).getTime();
   if (Number.isNaN(startedAt)) return null;
@@ -1024,10 +1015,10 @@ export function TasksClient({
   const TimeSortIcon = ArrowUpDown;
   const timeSortLabel =
     timeSort === "asc"
-      ? "Sort time left from longest to shortest"
+      ? "Sort time left from longest to shortest. Overdue time is negative, and completed or revoked tasks stay at the bottom."
       : timeSort === "desc"
         ? "Clear time sorting"
-        : "Sort time left from shortest to longest";
+        : "Sort time left from shortest to longest. Overdue time is negative, and completed or revoked tasks stay at the bottom.";
 
   return (
     <div className="space-y-4">
@@ -1152,7 +1143,7 @@ export function TasksClient({
                 <th className="px-3 py-3">Task</th>
                 <th className="w-[7rem] px-3 py-3">Status</th>
                 <th className="w-[9.5rem] px-3 py-3">Assignees</th>
-                <th className="w-[11rem] px-3 py-3">
+                <th className="w-[12.5rem] px-3 py-3 lg:w-[14rem] xl:w-[15rem]">
                   <span className="flex items-center gap-1.5">
                     <span>Time</span>
                     <IconHint label={timeSortLabel}>
@@ -1287,24 +1278,27 @@ export function TasksClient({
                           {status.detail}
                         </p>
                       )}
-                      <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                        Checker: {task.checker}
-                      </p>
-                      <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                        Assigner: {task.createdBy}
-                      </p>
-                      {managerAction ? (
-                        <div className="mt-2 border-t border-slate-200 pt-2 dark:border-[#555555]">
+                      <div className="mt-2 border-t border-slate-200 pt-2 dark:border-[#555555]">
+                        <p
+                          className="max-w-full truncate whitespace-nowrap text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]"
+                          title={`Checker: ${task.checker}`}
+                        >
+                          Checker: {task.checker}
+                        </p>
+                        <p
+                          className="max-w-full truncate whitespace-nowrap text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]"
+                          title={`Assigner: ${task.createdBy}`}
+                        >
+                          Assigner: {task.createdBy}
+                        </p>
+                        {managerAction ? (
                           <p
                             className={`max-w-full break-words text-xs font-semibold leading-5 ${managerAction.className}`}
                           >
                             {managerAction.label}: {managerAction.text}
                           </p>
-                          <p className="max-w-full break-words text-[11px] font-normal leading-4 text-[#667085] dark:text-[#8F98A8]">
-                            24h manager action window
-                          </p>
-                        </div>
-                      ) : null}
+                        ) : null}
+                      </div>
                     </td>
                     {canDelete && (
                       <td className="px-2 py-3 text-center align-top">

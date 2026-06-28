@@ -171,7 +171,7 @@ function timeMeta(row: RelatedResearchTaskRow) {
       detail: "",
       dateLines: [
         `revoked: ${shortDate(row.revokedAt ?? row.updatedAt)}`,
-        `due: ${shortDate(row.dueDate)}`,
+        `Due: ${shortDate(row.dueDate)}`,
         `assigned: ${shortDate(row.createdAt)}`,
       ],
       detailClassName: "text-[#B0B0B0]",
@@ -203,7 +203,7 @@ function timeMeta(row: RelatedResearchTaskRow) {
   if (row.status === "CHECKING") {
     return {
       detail: "Waiting assigner check",
-      dateLines: due ? [`due: ${shortDate(row.dueDate)}`] : [],
+      dateLines: due ? [`Due: ${shortDate(row.dueDate)}`] : [],
       detailClassName: "text-violet-600 dark:text-violet-300",
     };
   }
@@ -211,7 +211,7 @@ function timeMeta(row: RelatedResearchTaskRow) {
   if (row.status === "REVISION_REQUESTED") {
     return {
       detail: "Waiting assignee revision",
-      dateLines: due ? [`due: ${shortDate(row.dueDate)}`] : [],
+      dateLines: due ? [`Due: ${shortDate(row.dueDate)}`] : [],
       detailClassName: "text-orange-700 dark:text-orange-300",
     };
   }
@@ -219,7 +219,7 @@ function timeMeta(row: RelatedResearchTaskRow) {
   if (row.status === "NEED_CLARIFY") {
     return {
       detail: clarificationStatusDetail(row.clarifyDirection),
-      dateLines: due ? [`due: ${shortDate(row.dueDate)}`] : [],
+      dateLines: due ? [`Due: ${shortDate(row.dueDate)}`] : [],
       detailClassName: "text-cyan-700 dark:text-cyan-300",
     };
   }
@@ -234,7 +234,7 @@ function timeMeta(row: RelatedResearchTaskRow) {
 
   return {
     detail: due ? `${durationText(remainingMs ?? 0)} left` : "No due date",
-    dateLines: due ? [`due: ${shortDate(row.dueDate)}`] : [],
+    dateLines: due ? [`Due: ${shortDate(row.dueDate)}`] : [],
     detailClassName:
       remainingMs !== null && remainingMs < 24 * 60 * 60 * 1000
         ? "font-semibold text-[#B64F48] dark:text-[#FFB4A2]"
@@ -349,7 +349,9 @@ export function RelatedResearchTasksTable({
               <th className="px-3 py-3">Task</th>
               <th className="w-[7rem] px-3 py-3">Status</th>
               <th className="w-[16rem] px-3 py-3">Assignees</th>
-              <th className="w-[11rem] px-3 py-3">Time</th>
+              <th className="w-[12.5rem] px-3 py-3 lg:w-[14rem] xl:w-[15rem]">
+                Time
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#444444]">
@@ -421,12 +423,20 @@ export function RelatedResearchTasksTable({
                         {time.detail}
                       </p>
                     ) : null}
-                    <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                      Checker: {row.checker}
-                    </p>
-                    <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                      Assigner: {row.createdBy}
-                    </p>
+                    <div className="mt-2 border-t border-slate-200 pt-2 dark:border-[#555555]">
+                      <p
+                        className="max-w-full truncate whitespace-nowrap text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]"
+                        title={`Checker: ${row.checker}`}
+                      >
+                        Checker: {row.checker}
+                      </p>
+                      <p
+                        className="max-w-full truncate whitespace-nowrap text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]"
+                        title={`Assigner: ${row.createdBy}`}
+                      >
+                        Assigner: {row.createdBy}
+                      </p>
+                    </div>
                   </td>
                 </tr>
               );
