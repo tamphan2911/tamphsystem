@@ -1215,7 +1215,7 @@ export function TasksClient({
                         </p>
                       )}
                       <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                        checker: {task.checker}
+                        Checker: {task.checker}
                       </p>
                       <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
                         Assigner: {task.createdBy}

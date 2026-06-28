@@ -422,7 +422,7 @@ export function RelatedResearchTasksTable({
                       </p>
                     ) : null}
                     <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                      checker: {row.checker}
+                      Checker: {row.checker}
                     </p>
                     <p className="max-w-full break-words text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
                       Assigner: {row.createdBy}
