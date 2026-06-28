@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Menu, Moon, Sun, X } from "lucide-react";
 import { ActiveNavLink } from "@/sites/research/components/ActiveNavLink";
@@ -114,6 +114,7 @@ const navItems = [
 const sidebarStateKey = "research-sidebar-collapsed";
 const researchThemeKey = "research-theme-mode";
 const researchThemePreferenceKey = "research-theme-preference";
+const researchScrollStoragePrefix = "research-scroll-position:";
 const researchThemeTransitionMs = 280;
 type ResearchTheme = "dark" | "light";
 type ResearchThemePreference = "system" | ResearchTheme;
@@ -264,6 +265,9 @@ export function ResearchShell({
   themePreference?: string | null;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const search = searchParams.toString();
+  const scrollRootRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -323,6 +327,92 @@ export function ResearchShell({
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!("scrollRestoration" in window.history)) return;
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    return () => {
+      window.history.scrollRestoration = previousScrollRestoration;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    const scrollRoot = scrollRootRef.current;
+    if (!scrollRoot) return;
+    const root = scrollRoot;
+
+    const storageKey = `${researchScrollStoragePrefix}${pathname}${search ? `?${search}` : ""}`;
+
+    function restore() {
+      if (window.location.hash) {
+        const target = document.getElementById(window.location.hash.slice(1));
+        target?.scrollIntoView({ block: "start" });
+        return;
+      }
+
+      const savedPosition = window.sessionStorage.getItem(storageKey);
+      const nextScrollTop = savedPosition
+        ? Number.parseInt(savedPosition, 10)
+        : 0;
+      root.scrollTop = Number.isFinite(nextScrollTop) ? nextScrollTop : 0;
+    }
+
+    restore();
+    const animationFrame = window.requestAnimationFrame(restore);
+    const shortTimer = window.setTimeout(restore, 120);
+    const longTimer = window.setTimeout(restore, 420);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.clearTimeout(shortTimer);
+      window.clearTimeout(longTimer);
+    };
+  }, [pathname, search]);
+
+  useEffect(() => {
+    const scrollRoot = scrollRootRef.current;
+    if (!scrollRoot) return;
+    const root = scrollRoot;
+
+    const storageKey = `${researchScrollStoragePrefix}${pathname}${search ? `?${search}` : ""}`;
+    let animationFrame: number | null = null;
+
+    function savePosition() {
+      window.sessionStorage.setItem(storageKey, String(root.scrollTop));
+    }
+
+    function savePositionOnScroll() {
+      if (animationFrame !== null) return;
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = null;
+        savePosition();
+      });
+    }
+
+    function savePositionOnVisibilityChange() {
+      if (document.visibilityState === "hidden") savePosition();
+    }
+
+    root.addEventListener("scroll", savePositionOnScroll, {
+      passive: true,
+    });
+    window.addEventListener("pagehide", savePosition);
+    document.addEventListener(
+      "visibilitychange",
+      savePositionOnVisibilityChange,
+    );
+
+    return () => {
+      if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
+      root.removeEventListener("scroll", savePositionOnScroll);
+      window.removeEventListener("pagehide", savePosition);
+      document.removeEventListener(
+        "visibilitychange",
+        savePositionOnVisibilityChange,
+      );
+    };
+  }, [pathname, search]);
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -435,6 +525,7 @@ export function ResearchShell({
   return (
     <ResearchToastProvider>
       <div
+        ref={scrollRootRef}
         className={`research-site-root relative h-screen overflow-y-auto overflow-x-hidden bg-[#242424] text-[#E4E4E4] ${
           theme === "light" ? "research-theme-light" : "research-theme-dark"
         }`}
