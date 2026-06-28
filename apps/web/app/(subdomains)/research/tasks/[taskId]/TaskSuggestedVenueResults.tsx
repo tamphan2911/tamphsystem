@@ -21,6 +21,7 @@ export type TaskSuggestedVenueResult = {
   meta: string;
   apc: string | null;
   apcCurrency: string;
+  hasApcOption?: boolean | null;
   submissionFee: string | null;
   submissionFeeCurrency: string;
   useRawFeeText?: boolean;
@@ -270,7 +271,14 @@ function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
         </p>
       ) : null}
       <div className="mt-3 grid gap-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
-        <span>APC: {moneyText(venue.apc, venue.apcCurrency)}</span>
+        <span>
+          APC: {moneyText(venue.apc, venue.apcCurrency)}
+          {venue.kind === "journal" ? (
+            <span className="ml-1 text-[#344054] dark:text-[#E4E4E4]">
+              ({venue.hasApcOption ? "Option" : "No Option"})
+            </span>
+          ) : null}
+        </span>
         <span>
           Fee: {moneyText(venue.submissionFee, venue.submissionFeeCurrency)}
         </span>

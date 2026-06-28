@@ -984,6 +984,7 @@ export default async function TaskDetailPage({
               localRank: true,
               apc: true,
               apcCurrency: true,
+              hasApcOption: true,
               submissionFee: true,
               submissionFeeCurrency: true,
               note: true,
@@ -1065,6 +1066,7 @@ export default async function TaskDetailPage({
               localRank: true,
               apc: true,
               apcCurrency: true,
+              hasApcOption: true,
               submissionFee: true,
               submissionFeeCurrency: true,
               note: true,
@@ -1085,6 +1087,7 @@ export default async function TaskDetailPage({
                   localRank: true,
                   apc: true,
                   apcCurrency: true,
+                  hasApcOption: true,
                   submissionFee: true,
                   submissionFeeCurrency: true,
                   note: true,
@@ -1391,6 +1394,7 @@ export default async function TaskDetailPage({
                 localRank: true,
                 apc: true,
                 apcCurrency: true,
+                hasApcOption: true,
                 submissionFee: true,
                 submissionFeeCurrency: true,
                 note: true,
@@ -2171,6 +2175,7 @@ export default async function TaskDetailPage({
           .join(" - "),
         apc: journal?.apc ?? suggestion.apc ?? null,
         apcCurrency: journal?.apcCurrency ?? "USD",
+        hasApcOption: journal?.hasApcOption ?? false,
         submissionFee:
           journal?.submissionFee ?? suggestion.submissionFee ?? null,
         submissionFeeCurrency: journal?.submissionFeeCurrency ?? "USD",
@@ -2209,6 +2214,8 @@ export default async function TaskDetailPage({
               null,
             apcCurrency:
               linkedJournalSubmissionSuggestion.journal?.apcCurrency ?? "USD",
+            hasApcOption:
+              linkedJournalSubmissionSuggestion.journal?.hasApcOption ?? false,
             submissionFee:
               linkedJournalSubmissionSuggestion.journal?.submissionFee ??
               linkedJournalSubmissionSuggestion.submissionFee ??
