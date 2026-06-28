@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import {
   ArrowRight,
   Download,
@@ -31,6 +31,12 @@ import {
 
 export type WorkflowStep = {
   title: string;
+  detail: string;
+  options?: WorkflowOption[];
+};
+
+export type WorkflowOption = {
+  label: string;
   detail: string;
 };
 
@@ -189,13 +195,13 @@ function WorkflowGuideDialog({
               name="workflowText"
               rows={7}
               defaultValue={initialValues?.workflowText}
-              placeholder={"One step per line. Use: Step title :: What happens, including branches or cases."}
+              placeholder={
+                "One step per line. Use: Step title :: What happens => Option A: next action | Option B: next action | Option C: next action"
+              }
               className={`${researchTextareaClass} min-h-40 whitespace-pre-wrap`}
             />
             <span className="text-xs leading-5 text-slate-500 dark:text-[#B0B0B0]">
-              Use conditional text inside steps, for example: If journal scope
-              matches :: continue to risk check; otherwise record mismatch and
-              reject.
+              Add branches after =&gt; and separate each branch with |.
             </span>
           </label>
           <label className="grid gap-1.5 text-sm">
@@ -287,6 +293,16 @@ function DeleteGuideButton({
 }
 
 function WorkflowDiagram({ steps }: { steps: WorkflowStep[] }) {
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+  } | null>(null);
+
   if (steps.length === 0) {
     return (
       <div className="border border-dashed border-slate-300 px-4 py-6 text-sm text-slate-500 dark:border-[#555555] dark:text-[#B0B0B0]">
@@ -296,29 +312,124 @@ function WorkflowDiagram({ steps }: { steps: WorkflowStep[] }) {
   }
 
   return (
-    <div className="grid gap-3 lg:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
-      {steps.map((step, index) => (
-        <div key={`${step.title}-${index}`} className="flex min-w-0 gap-3">
-          <div className="min-w-0 flex-1 border border-slate-200 bg-white p-3 transition duration-200 hover:-translate-y-0.5 hover:border-[#1F7180] hover:shadow-sm dark:border-[#444444] dark:bg-[#242424] dark:hover:border-[#A8DADC]">
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 flex-none items-center justify-center border border-[#1F7180] text-xs font-normal text-[#1F7180] dark:border-[#A8DADC] dark:text-[#A8DADC]">
-                {index + 1}
-              </span>
-              <p className="min-w-0 truncate text-sm font-normal text-slate-950 dark:text-[#E4E4E4]">
-                {step.title}
-              </p>
+    <div
+      className={`relative h-[34rem] overflow-hidden border border-slate-200 bg-slate-50 dark:border-[#444444] dark:bg-[#202020] ${
+        dragging ? "cursor-grabbing" : "cursor-grab"
+      }`}
+      style={{ touchAction: "none" }}
+      onPointerDown={(event) => {
+        if (event.button !== 0) return;
+        event.currentTarget.setPointerCapture(event.pointerId);
+        dragRef.current = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          originX: offset.x,
+          originY: offset.y,
+        };
+        setDragging(true);
+      }}
+      onPointerMove={(event) => {
+        const drag = dragRef.current;
+        if (!drag || drag.pointerId !== event.pointerId) return;
+        setOffset({
+          x: drag.originX + event.clientX - drag.startX,
+          y: drag.originY + event.clientY - drag.startY,
+        });
+      }}
+      onPointerUp={(event) => {
+        if (dragRef.current?.pointerId === event.pointerId) {
+          dragRef.current = null;
+          setDragging(false);
+        }
+      }}
+      onPointerCancel={() => {
+        dragRef.current = null;
+        setDragging(false);
+      }}
+    >
+      <div
+        className="absolute left-0 top-0 min-h-full min-w-max p-8 transition-[transform] duration-75"
+        style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
+      >
+        <div className="flex items-start gap-8">
+          {steps.map((step, index) => (
+            <div
+              key={`${step.title}-${index}`}
+              className="flex items-start gap-8"
+            >
+              <WorkflowTreeStep step={step} index={index} />
+              {index < steps.length - 1 ? (
+                <ArrowRight className="mt-14 h-5 w-5 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+              ) : null}
             </div>
-            {step.detail ? (
-              <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-[#B0B0B0]">
-                {step.detail}
-              </p>
-            ) : null}
-          </div>
-          {index < steps.length - 1 ? (
-            <ArrowRight className="mt-5 hidden h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC] lg:block" />
-          ) : null}
+          ))}
         </div>
-      ))}
+      </div>
+    </div>
+  );
+}
+
+function WorkflowTreeStep({
+  step,
+  index,
+}: {
+  step: WorkflowStep;
+  index: number;
+}) {
+  const options = step.options ?? [];
+  const branchWidth = Math.max(18, options.length * 13);
+
+  return (
+    <div
+      className="flex flex-none flex-col items-center"
+      style={{ width: `${branchWidth}rem` }}
+    >
+      <div className="w-72 border border-slate-200 bg-white p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-[#1F7180] dark:border-[#444444] dark:bg-[#242424] dark:hover:border-[#A8DADC]">
+        <div className="flex items-center gap-2">
+          <span className="flex h-6 w-6 flex-none items-center justify-center border border-[#1F7180] text-xs font-normal text-[#1F7180] dark:border-[#A8DADC] dark:text-[#A8DADC]">
+            {index + 1}
+          </span>
+          <p className="min-w-0 truncate text-sm font-normal text-slate-950 dark:text-[#E4E4E4]">
+            {step.title}
+          </p>
+        </div>
+        {step.detail ? (
+          <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-[#B0B0B0]">
+            {step.detail}
+          </p>
+        ) : null}
+      </div>
+
+      {options.length > 0 ? (
+        <>
+          <div className="h-5 w-px bg-[#1F7180]/40 dark:bg-[#A8DADC]/45" />
+          <div className="h-px w-[calc(100%-4rem)] bg-[#1F7180]/30 dark:bg-[#A8DADC]/35" />
+          <div
+            className="mt-4 grid gap-3"
+            style={{
+              gridTemplateColumns: `repeat(${options.length}, minmax(11rem, 1fr))`,
+            }}
+          >
+            {options.map((option, optionIndex) => (
+              <div
+                key={`${option.label}-${optionIndex}`}
+                className="relative border border-[#D8D0C2] bg-[#FFFDF8] p-3 dark:border-[#444444] dark:bg-[#2C2C2C]"
+              >
+                <div className="absolute -top-4 left-1/2 h-4 w-px -translate-x-1/2 bg-[#1F7180]/30 dark:bg-[#A8DADC]/35" />
+                <p className="text-xs font-normal uppercase tracking-wide text-[#1F7180] dark:text-[#A8DADC]">
+                  {option.label}
+                </p>
+                {option.detail ? (
+                  <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-[#B0B0B0]">
+                    {option.detail}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

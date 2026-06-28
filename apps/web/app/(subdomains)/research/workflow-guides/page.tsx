@@ -27,15 +27,18 @@ const demoGuides = [
     workflow: [
       {
         title: "Read task and guide",
-        detail: "Open the task, read every guide icon, and note the expected deliverable.",
+        detail:
+          "Open the task, read every guide icon, and note the expected deliverable.",
       },
       {
         title: "Check input quality",
-        detail: "If research files or instructions are missing, request clarification before work starts.",
+        detail:
+          "If research files or instructions are missing, request clarification before work starts.",
       },
       {
         title: "Prepare output",
-        detail: "Follow the task guide format and keep source links or decision notes.",
+        detail:
+          "Follow the task guide format and keep source links or decision notes.",
       },
       {
         title: "Finish or clarify",
@@ -51,19 +54,36 @@ const demoGuides = [
     workflow: [
       {
         title: "Match scope",
-        detail: "Compare title, abstract, keywords, indexing, and publication type.",
+        detail:
+          "Compare title, abstract, keywords, indexing, and publication type.",
       },
       {
         title: "Check risk",
-        detail: "If the venue looks predatory, inactive, mismatched, or fee-heavy, mark the concern.",
+        detail:
+          "If the venue looks predatory, inactive, mismatched, or fee-heavy, mark the concern.",
       },
       {
         title: "Branch decision",
-        detail: "Suitable venues go to suggested list. Risky venues need notes or rejection.",
+        detail: "Choose the route based on evidence quality and venue fit.",
+        options: [
+          {
+            label: "Strong fit",
+            detail: "Add to suggested list with evidence and fees.",
+          },
+          {
+            label: "Unclear fit",
+            detail: "Collect missing scope, indexing, or deadline evidence.",
+          },
+          {
+            label: "High risk",
+            detail: "Reject or flag the venue with a clear risk note.",
+          },
+        ],
       },
       {
         title: "Submit evidence",
-        detail: "Include links, scope match, indexing, APC, deadlines, and final recommendation.",
+        detail:
+          "Include links, scope match, indexing, APC, deadlines, and final recommendation.",
       },
     ],
   },
@@ -75,19 +95,23 @@ const demoGuides = [
     workflow: [
       {
         title: "Question appears",
-        detail: "Identify whether the question belongs to assignee or checker/manager side.",
+        detail:
+          "Identify whether the question belongs to assignee or checker/manager side.",
       },
       {
         title: "Answer within 24h",
-        detail: "If you know the answer, respond clearly. If not, escalate with the missing fact.",
+        detail:
+          "If you know the answer, respond clearly. If not, escalate with the missing fact.",
       },
       {
         title: "Resume or review",
-        detail: "Assignee resumes work, or checker reviews the answer and makes approval/revision decision.",
+        detail:
+          "Assignee resumes work, or checker reviews the answer and makes approval/revision decision.",
       },
       {
         title: "Close loop",
-        detail: "Finish, approve, request redo, or ask one more targeted clarification.",
+        detail:
+          "Finish, approve, request redo, or ask one more targeted clarification.",
       },
     ],
   },
@@ -121,16 +145,38 @@ async function ensureDemoWorkflowGuides() {
 
 function workflowSteps(value: Prisma.JsonValue): WorkflowStep[] {
   if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => {
-      if (!item || typeof item !== "object" || Array.isArray(item)) return null;
-      const record = item as Record<string, unknown>;
-      const title = typeof record.title === "string" ? record.title : "";
-      const detail = typeof record.detail === "string" ? record.detail : "";
-      if (!title.trim()) return null;
-      return { title, detail };
-    })
-    .filter((item): item is WorkflowStep => Boolean(item));
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const record = item as Record<string, unknown>;
+    const title = typeof record.title === "string" ? record.title : "";
+    const detail = typeof record.detail === "string" ? record.detail : "";
+    const options = Array.isArray(record.options)
+      ? record.options
+          .map((option) => {
+            if (
+              !option ||
+              typeof option !== "object" ||
+              Array.isArray(option)
+            ) {
+              return null;
+            }
+            const optionRecord = option as Record<string, unknown>;
+            const label =
+              typeof optionRecord.label === "string" ? optionRecord.label : "";
+            const optionDetail =
+              typeof optionRecord.detail === "string"
+                ? optionRecord.detail
+                : "";
+            if (!label.trim()) return null;
+            return { label, detail: optionDetail };
+          })
+          .filter((option): option is { label: string; detail: string } =>
+            Boolean(option),
+          )
+      : [];
+    if (!title.trim()) return [];
+    return [{ title, detail, options }];
+  });
 }
 
 export default async function WorkflowGuidesPage() {
@@ -168,7 +214,17 @@ export default async function WorkflowGuidesPage() {
     content: guide.content,
     workflow: workflowSteps(guide.workflow),
     workflowText: workflowSteps(guide.workflow)
-      .map((step) => `${step.title}${step.detail ? ` :: ${step.detail}` : ""}`)
+      .map((step) => {
+        const branchText = step.options?.length
+          ? ` => ${step.options
+              .map(
+                (option) =>
+                  `${option.label}${option.detail ? `: ${option.detail}` : ""}`,
+              )
+              .join(" | ")}`
+          : "";
+        return `${step.title}${step.detail || branchText ? ` :: ${step.detail}${branchText}` : ""}`;
+      })
       .join("\n"),
     supportFileName: guide.supportFileName ?? "",
     supportFileSize: fileSizeLabel(guide.supportFileSize),

@@ -50,10 +50,23 @@ function guideValues(formData: FormData) {
           .map((line) => line.trim())
           .filter(Boolean)
           .map((line) => {
-            const [titlePart = "", detailPart] = line.split("::");
+            const [titlePart = "", restPart = ""] = line.split("::");
+            const [detailPart = "", branchesPart = ""] = restPart.split("=>");
             return {
               title: titlePart.trim(),
-              detail: (detailPart ?? "").trim(),
+              detail: detailPart.trim(),
+              options: branchesPart
+                .split("|")
+                .map((branch) => branch.trim())
+                .filter(Boolean)
+                .map((branch) => {
+                  const [labelPart = "", detailPart = ""] = branch.split(":");
+                  return {
+                    label: labelPart.trim(),
+                    detail: detailPart.trim(),
+                  };
+                })
+                .filter((branch) => branch.label),
             };
           })
       : undefined,
