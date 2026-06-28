@@ -562,9 +562,15 @@ export function TasksClient({
 }) {
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [query, setQuery] = usePersistentTableValue("tasks:q", "");
-  const [scopeTab, setScopeTab] = usePersistentTableValue(
-    "tasks:scope",
-    "assigned",
+  const scopeStorageKey = isAdmin
+    ? "tasks:scope:admin"
+    : isChiefAssistant
+      ? "tasks:scope:chief-assistant"
+      : "tasks:scope:user";
+  const defaultScopeTab: TaskHeaderTab = isAdmin ? "all" : "assigned";
+  const [scopeTab, setScopeTab] = usePersistentTableValue<TaskHeaderTab>(
+    scopeStorageKey,
+    defaultScopeTab,
   );
   const [statuses, setStatuses] = usePersistentMultiFilter(
     "tasks:status",
