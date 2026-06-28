@@ -65,6 +65,30 @@ function durationText(ms: number) {
   return restHours > 0 ? `${days}d ${restHours}h` : `${days}d`;
 }
 
+function activeDueMeta(due: Date | null, remainingMs: number | null) {
+  if (!due || remainingMs === null) {
+    return {
+      detail: "No due date",
+      detailClassName: "text-[#B0B0B0]",
+    };
+  }
+
+  if (remainingMs < 0) {
+    return {
+      detail: `${durationText(remainingMs)} late`,
+      detailClassName: "font-semibold text-rose-600 dark:text-rose-300",
+    };
+  }
+
+  return {
+    detail: `${durationText(remainingMs)} left`,
+    detailClassName:
+      remainingMs < 24 * 60 * 60 * 1000
+        ? "font-semibold text-[#B64F48] dark:text-[#FFB4A2]"
+        : "text-yellow-700 dark:text-yellow-300",
+  };
+}
+
 function taskId(row: RelatedResearchTaskRow) {
   return row.taskCode || row.id.replaceAll("-", "").slice(0, 10).toUpperCase();
 }
@@ -201,26 +225,35 @@ function timeMeta(row: RelatedResearchTaskRow) {
   }
 
   if (row.status === "CHECKING") {
+    const activeDue = activeDueMeta(due, remainingMs);
     return {
-      detail: "Waiting assigner check",
+      detail: activeDue.detail,
       dateLines: due ? [`Due: ${shortDate(row.dueDate)}`] : [],
-      detailClassName: "text-violet-600 dark:text-violet-300",
+      secondaryDetail: "Waiting assigner check",
+      detailClassName: activeDue.detailClassName,
+      secondaryDetailClassName: "text-violet-600 dark:text-violet-300",
     };
   }
 
   if (row.status === "REVISION_REQUESTED") {
+    const activeDue = activeDueMeta(due, remainingMs);
     return {
-      detail: "Waiting assignee revision",
+      detail: activeDue.detail,
       dateLines: due ? [`Due: ${shortDate(row.dueDate)}`] : [],
-      detailClassName: "text-orange-700 dark:text-orange-300",
+      secondaryDetail: "Waiting assignee revision",
+      detailClassName: activeDue.detailClassName,
+      secondaryDetailClassName: "text-orange-700 dark:text-orange-300",
     };
   }
 
   if (row.status === "NEED_CLARIFY") {
+    const activeDue = activeDueMeta(due, remainingMs);
     return {
-      detail: clarificationStatusDetail(row.clarifyDirection),
+      detail: activeDue.detail,
       dateLines: due ? [`Due: ${shortDate(row.dueDate)}`] : [],
-      detailClassName: "text-cyan-700 dark:text-cyan-300",
+      secondaryDetail: clarificationStatusDetail(row.clarifyDirection),
+      detailClassName: activeDue.detailClassName,
+      secondaryDetailClassName: "text-cyan-700 dark:text-cyan-300",
     };
   }
 
@@ -421,6 +454,13 @@ export function RelatedResearchTasksTable({
                         className={`max-w-full break-words text-xs font-normal leading-5 ${time.detailClassName}`}
                       >
                         {time.detail}
+                      </p>
+                    ) : null}
+                    {"secondaryDetail" in time && time.secondaryDetail ? (
+                      <p
+                        className={`max-w-full break-words text-xs font-normal leading-5 ${time.secondaryDetailClassName}`}
+                      >
+                        {time.secondaryDetail}
                       </p>
                     ) : null}
                     <div className="mt-2 border-t border-slate-200 pt-2 dark:border-[#555555]">

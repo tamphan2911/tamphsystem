@@ -141,6 +141,30 @@ function durationText(ms: number) {
   return restHours > 0 ? `${days}d ${restHours}h` : `${days}d`;
 }
 
+function activeDueMeta(due: Date | null, remainingMs: number | null) {
+  if (!due || remainingMs === null) {
+    return {
+      detail: "No due date",
+      detailClassName: "text-[#B0B0B0]",
+    };
+  }
+
+  if (remainingMs < 0) {
+    return {
+      detail: `${durationText(remainingMs)} late`,
+      detailClassName: "font-semibold text-rose-600 dark:text-rose-300",
+    };
+  }
+
+  return {
+    detail: `${durationText(remainingMs)} left`,
+    detailClassName:
+      remainingMs < 24 * 60 * 60 * 1000
+        ? "font-semibold text-[#B64F48] dark:text-[#FFB4A2]"
+        : "text-yellow-700 dark:text-yellow-300",
+  };
+}
+
 function displayTaskId(task: TaskRow) {
   return (
     task.taskCode || task.id.replaceAll("-", "").slice(0, 10).toUpperCase()
@@ -306,35 +330,44 @@ function statusMeta(task: TaskRow) {
   }
 
   if (task.status === "CHECKING") {
+    const activeDue = activeDueMeta(due, remainingMs);
     return {
       label: "Checking",
-      detail: "Waiting assigner check",
+      detail: activeDue.detail,
       dateLines: due ? [`Due: ${formatDate(task.dueDate)}`] : [],
+      secondaryDetail: "Waiting assigner check",
       className:
         "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-300/40 dark:bg-violet-950/25 dark:text-violet-300",
-      detailClassName: "text-violet-600 dark:text-violet-300",
+      detailClassName: activeDue.detailClassName,
+      secondaryDetailClassName: "text-violet-600 dark:text-violet-300",
     };
   }
 
   if (task.status === "REVISION_REQUESTED") {
+    const activeDue = activeDueMeta(due, remainingMs);
     return {
       label: "Revision requested",
-      detail: "Waiting assignee revision",
+      detail: activeDue.detail,
       dateLines: due ? [`Due: ${formatDate(task.dueDate)}`] : [],
+      secondaryDetail: "Waiting assignee revision",
       className:
         "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-300/40 dark:bg-orange-950/25 dark:text-orange-300",
-      detailClassName: "text-orange-700 dark:text-orange-300",
+      detailClassName: activeDue.detailClassName,
+      secondaryDetailClassName: "text-orange-700 dark:text-orange-300",
     };
   }
 
   if (task.status === "NEED_CLARIFY") {
+    const activeDue = activeDueMeta(due, remainingMs);
     return {
       label: "Need clarify",
-      detail: clarificationStatusDetail(task.clarifyDirection),
+      detail: activeDue.detail,
       dateLines: due ? [`Due: ${formatDate(task.dueDate)}`] : [],
+      secondaryDetail: clarificationStatusDetail(task.clarifyDirection),
       className:
         "border-cyan-200 bg-cyan-50 text-cyan-800 dark:border-cyan-300/40 dark:bg-cyan-950/25 dark:text-cyan-200",
-      detailClassName: "text-cyan-700 dark:text-cyan-300",
+      detailClassName: activeDue.detailClassName,
+      secondaryDetailClassName: "text-cyan-700 dark:text-cyan-300",
     };
   }
 
@@ -1278,6 +1311,14 @@ export function TasksClient({
                           {status.detail}
                         </p>
                       )}
+                      {"secondaryDetail" in status &&
+                      status.secondaryDetail ? (
+                        <p
+                          className={`max-w-full break-words text-xs font-normal leading-5 ${status.secondaryDetailClassName}`}
+                        >
+                          {status.secondaryDetail}
+                        </p>
+                      ) : null}
                       <div className="mt-2 border-t border-slate-200 pt-2 dark:border-[#555555]">
                         <p
                           className="max-w-full truncate whitespace-nowrap text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]"
