@@ -75,6 +75,7 @@ type EditableTask = {
   projectId: string;
   journalId: string;
   journalTargetCount: number | null;
+  suggestedVenueTargetCount: number | null;
   conferenceId: string;
   reviewId: string;
   organizedProjectId: string;
@@ -328,6 +329,9 @@ export function EditTaskDialog({
   const [isUrgent, setIsUrgent] = useState(task.isUrgent);
   const [journalTargetCount, setJournalTargetCount] = useState(
     String(task.journalTargetCount ?? 1),
+  );
+  const [suggestedVenueTargetCount, setSuggestedVenueTargetCount] = useState(
+    String(task.suggestedVenueTargetCount ?? 2),
   );
   const [isPending, startTransition] = useTransition();
   const { showSuccess, showError } = useResearchToast();
@@ -608,6 +612,7 @@ export function EditTaskDialog({
     setAllowReportUpload(task.allowAssigneeReportUpload);
     setIsUrgent(task.isUrgent);
     setJournalTargetCount(String(task.journalTargetCount ?? 1));
+    setSuggestedVenueTargetCount(String(task.suggestedVenueTargetCount ?? 2));
     setIsOpen(true);
   }
 
@@ -725,6 +730,9 @@ export function EditTaskDialog({
     selectedIds.length > 0 &&
     (mode !== "addJournal" ||
       (Number(journalTargetCount) >= 1 && Number(journalTargetCount) <= 30)) &&
+    (mode !== "suggestVenue" ||
+      (Number(suggestedVenueTargetCount) >= 1 &&
+        Number(suggestedVenueTargetCount) <= 30)) &&
     selectedResearchMatchesMode &&
     selectedVenueMatchesMode &&
     selectedReviewIsOpen &&
@@ -886,6 +894,26 @@ export function EditTaskDialog({
                 step="1"
                 value={journalTargetCount}
                 onChange={(event) => setJournalTargetCount(event.target.value)}
+                className={inputClass}
+              />
+            </label>
+          ) : null}
+
+          {mode === "suggestVenue" ? (
+            <label className="grid gap-1.5">
+              <span className="text-xs font-normal uppercase text-[#667085] dark:text-[#B0B0B0]">
+                Venues to suggest
+              </span>
+              <input
+                type="number"
+                name="suggestedVenueTargetCount"
+                min="1"
+                max="30"
+                step="1"
+                value={suggestedVenueTargetCount}
+                onChange={(event) =>
+                  setSuggestedVenueTargetCount(event.target.value)
+                }
                 className={inputClass}
               />
             </label>

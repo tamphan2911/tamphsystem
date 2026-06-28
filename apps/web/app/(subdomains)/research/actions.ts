@@ -5215,6 +5215,7 @@ async function completeSuggestVenueTaskIfReady(
       title: true,
       taskType: true,
       status: true,
+      suggestedVenueTargetCount: true,
       assignments: {
         select: {
           userId: true,
@@ -5232,16 +5233,17 @@ async function completeSuggestVenueTaskIfReady(
     return null;
   }
 
-  const [pendingJournals, pendingConferences] = await Promise.all([
+  const targetCount = Math.max(1, task.suggestedVenueTargetCount ?? 2);
+  const [approvedJournals, approvedConferences] = await Promise.all([
     prisma.suggestedJournal.count({
-      where: { taskId, status: { not: SuggestedVenueStatus.APPROVED } },
+      where: { taskId, status: SuggestedVenueStatus.APPROVED },
     }),
     prisma.suggestedConference.count({
-      where: { taskId, status: { not: SuggestedVenueStatus.APPROVED } },
+      where: { taskId, status: SuggestedVenueStatus.APPROVED },
     }),
   ]);
 
-  if (pendingJournals + pendingConferences > 0) return null;
+  if (approvedJournals + approvedConferences < targetCount) return null;
 
   const completedAt = new Date();
   const note =
@@ -5274,6 +5276,138 @@ async function completeSuggestVenueTaskIfReady(
     assigneeIds: task.assignments.map((assignment) => assignment.userId),
     assigneeEmails: task.assignments.map((assignment) => assignment.user.email),
   };
+}
+
+async function markSuggestVenueTaskReadyIfFilled(
+  taskId: string | null | undefined,
+) {
+  if (!taskId) return;
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      taskType: true,
+      status: true,
+      suggestedVenueTargetCount: true,
+    },
+  });
+  if (!task || task.taskType !== ResearchTaskType.SUGGEST_VENUE) return;
+  if (
+    task.status === ResearchTaskStatus.CHECKING ||
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    return;
+  }
+
+  const targetCount = Math.max(1, task.suggestedVenueTargetCount ?? 2);
+  const [activeJournals, activeConferences] = await Promise.all([
+    prisma.suggestedJournal.count({
+      where: { taskId, status: { not: SuggestedVenueStatus.DECLINED } },
+    }),
+    prisma.suggestedConference.count({
+      where: { taskId, status: { not: SuggestedVenueStatus.DECLINED } },
+    }),
+  ]);
+  if (activeJournals + activeConferences < targetCount) return;
+
+  const now = new Date();
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: {
+      status: ResearchTaskStatus.CHECKING,
+      adminViewedAt: null,
+      assignments: {
+        updateMany: {
+          where: { finishedAt: null },
+          data: { finishedAt: now },
+        },
+      },
+    },
+  });
+}
+
+async function requestSuggestVenueTaskRedoForDecline(
+  taskId: string | null | undefined,
+  requestedById: string,
+) {
+  if (!taskId) return;
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      title: true,
+      taskType: true,
+      status: true,
+      assignments: {
+        select: {
+          userId: true,
+          user: { select: { email: true } },
+        },
+      },
+    },
+  });
+  if (!task || task.taskType !== ResearchTaskType.SUGGEST_VENUE) return;
+  if (
+    task.status === ResearchTaskStatus.REVISION_REQUESTED ||
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    return;
+  }
+
+  const redoReason =
+    "One or more suggested venues were declined. Please add another suitable venue so the task reaches the required approved venue count.";
+  const now = new Date();
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: {
+      status: ResearchTaskStatus.REVISION_REQUESTED,
+      redoRequestedAt: now,
+      redoRequestedById: requestedById,
+      redoReason,
+      completedAt: null,
+      completedById: null,
+      completionMessage: null,
+      adminViewedAt: null,
+      assignments: {
+        updateMany: {
+          where: {},
+          data: { finishedAt: null },
+        },
+      },
+    },
+  });
+
+  const assigneeIds = task.assignments.map((assignment) => assignment.userId);
+  await notifyUsers({
+    userIds: assigneeIds,
+    excludeUserId: requestedById,
+    type: "TASK_REVISION_REQUESTED",
+    title: "Task returned for revision",
+    summary: task.title,
+    body: redoReason,
+    href: `/tasks/${task.id}`,
+    entityType: "task",
+    entityId: task.id,
+  });
+
+  const emails = task.assignments
+    .map((assignment) => assignment.user.email)
+    .filter(Boolean);
+  if (emails.length > 0) {
+    await sendTaskEmail({
+      to: emails,
+      subject: `Task returned for revision: ${task.title}`,
+      heading: "Task returned for revision",
+      intro: redoReason,
+      taskTitle: task.title,
+      taskId: task.id,
+      actionLabel: "Open task",
+    });
+  }
 }
 
 async function notifyMergedSuggestedVenueApproval({
@@ -6193,11 +6327,21 @@ export async function createResearchTask(formData: FormData) {
     taskType === ResearchTaskType.ADD_JOURNAL
       ? positiveIntFromForm(formData.get("journalTargetCount"))
       : null;
+  const suggestedVenueTargetCount =
+    taskType === ResearchTaskType.SUGGEST_VENUE
+      ? (positiveIntFromForm(formData.get("suggestedVenueTargetCount")) ?? 2)
+      : null;
   if (
     taskType === ResearchTaskType.ADD_JOURNAL &&
     (!journalTargetCount || journalTargetCount > 30)
   ) {
     return { ok: false, reason: "INVALID_JOURNAL_TARGET_COUNT" };
+  }
+  if (
+    taskType === ResearchTaskType.SUGGEST_VENUE &&
+    (!suggestedVenueTargetCount || suggestedVenueTargetCount > 30)
+  ) {
+    return { ok: false, reason: "INVALID_SUGGESTED_VENUE_TARGET_COUNT" };
   }
 
   if (
@@ -6350,6 +6494,7 @@ export async function createResearchTask(formData: FormData) {
       isUrgent,
       allowAssigneeReportUpload,
       journalTargetCount,
+      suggestedVenueTargetCount,
       checkerId,
       dueDate: researchTaskDueDate(optionalString(formData.get("dueDate"))),
       createdById: user.id,
@@ -6550,11 +6695,21 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     taskType === ResearchTaskType.ADD_JOURNAL
       ? positiveIntFromForm(formData.get("journalTargetCount"))
       : null;
+  const suggestedVenueTargetCount =
+    taskType === ResearchTaskType.SUGGEST_VENUE
+      ? (positiveIntFromForm(formData.get("suggestedVenueTargetCount")) ?? 2)
+      : null;
   if (
     taskType === ResearchTaskType.ADD_JOURNAL &&
     (!journalTargetCount || journalTargetCount > 30)
   ) {
     return { ok: false, reason: "INVALID_JOURNAL_TARGET_COUNT" };
+  }
+  if (
+    taskType === ResearchTaskType.SUGGEST_VENUE &&
+    (!suggestedVenueTargetCount || suggestedVenueTargetCount > 30)
+  ) {
+    return { ok: false, reason: "INVALID_SUGGESTED_VENUE_TARGET_COUNT" };
   }
   const highestFilledJournalPosition = currentTask.addedJournals.reduce(
     (highest, journal) => Math.max(highest, journal.resultPosition ?? -1),
@@ -6737,6 +6892,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
         isUrgent,
         allowAssigneeReportUpload,
         journalTargetCount,
+        suggestedVenueTargetCount,
         checkerId,
         ...(!allowAssigneeReportUpload
           ? {
@@ -7837,6 +7993,100 @@ async function validateSuggestedVenueTaskLink({
   return { ok: true as const };
 }
 
+export async function addTaskSuggestedVenue(
+  taskId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      projectId: true,
+      taskType: true,
+      status: true,
+      assignments: { select: { userId: true } },
+    },
+  });
+  if (!task || task.taskType !== ResearchTaskType.SUGGEST_VENUE) {
+    return { ok: false, message: "Suggest venue task was not found." };
+  }
+  if (!task.projectId) {
+    return { ok: false, message: "Link this task to a research first." };
+  }
+  if (
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    return { ok: false, message: "This task is already closed." };
+  }
+  if (!task.assignments.some((assignment) => assignment.userId === user.id)) {
+    redirect("/401");
+  }
+  if (await researchContentIsLocked(task.projectId)) {
+    return { ok: false, message: "Unlock the research before adding venues." };
+  }
+
+  const venueKind = optionalString(formData.get("venueKind"));
+  const venueName = optionalString(formData.get("venueName"));
+  const venueLink = optionalString(formData.get("venueLink"));
+  const note = optionalString(formData.get("note"));
+  const apc = optionalString(formData.get("apc"));
+  const submissionFee = optionalString(formData.get("submissionFee"));
+  if (venueKind !== "journal" && venueKind !== "conference") {
+    return { ok: false, message: "Choose journal or conference." };
+  }
+  if (!venueName && !venueLink) {
+    return { ok: false, message: "Enter at least a venue name or link." };
+  }
+
+  const suggestion =
+    venueKind === "journal"
+      ? await prisma.suggestedJournal.create({
+          data: {
+            projectId: task.projectId,
+            taskId: task.id,
+            createdById: user.id,
+            status: SuggestedVenueStatus.PENDING,
+            requiresApproval: true,
+            venueName,
+            venueLink,
+            apc,
+            submissionFee,
+            note,
+          },
+        })
+      : await prisma.suggestedConference.create({
+          data: {
+            projectId: task.projectId,
+            taskId: task.id,
+            createdById: user.id,
+            status: SuggestedVenueStatus.PENDING,
+            requiresApproval: true,
+            venueName,
+            venueLink,
+            note,
+          },
+        });
+
+  await notifyVenueSuggestionApprovalNeeded({
+    projectId: task.projectId,
+    suggestionId: suggestion.id,
+    venueName:
+      venueName ?? (venueKind === "journal" ? "New journal" : "New conference"),
+    kind: venueKind,
+    createdById: user.id,
+    adminOnly: true,
+  });
+  await markSuggestVenueTaskReadyIfFilled(task.id);
+
+  revalidatePath(`/tasks/${task.id}`);
+  revalidatePath(`/projects/${task.projectId}`);
+  revalidatePath("/tasks");
+  revalidatePath("/suggestions");
+  return { ok: true };
+}
+
 export async function addSuggestedJournal(
   projectId: string,
   formData: FormData,
@@ -7928,7 +8178,9 @@ export async function addSuggestedJournal(
       createdById: user.id,
       adminOnly: !journalId,
     });
+    await markSuggestVenueTaskReadyIfFilled(taskId);
   } else if (suggestion.status === SuggestedVenueStatus.APPROVED) {
+    await markSuggestVenueTaskReadyIfFilled(taskId);
     const completedSuggestTask = await completeSuggestVenueTaskIfReady(
       taskId,
       user.id,
@@ -8234,7 +8486,9 @@ export async function addSuggestedConference(
       createdById: user.id,
       adminOnly: !conferenceId,
     });
+    await markSuggestVenueTaskReadyIfFilled(taskId);
   } else if (suggestion.status === SuggestedVenueStatus.APPROVED) {
+    await markSuggestVenueTaskReadyIfFilled(taskId);
     const completedSuggestTask = await completeSuggestVenueTaskIfReady(
       taskId,
       user.id,
@@ -8932,6 +9186,7 @@ export async function declineSuggestedJournal(
       entityId: suggestionId,
     });
   }
+  await requestSuggestVenueTaskRedoForDecline(suggestion.taskId, user.id);
 
   revalidatePath(`/projects/${projectId}`);
   if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
@@ -9006,6 +9261,7 @@ export async function declineSuggestedConference(
       entityId: suggestionId,
     });
   }
+  await requestSuggestVenueTaskRedoForDecline(suggestion.taskId, user.id);
 
   revalidatePath(`/projects/${projectId}`);
   if (suggestion.taskId) revalidatePath(`/tasks/${suggestion.taskId}`);
@@ -9530,6 +9786,7 @@ async function createNextProductionWorkflowTask({
       description: nextDescription,
       category: isSuggestVenueNext ? null : ResearchTaskCategory.PRODUCTION,
       taskType: nextTaskType,
+      suggestedVenueTargetCount: isSuggestVenueNext ? 2 : null,
       productionSubtype: isSuggestVenueNext ? null : nextSubtype,
       proposalScope: ProposalTaskScope.RESEARCH,
       status: ResearchTaskStatus.IN_PROGRESS,

@@ -932,6 +932,7 @@ model ResearchTask {
   isUrgent                  Boolean               @default(false)
   allowAssigneeReportUpload Boolean               @default(false)
   journalTargetCount        Int?
+  suggestedVenueTargetCount Int?
   reportFileName            String?
   reportFileType            String?
   reportFileSize            Int?

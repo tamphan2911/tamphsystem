@@ -276,6 +276,8 @@ export function NewTaskDialog({
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [isUrgent, setIsUrgent] = useState(false);
   const [journalTargetCount, setJournalTargetCount] = useState("1");
+  const [suggestedVenueTargetCount, setSuggestedVenueTargetCount] =
+    useState("2");
   const [isPending, startTransition] = useTransition();
   const { showSuccess, showError } = useResearchToast();
 
@@ -725,6 +727,9 @@ export function NewTaskDialog({
     selectedIds.length > 0 &&
     (mode !== "addJournal" ||
       (Number(journalTargetCount) >= 1 && Number(journalTargetCount) <= 30)) &&
+    (mode !== "suggestVenue" ||
+      (Number(suggestedVenueTargetCount) >= 1 &&
+        Number(suggestedVenueTargetCount) <= 30)) &&
     selectedResearchMatchesMode &&
     selectedVenueMatchesMode &&
     (!submitAccountRequired || Boolean(selectedAccountId)) &&
@@ -867,6 +872,11 @@ export function NewTaskDialog({
           {mode === "suggestVenue" && (
             <>
               <input type="hidden" name="taskType" value="SUGGEST_VENUE" />
+              <input
+                type="hidden"
+                name="suggestedVenueTargetCount"
+                value={suggestedVenueTargetCount}
+              />
             </>
           )}
           {mode === "addJournal" && (
@@ -1006,6 +1016,26 @@ export function NewTaskDialog({
                 value={journalTargetCount}
                 onChange={(event) => setJournalTargetCount(event.target.value)}
                 placeholder="Number of journals"
+                className={inputClass}
+              />
+            </label>
+          ) : null}
+
+          {mode === "suggestVenue" ? (
+            <label className="grid gap-1.5">
+              <span className="text-xs font-normal uppercase text-[#667085] dark:text-[#B0B0B0]">
+                Venues to suggest
+              </span>
+              <input
+                type="number"
+                min="1"
+                max="30"
+                step="1"
+                value={suggestedVenueTargetCount}
+                onChange={(event) =>
+                  setSuggestedVenueTargetCount(event.target.value)
+                }
+                placeholder="Number of venues"
                 className={inputClass}
               />
             </label>
