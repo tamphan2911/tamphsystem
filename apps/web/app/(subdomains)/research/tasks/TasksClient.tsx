@@ -708,10 +708,13 @@ export function TasksClient({
   useEffect(() => {
     if (isAdmin || initializedNonAdminTabRef.current) return;
     initializedNonAdminTabRef.current = true;
-    if (scopeTab !== "assigned") {
+    const allowedScopeTabs: TaskHeaderTab[] = isChiefAssistant
+      ? ["assigned", "checker", "related"]
+      : ["assigned", "related"];
+    if (!allowedScopeTabs.includes(scopeTab as TaskHeaderTab)) {
       setScopeTab("assigned");
     }
-  }, [isAdmin, scopeTab, setScopeTab]);
+  }, [isAdmin, isChiefAssistant, scopeTab, setScopeTab]);
 
   const previousNonAdminTabRef = useRef<TaskHeaderTab | null>(null);
 
