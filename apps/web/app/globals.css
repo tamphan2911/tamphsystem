@@ -4053,6 +4053,56 @@ html[data-research-theme="light"]
   color: #155864 !important;
 }
 
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .suggested-venue-kind-tabs {
+  border-color: #d8d0c2 !important;
+  background: #f5f1e9 !important;
+  padding: 0.125rem !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .suggested-venue-kind-tab {
+  min-height: 2.5rem;
+  border-right-color: #e2d9cc !important;
+  color: #59677d !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .suggested-venue-kind-tab::before {
+  background: linear-gradient(180deg, #f3fbfa 0%, #e8f4f2 100%) !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .suggested-venue-kind-tab::after {
+  background: #f8fbfa !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .suggested-venue-kind-tab:hover {
+  color: #1f7180 !important;
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .suggested-venue-kind-tab[data-active="true"] {
+  border-right-color: #b8d9dc !important;
+  color: #145d68 !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(31, 113, 128, 0.2),
+    inset 0 -2px 0 rgba(31, 113, 128, 0.45);
+}
+
+html[data-research-theme="light"]
+  [data-research-modal-overlay="true"]
+  .suggested-venue-kind-tab[data-active="true"]:hover {
+  color: #145d68 !important;
+}
+
 .research-site-root button[class*="bg-emerald-600"],
 .research-site-root button[class*="bg-emerald-500"] {
   border: 1px solid #a8dadc;

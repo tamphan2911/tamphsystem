@@ -222,7 +222,7 @@ export function SuggestedVenueAddDialog({
       <div className="grid gap-4">
         <div
           data-research-toggle-tabs="true"
-          className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020]"
+          className="suggested-venue-kind-tabs grid w-full grid-cols-2 border border-[#444444] bg-[#202020]"
         >
           {(["journal", "conference"] as const).map((tab) => (
             <button
@@ -236,7 +236,7 @@ export function SuggestedVenueAddDialog({
               }}
               data-research-toggle-tab="true"
               data-active={activeTab === tab}
-              className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
+              className={`suggested-venue-kind-tab cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
                 activeTab === tab
                   ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
                   : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
