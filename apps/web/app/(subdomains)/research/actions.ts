@@ -3587,7 +3587,14 @@ export async function updateResearchProject(
     return;
   }
 
-  if (updateScope === "production" && projectLock.productionTimelineLocked) {
+  const existingProductionIsComplete = productionStepLabels.every((step) =>
+    projectLock.completedProductionSteps.includes(step),
+  );
+  if (
+    updateScope === "production" &&
+    projectLock.productionTimelineLocked &&
+    existingProductionIsComplete
+  ) {
     revalidatePath(`/projects/${projectId}`);
     return;
   }
