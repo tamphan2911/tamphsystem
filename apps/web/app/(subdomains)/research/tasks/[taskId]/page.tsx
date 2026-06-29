@@ -34,6 +34,7 @@ import {
   ResearchTaskStatus,
   ResearchTaskType,
   Role,
+  SuggestedVenueStatus,
 } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
@@ -183,6 +184,15 @@ function statusMeta(task: {
     };
   }
 
+  if (task.waitingForJournalCreation) {
+    return {
+      label: "In progress",
+      detail: "Waiting for assignee to add journal",
+      tone: "blue" as const,
+      timeTone: "blue" as const,
+    };
+  }
+
   if (task.status === "CHECKING") {
     return {
       label: "Checking",
@@ -210,15 +220,6 @@ function statusMeta(task: {
           : "Waiting for task manager answer",
       tone: "cyan" as const,
       timeTone: "cyan" as const,
-    };
-  }
-
-  if (task.waitingForJournalCreation) {
-    return {
-      label: "In progress",
-      detail: "Waiting for assignee to add journal",
-      tone: "blue" as const,
-      timeTone: "blue" as const,
     };
   }
 
@@ -1718,7 +1719,7 @@ export default async function TaskDetailPage({
     task.taskType === ResearchTaskType.SUGGEST_VENUE &&
     task.suggestedJournals.some(
       (suggestion) =>
-        suggestion.status === "PENDING" &&
+        suggestion.status !== SuggestedVenueStatus.DECLINED &&
         suggestion.journalCreationTask &&
         suggestion.journalCreationTask.status !==
           ResearchTaskStatus.COMPLETED &&
@@ -1806,36 +1807,46 @@ export default async function TaskDetailPage({
   const isClosed =
     task.status === ResearchTaskStatus.COMPLETED ||
     task.status === ResearchTaskStatus.REVOKED;
+  const effectiveStatus = waitingForJournalCreation
+    ? ResearchTaskStatus.IN_PROGRESS
+    : task.status;
   const isAutomatedJournalTask = Boolean(task.journalCreationSuggestion);
   const canMarkReady =
     !isClosed &&
+    !waitingForJournalCreation &&
     !isAutomatedJournalTask &&
     isAssignee &&
     !selfAssigned &&
-    task.status !== ResearchTaskStatus.CHECKING &&
-    task.status !== ResearchTaskStatus.NEED_CLARIFY;
+    effectiveStatus !== ResearchTaskStatus.CHECKING &&
+    effectiveStatus !== ResearchTaskStatus.NEED_CLARIFY;
   const canApprove =
     !isClosed &&
+    !waitingForJournalCreation &&
     !isAutomatedJournalTask &&
     !isAssignee &&
     (isAdmin || isAssigner) &&
-    (selfAssigned || isAdmin || task.status === ResearchTaskStatus.CHECKING);
+    (selfAssigned ||
+      isAdmin ||
+      effectiveStatus === ResearchTaskStatus.CHECKING);
   const canRedo =
     !isClosed &&
+    !waitingForJournalCreation &&
     !isAssignee &&
     (isAdmin || isAssigner) &&
-    task.status === ResearchTaskStatus.CHECKING;
+    effectiveStatus === ResearchTaskStatus.CHECKING;
   const canRequestClarification =
     !isClosed &&
+    !waitingForJournalCreation &&
     isAssignee &&
     !selfAssigned &&
-    task.status !== ResearchTaskStatus.CHECKING &&
-    task.status !== ResearchTaskStatus.NEED_CLARIFY &&
+    effectiveStatus !== ResearchTaskStatus.CHECKING &&
+    effectiveStatus !== ResearchTaskStatus.NEED_CLARIFY &&
     !hasOpenClarification;
   const canRequestAssigneeClarification =
     !isClosed &&
+    !waitingForJournalCreation &&
     (isRootAdmin || isAssigner || isChecker) &&
-    task.status === ResearchTaskStatus.CHECKING &&
+    effectiveStatus === ResearchTaskStatus.CHECKING &&
     !hasOpenClarification;
   const canRevoke = !isClosed && !isAssignee && (isAdmin || isAssigner);
   const canEdit =
@@ -1849,32 +1860,38 @@ export default async function TaskDetailPage({
           detail:
             "This task does not have any assignees, so there is no one to receive a finish reminder email.",
         }
-      : task.status === ResearchTaskStatus.COMPLETED
+      : effectiveStatus === ResearchTaskStatus.COMPLETED
         ? {
             title: "Reminder not available",
             detail:
               "This task is already completed. Assignees do not need a finish reminder for closed work.",
           }
-        : task.status === ResearchTaskStatus.REVOKED
+        : effectiveStatus === ResearchTaskStatus.REVOKED
           ? {
               title: "Reminder not available",
               detail:
                 "This task has been revoked. Revoked tasks are no longer active work for assignees.",
             }
-          : task.status === ResearchTaskStatus.CHECKING
+          : waitingForJournalCreation
             ? {
                 title: "Reminder not available",
                 detail:
-                  "This task is waiting for the assigner to check the submitted work. The next action belongs to the assigner, not the assignees.",
+                  "This suggest venue task is waiting for the assignee to finish the linked Add Journal task.",
               }
-            : task.status === ResearchTaskStatus.NEED_CLARIFY &&
-                clarifyDirection !== "MANAGER_TO_ASSIGNEE"
+            : effectiveStatus === ResearchTaskStatus.CHECKING
               ? {
                   title: "Reminder not available",
                   detail:
-                    "Assignees are waiting for clarification feedback from the task manager. Please answer the clarification request before sending finish reminders.",
+                    "This task is waiting for the assigner to check the submitted work. The next action belongs to the assigner, not the assignees.",
                 }
-              : null;
+              : effectiveStatus === ResearchTaskStatus.NEED_CLARIFY &&
+                  clarifyDirection !== "MANAGER_TO_ASSIGNEE"
+                ? {
+                    title: "Reminder not available",
+                    detail:
+                      "Assignees are waiting for clarification feedback from the task manager. Please answer the clarification request before sending finish reminders.",
+                  }
+                : null;
   const canAnswerClarification =
     !isClosed && (isRootAdmin || isAssigner || isChecker || isAssignee);
   const reportEnabled = task.allowAssigneeReportUpload;

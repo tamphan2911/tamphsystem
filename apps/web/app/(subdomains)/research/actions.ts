@@ -5394,6 +5394,12 @@ async function markSuggestVenueTaskReadyIfFilled(
       taskType: true,
       status: true,
       suggestedVenueTargetCount: true,
+      suggestedJournals: {
+        select: {
+          status: true,
+          journalCreationTask: { select: { status: true } },
+        },
+      },
     },
   });
   if (!task || task.taskType !== ResearchTaskType.SUGGEST_VENUE) return;
@@ -5404,6 +5410,14 @@ async function markSuggestVenueTaskReadyIfFilled(
   ) {
     return;
   }
+  const waitingForJournalCreation = task.suggestedJournals.some(
+    (suggestion) =>
+      suggestion.status !== SuggestedVenueStatus.DECLINED &&
+      suggestion.journalCreationTask &&
+      suggestion.journalCreationTask.status !== ResearchTaskStatus.COMPLETED &&
+      suggestion.journalCreationTask.status !== ResearchTaskStatus.REVOKED,
+  );
+  if (waitingForJournalCreation) return;
 
   const targetCount = Math.max(1, task.suggestedVenueTargetCount ?? 2);
   const [activeJournals, activeConferences] = await Promise.all([

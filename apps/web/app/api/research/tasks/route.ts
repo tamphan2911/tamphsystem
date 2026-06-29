@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { prisma, ResearchTaskStatus, Role } from "@repo/db";
+import {
+  prisma,
+  ResearchTaskStatus,
+  Role,
+  SuggestedVenueStatus,
+} from "@repo/db";
 import { auth } from "../../../../auth";
 
 function scopedTaskWhere(userId: string) {
@@ -227,8 +232,20 @@ export async function GET() {
             (right.answeredAt?.getTime() ?? 0) -
             (left.answeredAt?.getTime() ?? 0),
         )[0];
-      const managerActionStartedAt =
-        task.status === ResearchTaskStatus.CHECKING
+      const waitingForJournalCreation =
+        task.taskType === "SUGGEST_VENUE" &&
+        task.suggestedJournals.some(
+          (suggestion) =>
+            suggestion.status !== SuggestedVenueStatus.DECLINED &&
+            suggestion.journalCreationTask &&
+            suggestion.journalCreationTask.status !==
+              ResearchTaskStatus.COMPLETED &&
+            suggestion.journalCreationTask.status !==
+              ResearchTaskStatus.REVOKED,
+        );
+      const managerActionStartedAt = waitingForJournalCreation
+        ? null
+        : task.status === ResearchTaskStatus.CHECKING
           ? ([
               latestFinishedAt,
               latestManagerClarificationAnswer?.answeredAt ?? null,
@@ -240,17 +257,6 @@ export async function GET() {
               clarifyDirection === "ASSIGNEE_TO_MANAGER"
             ? (openClarification?.createdAt ?? task.updatedAt)
             : null;
-      const waitingForJournalCreation =
-        task.taskType === "SUGGEST_VENUE" &&
-        task.suggestedJournals.some(
-          (suggestion) =>
-            suggestion.status === "PENDING" &&
-            suggestion.journalCreationTask &&
-            suggestion.journalCreationTask.status !==
-              ResearchTaskStatus.COMPLETED &&
-            suggestion.journalCreationTask.status !==
-              ResearchTaskStatus.REVOKED,
-        );
 
       return {
         id: task.id,

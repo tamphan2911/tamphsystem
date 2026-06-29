@@ -245,7 +245,7 @@ export function TaskSuggestedVenueResults({
 function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
   const waitingForJournalCreation =
     venue.kind === "journal" &&
-    venue.status === "PENDING" &&
+    venue.status !== "DECLINED" &&
     venue.journalCreationTaskId &&
     venue.journalCreationTaskStatus !== "COMPLETED" &&
     venue.journalCreationTaskStatus !== "REVOKED";

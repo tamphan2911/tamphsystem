@@ -334,6 +334,20 @@ function statusMeta(task: TaskRow) {
     };
   }
 
+  if (task.waitingForJournalCreation) {
+    const activeDue = activeDueMeta(due, remainingMs);
+    return {
+      label: "In progress",
+      detail: activeDue.detail,
+      dateLines: due ? [`Due: ${formatDate(task.dueDate)}`] : [],
+      secondaryDetail: "Waiting for assignee to add journal",
+      className:
+        "border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-300/40 dark:bg-yellow-950/25 dark:text-yellow-200",
+      detailClassName: activeDue.detailClassName,
+      secondaryDetailClassName: "text-[#1F7180] dark:text-[#A8DADC]",
+    };
+  }
+
   if (task.status === "CHECKING") {
     const activeDue = activeDueMeta(due, remainingMs);
     return {
@@ -373,20 +387,6 @@ function statusMeta(task: TaskRow) {
         "border-cyan-200 bg-cyan-50 text-cyan-800 dark:border-cyan-300/40 dark:bg-cyan-950/25 dark:text-cyan-200",
       detailClassName: activeDue.detailClassName,
       secondaryDetailClassName: "text-cyan-700 dark:text-cyan-300",
-    };
-  }
-
-  if (task.waitingForJournalCreation) {
-    const activeDue = activeDueMeta(due, remainingMs);
-    return {
-      label: "In progress",
-      detail: activeDue.detail,
-      dateLines: due ? [`Due: ${formatDate(task.dueDate)}`] : [],
-      secondaryDetail: "Waiting for assignee to add journal",
-      className:
-        "border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-300/40 dark:bg-yellow-950/25 dark:text-yellow-200",
-      detailClassName: activeDue.detailClassName,
-      secondaryDetailClassName: "text-[#1F7180] dark:text-[#A8DADC]",
     };
   }
 
@@ -536,6 +536,7 @@ function statusIconMeta(task: TaskRow): {
 }
 
 function derivedStatus(task: TaskRow) {
+  if (task.waitingForJournalCreation) return "IN_PROGRESS";
   if (
     task.status === "CHECKING" ||
     task.status === "NEED_CLARIFY" ||
