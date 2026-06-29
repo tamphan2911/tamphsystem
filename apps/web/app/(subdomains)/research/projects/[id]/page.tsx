@@ -297,8 +297,13 @@ export default async function ProjectDetailPage({
     ? { activeSites: { has: "research" } }
     : {
         activeSites: { has: "research" },
-        roles: { has: Role.ASSISTANT },
-        NOT: { id: userId },
+        OR: [
+          {
+            roles: { has: Role.ASSISTANT },
+            NOT: { id: userId },
+          },
+          ...(isChiefAssistant ? [{ id: userId }] : []),
+        ],
       };
   const [
     project,
@@ -623,6 +628,8 @@ export default async function ProjectDetailPage({
     researchAcceptedOrPublished && !project.contentUnlocked;
   const canCreateSubmitOrOtherTask =
     canManageResearchTasks && !researchContentLocked;
+  const canAssignSuggestedVenueSubmitTask =
+    (canCreateSubmitOrOtherTask || isChiefAssistant) && !researchContentLocked;
   const canCreateProductionTask = canCreateSubmitOrOtherTask;
   const canApproveVenueSuggestion =
     (isRootAdmin || isChiefAssistant || isSuggestVenueTaskAssigner) &&
@@ -1989,7 +1996,8 @@ export default async function ProjectDetailPage({
           taskGuideOptions={taskGuides}
           canChooseChecker={isRootAdmin}
           isAdmin={isAdmin}
-          canAssignTask={canCreateSubmitOrOtherTask}
+          canAssignTask={canAssignSuggestedVenueSubmitTask}
+          canAssignOtherTask={canCreateSubmitOrOtherTask}
           canApproveSuggestion={canApproveVenueSuggestion}
           canSuggestVenue={canSuggestVenue}
           taskAction={

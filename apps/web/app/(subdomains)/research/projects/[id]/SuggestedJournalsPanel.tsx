@@ -194,6 +194,7 @@ export function SuggestedJournalsPanel({
   canChooseChecker = false,
   isAdmin,
   canAssignTask,
+  canAssignOtherTask = canAssignTask,
   canApproveSuggestion,
   canSuggestVenue,
   taskAction,
@@ -212,6 +213,7 @@ export function SuggestedJournalsPanel({
   canChooseChecker?: boolean;
   isAdmin: boolean;
   canAssignTask: boolean;
+  canAssignOtherTask?: boolean;
   canApproveSuggestion: boolean;
   canSuggestVenue: boolean;
   taskAction?: ReactNode;
@@ -1638,34 +1640,38 @@ export function SuggestedJournalsPanel({
               value={taskMode === "submit" ? "Submitting" : "Production"}
             />
 
-            <div
-              data-research-toggle-tabs="true"
-              className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020]"
-            >
-              {(["submit", "other"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => {
-                    setTaskMode(mode);
-                    setSelectedTaskGuideIds(
-                      mode === "submit"
-                        ? defaultSubmitTaskGuideIds(taskGuideOptions)
-                        : [],
-                    );
-                  }}
-                  data-research-toggle-tab="true"
-                  data-active={taskMode === mode}
-                  className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
-                    taskMode === mode
-                      ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
-                      : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
-                  }`}
-                >
-                  {mode === "submit" ? `Submit to ${assignKind}` : "Other task"}
-                </button>
-              ))}
-            </div>
+            {canAssignOtherTask ? (
+              <div
+                data-research-toggle-tabs="true"
+                className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020]"
+              >
+                {(["submit", "other"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => {
+                      setTaskMode(mode);
+                      setSelectedTaskGuideIds(
+                        mode === "submit"
+                          ? defaultSubmitTaskGuideIds(taskGuideOptions)
+                          : [],
+                      );
+                    }}
+                    data-research-toggle-tab="true"
+                    data-active={taskMode === mode}
+                    className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
+                      taskMode === mode
+                        ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
+                        : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
+                    }`}
+                  >
+                    {mode === "submit"
+                      ? `Submit to ${assignKind}`
+                      : "Other task"}
+                  </button>
+                ))}
+              </div>
+            ) : null}
 
             <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
               <label className="grid gap-1.5">

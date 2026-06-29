@@ -1562,9 +1562,11 @@ async function canManageTaskAsResearchAdmin(
 async function taskAssigneesAreSelectableByUser({
   assigneeIds,
   user,
+  allowChiefAssistantSelf = false,
 }: {
   assigneeIds: string[];
   user: { id: string; roles: Role[] };
+  allowChiefAssistantSelf?: boolean;
 }) {
   const uniqueAssigneeIds = Array.from(new Set(assigneeIds));
   if (uniqueAssigneeIds.length === 0) return false;
@@ -1574,12 +1576,18 @@ async function taskAssigneesAreSelectableByUser({
     !user.roles.includes(Role.ADMIN);
   const selectableAssigneeCount = await prisma.user.count({
     where: chiefAssistantOnly
-      ? {
-          id: { in: uniqueAssigneeIds },
-          activeSites: { has: "research" },
-          roles: { has: Role.ASSISTANT },
-          NOT: { id: user.id },
-        }
+      ? allowChiefAssistantSelf
+        ? {
+            id: { in: uniqueAssigneeIds },
+            activeSites: { has: "research" },
+            OR: [{ roles: { has: Role.ASSISTANT } }, { id: user.id }],
+          }
+        : {
+            id: { in: uniqueAssigneeIds },
+            activeSites: { has: "research" },
+            roles: { has: Role.ASSISTANT },
+            NOT: { id: user.id },
+          }
       : {
           id: { in: uniqueAssigneeIds },
           activeSites: { has: "research" },
@@ -1608,6 +1616,60 @@ async function taskCheckerIsSelectableByAdmin({
   });
 
   return checkerCount === 1;
+}
+
+async function suggestedVenueSubmitTaskIsSelectable({
+  taskType,
+  projectId,
+  journalId,
+  conferenceId,
+  suggestedJournalId,
+  suggestedConferenceId,
+}: {
+  taskType: ResearchTaskType;
+  projectId: string | null;
+  journalId: string | null;
+  conferenceId: string | null;
+  suggestedJournalId: string | null;
+  suggestedConferenceId: string | null;
+}) {
+  if (
+    taskType === ResearchTaskType.SUBMIT_RESEARCH &&
+    projectId &&
+    journalId &&
+    suggestedJournalId
+  ) {
+    return (
+      (await prisma.suggestedJournal.count({
+        where: {
+          id: suggestedJournalId,
+          projectId,
+          journalId,
+          status: SuggestedVenueStatus.APPROVED,
+        },
+      })) === 1
+    );
+  }
+
+  if (
+    taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
+    projectId &&
+    conferenceId &&
+    suggestedConferenceId
+  ) {
+    return (
+      (await prisma.suggestedConference.count({
+        where: {
+          id: suggestedConferenceId,
+          projectId,
+          conferenceId,
+          status: SuggestedVenueStatus.APPROVED,
+        },
+      })) === 1
+    );
+  }
+
+  return false;
 }
 
 async function notifyTaskAdminsAndChecker({
@@ -6408,15 +6470,6 @@ export async function createResearchTask(formData: FormData) {
     return { ok: false, reason: "NO_ASSIGNEE" };
   }
 
-  if (!(await taskAssigneesAreSelectableByUser({ assigneeIds, user }))) {
-    return { ok: false, reason: "INACTIVE_RESEARCH_ASSIGNEE" };
-  }
-
-  const checkerId = optionalString(formData.get("checkerId"));
-  if (!(await taskCheckerIsSelectableByAdmin({ checkerId, user }))) {
-    return { ok: false, reason: "INVALID_CHECKER" };
-  }
-
   const taskType = taskTypeFromForm(formData.get("taskType"));
   if (!taskType) return { ok: false, reason: "MISSING_ASSOCIATION" };
   const proposalScope = proposalTaskScopeFromForm(
@@ -6436,6 +6489,36 @@ export async function createResearchTask(formData: FormData) {
   const suggestedConferenceId = optionalString(
     formData.get("suggestedConferenceId"),
   );
+  const isSuggestedVenueSubmitTask =
+    (taskType === ResearchTaskType.SUBMIT_RESEARCH &&
+      Boolean(suggestedJournalId)) ||
+    (taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
+      Boolean(suggestedConferenceId));
+  const isChiefAssistantSuggestedVenueSubmitTask =
+    user.roles.includes(Role.CHIEF_ASSISTANT) &&
+    !user.roles.includes(Role.ADMIN) &&
+    isSuggestedVenueSubmitTask;
+  const checkerId = isChiefAssistantSuggestedVenueSubmitTask
+    ? user.id
+    : optionalString(formData.get("checkerId"));
+
+  if (
+    !(await taskAssigneesAreSelectableByUser({
+      assigneeIds,
+      user,
+      allowChiefAssistantSelf: isChiefAssistantSuggestedVenueSubmitTask,
+    }))
+  ) {
+    return { ok: false, reason: "INACTIVE_RESEARCH_ASSIGNEE" };
+  }
+
+  if (
+    !isChiefAssistantSuggestedVenueSubmitTask &&
+    !(await taskCheckerIsSelectableByAdmin({ checkerId, user }))
+  ) {
+    return { ok: false, reason: "INVALID_CHECKER" };
+  }
+
   const reviewId = optionalString(formData.get("reviewId"));
   let accountId = optionalString(formData.get("accountId"));
   const allowAssigneeReportUpload =
@@ -6462,14 +6545,26 @@ export async function createResearchTask(formData: FormData) {
     return { ok: false, reason: "INVALID_SUGGESTED_VENUE_TARGET_COUNT" };
   }
 
-  if (
-    !(await canCreateResearchTaskForProject({
+  const canCreateSuggestedVenueSubmitTask =
+    isChiefAssistantSuggestedVenueSubmitTask &&
+    (await suggestedVenueSubmitTaskIsSelectable({
+      taskType,
+      projectId,
+      journalId,
+      conferenceId,
+      suggestedJournalId,
+      suggestedConferenceId,
+    }));
+  const canCreateProjectTask =
+    canCreateSuggestedVenueSubmitTask ||
+    (await canCreateResearchTaskForProject({
       user,
       projectId,
       organizedProjectId,
       taskType,
-    }))
-  ) {
+    }));
+
+  if (!canCreateProjectTask) {
     return { ok: false, reason: "UNAUTHORIZED" };
   }
 
@@ -6527,12 +6622,7 @@ export async function createResearchTask(formData: FormData) {
     (taskType === ResearchTaskType.SUBMIT_RESEARCH ||
       taskType === ResearchTaskType.SUBMIT_CONFERENCE) &&
     !(await researchProductionIsComplete(projectId)) &&
-    !(await canCreateResearchTaskForProject({
-      user,
-      projectId,
-      organizedProjectId,
-      taskType,
-    }))
+    !canCreateProjectTask
   ) {
     return { ok: false, reason: "PRODUCTION_INCOMPLETE" };
   }
