@@ -22,9 +22,7 @@ import {
 import {
   FilterSelect,
   ResearchSortHeaderButton,
-  TablePagination,
   TableSearchInput,
-  useTablePagination,
   usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
@@ -189,22 +187,21 @@ export function AssistantsTable({
     });
   }, [query, role, rows]);
 
-  const sorted = useMemo(() => sortAssistants(filtered, sort), [filtered, sort]);
-  const pagination = useTablePagination(sorted, 10, 1, "assistants");
+  const sorted = useMemo(
+    () => sortAssistants(filtered, sort),
+    [filtered, sort],
+  );
 
   function updateQuery(value: string) {
     setQuery(value);
-    pagination.setPage(1);
   }
 
   function updateRole(value: string) {
     setRole(value);
-    pagination.setPage(1);
   }
 
   function updateSort() {
     setSortValue(nextAssistantSortValue(sort));
-    pagination.setPage(1);
   }
 
   function togglePassword(userId: string) {
@@ -342,7 +339,7 @@ export function AssistantsTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#444444]">
-            {pagination.pagedRows.map((user) => (
+            {sorted.map((user) => (
               <tr
                 key={user.id}
                 className="group align-top transition-colors duration-150 hover:bg-[#383838]"
@@ -450,7 +447,7 @@ export function AssistantsTable({
                 )}
               </tr>
             ))}
-            {pagination.total === 0 && (
+            {sorted.length === 0 && (
               <tr>
                 <td colSpan={canManage ? 7 : 6} className="px-4 py-2">
                   <ResearchEmptyState
@@ -463,14 +460,6 @@ export function AssistantsTable({
           </tbody>
         </table>
       </div>
-      <TablePagination
-        page={pagination.page}
-        pageCount={pagination.pageCount}
-        total={pagination.total}
-        pageSize={pagination.pageSize}
-        onPageChange={pagination.setPage}
-      />
-
       <ResearchModal
         open={Boolean(editing)}
         onClose={() => setEditing(null)}
