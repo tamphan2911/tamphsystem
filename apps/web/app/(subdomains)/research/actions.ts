@@ -8236,6 +8236,8 @@ export async function addTaskSuggestedVenue(
   }
 
   const venueKind = optionalString(formData.get("venueKind"));
+  const journalId = optionalString(formData.get("journalId"));
+  const conferenceId = optionalString(formData.get("conferenceId"));
   const venueName = optionalString(formData.get("venueName"));
   const venueLink = optionalString(formData.get("venueLink"));
   const note = optionalString(formData.get("note"));
@@ -8244,44 +8246,198 @@ export async function addTaskSuggestedVenue(
   if (venueKind !== "journal" && venueKind !== "conference") {
     return { ok: false, message: "Choose journal or conference." };
   }
-  if (!venueName && !venueLink) {
+  if (!journalId && !conferenceId && !venueName && !venueLink) {
     return { ok: false, message: "Enter at least a venue name or link." };
+  }
+  if (venueKind === "journal" && conferenceId) {
+    return { ok: false, message: "Choose a journal for this suggestion." };
+  }
+  if (venueKind === "conference" && journalId) {
+    return { ok: false, message: "Choose a conference for this suggestion." };
+  }
+
+  const linkedJournal =
+    venueKind === "journal" && journalId
+      ? await prisma.journal.findFirst({
+          where: {
+            id: journalId,
+            approvalStatus: JournalApprovalStatus.APPROVED,
+          },
+          select: {
+            id: true,
+            name: true,
+            homepageLink: true,
+            submissionLink: true,
+          },
+        })
+      : null;
+  const linkedConference =
+    venueKind === "conference" && conferenceId
+      ? await prisma.conference.findUnique({
+          where: { id: conferenceId },
+          select: { id: true, name: true, website: true },
+        })
+      : null;
+  if (journalId && !linkedJournal) {
+    return { ok: false, message: "Choose an approved journal on the site." };
+  }
+  if (conferenceId && !linkedConference) {
+    return { ok: false, message: "Choose a conference on the site." };
+  }
+
+  if (journalId) {
+    const existing = await prisma.suggestedJournal.findUnique({
+      where: { projectId_journalId: { projectId: task.projectId, journalId } },
+      select: { id: true, taskId: true, status: true },
+    });
+    if (
+      existing &&
+      existing.taskId !== task.id &&
+      existing.status !== SuggestedVenueStatus.DECLINED
+    ) {
+      return {
+        ok: false,
+        message: "This journal is already suggested for this research.",
+      };
+    }
+  }
+
+  if (conferenceId) {
+    const existing = await prisma.suggestedConference.findUnique({
+      where: {
+        projectId_conferenceId: {
+          projectId: task.projectId,
+          conferenceId,
+        },
+      },
+      select: { id: true, taskId: true, status: true },
+    });
+    if (
+      existing &&
+      existing.taskId !== task.id &&
+      existing.status !== SuggestedVenueStatus.DECLINED
+    ) {
+      return {
+        ok: false,
+        message: "This conference is already suggested for this research.",
+      };
+    }
   }
 
   const suggestion =
     venueKind === "journal"
-      ? await prisma.suggestedJournal.create({
-          data: {
-            projectId: task.projectId,
-            taskId: task.id,
-            createdById: user.id,
-            status: SuggestedVenueStatus.PENDING,
-            requiresApproval: true,
-            venueName,
-            venueLink,
-            apc,
-            submissionFee,
-            note,
-          },
-        })
-      : await prisma.suggestedConference.create({
-          data: {
-            projectId: task.projectId,
-            taskId: task.id,
-            createdById: user.id,
-            status: SuggestedVenueStatus.PENDING,
-            requiresApproval: true,
-            venueName,
-            venueLink,
-            note,
-          },
-        });
+      ? journalId
+        ? await prisma.suggestedJournal.upsert({
+            where: {
+              projectId_journalId: { projectId: task.projectId, journalId },
+            },
+            create: {
+              projectId: task.projectId,
+              taskId: task.id,
+              journalId,
+              createdById: user.id,
+              status: SuggestedVenueStatus.PENDING,
+              requiresApproval: true,
+              venueName: venueName ?? linkedJournal?.name ?? null,
+              venueLink:
+                venueLink ??
+                linkedJournal?.submissionLink ??
+                linkedJournal?.homepageLink ??
+                null,
+              apc,
+              submissionFee,
+              note,
+            },
+            update: {
+              taskId: task.id,
+              createdById: user.id,
+              status: SuggestedVenueStatus.PENDING,
+              requiresApproval: true,
+              approvedAt: null,
+              approvedById: null,
+              declinedAt: null,
+              declinedById: null,
+              declineReason: null,
+              venueName: venueName ?? linkedJournal?.name ?? null,
+              venueLink:
+                venueLink ??
+                linkedJournal?.submissionLink ??
+                linkedJournal?.homepageLink ??
+                null,
+              apc,
+              submissionFee,
+              note,
+            },
+          })
+        : await prisma.suggestedJournal.create({
+            data: {
+              projectId: task.projectId,
+              taskId: task.id,
+              createdById: user.id,
+              status: SuggestedVenueStatus.PENDING,
+              requiresApproval: true,
+              venueName,
+              venueLink,
+              apc,
+              submissionFee,
+              note,
+            },
+          })
+      : conferenceId
+        ? await prisma.suggestedConference.upsert({
+            where: {
+              projectId_conferenceId: {
+                projectId: task.projectId,
+                conferenceId,
+              },
+            },
+            create: {
+              projectId: task.projectId,
+              taskId: task.id,
+              conferenceId,
+              createdById: user.id,
+              status: SuggestedVenueStatus.PENDING,
+              requiresApproval: true,
+              venueName: venueName ?? linkedConference?.name ?? null,
+              venueLink: venueLink ?? linkedConference?.website ?? null,
+              note,
+            },
+            update: {
+              taskId: task.id,
+              createdById: user.id,
+              status: SuggestedVenueStatus.PENDING,
+              requiresApproval: true,
+              approvedAt: null,
+              approvedById: null,
+              declinedAt: null,
+              declinedById: null,
+              declineReason: null,
+              venueName: venueName ?? linkedConference?.name ?? null,
+              venueLink: venueLink ?? linkedConference?.website ?? null,
+              note,
+            },
+          })
+        : await prisma.suggestedConference.create({
+            data: {
+              projectId: task.projectId,
+              taskId: task.id,
+              createdById: user.id,
+              status: SuggestedVenueStatus.PENDING,
+              requiresApproval: true,
+              venueName,
+              venueLink,
+              note,
+            },
+          });
 
   await notifyVenueSuggestionApprovalNeeded({
     projectId: task.projectId,
     suggestionId: suggestion.id,
     venueName:
-      venueName ?? (venueKind === "journal" ? "New journal" : "New conference"),
+      venueName ??
+      linkedJournal?.name ??
+      linkedConference?.name ??
+      (venueKind === "journal" ? "New journal" : "New conference"),
     kind: venueKind,
     createdById: user.id,
     adminOnly: true,

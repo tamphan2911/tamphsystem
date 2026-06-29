@@ -1,21 +1,22 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { ExternalLink, Loader2, Plus, SearchCheck } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ExternalLink, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ResearchModal } from "@/sites/research/components/ResearchModal";
-import {
-  ResearchButton,
-  researchFieldClass,
-} from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { addTaskSuggestedVenue } from "../../actions";
+import {
+  SuggestedVenueAddDialog,
+  type SuggestedVenueAddConferenceOption,
+  type SuggestedVenueAddJournalOption,
+} from "../../SuggestedVenueAddDialog";
 
 export type TaskSuggestedVenueResult = {
   id: string;
   kind: "journal" | "conference";
   journalId: string | null;
+  conferenceId: string | null;
   isOnSite: boolean;
   name: string;
   status: string;
@@ -76,21 +77,43 @@ export function TaskSuggestedVenueResults({
   targetCount,
   venues,
   canCreate,
+  journals,
+  conferences,
 }: {
   taskId: string;
   targetCount: number;
   venues: TaskSuggestedVenueResult[];
   canCreate: boolean;
+  journals: SuggestedVenueAddJournalOption[];
+  conferences: SuggestedVenueAddConferenceOption[];
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [venueKind, setVenueKind] = useState<"journal" | "conference">(
-    "journal",
-  );
-  const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const toast = useResearchToast();
   const activeVenueCount = useMemo(
     () => venues.filter((venue) => venue.status !== "DECLINED").length,
+    [venues],
+  );
+  const excludedJournalIds = useMemo(
+    () =>
+      venues.flatMap((venue) =>
+        venue.status !== "DECLINED" &&
+        venue.kind === "journal" &&
+        venue.journalId
+          ? [venue.journalId]
+          : [],
+      ),
+    [venues],
+  );
+  const excludedConferenceIds = useMemo(
+    () =>
+      venues.flatMap((venue) =>
+        venue.status !== "DECLINED" &&
+        venue.kind === "conference" &&
+        venue.conferenceId
+          ? [venue.conferenceId]
+          : [],
+      ),
     [venues],
   );
   const emptySlotCount = Math.max(0, targetCount - activeVenueCount);
@@ -147,97 +170,28 @@ export function TaskSuggestedVenueResults({
         ))}
       </div>
 
-      <ResearchModal
+      <SuggestedVenueAddDialog
         open={dialogOpen}
-        title="Add suggested venue"
         onClose={() => setDialogOpen(false)}
-      >
-        <form
-          className="grid gap-4"
-          action={(formData) => {
-            startTransition(async () => {
-              const result = await addTaskSuggestedVenue(taskId, formData);
-              if (result?.ok === false) {
-                toast.showError({
-                  title: "Venue was not added",
-                  detail: result.message,
-                });
-                return;
-              }
-              toast.showSuccess({
-                title: "Venue submitted",
-                detail: "The suggestion is ready for checker review.",
-              });
-              setDialogOpen(false);
-              router.refresh();
-            });
-          }}
-        >
-          <input type="hidden" name="venueKind" value={venueKind} />
-          <div className="grid grid-cols-2 border border-[#D8D0C2] dark:border-[#444444]">
-            {(["journal", "conference"] as const).map((kind) => (
-              <button
-                key={kind}
-                type="button"
-                onClick={() => setVenueKind(kind)}
-                className={`px-3 py-2 text-sm capitalize transition ${
-                  venueKind === kind
-                    ? "bg-[#1F7180] text-white dark:bg-[#A8DADC] dark:text-[#101818]"
-                    : "text-[#667085] hover:bg-[#F8F3EA] dark:text-[#B0B0B0] dark:hover:bg-[#303030]"
-                }`}
-              >
-                {kind}
-              </button>
-            ))}
-          </div>
-          <input
-            name="venueName"
-            className={researchFieldClass}
-            placeholder="Venue name"
-          />
-          <input
-            name="venueLink"
-            className={researchFieldClass}
-            placeholder="Venue link"
-          />
-          {venueKind === "journal" ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <input
-                name="apc"
-                className={researchFieldClass}
-                placeholder="APC"
-              />
-              <input
-                name="submissionFee"
-                className={researchFieldClass}
-                placeholder="Submission fee"
-              />
-            </div>
-          ) : null}
-          <textarea
-            name="note"
-            className={`${researchFieldClass} min-h-28 resize-y`}
-            placeholder="Note"
-          />
-          <div className="flex justify-end gap-2">
-            <ResearchButton
-              type="button"
-              tone="secondary"
-              onClick={() => setDialogOpen(false)}
-            >
-              Cancel
-            </ResearchButton>
-            <ResearchButton type="submit" disabled={isPending}>
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <SearchCheck className="h-4 w-4" />
-              )}
-              Submit venue
-            </ResearchButton>
-          </div>
-        </form>
-      </ResearchModal>
+        journals={journals}
+        conferences={conferences}
+        excludedJournalIds={excludedJournalIds}
+        excludedConferenceIds={excludedConferenceIds}
+        onSubmit={(formData) => addTaskSuggestedVenue(taskId, formData)}
+        onError={(result) =>
+          toast.showError({
+            title: "Venue was not added",
+            detail: result.message ?? "Check the venue details and try again.",
+          })
+        }
+        onSuccess={() => {
+          toast.showSuccess({
+            title: "Venue submitted",
+            detail: "The suggestion is ready for checker review.",
+          });
+          router.refresh();
+        }}
+      />
     </section>
   );
 }

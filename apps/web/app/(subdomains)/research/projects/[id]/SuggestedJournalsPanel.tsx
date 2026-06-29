@@ -67,6 +67,7 @@ import {
   formatResearchNumber,
   normalizeResearchNumberInput,
 } from "@/sites/research/lib/currency";
+import { SuggestedVenueAddDialog } from "../../SuggestedVenueAddDialog";
 
 const defaultTaskDescription = "Read the guide by click on icons right above.";
 
@@ -223,9 +224,6 @@ export function SuggestedJournalsPanel({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [activeAddTab, setActiveAddTab] = useState<"journal" | "conference">(
-    "journal",
-  );
   const [addOpen, setAddOpen] = useState(false);
   const [assignVenue, setAssignVenue] = useState<Venue | null>(null);
   const [editVenue, setEditVenue] = useState<Venue | null>(null);
@@ -247,13 +245,7 @@ export function SuggestedJournalsPanel({
   const [autoCreateJournalTask, setAutoCreateJournalTask] = useState(true);
   const [autoCreateSubmitTask, setAutoCreateSubmitTask] = useState(true);
   const [declineReason, setDeclineReason] = useState("");
-  const [selectedAddVenue, setSelectedAddVenue] = useState<Venue | null>(null);
   const [approvalVenue, setApprovalVenue] = useState<Venue | null>(null);
-  const [freeVenueName, setFreeVenueName] = useState("");
-  const [freeVenueLink, setFreeVenueLink] = useState("");
-  const [freeJournalApc, setFreeJournalApc] = useState("");
-  const [freeJournalSubmissionFee, setFreeJournalSubmissionFee] = useState("");
-  const [freeVenueNote, setFreeVenueNote] = useState("");
   const [journalQuery, setJournalQuery] = useState("");
   const [conferenceQuery, setConferenceQuery] = useState("");
   const [assistantQuery, setAssistantQuery] = useState("");
@@ -487,18 +479,6 @@ export function SuggestedJournalsPanel({
     setCheckerQuery("");
   }
 
-  function closeAddVenue() {
-    setAddOpen(false);
-    setJournalQuery("");
-    setConferenceQuery("");
-    setSelectedAddVenue(null);
-    setFreeVenueName("");
-    setFreeVenueLink("");
-    setFreeJournalApc("");
-    setFreeJournalSubmissionFee("");
-    setFreeVenueNote("");
-  }
-
   function openEditVenue(venue: Venue) {
     const linkedVenue =
       venue.kind === "journal"
@@ -587,61 +567,26 @@ export function SuggestedJournalsPanel({
     });
   }
 
-  function addJournal(journalId?: string) {
-    if (disabled) return;
-    const formData = new FormData();
-    if (journalId) formData.set("journalId", journalId);
-    if (freeVenueName.trim()) formData.set("venueName", freeVenueName.trim());
-    if (freeVenueLink.trim()) formData.set("venueLink", freeVenueLink.trim());
-    if (freeJournalApc.trim()) formData.set("apc", freeJournalApc.trim());
-    if (freeJournalSubmissionFee.trim()) {
-      formData.set("submissionFee", freeJournalSubmissionFee.trim());
-    }
-    if (freeVenueNote.trim()) formData.set("note", freeVenueNote.trim());
-    startTransition(async () => {
-      await addSuggestedJournal(projectId, formData);
-      closeAddVenue();
-      showSuccess({
-        title: "Suggested venue added",
-        detail: journalId
-          ? "The journal was added to this research suggested venues."
-          : "The journal suggestion is waiting for admin approval and linking.",
-      });
-      router.refresh();
-    });
+  async function submitAddedVenue(formData: FormData) {
+    if (disabled) return { ok: false, message: "Research is locked." };
+    return formData.get("venueKind") === "journal"
+      ? addSuggestedJournal(projectId, formData)
+      : addSuggestedConference(projectId, formData);
   }
 
-  function addConference(conferenceId?: string) {
-    if (disabled) return;
-    const formData = new FormData();
-    if (conferenceId) formData.set("conferenceId", conferenceId);
-    if (freeVenueName.trim()) formData.set("venueName", freeVenueName.trim());
-    if (freeVenueLink.trim()) formData.set("venueLink", freeVenueLink.trim());
-    if (freeVenueNote.trim()) formData.set("note", freeVenueNote.trim());
-    startTransition(async () => {
-      await addSuggestedConference(projectId, formData);
-      closeAddVenue();
-      showSuccess({
-        title: "Suggested venue added",
-        detail: conferenceId
-          ? "The conference was added to this research suggested venues."
-          : "The conference suggestion is waiting for admin approval and linking.",
-      });
-      router.refresh();
+  function showAddedVenueSuccess(formData: FormData) {
+    const isJournal = formData.get("venueKind") === "journal";
+    const isExistingVenue = Boolean(
+      isJournal ? formData.get("journalId") : formData.get("conferenceId"),
+    );
+    showSuccess({
+      title: "Suggested venue added",
+      detail: isExistingVenue
+        ? `The ${isJournal ? "journal" : "conference"} was added to this research suggested venues.`
+        : `The ${isJournal ? "journal" : "conference"} suggestion is waiting for admin approval and linking.`,
     });
-  }
-
-  function addSelectedVenue() {
-    if (isPending) return;
-    if (selectedAddVenue?.kind === "journal") {
-      addJournal(selectedAddVenue.item.venueId);
-    } else if (selectedAddVenue?.kind === "conference") {
-      addConference(selectedAddVenue.item.venueId);
-    } else if (activeAddTab === "journal") {
-      addJournal();
-    } else {
-      addConference();
-    }
+    setAddOpen(false);
+    router.refresh();
   }
 
   function removeVenue() {
@@ -951,160 +896,22 @@ export function SuggestedJournalsPanel({
         </VenueSection>
       </div>
 
-      {addOpen && (
-        <ResearchModal
-          open={addOpen}
-          onClose={closeAddVenue}
-          title="Add suggested venue"
-          icon={<Plus className="h-5 w-5" />}
-          maxWidth="max-w-3xl"
-          bodyClassName="min-h-[25rem] px-5 py-4"
-          headerActions={
-            <ResearchButton
-              type="button"
-              onClick={addSelectedVenue}
-              disabled={
-                isPending ||
-                (!selectedAddVenue &&
-                  !freeVenueName.trim() &&
-                  !freeVenueLink.trim())
-              }
-            >
-              <Plus className="h-4 w-4" />
-              Add venue
-            </ResearchButton>
-          }
-        >
-          <div className="grid gap-4">
-            <div
-              data-research-toggle-tabs="true"
-              className="grid w-full grid-cols-2 border border-[#444444] bg-[#202020]"
-            >
-              {(["journal", "conference"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => {
-                    setActiveAddTab(tab);
-                    setSelectedAddVenue(null);
-                    setJournalQuery("");
-                    setConferenceQuery("");
-                  }}
-                  data-research-toggle-tab="true"
-                  data-active={activeAddTab === tab}
-                  className={`cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
-                    activeAddTab === tab
-                      ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
-                      : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
-                  }`}
-                >
-                  {tab === "journal" ? "Journals" : "Conferences"}
-                </button>
-              ))}
-            </div>
-
-            {activeAddTab === "journal" ? (
-              <>
-                <ApprovalVenuePicker
-                  kind="journal"
-                  query={journalQuery}
-                  selectedVenue={
-                    selectedAddVenue?.kind === "journal"
-                      ? selectedAddVenue
-                      : null
-                  }
-                  journals={journalResults}
-                  conferences={[]}
-                  placeholder="Search journal name, ISSN, field, rank, publisher..."
-                  onQueryChange={(value) => {
-                    setJournalQuery(value);
-                    setSelectedAddVenue(null);
-                  }}
-                  onSelect={(venue) => {
-                    setSelectedAddVenue(venue);
-                    setJournalQuery("");
-                  }}
-                  onClear={() => {
-                    setSelectedAddVenue(null);
-                    setJournalQuery("");
-                  }}
-                />
-                {!selectedAddVenue && (
-                  <p className="text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                    Search the journal list first and pick the journal if it is
-                    already on the site. If it is not available, enter the
-                    journal name, link, and fee information below so the
-                    suggestion can be reviewed and linked later.
-                  </p>
-                )}
-                {!selectedAddVenue && (
-                  <FreeVenueFields
-                    name={freeVenueName}
-                    link={freeVenueLink}
-                    apc={freeJournalApc}
-                    submissionFee={freeJournalSubmissionFee}
-                    onNameChange={setFreeVenueName}
-                    onLinkChange={setFreeVenueLink}
-                    onApcChange={setFreeJournalApc}
-                    onSubmissionFeeChange={setFreeJournalSubmissionFee}
-                    kind="journal"
-                  />
-                )}
-                <textarea
-                  value={freeVenueNote}
-                  onChange={(event) => setFreeVenueNote(event.target.value)}
-                  placeholder="Note for this suggested venue, for example why it fits this research, submission timing, or special reminder..."
-                  aria-label="Suggested venue note"
-                  className={`${researchTextareaClass} min-h-24`}
-                />
-              </>
-            ) : (
-              <>
-                <ApprovalVenuePicker
-                  kind="conference"
-                  query={conferenceQuery}
-                  selectedVenue={
-                    selectedAddVenue?.kind === "conference"
-                      ? selectedAddVenue
-                      : null
-                  }
-                  journals={[]}
-                  conferences={conferenceResults}
-                  placeholder="Search conference, organizer, theme, location..."
-                  onQueryChange={(value) => {
-                    setConferenceQuery(value);
-                    setSelectedAddVenue(null);
-                  }}
-                  onSelect={(venue) => {
-                    setSelectedAddVenue(venue);
-                    setConferenceQuery("");
-                  }}
-                  onClear={() => {
-                    setSelectedAddVenue(null);
-                    setConferenceQuery("");
-                  }}
-                />
-                {!selectedAddVenue && (
-                  <FreeVenueFields
-                    name={freeVenueName}
-                    link={freeVenueLink}
-                    onNameChange={setFreeVenueName}
-                    onLinkChange={setFreeVenueLink}
-                    kind="conference"
-                  />
-                )}
-                <textarea
-                  value={freeVenueNote}
-                  onChange={(event) => setFreeVenueNote(event.target.value)}
-                  placeholder="Note for this suggested venue, for example why it fits this research, deadline timing, or special reminder..."
-                  aria-label="Suggested venue note"
-                  className={`${researchTextareaClass} min-h-24`}
-                />
-              </>
-            )}
-          </div>
-        </ResearchModal>
-      )}
+      <SuggestedVenueAddDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        journals={journals}
+        conferences={conferences}
+        excludedJournalIds={Array.from(suggestedJournalIds)}
+        excludedConferenceIds={Array.from(suggestedConferenceIds)}
+        onSubmit={submitAddedVenue}
+        onSuccess={showAddedVenueSuccess}
+        onError={(result) =>
+          showError({
+            title: "Venue was not added",
+            detail: result.message ?? "Check the venue details and try again.",
+          })
+        }
+      />
 
       {editVenue && (
         <ResearchModal
@@ -2162,81 +1969,6 @@ function SelectedTaskPill({
             <X className="h-4 w-4" />
           </button>
         </IconHint>
-      ) : null}
-    </div>
-  );
-}
-
-function FreeVenueFields({
-  name,
-  link,
-  apc,
-  submissionFee,
-  onNameChange,
-  onLinkChange,
-  onApcChange,
-  onSubmissionFeeChange,
-  kind,
-}: {
-  name: string;
-  link: string;
-  apc?: string;
-  submissionFee?: string;
-  onNameChange: (value: string) => void;
-  onLinkChange: (value: string) => void;
-  onApcChange?: (value: string) => void;
-  onSubmissionFeeChange?: (value: string) => void;
-  kind: "journal" | "conference";
-}) {
-  return (
-    <div className="grid gap-3 border border-[#444444] bg-[#202020] p-3 animate-[modalPanelIn_220ms_ease-out] sm:grid-cols-2">
-      <label className="grid gap-1.5">
-        <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
-          {kind === "journal" ? "Journal name" : "Conference name"}
-        </span>
-        <input
-          value={name}
-          onChange={(event) => onNameChange(event.target.value)}
-          placeholder="Venue name"
-          className={researchFieldClass}
-        />
-      </label>
-      <label className="grid gap-1.5">
-        <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
-          Link
-        </span>
-        <input
-          value={link}
-          onChange={(event) => onLinkChange(event.target.value)}
-          placeholder="Homepage or submission link"
-          className={researchFieldClass}
-        />
-      </label>
-      {kind === "journal" ? (
-        <>
-          <label className="grid gap-1.5">
-            <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
-              APC
-            </span>
-            <input
-              value={apc ?? ""}
-              onChange={(event) => onApcChange?.(event.target.value)}
-              placeholder="Example: free, USD 500, waived"
-              className={researchFieldClass}
-            />
-          </label>
-          <label className="grid gap-1.5">
-            <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
-              Submission fee
-            </span>
-            <input
-              value={submissionFee ?? ""}
-              onChange={(event) => onSubmissionFeeChange?.(event.target.value)}
-              placeholder="Example: no fee, USD 50"
-              className={researchFieldClass}
-            />
-          </label>
-        </>
       ) : null}
     </div>
   );

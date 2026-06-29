@@ -81,6 +81,10 @@ import {
   TaskSuggestedVenueResults,
   type TaskSuggestedVenueResult,
 } from "./TaskSuggestedVenueResults";
+import type {
+  SuggestedVenueAddConferenceOption,
+  SuggestedVenueAddJournalOption,
+} from "../../SuggestedVenueAddDialog";
 import {
   type ProposalResultProjectOption,
   type ProposalResultProposalOption,
@@ -1020,6 +1024,7 @@ export default async function TaskDetailPage({
           createdAt: true,
           conference: {
             select: {
+              id: true,
               name: true,
               type: true,
               organizer: true,
@@ -1129,6 +1134,7 @@ export default async function TaskDetailPage({
           createdAt: true,
           conference: {
             select: {
+              id: true,
               name: true,
               type: true,
               organizer: true,
@@ -1444,6 +1450,7 @@ export default async function TaskDetailPage({
             createdAt: true,
             conference: {
               select: {
+                id: true,
                 name: true,
                 type: true,
                 organizer: true,
@@ -1852,6 +1859,11 @@ export default async function TaskDetailPage({
   const canEdit =
     !isAssignee && (isRootAdmin || (!isClosed && isChiefAssistant));
   const canLoadTaskFormOptions = canEdit || isRootAdmin;
+  const canLoadSuggestedVenueOptions =
+    task.taskType === ResearchTaskType.SUGGEST_VENUE &&
+    !isClosed &&
+    isAssignee &&
+    Boolean(task.projectId);
   const canUseReminder = !isAssignee && (isAdmin || isAssigner);
   const reminderBlock =
     task.assignments.length === 0
@@ -2221,6 +2233,7 @@ export default async function TaskDetailPage({
         id: suggestion.id,
         kind: "journal" as const,
         journalId: journal?.id ?? null,
+        conferenceId: null,
         isOnSite: Boolean(linkedSiteJournal),
         name: journal?.name ?? suggestion.venueName ?? "Unnamed journal",
         status: suggestion.status,
@@ -2254,6 +2267,7 @@ export default async function TaskDetailPage({
             id: linkedJournalSubmissionSuggestion.id,
             kind: "journal" as const,
             journalId: linkedJournalSubmissionSuggestion.journal?.id ?? null,
+            conferenceId: null,
             isOnSite: Boolean(linkedJournalSubmissionSuggestion.journal),
             name:
               linkedJournalSubmissionSuggestion.journal?.name ??
@@ -2303,6 +2317,7 @@ export default async function TaskDetailPage({
       id: suggestion.id,
       kind: "conference" as const,
       journalId: null,
+      conferenceId: suggestion.conference?.id ?? null,
       isOnSite: Boolean(suggestion.conference),
       name:
         suggestion.conference?.name ??
@@ -2339,6 +2354,8 @@ export default async function TaskDetailPage({
             id: linkedConferenceSubmissionSuggestion.id,
             kind: "conference" as const,
             journalId: null,
+            conferenceId:
+              linkedConferenceSubmissionSuggestion.conference?.id ?? null,
             isOnSite: Boolean(linkedConferenceSubmissionSuggestion.conference),
             name:
               linkedConferenceSubmissionSuggestion.conference?.name ??
@@ -2446,105 +2463,135 @@ export default async function TaskDetailPage({
     checkerUsers,
     taskGuideOptions,
     proposalsForLinking,
-  ] = canLoadTaskFormOptions
-    ? await Promise.all([
-        prisma.user.findMany({
-          where: assigneeWhere,
-          orderBy: [{ name: "asc" }, { email: "asc" }],
-          select: { id: true, name: true, email: true, roles: true },
-        }),
-        prisma.researchProject.findMany({
-          where: scopedResearchWhere,
-          orderBy: [{ updatedAt: "desc" }],
-          select: { id: true, researchCode: true, title: true, stage: true },
-        }),
-        prisma.journal.findMany({
-          where: { approvalStatus: JournalApprovalStatus.APPROVED },
-          orderBy: [{ name: "asc" }],
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            publisher: true,
-            publisherId: true,
-            publisherRecord: { select: { usesSingleAccount: true } },
-            rank: true,
-            localRank: true,
-            issn: true,
-          },
-        }),
-        prisma.publisherAccount.findMany({
-          where: {
-            OR: [{ journalId: { not: null } }, { publisherId: { not: null } }],
-          },
-          orderBy: [{ updatedAt: "desc" }, { username: "asc" }],
-          select: {
-            id: true,
-            journalId: true,
-            publisherId: true,
-            username: true,
-            email: true,
-          },
-        }),
-        prisma.conference.findMany({
-          orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
-          select: {
-            id: true,
-            name: true,
-            organizer: true,
-            type: true,
-            location: true,
-          },
-        }),
-        prisma.academicReview.findMany({
-          where: accessibleResearchReviewWhere(roles, userId),
-          orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
-          include: { journal: { select: { name: true } } },
-        }),
-        prisma.organizedProject.findMany({
-          where: scopedOrganizedProjectWhere,
-          orderBy: [{ updatedAt: "desc" }],
-          select: { id: true, title: true, referenceCode: true, status: true },
-        }),
-        prisma.user.findMany({
-          where: {
-            activeSites: { has: "research" },
-            roles: { has: Role.CHIEF_ASSISTANT },
-          },
-          orderBy: [{ name: "asc" }, { email: "asc" }],
-          select: { id: true, name: true, email: true, roles: true },
-        }),
-        prisma.taskGuide.findMany({
-          orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
-          select: {
-            id: true,
-            guideCode: true,
-            title: true,
-            content: true,
-            importantNote: true,
-            supportFileName: true,
-            supportFileSize: true,
-          },
-        }),
-        prisma.proposal.findMany({
-          where: {
-            taskId: null,
-            type:
-              proposalTaskType === "PROJECT"
-                ? ProposalType.PROJECT
-                : ProposalType.RESEARCH,
-          },
-          orderBy: [{ createdAt: "desc" }],
-          select: {
-            id: true,
-            title: true,
-            status: true,
-            createdAt: true,
-            submittedBy: { select: { name: true, email: true } },
-          },
-        }),
-      ])
-    : [[], [], [], [], [], [], [], [], [], []];
+  ] =
+    canLoadTaskFormOptions || canLoadSuggestedVenueOptions
+      ? await Promise.all([
+          prisma.user.findMany({
+            where: assigneeWhere,
+            orderBy: [{ name: "asc" }, { email: "asc" }],
+            select: { id: true, name: true, email: true, roles: true },
+          }),
+          prisma.researchProject.findMany({
+            where: scopedResearchWhere,
+            orderBy: [{ updatedAt: "desc" }],
+            select: { id: true, researchCode: true, title: true, stage: true },
+          }),
+          prisma.journal.findMany({
+            where: { approvalStatus: JournalApprovalStatus.APPROVED },
+            orderBy: [{ name: "asc" }],
+            select: {
+              id: true,
+              name: true,
+              type: true,
+              publisher: true,
+              publisherId: true,
+              publisherRecord: { select: { usesSingleAccount: true } },
+              rank: true,
+              localRank: true,
+              issn: true,
+              field: true,
+              fields: true,
+              apc: true,
+              apcCurrency: true,
+              hasApcOption: true,
+              submissionFee: true,
+              submissionFeeCurrency: true,
+              homepageLink: true,
+              submissionLink: true,
+              note: true,
+            },
+          }),
+          prisma.publisherAccount.findMany({
+            where: {
+              OR: [
+                { journalId: { not: null } },
+                { publisherId: { not: null } },
+              ],
+            },
+            orderBy: [{ updatedAt: "desc" }, { username: "asc" }],
+            select: {
+              id: true,
+              journalId: true,
+              publisherId: true,
+              username: true,
+              email: true,
+            },
+          }),
+          prisma.conference.findMany({
+            orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
+            select: {
+              id: true,
+              name: true,
+              organizer: true,
+              type: true,
+              targetTheme: true,
+              themes: true,
+              location: true,
+              isbn: true,
+              startDate: true,
+              endDate: true,
+              apc: true,
+              apcCurrency: true,
+              submissionFee: true,
+              submissionFeeCurrency: true,
+              note: true,
+              website: true,
+            },
+          }),
+          prisma.academicReview.findMany({
+            where: accessibleResearchReviewWhere(roles, userId),
+            orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
+            include: { journal: { select: { name: true } } },
+          }),
+          prisma.organizedProject.findMany({
+            where: scopedOrganizedProjectWhere,
+            orderBy: [{ updatedAt: "desc" }],
+            select: {
+              id: true,
+              title: true,
+              referenceCode: true,
+              status: true,
+            },
+          }),
+          prisma.user.findMany({
+            where: {
+              activeSites: { has: "research" },
+              roles: { has: Role.CHIEF_ASSISTANT },
+            },
+            orderBy: [{ name: "asc" }, { email: "asc" }],
+            select: { id: true, name: true, email: true, roles: true },
+          }),
+          prisma.taskGuide.findMany({
+            orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
+            select: {
+              id: true,
+              guideCode: true,
+              title: true,
+              content: true,
+              importantNote: true,
+              supportFileName: true,
+              supportFileSize: true,
+            },
+          }),
+          prisma.proposal.findMany({
+            where: {
+              taskId: null,
+              type:
+                proposalTaskType === "PROJECT"
+                  ? ProposalType.PROJECT
+                  : ProposalType.RESEARCH,
+            },
+            orderBy: [{ createdAt: "desc" }],
+            select: {
+              id: true,
+              title: true,
+              status: true,
+              createdAt: true,
+              submittedBy: { select: { name: true, email: true } },
+            },
+          }),
+        ])
+      : [[], [], [], [], [], [], [], [], [], []];
   const assignees = assigneeUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -2583,6 +2630,45 @@ export default async function TaskDetailPage({
         .join(" - "),
     })),
   ];
+  const suggestedVenueJournalOptions: SuggestedVenueAddJournalOption[] =
+    journals.map((journal) => ({
+      id: journal.id,
+      venueId: journal.id,
+      name: journal.name,
+      venueLink: journal.homepageLink ?? journal.submissionLink ?? "",
+      issn: journal.issn ?? "",
+      field: journal.fields.length
+        ? journal.fields.join(", ")
+        : (journal.field ?? ""),
+      rank: journal.rank ?? journal.localRank ?? "",
+      publisher: journal.publisher ?? "",
+      apc: journal.apc ?? "",
+      apcCurrency: journal.apcCurrency,
+      hasApcOption: journal.hasApcOption,
+      submissionFee: journal.submissionFee ?? "",
+      submissionFeeCurrency: journal.submissionFeeCurrency,
+      note: journal.note ?? "",
+      venueNote: "",
+    }));
+  const suggestedVenueConferenceOptions: SuggestedVenueAddConferenceOption[] =
+    conferences.map((conference) => ({
+      id: conference.id,
+      venueId: conference.id,
+      name: conference.name,
+      venueLink: conference.website ?? "",
+      type: conference.type ?? "",
+      theme: conference.targetTheme || conference.themes || "",
+      location: conference.location ?? "",
+      organizer: conference.organizer ?? "",
+      isbn: conference.isbn ?? "",
+      time: conferenceTime(conference.startDate, conference.endDate),
+      apc: conference.apc ?? "",
+      apcCurrency: conference.apcCurrency,
+      submissionFee: conference.submissionFee ?? "",
+      submissionFeeCurrency: conference.submissionFeeCurrency,
+      note: conference.note ?? "",
+      venueNote: "",
+    }));
   const accountOptions = accounts.flatMap((account) => {
     if (account.journalId) {
       const journal = journals.find((item) => item.id === account.journalId);
@@ -2950,6 +3036,8 @@ export default async function TaskDetailPage({
               targetCount={Math.max(1, task.suggestedVenueTargetCount ?? 2)}
               venues={suggestedVenueResults}
               canCreate={!isClosed && isAssignee && Boolean(task.projectId)}
+              journals={suggestedVenueJournalOptions}
+              conferences={suggestedVenueConferenceOptions}
             />
           ) : null}
 
