@@ -1269,19 +1269,54 @@ function linesFromForm(value: FormDataEntryValue | null) {
 function stageFromResearchState(
   completedProductionSteps: string[],
   submissionStatuses: SubmissionStatus[],
+  conferenceSubmissionStatuses: ConferenceSubmissionStatus[] = [],
 ) {
-  if (submissionStatuses.includes(SubmissionStatus.PUBLISHED))
+  if (
+    submissionStatuses.includes(SubmissionStatus.PUBLISHED) ||
+    conferenceSubmissionStatuses.includes(ConferenceSubmissionStatus.PUBLISHED)
+  ) {
     return ResearchStage.PUBLISHED;
-  if (submissionStatuses.includes(SubmissionStatus.ACCEPTED))
+  }
+  if (
+    submissionStatuses.includes(SubmissionStatus.ACCEPTED) ||
+    conferenceSubmissionStatuses.includes(ConferenceSubmissionStatus.ACCEPTED)
+  ) {
     return ResearchStage.ACCEPTED;
+  }
   if (
     submissionStatuses.some(
       (status) =>
         status === SubmissionStatus.UNDER_REVIEW ||
         status === SubmissionStatus.REVISION,
+    ) ||
+    conferenceSubmissionStatuses.some(
+      (status) => status === ConferenceSubmissionStatus.REVIEWING,
     )
   ) {
     return ResearchStage.REVIEW;
+  }
+
+  const hasSubmissionInProgress =
+    submissionStatuses.some((status) => status === SubmissionStatus.PENDING) ||
+    conferenceSubmissionStatuses.some(
+      (status) =>
+        status === ConferenceSubmissionStatus.PLANNED ||
+        status === ConferenceSubmissionStatus.SUBMITTED,
+    );
+  const hasRejectedOrWithdrawnSubmission =
+    submissionStatuses.some(
+      (status) =>
+        status === SubmissionStatus.REJECTED ||
+        status === SubmissionStatus.WITHDRAWN,
+    ) ||
+    conferenceSubmissionStatuses.some(
+      (status) =>
+        status === ConferenceSubmissionStatus.REJECTED ||
+        status === ConferenceSubmissionStatus.WITHDRAWN,
+    );
+
+  if (hasSubmissionInProgress || hasRejectedOrWithdrawnSubmission) {
+    return ResearchStage.SUBMITTING;
   }
 
   return productionStepLabels.every((step) =>
@@ -1300,6 +1335,7 @@ async function refreshResearchStage(
     select: {
       completedProductionSteps: true,
       submissions: { select: { status: true } },
+      conferenceSubmissions: { select: { status: true } },
     },
   });
 
@@ -1311,6 +1347,7 @@ async function refreshResearchStage(
       stage: stageFromResearchState(
         completedProductionSteps ?? project.completedProductionSteps,
         project.submissions.map((submission) => submission.status),
+        project.conferenceSubmissions.map((submission) => submission.status),
       ),
     },
   });
@@ -8076,6 +8113,7 @@ export async function updateSubmissionStatus(formData: FormData) {
       },
     });
 
+    await refreshResearchStage(submission.researchProjectId);
     const project = await prisma.researchProject.findUnique({
       where: { id: submission.researchProjectId },
       select: { title: true },
@@ -8204,6 +8242,12 @@ export async function updateSubmissionDetails(formData: FormData) {
         },
       });
 
+      await Promise.all([
+        refreshResearchStage(current.researchProjectId),
+        current.researchProjectId === researchProjectId
+          ? Promise.resolve()
+          : refreshResearchStage(researchProjectId),
+      ]);
       revalidatePath(`/conferences/${current.conferenceId}`);
       revalidatePath(`/conferences/${venueId}`);
       revalidatePath(`/projects/${current.researchProjectId}`);
@@ -8264,6 +8308,7 @@ export async function deleteSubmission(formData: FormData) {
     if (!submission) return { ok: false, message: "Submission was not found." };
 
     await prisma.conferenceSubmission.delete({ where: { id: submissionId } });
+    await refreshResearchStage(submission.researchProjectId);
 
     revalidatePath("/submissions");
     revalidatePath("/projects");

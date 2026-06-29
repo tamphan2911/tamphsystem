@@ -199,7 +199,8 @@ export default async function ProjectsDashboard() {
     ];
     const hasSubmissions = submissionStatuses.length > 0;
     const hasSubmittedSubmission = submissionStatuses.some(
-      (status) => status === "PENDING" || status === "SUBMITTED",
+      (status) =>
+        status === "PENDING" || status === "PLANNED" || status === "SUBMITTED",
     );
     const hasAcceptedSubmission = submissionStatuses.some(
       (status) => status === "ACCEPTED",
