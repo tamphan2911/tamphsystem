@@ -69,12 +69,13 @@ export function NewAccountDialog({
       >
         <form
           id="new-account-form"
+          autoComplete="off"
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
             const loginId =
-              typeof formData.get("username") === "string"
-                ? String(formData.get("username")).trim()
+              typeof formData.get("publisherAccountLoginId") === "string"
+                ? String(formData.get("publisherAccountLoginId")).trim()
                 : "";
             startTransition(async () => {
               try {
@@ -105,8 +106,11 @@ export function NewAccountDialog({
               <span className="sr-only">Account login ID or username</span>
               <span className="research-auth-input-shell">
                 <input
-                  name="username"
+                  name="publisherAccountLoginId"
                   required
+                  autoComplete="off"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
                   placeholder="Enter the journal login ID or username"
                 />
                 <AtSign aria-hidden="true" />
@@ -116,7 +120,10 @@ export function NewAccountDialog({
               <span className="sr-only">Account password</span>
               <span className="research-auth-input-shell">
                 <input
-                  name="password"
+                  name="publisherAccountSecret"
+                  autoComplete="new-password"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
                   placeholder="Enter the password, if you want to store it"
                 />
                 <KeyRound aria-hidden="true" />
@@ -126,8 +133,11 @@ export function NewAccountDialog({
               <span className="sr-only">Recovery email</span>
               <span className="research-auth-input-shell">
                 <input
-                  name="email"
+                  name="publisherAccountRecoveryEmail"
                   type="email"
+                  autoComplete="off"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
                   placeholder="Enter the recovery email linked to this account"
                 />
                 <Mail aria-hidden="true" />
@@ -144,7 +154,8 @@ export function NewAccountDialog({
               <span className="sr-only">Account notes</span>
               <span className="research-auth-input-shell">
                 <input
-                  name="note"
+                  name="publisherAccountNote"
+                  autoComplete="off"
                   placeholder="Add login URL, recovery note, or account scope"
                 />
                 <Link2 aria-hidden="true" />

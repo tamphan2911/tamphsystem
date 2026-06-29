@@ -91,6 +91,17 @@ function optionalString(value: FormDataEntryValue | null) {
   return text.length > 0 ? text : null;
 }
 
+function optionalAliasedString(
+  formData: FormData,
+  primaryName: string,
+  fallbackName: string,
+) {
+  return (
+    optionalString(formData.get(primaryName)) ??
+    optionalString(formData.get(fallbackName))
+  );
+}
+
 function normalizeContactEmail(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? "";
 }
@@ -5729,8 +5740,11 @@ export async function createPublisherAccount(formData: FormData) {
   await requireCurrentUser();
   const scope = await publisherAccountScope(formData);
 
-  const username = optionalString(formData.get("username")) ?? "new-account";
-  const password = optionalString(formData.get("password")) ?? "";
+  const username =
+    optionalAliasedString(formData, "publisherAccountLoginId", "username") ??
+    "new-account";
+  const password =
+    optionalAliasedString(formData, "publisherAccountSecret", "password") ?? "";
   await prisma.$transaction(async (tx) => {
     if (
       scope.accountType === PublisherAccountType.PUBLISHER &&
@@ -5745,8 +5759,12 @@ export async function createPublisherAccount(formData: FormData) {
       data: {
         username,
         password,
-        email: optionalString(formData.get("email")),
-        note: optionalString(formData.get("note")),
+        email: optionalAliasedString(
+          formData,
+          "publisherAccountRecoveryEmail",
+          "email",
+        ),
+        note: optionalAliasedString(formData, "publisherAccountNote", "note"),
         accountType: scope.accountType,
         journalId: scope.journalId,
         publisherId: scope.publisherId,
@@ -5780,8 +5798,11 @@ export async function updatePublisherAccount(
   requireResearchAdmin(user.roles);
   const scope = await publisherAccountScope(formData);
 
-  const username = optionalString(formData.get("username")) ?? "new-account";
-  const password = optionalString(formData.get("password")) ?? "";
+  const username =
+    optionalAliasedString(formData, "publisherAccountLoginId", "username") ??
+    "new-account";
+  const password =
+    optionalAliasedString(formData, "publisherAccountSecret", "password") ?? "";
   await prisma.$transaction(async (tx) => {
     if (
       scope.accountType === PublisherAccountType.PUBLISHER &&
@@ -5797,8 +5818,12 @@ export async function updatePublisherAccount(
       data: {
         username,
         password,
-        email: optionalString(formData.get("email")),
-        note: optionalString(formData.get("note")),
+        email: optionalAliasedString(
+          formData,
+          "publisherAccountRecoveryEmail",
+          "email",
+        ),
+        note: optionalAliasedString(formData, "publisherAccountNote", "note"),
         accountType: scope.accountType,
         journalId: scope.journalId,
         publisherId: scope.publisherId,

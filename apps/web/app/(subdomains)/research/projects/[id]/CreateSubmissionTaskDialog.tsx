@@ -862,6 +862,7 @@ export function CreateSubmissionTaskDialog({
           <form
             id="submission-account-form"
             action={submitAccount}
+            autoComplete="off"
             className="grid gap-4"
           >
             <input type="hidden" name="journalId" value={selectedVenue.id} />
@@ -881,25 +882,49 @@ export function CreateSubmissionTaskDialog({
                 Username
                 <span className="research-required-mark">(*)</span>
               </span>
-              <input name="username" required className={inputClass} />
+              <input
+                name="publisherAccountLoginId"
+                required
+                autoComplete="off"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                className={inputClass}
+              />
             </label>
             <label className="grid gap-1.5">
               <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Password
               </span>
-              <input name="password" className={inputClass} />
+              <input
+                name="publisherAccountSecret"
+                autoComplete="new-password"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                className={inputClass}
+              />
             </label>
             <label className="grid gap-1.5">
               <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Email
               </span>
-              <input name="email" type="email" className={inputClass} />
+              <input
+                name="publisherAccountRecoveryEmail"
+                type="email"
+                autoComplete="off"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                className={inputClass}
+              />
             </label>
             <label className="grid gap-1.5">
               <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                 Note
               </span>
-              <input name="note" className={inputClass} />
+              <input
+                name="publisherAccountNote"
+                autoComplete="off"
+                className={inputClass}
+              />
             </label>
           </form>
         </ResearchModal>

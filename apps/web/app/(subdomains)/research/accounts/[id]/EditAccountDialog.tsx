@@ -72,6 +72,7 @@ export function EditAccountDialog({
       >
         <form
           id="edit-account-form"
+          autoComplete="off"
           action={(formData) => {
             startTransition(async () => {
               try {
@@ -100,9 +101,12 @@ export function EditAccountDialog({
               <span className="sr-only">Account login ID or username</span>
               <span className="research-auth-input-shell">
                 <input
-                  name="username"
+                  name="publisherAccountLoginId"
                   required
                   defaultValue={account.username}
+                  autoComplete="off"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
                   placeholder="Enter the journal login ID or username"
                 />
                 <AtSign aria-hidden="true" />
@@ -112,8 +116,11 @@ export function EditAccountDialog({
               <span className="sr-only">Account password</span>
               <span className="research-auth-input-shell">
                 <input
-                  name="password"
+                  name="publisherAccountSecret"
                   defaultValue={account.password}
+                  autoComplete="new-password"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
                   placeholder="Enter the password, if stored"
                 />
                 <KeyRound aria-hidden="true" />
@@ -123,9 +130,12 @@ export function EditAccountDialog({
               <span className="sr-only">Recovery email</span>
               <span className="research-auth-input-shell">
                 <input
-                  name="email"
+                  name="publisherAccountRecoveryEmail"
                   type="email"
                   defaultValue={account.email}
+                  autoComplete="off"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
                   placeholder="Enter the recovery email linked to this account"
                 />
                 <Mail aria-hidden="true" />
@@ -145,8 +155,9 @@ export function EditAccountDialog({
               <span className="sr-only">Account notes</span>
               <span className="research-auth-input-shell">
                 <input
-                  name="note"
+                  name="publisherAccountNote"
                   defaultValue={account.note}
+                  autoComplete="off"
                   placeholder="Add login URL, recovery note, or account scope"
                 />
                 <Link2 aria-hidden="true" />
