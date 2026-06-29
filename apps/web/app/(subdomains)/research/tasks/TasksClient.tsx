@@ -668,6 +668,11 @@ export function TasksClient({
   const [statusBeforeUnfinished, setStatusBeforeUnfinished] = useState<
     string[] | null
   >(null);
+  const adminAllTabFilterSnapshotRef = useRef<{
+    unfinishedOnlyValue: string;
+    statuses: string[];
+    statusBeforeUnfinished: string[] | null;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
@@ -979,6 +984,19 @@ export function TasksClient({
   function updateScopeTab(value: TaskHeaderTab) {
     if (value === activeHeaderTab) return;
 
+    const enteringAdminNeedAction =
+      isAdmin && activeHeaderTab !== "need_action" && value === "need_action";
+    const leavingAdminNeedAction =
+      isAdmin && activeHeaderTab === "need_action" && value !== "need_action";
+
+    if (enteringAdminNeedAction) {
+      adminAllTabFilterSnapshotRef.current = {
+        unfinishedOnlyValue,
+        statuses,
+        statusBeforeUnfinished,
+      };
+    }
+
     setScopeTab(value);
     pagination.setPage(1);
 
@@ -993,13 +1011,18 @@ export function TasksClient({
 
     if (value === "need_action") {
       setUnfinishedOnlyValue("false");
+      setStatusBeforeUnfinished(null);
       setStatuses(adminNeedActionStatusValues);
       return;
     }
 
-    setUnfinishedOnlyValue("true");
-    setStatusBeforeUnfinished([]);
-    setStatuses(unfinishedTaskStatusValues);
+    if (leavingAdminNeedAction && adminAllTabFilterSnapshotRef.current) {
+      const snapshot = adminAllTabFilterSnapshotRef.current;
+      adminAllTabFilterSnapshotRef.current = null;
+      setUnfinishedOnlyValue(snapshot.unfinishedOnlyValue);
+      setStatusBeforeUnfinished(snapshot.statusBeforeUnfinished);
+      setStatuses(snapshot.statuses);
+    }
   }
 
   function updateStatuses(values: string[]) {
