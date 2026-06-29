@@ -646,16 +646,28 @@ function TaskRedoBlock({
 function AccountLine({
   account,
 }: {
-  account: { username: string; password: string; email: string | null } | null;
+  account: {
+    username: string;
+    password: string;
+    email: string | null;
+    note?: string | null;
+  } | null;
 }) {
   if (!account) return <span>No account assigned</span>;
   return (
-    <span className="inline-flex min-w-0 flex-wrap items-center gap-y-1">
-      <span>ID: {account.username || "No account id"}</span>
-      <DetailSeparator />
-      <span>pass: {account.password || "No pass"}</span>
-      <DetailSeparator />
-      <span>email: {account.email || "No email"}</span>
+    <span className="min-w-0">
+      <span className="inline-flex min-w-0 flex-wrap items-center gap-y-1">
+        <span>ID: {account.username || "No account id"}</span>
+        <DetailSeparator />
+        <span>pass: {account.password || "No pass"}</span>
+        <DetailSeparator />
+        <span>email: {account.email || "No email"}</span>
+      </span>
+      {account.note ? (
+        <span className="mt-1 block whitespace-pre-wrap break-words leading-5 text-slate-600 dark:text-[#B0B0B0]">
+          Note: {account.note}
+        </span>
+      ) : null}
     </span>
   );
 }
@@ -1367,7 +1379,13 @@ export default async function TaskDetailPage({
         },
       },
       account: {
-        select: { id: true, username: true, password: true, email: true },
+        select: {
+          id: true,
+          username: true,
+          password: true,
+          email: true,
+          note: true,
+        },
       },
       assignments: {
         include: {
@@ -1586,6 +1604,7 @@ export default async function TaskDetailPage({
                 username: true,
                 password: true,
                 email: true,
+                note: true,
               },
             },
           },
@@ -3137,7 +3156,7 @@ export default async function TaskDetailPage({
                     <p className="mt-1 text-xs text-[#B0B0B0]">
                       {journalMetaLine(task.journal)}
                     </p>
-                    <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
+                    <p className="mt-1 flex items-start gap-1.5 text-xs text-[#B0B0B0]">
                       <KeyRound className="h-3.5 w-3.5 text-amber-500" />
                       <AccountLine account={journalAccount} />
                     </p>
@@ -3168,7 +3187,7 @@ export default async function TaskDetailPage({
                         task.conference.endDate,
                       )}
                     </p>
-                    <p className="mt-1 flex items-center gap-1.5 text-xs text-[#B0B0B0]">
+                    <p className="mt-1 flex items-start gap-1.5 text-xs text-[#B0B0B0]">
                       <KeyRound className="h-3.5 w-3.5 text-amber-500" />
                       <AccountLine account={task.account} />
                     </p>
