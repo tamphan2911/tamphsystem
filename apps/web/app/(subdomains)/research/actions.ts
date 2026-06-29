@@ -8438,6 +8438,20 @@ export async function updateSuggestedJournal(
   const hasVenueLink = formData.has("venueLink");
   const hasNote = formData.has("note");
   const hasTaskId = formData.has("taskId");
+  const assistantNoteOnlyEdit =
+    !user.roles.includes(Role.ADMIN) &&
+    (user.roles.includes(Role.ASSISTANT) ||
+      user.roles.includes(Role.CHIEF_ASSISTANT));
+  if (
+    assistantNoteOnlyEdit &&
+    (hasJournalId || hasVenueName || hasVenueLink || hasTaskId)
+  ) {
+    return {
+      ok: false,
+      message:
+        "Assistant accounts can only update the note of a suggested venue.",
+    };
+  }
   const journalId = hasJournalId
     ? optionalString(formData.get("journalId"))
     : suggestion.journalId;
@@ -8746,6 +8760,20 @@ export async function updateSuggestedConference(
   const hasVenueLink = formData.has("venueLink");
   const hasNote = formData.has("note");
   const hasTaskId = formData.has("taskId");
+  const assistantNoteOnlyEdit =
+    !user.roles.includes(Role.ADMIN) &&
+    (user.roles.includes(Role.ASSISTANT) ||
+      user.roles.includes(Role.CHIEF_ASSISTANT));
+  if (
+    assistantNoteOnlyEdit &&
+    (hasConferenceId || hasVenueName || hasVenueLink || hasTaskId)
+  ) {
+    return {
+      ok: false,
+      message:
+        "Assistant accounts can only update the note of a suggested venue.",
+    };
+  }
   const conferenceId = hasConferenceId
     ? optionalString(formData.get("conferenceId"))
     : suggestion.conferenceId;

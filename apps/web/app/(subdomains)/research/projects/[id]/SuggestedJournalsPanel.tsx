@@ -196,6 +196,7 @@ export function SuggestedJournalsPanel({
   canAssignTask,
   canAssignOtherTask = canAssignTask,
   canApproveSuggestion,
+  canEditVenueTaskLink,
   canSuggestVenue,
   taskAction,
   disabled = false,
@@ -215,6 +216,7 @@ export function SuggestedJournalsPanel({
   canAssignTask: boolean;
   canAssignOtherTask?: boolean;
   canApproveSuggestion: boolean;
+  canEditVenueTaskLink: boolean;
   canSuggestVenue: boolean;
   taskAction?: ReactNode;
   disabled?: boolean;
@@ -538,7 +540,7 @@ export function SuggestedJournalsPanel({
   function saveEditedVenue() {
     if (!editVenue) return;
     const formData = new FormData();
-    if (!editVenue.item.venueId) {
+    if (canEditVenueTaskLink && !editVenue.item.venueId) {
       formData.set("venueName", editVenueName.trim());
       formData.set("venueLink", editVenueLink.trim());
       if (
@@ -555,7 +557,9 @@ export function SuggestedJournalsPanel({
       }
     }
     formData.set("note", editVenueNote.trim());
-    formData.set("taskId", selectedEditTask?.id ?? "");
+    if (canEditVenueTaskLink) {
+      formData.set("taskId", selectedEditTask?.id ?? "");
+    }
 
     startTransition(async () => {
       const result =
@@ -1107,7 +1111,11 @@ export function SuggestedJournalsPanel({
           open={Boolean(editVenue)}
           onClose={closeEditVenue}
           title="Edit suggested venue"
-          description={`Update the ${editVenue.kind} suggestion for this research.`}
+          description={
+            canEditVenueTaskLink
+              ? `Update the ${editVenue.kind} suggestion for this research.`
+              : `Update the note for this ${editVenue.kind} suggestion.`
+          }
           icon={<Pencil className="h-5 w-5" />}
           maxWidth="max-w-2xl"
           bodyClassName="min-h-[22rem] px-5 py-4"
@@ -1117,7 +1125,8 @@ export function SuggestedJournalsPanel({
               onClick={saveEditedVenue}
               disabled={
                 isPending ||
-                (!selectedEditTask &&
+                (canEditVenueTaskLink &&
+                  !selectedEditTask &&
                   !selectedEditVenue &&
                   !editVenueName.trim() &&
                   !editVenueLink.trim())
@@ -1129,7 +1138,7 @@ export function SuggestedJournalsPanel({
           }
         >
           <div className="grid gap-4">
-            {editVenueHasSystemLink ? (
+            {editVenueHasSystemLink || !canEditVenueTaskLink ? (
               <FixedVenueSummary venue={editVenue} />
             ) : (
               <>
@@ -1194,76 +1203,80 @@ export function SuggestedJournalsPanel({
               className={`${researchTextareaClass} min-h-24`}
             />
 
-            <section className="grid gap-2 border-t border-[#D8D0C2] pt-4 dark:border-[#444444]">
-              <span className="text-xs font-normal uppercase tracking-wide text-[#6C778D] dark:text-[#B0B0B0]">
-                Suggest venue task
-              </span>
-              <SelectedTaskPill
-                task={selectedEditTask}
-                locked={editTaskLocked}
-                onClear={() => setSelectedEditTask(null)}
-              />
-              {!editTaskLocked ? (
-                <>
-                  <div ref={editTaskSearchRef} className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8C95A4] dark:text-[#B0B0B0]" />
-                    <input
-                      value={editTaskQuery}
-                      onChange={(event) => setEditTaskQuery(event.target.value)}
-                      placeholder="Search suggest venue task by title, ID, assignee, or status..."
-                      className={`${researchSearchFieldClass} pl-9`}
-                    />
-                    <FloatingDropdownPortal
-                      anchorRef={editTaskSearchRef}
-                      open={editTaskQuery.trim().length > 0}
-                      maxPanelHeight={224}
-                    >
-                      <div className={researchDropdownPanelClass}>
-                        <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
-                          {editTaskResults.length > 0 ? (
-                            editTaskResults.map((task) => (
-                              <button
-                                key={task.id}
-                                type="button"
-                                disabled={isPending}
-                                onClick={() => {
-                                  setSelectedEditTask(task);
-                                  setEditTaskQuery("");
-                                }}
-                                className={`${researchDropdownItemClass} ${researchDropdownItemIdleClass} justify-start px-3`}
-                              >
-                                <ClipboardList className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
-                                <span className="min-w-0 flex-1">
-                                  <span className="block truncate text-sm">
-                                    {task.title}
+            {canEditVenueTaskLink ? (
+              <section className="grid gap-2 border-t border-[#D8D0C2] pt-4 dark:border-[#444444]">
+                <span className="text-xs font-normal uppercase tracking-wide text-[#6C778D] dark:text-[#B0B0B0]">
+                  Suggest venue task
+                </span>
+                <SelectedTaskPill
+                  task={selectedEditTask}
+                  locked={editTaskLocked}
+                  onClear={() => setSelectedEditTask(null)}
+                />
+                {!editTaskLocked ? (
+                  <>
+                    <div ref={editTaskSearchRef} className="relative">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8C95A4] dark:text-[#B0B0B0]" />
+                      <input
+                        value={editTaskQuery}
+                        onChange={(event) =>
+                          setEditTaskQuery(event.target.value)
+                        }
+                        placeholder="Search suggest venue task by title, ID, assignee, or status..."
+                        className={`${researchSearchFieldClass} pl-9`}
+                      />
+                      <FloatingDropdownPortal
+                        anchorRef={editTaskSearchRef}
+                        open={editTaskQuery.trim().length > 0}
+                        maxPanelHeight={224}
+                      >
+                        <div className={researchDropdownPanelClass}>
+                          <div className="max-h-[var(--research-dropdown-max-height)] overflow-y-auto">
+                            {editTaskResults.length > 0 ? (
+                              editTaskResults.map((task) => (
+                                <button
+                                  key={task.id}
+                                  type="button"
+                                  disabled={isPending}
+                                  onClick={() => {
+                                    setSelectedEditTask(task);
+                                    setEditTaskQuery("");
+                                  }}
+                                  className={`${researchDropdownItemClass} ${researchDropdownItemIdleClass} justify-start px-3`}
+                                >
+                                  <ClipboardList className="h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+                                  <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-sm">
+                                      {task.title}
+                                    </span>
+                                    <span className="block truncate text-xs text-[#667085] dark:text-[#B0B0B0]">
+                                      {task.taskCode} -{" "}
+                                      {task.status.replaceAll("_", " ")}
+                                      {task.assignees
+                                        ? ` - ${task.assignees}`
+                                        : ""}
+                                    </span>
                                   </span>
-                                  <span className="block truncate text-xs text-[#667085] dark:text-[#B0B0B0]">
-                                    {task.taskCode} -{" "}
-                                    {task.status.replaceAll("_", " ")}
-                                    {task.assignees
-                                      ? ` - ${task.assignees}`
-                                      : ""}
-                                  </span>
-                                </span>
-                              </button>
-                            ))
-                          ) : (
-                            <div className="px-3 py-3 text-sm text-[#667085] dark:text-[#B0B0B0]">
-                              No suggest venue task matches this search.
-                            </div>
-                          )}
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-3 py-3 text-sm text-[#667085] dark:text-[#B0B0B0]">
+                                No suggest venue task matches this search.
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </FloatingDropdownPortal>
-                  </div>
-                </>
-              ) : (
-                <p className="text-xs leading-5 text-[#6C778D] dark:text-[#B0B0B0]">
-                  This linked task is complete, so the task connection cannot be
-                  changed.
-                </p>
-              )}
-            </section>
+                      </FloatingDropdownPortal>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs leading-5 text-[#6C778D] dark:text-[#B0B0B0]">
+                    This linked task is complete, so the task connection cannot
+                    be changed.
+                  </p>
+                )}
+              </section>
+            ) : null}
           </div>
         </ResearchModal>
       )}
@@ -2098,7 +2111,7 @@ function FixedVenueSummary({ venue }: { venue: Venue }) {
   return (
     <div className="border border-[#D8D0C2] bg-[#FFFDF8] px-3 py-3 text-sm dark:border-[#444444] dark:bg-[#202020]">
       <span className="text-xs font-normal uppercase tracking-wide text-[#6C778D] dark:text-[#B0B0B0]">
-        Linked {venue.kind}
+        {venue.item.venueId ? "Linked" : "Suggested"} {venue.kind}
       </span>
       <p className="mt-1 break-words text-sm font-normal text-[#243047] dark:text-[#E4E4E4]">
         {venue.item.name}

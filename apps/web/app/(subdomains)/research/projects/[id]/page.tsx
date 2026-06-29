@@ -1999,6 +1999,7 @@ export default async function ProjectDetailPage({
           canAssignTask={canAssignSuggestedVenueSubmitTask}
           canAssignOtherTask={canCreateSubmitOrOtherTask}
           canApproveSuggestion={canApproveVenueSuggestion}
+          canEditVenueTaskLink={isRootAdmin}
           canSuggestVenue={canSuggestVenue}
           taskAction={
             canCreateSubmitOrOtherTask ? (
