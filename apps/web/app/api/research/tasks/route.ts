@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import {
+  JournalApprovalStatus,
   prisma,
   ResearchTaskStatus,
+  ResearchTaskType,
   Role,
   SuggestedVenueStatus,
 } from "@repo/db";
@@ -164,6 +166,16 @@ export async function GET() {
             },
           },
         },
+        addedJournals: {
+          select: {
+            approvalStatus: true,
+            resultPosition: true,
+            createdAt: true,
+            updatedAt: true,
+            publisherRecord: { select: { approvalStatus: true } },
+          },
+          orderBy: { resultPosition: "asc" },
+        },
       },
       orderBy: [
         { dueDate: { sort: "desc", nulls: "last" } },
@@ -243,20 +255,63 @@ export async function GET() {
             suggestion.journalCreationTask.status !==
               ResearchTaskStatus.REVOKED,
         );
+      const addedJournalResults =
+        task.taskType === ResearchTaskType.ADD_JOURNAL
+          ? task.addedJournals.filter(
+              (journal) => journal.resultPosition !== null,
+            )
+          : [];
+      const journalTargetCount = Math.max(1, task.journalTargetCount ?? 1);
+      const addJournalFilled = addedJournalResults.length >= journalTargetCount;
+      const pendingPublisherCount = addedJournalResults.filter(
+        (journal) =>
+          (journal.publisherRecord?.approvalStatus ??
+            JournalApprovalStatus.APPROVED) !== JournalApprovalStatus.APPROVED,
+      ).length;
+      const pendingJournalCount = addedJournalResults.filter(
+        (journal) => journal.approvalStatus !== JournalApprovalStatus.APPROVED,
+      ).length;
+      const addJournalNeedsReview =
+        task.taskType === ResearchTaskType.ADD_JOURNAL &&
+        task.status !== ResearchTaskStatus.COMPLETED &&
+        task.status !== ResearchTaskStatus.REVOKED &&
+        addJournalFilled &&
+        (pendingPublisherCount > 0 ||
+          pendingJournalCount > 0 ||
+          task.status === ResearchTaskStatus.CHECKING);
+      const latestAddedJournalUpdate = addedJournalResults.reduce<Date | null>(
+        (latest, journal) => {
+          const updatedAt = journal.updatedAt ?? journal.createdAt;
+          return !latest || updatedAt > latest ? updatedAt : latest;
+        },
+        null,
+      );
+      const addJournalReviewDetail = pendingPublisherCount
+        ? "Waiting publisher approval before journal approval"
+        : pendingJournalCount
+          ? "Waiting journal approval"
+          : "Waiting added journal review";
+      const addJournalReviewLabel = pendingPublisherCount
+        ? "Approve publisher"
+        : pendingJournalCount
+          ? "Approve journal"
+          : "Review journal";
       const managerActionStartedAt = waitingForJournalCreation
         ? null
-        : task.status === ResearchTaskStatus.CHECKING
-          ? ([
-              latestFinishedAt,
-              latestManagerClarificationAnswer?.answeredAt ?? null,
-            ].reduce<Date | null>((latest, value) => {
-              if (!value) return latest;
-              return !latest || value > latest ? value : latest;
-            }, null) ?? task.updatedAt)
-          : task.status === ResearchTaskStatus.NEED_CLARIFY &&
-              clarifyDirection === "ASSIGNEE_TO_MANAGER"
-            ? (openClarification?.createdAt ?? task.updatedAt)
-            : null;
+        : addJournalNeedsReview
+          ? (latestAddedJournalUpdate ?? task.updatedAt)
+          : task.status === ResearchTaskStatus.CHECKING
+            ? ([
+                latestFinishedAt,
+                latestManagerClarificationAnswer?.answeredAt ?? null,
+              ].reduce<Date | null>((latest, value) => {
+                if (!value) return latest;
+                return !latest || value > latest ? value : latest;
+              }, null) ?? task.updatedAt)
+            : task.status === ResearchTaskStatus.NEED_CLARIFY &&
+                clarifyDirection === "ASSIGNEE_TO_MANAGER"
+              ? (openClarification?.createdAt ?? task.updatedAt)
+              : null;
 
       return {
         id: task.id,
@@ -291,14 +346,24 @@ export async function GET() {
         checkerEmail: task.checker?.email ?? task.createdBy.email,
         managerAction: managerActionStartedAt
           ? {
-              label:
-                task.status === ResearchTaskStatus.CHECKING
+              label: addJournalNeedsReview
+                ? addJournalReviewLabel
+                : task.status === ResearchTaskStatus.CHECKING
                   ? "Check/review"
                   : "Answer clarification",
               startedAt: managerActionStartedAt.toISOString(),
             }
           : null,
         waitingForJournalCreation,
+        addJournalReview: addJournalNeedsReview
+          ? {
+              detail: addJournalReviewDetail,
+              pendingPublisherCount,
+              pendingJournalCount,
+              addedCount: addedJournalResults.length,
+              targetCount: journalTargetCount,
+            }
+          : null,
         scope: {
           assignedToMe,
           checkerForMe,

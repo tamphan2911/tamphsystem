@@ -4342,10 +4342,19 @@ export async function createJournalForTaskSlot(
       },
       assignments: { some: { userId: user.id } },
     },
-    select: { id: true, journalTargetCount: true },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      createdById: true,
+      checkerId: true,
+      journalTargetCount: true,
+      createdBy: { select: { email: true } },
+      checker: { select: { email: true } },
+    },
   });
   if (!task) redirect("/401");
-  const targetCount = task.journalTargetCount ?? 0;
+  const targetCount = Math.max(1, task.journalTargetCount ?? 1);
   if (resultPosition < 0 || resultPosition >= targetCount) {
     throw new Error("This journal result slot is not available.");
   }
@@ -4362,8 +4371,68 @@ export async function createJournalForTaskSlot(
       resultTaskId: taskId,
       resultPosition,
     });
+    const filledJournalCount = await prisma.journal.count({
+      where: { resultTaskId: taskId, resultPosition: { not: null } },
+    });
+    const readyForReview = filledJournalCount >= targetCount;
+    const shouldNotifyManagers =
+      readyForReview && task.status !== ResearchTaskStatus.CHECKING;
+    if (readyForReview) {
+      const finishedAt = new Date();
+      await prisma.researchTask.update({
+        where: { id: taskId },
+        data: {
+          status: ResearchTaskStatus.CHECKING,
+          completedAt: null,
+          revokedAt: null,
+          adminViewedAt: null,
+          assignments: {
+            updateMany: {
+              where: { finishedAt: null },
+              data: { finishedAt },
+            },
+          },
+        },
+      });
+    }
+    if (shouldNotifyManagers) {
+      await notifyUsers({
+        userIds: [task.createdById, task.checkerId].filter((id): id is string =>
+          Boolean(id),
+        ),
+        type: "TASK_READY_FOR_CHECK",
+        title: "Add journal task ready for approval",
+        summary: task.title,
+        body: "The assignee added the required journal result. Please approve the publisher first if needed, then approve the journal result.",
+        href: `/tasks/${taskId}`,
+        entityType: "task",
+        entityId: taskId,
+        excludeUserId: user.id,
+      });
+      await sendTaskManagerEmails({
+        assignerEmail: task.createdBy.email,
+        checkerEmail: task.checker?.email ?? null,
+        taskTitle: task.title,
+        taskId,
+        assigner: {
+          subject: `Add journal task ready for approval: ${task.title}`,
+          heading: "Add journal task ready for approval",
+          intro:
+            "The assignee added the required journal result. Please approve the publisher first if needed, then approve the journal so the task can complete automatically.",
+          actionLabel: "Review journal task",
+        },
+        checker: {
+          subject: `Add journal task ready for checker approval: ${task.title}`,
+          heading: "Add journal task ready for checker approval",
+          intro:
+            "The assignee added the required journal result. As checker, please approve the publisher first if needed, then approve the journal so the task can complete automatically.",
+          actionLabel: "Check journal task",
+        },
+      });
+    }
     revalidatePath("/journals");
     revalidatePath(`/tasks/${taskId}`);
+    revalidatePath("/tasks");
     if (shouldCreateAccount) revalidatePath("/accounts");
     return { pendingApproval: true };
   } catch (error) {
@@ -5966,6 +6035,7 @@ export async function approvePublisher(publisherId: string) {
 
   revalidatePath("/publishers");
   revalidatePath("/journals");
+  revalidatePath("/tasks");
 }
 
 export async function updatePublisher(publisherId: string, formData: FormData) {

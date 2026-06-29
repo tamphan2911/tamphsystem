@@ -77,6 +77,13 @@ type TaskRow = {
     startedAt: string;
   } | null;
   waitingForJournalCreation: boolean;
+  addJournalReview: {
+    detail: string;
+    pendingPublisherCount: number;
+    pendingJournalCount: number;
+    addedCount: number;
+    targetCount: number;
+  } | null;
   scope: {
     assignedToMe: boolean;
     relatedToMyItems: boolean;
@@ -348,6 +355,20 @@ function statusMeta(task: TaskRow) {
     };
   }
 
+  if (task.addJournalReview) {
+    const activeDue = activeDueMeta(due, remainingMs);
+    return {
+      label: "Checking",
+      detail: activeDue.detail,
+      dateLines: due ? [`Due: ${formatDate(task.dueDate)}`] : [],
+      secondaryDetail: task.addJournalReview.detail,
+      className:
+        "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-300/40 dark:bg-violet-950/25 dark:text-violet-300",
+      detailClassName: activeDue.detailClassName,
+      secondaryDetailClassName: "text-violet-600 dark:text-violet-300",
+    };
+  }
+
   if (task.status === "CHECKING") {
     const activeDue = activeDueMeta(due, remainingMs);
     return {
@@ -496,7 +517,7 @@ function statusIconMeta(task: TaskRow): {
     };
   }
 
-  if (task.status === "CHECKING") {
+  if (task.status === "CHECKING" || task.addJournalReview) {
     return {
       icon: SearchCheck,
       className:
@@ -537,6 +558,7 @@ function statusIconMeta(task: TaskRow): {
 
 function derivedStatus(task: TaskRow) {
   if (task.waitingForJournalCreation) return "IN_PROGRESS";
+  if (task.addJournalReview) return "CHECKING";
   if (
     task.status === "CHECKING" ||
     task.status === "NEED_CLARIFY" ||
@@ -550,6 +572,15 @@ function derivedStatus(task: TaskRow) {
   }
   if (label === "Revoked") return "REVOKED";
   return label.toUpperCase().replace(" ", "_");
+}
+
+function taskNeedsManagerAction(task: TaskRow) {
+  return Boolean(
+    task.managerAction ||
+    task.status === "CHECKING" ||
+    (task.status === "NEED_CLARIFY" &&
+      task.clarifyDirection !== "MANAGER_TO_ASSIGNEE"),
+  );
 }
 
 function DeleteTaskButton({
@@ -882,14 +913,7 @@ export function TasksClient({
         {
           value: "need_action",
           label: "Need actions",
-          count: tasks.filter((task) => {
-            const taskStatus = derivedStatus(task);
-            return (
-              taskStatus === "CHECKING" ||
-              (taskStatus === "NEED_CLARIFY" &&
-                task.clarifyDirection !== "MANAGER_TO_ASSIGNEE")
-            );
-          }).length,
+          count: tasks.filter(taskNeedsManagerAction).length,
         },
       ]
     : [
@@ -941,9 +965,7 @@ export function TasksClient({
       const taskStatus = derivedStatus(task);
       const matchesScope = isAdmin
         ? activeHeaderTab === "need_action"
-          ? taskStatus === "CHECKING" ||
-            (taskStatus === "NEED_CLARIFY" &&
-              task.clarifyDirection !== "MANAGER_TO_ASSIGNEE")
+          ? taskNeedsManagerAction(task)
           : true
         : activeHeaderTab === "assigned"
           ? task.scope.assignedToMe
@@ -974,6 +996,7 @@ export function TasksClient({
         task.waitingForJournalCreation
           ? "Waiting for assignee to add journal"
           : "",
+        task.addJournalReview?.detail,
         task.createdBy,
         task.checker,
         ...task.assignments.flatMap((item) => [
