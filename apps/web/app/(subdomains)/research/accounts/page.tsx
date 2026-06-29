@@ -7,6 +7,7 @@ import {
 } from "@repo/db";
 import { auth } from "../../../../auth";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
+import { canManageAllResearchAccounts } from "@/sites/research/lib/accountAccess";
 import { deletePublisherAccount } from "../actions";
 import { AccountsTable, type AccountRow } from "./AccountsTable";
 import { NewAccountDialog } from "./NewAccountDialog";
@@ -18,14 +19,16 @@ export default async function PublisherAccountsPage() {
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   const userId = (session?.user as { id?: string } | undefined)?.id;
-  const isAdmin =
-    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const canManageAccounts = canManageAllResearchAccounts({
+    roles,
+    email: session?.user?.email,
+  });
   const canDelete = roles.includes(Role.ADMIN);
   if (!userId) redirect("/login");
 
   const [accounts, journals, publishers] = await Promise.all([
     prisma.publisherAccount.findMany({
-      where: isAdmin
+      where: canManageAccounts
         ? {}
         : {
             tasks: {
@@ -56,7 +59,7 @@ export default async function PublisherAccountsPage() {
     }),
   ]);
 
-  if (!isAdmin && accounts.length === 0) redirect("/401");
+  if (!canManageAccounts && accounts.length === 0) redirect("/401");
 
   const rows: AccountRow[] = accounts.map((account) => ({
     id: account.id,
@@ -130,7 +133,7 @@ export default async function PublisherAccountsPage() {
             ))}
           </div>
           <div className="flex flex-none items-center">
-            {isAdmin && (
+            {canManageAccounts && (
               <NewAccountDialog
                 journals={journalOptions}
                 publishers={publisherOptions}

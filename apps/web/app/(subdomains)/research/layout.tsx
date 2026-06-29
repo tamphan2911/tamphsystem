@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { ResearchShell } from "./ResearchShell";
 import { displayResearchEmail } from "@/sites/research/lib/display";
 import { ResearchDesktopOnly } from "@/sites/research/components/ResearchDesktopOnly";
+import { canManageAllResearchAccounts } from "@/sites/research/lib/accountAccess";
 import {
   canAccessAllResearchProposals,
   relatedResearchProposalWhere,
@@ -65,22 +66,33 @@ export default async function ResearchLayout({
   const userId = (session?.user as { id?: string } | undefined)?.id;
   let roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
+  let userEmail = session?.user?.email ?? null;
   let userActiveSites: string[] | null = null;
   let researchThemePreference = "system";
   if (userId) {
     const currentUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { roles: true, activeSites: true, researchThemePreference: true },
+      select: {
+        roles: true,
+        email: true,
+        activeSites: true,
+        researchThemePreference: true,
+      },
     });
     if (currentUser) {
       roles = currentUser.roles;
+      userEmail = currentUser.email;
       userActiveSites = currentUser.activeSites;
       researchThemePreference = currentUser.researchThemePreference;
     }
   }
   const isRootAdmin = roles.includes(Role.ADMIN);
   const isResearchAdmin = isRootAdmin || roles.includes(Role.CHIEF_ASSISTANT);
-  let canSeeAccounts = isResearchAdmin;
+  const canManageAccounts = canManageAllResearchAccounts({
+    roles,
+    email: userEmail,
+  });
+  let canSeeAccounts = canManageAccounts;
   let canSeeReviews = isResearchAdmin;
   let canSeeTasks = isResearchAdmin;
   let canSeePublishers = isRootAdmin;
@@ -140,7 +152,7 @@ export default async function ResearchLayout({
     ) {
       redirect("/activate");
     }
-    canSeeAccounts = isResearchAdmin || unfinishedAccountTaskCount > 0;
+    canSeeAccounts = canManageAccounts || unfinishedAccountTaskCount > 0;
     canSeeReviews = isRootAdmin || assignedReviewTaskCount > 0;
     canSeeTasks = isResearchAdmin || assignedTaskCount > 0;
     canSeePublishers = isRootAdmin || checkedPublisherCount > 0;

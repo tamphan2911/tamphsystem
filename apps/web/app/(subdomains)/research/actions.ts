@@ -9,6 +9,7 @@ import {
   canAccessAllResearchProposals,
   proposalIsOpenForEditing,
 } from "@/sites/research/lib/proposalAccess";
+import { canManageAllResearchAccounts } from "@/sites/research/lib/accountAccess";
 import { canEditJournalDetailsByEmail } from "@/sites/research/lib/journalPermissions";
 import { researchTaskDueDate } from "@/sites/research/lib/task-date";
 import bcrypt from "bcrypt";
@@ -5905,7 +5906,7 @@ export async function updatePublisherAccount(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
-  requireResearchAdmin(user.roles);
+  if (!canManageAllResearchAccounts(user)) redirect("/401");
   const scope = await publisherAccountScope(formData);
 
   const username =

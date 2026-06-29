@@ -15,6 +15,7 @@ import {
 import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { displayResearchPersonName } from "@/sites/research/lib/display";
+import { canManageAllResearchAccounts } from "@/sites/research/lib/accountAccess";
 import { EditAccountDialog } from "./EditAccountDialog";
 
 export const dynamic = "force-dynamic";
@@ -72,8 +73,10 @@ export default async function AccountDetailPage({
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   if (!userId) redirect("/login");
-  const isAdmin =
-    roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT);
+  const canManageAccounts = canManageAllResearchAccounts({
+    roles,
+    email: session?.user?.email,
+  });
   const [account, journals, publishers] = await Promise.all([
     prisma.publisherAccount.findUnique({
       where: { id },
@@ -122,7 +125,7 @@ export default async function AccountDetailPage({
       task.status !== ResearchTaskStatus.REVOKED &&
       task.assignments.some((assignment) => assignment.userId === userId),
   );
-  if (!isAdmin && !hasUnfinishedAssignedTask) redirect("/401");
+  if (!canManageAccounts && !hasUnfinishedAssignedTask) redirect("/401");
 
   const submissionRows: SubmissionRow[] = account.submissions.map(
     (submission) => ({
@@ -178,7 +181,7 @@ export default async function AccountDetailPage({
                 {account.password || "-"}
               </span>
             </span>
-            {isAdmin && (
+            {canManageAccounts && (
               <EditAccountDialog
                 account={{
                   id: account.id,

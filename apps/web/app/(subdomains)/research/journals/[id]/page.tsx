@@ -35,6 +35,7 @@ import {
 import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
 import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 import { canEditJournalDetailsByEmail } from "@/sites/research/lib/journalPermissions";
+import { canManageAllResearchAccounts } from "@/sites/research/lib/accountAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +93,10 @@ export default async function JournalDetailPage({
   const isAdmin = roles.includes(Role.ADMIN);
   const isChiefAssistant = roles.includes(Role.CHIEF_ASSISTANT);
   const isAssistant = roles.includes(Role.ASSISTANT) || isChiefAssistant;
+  const canManageAccounts = canManageAllResearchAccounts({
+    roles,
+    email: session?.user?.email,
+  });
   const canViewAllRegistrationClaims = isAdmin || isChiefAssistant;
   const staffAccessWhere = staffJournalAccessWhere(roles, userId);
   const scopedProjectWhere = userId
@@ -132,7 +137,7 @@ export default async function JournalDetailPage({
           orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
         },
         accounts: {
-          where: isAdmin
+          where: canManageAccounts
             ? {}
             : isAssistant && userId
               ? { tasks: { some: { assignments: { some: { userId } } } } }
@@ -143,7 +148,7 @@ export default async function JournalDetailPage({
         publisherRecord: {
           include: {
             accounts: {
-              where: isAdmin
+              where: canManageAccounts
                 ? { accountType: "PUBLISHER" }
                 : isAssistant && userId
                   ? {
@@ -638,9 +643,9 @@ export default async function JournalDetailPage({
           submissionCount={journal._count.submissions}
           accountCount={accountRows.length}
           reviewCount={journal._count.reviews}
-          showManagementTabs={isAdmin || isAssistant}
+          showManagementTabs={isAdmin || isAssistant || canManageAccounts}
           linkSubmissions={isAdmin}
-          canAddAccount={isAdmin}
+          canAddAccount={canManageAccounts}
         />
       </div>
     </>
