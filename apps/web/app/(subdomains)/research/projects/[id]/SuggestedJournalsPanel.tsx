@@ -1401,7 +1401,7 @@ export function SuggestedJournalsPanel({
                 approveVenue.kind === "conference" ? (
                   <>
                     <p className="text-sm text-[#B0B0B0]">
-                      Link this suggestion to an existing {approveVenue.kind}
+                      Link this suggestion to an existing {approveVenue.kind}{" "}
                       before approving it.
                     </p>
                     <ApprovalVenuePicker
