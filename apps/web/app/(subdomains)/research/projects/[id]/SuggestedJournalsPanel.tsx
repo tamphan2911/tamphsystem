@@ -4,6 +4,7 @@ import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Ban,
@@ -2282,9 +2283,19 @@ function JournalCard({
       assignLabel="Assign journal submission task"
       deleteLabel="Delete suggested journal"
       title={
-        <p className="font-normal text-slate-900 dark:text-[#E4E4E4]">
-          {journal.name}
-        </p>
+        journal.status === "APPROVED" && journal.venueId ? (
+          <Link
+            href={`/journals/${journal.venueId}`}
+            onClick={(event) => event.stopPropagation()}
+            className="research-allow-transform inline-block break-words font-normal text-slate-900 transition hover:-translate-y-0.5 hover:text-[#1F7180] dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]"
+          >
+            {journal.name}
+          </Link>
+        ) : (
+          <p className="font-normal text-slate-900 dark:text-[#E4E4E4]">
+            {journal.name}
+          </p>
+        )
       }
     >
       {journal.venueId ? (
