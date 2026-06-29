@@ -90,10 +90,9 @@ export default async function JournalDetailPage({
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   const isAdmin = roles.includes(Role.ADMIN);
-  const isAssistant =
-    roles.includes(Role.ASSISTANT) || roles.includes(Role.CHIEF_ASSISTANT);
-  const canViewAllRegistrationClaims =
-    isAdmin || roles.includes(Role.CHIEF_ASSISTANT);
+  const isChiefAssistant = roles.includes(Role.CHIEF_ASSISTANT);
+  const isAssistant = roles.includes(Role.ASSISTANT) || isChiefAssistant;
+  const canViewAllRegistrationClaims = isAdmin || isChiefAssistant;
   const staffAccessWhere = staffJournalAccessWhere(roles, userId);
   const scopedProjectWhere = userId
     ? associatedResearchWhere(userId, registrationIdentityValues)
@@ -223,7 +222,8 @@ export default async function JournalDetailPage({
     isAdmin ||
     (approvalPending &&
       Boolean(userId) &&
-      (journal.resultTask?.checkerId === userId ||
+      (isChiefAssistant ||
+        journal.resultTask?.checkerId === userId ||
         journal.resultTask?.journalCreationSuggestion?.task?.checkerId ===
           userId));
   const creatorOptions: JournalCreatorOption[] = creatorUsers.map((user) => ({

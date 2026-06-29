@@ -4607,10 +4607,14 @@ export async function updateJournalApprovalStatus(
 ) {
   const user = await requireCurrentUser();
   const isAdmin = user.roles.includes(Role.ADMIN);
+  const canApproveAsChiefAssistant =
+    status === JournalApprovalStatus.APPROVED &&
+    user.roles.includes(Role.CHIEF_ASSISTANT);
   const canApproveAsChecker =
     status === JournalApprovalStatus.APPROVED &&
     (await isCheckerForJournalResult(user.id, journalId));
-  if (!isAdmin && !canApproveAsChecker) redirect("/401");
+  if (!isAdmin && !canApproveAsChiefAssistant && !canApproveAsChecker)
+    redirect("/401");
   if (!isAdmin && status !== JournalApprovalStatus.APPROVED) redirect("/401");
 
   if (status === JournalApprovalStatus.APPROVED) {
