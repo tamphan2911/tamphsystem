@@ -114,8 +114,10 @@ export async function GET() {
     prisma.researchTask.findMany({
       where,
       include: {
-        createdBy: { select: { id: true, name: true, email: true } },
-        checker: { select: { id: true, name: true, email: true } },
+        createdBy: {
+          select: { id: true, name: true, email: true, roles: true },
+        },
+        checker: { select: { id: true, name: true, email: true, roles: true } },
         project: {
           select: {
             leadResearcherId: true,
@@ -344,6 +346,7 @@ export async function GET() {
           task.createdBy.name ||
           task.createdBy.email,
         checkerEmail: task.checker?.email ?? task.createdBy.email,
+        checkerRoles: task.checker?.roles ?? task.createdBy.roles,
         managerAction: managerActionStartedAt
           ? {
               label: addJournalNeedsReview

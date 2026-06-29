@@ -22,6 +22,7 @@ import {
 import {
   IconHint,
   MultiFilterSelect,
+  parseMultiFilterValue,
   TablePagination,
   TableSearchInput,
   useTablePagination,
@@ -72,6 +73,7 @@ type TaskRow = {
   checkerId: string;
   checker: string;
   checkerEmail: string;
+  checkerRoles: string[];
   managerAction: {
     label: string;
     startedAt: string;
@@ -850,9 +852,77 @@ export function TasksClient({
     ],
     [tasks],
   );
-  const [checkerIds, setCheckerIds] = usePersistentMultiFilter(
-    "tasks:checker",
+  const adminCheckerIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          tasks
+            .filter((task) => task.checkerRoles.includes("ADMIN"))
+            .map((task) => task.checkerId)
+            .filter(Boolean),
+        ),
+      ),
+    [tasks],
+  );
+  const [adminAllCheckerStoredValue, setAdminAllCheckerStoredValue] =
+    usePersistentTableValue("tasks:checker:admin:all", "ALL", {
+      persistDefaultValue: true,
+    });
+  const [
+    adminNeedActionCheckerStoredValue,
+    setAdminNeedActionCheckerStoredValue,
+  ] = usePersistentTableValue(
+    "tasks:checker:admin:need-action",
+    "__DEFAULT__",
+    {
+      persistDefaultValue: true,
+    },
+  );
+  const [userCheckerStoredValue, setUserCheckerStoredValue] =
+    usePersistentTableValue("tasks:checker", "ALL");
+  const activeCheckerStoredValue = isAdmin
+    ? activeHeaderTab === "need_action"
+      ? adminNeedActionCheckerStoredValue
+      : adminAllCheckerStoredValue
+    : userCheckerStoredValue;
+  const checkerIds = useMemo(() => {
+    if (
+      isAdmin &&
+      activeHeaderTab === "need_action" &&
+      adminNeedActionCheckerStoredValue === "__DEFAULT__"
+    ) {
+      return adminCheckerIds;
+    }
+
+    return parseMultiFilterValue(activeCheckerStoredValue, checkerFilterValues);
+  }, [
+    activeCheckerStoredValue,
+    activeHeaderTab,
+    adminCheckerIds,
+    adminNeedActionCheckerStoredValue,
     checkerFilterValues,
+    isAdmin,
+  ]);
+  const setCheckerIds = useCallback(
+    (values: string[]) => {
+      const nextValue = values.length > 0 ? values.join(",") : "ALL";
+      if (!isAdmin) {
+        setUserCheckerStoredValue(nextValue);
+        return;
+      }
+      if (activeHeaderTab === "need_action") {
+        setAdminNeedActionCheckerStoredValue(nextValue);
+        return;
+      }
+      setAdminAllCheckerStoredValue(nextValue);
+    },
+    [
+      activeHeaderTab,
+      isAdmin,
+      setAdminAllCheckerStoredValue,
+      setAdminNeedActionCheckerStoredValue,
+      setUserCheckerStoredValue,
+    ],
   );
 
   useEffect(() => {
@@ -1081,7 +1151,6 @@ export function TasksClient({
 
     setQuery("");
     setTaskTypes([]);
-    setCheckerIds([]);
   }
 
   function updateStatuses(values: string[]) {
