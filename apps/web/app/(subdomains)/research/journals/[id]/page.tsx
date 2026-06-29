@@ -34,6 +34,7 @@ import {
 } from "@/sites/research/lib/venueAccess";
 import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
 import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
+import { canEditJournalDetailsByEmail } from "@/sites/research/lib/journalPermissions";
 
 export const dynamic = "force-dynamic";
 
@@ -107,7 +108,7 @@ export default async function JournalDetailPage({
     userId
       ? prisma.user.findUnique({
           where: { id: userId },
-          select: { canManageResearchVenues: true },
+          select: { canManageResearchVenues: true, email: true },
         })
       : Promise.resolve(null),
     prisma.journal.findFirst({
@@ -213,6 +214,7 @@ export default async function JournalDetailPage({
     journal.approvalStatus === JournalApprovalStatus.PENDING_APPROVAL;
   const canEditVenue =
     isAdmin ||
+    canEditJournalDetailsByEmail(currentUser?.email) ||
     (approvalPending &&
       Boolean(currentUser?.canManageResearchVenues) &&
       Boolean(userId) &&

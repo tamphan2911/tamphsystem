@@ -9,6 +9,7 @@ import {
   canAccessAllResearchProposals,
   proposalIsOpenForEditing,
 } from "@/sites/research/lib/proposalAccess";
+import { canEditJournalDetailsByEmail } from "@/sites/research/lib/journalPermissions";
 import { researchTaskDueDate } from "@/sites/research/lib/task-date";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -1460,11 +1461,12 @@ async function requireCurrentUser() {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { roles: true, canManageResearchVenues: true },
+    select: { roles: true, canManageResearchVenues: true, email: true },
   });
 
   return {
     id: userId,
+    email: user?.email ?? session?.user?.email ?? null,
     canManageResearchVenues: user?.canManageResearchVenues ?? false,
     roles:
       user?.roles ??
@@ -4400,6 +4402,7 @@ export async function updateJournal(journalId: string, formData: FormData) {
   if (!journal) return;
   const canEdit =
     user.roles.includes(Role.ADMIN) ||
+    canEditJournalDetailsByEmail(user.email) ||
     (user.canManageResearchVenues &&
       journal.createdById === user.id &&
       journal.approvalStatus === JournalApprovalStatus.PENDING_APPROVAL);
