@@ -533,13 +533,13 @@ export function TablePagination({
   const end = Math.min(total, currentPage * pageSize);
   const items = paginationItems(currentPage, pageCount);
   const pageButtonClass =
-    "research-allow-transform inline-flex h-8 min-w-8 flex-none cursor-pointer items-center justify-center border-y border-l px-2.5 text-xs font-normal outline-none transition duration-180 ease-out focus-visible:relative focus-visible:z-10 focus-visible:ring-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 motion-reduce:transition-none";
+    "research-allow-transform inline-flex h-8 min-w-8 flex-none cursor-pointer items-center justify-center border-0 px-2.5 text-xs font-normal outline-none transition duration-180 ease-out focus-visible:relative focus-visible:z-10 focus-visible:ring-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 motion-reduce:transition-none";
   const idlePageButtonClass =
-    "border-[#D8D0C2] bg-[#FFFDF8] text-[#596579] hover:bg-[#F2EEE6] hover:text-[#1F7180] focus-visible:ring-[#1F7180]/20 dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0] dark:hover:bg-[#303030] dark:hover:text-[#A8DADC] dark:focus-visible:ring-[#A8DADC]/22";
+    "bg-[#FFFDF8] text-[#596579] hover:bg-[#F2EEE6] hover:text-[#1F7180] focus-visible:ring-[#1F7180]/20 dark:bg-[#242424] dark:text-[#B0B0B0] dark:hover:bg-[#303030] dark:hover:text-[#A8DADC] dark:focus-visible:ring-[#A8DADC]/22";
   const activePageButtonClass =
-    "border-[#1F7180] bg-[#E5F3F4] text-[#155967] shadow-[inset_0_-2px_0_rgba(31,113,128,0.24)] focus-visible:ring-[#1F7180]/24 dark:border-[#A8DADC] dark:bg-[#17383E] dark:text-[#D8FBFF] dark:shadow-[inset_0_-2px_0_rgba(168,218,220,0.34)]";
+    "bg-[#E5F3F4] text-[#155967] focus-visible:ring-[#1F7180]/24 dark:bg-[#17383E] dark:text-[#D8FBFF] dark:focus-visible:ring-[#A8DADC]/22";
   const edgeButtonClass =
-    "research-allow-transform !h-8 !w-8 !rounded-none border-y border-slate-200 bg-[#FFFDF8] text-[#667085] shadow-none transition duration-180 ease-out hover:translate-y-0 hover:border-[#D8D0C2] hover:bg-[#F2EEE6] hover:text-[#1F7180] hover:shadow-none active:scale-95 disabled:active:scale-100 dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0] dark:hover:border-[#555555] dark:hover:bg-[#303030] dark:hover:text-[#A8DADC]";
+    "research-allow-transform !h-8 !w-8 !rounded-none border-0 bg-[#FFFDF8] text-[#667085] shadow-none transition duration-180 ease-out hover:translate-y-0 hover:bg-[#F2EEE6] hover:text-[#1F7180] hover:shadow-none active:scale-95 disabled:active:scale-100 dark:bg-[#242424] dark:text-[#B0B0B0] dark:hover:bg-[#303030] dark:hover:text-[#A8DADC]";
 
   return (
     <div className="flex flex-col gap-3 border-t border-[#D8D0C2] bg-[#F8F6EF] px-3 py-3 transition lg:flex-row lg:items-center lg:justify-between dark:border-[#333333] dark:bg-[#242424]">
@@ -566,10 +566,10 @@ export function TablePagination({
           </span>
         </p>
       </div>
-      <div className="max-w-full overflow-x-auto">
+      <div className="max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <nav
           aria-label="Table pagination"
-          className="inline-flex min-w-max items-center border-r border-[#D8D0C2] bg-[#FFFDF8] shadow-[0_10px_26px_rgba(37,48,71,0.06)] dark:border-[#444444] dark:bg-[#242424] dark:shadow-none"
+          className="inline-flex min-w-max items-center gap-px border border-[#D8D0C2] bg-[#D8D0C2] p-px dark:border-[#444444] dark:bg-[#444444]"
         >
           <ResearchIconButton
             type="button"
@@ -577,7 +577,7 @@ export function TablePagination({
             disabled={currentPage <= 1}
             label="Previous page"
             tone="slate"
-            className={cx(edgeButtonClass, "border-l")}
+            className={edgeButtonClass}
           >
             <ChevronLeft className="h-4 w-4" />
           </ResearchIconButton>
@@ -603,7 +603,7 @@ export function TablePagination({
                 key={item}
                 aria-hidden="true"
                 className={cx(
-                  "inline-flex h-8 min-w-8 flex-none items-center justify-center border-y border-l border-[#D8D0C2] bg-[#FFFDF8] px-2 text-xs text-[#9AA3B2] dark:border-[#444444] dark:bg-[#242424] dark:text-[#777777]",
+                  "inline-flex h-8 min-w-8 flex-none items-center justify-center border-0 bg-[#FFFDF8] px-2 text-xs text-[#9AA3B2] dark:bg-[#242424] dark:text-[#777777]",
                 )}
               >
                 ...
@@ -616,7 +616,7 @@ export function TablePagination({
             disabled={currentPage >= pageCount}
             label="Next page"
             tone="slate"
-            className={cx(edgeButtonClass, "border-l")}
+            className={edgeButtonClass}
           >
             <ChevronRight className="h-4 w-4" />
           </ResearchIconButton>
