@@ -494,7 +494,7 @@ export function ResearchShell({
       "requiresWorkflowGuideAccess" in item &&
       item.requiresWorkflowGuideAccess
     )
-      return isAdmin || isAssistant;
+      return isRootAdmin;
     if ("requiresReviewAccess" in item && item.requiresReviewAccess)
       return canSeeReviews;
     if ("requiresPublisherAccess" in item && item.requiresPublisherAccess)
