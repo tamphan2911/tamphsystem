@@ -975,7 +975,19 @@ async function publisherSelection(formData: FormData) {
 
 async function isCheckerForJournalResult(userId: string, journalId: string) {
   const journal = await prisma.journal.findFirst({
-    where: { id: journalId, resultTask: { checkerId: userId } },
+    where: {
+      id: journalId,
+      resultTask: {
+        OR: [
+          { checkerId: userId },
+          {
+            journalCreationSuggestion: {
+              task: { checkerId: userId },
+            },
+          },
+        ],
+      },
+    },
     select: { id: true },
   });
   return Boolean(journal);
@@ -988,7 +1000,20 @@ async function isCheckerForPublisherJournalResult(
   const publisher = await prisma.publisher.findFirst({
     where: {
       id: publisherId,
-      journals: { some: { resultTask: { checkerId: userId } } },
+      journals: {
+        some: {
+          resultTask: {
+            OR: [
+              { checkerId: userId },
+              {
+                journalCreationSuggestion: {
+                  task: { checkerId: userId },
+                },
+              },
+            ],
+          },
+        },
+      },
     },
     select: { id: true },
   });
@@ -4336,13 +4361,24 @@ export async function approveTaskJournal(taskId: string, journalId: string) {
   const user = await requireCurrentUser();
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
-    select: { createdById: true, checkerId: true },
+    select: {
+      createdById: true,
+      checkerId: true,
+      journalCreationSuggestion: {
+        select: {
+          task: { select: { checkerId: true } },
+        },
+      },
+    },
   });
+  const sourceSuggestVenueCheckerId =
+    task?.journalCreationSuggestion?.task?.checkerId ?? null;
   if (
     !task ||
     (!user.roles.includes(Role.ADMIN) &&
       task.createdById !== user.id &&
-      task.checkerId !== user.id)
+      task.checkerId !== user.id &&
+      sourceSuggestVenueCheckerId !== user.id)
   ) {
     redirect("/401");
   }
@@ -8959,6 +8995,9 @@ export async function approveSuggestedJournal(
     const taskTitle = `Add journal: ${venueName}`;
     const taskCode = await generateTaskCode();
     const taskDescription = DEFAULT_TASK_DESCRIPTION;
+    const followUpCheckerId =
+      suggestion.task?.checkerId ??
+      (user.roles.includes(Role.CHIEF_ASSISTANT) ? user.id : null);
     const task = await prisma.$transaction(async (tx) => {
       const createdTask = await tx.researchTask.create({
         data: {
@@ -8970,7 +9009,7 @@ export async function approveSuggestedJournal(
           dueDate,
           journalTargetCount: 1,
           createdById: suggestion.task?.createdById ?? user.id,
-          checkerId: suggestion.task?.checkerId ?? null,
+          checkerId: followUpCheckerId,
           assignments: { create: { userId: suggesterId } },
           guides: { connect: { id: guide.id } },
         },

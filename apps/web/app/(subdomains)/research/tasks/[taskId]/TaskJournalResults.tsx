@@ -32,6 +32,7 @@ import {
   normalizeResearchNumberInput,
 } from "@/sites/research/lib/currency";
 import {
+  approvePublisher,
   approveTaskJournal,
   createJournalForTaskSlot,
   linkJournalToTaskSlot,
@@ -103,6 +104,8 @@ export function TaskJournalResults({
   const [linkSlot, setLinkSlot] = useState<number | null>(null);
   const [approvalJournal, setApprovalJournal] =
     useState<TaskJournalResult | null>(null);
+  const [publisherApprovalJournal, setPublisherApprovalJournal] =
+    useState<TaskJournalResult | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const toast = useResearchToast();
@@ -136,6 +139,7 @@ export function TaskJournalResults({
               canEdit={canLinkExisting}
               onRelink={() => setLinkSlot(position)}
               onApprove={() => setApprovalJournal(journal)}
+              onApprovePublisher={() => setPublisherApprovalJournal(journal)}
             />
           ) : (
             <EmptyJournalSlot
@@ -204,6 +208,41 @@ export function TaskJournalResults({
                   error instanceof Error
                     ? error.message
                     : "Approve the linked publisher first, then try again.",
+              });
+            }
+          });
+        }}
+      />
+
+      <ResearchConfirmDialog
+        open={Boolean(publisherApprovalJournal)}
+        title="Approve this publisher?"
+        description={
+          publisherApprovalJournal
+            ? `${publisherApprovalJournal.publisher || "This publisher"} will be approved so ${publisherApprovalJournal.name} can be approved next.`
+            : undefined
+        }
+        confirmLabel={isPending ? "Approving..." : "Approve publisher"}
+        isConfirming={isPending}
+        onCancel={() => setPublisherApprovalJournal(null)}
+        onConfirm={() => {
+          if (!publisherApprovalJournal?.publisherId) return;
+          startTransition(async () => {
+            try {
+              await approvePublisher(publisherApprovalJournal.publisherId);
+              toast.showSuccess({
+                title: "Publisher approved",
+                detail: `${publisherApprovalJournal.publisher || "Publisher"} is now approved.`,
+              });
+              setPublisherApprovalJournal(null);
+              router.refresh();
+            } catch (error) {
+              toast.showError({
+                title: "Publisher could not be approved",
+                detail:
+                  error instanceof Error
+                    ? error.message
+                    : "Please refresh and try again.",
               });
             }
           });
@@ -488,12 +527,14 @@ function JournalResultCard({
   canApprove,
   onRelink,
   onApprove,
+  onApprovePublisher,
 }: {
   journal: TaskJournalResult;
   canEdit: boolean;
   canApprove: boolean;
   onRelink: () => void;
   onApprove: () => void;
+  onApprovePublisher: () => void;
 }) {
   const approved = journal.approvalStatus === "APPROVED";
   const publisherPending =
@@ -553,9 +594,14 @@ function JournalResultCard({
             </IconHint>
           ) : canApprove && publisherPending ? (
             <IconHint label="Approve publisher before approving this journal">
-              <span className="inline-flex h-7 w-7 items-center justify-center text-amber-700 dark:text-amber-300">
+              <button
+                type="button"
+                onClick={onApprovePublisher}
+                className="research-allow-transform inline-flex h-7 w-7 items-center justify-center border-0 bg-transparent text-amber-700 transition-[color,transform] hover:-translate-y-0.5 hover:text-amber-900 active:translate-y-0 active:scale-90 dark:text-amber-300 dark:hover:text-amber-100"
+                aria-label="Approve publisher before approving this journal"
+              >
                 <ShieldAlert className="h-4 w-4" />
-              </span>
+              </button>
             </IconHint>
           ) : null}
         </div>

@@ -972,7 +972,12 @@ export default async function TaskDetailPage({
       allowAssigneeReportUpload: true,
       journalTargetCount: true,
       suggestedVenueTargetCount: true,
-      journalCreationSuggestion: { select: { id: true } },
+      journalCreationSuggestion: {
+        select: {
+          id: true,
+          task: { select: { checkerId: true } },
+        },
+      },
       journalSubmissionSuggestion: {
         select: {
           id: true,
@@ -1461,6 +1466,8 @@ export default async function TaskDetailPage({
   );
   const isAssigner = task.createdById === userId;
   const isChecker = task.checkerId === userId;
+  const isSourceJournalSuggestionChecker =
+    task.journalCreationSuggestion?.task?.checkerId === userId;
   const isAssignee = Boolean(myAssignment);
   const selfAssigned = isAssigner && isAssignee;
   const isRelatedResearchTask =
@@ -1479,6 +1486,7 @@ export default async function TaskDetailPage({
     isChiefAssistant &&
     (isAssigner ||
       isChecker ||
+      isSourceJournalSuggestionChecker ||
       isAssignee ||
       Boolean(isRelatedResearchTask) ||
       Boolean(isRelatedOrganizedProjectTask));
@@ -1886,7 +1894,11 @@ export default async function TaskDetailPage({
     task.proposalScope === "PROJECT" ? "PROJECT" : "RESEARCH";
   const canAddTaskJournals = isAddJournalTask && !isClosed && isAssignee;
   const canApproveTaskJournals =
-    isAddJournalTask && (isRootAdmin || isAssigner || isChecker);
+    isAddJournalTask &&
+    (isRootAdmin ||
+      isAssigner ||
+      isChecker ||
+      isSourceJournalSuggestionChecker);
   const taskJournalResults: TaskJournalResult[] = task.addedJournals.flatMap(
     (journal) =>
       journal.resultPosition === null

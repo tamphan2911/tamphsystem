@@ -168,7 +168,16 @@ export default async function JournalDetailPage({
         createdBy: {
           select: { id: true, name: true, email: true, roles: true },
         },
-        resultTask: { select: { checkerId: true } },
+        resultTask: {
+          select: {
+            checkerId: true,
+            journalCreationSuggestion: {
+              select: {
+                task: { select: { checkerId: true } },
+              },
+            },
+          },
+        },
         _count: {
           select: { submissions: true, accounts: true, reviews: true },
         },
@@ -212,7 +221,9 @@ export default async function JournalDetailPage({
     isAdmin ||
     (approvalPending &&
       Boolean(userId) &&
-      journal.resultTask?.checkerId === userId);
+      (journal.resultTask?.checkerId === userId ||
+        journal.resultTask?.journalCreationSuggestion?.task?.checkerId ===
+          userId));
   const creatorOptions: JournalCreatorOption[] = creatorUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
