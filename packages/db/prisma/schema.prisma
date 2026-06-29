@@ -844,27 +844,28 @@ model Publisher {
 }
 
 model SuggestedJournal {
-  id                    String               @id @default(uuid())
-  projectId             String
-  taskId                String?
-  journalCreationTaskId String?              @unique
-  submissionTaskId      String?              @unique
-  journalId             String?
-  venueName             String?
-  venueLink             String?
-  apc                   String?
-  submissionFee         String?
-  note                  String?
-  status                SuggestedVenueStatus @default(APPROVED)
-  approvedAt            DateTime?
-  approvedById          String?
-  approvalNote          String?
-  declinedAt            DateTime?
-  declinedById          String?
-  declineReason         String?
-  requiresApproval      Boolean              @default(false)
-  createdById           String?
-  createdAt             DateTime             @default(now())
+  id                             String               @id @default(uuid())
+  projectId                      String
+  taskId                         String?
+  journalCreationTaskId          String?              @unique
+  submissionTaskId               String?              @unique
+  journalId                      String?
+  venueName                      String?
+  venueLink                      String?
+  apc                            String?
+  submissionFee                  String?
+  note                           String?
+  status                         SuggestedVenueStatus @default(APPROVED)
+  approvedAt                     DateTime?
+  approvedById                   String?
+  approvalNote                   String?
+  declinedAt                     DateTime?
+  declinedById                   String?
+  declineReason                  String?
+  requiresApproval               Boolean              @default(false)
+  autoCreateSubmitTaskOnApproval Boolean              @default(true)
+  createdById                    String?
+  createdAt                      DateTime             @default(now())
 
   project             ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
   task                ResearchTask?   @relation(fields: [taskId], references: [id], onDelete: SetNull)

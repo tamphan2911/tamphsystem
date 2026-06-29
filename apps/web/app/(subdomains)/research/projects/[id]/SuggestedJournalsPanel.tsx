@@ -463,7 +463,10 @@ export function SuggestedJournalsPanel({
   );
   const approvalUsesJournalTask =
     isUnlinkedJournalApproval && autoCreateJournalTask;
-  const approvalCanCreateSubmitTask = Boolean(approveVenue?.item.venueId);
+  const approvalCanCreateSubmitTask = Boolean(
+    approveVenue?.item.venueId ||
+    (isUnlinkedJournalApproval && autoCreateJournalTask),
+  );
 
   function toggleAssistant(id: string) {
     setSelectedAssistantIds((current) =>
@@ -622,8 +625,11 @@ export function SuggestedJournalsPanel({
       let taskCreated = false;
       let submitTaskCreated = false;
       let submitTaskLinked = false;
-      if (approvalCanCreateSubmitTask && autoCreateSubmitTask) {
-        formData.set("createSubmitTask", "true");
+      if (approvalCanCreateSubmitTask) {
+        formData.set(
+          "createSubmitTask",
+          autoCreateSubmitTask ? "true" : "false",
+        );
       }
       if (approveVenue.kind === "journal") {
         if (approvalVenue?.kind === "journal") {
@@ -1265,8 +1271,9 @@ export function SuggestedJournalsPanel({
                     Assign submit task automatically
                   </span>
                   <span className="mt-1 block text-xs leading-5 text-slate-500 dark:text-[#B0B0B0]">
-                    The task will be assigned to the suggester, with the same
-                    assigner and checker as the suggested-venue task.
+                    {approvalUsesJournalTask
+                      ? "After the new journal is approved, the submit task will be assigned to the suggester with the same assigner and checker as the suggested-venue task."
+                      : "The task will be assigned to the suggester, with the same assigner and checker as the suggested-venue task."}
                   </span>
                 </span>
               </label>
@@ -1309,6 +1316,9 @@ export function SuggestedJournalsPanel({
           <p className="text-xs leading-5 text-slate-500 dark:text-[#8F98A8]">
             Guide G003 will be attached. The venue suggestion remains pending
             until the journal is added and approved.
+            {autoCreateSubmitTask
+              ? " A submit task will be created or linked automatically after that approval."
+              : " No submit task will be created automatically after that approval."}
           </p>
         </ResearchConfirmDialog>
       )}

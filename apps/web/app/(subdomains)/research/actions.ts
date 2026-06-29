@@ -4719,6 +4719,8 @@ async function approveJournalWithWorkflow(
                 projectId: true,
                 taskId: true,
                 createdById: true,
+                autoCreateSubmitTaskOnApproval: true,
+                task: { select: { createdById: true, checkerId: true } },
               },
             },
           },
@@ -4823,6 +4825,9 @@ async function approveJournalWithWorkflow(
         projectId: suggestion?.projectId ?? null,
         suggestVenueTaskId: suggestion?.taskId ?? null,
         suggesterId: suggestion?.createdById ?? null,
+        autoCreateSubmitTaskOnApproval:
+          suggestion?.autoCreateSubmitTaskOnApproval ?? false,
+        originalTask: suggestion?.task ?? null,
         assigneeIds: workflowTask.assignments.map(
           (assignment) => assignment.userId,
         ),
@@ -4844,6 +4849,23 @@ async function approveJournalWithWorkflow(
   if (completedSuggestTask) {
     revalidatePath(`/tasks/${completedSuggestTask.taskId}`);
   }
+  const submitTaskResult =
+    result.workflow?.autoCreateSubmitTaskOnApproval &&
+    result.workflow.projectId &&
+    result.workflow.suggestionId &&
+    result.workflow.suggesterId
+      ? await createSubmitTaskForSuggestedJournalApproval({
+          projectId: result.workflow.projectId,
+          suggestionId: result.workflow.suggestionId,
+          journalId,
+          approverId: approvedById,
+          suggestedById: result.workflow.suggesterId,
+          originalTask: result.workflow.originalTask,
+        })
+      : null;
+  if (submitTaskResult?.taskId) {
+    revalidatePath(`/tasks/${submitTaskResult.taskId}`);
+  }
   if (result.workflow?.taskCompleted || result.workflow?.suggestionId) {
     revalidatePath("/tasks");
     if (result.workflow.projectId)
@@ -4856,11 +4878,19 @@ async function approveJournalWithWorkflow(
     completedSuggestTask?.assigneeIds.forEach((assigneeId) =>
       recipientIds.add(assigneeId),
     );
+    if (submitTaskResult?.checkerId) {
+      recipientIds.add(submitTaskResult.checkerId);
+    }
     const body = [
       `${result.journalName} was approved.`,
       result.workflow.suggestionId
         ? "The linked venue suggestion is now approved."
         : null,
+      submitTaskResult?.created
+        ? `A submit task was assigned: ${submitTaskResult.taskTitle}.`
+        : submitTaskResult
+          ? `The suggestion was linked to an existing submit task: ${submitTaskResult.taskTitle}.`
+          : null,
       result.workflow.completionNote
         ? `${result.workflow.taskTitle} was completed automatically. ${result.workflow.completionNote}`
         : null,
@@ -4874,22 +4904,30 @@ async function approveJournalWithWorkflow(
       userIds: Array.from(recipientIds),
       type: "VENUE_SUGGESTION_APPROVED",
       title:
-        completedSuggestTask && result.workflow.taskCompleted
-          ? "Venue approved and tasks completed"
-          : result.workflow.suggestionId && result.workflow.taskCompleted
-            ? "Venue approved and task completed"
-            : completedSuggestTask
-              ? "Venue approved and suggest venue task completed"
-              : result.workflow.taskCompleted
-                ? "Add journal task completed"
-                : "Venue suggestion approved",
+        submitTaskResult?.created &&
+        completedSuggestTask &&
+        result.workflow.taskCompleted
+          ? "Venue approved, submit task assigned, and tasks completed"
+          : submitTaskResult?.created
+            ? "Venue approved and submit task assigned"
+            : completedSuggestTask && result.workflow.taskCompleted
+              ? "Venue approved and tasks completed"
+              : result.workflow.suggestionId && result.workflow.taskCompleted
+                ? "Venue approved and task completed"
+                : completedSuggestTask
+                  ? "Venue approved and suggest venue task completed"
+                  : result.workflow.taskCompleted
+                    ? "Add journal task completed"
+                    : "Venue suggestion approved",
       summary: result.journalName,
       body,
-      href: result.workflow.taskCompleted
-        ? `/tasks/${result.taskId}`
-        : result.workflow.projectId
-          ? `/projects/${result.workflow.projectId}`
-          : `/tasks/${result.taskId}`,
+      href: submitTaskResult?.taskId
+        ? `/tasks/${submitTaskResult.taskId}`
+        : result.workflow.taskCompleted
+          ? `/tasks/${result.taskId}`
+          : result.workflow.projectId
+            ? `/projects/${result.workflow.projectId}`
+            : `/tasks/${result.taskId}`,
       entityType: "task",
       entityId: result.taskId,
       excludeUserId: approvedById,
@@ -9456,11 +9494,17 @@ export async function approveSuggestedJournal(
   const createJournalTask =
     formData.get("createJournalTask") === "true" && !suggestion.journalId;
   if (createJournalTask) {
+    const autoCreateSubmitTaskOnApproval =
+      formData.get("createSubmitTask") !== "false";
     if (!suggestion.createdById || !suggestion.createdBy) {
       throw new Error("The venue suggester is not available for assignment.");
     }
     const suggesterId = suggestion.createdById;
     if (suggestion.journalCreationTaskId) {
+      await prisma.suggestedJournal.update({
+        where: { id: suggestionId },
+        data: { autoCreateSubmitTaskOnApproval },
+      });
       if (
         suggestion.journalCreationTask?.status !==
           ResearchTaskStatus.COMPLETED &&
@@ -9516,6 +9560,7 @@ export async function approveSuggestedJournal(
           journalCreationTaskId: createdTask.id,
           status: SuggestedVenueStatus.PENDING,
           requiresApproval: true,
+          autoCreateSubmitTaskOnApproval,
           approvedAt: null,
           approvedById: null,
           declinedAt: null,
