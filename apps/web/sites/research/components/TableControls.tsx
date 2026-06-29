@@ -529,6 +529,8 @@ export function TablePagination({
   onPageChange: (page: number) => void;
 }) {
   const currentPage = Math.min(Math.max(page, 1), pageCount);
+  if (pageCount <= 1) return null;
+
   const start = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const end = Math.min(total, currentPage * pageSize);
   const items = paginationItems(currentPage, pageCount);
