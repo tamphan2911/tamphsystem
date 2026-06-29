@@ -3160,6 +3160,11 @@ export default async function TaskDetailPage({
                     <p className="mt-1 text-xs text-[#B0B0B0]">
                       {journalMetaLine(task.journal)}
                     </p>
+                    {task.journal.note ? (
+                      <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-slate-600 dark:text-[#B0B0B0]">
+                        Journal note: {task.journal.note}
+                      </p>
+                    ) : null}
                     <p className="mt-1 flex items-start gap-1.5 text-xs text-[#B0B0B0]">
                       <KeyRound className="h-3.5 w-3.5 text-amber-500" />
                       <AccountLine account={journalAccount} />
