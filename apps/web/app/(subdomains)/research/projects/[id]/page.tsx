@@ -1995,7 +1995,7 @@ export default async function ProjectDetailPage({
           checkers={taskCheckerOptions}
           taskGuideOptions={taskGuides}
           canChooseChecker={isRootAdmin}
-          isAdmin={isAdmin}
+          canDeleteVenue={isRootAdmin}
           canAssignTask={canAssignSuggestedVenueSubmitTask}
           canAssignOtherTask={canCreateSubmitOrOtherTask}
           canApproveSuggestion={canApproveVenueSuggestion}

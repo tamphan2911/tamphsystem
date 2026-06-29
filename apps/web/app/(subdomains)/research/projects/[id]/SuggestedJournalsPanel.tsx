@@ -192,7 +192,7 @@ export function SuggestedJournalsPanel({
   checkers = [],
   taskGuideOptions = [],
   canChooseChecker = false,
-  isAdmin,
+  canDeleteVenue,
   canAssignTask,
   canAssignOtherTask = canAssignTask,
   canApproveSuggestion,
@@ -212,7 +212,7 @@ export function SuggestedJournalsPanel({
   checkers?: TaskAssigneeOption[];
   taskGuideOptions?: TaskGuideOption[];
   canChooseChecker?: boolean;
-  isAdmin: boolean;
+  canDeleteVenue: boolean;
   canAssignTask: boolean;
   canAssignOtherTask?: boolean;
   canApproveSuggestion: boolean;
@@ -905,7 +905,7 @@ export function SuggestedJournalsPanel({
             <JournalCard
               key={journal.id}
               journal={journal}
-              isAdmin={isAdmin}
+              canDeleteVenue={canDeleteVenue}
               canAssignTask={canAssignTask}
               canApproveSuggestion={canApproveSuggestion}
               canEditVenue={canApproveSuggestion}
@@ -929,7 +929,7 @@ export function SuggestedJournalsPanel({
             <ConferenceCard
               key={conference.id}
               conference={conference}
-              isAdmin={isAdmin}
+              canDeleteVenue={canDeleteVenue}
               canAssignTask={canAssignTask}
               canApproveSuggestion={canApproveSuggestion}
               canEditVenue={canApproveSuggestion}
@@ -2266,7 +2266,7 @@ function VenueSection({
 
 function JournalCard({
   journal,
-  isAdmin,
+  canDeleteVenue,
   canAssignTask,
   canApproveSuggestion,
   canEditVenue,
@@ -2277,7 +2277,7 @@ function JournalCard({
   onDelete,
 }: {
   journal: SuggestedJournalOption;
-  isAdmin: boolean;
+  canDeleteVenue: boolean;
   canAssignTask: boolean;
   canApproveSuggestion: boolean;
   canEditVenue: boolean;
@@ -2289,7 +2289,7 @@ function JournalCard({
 }) {
   return (
     <VenueCard
-      isAdmin={isAdmin}
+      canDeleteVenue={canDeleteVenue}
       canAssignTask={canAssignTask}
       canApproveSuggestion={canApproveSuggestion}
       canEditVenue={canEditVenue}
@@ -2391,7 +2391,7 @@ function JournalCard({
 
 function ConferenceCard({
   conference,
-  isAdmin,
+  canDeleteVenue,
   canAssignTask,
   canApproveSuggestion,
   canEditVenue,
@@ -2402,7 +2402,7 @@ function ConferenceCard({
   onDelete,
 }: {
   conference: SuggestedConferenceOption;
-  isAdmin: boolean;
+  canDeleteVenue: boolean;
   canAssignTask: boolean;
   canApproveSuggestion: boolean;
   canEditVenue: boolean;
@@ -2414,7 +2414,7 @@ function ConferenceCard({
 }) {
   return (
     <VenueCard
-      isAdmin={isAdmin}
+      canDeleteVenue={canDeleteVenue}
       canAssignTask={canAssignTask}
       canApproveSuggestion={canApproveSuggestion}
       canEditVenue={canEditVenue}
@@ -2635,7 +2635,7 @@ function AttributionSeparator() {
 }
 
 function VenueCard({
-  isAdmin,
+  canDeleteVenue,
   canAssignTask,
   canApproveSuggestion,
   canEditVenue,
@@ -2650,7 +2650,7 @@ function VenueCard({
   title,
   children,
 }: {
-  isAdmin: boolean;
+  canDeleteVenue: boolean;
   canAssignTask: boolean;
   canApproveSuggestion: boolean;
   canEditVenue: boolean;
@@ -2680,7 +2680,7 @@ function VenueCard({
     ["idle", "pendingApproval", "declined", "rejected", "withdrawn"].includes(
       state.state,
     );
-  const canDelete = isAdmin && !disabled;
+  const canDelete = canDeleteVenue && !disabled;
   const showActions = canEdit || canAssign || canDelete;
 
   function handleCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
