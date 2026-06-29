@@ -660,8 +660,12 @@ function AccountLine({
         <span>ID: {account.username || "No account id"}</span>
         <DetailSeparator />
         <span>pass: {account.password || "No pass"}</span>
-        <DetailSeparator />
-        <span>email: {account.email || "No email"}</span>
+        {account.email ? (
+          <>
+            <DetailSeparator />
+            <span>email: {account.email}</span>
+          </>
+        ) : null}
       </span>
       {account.note ? (
         <span className="mt-1 block whitespace-pre-wrap break-words leading-5 text-slate-600 dark:text-[#B0B0B0]">
