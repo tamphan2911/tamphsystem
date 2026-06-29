@@ -4,8 +4,8 @@ import { prisma, Role } from "@repo/db";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { staffPublisherAccessWhere } from "@/sites/research/lib/venueAccess";
 import {
-  approvePublisher,
   createPublisher,
+  decidePublisherApproval,
   deletePublisher,
   updatePublisher,
 } from "../actions";
@@ -101,7 +101,7 @@ export default async function PublishersPage() {
       <PublishersTable
         rows={rows}
         isAdmin={isAdmin}
-        approveAction={approvePublisher}
+        decideApprovalAction={decidePublisherApproval}
         updateAction={updatePublisher}
         deleteAction={deletePublisher}
       />

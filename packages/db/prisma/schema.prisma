@@ -79,6 +79,7 @@ enum JournalType {
 enum JournalApprovalStatus {
   APPROVED
   PENDING_APPROVAL
+  DECLINED
 }
 
 enum PublisherAccountType {

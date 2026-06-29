@@ -8,7 +8,9 @@ import {
   CheckCircle2,
   ExternalLink,
   Loader2,
+  ShieldQuestion,
   Trash2,
+  XCircle,
 } from "lucide-react";
 import {
   IconHint,
@@ -18,6 +20,11 @@ import {
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import {
+  ResearchButton,
+  researchTextareaClass,
+} from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { PublisherDialog } from "./PublisherDialog";
@@ -117,12 +124,20 @@ function DeletePublisherButton({
 
 function ApprovePublisherButton({
   publisher,
-  approveAction,
+  decideApprovalAction,
 }: {
   publisher: PublisherRow;
-  approveAction: (publisherId: string) => Promise<void>;
+  decideApprovalAction: (
+    publisherId: string,
+    decision: "APPROVED" | "DECLINED",
+    formData: FormData,
+  ) => Promise<void>;
 }) {
-  const [approving, setApproving] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const [decision, setDecision] = useState<"APPROVED" | "DECLINED" | null>(
+    null,
+  );
   const toast = useResearchToast();
   const router = useRouter();
 
@@ -134,60 +149,152 @@ function ApprovePublisherButton({
     );
   }
 
+  const isDeclined = publisher.approvalStatus === "DECLINED";
+
+  async function submit(nextDecision: "APPROVED" | "DECLINED") {
+    setDecision(nextDecision);
+    const formData = new FormData();
+    formData.set("note", note);
+    try {
+      await decideApprovalAction(publisher.id, nextDecision, formData);
+      toast.showSuccess({
+        title:
+          nextDecision === "APPROVED"
+            ? "Publisher approved"
+            : "Publisher declined",
+        detail:
+          nextDecision === "APPROVED"
+            ? `${publisher.name} can now be used by approved journals.`
+            : `${publisher.name} was marked as declined.`,
+      });
+      setOpen(false);
+      setNote("");
+      router.refresh();
+    } catch (error) {
+      toast.showError({
+        title: "Publisher approval could not be updated",
+        detail:
+          error instanceof Error
+            ? error.message
+            : "Try again after checking the publisher details.",
+      });
+    } finally {
+      setDecision(null);
+    }
+  }
+
   return (
-    <span className="inline-flex items-center justify-center gap-2">
-      <span className="border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] uppercase text-amber-700 dark:border-amber-400/25 dark:bg-amber-950/30 dark:text-amber-200">
-        Pending
-      </span>
-      <IconHint label={`Approve ${publisher.name}`}>
-        <button
-          type="button"
-          disabled={approving}
-          onClick={async () => {
-            setApproving(true);
-            try {
-              await approveAction(publisher.id);
-              toast.showSuccess({
-                title: "Publisher approved",
-                detail: `${publisher.name} can now be used by approved journals.`,
-              });
-              router.refresh();
-            } catch (error) {
-              toast.showError({
-                title: "Publisher could not be approved",
-                detail:
-                  error instanceof Error
-                    ? error.message
-                    : "Try again after checking the publisher details.",
-              });
-            } finally {
-              setApproving(false);
-            }
-          }}
-          className="research-allow-transform inline-flex h-5 w-5 items-center justify-center border-0 bg-transparent text-emerald-700 transition hover:-translate-y-0.5 hover:bg-transparent hover:text-emerald-800 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 dark:text-emerald-300 dark:hover:text-emerald-200"
-          aria-label={`Approve ${publisher.name}`}
+    <>
+      <span className="inline-flex items-center justify-center gap-2">
+        <span
+          className={
+            isDeclined
+              ? "border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] uppercase text-rose-700 dark:border-rose-400/25 dark:bg-rose-950/30 dark:text-rose-200"
+              : "border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] uppercase text-amber-700 dark:border-amber-400/25 dark:bg-amber-950/30 dark:text-amber-200"
+          }
         >
-          {approving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <CheckCircle2 className="h-4 w-4" />
-          )}
-        </button>
-      </IconHint>
-    </span>
+          {isDeclined ? "Declined" : "Pending"}
+        </span>
+        <IconHint label={`Review ${publisher.name}`}>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="research-allow-transform inline-flex h-5 w-5 items-center justify-center border-0 bg-transparent text-cyan-700 transition hover:-translate-y-0.5 hover:bg-transparent hover:text-cyan-800 active:translate-y-0 active:scale-95 dark:text-cyan-300 dark:hover:text-cyan-200"
+            aria-label={`Review ${publisher.name}`}
+          >
+            <ShieldQuestion className="h-4 w-4" />
+          </button>
+        </IconHint>
+      </span>
+      <ResearchModal
+        open={open}
+        onClose={() => {
+          if (decision) return;
+          setOpen(false);
+          setNote("");
+        }}
+        title="Review publisher"
+        description="Approve this publisher for journal workflows, or decline it with an optional note."
+        icon={<ShieldQuestion className="h-5 w-5" />}
+        maxWidth="max-w-xl"
+        bodyClassName="px-5 py-5"
+      >
+        <div className="space-y-4">
+          <div className="border border-slate-200 bg-slate-50 px-4 py-3 dark:border-[#444444] dark:bg-[#252525]">
+            <p className="break-words text-sm font-semibold text-slate-950 dark:text-[#E4E4E4]">
+              {publisher.name}
+            </p>
+            <p className="mt-1 text-xs uppercase tracking-wide text-slate-500 dark:text-[#8F98A8]">
+              <span>{publisher.publisherCode}</span>
+              <span className="px-1.5 text-slate-300 dark:text-[#666666]">
+                |
+              </span>
+              <span>{isDeclined ? "Declined" : "Pending"}</span>
+            </p>
+            {publisher.website ? (
+              <p className="mt-1 break-all text-xs text-slate-500 dark:text-[#B0B0B0]">
+                {publisher.website}
+              </p>
+            ) : null}
+          </div>
+          <label className="grid gap-1.5 text-sm font-normal text-slate-800 dark:text-[#E4E4E4]">
+            Note
+            <textarea
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              className={researchTextareaClass}
+              placeholder="Optional note for the notification"
+              rows={4}
+            />
+          </label>
+          <div className="flex flex-wrap justify-end gap-2">
+            <ResearchButton
+              type="button"
+              tone="danger"
+              disabled={Boolean(decision)}
+              onClick={() => submit("DECLINED")}
+            >
+              {decision === "DECLINED" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <XCircle className="h-4 w-4" />
+              )}
+              Decline
+            </ResearchButton>
+            <ResearchButton
+              type="button"
+              tone="success"
+              disabled={Boolean(decision)}
+              onClick={() => submit("APPROVED")}
+            >
+              {decision === "APPROVED" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4" />
+              )}
+              Approve
+            </ResearchButton>
+          </div>
+        </div>
+      </ResearchModal>
+    </>
   );
 }
 
 export function PublishersTable({
   rows,
   isAdmin,
-  approveAction,
+  decideApprovalAction,
   updateAction,
   deleteAction,
 }: {
   rows: PublisherRow[];
   isAdmin: boolean;
-  approveAction: (publisherId: string) => Promise<void>;
+  decideApprovalAction: (
+    publisherId: string,
+    decision: "APPROVED" | "DECLINED",
+    formData: FormData,
+  ) => Promise<void>;
   updateAction: (publisherId: string, formData: FormData) => Promise<void>;
   deleteAction: (publisherId: string) => Promise<void>;
 }) {
@@ -263,7 +370,7 @@ export function PublishersTable({
                 <td className="px-3 py-3 text-center align-top">
                   <ApprovePublisherButton
                     publisher={publisher}
-                    approveAction={approveAction}
+                    decideApprovalAction={decideApprovalAction}
                   />
                 </td>
                 <td className="px-3 py-3 text-center text-sm text-[#E4E4E4]">

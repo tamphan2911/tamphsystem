@@ -1,0 +1,1 @@
+ALTER TYPE "JournalApprovalStatus" ADD VALUE IF NOT EXISTS 'DECLINED';

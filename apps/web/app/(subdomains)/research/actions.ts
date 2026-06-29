@@ -6025,21 +6025,58 @@ export async function createPublisher(formData: FormData) {
   };
 }
 
-export async function approvePublisher(publisherId: string) {
+export async function decidePublisherApproval(
+  publisherId: string,
+  decision: "APPROVED" | "DECLINED",
+  formData: FormData,
+) {
   const user = await requireCurrentUser();
   const canApprove =
     user.roles.includes(Role.ADMIN) ||
     (await isCheckerForPublisherJournalResult(user.id, publisherId));
   if (!canApprove) redirect("/401");
 
-  await prisma.publisher.update({
+  const status =
+    decision === "APPROVED"
+      ? JournalApprovalStatus.APPROVED
+      : JournalApprovalStatus.DECLINED;
+  const note = optionalString(formData.get("note"));
+  const publisher = await prisma.publisher.update({
     where: { id: publisherId },
-    data: { approvalStatus: JournalApprovalStatus.APPROVED },
+    data: { approvalStatus: status },
+    select: { id: true, name: true, createdById: true },
   });
+
+  if (publisher.createdById) {
+    const approved = status === JournalApprovalStatus.APPROVED;
+    await notifyUsers({
+      userIds: [publisher.createdById],
+      type: approved ? "PUBLISHER_APPROVED" : "PUBLISHER_DECLINED",
+      title: approved ? "Publisher approved" : "Publisher declined",
+      summary: publisher.name,
+      body: [
+        approved
+          ? "The publisher is now available for approved journal workflows."
+          : "The publisher was declined and will not be available for journal workflows.",
+        note ? `Note: ${note}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      href: `/publishers?q=${encodeURIComponent(publisher.name)}`,
+      entityType: "publisher",
+      entityId: publisher.id,
+      excludeUserId: user.id,
+    });
+  }
 
   revalidatePath("/publishers");
   revalidatePath("/journals");
   revalidatePath("/tasks");
+}
+
+export async function approvePublisher(publisherId: string) {
+  const formData = new FormData();
+  await decidePublisherApproval(publisherId, "APPROVED", formData);
 }
 
 export async function updatePublisher(publisherId: string, formData: FormData) {
