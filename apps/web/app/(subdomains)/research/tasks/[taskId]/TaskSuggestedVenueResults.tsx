@@ -16,6 +16,7 @@ export type TaskSuggestedVenueResult = {
   id: string;
   kind: "journal" | "conference";
   journalId: string | null;
+  isOnSite: boolean;
   name: string;
   status: string;
   meta: string;
@@ -42,6 +43,18 @@ function statusClass(status: string) {
     return "border-rose-300 bg-rose-100 text-rose-800 dark:border-rose-300/35 dark:bg-rose-950/35 dark:text-rose-200";
   }
   return "border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-300/35 dark:bg-amber-950/35 dark:text-amber-200";
+}
+
+function sitePresenceClass(isOnSite: boolean) {
+  if (isOnSite) {
+    return "border-cyan-300 bg-cyan-50 text-cyan-800 dark:border-cyan-300/35 dark:bg-cyan-950/35 dark:text-cyan-200";
+  }
+  return "border-[#C9BEAD] bg-[#F3EDE3] text-[#625341] dark:border-[#555555] dark:bg-[#333333] dark:text-[#D0D0D0]";
+}
+
+function sitePresenceLabel(venue: TaskSuggestedVenueResult) {
+  const label = venue.kind === "journal" ? "Journal" : "Conference";
+  return venue.isOnSite ? `${label} on site already` : `${label} not on site`;
 }
 
 function moneyText(value: string | null, currency: string) {
@@ -266,13 +279,22 @@ function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
             </p>
           )}
         </div>
-        <span
-          className={`flex-none border px-2 py-1 text-[10px] uppercase ${statusClass(
-            venue.status,
-          )}`}
-        >
-          {venue.status.replaceAll("_", " ")}
-        </span>
+        <div className="flex flex-none flex-col items-end gap-1.5">
+          <span
+            className={`border px-2 py-1 text-[10px] uppercase leading-none ${sitePresenceClass(
+              venue.isOnSite,
+            )}`}
+          >
+            {sitePresenceLabel(venue)}
+          </span>
+          <span
+            className={`border px-2 py-1 text-[10px] uppercase leading-none ${statusClass(
+              venue.status,
+            )}`}
+          >
+            {venue.status.replaceAll("_", " ")}
+          </span>
+        </div>
       </div>
       {venue.meta ? (
         <p className="mt-2 break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">

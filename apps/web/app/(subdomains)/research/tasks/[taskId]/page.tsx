@@ -2195,14 +2195,16 @@ export default async function TaskDetailPage({
   );
   const suggestedVenueResults: TaskSuggestedVenueResult[] = [
     ...task.suggestedJournals.map((suggestion) => {
+      const linkedSiteJournal = suggestion.journal;
       const journal =
-        suggestion.journal ??
+        linkedSiteJournal ??
         suggestion.journalCreationTask?.addedJournals[0] ??
         null;
       return {
         id: suggestion.id,
         kind: "journal" as const,
         journalId: journal?.id ?? null,
+        isOnSite: Boolean(linkedSiteJournal),
         name: journal?.name ?? suggestion.venueName ?? "Unnamed journal",
         status: suggestion.status,
         meta: [
@@ -2235,6 +2237,7 @@ export default async function TaskDetailPage({
             id: linkedJournalSubmissionSuggestion.id,
             kind: "journal" as const,
             journalId: linkedJournalSubmissionSuggestion.journal?.id ?? null,
+            isOnSite: Boolean(linkedJournalSubmissionSuggestion.journal),
             name:
               linkedJournalSubmissionSuggestion.journal?.name ??
               linkedJournalSubmissionSuggestion.venueName ??
@@ -2283,6 +2286,7 @@ export default async function TaskDetailPage({
       id: suggestion.id,
       kind: "conference" as const,
       journalId: null,
+      isOnSite: Boolean(suggestion.conference),
       name:
         suggestion.conference?.name ??
         suggestion.venueName ??
@@ -2318,6 +2322,7 @@ export default async function TaskDetailPage({
             id: linkedConferenceSubmissionSuggestion.id,
             kind: "conference" as const,
             journalId: null,
+            isOnSite: Boolean(linkedConferenceSubmissionSuggestion.conference),
             name:
               linkedConferenceSubmissionSuggestion.conference?.name ??
               linkedConferenceSubmissionSuggestion.venueName ??
