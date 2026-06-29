@@ -5,7 +5,7 @@ import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   AlarmClockCheck,
@@ -104,8 +104,6 @@ const unfinishedTaskStatusValues = taskStatusValues.filter(
   (value) => value !== "ALL" && value !== "COMPLETED" && value !== "REVOKED",
 );
 
-const adminNeedActionStatusValues = ["NEED_CLARIFY", "CHECKING"];
-
 const taskTypeFilterValues = [
   "ALL",
   "SUBMIT",
@@ -122,6 +120,12 @@ const taskTypeFilterValues = [
 type TaskScopeTab = "assigned" | "related" | "checker";
 type TaskHeaderTab = TaskScopeTab | "all" | "need_action";
 type TimeSortDirection = "none" | "asc" | "desc";
+type TaskTabFilterState = {
+  statuses: string[];
+  setStatuses: (values: string[]) => void;
+  unfinishedOnlyValue: string;
+  setUnfinishedOnlyValue: Dispatch<SetStateAction<string>>;
+};
 const managerActionSlaMs = 24 * 60 * 60 * 1000;
 
 function formatDate(value: string | null) {
@@ -643,18 +647,102 @@ export function TasksClient({
     scopeStorageKey,
     defaultScopeTab,
   );
-  const [statuses, setStatuses] = usePersistentMultiFilter(
+  const activeHeaderTab: TaskHeaderTab = isAdmin
+    ? scopeTab === "need_action"
+      ? "need_action"
+      : "all"
+    : scopeTab === "checker" && !isChiefAssistant
+      ? "assigned"
+      : scopeTab === "related" || scopeTab === "checker"
+        ? scopeTab
+        : "assigned";
+  const [userStatuses, setUserStatuses] = usePersistentMultiFilter(
     "tasks:status",
     taskStatusValues,
   );
-  const hasStoredTaskStatus =
-    typeof window !== "undefined" &&
-    window.sessionStorage.getItem("research:/tasks:tasks:status") !== null;
-  const [unfinishedOnlyValue, setUnfinishedOnlyValue] = usePersistentTableValue(
-    "tasks:unfinished",
-    isAdmin && !hasStoredTaskStatus ? "true" : "false",
-    { persistDefaultValue: true },
+  const [adminAllStatuses, setAdminAllStatuses] = usePersistentMultiFilter(
+    "tasks:status:admin:all",
+    taskStatusValues,
   );
+  const [adminNeedActionStatuses, setAdminNeedActionStatuses] =
+    usePersistentMultiFilter(
+      "tasks:status:admin:need-action",
+      taskStatusValues,
+    );
+  const [chiefAssignedStatuses, setChiefAssignedStatuses] =
+    usePersistentMultiFilter("tasks:status:chief:assigned", taskStatusValues);
+  const [chiefCheckerStatuses, setChiefCheckerStatuses] =
+    usePersistentMultiFilter("tasks:status:chief:checker", taskStatusValues);
+  const [chiefRelatedStatuses, setChiefRelatedStatuses] =
+    usePersistentMultiFilter("tasks:status:chief:related", taskStatusValues);
+  const legacyUnfinishedOnlyValue =
+    typeof window !== "undefined"
+      ? window.sessionStorage.getItem("research:/tasks:tasks:unfinished")
+      : null;
+  const [userUnfinishedOnlyValue, setUserUnfinishedOnlyValue] =
+    usePersistentTableValue(
+      "tasks:unfinished",
+      !isAdmin && !isChiefAssistant
+        ? (legacyUnfinishedOnlyValue ?? "false")
+        : "false",
+    );
+  const [adminAllUnfinishedOnlyValue, setAdminAllUnfinishedOnlyValue] =
+    usePersistentTableValue("tasks:unfinished:admin:all", "true");
+  const [
+    adminNeedActionUnfinishedOnlyValue,
+    setAdminNeedActionUnfinishedOnlyValue,
+  ] = usePersistentTableValue("tasks:unfinished:admin:need-action", "false");
+  const [
+    chiefAssignedUnfinishedOnlyValue,
+    setChiefAssignedUnfinishedOnlyValue,
+  ] = usePersistentTableValue("tasks:unfinished:chief:assigned", "false");
+  const [chiefCheckerUnfinishedOnlyValue, setChiefCheckerUnfinishedOnlyValue] =
+    usePersistentTableValue("tasks:unfinished:chief:checker", "false");
+  const [chiefRelatedUnfinishedOnlyValue, setChiefRelatedUnfinishedOnlyValue] =
+    usePersistentTableValue("tasks:unfinished:chief:related", "false");
+  const currentTabFilter: TaskTabFilterState = isAdmin
+    ? activeHeaderTab === "need_action"
+      ? {
+          statuses: adminNeedActionStatuses,
+          setStatuses: setAdminNeedActionStatuses,
+          unfinishedOnlyValue: adminNeedActionUnfinishedOnlyValue,
+          setUnfinishedOnlyValue: setAdminNeedActionUnfinishedOnlyValue,
+        }
+      : {
+          statuses: adminAllStatuses,
+          setStatuses: setAdminAllStatuses,
+          unfinishedOnlyValue: adminAllUnfinishedOnlyValue,
+          setUnfinishedOnlyValue: setAdminAllUnfinishedOnlyValue,
+        }
+    : isChiefAssistant
+      ? activeHeaderTab === "checker"
+        ? {
+            statuses: chiefCheckerStatuses,
+            setStatuses: setChiefCheckerStatuses,
+            unfinishedOnlyValue: chiefCheckerUnfinishedOnlyValue,
+            setUnfinishedOnlyValue: setChiefCheckerUnfinishedOnlyValue,
+          }
+        : activeHeaderTab === "related"
+          ? {
+              statuses: chiefRelatedStatuses,
+              setStatuses: setChiefRelatedStatuses,
+              unfinishedOnlyValue: chiefRelatedUnfinishedOnlyValue,
+              setUnfinishedOnlyValue: setChiefRelatedUnfinishedOnlyValue,
+            }
+          : {
+              statuses: chiefAssignedStatuses,
+              setStatuses: setChiefAssignedStatuses,
+              unfinishedOnlyValue: chiefAssignedUnfinishedOnlyValue,
+              setUnfinishedOnlyValue: setChiefAssignedUnfinishedOnlyValue,
+            }
+      : {
+          statuses: userStatuses,
+          setStatuses: setUserStatuses,
+          unfinishedOnlyValue: userUnfinishedOnlyValue,
+          setUnfinishedOnlyValue: setUserUnfinishedOnlyValue,
+        };
+  const { statuses, setStatuses, unfinishedOnlyValue, setUnfinishedOnlyValue } =
+    currentTabFilter;
   const [timeSort, setTimeSort] = usePersistentTableValue<TimeSortDirection>(
     "tasks:timeSort",
     "none",
@@ -665,14 +753,10 @@ export function TasksClient({
     });
   const unfinishedOnly = unfinishedOnlyValue === "true";
   const checkerNeedsActionOnly = checkerNeedsActionOnlyValue === "true";
-  const [statusBeforeUnfinished, setStatusBeforeUnfinished] = useState<
-    string[] | null
-  >(null);
-  const adminAllTabFilterSnapshotRef = useRef<{
-    unfinishedOnlyValue: string;
-    statuses: string[];
-    statusBeforeUnfinished: string[] | null;
-  } | null>(null);
+  const [statusBeforeUnfinishedByTab, setStatusBeforeUnfinishedByTab] =
+    useState<Partial<Record<TaskHeaderTab, string[] | null>>>({});
+  const statusBeforeUnfinished =
+    statusBeforeUnfinishedByTab[activeHeaderTab] ?? null;
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
@@ -739,17 +823,6 @@ export function TasksClient({
     checkerFilterValues,
   );
 
-  const activeHeaderTab: TaskHeaderTab = isAdmin
-    ? scopeTab === "need_action"
-      ? "need_action"
-      : "all"
-    : scopeTab === "checker" && !isChiefAssistant
-      ? "assigned"
-      : scopeTab === "related" || scopeTab === "checker"
-        ? scopeTab
-        : "assigned";
-  const previousAdminTabRef = useRef<TaskHeaderTab | null>(null);
-
   useEffect(() => {
     if (!isAdmin) return;
     const hasTaskPrefill =
@@ -764,26 +837,10 @@ export function TasksClient({
       return;
     }
 
-    const previousAdminTab = previousAdminTabRef.current;
-    previousAdminTabRef.current = activeHeaderTab;
-    const enteredNeedActionTab =
-      activeHeaderTab === "need_action" && previousAdminTab !== "need_action";
-
-    if (enteredNeedActionTab) {
-      setUnfinishedOnlyValue("false");
-      setStatuses(adminNeedActionStatusValues);
-      return;
-    }
-
-    if (
-      activeHeaderTab !== "need_action" &&
-      unfinishedOnly &&
-      statuses.length === 0
-    ) {
+    if (unfinishedOnly && statuses.length === 0) {
       setStatuses(unfinishedTaskStatusValues);
     }
   }, [
-    activeHeaderTab,
     isAdmin,
     setCheckerIds,
     setStatuses,
@@ -981,21 +1038,15 @@ export function TasksClient({
     pagination.setPage(1);
   }
 
+  function setStatusBeforeUnfinishedForTab(value: string[] | null) {
+    setStatusBeforeUnfinishedByTab((current) => ({
+      ...current,
+      [activeHeaderTab]: value,
+    }));
+  }
+
   function updateScopeTab(value: TaskHeaderTab) {
     if (value === activeHeaderTab) return;
-
-    const enteringAdminNeedAction =
-      isAdmin && activeHeaderTab !== "need_action" && value === "need_action";
-    const leavingAdminNeedAction =
-      isAdmin && activeHeaderTab === "need_action" && value !== "need_action";
-
-    if (enteringAdminNeedAction) {
-      adminAllTabFilterSnapshotRef.current = {
-        unfinishedOnlyValue,
-        statuses,
-        statusBeforeUnfinished,
-      };
-    }
 
     setScopeTab(value);
     pagination.setPage(1);
@@ -1007,28 +1058,12 @@ export function TasksClient({
     setQuery("");
     setTaskTypes([]);
     setCheckerIds([]);
-    setStatusBeforeUnfinished(null);
-
-    if (value === "need_action") {
-      setUnfinishedOnlyValue("false");
-      setStatusBeforeUnfinished(null);
-      setStatuses(adminNeedActionStatusValues);
-      return;
-    }
-
-    if (leavingAdminNeedAction && adminAllTabFilterSnapshotRef.current) {
-      const snapshot = adminAllTabFilterSnapshotRef.current;
-      adminAllTabFilterSnapshotRef.current = null;
-      setUnfinishedOnlyValue(snapshot.unfinishedOnlyValue);
-      setStatusBeforeUnfinished(snapshot.statusBeforeUnfinished);
-      setStatuses(snapshot.statuses);
-    }
   }
 
   function updateStatuses(values: string[]) {
     if (unfinishedOnly) {
       setUnfinishedOnlyValue("false");
-      setStatusBeforeUnfinished(null);
+      setStatusBeforeUnfinishedForTab(null);
     }
     setStatuses(values);
     pagination.setPage(1);
@@ -1037,11 +1072,11 @@ export function TasksClient({
   function toggleUnfinishedOnly(checked: boolean) {
     setUnfinishedOnlyValue(checked ? "true" : "false");
     if (checked) {
-      setStatusBeforeUnfinished(statuses);
+      setStatusBeforeUnfinishedForTab(statuses);
       setStatuses(unfinishedTaskStatusValues);
     } else {
       setStatuses(statusBeforeUnfinished ?? []);
-      setStatusBeforeUnfinished(null);
+      setStatusBeforeUnfinishedForTab(null);
     }
     pagination.setPage(1);
   }
