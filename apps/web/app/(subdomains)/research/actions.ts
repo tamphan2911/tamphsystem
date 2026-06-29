@@ -3523,6 +3523,7 @@ export async function updateResearchProject(
       fundingInstitution: { select: { name: true } },
       stage: true,
       completedProductionSteps: true,
+      productionTimelineLocked: true,
       contentUnlocked: true,
       authorsUnlocked: true,
       leadResearcherId: true,
@@ -3586,6 +3587,11 @@ export async function updateResearchProject(
     return;
   }
 
+  if (updateScope === "production" && projectLock.productionTimelineLocked) {
+    revalidatePath(`/projects/${projectId}`);
+    return;
+  }
+
   if (
     updateScope !== "authors" &&
     hasLockedJournalSubmission &&
@@ -3610,12 +3616,16 @@ export async function updateResearchProject(
     selectedContactEmailMap(formData),
     { allowPendingEmail: isAdmin },
   );
-  const completedProductionSteps = formData
+  const submittedCompletedProductionSteps = formData
     .getAll("completedProductionSteps")
     .filter(
       (value): value is string =>
         typeof value === "string" && value.trim().length > 0,
     );
+  const completedProductionStepUpdate =
+    updateScope === "production"
+      ? { completedProductionSteps: submittedCompletedProductionSteps }
+      : {};
 
   const registrationUserId = optionalString(formData.get("registrationUserId"));
   const fundingInstitutionId = optionalString(
@@ -3625,7 +3635,7 @@ export async function updateResearchProject(
     title: optionalString(formData.get("title")) ?? "Untitled research",
     sharedFolderUrl: optionalString(formData.get("sharedFolderUrl")),
     coAuthors: null,
-    completedProductionSteps,
+    ...completedProductionStepUpdate,
     ...(isAdmin
       ? {
           universityRegistration: optionalString(
@@ -3647,7 +3657,7 @@ export async function updateResearchProject(
       : {}),
   };
   const productionIsComplete = productionStepLabels.every((step) =>
-    completedProductionSteps.includes(step),
+    submittedCompletedProductionSteps.includes(step),
   );
   const productionLockUpdate =
     updateScope === "production"
@@ -3693,7 +3703,12 @@ export async function updateResearchProject(
     }
   });
 
-  await refreshResearchStage(projectId, completedProductionSteps);
+  await refreshResearchStage(
+    projectId,
+    updateScope === "production"
+      ? submittedCompletedProductionSteps
+      : undefined,
+  );
   const updatedProject = await prisma.researchProject.findUnique({
     where: { id: projectId },
     select: {
