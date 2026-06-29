@@ -483,6 +483,38 @@ export function usePersistentMultiFilter(
   return [values, setValues] as const;
 }
 
+function paginationItems(page: number, pageCount: number) {
+  if (pageCount <= 7) {
+    return Array.from({ length: pageCount }, (_, index) => index + 1);
+  }
+
+  if (page <= 4) {
+    return [1, 2, 3, 4, 5, "ellipsis-right", pageCount] as const;
+  }
+
+  if (page >= pageCount - 3) {
+    return [
+      1,
+      "ellipsis-left",
+      pageCount - 4,
+      pageCount - 3,
+      pageCount - 2,
+      pageCount - 1,
+      pageCount,
+    ] as const;
+  }
+
+  return [
+    1,
+    "ellipsis-left",
+    page - 1,
+    page,
+    page + 1,
+    "ellipsis-right",
+    pageCount,
+  ] as const;
+}
+
 export function TablePagination({
   page,
   pageCount,
@@ -496,42 +528,96 @@ export function TablePagination({
   pageSize: number;
   onPageChange: (page: number) => void;
 }) {
-  const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
-  const end = Math.min(total, page * pageSize);
+  const currentPage = Math.min(Math.max(page, 1), pageCount);
+  const start = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const end = Math.min(total, currentPage * pageSize);
+  const items = paginationItems(currentPage, pageCount);
+  const pageButtonClass =
+    "research-allow-transform inline-flex h-9 min-w-9 flex-none cursor-pointer items-center justify-center border px-3 text-xs font-normal outline-none transition duration-150 ease-out focus-visible:ring-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 motion-reduce:transition-none";
+  const idlePageButtonClass =
+    "border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950 focus-visible:ring-sky-500/20 dark:text-[#B0B0B0] dark:hover:border-[#444444] dark:hover:bg-[#383838] dark:hover:text-[#E4E4E4] dark:focus-visible:ring-[#A8DADC]/20";
+  const activePageButtonClass =
+    "border-[#1F7180] bg-[#EAF6F7] text-[#155967] shadow-[inset_0_-2px_0_rgba(31,113,128,0.2)] focus-visible:ring-[#1F7180]/20 dark:border-[#A8DADC] dark:bg-[#1F3F45] dark:text-[#D8FBFF] dark:shadow-[inset_0_-2px_0_rgba(168,218,220,0.28)]";
 
   return (
-    <div className="flex flex-col gap-3 border-t border-slate-200 bg-transparent px-0 py-3 transition sm:flex-row sm:items-center sm:justify-between dark:border-[#333333] dark:bg-[#242424]">
-      <p className="text-xs font-normal text-slate-500 dark:text-[#B0B0B0]">
-        Showing{" "}
-        <span className="text-slate-800 dark:text-[#E4E4E4]">
-          {start}-{end}
-        </span>{" "}
-        of <span className="text-slate-800 dark:text-[#E4E4E4]">{total}</span>
-      </p>
-      <div className="flex overflow-hidden border border-slate-200 bg-white dark:border-[#444444] dark:bg-[#2C2C2C]">
-        <ResearchIconButton
-          type="button"
-          onClick={() => onPageChange(Math.max(1, page - 1))}
-          disabled={page <= 1}
-          label="Previous page"
-          tone="slate"
-          className="research-allow-transform !rounded-none border-0 shadow-none transition duration-180 ease-out hover:translate-y-0 hover:bg-transparent hover:text-[#1F7180] hover:shadow-none active:scale-95 disabled:active:scale-100 dark:hover:text-[#A8DADC]"
+    <div className="flex flex-col gap-3 border-t border-slate-200 bg-transparent px-0 py-3 transition lg:flex-row lg:items-center lg:justify-between dark:border-[#333333] dark:bg-[#242424]">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-normal text-slate-500 dark:text-[#B0B0B0]">
+        <p>
+          Showing{" "}
+          <span className="text-slate-800 dark:text-[#E4E4E4]">
+            {start}-{end}
+          </span>{" "}
+          of <span className="text-slate-800 dark:text-[#E4E4E4]">{total}</span>
+        </p>
+        <span className="hidden h-3 w-px bg-slate-200 sm:inline-block dark:bg-[#444444]" />
+        <p>
+          Page{" "}
+          <span className="text-slate-800 dark:text-[#E4E4E4]">
+            {currentPage}
+          </span>{" "}
+          of{" "}
+          <span className="text-slate-800 dark:text-[#E4E4E4]">
+            {pageCount}
+          </span>
+        </p>
+      </div>
+      <div className="max-w-full overflow-x-auto">
+        <nav
+          aria-label="Table pagination"
+          className="inline-flex min-w-max overflow-hidden border border-slate-200 bg-white dark:border-[#444444] dark:bg-[#2C2C2C]"
         >
-          <ChevronLeft className="h-4 w-4" />
-        </ResearchIconButton>
-        <span className="border-x border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 dark:border-[#444444] dark:text-[#E4E4E4]">
-          {page} / {pageCount}
-        </span>
-        <ResearchIconButton
-          type="button"
-          onClick={() => onPageChange(Math.min(pageCount, page + 1))}
-          disabled={page >= pageCount}
-          label="Next page"
-          tone="slate"
-          className="research-allow-transform !rounded-none border-0 shadow-none transition duration-180 ease-out hover:translate-y-0 hover:bg-transparent hover:text-[#1F7180] hover:shadow-none active:scale-95 disabled:active:scale-100 dark:hover:text-[#A8DADC]"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </ResearchIconButton>
+          <ResearchIconButton
+            type="button"
+            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+            disabled={currentPage <= 1}
+            label="Previous page"
+            tone="slate"
+            className="research-allow-transform !h-9 !w-9 !rounded-none border-0 border-r border-slate-200 shadow-none transition duration-180 ease-out hover:translate-y-0 hover:bg-slate-50 hover:text-[#1F7180] hover:shadow-none active:scale-95 disabled:active:scale-100 dark:border-[#444444] dark:hover:bg-[#383838] dark:hover:text-[#A8DADC]"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </ResearchIconButton>
+          {items.map((item, index) =>
+            typeof item === "number" ? (
+              <button
+                key={item}
+                type="button"
+                aria-label={`Go to page ${item}`}
+                aria-current={item === currentPage ? "page" : undefined}
+                onClick={() => onPageChange(item)}
+                className={cx(
+                  pageButtonClass,
+                  item === currentPage
+                    ? activePageButtonClass
+                    : idlePageButtonClass,
+                  index > 0 && "border-l-slate-200 dark:border-l-[#444444]",
+                )}
+              >
+                {item}
+              </button>
+            ) : (
+              <span
+                key={item}
+                aria-hidden="true"
+                className={cx(
+                  "inline-flex h-9 min-w-9 flex-none items-center justify-center border border-transparent px-2 text-xs text-slate-400 dark:text-[#777777]",
+                  index > 0 && "border-l-slate-200 dark:border-l-[#444444]",
+                )}
+              >
+                ...
+              </span>
+            ),
+          )}
+          <ResearchIconButton
+            type="button"
+            onClick={() => onPageChange(Math.min(pageCount, currentPage + 1))}
+            disabled={currentPage >= pageCount}
+            label="Next page"
+            tone="slate"
+            className="research-allow-transform !h-9 !w-9 !rounded-none border-0 border-l border-slate-200 shadow-none transition duration-180 ease-out hover:translate-y-0 hover:bg-slate-50 hover:text-[#1F7180] hover:shadow-none active:scale-95 disabled:active:scale-100 dark:border-[#444444] dark:hover:bg-[#383838] dark:hover:text-[#A8DADC]"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </ResearchIconButton>
+        </nav>
       </div>
     </div>
   );
