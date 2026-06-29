@@ -102,14 +102,14 @@ export default async function SubmissionsPage() {
         name: true,
         publisher: true,
         accounts: {
-          select: { id: true, username: true, email: true },
+          select: { id: true, username: true, password: true, email: true },
           orderBy: { username: "asc" },
         },
         publisherRecord: {
           include: {
             accounts: {
               where: { accountType: "PUBLISHER" },
-              select: { id: true, username: true, email: true },
+              select: { id: true, username: true, password: true, email: true },
               orderBy: { username: "asc" },
             },
           },
@@ -134,18 +134,42 @@ export default async function SubmissionsPage() {
       },
     },
     include: {
+      account: {
+        select: { id: true, username: true, password: true, email: true },
+      },
       createdBy: { select: { id: true, name: true, email: true } },
       assignments: {
         include: { user: { select: { id: true, name: true, email: true } } },
         orderBy: [{ finishedAt: "desc" }, { createdAt: "asc" }],
       },
     },
+    orderBy: [{ completedAt: "desc" }, { updatedAt: "desc" }],
   });
 
   const submitterByVenue = new Map<
     string,
     { id: string; name: string; email: string }
   >();
+  const assigneesByVenue = new Map<
+    string,
+    { id: string; name: string; email: string }[]
+  >();
+  const accountByVenue = new Map<
+    string,
+    { id: string; username: string; password: string; email: string | null }
+  >();
+  const singleAccountByJournalId = new Map<
+    string,
+    { id: string; username: string; password: string; email: string | null }
+  >();
+  for (const journal of journals) {
+    const accounts = journal.publisherRecord?.usesSingleAccount
+      ? (journal.publisherRecord.accounts ?? [])
+      : journal.accounts;
+    if (accounts.length === 1 && accounts[0]) {
+      singleAccountByJournalId.set(journal.id, accounts[0]);
+    }
+  }
 
   for (const task of completedSubmitTasks) {
     const submitter =
@@ -158,122 +182,118 @@ export default async function SubmissionsPage() {
       email: displayResearchEmail(submitter.email),
     };
 
-    if (
+    const assignees = task.assignments.map((assignment) => ({
+      id: assignment.user.id,
+      name: displayResearchPersonName(assignment.user),
+      email: displayResearchEmail(assignment.user.email),
+    }));
+    const venueKey =
       task.taskType === ResearchTaskType.SUBMIT_RESEARCH &&
       task.projectId &&
       task.journalId
-    ) {
-      submitterByVenue.set(
-        `journal:${task.projectId}:${task.journalId}`,
-        value,
-      );
-    }
-    if (
-      task.taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
-      task.projectId &&
-      task.conferenceId
-    ) {
-      submitterByVenue.set(
-        `conference:${task.projectId}:${task.conferenceId}`,
-        value,
-      );
-    }
+        ? `journal:${task.projectId}:${task.journalId}`
+        : task.taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
+            task.projectId &&
+            task.conferenceId
+          ? `conference:${task.projectId}:${task.conferenceId}`
+          : null;
+    if (!venueKey || submitterByVenue.has(venueKey)) continue;
+
+    submitterByVenue.set(venueKey, value);
+    assigneesByVenue.set(venueKey, assignees);
+    if (task.account) accountByVenue.set(venueKey, task.account);
   }
 
   const rows: SubmissionRow[] = [
-    ...journalSubmissions.map((submission) => ({
-      id: submission.id,
-      code:
-        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
-      kind: "journal" as const,
-      projectId: submission.researchProjectId,
-      venueId: submission.journal.id,
-      venueName: submission.journal.name,
-      metaLine: submission.project.title,
-      venueDetailLine: [
-        submission.journal.publisher || "No publisher",
-        submission.journal.type === "LOCAL"
-          ? submission.journal.localRank || "No local rank"
-          : submission.journal.rank || "No rank",
-      ].join(" | "),
-      apc: submission.journal.apc ?? "",
-      apcCurrency: submission.journal.apcCurrency,
-      hasApcOption: submission.journal.hasApcOption,
-      submissionFee: submission.journal.submissionFee ?? "",
-      submissionFeeCurrency: submission.journal.submissionFeeCurrency,
-      accountId: submission.account?.id ?? "",
-      account: submission.account?.username ?? "",
-      accountPassword: submission.account?.password ?? "",
-      accountEmail: submission.account?.email ?? "",
-      submittedByName:
-        submitterByVenue.get(
-          `journal:${submission.researchProjectId}:${submission.journalId}`,
-        )?.name ?? "",
-      submittedById:
-        submitterByVenue.get(
-          `journal:${submission.researchProjectId}:${submission.journalId}`,
-        )?.id ?? "",
-      submittedByEmail:
-        submitterByVenue.get(
-          `journal:${submission.researchProjectId}:${submission.journalId}`,
-        )?.email ?? "",
-      status: submission.status,
-      submittedAt: isoDate(submission.submittedAt),
-      acceptedAt: isoDate(submission.acceptedAt),
-      rejectedAt: isoDate(submission.rejectedAt),
-      withdrawnAt: isoDate(submission.withdrawnAt),
-      publishedAt: isoDate(submission.publishedAt),
-      articleUrl: submission.articleUrl ?? "",
-      articleFileName: submission.articleFileName ?? "",
-      articleFileSize: submission.articleFileSize,
-    })),
-    ...conferenceSubmissions.map((submission) => ({
-      id: submission.id,
-      code:
-        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
-      kind: "conference" as const,
-      projectId: submission.researchProjectId,
-      venueId: submission.conference.id,
-      venueName: submission.conference.name,
-      metaLine: [
-        submission.project.title,
-        submission.conference.organizer || "No organizer",
-        submission.conference.type || "No type",
-        submission.conference.location || "No location",
-        [
-          shortDate(submission.conference.startDate),
-          shortDate(submission.conference.endDate),
+    ...journalSubmissions.map((submission) => {
+      const venueKey = `journal:${submission.researchProjectId}:${submission.journalId}`;
+      const submitter = submitterByVenue.get(venueKey);
+      const account =
+        submission.account ??
+        accountByVenue.get(venueKey) ??
+        singleAccountByJournalId.get(submission.journalId);
+      return {
+        id: submission.id,
+        code:
+          submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
+        kind: "journal" as const,
+        projectId: submission.researchProjectId,
+        venueId: submission.journal.id,
+        venueName: submission.journal.name,
+        metaLine: submission.project.title,
+        venueDetailLine: [
+          submission.journal.publisher || "No publisher",
+          submission.journal.type === "LOCAL"
+            ? submission.journal.localRank || "No local rank"
+            : submission.journal.rank || "No rank",
+        ].join(" | "),
+        apc: submission.journal.apc ?? "",
+        apcCurrency: submission.journal.apcCurrency,
+        hasApcOption: submission.journal.hasApcOption,
+        submissionFee: submission.journal.submissionFee ?? "",
+        submissionFeeCurrency: submission.journal.submissionFeeCurrency,
+        accountId: account?.id ?? "",
+        account: account?.username ?? "",
+        accountPassword: account?.password ?? "",
+        accountEmail: account?.email ?? "",
+        submittedByName: submitter?.name ?? "",
+        submittedById: submitter?.id ?? "",
+        submittedByEmail: submitter?.email ?? "",
+        assignees: assigneesByVenue.get(venueKey) ?? [],
+        status: submission.status,
+        submittedAt: isoDate(submission.submittedAt),
+        acceptedAt: isoDate(submission.acceptedAt),
+        rejectedAt: isoDate(submission.rejectedAt),
+        withdrawnAt: isoDate(submission.withdrawnAt),
+        publishedAt: isoDate(submission.publishedAt),
+        articleUrl: submission.articleUrl ?? "",
+        articleFileName: submission.articleFileName ?? "",
+        articleFileSize: submission.articleFileSize,
+      };
+    }),
+    ...conferenceSubmissions.map((submission) => {
+      const venueKey = `conference:${submission.researchProjectId}:${submission.conferenceId}`;
+      const submitter = submitterByVenue.get(venueKey);
+      return {
+        id: submission.id,
+        code:
+          submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
+        kind: "conference" as const,
+        projectId: submission.researchProjectId,
+        venueId: submission.conference.id,
+        venueName: submission.conference.name,
+        metaLine: [
+          submission.project.title,
+          submission.conference.organizer || "No organizer",
+          submission.conference.type || "No type",
+          submission.conference.location || "No location",
+          [
+            shortDate(submission.conference.startDate),
+            shortDate(submission.conference.endDate),
+          ]
+            .filter(Boolean)
+            .join(" - "),
         ]
           .filter(Boolean)
           .join(" - "),
-      ]
-        .filter(Boolean)
-        .join(" - "),
-      apc: "",
-      apcCurrency: submission.conference.submissionFeeCurrency,
-      submissionFee: submission.conference.submissionFee ?? "",
-      submissionFeeCurrency: submission.conference.submissionFeeCurrency,
-      account: "",
-      submittedByName:
-        submitterByVenue.get(
-          `conference:${submission.researchProjectId}:${submission.conferenceId}`,
-        )?.name ?? "",
-      submittedById:
-        submitterByVenue.get(
-          `conference:${submission.researchProjectId}:${submission.conferenceId}`,
-        )?.id ?? "",
-      submittedByEmail:
-        submitterByVenue.get(
-          `conference:${submission.researchProjectId}:${submission.conferenceId}`,
-        )?.email ?? "",
-      status: submission.status,
-      submittedAt: isoDate(submission.submittedAt ?? submission.createdAt),
-      acceptedAt: isoDate(submission.acceptedAt),
-      rejectedAt: isoDate(submission.rejectedAt),
-      withdrawnAt: isoDate(submission.withdrawnAt),
-      publishedAt: isoDate(submission.publishedAt),
-      note: submission.note ?? "",
-    })),
+        apc: "",
+        apcCurrency: submission.conference.submissionFeeCurrency,
+        submissionFee: submission.conference.submissionFee ?? "",
+        submissionFeeCurrency: submission.conference.submissionFeeCurrency,
+        account: "",
+        submittedByName: submitter?.name ?? "",
+        submittedById: submitter?.id ?? "",
+        submittedByEmail: submitter?.email ?? "",
+        assignees: assigneesByVenue.get(venueKey) ?? [],
+        status: submission.status,
+        submittedAt: isoDate(submission.submittedAt ?? submission.createdAt),
+        acceptedAt: isoDate(submission.acceptedAt),
+        rejectedAt: isoDate(submission.rejectedAt),
+        withdrawnAt: isoDate(submission.withdrawnAt),
+        publishedAt: isoDate(submission.publishedAt),
+        note: submission.note ?? "",
+      };
+    }),
   ].sort((left, right) =>
     (right.submittedAt || "").localeCompare(left.submittedAt || ""),
   );

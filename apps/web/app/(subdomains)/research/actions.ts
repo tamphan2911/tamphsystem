@@ -9691,7 +9691,7 @@ async function createSubmissionAfterTaskApproval(
   },
   formData?: FormData,
 ) {
-  const accountId = optionalString(formData?.get("accountId") ?? null);
+  let accountId = optionalString(formData?.get("accountId") ?? null);
   const submittedAt = dateFromForm(formData?.get("submissionDate") ?? null);
 
   if (
@@ -9708,6 +9708,18 @@ async function createSubmissionAfterTaskApproval(
     task.journalId &&
     submittedAt
   ) {
+    const journalAccounts = await journalAccountIds(task.journalId);
+    accountId = accountId ?? task.accountId;
+    if (!accountId && journalAccounts.length === 1) {
+      accountId = journalAccounts[0]?.id ?? null;
+    }
+    if (
+      accountId &&
+      !journalAccounts.some((account) => account.id === accountId)
+    ) {
+      return false;
+    }
+
     await prisma.researchSubmission.upsert({
       where: {
         researchProjectId_journalId: {
@@ -9716,15 +9728,13 @@ async function createSubmissionAfterTaskApproval(
         },
       },
       update: {
-        ...(accountId || task.accountId
-          ? { accountId: accountId ?? task.accountId }
-          : {}),
+        ...(accountId ? { accountId } : {}),
       },
       create: {
         submissionCode: await generateSubmissionCode(),
         researchProjectId: task.projectId,
         journalId: task.journalId,
-        accountId: accountId ?? task.accountId,
+        accountId,
         status: SubmissionStatus.PENDING,
         submittedAt,
       },

@@ -2986,7 +2986,7 @@ export default async function TaskDetailPage({
             {canApprove && (
               <FinishTaskForm
                 action={finishAction}
-                accountId={task.account?.id}
+                accountId={task.accountId}
                 mode="approve"
                 requiresSubmissionDate={
                   task.taskType === "SUBMIT_RESEARCH" ||

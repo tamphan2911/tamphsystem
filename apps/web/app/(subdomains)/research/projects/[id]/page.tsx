@@ -21,6 +21,7 @@ import {
   JournalApprovalStatus,
   ResearchFolderAccessRequestStatus,
   ResearchTaskStatus,
+  ResearchTaskType,
   Role,
 } from "@repo/db";
 import { auth } from "../../../../../auth";
@@ -390,6 +391,9 @@ export default async function ProjectDetailPage({
           include: {
             journal: true,
             conference: true,
+            account: {
+              select: { id: true, username: true, password: true, email: true },
+            },
             createdBy: {
               select: { id: true, name: true, email: true, roles: true },
             },
@@ -1172,67 +1176,139 @@ export default async function ProjectDetailPage({
   const generalTaskAccountOptions: GeneralTaskAccountOption[] = venueOptions
     .filter((venue) => venue.kind === "journal")
     .flatMap((venue) => venue.accounts);
+  const singleAccountByJournalId = new Map<
+    string,
+    { id: string; username: string; password: string; email: string | null }
+  >();
+  for (const journal of journals) {
+    const accounts = journal.publisherRecord?.usesSingleAccount
+      ? (journal.publisherRecord.accounts ?? [])
+      : journal.accounts;
+    if (accounts.length === 1 && accounts[0]) {
+      singleAccountByJournalId.set(journal.id, accounts[0]);
+    }
+  }
+  const submitTaskByJournalId = new Map<
+    string,
+    (typeof project.tasks)[number]
+  >();
+  const submitTaskByConferenceId = new Map<
+    string,
+    (typeof project.tasks)[number]
+  >();
+  const shouldReplaceSubmitTask = (
+    current: (typeof project.tasks)[number] | undefined,
+    next: (typeof project.tasks)[number],
+  ) =>
+    !current ||
+    (current.status !== ResearchTaskStatus.COMPLETED &&
+      next.status === ResearchTaskStatus.COMPLETED);
+
+  for (const task of project.tasks) {
+    if (
+      task.taskType === ResearchTaskType.SUBMIT_RESEARCH &&
+      task.journalId &&
+      shouldReplaceSubmitTask(submitTaskByJournalId.get(task.journalId), task)
+    ) {
+      submitTaskByJournalId.set(task.journalId, task);
+    }
+    if (
+      task.taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
+      task.conferenceId &&
+      shouldReplaceSubmitTask(
+        submitTaskByConferenceId.get(task.conferenceId),
+        task,
+      )
+    ) {
+      submitTaskByConferenceId.set(task.conferenceId, task);
+    }
+  }
+
+  const taskSubmissionAssignees = (
+    task: (typeof project.tasks)[number] | undefined,
+  ) =>
+    task?.assignments.map((assignment) => ({
+      id: assignment.user.id,
+      name: displayResearchPersonName(assignment.user),
+      email: displayResearchEmail(assignment.user.email),
+    })) ?? [];
   const submissionRows: SubmissionRow[] = [
-    ...project.submissions.map((submission) => ({
-      id: submission.id,
-      code:
-        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
-      kind: "journal" as const,
-      venueId: submission.journalId,
-      venueName: submission.journal.name,
-      metaLine: `${submission.journal.publisher || "No publisher"} - ${
-        submission.journal.type === "LOCAL"
-          ? submission.journal.localRank || "No local rank"
-          : submission.journal.rank || "No rank"
-      }`,
-      apc: submission.journal.apc ?? "",
-      apcCurrency: submission.journal.apcCurrency,
-      hasApcOption: submission.journal.hasApcOption,
-      submissionFee: submission.journal.submissionFee ?? "",
-      submissionFeeCurrency: submission.journal.submissionFeeCurrency,
-      account: submission.account?.username ?? "",
-      status: submission.status,
-      submittedAt: isoDate(submission.submittedAt),
-      acceptedAt: isoDate(submission.acceptedAt),
-      rejectedAt: isoDate(submission.rejectedAt),
-      withdrawnAt: isoDate(submission.withdrawnAt),
-      publishedAt: isoDate(submission.publishedAt),
-      articleUrl: submission.articleUrl ?? "",
-      articleFileName: submission.articleFileName ?? "",
-      articleFileSize: submission.articleFileSize,
-    })),
-    ...project.conferenceSubmissions.map((submission) => ({
-      id: submission.id,
-      code:
-        submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
-      kind: "conference" as const,
-      venueId: submission.conferenceId,
-      venueName: submission.conference.name,
-      metaLine: [
-        submission.conference.organizer || "No organizer",
-        submission.conference.type || "No type",
-        submission.conference.location || "No location",
-        [
-          shortDate(submission.conference.startDate),
-          shortDate(submission.conference.endDate),
+    ...project.submissions.map((submission) => {
+      const submitTask = submitTaskByJournalId.get(submission.journalId);
+      const account =
+        submission.account ??
+        submitTask?.account ??
+        singleAccountByJournalId.get(submission.journalId) ??
+        null;
+      return {
+        id: submission.id,
+        code:
+          submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
+        kind: "journal" as const,
+        venueId: submission.journalId,
+        venueName: submission.journal.name,
+        metaLine: `${submission.journal.publisher || "No publisher"} - ${
+          submission.journal.type === "LOCAL"
+            ? submission.journal.localRank || "No local rank"
+            : submission.journal.rank || "No rank"
+        }`,
+        apc: submission.journal.apc ?? "",
+        apcCurrency: submission.journal.apcCurrency,
+        hasApcOption: submission.journal.hasApcOption,
+        submissionFee: submission.journal.submissionFee ?? "",
+        submissionFeeCurrency: submission.journal.submissionFeeCurrency,
+        accountId: account?.id ?? "",
+        account: account?.username ?? "",
+        accountPassword: account?.password ?? "",
+        accountEmail: account?.email ?? "",
+        assignees: taskSubmissionAssignees(submitTask),
+        status: submission.status,
+        submittedAt: isoDate(submission.submittedAt),
+        acceptedAt: isoDate(submission.acceptedAt),
+        rejectedAt: isoDate(submission.rejectedAt),
+        withdrawnAt: isoDate(submission.withdrawnAt),
+        publishedAt: isoDate(submission.publishedAt),
+        articleUrl: submission.articleUrl ?? "",
+        articleFileName: submission.articleFileName ?? "",
+        articleFileSize: submission.articleFileSize,
+      };
+    }),
+    ...project.conferenceSubmissions.map((submission) => {
+      const submitTask = submitTaskByConferenceId.get(submission.conferenceId);
+      return {
+        id: submission.id,
+        code:
+          submission.submissionCode ?? submission.id.slice(0, 6).toUpperCase(),
+        kind: "conference" as const,
+        venueId: submission.conferenceId,
+        venueName: submission.conference.name,
+        metaLine: [
+          submission.conference.organizer || "No organizer",
+          submission.conference.type || "No type",
+          submission.conference.location || "No location",
+          [
+            shortDate(submission.conference.startDate),
+            shortDate(submission.conference.endDate),
+          ]
+            .filter(Boolean)
+            .join(" - "),
         ]
           .filter(Boolean)
           .join(" - "),
-      ]
-        .filter(Boolean)
-        .join(" - "),
-      apc: "",
-      apcCurrency: submission.conference.submissionFeeCurrency,
-      submissionFee: submission.conference.submissionFee ?? "",
-      submissionFeeCurrency: submission.conference.submissionFeeCurrency,
-      account: "",
-      status: submission.status,
-      submittedAt: isoDate(submission.submittedAt ?? submission.createdAt),
-      acceptedAt: isoDate(submission.acceptedAt),
-      rejectedAt: isoDate(submission.rejectedAt),
-      withdrawnAt: isoDate(submission.withdrawnAt),
-      publishedAt: isoDate(submission.publishedAt),
-    })),
+        apc: "",
+        apcCurrency: submission.conference.submissionFeeCurrency,
+        submissionFee: submission.conference.submissionFee ?? "",
+        submissionFeeCurrency: submission.conference.submissionFeeCurrency,
+        account: "",
+        assignees: taskSubmissionAssignees(submitTask),
+        status: submission.status,
+        submittedAt: isoDate(submission.submittedAt ?? submission.createdAt),
+        acceptedAt: isoDate(submission.acceptedAt),
+        rejectedAt: isoDate(submission.rejectedAt),
+        withdrawnAt: isoDate(submission.withdrawnAt),
+        publishedAt: isoDate(submission.publishedAt),
+      };
+    }),
   ].sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || ""));
   const generalTaskSubmissionOptions: GeneralTaskSubmissionOption[] = [
     ...project.submissions.map((submission) => ({

@@ -74,6 +74,7 @@ export type SubmissionRow = {
   submittedByName?: string;
   submittedById?: string;
   submittedByEmail?: string;
+  assignees?: { id: string; name: string; email: string }[];
   status: string;
   submittedAt: string;
   acceptedAt: string;
@@ -415,6 +416,29 @@ function RegistrationCell({
   );
 }
 
+function AssigneesCell({
+  assignees,
+}: {
+  assignees?: { id: string; name: string; email: string }[];
+}) {
+  if (!assignees?.length) {
+    return <span className="text-xs text-[#B0B0B0]">Not recorded</span>;
+  }
+
+  return (
+    <div className="grid min-w-0 gap-1 text-xs leading-5 text-[#B0B0B0]">
+      {assignees.map((assignee) => (
+        <div key={assignee.id} className="min-w-0">
+          <p className="truncate text-[#E4E4E4]">
+            {assignee.name || "Unnamed assignee"}
+          </p>
+          <p className="truncate">{assignee.email || "-"}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function SubmissionsTable({
   rows,
   isAdmin,
@@ -499,6 +523,11 @@ export function SubmissionsTable({
         row.submittedByName,
         row.submittedByEmail,
         row.submittedById,
+        ...(row.assignees ?? []).flatMap((assignee) => [
+          assignee.name,
+          assignee.email,
+          assignee.id,
+        ]),
         row.status,
         row.kind,
       ]
@@ -659,7 +688,7 @@ export function SubmissionsTable({
             placeholder={
               isResearchView
                 ? "Search research, authors, status..."
-                : "Search journal, conference, publisher, account..."
+                : "Search journal, conference, publisher, assignee, account..."
             }
           />
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
@@ -697,14 +726,14 @@ export function SubmissionsTable({
                   ID
                 </th>
                 <th
-                  className={`${isResearchView ? (showRegistrationClaim ? "w-[49%]" : "w-[56%]") : isAdminListing ? "w-[35%] xl:w-[39%]" : hasAction ? "w-[29%]" : "w-[33%]"} px-3 py-3`}
+                  className={`${isResearchView ? (showRegistrationClaim ? "w-[49%]" : "w-[56%]") : isAdminListing ? "w-[29%] xl:w-[31%]" : hasAction ? "w-[31%]" : "w-[35%]"} px-3 py-3`}
                 >
                   {isResearchView
                     ? "Research Associated"
                     : "Journal / Conference"}
                 </th>
                 <th
-                  className={`${isResearchView ? (showRegistrationClaim ? "w-[12%]" : "w-[13%]") : isAdminListing ? "w-[12%] xl:w-[11%]" : "w-[13%]"} px-3 py-3`}
+                  className={`${isResearchView ? (showRegistrationClaim ? "w-[12%]" : "w-[13%]") : isAdminListing ? "w-[10%]" : "w-[13%]"} px-3 py-3`}
                 >
                   <span className="inline-flex items-center gap-2">
                     Status
@@ -736,23 +765,28 @@ export function SubmissionsTable({
                   <>
                     {showSubmitter && (
                       <th
-                        className={`${isAdminListing ? "w-[11%] xl:w-[10%]" : "w-[13%]"} px-3 py-3`}
+                        className={`${isAdminListing ? "w-[10%] xl:w-[9%]" : "w-[13%]"} px-3 py-3`}
                       >
                         Submitted by
                       </th>
                     )}
                     <th
-                      className={`${isAdminListing ? "w-[6%] xl:w-[5%]" : "w-[8%]"} px-3 py-3`}
+                      className={`${isAdminListing ? "w-[12%]" : hasAction ? "w-[14%]" : "w-[15%]"} px-3 py-3`}
+                    >
+                      Assignees
+                    </th>
+                    <th
+                      className={`${isAdminListing ? "w-[5%]" : "w-[7%]"} px-3 py-3`}
                     >
                       APC
                     </th>
                     <th
-                      className={`${isAdminListing ? "w-[6%] xl:w-[5%]" : "w-[8%]"} px-3 py-3`}
+                      className={`${isAdminListing ? "w-[5%]" : "w-[7%]"} px-3 py-3`}
                     >
                       Fee
                     </th>
                     <th
-                      className={`${isAdminListing ? "w-[18%] xl:w-[19%]" : hasAction ? "w-[12%]" : "w-[14%]"} px-3 py-3`}
+                      className={`${isAdminListing ? "w-[17%]" : hasAction ? "w-[13%]" : "w-[14%]"} px-3 py-3`}
                     >
                       Account
                     </th>
@@ -964,6 +998,9 @@ export function SubmissionsTable({
                           </p>
                         </td>
                       )}
+                      <td className="px-3 py-3 align-top">
+                        <AssigneesCell assignees={row.assignees} />
+                      </td>
                       <td className="px-3 py-3 text-sm text-[#E4E4E4]">
                         <MoneyCell
                           amount={row.apc}
@@ -1076,8 +1113,8 @@ export function SubmissionsTable({
                       isResearchView
                         ? (showRegistrationClaim ? 6 : 4) + (hasAction ? 1 : 0)
                         : hasAction
-                          ? 7 + (showSubmitter ? 1 : 0)
-                          : 6 + (showSubmitter ? 1 : 0)
+                          ? 8 + (showSubmitter ? 1 : 0)
+                          : 7 + (showSubmitter ? 1 : 0)
                     }
                     className="px-3 py-14 text-center text-sm text-[#B0B0B0]"
                   >
