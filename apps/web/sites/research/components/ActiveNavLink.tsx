@@ -22,6 +22,7 @@ import {
   Route,
   ShieldCheck,
   UserRoundSearch,
+  Users,
   UsersRound,
 } from "lucide-react";
 
@@ -44,6 +45,7 @@ const icons = {
   proposals: Inbox,
   suggestions: Lightbulb,
   notifications: BellRing,
+  teams: Users,
   users: UsersRound,
 };
 

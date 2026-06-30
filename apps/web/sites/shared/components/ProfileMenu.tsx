@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { CalendarDays, LogOut, Settings, UserCircle } from "lucide-react";
+import {
+  CalendarDays,
+  LogOut,
+  Settings,
+  UserCircle,
+  UsersRound,
+} from "lucide-react";
 
 type ProfileMenuProps = {
   email?: string | null;
@@ -11,8 +17,11 @@ type ProfileMenuProps = {
   profileHref?: string;
   calendarHref?: string;
   adminHref?: string;
+  teamHref?: string;
+  teamLabel?: string;
   showCalendar?: boolean;
   showAdminConsole?: boolean;
+  showTeam?: boolean;
   variant?: "default" | "research";
 };
 
@@ -22,8 +31,11 @@ export function ProfileMenu({
   profileHref = "/profile",
   calendarHref = "/calendar",
   adminHref = "https://admin.tamph.com",
+  teamHref = "/team",
+  teamLabel = "Team",
   showCalendar = false,
   showAdminConsole = false,
+  showTeam = false,
   variant = "default",
 }: ProfileMenuProps) {
   const [open, setOpen] = useState(false);
@@ -115,6 +127,24 @@ export function ProfileMenu({
             />
             Profile
           </Link>
+          {showTeam ? (
+            <Link
+              href={teamHref}
+              onClick={() => setOpen(false)}
+              className={`research-profile-menu-item flex items-center gap-3 border-y border-transparent px-4 py-3 text-sm font-normal transition ${
+                isResearch
+                  ? "text-[#E4E4E4] hover:border-[#444444] hover:bg-[#383838] hover:text-[#A8DADC]"
+                  : "text-slate-700 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+              }`}
+            >
+              <UsersRound
+                className={`h-4 w-4 ${
+                  isResearch ? "text-[#A8DADC]" : "text-slate-400"
+                }`}
+              />
+              {teamLabel}
+            </Link>
+          ) : null}
           {showCalendar ? (
             <Link
               href={calendarHref}

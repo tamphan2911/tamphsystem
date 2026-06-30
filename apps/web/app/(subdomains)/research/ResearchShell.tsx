@@ -115,6 +115,12 @@ const navItems = [
     rootAdminOnly: true,
   },
   {
+    href: "/teams",
+    label: "Teams",
+    icon: "teams" as const,
+    rootAdminOnly: true,
+  },
+  {
     href: "/users",
     label: "Users",
     icon: "users" as const,
@@ -655,6 +661,9 @@ export function ResearchShell({
                   adminHref="https://admin.tamph.com"
                   showCalendar={isRootAdmin}
                   showAdminConsole={isRootAdmin}
+                  showTeam={isRootAdmin || isAssistant}
+                  teamHref="/team"
+                  teamLabel="Team (under construction)"
                   variant="research"
                 />
               </div>
