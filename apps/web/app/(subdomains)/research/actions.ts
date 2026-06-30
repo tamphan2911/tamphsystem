@@ -1168,6 +1168,7 @@ type ResearchNotificationSnapshot = {
   universityRegistration: string | null;
   registerStatus: RegistrationStatus;
   claimStatus: ClaimStatus;
+  isPriority: boolean;
   completedProductionSteps: string[];
   registrationName: string | null;
   registrationUser: { name: string | null; email: string } | null;
@@ -1288,6 +1289,11 @@ function researchProjectNotificationChanges(
     "Claim status",
     readableResearchValue(before.claimStatus),
     readableResearchValue(after.claimStatus),
+  );
+  addChange(
+    "Priority",
+    before.isPriority ? "Priority" : "Not priority",
+    after.isPriority ? "Priority" : "Not priority",
   );
   addChange(
     "Authors",
@@ -3074,6 +3080,8 @@ export async function createResearchProject(formData: FormData) {
   const fundingInstitutionId = isAdmin
     ? optionalString(formData.get("fundingInstitutionId"))
     : null;
+  const isPriority =
+    user.roles.includes(Role.ADMIN) && formData.get("isPriority") === "true";
 
   const createdProject = await prisma.researchProject.create({
     data: {
@@ -3089,6 +3097,7 @@ export async function createResearchProject(formData: FormData) {
       registrationName: null,
       registrationUserId,
       fundingInstitutionId,
+      isPriority,
       registerStatus: isAdmin
         ? (enumValue(RegistrationStatus, formData.get("registerStatus")) ??
           RegistrationStatus.NOT_REGISTERED)
@@ -3625,6 +3634,7 @@ export async function updateResearchProject(
 ) {
   const user = await requireCurrentUser();
   const isAdmin = isResearchAdminRole(user.roles);
+  const isRootAdmin = user.roles.includes(Role.ADMIN);
   const projectLock = await prisma.researchProject.findUnique({
     where: { id: projectId },
     select: {
@@ -3634,6 +3644,7 @@ export async function updateResearchProject(
       universityRegistration: true,
       registerStatus: true,
       claimStatus: true,
+      isPriority: true,
       registrationName: true,
       registrationUser: { select: { name: true, email: true } },
       fundingInstitution: { select: { name: true } },
@@ -3773,6 +3784,9 @@ export async function updateResearchProject(
           claimStatus:
             enumValue(ClaimStatus, formData.get("claimStatus")) ??
             ClaimStatus.CANNOT_CLAIM,
+          ...(isRootAdmin
+            ? { isPriority: formData.get("isPriority") === "true" }
+            : {}),
         }
       : {}),
     ...(formData.has("abstract")
@@ -3841,6 +3855,7 @@ export async function updateResearchProject(
       universityRegistration: true,
       registerStatus: true,
       claimStatus: true,
+      isPriority: true,
       registrationName: true,
       registrationUser: { select: { name: true, email: true } },
       fundingInstitution: { select: { name: true } },

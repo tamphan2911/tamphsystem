@@ -439,6 +439,7 @@ model ResearchProject {
   fundingInstitution       FundingInstitution? @relation(fields: [fundingInstitutionId], references: [id], onDelete: SetNull)
   registerStatus           RegistrationStatus  @default(NOT_REGISTERED)
   claimStatus              ClaimStatus         @default(CANNOT_CLAIM)
+  isPriority               Boolean             @default(false)
   completedProductionSteps String[]            @default([])
   productionTimelineLocked Boolean             @default(false)
   contentUnlocked          Boolean             @default(false)

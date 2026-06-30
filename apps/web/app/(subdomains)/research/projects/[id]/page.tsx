@@ -16,6 +16,7 @@ import {
   Mail,
   Rocket,
   SearchCheck,
+  Star,
 } from "lucide-react";
 import {
   prisma,
@@ -1110,6 +1111,7 @@ export default async function ProjectDetailPage({
     registrationName: project.registrationName ?? "",
     registerStatus: project.registerStatus,
     claimStatus: project.claimStatus,
+    isPriority: project.isPriority,
     registrationUser: defaultRegistrationUser,
     fundingInstitution: defaultFundingInstitution,
   };
@@ -1715,6 +1717,21 @@ export default async function ProjectDetailPage({
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="min-w-0 space-y-2 text-sm text-[#B0B0B0]">
           <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-[#B0B0B0]">
+            {project.isPriority && (
+              <IconHint label="Priority research">
+                <span
+                  className="research-allow-transform inline-flex h-5 w-5 flex-none cursor-help items-center justify-center text-amber-700 transition duration-180 ease-out hover:-translate-y-0.5 hover:drop-shadow-[0_0_0.45rem_rgba(217,119,6,0.24)] dark:text-amber-300"
+                  aria-label="Priority research"
+                >
+                  <Star
+                    className="h-4 w-4"
+                    fill="currentColor"
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                  />
+                </span>
+              </IconHint>
+            )}
             {project.researchCode && (
               <span className="font-normal">ID: {project.researchCode}</span>
             )}
@@ -1972,6 +1989,11 @@ export default async function ProjectDetailPage({
                 type="hidden"
                 name="claimStatus"
                 value={project.claimStatus}
+              />
+              <input
+                type="hidden"
+                name="isPriority"
+                value={project.isPriority ? "true" : "false"}
               />
               <div>
                 {project.organizedProjectLinks.length > 0 && (

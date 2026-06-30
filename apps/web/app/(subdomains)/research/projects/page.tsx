@@ -211,6 +211,7 @@ export default async function ProjectsDashboard() {
       researchCode: project.researchCode ?? "",
       title: project.title,
       abstract: project.abstract ?? "",
+      isPriority: project.isPriority,
       stage: project.stage,
       claimStatus: project.claimStatus,
       registerStatus: project.registerStatus,
