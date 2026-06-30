@@ -3773,11 +3773,30 @@ export default async function TaskDetailPage({
                       canManageAssignmentResults &&
                       Boolean(assignment.finishedAt) &&
                       !assignment.completedAt;
+                    const approvingThisAssigneeCompletesTask =
+                      canApproveThisAssignee &&
+                      task.assignments.every(
+                        (item) => item.completedAt || item.id === assignment.id,
+                      );
                     const workflowAction = canApproveThisAssignee ? (
                       <AssigneeReviewActions
                         assignmentId={assignment.id}
                         finishAction={finishAction}
                         redoAction={redoAction}
+                        accountId={task.accountId}
+                        requiresSubmissionDate={
+                          approvingThisAssigneeCompletesTask &&
+                          (task.taskType ===
+                            ResearchTaskType.SUBMIT_RESEARCH ||
+                            task.taskType ===
+                              ResearchTaskType.SUBMIT_CONFERENCE)
+                        }
+                        nextProductionTaskLabel={
+                          approvingThisAssigneeCompletesTask &&
+                          task.taskType === ResearchTaskType.PRODUCTION
+                            ? nextProductionTaskLabel(task.productionSubtype)
+                            : ""
+                        }
                         iconClassName={workflow.className}
                         label={workflow.label}
                         detail={workflow.detail}

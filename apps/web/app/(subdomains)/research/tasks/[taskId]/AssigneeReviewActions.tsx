@@ -13,6 +13,9 @@ export function AssigneeReviewActions({
   assignmentId,
   finishAction,
   redoAction,
+  accountId,
+  requiresSubmissionDate = false,
+  nextProductionTaskLabel = "",
   iconClassName,
   label,
   detail,
@@ -20,6 +23,9 @@ export function AssigneeReviewActions({
   assignmentId: string;
   finishAction: TaskAction;
   redoAction: TaskAction;
+  accountId?: string | null;
+  requiresSubmissionDate?: boolean;
+  nextProductionTaskLabel?: string;
   iconClassName: string;
   label: string;
   detail: string;
@@ -138,8 +144,11 @@ export function AssigneeReviewActions({
               <div className="grid gap-2">
                 <FinishTaskForm
                   action={finishAction}
+                  accountId={accountId}
                   assignmentId={assignmentId}
+                  requiresSubmissionDate={requiresSubmissionDate}
                   mode="approve"
+                  nextProductionTaskLabel={nextProductionTaskLabel}
                 />
                 <RedoTaskForm action={redoAction} assignmentId={assignmentId} />
               </div>

@@ -198,6 +198,9 @@ export async function GET() {
       const assignedToMe = task.assignments.some(
         (assignment) => assignment.userId === userId,
       );
+      const currentUserAssignment =
+        task.assignments.find((assignment) => assignment.userId === userId) ??
+        null;
       const checkerForMe = task.checkerId === userId;
       const relatedToResearch =
         task.project?.leadResearcherId === userId ||
@@ -373,6 +376,7 @@ export async function GET() {
               : "research"
             : null,
         status: task.status,
+        currentUserAssignmentId: currentUserAssignment?.id ?? null,
         clarifyDirection,
         isUrgent: task.isUrgent,
         dueDate: task.dueDate?.toISOString() ?? null,

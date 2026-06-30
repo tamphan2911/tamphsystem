@@ -66,6 +66,7 @@ type TaskRow = {
   productionSubtype: string | null;
   proposalScope: "research" | "project" | null;
   status: string;
+  currentUserAssignmentId: string | null;
   clarifyDirection: "ASSIGNEE_TO_MANAGER" | "MANAGER_TO_ASSIGNEE" | null;
   isUrgent: boolean;
   dueDate: string | null;
@@ -274,6 +275,81 @@ function assignmentWorkflowMeta(assignment: TaskAssignment): {
     icon: Clock3,
     className:
       "text-yellow-700 hover:text-yellow-800 dark:text-yellow-300 dark:hover:text-yellow-200",
+  };
+}
+
+function currentUserAssignment(task: TaskRow) {
+  if (!task.currentUserAssignmentId) return null;
+  return (
+    task.assignments.find(
+      (assignment) => assignment.id === task.currentUserAssignmentId,
+    ) ?? null
+  );
+}
+
+function shouldUseAssigneeStatus(task: TaskRow, activeTab: TaskHeaderTab) {
+  return (
+    activeTab === "assigned" &&
+    task.scope.assignedToMe &&
+    task.assignments.length > 1 &&
+    Boolean(currentUserAssignment(task))
+  );
+}
+
+function assigneeStatusValue(assignment: TaskAssignment) {
+  if (assignment.completedAt) return "COMPLETED";
+  if (assignment.redoRequestedAt) return "REVISION_REQUESTED";
+  if (assignment.finishedAt) return "CHECKING";
+  return "IN_PROGRESS";
+}
+
+function assigneeTableStatusMeta(task: TaskRow, activeTab: TaskHeaderTab) {
+  if (!shouldUseAssigneeStatus(task, activeTab)) return null;
+  if (task.status === "REVOKED") return null;
+
+  const assignment = currentUserAssignment(task);
+  if (!assignment) return null;
+
+  if (assignment.completedAt) {
+    return {
+      label: "Your part complete",
+      text: "Your part complete",
+      icon: CheckCircle2,
+      className:
+        "text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200",
+      textClassName: "text-emerald-700 dark:text-emerald-300",
+    };
+  }
+
+  if (assignment.redoRequestedAt) {
+    return {
+      label: "Redo requested for your part",
+      text: "Redo requested",
+      icon: RotateCcw,
+      className:
+        "text-orange-700 hover:text-orange-800 dark:text-orange-300 dark:hover:text-orange-200",
+      textClassName: "text-orange-700 dark:text-orange-300",
+    };
+  }
+
+  if (assignment.finishedAt) {
+    return {
+      label: "Your part is ready for check",
+      text: "Ready for check",
+      icon: SearchCheck,
+      className:
+        "text-violet-700 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200",
+      textClassName: "text-violet-700 dark:text-violet-300",
+    };
+  }
+
+  return {
+    label: "Your part is in progress",
+    text: "In progress",
+    icon: Clock3,
+    className:
+      "text-yellow-700 hover:text-yellow-800 dark:text-yellow-300 dark:hover:text-yellow-200",
+    textClassName: "text-yellow-700 dark:text-yellow-300",
   };
 }
 
@@ -692,7 +768,14 @@ function statusIconMeta(task: TaskRow): {
   };
 }
 
-function derivedStatus(task: TaskRow) {
+function derivedStatus(task: TaskRow, activeTab: TaskHeaderTab) {
+  if (shouldUseAssigneeStatus(task, activeTab)) {
+    const assignment = currentUserAssignment(task);
+    if (assignment && task.status !== "REVOKED") {
+      return assigneeStatusValue(assignment);
+    }
+  }
+
   if (task.waitingForJournalCreation) return "IN_PROGRESS";
   if (task.addJournalCorrection) return "REVISION_REQUESTED";
   if (task.addJournalReview) return "CHECKING";
@@ -1168,7 +1251,7 @@ export function TasksClient({
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return tasks.filter((task) => {
-      const taskStatus = derivedStatus(task);
+      const taskStatus = derivedStatus(task, activeHeaderTab);
       const matchesScope = isAdmin
         ? activeHeaderTab === "need_action"
           ? taskNeedsManagerAction(task)
@@ -1199,6 +1282,7 @@ export function TasksClient({
         productionSubtypeLabel(task.productionSubtype),
         task.category,
         statusMeta(task).label,
+        assigneeTableStatusMeta(task, activeHeaderTab)?.label,
         task.waitingForJournalCreation
           ? "Waiting for assignee to add journal"
           : "",
@@ -1493,9 +1577,18 @@ export function TasksClient({
             <tbody className="divide-y divide-[#444444]">
               {pagination.pagedRows.map((task) => {
                 const status = statusMeta(task);
-                const statusIcon = statusIconMeta(task);
+                const assigneeStatus = assigneeTableStatusMeta(
+                  task,
+                  activeHeaderTab,
+                );
+                const statusIcon = assigneeStatus ?? statusIconMeta(task);
                 const StatusIcon = statusIcon.icon;
-                const statusActionText = pendingReadyAssignmentText(task);
+                const statusLabel = assigneeStatus?.label ?? status.label;
+                const statusActionText =
+                  assigneeStatus?.text ?? pendingReadyAssignmentText(task);
+                const statusActionClassName =
+                  assigneeStatus?.textClassName ??
+                  "text-violet-700 dark:text-violet-300";
                 const typeLines = taskTypeLines(task);
                 const relationshipLabels = taskRelationshipLabels(task);
                 const managerAction = managerActionMeta(task, Date.now());
@@ -1549,8 +1642,8 @@ export function TasksClient({
                       <IconHint
                         label={
                           statusActionText
-                            ? `${status.label}: ${statusActionText}`
-                            : status.label
+                            ? `${statusLabel}: ${statusActionText}`
+                            : statusLabel
                         }
                       >
                         <span className="inline-flex flex-col items-start gap-1">
@@ -1561,10 +1654,12 @@ export function TasksClient({
                               className="h-4 w-4"
                               aria-hidden="true"
                             />
-                            <span className="sr-only">{status.label}</span>
+                            <span className="sr-only">{statusLabel}</span>
                           </span>
                           {statusActionText ? (
-                            <span className="max-w-[6.25rem] text-[11px] font-semibold leading-4 text-violet-700 dark:text-violet-300">
+                            <span
+                              className={`max-w-[6.25rem] text-[11px] font-semibold leading-4 ${statusActionClassName}`}
+                            >
                               {statusActionText}
                             </span>
                           ) : null}
