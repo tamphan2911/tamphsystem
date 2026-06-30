@@ -1883,10 +1883,12 @@ export default async function ProjectDetailPage({
                         </p>
                         {author.orcid ? (
                           <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs font-normal leading-5 text-[#B0B0B0] lg:items-center lg:truncate">
-                            <ExternalLink
-                              className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]"
+                            <span
+                              className="mt-[3px] inline-flex h-4 w-4 flex-none items-center justify-center rounded-full border border-emerald-500/60 bg-emerald-50 text-[8px] font-semibold leading-none text-emerald-700 dark:border-emerald-300/55 dark:bg-emerald-300/10 dark:text-emerald-200 lg:mt-0"
                               aria-hidden="true"
-                            />
+                            >
+                              iD
+                            </span>
                             <a
                               href={author.orcid}
                               target="_blank"
