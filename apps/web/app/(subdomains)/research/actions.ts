@@ -306,7 +306,7 @@ function nextProductionSubtype(subtype: ResearchProductionSubtype | null) {
   return productionSubtypeConfig[index + 1]?.value ?? null;
 }
 
-function defaultTaskGuideCodeForTask({
+function defaultTaskGuideCodesForTask({
   taskType,
   proposalScope,
   productionSubtype,
@@ -315,24 +315,24 @@ function defaultTaskGuideCodeForTask({
   proposalScope: ProposalTaskScope;
   productionSubtype?: ResearchProductionSubtype | null;
 }) {
-  if (taskType === ResearchTaskType.SUGGEST_VENUE) return "G001";
+  if (taskType === ResearchTaskType.SUGGEST_VENUE) return ["G001", "G023"];
   if (
     taskType === ResearchTaskType.SUBMIT_RESEARCH ||
     taskType === ResearchTaskType.SUBMIT_CONFERENCE
   ) {
-    return "G002";
+    return ["G002"];
   }
   if (taskType === ResearchTaskType.PRODUCTION) {
-    return (
-      productionSubtypeMeta(productionSubtype ?? null)?.guideCode ?? "G014"
-    );
+    return [
+      productionSubtypeMeta(productionSubtype ?? null)?.guideCode ?? "G014",
+    ];
   }
-  if (taskType === ResearchTaskType.ADD_JOURNAL) return "G003";
+  if (taskType === ResearchTaskType.ADD_JOURNAL) return ["G003"];
   if (taskType === ResearchTaskType.PROPOSAL) {
-    return proposalScope === ProposalTaskScope.PROJECT ? "G005" : "G004";
+    return [proposalScope === ProposalTaskScope.PROJECT ? "G005" : "G004"];
   }
-  if (taskType === ResearchTaskType.REVIEW) return "G013";
-  return null;
+  if (taskType === ResearchTaskType.REVIEW) return ["G013"];
+  return [];
 }
 
 function defaultDescriptionForTask(taskType: ResearchTaskType) {
@@ -350,17 +350,22 @@ async function defaultTaskGuideIdsForTask({
   proposalScope: ProposalTaskScope;
   productionSubtype?: ResearchProductionSubtype | null;
 }) {
-  const guideCode = defaultTaskGuideCodeForTask({
+  const guideCodes = defaultTaskGuideCodesForTask({
     taskType,
     proposalScope,
     productionSubtype,
   });
-  if (!guideCode) return [];
-  const guide = await prisma.taskGuide.findUnique({
-    where: { guideCode },
-    select: { id: true },
+  if (guideCodes.length === 0) return [];
+  const guides = await prisma.taskGuide.findMany({
+    where: { guideCode: { in: guideCodes } },
+    select: { id: true, guideCode: true },
   });
-  return guide ? [guide.id] : [];
+  const guideIdByCode = new Map(
+    guides.map((guide) => [guide.guideCode, guide.id] as const),
+  );
+  return guideCodes
+    .map((guideCode) => guideIdByCode.get(guideCode))
+    .filter((id): id is string => Boolean(id));
 }
 
 function dateFromForm(value: FormDataEntryValue | null) {

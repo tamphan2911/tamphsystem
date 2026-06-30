@@ -146,6 +146,12 @@ function guideIdsForCode(guides: TaskGuideOption[], guideCode: string) {
   return guide ? [guide.id] : [];
 }
 
+function guideIdsForCodes(guides: TaskGuideOption[], guideCodes: string[]) {
+  return guideCodes
+    .map((guideCode) => guides.find((item) => item.guideCode === guideCode)?.id)
+    .filter((id): id is string => Boolean(id));
+}
+
 function modeFromTaskType(taskType: string): TaskMode {
   if (taskType === "SUBMIT_RESEARCH" || taskType === "SUBMIT_CONFERENCE") {
     return "submit";
@@ -681,6 +687,11 @@ export function EditTaskDialog({
               (option) => option.value === productionSubtype,
             )?.guideCode ?? "G016",
           ),
+        );
+      }
+      if (nextChoice === "SUGGEST_VENUE") {
+        setSelectedTaskGuideIds(
+          guideIdsForCodes(taskGuideOptions, ["G001", "G023"]),
         );
       }
       setSelectedTaskType(nextChoice);

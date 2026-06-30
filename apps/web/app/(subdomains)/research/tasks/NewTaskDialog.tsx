@@ -157,6 +157,12 @@ function guideIdsForCode(guides: TaskGuideOption[], guideCode: string) {
   return guide ? [guide.id] : [];
 }
 
+function guideIdsForCodes(guides: TaskGuideOption[], guideCodes: string[]) {
+  return guideCodes
+    .map((guideCode) => guides.find((item) => item.guideCode === guideCode)?.id)
+    .filter((id): id is string => Boolean(id));
+}
+
 function modeLabel(mode: TaskMode) {
   if (mode === "submit") return "Submit";
   if (mode === "production") return "Production";
@@ -231,20 +237,20 @@ function defaultTaskGuideIdsForMode(
         ?.guideCode ?? "G016",
     );
   }
+  if (mode === "suggestVenue")
+    return guideIdsForCodes(guides, ["G001", "G023"]);
   const guideCode =
     mode === "submit"
       ? "G002"
-      : mode === "suggestVenue"
-        ? "G001"
-        : mode === "addJournal"
-          ? "G003"
-          : mode === "proposal"
-            ? proposalScope === "project"
-              ? "G005"
-              : "G004"
-            : mode === "review"
-              ? "G013"
-              : null;
+      : mode === "addJournal"
+        ? "G003"
+        : mode === "proposal"
+          ? proposalScope === "project"
+            ? "G005"
+            : "G004"
+          : mode === "review"
+            ? "G013"
+            : null;
   if (!guideCode) return [];
   return guideIdsForCode(guides, guideCode);
 }
