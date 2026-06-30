@@ -142,6 +142,67 @@ function durationText(ms: number) {
   return restHours > 0 ? `${days}d ${restHours}h` : `${days}d`;
 }
 
+function assigneeDueText({
+  dueDate,
+  completedAt,
+}: {
+  dueDate: Date | null;
+  completedAt: Date | null;
+}) {
+  if (!dueDate) {
+    return completedAt
+      ? `Completed: ${formatDate(completedAt)}`
+      : "No due date";
+  }
+  if (completedAt) {
+    const diff = dueDate.getTime() - completedAt.getTime();
+    return diff >= 0
+      ? `${durationText(diff)} early`
+      : `${durationText(diff)} overdue`;
+  }
+  const remaining = dueDate.getTime() - Date.now();
+  return remaining >= 0
+    ? `${durationText(remaining)} left`
+    : `${durationText(remaining)} late`;
+}
+
+function assigneeWorkflowMeta(assignment: {
+  finishedAt: Date | null;
+  completedAt: Date | null;
+  redoRequestedAt: Date | null;
+}) {
+  if (assignment.completedAt) {
+    return {
+      label: "Complete",
+      detail: "This assignee has completed this task.",
+      icon: CheckCircle2,
+      className: "text-emerald-600 dark:text-emerald-300",
+    };
+  }
+  if (assignment.redoRequestedAt) {
+    return {
+      label: "Redo requested",
+      detail: "This assignee has been asked to revise their work.",
+      icon: RotateCcw,
+      className: "text-rose-600 dark:text-rose-300",
+    };
+  }
+  if (assignment.finishedAt) {
+    return {
+      label: "Ready for check",
+      detail: "This assignee marked their work ready for check.",
+      icon: SearchCheck,
+      className: "text-sky-700 dark:text-[#A8DADC]",
+    };
+  }
+  return {
+    label: "In progress",
+    detail: "This assignee has not marked their work ready yet.",
+    icon: Clock3,
+    className: "text-amber-600 dark:text-amber-300",
+  };
+}
+
 function statusMeta(task: {
   status: string;
   dueDate: Date | null;
@@ -1885,6 +1946,8 @@ export default async function TaskDetailPage({
     (!isAutomatedJournalTask || canReadyAutomatedJournalTask) &&
     isAssignee &&
     !selfAssigned &&
+    !myAssignment?.finishedAt &&
+    !myAssignment?.completedAt &&
     effectiveStatus !== ResearchTaskStatus.CHECKING &&
     effectiveStatus !== ResearchTaskStatus.NEED_CLARIFY;
   const canApprove =
@@ -1917,6 +1980,11 @@ export default async function TaskDetailPage({
     (effectiveStatus === ResearchTaskStatus.CHECKING ||
       effectiveStatus === ResearchTaskStatus.REVISION_REQUESTED) &&
     !hasOpenClarification;
+  const canManageAssignmentResults =
+    !isClosed &&
+    !waitingForJournalCreation &&
+    !isAssignee &&
+    (isRootAdmin || isAssigner || isChecker);
   const canRevoke = !isClosed && !isAssignee && (isAdmin || isAssigner);
   const canEdit =
     !isAssignee && (isRootAdmin || (!isClosed && isChiefAssistant));
@@ -3386,11 +3454,64 @@ export default async function TaskDetailPage({
               </h2>
               <div className="divide-y divide-[#D8D0C2] border-t border-[#D8D0C2] dark:divide-[#444444] dark:border-[#444444]">
                 {task.assignments.length > 0 ? (
-                  task.assignments.map((assignment) => (
-                    <div key={assignment.id} className="py-3">
-                      <TaskPersonLine person={assignment.user} showEmail />
-                    </div>
-                  ))
+                  task.assignments.map((assignment) => {
+                    const workflow = assigneeWorkflowMeta(assignment);
+                    const WorkflowIcon = workflow.icon;
+                    const assignmentDueDate = assignment.dueDate;
+                    const canApproveThisAssignee =
+                      canManageAssignmentResults &&
+                      Boolean(assignment.finishedAt) &&
+                      !assignment.completedAt;
+                    return (
+                      <div key={assignment.id} className="grid gap-2 py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <TaskPersonLine person={assignment.user} showEmail />
+                          <IconHint label={workflow.detail}>
+                            <span
+                              className={`research-allow-transform inline-flex h-7 w-7 flex-none items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${workflow.className}`}
+                              aria-label={workflow.label}
+                            >
+                              <WorkflowIcon className="h-4 w-4" />
+                            </span>
+                          </IconHint>
+                        </div>
+                        <div className="grid gap-1 text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
+                          <span>
+                            {workflow.label} |{" "}
+                            {assigneeDueText({
+                              dueDate: assignmentDueDate,
+                              completedAt: assignment.completedAt,
+                            })}
+                          </span>
+                          {assignment.completedAt ? (
+                            <span className="text-emerald-700 dark:text-emerald-300">
+                              {task.status === ResearchTaskStatus.COMPLETED
+                                ? "This task is fully completed."
+                                : "This assignee is complete. Waiting for other assignees."}
+                            </span>
+                          ) : null}
+                          {assignment.redoReason ? (
+                            <span className="whitespace-pre-wrap text-rose-700 dark:text-rose-300">
+                              Redo note: {assignment.redoReason}
+                            </span>
+                          ) : null}
+                        </div>
+                        {canApproveThisAssignee ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <FinishTaskForm
+                              action={finishAction}
+                              assignmentId={assignment.id}
+                              mode="approve"
+                            />
+                            <RedoTaskForm
+                              action={redoAction}
+                              assignmentId={assignment.id}
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })
                 ) : (
                   <div className="py-3 text-sm text-[#667085] dark:text-[#B0B0B0]">
                     No assignee

@@ -412,7 +412,11 @@ export async function GET() {
           userName: assignment.user.name || assignment.user.email,
           userEmail: assignment.user.email,
           userRoles: assignment.user.roles,
+          dueDate: assignment.dueDate?.toISOString() ?? null,
           finishedAt: assignment.finishedAt?.toISOString() ?? null,
+          completedAt: assignment.completedAt?.toISOString() ?? null,
+          redoRequestedAt: assignment.redoRequestedAt?.toISOString() ?? null,
+          redoReason: assignment.redoReason ?? null,
         })),
       };
     }),

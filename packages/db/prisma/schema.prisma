@@ -1061,16 +1061,25 @@ model AssistantWorkflowGuide {
 }
 
 model ResearchTaskAssignment {
-  id         String    @id @default(uuid())
-  taskId     String
-  userId     String
-  finishedAt DateTime?
-  createdAt  DateTime  @default(now())
+  id                String    @id @default(uuid())
+  taskId            String
+  userId            String
+  dueDate           DateTime?
+  finishedAt        DateTime?
+  completedAt       DateTime?
+  completedById     String?
+  completionMessage String?
+  redoRequestedAt   DateTime?
+  redoRequestedById String?
+  redoReason        String?
+  createdAt         DateTime  @default(now())
 
   task ResearchTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user User         @relation("ResearchTaskAssignee", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, userId])
+  @@index([completedById])
+  @@index([redoRequestedById])
 }
 
 model ResearchAssistantTeam {

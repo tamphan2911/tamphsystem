@@ -13,12 +13,14 @@ import { researchDateValue } from "@/sites/research/lib/date-time";
 export function FinishTaskForm({
   action,
   accountId,
+  assignmentId,
   requiresSubmissionDate = false,
   mode = "approve",
   nextProductionTaskLabel = "",
 }: {
   action: (formData: FormData) => void | Promise<void>;
   accountId?: string | null;
+  assignmentId?: string | null;
   requiresSubmissionDate?: boolean;
   mode?: "ready" | "approve";
   nextProductionTaskLabel?: string;
@@ -32,7 +34,9 @@ export function FinishTaskForm({
   const [isPending, startTransition] = useTransition();
   const isReadyMode = mode === "ready";
   const Icon = isReadyMode ? CheckCircle2 : ShieldCheck;
-  const formId = isReadyMode ? "ready-task-form" : "approve-task-form";
+  const formId = `${isReadyMode ? "ready-task-form" : "approve-task-form"}-${
+    assignmentId ?? "task"
+  }`;
   const buttonLabel = isReadyMode ? "Ready for check" : "Approve complete";
   const title = isReadyMode
     ? "Mark work ready for check?"
@@ -51,6 +55,9 @@ export function FinishTaskForm({
       >
         {accountId ? (
           <input type="hidden" name="accountId" value={accountId} />
+        ) : null}
+        {assignmentId ? (
+          <input type="hidden" name="assignmentId" value={assignmentId} />
         ) : null}
         {!isReadyMode && nextProductionTaskLabel ? (
           <input

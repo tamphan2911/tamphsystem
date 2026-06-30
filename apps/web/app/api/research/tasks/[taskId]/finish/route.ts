@@ -50,19 +50,48 @@ export async function POST(
     );
   }
 
-  const completedAt = new Date();
+  const finishedAt = new Date();
 
-  await prisma.researchTask.update({
-    where: { id: taskId },
-    data: {
-      status: ResearchTaskStatus.CHECKING,
-      completedAt: null,
-      revokedAt: null,
-      adminViewedAt: null,
-      assignments: {
-        updateMany: { where: { userId }, data: { finishedAt: completedAt } },
+  await prisma.$transaction(async (tx) => {
+    await tx.researchTaskAssignment.update({
+      where: {
+        taskId_userId: {
+          taskId,
+          userId,
+        },
       },
-    },
+      data: {
+        finishedAt,
+        redoRequestedAt: null,
+        redoRequestedById: null,
+        redoReason: null,
+      },
+    });
+
+    const assignments = await tx.researchTaskAssignment.findMany({
+      where: { taskId },
+      select: { finishedAt: true, completedAt: true, redoRequestedAt: true },
+    });
+    const allReady =
+      assignments.length > 0 &&
+      assignments.every((item) => item.completedAt || item.finishedAt);
+    const anyRedo = assignments.some(
+      (item) => item.redoRequestedAt && !item.completedAt,
+    );
+
+    await tx.researchTask.update({
+      where: { id: taskId },
+      data: {
+        status: allReady
+          ? ResearchTaskStatus.CHECKING
+          : anyRedo
+            ? ResearchTaskStatus.REVISION_REQUESTED
+            : ResearchTaskStatus.IN_PROGRESS,
+        completedAt: null,
+        revokedAt: null,
+        adminViewedAt: null,
+      },
+    });
   });
 
   return NextResponse.json({ ok: true });

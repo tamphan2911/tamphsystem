@@ -49,7 +49,11 @@ type TaskAssignment = {
   userName: string;
   userEmail: string;
   userRoles: string[];
+  dueDate: string | null;
   finishedAt: string | null;
+  completedAt: string | null;
+  redoRequestedAt: string | null;
+  redoReason: string | null;
 };
 
 type TaskRow = {
@@ -180,6 +184,92 @@ function activeDueMeta(due: Date | null, remainingMs: number | null) {
       remainingMs < 24 * 60 * 60 * 1000
         ? "font-semibold text-[#B64F48] dark:text-[#FFB4A2]"
         : "text-yellow-700 dark:text-yellow-300",
+  };
+}
+
+function assignmentDueText(assignment: TaskAssignment) {
+  const due = assignment.dueDate ? new Date(assignment.dueDate) : null;
+  const completed = assignment.completedAt
+    ? new Date(assignment.completedAt)
+    : null;
+  if (!due) {
+    return completed
+      ? `Completed: ${formatDate(assignment.completedAt)}`
+      : "No due date";
+  }
+
+  if (completed) {
+    const diff = due.getTime() - completed.getTime();
+    if (diff >= 0) return `${durationText(diff)} early`;
+    return `${durationText(diff)} late`;
+  }
+
+  const diff = due.getTime() - Date.now();
+  if (diff < 0) return `${durationText(diff)} late`;
+  return `${durationText(diff)} left`;
+}
+
+function assignmentDueClassName(assignment: TaskAssignment) {
+  const due = assignment.dueDate ? new Date(assignment.dueDate) : null;
+  const completed = assignment.completedAt
+    ? new Date(assignment.completedAt)
+    : null;
+  if (completed) {
+    if (due && completed > due) {
+      return "text-[#A06716] dark:text-[#F4D47A]";
+    }
+    return "text-emerald-700 dark:text-emerald-300";
+  }
+  if (!due) return "text-[#667085] dark:text-[#8F98A8]";
+  const remainingMs = due.getTime() - Date.now();
+  if (remainingMs < 0) return "font-semibold text-rose-600 dark:text-rose-300";
+  if (remainingMs < 24 * 60 * 60 * 1000) {
+    return "font-semibold text-[#B64F48] dark:text-[#FFB4A2]";
+  }
+  return "text-[#A06716] dark:text-[#F4D47A]";
+}
+
+function assignmentWorkflowMeta(assignment: TaskAssignment): {
+  label: string;
+  detail: string;
+  icon: LucideIcon;
+  className: string;
+} {
+  if (assignment.completedAt) {
+    return {
+      label: "Complete",
+      detail: `This assignee was approved complete on ${formatDate(assignment.completedAt)}.`,
+      icon: CheckCircle2,
+      className:
+        "text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200",
+    };
+  }
+  if (assignment.redoRequestedAt) {
+    return {
+      label: "Redo",
+      detail: assignment.redoReason
+        ? `Redo requested: ${assignment.redoReason}`
+        : "Redo requested for this assignee.",
+      icon: RotateCcw,
+      className:
+        "text-orange-700 hover:text-orange-800 dark:text-orange-300 dark:hover:text-orange-200",
+    };
+  }
+  if (assignment.finishedAt) {
+    return {
+      label: "Ready",
+      detail: `Ready for check since ${formatDate(assignment.finishedAt)}.`,
+      icon: SearchCheck,
+      className:
+        "text-violet-700 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200",
+    };
+  }
+  return {
+    label: "In progress",
+    detail: "This assignee has not marked their work ready for check yet.",
+    icon: Clock3,
+    className:
+      "text-yellow-700 hover:text-yellow-800 dark:text-yellow-300 dark:hover:text-yellow-200",
   };
 }
 
@@ -1439,23 +1529,49 @@ export function TasksClient({
                     </td>
                     <td className="px-3 py-3 align-top text-xs leading-5 text-[#B0B0B0]">
                       {task.assignments.length > 0 ? (
-                        task.assignments.map((assignment) => (
-                          <div
-                            key={assignment.id}
-                            className="space-y-0.5 font-normal"
-                            title={displayResearchEmail(assignment.userEmail)}
-                          >
-                            <div>
-                              {displayResearchPersonName({
-                                name: assignment.userName,
-                                email: assignment.userEmail,
-                              })}
+                        task.assignments.map((assignment) => {
+                          const assignmentWorkflow =
+                            assignmentWorkflowMeta(assignment);
+                          const AssignmentIcon = assignmentWorkflow.icon;
+                          return (
+                            <div
+                              key={assignment.id}
+                              className="space-y-0.5 font-normal"
+                              title={displayResearchEmail(assignment.userEmail)}
+                            >
+                              <div className="flex items-start gap-1.5">
+                                <span className="min-w-0 break-words">
+                                  {displayResearchPersonName({
+                                    name: assignment.userName,
+                                    email: assignment.userEmail,
+                                  })}
+                                </span>
+                                <IconHint label={assignmentWorkflow.detail}>
+                                  <span
+                                    className={`research-allow-transform mt-0.5 inline-flex h-4 w-4 flex-none cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${assignmentWorkflow.className}`}
+                                  >
+                                    <AssignmentIcon
+                                      className="h-3.5 w-3.5"
+                                      aria-hidden="true"
+                                    />
+                                    <span className="sr-only">
+                                      {assignmentWorkflow.label}
+                                    </span>
+                                  </span>
+                                </IconHint>
+                              </div>
+                              <div className="break-all text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
+                                {displayResearchEmail(assignment.userEmail)}
+                              </div>
+                              <div
+                                className={`text-[11px] leading-4 ${assignmentDueClassName(assignment)}`}
+                              >
+                                {assignmentWorkflow.label} |{" "}
+                                {assignmentDueText(assignment)}
+                              </div>
                             </div>
-                            <div className="break-all text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
-                              {displayResearchEmail(assignment.userEmail)}
-                            </div>
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
                         <div className="text-[#777777]">Unassigned</div>
                       )}

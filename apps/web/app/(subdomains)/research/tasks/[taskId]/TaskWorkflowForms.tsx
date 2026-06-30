@@ -24,6 +24,7 @@ type TextModalFormProps = {
   confirmLabel: string;
   tone: "amber" | "rose" | "blue";
   helperText?: string;
+  hiddenFields?: Array<{ name: string; value: string }>;
 };
 
 const toneClasses = {
@@ -58,6 +59,7 @@ function TextModalForm({
   confirmLabel,
   tone,
   helperText,
+  hiddenFields = [],
 }: TextModalFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -160,6 +162,14 @@ function TextModalForm({
           }}
           className="grid gap-4"
         >
+          {hiddenFields.map((field) => (
+            <input
+              key={`${field.name}-${field.value}`}
+              type="hidden"
+              name={field.name}
+              value={field.value}
+            />
+          ))}
           <label className="grid gap-1.5">
             <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
               {fieldLabel}
@@ -188,8 +198,10 @@ function TextModalForm({
 
 export function RedoTaskForm({
   action,
+  assignmentId,
 }: {
   action: (formData: FormData) => void | Promise<void>;
+  assignmentId?: string | null;
 }) {
   return (
     <TextModalForm
@@ -202,6 +214,9 @@ export function RedoTaskForm({
       placeholder="Explain what needs to be corrected before this task can be approved."
       confirmLabel="Send redo request"
       tone="rose"
+      hiddenFields={
+        assignmentId ? [{ name: "assignmentId", value: assignmentId }] : []
+      }
     />
   );
 }

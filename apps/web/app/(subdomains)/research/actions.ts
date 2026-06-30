@@ -2792,7 +2792,15 @@ export async function reviewProposal(formData: FormData) {
         assignments: {
           updateMany: {
             where: { finishedAt: null },
-            data: { finishedAt: completedAt },
+            data: {
+              finishedAt: completedAt,
+              completedAt,
+              completedById: user.id,
+              completionMessage: proposalTaskNote,
+              redoRequestedAt: null,
+              redoRequestedById: null,
+              redoReason: null,
+            },
           },
         },
       },
@@ -2821,7 +2829,15 @@ export async function reviewProposal(formData: FormData) {
         assignments: {
           updateMany: {
             where: {},
-            data: { finishedAt: null },
+            data: {
+              finishedAt: null,
+              completedAt: null,
+              completedById: null,
+              completionMessage: null,
+              redoRequestedAt,
+              redoRequestedById: user.id,
+              redoReason: proposalTaskNote,
+            },
           },
         },
       },
@@ -4730,7 +4746,15 @@ export async function requestTaskJournalCorrection(
         assignments: {
           updateMany: {
             where: {},
-            data: { finishedAt: null },
+            data: {
+              finishedAt: null,
+              completedAt: null,
+              completedById: null,
+              completionMessage: null,
+              redoRequestedAt: requestedAt,
+              redoRequestedById: user.id,
+              redoReason,
+            },
           },
         },
       },
@@ -4994,7 +5018,15 @@ async function approveJournalWithWorkflow(
           assignments: {
             updateMany: {
               where: { finishedAt: null },
-              data: { finishedAt: completedAt },
+              data: {
+                finishedAt: completedAt,
+                completedAt,
+                completedById: approvedById,
+                completionMessage: completionNote,
+                redoRequestedAt: null,
+                redoRequestedById: null,
+                redoReason: null,
+              },
             },
           },
         },
@@ -5531,6 +5563,7 @@ async function createSubmitTaskForSuggestedJournalApproval({
 
   const taskTitle = `Submit "${project.title}" to ${journal.name}`;
   const taskDescription = DEFAULT_TASK_DESCRIPTION;
+  const taskDueDate = researchTaskDueDate(researchDateValue(new Date(), 7));
   const task = await prisma.$transaction(async (tx) => {
     const createdTask = await tx.researchTask.create({
       data: {
@@ -5543,10 +5576,12 @@ async function createSubmitTaskForSuggestedJournalApproval({
         projectId,
         journalId,
         accountId: accounts.length === 1 ? accounts[0]?.id : null,
-        dueDate: researchTaskDueDate(researchDateValue(new Date(), 7)),
+        dueDate: taskDueDate,
         createdById: originalTask?.createdById ?? approverId,
         checkerId: originalTask?.checkerId ?? null,
-        assignments: { create: { userId: suggestedById } },
+        assignments: {
+          create: { userId: suggestedById, dueDate: taskDueDate },
+        },
         ...(guide ? { guides: { connect: { id: guide.id } } } : {}),
       },
       select: {
@@ -5652,6 +5687,7 @@ async function createSubmitTaskForSuggestedConferenceApproval({
 
   const taskTitle = `Submit "${project.title}" to ${conference.name}`;
   const taskDescription = DEFAULT_TASK_DESCRIPTION;
+  const taskDueDate = researchTaskDueDate(researchDateValue(new Date(), 7));
   const task = await prisma.$transaction(async (tx) => {
     const createdTask = await tx.researchTask.create({
       data: {
@@ -5663,10 +5699,12 @@ async function createSubmitTaskForSuggestedConferenceApproval({
         status: ResearchTaskStatus.IN_PROGRESS,
         projectId,
         conferenceId,
-        dueDate: researchTaskDueDate(researchDateValue(new Date(), 7)),
+        dueDate: taskDueDate,
         createdById: originalTask?.createdById ?? approverId,
         checkerId: originalTask?.checkerId ?? null,
-        assignments: { create: { userId: suggestedById } },
+        assignments: {
+          create: { userId: suggestedById, dueDate: taskDueDate },
+        },
         ...(guide ? { guides: { connect: { id: guide.id } } } : {}),
       },
       select: {
@@ -5773,7 +5811,15 @@ async function completeSuggestVenueTaskIfReady(
       assignments: {
         updateMany: {
           where: { finishedAt: null },
-          data: { finishedAt: completedAt },
+          data: {
+            finishedAt: completedAt,
+            completedAt,
+            completedById,
+            completionMessage: note,
+            redoRequestedAt: null,
+            redoRequestedById: null,
+            redoReason: null,
+          },
         },
       },
     },
@@ -5819,7 +5865,15 @@ async function markSuggestVenueTaskWaitingForJournalCreation(
       assignments: {
         updateMany: {
           where: {},
-          data: { finishedAt: null },
+          data: {
+            finishedAt: null,
+            completedAt: null,
+            completedById: null,
+            completionMessage: null,
+            redoRequestedAt: null,
+            redoRequestedById: null,
+            redoReason: null,
+          },
         },
       },
     },
@@ -5939,7 +5993,15 @@ async function requestSuggestVenueTaskRedoForDecline(
       assignments: {
         updateMany: {
           where: {},
-          data: { finishedAt: null },
+          data: {
+            finishedAt: null,
+            completedAt: null,
+            completedById: null,
+            completionMessage: null,
+            redoRequestedAt: now,
+            redoRequestedById: requestedById,
+            redoReason,
+          },
         },
       },
     },
@@ -7136,6 +7198,9 @@ export async function createResearchTask(formData: FormData) {
           productionSubtype,
         });
 
+  const taskDueDate = researchTaskDueDate(
+    optionalString(formData.get("dueDate")),
+  );
   const task = await prisma.researchTask.create({
     data: {
       title: optionalString(formData.get("title")) ?? "Untitled task",
@@ -7162,11 +7227,11 @@ export async function createResearchTask(formData: FormData) {
       journalTargetCount,
       suggestedVenueTargetCount,
       checkerId,
-      dueDate: researchTaskDueDate(optionalString(formData.get("dueDate"))),
+      dueDate: taskDueDate,
       createdById: user.id,
       ...(taskFile?.ok ? taskFile.data : {}),
       assignments: {
-        create: assigneeIds.map((userId) => ({ userId })),
+        create: assigneeIds.map((userId) => ({ userId, dueDate: taskDueDate })),
       },
       guides: {
         connect: resolvedTaskGuideIds.map((id) => ({ id })),
@@ -7534,6 +7599,9 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   );
 
   const task = await prisma.$transaction(async (tx) => {
+    const updatedTaskDueDate = researchTaskDueDate(
+      optionalString(formData.get("dueDate")),
+    );
     const updatedTask = await tx.researchTask.update({
       where: { id: taskId },
       data: {
@@ -7578,7 +7646,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
               reportUploadedById: null,
             }
           : {}),
-        dueDate: researchTaskDueDate(optionalString(formData.get("dueDate"))),
+        dueDate: updatedTaskDueDate,
         ...(formData.has("taskGuideIds")
           ? { guides: { set: taskGuideIds.map((id) => ({ id })) } }
           : {}),
@@ -7593,7 +7661,11 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     }
     if (addedAssignees.length > 0) {
       await tx.researchTaskAssignment.createMany({
-        data: addedAssignees.map((userId) => ({ taskId, userId })),
+        data: addedAssignees.map((userId) => ({
+          taskId,
+          userId,
+          dueDate: updatedTaskDueDate,
+        })),
         skipDuplicates: true,
       });
     }
@@ -7885,7 +7957,10 @@ export async function revokeResearchTask(taskId: string, formData?: FormData) {
               journalTargetCount: currentTask.journalTargetCount,
               transferredFromTaskId: taskId,
               assignments: {
-                create: transferAssigneeIds.map((userId) => ({ userId })),
+                create: transferAssigneeIds.map((userId) => ({
+                  userId,
+                  dueDate: currentTask.dueDate,
+                })),
               },
               guides:
                 currentTask.guides.length > 0
@@ -9781,7 +9856,7 @@ export async function approveSuggestedJournal(
           journalTargetCount: 1,
           createdById: suggestion.task?.createdById ?? user.id,
           checkerId: followUpCheckerId,
-          assignments: { create: { userId: suggesterId } },
+          assignments: { create: { userId: suggesterId, dueDate } },
           guides: { connect: { id: guide.id } },
         },
         select: { id: true },
@@ -10325,7 +10400,13 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
       createdBy: { select: { email: true } },
       checker: { select: { email: true } },
       assignments: {
-        select: { userId: true, user: { select: { email: true } } },
+        select: {
+          id: true,
+          userId: true,
+          finishedAt: true,
+          completedAt: true,
+          user: { select: { email: true } },
+        },
       },
     },
   });
@@ -10351,20 +10432,43 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
   }
 
   const finishedAt = new Date();
-  await prisma.$transaction(async (tx) => {
+  const readyResult = await prisma.$transaction(async (tx) => {
+    await tx.researchTaskAssignment.updateMany({
+      where: isAdmin
+        ? { taskId, completedAt: null }
+        : { taskId, userId: user.id, completedAt: null },
+      data: {
+        finishedAt,
+        redoRequestedAt: null,
+        redoRequestedById: null,
+        redoReason: null,
+      },
+    });
+
+    const assignments = await tx.researchTaskAssignment.findMany({
+      where: { taskId },
+      select: { finishedAt: true, completedAt: true, redoRequestedAt: true },
+    });
+    const allReady =
+      assignments.length > 0 &&
+      assignments.every(
+        (assignment) => assignment.completedAt || assignment.finishedAt,
+      );
+    const anyRedo = assignments.some(
+      (assignment) => assignment.redoRequestedAt && !assignment.completedAt,
+    );
+
     await tx.researchTask.update({
       where: { id: taskId },
       data: {
-        status: ResearchTaskStatus.CHECKING,
+        status: allReady
+          ? ResearchTaskStatus.CHECKING
+          : anyRedo
+            ? ResearchTaskStatus.REVISION_REQUESTED
+            : ResearchTaskStatus.IN_PROGRESS,
         completedAt: null,
         revokedAt: null,
         adminViewedAt: null,
-        assignments: {
-          updateMany: {
-            where: isAdmin ? { finishedAt: null } : { userId: user.id },
-            data: { finishedAt },
-          },
-        },
       },
     });
 
@@ -10378,41 +10482,48 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
         data: { resultCorrectionResolvedAt: finishedAt },
       });
     }
+
+    return { allReady };
   });
 
-  await notifyUsers({
-    userIds: [task.createdById, task.checkerId].filter((id): id is string =>
-      Boolean(id),
-    ),
-    type: "TASK_READY_FOR_CHECK",
-    title: "Task ready for check",
-    summary: task.title,
-    body: "An assignee marked this task as finished and ready for review.",
-    href: `/tasks/${taskId}`,
-    entityType: "task",
-    entityId: taskId,
-    excludeUserId: user.id,
-  });
-  await sendTaskManagerEmails({
-    assignerEmail: task.createdBy.email,
-    checkerEmail: task.checker?.email ?? null,
-    taskTitle: task.title,
-    taskId,
-    assigner: {
-      subject: `Task ready for your review: ${task.title}`,
-      heading: "Task ready for assigner review",
-      intro:
-        "An assignee has marked the assigned work as finished. As the assigner, please review the work and either approve completion or send it back for revision.",
-      actionLabel: "Review task",
-    },
-    checker: {
-      subject: `Task ready for checker review: ${task.title}`,
-      heading: "Task ready for checker review",
-      intro:
-        "An assignee has marked the assigned work as finished. As the checker, please review the result and confirm whether this task is ready to be approved.",
-      actionLabel: "Check task",
-    },
-  });
+  if (readyResult.allReady) {
+    await notifyUsers({
+      userIds: [task.createdById, task.checkerId].filter((id): id is string =>
+        Boolean(id),
+      ),
+      type: "TASK_READY_FOR_CHECK",
+      title: "Task ready for check",
+      summary: task.title,
+      body:
+        task.assignments.length > 1
+          ? "All assignees marked their work ready for review."
+          : "An assignee marked this task as finished and ready for review.",
+      href: `/tasks/${taskId}`,
+      entityType: "task",
+      entityId: taskId,
+      excludeUserId: user.id,
+    });
+    await sendTaskManagerEmails({
+      assignerEmail: task.createdBy.email,
+      checkerEmail: task.checker?.email ?? null,
+      taskTitle: task.title,
+      taskId,
+      assigner: {
+        subject: `Task ready for your review: ${task.title}`,
+        heading: "Task ready for assigner review",
+        intro:
+          "All assignees have marked the assigned work as finished. As the assigner, please review the work and either approve completion or send it back for revision.",
+        actionLabel: "Review task",
+      },
+      checker: {
+        subject: `Task ready for checker review: ${task.title}`,
+        heading: "Task ready for checker review",
+        intro:
+          "All assignees have marked the assigned work as finished. As the checker, please review the result and confirm whether this task is ready to be approved.",
+        actionLabel: "Check task",
+      },
+    });
+  }
 
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
@@ -10697,6 +10808,7 @@ async function createNextProductionWorkflowTask({
     proposalScope: ProposalTaskScope.RESEARCH,
     productionSubtype: nextSubtype,
   });
+  const nextDueDate = researchTaskDueDate(researchDateValue(new Date(), 7));
 
   return prisma.researchTask.create({
     data: {
@@ -10711,11 +10823,12 @@ async function createNextProductionWorkflowTask({
       status: ResearchTaskStatus.IN_PROGRESS,
       projectId: sourceTask.projectId,
       checkerId: sourceTask.checkerId,
-      dueDate: researchTaskDueDate(researchDateValue(new Date(), 7)),
+      dueDate: nextDueDate,
       createdById,
       assignments: {
         create: sourceTask.assignments.map((assignment) => ({
           userId: assignment.userId,
+          dueDate: nextDueDate,
         })),
       },
       guides: {
@@ -10736,6 +10849,7 @@ async function createNextProductionWorkflowTask({
 
 export async function finishResearchTask(taskId: string, formData?: FormData) {
   const user = await requireCurrentUser();
+  const assignmentId = optionalString(formData?.get("assignmentId") ?? null);
   const completionMessage = optionalString(
     formData?.get("completionMessage") ?? null,
   )?.slice(0, 2000);
@@ -10764,7 +10878,13 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       },
       journalCreationSuggestion: { select: { id: true } },
       assignments: {
-        select: { userId: true, user: { select: { email: true } } },
+        select: {
+          id: true,
+          userId: true,
+          finishedAt: true,
+          completedAt: true,
+          user: { select: { email: true } },
+        },
       },
     },
   });
@@ -10783,13 +10903,129 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     (assignment) => assignment.userId === user.id,
   );
   const selfAssigned = task.createdById === user.id && isAssigned;
-  if (!isAdmin && task.createdById !== user.id) redirect("/401");
+  const canManageAssignment =
+    isAdmin || task.createdById === user.id || task.checkerId === user.id;
+  if (!isAdmin && task.createdById !== user.id && task.checkerId !== user.id)
+    redirect("/401");
+  if (assignmentId && !canManageAssignment) redirect("/401");
   if (
     !selfAssigned &&
     !isAdmin &&
+    !assignmentId &&
+    task.checkerId !== user.id &&
     task.status !== ResearchTaskStatus.CHECKING
   ) {
     return;
+  }
+
+  if (assignmentId) {
+    const approvedAt = new Date();
+    const result = await prisma.$transaction(async (tx) => {
+      const targetAssignment = await tx.researchTaskAssignment.findFirst({
+        where: { id: assignmentId, taskId },
+        select: {
+          id: true,
+          userId: true,
+          finishedAt: true,
+          completedAt: true,
+          user: { select: { email: true } },
+        },
+      });
+      if (
+        !targetAssignment ||
+        targetAssignment.completedAt ||
+        !targetAssignment.finishedAt
+      ) {
+        return {
+          ok: false,
+          allComplete: false,
+          targetAssignment,
+          assignments: [],
+        };
+      }
+
+      await tx.researchTaskAssignment.update({
+        where: { id: assignmentId },
+        data: {
+          completedAt: approvedAt,
+          completedById: user.id,
+          completionMessage,
+          redoRequestedAt: null,
+          redoRequestedById: null,
+          redoReason: null,
+        },
+      });
+
+      const assignments = await tx.researchTaskAssignment.findMany({
+        where: { taskId },
+        select: {
+          id: true,
+          userId: true,
+          finishedAt: true,
+          completedAt: true,
+          redoRequestedAt: true,
+          user: { select: { email: true } },
+        },
+      });
+      const allComplete =
+        assignments.length > 0 &&
+        assignments.every(
+          (assignment) =>
+            assignment.completedAt || assignment.id === assignmentId,
+        );
+      const allReady = assignments.every(
+        (assignment) => assignment.completedAt || assignment.finishedAt,
+      );
+      const anyRedo = assignments.some(
+        (assignment) => assignment.redoRequestedAt && !assignment.completedAt,
+      );
+      if (!allComplete) {
+        await tx.researchTask.update({
+          where: { id: taskId },
+          data: {
+            status: allReady
+              ? ResearchTaskStatus.CHECKING
+              : anyRedo
+                ? ResearchTaskStatus.REVISION_REQUESTED
+                : ResearchTaskStatus.IN_PROGRESS,
+            completedAt: null,
+            completionMessage: null,
+            completedById: null,
+            adminViewedAt: null,
+          },
+        });
+      }
+
+      return { ok: true, allComplete, targetAssignment, assignments };
+    });
+
+    if (!result.ok || !result.targetAssignment) {
+      revalidatePath("/tasks");
+      revalidatePath(`/tasks/${taskId}`);
+      return;
+    }
+
+    await notifyUsers({
+      userIds: [result.targetAssignment.userId],
+      type: "TASK_COMPLETED",
+      title: result.allComplete
+        ? "Task fully completed"
+        : "Your part of the task was approved",
+      summary: task.title,
+      body: result.allComplete
+        ? "Your work was approved and all assignees are now complete."
+        : "Your work was approved. The task remains open until every assignee is complete.",
+      href: `/tasks/${taskId}`,
+      entityType: "task",
+      entityId: taskId,
+      excludeUserId: user.id,
+    });
+
+    if (!result.allComplete) {
+      revalidatePath("/tasks");
+      revalidatePath(`/tasks/${taskId}`);
+      return;
+    }
   }
 
   if (!(await createSubmissionAfterTaskApproval(task, formData))) return;
@@ -10842,8 +11078,16 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
           : undefined,
       assignments: {
         updateMany: {
-          where: { finishedAt: null },
-          data: { finishedAt: completedAt },
+          where: { completedAt: null },
+          data: {
+            finishedAt: completedAt,
+            completedAt,
+            completedById: user.id,
+            completionMessage,
+            redoRequestedAt: null,
+            redoRequestedById: null,
+            redoReason: null,
+          },
         },
       },
       review:
@@ -11105,6 +11349,7 @@ export async function sendTaskReminderEmail(
 export async function requestTaskRedo(taskId: string, formData: FormData) {
   const user = await requireCurrentUser();
   const reason = optionalString(formData.get("reason"));
+  const assignmentId = optionalString(formData.get("assignmentId"));
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
     select: {
@@ -11113,17 +11358,28 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
       createdById: true,
       checkerId: true,
       assignments: {
-        select: { userId: true, user: { select: { email: true } } },
+        select: {
+          id: true,
+          userId: true,
+          user: { select: { email: true } },
+        },
       },
     },
   });
   if (!task) return;
   if (
     !(await canManageTaskAsResearchAdmin(taskId, user)) &&
-    task.createdById !== user.id
+    task.createdById !== user.id &&
+    task.checkerId !== user.id
   ) {
     redirect("/401");
   }
+
+  const requestedAt = new Date();
+  const selectedAssignments = assignmentId
+    ? task.assignments.filter((assignment) => assignment.id === assignmentId)
+    : task.assignments;
+  if (assignmentId && selectedAssignments.length === 0) return;
 
   await prisma.researchTask.update({
     where: { id: taskId },
@@ -11132,11 +11388,24 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
       completedAt: null,
       completedBy: { disconnect: true },
       completionMessage: null,
-      redoRequestedAt: new Date(),
+      redoRequestedAt: requestedAt,
       redoRequestedBy: { connect: { id: user.id } },
       redoReason: reason,
       adminViewedAt: null,
-      assignments: { updateMany: { where: {}, data: { finishedAt: null } } },
+      assignments: {
+        updateMany: {
+          where: assignmentId ? { id: assignmentId } : {},
+          data: {
+            finishedAt: null,
+            completedAt: null,
+            completedById: null,
+            completionMessage: null,
+            redoRequestedAt: requestedAt,
+            redoRequestedById: user.id,
+            redoReason: reason,
+          },
+        },
+      },
     },
   });
   if (reason) {
@@ -11152,7 +11421,7 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
     });
   }
   await notifyUsers({
-    userIds: task.assignments.map((assignment) => assignment.userId),
+    userIds: selectedAssignments.map((assignment) => assignment.userId),
     type: "TASK_REDO_REQUIRED",
     title: "Task needs revision",
     summary: task.title,
@@ -11165,11 +11434,12 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
     excludeUserId: user.id,
   });
   await sendTaskEmail({
-    to: task.assignments.map((assignment) => assignment.user.email),
+    to: selectedAssignments.map((assignment) => assignment.user.email),
     subject: `Revision requested: ${task.title}`,
     heading: "Task needs revision",
-    intro:
-      "The assigner reviewed the work and requested revision before the task can be completed.",
+    intro: assignmentId
+      ? "The task manager reviewed your work and requested revision before your part can be completed."
+      : "The assigner reviewed the work and requested revision before the task can be completed.",
     detail: reason ?? undefined,
     taskTitle: task.title,
     taskId,
