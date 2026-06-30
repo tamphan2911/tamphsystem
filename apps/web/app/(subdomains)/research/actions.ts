@@ -4598,7 +4598,11 @@ export async function linkJournalToTaskSlot(
   return { journalName: journal.name };
 }
 
-export async function approveTaskJournal(taskId: string, journalId: string) {
+export async function approveTaskJournal(
+  taskId: string,
+  journalId: string,
+  formData?: FormData,
+) {
   const user = await requireCurrentUser();
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
@@ -4629,22 +4633,171 @@ export async function approveTaskJournal(taskId: string, journalId: string) {
   });
   if (!journal) throw new Error("Task journal was not found.");
 
-  await approveJournalWithWorkflow(journalId, user.id);
+  await approveJournalWithWorkflow(
+    journalId,
+    user.id,
+    optionalString(formData?.get("note") ?? null),
+  );
+}
+
+export async function requestTaskJournalCorrection(
+  taskId: string,
+  journalId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  const note = optionalString(formData.get("note"))?.slice(0, 2000) ?? null;
+  const requestedAt = new Date();
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      title: true,
+      taskType: true,
+      status: true,
+      createdById: true,
+      checkerId: true,
+      assignments: {
+        select: { userId: true, user: { select: { email: true } } },
+      },
+      journalCreationSuggestion: {
+        select: {
+          task: { select: { checkerId: true } },
+        },
+      },
+    },
+  });
+  const sourceSuggestVenueCheckerId =
+    task?.journalCreationSuggestion?.task?.checkerId ?? null;
+  if (
+    !task ||
+    task.taskType !== ResearchTaskType.ADD_JOURNAL ||
+    (!user.roles.includes(Role.ADMIN) &&
+      task.createdById !== user.id &&
+      task.checkerId !== user.id &&
+      sourceSuggestVenueCheckerId !== user.id)
+  ) {
+    redirect("/401");
+  }
+  if (
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    throw new Error("This task is already closed.");
+  }
+
+  const journal = await prisma.journal.findFirst({
+    where: { id: journalId, resultTaskId: taskId },
+    select: { id: true, name: true, approvalStatus: true },
+  });
+  if (!journal) throw new Error("Task journal was not found.");
+  if (journal.approvalStatus === JournalApprovalStatus.APPROVED) {
+    throw new Error("This journal is already approved.");
+  }
+
+  const redoReason = [
+    `Correction requested for added journal: ${journal.name}.`,
+    note ? `Note: ${note}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  await prisma.$transaction(async (tx) => {
+    await tx.journal.update({
+      where: { id: journalId },
+      data: {
+        approvalStatus: JournalApprovalStatus.PENDING_APPROVAL,
+        resultCorrectionNote: note,
+        resultCorrectionRequestedAt: requestedAt,
+        resultCorrectionRequestedById: user.id,
+        resultCorrectionResolvedAt: null,
+        resultApprovalNote: null,
+        resultApprovedAt: null,
+        resultApprovedById: null,
+      },
+    });
+    await tx.researchTask.update({
+      where: { id: taskId },
+      data: {
+        status: ResearchTaskStatus.REVISION_REQUESTED,
+        completedAt: null,
+        completedById: null,
+        completionMessage: null,
+        redoRequestedAt: requestedAt,
+        redoRequestedById: user.id,
+        redoReason,
+        adminViewedAt: null,
+        assignments: {
+          updateMany: {
+            where: {},
+            data: { finishedAt: null },
+          },
+        },
+      },
+    });
+  });
+
+  const assigneeIds = task.assignments.map((assignment) => assignment.userId);
+  await notifyUsers({
+    userIds: assigneeIds,
+    excludeUserId: user.id,
+    type: "TASK_REVISION_REQUESTED",
+    title: "Journal correction requested",
+    summary: task.title,
+    body: redoReason,
+    href: `/tasks/${task.id}`,
+    entityType: "task",
+    entityId: task.id,
+  });
+  try {
+    await sendTaskEmail({
+      to: task.assignments.map((assignment) => assignment.user.email),
+      subject: `Journal correction requested: ${task.title}`,
+      heading: "Journal correction requested",
+      intro:
+        "A journal result in your add-journal task needs correction before it can be approved.",
+      detail: redoReason,
+      taskTitle: task.title,
+      taskId: task.id,
+      actionLabel: "Open task",
+    });
+  } catch (error) {
+    console.error("[research tasks] journal correction email failed", error);
+  }
+
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+  revalidatePath("/journals");
+  revalidatePath(`/journals/${journalId}`);
 }
 
 export async function updateJournal(journalId: string, formData: FormData) {
   const user = await requireCurrentUser();
   const journal = await prisma.journal.findUnique({
     where: { id: journalId },
-    select: { approvalStatus: true, createdById: true, resultTaskId: true },
+    select: {
+      approvalStatus: true,
+      createdById: true,
+      resultTaskId: true,
+      resultCorrectionRequestedAt: true,
+      resultTask: { select: { assignments: { select: { userId: true } } } },
+    },
   });
   if (!journal) return;
+  const isPendingCreator =
+    journal.createdById === user.id &&
+    journal.approvalStatus === JournalApprovalStatus.PENDING_APPROVAL;
+  const isTaskResultAssignee = Boolean(
+    journal.resultTaskId &&
+    journal.resultTask?.assignments.some(
+      (assignment) => assignment.userId === user.id,
+    ),
+  );
   const canEdit =
     user.roles.includes(Role.ADMIN) ||
     canEditJournalDetailsByEmail(user.email) ||
-    (user.canManageResearchVenues &&
-      journal.createdById === user.id &&
-      journal.approvalStatus === JournalApprovalStatus.PENDING_APPROVAL);
+    (isPendingCreator &&
+      (user.canManageResearchVenues || isTaskResultAssignee));
   if (!canEdit) redirect("/401");
   const fields = orderedUniqueStrings(formData.getAll("fields"));
   const legacyField = optionalString(formData.get("field"));
@@ -4690,6 +4843,10 @@ export async function updateJournal(journalId: string, formData: FormData) {
       scimagoLink: optionalString(formData.get("scimagoLink")),
       scopusLink: optionalString(formData.get("scopusLink")),
       note: optionalString(formData.get("note")),
+      resultCorrectionResolvedAt:
+        isTaskResultAssignee && journal.resultCorrectionRequestedAt
+          ? new Date()
+          : undefined,
     },
   });
 
@@ -4733,6 +4890,7 @@ export async function updateJournalApprovalStatus(
 async function approveJournalWithWorkflow(
   journalId: string,
   approvedById: string,
+  approvalNote?: string | null,
 ) {
   const completedAt = new Date();
   const result = await prisma.$transaction(async (tx) => {
@@ -4784,7 +4942,13 @@ async function approveJournalWithWorkflow(
 
     await tx.journal.update({
       where: { id: journalId },
-      data: { approvalStatus: JournalApprovalStatus.APPROVED },
+      data: {
+        approvalStatus: JournalApprovalStatus.APPROVED,
+        resultApprovalNote: approvalNote,
+        resultApprovedAt: completedAt,
+        resultApprovedById: approvedById,
+        resultCorrectionResolvedAt: completedAt,
+      },
     });
 
     const workflowTask = journal.resultTask;
@@ -4920,6 +5084,7 @@ async function approveJournalWithWorkflow(
     }
     const body = [
       `${result.journalName} was approved.`,
+      approvalNote ? `Approval note: ${approvalNote}` : null,
       result.workflow.suggestionId
         ? "The linked venue suggestion is now approved."
         : null,
@@ -6216,7 +6381,17 @@ export async function approvePublisher(publisherId: string) {
 
 export async function updatePublisher(publisherId: string, formData: FormData) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  const currentPublisher = await prisma.publisher.findUnique({
+    where: { id: publisherId },
+    select: { createdById: true, approvalStatus: true },
+  });
+  if (!currentPublisher) throw new Error("Publisher was not found.");
+  const canEdit =
+    user.roles.includes(Role.ADMIN) ||
+    (currentPublisher.createdById === user.id &&
+      currentPublisher.approvalStatus ===
+        JournalApprovalStatus.PENDING_APPROVAL);
+  if (!canEdit) redirect("/401");
 
   const name = optionalString(formData.get("name"));
   if (!name) throw new Error("Publisher name is required.");
@@ -10143,6 +10318,7 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
       id: true,
       status: true,
       title: true,
+      taskType: true,
       createdById: true,
       checkerId: true,
       journalCreationSuggestion: { select: { id: true } },
@@ -10155,7 +10331,11 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
   });
 
   if (!task) return;
-  if (task.journalCreationSuggestion) return;
+  const canReadyAutomatedJournalTask =
+    task.journalCreationSuggestion &&
+    task.taskType === ResearchTaskType.ADD_JOURNAL &&
+    task.status === ResearchTaskStatus.REVISION_REQUESTED;
+  if (task.journalCreationSuggestion && !canReadyAutomatedJournalTask) return;
   if (
     task.status === ResearchTaskStatus.COMPLETED ||
     task.status === ResearchTaskStatus.REVOKED
@@ -10171,20 +10351,33 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
   }
 
   const finishedAt = new Date();
-  await prisma.researchTask.update({
-    where: { id: taskId },
-    data: {
-      status: ResearchTaskStatus.CHECKING,
-      completedAt: null,
-      revokedAt: null,
-      adminViewedAt: null,
-      assignments: {
-        updateMany: {
-          where: isAdmin ? { finishedAt: null } : { userId: user.id },
-          data: { finishedAt },
+  await prisma.$transaction(async (tx) => {
+    await tx.researchTask.update({
+      where: { id: taskId },
+      data: {
+        status: ResearchTaskStatus.CHECKING,
+        completedAt: null,
+        revokedAt: null,
+        adminViewedAt: null,
+        assignments: {
+          updateMany: {
+            where: isAdmin ? { finishedAt: null } : { userId: user.id },
+            data: { finishedAt },
+          },
         },
       },
-    },
+    });
+
+    if (task.taskType === ResearchTaskType.ADD_JOURNAL) {
+      await tx.journal.updateMany({
+        where: {
+          resultTaskId: taskId,
+          resultCorrectionRequestedAt: { not: null },
+          resultCorrectionResolvedAt: null,
+        },
+        data: { resultCorrectionResolvedAt: finishedAt },
+      });
+    }
   });
 
   await notifyUsers({

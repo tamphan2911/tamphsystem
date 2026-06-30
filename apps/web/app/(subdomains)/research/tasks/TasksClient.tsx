@@ -79,6 +79,10 @@ type TaskRow = {
     startedAt: string;
   } | null;
   waitingForJournalCreation: boolean;
+  addJournalCorrection: {
+    detail: string;
+    count: number;
+  } | null;
   addJournalReview: {
     detail: string;
     pendingPublisherCount: number;
@@ -357,6 +361,20 @@ function statusMeta(task: TaskRow) {
     };
   }
 
+  if (task.addJournalCorrection) {
+    const activeDue = activeDueMeta(due, remainingMs);
+    return {
+      label: "Correction requested",
+      detail: activeDue.detail,
+      dateLines: due ? [`Due: ${formatDate(task.dueDate)}`] : [],
+      secondaryDetail: task.addJournalCorrection.detail,
+      className:
+        "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-300/40 dark:bg-orange-950/25 dark:text-orange-300",
+      detailClassName: activeDue.detailClassName,
+      secondaryDetailClassName: "text-orange-700 dark:text-orange-300",
+    };
+  }
+
   if (task.addJournalReview) {
     const activeDue = activeDueMeta(due, remainingMs);
     return {
@@ -560,6 +578,7 @@ function statusIconMeta(task: TaskRow): {
 
 function derivedStatus(task: TaskRow) {
   if (task.waitingForJournalCreation) return "IN_PROGRESS";
+  if (task.addJournalCorrection) return "REVISION_REQUESTED";
   if (task.addJournalReview) return "CHECKING";
   if (
     task.status === "CHECKING" ||
@@ -1066,6 +1085,7 @@ export function TasksClient({
         task.waitingForJournalCreation
           ? "Waiting for assignee to add journal"
           : "",
+        task.addJournalCorrection?.detail,
         task.addJournalReview?.detail,
         task.createdBy,
         task.checker,

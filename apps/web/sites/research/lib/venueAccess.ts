@@ -11,7 +11,6 @@ export function hasUnrestrictedVenueAccess(roles: Role[]) {
 
 export function staffJournalAccessWhere(
   roles: Role[],
-  userId?: string,
 ): Prisma.JournalWhereInput | null {
   if (roles.includes(Role.ADMIN)) return {};
   if (roles.includes(Role.CHIEF_ASSISTANT)) return {};
@@ -26,6 +25,7 @@ export function staffPublisherAccessWhere(
 ): Prisma.PublisherWhereInput | null {
   if (roles.includes(Role.ADMIN)) return {};
   if (roles.includes(Role.CHIEF_ASSISTANT)) return {};
+  if (roles.includes(Role.ASSISTANT) && userId) return { createdById: userId };
   if (userId && canManageResearchVenues) return { createdById: userId };
   return null;
 }

@@ -64,6 +64,11 @@ export default async function PublishersPage() {
     note: publisher.note ?? "",
     usesSingleAccount: publisher.usesSingleAccount,
     approvalStatus: publisher.approvalStatus,
+    canApprove: isAdmin,
+    canEdit:
+      isAdmin ||
+      (publisher.createdById === userId &&
+        publisher.approvalStatus === "PENDING_APPROVAL"),
     publisherAccount: publisher.accounts[0]
       ? {
           id: publisher.accounts[0].id,

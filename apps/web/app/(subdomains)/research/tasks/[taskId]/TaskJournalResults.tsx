@@ -36,6 +36,7 @@ import {
   approveTaskJournal,
   createJournalForTaskSlot,
   linkJournalToTaskSlot,
+  requestTaskJournalCorrection,
 } from "../../actions";
 
 export type TaskJournalResult = {
@@ -64,6 +65,13 @@ export type TaskJournalResult = {
   scopusLink: string;
   note: string;
   approvalStatus: string;
+  resultApprovalNote: string;
+  resultApprovedAt: string;
+  resultApprovedBy: string;
+  resultCorrectionNote: string;
+  resultCorrectionRequestedAt: string;
+  resultCorrectionRequestedBy: string;
+  resultCorrectionResolvedAt: string;
   publisherApprovalStatus?: string;
   createdBy: string;
 };
@@ -104,6 +112,7 @@ export function TaskJournalResults({
   const [linkSlot, setLinkSlot] = useState<number | null>(null);
   const [approvalJournal, setApprovalJournal] =
     useState<TaskJournalResult | null>(null);
+  const [reviewNote, setReviewNote] = useState("");
   const [publisherApprovalJournal, setPublisherApprovalJournal] =
     useState<TaskJournalResult | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -179,40 +188,119 @@ export function TaskJournalResults({
         onClose={() => setLinkSlot(null)}
       />
 
-      <ResearchConfirmDialog
+      <ResearchModal
         open={Boolean(approvalJournal)}
-        title="Approve this journal?"
-        description={
-          approvalJournal
-            ? `${approvalJournal.name} will become available across the research site.`
-            : undefined
-        }
-        confirmLabel={isPending ? "Approving..." : "Approve journal"}
-        isConfirming={isPending}
-        onCancel={() => setApprovalJournal(null)}
-        onConfirm={() => {
-          if (!approvalJournal) return;
-          startTransition(async () => {
-            try {
-              await approveTaskJournal(taskId, approvalJournal.id);
-              toast.showSuccess({
-                title: "Journal approved",
-                detail: `${approvalJournal.name} is now approved and available.`,
-              });
-              setApprovalJournal(null);
-              router.refresh();
-            } catch (error) {
-              toast.showError({
-                title: "Journal could not be approved",
-                detail:
-                  error instanceof Error
-                    ? error.message
-                    : "Approve the linked publisher first, then try again.",
-              });
-            }
-          });
+        onClose={() => {
+          setApprovalJournal(null);
+          setReviewNote("");
         }}
-      />
+        title="Review journal result"
+        maxWidth="max-w-xl"
+        bodyClassName="px-5 py-4"
+      >
+        {approvalJournal ? (
+          <div className="grid gap-4">
+            <div className="border border-[#D8D0C2] bg-[#FFFDF8] px-3 py-3 dark:border-[#444444] dark:bg-[#202020]">
+              <p className="text-sm font-normal text-[#243047] dark:text-[#E4E4E4]">
+                {approvalJournal.name}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                {[approvalJournal.issn || "No ISSN", approvalJournal.publisher]
+                  .filter(Boolean)
+                  .join(" - ")}
+              </p>
+            </div>
+            <label className="grid gap-1.5">
+              <span className="text-xs font-normal uppercase text-[#667085] dark:text-[#B0B0B0]">
+                Note
+              </span>
+              <textarea
+                rows={4}
+                maxLength={2000}
+                value={reviewNote}
+                onChange={(event) => setReviewNote(event.target.value)}
+                placeholder="Optional note for approval or correction request."
+                className="min-h-28 w-full rounded-none border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal text-slate-800 outline-none transition duration-150 ease-out placeholder:text-slate-400 hover:border-slate-300 hover:bg-slate-50 focus:border-sky-500 focus:bg-white dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:placeholder:text-[#5A5A5A] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:focus:border-[#A8DADC]"
+              />
+              <span className="text-xs leading-5 text-[#7C8798] dark:text-[#9CA3AF]">
+                This note is included in the notification to the assignee.
+              </span>
+            </label>
+            <div className="flex flex-wrap justify-end gap-2">
+              <ResearchButton
+                type="button"
+                tone="secondary"
+                disabled={isPending}
+                onClick={() => {
+                  const formData = new FormData();
+                  formData.set("note", reviewNote);
+                  startTransition(async () => {
+                    try {
+                      await requestTaskJournalCorrection(
+                        taskId,
+                        approvalJournal.id,
+                        formData,
+                      );
+                      toast.showSuccess({
+                        title: "Correction requested",
+                        detail: `${approvalJournal.name} was sent back for correction.`,
+                      });
+                      setApprovalJournal(null);
+                      setReviewNote("");
+                      router.refresh();
+                    } catch (error) {
+                      toast.showError({
+                        title: "Correction could not be requested",
+                        detail:
+                          error instanceof Error
+                            ? error.message
+                            : "Please refresh and try again.",
+                      });
+                    }
+                  });
+                }}
+              >
+                {isPending ? "Sending..." : "Ask for correction"}
+              </ResearchButton>
+              <ResearchButton
+                type="button"
+                tone="success"
+                disabled={isPending}
+                onClick={() => {
+                  const formData = new FormData();
+                  formData.set("note", reviewNote);
+                  startTransition(async () => {
+                    try {
+                      await approveTaskJournal(
+                        taskId,
+                        approvalJournal.id,
+                        formData,
+                      );
+                      toast.showSuccess({
+                        title: "Journal approved",
+                        detail: `${approvalJournal.name} is now approved and available.`,
+                      });
+                      setApprovalJournal(null);
+                      setReviewNote("");
+                      router.refresh();
+                    } catch (error) {
+                      toast.showError({
+                        title: "Journal could not be approved",
+                        detail:
+                          error instanceof Error
+                            ? error.message
+                            : "Approve the linked publisher first, then try again.",
+                      });
+                    }
+                  });
+                }}
+              >
+                {isPending ? "Approving..." : "Approve"}
+              </ResearchButton>
+            </div>
+          </div>
+        ) : null}
+      </ResearchModal>
 
       <ResearchConfirmDialog
         open={Boolean(publisherApprovalJournal)}
@@ -539,6 +627,14 @@ function JournalResultCard({
   const approved = journal.approvalStatus === "APPROVED";
   const publisherPending =
     journal.publisherApprovalStatus === "PENDING_APPROVAL";
+  const correctionRequested =
+    !approved &&
+    Boolean(journal.resultCorrectionRequestedAt) &&
+    !journal.resultCorrectionResolvedAt;
+  const correctionUpdated =
+    !approved &&
+    Boolean(journal.resultCorrectionRequestedAt) &&
+    Boolean(journal.resultCorrectionResolvedAt);
   const apc = journalMoneyMeta(journal.apc, journal.apcCurrency, "apc");
   const fee = journalMoneyMeta(
     journal.submissionFee,
@@ -563,10 +659,20 @@ function JournalResultCard({
           className={`inline-flex border px-2 py-1 text-[10px] uppercase ${
             approved
               ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-950/30 dark:text-emerald-200"
-              : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/30 dark:bg-amber-950/30 dark:text-amber-200"
+              : correctionRequested
+                ? "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-300/35 dark:bg-orange-950/30 dark:text-orange-200"
+                : correctionUpdated
+                  ? "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-300/35 dark:bg-sky-950/30 dark:text-sky-200"
+                  : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/30 dark:bg-amber-950/30 dark:text-amber-200"
           }`}
         >
-          {approved ? "Approved" : "Pending approval"}
+          {approved
+            ? "Approved"
+            : correctionRequested
+              ? "Correction requested"
+              : correctionUpdated
+                ? "Correction updated"
+                : "Pending approval"}
         </span>
         <div className="flex flex-none items-center gap-1">
           {canEdit ? (
@@ -637,6 +743,37 @@ function JournalResultCard({
           Publisher pending approval. Approve the publisher before approving
           this journal.
         </p>
+      ) : null}
+      {journal.resultCorrectionRequestedAt ? (
+        <div
+          className={`mt-2 border px-2 py-1.5 text-xs leading-5 ${
+            correctionRequested
+              ? "border-orange-200 bg-orange-50 text-orange-800 dark:border-orange-300/30 dark:bg-orange-950/25 dark:text-orange-200"
+              : "border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-300/30 dark:bg-sky-950/25 dark:text-sky-200"
+          }`}
+        >
+          <p>
+            {correctionRequested
+              ? "Correction requested"
+              : "Correction updated"}{" "}
+            by {journal.resultCorrectionRequestedBy || "task manager"}.
+          </p>
+          {journal.resultCorrectionNote ? (
+            <p className="mt-1 whitespace-pre-wrap break-words">
+              Note: {journal.resultCorrectionNote}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {approved && journal.resultApprovedAt ? (
+        <div className="mt-2 border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-xs leading-5 text-emerald-800 dark:border-emerald-300/30 dark:bg-emerald-950/25 dark:text-emerald-200">
+          <p>Approved by {journal.resultApprovedBy || "task manager"}.</p>
+          {journal.resultApprovalNote ? (
+            <p className="mt-1 whitespace-pre-wrap break-words">
+              Note: {journal.resultApprovalNote}
+            </p>
+          ) : null}
+        </div>
       ) : null}
       {journal.note ? (
         <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">

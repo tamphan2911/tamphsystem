@@ -773,33 +773,40 @@ model ConferenceSubmission {
 }
 
 model Journal {
-  id                    String                @id @default(uuid())
-  name                  String
-  issn                  String?
-  field                 String?
-  fields                String[]              @default([])
-  type                  JournalType           @default(INTERNATIONAL)
-  rank                  String? // Q1, Q2, Q3, Q4
-  localRank             String?
-  issuesPerYear         Int?
-  isFavorite            Boolean               @default(false)
-  isInterest            Boolean               @default(false)
-  publisher             String?
-  publisherId           String?
-  country               String?
-  apc                   String?
-  apcCurrency           CurrencyCode          @default(USD)
-  hasApcOption          Boolean               @default(false)
-  submissionFee         String?
-  submissionFeeCurrency CurrencyCode          @default(USD)
-  homepageLink          String?
-  submissionLink        String?
-  scimagoLink           String?
-  scopusLink            String?
-  note                  String?
-  approvalStatus        JournalApprovalStatus @default(APPROVED)
-  createdAt             DateTime              @default(now())
-  updatedAt             DateTime              @default(now()) @updatedAt
+  id                            String                @id @default(uuid())
+  name                          String
+  issn                          String?
+  field                         String?
+  fields                        String[]              @default([])
+  type                          JournalType           @default(INTERNATIONAL)
+  rank                          String? // Q1, Q2, Q3, Q4
+  localRank                     String?
+  issuesPerYear                 Int?
+  isFavorite                    Boolean               @default(false)
+  isInterest                    Boolean               @default(false)
+  publisher                     String?
+  publisherId                   String?
+  country                       String?
+  apc                           String?
+  apcCurrency                   CurrencyCode          @default(USD)
+  hasApcOption                  Boolean               @default(false)
+  submissionFee                 String?
+  submissionFeeCurrency         CurrencyCode          @default(USD)
+  homepageLink                  String?
+  submissionLink                String?
+  scimagoLink                   String?
+  scopusLink                    String?
+  note                          String?
+  approvalStatus                JournalApprovalStatus @default(APPROVED)
+  resultApprovalNote            String?
+  resultApprovedAt              DateTime?
+  resultApprovedById            String?
+  resultCorrectionNote          String?
+  resultCorrectionRequestedAt   DateTime?
+  resultCorrectionRequestedById String?
+  resultCorrectionResolvedAt    DateTime?
+  createdAt                     DateTime              @default(now())
+  updatedAt                     DateTime              @default(now()) @updatedAt
 
   createdById     String?
   resultTaskId    String?
@@ -819,6 +826,8 @@ model Journal {
   @@index([publisherId])
   @@index([approvalStatus])
   @@index([resultTaskId])
+  @@index([resultApprovedById])
+  @@index([resultCorrectionRequestedById])
 }
 
 model Publisher {

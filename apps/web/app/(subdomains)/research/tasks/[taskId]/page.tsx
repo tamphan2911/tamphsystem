@@ -149,6 +149,7 @@ function statusMeta(task: {
   revokedAt?: Date | null;
   clarifyDirection?: "ASSIGNEE_TO_MANAGER" | "MANAGER_TO_ASSIGNEE" | null;
   waitingForJournalCreation?: boolean;
+  addJournalCorrection?: string | null;
 }) {
   const now = new Date();
 
@@ -194,6 +195,15 @@ function statusMeta(task: {
       detail: "Waiting for assignee to add journal",
       tone: "blue" as const,
       timeTone: "blue" as const,
+    };
+  }
+
+  if (task.addJournalCorrection) {
+    return {
+      label: "Correction requested",
+      detail: task.addJournalCorrection,
+      tone: "amber" as const,
+      timeTone: "amber" as const,
     };
   }
 
@@ -1196,6 +1206,13 @@ export default async function TaskDetailPage({
           scopusLink: true,
           note: true,
           approvalStatus: true,
+          resultApprovalNote: true,
+          resultApprovedAt: true,
+          resultApprovedById: true,
+          resultCorrectionNote: true,
+          resultCorrectionRequestedAt: true,
+          resultCorrectionRequestedById: true,
+          resultCorrectionResolvedAt: true,
           publisherRecord: { select: { approvalStatus: true } },
           createdBy: { select: { name: true, email: true } },
         },
@@ -1755,10 +1772,27 @@ export default async function TaskDetailPage({
           ResearchTaskStatus.COMPLETED &&
         suggestion.journalCreationTask.status !== ResearchTaskStatus.REVOKED,
     );
+  const activeJournalCorrectionCount =
+    task.taskType === ResearchTaskType.ADD_JOURNAL
+      ? task.addedJournals.filter(
+          (journal) =>
+            journal.approvalStatus !== JournalApprovalStatus.APPROVED &&
+            journal.resultCorrectionRequestedAt &&
+            !journal.resultCorrectionResolvedAt,
+        ).length
+      : 0;
+  const addJournalCorrection =
+    task.status === ResearchTaskStatus.REVISION_REQUESTED &&
+    activeJournalCorrectionCount > 0
+      ? activeJournalCorrectionCount === 1
+        ? "Waiting assignee to correct the added journal"
+        : `Waiting assignee to correct ${activeJournalCorrectionCount} added journals`
+      : null;
   const meta = statusMeta({
     ...task,
     clarifyDirection,
     waitingForJournalCreation,
+    addJournalCorrection,
   });
   const taskResult =
     task.status === ResearchTaskStatus.COMPLETED
@@ -1841,10 +1875,14 @@ export default async function TaskDetailPage({
     ? ResearchTaskStatus.IN_PROGRESS
     : task.status;
   const isAutomatedJournalTask = Boolean(task.journalCreationSuggestion);
+  const canReadyAutomatedJournalTask =
+    isAutomatedJournalTask &&
+    task.taskType === ResearchTaskType.ADD_JOURNAL &&
+    task.status === ResearchTaskStatus.REVISION_REQUESTED;
   const canMarkReady =
     !isClosed &&
     !waitingForJournalCreation &&
-    !isAutomatedJournalTask &&
+    (!isAutomatedJournalTask || canReadyAutomatedJournalTask) &&
     isAssignee &&
     !selfAssigned &&
     effectiveStatus !== ResearchTaskStatus.CHECKING &&
@@ -1951,6 +1989,34 @@ export default async function TaskDetailPage({
       isAssigner ||
       isChecker ||
       isSourceJournalSuggestionChecker);
+  const journalReviewUserIds = Array.from(
+    new Set(
+      task.addedJournals
+        .flatMap((journal) => [
+          journal.resultApprovedById,
+          journal.resultCorrectionRequestedById,
+        ])
+        .filter((id): id is string => Boolean(id)),
+    ),
+  );
+  const journalReviewUsers =
+    journalReviewUserIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: journalReviewUserIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : [];
+  const journalReviewUserLabel = new Map(
+    journalReviewUsers.map((reviewUser) => [
+      reviewUser.id,
+      [
+        displayResearchPersonName(reviewUser),
+        displayResearchEmail(reviewUser.email),
+      ]
+        .filter(Boolean)
+        .join(" | "),
+    ]),
+  );
   const taskJournalResults: TaskJournalResult[] = task.addedJournals.flatMap(
     (journal) =>
       journal.resultPosition === null
@@ -1989,6 +2055,22 @@ export default async function TaskDetailPage({
               scopusLink: journal.scopusLink ?? "",
               note: journal.note ?? "",
               approvalStatus: journal.approvalStatus,
+              resultApprovalNote: journal.resultApprovalNote ?? "",
+              resultApprovedAt: journal.resultApprovedAt?.toISOString() ?? "",
+              resultApprovedBy: journal.resultApprovedById
+                ? (journalReviewUserLabel.get(journal.resultApprovedById) ??
+                  "task manager")
+                : "",
+              resultCorrectionNote: journal.resultCorrectionNote ?? "",
+              resultCorrectionRequestedAt:
+                journal.resultCorrectionRequestedAt?.toISOString() ?? "",
+              resultCorrectionRequestedBy: journal.resultCorrectionRequestedById
+                ? (journalReviewUserLabel.get(
+                    journal.resultCorrectionRequestedById,
+                  ) ?? "task manager")
+                : "",
+              resultCorrectionResolvedAt:
+                journal.resultCorrectionResolvedAt?.toISOString() ?? "",
               publisherApprovalStatus:
                 journal.publisherRecord?.approvalStatus ?? "APPROVED",
               createdBy: journal.createdBy

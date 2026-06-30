@@ -39,6 +39,8 @@ export type PublisherRow = {
   note: string;
   usesSingleAccount: boolean;
   approvalStatus: string;
+  canApprove: boolean;
+  canEdit: boolean;
   publisherAccount: {
     id: string;
     username: string;
@@ -150,6 +152,20 @@ function ApprovePublisherButton({
   }
 
   const isDeclined = publisher.approvalStatus === "DECLINED";
+
+  if (!publisher.canApprove) {
+    return (
+      <span
+        className={`inline-flex border px-2 py-1 text-[10px] uppercase ${
+          isDeclined
+            ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/25 dark:bg-rose-950/30 dark:text-rose-200"
+            : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/25 dark:bg-amber-950/30 dark:text-amber-200"
+        }`}
+      >
+        {isDeclined ? "Declined" : "Pending approval"}
+      </span>
+    );
+  }
 
   async function submit(nextDecision: "APPROVED" | "DECLINED") {
     setDecision(nextDecision);
@@ -299,6 +315,7 @@ export function PublishersTable({
   deleteAction: (publisherId: string) => Promise<void>;
 }) {
   const [query, setQuery] = usePersistentTableValue("publishers:q", "");
+  const showEditColumn = isAdmin || rows.some((row) => row.canEdit);
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) return rows;
@@ -335,12 +352,16 @@ export function PublishersTable({
               <th className="w-[9%] px-3 py-3 text-center">Submits</th>
               <th className="w-[9%] px-3 py-3 text-center">Accounts</th>
               <th className="w-[6%] px-2 py-3 text-center">Web</th>
-              {isAdmin ? (
+              {showEditColumn || isAdmin ? (
                 <>
-                  <th className="w-[6%] px-2 py-3 text-center">Edit</th>
-                  <th className="w-[6%] px-2 py-3 text-center">
-                    <span className="sr-only">Delete</span>
-                  </th>
+                  {showEditColumn ? (
+                    <th className="w-[6%] px-2 py-3 text-center">Edit</th>
+                  ) : null}
+                  {isAdmin ? (
+                    <th className="w-[6%] px-2 py-3 text-center">
+                      <span className="sr-only">Delete</span>
+                    </th>
+                  ) : null}
                 </>
               ) : null}
             </tr>
@@ -408,32 +429,46 @@ export function PublishersTable({
                     <Building2 className="mx-auto h-4 w-4 text-[#666666]" />
                   )}
                 </td>
-                {isAdmin ? (
+                {showEditColumn || isAdmin ? (
                   <>
-                    <td className="px-2 py-3 text-center align-top">
-                      <div className="flex items-start justify-center">
-                        <PublisherDialog
-                          mode="edit"
-                          submitAction={updateAction.bind(null, publisher.id)}
-                          initialValues={publisher}
-                        />
-                      </div>
-                    </td>
-                    <td className="px-2 py-3 text-center align-top">
-                      <div className="flex items-start justify-center">
-                        <DeletePublisherButton
-                          publisher={publisher}
-                          deleteAction={deleteAction}
-                        />
-                      </div>
-                    </td>
+                    {showEditColumn ? (
+                      <td className="px-2 py-3 text-center align-top">
+                        <div className="flex items-start justify-center">
+                          {publisher.canEdit ? (
+                            <PublisherDialog
+                              mode="edit"
+                              submitAction={updateAction.bind(
+                                null,
+                                publisher.id,
+                              )}
+                              initialValues={publisher}
+                            />
+                          ) : (
+                            <span className="text-[#777777]">-</span>
+                          )}
+                        </div>
+                      </td>
+                    ) : null}
+                    {isAdmin ? (
+                      <td className="px-2 py-3 text-center align-top">
+                        <div className="flex items-start justify-center">
+                          <DeletePublisherButton
+                            publisher={publisher}
+                            deleteAction={deleteAction}
+                          />
+                        </div>
+                      </td>
+                    ) : null}
                   </>
                 ) : null}
               </tr>
             ))}
             {pagination.total === 0 ? (
               <tr>
-                <td colSpan={isAdmin ? 10 : 8} className="px-4 py-2">
+                <td
+                  colSpan={8 + (showEditColumn ? 1 : 0) + (isAdmin ? 1 : 0)}
+                  className="px-4 py-2"
+                >
                   <ResearchEmptyState
                     title="No publishers match the current search."
                     detail="Try another publisher name, ID, website, or note."

@@ -172,6 +172,8 @@ export async function GET() {
           select: {
             approvalStatus: true,
             resultPosition: true,
+            resultCorrectionRequestedAt: true,
+            resultCorrectionResolvedAt: true,
             createdAt: true,
             updatedAt: true,
             publisherRecord: { select: { approvalStatus: true } },
@@ -273,10 +275,21 @@ export async function GET() {
       const pendingJournalCount = addedJournalResults.filter(
         (journal) => journal.approvalStatus !== JournalApprovalStatus.APPROVED,
       ).length;
+      const correctionRequestedCount = addedJournalResults.filter(
+        (journal) =>
+          journal.approvalStatus !== JournalApprovalStatus.APPROVED &&
+          journal.resultCorrectionRequestedAt &&
+          !journal.resultCorrectionResolvedAt,
+      ).length;
+      const addJournalCorrection =
+        task.taskType === ResearchTaskType.ADD_JOURNAL &&
+        task.status === ResearchTaskStatus.REVISION_REQUESTED &&
+        correctionRequestedCount > 0;
       const addJournalNeedsReview =
         task.taskType === ResearchTaskType.ADD_JOURNAL &&
         task.status !== ResearchTaskStatus.COMPLETED &&
         task.status !== ResearchTaskStatus.REVOKED &&
+        !addJournalCorrection &&
         addJournalFilled &&
         (pendingPublisherCount > 0 ||
           pendingJournalCount > 0 ||
@@ -358,6 +371,15 @@ export async function GET() {
             }
           : null,
         waitingForJournalCreation,
+        addJournalCorrection: addJournalCorrection
+          ? {
+              detail:
+                correctionRequestedCount === 1
+                  ? "Waiting assignee journal correction"
+                  : `Waiting assignee corrections for ${correctionRequestedCount} journals`,
+              count: correctionRequestedCount,
+            }
+          : null,
         addJournalReview: addJournalNeedsReview
           ? {
               detail: addJournalReviewDetail,

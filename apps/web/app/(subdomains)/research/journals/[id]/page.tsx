@@ -98,7 +98,7 @@ export default async function JournalDetailPage({
     email: session?.user?.email,
   });
   const canViewAllRegistrationClaims = isAdmin || isChiefAssistant;
-  const staffAccessWhere = staffJournalAccessWhere(roles, userId);
+  const staffAccessWhere = staffJournalAccessWhere(roles);
   const scopedProjectWhere = userId
     ? associatedResearchWhere(userId, registrationIdentityValues)
     : { id: "__no_access__" };
@@ -176,6 +176,7 @@ export default async function JournalDetailPage({
         resultTask: {
           select: {
             checkerId: true,
+            assignments: { select: { userId: true } },
             journalCreationSuggestion: {
               select: {
                 task: { select: { checkerId: true } },
@@ -220,9 +221,14 @@ export default async function JournalDetailPage({
     isAdmin ||
     canEditJournalDetailsByEmail(currentUser?.email) ||
     (approvalPending &&
-      Boolean(currentUser?.canManageResearchVenues) &&
       Boolean(userId) &&
-      journal.createdById === userId);
+      journal.createdById === userId &&
+      (Boolean(currentUser?.canManageResearchVenues) ||
+        Boolean(
+          journal.resultTask?.assignments.some(
+            (assignment) => assignment.userId === userId,
+          ),
+        )));
   const canApproveVenue =
     isAdmin ||
     (approvalPending &&
