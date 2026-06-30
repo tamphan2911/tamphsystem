@@ -377,6 +377,7 @@ export default async function ProjectDetailPage({
             },
             createdBy: { select: { name: true, email: true } },
             approvedBy: { select: { name: true, email: true } },
+            declinedBy: { select: { name: true, email: true } },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -385,6 +386,7 @@ export default async function ProjectDetailPage({
             conference: true,
             createdBy: { select: { name: true, email: true } },
             approvedBy: { select: { name: true, email: true } },
+            declinedBy: { select: { name: true, email: true } },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -767,7 +769,7 @@ export default async function ProjectDetailPage({
   );
   const suggestedJournalOptions: SuggestedJournalOption[] =
     project.suggestedJournals.map(
-      ({ journal, createdBy, approvedBy, ...suggestion }) => ({
+      ({ journal, createdBy, approvedBy, declinedBy, ...suggestion }) => ({
         id: suggestion.id,
         venueId: journal?.id ?? "",
         name: journal?.name ?? suggestion.venueName ?? "Unnamed journal",
@@ -814,6 +816,12 @@ export default async function ProjectDetailPage({
           : undefined,
         approvedByEmail: approvedBy
           ? displayResearchEmail(approvedBy.email)
+          : undefined,
+        declinedByName: declinedBy
+          ? displayResearchPersonName(declinedBy) || "Unknown user"
+          : undefined,
+        declinedByEmail: declinedBy
+          ? displayResearchEmail(declinedBy.email)
           : undefined,
         venueState:
           suggestion.status === "PENDING"
@@ -862,7 +870,7 @@ export default async function ProjectDetailPage({
   );
   const suggestedConferenceOptions: SuggestedConferenceOption[] =
     project.suggestedConferences.map(
-      ({ conference, createdBy, approvedBy, ...suggestion }) => ({
+      ({ conference, createdBy, approvedBy, declinedBy, ...suggestion }) => ({
         id: suggestion.id,
         venueId: conference?.id ?? "",
         name: conference?.name ?? suggestion.venueName ?? "Unnamed conference",
@@ -906,6 +914,12 @@ export default async function ProjectDetailPage({
           : undefined,
         approvedByEmail: approvedBy
           ? displayResearchEmail(approvedBy.email)
+          : undefined,
+        declinedByName: declinedBy
+          ? displayResearchPersonName(declinedBy) || "Unknown user"
+          : undefined,
+        declinedByEmail: declinedBy
+          ? displayResearchEmail(declinedBy.email)
           : undefined,
         venueState:
           suggestion.status === "PENDING"

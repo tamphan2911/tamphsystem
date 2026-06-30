@@ -1112,8 +1112,12 @@ export default async function TaskDetailPage({
           submissionFee: true,
           note: true,
           status: true,
+          approvalNote: true,
           declineReason: true,
           createdAt: true,
+          createdBy: { select: { name: true, email: true } },
+          approvedBy: { select: { name: true, email: true } },
+          declinedBy: { select: { name: true, email: true } },
           journal: {
             select: {
               id: true,
@@ -1140,8 +1144,12 @@ export default async function TaskDetailPage({
           venueLink: true,
           note: true,
           status: true,
+          approvalNote: true,
           declineReason: true,
           createdAt: true,
+          createdBy: { select: { name: true, email: true } },
+          approvedBy: { select: { name: true, email: true } },
+          declinedBy: { select: { name: true, email: true } },
           conference: {
             select: {
               id: true,
@@ -1195,8 +1203,12 @@ export default async function TaskDetailPage({
           submissionFee: true,
           note: true,
           status: true,
+          approvalNote: true,
           declineReason: true,
           createdAt: true,
+          createdBy: { select: { name: true, email: true } },
+          approvedBy: { select: { name: true, email: true } },
+          declinedBy: { select: { name: true, email: true } },
           journal: {
             select: {
               id: true,
@@ -1250,8 +1262,12 @@ export default async function TaskDetailPage({
           venueLink: true,
           note: true,
           status: true,
+          approvalNote: true,
           declineReason: true,
           createdAt: true,
+          createdBy: { select: { name: true, email: true } },
+          approvedBy: { select: { name: true, email: true } },
+          declinedBy: { select: { name: true, email: true } },
           conference: {
             select: {
               id: true,
@@ -1542,8 +1558,12 @@ export default async function TaskDetailPage({
             submissionFee: true,
             note: true,
             status: true,
+            approvalNote: true,
             declineReason: true,
             createdAt: true,
+            createdBy: { select: { name: true, email: true } },
+            approvedBy: { select: { name: true, email: true } },
+            declinedBy: { select: { name: true, email: true } },
             journal: {
               select: {
                 id: true,
@@ -1581,8 +1601,12 @@ export default async function TaskDetailPage({
             venueLink: true,
             note: true,
             status: true,
+            approvalNote: true,
             declineReason: true,
             createdAt: true,
+            createdBy: { select: { name: true, email: true } },
+            approvedBy: { select: { name: true, email: true } },
+            declinedBy: { select: { name: true, email: true } },
             conference: {
               select: {
                 id: true,
@@ -2506,6 +2530,25 @@ export default async function TaskDetailPage({
         useRawFeeText: !journal,
         journalNote: journal?.note ?? null,
         venueNote: suggestion.note ?? null,
+        suggestedByName: suggestion.createdBy
+          ? displayResearchPersonName(suggestion.createdBy) || "Unknown user"
+          : null,
+        suggestedByEmail: suggestion.createdBy
+          ? displayResearchEmail(suggestion.createdBy.email)
+          : null,
+        approvedByName: suggestion.approvedBy
+          ? displayResearchPersonName(suggestion.approvedBy) || "Unknown user"
+          : null,
+        approvedByEmail: suggestion.approvedBy
+          ? displayResearchEmail(suggestion.approvedBy.email)
+          : null,
+        declinedByName: suggestion.declinedBy
+          ? displayResearchPersonName(suggestion.declinedBy) || "Unknown user"
+          : null,
+        declinedByEmail: suggestion.declinedBy
+          ? displayResearchEmail(suggestion.declinedBy.email)
+          : null,
+        approvalNote: suggestion.approvalNote,
         declineReason: suggestion.declineReason,
         venueLink: suggestion.venueLink ?? journal?.homepageLink ?? null,
         journalCreationTaskId: suggestion.journalCreationTask?.id ?? null,
@@ -2556,6 +2599,37 @@ export default async function TaskDetailPage({
             journalNote:
               linkedJournalSubmissionSuggestion.journal?.note ?? null,
             venueNote: linkedJournalSubmissionSuggestion.note ?? null,
+            suggestedByName: linkedJournalSubmissionSuggestion.createdBy
+              ? displayResearchPersonName(
+                  linkedJournalSubmissionSuggestion.createdBy,
+                ) || "Unknown user"
+              : null,
+            suggestedByEmail: linkedJournalSubmissionSuggestion.createdBy
+              ? displayResearchEmail(
+                  linkedJournalSubmissionSuggestion.createdBy.email,
+                )
+              : null,
+            approvedByName: linkedJournalSubmissionSuggestion.approvedBy
+              ? displayResearchPersonName(
+                  linkedJournalSubmissionSuggestion.approvedBy,
+                ) || "Unknown user"
+              : null,
+            approvedByEmail: linkedJournalSubmissionSuggestion.approvedBy
+              ? displayResearchEmail(
+                  linkedJournalSubmissionSuggestion.approvedBy.email,
+                )
+              : null,
+            declinedByName: linkedJournalSubmissionSuggestion.declinedBy
+              ? displayResearchPersonName(
+                  linkedJournalSubmissionSuggestion.declinedBy,
+                ) || "Unknown user"
+              : null,
+            declinedByEmail: linkedJournalSubmissionSuggestion.declinedBy
+              ? displayResearchEmail(
+                  linkedJournalSubmissionSuggestion.declinedBy.email,
+                )
+              : null,
+            approvalNote: linkedJournalSubmissionSuggestion.approvalNote,
             declineReason: linkedJournalSubmissionSuggestion.declineReason,
             venueLink:
               linkedJournalSubmissionSuggestion.venueLink ??
@@ -2597,6 +2671,25 @@ export default async function TaskDetailPage({
         suggestion.conference?.submissionFeeCurrency ?? "USD",
       journalNote: suggestion.conference?.note ?? null,
       venueNote: suggestion.note ?? null,
+      suggestedByName: suggestion.createdBy
+        ? displayResearchPersonName(suggestion.createdBy) || "Unknown user"
+        : null,
+      suggestedByEmail: suggestion.createdBy
+        ? displayResearchEmail(suggestion.createdBy.email)
+        : null,
+      approvedByName: suggestion.approvedBy
+        ? displayResearchPersonName(suggestion.approvedBy) || "Unknown user"
+        : null,
+      approvedByEmail: suggestion.approvedBy
+        ? displayResearchEmail(suggestion.approvedBy.email)
+        : null,
+      declinedByName: suggestion.declinedBy
+        ? displayResearchPersonName(suggestion.declinedBy) || "Unknown user"
+        : null,
+      declinedByEmail: suggestion.declinedBy
+        ? displayResearchEmail(suggestion.declinedBy.email)
+        : null,
+      approvalNote: suggestion.approvalNote,
       declineReason: suggestion.declineReason,
       venueLink: suggestion.venueLink ?? suggestion.conference?.website ?? null,
       createdAt: suggestion.createdAt.toISOString(),
@@ -2641,6 +2734,37 @@ export default async function TaskDetailPage({
             journalNote:
               linkedConferenceSubmissionSuggestion.conference?.note ?? null,
             venueNote: linkedConferenceSubmissionSuggestion.note ?? null,
+            suggestedByName: linkedConferenceSubmissionSuggestion.createdBy
+              ? displayResearchPersonName(
+                  linkedConferenceSubmissionSuggestion.createdBy,
+                ) || "Unknown user"
+              : null,
+            suggestedByEmail: linkedConferenceSubmissionSuggestion.createdBy
+              ? displayResearchEmail(
+                  linkedConferenceSubmissionSuggestion.createdBy.email,
+                )
+              : null,
+            approvedByName: linkedConferenceSubmissionSuggestion.approvedBy
+              ? displayResearchPersonName(
+                  linkedConferenceSubmissionSuggestion.approvedBy,
+                ) || "Unknown user"
+              : null,
+            approvedByEmail: linkedConferenceSubmissionSuggestion.approvedBy
+              ? displayResearchEmail(
+                  linkedConferenceSubmissionSuggestion.approvedBy.email,
+                )
+              : null,
+            declinedByName: linkedConferenceSubmissionSuggestion.declinedBy
+              ? displayResearchPersonName(
+                  linkedConferenceSubmissionSuggestion.declinedBy,
+                ) || "Unknown user"
+              : null,
+            declinedByEmail: linkedConferenceSubmissionSuggestion.declinedBy
+              ? displayResearchEmail(
+                  linkedConferenceSubmissionSuggestion.declinedBy.email,
+                )
+              : null,
+            approvalNote: linkedConferenceSubmissionSuggestion.approvalNote,
             declineReason: linkedConferenceSubmissionSuggestion.declineReason,
             venueLink:
               linkedConferenceSubmissionSuggestion.venueLink ??
@@ -3760,7 +3884,8 @@ export default async function TaskDetailPage({
                     const hasMultipleAssignees = task.assignments.length > 1;
                     const workflow = assigneeWorkflowMeta(assignment);
                     const WorkflowIcon = workflow.icon;
-                    const assignmentDueDate = assignment.dueDate ?? task.dueDate;
+                    const assignmentDueDate =
+                      assignment.dueDate ?? task.dueDate;
                     const assignmentTiming = hasMultipleAssignees
                       ? assigneeTimingMeta({
                           dueDate: assignmentDueDate,
@@ -3786,8 +3911,7 @@ export default async function TaskDetailPage({
                         accountId={task.accountId}
                         requiresSubmissionDate={
                           approvingThisAssigneeCompletesTask &&
-                          (task.taskType ===
-                            ResearchTaskType.SUBMIT_RESEARCH ||
+                          (task.taskType === ResearchTaskType.SUBMIT_RESEARCH ||
                             task.taskType ===
                               ResearchTaskType.SUBMIT_CONFERENCE)
                         }

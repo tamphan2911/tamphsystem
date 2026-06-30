@@ -94,6 +94,8 @@ export type SuggestedJournalOption = {
   requiresApproval?: boolean;
   approvedByName?: string;
   approvedByEmail?: string;
+  declinedByName?: string;
+  declinedByEmail?: string;
   approvalNote?: string;
   declineReason?: string;
   journalCreationPending?: boolean;
@@ -132,6 +134,8 @@ export type SuggestedConferenceOption = {
   requiresApproval?: boolean;
   approvedByName?: string;
   approvedByEmail?: string;
+  declinedByName?: string;
+  declinedByEmail?: string;
   approvalNote?: string;
   declineReason?: string;
   taskId?: string;
@@ -2105,28 +2109,18 @@ function JournalCard({
           />
         </>
       )}
-      <VenueAttribution
+      <VenueSuggestionDecisionBlock
+        venueNote={journal.venueNote}
+        status={journal.status}
         name={journal.suggestedByName}
         email={journal.suggestedByEmail}
-        showApproval={
-          Boolean(journal.requiresApproval) && journal.status === "APPROVED"
-        }
         approvedByName={journal.approvedByName}
         approvedByEmail={journal.approvedByEmail}
-      />
-      <VenueDecisionNote
-        status={journal.status}
+        declinedByName={journal.declinedByName}
+        declinedByEmail={journal.declinedByEmail}
         approvalNote={journal.approvalNote}
         declineReason={journal.declineReason}
       />
-      {journal.venueNote.trim() ? (
-        <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-          <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
-            Note:
-          </span>{" "}
-          {journal.venueNote}
-        </p>
-      ) : null}
     </VenueCard>
   );
 }
@@ -2195,29 +2189,18 @@ function ConferenceCard({
           {conference.note}
         </p>
       ) : null}
-      <VenueAttribution
+      <VenueSuggestionDecisionBlock
+        venueNote={conference.venueNote}
+        status={conference.status}
         name={conference.suggestedByName}
         email={conference.suggestedByEmail}
-        showApproval={
-          Boolean(conference.requiresApproval) &&
-          conference.status === "APPROVED"
-        }
         approvedByName={conference.approvedByName}
         approvedByEmail={conference.approvedByEmail}
-      />
-      <VenueDecisionNote
-        status={conference.status}
+        declinedByName={conference.declinedByName}
+        declinedByEmail={conference.declinedByEmail}
         approvalNote={conference.approvalNote}
         declineReason={conference.declineReason}
       />
-      {conference.venueNote.trim() ? (
-        <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-          <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
-            Note:
-          </span>{" "}
-          {conference.venueNote}
-        </p>
-      ) : null}
     </VenueCard>
   );
 }
@@ -2304,49 +2287,26 @@ function VenueFees({
   );
 }
 
-function VenueAttribution({
+function VenueSuggestionDecisionBlock({
+  venueNote,
+  status,
   name,
   email,
-  showApproval,
   approvedByName,
   approvedByEmail,
-}: {
-  name?: string;
-  email?: string;
-  showApproval: boolean;
-  approvedByName?: string;
-  approvedByEmail?: string;
-}) {
-  return (
-    <div className="mt-3 space-y-1 border-t border-slate-200 pt-2 text-xs leading-5 text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0]">
-      <p className="whitespace-normal break-words">
-        Suggested by{" "}
-        <span className="font-normal text-slate-900 dark:text-[#E4E4E4]">
-          {name || "Unknown user"}
-          <AttributionSeparator />
-          {email || "Unknown email"}
-        </span>
-      </p>
-      {showApproval && approvedByName && approvedByEmail ? (
-        <p className="whitespace-normal break-words">
-          Approved by{" "}
-          <span className="font-normal text-slate-900 dark:text-[#E4E4E4]">
-            {approvedByName}
-            <AttributionSeparator />
-            {approvedByEmail}
-          </span>
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-function VenueDecisionNote({
-  status,
+  declinedByName,
+  declinedByEmail,
   approvalNote,
   declineReason,
 }: {
+  venueNote: string;
   status: string;
+  name?: string;
+  email?: string;
+  approvedByName?: string;
+  approvedByEmail?: string;
+  declinedByName?: string;
+  declinedByEmail?: string;
   approvalNote?: string;
   declineReason?: string;
 }) {
@@ -2356,15 +2316,63 @@ function VenueDecisionNote({
       : status === "DECLINED"
         ? declineReason?.trim()
         : "";
-  if (!note) return null;
+  const decisionPerson =
+    status === "APPROVED"
+      ? { name: approvedByName, email: approvedByEmail }
+      : status === "DECLINED"
+        ? { name: declinedByName, email: declinedByEmail }
+        : null;
+  if (!name && !email && !venueNote.trim() && !decisionPerson && !note) {
+    return null;
+  }
 
   return (
-    <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-      <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
-        {status === "APPROVED" ? "Approval note:" : "Decline note:"}
-      </span>{" "}
-      {note}
-    </p>
+    <div className="mt-3 space-y-2 border-t border-slate-200 pt-2 text-xs leading-5 text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0]">
+      <p className="whitespace-normal break-words">
+        Suggested by{" "}
+        <span className="font-normal text-slate-900 dark:text-[#E4E4E4]">
+          {name || "Unknown user"}
+          <AttributionSeparator />
+          {email || "Unknown email"}
+        </span>
+      </p>
+      {venueNote.trim() ? (
+        <p className="whitespace-pre-wrap break-words">
+          <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
+            Suggestion note:
+          </span>{" "}
+          {venueNote}
+        </p>
+      ) : null}
+      {decisionPerson || note ? (
+        <div className="space-y-2 border-t border-slate-200 pt-2 dark:border-[#444444]">
+          {decisionPerson ? (
+            <p className="whitespace-normal break-words">
+              {status === "APPROVED" ? "Approved by" : "Declined by"}{" "}
+              <span className="font-normal text-slate-900 dark:text-[#E4E4E4]">
+                {decisionPerson.name || "Unknown user"}
+                <AttributionSeparator />
+                {decisionPerson.email || "Unknown email"}
+              </span>
+            </p>
+          ) : null}
+          {note ? (
+            <p
+              className={`whitespace-pre-wrap break-words ${
+                status === "APPROVED"
+                  ? "text-emerald-700 dark:text-emerald-300"
+                  : "text-rose-700 dark:text-rose-300"
+              }`}
+            >
+              <span className="font-normal">
+                {status === "APPROVED" ? "Approval note:" : "Decline note:"}
+              </span>{" "}
+              {note}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

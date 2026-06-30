@@ -29,6 +29,13 @@ export type TaskSuggestedVenueResult = {
   useRawFeeText?: boolean;
   journalNote: string | null;
   venueNote: string | null;
+  suggestedByName: string | null;
+  suggestedByEmail: string | null;
+  approvedByName: string | null;
+  approvedByEmail: string | null;
+  declinedByName: string | null;
+  declinedByEmail: string | null;
+  approvalNote: string | null;
   declineReason: string | null;
   venueLink: string | null;
   journalCreationTaskId?: string | null;
@@ -70,6 +77,24 @@ function formatDate(value: string) {
     month: "2-digit",
     year: "2-digit",
   }).format(new Date(value));
+}
+
+function DecisionSeparator() {
+  return (
+    <span className="px-1.5 text-[#98A2B3] dark:text-[#777777]" aria-hidden>
+      |
+    </span>
+  );
+}
+
+function personLine(name: string | null, email: string | null) {
+  return (
+    <span className="font-normal text-slate-900 dark:text-[#E4E4E4]">
+      {name || "Unknown user"}
+      <DecisionSeparator />
+      {email || "Unknown email"}
+    </span>
+  );
 }
 
 export function TaskSuggestedVenueResults({
@@ -203,6 +228,20 @@ function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
     venue.journalCreationTaskId &&
     venue.journalCreationTaskStatus !== "COMPLETED" &&
     venue.journalCreationTaskStatus !== "REVOKED";
+  const decisionNote =
+    venue.status === "APPROVED"
+      ? venue.approvalNote?.trim()
+      : venue.status === "DECLINED"
+        ? venue.declineReason?.trim()
+        : "";
+  const decisionPerson =
+    venue.status === "APPROVED"
+      ? personLine(venue.approvedByName, venue.approvedByEmail)
+      : venue.status === "DECLINED"
+        ? personLine(venue.declinedByName, venue.declinedByEmail)
+        : null;
+  const decisionLabel =
+    venue.status === "APPROVED" ? "Approved by" : "Declined by";
 
   return (
     <article className="min-h-52 border border-[#D8D0C2] bg-[#FFFDF8] p-4 dark:border-[#444444] dark:bg-[#262626]">
@@ -292,16 +331,45 @@ function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
           Venue record note: {venue.journalNote}
         </p>
       ) : null}
-      {venue.venueNote ? (
-        <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-          Suggestion note: {venue.venueNote}
+      <div className="mt-3 space-y-2 border-t border-[#D8D0C2] pt-2 text-xs leading-5 text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0]">
+        <p className="whitespace-normal break-words">
+          Suggested by{" "}
+          {personLine(venue.suggestedByName, venue.suggestedByEmail)}
         </p>
-      ) : null}
-      {venue.declineReason ? (
-        <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-rose-700 dark:text-rose-300">
-          Decline reason: {venue.declineReason}
-        </p>
-      ) : null}
+        {venue.venueNote ? (
+          <p className="whitespace-pre-wrap break-words">
+            <span className="font-normal text-[#344054] dark:text-[#E4E4E4]">
+              Suggestion note:
+            </span>{" "}
+            {venue.venueNote}
+          </p>
+        ) : null}
+        {decisionPerson || decisionNote ? (
+          <div className="space-y-2 border-t border-[#D8D0C2] pt-2 dark:border-[#444444]">
+            {decisionPerson ? (
+              <p className="whitespace-normal break-words">
+                {decisionLabel} {decisionPerson}
+              </p>
+            ) : null}
+            {decisionNote ? (
+              <p
+                className={`whitespace-pre-wrap break-words ${
+                  venue.status === "APPROVED"
+                    ? "text-emerald-700 dark:text-emerald-300"
+                    : "text-rose-700 dark:text-rose-300"
+                }`}
+              >
+                <span className="font-normal">
+                  {venue.status === "APPROVED"
+                    ? "Approval note:"
+                    : "Decline note:"}
+                </span>{" "}
+                {decisionNote}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
     </article>
   );
 }
