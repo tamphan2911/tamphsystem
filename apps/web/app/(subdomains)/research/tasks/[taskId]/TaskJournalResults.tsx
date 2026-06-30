@@ -3,13 +3,15 @@
 import { useMemo, useState, useTransition } from "react";
 import {
   BookOpen,
+  ClipboardCheck,
+  CheckCircle2,
   GitBranch,
   LinkIcon,
   Loader2,
+  MessageSquareWarning,
   Plus,
   SearchCheck,
   ShieldAlert,
-  ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -229,8 +231,9 @@ export function TaskJournalResults({
             <div className="flex flex-wrap justify-end gap-2">
               <ResearchButton
                 type="button"
-                tone="secondary"
+                tone="quiet"
                 disabled={isPending}
+                className="border-orange-200 bg-orange-50 text-orange-700 shadow-orange-900/5 hover:border-orange-300 hover:bg-orange-100 hover:text-orange-800 focus:ring-orange-500/15 dark:border-orange-300/35 dark:bg-orange-950/25 dark:text-orange-200 dark:hover:border-orange-300/55 dark:hover:bg-orange-900/35 dark:hover:text-orange-100 dark:focus:ring-orange-500/20"
                 onClick={() => {
                   const formData = new FormData();
                   formData.set("note", reviewNote);
@@ -260,6 +263,7 @@ export function TaskJournalResults({
                   });
                 }}
               >
+                <MessageSquareWarning className="h-4 w-4" aria-hidden />
                 {isPending ? "Sending..." : "Ask for correction"}
               </ResearchButton>
               <ResearchButton
@@ -295,6 +299,7 @@ export function TaskJournalResults({
                   });
                 }}
               >
+                <CheckCircle2 className="h-4 w-4" aria-hidden />
                 {isPending ? "Approving..." : "Approve"}
               </ResearchButton>
             </div>
@@ -691,14 +696,14 @@ function JournalResultCard({
             </IconHint>
           ) : null}
           {canApprove && !publisherPending ? (
-            <IconHint label="Approve journal">
+            <IconHint label="Review journal result: approve or ask for correction">
               <button
                 type="button"
                 onClick={onApprove}
-                className="research-allow-transform inline-flex h-7 w-7 items-center justify-center border-0 bg-transparent text-emerald-600 transition-[color,transform] hover:-translate-y-0.5 hover:text-emerald-800 active:translate-y-0 active:scale-90 dark:text-emerald-300 dark:hover:text-emerald-200"
-                aria-label="Approve journal"
+                className="research-allow-transform inline-flex h-7 w-7 items-center justify-center border-0 bg-transparent text-sky-700 transition-[color,filter,transform] hover:-translate-y-0.5 hover:text-sky-800 hover:drop-shadow-[0_0_0.45rem_rgba(31,113,128,0.22)] active:translate-y-0 active:scale-90 dark:text-[#A8DADC] dark:hover:text-cyan-100 dark:hover:drop-shadow-[0_0_0.55rem_rgba(168,218,220,0.28)]"
+                aria-label="Review journal result: approve or ask for correction"
               >
-                <ShieldCheck className="h-4 w-4" />
+                <ClipboardCheck className="h-4 w-4" />
               </button>
             </IconHint>
           ) : canApprove && publisherPending ? (
