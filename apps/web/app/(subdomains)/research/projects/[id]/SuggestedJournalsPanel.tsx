@@ -2092,6 +2092,7 @@ function JournalCard({
             apc={journal.apc}
             apcCurrency={journal.apcCurrency}
             hasApcOption={journal.hasApcOption}
+            showApcOptionStatus
             submissionFee={journal.submissionFee}
             submissionFeeCurrency={journal.submissionFeeCurrency}
           />
@@ -2219,6 +2220,7 @@ function VenueFees({
   apc,
   apcCurrency,
   hasApcOption = false,
+  showApcOptionStatus = false,
   submissionFee,
   submissionFeeCurrency,
   rawTextFees = false,
@@ -2226,73 +2228,72 @@ function VenueFees({
   apc: string;
   apcCurrency: string;
   hasApcOption?: boolean;
+  showApcOptionStatus?: boolean;
   submissionFee: string;
   submissionFeeCurrency: string;
   rawTextFees?: boolean;
 }) {
   const normalizedApc = normalizeResearchNumberInput(apc);
-  const apcValue = Number(normalizedApc || 0);
-  const apcIsBlank = !apc.trim();
+  const apcValue = normalizedApc ? Number(normalizedApc) : 0;
+  const apcHasNumericValue = normalizedApc !== "" && Number.isFinite(apcValue);
   const apcIsFree =
-    (!Number.isFinite(apcValue) || apcValue <= 0) &&
-    (!rawTextFees ||
-      !apc.trim() ||
-      /^(free|no fee|none|waived)$/i.test(apc.trim()));
-  const apcIsHigh = apcValue > 1000;
+    !apc.trim() ||
+    /^(free|no fee|none|waived|0(?:[.,]0+)?)$/i.test(apc.trim()) ||
+    (apcHasNumericValue && apcValue <= 0);
+  const apcIsHigh = apcHasNumericValue && apcValue > 300;
   const normalizedFee = normalizeResearchNumberInput(submissionFee);
-  const feeValue = Number(normalizedFee || 0);
-  const feeIsBlank = !submissionFee.trim();
+  const feeValue = normalizedFee ? Number(normalizedFee) : 0;
+  const feeHasNumericValue = normalizedFee !== "" && Number.isFinite(feeValue);
   const feeIsFree =
-    (!Number.isFinite(feeValue) || feeValue <= 0) &&
-    (!rawTextFees ||
-      !submissionFee.trim() ||
-      /^(free|no fee|none|waived)$/i.test(submissionFee.trim()));
-  const feeIsHigh = feeValue > 1000;
+    !submissionFee.trim() ||
+    /^(free|no fee|none|waived|0(?:[.,]0+)?)$/i.test(
+      submissionFee.trim(),
+    ) ||
+    (feeHasNumericValue && feeValue <= 0);
   const apcLabel = rawTextFees
-    ? apc.trim() || "not provided"
+    ? apcIsFree
+      ? "free"
+      : apc.trim()
     : apcIsFree
       ? "free"
-      : `${currencySymbol(apcCurrency)} ${formatResearchNumber(apc)}`;
+      : formatResearchNumber(apc)
+        ? `${currencySymbol(apcCurrency)} ${formatResearchNumber(apc)}`
+        : apc.trim();
   const submissionFeeLabel = rawTextFees
-    ? submissionFee.trim() || "not provided"
+    ? feeIsFree
+      ? "free"
+      : submissionFee.trim()
     : feeIsFree
       ? "free"
-      : `${currencySymbol(submissionFeeCurrency)} ${formatResearchNumber(
-          submissionFee,
-        )}`;
+      : formatResearchNumber(submissionFee)
+        ? `${currencySymbol(submissionFeeCurrency)} ${formatResearchNumber(
+            submissionFee,
+          )}`
+        : submissionFee.trim();
+  const apcClassName = apcIsFree
+    ? "font-normal text-emerald-700 dark:text-emerald-300"
+    : apcIsHigh
+      ? "font-normal text-rose-700 dark:text-rose-300"
+      : "font-normal text-[#344054] dark:text-[#E4E4E4]";
+  const feeClassName = feeIsFree
+    ? "font-normal text-emerald-700 dark:text-emerald-300"
+    : "font-normal text-rose-700 dark:text-rose-300";
+  const apcOptionClassName = hasApcOption
+    ? "font-normal text-emerald-700 dark:text-emerald-300"
+    : "font-normal text-rose-700 dark:text-rose-300";
 
   return (
     <p className="mt-2 flex flex-wrap items-center gap-x-1 text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
       <span>APC:</span>
-      <span
-        className={
-          apcIsBlank
-            ? "font-normal text-[#667085] dark:text-[#B0B0B0]"
-            : apcIsFree
-              ? "font-normal text-emerald-700 dark:text-emerald-300"
-              : apcIsHigh
-                ? "font-normal text-rose-700 dark:text-rose-300"
-                : "font-normal text-[#344054] dark:text-[#E4E4E4]"
-        }
-      >
-        {apcLabel}
-      </span>
-      {hasApcOption ? <span>- Option</span> : null}
+      <span className={apcClassName}>{apcLabel}</span>
+      {showApcOptionStatus && !rawTextFees ? (
+        <span className={apcOptionClassName}>
+          ({hasApcOption ? "Option" : "No Option"})
+        </span>
+      ) : null}
       <span className="mx-1 text-[#98A2B3] dark:text-[#777777]">|</span>
-      <span>Fee:</span>
-      <span
-        className={
-          feeIsBlank
-            ? "font-normal text-[#667085] dark:text-[#B0B0B0]"
-            : feeIsFree
-              ? "font-normal text-emerald-700 dark:text-emerald-300"
-              : feeIsHigh
-                ? "font-normal text-rose-700 dark:text-rose-300"
-                : "font-normal text-[#344054] dark:text-[#E4E4E4]"
-        }
-      >
-        {submissionFeeLabel}
-      </span>
+      <span>Submission fee:</span>
+      <span className={feeClassName}>{submissionFeeLabel}</span>
     </p>
   );
 }

@@ -5,6 +5,11 @@ import { ExternalLink, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import {
+  currencySymbol,
+  formatResearchNumber,
+  normalizeResearchNumberInput,
+} from "@/sites/research/lib/currency";
 import { addTaskSuggestedVenue } from "../../actions";
 import {
   SuggestedVenueAddDialog,
@@ -65,10 +70,53 @@ function sitePresenceLabel(venue: TaskSuggestedVenueResult) {
   return venue.isOnSite ? `${label} on site already` : `${label} not on site`;
 }
 
-function moneyText(value: string | null, currency: string) {
-  if (!value?.trim()) return "Not provided";
-  if (/^(free|no fee|none|waived|0)$/i.test(value.trim())) return "Free";
-  return `${currency} ${value}`;
+function feeMeta({
+  amount,
+  currency,
+  kind,
+  rawText = false,
+}: {
+  amount: string | null;
+  currency: string;
+  kind: "apc" | "submissionFee";
+  rawText?: boolean;
+}) {
+  const text = amount?.trim() ?? "";
+  const normalized = normalizeResearchNumberInput(text);
+  const value = normalized ? Number(normalized) : 0;
+  const hasNumericValue = normalized !== "" && Number.isFinite(value);
+  const isFree =
+    !text ||
+    /^(free|no fee|none|waived|0(?:[.,]0+)?)$/i.test(text) ||
+    (hasNumericValue && value <= 0);
+  const isHighApc = kind === "apc" && hasNumericValue && value > 300;
+
+  if (isFree) {
+    return {
+      label: "free",
+      isFree: true,
+      className: "font-normal text-emerald-700 dark:text-emerald-300",
+    };
+  }
+
+  return {
+    label: rawText
+      ? text
+      : formatResearchNumber(text)
+        ? `${currencySymbol(currency)} ${formatResearchNumber(text)}`
+        : text,
+    isFree: false,
+    className:
+      kind === "submissionFee" || isHighApc
+        ? "font-normal text-rose-700 dark:text-rose-300"
+        : "font-normal text-[#344054] dark:text-[#E4E4E4]",
+  };
+}
+
+function apcOptionClass(hasOption: boolean) {
+  return hasOption
+    ? "font-normal text-emerald-700 dark:text-emerald-300"
+    : "font-normal text-rose-700 dark:text-rose-300";
 }
 
 function formatDate(value: string) {
@@ -242,6 +290,18 @@ function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
         : null;
   const decisionLabel =
     venue.status === "APPROVED" ? "Approved by" : "Declined by";
+  const apc = feeMeta({
+    amount: venue.apc,
+    currency: venue.apcCurrency,
+    kind: "apc",
+    rawText: venue.useRawFeeText,
+  });
+  const submissionFee = feeMeta({
+    amount: venue.submissionFee,
+    currency: venue.submissionFeeCurrency,
+    kind: "submissionFee",
+    rawText: venue.useRawFeeText,
+  });
 
   return (
     <article className="min-h-52 border border-[#D8D0C2] bg-[#FFFDF8] p-4 dark:border-[#444444] dark:bg-[#262626]">
@@ -296,15 +356,20 @@ function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
       ) : null}
       <div className="mt-3 grid gap-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
         <span>
-          APC: {moneyText(venue.apc, venue.apcCurrency)}
-          {venue.kind === "journal" ? (
-            <span className="ml-1 text-[#344054] dark:text-[#E4E4E4]">
+          APC: <span className={apc.className}>{apc.label}</span>
+          {venue.kind === "journal" && !apc.isFree ? (
+            <span
+              className={`ml-1 ${apcOptionClass(
+                Boolean(venue.hasApcOption),
+              )}`}
+            >
               ({venue.hasApcOption ? "Option" : "No Option"})
             </span>
           ) : null}
         </span>
         <span>
-          Fee: {moneyText(venue.submissionFee, venue.submissionFeeCurrency)}
+          Submission fee:{" "}
+          <span className={submissionFee.className}>{submissionFee.label}</span>
         </span>
         <span>Suggested: {formatDate(venue.createdAt)}</span>
       </div>
