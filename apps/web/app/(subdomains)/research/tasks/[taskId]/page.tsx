@@ -540,20 +540,30 @@ function TaskPersonLine({
   showEmail = false,
   note,
   inlineAction,
+  profileHref,
 }: {
   person: { name: string | null; email: string; roles: Role[] };
   showEmail?: boolean;
   note?: ReactNode;
   inlineAction?: ReactNode;
+  profileHref?: string;
 }) {
+  const name = displayResearchPersonName(person);
   return (
     <span className="flex min-w-0 items-start gap-3">
       <UserRound className="research-task-icon-motion mt-0.5 h-4 w-4 flex-none text-amber-700 dark:text-amber-300" />
       <span className="min-w-0 leading-tight">
         <span className="flex min-w-0 flex-wrap items-center text-sm font-normal text-[#1F2937] dark:text-[#E4E4E4]">
-          <span className="min-w-0 truncate">
-            {displayResearchPersonName(person)}
-          </span>
+          {profileHref ? (
+            <Link
+              href={profileHref}
+              className="research-allow-transform min-w-0 truncate text-[#1F7180] transition duration-180 ease-out hover:-translate-y-0.5 hover:text-[#155E6C] active:translate-y-0 active:scale-[0.98] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+            >
+              {name}
+            </Link>
+          ) : (
+            <span className="min-w-0 truncate">{name}</span>
+          )}
           <DetailSeparator />
           <span className="text-xs text-[#667085] dark:text-[#B0B0B0]">
             {displayRole(person.roles)}
@@ -3940,6 +3950,13 @@ export default async function TaskDetailPage({
                         <TaskPersonLine
                           person={assignment.user}
                           showEmail
+                          profileHref={
+                            isRootAdmin
+                              ? `/profile?userId=${encodeURIComponent(
+                                  assignment.user.id,
+                                )}`
+                              : undefined
+                          }
                           inlineAction={workflowAction}
                           note={
                             assignmentTiming ? (
