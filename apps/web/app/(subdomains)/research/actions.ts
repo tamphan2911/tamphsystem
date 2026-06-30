@@ -10679,7 +10679,6 @@ async function createSubmissionAfterTaskApproval(
 
 export async function markResearchTaskReadyForCheck(taskId: string) {
   const user = await requireCurrentUser();
-  const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
     select: {
@@ -10716,20 +10715,17 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
   ) {
     return;
   }
-  if (!isAdmin) {
-    const isAssigned = task.assignments.some(
-      (assignment) => assignment.userId === user.id,
-    );
-    if (!isAssigned) redirect("/401");
-    if (task.createdById === user.id) return;
-  }
+  const actingAssignment = task.assignments.find(
+    (assignment) => assignment.userId === user.id,
+  );
+  if (!actingAssignment) redirect("/401");
+  if (actingAssignment.completedAt) return;
+  if (task.createdById === user.id) return;
 
   const finishedAt = new Date();
   const readyResult = await prisma.$transaction(async (tx) => {
-    await tx.researchTaskAssignment.updateMany({
-      where: isAdmin
-        ? { taskId, completedAt: null }
-        : { taskId, userId: user.id, completedAt: null },
+    await tx.researchTaskAssignment.update({
+      where: { id: actingAssignment.id },
       data: {
         finishedAt,
         redoRequestedAt: null,
