@@ -1747,7 +1747,8 @@ export function TasksClient({
                                     {displayResearchEmail(assignment.userEmail)}
                                   </div>
                                 ) : null}
-                                {assignmentTiming ? (
+                                {task.assignments.length > 1 &&
+                                assignmentTiming ? (
                                   <div
                                     className={`text-[11px] leading-4 ${assignmentTiming.className}`}
                                   >
