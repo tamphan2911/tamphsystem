@@ -383,6 +383,21 @@ function clarificationStatusDetail(
     : "Waiting for task manager answer";
 }
 
+function pendingReadyAssignmentCount(task: TaskRow) {
+  return task.assignments.filter(
+    (assignment) => assignment.finishedAt && !assignment.completedAt,
+  ).length;
+}
+
+function pendingReadyAssignmentText(task: TaskRow) {
+  const count = pendingReadyAssignmentCount(task);
+  if (count === 0 || task.status !== "IN_PROGRESS") {
+    return null;
+  }
+
+  return count === 1 ? "1 assignee ready" : `${count} assignees ready`;
+}
+
 function statusMeta(task: TaskRow) {
   const due = task.dueDate ? new Date(task.dueDate) : null;
   const completed = task.completedAt ? new Date(task.completedAt) : null;
@@ -601,6 +616,13 @@ function statusIconMeta(task: TaskRow): {
   className: string;
 } {
   const status = statusMeta(task);
+  if (pendingReadyAssignmentText(task)) {
+    return {
+      icon: SearchCheck,
+      className:
+        "text-violet-700 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200",
+    };
+  }
 
   if (task.status === "REVOKED") {
     return {
@@ -688,6 +710,7 @@ function derivedStatus(task: TaskRow) {
 function taskNeedsManagerAction(task: TaskRow) {
   return Boolean(
     task.managerAction ||
+    pendingReadyAssignmentText(task) ||
     task.status === "CHECKING" ||
     (task.status === "NEED_CLARIFY" &&
       task.clarifyDirection !== "MANAGER_TO_ASSIGNEE"),
@@ -1163,7 +1186,7 @@ export function TasksClient({
         !checkerNeedsActionOnly ||
         !isChiefAssistant ||
         activeHeaderTab !== "checker" ||
-        Boolean(task.managerAction);
+        taskNeedsManagerAction(task);
       const haystack = [
         displayTaskId(task),
         task.title,
@@ -1468,6 +1491,7 @@ export function TasksClient({
                 const status = statusMeta(task);
                 const statusIcon = statusIconMeta(task);
                 const StatusIcon = statusIcon.icon;
+                const statusActionText = pendingReadyAssignmentText(task);
                 const typeLines = taskTypeLines(task);
                 const relationshipLabels = taskRelationshipLabels(task);
                 const managerAction = managerActionMeta(task, Date.now());
@@ -1518,12 +1542,28 @@ export function TasksClient({
                       ) : null}
                     </td>
                     <td className="px-3 py-3 align-top">
-                      <IconHint label={status.label}>
-                        <span
-                          className={`research-allow-transform inline-flex cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${statusIcon.className}`}
-                        >
-                          <StatusIcon className="h-4 w-4" aria-hidden="true" />
-                          <span className="sr-only">{status.label}</span>
+                      <IconHint
+                        label={
+                          statusActionText
+                            ? `${status.label}: ${statusActionText}`
+                            : status.label
+                        }
+                      >
+                        <span className="inline-flex flex-col items-start gap-1">
+                          <span
+                            className={`research-allow-transform inline-flex cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${statusIcon.className}`}
+                          >
+                            <StatusIcon
+                              className="h-4 w-4"
+                              aria-hidden="true"
+                            />
+                            <span className="sr-only">{status.label}</span>
+                          </span>
+                          {statusActionText ? (
+                            <span className="max-w-[6.25rem] text-[11px] font-semibold leading-4 text-violet-700 dark:text-violet-300">
+                              {statusActionText}
+                            </span>
+                          ) : null}
                         </span>
                       </IconHint>
                     </td>

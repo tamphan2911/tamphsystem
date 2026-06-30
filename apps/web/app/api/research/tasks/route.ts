@@ -246,6 +246,19 @@ export async function GET() {
         },
         null,
       );
+      const readyAssignmentsWaitingForReview = task.assignments.filter(
+        (assignment) => assignment.finishedAt && !assignment.completedAt,
+      );
+      const earliestReadyAssignmentAt =
+        readyAssignmentsWaitingForReview.reduce<Date | null>(
+          (earliest, assignment) => {
+            if (!assignment.finishedAt) return earliest;
+            return !earliest || assignment.finishedAt < earliest
+              ? assignment.finishedAt
+              : earliest;
+          },
+          null,
+        );
       const latestManagerClarificationAnswer = task.clarifications
         .filter(
           (clarification) =>
@@ -329,6 +342,9 @@ export async function GET() {
           ? (task.checkerReferralAt ?? task.updatedAt)
           : addJournalNeedsReview
             ? (latestAddedJournalUpdate ?? task.updatedAt)
+            : readyAssignmentsWaitingForReview.length > 0 &&
+                task.status === ResearchTaskStatus.IN_PROGRESS
+              ? (earliestReadyAssignmentAt ?? task.updatedAt)
             : task.status === ResearchTaskStatus.CHECKING
               ? ([
                   latestFinishedAt,
@@ -380,6 +396,11 @@ export async function GET() {
                 ? "Referred checker help"
                 : addJournalNeedsReview
                   ? addJournalReviewLabel
+                  : readyAssignmentsWaitingForReview.length > 0 &&
+                      task.status === ResearchTaskStatus.IN_PROGRESS
+                    ? readyAssignmentsWaitingForReview.length === 1
+                      ? "Review 1 assignee"
+                      : `Review ${readyAssignmentsWaitingForReview.length} assignees`
                   : task.status === ResearchTaskStatus.CHECKING
                     ? "Check/review"
                     : "Answer clarification",
