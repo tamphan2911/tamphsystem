@@ -98,6 +98,10 @@ import {
   TaskSuggestedReviewersTable,
   type SuggestedReviewerOption,
 } from "./TaskSuggestedReviewers";
+import {
+  ResearchChangeLogTable,
+  type ResearchChangeLogRow,
+} from "@/sites/research/components/ResearchChangeLogTable";
 
 export const dynamic = "force-dynamic";
 
@@ -1274,6 +1278,8 @@ export default async function TaskDetailPage({
           resultCorrectionRequestedAt: true,
           resultCorrectionRequestedById: true,
           resultCorrectionResolvedAt: true,
+          createdAt: true,
+          updatedAt: true,
           publisherRecord: { select: { approvalStatus: true } },
           createdBy: { select: { name: true, email: true } },
         },
@@ -3007,6 +3013,193 @@ export default async function TaskDetailPage({
       };
     },
   );
+  const canViewChangeLog = isRootAdmin || isChiefAssistant;
+  const taskChangeRows: ResearchChangeLogRow[] = canViewChangeLog
+    ? [
+        {
+          id: "task-created",
+          changedAt: task.createdAt.toISOString(),
+          area: "Task",
+          action: "Created",
+          actor:
+            displayResearchPersonName(task.createdBy) || task.createdBy.email,
+          detail: task.title,
+        },
+        {
+          id: "task-updated",
+          changedAt: task.updatedAt.toISOString(),
+          area: "Task",
+          action: "Updated",
+          actor: "",
+          detail: `${task.status} | ${task.taskType ?? task.category ?? "Task"}`,
+        },
+        task.completedAt
+          ? {
+              id: "task-completed",
+              changedAt: task.completedAt.toISOString(),
+              area: "Task",
+              action: "Completed",
+              actor: task.completedBy
+                ? displayResearchPersonName(task.completedBy) ||
+                  task.completedBy.email
+                : "",
+              detail: task.completionMessage ?? task.title,
+            }
+          : null,
+        task.redoRequestedAt
+          ? {
+              id: "task-redo",
+              changedAt: task.redoRequestedAt.toISOString(),
+              area: "Task",
+              action: "Redo requested",
+              actor: task.redoRequestedBy
+                ? displayResearchPersonName(task.redoRequestedBy) ||
+                  task.redoRequestedBy.email
+                : "",
+              detail: task.redoReason ?? task.title,
+            }
+          : null,
+        task.revokedAt
+          ? {
+              id: "task-revoked",
+              changedAt: task.revokedAt.toISOString(),
+              area: "Task",
+              action: "Revoked",
+              actor: task.revokedBy
+                ? displayResearchPersonName(task.revokedBy) ||
+                  task.revokedBy.email
+                : "",
+              detail: task.revokeReason ?? task.title,
+            }
+          : null,
+        ...task.assignments.flatMap((assignment) =>
+          [
+            {
+              id: `assignment-${assignment.id}`,
+              changedAt: (
+                assignment.completedAt ??
+                assignment.finishedAt ??
+                assignment.redoRequestedAt ??
+                assignment.createdAt
+              ).toISOString(),
+              area: "Assignee",
+              action: assignment.completedAt
+                ? "Completed"
+                : assignment.finishedAt
+                  ? "Ready for check"
+                  : assignment.redoRequestedAt
+                    ? "Redo requested"
+                    : "Updated",
+              actor:
+                displayResearchPersonName(assignment.user) ||
+                assignment.user.email,
+              detail:
+                assignment.completionMessage ?? assignment.redoReason ?? "",
+            },
+            assignment.finishedAt
+              ? {
+                  id: `assignment-${assignment.id}-ready`,
+                  changedAt: assignment.finishedAt.toISOString(),
+                  area: "Assignee",
+                  action: "Ready for check",
+                  actor:
+                    displayResearchPersonName(assignment.user) ||
+                    assignment.user.email,
+                  detail: "",
+                }
+              : null,
+            assignment.completedAt
+              ? {
+                  id: `assignment-${assignment.id}-completed`,
+                  changedAt: assignment.completedAt.toISOString(),
+                  area: "Assignee",
+                  action: "Completed",
+                  actor:
+                    displayResearchPersonName(assignment.user) ||
+                    assignment.user.email,
+                  detail: assignment.completionMessage ?? "",
+                }
+              : null,
+          ].filter((row): row is ResearchChangeLogRow => Boolean(row)),
+        ),
+        ...taskClarifications.flatMap((clarification) => [
+          {
+            id: `clarification-${clarification.id}`,
+            changedAt: clarification.createdAt.toISOString(),
+            area: "Clarification",
+            action: "Requested",
+            actor: clarification.requestedBy
+              ? displayResearchPersonName(clarification.requestedBy) ||
+                clarification.requestedBy.email
+              : "",
+            detail: clarification.question,
+          },
+          ...(clarification.answeredAt
+            ? [
+                {
+                  id: `clarification-${clarification.id}-answered`,
+                  changedAt: clarification.answeredAt.toISOString(),
+                  area: "Clarification",
+                  action: "Answered",
+                  actor: clarification.answeredBy
+                    ? displayResearchPersonName(clarification.answeredBy) ||
+                      clarification.answeredBy.email
+                    : "",
+                  detail: clarification.answer ?? "",
+                },
+              ]
+            : []),
+          ...clarification.messages.map((message) => ({
+            id: `clarification-message-${message.id}`,
+            changedAt: message.createdAt.toISOString(),
+            area: "Clarification",
+            action: "Message",
+            actor:
+              displayResearchPersonName(message.sender) || message.sender.email,
+            detail: message.body,
+          })),
+        ]),
+        ...task.addedJournals.map((journal) => ({
+          id: `added-journal-${journal.id}`,
+          changedAt: journal.updatedAt.toISOString(),
+          area: "Journal result",
+          action: journal.approvalStatus,
+          actor: journal.createdBy
+            ? displayResearchPersonName(journal.createdBy) ||
+              journal.createdBy.email
+            : "",
+          detail: journal.name,
+        })),
+        ...task.suggestedJournals.map((suggestion) => ({
+          id: `suggested-journal-${suggestion.id}`,
+          changedAt: suggestion.createdAt.toISOString(),
+          area: "Suggested venue",
+          action: suggestion.status,
+          actor: "",
+          detail: suggestion.journal?.name ?? suggestion.venueName ?? "Journal",
+        })),
+        ...task.suggestedConferences.map((suggestion) => ({
+          id: `suggested-conference-${suggestion.id}`,
+          changedAt: suggestion.createdAt.toISOString(),
+          area: "Suggested venue",
+          action: suggestion.status,
+          actor: "",
+          detail:
+            suggestion.conference?.name ?? suggestion.venueName ?? "Conference",
+        })),
+        ...task.proposalResults.map((proposal) => ({
+          id: `proposal-${proposal.id}`,
+          changedAt: proposal.createdAt.toISOString(),
+          area: "Proposal result",
+          action: proposal.status,
+          actor: proposal.submittedBy
+            ? displayResearchPersonName(proposal.submittedBy) ||
+              proposal.submittedBy.email
+            : "",
+          detail: proposal.title,
+        })),
+      ].filter((row): row is ResearchChangeLogRow => Boolean(row))
+    : [];
 
   return (
     <>
@@ -3554,6 +3747,9 @@ export default async function TaskDetailPage({
             </div>
           </section>
         </div>
+        {canViewChangeLog ? (
+          <ResearchChangeLogTable rows={taskChangeRows} />
+        ) : null}
       </div>
     </>
   );

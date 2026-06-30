@@ -36,6 +36,10 @@ import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess
 import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 import { canEditJournalDetailsByEmail } from "@/sites/research/lib/journalPermissions";
 import { canManageAllResearchAccounts } from "@/sites/research/lib/accountAccess";
+import {
+  ResearchChangeLogTable,
+  type ResearchChangeLogRow,
+} from "@/sites/research/components/ResearchChangeLogTable";
 
 export const dynamic = "force-dynamic";
 
@@ -399,6 +403,84 @@ export default async function JournalDetailPage({
       ? journal.localRank || "No local rank"
       : journal.rank || "No rank";
   const journalTypeLabel = journal.type === "LOCAL" ? "Local" : "International";
+  const canViewChangeLog = isAdmin || isChiefAssistant;
+  const journalChangeRows: ResearchChangeLogRow[] = canViewChangeLog
+    ? [
+        {
+          id: "journal-created",
+          changedAt: journal.createdAt.toISOString(),
+          area: "Journal",
+          action: "Created",
+          actor: journal.createdBy
+            ? displayResearchPersonName(journal.createdBy) ||
+              journal.createdBy.email
+            : "",
+          detail: journal.name,
+        },
+        {
+          id: "journal-updated",
+          changedAt: journal.updatedAt.toISOString(),
+          area: "Journal",
+          action: "Updated",
+          actor: "",
+          detail: `${journalTypeLabel} | ${journalRank}`,
+        },
+        journal.resultCorrectionRequestedAt
+          ? {
+              id: "journal-correction-requested",
+              changedAt: journal.resultCorrectionRequestedAt.toISOString(),
+              area: "Approval",
+              action: "Correction requested",
+              actor: "",
+              detail: journal.resultCorrectionNote ?? journal.name,
+            }
+          : null,
+        journal.resultCorrectionResolvedAt
+          ? {
+              id: "journal-correction-resolved",
+              changedAt: journal.resultCorrectionResolvedAt.toISOString(),
+              area: "Approval",
+              action: "Correction resolved",
+              actor: "",
+              detail: journal.name,
+            }
+          : null,
+        journal.resultApprovedAt
+          ? {
+              id: "journal-approved",
+              changedAt: journal.resultApprovedAt.toISOString(),
+              area: "Approval",
+              action: "Approved",
+              actor: "",
+              detail: journal.resultApprovalNote ?? journal.name,
+            }
+          : null,
+        ...journal.submissions.map((submission) => ({
+          id: `submission-${submission.id}`,
+          changedAt: submission.updatedAt.toISOString(),
+          area: "Submission",
+          action: submission.status,
+          actor: "",
+          detail: `${submission.submissionCode ?? submission.id.slice(0, 8).toUpperCase()} | ${submission.project.title}`,
+        })),
+        ...journalAccounts.map((account) => ({
+          id: `account-${account.id}`,
+          changedAt: account.updatedAt.toISOString(),
+          area: "Account",
+          action: "Updated",
+          actor: "",
+          detail: account.username,
+        })),
+        ...journal.reviews.map((review) => ({
+          id: `review-${review.id}`,
+          changedAt: review.updatedAt.toISOString(),
+          area: "Review",
+          action: review.status,
+          actor: "",
+          detail: review.manuscriptTitle,
+        })),
+      ].filter((row): row is ResearchChangeLogRow => Boolean(row))
+    : [];
 
   return (
     <>
@@ -658,6 +740,9 @@ export default async function JournalDetailPage({
           linkSubmissions={isAdmin}
           canAddAccount={canManageAccounts}
         />
+        {canViewChangeLog ? (
+          <ResearchChangeLogTable rows={journalChangeRows} />
+        ) : null}
       </div>
     </>
   );

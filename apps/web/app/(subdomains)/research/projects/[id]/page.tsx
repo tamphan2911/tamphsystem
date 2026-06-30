@@ -82,6 +82,10 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import {
+  ResearchChangeLogTable,
+  type ResearchChangeLogRow,
+} from "@/sites/research/components/ResearchChangeLogTable";
 
 export const dynamic = "force-dynamic";
 
@@ -352,6 +356,7 @@ export default async function ProjectDetailPage({
             status: true,
             note: true,
             createdAt: true,
+            updatedAt: true,
             decidedAt: true,
           },
         },
@@ -1378,6 +1383,215 @@ export default async function ProjectDetailPage({
       };
     },
   );
+  const researchChangeRows: ResearchChangeLogRow[] = isAdmin
+    ? [
+        {
+          id: "research-created",
+          changedAt: project.createdAt.toISOString(),
+          area: "Research",
+          action: "Created",
+          actor: leadResearcher
+            ? displayResearchPersonName(leadResearcher) || leadResearcher.email
+            : "",
+          detail: project.title,
+        },
+        {
+          id: "research-updated",
+          changedAt: project.updatedAt.toISOString(),
+          area: "Research",
+          action: "Updated",
+          actor: "",
+          detail: `${project.stage} | ${project.researchCode ?? "No research ID"}`,
+        },
+        ...project.authorEntries.map((entry) => {
+          const authorUser = linkedAuthorUserById.get(entry.userId);
+          return {
+            id: `author-${entry.id}`,
+            changedAt: entry.updatedAt.toISOString(),
+            area: "Authors",
+            action: entry.isCorresponding ? "Corresponding author" : "Updated",
+            actor: authorUser
+              ? displayResearchPersonName(authorUser) || authorUser.email
+              : "",
+            detail: entry.selectedEmail ?? "",
+          };
+        }),
+        ...project.submissions.flatMap((submission) =>
+          [
+            {
+              id: `submission-${submission.id}`,
+              changedAt: submission.updatedAt.toISOString(),
+              area: "Submission",
+              action: submission.status,
+              actor: "",
+              detail: `${submission.submissionCode ?? submission.id.slice(0, 8).toUpperCase()} | ${submission.journal.name}`,
+            },
+            submission.acceptedAt
+              ? {
+                  id: `submission-${submission.id}-accepted`,
+                  changedAt: submission.acceptedAt.toISOString(),
+                  area: "Submission",
+                  action: "Accepted",
+                  actor: "",
+                  detail: submission.journal.name,
+                }
+              : null,
+            submission.publishedAt
+              ? {
+                  id: `submission-${submission.id}-published`,
+                  changedAt: submission.publishedAt.toISOString(),
+                  area: "Submission",
+                  action: "Published",
+                  actor: "",
+                  detail: submission.journal.name,
+                }
+              : null,
+          ].filter((row): row is ResearchChangeLogRow => Boolean(row)),
+        ),
+        ...project.conferenceSubmissions.flatMap((submission) =>
+          [
+            {
+              id: `conference-submission-${submission.id}`,
+              changedAt: submission.updatedAt.toISOString(),
+              area: "Conference submission",
+              action: submission.status,
+              actor: "",
+              detail: `${submission.submissionCode ?? submission.id.slice(0, 8).toUpperCase()} | ${submission.conference.name}`,
+            },
+            submission.acceptedAt
+              ? {
+                  id: `conference-submission-${submission.id}-accepted`,
+                  changedAt: submission.acceptedAt.toISOString(),
+                  area: "Conference submission",
+                  action: "Accepted",
+                  actor: "",
+                  detail: submission.conference.name,
+                }
+              : null,
+            submission.publishedAt
+              ? {
+                  id: `conference-submission-${submission.id}-published`,
+                  changedAt: submission.publishedAt.toISOString(),
+                  area: "Conference submission",
+                  action: "Published",
+                  actor: "",
+                  detail: submission.conference.name,
+                }
+              : null,
+          ].filter((row): row is ResearchChangeLogRow => Boolean(row)),
+        ),
+        ...project.suggestedJournals.flatMap((suggestion) =>
+          [
+            {
+              id: `suggested-journal-${suggestion.id}`,
+              changedAt: suggestion.createdAt.toISOString(),
+              area: "Suggested venue",
+              action: suggestion.status,
+              actor: suggestion.createdBy
+                ? displayResearchPersonName(suggestion.createdBy) ||
+                  suggestion.createdBy.email
+                : "",
+              detail: suggestion.journal?.name ?? suggestion.venueName ?? "",
+            },
+            suggestion.approvedAt
+              ? {
+                  id: `suggested-journal-${suggestion.id}-approved`,
+                  changedAt: suggestion.approvedAt.toISOString(),
+                  area: "Suggested venue",
+                  action: "Approved",
+                  actor: suggestion.approvedBy
+                    ? displayResearchPersonName(suggestion.approvedBy) ||
+                      suggestion.approvedBy.email
+                    : "",
+                  detail: suggestion.approvalNote ?? "",
+                }
+              : null,
+            suggestion.declinedAt
+              ? {
+                  id: `suggested-journal-${suggestion.id}-declined`,
+                  changedAt: suggestion.declinedAt.toISOString(),
+                  area: "Suggested venue",
+                  action: "Declined",
+                  actor: "",
+                  detail: suggestion.declineReason ?? "",
+                }
+              : null,
+          ].filter((row): row is ResearchChangeLogRow => Boolean(row)),
+        ),
+        ...project.suggestedConferences.flatMap((suggestion) =>
+          [
+            {
+              id: `suggested-conference-${suggestion.id}`,
+              changedAt: suggestion.createdAt.toISOString(),
+              area: "Suggested venue",
+              action: suggestion.status,
+              actor: suggestion.createdBy
+                ? displayResearchPersonName(suggestion.createdBy) ||
+                  suggestion.createdBy.email
+                : "",
+              detail: suggestion.conference?.name ?? suggestion.venueName ?? "",
+            },
+            suggestion.approvedAt
+              ? {
+                  id: `suggested-conference-${suggestion.id}-approved`,
+                  changedAt: suggestion.approvedAt.toISOString(),
+                  area: "Suggested venue",
+                  action: "Approved",
+                  actor: suggestion.approvedBy
+                    ? displayResearchPersonName(suggestion.approvedBy) ||
+                      suggestion.approvedBy.email
+                    : "",
+                  detail: suggestion.approvalNote ?? "",
+                }
+              : null,
+            suggestion.declinedAt
+              ? {
+                  id: `suggested-conference-${suggestion.id}-declined`,
+                  changedAt: suggestion.declinedAt.toISOString(),
+                  area: "Suggested venue",
+                  action: "Declined",
+                  actor: "",
+                  detail: suggestion.declineReason ?? "",
+                }
+              : null,
+          ].filter((row): row is ResearchChangeLogRow => Boolean(row)),
+        ),
+        ...project.tasks.map((task) => ({
+          id: `task-${task.id}`,
+          changedAt: task.updatedAt.toISOString(),
+          area: "Task",
+          action: task.status,
+          actor: displayResearchPersonName(task.createdBy) || "",
+          detail: task.title,
+        })),
+        ...project.folderAccessRequests.map((request) => ({
+          id: `folder-request-${request.id}`,
+          changedAt: request.updatedAt.toISOString(),
+          area: "Folder access",
+          action: request.status,
+          actor: `${request.requesterName} | ${request.requesterEmail}`,
+          detail: request.note ?? "",
+        })),
+        ...project.organizedProjectLinks.map((link) => ({
+          id: `organized-project-${link.id}`,
+          changedAt: link.createdAt.toISOString(),
+          area: "Project link",
+          action: "Linked",
+          actor: "",
+          detail: link.organizedProject.title,
+        })),
+        ...project.publications.map((publication) => ({
+          id: `publication-${publication.id}`,
+          changedAt: (
+            publication.publishedDate ?? project.updatedAt
+          ).toISOString(),
+          area: "Publication",
+          action: "Published",
+          actor: "",
+          detail: publication.title,
+        })),
+      ]
+    : [];
   const stageStyle = stageStyles[displayStage];
   const StageIcon = stageStyle.icon;
 
@@ -2135,6 +2349,7 @@ export default async function ProjectDetailPage({
             rows={relatedTaskRows}
           />
         </section>
+        {isAdmin ? <ResearchChangeLogTable rows={researchChangeRows} /> : null}
       </div>
     </>
   );

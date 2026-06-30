@@ -376,9 +376,12 @@ export function PublishersTable({
                   {publisher.publisherCode}
                 </td>
                 <td className="px-4 py-3">
-                  <p className="whitespace-normal break-words text-base font-normal text-[#E4E4E4]">
+                  <Link
+                    href={`/publishers/${publisher.id}`}
+                    className="research-allow-transform block whitespace-normal break-words text-base font-normal text-[#1F7180] transition-[color,transform] hover:-translate-y-0.5 hover:text-[#155864] active:translate-y-0 active:scale-[0.99] dark:text-[#A8DADC] dark:hover:text-cyan-100"
+                  >
                     {publisher.name}
-                  </p>
+                  </Link>
                   <p className="mt-1 line-clamp-2 text-xs text-[#B0B0B0]">
                     {publisher.note || "No note"}
                   </p>
