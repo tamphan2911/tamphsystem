@@ -740,23 +740,17 @@ async function researchContentIsLocked(projectId: string) {
     select: {
       contentUnlocked: true,
       submissions: { select: { status: true } },
-      conferenceSubmissions: { select: { status: true } },
     },
   });
 
   if (!project) return false;
   return (
     !project.contentUnlocked &&
-    (project.submissions.some(
+    project.submissions.some(
       (submission) =>
         submission.status === SubmissionStatus.ACCEPTED ||
         submission.status === SubmissionStatus.PUBLISHED,
-    ) ||
-      project.conferenceSubmissions.some(
-        (submission) =>
-          submission.status === ConferenceSubmissionStatus.ACCEPTED ||
-          submission.status === ConferenceSubmissionStatus.PUBLISHED,
-      ))
+    )
   );
 }
 
@@ -875,14 +869,18 @@ async function taskAssociationIsSelectable({
   ) {
     const project = await prisma.researchProject.findUnique({
       where: { id: projectId },
-      select: { stage: true },
+      select: { submissions: { select: { status: true } } },
     });
     if (!project) return "MISSING_ASSOCIATION";
+    const hasFinishedJournalSubmission = project.submissions.some(
+      (submission) =>
+        submission.status === SubmissionStatus.ACCEPTED ||
+        submission.status === SubmissionStatus.PUBLISHED,
+    );
     if (
       (taskType === ResearchTaskType.SUBMIT_RESEARCH ||
         taskType === ResearchTaskType.SUBMIT_CONFERENCE) &&
-      (project.stage === ResearchStage.ACCEPTED ||
-        project.stage === ResearchStage.PUBLISHED)
+      hasFinishedJournalSubmission
     ) {
       return "RESEARCH_ALREADY_FINISHED";
     }
@@ -1376,18 +1374,11 @@ function linesFromForm(value: FormDataEntryValue | null) {
 function stageFromResearchState(
   completedProductionSteps: string[],
   submissionStatuses: SubmissionStatus[],
-  conferenceSubmissionStatuses: ConferenceSubmissionStatus[] = [],
 ) {
-  if (
-    submissionStatuses.includes(SubmissionStatus.PUBLISHED) ||
-    conferenceSubmissionStatuses.includes(ConferenceSubmissionStatus.PUBLISHED)
-  ) {
+  if (submissionStatuses.includes(SubmissionStatus.PUBLISHED)) {
     return ResearchStage.PUBLISHED;
   }
-  if (
-    submissionStatuses.includes(SubmissionStatus.ACCEPTED) ||
-    conferenceSubmissionStatuses.includes(ConferenceSubmissionStatus.ACCEPTED)
-  ) {
+  if (submissionStatuses.includes(SubmissionStatus.ACCEPTED)) {
     return ResearchStage.ACCEPTED;
   }
   if (
@@ -1395,31 +1386,18 @@ function stageFromResearchState(
       (status) =>
         status === SubmissionStatus.UNDER_REVIEW ||
         status === SubmissionStatus.REVISION,
-    ) ||
-    conferenceSubmissionStatuses.some(
-      (status) => status === ConferenceSubmissionStatus.REVIEWING,
     )
   ) {
     return ResearchStage.REVIEW;
   }
 
   const hasSubmissionInProgress =
-    submissionStatuses.some((status) => status === SubmissionStatus.PENDING) ||
-    conferenceSubmissionStatuses.some(
-      (status) =>
-        status === ConferenceSubmissionStatus.PLANNED ||
-        status === ConferenceSubmissionStatus.SUBMITTED,
-    );
+    submissionStatuses.some((status) => status === SubmissionStatus.PENDING);
   const hasRejectedOrWithdrawnSubmission =
     submissionStatuses.some(
       (status) =>
         status === SubmissionStatus.REJECTED ||
         status === SubmissionStatus.WITHDRAWN,
-    ) ||
-    conferenceSubmissionStatuses.some(
-      (status) =>
-        status === ConferenceSubmissionStatus.REJECTED ||
-        status === ConferenceSubmissionStatus.WITHDRAWN,
     );
 
   if (hasSubmissionInProgress || hasRejectedOrWithdrawnSubmission) {
@@ -1442,7 +1420,6 @@ async function refreshResearchStage(
     select: {
       completedProductionSteps: true,
       submissions: { select: { status: true } },
-      conferenceSubmissions: { select: { status: true } },
     },
   });
 
@@ -1454,7 +1431,6 @@ async function refreshResearchStage(
       stage: stageFromResearchState(
         completedProductionSteps ?? project.completedProductionSteps,
         project.submissions.map((submission) => submission.status),
-        project.conferenceSubmissions.map((submission) => submission.status),
       ),
     },
   });
@@ -3666,7 +3642,6 @@ export async function updateResearchProject(
         },
       },
       submissions: { select: { status: true } },
-      conferenceSubmissions: { select: { status: true } },
     },
   });
   if (!projectLock) return;
@@ -3698,15 +3673,7 @@ export async function updateResearchProject(
       submission.status === SubmissionStatus.ACCEPTED ||
       submission.status === SubmissionStatus.PUBLISHED,
   );
-  const hasAcceptedResearch =
-    projectLock.stage === ResearchStage.ACCEPTED ||
-    projectLock.stage === ResearchStage.PUBLISHED ||
-    hasLockedJournalSubmission ||
-    projectLock.conferenceSubmissions.some(
-      (submission) =>
-        submission.status === ConferenceSubmissionStatus.ACCEPTED ||
-        submission.status === ConferenceSubmissionStatus.PUBLISHED,
-    );
+  const hasAcceptedResearch = hasLockedJournalSubmission;
   const authorsLocked = hasAcceptedResearch && !projectLock.authorsUnlocked;
 
   if (updateScope === "authors" && authorsLocked) {
@@ -4003,26 +3970,16 @@ export async function setResearchAuthorsLock(
   const project = await prisma.researchProject.findUnique({
     where: { id: projectId },
     select: {
-      stage: true,
       submissions: { select: { status: true } },
-      conferenceSubmissions: { select: { status: true } },
     },
   });
   if (!project) return;
 
-  const acceptedOrPublished =
-    project.stage === ResearchStage.ACCEPTED ||
-    project.stage === ResearchStage.PUBLISHED ||
-    project.submissions.some(
-      (submission) =>
-        submission.status === SubmissionStatus.ACCEPTED ||
-        submission.status === SubmissionStatus.PUBLISHED,
-    ) ||
-    project.conferenceSubmissions.some(
-      (submission) =>
-        submission.status === ConferenceSubmissionStatus.ACCEPTED ||
-        submission.status === ConferenceSubmissionStatus.PUBLISHED,
-    );
+  const acceptedOrPublished = project.submissions.some(
+    (submission) =>
+      submission.status === SubmissionStatus.ACCEPTED ||
+      submission.status === SubmissionStatus.PUBLISHED,
+  );
   if (!acceptedOrPublished) return;
 
   await prisma.researchProject.update({

@@ -221,18 +221,6 @@ function stageFromJournalSubmissions(
   return "SUBMITTING";
 }
 
-function stageFromConferenceSubmissions(
-  submissions: { status: string }[],
-): DisplayStage {
-  if (submissions.some((submission) => submission.status === "PUBLISHED"))
-    return "PUBLISHED";
-  if (submissions.some((submission) => submission.status === "ACCEPTED"))
-    return "ACCEPTED";
-  if (submissions.some((submission) => submission.status === "REVIEWING"))
-    return "REVIEW";
-  return "SUBMITTING";
-}
-
 function highlightedSubmissionBoxClass(status: string) {
   if (status === "PUBLISHED") {
     return {
@@ -599,23 +587,23 @@ export default async function ProjectDetailPage({
     null,
     project.id,
   );
+  const completedProductionSteps = new Set(project.completedProductionSteps);
+  const unfinishedSteps = productionSteps.filter(
+    (step) => !completedProductionSteps.has(step.label),
+  );
+  const productionComplete = unfinishedSteps.length === 0;
   const hasJournalSubmissions = project.submissions.length > 0;
   const displayStage: DisplayStage = hasJournalSubmissions
     ? stageFromJournalSubmissions(project.submissions)
-    : project.conferenceSubmissions.length > 0
-      ? stageFromConferenceSubmissions(project.conferenceSubmissions)
-      : project.stage;
-  const researchAcceptedOrPublished =
-    project.stage === "ACCEPTED" ||
-    project.stage === "PUBLISHED" ||
-    project.submissions.some(
-      (submission) =>
-        submission.status === "ACCEPTED" || submission.status === "PUBLISHED",
-    ) ||
-    project.conferenceSubmissions.some(
-      (submission) =>
-        submission.status === "ACCEPTED" || submission.status === "PUBLISHED",
-    );
+    : project.stage === "PENDING"
+      ? "PENDING"
+      : productionComplete
+        ? "SUBMITTING"
+        : "PRODUCTION";
+  const researchAcceptedOrPublished = project.submissions.some(
+    (submission) =>
+      submission.status === "ACCEPTED" || submission.status === "PUBLISHED",
+  );
   const authorsLocked = researchAcceptedOrPublished && !project.authorsUnlocked;
   const highlightedJournalSubmission = hasJournalSubmissions
     ? (project.submissions.find(
@@ -666,11 +654,6 @@ export default async function ProjectDetailPage({
             project.coAuthors,
           ].filter(Boolean);
   const authorsLine = authorNames.join(", ");
-  const completedProductionSteps = new Set(project.completedProductionSteps);
-  const unfinishedSteps = productionSteps.filter(
-    (step) => !completedProductionSteps.has(step.label),
-  );
-  const productionComplete = unfinishedSteps.length === 0;
   const productionTimelineLocked =
     productionComplete && project.productionTimelineLocked;
   const successfulJournalSubmission = project.submissions.find(

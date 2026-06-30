@@ -1,8 +1,6 @@
 import bcrypt from "bcrypt";
 import {
-  ConferenceSubmissionStatus,
   prisma,
-  ResearchStage,
   ResearchTaskStatus,
   Role,
   SubmissionStatus,
@@ -124,11 +122,9 @@ export default async function AssistantsPage() {
         },
         select: {
           id: true,
-          stage: true,
           authors: { select: { id: true } },
           authorEntries: { select: { userId: true } },
           submissions: { select: { status: true } },
-          conferenceSubmissions: { select: { status: true } },
           tasks: {
             select: {
               checkerId: true,
@@ -216,19 +212,11 @@ export default async function AssistantsPage() {
         associatedIds.add(assignment.userId),
       );
     });
-    const acceptedOrPublished =
-      project.stage === ResearchStage.ACCEPTED ||
-      project.stage === ResearchStage.PUBLISHED ||
-      project.submissions.some(
-        (submission) =>
-          submission.status === SubmissionStatus.ACCEPTED ||
-          submission.status === SubmissionStatus.PUBLISHED,
-      ) ||
-      project.conferenceSubmissions.some(
-        (submission) =>
-          submission.status === ConferenceSubmissionStatus.ACCEPTED ||
-          submission.status === ConferenceSubmissionStatus.PUBLISHED,
-      );
+    const acceptedOrPublished = project.submissions.some(
+      (submission) =>
+        submission.status === SubmissionStatus.ACCEPTED ||
+        submission.status === SubmissionStatus.PUBLISHED,
+    );
 
     associatedIds.forEach((userId) => {
       if (!assistantUserIds.includes(userId)) return;

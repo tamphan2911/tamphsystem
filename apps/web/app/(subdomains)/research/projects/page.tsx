@@ -34,6 +34,50 @@ function displayRole(roles: Role[]) {
   );
 }
 
+const productionStepLabels = [
+  "Idea forming",
+  "Data collection",
+  "Modeling",
+  "Writing",
+  "Humanizing",
+  "References",
+];
+
+function journalFocusedResearchStage(project: {
+  stage: string;
+  completedProductionSteps: string[];
+  submissions: { status: string }[];
+}) {
+  const journalStatuses = project.submissions.map(
+    (submission) => submission.status,
+  );
+  if (journalStatuses.includes("PUBLISHED")) return "PUBLISHED";
+  if (journalStatuses.includes("ACCEPTED")) return "ACCEPTED";
+  if (
+    journalStatuses.some(
+      (status) => status === "UNDER_REVIEW" || status === "REVISION",
+    )
+  ) {
+    return "REVIEW";
+  }
+  if (
+    journalStatuses.some(
+      (status) =>
+        status === "PENDING" ||
+        status === "REJECTED" ||
+        status === "WITHDRAWN",
+    )
+  ) {
+    return "SUBMITTING";
+  }
+  if (project.stage === "PENDING") return "PENDING";
+  return productionStepLabels.every((step) =>
+    project.completedProductionSteps.includes(step),
+  )
+    ? "SUBMITTING"
+    : "PRODUCTION";
+}
+
 async function ensureResearchCodes() {
   const projects = await prisma.researchProject.findMany({
     where: { researchCode: null },
@@ -145,9 +189,6 @@ export default async function ProjectsDashboard() {
         submissions: {
           select: { status: true },
         },
-        conferenceSubmissions: {
-          select: { status: true },
-        },
         _count: {
           select: {
             submissions: true,
@@ -187,22 +228,19 @@ export default async function ProjectsDashboard() {
     role: displayRole(user.roles),
   }));
 
-  const published = projects.filter((project) => project.stage === "PUBLISHED");
   const claimed = projects.filter(
     (project) => project.claimStatus === "CLAIMED",
   );
 
   const rows: ResearchProjectRow[] = projects.map((project) => {
-    const submissionStatuses = [
-      ...project.submissions.map((submission) => submission.status),
-      ...project.conferenceSubmissions.map((submission) => submission.status),
-    ];
-    const hasSubmissions = submissionStatuses.length > 0;
-    const hasSubmittedSubmission = submissionStatuses.some(
-      (status) =>
-        status === "PENDING" || status === "PLANNED" || status === "SUBMITTED",
+    const journalSubmissionStatuses = project.submissions.map(
+      (submission) => submission.status,
     );
-    const hasAcceptedSubmission = submissionStatuses.some(
+    const hasJournalSubmissions = journalSubmissionStatuses.length > 0;
+    const hasSubmittedSubmission = journalSubmissionStatuses.some(
+      (status) => status === "PENDING",
+    );
+    const hasAcceptedSubmission = journalSubmissionStatuses.some(
       (status) => status === "ACCEPTED",
     );
 
@@ -212,7 +250,7 @@ export default async function ProjectsDashboard() {
       title: project.title,
       abstract: project.abstract ?? "",
       isPriority: project.isPriority,
-      stage: project.stage,
+      stage: journalFocusedResearchStage(project),
       claimStatus: project.claimStatus,
       registerStatus: project.registerStatus,
       coAuthors:
@@ -253,8 +291,8 @@ export default async function ProjectsDashboard() {
       pendingFolderAccessRequests: project._count.folderAccessRequests,
       updatedAt: researchDateTimeFormat("en-GB").format(project.updatedAt),
       notSubmittedAnywhere:
-        !hasSubmissions ||
-        submissionStatuses.every(
+        !hasJournalSubmissions ||
+        journalSubmissionStatuses.every(
           (status) => status === "REJECTED" || status === "WITHDRAWN",
         ),
       hasSubmittedSubmission,
@@ -272,6 +310,7 @@ export default async function ProjectsDashboard() {
       (row.stage === "SUBMITTING" && row.hasSubmittedSubmission),
   );
   const accepted = rows.filter((row) => row.hasAcceptedSubmission);
+  const published = rows.filter((row) => row.stage === "PUBLISHED");
 
   const stats = [
     {
