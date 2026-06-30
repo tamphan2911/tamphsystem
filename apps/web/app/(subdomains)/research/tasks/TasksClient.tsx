@@ -1281,10 +1281,17 @@ export function TasksClient({
         statuses.length === 0 || statuses.includes(taskStatus);
       const matchesType =
         taskTypes.length === 0 || taskTypes.includes(taskTypeFilterValue(task));
+      const selectedAdminChecker =
+        isAdmin &&
+        checkerIds.length > 0 &&
+        adminCheckerIds.some((checkerId) => checkerIds.includes(checkerId));
+      const referredToAdminForHelp =
+        task.managerAction?.label === "Referred checker help";
       const matchesChecker =
         !isAdmin ||
         checkerIds.length === 0 ||
-        checkerIds.includes(task.checkerId);
+        checkerIds.includes(task.checkerId) ||
+        (selectedAdminChecker && referredToAdminForHelp);
       const matchesCheckerNeedsAction =
         !checkerNeedsActionOnly ||
         !isChiefAssistant ||
@@ -1325,6 +1332,7 @@ export function TasksClient({
     });
   }, [
     activeHeaderTab,
+    adminCheckerIds,
     checkerIds,
     checkerNeedsActionOnly,
     isAdmin,
