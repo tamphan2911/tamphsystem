@@ -10094,6 +10094,7 @@ export async function approveSuggestedJournal(
   const createJournalTask =
     formData.get("createJournalTask") === "true" && !suggestion.journalId;
   if (createJournalTask) {
+    const approvalNote = optionalString(formData.get("approvalNote"));
     const autoCreateSubmitTaskOnApproval =
       formData.get("createSubmitTask") !== "false";
     if (!suggestion.createdById || !suggestion.createdBy) {
@@ -10103,7 +10104,7 @@ export async function approveSuggestedJournal(
     if (suggestion.journalCreationTaskId) {
       await prisma.suggestedJournal.update({
         where: { id: suggestionId },
-        data: { autoCreateSubmitTaskOnApproval },
+        data: { autoCreateSubmitTaskOnApproval, approvalNote },
       });
       if (
         suggestion.journalCreationTask?.status !==
@@ -10161,6 +10162,7 @@ export async function approveSuggestedJournal(
           status: SuggestedVenueStatus.PENDING,
           requiresApproval: true,
           autoCreateSubmitTaskOnApproval,
+          approvalNote,
           approvedAt: null,
           approvedById: null,
           declinedAt: null,

@@ -248,6 +248,7 @@ export function SuggestedJournalsPanel({
   const [journalTaskConfirmOpen, setJournalTaskConfirmOpen] = useState(false);
   const [autoCreateJournalTask, setAutoCreateJournalTask] = useState(true);
   const [autoCreateSubmitTask, setAutoCreateSubmitTask] = useState(true);
+  const [approvalNote, setApprovalNote] = useState("");
   const [declineReason, setDeclineReason] = useState("");
   const [approvalVenue, setApprovalVenue] = useState<Venue | null>(null);
   const [journalQuery, setJournalQuery] = useState("");
@@ -629,6 +630,7 @@ export function SuggestedJournalsPanel({
       let taskCreated = false;
       let submitTaskCreated = false;
       let submitTaskLinked = false;
+      formData.set("approvalNote", approvalNote.trim());
       if (approvalCanCreateSubmitTask) {
         formData.set(
           "createSubmitTask",
@@ -666,6 +668,7 @@ export function SuggestedJournalsPanel({
       setJournalTaskConfirmOpen(false);
       setAutoCreateJournalTask(true);
       setAutoCreateSubmitTask(true);
+      setApprovalNote("");
       showSuccess({
         title: taskCreated
           ? "Journal task assigned"
@@ -693,6 +696,7 @@ export function SuggestedJournalsPanel({
     setConferenceQuery("");
     setAutoCreateJournalTask(venue.kind === "journal" && !venue.item.venueId);
     setAutoCreateSubmitTask(true);
+    setApprovalNote("");
     setJournalTaskConfirmOpen(false);
   }
 
@@ -700,6 +704,7 @@ export function SuggestedJournalsPanel({
     if (!approveVenue || approveVenue.kind !== "journal") return;
     const formData = new FormData();
     formData.set("createJournalTask", "true");
+    formData.set("approvalNote", approvalNote.trim());
     setJournalTaskConfirmOpen(false);
     approveSuggestion(formData);
   }
@@ -1120,6 +1125,7 @@ export function SuggestedJournalsPanel({
             setJournalTaskConfirmOpen(false);
             setAutoCreateJournalTask(true);
             setAutoCreateSubmitTask(true);
+            setApprovalNote("");
             setDeclineReason("");
             setJournalQuery("");
             setConferenceQuery("");
@@ -1282,19 +1288,23 @@ export function SuggestedJournalsPanel({
                 </span>
               </label>
             ) : null}
-            {!approvalUsesJournalTask ? (
-              <label className="grid gap-1.5">
-                <span className="text-xs font-normal uppercase tracking-wide text-slate-600 dark:text-[#B0B0B0]">
-                  Approval note
-                </span>
-                <textarea
-                  name="approvalNote"
-                  rows={3}
-                  placeholder="Optional note about this approval, for example why this venue fits the research or what to watch during submission."
-                  className={researchTextareaClass}
-                />
-              </label>
-            ) : null}
+            <label className="grid gap-1.5">
+              <span className="text-xs font-normal uppercase tracking-wide text-slate-600 dark:text-[#B0B0B0]">
+                Approval note
+              </span>
+              <textarea
+                name="approvalNote"
+                rows={3}
+                value={approvalNote}
+                onChange={(event) => setApprovalNote(event.target.value)}
+                placeholder={
+                  approvalUsesJournalTask
+                    ? "Optional note for this approval path. It will stay with the venue while the Add Journal task is created."
+                    : "Optional note about this approval, for example why this venue fits the research or what to watch during submission."
+                }
+                className={researchTextareaClass}
+              />
+            </label>
           </form>
         </ResearchModal>
       )}
