@@ -148,28 +148,41 @@ function durationText(ms: number) {
   return restHours > 0 ? `${days}d ${restHours}h` : `${days}d`;
 }
 
-function assigneeDueText({
+function assigneeTimingMeta({
   dueDate,
+  finishedAt,
   completedAt,
 }: {
   dueDate: Date | null;
+  finishedAt: Date | null;
   completedAt: Date | null;
 }) {
-  if (!dueDate) {
-    return completedAt
-      ? `Completed: ${formatDate(completedAt)}`
-      : "No due date";
-  }
-  if (completedAt) {
-    const diff = dueDate.getTime() - completedAt.getTime();
+  if (!dueDate) return null;
+
+  const finishDate = completedAt ?? finishedAt;
+  if (finishDate) {
+    const diff = dueDate.getTime() - finishDate.getTime();
     return diff >= 0
-      ? `${durationText(diff)} early`
-      : `${durationText(diff)} overdue`;
+      ? {
+          label: `Finished ${durationText(diff)} early`,
+          className: "text-emerald-700 dark:text-emerald-300",
+        }
+      : {
+          label: `Finished ${durationText(diff)} late`,
+          className: "text-rose-700 dark:text-rose-300",
+        };
   }
+
   const remaining = dueDate.getTime() - Date.now();
   return remaining >= 0
-    ? `${durationText(remaining)} left`
-    : `${durationText(remaining)} late`;
+    ? {
+        label: `${durationText(remaining)} left`,
+        className: "text-sky-700 dark:text-[#A8DADC]",
+      }
+    : {
+        label: `${durationText(remaining)} overdue`,
+        className: "text-rose-700 dark:text-rose-300",
+      };
 }
 
 function assigneeWorkflowMeta(assignment: {
@@ -524,9 +537,11 @@ function displayRole(roles: Role[]) {
 function TaskPersonLine({
   person,
   showEmail = false,
+  note,
 }: {
   person: { name: string | null; email: string; roles: Role[] };
   showEmail?: boolean;
+  note?: ReactNode;
 }) {
   return (
     <span className="flex min-w-0 items-start gap-3">
@@ -546,6 +561,7 @@ function TaskPersonLine({
             {person.email}
           </span>
         ) : null}
+        {note ? <span className="mt-0.5 block min-w-0">{note}</span> : null}
       </span>
     </span>
   );
@@ -3736,7 +3752,14 @@ export default async function TaskDetailPage({
                     const hasMultipleAssignees = task.assignments.length > 1;
                     const workflow = assigneeWorkflowMeta(assignment);
                     const WorkflowIcon = workflow.icon;
-                    const assignmentDueDate = assignment.dueDate;
+                    const assignmentDueDate = assignment.dueDate ?? task.dueDate;
+                    const assignmentTiming = hasMultipleAssignees
+                      ? assigneeTimingMeta({
+                          dueDate: assignmentDueDate,
+                          finishedAt: assignment.finishedAt,
+                          completedAt: assignment.completedAt,
+                        })
+                      : null;
                     const canApproveThisAssignee =
                       hasMultipleAssignees &&
                       canManageAssignmentResults &&
@@ -3745,7 +3768,19 @@ export default async function TaskDetailPage({
                     return (
                       <div key={assignment.id} className="grid gap-2 py-3">
                         <div className="flex items-start justify-between gap-3">
-                          <TaskPersonLine person={assignment.user} showEmail />
+                          <TaskPersonLine
+                            person={assignment.user}
+                            showEmail
+                            note={
+                              assignmentTiming ? (
+                                <span
+                                  className={`text-[11px] font-medium leading-4 ${assignmentTiming.className}`}
+                                >
+                                  {assignmentTiming.label}
+                                </span>
+                              ) : null
+                            }
+                          />
                           {hasMultipleAssignees ? (
                             <IconHint label={workflow.detail}>
                               <span
@@ -3758,15 +3793,6 @@ export default async function TaskDetailPage({
                           ) : null}
                         </div>
                         <div className="grid gap-1 text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
-                          {hasMultipleAssignees ? (
-                            <span>
-                              {workflow.label} |{" "}
-                              {assigneeDueText({
-                                dueDate: assignmentDueDate,
-                                completedAt: assignment.completedAt,
-                              })}
-                            </span>
-                          ) : null}
                           {assignment.completedAt ? (
                             <span className="text-emerald-700 dark:text-emerald-300">
                               {task.status === ResearchTaskStatus.COMPLETED
