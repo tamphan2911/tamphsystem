@@ -67,6 +67,7 @@ import {
   ClarificationRequestForm,
   RedoTaskForm,
 } from "./TaskWorkflowForms";
+import { AssigneeReviewActions } from "./AssigneeReviewActions";
 import { EditTaskDialog } from "./EditTaskDialog";
 import {
   TaskClarificationPanel,
@@ -3781,7 +3782,16 @@ export default async function TaskDetailPage({
                               ) : null
                             }
                           />
-                          {hasMultipleAssignees ? (
+                          {canApproveThisAssignee ? (
+                            <AssigneeReviewActions
+                              assignmentId={assignment.id}
+                              finishAction={finishAction}
+                              redoAction={redoAction}
+                              iconClassName={workflow.className}
+                              label={workflow.label}
+                              detail={workflow.detail}
+                            />
+                          ) : hasMultipleAssignees ? (
                             <IconHint label={workflow.detail}>
                               <span
                                 className={`research-allow-transform inline-flex h-7 w-7 flex-none items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${workflow.className}`}
@@ -3806,19 +3816,6 @@ export default async function TaskDetailPage({
                             </span>
                           ) : null}
                         </div>
-                        {canApproveThisAssignee ? (
-                          <div className="flex flex-wrap items-center gap-2">
-                            <FinishTaskForm
-                              action={finishAction}
-                              assignmentId={assignment.id}
-                              mode="approve"
-                            />
-                            <RedoTaskForm
-                              action={redoAction}
-                              assignmentId={assignment.id}
-                            />
-                          </div>
-                        ) : null}
                       </div>
                     );
                   })
