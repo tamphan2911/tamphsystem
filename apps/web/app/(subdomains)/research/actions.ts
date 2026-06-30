@@ -474,6 +474,9 @@ function createTransporter() {
     host: process.env.SMTP_HOST,
     port,
     secure: process.env.SMTP_SECURE === "true" || port === 465,
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 10000,
     auth:
       process.env.SMTP_USER && process.env.SMTP_PASSWORD
         ? {
@@ -773,6 +776,31 @@ async function canCreateResearchTaskForProject({
   taskType: ResearchTaskType;
 }) {
   if (user.roles.includes(Role.ADMIN)) return true;
+  if (projectId && taskTypeCanBeCreatedByResearchAuthor(taskType)) {
+    const project = await prisma.researchProject.findUnique({
+      where: { id: projectId },
+      select: {
+        leadResearcherId: true,
+        authorEntries: {
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          select: { userId: true, isCorresponding: true },
+        },
+      },
+    });
+
+    if (!project) return false;
+    if (project.authorEntries.length === 0) {
+      return project.leadResearcherId === user.id;
+    }
+
+    return (
+      project.authorEntries[0]?.userId === user.id ||
+      project.authorEntries.some(
+        (entry) => entry.userId === user.id && entry.isCorresponding,
+      )
+    );
+  }
+
   if (user.roles.includes(Role.CHIEF_ASSISTANT)) {
     if (
       taskType === ResearchTaskType.REVIEW ||
@@ -804,32 +832,7 @@ async function canCreateResearchTaskForProject({
 
     return false;
   }
-  if (!projectId || !taskTypeCanBeCreatedByResearchAuthor(taskType)) {
-    return false;
-  }
-
-  const project = await prisma.researchProject.findUnique({
-    where: { id: projectId },
-    select: {
-      leadResearcherId: true,
-      authorEntries: {
-        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-        select: { userId: true, isCorresponding: true },
-      },
-    },
-  });
-
-  if (!project) return false;
-  if (project.authorEntries.length === 0) {
-    return project.leadResearcherId === user.id;
-  }
-
-  return (
-    project.authorEntries[0]?.userId === user.id ||
-    project.authorEntries.some(
-      (entry) => entry.userId === user.id && entry.isCorresponding,
-    )
-  );
+  return false;
 }
 
 async function taskAssociationIsSelectable({
@@ -7059,16 +7062,20 @@ export async function createResearchTask(formData: FormData) {
     entityType: "task",
     entityId: task.id,
   });
-  await sendTaskEmail({
-    to: task.assignments.map((assignment) => assignment.user.email),
-    subject: `Task assigned: ${task.title}`,
-    heading: "Task assigned",
-    intro: "A new research task has been assigned to you.",
-    detail: task.description ?? undefined,
-    taskTitle: task.title,
-    taskId: task.id,
-    actionLabel: "Open task",
-  });
+  try {
+    await sendTaskEmail({
+      to: task.assignments.map((assignment) => assignment.user.email),
+      subject: `Task assigned: ${task.title}`,
+      heading: "Task assigned",
+      intro: "A new research task has been assigned to you.",
+      detail: task.description ?? undefined,
+      taskTitle: task.title,
+      taskId: task.id,
+      actionLabel: "Open task",
+    });
+  } catch (error) {
+    console.error("[research tasks] assignment email failed", error);
+  }
   if (task.checkerId) {
     await notifyUsers({
       userIds: [task.checkerId],
@@ -7081,12 +7088,16 @@ export async function createResearchTask(formData: FormData) {
       entityId: task.id,
       excludeUserId: user.id,
     });
-    await sendTaskCheckerAssignedEmail({
-      checkerId: task.checkerId,
-      taskTitle: task.title,
-      taskId: task.id,
-      detail: task.description ?? undefined,
-    });
+    try {
+      await sendTaskCheckerAssignedEmail({
+        checkerId: task.checkerId,
+        taskTitle: task.title,
+        taskId: task.id,
+        detail: task.description ?? undefined,
+      });
+    } catch (error) {
+      console.error("[research tasks] checker email failed", error);
+    }
   }
 
   revalidatePath("/tasks");

@@ -174,6 +174,45 @@ function taskChoiceLabel(choice: TaskModeChoice) {
   return modeLabel(choice);
 }
 
+function createTaskErrorDetail(reason?: string) {
+  if (reason === "PRODUCTION_INCOMPLETE")
+    return "Complete the production timeline before assigning a submission task.";
+  if (reason === "MISSING_ASSOCIATION")
+    return "Choose the required research, venue, review, or project before creating this task.";
+  if (reason === "RESEARCH_ALREADY_FINISHED")
+    return "Choose research that is not accepted or published yet.";
+  if (reason === "RESEARCH_PRODUCTION_COMPLETE")
+    return "Choose research that has not finished the production timeline.";
+  if (reason === "REVIEW_CLOSED")
+    return "Choose a review that is not submitted, declined, or cancelled.";
+  if (reason === "PROJECT_CLOSED")
+    return "Choose a project that is not completed.";
+  if (reason === "INACTIVE_RESEARCH_ASSIGNEE")
+    return "Choose only users who have activated their research-site account.";
+  if (reason === "INVALID_CHECKER")
+    return "Choose a chief assistant as checker, or leave checker empty.";
+  if (reason === "ACTIVE_SUBMISSION_TASK_EXISTS")
+    return "An active submission task already exists for this research and venue.";
+  if (reason === "ACCOUNT_NOT_FOR_JOURNAL")
+    return "Choose an account that belongs to the selected journal.";
+  if (reason === "ACCOUNT_REQUIRED")
+    return "Choose the journal account for this submission task.";
+  if (reason === "INVALID_JOURNAL_TARGET_COUNT")
+    return "Enter a journal target between 1 and 30.";
+  if (reason === "INVALID_SUGGESTED_VENUE_TARGET_COUNT")
+    return "Enter a suggested venue target between 1 and 30.";
+  if (reason === "TASK_FILE_TOO_LARGE")
+    return "Task file must be 2 MB or smaller.";
+  if (reason === "TASK_FILE_REJECTED")
+    return "Upload the task file as PDF, DOC, DOCX, or XLSX.";
+  if (reason === "RESEARCH_LOCKED")
+    return "This research is locked because it has been accepted or published.";
+  if (reason === "UNAUTHORIZED")
+    return "Your account is not allowed to create this task for the selected research.";
+  if (reason === "NO_ASSIGNEE") return "Choose at least one task assignee.";
+  return "Please check the task details and try again.";
+}
+
 function researchMatchesMode(project: TaskResearchOption, mode: TaskMode) {
   if (mode === "submit") return !finishedResearchStages.has(project.stage);
   return true;
@@ -650,41 +689,22 @@ export function NewTaskDialog({
 
   function submitTask(formData: FormData) {
     startTransition(async () => {
-      const result = await createResearchTask(formData);
-      if (!result?.ok) {
+      let result: Awaited<ReturnType<typeof createResearchTask>>;
+      try {
+        result = await createResearchTask(formData);
+      } catch (error) {
+        console.error("[research tasks] create failed", error);
         showError({
           title: "Task was not created",
           detail:
-            result?.reason === "PRODUCTION_INCOMPLETE"
-              ? "Complete the production timeline before assigning a submission task."
-              : result?.reason === "MISSING_ASSOCIATION"
-                ? "Choose the required research, venue, review, or project before creating this task."
-                : result?.reason === "RESEARCH_ALREADY_FINISHED"
-                  ? "Choose research that is not accepted or published yet."
-                  : result?.reason === "RESEARCH_PRODUCTION_COMPLETE"
-                    ? "Choose research that has not finished the production timeline."
-                    : result?.reason === "REVIEW_CLOSED"
-                      ? "Choose a review that is not submitted, declined, or cancelled."
-                      : result?.reason === "PROJECT_CLOSED"
-                        ? "Choose a project that is not completed."
-                        : result?.reason === "INACTIVE_RESEARCH_ASSIGNEE"
-                          ? "Choose only users who have activated their research-site account."
-                          : result?.reason === "INVALID_CHECKER"
-                            ? "Choose a chief assistant as checker, or leave checker empty."
-                            : result?.reason === "ACTIVE_SUBMISSION_TASK_EXISTS"
-                              ? "An active submission task already exists for this research and venue."
-                              : result?.reason === "ACCOUNT_NOT_FOR_JOURNAL"
-                                ? "Choose an account that belongs to the selected journal."
-                                : result?.reason === "ACCOUNT_REQUIRED"
-                                  ? "Choose the journal account for this submission task."
-                                  : result?.reason ===
-                                      "INVALID_JOURNAL_TARGET_COUNT"
-                                    ? "Enter a journal target between 1 and 30."
-                                    : result?.reason === "TASK_FILE_TOO_LARGE"
-                                      ? "Task file must be 2 MB or smaller."
-                                      : result?.reason === "TASK_FILE_REJECTED"
-                                        ? "Upload the task file as PDF, DOC, DOCX, or XLSX."
-                                        : "Please check the task details and try again.",
+            "The server could not finish creating this task. Please try again.",
+        });
+        return;
+      }
+      if (!result?.ok) {
+        showError({
+          title: "Task was not created",
+          detail: createTaskErrorDetail(result?.reason),
         });
         return;
       }
@@ -805,6 +825,7 @@ export function NewTaskDialog({
         maxWidth="max-w-5xl"
         headerActions={
           <ResearchButton
+            type="submit"
             form="new-task-form"
             disabled={!canSubmit || isPending}
           >
