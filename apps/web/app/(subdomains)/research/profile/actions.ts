@@ -84,10 +84,26 @@ export async function updateResearchProfile(formData: FormData) {
         researchThemePreference,
       },
     });
+    const linkedResearch = await prisma.researchProject.findMany({
+      where: {
+        OR: [
+          { leadResearcherId: targetUserId },
+          { authors: { some: { id: targetUserId } } },
+          { authorEntries: { some: { userId: targetUserId } } },
+        ],
+      },
+      select: { id: true },
+    });
     revalidatePath("/profile");
     revalidatePath("/research/profile");
     revalidatePath("/users");
     revalidatePath("/assistants");
+    revalidatePath("/projects");
+    revalidatePath("/research/projects");
+    linkedResearch.forEach((research) => {
+      revalidatePath(`/projects/${research.id}`);
+      revalidatePath(`/research/projects/${research.id}`);
+    });
     return { success: true };
   } catch {
     return { error: "Profile could not be updated." };

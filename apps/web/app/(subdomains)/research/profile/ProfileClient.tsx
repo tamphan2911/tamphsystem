@@ -703,10 +703,23 @@ export function ProfileClient({
           ))}
         </div>
 
-        {user.affiliation && (
-          <p className="border-b border-[#444444] pb-3 text-sm leading-6 text-[#B0B0B0]">
-            {user.affiliation}
-          </p>
+        {(user.affiliation || user.orcid) && (
+          <div className="space-y-1 border-b border-[#444444] pb-3 text-sm leading-6 text-[#B0B0B0]">
+            {user.affiliation ? <p>{user.affiliation}</p> : null}
+            {user.orcid ? (
+              <p>
+                ORCID:{" "}
+                <a
+                  href={user.orcid}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#1F7180] transition-colors duration-150 hover:text-[#145B66] dark:text-[#A8DADC] dark:hover:text-[#CFF4F5]"
+                >
+                  {user.orcid}
+                </a>
+              </p>
+            ) : null}
+          </div>
         )}
 
         <section className="space-y-3">
