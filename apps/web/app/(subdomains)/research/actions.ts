@@ -11204,6 +11204,7 @@ export async function requestTaskClarification(
       createdById: true,
       checkerId: true,
       status: true,
+      redoRequestedAt: true,
       createdBy: { select: { email: true } },
       checker: { select: { email: true } },
       assignments: { select: { userId: true } },
@@ -11288,6 +11289,7 @@ export async function answerTaskClarification(
       createdById: true,
       checkerId: true,
       status: true,
+      redoRequestedAt: true,
       createdBy: { select: { email: true } },
       checker: { select: { email: true } },
       assignments: {
@@ -11330,8 +11332,12 @@ export async function answerTaskClarification(
     where: { id: taskId },
     data: {
       status: requesterIsAssignee
-        ? ResearchTaskStatus.IN_PROGRESS
-        : ResearchTaskStatus.CHECKING,
+        ? task.redoRequestedAt
+          ? ResearchTaskStatus.REVISION_REQUESTED
+          : ResearchTaskStatus.IN_PROGRESS
+        : task.redoRequestedAt
+          ? ResearchTaskStatus.REVISION_REQUESTED
+          : ResearchTaskStatus.CHECKING,
     },
   });
   if (requesterIsAssignee) {
@@ -11435,7 +11441,8 @@ export async function requestAssigneeClarification(
     task.checkerId === user.id;
   if (!canManage) redirect("/401");
   if (
-    task.status !== ResearchTaskStatus.CHECKING ||
+    (task.status !== ResearchTaskStatus.CHECKING &&
+      task.status !== ResearchTaskStatus.REVISION_REQUESTED) ||
     task.clarifications.length > 0
   ) {
     return;
@@ -11504,6 +11511,7 @@ export async function sendTaskClarificationChatMessage(
       createdById: true,
       checkerId: true,
       status: true,
+      redoRequestedAt: true,
       createdBy: { select: { email: true } },
       checker: { select: { email: true } },
       assignments: {
@@ -11573,7 +11581,9 @@ export async function sendTaskClarificationChatMessage(
     checkedTask.status !== ResearchTaskStatus.CHECKING &&
     checkedTask.status !== ResearchTaskStatus.NEED_CLARIFY;
   const canStartManagerRequest =
-    userCanManage && checkedTask.status === ResearchTaskStatus.CHECKING;
+    userCanManage &&
+    (checkedTask.status === ResearchTaskStatus.CHECKING ||
+      checkedTask.status === ResearchTaskStatus.REVISION_REQUESTED);
 
   async function createClarificationRequest() {
     if (!canStartAssigneeRequest && !canStartManagerRequest) return;
@@ -11715,8 +11725,12 @@ export async function sendTaskClarificationChatMessage(
       where: { id: taskId },
       data: {
         status: requesterIsAssignee
-          ? ResearchTaskStatus.IN_PROGRESS
-          : ResearchTaskStatus.CHECKING,
+          ? checkedTask.redoRequestedAt
+            ? ResearchTaskStatus.REVISION_REQUESTED
+            : ResearchTaskStatus.IN_PROGRESS
+          : checkedTask.redoRequestedAt
+            ? ResearchTaskStatus.REVISION_REQUESTED
+            : ResearchTaskStatus.CHECKING,
       },
     });
 

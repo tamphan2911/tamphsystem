@@ -1914,7 +1914,8 @@ export default async function TaskDetailPage({
     !isClosed &&
     !waitingForJournalCreation &&
     (isRootAdmin || isAssigner || isChecker) &&
-    effectiveStatus === ResearchTaskStatus.CHECKING &&
+    (effectiveStatus === ResearchTaskStatus.CHECKING ||
+      effectiveStatus === ResearchTaskStatus.REVISION_REQUESTED) &&
     !hasOpenClarification;
   const canRevoke = !isClosed && !isAssignee && (isAdmin || isAssigner);
   const canEdit =
