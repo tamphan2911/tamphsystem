@@ -737,6 +737,15 @@ function JournalResultCard({
       <p className="mt-2 text-xs text-[#667085] dark:text-[#B0B0B0]">
         <span>APC: </span>
         <span className={apc.className}>{apc.label}</span>
+        <span
+          className={`ml-1 font-medium ${
+            journal.hasApcOption
+              ? "text-emerald-700 dark:text-emerald-300"
+              : "text-rose-700 dark:text-rose-300"
+          }`}
+        >
+          {journal.hasApcOption ? "(Option)" : "(No Option)"}
+        </span>
         <JournalResultSeparator />
         <span>Fee: </span>
         <span className={fee.className}>{fee.label}</span>
