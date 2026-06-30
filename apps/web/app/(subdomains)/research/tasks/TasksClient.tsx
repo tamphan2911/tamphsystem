@@ -187,46 +187,50 @@ function activeDueMeta(due: Date | null, remainingMs: number | null) {
   };
 }
 
-function assignmentDueText(assignment: TaskAssignment) {
-  const due = assignment.dueDate ? new Date(assignment.dueDate) : null;
-  const completed = assignment.completedAt
-    ? new Date(assignment.completedAt)
-    : null;
-  if (!due) {
-    return completed
-      ? `Completed: ${formatDate(assignment.completedAt)}`
-      : "No due date";
+function assignmentTimingMeta({
+  dueDate,
+  finishedAt,
+  completedAt,
+}: {
+  dueDate: string | null;
+  finishedAt: string | null;
+  completedAt: string | null;
+}) {
+  if (!dueDate) return null;
+
+  const due = new Date(dueDate);
+  const finishDate = completedAt
+    ? new Date(completedAt)
+    : finishedAt
+      ? new Date(finishedAt)
+      : null;
+
+  if (finishDate) {
+    const diff = due.getTime() - finishDate.getTime();
+    return diff >= 0
+      ? {
+          label: `Finished ${durationText(diff)} early`,
+          className: "font-medium text-emerald-700 dark:text-emerald-300",
+        }
+      : {
+          label: `Finished ${durationText(diff)} late`,
+          className: "font-medium text-rose-700 dark:text-rose-300",
+        };
   }
 
-  if (completed) {
-    const diff = due.getTime() - completed.getTime();
-    if (diff >= 0) return `${durationText(diff)} early`;
-    return `${durationText(diff)} late`;
-  }
-
-  const diff = due.getTime() - Date.now();
-  if (diff < 0) return `${durationText(diff)} late`;
-  return `${durationText(diff)} left`;
-}
-
-function assignmentDueClassName(assignment: TaskAssignment) {
-  const due = assignment.dueDate ? new Date(assignment.dueDate) : null;
-  const completed = assignment.completedAt
-    ? new Date(assignment.completedAt)
-    : null;
-  if (completed) {
-    if (due && completed > due) {
-      return "text-[#A06716] dark:text-[#F4D47A]";
-    }
-    return "text-emerald-700 dark:text-emerald-300";
-  }
-  if (!due) return "text-[#667085] dark:text-[#8F98A8]";
   const remainingMs = due.getTime() - Date.now();
-  if (remainingMs < 0) return "font-semibold text-rose-600 dark:text-rose-300";
-  if (remainingMs < 24 * 60 * 60 * 1000) {
-    return "font-semibold text-[#B64F48] dark:text-[#FFB4A2]";
-  }
-  return "text-[#A06716] dark:text-[#F4D47A]";
+  return remainingMs >= 0
+    ? {
+        label: `${durationText(remainingMs)} left`,
+        className:
+          remainingMs < 24 * 60 * 60 * 1000
+            ? "font-semibold text-[#B64F48] dark:text-[#FFB4A2]"
+            : "font-medium text-sky-700 dark:text-[#A8DADC]",
+      }
+    : {
+        label: `${durationText(remainingMs)} overdue`,
+        className: "font-semibold text-rose-700 dark:text-rose-300",
+      };
 }
 
 function assignmentWorkflowMeta(assignment: TaskAssignment): {
@@ -1581,6 +1585,11 @@ export function TasksClient({
                               assignmentWorkflowMeta(assignment);
                             const AssignmentIcon = assignmentWorkflow.icon;
                             const showEmail = task.assignments.length === 1;
+                            const assignmentTiming = assignmentTimingMeta({
+                              dueDate: assignment.dueDate ?? task.dueDate,
+                              finishedAt: assignment.finishedAt,
+                              completedAt: assignment.completedAt,
+                            });
                             return (
                               <div
                                 key={assignment.id}
@@ -1619,12 +1628,13 @@ export function TasksClient({
                                     {displayResearchEmail(assignment.userEmail)}
                                   </div>
                                 ) : null}
-                                <div
-                                  className={`text-[11px] leading-4 ${assignmentDueClassName(assignment)}`}
-                                >
-                                  {assignmentWorkflow.label} |{" "}
-                                  {assignmentDueText(assignment)}
-                                </div>
+                                {assignmentTiming ? (
+                                  <div
+                                    className={`text-[11px] leading-4 ${assignmentTiming.className}`}
+                                  >
+                                    {assignmentTiming.label}
+                                  </div>
+                                ) : null}
                               </div>
                             );
                           })}
