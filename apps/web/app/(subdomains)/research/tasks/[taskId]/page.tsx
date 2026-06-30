@@ -3758,13 +3758,15 @@ export default async function TaskDetailPage({
                           ) : null}
                         </div>
                         <div className="grid gap-1 text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
-                          <span>
-                            {workflow.label} |{" "}
-                            {assigneeDueText({
-                              dueDate: assignmentDueDate,
-                              completedAt: assignment.completedAt,
-                            })}
-                          </span>
+                          {hasMultipleAssignees ? (
+                            <span>
+                              {workflow.label} |{" "}
+                              {assigneeDueText({
+                                dueDate: assignmentDueDate,
+                                completedAt: assignment.completedAt,
+                              })}
+                            </span>
+                          ) : null}
                           {assignment.completedAt ? (
                             <span className="text-emerald-700 dark:text-emerald-300">
                               {task.status === ResearchTaskStatus.COMPLETED
