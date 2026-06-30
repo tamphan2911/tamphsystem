@@ -44,6 +44,7 @@ import {
   requestAssigneeClarification,
   requestTaskClarification,
   requestTaskRedo,
+  referTaskCheckerHelp,
   revokeResearchTask,
   sendTaskReminderEmail,
   sendTaskClarificationChatMessage,
@@ -59,6 +60,7 @@ import {
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
 import { FinishTaskForm } from "./FinishTaskForm";
+import { CheckerReferralForm } from "./CheckerReferralForm";
 import { RevokeTaskForm } from "./RevokeTaskForm";
 import {
   AssigneeClarificationRequestForm,
@@ -1053,6 +1055,9 @@ export default async function TaskDetailPage({
       updatedAt: true,
       createdById: true,
       checkerId: true,
+      checkerReferralTargetIds: true,
+      checkerReferralAction: true,
+      checkerReferralAt: true,
       projectId: true,
       organizedProjectId: true,
       journalId: true,
@@ -1921,6 +1926,7 @@ export default async function TaskDetailPage({
   const finishAction = finishResearchTask.bind(null, task.id);
   const readyAction = markResearchTaskReadyForCheck.bind(null, task.id);
   const redoAction = requestTaskRedo.bind(null, task.id);
+  const checkerReferralAction = referTaskCheckerHelp.bind(null, task.id);
   const reminderAction = sendTaskReminderEmail.bind(null, task.id);
   const clarificationAction = requestTaskClarification.bind(null, task.id);
   const assigneeClarificationAction = requestAssigneeClarification.bind(
@@ -1938,6 +1944,43 @@ export default async function TaskDetailPage({
   const isClosed =
     task.status === ResearchTaskStatus.COMPLETED ||
     task.status === ResearchTaskStatus.REVOKED;
+  const checkerReferralCheckingAction = "CHECKING_REVIEW";
+  const checkerReferralClarificationAction = "ANSWER_ASSIGNEE_CLARIFICATION";
+  const currentCheckerReferralAction =
+    task.status === ResearchTaskStatus.CHECKING
+      ? checkerReferralCheckingAction
+      : task.status === ResearchTaskStatus.NEED_CLARIFY &&
+          openClarificationRequestedByAssignee
+        ? checkerReferralClarificationAction
+        : null;
+  const hasActiveCheckerReferral =
+    Boolean(currentCheckerReferralAction) &&
+    task.checkerReferralAction === currentCheckerReferralAction &&
+    task.checkerReferralTargetIds.length > 0;
+  const isActiveCheckerReferralTarget =
+    hasActiveCheckerReferral && task.checkerReferralTargetIds.includes(userId);
+  const canReferCheckerAction =
+    !isClosed &&
+    !waitingForJournalCreation &&
+    isChecker &&
+    Boolean(currentCheckerReferralAction);
+  const checkerReferralOptions = [
+    task.createdById !== task.checkerId
+      ? {
+          value: "assigner" as const,
+          label: "Assigner",
+          detail: "Ask the assigner to help with this current checker action.",
+        }
+      : null,
+    !task.checker?.roles.includes(Role.ADMIN) &&
+    !task.createdBy.roles.includes(Role.ADMIN)
+      ? {
+          value: "admin" as const,
+          label: "Admin",
+          detail: "Ask an admin to help with this current checker action.",
+        }
+      : null,
+  ].filter((option): option is NonNullable<typeof option> => Boolean(option));
   const effectiveStatus = waitingForJournalCreation
     ? ResearchTaskStatus.IN_PROGRESS
     : task.status;
@@ -1961,15 +2004,16 @@ export default async function TaskDetailPage({
     !waitingForJournalCreation &&
     !isAutomatedJournalTask &&
     !isAssignee &&
-    (isAdmin || isAssigner) &&
+    (isAdmin || isAssigner || isActiveCheckerReferralTarget) &&
     (selfAssigned ||
       isAdmin ||
+      isActiveCheckerReferralTarget ||
       effectiveStatus === ResearchTaskStatus.CHECKING);
   const canRedo =
     !isClosed &&
     !waitingForJournalCreation &&
     !isAssignee &&
-    (isAdmin || isAssigner) &&
+    (isAdmin || isAssigner || isActiveCheckerReferralTarget) &&
     effectiveStatus === ResearchTaskStatus.CHECKING;
   const canRequestClarification =
     !isClosed &&
@@ -1982,7 +2026,7 @@ export default async function TaskDetailPage({
   const canRequestAssigneeClarification =
     !isClosed &&
     !waitingForJournalCreation &&
-    (isRootAdmin || isAssigner || isChecker) &&
+    (isRootAdmin || isAssigner || isChecker || isActiveCheckerReferralTarget) &&
     (effectiveStatus === ResearchTaskStatus.CHECKING ||
       effectiveStatus === ResearchTaskStatus.REVISION_REQUESTED) &&
     !hasOpenClarification;
@@ -1990,7 +2034,7 @@ export default async function TaskDetailPage({
     !isClosed &&
     !waitingForJournalCreation &&
     !isAssignee &&
-    (isRootAdmin || isAssigner || isChecker);
+    (isRootAdmin || isAssigner || isChecker || isActiveCheckerReferralTarget);
   const canRevoke = !isClosed && !isAssignee && (isAdmin || isAssigner);
   const canEdit =
     !isAssignee && (isRootAdmin || (!isClosed && isChiefAssistant));
@@ -2041,7 +2085,12 @@ export default async function TaskDetailPage({
                   }
                 : null;
   const canAnswerClarification =
-    !isClosed && (isRootAdmin || isAssigner || isChecker || isAssignee);
+    !isClosed &&
+    (isRootAdmin ||
+      isAssigner ||
+      isChecker ||
+      isAssignee ||
+      isActiveCheckerReferralTarget);
   const reportEnabled = task.allowAssigneeReportUpload;
   const isJournalSubmitTask =
     task.taskType === "SUBMIT_RESEARCH" && Boolean(task.journal);
@@ -3318,12 +3367,19 @@ export default async function TaskDetailPage({
 
       <div className="mx-auto max-w-7xl space-y-5">
         {(canMarkReady ||
+          (canReferCheckerAction && checkerReferralOptions.length > 0) ||
           canApprove ||
           canRedo ||
           canRequestClarification ||
           canRequestAssigneeClarification ||
           canRevoke) && (
           <div className="flex flex-col justify-end gap-2 sm:flex-row sm:items-center">
+            {canReferCheckerAction && checkerReferralOptions.length > 0 && (
+              <CheckerReferralForm
+                action={checkerReferralAction}
+                options={checkerReferralOptions}
+              />
+            )}
             {canRevoke && (
               <RevokeTaskForm
                 action={revokeAction}
@@ -3393,6 +3449,14 @@ export default async function TaskDetailPage({
                 <DetailSeparator />
                 <span className="font-normal uppercase tracking-wide text-[#B33E5C] dark:text-[#FF9DAE]">
                   Urgent
+                </span>
+              </>
+            ) : null}
+            {hasActiveCheckerReferral ? (
+              <>
+                <DetailSeparator />
+                <span className="font-normal text-violet-700 dark:text-violet-200">
+                  Checker help requested
                 </span>
               </>
             ) : null}

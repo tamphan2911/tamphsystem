@@ -14,6 +14,7 @@ function scopedTaskWhere(userId: string) {
     OR: [
       { createdById: userId },
       { checkerId: userId },
+      { checkerReferralTargetIds: { has: userId } },
       { assignments: { some: { userId } } },
       {
         project: {
@@ -225,6 +226,17 @@ export async function GET() {
           ? "ASSIGNEE_TO_MANAGER"
           : "MANAGER_TO_ASSIGNEE"
         : null;
+      const checkerReferralAction =
+        task.status === ResearchTaskStatus.CHECKING
+          ? "CHECKING_REVIEW"
+          : task.status === ResearchTaskStatus.NEED_CLARIFY &&
+              clarifyDirection === "ASSIGNEE_TO_MANAGER"
+            ? "ANSWER_ASSIGNEE_CLARIFICATION"
+            : null;
+      const referredCheckerActionForMe =
+        Boolean(checkerReferralAction) &&
+        task.checkerReferralAction === checkerReferralAction &&
+        task.checkerReferralTargetIds.includes(userId);
       const latestFinishedAt = task.assignments.reduce<Date | null>(
         (latest, assignment) => {
           if (!assignment.finishedAt) return latest;
@@ -313,20 +325,22 @@ export async function GET() {
           : "Review journal";
       const managerActionStartedAt = waitingForJournalCreation
         ? null
-        : addJournalNeedsReview
-          ? (latestAddedJournalUpdate ?? task.updatedAt)
-          : task.status === ResearchTaskStatus.CHECKING
-            ? ([
-                latestFinishedAt,
-                latestManagerClarificationAnswer?.answeredAt ?? null,
-              ].reduce<Date | null>((latest, value) => {
-                if (!value) return latest;
-                return !latest || value > latest ? value : latest;
-              }, null) ?? task.updatedAt)
-            : task.status === ResearchTaskStatus.NEED_CLARIFY &&
-                clarifyDirection === "ASSIGNEE_TO_MANAGER"
-              ? (openClarification?.createdAt ?? task.updatedAt)
-              : null;
+        : referredCheckerActionForMe
+          ? (task.checkerReferralAt ?? task.updatedAt)
+          : addJournalNeedsReview
+            ? (latestAddedJournalUpdate ?? task.updatedAt)
+            : task.status === ResearchTaskStatus.CHECKING
+              ? ([
+                  latestFinishedAt,
+                  latestManagerClarificationAnswer?.answeredAt ?? null,
+                ].reduce<Date | null>((latest, value) => {
+                  if (!value) return latest;
+                  return !latest || value > latest ? value : latest;
+                }, null) ?? task.updatedAt)
+              : task.status === ResearchTaskStatus.NEED_CLARIFY &&
+                  clarifyDirection === "ASSIGNEE_TO_MANAGER"
+                ? (openClarification?.createdAt ?? task.updatedAt)
+                : null;
 
       return {
         id: task.id,
@@ -362,11 +376,13 @@ export async function GET() {
         checkerRoles: task.checker?.roles ?? task.createdBy.roles,
         managerAction: managerActionStartedAt
           ? {
-              label: addJournalNeedsReview
-                ? addJournalReviewLabel
-                : task.status === ResearchTaskStatus.CHECKING
-                  ? "Check/review"
-                  : "Answer clarification",
+              label: referredCheckerActionForMe
+                ? "Referred checker help"
+                : addJournalNeedsReview
+                  ? addJournalReviewLabel
+                  : task.status === ResearchTaskStatus.CHECKING
+                    ? "Check/review"
+                    : "Answer clarification",
               startedAt: managerActionStartedAt.toISOString(),
             }
           : null,
@@ -391,7 +407,7 @@ export async function GET() {
           : null,
         scope: {
           assignedToMe,
-          checkerForMe,
+          checkerForMe: checkerForMe || referredCheckerActionForMe,
           assignerForMe: createdByMe,
           adminAccess: isRootAdmin,
           relatedToResearch,

@@ -92,6 +92,20 @@ function optionalString(value: FormDataEntryValue | null) {
   return text.length > 0 ? text : null;
 }
 
+const checkerReferralActions = {
+  checkingReview: "CHECKING_REVIEW",
+  answerAssigneeClarification: "ANSWER_ASSIGNEE_CLARIFICATION",
+} as const;
+
+function clearCheckerReferralData() {
+  return {
+    checkerReferralTargetIds: { set: [] },
+    checkerReferralBy: { disconnect: true },
+    checkerReferralAction: null,
+    checkerReferralAt: null,
+  };
+}
+
 function optionalOrcid(value: FormDataEntryValue | null) {
   const orcid = optionalString(value);
   if (!orcid) return { ok: true as const, value: null };
@@ -10473,6 +10487,7 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
         completedAt: null,
         revokedAt: null,
         adminViewedAt: null,
+        ...clearCheckerReferralData(),
       },
     });
 
@@ -10874,6 +10889,8 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       title: true,
       createdById: true,
       checkerId: true,
+      checkerReferralTargetIds: true,
+      checkerReferralAction: true,
       project: {
         select: {
           title: true,
@@ -10908,8 +10925,20 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
   );
   const selfAssigned = task.createdById === user.id && isAssigned;
   const canManageAssignment =
-    isAdmin || task.createdById === user.id || task.checkerId === user.id;
-  if (!isAdmin && task.createdById !== user.id && task.checkerId !== user.id)
+    isAdmin ||
+    task.createdById === user.id ||
+    task.checkerId === user.id ||
+    (task.checkerReferralAction === checkerReferralActions.checkingReview &&
+      task.checkerReferralTargetIds.includes(user.id));
+  if (
+    !isAdmin &&
+    task.createdById !== user.id &&
+    task.checkerId !== user.id &&
+    !(
+      task.checkerReferralAction === checkerReferralActions.checkingReview &&
+      task.checkerReferralTargetIds.includes(user.id)
+    )
+  )
     redirect("/401");
   if (assignmentId && !canManageAssignment) redirect("/401");
   if (
@@ -10994,8 +11023,9 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
                 : ResearchTaskStatus.IN_PROGRESS,
             completedAt: null,
             completionMessage: null,
-            completedById: null,
+            completedBy: { disconnect: true },
             adminViewedAt: null,
+            ...clearCheckerReferralData(),
           },
         });
       }
@@ -11069,6 +11099,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       revokedBy: { disconnect: true },
       revokeReason: null,
       adminViewedAt: null,
+      ...clearCheckerReferralData(),
       project:
         task.taskType === ResearchTaskType.PRODUCTION &&
         task.projectId &&
@@ -11350,6 +11381,119 @@ export async function sendTaskReminderEmail(
   };
 }
 
+export async function referTaskCheckerHelp(taskId: string, formData: FormData) {
+  const user = await requireCurrentUser();
+  const requestedTargets = new Set(
+    formData
+      .getAll("targets")
+      .filter(
+        (value): value is string =>
+          typeof value === "string" && value.trim().length > 0,
+      ),
+  );
+  if (requestedTargets.size === 0) return;
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      createdById: true,
+      checkerId: true,
+      createdBy: { select: { id: true, name: true, email: true, roles: true } },
+      checker: { select: { id: true, name: true, email: true, roles: true } },
+      clarifications: {
+        where: { answer: null },
+        select: { id: true, requestedById: true, question: true },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+      assignments: { select: { userId: true } },
+    },
+  });
+  if (!task) return;
+  if (!task.checkerId || task.checkerId !== user.id) redirect("/401");
+  if (
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    return;
+  }
+
+  const openClarification = task.clarifications[0] ?? null;
+  const clarificationRequestedByAssignee = openClarification
+    ? task.assignments.some(
+        (assignment) => assignment.userId === openClarification.requestedById,
+      )
+    : false;
+  const referralAction =
+    task.status === ResearchTaskStatus.CHECKING
+      ? checkerReferralActions.checkingReview
+      : task.status === ResearchTaskStatus.NEED_CLARIFY &&
+          clarificationRequestedByAssignee
+        ? checkerReferralActions.answerAssigneeClarification
+        : null;
+  if (!referralAction) return;
+
+  const targetIds = new Set<string>();
+  if (requestedTargets.has("assigner") && task.createdById !== task.checkerId) {
+    targetIds.add(task.createdById);
+  }
+
+  const checkerIsAdmin = Boolean(task.checker?.roles.includes(Role.ADMIN));
+  const assignerIsAdmin = task.createdBy.roles.includes(Role.ADMIN);
+  if (requestedTargets.has("admin") && !checkerIsAdmin && !assignerIsAdmin) {
+    const admin = await prisma.user.findFirst({
+      where: {
+        roles: { has: Role.ADMIN },
+        activeSites: { has: "research" },
+        NOT: { id: { in: [task.checkerId, task.createdById].filter(Boolean) } },
+      },
+      orderBy: [{ name: "asc" }, { email: "asc" }],
+      select: { id: true },
+    });
+    if (admin) targetIds.add(admin.id);
+  }
+
+  const targetIdList = Array.from(targetIds).filter((id) => id !== user.id);
+  if (targetIdList.length === 0) return;
+
+  await prisma.researchTask.update({
+    where: { id: taskId },
+    data: {
+      checkerReferralTargetIds: targetIdList,
+      checkerReferralById: user.id,
+      checkerReferralAction: referralAction,
+      checkerReferralAt: new Date(),
+    },
+  });
+
+  const checkerName = task.checker?.name || task.checker?.email || "Checker";
+  const actionLabel =
+    referralAction === checkerReferralActions.checkingReview
+      ? "review the finished work and decide whether to approve, request redo, or ask the assignee to clarify"
+      : "answer the assignee clarification request";
+  const clarificationLine = openClarification?.question
+    ? ` Clarification: ${openClarification.question}`
+    : "";
+
+  await notifyUsers({
+    userIds: targetIdList,
+    type: "TASK_CHECKER_REFERRED_HELP",
+    title: "Checker requested help",
+    summary: task.title,
+    body: `${checkerName} requested help to ${actionLabel}.${clarificationLine}`,
+    href: `/tasks/${taskId}`,
+    entityType: "task",
+    entityId: taskId,
+    excludeUserId: user.id,
+  });
+
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+}
+
 export async function requestTaskRedo(taskId: string, formData: FormData) {
   const user = await requireCurrentUser();
   const reason = optionalString(formData.get("reason"));
@@ -11361,6 +11505,8 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
       title: true,
       createdById: true,
       checkerId: true,
+      checkerReferralTargetIds: true,
+      checkerReferralAction: true,
       assignments: {
         select: {
           id: true,
@@ -11374,7 +11520,11 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
   if (
     !(await canManageTaskAsResearchAdmin(taskId, user)) &&
     task.createdById !== user.id &&
-    task.checkerId !== user.id
+    task.checkerId !== user.id &&
+    !(
+      task.checkerReferralAction === checkerReferralActions.checkingReview &&
+      task.checkerReferralTargetIds.includes(user.id)
+    )
   ) {
     redirect("/401");
   }
@@ -11396,6 +11546,7 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
       redoRequestedBy: { connect: { id: user.id } },
       redoReason: reason,
       adminViewedAt: null,
+      ...clearCheckerReferralData(),
       assignments: {
         updateMany: {
           where: assignmentId ? { id: assignmentId } : {},
@@ -11477,6 +11628,8 @@ export async function requestTaskClarification(
       title: true,
       createdById: true,
       checkerId: true,
+      checkerReferralTargetIds: true,
+      checkerReferralAction: true,
       status: true,
       redoRequestedAt: true,
       createdBy: { select: { email: true } },
@@ -11562,6 +11715,8 @@ export async function answerTaskClarification(
       title: true,
       createdById: true,
       checkerId: true,
+      checkerReferralTargetIds: true,
+      checkerReferralAction: true,
       status: true,
       redoRequestedAt: true,
       createdBy: { select: { email: true } },
@@ -11588,7 +11743,10 @@ export async function answerTaskClarification(
   const userCanManage =
     (await canManageTaskAsResearchAdmin(taskId, user)) ||
     task.createdById === user.id ||
-    task.checkerId === user.id;
+    task.checkerId === user.id ||
+    (task.checkerReferralAction ===
+      checkerReferralActions.answerAssigneeClarification &&
+      task.checkerReferralTargetIds.includes(user.id));
   if (requesterIsAssignee ? !userCanManage : !userIsAssignee) redirect("/401");
   if (
     task.status === ResearchTaskStatus.COMPLETED ||
@@ -11612,6 +11770,7 @@ export async function answerTaskClarification(
         : task.redoRequestedAt
           ? ResearchTaskStatus.REVISION_REQUESTED
           : ResearchTaskStatus.CHECKING,
+      ...clearCheckerReferralData(),
     },
   });
   if (requesterIsAssignee) {
@@ -11695,6 +11854,8 @@ export async function requestAssigneeClarification(
       title: true,
       createdById: true,
       checkerId: true,
+      checkerReferralTargetIds: true,
+      checkerReferralAction: true,
       status: true,
       createdBy: { select: { email: true } },
       checker: { select: { email: true } },
@@ -11712,7 +11873,9 @@ export async function requestAssigneeClarification(
   const canManage =
     (await canManageTaskAsResearchAdmin(taskId, user)) ||
     task.createdById === user.id ||
-    task.checkerId === user.id;
+    task.checkerId === user.id ||
+    (task.checkerReferralAction === checkerReferralActions.checkingReview &&
+      task.checkerReferralTargetIds.includes(user.id));
   if (!canManage) redirect("/401");
   if (
     (task.status !== ResearchTaskStatus.CHECKING &&
@@ -11727,7 +11890,10 @@ export async function requestAssigneeClarification(
   });
   await prisma.researchTask.update({
     where: { id: taskId },
-    data: { status: ResearchTaskStatus.NEED_CLARIFY },
+    data: {
+      status: ResearchTaskStatus.NEED_CLARIFY,
+      ...clearCheckerReferralData(),
+    },
   });
   await notifyUsers({
     userIds: task.assignments.map((assignment) => assignment.userId),
@@ -11786,6 +11952,8 @@ export async function sendTaskClarificationChatMessage(
       checkerId: true,
       status: true,
       redoRequestedAt: true,
+      checkerReferralTargetIds: true,
+      checkerReferralAction: true,
       createdBy: { select: { email: true } },
       checker: { select: { email: true } },
       assignments: {
@@ -11822,7 +11990,13 @@ export async function sendTaskClarificationChatMessage(
   const userCanManage =
     (await canManageTaskAsResearchAdmin(taskId, user)) ||
     checkedTask.createdById === currentUserId ||
-    checkedTask.checkerId === currentUserId;
+    checkedTask.checkerId === currentUserId ||
+    (checkedTask.checkerReferralAction ===
+      checkerReferralActions.checkingReview &&
+      checkedTask.checkerReferralTargetIds.includes(currentUserId)) ||
+    (checkedTask.checkerReferralAction ===
+      checkerReferralActions.answerAssigneeClarification &&
+      checkedTask.checkerReferralTargetIds.includes(currentUserId));
   const clarification = checkedTask.clarifications[0] ?? null;
   const requesterIsAssignee = clarification
     ? checkedTask.assignments.some(
@@ -11868,7 +12042,10 @@ export async function sendTaskClarificationChatMessage(
     });
     await prisma.researchTask.update({
       where: { id: taskId },
-      data: { status: ResearchTaskStatus.NEED_CLARIFY },
+      data: {
+        status: ResearchTaskStatus.NEED_CLARIFY,
+        ...clearCheckerReferralData(),
+      },
     });
 
     if (userIsAssignee) {
@@ -12005,6 +12182,7 @@ export async function sendTaskClarificationChatMessage(
           : checkedTask.redoRequestedAt
             ? ResearchTaskStatus.REVISION_REQUESTED
             : ResearchTaskStatus.CHECKING,
+        ...clearCheckerReferralData(),
       },
     });
 

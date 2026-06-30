@@ -123,6 +123,7 @@ model User {
   registeredResearch               ResearchProject[]                  @relation("ResearchRegistrationUser")
   createdResearchTasks             ResearchTask[]                     @relation("ResearchTaskCreator")
   checkedResearchTasks             ResearchTask[]                     @relation("ResearchTaskChecker")
+  checkerReferralRequests          ResearchTask[]                     @relation("ResearchTaskCheckerReferralRequester")
   completedResearchTasks           ResearchTask[]                     @relation("ResearchTaskCompleter")
   redoRequestedResearchTasks       ResearchTask[]                     @relation("ResearchTaskRedoRequester")
   revokedResearchTasks             ResearchTask[]                     @relation("ResearchTaskRevoker")
@@ -957,30 +958,35 @@ model ResearchTask {
   createdAt                 DateTime              @default(now())
   updatedAt                 DateTime              @updatedAt
 
-  createdById         String
-  checkerId           String?
-  createdBy           User                       @relation("ResearchTaskCreator", fields: [createdById], references: [id])
-  checker             User?                      @relation("ResearchTaskChecker", fields: [checkerId], references: [id], onDelete: SetNull)
-  completedBy         User?                      @relation("ResearchTaskCompleter", fields: [completedById], references: [id], onDelete: SetNull)
-  redoRequestedBy     User?                      @relation("ResearchTaskRedoRequester", fields: [redoRequestedById], references: [id], onDelete: SetNull)
-  revokedBy           User?                      @relation("ResearchTaskRevoker", fields: [revokedById], references: [id], onDelete: SetNull)
-  transferredFromTask ResearchTask?              @relation("ResearchTaskTransfer", fields: [transferredFromTaskId], references: [id], onDelete: SetNull)
-  transferredToTask   ResearchTask?              @relation("ResearchTaskTransfer")
-  projectId           String?
-  organizedProjectId  String?
-  journalId           String?
-  conferenceId        String?
-  reviewId            String?
-  accountId           String?
-  taskType            ResearchTaskType?
-  productionSubtype   ResearchProductionSubtype?
-  proposalScope       ProposalTaskScope          @default(RESEARCH)
-  project             ResearchProject?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  organizedProject    OrganizedProject?          @relation(fields: [organizedProjectId], references: [id], onDelete: SetNull)
-  journal             Journal?                   @relation(fields: [journalId], references: [id], onDelete: SetNull)
-  conference          Conference?                @relation(fields: [conferenceId], references: [id], onDelete: SetNull)
-  review              AcademicReview?            @relation(fields: [reviewId], references: [id], onDelete: SetNull)
-  account             PublisherAccount?          @relation("ResearchTaskAccount", fields: [accountId], references: [id], onDelete: SetNull)
+  createdById              String
+  checkerId                String?
+  checkerReferralTargetIds String[]                   @default([])
+  checkerReferralById      String?
+  checkerReferralAction    String?
+  checkerReferralAt        DateTime?
+  createdBy                User                       @relation("ResearchTaskCreator", fields: [createdById], references: [id])
+  checker                  User?                      @relation("ResearchTaskChecker", fields: [checkerId], references: [id], onDelete: SetNull)
+  checkerReferralBy        User?                      @relation("ResearchTaskCheckerReferralRequester", fields: [checkerReferralById], references: [id], onDelete: SetNull)
+  completedBy              User?                      @relation("ResearchTaskCompleter", fields: [completedById], references: [id], onDelete: SetNull)
+  redoRequestedBy          User?                      @relation("ResearchTaskRedoRequester", fields: [redoRequestedById], references: [id], onDelete: SetNull)
+  revokedBy                User?                      @relation("ResearchTaskRevoker", fields: [revokedById], references: [id], onDelete: SetNull)
+  transferredFromTask      ResearchTask?              @relation("ResearchTaskTransfer", fields: [transferredFromTaskId], references: [id], onDelete: SetNull)
+  transferredToTask        ResearchTask?              @relation("ResearchTaskTransfer")
+  projectId                String?
+  organizedProjectId       String?
+  journalId                String?
+  conferenceId             String?
+  reviewId                 String?
+  accountId                String?
+  taskType                 ResearchTaskType?
+  productionSubtype        ResearchProductionSubtype?
+  proposalScope            ProposalTaskScope          @default(RESEARCH)
+  project                  ResearchProject?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  organizedProject         OrganizedProject?          @relation(fields: [organizedProjectId], references: [id], onDelete: SetNull)
+  journal                  Journal?                   @relation(fields: [journalId], references: [id], onDelete: SetNull)
+  conference               Conference?                @relation(fields: [conferenceId], references: [id], onDelete: SetNull)
+  review                   AcademicReview?            @relation(fields: [reviewId], references: [id], onDelete: SetNull)
+  account                  PublisherAccount?          @relation("ResearchTaskAccount", fields: [accountId], references: [id], onDelete: SetNull)
 
   assignments                    ResearchTaskAssignment[]
   clarifications                 ResearchTaskClarification[]
@@ -995,6 +1001,7 @@ model ResearchTask {
   proposalResults                Proposal[]                  @relation("ResearchTaskProposal")
 
   @@index([checkerId])
+  @@index([checkerReferralById])
   @@index([completedById])
   @@index([redoRequestedById])
   @@index([revokedById])
