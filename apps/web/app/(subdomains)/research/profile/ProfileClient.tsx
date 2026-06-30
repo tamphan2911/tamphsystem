@@ -57,6 +57,7 @@ type ResearchProfileUser = {
   email: string;
   additionalEmails: string[];
   affiliation: string;
+  orcid: string | null;
   avatarUrl: string | null;
   researchThemePreference: string;
   emailVerified: string | null;
@@ -417,8 +418,10 @@ export function ProfileClient({
   );
   const [dashboardStatus, setDashboardStatus] =
     usePersistentTableValue<DashboardStatusKey>("profile:status", "all");
-  const [checkerPeriod, setCheckerPeriod] =
-    usePersistentTableValue<PeriodKey>("profile:checker-period", "all");
+  const [checkerPeriod, setCheckerPeriod] = usePersistentTableValue<PeriodKey>(
+    "profile:checker-period",
+    "all",
+  );
   const [checkerDashboardStatus, setCheckerDashboardStatus] =
     usePersistentTableValue<DashboardStatusKey>(
       "profile:checker-status",
@@ -565,9 +568,7 @@ export function ProfileClient({
   const filteredCheckerTasks = useMemo(
     () =>
       checkerPeriodTasks
-        .filter((task) =>
-          matchesDashboardStatus(task, checkerDashboardStatus),
-        )
+        .filter((task) => matchesDashboardStatus(task, checkerDashboardStatus))
         .sort(
           (left, right) =>
             new Date(right.updatedAt).getTime() -
@@ -602,7 +603,9 @@ export function ProfileClient({
                   </span>
                 </IconHint>
               )}
-              {(canViewWorkflowGuides || canEditProfile || canChangePassword) && (
+              {(canViewWorkflowGuides ||
+                canEditProfile ||
+                canChangePassword) && (
                 <>
                   {canChangePassword && (
                     <IconHint label="Change password" position="bottom">
@@ -617,7 +620,10 @@ export function ProfileClient({
                     </IconHint>
                   )}
                   {canViewWorkflowGuides && (
-                    <IconHint label="Assistant workflow guides" position="bottom">
+                    <IconHint
+                      label="Assistant workflow guides"
+                      position="bottom"
+                    >
                       <Link
                         href="/workflow-guides"
                         className="research-allow-transform inline-flex cursor-pointer border-0 bg-transparent p-1 text-[#B0B0B0] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#A8DADC] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95"
@@ -907,6 +913,18 @@ export function ProfileClient({
           </label>
           <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
             <span className="inline-flex items-center gap-1 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+              <span>ORCID</span>
+            </span>
+            <input
+              name="orcid"
+              type="url"
+              defaultValue={user.orcid ?? ""}
+              placeholder="Optional. Example: https://orcid.org/0000-0001-5111-1024"
+              className={researchFieldClass}
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
+            <span className="inline-flex items-center gap-1 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
               <span>Additional emails</span>
             </span>
             <textarea
@@ -994,13 +1012,11 @@ function TaskDashboard({
           </p>
           <p className="mt-1 text-sm text-[#E4E4E4]">
             {total} {summaryLabel}
-            {total === 1 ? "" : "s"} tracked - {completionRate}% completion
-            rate
+            {total === 1 ? "" : "s"} tracked - {completionRate}% completion rate
           </p>
           <p className="mt-1 text-xs text-[#B0B0B0]">
             {activeCount} active {summaryLabel}
-            {activeCount === 1 ? "" : "s"} and{" "}
-            {overdueCount} overdue
+            {activeCount === 1 ? "" : "s"} and {overdueCount} overdue
             {revokedCount > 0
               ? `, with ${revokedCount} revoked ${summaryLabel}${revokedCount === 1 ? "" : "s"}`
               : ""}{" "}
@@ -1097,12 +1113,7 @@ function ProfileTaskTable({
       return sort.direction === "asc" ? result : -result;
     });
   }, [rows, sort]);
-  const pagination = useTablePagination(
-    sortedRows,
-    10,
-    1,
-    storageKey,
-  );
+  const pagination = useTablePagination(sortedRows, 10, 1, storageKey);
 
   function updateSort(key: ProfileTaskSortKey) {
     setSortValue(

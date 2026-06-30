@@ -123,6 +123,7 @@ export default async function ResearchProfilePage({
         email: true,
         additionalEmails: true,
         affiliation: true,
+        orcid: true,
         avatarUrl: true,
         researchThemePreference: true,
         emailVerified: true,

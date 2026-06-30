@@ -448,6 +448,7 @@ export default async function ProjectDetailPage({
         email: true,
         additionalEmails: true,
         affiliation: true,
+        orcid: true,
         roles: true,
       },
     }),
@@ -473,6 +474,7 @@ export default async function ProjectDetailPage({
         email: true,
         additionalEmails: true,
         affiliation: true,
+        orcid: true,
         roles: true,
       },
     }),
@@ -512,6 +514,7 @@ export default async function ProjectDetailPage({
       email: true,
       additionalEmails: true,
       affiliation: true,
+      orcid: true,
       roles: true,
     },
   });
@@ -932,6 +935,7 @@ export default async function ProjectDetailPage({
     email: user.email,
     additionalEmails: user.additionalEmails,
     affiliation: user.affiliation,
+    orcid: user.orcid,
     role: displayRole(user.roles),
   }));
   const defaultRegistrationUser: AuthorOption | null = project.registrationUser
@@ -941,6 +945,7 @@ export default async function ProjectDetailPage({
         email: project.registrationUser.email,
         additionalEmails: project.registrationUser.additionalEmails,
         affiliation: project.registrationUser.affiliation,
+        orcid: project.registrationUser.orcid,
         role: displayRole(project.registrationUser.roles),
       }
     : null;
@@ -967,6 +972,7 @@ export default async function ProjectDetailPage({
           additionalEmails: entry.user.additionalEmails,
           selectedEmail: entry.selectedEmail ?? entry.user.email,
           affiliation: entry.user.affiliation,
+          orcid: entry.user.orcid,
           role: displayRole(entry.user.roles),
           isCorresponding: entry.isCorresponding,
           folderShared: entry.folderShared,
@@ -979,6 +985,7 @@ export default async function ProjectDetailPage({
             additionalEmails: author.additionalEmails,
             selectedEmail: author.email,
             affiliation: author.affiliation,
+            orcid: author.orcid,
             role: displayRole(author.roles),
             isCorresponding: index === 0,
             folderShared: false,
@@ -992,6 +999,7 @@ export default async function ProjectDetailPage({
                 additionalEmails: leadResearcher.additionalEmails,
                 selectedEmail: leadResearcher.email,
                 affiliation: leadResearcher.affiliation,
+                orcid: leadResearcher.orcid,
                 role: displayRole(leadResearcher.roles),
                 isCorresponding: true,
                 folderShared: false,
@@ -1873,6 +1881,22 @@ export default async function ProjectDetailPage({
                             {author.affiliation || "No affiliation recorded"}
                           </span>
                         </p>
+                        {author.orcid ? (
+                          <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs font-normal leading-5 text-[#B0B0B0] lg:items-center lg:truncate">
+                            <ExternalLink
+                              className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]"
+                              aria-hidden="true"
+                            />
+                            <a
+                              href={author.orcid}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={`${researchLinkClass} min-w-0 whitespace-normal break-all lg:truncate`}
+                            >
+                              {author.orcid}
+                            </a>
+                          </p>
+                        ) : null}
                       </div>
                     </div>
                   ))}

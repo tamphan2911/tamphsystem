@@ -98,6 +98,7 @@ model User {
   passwordResetTokenExpires     DateTime?
   name                          String?
   affiliation                   String    @default("Not set")
+  orcid                         String?
   passwordHash                  String
   adminVisiblePassword          String?
   avatarUrl                     String?

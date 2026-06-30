@@ -40,6 +40,7 @@ export type ResearchUserRow = {
   name: string;
   email: string;
   affiliation: string;
+  orcid: string;
   roles: string[];
   activeSites: string[];
   password: string;
@@ -119,6 +120,8 @@ function reasonMessage(reason?: string) {
     return "This user is linked to research records, tasks, or notifications and could not be deleted.";
   if (reason === "UPDATE_FAILED")
     return "The user could not be updated. Check for duplicate email addresses.";
+  if (reason === "INVALID_ORCID")
+    return "ORCID must use the full URL format, for example https://orcid.org/0000-0001-5111-1024.";
   return "Please check the user information and try again.";
 }
 
@@ -154,6 +157,7 @@ export function ResearchUsersTable({
         row.name,
         row.email,
         row.affiliation,
+        row.orcid,
         row.id,
         ...row.roles,
       ]
@@ -500,6 +504,13 @@ export function ResearchUsersTable({
                 label="Affiliation"
                 name="affiliation"
                 defaultValue={editing.affiliation}
+              />
+              <Field
+                label="ORCID"
+                name="orcid"
+                type="url"
+                defaultValue={editing.orcid}
+                placeholder="Optional. Example: https://orcid.org/0000-0001-5111-1024"
               />
               <Field
                 label="New password"

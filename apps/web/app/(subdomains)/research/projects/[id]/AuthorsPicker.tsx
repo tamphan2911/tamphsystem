@@ -40,6 +40,7 @@ export type AuthorOption = {
   additionalEmails?: string[];
   selectedEmail?: string;
   affiliation?: string;
+  orcid?: string | null;
   role: string;
 };
 

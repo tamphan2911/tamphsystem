@@ -31,6 +31,14 @@ export async function updateResearchProfile(formData: FormData) {
   if (!name) return { error: "Display name is required." };
   const affiliation = String(formData.get("affiliation") ?? "").trim();
   if (!affiliation) return { error: "Affiliation is required." };
+  const orcid = String(formData.get("orcid") ?? "").trim();
+  const orcidPattern = /^https:\/\/orcid\.org\/\d{4}-\d{4}-\d{4}-[\dX]{4}$/i;
+  if (orcid && !orcidPattern.test(orcid)) {
+    return {
+      error:
+        "ORCID must use the full URL format, for example https://orcid.org/0000-0001-5111-1024.",
+    };
+  }
   const requestedThemePreference = String(
     formData.get("researchThemePreference") ?? "system",
   ).trim();
@@ -71,6 +79,7 @@ export async function updateResearchProfile(formData: FormData) {
       data: {
         name,
         affiliation,
+        orcid: orcid || null,
         additionalEmails: uniqueAdditionalEmails,
         researchThemePreference,
       },

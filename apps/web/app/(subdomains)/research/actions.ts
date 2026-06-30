@@ -92,6 +92,14 @@ function optionalString(value: FormDataEntryValue | null) {
   return text.length > 0 ? text : null;
 }
 
+function optionalOrcid(value: FormDataEntryValue | null) {
+  const orcid = optionalString(value);
+  if (!orcid) return { ok: true as const, value: null };
+  const pattern = /^https:\/\/orcid\.org\/\d{4}-\d{4}-\d{4}-[\dX]{4}$/i;
+  if (!pattern.test(orcid)) return { ok: false as const };
+  return { ok: true as const, value: orcid };
+}
+
 function optionalAliasedString(
   formData: FormData,
   primaryName: string,
@@ -6573,10 +6581,14 @@ export async function createResearchSiteUser(formData: FormData) {
   const submittedEmail = optionalString(formData.get("email"))?.toLowerCase();
   const email = submittedEmail ?? generatedResearchEmail();
   const affiliation = optionalString(formData.get("affiliation")) ?? "Not set";
+  const orcid = optionalOrcid(formData.get("orcid"));
   const password = optionalString(formData.get("password"));
 
   if (!name || !password) {
     return { ok: false, reason: "MISSING_REQUIRED" };
+  }
+  if (!orcid.ok) {
+    return { ok: false, reason: "INVALID_ORCID" };
   }
   if (password.length < 6) {
     return { ok: false, reason: "PASSWORD_SHORT" };
@@ -6592,6 +6604,7 @@ export async function createResearchSiteUser(formData: FormData) {
         name,
         email,
         affiliation,
+        orcid: orcid.value,
         passwordHash: await bcrypt.hash(password, 10),
         adminVisiblePassword: password,
         emailVerified: null,
@@ -6616,9 +6629,13 @@ export async function updateResearchSiteUser(formData: FormData) {
 
   const userId = optionalString(formData.get("userId"));
   const email = optionalString(formData.get("email"))?.toLowerCase();
+  const orcid = optionalOrcid(formData.get("orcid"));
   const password = optionalString(formData.get("password"));
   if (!userId) {
     return { ok: false, reason: "MISSING_REQUIRED" };
+  }
+  if (!orcid.ok) {
+    return { ok: false, reason: "INVALID_ORCID" };
   }
 
   const roles = formData
@@ -6642,6 +6659,7 @@ export async function updateResearchSiteUser(formData: FormData) {
         name: optionalString(formData.get("name")),
         email: existing.emailVerified ? existing.email : email,
         affiliation: optionalString(formData.get("affiliation")) ?? "Not set",
+        orcid: orcid.value,
         roles: roles.length > 0 ? roles : [Role.STUDENT],
         activeSites: {
           set: Array.from(new Set([...existing.activeSites, "research"])),
