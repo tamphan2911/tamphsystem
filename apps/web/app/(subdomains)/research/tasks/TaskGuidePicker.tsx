@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import {
   ClipboardCheck,
   ClipboardList,
+  Compass,
   Download,
   FileSearch,
   FileText,
@@ -87,6 +88,13 @@ function guideIconMetaForGuide(guide: TaskGuideOption, index: number) {
       icon: ScrollText,
       className:
         "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-200",
+    };
+  }
+  if (guide.guideCode === "G023") {
+    return {
+      icon: Compass,
+      className:
+        "text-[#5B5BD6] hover:text-[#4141A8] dark:text-[#B8B5FF] dark:hover:text-[#D6D3FF]",
     };
   }
   return guideIconMeta(index);
