@@ -1529,49 +1529,66 @@ export function TasksClient({
                     </td>
                     <td className="px-3 py-3 align-top text-xs leading-5 text-[#B0B0B0]">
                       {task.assignments.length > 0 ? (
-                        task.assignments.map((assignment) => {
-                          const assignmentWorkflow =
-                            assignmentWorkflowMeta(assignment);
-                          const AssignmentIcon = assignmentWorkflow.icon;
-                          return (
-                            <div
-                              key={assignment.id}
-                              className="space-y-0.5 font-normal"
-                              title={displayResearchEmail(assignment.userEmail)}
-                            >
-                              <div className="flex items-start gap-1.5">
-                                <span className="min-w-0 break-words">
-                                  {displayResearchPersonName({
-                                    name: assignment.userName,
-                                    email: assignment.userEmail,
-                                  })}
-                                </span>
-                                <IconHint label={assignmentWorkflow.detail}>
-                                  <span
-                                    className={`research-allow-transform mt-0.5 inline-flex h-4 w-4 flex-none cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${assignmentWorkflow.className}`}
-                                  >
-                                    <AssignmentIcon
-                                      className="h-3.5 w-3.5"
-                                      aria-hidden="true"
-                                    />
-                                    <span className="sr-only">
-                                      {assignmentWorkflow.label}
-                                    </span>
-                                  </span>
-                                </IconHint>
-                              </div>
-                              <div className="break-all text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
-                                {displayResearchEmail(assignment.userEmail)}
-                              </div>
+                        <div
+                          className={
+                            task.assignments.length > 1
+                              ? "divide-y divide-[#D8D0C2] dark:divide-[#444444]"
+                              : ""
+                          }
+                        >
+                          {task.assignments.map((assignment) => {
+                            const assignmentWorkflow =
+                              assignmentWorkflowMeta(assignment);
+                            const AssignmentIcon = assignmentWorkflow.icon;
+                            const showEmail = task.assignments.length === 1;
+                            return (
                               <div
-                                className={`text-[11px] leading-4 ${assignmentDueClassName(assignment)}`}
+                                key={assignment.id}
+                                className={`space-y-0.5 font-normal ${
+                                  task.assignments.length > 1
+                                    ? "py-2 first:pt-0 last:pb-0"
+                                    : ""
+                                }`}
+                                title={displayResearchEmail(
+                                  assignment.userEmail,
+                                )}
                               >
-                                {assignmentWorkflow.label} |{" "}
-                                {assignmentDueText(assignment)}
+                                <div className="flex items-start gap-1.5">
+                                  <span className="min-w-0 break-words">
+                                    {displayResearchPersonName({
+                                      name: assignment.userName,
+                                      email: assignment.userEmail,
+                                    })}
+                                  </span>
+                                  <IconHint label={assignmentWorkflow.detail}>
+                                    <span
+                                      className={`research-allow-transform mt-0.5 inline-flex h-4 w-4 flex-none cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${assignmentWorkflow.className}`}
+                                    >
+                                      <AssignmentIcon
+                                        className="h-3.5 w-3.5"
+                                        aria-hidden="true"
+                                      />
+                                      <span className="sr-only">
+                                        {assignmentWorkflow.label}
+                                      </span>
+                                    </span>
+                                  </IconHint>
+                                </div>
+                                {showEmail ? (
+                                  <div className="break-all text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
+                                    {displayResearchEmail(assignment.userEmail)}
+                                  </div>
+                                ) : null}
+                                <div
+                                  className={`text-[11px] leading-4 ${assignmentDueClassName(assignment)}`}
+                                >
+                                  {assignmentWorkflow.label} |{" "}
+                                  {assignmentDueText(assignment)}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })
+                            );
+                          })}
+                        </div>
                       ) : (
                         <div className="text-[#777777]">Unassigned</div>
                       )}
