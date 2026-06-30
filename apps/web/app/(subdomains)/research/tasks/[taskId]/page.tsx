@@ -3712,10 +3712,12 @@ export default async function TaskDetailPage({
               <div className="divide-y divide-[#D8D0C2] border-t border-[#D8D0C2] dark:divide-[#444444] dark:border-[#444444]">
                 {task.assignments.length > 0 ? (
                   task.assignments.map((assignment) => {
+                    const hasMultipleAssignees = task.assignments.length > 1;
                     const workflow = assigneeWorkflowMeta(assignment);
                     const WorkflowIcon = workflow.icon;
                     const assignmentDueDate = assignment.dueDate;
                     const canApproveThisAssignee =
+                      hasMultipleAssignees &&
                       canManageAssignmentResults &&
                       Boolean(assignment.finishedAt) &&
                       !assignment.completedAt;
@@ -3723,14 +3725,16 @@ export default async function TaskDetailPage({
                       <div key={assignment.id} className="grid gap-2 py-3">
                         <div className="flex items-start justify-between gap-3">
                           <TaskPersonLine person={assignment.user} showEmail />
-                          <IconHint label={workflow.detail}>
-                            <span
-                              className={`research-allow-transform inline-flex h-7 w-7 flex-none items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${workflow.className}`}
-                              aria-label={workflow.label}
-                            >
-                              <WorkflowIcon className="h-4 w-4" />
-                            </span>
-                          </IconHint>
+                          {hasMultipleAssignees ? (
+                            <IconHint label={workflow.detail}>
+                              <span
+                                className={`research-allow-transform inline-flex h-7 w-7 flex-none items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${workflow.className}`}
+                                aria-label={workflow.label}
+                              >
+                                <WorkflowIcon className="h-4 w-4" />
+                              </span>
+                            </IconHint>
+                          ) : null}
                         </div>
                         <div className="grid gap-1 text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
                           <span>
