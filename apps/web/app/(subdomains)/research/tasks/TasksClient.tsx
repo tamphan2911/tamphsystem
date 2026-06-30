@@ -1083,6 +1083,22 @@ export function TasksClient({
       ),
     [tasks],
   );
+  const adminNeedActionDefaultCheckerIds = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...adminCheckerIds,
+          ...tasks
+            .filter(
+              (task) =>
+                task.managerAction?.label === "Referred checker help" &&
+                task.checkerId,
+            )
+            .map((task) => task.checkerId),
+        ]),
+      ),
+    [adminCheckerIds, tasks],
+  );
   const [adminAllCheckerStoredValue, setAdminAllCheckerStoredValue] =
     usePersistentTableValue("tasks:checker:admin:all", "ALL", {
       persistDefaultValue: true,
@@ -1110,14 +1126,14 @@ export function TasksClient({
       activeHeaderTab === "need_action" &&
       adminNeedActionCheckerStoredValue === "__DEFAULT__"
     ) {
-      return adminCheckerIds;
+      return adminNeedActionDefaultCheckerIds;
     }
 
     return parseMultiFilterValue(activeCheckerStoredValue, checkerFilterValues);
   }, [
     activeCheckerStoredValue,
     activeHeaderTab,
-    adminCheckerIds,
+    adminNeedActionDefaultCheckerIds,
     adminNeedActionCheckerStoredValue,
     checkerFilterValues,
     isAdmin,
