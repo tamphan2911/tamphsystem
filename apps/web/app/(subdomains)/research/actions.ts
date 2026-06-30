@@ -4924,6 +4924,8 @@ async function approveJournalWithWorkflow(
         id: true,
         name: true,
         resultTaskId: true,
+        resultCorrectionRequestedAt: true,
+        resultCorrectionResolvedAt: true,
         resultTask: {
           select: {
             id: true,
@@ -4971,7 +4973,9 @@ async function approveJournalWithWorkflow(
         resultApprovalNote: approvalNote,
         resultApprovedAt: completedAt,
         resultApprovedById: approvedById,
-        resultCorrectionResolvedAt: completedAt,
+        resultCorrectionResolvedAt: journal.resultCorrectionRequestedAt
+          ? (journal.resultCorrectionResolvedAt ?? completedAt)
+          : null,
       },
     });
 

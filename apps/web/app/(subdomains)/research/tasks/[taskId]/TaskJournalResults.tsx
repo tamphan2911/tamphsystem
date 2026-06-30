@@ -656,6 +656,11 @@ function JournalResultCard({
     .split("|")
     .map((part) => part.trim())
     .filter(Boolean);
+  const correctionRequestLabel = approved
+    ? "Correction request"
+    : correctionRequested
+      ? "Correction requested"
+      : "Correction updated";
 
   return (
     <article
@@ -770,10 +775,11 @@ function JournalResultCard({
           }`}
         >
           <p>
-            {correctionRequested
-              ? "Correction requested"
-              : "Correction updated"}{" "}
-            by {journal.resultCorrectionRequestedBy || "task manager"}.
+            {correctionRequestLabel} by{" "}
+            {journal.resultCorrectionRequestedBy || "task manager"}.
+            {approved && journal.resultCorrectionResolvedAt
+              ? " Corrected before approval."
+              : null}
           </p>
           {journal.resultCorrectionNote ? (
             <p className="mt-1 whitespace-pre-wrap break-words">
