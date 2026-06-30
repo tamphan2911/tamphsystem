@@ -100,6 +100,32 @@ function optionalOrcid(value: FormDataEntryValue | null) {
   return { ok: true as const, value: orcid };
 }
 
+async function revalidateResearchUserProfileSurfaces(userId: string) {
+  const linkedResearch = await prisma.researchProject.findMany({
+    where: {
+      OR: [
+        { leadResearcherId: userId },
+        { authors: { some: { id: userId } } },
+        { authorEntries: { some: { userId } } },
+      ],
+    },
+    select: { id: true },
+  });
+
+  revalidatePath("/users");
+  revalidatePath("/research/users");
+  revalidatePath("/assistants");
+  revalidatePath("/research/assistants");
+  revalidatePath("/profile");
+  revalidatePath("/research/profile");
+  revalidatePath("/projects");
+  revalidatePath("/research/projects");
+  linkedResearch.forEach((research) => {
+    revalidatePath(`/projects/${research.id}`);
+    revalidatePath(`/research/projects/${research.id}`);
+  });
+}
+
 function optionalAliasedString(
   formData: FormData,
   primaryName: string,
@@ -6598,8 +6624,10 @@ export async function createResearchSiteUser(formData: FormData) {
     .getAll("roles")
     .filter((role): role is Role => Object.values(Role).includes(role as Role));
 
+  let createdUser: { id: string };
   try {
-    await prisma.user.create({
+    createdUser = await prisma.user.create({
+      select: { id: true },
       data: {
         name,
         email,
@@ -6619,7 +6647,7 @@ export async function createResearchSiteUser(formData: FormData) {
     return { ok: false, reason: "CREATE_FAILED" };
   }
 
-  revalidatePath("/users");
+  await revalidateResearchUserProfileSurfaces(createdUser.id);
   return { ok: true, email: submittedEmail ?? null };
 }
 
@@ -6677,7 +6705,7 @@ export async function updateResearchSiteUser(formData: FormData) {
     return { ok: false, reason: "UPDATE_FAILED" };
   }
 
-  revalidatePath("/users");
+  await revalidateResearchUserProfileSurfaces(userId);
   return { ok: true };
 }
 
