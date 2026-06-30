@@ -539,10 +539,12 @@ function TaskPersonLine({
   person,
   showEmail = false,
   note,
+  inlineAction,
 }: {
   person: { name: string | null; email: string; roles: Role[] };
   showEmail?: boolean;
   note?: ReactNode;
+  inlineAction?: ReactNode;
 }) {
   return (
     <span className="flex min-w-0 items-start gap-3">
@@ -556,6 +558,11 @@ function TaskPersonLine({
           <span className="text-xs text-[#667085] dark:text-[#B0B0B0]">
             {displayRole(person.roles)}
           </span>
+          {inlineAction ? (
+            <span className="ml-1 inline-flex flex-none items-center">
+              {inlineAction}
+            </span>
+          ) : null}
         </span>
         {showEmail ? (
           <span className="mt-1 block min-w-0 break-all text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
@@ -3766,42 +3773,41 @@ export default async function TaskDetailPage({
                       canManageAssignmentResults &&
                       Boolean(assignment.finishedAt) &&
                       !assignment.completedAt;
+                    const workflowAction = canApproveThisAssignee ? (
+                      <AssigneeReviewActions
+                        assignmentId={assignment.id}
+                        finishAction={finishAction}
+                        redoAction={redoAction}
+                        iconClassName={workflow.className}
+                        label={workflow.label}
+                        detail={workflow.detail}
+                      />
+                    ) : hasMultipleAssignees ? (
+                      <IconHint label={workflow.detail}>
+                        <span
+                          className={`research-allow-transform inline-flex h-7 w-7 flex-none items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${workflow.className}`}
+                          aria-label={workflow.label}
+                        >
+                          <WorkflowIcon className="h-4 w-4" />
+                        </span>
+                      </IconHint>
+                    ) : null;
                     return (
                       <div key={assignment.id} className="grid gap-2 py-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <TaskPersonLine
-                            person={assignment.user}
-                            showEmail
-                            note={
-                              assignmentTiming ? (
-                                <span
-                                  className={`text-[11px] font-medium leading-4 ${assignmentTiming.className}`}
-                                >
-                                  {assignmentTiming.label}
-                                </span>
-                              ) : null
-                            }
-                          />
-                          {canApproveThisAssignee ? (
-                            <AssigneeReviewActions
-                              assignmentId={assignment.id}
-                              finishAction={finishAction}
-                              redoAction={redoAction}
-                              iconClassName={workflow.className}
-                              label={workflow.label}
-                              detail={workflow.detail}
-                            />
-                          ) : hasMultipleAssignees ? (
-                            <IconHint label={workflow.detail}>
+                        <TaskPersonLine
+                          person={assignment.user}
+                          showEmail
+                          inlineAction={workflowAction}
+                          note={
+                            assignmentTiming ? (
                               <span
-                                className={`research-allow-transform inline-flex h-7 w-7 flex-none items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${workflow.className}`}
-                                aria-label={workflow.label}
+                                className={`text-[11px] font-medium leading-4 ${assignmentTiming.className}`}
                               >
-                                <WorkflowIcon className="h-4 w-4" />
+                                {assignmentTiming.label}
                               </span>
-                            </IconHint>
-                          ) : null}
-                        </div>
+                            ) : null
+                          }
+                        />
                         <div className="grid gap-1 text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
                           {assignment.completedAt ? (
                             <span className="text-emerald-700 dark:text-emerald-300">
