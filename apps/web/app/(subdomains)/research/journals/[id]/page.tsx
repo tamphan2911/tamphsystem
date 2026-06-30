@@ -111,114 +111,140 @@ export default async function JournalDetailPage({
     : userId
       ? accessibleJournalWhere(userId, registrationIdentityValues)
       : { id: "__no_access__" };
+  const canViewChangeLog = isAdmin || isChiefAssistant;
 
-  const [currentUser, journal, creatorUsers, publishers] = await Promise.all([
-    userId
-      ? prisma.user.findUnique({
-          where: { id: userId },
-          select: { canManageResearchVenues: true, email: true },
-        })
-      : Promise.resolve(null),
-    prisma.journal.findFirst({
-      where: { AND: [{ id }, journalAccessWhere] },
-      include: {
-        submissions: {
-          where: isAdmin ? {} : { project: scopedProjectWhere },
-          include: {
-            project: {
-              include: {
-                leadResearcher: true,
-                registrationUser: true,
-                authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
-                authorEntries: {
-                  include: { user: true },
-                  orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+  const [currentUser, journal, creatorUsers, publishers, auditLogs] =
+    await Promise.all([
+      userId
+        ? prisma.user.findUnique({
+            where: { id: userId },
+            select: { canManageResearchVenues: true, email: true },
+          })
+        : Promise.resolve(null),
+      prisma.journal.findFirst({
+        where: { AND: [{ id }, journalAccessWhere] },
+        include: {
+          submissions: {
+            where: isAdmin ? {} : { project: scopedProjectWhere },
+            include: {
+              project: {
+                include: {
+                  leadResearcher: true,
+                  registrationUser: true,
+                  authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
+                  authorEntries: {
+                    include: { user: true },
+                    orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+                  },
+                },
+              },
+              account: { select: { id: true, username: true, email: true } },
+            },
+            orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
+          },
+          accounts: {
+            where: canManageAccounts
+              ? {}
+              : isAssistant && userId
+                ? { tasks: { some: { assignments: { some: { userId } } } } }
+                : { id: "__no_access__" },
+            include: { _count: { select: { submissions: true } } },
+            orderBy: [{ updatedAt: "desc" }],
+          },
+          publisherRecord: {
+            include: {
+              accounts: {
+                where: canManageAccounts
+                  ? { accountType: "PUBLISHER" }
+                  : isAssistant && userId
+                    ? {
+                        accountType: "PUBLISHER",
+                        tasks: { some: { assignments: { some: { userId } } } },
+                      }
+                    : { id: "__no_access__" },
+                include: { _count: { select: { submissions: true } } },
+                orderBy: [{ updatedAt: "desc" }],
+              },
+            },
+          },
+          reviews: {
+            where:
+              isAdmin && userId
+                ? {}
+                : isAssistant && userId
+                  ? accessibleResearchReviewWhere(roles, userId)
+                  : { id: "__no_access__" },
+            orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
+          },
+          createdBy: {
+            select: { id: true, name: true, email: true, roles: true },
+          },
+          resultTask: {
+            select: {
+              checkerId: true,
+              assignments: { select: { userId: true } },
+              journalCreationSuggestion: {
+                select: {
+                  task: { select: { checkerId: true } },
                 },
               },
             },
-            account: { select: { id: true, username: true, email: true } },
           },
-          orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
+          _count: {
+            select: { submissions: true, accounts: true, reviews: true },
+          },
         },
-        accounts: {
-          where: canManageAccounts
-            ? {}
-            : isAssistant && userId
-              ? { tasks: { some: { assignments: { some: { userId } } } } }
-              : { id: "__no_access__" },
-          include: { _count: { select: { submissions: true } } },
-          orderBy: [{ updatedAt: "desc" }],
-        },
-        publisherRecord: {
-          include: {
-            accounts: {
-              where: canManageAccounts
-                ? { accountType: "PUBLISHER" }
-                : isAssistant && userId
-                  ? {
-                      accountType: "PUBLISHER",
-                      tasks: { some: { assignments: { some: { userId } } } },
-                    }
-                  : { id: "__no_access__" },
-              include: { _count: { select: { submissions: true } } },
-              orderBy: [{ updatedAt: "desc" }],
+      }),
+      isAdmin
+        ? prisma.user.findMany({
+            where: {
+              OR: [
+                { activeSites: { has: "research" } },
+                { roles: { has: Role.ADMIN } },
+              ],
             },
-          },
+            orderBy: [{ name: "asc" }, { email: "asc" }],
+            select: { id: true, name: true, email: true },
+          })
+        : Promise.resolve([]),
+      prisma.publisher.findMany({
+        orderBy: [{ name: "asc" }],
+        select: {
+          id: true,
+          publisherCode: true,
+          name: true,
+          alias: true,
+          country: true,
+          usesSingleAccount: true,
         },
-        reviews: {
-          where:
-            isAdmin && userId
-              ? {}
-              : isAssistant && userId
-                ? accessibleResearchReviewWhere(roles, userId)
-                : { id: "__no_access__" },
-          orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
-        },
-        createdBy: {
-          select: { id: true, name: true, email: true, roles: true },
-        },
-        resultTask: {
-          select: {
-            checkerId: true,
-            assignments: { select: { userId: true } },
-            journalCreationSuggestion: {
-              select: {
-                task: { select: { checkerId: true } },
-              },
-            },
-          },
-        },
-        _count: {
-          select: { submissions: true, accounts: true, reviews: true },
-        },
-      },
-    }),
-    isAdmin
-      ? prisma.user.findMany({
-          where: {
-            OR: [
-              { activeSites: { has: "research" } },
-              { roles: { has: Role.ADMIN } },
-            ],
-          },
-          orderBy: [{ name: "asc" }, { email: "asc" }],
-          select: { id: true, name: true, email: true },
-        })
-      : Promise.resolve([]),
-    prisma.publisher.findMany({
-      orderBy: [{ name: "asc" }],
-      select: {
-        id: true,
-        publisherCode: true,
-        name: true,
-        alias: true,
-        country: true,
-        usesSingleAccount: true,
-      },
-    }),
-  ]);
+      }),
+      canViewChangeLog
+        ? prisma.researchChangeLog.findMany({
+            where: { entityType: "journal", entityId: id },
+            include: { actor: { select: { name: true, email: true } } },
+            orderBy: { createdAt: "desc" },
+          })
+        : Promise.resolve([]),
+    ]);
 
   if (!journal) notFound();
+  const approvalActorIds = [
+    journal.resultApprovedById,
+    journal.resultCorrectionRequestedById,
+  ].filter((actorId): actorId is string => Boolean(actorId));
+  const approvalActors =
+    approvalActorIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: approvalActorIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : [];
+  const approvalActorById = new Map(
+    approvalActors.map((actor) => [
+      actor.id,
+      displayResearchPersonName(actor) || actor.email,
+    ]),
+  );
   const approvalPending =
     journal.approvalStatus === JournalApprovalStatus.PENDING_APPROVAL;
   const canEditVenue =
@@ -403,9 +429,18 @@ export default async function JournalDetailPage({
       ? journal.localRank || "No local rank"
       : journal.rank || "No rank";
   const journalTypeLabel = journal.type === "LOCAL" ? "Local" : "International";
-  const canViewChangeLog = isAdmin || isChiefAssistant;
   const journalChangeRows: ResearchChangeLogRow[] = canViewChangeLog
     ? [
+        ...auditLogs.map((log) => ({
+          id: `audit-${log.id}`,
+          changedAt: log.createdAt.toISOString(),
+          area: log.area,
+          action: log.action,
+          actor: log.actor
+            ? displayResearchPersonName(log.actor) || log.actor.email
+            : "",
+          detail: log.detail,
+        })),
         {
           id: "journal-created",
           changedAt: journal.createdAt.toISOString(),
@@ -423,7 +458,23 @@ export default async function JournalDetailPage({
           area: "Journal",
           action: "Updated",
           actor: "",
-          detail: `${journalTypeLabel} | ${journalRank}`,
+          detail: [
+            "Current values after latest update:",
+            `Type: ${journalTypeLabel}`,
+            `Rank: ${journalRank}`,
+            `Publisher: ${journal.publisher || "Not recorded"}`,
+            `APC: ${journal.apc ? `${journal.apcCurrency} ${journal.apc}` : "Not recorded"} (${journal.hasApcOption ? "Option" : "No Option"})`,
+            `Submission fee: ${
+              journal.submissionFee
+                ? `${journal.submissionFeeCurrency} ${journal.submissionFee}`
+                : "Not recorded"
+            }`,
+            `Homepage: ${journal.homepageLink || "Not recorded"}`,
+            `Submission link: ${journal.submissionLink || "Not recorded"}`,
+            `Scimago: ${journal.scimagoLink || "Not recorded"}`,
+            `Scopus: ${journal.scopusLink || "Not recorded"}`,
+            `Note: ${journal.note || "Not recorded"}`,
+          ].join("\n"),
         },
         journal.resultCorrectionRequestedAt
           ? {
@@ -431,7 +482,11 @@ export default async function JournalDetailPage({
               changedAt: journal.resultCorrectionRequestedAt.toISOString(),
               area: "Approval",
               action: "Correction requested",
-              actor: "",
+              actor: journal.resultCorrectionRequestedById
+                ? (approvalActorById.get(
+                    journal.resultCorrectionRequestedById,
+                  ) ?? "")
+                : "",
               detail: journal.resultCorrectionNote ?? journal.name,
             }
           : null,
@@ -451,7 +506,9 @@ export default async function JournalDetailPage({
               changedAt: journal.resultApprovedAt.toISOString(),
               area: "Approval",
               action: "Approved",
-              actor: "",
+              actor: journal.resultApprovedById
+                ? (approvalActorById.get(journal.resultApprovedById) ?? "")
+                : "",
               detail: journal.resultApprovalNote ?? journal.name,
             }
           : null,

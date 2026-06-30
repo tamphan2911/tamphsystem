@@ -993,6 +993,50 @@ function normalizedPublisherName(name: string) {
   return name.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
+function auditValue(value: unknown) {
+  if (Array.isArray(value)) {
+    const items = value
+      .map((item) => String(item ?? "").trim())
+      .filter(Boolean);
+    return items.length > 0 ? items.join(", ") : "Not recorded";
+  }
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "number")
+    return Number.isFinite(value) ? String(value) : "Not recorded";
+  const text = String(value ?? "").trim();
+  if (!text) return "Not recorded";
+  return text.length > 240 ? `${text.slice(0, 237)}...` : text;
+}
+
+function auditChange(label: string, before: unknown, after: unknown) {
+  const beforeText = auditValue(before);
+  const afterText = auditValue(after);
+  if (beforeText === afterText) return null;
+  return `${label}: ${beforeText} -> ${afterText}`;
+}
+
+function auditBooleanLabel(
+  value: boolean,
+  trueLabel: string,
+  falseLabel: string,
+) {
+  return value ? trueLabel : falseLabel;
+}
+
+function auditMoney(
+  amount: string | null | undefined,
+  currency: CurrencyCode | string,
+) {
+  const value = optionalString(amount ?? null);
+  return value ? `${currency} ${value}` : "Not recorded";
+}
+
+function auditDetail(changes: Array<string | null>) {
+  return changes
+    .filter((change): change is string => Boolean(change))
+    .join("\n");
+}
+
 function publisherCodeBase(name: string, alias: string | null) {
   const source = alias || name;
   const words = source
@@ -4773,6 +4817,17 @@ export async function requestTaskJournalCorrection(
         },
       },
     });
+    await tx.researchChangeLog.create({
+      data: {
+        entityType: "journal",
+        entityId: journalId,
+        area: "Approval",
+        action: "Correction requested",
+        detail: redoReason,
+        actorId: user.id,
+        createdAt: requestedAt,
+      },
+    });
   });
 
   const assigneeIds = task.assignments.map((assignment) => assignment.userId);
@@ -4818,6 +4873,30 @@ export async function updateJournal(journalId: string, formData: FormData) {
       createdById: true,
       resultTaskId: true,
       resultCorrectionRequestedAt: true,
+      resultCorrectionResolvedAt: true,
+      name: true,
+      issn: true,
+      field: true,
+      fields: true,
+      type: true,
+      rank: true,
+      localRank: true,
+      issuesPerYear: true,
+      isFavorite: true,
+      isInterest: true,
+      publisher: true,
+      publisherId: true,
+      country: true,
+      apc: true,
+      apcCurrency: true,
+      hasApcOption: true,
+      submissionFee: true,
+      submissionFeeCurrency: true,
+      homepageLink: true,
+      submissionLink: true,
+      scimagoLink: true,
+      scopusLink: true,
+      note: true,
       resultTask: { select: { assignments: { select: { userId: true } } } },
     },
   });
@@ -4844,48 +4923,137 @@ export async function updateJournal(journalId: string, formData: FormData) {
   const publisher = await publisherSelection(formData);
   if (!publisher)
     throw new Error("Choose a publisher before saving the journal.");
+  const nextJournal = {
+    name: optionalString(formData.get("name")) ?? "Untitled journal",
+    issn: optionalString(formData.get("issn")),
+    field: fields.length > 0 ? fields.join("; ") : legacyField,
+    fields,
+    type: journalType,
+    rank:
+      journalType === JournalType.INTERNATIONAL
+        ? optionalString(formData.get("rank"))
+        : null,
+    localRank:
+      journalType === JournalType.LOCAL
+        ? optionalString(formData.get("localRank"))
+        : null,
+    issuesPerYear: positiveIntFromForm(formData.get("issuesPerYear")),
+    isFavorite: formData.get("isFavorite") === "on",
+    isInterest: formData.get("isInterest") === "on",
+    publisherId: publisher.id,
+    publisher: publisher.name,
+    country: optionalString(formData.get("country")),
+    apc: optionalString(formData.get("apc")),
+    apcCurrency:
+      enumValue(CurrencyCode, formData.get("apcCurrency")) ?? CurrencyCode.USD,
+    hasApcOption: formData.get("hasApcOption") === "on",
+    submissionFee: optionalString(formData.get("submissionFee")),
+    submissionFeeCurrency:
+      enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??
+      CurrencyCode.USD,
+    homepageLink: optionalString(formData.get("homepageLink")),
+    submissionLink: optionalString(formData.get("submissionLink")),
+    scimagoLink: optionalString(formData.get("scimagoLink")),
+    scopusLink: optionalString(formData.get("scopusLink")),
+    note: optionalString(formData.get("note")),
+    resultCorrectionResolvedAt:
+      isTaskResultAssignee &&
+      journal.resultCorrectionRequestedAt &&
+      !journal.resultCorrectionResolvedAt
+        ? new Date()
+        : undefined,
+  };
+  const previousFields =
+    journal.fields.length > 0
+      ? journal.fields
+      : (journal.field ?? "")
+          .split(";")
+          .map((field) => field.trim())
+          .filter(Boolean);
+  const nextFields =
+    nextJournal.fields.length > 0
+      ? nextJournal.fields
+      : (nextJournal.field ?? "")
+          .split(";")
+          .map((field) => field.trim())
+          .filter(Boolean);
+  const updateDetail = auditDetail([
+    auditChange("Name", journal.name, nextJournal.name),
+    auditChange("ISSN", journal.issn, nextJournal.issn),
+    auditChange("Fields", previousFields, nextFields),
+    auditChange("Type", journal.type, nextJournal.type),
+    auditChange("Rank", journal.rank, nextJournal.rank),
+    auditChange("Local rank", journal.localRank, nextJournal.localRank),
+    auditChange(
+      "Issues per year",
+      journal.issuesPerYear,
+      nextJournal.issuesPerYear,
+    ),
+    auditChange("Favorite", journal.isFavorite, nextJournal.isFavorite),
+    auditChange("Interest", journal.isInterest, nextJournal.isInterest),
+    auditChange("Publisher", journal.publisher, nextJournal.publisher),
+    auditChange("Country", journal.country, nextJournal.country),
+    auditChange(
+      "APC",
+      auditMoney(journal.apc, journal.apcCurrency),
+      auditMoney(nextJournal.apc, nextJournal.apcCurrency),
+    ),
+    auditChange(
+      "APC option",
+      auditBooleanLabel(journal.hasApcOption, "Option", "No Option"),
+      auditBooleanLabel(nextJournal.hasApcOption, "Option", "No Option"),
+    ),
+    auditChange(
+      "Submission fee",
+      auditMoney(journal.submissionFee, journal.submissionFeeCurrency),
+      auditMoney(nextJournal.submissionFee, nextJournal.submissionFeeCurrency),
+    ),
+    auditChange(
+      "Homepage link",
+      journal.homepageLink,
+      nextJournal.homepageLink,
+    ),
+    auditChange(
+      "Submission link",
+      journal.submissionLink,
+      nextJournal.submissionLink,
+    ),
+    auditChange("Scimago link", journal.scimagoLink, nextJournal.scimagoLink),
+    auditChange("Scopus link", journal.scopusLink, nextJournal.scopusLink),
+    auditChange("Note", journal.note, nextJournal.note),
+  ]);
 
-  await prisma.journal.update({
-    where: { id: journalId },
-    data: {
-      name: optionalString(formData.get("name")) ?? "Untitled journal",
-      issn: optionalString(formData.get("issn")),
-      field: fields.length > 0 ? fields.join("; ") : legacyField,
-      fields,
-      type: journalType,
-      rank:
-        journalType === JournalType.INTERNATIONAL
-          ? optionalString(formData.get("rank"))
-          : null,
-      localRank:
-        journalType === JournalType.LOCAL
-          ? optionalString(formData.get("localRank"))
-          : null,
-      issuesPerYear: positiveIntFromForm(formData.get("issuesPerYear")),
-      isFavorite: formData.get("isFavorite") === "on",
-      isInterest: formData.get("isInterest") === "on",
-      publisherId: publisher.id,
-      publisher: publisher.name,
-      country: optionalString(formData.get("country")),
-      apc: optionalString(formData.get("apc")),
-      apcCurrency:
-        enumValue(CurrencyCode, formData.get("apcCurrency")) ??
-        CurrencyCode.USD,
-      hasApcOption: formData.get("hasApcOption") === "on",
-      submissionFee: optionalString(formData.get("submissionFee")),
-      submissionFeeCurrency:
-        enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??
-        CurrencyCode.USD,
-      homepageLink: optionalString(formData.get("homepageLink")),
-      submissionLink: optionalString(formData.get("submissionLink")),
-      scimagoLink: optionalString(formData.get("scimagoLink")),
-      scopusLink: optionalString(formData.get("scopusLink")),
-      note: optionalString(formData.get("note")),
-      resultCorrectionResolvedAt:
-        isTaskResultAssignee && journal.resultCorrectionRequestedAt
-          ? new Date()
-          : undefined,
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.journal.update({
+      where: { id: journalId },
+      data: nextJournal,
+    });
+    if (updateDetail) {
+      await tx.researchChangeLog.create({
+        data: {
+          entityType: "journal",
+          entityId: journalId,
+          area: "Journal",
+          action: "Updated",
+          detail: updateDetail,
+          actorId: user.id,
+        },
+      });
+    }
+    if (nextJournal.resultCorrectionResolvedAt) {
+      await tx.researchChangeLog.create({
+        data: {
+          entityType: "journal",
+          entityId: journalId,
+          area: "Approval",
+          action: "Correction resolved",
+          detail:
+            "Correction request was addressed by editing journal details.",
+          actorId: user.id,
+          createdAt: nextJournal.resultCorrectionResolvedAt,
+        },
+      });
+    }
   });
 
   revalidatePath("/journals");
@@ -4914,10 +5082,26 @@ export async function updateJournalApprovalStatus(
     return;
   }
 
-  const journal = await prisma.journal.update({
-    where: { id: journalId },
-    data: { approvalStatus: status },
-    select: { resultTaskId: true },
+  const journal = await prisma.$transaction(async (tx) => {
+    const updatedJournal = await tx.journal.update({
+      where: { id: journalId },
+      data: { approvalStatus: status },
+      select: { resultTaskId: true, name: true },
+    });
+    await tx.researchChangeLog.create({
+      data: {
+        entityType: "journal",
+        entityId: journalId,
+        area: "Approval",
+        action:
+          status === JournalApprovalStatus.PENDING_APPROVAL
+            ? "Marked unapproved"
+            : status,
+        detail: updatedJournal.name,
+        actorId: user.id,
+      },
+    });
+    return updatedJournal;
   });
 
   revalidatePath("/journals");
@@ -4990,6 +5174,17 @@ async function approveJournalWithWorkflow(
         resultCorrectionResolvedAt: journal.resultCorrectionRequestedAt
           ? (journal.resultCorrectionResolvedAt ?? completedAt)
           : null,
+      },
+    });
+    await tx.researchChangeLog.create({
+      data: {
+        entityType: "journal",
+        entityId: journalId,
+        area: "Approval",
+        action: "Approved",
+        detail: approvalNote || `Approved journal: ${journal.name}`,
+        actorId: approvedById,
+        createdAt: completedAt,
       },
     });
 
@@ -5198,10 +5393,43 @@ export async function updateJournalCreator(
   const user = await requireCurrentUser();
   requireAdmin(user.roles);
   const createdById = optionalString(formData.get("createdById"));
+  const [journal, nextCreator] = await Promise.all([
+    prisma.journal.findUnique({
+      where: { id: journalId },
+      select: {
+        createdBy: { select: { name: true, email: true } },
+      },
+    }),
+    createdById
+      ? prisma.user.findUnique({
+          where: { id: createdById },
+          select: { name: true, email: true },
+        })
+      : Promise.resolve(null),
+  ]);
 
-  await prisma.journal.update({
-    where: { id: journalId },
-    data: { createdById },
+  await prisma.$transaction(async (tx) => {
+    await tx.journal.update({
+      where: { id: journalId },
+      data: { createdById },
+    });
+    await tx.researchChangeLog.create({
+      data: {
+        entityType: "journal",
+        entityId: journalId,
+        area: "Journal",
+        action: "Creator changed",
+        detail:
+          auditChange(
+            "Added by",
+            journal?.createdBy
+              ? journal.createdBy.name || journal.createdBy.email
+              : null,
+            nextCreator ? nextCreator.name || nextCreator.email : null,
+          ) ?? "Added by was cleared.",
+        actorId: user.id,
+      },
+    });
   });
 
   revalidatePath("/journals");
@@ -6421,10 +6649,23 @@ export async function decidePublisherApproval(
       ? JournalApprovalStatus.APPROVED
       : JournalApprovalStatus.DECLINED;
   const note = optionalString(formData.get("note"));
-  const publisher = await prisma.publisher.update({
-    where: { id: publisherId },
-    data: { approvalStatus: status },
-    select: { id: true, name: true, createdById: true },
+  const publisher = await prisma.$transaction(async (tx) => {
+    const updatedPublisher = await tx.publisher.update({
+      where: { id: publisherId },
+      data: { approvalStatus: status },
+      select: { id: true, name: true, createdById: true },
+    });
+    await tx.researchChangeLog.create({
+      data: {
+        entityType: "publisher",
+        entityId: publisherId,
+        area: "Approval",
+        action: status,
+        detail: note || updatedPublisher.name,
+        actorId: user.id,
+      },
+    });
+    return updatedPublisher;
   });
 
   if (publisher.createdById) {
@@ -6463,7 +6704,14 @@ export async function updatePublisher(publisherId: string, formData: FormData) {
   const user = await requireCurrentUser();
   const currentPublisher = await prisma.publisher.findUnique({
     where: { id: publisherId },
-    select: { createdById: true, approvalStatus: true },
+    select: {
+      createdById: true,
+      approvalStatus: true,
+      name: true,
+      usesSingleAccount: true,
+      website: true,
+      note: true,
+    },
   });
   if (!currentPublisher) throw new Error("Publisher was not found.");
   const canEdit =
@@ -6499,22 +6747,49 @@ export async function updatePublisher(publisherId: string, formData: FormData) {
       "Delete or reassign the publisher-wide account before switching to separate journal accounts.",
     );
   }
+  const nextPublisher = {
+    name: cleanedName,
+    normalizedName,
+    usesSingleAccount,
+    website: optionalString(formData.get("website")),
+    note: optionalString(formData.get("note")),
+  };
+  const updateDetail = auditDetail([
+    auditChange("Name", currentPublisher.name, nextPublisher.name),
+    auditChange(
+      "Account policy",
+      currentPublisher.usesSingleAccount
+        ? "Single publisher account"
+        : "Separate journal accounts",
+      nextPublisher.usesSingleAccount
+        ? "Single publisher account"
+        : "Separate journal accounts",
+    ),
+    auditChange("Website", currentPublisher.website, nextPublisher.website),
+    auditChange("Note", currentPublisher.note, nextPublisher.note),
+  ]);
 
   await prisma.$transaction(async (tx) => {
     await tx.publisher.update({
       where: { id: publisherId },
-      data: {
-        name: cleanedName,
-        normalizedName,
-        usesSingleAccount,
-        website: optionalString(formData.get("website")),
-        note: optionalString(formData.get("note")),
-      },
+      data: nextPublisher,
     });
     await tx.journal.updateMany({
       where: { publisherId },
       data: { publisher: cleanedName },
     });
+    if (updateDetail) {
+      await tx.researchChangeLog.create({
+        data: {
+          entityType: "publisher",
+          entityId: publisherId,
+          area: "Publisher",
+          action: "Updated",
+          detail: updateDetail,
+          actorId: user.id,
+        },
+      });
+    }
   });
 
   revalidatePath("/publishers");

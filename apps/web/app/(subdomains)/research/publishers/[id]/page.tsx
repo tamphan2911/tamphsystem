@@ -54,30 +54,49 @@ export default async function PublisherDetailPage({
     currentUser?.canManageResearchVenues ?? false,
   );
   if (!publisherWhere) redirect("/401");
+  const canViewChangeLog = isAdmin || isChiefAssistant;
 
-  const publisher = await prisma.publisher.findFirst({
-    where: { AND: [{ id }, publisherWhere] },
-    include: {
-      createdBy: { select: { name: true, email: true } },
-      accounts: {
-        where: { accountType: "PUBLISHER" },
-        orderBy: [{ updatedAt: "desc" }],
-      },
-      journals: {
-        orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
-        include: {
-          _count: { select: { submissions: true, accounts: true } },
+  const [publisher, auditLogs] = await Promise.all([
+    prisma.publisher.findFirst({
+      where: { AND: [{ id }, publisherWhere] },
+      include: {
+        createdBy: { select: { name: true, email: true } },
+        accounts: {
+          where: { accountType: "PUBLISHER" },
+          orderBy: [{ updatedAt: "desc" }],
+        },
+        journals: {
+          orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
+          include: {
+            _count: { select: { submissions: true, accounts: true } },
+          },
         },
       },
-    },
-  });
+    }),
+    canViewChangeLog
+      ? prisma.researchChangeLog.findMany({
+          where: { entityType: "publisher", entityId: id },
+          include: { actor: { select: { name: true, email: true } } },
+          orderBy: { createdAt: "desc" },
+        })
+      : Promise.resolve([]),
+  ]);
 
   if (!publisher) notFound();
 
   const website = externalUrl(publisher.website);
-  const canViewChangeLog = isAdmin || isChiefAssistant;
   const changeRows: ResearchChangeLogRow[] = canViewChangeLog
     ? [
+        ...auditLogs.map((log) => ({
+          id: `audit-${log.id}`,
+          changedAt: log.createdAt.toISOString(),
+          area: log.area,
+          action: log.action,
+          actor: log.actor
+            ? displayResearchPersonName(log.actor) || log.actor.email
+            : "",
+          detail: log.detail,
+        })),
         {
           id: "publisher-created",
           changedAt: publisher.createdAt.toISOString(),
@@ -95,7 +114,17 @@ export default async function PublisherDetailPage({
           area: "Publisher",
           action: "Updated",
           actor: "",
-          detail: `${publisher.approvalStatus} | ${publisher.usesSingleAccount ? "Single account" : "Journal accounts"}`,
+          detail: [
+            "Current values after latest update:",
+            `Status: ${publisher.approvalStatus}`,
+            `Account policy: ${
+              publisher.usesSingleAccount
+                ? "Single publisher account"
+                : "Separate journal accounts"
+            }`,
+            `Website: ${publisher.website || "Not recorded"}`,
+            `Note: ${publisher.note || "Not recorded"}`,
+          ].join("\n"),
         },
         ...publisher.journals.map((journal) => ({
           id: `journal-${journal.id}`,

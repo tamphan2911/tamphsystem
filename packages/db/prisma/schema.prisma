@@ -150,6 +150,7 @@ model User {
   createdResearchCalendarItems     ResearchCalendarItem[]             @relation("ResearchCalendarItemCreator")
   ledResearchAssistantTeams        ResearchAssistantTeam[]            @relation("ResearchAssistantTeamLeader")
   researchAssistantTeamMemberships ResearchAssistantTeamMember[]      @relation("ResearchAssistantTeamMemberUser")
+  researchChangeLogs               ResearchChangeLog[]                @relation("ResearchChangeLogActor")
 }
 
 // ---------------------------------------------
@@ -1115,6 +1116,22 @@ model ResearchAssistantTeamMember {
 
   @@unique([teamId, userId])
   @@index([teamId])
+}
+
+model ResearchChangeLog {
+  id         String   @id @default(uuid())
+  entityType String
+  entityId   String
+  area       String
+  action     String
+  detail     String
+  actorId    String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("ResearchChangeLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorId])
 }
 
 model ResearchTaskClarification {

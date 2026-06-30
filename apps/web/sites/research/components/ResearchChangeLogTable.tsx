@@ -35,6 +35,11 @@ function displayDate(value: string) {
   return dateFormatter.format(date);
 }
 
+function displayActor(value: string) {
+  const actor = value.trim();
+  return actor || "Historical record (actor not captured)";
+}
+
 function SortButton({
   label,
   sortKey,
@@ -180,7 +185,7 @@ export function ResearchChangeLogTable({
                       {row.action}
                     </td>
                     <td className="px-3 py-3 text-xs text-[#667085] dark:text-[#B0B0B0]">
-                      {row.actor || "-"}
+                      {displayActor(row.actor)}
                     </td>
                     <td className="whitespace-pre-wrap break-words px-3 py-3 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
                       {row.detail || "-"}

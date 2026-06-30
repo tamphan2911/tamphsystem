@@ -3063,6 +3063,17 @@ export default async function TaskDetailPage({
     },
   );
   const canViewChangeLog = isRootAdmin || isChiefAssistant;
+  const taskJournalAuditLogs =
+    canViewChangeLog && task.addedJournals.length > 0
+      ? await prisma.researchChangeLog.findMany({
+          where: {
+            entityType: "journal",
+            entityId: { in: task.addedJournals.map((journal) => journal.id) },
+          },
+          include: { actor: { select: { name: true, email: true } } },
+          orderBy: { createdAt: "desc" },
+        })
+      : [];
   const taskChangeRows: ResearchChangeLogRow[] = canViewChangeLog
     ? [
         {
@@ -3218,6 +3229,16 @@ export default async function TaskDetailPage({
               journal.createdBy.email
             : "",
           detail: journal.name,
+        })),
+        ...taskJournalAuditLogs.map((log) => ({
+          id: `journal-audit-${log.id}`,
+          changedAt: log.createdAt.toISOString(),
+          area: `Journal result | ${log.area}`,
+          action: log.action,
+          actor: log.actor
+            ? displayResearchPersonName(log.actor) || log.actor.email
+            : "",
+          detail: log.detail,
         })),
         ...task.suggestedJournals.map((suggestion) => ({
           id: `suggested-journal-${suggestion.id}`,
