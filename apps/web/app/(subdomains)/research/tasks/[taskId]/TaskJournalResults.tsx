@@ -653,7 +653,10 @@ function JournalResultCard({
     .filter(Boolean);
 
   return (
-    <article className="relative min-h-56 border border-[#D8D0C2] bg-[#FFFDF8] p-4 dark:border-[#444444] dark:bg-[#262626]">
+    <article
+      id={`task-journal-result-${journal.id}`}
+      className="relative min-h-56 scroll-mt-28 border border-[#D8D0C2] bg-[#FFFDF8] p-4 dark:border-[#444444] dark:bg-[#262626]"
+    >
       <div className="flex items-start justify-between gap-3">
         <span
           className={`inline-flex border px-2 py-1 text-[10px] uppercase ${

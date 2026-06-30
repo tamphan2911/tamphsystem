@@ -85,10 +85,12 @@ export function JournalApprovalToggleButton({
   journalId,
   journalName,
   approvalStatus,
+  returnHref,
 }: {
   journalId: string;
   journalName: string;
   approvalStatus: JournalApprovalStatus;
+  returnHref?: string | null;
 }) {
   const router = useRouter();
   const toast = useResearchToast();
@@ -112,7 +114,11 @@ export function JournalApprovalToggleButton({
             ? `${journalName} is now waiting for admin approval and will not appear in journal pickers.`
             : `${journalName} is now approved and available across the research site.`,
         });
-        router.refresh();
+        if (!isApproved && returnHref) {
+          router.push(returnHref);
+        } else {
+          router.refresh();
+        }
       } catch (error) {
         toast.showError({
           title: "Journal could not be approved",
@@ -161,11 +167,7 @@ export function JournalApprovalToggleButton({
         maxWidth="max-w-lg"
         bodyClassName="px-5 py-5"
         headerActions={
-          <ResearchButton
-            type="button"
-            onClick={submit}
-            disabled={isPending}
-          >
+          <ResearchButton type="button" onClick={submit} disabled={isPending}>
             {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : isApproved ? (

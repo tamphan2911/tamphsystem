@@ -255,6 +255,10 @@ export default async function JournalDetailPage({
     country: publisher.country ?? "",
     usesSingleAccount: publisher.usesSingleAccount,
   }));
+  const approvalReturnHref =
+    journal.resultTaskId && journal.resultPosition !== null
+      ? `/tasks/${journal.resultTaskId}#task-journal-result-${journal.id}`
+      : null;
 
   const submissionRows: JournalSubmissionRow[] = journal.submissions.map(
     (submission) => {
@@ -609,6 +613,7 @@ export default async function JournalDetailPage({
                     journalId={journal.id}
                     journalName={journal.name}
                     approvalStatus={journal.approvalStatus}
+                    returnHref={approvalReturnHref}
                   />
                 ) : null}
               </dt>
