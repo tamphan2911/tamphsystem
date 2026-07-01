@@ -265,6 +265,25 @@ function claimLabel(status: string) {
   return status.replaceAll("_", " ");
 }
 
+const closedJournalSubmissionStatuses = new Set([
+  "ACCEPTED",
+  "PUBLISHED",
+  "REJECTED",
+  "WITHDRAWN",
+]);
+
+function normalizedPublisherKey(value?: string | null) {
+  return value?.trim().replace(/\s+/g, " ").toLowerCase() ?? "";
+}
+
+function readableSubmissionStatus(status: string) {
+  if (status === "PENDING") return "Submitted";
+  return status
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 export default async function ProjectDetailPage({
   params,
 }: {
@@ -680,6 +699,68 @@ export default async function ProjectDetailPage({
   const activeSubmitTasks = project.tasks.filter(
     (task) => task.status !== "COMPLETED" && task.status !== "REVOKED",
   );
+  const submitTaskLockForPublisher = ({
+    publisherId,
+    publisherName,
+  }: {
+    publisherId?: string | null;
+    publisherName?: string | null;
+  }) => {
+    const normalizedTarget = normalizedPublisherKey(publisherName);
+    if (!publisherId && !normalizedTarget) return undefined;
+    const samePublisher = (journal: {
+      publisherId?: string | null;
+      publisher?: string | null;
+    }) =>
+      Boolean(
+        (publisherId && journal.publisherId === publisherId) ||
+          (normalizedTarget &&
+            normalizedPublisherKey(journal.publisher) === normalizedTarget),
+      );
+    const submissionJournalIds = new Set<string>();
+    const submissionItems = project.submissions
+      .filter(
+        (submission) => !closedJournalSubmissionStatuses.has(submission.status),
+      )
+      .filter((submission) => samePublisher(submission.journal))
+      .map((submission) => {
+        submissionJournalIds.add(submission.journalId);
+        const statusDate =
+          submission.status === "PENDING"
+            ? shortDate(submission.submittedAt)
+            : shortDate(submission.updatedAt);
+        return {
+          journalName: submission.journal.name,
+          status: readableSubmissionStatus(submission.status),
+          statusDate,
+        };
+      });
+    const taskItems = activeSubmitTasks
+      .filter((task) => task.taskType === "SUBMIT_RESEARCH" && task.journal)
+      .filter((task) => !submissionJournalIds.has(task.journalId ?? ""))
+      .filter((task) => samePublisher(task.journal!))
+      .map((task) => ({
+        journalName: task.journal?.name ?? "Unnamed journal",
+        status: `Submit task: ${readableSubmissionStatus(task.status)}`,
+        statusDate: shortDate(task.updatedAt),
+      }));
+    const items = [...submissionItems, ...taskItems];
+    if (items.length === 0) return undefined;
+    const displayPublisher = publisherName?.trim() || "this publisher";
+    const itemLines = items
+      .map(
+        (item) =>
+          `- ${item.journalName} | ${item.status} | status date: ${item.statusDate}`,
+      )
+      .join("\n");
+    const firstJournal = items[0]?.journalName ?? "the current journal";
+    return {
+      publisherName: displayPublisher,
+      items,
+      checkboxText: `The publisher ${displayPublisher} already has an ongoing submission workflow for this research:\n${itemLines}\nPlease wait until the current ongoing submission for ${displayPublisher} is complete before assigning another submit task.`,
+      cardText: `This suggested venue must wait until the ongoing submission workflow for ${firstJournal} is finished before assigning a submit task, because both journals are from ${displayPublisher}.`,
+    };
+  };
   const suggestVenueTaskOptions: SuggestedVenueTaskOption[] = project.tasks
     .filter((task) => task.taskType === "SUGGEST_VENUE")
     .map((task) => ({
@@ -748,6 +829,7 @@ export default async function ProjectDetailPage({
         : (journal.field ?? ""),
       rank: journal.rank ?? "",
       publisher: journal.publisher ?? "",
+      publisherId: journal.publisherId ?? undefined,
       apc: journal.apc ?? "",
       apcCurrency: journal.apcCurrency,
       hasApcOption: journal.hasApcOption,
@@ -764,6 +846,10 @@ export default async function ProjectDetailPage({
         username: account.username,
         email: account.email ?? "",
       })),
+      submitTaskLock: submitTaskLockForPublisher({
+        publisherId: journal.publisherId,
+        publisherName: journal.publisherRecord?.name ?? journal.publisher,
+      }),
     }),
   );
   const suggestedJournalOptions: SuggestedJournalOption[] =
@@ -787,6 +873,7 @@ export default async function ProjectDetailPage({
           : (journal?.field ?? ""),
         rank: journal?.rank ?? "",
         publisher: journal?.publisher ?? publisher?.name ?? "",
+        publisherId: journal?.publisherId ?? suggestion.publisherId ?? undefined,
         apc: journal?.apc ?? suggestion.apc ?? "",
         apcCurrency: journal?.apcCurrency ?? "USD",
         hasApcOption: journal?.hasApcOption ?? false,
@@ -817,6 +904,10 @@ export default async function ProjectDetailPage({
         linkedTask: suggestion.taskId
           ? suggestVenueTaskById.get(suggestion.taskId)
           : undefined,
+        submitTaskLock: submitTaskLockForPublisher({
+          publisherId: journal?.publisherId ?? suggestion.publisherId,
+          publisherName: journal?.publisher ?? publisher?.name,
+        }),
         approvedByName: approvedBy
           ? displayResearchPersonName(approvedBy) || "Unknown user"
           : undefined,

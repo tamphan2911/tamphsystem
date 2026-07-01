@@ -46,6 +46,7 @@ export type TaskSuggestedVenueResult = {
   venueLink: string | null;
   journalCreationTaskId?: string | null;
   journalCreationTaskStatus?: string | null;
+  submitTaskLockNote?: string | null;
   createdAt: string;
 };
 
@@ -398,6 +399,11 @@ function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
       {venue.journalNote ? (
         <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
           Venue record note: {venue.journalNote}
+        </p>
+      ) : null}
+      {venue.submitTaskLockNote ? (
+        <p className="mt-3 whitespace-pre-line border border-amber-200 bg-amber-50/70 px-3 py-2 text-xs leading-5 text-amber-900 dark:border-amber-900/55 dark:bg-amber-950/25 dark:text-amber-200">
+          {venue.submitTaskLockNote}
         </p>
       ) : null}
       <div className="mt-3 space-y-2 border-t border-[#D8D0C2] pt-2 text-xs leading-5 text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0]">

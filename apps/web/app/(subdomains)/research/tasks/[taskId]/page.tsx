@@ -34,6 +34,7 @@ import {
   ResearchTaskStatus,
   ResearchTaskType,
   Role,
+  SubmissionStatus,
   SuggestedVenueStatus,
 } from "@repo/db";
 import { auth } from "../../../../../auth";
@@ -120,6 +121,34 @@ function formatDate(value: Date | null) {
     month: "2-digit",
     year: "2-digit",
   }).format(value);
+}
+
+function shortDate(value: Date | null | undefined) {
+  if (!value) return "";
+  return researchDateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  }).format(value);
+}
+
+const closedJournalSubmissionStatuses = new Set<SubmissionStatus>([
+  SubmissionStatus.ACCEPTED,
+  SubmissionStatus.PUBLISHED,
+  SubmissionStatus.REJECTED,
+  SubmissionStatus.WITHDRAWN,
+]);
+
+function normalizedPublisherKey(value?: string | null) {
+  return value?.trim().replace(/\s+/g, " ").toLowerCase() ?? "";
+}
+
+function readableSubmissionStatus(status: string) {
+  if (status === "PENDING") return "Submitted";
+  return status
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function fileSizeLabel(value: number | null) {
@@ -1128,6 +1157,7 @@ export default async function TaskDetailPage({
           createdBy: { select: { name: true, email: true } },
           approvedBy: { select: { name: true, email: true } },
           declinedBy: { select: { name: true, email: true } },
+          publisherId: true,
           publisher: { select: { name: true } },
           journal: {
             select: {
@@ -1135,6 +1165,7 @@ export default async function TaskDetailPage({
               name: true,
               issn: true,
               publisher: true,
+              publisherId: true,
               rank: true,
               localRank: true,
               apc: true,
@@ -1220,6 +1251,7 @@ export default async function TaskDetailPage({
           createdBy: { select: { name: true, email: true } },
           approvedBy: { select: { name: true, email: true } },
           declinedBy: { select: { name: true, email: true } },
+          publisherId: true,
           publisher: { select: { name: true } },
           journal: {
             select: {
@@ -1227,6 +1259,7 @@ export default async function TaskDetailPage({
               name: true,
               issn: true,
               publisher: true,
+              publisherId: true,
               rank: true,
               localRank: true,
               apc: true,
@@ -1251,6 +1284,7 @@ export default async function TaskDetailPage({
                   name: true,
                   issn: true,
                   publisher: true,
+                  publisherId: true,
                   rank: true,
                   localRank: true,
                   apc: true,
@@ -1576,6 +1610,7 @@ export default async function TaskDetailPage({
             createdBy: { select: { name: true, email: true } },
             approvedBy: { select: { name: true, email: true } },
             declinedBy: { select: { name: true, email: true } },
+            publisherId: true,
             publisher: { select: { name: true } },
             journal: {
               select: {
@@ -1583,6 +1618,7 @@ export default async function TaskDetailPage({
                 name: true,
                 issn: true,
                 publisher: true,
+                publisherId: true,
                 rank: true,
                 localRank: true,
                 apc: true,
@@ -1641,6 +1677,107 @@ export default async function TaskDetailPage({
           orderBy: { createdAt: "desc" },
         })
       : null);
+  const [projectActiveJournalSubmissions, projectActiveSubmitTasks] =
+    task.projectId
+      ? await Promise.all([
+          prisma.researchSubmission.findMany({
+            where: {
+              researchProjectId: task.projectId,
+              status: {
+                notIn: Array.from(closedJournalSubmissionStatuses),
+              },
+            },
+            select: {
+              journalId: true,
+              status: true,
+              submittedAt: true,
+              updatedAt: true,
+              journal: {
+                select: {
+                  id: true,
+                  name: true,
+                  publisher: true,
+                  publisherId: true,
+                },
+              },
+            },
+          }),
+          prisma.researchTask.findMany({
+            where: {
+              id: { not: task.id },
+              projectId: task.projectId,
+              taskType: ResearchTaskType.SUBMIT_RESEARCH,
+              status: {
+                notIn: [
+                  ResearchTaskStatus.COMPLETED,
+                  ResearchTaskStatus.REVOKED,
+                ],
+              },
+              journalId: { not: null },
+            },
+            select: {
+              journalId: true,
+              status: true,
+              updatedAt: true,
+              journal: {
+                select: {
+                  id: true,
+                  name: true,
+                  publisher: true,
+                  publisherId: true,
+                },
+              },
+            },
+          }),
+        ])
+      : [[], []];
+  const submitTaskLockNoteForPublisher = ({
+    publisherId,
+    publisherName,
+  }: {
+    publisherId?: string | null;
+    publisherName?: string | null;
+  }) => {
+    const normalizedTarget = normalizedPublisherKey(publisherName);
+    if (!publisherId && !normalizedTarget) return null;
+    const samePublisher = (journal: {
+      publisherId?: string | null;
+      publisher?: string | null;
+    }) =>
+      Boolean(
+        (publisherId && journal.publisherId === publisherId) ||
+          (normalizedTarget &&
+            normalizedPublisherKey(journal.publisher) === normalizedTarget),
+      );
+    const submissionJournalIds = new Set<string>();
+    const submissionItems = projectActiveJournalSubmissions
+      .filter((submission) => samePublisher(submission.journal))
+      .map((submission) => {
+        submissionJournalIds.add(submission.journalId);
+        return {
+          journalName: submission.journal.name,
+          status: readableSubmissionStatus(submission.status),
+          statusDate:
+            submission.status === SubmissionStatus.PENDING
+              ? shortDate(submission.submittedAt)
+              : shortDate(submission.updatedAt),
+        };
+      });
+    const taskItems = projectActiveSubmitTasks
+      .filter((item) => item.journal)
+      .filter((item) => !submissionJournalIds.has(item.journalId ?? ""))
+      .filter((item) => samePublisher(item.journal!))
+      .map((item) => ({
+        journalName: item.journal?.name ?? "Unnamed journal",
+        status: `Submit task: ${readableSubmissionStatus(item.status)}`,
+        statusDate: shortDate(item.updatedAt),
+      }));
+    const items = [...submissionItems, ...taskItems];
+    if (items.length === 0) return null;
+    const displayPublisher = publisherName?.trim() || "this publisher";
+    const firstJournal = items[0]?.journalName ?? "the current journal";
+    return `This suggested venue must wait until the ongoing submission workflow for ${firstJournal} is finished before assigning a submit task, because both journals are from ${displayPublisher}.`;
+  };
   const myAssignment = task.assignments.find(
     (assignment) => assignment.userId === userId,
   );
@@ -2567,6 +2704,10 @@ export default async function TaskDetailPage({
         journalCreationTaskId: suggestion.journalCreationTask?.id ?? null,
         journalCreationTaskStatus:
           suggestion.journalCreationTask?.status ?? null,
+        submitTaskLockNote: submitTaskLockNoteForPublisher({
+          publisherId: journal?.publisherId ?? suggestion.publisherId,
+          publisherName: journal?.publisher ?? suggestion.publisher?.name,
+        }),
         createdAt: suggestion.createdAt.toISOString(),
       };
     }),
@@ -2649,6 +2790,14 @@ export default async function TaskDetailPage({
               linkedJournalSubmissionSuggestion.venueLink ??
               linkedJournalSubmissionSuggestion.journal?.homepageLink ??
               null,
+            submitTaskLockNote: submitTaskLockNoteForPublisher({
+              publisherId:
+                linkedJournalSubmissionSuggestion.journal?.publisherId ??
+                linkedJournalSubmissionSuggestion.publisherId,
+              publisherName:
+                linkedJournalSubmissionSuggestion.journal?.publisher ??
+                linkedJournalSubmissionSuggestion.publisher?.name,
+            }),
             createdAt:
               linkedJournalSubmissionSuggestion.createdAt.toISOString(),
           },

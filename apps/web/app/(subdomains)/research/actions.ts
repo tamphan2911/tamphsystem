@@ -5312,8 +5312,10 @@ async function approveJournalWithWorkflow(
         : null,
       submitTaskResult?.created
         ? `A submit task was assigned: ${submitTaskResult.taskTitle}.`
-        : submitTaskResult
+        : submitTaskResult?.taskId
           ? `The suggestion was linked to an existing submit task: ${submitTaskResult.taskTitle}.`
+          : submitTaskResult?.blocked && submitTaskResult.blockMessage
+            ? submitTaskResult.blockMessage
           : null,
       result.workflow.completionNote
         ? `${result.workflow.taskTitle} was completed automatically. ${result.workflow.completionNote}`
@@ -5710,11 +5712,13 @@ async function accountBelongsToJournal(accountId: string, journalId: string) {
 }
 
 type SuggestedVenueSubmitTaskResult = {
-  taskId: string;
+  taskId: string | null;
   taskTitle: string;
   taskDescription: string | null;
   checkerId: string | null;
   created: boolean;
+  blocked?: boolean;
+  blockMessage?: string;
 };
 
 type AutoCompletedSuggestVenueTask = {
@@ -5770,7 +5774,19 @@ async function createSubmitTaskForSuggestedJournalApproval({
     journalId,
   });
   if (publisherSubmissionBlock) {
-    throw new Error(publisherSubmissionBlock.message);
+    await prisma.suggestedJournal.update({
+      where: { id: suggestionId },
+      data: { autoCreateSubmitTaskOnApproval: false },
+    });
+    return {
+      taskId: null,
+      taskTitle: "Submit task blocked",
+      taskDescription: null,
+      checkerId: null,
+      created: false,
+      blocked: true,
+      blockMessage: publisherSubmissionBlock.message,
+    };
   }
 
   const [project, journal, guide, accounts] = await Promise.all([
@@ -6300,10 +6316,12 @@ async function notifyMergedSuggestedVenueApproval({
   if (approvalNote) lines.push(`Approval note: ${approvalNote}`);
   if (submitTask?.created) {
     lines.push(`A submit task was assigned: ${submitTask.taskTitle}.`);
-  } else if (submitTask) {
+  } else if (submitTask?.taskId) {
     lines.push(
       `The suggestion was linked to an existing submit task: ${submitTask.taskTitle}.`,
     );
+  } else if (submitTask?.blocked && submitTask.blockMessage) {
+    lines.push(submitTask.blockMessage);
   }
   if (completedSuggestTask) {
     lines.push(
@@ -9345,30 +9363,51 @@ function publisherSlotNoticeLine(
 
 async function submitTaskPublisherBlock({
   projectId,
-  journalId,
+  journalId = null,
+  publisherId = null,
   excludeTaskId,
 }: {
   projectId: string;
-  journalId: string;
+  journalId?: string | null;
+  publisherId?: string | null;
   excludeTaskId?: string;
 }) {
-  const targetJournal = await prisma.journal.findUnique({
-    where: { id: journalId },
-    select: {
-      id: true,
-      name: true,
-      publisher: true,
-      publisherId: true,
-      publisherRecord: { select: { name: true } },
-    },
-  });
-  if (!targetJournal) return null;
+  const targetJournal = journalId
+    ? await prisma.journal.findUnique({
+        where: { id: journalId },
+        select: {
+          id: true,
+          name: true,
+          publisher: true,
+          publisherId: true,
+          publisherRecord: { select: { name: true } },
+        },
+      })
+    : null;
+  const targetPublisher =
+    !targetJournal && publisherId
+      ? await prisma.publisher.findUnique({
+          where: { id: publisherId },
+          select: { id: true, name: true },
+        })
+      : null;
+  if (journalId && !targetJournal) return null;
+  if (publisherId && !targetJournal && !targetPublisher) return null;
 
-  const target = {
-    journalId: targetJournal.id,
-    publisherId: targetJournal.publisherId,
-    publisherName: publisherDisplayName(targetJournal),
-  };
+  const target: PublisherSlotTarget | null = targetJournal
+    ? {
+        journalId: targetJournal.id,
+        publisherId: targetJournal.publisherId,
+        publisherName: publisherDisplayName(targetJournal),
+      }
+    : targetPublisher
+      ? {
+          journalId: null,
+          publisherId: targetPublisher.id,
+          publisherName: targetPublisher.name,
+        }
+      : null;
+  if (!target) return null;
   if (!target.publisherId && !target.publisherName) return null;
   const publisherName = target.publisherName || "this publisher";
 
@@ -9469,6 +9508,7 @@ async function submitTaskPublisherBlock({
   const targetSlotNotice = await publisherJournalTargetSlotNotice({
     projectId,
     journalId,
+    publisherId,
     confirmed: true,
   });
   if (targetSlotNotice?.publisherSlot?.mode === "blocked") {
@@ -10583,6 +10623,7 @@ export async function approveSuggestedJournal(
       venueName: true,
       venueLink: true,
       createdById: true,
+      publisherId: true,
       taskId: true,
       journalCreationTaskId: true,
       submissionTaskId: true,
@@ -10598,8 +10639,15 @@ export async function approveSuggestedJournal(
     formData.get("createJournalTask") === "true" && !suggestion.journalId;
   if (createJournalTask) {
     const approvalNote = optionalString(formData.get("approvalNote"));
-    const autoCreateSubmitTaskOnApproval =
+    let autoCreateSubmitTaskOnApproval =
       formData.get("createSubmitTask") !== "false";
+    if (autoCreateSubmitTaskOnApproval && suggestion.publisherId) {
+      const submitBlock = await submitTaskPublisherBlock({
+        projectId,
+        publisherId: suggestion.publisherId,
+      });
+      if (submitBlock) autoCreateSubmitTaskOnApproval = false;
+    }
     if (!suggestion.createdById || !suggestion.createdBy) {
       throw new Error("The venue suggester is not available for assignment.");
     }
@@ -10773,7 +10821,9 @@ export async function approveSuggestedJournal(
   return {
     taskCreated: false,
     submitTaskCreated: submitTaskResult?.created ?? false,
-    submitTaskLinked: Boolean(submitTaskResult && !submitTaskResult.created),
+    submitTaskLinked: Boolean(
+      submitTaskResult?.taskId && !submitTaskResult.created,
+    ),
     submitTaskId: submitTaskResult?.taskId,
     suggestVenueTaskCompleted: Boolean(completedSuggestTask),
   };
@@ -10877,7 +10927,9 @@ export async function approveSuggestedConference(
   return {
     taskCreated: false,
     submitTaskCreated: submitTaskResult?.created ?? false,
-    submitTaskLinked: Boolean(submitTaskResult && !submitTaskResult.created),
+    submitTaskLinked: Boolean(
+      submitTaskResult?.taskId && !submitTaskResult.created,
+    ),
     submitTaskId: submitTaskResult?.taskId,
     suggestVenueTaskCompleted: Boolean(completedSuggestTask),
   };

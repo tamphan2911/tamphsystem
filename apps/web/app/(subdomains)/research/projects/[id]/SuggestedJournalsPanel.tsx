@@ -82,6 +82,7 @@ export type SuggestedJournalOption = {
   field: string;
   rank: string;
   publisher: string;
+  publisherId?: string;
   apc: string;
   apcCurrency: string;
   hasApcOption: boolean;
@@ -103,6 +104,14 @@ export type SuggestedJournalOption = {
   taskId?: string;
   linkedTask?: SuggestedVenueTaskOption;
   venueState?: SuggestedVenueState;
+  submitTaskLock?: SuggestedVenueSubmitTaskLock;
+};
+
+export type SuggestedVenueSubmitTaskLock = {
+  publisherName: string;
+  items: { journalName: string; status: string; statusDate: string }[];
+  checkboxText: string;
+  cardText: string;
 };
 
 type SuggestedJournalAccountOption = {
@@ -475,6 +484,16 @@ export function SuggestedJournalsPanel({
     approveVenue?.item.venueId ||
     (isUnlinkedJournalApproval && autoCreateJournalTask),
   );
+  const approvalSubmitTaskLock =
+    approvalCanCreateSubmitTask && approveVenue?.kind === "journal"
+      ? approveVenue.item.submitTaskLock
+      : null;
+
+  useEffect(() => {
+    if (approvalSubmitTaskLock && autoCreateSubmitTask) {
+      setAutoCreateSubmitTask(false);
+    }
+  }, [approvalSubmitTaskLock, autoCreateSubmitTask]);
 
   function toggleAssistant(id: string) {
     setSelectedAssistantIds((current) =>
@@ -637,7 +656,7 @@ export function SuggestedJournalsPanel({
       if (approvalCanCreateSubmitTask) {
         formData.set(
           "createSubmitTask",
-          autoCreateSubmitTask ? "true" : "false",
+          autoCreateSubmitTask && !approvalSubmitTaskLock ? "true" : "false",
         );
       }
       if (approveVenue.kind === "journal") {
@@ -710,7 +729,9 @@ export function SuggestedJournalsPanel({
     setJournalQuery("");
     setConferenceQuery("");
     setAutoCreateJournalTask(venue.kind === "journal" && !venue.item.venueId);
-    setAutoCreateSubmitTask(true);
+    setAutoCreateSubmitTask(
+      !(venue.kind === "journal" && venue.item.submitTaskLock),
+    );
     setApprovalNote("");
     setJournalTaskConfirmOpen(false);
   }
@@ -1290,14 +1311,21 @@ export function SuggestedJournalsPanel({
               </>
             )}
             {approvalCanCreateSubmitTask ? (
-              <label className="flex cursor-pointer items-start gap-3 border border-[#D8D0C2] bg-[#FFFDF8] px-3 py-3 text-sm text-[#475467] transition hover:border-[#1F7180]/45 hover:bg-[#F8FBFA] dark:border-[#444444] dark:bg-[#202020] dark:text-[#D0D0D0] dark:hover:border-[#A8DADC]/45 dark:hover:bg-[#262626]">
+              <label
+                className={`flex items-start gap-3 border px-3 py-3 text-sm text-[#475467] transition dark:text-[#D0D0D0] ${
+                  approvalSubmitTaskLock
+                    ? "cursor-not-allowed border-amber-200 bg-amber-50/70 dark:border-amber-900/55 dark:bg-amber-950/25"
+                    : "cursor-pointer border-[#D8D0C2] bg-[#FFFDF8] hover:border-[#1F7180]/45 hover:bg-[#F8FBFA] dark:border-[#444444] dark:bg-[#202020] dark:hover:border-[#A8DADC]/45 dark:hover:bg-[#262626]"
+                }`}
+              >
                 <input
                   type="checkbox"
-                  checked={autoCreateSubmitTask}
+                  checked={autoCreateSubmitTask && !approvalSubmitTaskLock}
+                  disabled={Boolean(approvalSubmitTaskLock)}
                   onChange={(event) =>
                     setAutoCreateSubmitTask(event.target.checked)
                   }
-                  className="mt-0.5 h-4 w-4 flex-none accent-[#1F7180]"
+                  className="mt-0.5 h-4 w-4 flex-none accent-[#1F7180] disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <span className="min-w-0">
                   <span className="block font-normal text-slate-900 dark:text-[#E4E4E4]">
@@ -1308,6 +1336,11 @@ export function SuggestedJournalsPanel({
                       ? "After the new journal is approved, the submit task will be assigned to the suggester with the same assigner and checker as the suggested-venue task."
                       : "The task will be assigned to the suggester, with the same assigner and checker as the suggested-venue task."}
                   </span>
+                  {approvalSubmitTaskLock ? (
+                    <span className="mt-2 block whitespace-pre-line border border-amber-200 bg-white/70 px-3 py-2 text-xs leading-5 text-amber-900 dark:border-amber-900/60 dark:bg-[#202020] dark:text-amber-200">
+                      {approvalSubmitTaskLock.checkboxText}
+                    </span>
+                  ) : null}
                 </span>
               </label>
             ) : null}
@@ -1353,7 +1386,7 @@ export function SuggestedJournalsPanel({
           <p className="text-xs leading-5 text-slate-500 dark:text-[#8F98A8]">
             Guide G003 will be attached. The venue suggestion remains pending
             until the journal is added and approved.
-            {autoCreateSubmitTask
+            {autoCreateSubmitTask && !approvalSubmitTaskLock
               ? " A submit task will be created or linked automatically after that approval."
               : " No submit task will be created automatically after that approval."}
           </p>
@@ -2143,6 +2176,11 @@ function JournalCard({
           />
         </>
       )}
+      {journal.submitTaskLock ? (
+        <p className="mt-3 whitespace-pre-line border border-amber-200 bg-amber-50/70 px-3 py-2 text-xs leading-5 text-amber-900 dark:border-amber-900/55 dark:bg-amber-950/25 dark:text-amber-200">
+          {journal.submitTaskLock.cardText}
+        </p>
+      ) : null}
       <VenueSuggestionDecisionBlock
         venueNote={journal.venueNote}
         status={journal.status}
