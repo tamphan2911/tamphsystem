@@ -202,7 +202,7 @@ function statusMeta(row: RelatedResearchTaskRow): {
     label: "In progress",
     icon: Clock3,
     className:
-      "text-sky-700 dark:text-[#A8DADC] hover:text-sky-800 dark:hover:text-[#C7ECEE]",
+      "text-yellow-700 hover:text-yellow-800 dark:text-yellow-300 dark:hover:text-yellow-200",
   };
 }
 
