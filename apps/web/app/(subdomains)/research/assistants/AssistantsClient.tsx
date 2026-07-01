@@ -145,6 +145,10 @@ function isOverdueTask(task: AssistantPerformanceTask) {
   return new Date(task.dueDate).getTime() < Date.now();
 }
 
+function isCheckerActionTask(task: AssistantPerformanceTask) {
+  return task.status === "CHECKING";
+}
+
 function taskPeriodDate(task: AssistantPerformanceTask) {
   return new Date(task.completedAt ?? task.revokedAt ?? task.updatedAt);
 }
@@ -249,6 +253,7 @@ function sortAssistantPerformanceStats(
 function calculateStats(
   rows: AssistantPerformanceRow[],
   period: PerformancePeriod,
+  reportKind: "assistant" | "checker",
 ) {
   return rows.map((row) => {
     const periodTasks = row.tasks.filter((task) =>
@@ -261,7 +266,10 @@ function calculateStats(
     return {
       row,
       assigned,
-      active: periodTasks.filter((task) => !isClosedTask(task)).length,
+      active:
+        reportKind === "checker"
+          ? periodTasks.filter(isCheckerActionTask).length
+          : periodTasks.filter((task) => !isClosedTask(task)).length,
       completed,
       overdue: periodTasks.filter(isOverdueTask).length,
       revoked: periodTasks.filter((task) => task.status === "REVOKED").length,
@@ -475,11 +483,11 @@ function downloadAssistantPerformance(
     "Assistant",
     "Email",
     "Role",
-    reportKind === "checker" ? "Checked" : "Assigned",
+    reportKind === "checker" ? "To check" : "Assigned",
     "Active",
     "Completed",
     "Overdue",
-    "Revoked",
+    ...(reportKind === "assistant" ? ["Revoked"] : []),
     "Completion rate",
     ...(reportKind === "assistant" ? ["Acceptance rate"] : []),
   ];
@@ -492,9 +500,9 @@ function downloadAssistantPerformance(
       item.active,
       item.completed,
       item.overdue,
-      item.revoked,
-      item.completionRate,
     ];
+    if (reportKind === "assistant") baseRow.push(item.revoked);
+    baseRow.push(item.completionRate);
     if (reportKind === "assistant") baseRow.push(item.acceptanceRate);
     return baseRow;
   });
@@ -660,9 +668,16 @@ function AssistantPerformanceTable({
     [sortValue],
   );
   const showAcceptanceRate = reportKind === "assistant";
+  const showRevoked = reportKind === "assistant";
   const effectiveSort =
-    !showAcceptanceRate && sort?.key === "acceptance" ? null : sort;
-  const stats = useMemo(() => calculateStats(rows, period), [period, rows]);
+    (!showAcceptanceRate && sort?.key === "acceptance") ||
+    (!showRevoked && sort?.key === "revoked")
+      ? null
+      : sort;
+  const stats = useMemo(
+    () => calculateStats(rows, period, reportKind),
+    [period, reportKind, rows],
+  );
   const sortedStats = useMemo(
     () => sortAssistantPerformanceStats(stats, effectiveSort),
     [effectiveSort, stats],
@@ -744,7 +759,7 @@ function AssistantPerformanceTable({
               </th>
               <th className="w-[10%] px-3 py-3">
                 <AssistantPerformanceSortHeader
-                  label={reportKind === "checker" ? "Checked" : "Assigned"}
+                  label={reportKind === "checker" ? "To check" : "Assigned"}
                   column="assigned"
                   sort={sort}
                   onChange={updateSort}
@@ -778,15 +793,17 @@ function AssistantPerformanceTable({
                   align="center"
                 />
               </th>
-              <th className="w-[10%] px-3 py-3">
-                <AssistantPerformanceSortHeader
-                  label="Revoked"
-                  column="revoked"
-                  sort={sort}
-                  onChange={updateSort}
-                  align="center"
-                />
-              </th>
+              {showRevoked ? (
+                <th className="w-[10%] px-3 py-3">
+                  <AssistantPerformanceSortHeader
+                    label="Revoked"
+                    column="revoked"
+                    sort={sort}
+                    onChange={updateSort}
+                    align="center"
+                  />
+                </th>
+              ) : null}
               <th
                 className={`${showAcceptanceRate ? "w-[10%]" : "w-[13%]"} px-3 py-3`}
               >
@@ -840,9 +857,11 @@ function AssistantPerformanceTable({
                 <td className="px-3 py-3 text-center text-sm text-rose-700 dark:text-rose-300">
                   {item.overdue}
                 </td>
-                <td className="px-3 py-3 text-center text-sm text-slate-600 dark:text-[#B0B0B0]">
-                  {item.revoked}
-                </td>
+                {showRevoked ? (
+                  <td className="px-3 py-3 text-center text-sm text-slate-600 dark:text-[#B0B0B0]">
+                    {item.revoked}
+                  </td>
+                ) : null}
                 <td className="px-3 py-3 text-center text-sm text-[#A8DADC]">
                   {item.completionRate}%
                 </td>
@@ -860,7 +879,7 @@ function AssistantPerformanceTable({
             {sortedStats.length === 0 && (
               <tr>
                 <td
-                  colSpan={showAcceptanceRate ? 9 : 8}
+                  colSpan={showAcceptanceRate ? 9 : 7}
                   className="px-4 py-8 text-center text-sm text-[#B0B0B0]"
                 >
                   No assistant performance data is available.

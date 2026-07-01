@@ -201,6 +201,18 @@ type ActionBlockedNotice = {
   detail: string;
 };
 
+const venueStatesWithOwnSubmissionWorkflow = new Set<
+  SuggestedVenueState["state"]
+>([
+  "assigned",
+  "submitted",
+  "reviewing",
+  "rejected",
+  "withdrawn",
+  "accepted",
+  "published",
+]);
+
 export function SuggestedJournalsPanel({
   projectId,
   projectTitle,
@@ -2154,6 +2166,12 @@ function JournalCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const submitTaskLock =
+    journal.submitTaskLock &&
+    !venueStatesWithOwnSubmissionWorkflow.has(journal.venueState?.state ?? "idle")
+      ? journal.submitTaskLock
+      : null;
+
   return (
     <VenueCard
       canDeleteVenue={canDeleteVenue}
@@ -2231,9 +2249,9 @@ function JournalCard({
           />
         </>
       )}
-      {journal.submitTaskLock ? (
+      {submitTaskLock ? (
         <p className="mt-3 whitespace-pre-line border border-amber-200 bg-amber-50/70 px-3 py-2 text-xs leading-5 text-amber-900 dark:border-amber-900/55 dark:bg-amber-950/25 dark:text-amber-200">
-          {journal.submitTaskLock.cardText}
+          {submitTaskLock.cardText}
         </p>
       ) : null}
       <VenueSuggestionDecisionBlock

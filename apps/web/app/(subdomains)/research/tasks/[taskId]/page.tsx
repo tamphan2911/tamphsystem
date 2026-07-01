@@ -2683,7 +2683,7 @@ export default async function TaskDetailPage({
           .join(" - "),
         apc: journal?.apc ?? suggestion.apc ?? null,
         apcCurrency: journal?.apcCurrency ?? "USD",
-        hasApcOption: journal?.hasApcOption ?? false,
+        hasApcOption: journal ? journal.hasApcOption : null,
         submissionFee:
           journal?.submissionFee ?? suggestion.submissionFee ?? null,
         submissionFeeCurrency: journal?.submissionFeeCurrency ?? "USD",
@@ -2753,8 +2753,9 @@ export default async function TaskDetailPage({
               null,
             apcCurrency:
               linkedJournalSubmissionSuggestion.journal?.apcCurrency ?? "USD",
-            hasApcOption:
-              linkedJournalSubmissionSuggestion.journal?.hasApcOption ?? false,
+            hasApcOption: linkedJournalSubmissionSuggestion.journal
+              ? linkedJournalSubmissionSuggestion.journal.hasApcOption
+              : null,
             submissionFee:
               linkedJournalSubmissionSuggestion.journal?.submissionFee ??
               linkedJournalSubmissionSuggestion.submissionFee ??

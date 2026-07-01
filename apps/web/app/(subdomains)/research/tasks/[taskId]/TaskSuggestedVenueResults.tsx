@@ -307,6 +307,11 @@ function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
     kind: "submissionFee",
     rawText: venue.useRawFeeText,
   });
+  const showApcOption =
+    venue.kind === "journal" &&
+    !apc.isFree &&
+    venue.hasApcOption !== null &&
+    venue.hasApcOption !== undefined;
 
   return (
     <article className="min-h-52 border border-[#D8D0C2] bg-[#FFFDF8] p-4 dark:border-[#444444] dark:bg-[#262626]">
@@ -362,10 +367,10 @@ function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
       <div className="mt-3 grid gap-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
         <span>
           APC: <span className={apc.className}>{apc.label}</span>
-          {venue.kind === "journal" && !apc.isFree ? (
+          {showApcOption ? (
             <span
               className={`ml-1 ${apcOptionClass(
-                Boolean(venue.hasApcOption),
+                venue.hasApcOption === true,
               )}`}
             >
               ({venue.hasApcOption ? "Option" : "No Option"})
