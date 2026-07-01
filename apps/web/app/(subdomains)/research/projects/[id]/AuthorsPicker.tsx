@@ -41,6 +41,7 @@ export type AuthorOption = {
   selectedEmail?: string;
   affiliation?: string;
   orcid?: string | null;
+  bio?: string | null;
   role: string;
 };
 

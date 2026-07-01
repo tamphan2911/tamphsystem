@@ -107,9 +107,7 @@ function journalFocusedResearchStage(project: {
   if (
     journalStatuses.some(
       (status) =>
-        status === "PENDING" ||
-        status === "REJECTED" ||
-        status === "WITHDRAWN",
+        status === "PENDING" || status === "REJECTED" || status === "WITHDRAWN",
     )
   ) {
     return "SUBMITTING";
@@ -168,6 +166,7 @@ export default async function ResearchProfilePage({
         additionalEmails: true,
         affiliation: true,
         orcid: true,
+        bio: true,
         avatarUrl: true,
         researchThemePreference: true,
         emailVerified: true,

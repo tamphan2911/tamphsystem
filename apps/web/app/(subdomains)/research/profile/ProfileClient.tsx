@@ -58,6 +58,7 @@ type ResearchProfileUser = {
   additionalEmails: string[];
   affiliation: string;
   orcid: string | null;
+  bio: string | null;
   avatarUrl: string | null;
   researchThemePreference: string;
   emailVerified: string | null;
@@ -935,6 +936,20 @@ export function ProfileClient({
               placeholder="Optional. Example: https://orcid.org/0000-0001-5111-1024"
               className={researchFieldClass}
             />
+          </label>
+          <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
+            <span className="inline-flex items-center gap-1 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+              <span>Bio</span>
+            </span>
+            <textarea
+              name="bio"
+              defaultValue={user.bio ?? ""}
+              placeholder="Optional. Add a short research bio, around 100-150 words."
+              className={`${researchTextareaClass} min-h-36`}
+            />
+            <span className="text-xs font-normal text-[#B0B0B0]">
+              This bio can appear beside your author name in research details.
+            </span>
           </label>
           <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
             <span className="inline-flex items-center gap-1 text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">

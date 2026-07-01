@@ -99,6 +99,7 @@ model User {
   name                          String?
   affiliation                   String    @default("Not set")
   orcid                         String?
+  bio                           String?
   passwordHash                  String
   adminVisiblePassword          String?
   avatarUrl                     String?

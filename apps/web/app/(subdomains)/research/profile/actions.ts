@@ -39,6 +39,7 @@ export async function updateResearchProfile(formData: FormData) {
         "ORCID must use the full URL format, for example https://orcid.org/0000-0001-5111-1024.",
     };
   }
+  const bio = String(formData.get("bio") ?? "").trim();
   const requestedThemePreference = String(
     formData.get("researchThemePreference") ?? "system",
   ).trim();
@@ -80,6 +81,7 @@ export async function updateResearchProfile(formData: FormData) {
         name,
         affiliation,
         orcid: orcid || null,
+        bio: bio || null,
         additionalEmails: uniqueAdditionalEmails,
         researchThemePreference,
       },

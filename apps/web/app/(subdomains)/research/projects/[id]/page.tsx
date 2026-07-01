@@ -61,6 +61,7 @@ import { ResearchContentLockButton } from "./ResearchContentLockButton";
 import { ResearchAuthorsLockButton } from "./ResearchAuthorsLockButton";
 import { ProductionTimelineActions } from "./ProductionTimelineActions";
 import { AuthorNotificationActions } from "./AuthorNotificationActions";
+import { AuthorBioButton } from "./AuthorBioButton";
 import {
   ResearchAuthorsEditDialog,
   ResearchBasicEditDialog,
@@ -479,6 +480,7 @@ export default async function ProjectDetailPage({
         additionalEmails: true,
         affiliation: true,
         orcid: true,
+        bio: true,
         roles: true,
       },
     }),
@@ -505,6 +507,7 @@ export default async function ProjectDetailPage({
         additionalEmails: true,
         affiliation: true,
         orcid: true,
+        bio: true,
         roles: true,
       },
     }),
@@ -545,6 +548,7 @@ export default async function ProjectDetailPage({
       additionalEmails: true,
       affiliation: true,
       orcid: true,
+      bio: true,
       roles: true,
     },
   });
@@ -1063,6 +1067,7 @@ export default async function ProjectDetailPage({
     additionalEmails: user.additionalEmails,
     affiliation: user.affiliation,
     orcid: user.orcid,
+    bio: user.bio,
     role: displayRole(user.roles),
   }));
   const defaultRegistrationUser: AuthorOption | null = project.registrationUser
@@ -1100,6 +1105,7 @@ export default async function ProjectDetailPage({
           selectedEmail: entry.selectedEmail ?? entry.user.email,
           affiliation: entry.user.affiliation,
           orcid: entry.user.orcid,
+          bio: entry.user.bio,
           role: displayRole(entry.user.roles),
           isCorresponding: entry.isCorresponding,
           folderShared: entry.folderShared,
@@ -1113,6 +1119,7 @@ export default async function ProjectDetailPage({
             selectedEmail: author.email,
             affiliation: author.affiliation,
             orcid: author.orcid,
+            bio: author.bio,
             role: displayRole(author.roles),
             isCorresponding: index === 0,
             folderShared: false,
@@ -1127,6 +1134,7 @@ export default async function ProjectDetailPage({
                 selectedEmail: leadResearcher.email,
                 affiliation: leadResearcher.affiliation,
                 orcid: leadResearcher.orcid,
+                bio: leadResearcher.bio,
                 role: displayRole(leadResearcher.roles),
                 isCorresponding: true,
                 folderShared: false,
@@ -2196,6 +2204,15 @@ export default async function ProjectDetailPage({
                             {displayResearchPersonName(author)}
                             {author.isCorresponding ? "*" : ""}
                           </p>
+                          {author.bio?.trim() ? (
+                            <AuthorBioButton
+                              authorName={
+                                displayResearchPersonName(author) ||
+                                author.email
+                              }
+                              bio={author.bio}
+                            />
+                          ) : null}
                           <span className="border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#B0B0B0]">
                             {index === 0 ? "First author" : "Author"}
                           </span>
