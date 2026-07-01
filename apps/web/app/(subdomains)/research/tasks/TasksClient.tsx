@@ -1704,6 +1704,8 @@ export function TasksClient({
                               assignmentWorkflowMeta(assignment);
                             const AssignmentIcon = assignmentWorkflow.icon;
                             const showEmail = task.assignments.length === 1;
+                            const showAssignmentIcon =
+                              task.assignments.length > 1;
                             const assignmentTiming = assignmentTimingMeta({
                               dueDate: assignment.dueDate ?? task.dueDate,
                               finishedAt: assignment.finishedAt,
@@ -1728,19 +1730,21 @@ export function TasksClient({
                                       email: assignment.userEmail,
                                     })}
                                   </span>
-                                  <IconHint label={assignmentWorkflow.detail}>
-                                    <span
-                                      className={`research-allow-transform mt-0.5 inline-flex h-4 w-4 flex-none cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${assignmentWorkflow.className}`}
-                                    >
-                                      <AssignmentIcon
-                                        className="h-3.5 w-3.5"
-                                        aria-hidden="true"
-                                      />
-                                      <span className="sr-only">
-                                        {assignmentWorkflow.label}
+                                  {showAssignmentIcon ? (
+                                    <IconHint label={assignmentWorkflow.detail}>
+                                      <span
+                                        className={`research-allow-transform mt-0.5 inline-flex h-4 w-4 flex-none cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${assignmentWorkflow.className}`}
+                                      >
+                                        <AssignmentIcon
+                                          className="h-3.5 w-3.5"
+                                          aria-hidden="true"
+                                        />
+                                        <span className="sr-only">
+                                          {assignmentWorkflow.label}
+                                        </span>
                                       </span>
-                                    </span>
-                                  </IconHint>
+                                    </IconHint>
+                                  ) : null}
                                 </div>
                                 {showEmail ? (
                                   <div className="break-all text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
