@@ -2098,12 +2098,17 @@ export default async function TaskDetailPage({
   const showCheckerEmail = Boolean(
     task.checker && !task.checker.roles.includes(Role.ADMIN),
   );
+  const actionBelongsUnderChecker = (actorId?: string | null) => {
+    if (task.checkerId && actorId === task.checkerId) return true;
+    if (!task.checkerId && actorId === task.createdById) return true;
+    return Boolean(
+      actorId &&
+        actorId === task.createdById &&
+        task.checkerId === task.createdById,
+    );
+  };
   const resultUnderChecker = Boolean(
-    taskResult &&
-    (taskResult.actorId === task.checkerId ||
-      task.checkerId === task.createdById ||
-      (!task.checkerId && taskResult.actorId === task.createdById) ||
-      (!taskResult.actorId && !task.checkerId)),
+    taskResult && actionBelongsUnderChecker(taskResult.actorId),
   );
   const redoInfo =
     task.status !== ResearchTaskStatus.COMPLETED &&
@@ -2117,11 +2122,7 @@ export default async function TaskDetailPage({
         }
       : null;
   const redoUnderChecker = Boolean(
-    redoInfo &&
-    (redoInfo.actorId === task.checkerId ||
-      task.checkerId === task.createdById ||
-      (!task.checkerId && redoInfo.actorId === task.createdById) ||
-      (!redoInfo.actorId && !task.checkerId)),
+    redoInfo && actionBelongsUnderChecker(redoInfo.actorId),
   );
   const taskType = taskTypeMeta(
     task.taskType,
@@ -4155,20 +4156,15 @@ export default async function TaskDetailPage({
                             ) : null
                           }
                         />
-                        <div className="grid gap-1 text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
-                          {assignment.completedAt ? (
+                        {assignment.completedAt ? (
+                          <div className="grid gap-1 text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
                             <span className="text-emerald-700 dark:text-emerald-300">
                               {task.status === ResearchTaskStatus.COMPLETED
                                 ? "This task is fully completed."
                                 : "This assignee is complete. Waiting for other assignees."}
                             </span>
-                          ) : null}
-                          {assignment.redoReason ? (
-                            <span className="whitespace-pre-wrap text-rose-700 dark:text-rose-300">
-                              Redo note: {assignment.redoReason}
-                            </span>
-                          ) : null}
-                        </div>
+                          </div>
+                        ) : null}
                       </div>
                     );
                   })
