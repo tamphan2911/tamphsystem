@@ -9041,6 +9041,12 @@ type PublisherSlotJournal = {
   publisherRecord?: { name: string } | null;
 };
 
+type PublisherSlotTarget = {
+  journalId: string | null;
+  publisherId: string | null;
+  publisherName: string;
+};
+
 function normalizedPublisherSlotName(value?: string | null) {
   return value?.trim().replace(/\s+/g, " ").toLowerCase() ?? "";
 }
@@ -9049,16 +9055,23 @@ function publisherDisplayName(journal: PublisherSlotJournal) {
   return journal.publisherRecord?.name?.trim() || journal.publisher?.trim() || "";
 }
 
-function sameJournalPublisher(
-  journal: PublisherSlotJournal,
-  target: PublisherSlotJournal,
+function samePublisherSlot(
+  publisher: { publisherId: string | null; publisherName?: string | null },
+  target: PublisherSlotTarget,
 ) {
-  if (target.publisherId && journal.publisherId === target.publisherId) {
+  if (target.publisherId && publisher.publisherId === target.publisherId) {
     return true;
   }
-  const targetName = normalizedPublisherSlotName(publisherDisplayName(target));
-  const journalName = normalizedPublisherSlotName(publisherDisplayName(journal));
-  return Boolean(targetName && journalName && targetName === journalName);
+  const targetName = normalizedPublisherSlotName(target.publisherName);
+  const publisherName = normalizedPublisherSlotName(publisher.publisherName);
+  return Boolean(targetName && publisherName && targetName === publisherName);
+}
+
+function journalPublisherSlot(journal: PublisherSlotJournal) {
+  return {
+    publisherId: journal.publisherId,
+    publisherName: publisherDisplayName(journal),
+  };
 }
 
 function suggestedVenueStatusLabel(status: SuggestedVenueStatus) {
@@ -9093,39 +9106,66 @@ function submissionSlotDate(submission: {
 
 async function publisherJournalTargetSlotNotice({
   projectId,
-  journalId,
+  journalId = null,
+  publisherId = null,
   confirmed,
 }: {
   projectId: string;
-  journalId: string;
+  journalId?: string | null;
+  publisherId?: string | null;
   confirmed: boolean;
 }) {
-  const targetJournal = await prisma.journal.findUnique({
-    where: { id: journalId },
-    select: {
-      id: true,
-      name: true,
-      publisher: true,
-      publisherId: true,
-      publisherRecord: { select: { name: true } },
-    },
-  });
-  if (!targetJournal) return null;
+  const targetJournal = journalId
+    ? await prisma.journal.findUnique({
+        where: { id: journalId },
+        select: {
+          id: true,
+          name: true,
+          publisher: true,
+          publisherId: true,
+          publisherRecord: { select: { name: true } },
+        },
+      })
+    : null;
+  const targetPublisher =
+    !targetJournal && publisherId
+      ? await prisma.publisher.findUnique({
+          where: { id: publisherId },
+          select: { id: true, name: true },
+        })
+      : null;
+  if (journalId && !targetJournal) return null;
+  if (publisherId && !targetJournal && !targetPublisher) return null;
 
-  const publisherName = publisherDisplayName(targetJournal);
-  if (!targetJournal.publisherId && !publisherName) return null;
+  const target: PublisherSlotTarget | null = targetJournal
+    ? {
+        journalId: targetJournal.id,
+        publisherId: targetJournal.publisherId,
+        publisherName: publisherDisplayName(targetJournal),
+      }
+    : targetPublisher
+      ? {
+          journalId: null,
+          publisherId: targetPublisher.id,
+          publisherName: targetPublisher.name,
+        }
+      : null;
+  if (!target || (!target.publisherId && !target.publisherName)) return null;
 
   const [suggestions, submissions] = await Promise.all([
     prisma.suggestedJournal.findMany({
       where: {
         projectId,
-        journalId: { not: null },
         status: { not: SuggestedVenueStatus.DECLINED },
+        OR: [{ journalId: { not: null } }, { publisherId: { not: null } }],
       },
       select: {
         id: true,
         status: true,
         createdAt: true,
+        venueName: true,
+        publisherId: true,
+        publisher: { select: { id: true, name: true } },
         journal: {
           select: {
             id: true,
@@ -9173,10 +9213,17 @@ async function publisherJournalTargetSlotNotice({
 
   for (const suggestion of suggestions) {
     const journal = suggestion.journal;
-    if (!journal || journal.id === targetJournal.id) continue;
-    if (!sameJournalPublisher(journal, targetJournal)) continue;
+    if (target.journalId && journal?.id === target.journalId) continue;
 
-    const submission = submissionsByJournalId.get(journal.id);
+    const suggestionPublisher = journal
+      ? journalPublisherSlot(journal)
+      : {
+          publisherId: suggestion.publisherId,
+          publisherName: suggestion.publisher?.name ?? null,
+        };
+    if (!samePublisherSlot(suggestionPublisher, target)) continue;
+
+    const submission = journal ? submissionsByJournalId.get(journal.id) : null;
     if (
       submission &&
       inactiveJournalSubmissionStatuses.has(submission.status)
@@ -9188,30 +9235,30 @@ async function publisherJournalTargetSlotNotice({
       const statusDate = submissionSlotDate(submission);
       slots.push({
         kind: "submission",
-        journalName: journal.name,
+        journalName: journal?.name ?? suggestion.venueName ?? "Unnamed journal",
         status: submissionStatusLabel(submission.status),
         dateLabel: statusDate.label,
         dateValue: statusDate.value,
       });
-      slottedJournalIds.add(journal.id);
+      if (journal) slottedJournalIds.add(journal.id);
       continue;
     }
 
     slots.push({
       kind: "suggestedVenue",
-      journalName: journal.name,
+      journalName: journal?.name ?? suggestion.venueName ?? "Unnamed journal",
       status: suggestedVenueStatusLabel(suggestion.status),
       dateLabel: "created date",
       dateValue: publisherSlotDate(suggestion.createdAt),
     });
-    slottedJournalIds.add(journal.id);
+    if (journal) slottedJournalIds.add(journal.id);
   }
 
   for (const submission of submissions) {
     const journal = submission.journal;
-    if (journal.id === targetJournal.id) continue;
+    if (target.journalId && journal.id === target.journalId) continue;
     if (slottedJournalIds.has(journal.id)) continue;
-    if (!sameJournalPublisher(journal, targetJournal)) continue;
+    if (!samePublisherSlot(journalPublisherSlot(journal), target)) continue;
     if (inactiveJournalSubmissionStatuses.has(submission.status)) continue;
 
     const statusDate = submissionSlotDate(submission);
@@ -9232,14 +9279,14 @@ async function publisherJournalTargetSlotNotice({
       message:
         slots.length >= 2
           ? `Two publisher slots are already taken for ${
-              publisherName || "this publisher"
+              target.publisherName || "this publisher"
             }.`
           : `One publisher slot is already taken for ${
-              publisherName || "this publisher"
+              target.publisherName || "this publisher"
             }.`,
       publisherSlot: {
         mode: slots.length >= 2 ? ("blocked" as const) : ("confirm" as const),
-        publisherName: publisherName || "this publisher",
+        publisherName: target.publisherName || "this publisher",
         slotCount: slots.length,
         slots,
       },
@@ -9344,6 +9391,15 @@ export async function addTaskSuggestedVenue(
     : null;
   if (suggestedPublisherId && !suggestedPublisher) {
     return { ok: false, message: "Choose a valid publisher on the site." };
+  }
+
+  if (venueKind === "journal" && !journalId && suggestedPublisher?.id) {
+    const publisherSlotNotice = await publisherJournalTargetSlotNotice({
+      projectId: task.projectId,
+      publisherId: suggestedPublisher.id,
+      confirmed: formData.get("publisherSlotConfirmed") === "true",
+    });
+    if (publisherSlotNotice) return publisherSlotNotice;
   }
 
   if (journalId) {
@@ -9549,6 +9605,15 @@ export async function addSuggestedJournal(
     : null;
   if (suggestedPublisherId && !suggestedPublisher) {
     return { ok: false, message: "Choose a valid publisher on the site." };
+  }
+
+  if (!journalId && suggestedPublisher?.id) {
+    const publisherSlotNotice = await publisherJournalTargetSlotNotice({
+      projectId,
+      publisherId: suggestedPublisher.id,
+      confirmed: formData.get("publisherSlotConfirmed") === "true",
+    });
+    if (publisherSlotNotice) return publisherSlotNotice;
   }
 
   if (journalId) {
