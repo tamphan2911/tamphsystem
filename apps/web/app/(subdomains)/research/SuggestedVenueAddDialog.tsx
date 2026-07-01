@@ -82,6 +82,12 @@ export type SuggestedVenuePublisherSlotNotice = {
   slots: SuggestedVenuePublisherSlot[];
 };
 
+export type SuggestedVenueJournalControlNotice = {
+  journalId: string;
+  title: string;
+  detail: string;
+};
+
 export function SuggestedVenueAddDialog({
   open,
   onClose,
@@ -90,6 +96,7 @@ export function SuggestedVenueAddDialog({
   publishers,
   excludedJournalIds = [],
   excludedConferenceIds = [],
+  journalControlNotices = [],
   onSubmit,
   onSuccess,
   onError,
@@ -101,6 +108,7 @@ export function SuggestedVenueAddDialog({
   publishers: PublisherPickerItem[];
   excludedJournalIds?: string[];
   excludedConferenceIds?: string[];
+  journalControlNotices?: SuggestedVenueJournalControlNotice[];
   onSubmit: (formData: FormData) => Promise<SuggestedVenueAddResult>;
   onSuccess?: (formData: FormData) => void;
   onError?: (result: Exclude<SuggestedVenueAddResult, void>) => void;
@@ -132,12 +140,23 @@ export function SuggestedVenueAddDialog({
     () => new Set(excludedConferenceIds),
     [excludedConferenceIds],
   );
+  const journalControlNoticeById = useMemo(
+    () =>
+      new Map(
+        journalControlNotices.map((notice) => [notice.journalId, notice]),
+      ),
+    [journalControlNotices],
+  );
 
   const journalResults = useMemo(() => {
     const needle = journalQuery.trim().toLowerCase();
     if (!needle) return [];
     return journals
-      .filter((journal) => !excludedJournalIdSet.has(journal.venueId))
+      .filter(
+        (journal) =>
+          !excludedJournalIdSet.has(journal.venueId) ||
+          journalControlNoticeById.has(journal.venueId),
+      )
       .filter((journal) =>
         [
           journal.name,
@@ -151,7 +170,7 @@ export function SuggestedVenueAddDialog({
           .includes(needle),
       )
       .slice(0, 12);
-  }, [excludedJournalIdSet, journalQuery, journals]);
+  }, [excludedJournalIdSet, journalControlNoticeById, journalQuery, journals]);
 
   const conferenceResults = useMemo(() => {
     const needle = conferenceQuery.trim().toLowerCase();
@@ -267,7 +286,11 @@ export function SuggestedVenueAddDialog({
   }
 
   const canSubmit = Boolean(
-    selectedVenue ||
+    (selectedVenue &&
+      !(
+        selectedVenue.kind === "journal" &&
+        journalControlNoticeById.has(selectedVenue.item.venueId)
+      )) ||
       (activeTab === "journal"
         ? manualJournalEntry &&
           (freeVenueName.trim() || freeVenueLink.trim())
@@ -335,6 +358,11 @@ export function SuggestedVenueAddDialog({
                   query={journalQuery}
                   selectedVenue={
                     selectedVenue?.kind === "journal" ? selectedVenue : null
+                  }
+                  notice={
+                    selectedVenue?.kind === "journal"
+                      ? journalControlNoticeById.get(selectedVenue.item.venueId)
+                      : undefined
                   }
                   journals={journalResults}
                   conferences={[]}
@@ -541,6 +569,7 @@ function AddVenuePicker({
   onQueryChange,
   onSelect,
   onClear,
+  notice,
 }: {
   kind: "journal" | "conference";
   query: string;
@@ -551,6 +580,7 @@ function AddVenuePicker({
   onQueryChange: (value: string) => void;
   onSelect: (venue: AddVenue) => void;
   onClear: () => void;
+  notice?: SuggestedVenueJournalControlNotice;
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const results = kind === "journal" ? journals : conferences;
@@ -627,6 +657,17 @@ function AddVenuePicker({
           </div>
         </div>
       </FloatingDropdownPortal>
+      {notice ? (
+        <div className="mt-2 flex items-start gap-2 border border-rose-200 bg-rose-50 px-3 py-2 text-sm leading-5 text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/35 dark:text-rose-200">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
+          <span>
+            <span className="block font-normal">{notice.title}</span>
+            <span className="mt-0.5 block text-xs leading-5">
+              {notice.detail}
+            </span>
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }

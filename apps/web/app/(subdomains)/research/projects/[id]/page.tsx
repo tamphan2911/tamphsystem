@@ -853,6 +853,7 @@ export default async function ProjectDetailPage({
         username: account.username,
         email: account.email ?? "",
       })),
+      venueState: suggestedJournalState(journal.id),
       submitTaskLock: submitTaskLockForPublisher({
         publisherId: journal.publisherId,
         publisherName: journal.publisherRecord?.name ?? journal.publisher,

@@ -68,7 +68,10 @@ import {
   formatResearchNumber,
   normalizeResearchNumberInput,
 } from "@/sites/research/lib/currency";
-import { SuggestedVenueAddDialog } from "../../SuggestedVenueAddDialog";
+import {
+  SuggestedVenueAddDialog,
+  type SuggestedVenueJournalControlNotice,
+} from "../../SuggestedVenueAddDialog";
 import type { PublisherPickerItem } from "@/sites/research/components/PublisherPicker";
 
 const defaultTaskDescription = "Read the guide by click on icons right above.";
@@ -213,6 +216,26 @@ const venueStatesWithOwnSubmissionWorkflow = new Set<
   "published",
 ]);
 
+const activeVenueWorkflowStates = new Set<SuggestedVenueState["state"]>([
+  "assigned",
+  "submitted",
+  "reviewing",
+]);
+
+function readableSuggestionStatus(status: string) {
+  if (status === "APPROVED") return "approved";
+  if (status === "DECLINED") return "declined";
+  if (status === "PENDING") return "waiting for approval";
+  return status.replaceAll("_", " ").toLowerCase();
+}
+
+function readableVenueWorkflowState(state: SuggestedVenueState["state"]) {
+  if (state === "assigned") return "submit task assigned";
+  if (state === "submitted") return "submission already sent";
+  if (state === "reviewing") return "submission under review";
+  return state.replaceAll(/([A-Z])/g, " $1").toLowerCase();
+}
+
 export function SuggestedJournalsPanel({
   projectId,
   projectTitle,
@@ -328,6 +351,44 @@ export function SuggestedJournalsPanel({
       ),
     [suggestedConferences],
   );
+  const journalControlNotices = useMemo(() => {
+    const notices = new Map<string, SuggestedVenueJournalControlNotice>();
+
+    suggested.forEach((journal) => {
+      if (!journal.venueId) return;
+      if (journal.status === "DECLINED") {
+        notices.set(journal.venueId, {
+          journalId: journal.venueId,
+          title: "This journal was suggested before and declined.",
+          detail: `${journal.name} already has a declined suggestion for this research. Please choose another journal unless admin asks you to suggest this one again.`,
+        });
+        return;
+      }
+
+      notices.set(journal.venueId, {
+        journalId: journal.venueId,
+        title: "This journal is already in suggested venues.",
+        detail: `${journal.name} is already associated with this research as a suggested venue (${readableSuggestionStatus(
+          journal.status,
+        )}). Please choose a different journal.`,
+      });
+    });
+
+    journals.forEach((journal) => {
+      if (notices.has(journal.venueId)) return;
+      const state = journal.venueState?.state ?? "idle";
+      if (!activeVenueWorkflowStates.has(state)) return;
+      notices.set(journal.venueId, {
+        journalId: journal.venueId,
+        title: "This journal already has an active workflow.",
+        detail: `${journal.name} is currently associated with this research (${readableVenueWorkflowState(
+          state,
+        )}). Wait until that workflow is finished before suggesting it again.`,
+      });
+    });
+
+    return Array.from(notices.values());
+  }, [journals, suggested]);
 
   const journalResults = useMemo(() => {
     const needle = journalQuery.trim().toLowerCase();
@@ -986,6 +1047,7 @@ export function SuggestedJournalsPanel({
         publishers={publishers}
         excludedJournalIds={Array.from(suggestedJournalIds)}
         excludedConferenceIds={Array.from(suggestedConferenceIds)}
+        journalControlNotices={journalControlNotices}
         onSubmit={submitAddedVenue}
         onSuccess={showAddedVenueSuccess}
         onError={(result) =>
