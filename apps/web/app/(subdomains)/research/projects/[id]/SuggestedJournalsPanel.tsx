@@ -7,6 +7,7 @@ import type { KeyboardEvent, ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  AlertTriangle,
   Ban,
   Check,
   ChevronDown,
@@ -195,6 +196,11 @@ type Venue =
   | { kind: "journal"; item: SuggestedJournalOption }
   | { kind: "conference"; item: SuggestedConferenceOption };
 
+type ActionBlockedNotice = {
+  title: string;
+  detail: string;
+};
+
 export function SuggestedJournalsPanel({
   projectId,
   projectTitle,
@@ -278,13 +284,19 @@ export function SuggestedJournalsPanel({
   );
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [taskMode, setTaskMode] = useState<"submit" | "other">("submit");
-  const { showError, showSuccess } = useResearchToast();
+  const [actionBlockedNotice, setActionBlockedNotice] =
+    useState<ActionBlockedNotice | null>(null);
+  const { showSuccess } = useResearchToast();
   const accountDropdownRef = useRef<HTMLDivElement>(null);
   const assistantDropdownRef = useRef<HTMLDivElement>(null);
   const checkerDropdownRef = useRef<HTMLDivElement>(null);
 
+  function showActionBlocked(notice: ActionBlockedNotice) {
+    setActionBlockedNotice(notice);
+  }
+
   function showProductionIncomplete() {
-    showSuccess({
+    showActionBlocked({
       title: "Research is still in production",
       detail:
         "Complete every production timeline checkbox before submitting this research anywhere.",
@@ -581,7 +593,7 @@ export function SuggestedJournalsPanel({
               formData,
             );
       if (!result?.ok) {
-        showError({
+        showActionBlocked({
           title: "Suggested venue was not updated",
           detail: result?.message ?? "Check the venue details and try again.",
         });
@@ -629,7 +641,7 @@ export function SuggestedJournalsPanel({
           ? await deleteSuggestedJournal(projectId, deleteVenue.item.id)
           : await deleteSuggestedConference(projectId, deleteVenue.item.id);
       if (!result?.ok) {
-        showError({
+        showActionBlocked({
           title: "Suggested venue was not removed",
           detail:
             result?.message ||
@@ -671,7 +683,7 @@ export function SuggestedJournalsPanel({
             formData,
           );
         } catch (error) {
-          showError({
+          showActionBlocked({
             title: "Venue was not approved",
             detail:
               error instanceof Error
@@ -749,7 +761,7 @@ export function SuggestedJournalsPanel({
     if (!approveVenue) return;
     const reason = declineReason.trim();
     if (!reason) {
-      showError({
+      showActionBlocked({
         title: "Decline reason required",
         detail: "Enter the reason before confirming this decision.",
       });
@@ -763,7 +775,7 @@ export function SuggestedJournalsPanel({
           ? await declineSuggestedJournal(projectId, venue.item.id, reason)
           : await declineSuggestedConference(projectId, venue.item.id, reason);
       if (!result.ok) {
-        showError({
+        showActionBlocked({
           title: "Suggestion was not declined",
           detail: result.message || "Please refresh the page and try again.",
         });
@@ -790,7 +802,7 @@ export function SuggestedJournalsPanel({
       const result = await createResearchTask(formData);
       if (!result?.ok) {
         if (result && "message" in result && result.message) {
-          showError({
+          showActionBlocked({
             title: "Submit task was not assigned",
             detail: result.message,
           });
@@ -799,26 +811,26 @@ export function SuggestedJournalsPanel({
         if (result?.reason === "PRODUCTION_INCOMPLETE") {
           showProductionIncomplete();
         } else if (result?.reason === "RESEARCH_LOCKED") {
-          showSuccess({
+          showActionBlocked({
             title: "Research is locked",
             detail:
               "Unlock the research before creating submission tasks from this page.",
           });
         } else if (result?.reason === "UNAUTHORIZED") {
-          showSuccess({
+          showActionBlocked({
             title: "Task was not created",
             detail:
               "Only admin, first author, or corresponding author can create this task for the research.",
           });
         } else if (result?.reason === "ACCOUNT_REQUIRED") {
-          showSuccess({
+          showActionBlocked({
             title: "Account is required",
             detail:
               "This journal has multiple accounts. Choose the account for this submission task.",
           });
           return;
         } else {
-          showSuccess({
+          showActionBlocked({
             title: "Submission task already exists",
             detail:
               "Revoke the unfinished task for this research and venue before assigning a new one.",
@@ -965,11 +977,16 @@ export function SuggestedJournalsPanel({
         onSubmit={submitAddedVenue}
         onSuccess={showAddedVenueSuccess}
         onError={(result) =>
-          showError({
+          showActionBlocked({
             title: "Venue was not added",
             detail: result.message ?? "Check the venue details and try again.",
           })
         }
+      />
+
+      <ActionBlockedModal
+        notice={actionBlockedNotice}
+        onClose={() => setActionBlockedNotice(null)}
       />
 
       {editVenue && (
@@ -1879,6 +1896,44 @@ function ReportUploadPermissionField({
   );
 }
 
+function ActionBlockedModal({
+  notice,
+  onClose,
+}: {
+  notice: ActionBlockedNotice | null;
+  onClose: () => void;
+}) {
+  if (!notice) return null;
+
+  return (
+    <ResearchModal
+      open={Boolean(notice)}
+      onClose={onClose}
+      title={notice.title}
+      icon={<AlertTriangle className="h-5 w-5" />}
+      maxWidth="max-w-xl"
+      bodyClassName="px-5 py-4"
+      footer={
+        <div className="flex justify-end">
+          <ResearchButton type="button" tone="secondary" onClick={onClose}>
+            Got it
+          </ResearchButton>
+        </div>
+      }
+    >
+      <div className="grid gap-3">
+        <p className="border border-rose-200 bg-rose-50 px-3 py-2 text-sm leading-6 text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/35 dark:text-rose-200">
+          {notice.detail}
+        </p>
+        <p className="text-xs leading-5 text-slate-500 dark:text-[#9A9A9A]">
+          The action was stopped before changes were saved. Review the message,
+          then adjust the form and try again.
+        </p>
+      </div>
+    </ResearchModal>
+  );
+}
+
 function ApprovalVenuePicker({
   kind,
   query,
@@ -2307,9 +2362,7 @@ function VenueFees({
   const feeHasNumericValue = normalizedFee !== "" && Number.isFinite(feeValue);
   const feeIsFree =
     !submissionFee.trim() ||
-    /^(free|no fee|none|waived|0(?:[.,]0+)?)$/i.test(
-      submissionFee.trim(),
-    ) ||
+    /^(free|no fee|none|waived|0(?:[.,]0+)?)$/i.test(submissionFee.trim()) ||
     (feeHasNumericValue && feeValue <= 0);
   const apcLabel = rawTextFees
     ? apcIsFree
