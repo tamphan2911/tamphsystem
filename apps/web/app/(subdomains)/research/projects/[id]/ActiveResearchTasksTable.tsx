@@ -24,6 +24,7 @@ import {
   useTablePagination,
 } from "@/sites/research/components/TableControls";
 import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 
 export type RelatedResearchTaskRow = {
   id: string;
@@ -101,6 +102,35 @@ function sentenceCase(value: string) {
     .join(" ");
 }
 
+function taskTypeLines(row: RelatedResearchTaskRow) {
+  const type = row.taskType;
+  if (type === "SUBMIT_RESEARCH" || type === "SUBMIT_CONFERENCE") {
+    return {
+      typeLabel: "Submit",
+      subtypeLabel: type === "SUBMIT_CONFERENCE" ? "Conference" : "Journal",
+    };
+  }
+  if (type === "SUGGEST_VENUE") {
+    return {
+      typeLabel: "Suggest venue",
+      subtypeLabel: "Research",
+    };
+  }
+  if (type === "ADD_JOURNAL") {
+    return { typeLabel: "Add journal", subtypeLabel: "" };
+  }
+  if (type === "PROPOSAL") {
+    return { typeLabel: "Proposal", subtypeLabel: "" };
+  }
+  if (type === "PRODUCTION") {
+    return { typeLabel: "Production", subtypeLabel: "" };
+  }
+  if (type === "PROJECT_PRODUCTION" || type === "PROJECT_RESEARCH_ASSOCIATED") {
+    return { typeLabel: "Project", subtypeLabel: "" };
+  }
+  return { typeLabel: sentenceCase(type || "Task"), subtypeLabel: "" };
+}
+
 function statusMeta(row: RelatedResearchTaskRow): {
   value: string;
   label: string;
@@ -174,6 +204,31 @@ function statusMeta(row: RelatedResearchTaskRow): {
     className:
       "text-sky-700 dark:text-[#A8DADC] hover:text-sky-800 dark:hover:text-[#C7ECEE]",
   };
+}
+
+function statusActionText(row: RelatedResearchTaskRow) {
+  if (row.status === "CHECKING") {
+    return {
+      text: "Ready to check",
+      className: "text-violet-700 dark:text-violet-300",
+    };
+  }
+  if (row.status === "REVISION_REQUESTED") {
+    return {
+      text: "Waiting revision",
+      className: "text-orange-700 dark:text-orange-300",
+    };
+  }
+  if (row.status === "NEED_CLARIFY") {
+    return {
+      text:
+        row.clarifyDirection === "MANAGER_TO_ASSIGNEE"
+          ? "Waiting assignee"
+          : "Waiting manager",
+      className: "text-cyan-700 dark:text-cyan-300",
+    };
+  }
+  return null;
 }
 
 function clarificationStatusDetail(
@@ -292,7 +347,7 @@ const unfinishedRelatedTaskStatuses = relatedTaskStatusOptions.filter(
 
 function statusFilterLabel(value: string) {
   if (value === "ALL") return "All statuses";
-  if (value === "CHECKING") return "Checking";
+  if (value === "CHECKING") return "Ready to check";
   if (value === "NEED_CLARIFY") return "Need clarify";
   if (value === "REVISION_REQUESTED") return "Revision requested";
   return sentenceCase(value);
@@ -356,7 +411,7 @@ export function RelatedResearchTasksTable({
   }
 
   return (
-    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
+    <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C] shadow-none">
       <div className="research-related-tasks-toolbar flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
           value={query}
@@ -374,14 +429,14 @@ export function RelatedResearchTasksTable({
         />
       </div>
 
-      <div className="overflow-hidden">
-        <table className="research-related-tasks-table w-full table-fixed text-left">
+      <div className="overflow-x-auto">
+        <table className="research-related-tasks-table w-full min-w-[60rem] table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
-              <th className="w-[8rem] px-3 py-3">Task ID</th>
+              <th className="w-[6rem] px-3 py-3">Task ID</th>
               <th className="px-3 py-3">Task</th>
               <th className="w-[7rem] px-3 py-3">Status</th>
-              <th className="w-[16rem] px-3 py-3">Assignees</th>
+              <th className="w-[14rem] px-3 py-3">Assignees</th>
               <th className="w-[12.5rem] px-3 py-3 lg:w-[14rem] xl:w-[15rem]">
                 Time
               </th>
@@ -390,55 +445,98 @@ export function RelatedResearchTasksTable({
           <tbody className="divide-y divide-[#444444]">
             {pagination.pagedRows.map((row) => {
               const meta = statusMeta(row);
+              const actionText = statusActionText(row);
               const time = timeMeta(row);
               const StatusIcon = meta.icon;
+              const typeLines = taskTypeLines(row);
               return (
                 <tr
                   key={row.id}
-                  className="align-top transition-colors duration-150 hover:bg-[#383838]"
+                  className="group align-top transition-colors duration-150 hover:bg-[#383838]"
                 >
                   <td className="px-3 py-3 align-top">
-                    <span className="font-mono text-xs uppercase tracking-wide text-[#B0B0B0]">
+                    <span className="font-mono text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
                       {taskId(row)}
                     </span>
-                    <p className="mt-1 text-[11px] leading-4 text-[#777777]">
-                      {sentenceCase(row.taskType || "Task")}
+                    <p className="mt-1 text-[11px] font-normal leading-4 text-[#B0B0B0]">
+                      {typeLines.typeLabel}
                     </p>
+                    {typeLines.subtypeLabel ? (
+                      <p className="text-[11px] leading-4 text-[#777777]">
+                        {typeLines.subtypeLabel}
+                      </p>
+                    ) : null}
                   </td>
                   <td className="min-w-0 px-3 py-3 align-top">
                     <Link
                       href={`/tasks/${row.id}`}
-                      className={`text-sm font-normal leading-5 ${researchLinkClass}`}
+                      className={`research-allow-transform text-sm font-normal leading-5 ${researchLinkClass}`}
                     >
                       {row.title}
                     </Link>
                     <p className="mt-1 line-clamp-3 whitespace-pre-line break-words text-xs font-normal leading-5 text-[#B0B0B0]">
                       {row.description || "No description"}
                     </p>
+                    <p className="mt-1 flex flex-wrap items-center text-[11px] font-normal leading-4 text-[#1F7180] dark:text-[#A8DADC]">
+                      Related to this research
+                    </p>
                   </td>
                   <td className="px-3 py-3 align-top">
-                    <IconHint label={meta.label}>
-                      <span
-                        className={`research-allow-transform inline-flex border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${meta.className}`}
-                      >
-                        <StatusIcon className="h-4 w-4" aria-hidden="true" />
-                        <span className="sr-only">{meta.label}</span>
+                    <IconHint
+                      label={
+                        actionText
+                          ? `${meta.label}: ${actionText.text}`
+                          : meta.label
+                      }
+                    >
+                      <span className="inline-flex flex-col items-start gap-1">
+                        <span
+                          className={`research-allow-transform inline-flex cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${meta.className}`}
+                        >
+                          <StatusIcon className="h-4 w-4" aria-hidden="true" />
+                          <span className="sr-only">{meta.label}</span>
+                        </span>
+                        {actionText ? (
+                          <span
+                            className={`max-w-[6.25rem] text-[11px] font-semibold leading-4 ${actionText.className}`}
+                          >
+                            {actionText.text}
+                          </span>
+                        ) : null}
                       </span>
                     </IconHint>
                   </td>
                   <td className="px-3 py-3 align-top text-xs leading-5 text-[#B0B0B0]">
-                    {row.assignments.length > 0
-                      ? row.assignments.map((assignment) => (
-                          <div key={assignment.id} className="mb-2 last:mb-0">
-                            <div className="text-[#E4E4E4]">
+                    {row.assignments.length > 0 ? (
+                      <div
+                        className={
+                          row.assignments.length > 1
+                            ? "divide-y divide-[#D8D0C2] dark:divide-[#444444]"
+                            : ""
+                        }
+                      >
+                        {row.assignments.map((assignment) => (
+                          <div
+                            key={assignment.id}
+                            className={`space-y-0.5 font-normal ${
+                              row.assignments.length > 1
+                                ? "py-2 first:pt-0 last:pb-0"
+                                : ""
+                            }`}
+                            title={assignment.email}
+                          >
+                            <div className="min-w-0 break-words text-[#E4E4E4]">
                               {assignment.name || assignment.email}
                             </div>
-                            <div className="break-all text-[#B0B0B0]">
+                            <div className="break-all text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
                               {assignment.email}
                             </div>
                           </div>
-                        ))
-                      : "Unassigned"}
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-[#777777]">Unassigned</div>
+                    )}
                   </td>
                   <td className="px-3 py-3 align-top">
                     {time.dateLines.map((line) => (
@@ -483,13 +581,19 @@ export function RelatedResearchTasksTable({
             })}
             {pagination.total === 0 && (
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-3 py-14 text-center text-sm text-[#B0B0B0]"
-                >
-                  {rows.length === 0
-                    ? "No tasks are related to this research."
-                    : "No related tasks match the current filters."}
+                <td colSpan={5} className="px-4 py-2">
+                  <ResearchEmptyState
+                    title={
+                      rows.length === 0
+                        ? "No tasks are related to this research."
+                        : "No related tasks match the current filters."
+                    }
+                    detail={
+                      rows.length === 0
+                        ? "Create or assign a task to connect work with this research."
+                        : "Try another keyword or status."
+                    }
+                  />
                 </td>
               </tr>
             )}
