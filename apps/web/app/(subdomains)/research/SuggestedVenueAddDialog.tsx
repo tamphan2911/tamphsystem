@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
-import { Plus, Search, X } from "lucide-react";
+import { AlertTriangle, Plus, Search, X } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   IconHint,
@@ -59,7 +59,23 @@ type AddVenue =
 export type SuggestedVenueAddResult = {
   ok?: boolean;
   message?: string;
+  publisherSlot?: SuggestedVenuePublisherSlotNotice;
 } | void;
+
+export type SuggestedVenuePublisherSlot = {
+  kind: "suggestedVenue" | "submission";
+  journalName: string;
+  status: string;
+  dateLabel: string;
+  dateValue: string;
+};
+
+export type SuggestedVenuePublisherSlotNotice = {
+  mode: "confirm" | "blocked";
+  publisherName: string;
+  slotCount: number;
+  slots: SuggestedVenuePublisherSlot[];
+};
 
 export function SuggestedVenueAddDialog({
   open,
@@ -93,6 +109,9 @@ export function SuggestedVenueAddDialog({
   const [freeJournalApc, setFreeJournalApc] = useState("");
   const [freeJournalSubmissionFee, setFreeJournalSubmissionFee] = useState("");
   const [freeVenueNote, setFreeVenueNote] = useState("");
+  const [publisherSlotNotice, setPublisherSlotNotice] =
+    useState<SuggestedVenuePublisherSlotNotice | null>(null);
+  const pendingPublisherSlotFormRef = useRef<FormData | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const excludedJournalIdSet = useMemo(
@@ -154,11 +173,31 @@ export function SuggestedVenueAddDialog({
     setFreeJournalApc("");
     setFreeJournalSubmissionFee("");
     setFreeVenueNote("");
+    setPublisherSlotNotice(null);
+    pendingPublisherSlotFormRef.current = null;
   }
 
   function closeDialog() {
     reset();
     onClose();
+  }
+
+  function sendVenueFormData(formData: FormData) {
+    startTransition(async () => {
+      const result = await onSubmit(formData);
+      if (result?.publisherSlot) {
+        pendingPublisherSlotFormRef.current =
+          result.publisherSlot.mode === "confirm" ? formData : null;
+        setPublisherSlotNotice(result.publisherSlot);
+        return;
+      }
+      if (result?.ok === false) {
+        onError?.(result);
+        return;
+      }
+      onSuccess?.(formData);
+      closeDialog();
+    });
   }
 
   function submitVenue() {
@@ -185,15 +224,16 @@ export function SuggestedVenueAddDialog({
     }
     if (freeVenueNote.trim()) formData.set("note", freeVenueNote.trim());
 
-    startTransition(async () => {
-      const result = await onSubmit(formData);
-      if (result?.ok === false) {
-        onError?.(result);
-        return;
-      }
-      onSuccess?.(formData);
-      closeDialog();
-    });
+    sendVenueFormData(formData);
+  }
+
+  function confirmPublisherSlotWarning() {
+    const formData = pendingPublisherSlotFormRef.current;
+    if (!formData || isPending) return;
+    formData.set("publisherSlotConfirmed", "true");
+    pendingPublisherSlotFormRef.current = null;
+    setPublisherSlotNotice(null);
+    sendVenueFormData(formData);
   }
 
   const canSubmit = Boolean(
@@ -201,25 +241,26 @@ export function SuggestedVenueAddDialog({
   );
 
   return (
-    <ResearchModal
-      open={open}
-      onClose={closeDialog}
-      title="Add suggested venue"
-      icon={<Plus className="h-5 w-5" />}
-      maxWidth="max-w-3xl"
-      bodyClassName="min-h-[25rem] px-5 py-4"
-      headerActions={
-        <ResearchButton
-          type="button"
-          onClick={submitVenue}
-          disabled={isPending || !canSubmit}
-        >
-          <Plus className="h-4 w-4" />
-          Add venue
-        </ResearchButton>
-      }
-    >
-      <div className="grid gap-4">
+    <>
+      <ResearchModal
+        open={open}
+        onClose={closeDialog}
+        title="Add suggested venue"
+        icon={<Plus className="h-5 w-5" />}
+        maxWidth="max-w-3xl"
+        bodyClassName="min-h-[25rem] px-5 py-4"
+        headerActions={
+          <ResearchButton
+            type="button"
+            onClick={submitVenue}
+            disabled={isPending || !canSubmit}
+          >
+            <Plus className="h-4 w-4" />
+            Add venue
+          </ResearchButton>
+        }
+      >
+        <div className="grid gap-4">
         <div
           data-research-toggle-tabs="true"
           className="suggested-venue-kind-tabs grid w-full grid-cols-2 border border-[#444444] bg-[#202020]"
@@ -342,6 +383,108 @@ export function SuggestedVenueAddDialog({
             />
           </>
         )}
+        </div>
+      </ResearchModal>
+
+      <PublisherSlotNoticeModal
+        notice={publisherSlotNotice}
+        isPending={isPending}
+        onClose={() => {
+          pendingPublisherSlotFormRef.current = null;
+          setPublisherSlotNotice(null);
+        }}
+        onConfirm={confirmPublisherSlotWarning}
+      />
+    </>
+  );
+}
+
+function PublisherSlotNoticeModal({
+  notice,
+  isPending,
+  onClose,
+  onConfirm,
+}: {
+  notice: SuggestedVenuePublisherSlotNotice | null;
+  isPending: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  if (!notice) return null;
+
+  const blocked = notice.mode === "blocked";
+  const title = blocked
+    ? "Publisher target limit reached"
+    : "Confirm publisher target";
+  const slotWord = notice.slotCount === 1 ? "slot" : "slots";
+  const associatedWord =
+    notice.slotCount === 1 ? "target journal" : "target journals";
+
+  return (
+    <ResearchModal
+      open={Boolean(notice)}
+      onClose={onClose}
+      title={title}
+      icon={<AlertTriangle className="h-5 w-5" />}
+      maxWidth="max-w-2xl"
+      bodyClassName="px-5 py-4"
+      headerActions={
+        !blocked ? (
+          <ResearchButton
+            type="button"
+            tone="secondary"
+            onClick={onConfirm}
+            disabled={isPending}
+          >
+            Confirm suggestion
+          </ResearchButton>
+        ) : null
+      }
+      footer={
+        <div className="flex justify-end">
+          <ResearchButton type="button" tone="quiet" onClick={onClose}>
+            Close
+          </ResearchButton>
+        </div>
+      }
+    >
+      <div className="grid gap-4 text-sm leading-6">
+        <p className="text-slate-700 dark:text-[#D0D0D0]">
+          {blocked
+            ? `This research already has ${notice.slotCount} active ${associatedWord} from ${notice.publisherName}. A research can have at most 2 active journal targets from the same publisher at the same time.`
+            : `Careful, this publisher already has ${notice.slotCount} active ${associatedWord} associated with this research.`}
+        </p>
+
+        <ol className="grid gap-2">
+          {notice.slots.map((slot, index) => (
+            <li
+              key={`${slot.kind}-${slot.journalName}-${index}`}
+              className="border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700 dark:border-[#444444] dark:bg-[#202020] dark:text-[#D0D0D0]"
+            >
+              <span className="font-normal text-slate-950 dark:text-[#E4E4E4]">
+                {index + 1}.{" "}
+                {slot.kind === "suggestedVenue"
+                  ? "Suggested venue"
+                  : "Submission"}
+                :
+              </span>{" "}
+              {slot.journalName} | {slot.status} | {slot.dateLabel}:{" "}
+              {slot.dateValue}
+            </li>
+          ))}
+        </ol>
+
+        <p
+          className={`border px-3 py-2 text-sm ${
+            blocked
+              ? "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/35 dark:text-rose-200"
+              : "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/35 dark:text-amber-200"
+          }`}
+        >
+          {blocked
+            ? `${notice.slotCount} ${slotWord} for target journals from ${notice.publisherName} are taken. Please suggest a journal from another publisher, or wait until one ongoing suggested venue/submission from this publisher is finished.`
+            : `If you suggest this venue, the research will use another publisher slot for ${notice.publisherName}. You may need to wait until the ongoing suggested venue or submission finishes before proceeding with additional journals from this publisher.`}
+        </p>
       </div>
     </ResearchModal>
   );

@@ -9020,6 +9020,222 @@ async function validateSuggestedVenueTaskLink({
   return { ok: true as const };
 }
 
+const inactiveJournalSubmissionStatuses = new Set<SubmissionStatus>([
+  SubmissionStatus.ACCEPTED,
+  SubmissionStatus.PUBLISHED,
+  SubmissionStatus.REJECTED,
+  SubmissionStatus.WITHDRAWN,
+]);
+
+const publisherSlotDateFormatter = researchDateTimeFormat("en-GB", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "2-digit",
+});
+
+type PublisherSlotJournal = {
+  id: string;
+  name: string;
+  publisher: string | null;
+  publisherId: string | null;
+  publisherRecord?: { name: string } | null;
+};
+
+function normalizedPublisherSlotName(value?: string | null) {
+  return value?.trim().replace(/\s+/g, " ").toLowerCase() ?? "";
+}
+
+function publisherDisplayName(journal: PublisherSlotJournal) {
+  return journal.publisherRecord?.name?.trim() || journal.publisher?.trim() || "";
+}
+
+function sameJournalPublisher(
+  journal: PublisherSlotJournal,
+  target: PublisherSlotJournal,
+) {
+  if (target.publisherId && journal.publisherId === target.publisherId) {
+    return true;
+  }
+  const targetName = normalizedPublisherSlotName(publisherDisplayName(target));
+  const journalName = normalizedPublisherSlotName(publisherDisplayName(journal));
+  return Boolean(targetName && journalName && targetName === journalName);
+}
+
+function suggestedVenueStatusLabel(status: SuggestedVenueStatus) {
+  return readableResearchValue(status);
+}
+
+function submissionStatusLabel(status: SubmissionStatus) {
+  if (status === SubmissionStatus.PENDING) return "Submitted";
+  return readableResearchValue(status);
+}
+
+function publisherSlotDate(value: Date | null | undefined) {
+  return value ? publisherSlotDateFormatter.format(value) : "No date";
+}
+
+function submissionSlotDate(submission: {
+  status: SubmissionStatus;
+  submittedAt: Date;
+  updatedAt: Date;
+}) {
+  if (submission.status === SubmissionStatus.PENDING) {
+    return {
+      label: "submitted date",
+      value: publisherSlotDate(submission.submittedAt),
+    };
+  }
+  return {
+    label: "status date",
+    value: publisherSlotDate(submission.updatedAt),
+  };
+}
+
+async function publisherJournalTargetSlotNotice({
+  projectId,
+  journalId,
+  confirmed,
+}: {
+  projectId: string;
+  journalId: string;
+  confirmed: boolean;
+}) {
+  const targetJournal = await prisma.journal.findUnique({
+    where: { id: journalId },
+    select: {
+      id: true,
+      name: true,
+      publisher: true,
+      publisherId: true,
+      publisherRecord: { select: { name: true } },
+    },
+  });
+  if (!targetJournal) return null;
+
+  const publisherName = publisherDisplayName(targetJournal);
+  if (!targetJournal.publisherId && !publisherName) return null;
+
+  const [suggestions, submissions] = await Promise.all([
+    prisma.suggestedJournal.findMany({
+      where: {
+        projectId,
+        journalId: { not: null },
+        status: { not: SuggestedVenueStatus.DECLINED },
+      },
+      select: {
+        id: true,
+        status: true,
+        createdAt: true,
+        journal: {
+          select: {
+            id: true,
+            name: true,
+            publisher: true,
+            publisherId: true,
+            publisherRecord: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.researchSubmission.findMany({
+      where: { researchProjectId: projectId },
+      select: {
+        id: true,
+        status: true,
+        submittedAt: true,
+        updatedAt: true,
+        journal: {
+          select: {
+            id: true,
+            name: true,
+            publisher: true,
+            publisherId: true,
+            publisherRecord: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: [{ submittedAt: "asc" }, { createdAt: "asc" }],
+    }),
+  ]);
+
+  const submissionsByJournalId = new Map(
+    submissions.map((submission) => [submission.journal.id, submission]),
+  );
+  const slottedJournalIds = new Set<string>();
+  const slots: {
+    kind: "suggestedVenue" | "submission";
+    journalName: string;
+    status: string;
+    dateLabel: string;
+    dateValue: string;
+  }[] = [];
+
+  for (const suggestion of suggestions) {
+    const journal = suggestion.journal;
+    if (!journal || journal.id === targetJournal.id) continue;
+    if (!sameJournalPublisher(journal, targetJournal)) continue;
+
+    const submission = submissionsByJournalId.get(journal.id);
+    if (
+      submission &&
+      inactiveJournalSubmissionStatuses.has(submission.status)
+    ) {
+      continue;
+    }
+
+    slots.push({
+      kind: "suggestedVenue",
+      journalName: journal.name,
+      status: suggestedVenueStatusLabel(suggestion.status),
+      dateLabel: "created date",
+      dateValue: publisherSlotDate(suggestion.createdAt),
+    });
+    slottedJournalIds.add(journal.id);
+  }
+
+  for (const submission of submissions) {
+    const journal = submission.journal;
+    if (journal.id === targetJournal.id) continue;
+    if (slottedJournalIds.has(journal.id)) continue;
+    if (!sameJournalPublisher(journal, targetJournal)) continue;
+    if (inactiveJournalSubmissionStatuses.has(submission.status)) continue;
+
+    const statusDate = submissionSlotDate(submission);
+    slots.push({
+      kind: "submission",
+      journalName: journal.name,
+      status: submissionStatusLabel(submission.status),
+      dateLabel: statusDate.label,
+      dateValue: statusDate.value,
+    });
+    slottedJournalIds.add(journal.id);
+  }
+
+  if (slots.length === 0) return null;
+  if (slots.length >= 2 || !confirmed) {
+    return {
+      ok: false as const,
+      message:
+        slots.length >= 2
+          ? `Two publisher slots are already taken for ${
+              publisherName || "this publisher"
+            }.`
+          : `One publisher slot is already taken for ${
+              publisherName || "this publisher"
+            }.`,
+      publisherSlot: {
+        mode: slots.length >= 2 ? ("blocked" as const) : ("confirm" as const),
+        publisherName: publisherName || "this publisher",
+        slotCount: slots.length,
+        slots,
+      },
+    };
+  }
+
+  return null;
+}
+
 export async function addTaskSuggestedVenue(
   taskId: string,
   formData: FormData,
@@ -9119,6 +9335,13 @@ export async function addTaskSuggestedVenue(
         message: "This journal is already suggested for this research.",
       };
     }
+
+    const publisherSlotNotice = await publisherJournalTargetSlotNotice({
+      projectId: task.projectId,
+      journalId,
+      confirmed: formData.get("publisherSlotConfirmed") === "true",
+    });
+    if (publisherSlotNotice) return publisherSlotNotice;
   }
 
   if (conferenceId) {
@@ -9288,6 +9511,15 @@ export async function addSuggestedJournal(
   if (!journalId && !venueName && !venueLink) return;
   if (await researchContentIsLocked(projectId)) return;
   const taskId = await unfinishedSuggestVenueTaskIdForUser(projectId, user.id);
+
+  if (journalId) {
+    const publisherSlotNotice = await publisherJournalTargetSlotNotice({
+      projectId,
+      journalId,
+      confirmed: formData.get("publisherSlotConfirmed") === "true",
+    });
+    if (publisherSlotNotice) return publisherSlotNotice;
+  }
 
   const canApprove =
     journalId &&
