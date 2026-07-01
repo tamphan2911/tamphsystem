@@ -429,6 +429,20 @@ export default async function JournalDetailPage({
       ? journal.localRank || "No local rank"
       : journal.rank || "No rank";
   const journalTypeLabel = journal.type === "LOCAL" ? "Local" : "International";
+  const latestJournalUpdateAudit = auditLogs.find(
+    (log) => log.area === "Journal" && log.action === "Updated",
+  );
+  const latestCorrectionResolvedAudit = auditLogs.find(
+    (log) => log.area === "Approval" && log.action === "Correction resolved",
+  );
+  const latestJournalUpdateActor = latestJournalUpdateAudit?.actor
+    ? displayResearchPersonName(latestJournalUpdateAudit.actor) ||
+      latestJournalUpdateAudit.actor.email
+    : "";
+  const latestCorrectionResolvedActor = latestCorrectionResolvedAudit?.actor
+    ? displayResearchPersonName(latestCorrectionResolvedAudit.actor) ||
+      latestCorrectionResolvedAudit.actor.email
+    : "";
   const journalChangeRows: ResearchChangeLogRow[] = canViewChangeLog
     ? [
         ...auditLogs.map((log) => ({
@@ -457,7 +471,7 @@ export default async function JournalDetailPage({
           changedAt: journal.updatedAt.toISOString(),
           area: "Journal",
           action: "Updated",
-          actor: "",
+          actor: latestJournalUpdateActor,
           detail: [
             "Current values after latest update:",
             `Type: ${journalTypeLabel}`,
@@ -496,7 +510,7 @@ export default async function JournalDetailPage({
               changedAt: journal.resultCorrectionResolvedAt.toISOString(),
               area: "Approval",
               action: "Correction resolved",
-              actor: "",
+              actor: latestCorrectionResolvedActor,
               detail: journal.name,
             }
           : null,
