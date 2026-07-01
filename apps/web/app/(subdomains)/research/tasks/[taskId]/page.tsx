@@ -2044,6 +2044,7 @@ export default async function TaskDetailPage({
     : null;
   const waitingForJournalCreation =
     task.taskType === ResearchTaskType.SUGGEST_VENUE &&
+    task.status === ResearchTaskStatus.IN_PROGRESS &&
     task.suggestedJournals.some(
       (suggestion) =>
         suggestion.status !== SuggestedVenueStatus.DECLINED &&

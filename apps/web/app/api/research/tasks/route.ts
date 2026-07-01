@@ -278,6 +278,7 @@ export async function GET() {
         )[0];
       const waitingForJournalCreation =
         task.taskType === "SUGGEST_VENUE" &&
+        task.status === ResearchTaskStatus.IN_PROGRESS &&
         task.suggestedJournals.some(
           (suggestion) =>
             suggestion.status !== SuggestedVenueStatus.DECLINED &&
@@ -315,13 +316,9 @@ export async function GET() {
         correctionRequestedCount > 0;
       const addJournalNeedsReview =
         task.taskType === ResearchTaskType.ADD_JOURNAL &&
-        task.status !== ResearchTaskStatus.COMPLETED &&
-        task.status !== ResearchTaskStatus.REVOKED &&
+        task.status === ResearchTaskStatus.CHECKING &&
         !addJournalCorrection &&
-        addJournalFilled &&
-        (pendingPublisherCount > 0 ||
-          pendingJournalCount > 0 ||
-          task.status === ResearchTaskStatus.CHECKING);
+        addJournalFilled;
       const latestAddedJournalUpdate = addedJournalResults.reduce<Date | null>(
         (latest, journal) => {
           const updatedAt = journal.updatedAt ?? journal.createdAt;

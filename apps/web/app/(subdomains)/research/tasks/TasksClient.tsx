@@ -478,6 +478,50 @@ function pendingReadyAssignmentText(task: TaskRow) {
   return count === 1 ? "1 assignee ready" : `${count} assignees ready`;
 }
 
+function activeWaitingForJournalCreation(task: TaskRow) {
+  return task.waitingForJournalCreation && task.status === "IN_PROGRESS";
+}
+
+function activeAddJournalCorrection(
+  task: TaskRow,
+): task is TaskRow & {
+  addJournalCorrection: NonNullable<TaskRow["addJournalCorrection"]>;
+} {
+  return (
+    Boolean(task.addJournalCorrection) &&
+    task.status === "REVISION_REQUESTED"
+  );
+}
+
+function activeAddJournalReview(
+  task: TaskRow,
+): task is TaskRow & {
+  addJournalReview: NonNullable<TaskRow["addJournalReview"]>;
+} {
+  return Boolean(task.addJournalReview) && task.status === "CHECKING";
+}
+
+function activeManagerAction(task: TaskRow) {
+  if (!task.managerAction) return null;
+  if (
+    task.status === "COMPLETED" ||
+    task.status === "REVOKED" ||
+    task.status === "REVISION_REQUESTED"
+  ) {
+    return null;
+  }
+  if (task.status === "IN_PROGRESS") {
+    return pendingReadyAssignmentText(task) ? task.managerAction : null;
+  }
+  if (task.status === "CHECKING") return task.managerAction;
+  if (task.status === "NEED_CLARIFY") {
+    return task.clarifyDirection === "ASSIGNEE_TO_MANAGER"
+      ? task.managerAction
+      : null;
+  }
+  return null;
+}
+
 function statusMeta(task: TaskRow) {
   const due = task.dueDate ? new Date(task.dueDate) : null;
   const completed = task.completedAt ? new Date(task.completedAt) : null;
@@ -532,7 +576,7 @@ function statusMeta(task: TaskRow) {
     };
   }
 
-  if (task.waitingForJournalCreation) {
+  if (activeWaitingForJournalCreation(task)) {
     const activeDue = activeDueMeta(due, remainingMs);
     return {
       label: "In progress",
@@ -546,7 +590,7 @@ function statusMeta(task: TaskRow) {
     };
   }
 
-  if (task.addJournalCorrection) {
+  if (activeAddJournalCorrection(task)) {
     const activeDue = activeDueMeta(due, remainingMs);
     return {
       label: "Correction requested",
@@ -560,7 +604,7 @@ function statusMeta(task: TaskRow) {
     };
   }
 
-  if (task.addJournalReview) {
+  if (activeAddJournalReview(task)) {
     const activeDue = activeDueMeta(due, remainingMs);
     return {
       label: "Checking",
@@ -643,8 +687,9 @@ function statusMeta(task: TaskRow) {
 function taskTimeLeftSortValue(task: TaskRow, nowMs: number) {
   if (task.status === "COMPLETED" || task.status === "REVOKED") return null;
 
-  if (task.managerAction) {
-    const startedAt = new Date(task.managerAction.startedAt).getTime();
+  const managerAction = activeManagerAction(task);
+  if (managerAction) {
+    const startedAt = new Date(managerAction.startedAt).getTime();
     if (!Number.isNaN(startedAt)) {
       return startedAt + managerActionSlaMs - nowMs;
     }
@@ -657,16 +702,17 @@ function taskTimeLeftSortValue(task: TaskRow, nowMs: number) {
 }
 
 function managerActionMeta(task: TaskRow, nowMs: number) {
-  if (!task.managerAction) return null;
+  const managerAction = activeManagerAction(task);
+  if (!managerAction) return null;
 
-  const startedAt = new Date(task.managerAction.startedAt).getTime();
+  const startedAt = new Date(managerAction.startedAt).getTime();
   if (Number.isNaN(startedAt)) return null;
 
   const remainingMs = startedAt + managerActionSlaMs - nowMs;
   const isOverdue = remainingMs < 0;
 
   return {
-    label: task.managerAction.label,
+    label: managerAction.label,
     text: isOverdue
       ? `${durationText(remainingMs)} overdue`
       : `${durationText(remainingMs)} left`,
@@ -729,7 +775,7 @@ function statusIconMeta(task: TaskRow): {
     };
   }
 
-  if (task.status === "CHECKING" || task.addJournalReview) {
+  if (task.status === "CHECKING" || activeAddJournalReview(task)) {
     return {
       icon: SearchCheck,
       className:
@@ -776,9 +822,9 @@ function derivedStatus(task: TaskRow, activeTab: TaskHeaderTab) {
     }
   }
 
-  if (task.waitingForJournalCreation) return "IN_PROGRESS";
-  if (task.addJournalCorrection) return "REVISION_REQUESTED";
-  if (task.addJournalReview) return "CHECKING";
+  if (activeWaitingForJournalCreation(task)) return "IN_PROGRESS";
+  if (activeAddJournalCorrection(task)) return "REVISION_REQUESTED";
+  if (activeAddJournalReview(task)) return "CHECKING";
   if (
     task.status === "CHECKING" ||
     task.status === "NEED_CLARIFY" ||
@@ -796,7 +842,7 @@ function derivedStatus(task: TaskRow, activeTab: TaskHeaderTab) {
 
 function taskNeedsManagerAction(task: TaskRow) {
   return Boolean(
-    task.managerAction ||
+    activeManagerAction(task) ||
     pendingReadyAssignmentText(task) ||
     task.status === "CHECKING" ||
     (task.status === "NEED_CLARIFY" &&
@@ -1091,7 +1137,7 @@ export function TasksClient({
           ...tasks
             .filter(
               (task) =>
-                task.managerAction?.label === "Referred checker help" &&
+                activeManagerAction(task)?.label === "Referred checker help" &&
                 task.checkerId,
             )
             .map((task) => task.checkerId),
@@ -1288,7 +1334,7 @@ export function TasksClient({
         checkerIds.length > 0 &&
         adminCheckerIds.some((checkerId) => checkerIds.includes(checkerId));
       const referredToAdminForHelp =
-        task.managerAction?.label === "Referred checker help";
+        activeManagerAction(task)?.label === "Referred checker help";
       const matchesChecker =
         !isAdmin ||
         checkerIds.length === 0 ||
@@ -1308,11 +1354,13 @@ export function TasksClient({
         task.category,
         statusMeta(task).label,
         assigneeTableStatusMeta(task, activeHeaderTab)?.label,
-        task.waitingForJournalCreation
+        activeWaitingForJournalCreation(task)
           ? "Waiting for assignee to add journal"
           : "",
-        task.addJournalCorrection?.detail,
-        task.addJournalReview?.detail,
+        activeAddJournalCorrection(task)
+          ? task.addJournalCorrection?.detail
+          : "",
+        activeAddJournalReview(task) ? task.addJournalReview?.detail : "",
         task.createdBy,
         task.checker,
         ...task.assignments.flatMap((item) => [
