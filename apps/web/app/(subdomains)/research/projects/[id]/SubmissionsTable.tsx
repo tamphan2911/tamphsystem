@@ -447,6 +447,7 @@ export function SubmissionsTable({
   view = "venue",
   linkVenue = true,
   showSubmitter = false,
+  showInternalColumns = true,
   flushControls = false,
   editOptions,
 }: {
@@ -457,6 +458,7 @@ export function SubmissionsTable({
   view?: "venue" | "research";
   linkVenue?: boolean;
   showSubmitter?: boolean;
+  showInternalColumns?: boolean;
   flushControls?: boolean;
   editOptions?: SubmissionEditOptions;
 }) {
@@ -471,6 +473,7 @@ export function SubmissionsTable({
   const showDelete =
     isAdmin && (actionMode === "delete" || actionMode === "manage");
   const isAdminListing = !isResearchView && showSubmitter;
+  const showInternalSubmissionColumns = !isResearchView && showInternalColumns;
   const [query, setQuery] = usePersistentTableValue(
     "research-submissions:q",
     "",
@@ -503,6 +506,18 @@ export function SubmissionsTable({
         statuses.length === 0 ||
         statuses.includes(normalizedStatus(row.status));
       const matchesKind = kinds.length === 0 || kinds.includes(row.kind);
+      const internalSearchText = showInternalSubmissionColumns
+        ? [
+            row.account,
+            row.accountPassword,
+            row.accountEmail,
+            ...(row.assignees ?? []).flatMap((assignee) => [
+              assignee.name,
+              assignee.email,
+              assignee.id,
+            ]),
+          ]
+        : [];
       const haystack = [
         row.venueName,
         row.projectTitle,
@@ -517,17 +532,10 @@ export function SubmissionsTable({
         row.venueDetailLine,
         row.apc,
         row.submissionFee,
-        row.account,
-        row.accountPassword,
-        row.accountEmail,
         row.submittedByName,
         row.submittedByEmail,
         row.submittedById,
-        ...(row.assignees ?? []).flatMap((assignee) => [
-          assignee.name,
-          assignee.email,
-          assignee.id,
-        ]),
+        ...internalSearchText,
         row.status,
         row.kind,
       ]
@@ -537,7 +545,7 @@ export function SubmissionsTable({
         matchesStatus && matchesKind && (!needle || haystack.includes(needle))
       );
     });
-  }, [kinds, query, rows, statuses]);
+  }, [kinds, query, rows, showInternalSubmissionColumns, statuses]);
 
   const pagination = useTablePagination(
     filtered,
@@ -688,7 +696,9 @@ export function SubmissionsTable({
             placeholder={
               isResearchView
                 ? "Search research, authors, status..."
-                : "Search journal, conference, publisher, assignee, account..."
+                : showInternalSubmissionColumns
+                  ? "Search journal, conference, publisher, assignee, account..."
+                  : "Search journal, conference, publisher, status..."
             }
           />
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
@@ -721,19 +731,19 @@ export function SubmissionsTable({
             <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
               <tr>
                 <th
-                  className={`${isResearchView ? (showRegistrationClaim ? "w-[6%]" : "w-[7%]") : isAdminListing ? "w-[6%] xl:w-[5%]" : "w-[6%]"} px-3 py-3`}
+                  className={`${isResearchView ? (showRegistrationClaim ? "w-[6%]" : "w-[7%]") : isAdminListing ? "w-[6%] xl:w-[5%]" : showInternalSubmissionColumns ? "w-[6%]" : "w-[7%]"} px-3 py-3`}
                 >
                   ID
                 </th>
                 <th
-                  className={`${isResearchView ? (showRegistrationClaim ? "w-[49%]" : "w-[56%]") : isAdminListing ? "w-[29%] xl:w-[31%]" : hasAction ? "w-[31%]" : "w-[35%]"} px-3 py-3`}
+                  className={`${isResearchView ? (showRegistrationClaim ? "w-[49%]" : "w-[56%]") : isAdminListing ? "w-[29%] xl:w-[31%]" : !showInternalSubmissionColumns ? (hasAction ? "w-[45%]" : "w-[55%]") : hasAction ? "w-[31%]" : "w-[35%]"} px-3 py-3`}
                 >
                   {isResearchView
                     ? "Research Associated"
                     : "Journal / Conference"}
                 </th>
                 <th
-                  className={`${isResearchView ? (showRegistrationClaim ? "w-[12%]" : "w-[13%]") : isAdminListing ? "w-[10%]" : "w-[13%]"} px-3 py-3`}
+                  className={`${isResearchView ? (showRegistrationClaim ? "w-[12%]" : "w-[13%]") : isAdminListing ? "w-[10%]" : showInternalSubmissionColumns ? "w-[13%]" : "w-[16%]"} px-3 py-3`}
                 >
                   <span className="inline-flex items-center gap-2">
                     Status
@@ -770,26 +780,30 @@ export function SubmissionsTable({
                         Submitted by
                       </th>
                     )}
+                    {showInternalSubmissionColumns && (
+                      <th
+                        className={`${isAdminListing ? "w-[12%]" : hasAction ? "w-[14%]" : "w-[15%]"} px-3 py-3`}
+                      >
+                        Assignees
+                      </th>
+                    )}
                     <th
-                      className={`${isAdminListing ? "w-[12%]" : hasAction ? "w-[14%]" : "w-[15%]"} px-3 py-3`}
-                    >
-                      Assignees
-                    </th>
-                    <th
-                      className={`${isAdminListing ? "w-[5%]" : "w-[7%]"} px-3 py-3`}
+                      className={`${isAdminListing ? "w-[5%]" : showInternalSubmissionColumns ? "w-[7%]" : "w-[11%]"} px-3 py-3`}
                     >
                       APC
                     </th>
                     <th
-                      className={`${isAdminListing ? "w-[5%]" : "w-[7%]"} px-3 py-3`}
+                      className={`${isAdminListing ? "w-[5%]" : showInternalSubmissionColumns ? "w-[7%]" : "w-[11%]"} px-3 py-3`}
                     >
                       Fee
                     </th>
-                    <th
-                      className={`${isAdminListing ? "w-[17%]" : hasAction ? "w-[13%]" : "w-[14%]"} px-3 py-3`}
-                    >
-                      Account
-                    </th>
+                    {showInternalSubmissionColumns && (
+                      <th
+                        className={`${isAdminListing ? "w-[17%]" : hasAction ? "w-[13%]" : "w-[14%]"} px-3 py-3`}
+                      >
+                        Account
+                      </th>
+                    )}
                   </>
                 )}
                 {hasAction && (
@@ -998,9 +1012,11 @@ export function SubmissionsTable({
                           </p>
                         </td>
                       )}
-                      <td className="px-3 py-3 align-top">
-                        <AssigneesCell assignees={row.assignees} />
-                      </td>
+                      {showInternalSubmissionColumns && (
+                        <td className="px-3 py-3 align-top">
+                          <AssigneesCell assignees={row.assignees} />
+                        </td>
+                      )}
                       <td className="px-3 py-3 text-sm text-[#E4E4E4]">
                         <MoneyCell
                           amount={row.apc}
@@ -1016,28 +1032,30 @@ export function SubmissionsTable({
                           currency={row.submissionFeeCurrency}
                         />
                       </td>
-                      <td className="px-3 py-3 text-xs leading-5 text-[#B0B0B0]">
-                        {row.kind === "conference" ? (
-                          "Email / website"
-                        ) : row.accountId ? (
-                          <Link
-                            href={`/accounts/${row.accountId}`}
-                            className="research-allow-transform group/account grid min-w-0 gap-0.5"
-                          >
-                            <span className="whitespace-normal break-all text-[#E4E4E4] transition group-hover/account:text-[#A8DADC]">
-                              id: {row.account || "Not recorded"}
-                            </span>
-                            <span className="whitespace-normal break-all">
-                              pass: {row.accountPassword || "Not recorded"}
-                            </span>
-                            <span className="whitespace-normal break-all">
-                              email: {row.accountEmail || "Not recorded"}
-                            </span>
-                          </Link>
-                        ) : (
-                          "Not recorded"
-                        )}
-                      </td>
+                      {showInternalSubmissionColumns && (
+                        <td className="px-3 py-3 text-xs leading-5 text-[#B0B0B0]">
+                          {row.kind === "conference" ? (
+                            "Email / website"
+                          ) : row.accountId ? (
+                            <Link
+                              href={`/accounts/${row.accountId}`}
+                              className="research-allow-transform group/account grid min-w-0 gap-0.5"
+                            >
+                              <span className="whitespace-normal break-all text-[#E4E4E4] transition group-hover/account:text-[#A8DADC]">
+                                id: {row.account || "Not recorded"}
+                              </span>
+                              <span className="whitespace-normal break-all">
+                                pass: {row.accountPassword || "Not recorded"}
+                              </span>
+                              <span className="whitespace-normal break-all">
+                                email: {row.accountEmail || "Not recorded"}
+                              </span>
+                            </Link>
+                          ) : (
+                            "Not recorded"
+                          )}
+                        </td>
+                      )}
                     </>
                   )}
                   {hasAction && (
@@ -1112,9 +1130,10 @@ export function SubmissionsTable({
                     colSpan={
                       isResearchView
                         ? (showRegistrationClaim ? 6 : 4) + (hasAction ? 1 : 0)
-                        : hasAction
-                          ? 8 + (showSubmitter ? 1 : 0)
-                          : 7 + (showSubmitter ? 1 : 0)
+                        : 5 +
+                          (showSubmitter ? 1 : 0) +
+                          (showInternalSubmissionColumns ? 2 : 0) +
+                          (hasAction ? 1 : 0)
                     }
                     className="px-3 py-14 text-center text-sm text-[#B0B0B0]"
                   >

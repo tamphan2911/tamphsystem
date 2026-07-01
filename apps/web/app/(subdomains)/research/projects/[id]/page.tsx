@@ -618,6 +618,8 @@ export default async function ProjectDetailPage({
     isRootAdmin || isFirstAuthor || isCorrespondingAuthor;
   const canSuggestVenue =
     isAdmin || isProjectAuthor || hasUnfinishedAssignedResearchTask;
+  const canViewSubmissionInternalColumns =
+    isAdmin || roles.includes(Role.ASSISTANT);
 
   const updateAction = updateResearchProject.bind(null, project.id);
   const updateFolderSharedUsersAction = updateResearchFolderSharedUsers.bind(
@@ -1401,11 +1403,19 @@ export default async function ProjectDetailPage({
         hasApcOption: submission.journal.hasApcOption,
         submissionFee: submission.journal.submissionFee ?? "",
         submissionFeeCurrency: submission.journal.submissionFeeCurrency,
-        accountId: account?.id ?? "",
-        account: account?.username ?? "",
-        accountPassword: account?.password ?? "",
-        accountEmail: account?.email ?? "",
-        assignees: taskSubmissionAssignees(submitTask),
+        accountId: canViewSubmissionInternalColumns ? (account?.id ?? "") : "",
+        account: canViewSubmissionInternalColumns
+          ? (account?.username ?? "")
+          : "",
+        accountPassword: canViewSubmissionInternalColumns
+          ? (account?.password ?? "")
+          : "",
+        accountEmail: canViewSubmissionInternalColumns
+          ? (account?.email ?? "")
+          : "",
+        assignees: canViewSubmissionInternalColumns
+          ? taskSubmissionAssignees(submitTask)
+          : [],
         status: submission.status,
         submittedAt: isoDate(submission.submittedAt),
         acceptedAt: isoDate(submission.acceptedAt),
@@ -1444,7 +1454,9 @@ export default async function ProjectDetailPage({
         submissionFee: submission.conference.submissionFee ?? "",
         submissionFeeCurrency: submission.conference.submissionFeeCurrency,
         account: "",
-        assignees: taskSubmissionAssignees(submitTask),
+        assignees: canViewSubmissionInternalColumns
+          ? taskSubmissionAssignees(submitTask)
+          : [],
         status: submission.status,
         submittedAt: isoDate(submission.submittedAt ?? submission.createdAt),
         acceptedAt: isoDate(submission.acceptedAt),
@@ -2454,6 +2466,7 @@ export default async function ProjectDetailPage({
             rows={submissionRows}
             isAdmin={isAdmin}
             disabled={researchContentLocked}
+            showInternalColumns={canViewSubmissionInternalColumns}
             flushControls
           />
         </section>
