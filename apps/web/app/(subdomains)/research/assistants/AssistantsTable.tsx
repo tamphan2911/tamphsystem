@@ -66,19 +66,6 @@ const unfinishedTaskFilterStatuses = [
   "OVERDUE",
 ];
 
-const allTaskTypeFilterValues = [
-  "ALL",
-  "SUBMIT",
-  "PRODUCTION",
-  "SUGGEST_VENUE",
-  "ADD_JOURNAL",
-  "PROPOSAL_RESEARCH",
-  "PROPOSAL_PROJECT",
-  "REVIEW",
-  "PROJECT",
-  "OTHER",
-];
-
 type AssistantSortKey = "unfinished";
 type AssistantSortDirection = "asc" | "desc";
 type AssistantSort = {
@@ -228,16 +215,26 @@ export function AssistantsTable({
       "research:/tasks:tasks:prefill",
       "person-unfinished",
     );
+    window.sessionStorage.setItem("research:/tasks:tasks:scope:admin", "all");
     window.sessionStorage.setItem("research:/tasks:tasks:q", searchValue);
+    window.sessionStorage.setItem(
+      "research:/tasks:tasks:status:admin:all",
+      unfinishedTaskFilterStatuses.join(","),
+    );
+    window.sessionStorage.setItem(
+      "research:/tasks:tasks:unfinished:admin:all",
+      "true",
+    );
+    window.sessionStorage.setItem(
+      "research:/tasks:tasks:checker:admin:all",
+      "ALL",
+    );
+    window.sessionStorage.setItem("research:/tasks:tasks:type", "ALL");
     window.sessionStorage.setItem(
       "research:/tasks:tasks:status",
       unfinishedTaskFilterStatuses.join(","),
     );
     window.sessionStorage.setItem("research:/tasks:tasks:unfinished", "true");
-    window.sessionStorage.setItem(
-      "research:/tasks:tasks:type",
-      allTaskTypeFilterValues.join(","),
-    );
     window.sessionStorage.removeItem("research:/tasks:tasks:page");
   }
 

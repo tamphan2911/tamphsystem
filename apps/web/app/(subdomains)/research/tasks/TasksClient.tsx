@@ -1168,6 +1168,7 @@ export function TasksClient({
         "person-unfinished";
     if (hasTaskPrefill) {
       window.sessionStorage.removeItem("research:/tasks:tasks:prefill");
+      setScopeTab("all");
       setUnfinishedOnlyValue("true");
       setStatuses(unfinishedTaskStatusValues);
       setCheckerIds([]);
@@ -1179,6 +1180,7 @@ export function TasksClient({
     }
   }, [
     isAdmin,
+    setScopeTab,
     setCheckerIds,
     setStatuses,
     setUnfinishedOnlyValue,
