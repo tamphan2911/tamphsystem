@@ -66,6 +66,7 @@ import {
 import {
   currencySymbol,
   formatResearchNumber,
+  isFreeResearchAmount,
   normalizeResearchNumberInput,
 } from "@/sites/research/lib/currency";
 import {
@@ -2432,18 +2433,9 @@ function VenueFees({
   const normalizedApc = normalizeResearchNumberInput(apc);
   const apcValue = normalizedApc ? Number(normalizedApc) : 0;
   const apcHasNumericValue = normalizedApc !== "" && Number.isFinite(apcValue);
-  const apcIsFree =
-    !apc.trim() ||
-    /^(free|no fee|none|waived|0(?:[.,]0+)?)$/i.test(apc.trim()) ||
-    (apcHasNumericValue && apcValue <= 0);
+  const apcIsFree = isFreeResearchAmount(apc);
   const apcIsHigh = apcHasNumericValue && apcValue > 300;
-  const normalizedFee = normalizeResearchNumberInput(submissionFee);
-  const feeValue = normalizedFee ? Number(normalizedFee) : 0;
-  const feeHasNumericValue = normalizedFee !== "" && Number.isFinite(feeValue);
-  const feeIsFree =
-    !submissionFee.trim() ||
-    /^(free|no fee|none|waived|0(?:[.,]0+)?)$/i.test(submissionFee.trim()) ||
-    (feeHasNumericValue && feeValue <= 0);
+  const feeIsFree = isFreeResearchAmount(submissionFee);
   const apcLabel = rawTextFees
     ? apcIsFree
       ? "free"
@@ -2480,7 +2472,7 @@ function VenueFees({
     <p className="mt-2 flex flex-wrap items-center gap-x-1 text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
       <span>APC:</span>
       <span className={apcClassName}>{apcLabel}</span>
-      {showApcOptionStatus && !rawTextFees ? (
+      {showApcOptionStatus && !rawTextFees && !apcIsFree ? (
         <span className={apcOptionClassName}>
           ({hasApcOption ? "Option" : "No Option"})
         </span>

@@ -48,6 +48,7 @@ import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
   currencySymbol,
   formatResearchNumber,
+  isFreeResearchAmount,
 } from "@/sites/research/lib/currency";
 import {
   EditSubmissionDialog,
@@ -271,6 +272,7 @@ function MoneyCell({
   currency: string;
   apcOption?: boolean | null;
 }) {
+  const isFree = isFreeResearchAmount(amount);
   const amountNode = !amount ? (
     <span className="text-[#667085] dark:text-[#B0B0B0]">-</span>
   ) : currency === "USD" ? (
@@ -287,7 +289,7 @@ function MoneyCell({
   return (
     <span className="grid gap-0.5">
       {amountNode}
-      {typeof apcOption === "boolean" ? (
+      {typeof apcOption === "boolean" && !isFree ? (
         <span
           className={
             apcOption

@@ -8,6 +8,7 @@ import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
   currencySymbol,
   formatResearchNumber,
+  isFreeResearchAmount,
   normalizeResearchNumberInput,
 } from "@/sites/research/lib/currency";
 import { addTaskSuggestedVenue } from "../../actions";
@@ -87,10 +88,7 @@ function feeMeta({
   const normalized = normalizeResearchNumberInput(text);
   const value = normalized ? Number(normalized) : 0;
   const hasNumericValue = normalized !== "" && Number.isFinite(value);
-  const isFree =
-    !text ||
-    /^(free|no fee|none|waived|0(?:[.,]0+)?)$/i.test(text) ||
-    (hasNumericValue && value <= 0);
+  const isFree = isFreeResearchAmount(text);
   const isHighApc = kind === "apc" && hasNumericValue && value > 300;
 
   if (isFree) {

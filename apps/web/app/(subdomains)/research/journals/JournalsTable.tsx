@@ -27,6 +27,7 @@ import { CountryFlag } from "@/sites/research/components/CountryFlag";
 import {
   currencySymbol,
   formatResearchNumber,
+  isFreeResearchAmount,
 } from "@/sites/research/lib/currency";
 import { countryName } from "@/sites/research/lib/countries";
 
@@ -240,11 +241,6 @@ function rankLabel(journal: JournalRow) {
     : journal.rank || "No rank";
 }
 
-function isFreeAmount(amount: string) {
-  const normalized = amount.trim().replaceAll(",", "").replaceAll(" ", "");
-  return !normalized || Number(normalized) === 0;
-}
-
 function MoneyIndicator({
   amount,
   currency,
@@ -256,9 +252,9 @@ function MoneyIndicator({
   currency: string;
   label: string;
   showIcon?: boolean;
-  option?: boolean;
+  option?: boolean | null;
 }) {
-  const isFree = isFreeAmount(amount);
+  const isFree = isFreeResearchAmount(amount);
   const detail = isFree
     ? `${label}: free or not provided`
     : `${label}: ${currencySymbol(currency)} ${formatResearchNumber(amount)}`;
@@ -278,8 +274,16 @@ function MoneyIndicator({
               ? "Free"
               : `${currencySymbol(currency)} ${formatResearchNumber(amount)}`}
           </span>
-          {option && !isFree ? (
-            <span className="mt-0.5 block text-xs text-[#A8DADC]">Option</span>
+          {typeof option === "boolean" && !isFree ? (
+            <span
+              className={`mt-0.5 block text-xs ${
+                option
+                  ? "text-emerald-700 dark:text-emerald-300"
+                  : "text-rose-700 dark:text-rose-300"
+              }`}
+            >
+              {option ? "Option" : "No Option"}
+            </span>
           ) : null}
         </span>
       </span>
@@ -346,7 +350,9 @@ export function JournalsTable({
         row.approvalStatus === "PENDING_APPROVAL"
           ? "need approval pending approval waiting approve"
           : "approved",
-        row.hasApcOption ? "option paid free route" : "",
+        row.hasApcOption && !isFreeResearchAmount(row.apc)
+          ? "option paid route"
+          : "",
         row.submissionFee,
         row.hasAssociatedAccount
           ? row.usesPublisherAccount

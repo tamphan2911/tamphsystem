@@ -42,6 +42,22 @@ export function normalizeResearchNumberInput(value?: string | number | null) {
   return normalized.replace(/[^\d.-]/g, "");
 }
 
+export function isFreeResearchAmount(value?: string | number | null) {
+  const text = String(value ?? "").trim();
+  if (!text) return true;
+  if (
+    /^(free|no fee|no apc|none|n\/a|na|waived|waiver|0(?:[.,]0+)?)$/i.test(
+      text,
+    )
+  ) {
+    return true;
+  }
+  const normalized = normalizeResearchNumberInput(text);
+  if (!normalized) return false;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) && parsed <= 0;
+}
+
 export function formatResearchNumber(value?: string | number | null) {
   const normalized = normalizeResearchNumberInput(value);
   if (!normalized) return "";

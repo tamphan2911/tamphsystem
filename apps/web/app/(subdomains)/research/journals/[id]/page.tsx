@@ -10,7 +10,10 @@ import {
 import { prisma, JournalApprovalStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { CountryFlag } from "@/sites/research/components/CountryFlag";
-import { formatMoney } from "@/sites/research/lib/currency";
+import {
+  formatMoney,
+  isFreeResearchAmount,
+} from "@/sites/research/lib/currency";
 import { countryName } from "@/sites/research/lib/countries";
 import { displayResearchPersonName } from "@/sites/research/lib/display";
 import { IconHint } from "@/sites/research/components/ResearchPrimitives";
@@ -624,7 +627,11 @@ export default async function JournalDetailPage({
                 </dt>
                 <dd className="mt-1 text-base font-normal text-[#A8DADC]">
                   {formatMoney(journal.apc, journal.apcCurrency)}
-                  {journal.hasApcOption ? " (Option)" : ""}
+                  {!isFreeResearchAmount(journal.apc)
+                    ? journal.hasApcOption
+                      ? " (Option)"
+                      : " (No Option)"
+                    : ""}
                 </dd>
               </div>
               <div>
