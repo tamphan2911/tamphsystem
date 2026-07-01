@@ -429,20 +429,8 @@ export default async function JournalDetailPage({
       ? journal.localRank || "No local rank"
       : journal.rank || "No rank";
   const journalTypeLabel = journal.type === "LOCAL" ? "Local" : "International";
-  const latestJournalUpdateAudit = auditLogs.find(
-    (log) => log.area === "Journal" && log.action === "Updated",
-  );
-  const latestCorrectionResolvedAudit = auditLogs.find(
-    (log) => log.area === "Approval" && log.action === "Correction resolved",
-  );
-  const latestJournalUpdateActor = latestJournalUpdateAudit?.actor
-    ? displayResearchPersonName(latestJournalUpdateAudit.actor) ||
-      latestJournalUpdateAudit.actor.email
-    : "";
-  const latestCorrectionResolvedActor = latestCorrectionResolvedAudit?.actor
-    ? displayResearchPersonName(latestCorrectionResolvedAudit.actor) ||
-      latestCorrectionResolvedAudit.actor.email
-    : "";
+  const hasAuditRow = (area: string, action: string) =>
+    auditLogs.some((log) => log.area === area && log.action === action);
   const journalChangeRows: ResearchChangeLogRow[] = canViewChangeLog
     ? [
         ...auditLogs.map((log) => ({
@@ -466,31 +454,8 @@ export default async function JournalDetailPage({
             : "",
           detail: journal.name,
         },
-        {
-          id: "journal-updated",
-          changedAt: journal.updatedAt.toISOString(),
-          area: "Journal",
-          action: "Updated",
-          actor: latestJournalUpdateActor,
-          detail: [
-            "Current values after latest update:",
-            `Type: ${journalTypeLabel}`,
-            `Rank: ${journalRank}`,
-            `Publisher: ${journal.publisher || "Not recorded"}`,
-            `APC: ${journal.apc ? `${journal.apcCurrency} ${journal.apc}` : "Not recorded"} (${journal.hasApcOption ? "Option" : "No Option"})`,
-            `Submission fee: ${
-              journal.submissionFee
-                ? `${journal.submissionFeeCurrency} ${journal.submissionFee}`
-                : "Not recorded"
-            }`,
-            `Homepage: ${journal.homepageLink || "Not recorded"}`,
-            `Submission link: ${journal.submissionLink || "Not recorded"}`,
-            `Scimago: ${journal.scimagoLink || "Not recorded"}`,
-            `Scopus: ${journal.scopusLink || "Not recorded"}`,
-            `Note: ${journal.note || "Not recorded"}`,
-          ].join("\n"),
-        },
-        journal.resultCorrectionRequestedAt
+        journal.resultCorrectionRequestedAt &&
+        !hasAuditRow("Approval", "Correction requested")
           ? {
               id: "journal-correction-requested",
               changedAt: journal.resultCorrectionRequestedAt.toISOString(),
@@ -504,17 +469,7 @@ export default async function JournalDetailPage({
               detail: journal.resultCorrectionNote ?? journal.name,
             }
           : null,
-        journal.resultCorrectionResolvedAt
-          ? {
-              id: "journal-correction-resolved",
-              changedAt: journal.resultCorrectionResolvedAt.toISOString(),
-              area: "Approval",
-              action: "Correction resolved",
-              actor: latestCorrectionResolvedActor,
-              detail: journal.name,
-            }
-          : null,
-        journal.resultApprovedAt
+        journal.resultApprovedAt && !hasAuditRow("Approval", "Approved")
           ? {
               id: "journal-approved",
               changedAt: journal.resultApprovedAt.toISOString(),
@@ -526,30 +481,6 @@ export default async function JournalDetailPage({
               detail: journal.resultApprovalNote ?? journal.name,
             }
           : null,
-        ...journal.submissions.map((submission) => ({
-          id: `submission-${submission.id}`,
-          changedAt: submission.updatedAt.toISOString(),
-          area: "Submission",
-          action: submission.status,
-          actor: "",
-          detail: `${submission.submissionCode ?? submission.id.slice(0, 8).toUpperCase()} | ${submission.project.title}`,
-        })),
-        ...journalAccounts.map((account) => ({
-          id: `account-${account.id}`,
-          changedAt: account.updatedAt.toISOString(),
-          area: "Account",
-          action: "Updated",
-          actor: "",
-          detail: account.username,
-        })),
-        ...journal.reviews.map((review) => ({
-          id: `review-${review.id}`,
-          changedAt: review.updatedAt.toISOString(),
-          area: "Review",
-          action: review.status,
-          actor: "",
-          detail: review.manuscriptTitle,
-        })),
       ].filter((row): row is ResearchChangeLogRow => Boolean(row))
     : [];
 

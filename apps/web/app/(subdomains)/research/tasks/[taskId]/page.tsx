@@ -2103,8 +2103,8 @@ export default async function TaskDetailPage({
     if (!task.checkerId && actorId === task.createdById) return true;
     return Boolean(
       actorId &&
-        actorId === task.createdById &&
-        task.checkerId === task.createdById,
+      actorId === task.createdById &&
+      task.checkerId === task.createdById,
     );
   };
   const resultUnderChecker = Boolean(
@@ -3404,6 +3404,13 @@ export default async function TaskDetailPage({
     },
   );
   const canViewChangeLog = isRootAdmin || isChiefAssistant;
+  const taskAuditLogs = canViewChangeLog
+    ? await prisma.researchChangeLog.findMany({
+        where: { entityType: "task", entityId: task.id },
+        include: { actor: { select: { name: true, email: true } } },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
   const taskJournalAuditLogs =
     canViewChangeLog && task.addedJournals.length > 0
       ? await prisma.researchChangeLog.findMany({
@@ -3417,6 +3424,16 @@ export default async function TaskDetailPage({
       : [];
   const taskChangeRows: ResearchChangeLogRow[] = canViewChangeLog
     ? [
+        ...taskAuditLogs.map((log) => ({
+          id: `task-audit-${log.id}`,
+          changedAt: log.createdAt.toISOString(),
+          area: log.area,
+          action: log.action,
+          actor: log.actor
+            ? displayResearchPersonName(log.actor) || log.actor.email
+            : "",
+          detail: log.detail,
+        })),
         {
           id: "task-created",
           changedAt: task.createdAt.toISOString(),
@@ -3425,14 +3442,6 @@ export default async function TaskDetailPage({
           actor:
             displayResearchPersonName(task.createdBy) || task.createdBy.email,
           detail: task.title,
-        },
-        {
-          id: "task-updated",
-          changedAt: task.updatedAt.toISOString(),
-          area: "Task",
-          action: "Updated",
-          actor: "",
-          detail: `${task.status} | ${task.taskType ?? task.category ?? "Task"}`,
         },
         task.completedAt
           ? {

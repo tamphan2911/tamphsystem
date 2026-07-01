@@ -7660,16 +7660,48 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     where: { id: taskId },
     select: {
       id: true,
-      projectId: true,
-      organizedProjectId: true,
-      reviewId: true,
       status: true,
       createdById: true,
       checkerId: true,
+      title: true,
+      description: true,
+      category: true,
+      dueDate: true,
       taskType: true,
+      productionSubtype: true,
+      proposalScope: true,
+      projectId: true,
+      organizedProjectId: true,
+      journalId: true,
+      conferenceId: true,
+      reviewId: true,
+      accountId: true,
+      isUrgent: true,
+      allowAssigneeReportUpload: true,
+      journalTargetCount: true,
+      suggestedVenueTargetCount: true,
+      project: { select: { title: true } },
+      organizedProject: { select: { title: true } },
+      journal: { select: { name: true } },
+      conference: { select: { name: true } },
+      review: { select: { manuscriptTitle: true } },
+      account: { select: { username: true, email: true } },
+      checker: { select: { name: true, email: true } },
+      guides: {
+        select: {
+          guideCode: true,
+          title: true,
+        },
+        orderBy: [{ guideCode: "asc" }],
+      },
       addedJournals: { select: { resultPosition: true } },
       proposalResults: { select: { id: true } },
-      assignments: { select: { userId: true } },
+      assignments: {
+        select: {
+          userId: true,
+          user: { select: { name: true, email: true } },
+        },
+      },
     },
   });
   if (!currentTask) return { ok: false, reason: "NOT_FOUND" };
@@ -7915,19 +7947,176 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   const addedAssignees = assigneeIds.filter(
     (userId) => !previousAssignees.has(userId),
   );
+  const updatedTaskDueDate = researchTaskDueDate(
+    optionalString(formData.get("dueDate")),
+  );
+  const nextTaskTitle =
+    optionalString(formData.get("title")) ?? "Untitled task";
+  const nextTaskDescription =
+    optionalString(formData.get("description")) ??
+    defaultDescriptionForTask(taskType);
+  const nextTaskCategory = taskCategoryFromForm(formData.get("category"));
+  const currentAssigneeLabels = currentTask.assignments.map((assignment) =>
+    researchPersonLabel(assignment.user),
+  );
+  const nextAssigneeLabels =
+    assigneeIds.length > 0
+      ? (
+          await prisma.user.findMany({
+            where: { id: { in: assigneeIds } },
+            select: { id: true, name: true, email: true },
+          })
+        )
+          .sort(
+            (left, right) =>
+              assigneeIds.indexOf(left.id) - assigneeIds.indexOf(right.id),
+          )
+          .map((assignee) => researchPersonLabel(assignee))
+      : [];
+  const nextChecker = checkerId
+    ? await prisma.user.findUnique({
+        where: { id: checkerId },
+        select: { name: true, email: true },
+      })
+    : null;
+  const [
+    nextProject,
+    nextOrganizedProject,
+    nextJournal,
+    nextConference,
+    nextReview,
+    nextAccount,
+  ] = await Promise.all([
+    effectiveProjectId
+      ? prisma.researchProject.findUnique({
+          where: { id: effectiveProjectId },
+          select: { title: true },
+        })
+      : Promise.resolve(null),
+    effectiveOrganizedProjectId
+      ? prisma.organizedProject.findUnique({
+          where: { id: effectiveOrganizedProjectId },
+          select: { title: true },
+        })
+      : Promise.resolve(null),
+    journalId
+      ? prisma.journal.findUnique({
+          where: { id: journalId },
+          select: { name: true },
+        })
+      : Promise.resolve(null),
+    conferenceId
+      ? prisma.conference.findUnique({
+          where: { id: conferenceId },
+          select: { name: true },
+        })
+      : Promise.resolve(null),
+    reviewId
+      ? prisma.academicReview.findUnique({
+          where: { id: reviewId },
+          select: { manuscriptTitle: true },
+        })
+      : Promise.resolve(null),
+    accountId
+      ? prisma.publisherAccount.findUnique({
+          where: { id: accountId },
+          select: { username: true, email: true },
+        })
+      : Promise.resolve(null),
+  ]);
+  const nextGuideLabels =
+    taskGuideIds.length > 0
+      ? (
+          await prisma.taskGuide.findMany({
+            where: { id: { in: taskGuideIds } },
+            select: { id: true, guideCode: true, title: true },
+          })
+        )
+          .sort(
+            (left, right) =>
+              taskGuideIds.indexOf(left.id) - taskGuideIds.indexOf(right.id),
+          )
+          .map((guide) => `${guide.guideCode} - ${guide.title}`)
+      : [];
+  const currentGuideLabels = currentTask.guides.map(
+    (guide) => `${guide.guideCode} - ${guide.title}`,
+  );
+  const taskEditDetail = auditDetail([
+    auditChange("Title", currentTask.title, nextTaskTitle),
+    auditChange("Description", currentTask.description, nextTaskDescription),
+    auditChange("Category", currentTask.category, nextTaskCategory),
+    auditChange("Type", currentTask.taskType, taskType),
+    auditChange(
+      "Production step",
+      currentTask.productionSubtype,
+      productionSubtype,
+    ),
+    auditChange("Proposal scope", currentTask.proposalScope, proposalScope),
+    auditChange("Research", currentTask.project?.title, nextProject?.title),
+    auditChange(
+      "Project",
+      currentTask.organizedProject?.title,
+      nextOrganizedProject?.title,
+    ),
+    auditChange("Journal", currentTask.journal?.name, nextJournal?.name),
+    auditChange(
+      "Conference",
+      currentTask.conference?.name,
+      nextConference?.name,
+    ),
+    auditChange(
+      "Review",
+      currentTask.review?.manuscriptTitle,
+      nextReview?.manuscriptTitle,
+    ),
+    auditChange(
+      "Account",
+      currentTask.account
+        ? [currentTask.account.username, currentTask.account.email]
+            .filter(Boolean)
+            .join(" | ")
+        : null,
+      nextAccount
+        ? [nextAccount.username, nextAccount.email].filter(Boolean).join(" | ")
+        : null,
+    ),
+    auditChange(
+      "Checker",
+      currentTask.checker ? researchPersonLabel(currentTask.checker) : null,
+      nextChecker ? researchPersonLabel(nextChecker) : null,
+    ),
+    auditChange("Assignees", currentAssigneeLabels, nextAssigneeLabels),
+    auditChange("Task guides", currentGuideLabels, nextGuideLabels),
+    auditChange("Urgent", currentTask.isUrgent, isUrgent),
+    auditChange(
+      "Assignee report upload",
+      currentTask.allowAssigneeReportUpload,
+      allowAssigneeReportUpload,
+    ),
+    auditChange(
+      "Due date",
+      currentTask.dueDate?.toISOString(),
+      updatedTaskDueDate?.toISOString(),
+    ),
+    auditChange(
+      "Journal target count",
+      currentTask.journalTargetCount,
+      journalTargetCount,
+    ),
+    auditChange(
+      "Suggested venue target count",
+      currentTask.suggestedVenueTargetCount,
+      suggestedVenueTargetCount,
+    ),
+  ]);
 
   const task = await prisma.$transaction(async (tx) => {
-    const updatedTaskDueDate = researchTaskDueDate(
-      optionalString(formData.get("dueDate")),
-    );
     const updatedTask = await tx.researchTask.update({
       where: { id: taskId },
       data: {
-        title: optionalString(formData.get("title")) ?? "Untitled task",
-        description:
-          optionalString(formData.get("description")) ??
-          defaultDescriptionForTask(taskType),
-        category: taskCategoryFromForm(formData.get("category")),
+        title: nextTaskTitle,
+        description: nextTaskDescription,
+        category: nextTaskCategory,
         taskType,
         productionSubtype,
         proposalScope:
@@ -7971,6 +8160,18 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
       },
       select: { id: true, title: true, description: true },
     });
+    if (taskEditDetail) {
+      await tx.researchChangeLog.create({
+        data: {
+          entityType: "task",
+          entityId: taskId,
+          area: "Task",
+          action: "Updated",
+          detail: taskEditDetail,
+          actorId: user.id,
+        },
+      });
+    }
 
     if (removedAssignees.length > 0) {
       await tx.researchTaskAssignment.deleteMany({
