@@ -9184,6 +9184,19 @@ async function publisherJournalTargetSlotNotice({
       continue;
     }
 
+    if (submission) {
+      const statusDate = submissionSlotDate(submission);
+      slots.push({
+        kind: "submission",
+        journalName: journal.name,
+        status: submissionStatusLabel(submission.status),
+        dateLabel: statusDate.label,
+        dateValue: statusDate.value,
+      });
+      slottedJournalIds.add(journal.id);
+      continue;
+    }
+
     slots.push({
       kind: "suggestedVenue",
       journalName: journal.name,
