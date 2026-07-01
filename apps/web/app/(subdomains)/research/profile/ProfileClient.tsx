@@ -704,7 +704,7 @@ export function ProfileClient({
           ))}
         </div>
 
-        {(user.affiliation || user.orcid) && (
+        {(user.affiliation || user.orcid || user.bio?.trim()) && (
           <div className="space-y-1 border-b border-[#444444] pb-3 text-sm leading-6 text-[#B0B0B0]">
             {user.affiliation ? <p>{user.affiliation}</p> : null}
             {user.orcid ? (
@@ -718,6 +718,14 @@ export function ProfileClient({
                 >
                   {user.orcid}
                 </a>
+              </p>
+            ) : null}
+            {user.bio?.trim() ? (
+              <p className="whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                <span className="text-[#344054] dark:text-[#E4E4E4]">
+                  Bio:
+                </span>{" "}
+                {user.bio.trim()}
               </p>
             ) : null}
           </div>
