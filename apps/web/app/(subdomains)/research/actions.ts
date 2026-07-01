@@ -1391,14 +1391,14 @@ function stageFromResearchState(
     return ResearchStage.REVIEW;
   }
 
-  const hasSubmissionInProgress =
-    submissionStatuses.some((status) => status === SubmissionStatus.PENDING);
-  const hasRejectedOrWithdrawnSubmission =
-    submissionStatuses.some(
-      (status) =>
-        status === SubmissionStatus.REJECTED ||
-        status === SubmissionStatus.WITHDRAWN,
-    );
+  const hasSubmissionInProgress = submissionStatuses.some(
+    (status) => status === SubmissionStatus.PENDING,
+  );
+  const hasRejectedOrWithdrawnSubmission = submissionStatuses.some(
+    (status) =>
+      status === SubmissionStatus.REJECTED ||
+      status === SubmissionStatus.WITHDRAWN,
+  );
 
   if (hasSubmissionInProgress || hasRejectedOrWithdrawnSubmission) {
     return ResearchStage.SUBMITTING;
@@ -5316,7 +5316,7 @@ async function approveJournalWithWorkflow(
           ? `The suggestion was linked to an existing submit task: ${submitTaskResult.taskTitle}.`
           : submitTaskResult?.blocked && submitTaskResult.blockMessage
             ? submitTaskResult.blockMessage
-          : null,
+            : null,
       result.workflow.completionNote
         ? `${result.workflow.taskTitle} was completed automatically. ${result.workflow.completionNote}`
         : null,
@@ -9100,7 +9100,9 @@ function normalizedPublisherSlotName(value?: string | null) {
 }
 
 function publisherDisplayName(journal: PublisherSlotJournal) {
-  return journal.publisherRecord?.name?.trim() || journal.publisher?.trim() || "";
+  return (
+    journal.publisherRecord?.name?.trim() || journal.publisher?.trim() || ""
+  );
 }
 
 function samePublisherSlot(
@@ -10113,21 +10115,21 @@ export async function deleteSuggestedJournal(
     return { ok: false, message: "Suggested venue was not found." };
   }
 
-  const linkedSubmission = suggestion.journalId
-    ? await prisma.researchSubmission.findUnique({
+  const linkedSubmissions = suggestion.journalId
+    ? await prisma.researchSubmission.findMany({
         where: {
-          researchProjectId_journalId: {
-            researchProjectId: projectId,
-            journalId: suggestion.journalId,
-          },
+          researchProjectId: projectId,
+          journalId: suggestion.journalId,
         },
         select: { id: true, status: true },
       })
-    : null;
+    : [];
   if (
-    linkedSubmission &&
-    (linkedSubmission.status === SubmissionStatus.ACCEPTED ||
-      linkedSubmission.status === SubmissionStatus.PUBLISHED)
+    linkedSubmissions.some(
+      (submission) =>
+        submission.status === SubmissionStatus.ACCEPTED ||
+        submission.status === SubmissionStatus.PUBLISHED,
+    )
   ) {
     return {
       ok: false,
@@ -10142,9 +10144,11 @@ export async function deleteSuggestedJournal(
   ].filter((id): id is string => Boolean(id));
 
   await prisma.$transaction(async (tx) => {
-    if (linkedSubmission) {
-      await tx.researchSubmission.delete({
-        where: { id: linkedSubmission.id },
+    if (linkedSubmissions.length > 0) {
+      await tx.researchSubmission.deleteMany({
+        where: {
+          id: { in: linkedSubmissions.map((submission) => submission.id) },
+        },
       });
     }
     await tx.suggestedJournal.delete({ where: { id: suggestionId } });
@@ -11126,17 +11130,8 @@ async function createSubmissionAfterTaskApproval(
       return false;
     }
 
-    await prisma.researchSubmission.upsert({
-      where: {
-        researchProjectId_journalId: {
-          researchProjectId: task.projectId,
-          journalId: task.journalId,
-        },
-      },
-      update: {
-        ...(accountId ? { accountId } : {}),
-      },
-      create: {
+    await prisma.researchSubmission.create({
+      data: {
         submissionCode: await generateSubmissionCode(),
         researchProjectId: task.projectId,
         journalId: task.journalId,

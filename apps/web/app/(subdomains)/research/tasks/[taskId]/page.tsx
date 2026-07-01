@@ -1882,12 +1882,10 @@ export default async function TaskDetailPage({
 
   const associatedJournalSubmission =
     task.projectId && task.journalId
-      ? await prisma.researchSubmission.findUnique({
+      ? await prisma.researchSubmission.findFirst({
           where: {
-            researchProjectId_journalId: {
-              researchProjectId: task.projectId,
-              journalId: task.journalId,
-            },
+            researchProjectId: task.projectId,
+            journalId: task.journalId,
           },
           select: {
             id: true,
@@ -1910,6 +1908,7 @@ export default async function TaskDetailPage({
               },
             },
           },
+          orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
         })
       : null;
   const associatedConferenceSubmission =

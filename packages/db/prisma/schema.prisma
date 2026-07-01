@@ -1220,7 +1220,7 @@ model ResearchSubmission {
   journal Journal           @relation(fields: [journalId], references: [id], onDelete: Cascade)
   account PublisherAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
 
-  @@unique([researchProjectId, journalId])
+  @@index([researchProjectId, journalId])
 }
 
 model Publication {
