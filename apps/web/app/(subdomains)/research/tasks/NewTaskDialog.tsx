@@ -47,6 +47,11 @@ import {
   urgentResearchTaskDueDate,
 } from "@/sites/research/lib/task-date";
 import { TaskGuidePicker, type TaskGuideOption } from "./TaskGuidePicker";
+import {
+  defaultSubmissionTaskBlockedDetail,
+  isSubmissionTaskBlockingReason,
+  SubmissionTaskBlockedDialog,
+} from "./SubmissionTaskBlockedDialog";
 
 export type TaskAssigneeOption = {
   id: string;
@@ -324,6 +329,7 @@ export function NewTaskDialog({
     useState<ProductionSubtype>("IDEA_FORMING");
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [isUrgent, setIsUrgent] = useState(false);
+  const [submissionBlockedDetail, setSubmissionBlockedDetail] = useState("");
   const [journalTargetCount, setJournalTargetCount] = useState("1");
   const [suggestedVenueTargetCount, setSuggestedVenueTargetCount] =
     useState("2");
@@ -712,6 +718,14 @@ export function NewTaskDialog({
         return;
       }
       if (!result?.ok) {
+        if (isSubmissionTaskBlockingReason(result?.reason)) {
+          setSubmissionBlockedDetail(
+            result && "message" in result && result.message
+              ? result.message
+              : defaultSubmissionTaskBlockedDetail(result?.reason),
+          );
+          return;
+        }
         showError({
           title: "Task was not created",
           detail:
@@ -1427,6 +1441,11 @@ export function NewTaskDialog({
           </div>
         </form>
       </ResearchModal>
+      <SubmissionTaskBlockedDialog
+        open={Boolean(submissionBlockedDetail)}
+        detail={submissionBlockedDetail}
+        onClose={() => setSubmissionBlockedDetail("")}
+      />
     </>
   );
 }

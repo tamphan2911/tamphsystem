@@ -40,6 +40,11 @@ import {
   TaskGuidePicker,
   type TaskGuideOption,
 } from "../../tasks/TaskGuidePicker";
+import {
+  defaultSubmissionTaskBlockedDetail,
+  isSubmissionTaskBlockingReason,
+  SubmissionTaskBlockedDialog,
+} from "../../tasks/SubmissionTaskBlockedDialog";
 
 export type SubmissionTaskAccountOption = {
   id: string;
@@ -121,6 +126,7 @@ export function CreateSubmissionTaskDialog({
     () => defaultSubmissionTaskGuideIds(taskGuideOptions),
   );
   const [allowReportUpload, setAllowReportUpload] = useState(false);
+  const [submissionBlockedDetail, setSubmissionBlockedDetail] = useState("");
   const [accountOpen, setAccountOpen] = useState(false);
   const [addAccountOpen, setAddAccountOpen] = useState(false);
   const venueDropdownRef = useRef<HTMLDivElement>(null);
@@ -301,6 +307,14 @@ export function CreateSubmissionTaskDialog({
     startTransition(async () => {
       const result = await createResearchTask(formData);
       if (!result?.ok) {
+        if (isSubmissionTaskBlockingReason(result?.reason)) {
+          setSubmissionBlockedDetail(
+            result && "message" in result && result.message
+              ? result.message
+              : defaultSubmissionTaskBlockedDetail(result?.reason),
+          );
+          return;
+        }
         if (result && "message" in result && result.message) {
           showError({
             title: "Submission task was not created",
@@ -849,6 +863,11 @@ export function CreateSubmissionTaskDialog({
           </form>
         </ResearchModal>
       )}
+      <SubmissionTaskBlockedDialog
+        open={Boolean(submissionBlockedDetail)}
+        detail={submissionBlockedDetail}
+        onClose={() => setSubmissionBlockedDetail("")}
+      />
 
       {addAccountOpen && selectedVenue?.kind === "journal" && (
         <ResearchModal
