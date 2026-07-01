@@ -292,7 +292,7 @@ function MoneyCell({
           className={
             apcOption
               ? "text-[11px] font-normal text-emerald-700 dark:text-emerald-300"
-              : "text-[11px] font-normal text-[#A06716] dark:text-[#F4D47A]"
+              : "text-[11px] font-normal text-rose-700 dark:text-rose-300"
           }
         >
           {apcOption ? "Option" : "No Option"}
