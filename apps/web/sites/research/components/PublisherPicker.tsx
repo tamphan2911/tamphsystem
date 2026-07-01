@@ -151,10 +151,10 @@ export function PublisherPicker({
         <span className="flex min-w-0 flex-1 items-center gap-3">
           <Building2 className="h-4 w-4 flex-none text-violet-600 dark:text-violet-300" />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-normal text-[#E4E4E4]">
+            <span className="block truncate text-sm font-normal text-slate-900 dark:text-[#E4E4E4]">
               {option.label}
             </span>
-            <span className="block truncate text-xs font-normal text-[#B0B0B0]">
+            <span className="block truncate text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
               {[option.meta, option.description].filter(Boolean).join(" | ")}
             </span>
           </span>

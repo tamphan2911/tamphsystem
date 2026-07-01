@@ -68,6 +68,7 @@ import {
   normalizeResearchNumberInput,
 } from "@/sites/research/lib/currency";
 import { SuggestedVenueAddDialog } from "../../SuggestedVenueAddDialog";
+import type { PublisherPickerItem } from "@/sites/research/components/PublisherPicker";
 
 const defaultTaskDescription = "Read the guide by click on icons right above.";
 
@@ -192,6 +193,7 @@ export function SuggestedJournalsPanel({
   suggested,
   conferences,
   suggestedConferences,
+  publishers,
   taskOptions,
   assistants,
   checkers = [],
@@ -212,6 +214,7 @@ export function SuggestedJournalsPanel({
   suggested: SuggestedJournalOption[];
   conferences: SuggestedConferenceOption[];
   suggestedConferences: SuggestedConferenceOption[];
+  publishers: PublisherPickerItem[];
   taskOptions: SuggestedVenueTaskOption[];
   assistants: TaskAssigneeOption[];
   checkers?: TaskAssigneeOption[];
@@ -916,6 +919,7 @@ export function SuggestedJournalsPanel({
         onClose={() => setAddOpen(false)}
         journals={journals}
         conferences={conferences}
+        publishers={publishers}
         excludedJournalIds={Array.from(suggestedJournalIds)}
         excludedConferenceIds={Array.from(suggestedConferenceIds)}
         onSubmit={submitAddedVenue}

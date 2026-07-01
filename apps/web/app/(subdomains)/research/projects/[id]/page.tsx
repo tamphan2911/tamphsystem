@@ -304,6 +304,7 @@ export default async function ProjectDetailPage({
     project,
     journals,
     conferences,
+    publishers,
     taskAssignees,
     checkerUsers,
     authorUsers,
@@ -368,6 +369,7 @@ export default async function ProjectDetailPage({
             createdBy: { select: { name: true, email: true } },
             approvedBy: { select: { name: true, email: true } },
             declinedBy: { select: { name: true, email: true } },
+            publisher: { select: { name: true } },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -435,6 +437,18 @@ export default async function ProjectDetailPage({
     }),
     prisma.conference.findMany({
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
+    }),
+    prisma.publisher.findMany({
+      orderBy: [{ name: "asc" }],
+      select: {
+        id: true,
+        publisherCode: true,
+        name: true,
+        alias: true,
+        country: true,
+        usesSingleAccount: true,
+        approvalStatus: true,
+      },
     }),
     prisma.user.findMany({
       where: taskAssigneeWhere,
@@ -754,7 +768,14 @@ export default async function ProjectDetailPage({
   );
   const suggestedJournalOptions: SuggestedJournalOption[] =
     project.suggestedJournals.map(
-      ({ journal, createdBy, approvedBy, declinedBy, ...suggestion }) => ({
+      ({
+        journal,
+        createdBy,
+        approvedBy,
+        declinedBy,
+        publisher,
+        ...suggestion
+      }) => ({
         id: suggestion.id,
         venueId: journal?.id ?? "",
         name: journal?.name ?? suggestion.venueName ?? "Unnamed journal",
@@ -765,7 +786,7 @@ export default async function ProjectDetailPage({
           ? journal.fields.join(", ")
           : (journal?.field ?? ""),
         rank: journal?.rank ?? "",
-        publisher: journal?.publisher ?? "",
+        publisher: journal?.publisher ?? publisher?.name ?? "",
         apc: journal?.apc ?? suggestion.apc ?? "",
         apcCurrency: journal?.apcCurrency ?? "USD",
         hasApcOption: journal?.hasApcOption ?? false,
@@ -2324,6 +2345,11 @@ export default async function ProjectDetailPage({
           suggested={suggestedJournalOptions}
           conferences={allConferenceOptions}
           suggestedConferences={suggestedConferenceOptions}
+          publishers={publishers.map((publisher) => ({
+            ...publisher,
+            alias: publisher.alias ?? "",
+            country: publisher.country ?? "",
+          }))}
           taskOptions={suggestVenueTaskOptions}
           assistants={taskAssigneeOptions}
           checkers={taskCheckerOptions}

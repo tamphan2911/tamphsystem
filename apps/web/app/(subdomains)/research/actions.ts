@@ -9291,6 +9291,10 @@ export async function addTaskSuggestedVenue(
   const note = optionalString(formData.get("note"));
   const apc = optionalString(formData.get("apc"));
   const submissionFee = optionalString(formData.get("submissionFee"));
+  const suggestedPublisherId =
+    venueKind === "journal" && !journalId
+      ? optionalString(formData.get("publisherId"))
+      : null;
   if (venueKind !== "journal" && venueKind !== "conference") {
     return { ok: false, message: "Choose journal or conference." };
   }
@@ -9331,6 +9335,15 @@ export async function addTaskSuggestedVenue(
   }
   if (conferenceId && !linkedConference) {
     return { ok: false, message: "Choose a conference on the site." };
+  }
+  const suggestedPublisher = suggestedPublisherId
+    ? await prisma.publisher.findUnique({
+        where: { id: suggestedPublisherId },
+        select: { id: true },
+      })
+    : null;
+  if (suggestedPublisherId && !suggestedPublisher) {
+    return { ok: false, message: "Choose a valid publisher on the site." };
   }
 
   if (journalId) {
@@ -9435,6 +9448,7 @@ export async function addTaskSuggestedVenue(
               venueLink,
               apc,
               submissionFee,
+              publisherId: suggestedPublisher?.id ?? null,
               note,
             },
           })
@@ -9521,9 +9535,21 @@ export async function addSuggestedJournal(
   const apc = optionalString(formData.get("apc"));
   const submissionFee = optionalString(formData.get("submissionFee"));
   const note = optionalString(formData.get("note"));
+  const suggestedPublisherId = !journalId
+    ? optionalString(formData.get("publisherId"))
+    : null;
   if (!journalId && !venueName && !venueLink) return;
   if (await researchContentIsLocked(projectId)) return;
   const taskId = await unfinishedSuggestVenueTaskIdForUser(projectId, user.id);
+  const suggestedPublisher = suggestedPublisherId
+    ? await prisma.publisher.findUnique({
+        where: { id: suggestedPublisherId },
+        select: { id: true },
+      })
+    : null;
+  if (suggestedPublisherId && !suggestedPublisher) {
+    return { ok: false, message: "Choose a valid publisher on the site." };
+  }
 
   if (journalId) {
     const publisherSlotNotice = await publisherJournalTargetSlotNotice({
@@ -9592,6 +9618,7 @@ export async function addSuggestedJournal(
           venueLink,
           apc,
           submissionFee,
+          publisherId: suggestedPublisher?.id ?? null,
           note,
           taskId,
         },

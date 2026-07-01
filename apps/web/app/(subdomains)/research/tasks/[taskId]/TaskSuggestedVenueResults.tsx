@@ -16,6 +16,7 @@ import {
   type SuggestedVenueAddConferenceOption,
   type SuggestedVenueAddJournalOption,
 } from "../../SuggestedVenueAddDialog";
+import type { PublisherPickerItem } from "@/sites/research/components/PublisherPicker";
 
 export type TaskSuggestedVenueResult = {
   id: string;
@@ -152,6 +153,7 @@ export function TaskSuggestedVenueResults({
   canCreate,
   journals,
   conferences,
+  publishers,
 }: {
   taskId: string;
   targetCount: number;
@@ -159,6 +161,7 @@ export function TaskSuggestedVenueResults({
   canCreate: boolean;
   journals: SuggestedVenueAddJournalOption[];
   conferences: SuggestedVenueAddConferenceOption[];
+  publishers: PublisherPickerItem[];
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const router = useRouter();
@@ -248,6 +251,7 @@ export function TaskSuggestedVenueResults({
         onClose={() => setDialogOpen(false)}
         journals={journals}
         conferences={conferences}
+        publishers={publishers}
         excludedJournalIds={excludedJournalIds}
         excludedConferenceIds={excludedConferenceIds}
         onSubmit={(formData) => addTaskSuggestedVenue(taskId, formData)}

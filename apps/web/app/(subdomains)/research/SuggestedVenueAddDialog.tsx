@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
-import { AlertTriangle, Plus, Search, X } from "lucide-react";
+import { AlertTriangle, Building2, Plus, Search, X } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import {
   IconHint,
   ResearchButton,
+  cx,
   researchDropdownItemClass,
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
@@ -14,6 +15,10 @@ import {
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
+import {
+  PublisherPicker,
+  type PublisherPickerItem,
+} from "@/sites/research/components/PublisherPicker";
 
 export type SuggestedVenueAddJournalOption = {
   id: string;
@@ -82,6 +87,7 @@ export function SuggestedVenueAddDialog({
   onClose,
   journals,
   conferences,
+  publishers,
   excludedJournalIds = [],
   excludedConferenceIds = [],
   onSubmit,
@@ -92,6 +98,7 @@ export function SuggestedVenueAddDialog({
   onClose: () => void;
   journals: SuggestedVenueAddJournalOption[];
   conferences: SuggestedVenueAddConferenceOption[];
+  publishers: PublisherPickerItem[];
   excludedJournalIds?: string[];
   excludedConferenceIds?: string[];
   onSubmit: (formData: FormData) => Promise<SuggestedVenueAddResult>;
@@ -109,6 +116,9 @@ export function SuggestedVenueAddDialog({
   const [freeJournalApc, setFreeJournalApc] = useState("");
   const [freeJournalSubmissionFee, setFreeJournalSubmissionFee] = useState("");
   const [freeVenueNote, setFreeVenueNote] = useState("");
+  const [manualJournalEntry, setManualJournalEntry] = useState(false);
+  const [selectedPublisher, setSelectedPublisher] =
+    useState<PublisherPickerItem | null>(null);
   const [publisherSlotNotice, setPublisherSlotNotice] =
     useState<SuggestedVenuePublisherSlotNotice | null>(null);
   const pendingPublisherSlotFormRef = useRef<FormData | null>(null);
@@ -173,8 +183,25 @@ export function SuggestedVenueAddDialog({
     setFreeJournalApc("");
     setFreeJournalSubmissionFee("");
     setFreeVenueNote("");
+    setManualJournalEntry(false);
+    setSelectedPublisher(null);
     setPublisherSlotNotice(null);
     pendingPublisherSlotFormRef.current = null;
+  }
+
+  function clearManualVenueFields() {
+    setFreeVenueName("");
+    setFreeVenueLink("");
+    setFreeJournalApc("");
+    setFreeJournalSubmissionFee("");
+    setSelectedPublisher(null);
+  }
+
+  function setManualJournalMode(checked: boolean) {
+    setManualJournalEntry(checked);
+    setSelectedVenue(null);
+    setJournalQuery("");
+    if (!checked) clearManualVenueFields();
   }
 
   function closeDialog() {
@@ -221,6 +248,9 @@ export function SuggestedVenueAddDialog({
       if (activeTab === "journal" && freeJournalSubmissionFee.trim()) {
         formData.set("submissionFee", freeJournalSubmissionFee.trim());
       }
+      if (activeTab === "journal" && selectedPublisher) {
+        formData.set("publisherId", selectedPublisher.id);
+      }
     }
     if (freeVenueNote.trim()) formData.set("note", freeVenueNote.trim());
 
@@ -237,7 +267,11 @@ export function SuggestedVenueAddDialog({
   }
 
   const canSubmit = Boolean(
-    selectedVenue || freeVenueName.trim() || freeVenueLink.trim(),
+    selectedVenue ||
+      (activeTab === "journal"
+        ? manualJournalEntry &&
+          (freeVenueName.trim() || freeVenueLink.trim())
+        : freeVenueName.trim() || freeVenueLink.trim()),
   );
 
   return (
@@ -261,78 +295,85 @@ export function SuggestedVenueAddDialog({
         }
       >
         <div className="grid gap-4">
-        <div
-          data-research-toggle-tabs="true"
-          className="suggested-venue-kind-tabs grid w-full grid-cols-2 border border-[#444444] bg-[#202020]"
-        >
-          {(["journal", "conference"] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => {
-                setActiveTab(tab);
-                setSelectedVenue(null);
-                setJournalQuery("");
-                setConferenceQuery("");
-              }}
-              data-research-toggle-tab="true"
-              data-active={activeTab === tab}
-              className={`suggested-venue-kind-tab cursor-pointer border-r border-[#303030] px-3 py-2 text-sm font-normal transition last:border-r-0 hover:border-[#444444] ${
-                activeTab === tab
-                  ? "border-[#444444] bg-[#383838] text-[#A8DADC] shadow-none"
-                  : "text-[#B0B0B0] hover:bg-[#303030] hover:text-[#E4E4E4]"
-              }`}
-            >
-              {tab === "journal" ? "Journals" : "Conferences"}
-            </button>
-          ))}
-        </div>
+          <div
+            data-research-toggle-tabs="true"
+            className="suggested-venue-kind-tabs grid w-full grid-cols-2 gap-1 border border-slate-200 bg-slate-50/80 p-1 dark:border-[#444444] dark:bg-[#202020]"
+          >
+            {(["journal", "conference"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => {
+                  if (activeTab === tab) return;
+                  setActiveTab(tab);
+                  setSelectedVenue(null);
+                  setJournalQuery("");
+                  setConferenceQuery("");
+                  setManualJournalEntry(false);
+                  clearManualVenueFields();
+                }}
+                data-research-toggle-tab="true"
+                data-active={activeTab === tab}
+                className={cx(
+                  "suggested-venue-kind-tab cursor-pointer border px-3 py-2 text-sm font-normal transition duration-150 ease-out",
+                  activeTab === tab
+                    ? "border-sky-200 bg-sky-50/80 text-[#1F7180] dark:border-[#444444] dark:bg-[#383838] dark:text-[#A8DADC]"
+                    : "border-transparent text-[#667085] hover:border-slate-200 hover:bg-white hover:text-slate-900 dark:text-[#B0B0B0] dark:hover:border-[#444444] dark:hover:bg-[#303030] dark:hover:text-[#E4E4E4]",
+                )}
+              >
+                {tab === "journal" ? "Journals" : "Conferences"}
+              </button>
+            ))}
+          </div>
 
         {activeTab === "journal" ? (
           <>
-            <AddVenuePicker
-              kind="journal"
-              query={journalQuery}
-              selectedVenue={
-                selectedVenue?.kind === "journal" ? selectedVenue : null
-              }
-              journals={journalResults}
-              conferences={[]}
-              placeholder="Search journal name, ISSN, field, rank, publisher..."
-              onQueryChange={(value) => {
-                setJournalQuery(value);
-                setSelectedVenue(null);
-              }}
-              onSelect={(venue) => {
-                setSelectedVenue(venue);
-                setJournalQuery("");
-              }}
-              onClear={() => {
-                setSelectedVenue(null);
-                setJournalQuery("");
-              }}
+            {!manualJournalEntry ? (
+              <div className="animate-[modalPanelIn_180ms_ease-out]">
+                <AddVenuePicker
+                  kind="journal"
+                  query={journalQuery}
+                  selectedVenue={
+                    selectedVenue?.kind === "journal" ? selectedVenue : null
+                  }
+                  journals={journalResults}
+                  conferences={[]}
+                  placeholder="Search journal name, ISSN, field, rank, publisher..."
+                  onQueryChange={(value) => {
+                    setJournalQuery(value);
+                    setSelectedVenue(null);
+                  }}
+                  onSelect={(venue) => {
+                    setSelectedVenue(venue);
+                    setJournalQuery("");
+                  }}
+                  onClear={() => {
+                    setSelectedVenue(null);
+                    setJournalQuery("");
+                  }}
+                />
+              </div>
+            ) : null}
+            <ManualVenueToggle
+              checked={manualJournalEntry}
+              onChange={setManualJournalMode}
             />
-            {!selectedVenue && (
-              <p className="text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                Search the journal list first and pick the journal if it is
-                already on the site. If it is not available, enter the journal
-                name, link, and fee information below so the suggestion can be
-                reviewed and linked later.
-              </p>
-            )}
-            {!selectedVenue && (
+            {manualJournalEntry ? (
               <FreeVenueFields
                 name={freeVenueName}
                 link={freeVenueLink}
                 apc={freeJournalApc}
                 submissionFee={freeJournalSubmissionFee}
+                publishers={publishers}
+                selectedPublisher={selectedPublisher}
                 onNameChange={setFreeVenueName}
                 onLinkChange={setFreeVenueLink}
                 onApcChange={setFreeJournalApc}
                 onSubmissionFeeChange={setFreeJournalSubmissionFee}
+                onPublisherChange={setSelectedPublisher}
                 kind="journal"
               />
-            )}
+            ) : null}
             <textarea
               value={freeVenueNote}
               onChange={(event) => setFreeVenueNote(event.target.value)}
@@ -590,31 +631,86 @@ function AddVenuePicker({
   );
 }
 
+function ManualVenueToggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="group flex cursor-pointer items-start gap-3 border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-sm transition duration-150 ease-out hover:border-slate-300 hover:bg-white dark:border-[#444444] dark:bg-[#202020] dark:hover:border-[#5A5A5A] dark:hover:bg-[#2C2C2C]">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="mt-0.5 h-4 w-4 cursor-pointer accent-[#1F7180] transition duration-150 ease-out dark:accent-[#A8DADC]"
+      />
+      <span className="grid gap-1">
+        <span className="font-normal text-slate-800 transition group-hover:text-slate-950 dark:text-[#E4E4E4] dark:group-hover:text-white">
+          I cannot find this journal on the site, so I want to enter a new
+          journal suggestion manually.
+        </span>
+        <span className="text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+          Leave this unchecked to search and choose an existing on-site journal.
+        </span>
+      </span>
+    </label>
+  );
+}
+
 function FreeVenueFields({
   name,
   link,
   apc,
   submissionFee,
+  publishers = [],
+  selectedPublisher,
   onNameChange,
   onLinkChange,
   onApcChange,
   onSubmissionFeeChange,
+  onPublisherChange,
   kind,
 }: {
   name: string;
   link: string;
   apc?: string;
   submissionFee?: string;
+  publishers?: PublisherPickerItem[];
+  selectedPublisher?: PublisherPickerItem | null;
   onNameChange: (value: string) => void;
   onLinkChange: (value: string) => void;
   onApcChange?: (value: string) => void;
   onSubmissionFeeChange?: (value: string) => void;
+  onPublisherChange?: (value: PublisherPickerItem | null) => void;
   kind: "journal" | "conference";
 }) {
   return (
-    <div className="grid gap-3 border border-[#444444] bg-[#202020] p-3 animate-[modalPanelIn_220ms_ease-out] sm:grid-cols-2">
-      <label className="grid gap-1.5">
-        <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+    <div className="grid gap-3 border border-slate-200 bg-slate-50/70 p-3 animate-[modalPanelIn_220ms_ease-out] sm:grid-cols-2 dark:border-[#444444] dark:bg-[#202020]">
+      {kind === "journal" ? (
+        <div className="grid gap-1.5 sm:col-span-2">
+          <PublisherPicker
+            key={selectedPublisher?.id ?? "empty-suggested-publisher"}
+            publishers={publishers}
+            initialPublisherId={selectedPublisher?.id}
+            initialPublisherName={selectedPublisher?.name}
+            required={false}
+            showLabel={false}
+            placeholder="Search publisher on the site..."
+            onSelectionChange={onPublisherChange}
+          />
+          <p className="flex items-start gap-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+            <Building2 className="mt-0.5 h-3.5 w-3.5 flex-none text-violet-600 dark:text-violet-300" />
+            <span>
+              Search for the publisher of the new journal first. If the
+              publisher is not on the site yet, leave this empty.
+            </span>
+          </p>
+        </div>
+      ) : null}
+      <label className="grid gap-1.5 sm:col-span-2">
+        <span className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
           {kind === "journal" ? "Journal name" : "Conference name"}
         </span>
         <input
@@ -624,8 +720,8 @@ function FreeVenueFields({
           className={researchFieldClass}
         />
       </label>
-      <label className="grid gap-1.5">
-        <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+      <label className="grid gap-1.5 sm:col-span-2">
+        <span className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
           Link
         </span>
         <input
@@ -638,7 +734,7 @@ function FreeVenueFields({
       {kind === "journal" ? (
         <>
           <label className="grid gap-1.5">
-            <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+            <span className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
               APC
             </span>
             <input
@@ -649,7 +745,7 @@ function FreeVenueFields({
             />
           </label>
           <label className="grid gap-1.5">
-            <span className="text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+            <span className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
               Submission fee
             </span>
             <input

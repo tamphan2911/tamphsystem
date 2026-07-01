@@ -1128,6 +1128,7 @@ export default async function TaskDetailPage({
           createdBy: { select: { name: true, email: true } },
           approvedBy: { select: { name: true, email: true } },
           declinedBy: { select: { name: true, email: true } },
+          publisher: { select: { name: true } },
           journal: {
             select: {
               id: true,
@@ -1219,6 +1220,7 @@ export default async function TaskDetailPage({
           createdBy: { select: { name: true, email: true } },
           approvedBy: { select: { name: true, email: true } },
           declinedBy: { select: { name: true, email: true } },
+          publisher: { select: { name: true } },
           journal: {
             select: {
               id: true,
@@ -1574,6 +1576,7 @@ export default async function TaskDetailPage({
             createdBy: { select: { name: true, email: true } },
             approvedBy: { select: { name: true, email: true } },
             declinedBy: { select: { name: true, email: true } },
+            publisher: { select: { name: true } },
             journal: {
               select: {
                 id: true,
@@ -2526,7 +2529,7 @@ export default async function TaskDetailPage({
         status: suggestion.status,
         meta: [
           journal?.issn ? `ISSN ${journal.issn}` : null,
-          journal?.publisher,
+          journal?.publisher ?? suggestion.publisher?.name,
           journal?.rank ?? journal?.localRank,
         ]
           .filter(Boolean)
@@ -2584,7 +2587,8 @@ export default async function TaskDetailPage({
               linkedJournalSubmissionSuggestion.journal?.issn
                 ? `ISSN ${linkedJournalSubmissionSuggestion.journal.issn}`
                 : null,
-              linkedJournalSubmissionSuggestion.journal?.publisher,
+              linkedJournalSubmissionSuggestion.journal?.publisher ??
+                linkedJournalSubmissionSuggestion.publisher?.name,
               linkedJournalSubmissionSuggestion.journal?.rank ??
                 linkedJournalSubmissionSuggestion.journal?.localRank,
             ]
@@ -2845,6 +2849,7 @@ export default async function TaskDetailPage({
     journals,
     accounts,
     conferences,
+    publishers,
     reviews,
     organizedProjects,
     checkerUsers,
@@ -2925,6 +2930,18 @@ export default async function TaskDetailPage({
               website: true,
             },
           }),
+          prisma.publisher.findMany({
+            orderBy: [{ name: "asc" }],
+            select: {
+              id: true,
+              publisherCode: true,
+              name: true,
+              alias: true,
+              country: true,
+              usesSingleAccount: true,
+              approvalStatus: true,
+            },
+          }),
           prisma.academicReview.findMany({
             where: accessibleResearchReviewWhere(roles, userId),
             orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
@@ -2978,7 +2995,7 @@ export default async function TaskDetailPage({
             },
           }),
         ])
-      : [[], [], [], [], [], [], [], [], [], []];
+      : [[], [], [], [], [], [], [], [], [], [], []];
   const assignees = assigneeUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -3648,6 +3665,11 @@ export default async function TaskDetailPage({
               canCreate={!isClosed && isAssignee && Boolean(task.projectId)}
               journals={suggestedVenueJournalOptions}
               conferences={suggestedVenueConferenceOptions}
+              publishers={publishers.map((publisher) => ({
+                ...publisher,
+                alias: publisher.alias ?? "",
+                country: publisher.country ?? "",
+              }))}
             />
           ) : null}
 

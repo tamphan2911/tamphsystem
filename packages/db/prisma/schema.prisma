@@ -850,9 +850,10 @@ model Publisher {
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
 
-  createdBy User?              @relation("PublisherCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  journals  Journal[]
-  accounts  PublisherAccount[]
+  createdBy         User?              @relation("PublisherCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  journals          Journal[]
+  accounts          PublisherAccount[]
+  suggestedJournals SuggestedJournal[]
 
   @@index([createdById])
   @@index([approvalStatus])
@@ -880,6 +881,7 @@ model SuggestedJournal {
   requiresApproval               Boolean              @default(false)
   autoCreateSubmitTaskOnApproval Boolean              @default(true)
   createdById                    String?
+  publisherId                    String?
   createdAt                      DateTime             @default(now())
 
   project             ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -887,6 +889,7 @@ model SuggestedJournal {
   journalCreationTask ResearchTask?   @relation("SuggestedJournalCreationTask", fields: [journalCreationTaskId], references: [id], onDelete: SetNull)
   submissionTask      ResearchTask?   @relation("SuggestedJournalSubmissionTask", fields: [submissionTaskId], references: [id], onDelete: SetNull)
   journal             Journal?        @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  publisher           Publisher?      @relation(fields: [publisherId], references: [id], onDelete: SetNull)
   createdBy           User?           @relation("SuggestedJournalCreator", fields: [createdById], references: [id], onDelete: SetNull)
   approvedBy          User?           @relation("SuggestedJournalApprover", fields: [approvedById], references: [id], onDelete: SetNull)
   declinedBy          User?           @relation("SuggestedJournalDecliner", fields: [declinedById], references: [id], onDelete: SetNull)
@@ -896,6 +899,7 @@ model SuggestedJournal {
   @@index([taskId])
   @@index([journalCreationTaskId])
   @@index([submissionTaskId])
+  @@index([publisherId])
   @@index([approvedById])
   @@index([declinedById])
 }
