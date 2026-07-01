@@ -129,7 +129,7 @@ export function CreateSubmissionTaskDialog({
   const checkerDropdownRef = useRef<HTMLDivElement>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const { showSuccess } = useResearchToast();
+  const { showSuccess, showError } = useResearchToast();
   const defaultAssistantId = useMemo(
     () =>
       assistants.find(
@@ -301,6 +301,13 @@ export function CreateSubmissionTaskDialog({
     startTransition(async () => {
       const result = await createResearchTask(formData);
       if (!result?.ok) {
+        if (result && "message" in result && result.message) {
+          showError({
+            title: "Submission task was not created",
+            detail: result.message,
+          });
+          return;
+        }
         if (result?.reason === "PRODUCTION_INCOMPLETE") {
           showProductionIncomplete();
           setIsOpen(false);

@@ -644,11 +644,23 @@ export function SuggestedJournalsPanel({
         if (approvalVenue?.kind === "journal") {
           formData.set("journalId", approvalVenue.item.venueId);
         }
-        const result = await approveSuggestedJournal(
-          projectId,
-          approveVenue.item.id,
-          formData,
-        );
+        let result: Awaited<ReturnType<typeof approveSuggestedJournal>>;
+        try {
+          result = await approveSuggestedJournal(
+            projectId,
+            approveVenue.item.id,
+            formData,
+          );
+        } catch (error) {
+          showError({
+            title: "Venue was not approved",
+            detail:
+              error instanceof Error
+                ? error.message
+                : "The submit task could not be assigned. Please try again.",
+          });
+          return;
+        }
         taskCreated = Boolean(result?.taskCreated);
         submitTaskCreated = Boolean(result?.submitTaskCreated);
         submitTaskLinked = Boolean(result?.submitTaskLinked);
@@ -756,6 +768,13 @@ export function SuggestedJournalsPanel({
     startTransition(async () => {
       const result = await createResearchTask(formData);
       if (!result?.ok) {
+        if (result && "message" in result && result.message) {
+          showError({
+            title: "Submit task was not assigned",
+            detail: result.message,
+          });
+          return;
+        }
         if (result?.reason === "PRODUCTION_INCOMPLETE") {
           showProductionIncomplete();
         } else if (result?.reason === "RESEARCH_LOCKED") {

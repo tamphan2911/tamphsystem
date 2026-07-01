@@ -5765,6 +5765,14 @@ async function createSubmitTaskForSuggestedJournalApproval({
     };
   }
 
+  const publisherSubmissionBlock = await submitTaskPublisherBlock({
+    projectId,
+    journalId,
+  });
+  if (publisherSubmissionBlock) {
+    throw new Error(publisherSubmissionBlock.message);
+  }
+
   const [project, journal, guide, accounts] = await Promise.all([
     prisma.researchProject.findUnique({
       where: { id: projectId },
@@ -7407,6 +7415,14 @@ export async function createResearchTask(formData: FormData) {
     }
   }
 
+  if (taskType === ResearchTaskType.SUBMIT_RESEARCH && projectId && journalId) {
+    const publisherSubmissionBlock = await submitTaskPublisherBlock({
+      projectId,
+      journalId,
+    });
+    if (publisherSubmissionBlock) return publisherSubmissionBlock;
+  }
+
   if (
     projectId &&
     (taskType === ResearchTaskType.SUBMIT_RESEARCH ||
@@ -7799,6 +7815,20 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     if (!journalId || !(await accountBelongsToJournal(accountId, journalId))) {
       return { ok: false, reason: "ACCOUNT_NOT_FOR_JOURNAL" };
     }
+  }
+
+  if (
+    !isClosedTask &&
+    taskType === ResearchTaskType.SUBMIT_RESEARCH &&
+    effectiveProjectId &&
+    journalId
+  ) {
+    const publisherSubmissionBlock = await submitTaskPublisherBlock({
+      projectId: effectiveProjectId,
+      journalId,
+      excludeTaskId: taskId,
+    });
+    if (publisherSubmissionBlock) return publisherSubmissionBlock;
   }
 
   if (
@@ -9290,6 +9320,165 @@ async function publisherJournalTargetSlotNotice({
         slotCount: slots.length,
         slots,
       },
+    };
+  }
+
+  return null;
+}
+
+function publisherSlotNoticeLine(
+  slot: {
+    kind: "suggestedVenue" | "submission";
+    journalName: string;
+    status: string;
+    dateLabel: string;
+    dateValue: string;
+  },
+  index: number,
+) {
+  const source =
+    slot.kind === "suggestedVenue" ? "Suggested venue" : "Submission";
+  return `${index + 1}. ${source}: ${slot.journalName} | ${slot.status} | ${
+    slot.dateLabel
+  }: ${slot.dateValue}`;
+}
+
+async function submitTaskPublisherBlock({
+  projectId,
+  journalId,
+  excludeTaskId,
+}: {
+  projectId: string;
+  journalId: string;
+  excludeTaskId?: string;
+}) {
+  const targetJournal = await prisma.journal.findUnique({
+    where: { id: journalId },
+    select: {
+      id: true,
+      name: true,
+      publisher: true,
+      publisherId: true,
+      publisherRecord: { select: { name: true } },
+    },
+  });
+  if (!targetJournal) return null;
+
+  const target = {
+    journalId: targetJournal.id,
+    publisherId: targetJournal.publisherId,
+    publisherName: publisherDisplayName(targetJournal),
+  };
+  if (!target.publisherId && !target.publisherName) return null;
+  const publisherName = target.publisherName || "this publisher";
+
+  const [activeSubmissions, activeTasks] = await Promise.all([
+    prisma.researchSubmission.findMany({
+      where: {
+        researchProjectId: projectId,
+        status: { notIn: Array.from(inactiveJournalSubmissionStatuses) },
+      },
+      select: {
+        id: true,
+        status: true,
+        submittedAt: true,
+        updatedAt: true,
+        journal: {
+          select: {
+            id: true,
+            name: true,
+            publisher: true,
+            publisherId: true,
+            publisherRecord: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: [{ submittedAt: "asc" }, { createdAt: "asc" }],
+    }),
+    prisma.researchTask.findMany({
+      where: {
+        ...(excludeTaskId ? { id: { not: excludeTaskId } } : {}),
+        projectId,
+        taskType: ResearchTaskType.SUBMIT_RESEARCH,
+        status: {
+          notIn: [ResearchTaskStatus.COMPLETED, ResearchTaskStatus.REVOKED],
+        },
+        journalId: { not: null },
+      },
+      select: {
+        id: true,
+        status: true,
+        updatedAt: true,
+        journal: {
+          select: {
+            id: true,
+            name: true,
+            publisher: true,
+            publisherId: true,
+            publisherRecord: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: [{ updatedAt: "asc" }, { createdAt: "asc" }],
+    }),
+  ]);
+
+  const submissionJournalIds = new Set<string>();
+  const activeSubmissionLines = activeSubmissions
+    .filter((submission) =>
+      samePublisherSlot(journalPublisherSlot(submission.journal), target),
+    )
+    .map((submission) => {
+      submissionJournalIds.add(submission.journal.id);
+      const statusDate = submissionSlotDate(submission);
+      return {
+        journalName: submission.journal.name,
+        status: submissionStatusLabel(submission.status),
+        statusDate: statusDate.value,
+      };
+    });
+  const activeTaskLines = activeTasks
+    .filter((task) => task.journal)
+    .filter((task) => !submissionJournalIds.has(task.journal!.id))
+    .filter((task) =>
+      samePublisherSlot(journalPublisherSlot(task.journal!), target),
+    )
+    .map((task) => ({
+      journalName: task.journal!.name,
+      status: `Submit task: ${readableResearchValue(task.status)}`,
+      statusDate: publisherSlotDate(task.updatedAt),
+    }));
+  const activeSubmissionWork = [...activeSubmissionLines, ...activeTaskLines];
+
+  if (activeSubmissionWork.length > 0) {
+    const details = activeSubmissionWork
+      .map(
+        (item, index) =>
+          `${index + 1}. ${item.journalName} | ${item.status} | status date: ${
+            item.statusDate
+          }`,
+      )
+      .join("\n");
+    return {
+      ok: false as const,
+      reason: "ACTIVE_PUBLISHER_SUBMISSION_EXISTS",
+      message: `This research already has an ongoing journal submission workflow for ${publisherName}. A research can have only 1 active journal submission per publisher at the same time.\n\n${details}\n\nPlease choose a journal from another publisher to assign a submit task.`,
+    };
+  }
+
+  const targetSlotNotice = await publisherJournalTargetSlotNotice({
+    projectId,
+    journalId,
+    confirmed: true,
+  });
+  if (targetSlotNotice?.publisherSlot?.mode === "blocked") {
+    const details = targetSlotNotice.publisherSlot.slots
+      .map(publisherSlotNoticeLine)
+      .join("\n");
+    return {
+      ok: false as const,
+      reason: "PUBLISHER_TARGET_SLOTS_FULL",
+      message: `This research already has 2 active target journal slots from ${targetSlotNotice.publisherSlot.publisherName}. A publisher can have at most 2 target journals for one research at the same time.\n\n${details}\n\nPlease choose a journal from another publisher to assign a submit task.`,
     };
   }
 

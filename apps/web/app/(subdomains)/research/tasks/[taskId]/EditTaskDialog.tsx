@@ -215,6 +215,12 @@ function detailForFailure(reason?: string) {
   if (reason === "ACTIVE_SUBMISSION_TASK_EXISTS") {
     return "An active submission task already exists for this research and venue.";
   }
+  if (reason === "ACTIVE_PUBLISHER_SUBMISSION_EXISTS") {
+    return "This research already has an active submission workflow for this publisher. Choose a journal from another publisher.";
+  }
+  if (reason === "PUBLISHER_TARGET_SLOTS_FULL") {
+    return "This publisher already has 2 active target journal slots for this research. Choose a journal from another publisher.";
+  }
   if (reason === "ACCOUNT_NOT_FOR_JOURNAL") {
     return "Choose an account that belongs to the selected journal.";
   }
@@ -628,7 +634,10 @@ export function EditTaskDialog({
       if (!result?.ok) {
         showError({
           title: "Task was not saved",
-          detail: detailForFailure(result?.reason),
+          detail:
+            result && "message" in result && result.message
+              ? result.message
+              : detailForFailure(result?.reason),
         });
         return;
       }
