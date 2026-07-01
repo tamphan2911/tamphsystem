@@ -40,6 +40,10 @@ export async function updateResearchProfile(formData: FormData) {
     };
   }
   const bio = String(formData.get("bio") ?? "").trim();
+  const bioWordCount = bio ? bio.split(/\s+/).filter(Boolean).length : 0;
+  if (bioWordCount > 100) {
+    return { error: "Bio must be 100 words or fewer." };
+  }
   const requestedThemePreference = String(
     formData.get("researchThemePreference") ?? "system",
   ).trim();

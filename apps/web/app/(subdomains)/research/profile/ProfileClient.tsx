@@ -952,11 +952,12 @@ export function ProfileClient({
             <textarea
               name="bio"
               defaultValue={user.bio ?? ""}
-              placeholder="Optional. Add a short research bio, around 100-150 words."
+              placeholder="Optional. Add a short research bio, maximum 100 words."
               className={`${researchTextareaClass} min-h-36`}
             />
             <span className="text-xs font-normal text-[#B0B0B0]">
               This bio can appear beside your author name in research details.
+              Keep it to 100 words or fewer.
             </span>
           </label>
           <label className="grid gap-1.5 text-sm font-normal text-[#E4E4E4]">
