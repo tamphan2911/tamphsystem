@@ -702,9 +702,13 @@ export default async function ProjectDetailPage({
   const submitTaskLockForPublisher = ({
     publisherId,
     publisherName,
+    currentVenueId,
+    currentSubmissionTaskId,
   }: {
     publisherId?: string | null;
     publisherName?: string | null;
+    currentVenueId?: string | null;
+    currentSubmissionTaskId?: string | null;
   }) => {
     const normalizedTarget = normalizedPublisherKey(publisherName);
     if (!publisherId && !normalizedTarget) return undefined;
@@ -714,14 +718,15 @@ export default async function ProjectDetailPage({
     }) =>
       Boolean(
         (publisherId && journal.publisherId === publisherId) ||
-          (normalizedTarget &&
-            normalizedPublisherKey(journal.publisher) === normalizedTarget),
+        (normalizedTarget &&
+          normalizedPublisherKey(journal.publisher) === normalizedTarget),
       );
     const submissionJournalIds = new Set<string>();
     const submissionItems = project.submissions
       .filter(
         (submission) => !closedJournalSubmissionStatuses.has(submission.status),
       )
+      .filter((submission) => submission.journalId !== currentVenueId)
       .filter((submission) => samePublisher(submission.journal))
       .map((submission) => {
         submissionJournalIds.add(submission.journalId);
@@ -737,6 +742,8 @@ export default async function ProjectDetailPage({
       });
     const taskItems = activeSubmitTasks
       .filter((task) => task.taskType === "SUBMIT_RESEARCH" && task.journal)
+      .filter((task) => task.id !== currentSubmissionTaskId)
+      .filter((task) => task.journalId !== currentVenueId)
       .filter((task) => !submissionJournalIds.has(task.journalId ?? ""))
       .filter((task) => samePublisher(task.journal!))
       .map((task) => ({
@@ -873,7 +880,8 @@ export default async function ProjectDetailPage({
           : (journal?.field ?? ""),
         rank: journal?.rank ?? "",
         publisher: journal?.publisher ?? publisher?.name ?? "",
-        publisherId: journal?.publisherId ?? suggestion.publisherId ?? undefined,
+        publisherId:
+          journal?.publisherId ?? suggestion.publisherId ?? undefined,
         apc: journal?.apc ?? suggestion.apc ?? "",
         apcCurrency: journal?.apcCurrency ?? "USD",
         hasApcOption: journal?.hasApcOption ?? false,
@@ -907,6 +915,8 @@ export default async function ProjectDetailPage({
         submitTaskLock: submitTaskLockForPublisher({
           publisherId: journal?.publisherId ?? suggestion.publisherId,
           publisherName: journal?.publisher ?? publisher?.name,
+          currentVenueId: journal?.id,
+          currentSubmissionTaskId: suggestion.submissionTaskId,
         }),
         approvedByName: approvedBy
           ? displayResearchPersonName(approvedBy) || "Unknown user"

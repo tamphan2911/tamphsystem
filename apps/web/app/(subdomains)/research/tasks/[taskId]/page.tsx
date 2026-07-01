@@ -1151,6 +1151,7 @@ export default async function TaskDetailPage({
           submissionFee: true,
           note: true,
           status: true,
+          submissionTaskId: true,
           approvalNote: true,
           declineReason: true,
           createdAt: true,
@@ -1245,6 +1246,7 @@ export default async function TaskDetailPage({
           submissionFee: true,
           note: true,
           status: true,
+          submissionTaskId: true,
           approvalNote: true,
           declineReason: true,
           createdAt: true,
@@ -1604,6 +1606,7 @@ export default async function TaskDetailPage({
             submissionFee: true,
             note: true,
             status: true,
+            submissionTaskId: true,
             approvalNote: true,
             declineReason: true,
             createdAt: true,
@@ -1716,6 +1719,7 @@ export default async function TaskDetailPage({
               journalId: { not: null },
             },
             select: {
+              id: true,
               journalId: true,
               status: true,
               updatedAt: true,
@@ -1734,9 +1738,13 @@ export default async function TaskDetailPage({
   const submitTaskLockNoteForPublisher = ({
     publisherId,
     publisherName,
+    currentVenueId,
+    currentSubmissionTaskId,
   }: {
     publisherId?: string | null;
     publisherName?: string | null;
+    currentVenueId?: string | null;
+    currentSubmissionTaskId?: string | null;
   }) => {
     const normalizedTarget = normalizedPublisherKey(publisherName);
     if (!publisherId && !normalizedTarget) return null;
@@ -1746,11 +1754,12 @@ export default async function TaskDetailPage({
     }) =>
       Boolean(
         (publisherId && journal.publisherId === publisherId) ||
-          (normalizedTarget &&
-            normalizedPublisherKey(journal.publisher) === normalizedTarget),
+        (normalizedTarget &&
+          normalizedPublisherKey(journal.publisher) === normalizedTarget),
       );
     const submissionJournalIds = new Set<string>();
     const submissionItems = projectActiveJournalSubmissions
+      .filter((submission) => submission.journalId !== currentVenueId)
       .filter((submission) => samePublisher(submission.journal))
       .map((submission) => {
         submissionJournalIds.add(submission.journalId);
@@ -1765,6 +1774,8 @@ export default async function TaskDetailPage({
       });
     const taskItems = projectActiveSubmitTasks
       .filter((item) => item.journal)
+      .filter((item) => item.id !== currentSubmissionTaskId)
+      .filter((item) => item.journalId !== currentVenueId)
       .filter((item) => !submissionJournalIds.has(item.journalId ?? ""))
       .filter((item) => samePublisher(item.journal!))
       .map((item) => ({
@@ -2707,6 +2718,8 @@ export default async function TaskDetailPage({
         submitTaskLockNote: submitTaskLockNoteForPublisher({
           publisherId: journal?.publisherId ?? suggestion.publisherId,
           publisherName: journal?.publisher ?? suggestion.publisher?.name,
+          currentVenueId: journal?.id,
+          currentSubmissionTaskId: suggestion.submissionTaskId,
         }),
         createdAt: suggestion.createdAt.toISOString(),
       };
@@ -2797,6 +2810,9 @@ export default async function TaskDetailPage({
               publisherName:
                 linkedJournalSubmissionSuggestion.journal?.publisher ??
                 linkedJournalSubmissionSuggestion.publisher?.name,
+              currentVenueId: linkedJournalSubmissionSuggestion.journal?.id,
+              currentSubmissionTaskId:
+                linkedJournalSubmissionSuggestion.submissionTaskId,
             }),
             createdAt:
               linkedJournalSubmissionSuggestion.createdAt.toISOString(),
