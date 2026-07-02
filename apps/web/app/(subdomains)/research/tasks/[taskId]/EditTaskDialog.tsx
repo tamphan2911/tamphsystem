@@ -763,7 +763,7 @@ export function EditTaskDialog({
       <button
         type="button"
         onClick={openDialog}
-        className="group relative inline-flex h-5 w-5 flex-none cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none transition hover:-translate-y-0.5 hover:text-[#A8DADC]"
+        className="research-allow-transform group relative inline-flex h-5 w-5 flex-none cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-[#B0B0B0] shadow-none outline-none transition-[color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-0 hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none focus-visible:border-0 focus-visible:bg-transparent focus-visible:ring-0 active:translate-y-0 active:scale-95 active:bg-transparent active:shadow-none"
         aria-label="Edit task"
       >
         <Edit3 className="h-4 w-4" />
