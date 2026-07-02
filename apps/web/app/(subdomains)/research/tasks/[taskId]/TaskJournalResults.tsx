@@ -42,6 +42,9 @@ import {
   requestTaskJournalCorrection,
 } from "../../actions";
 
+const journalResultPlainLinkClass =
+  "research-allow-transform border-0 bg-transparent p-0 shadow-none outline-none transition-[color,transform] duration-180 ease-out hover:border-0 hover:bg-transparent hover:shadow-none hover:[text-shadow:none] focus-visible:border-0 focus-visible:bg-transparent focus-visible:ring-0 active:bg-transparent active:shadow-none active:[transform:scale(0.985)]";
+
 export type TaskJournalResult = {
   id: string;
   resultPosition: number;
@@ -729,7 +732,7 @@ function JournalResultCard({
       </div>
       <Link
         href={`/journals/${journal.id}`}
-        className="mt-3 block break-words text-sm leading-5 text-[#1F2937] transition-colors hover:text-[#1F7180] active:opacity-70 dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]"
+        className={`${journalResultPlainLinkClass} mt-3 block break-words text-sm leading-5 text-[#1F2937] hover:text-[#1F7180] dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]`}
       >
         {journal.name}
       </Link>
