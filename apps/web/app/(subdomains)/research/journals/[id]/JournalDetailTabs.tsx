@@ -31,7 +31,6 @@ import {
   usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
 import type { SubmissionRow } from "../../projects/[id]/SubmissionsTable";
-import { researchLinkClass } from "@/sites/research/components/ResearchPrimitives";
 import { NewAccountDialog } from "../../accounts/NewAccountDialog";
 import type { AccountJournalOption } from "../../accounts/AccountScopeFields";
 
@@ -61,6 +60,9 @@ export type JournalReviewRow = {
 };
 
 type TabKey = "submissions" | "accounts" | "reviews";
+
+const journalDetailPlainLinkClass =
+  "research-allow-transform border-0 bg-transparent p-0 shadow-none outline-none transition-[color,transform] duration-180 ease-out hover:border-0 hover:bg-transparent hover:shadow-none hover:[text-shadow:none] focus-visible:border-0 focus-visible:bg-transparent focus-visible:ring-0 active:bg-transparent active:shadow-none active:[transform:scale(0.985)]";
 
 function statusClass(status: string) {
   if (status === "ACCEPTED" || status === "SUBMITTED")
@@ -257,7 +259,7 @@ function JournalSubmissionsTable({
                     {linkSubmissions ? (
                       <Link
                         href={`/submissions/${row.id}`}
-                        className="research-journal-name-link font-mono text-xs uppercase tracking-wide text-[#1F7180] dark:text-[#A8DADC]"
+                        className={`${journalDetailPlainLinkClass} font-mono text-xs uppercase tracking-wide text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]`}
                       >
                         {row.code}
                       </Link>
@@ -271,7 +273,7 @@ function JournalSubmissionsTable({
                     {linkSubmissions ? (
                       <Link
                         href={`/submissions/${row.id}`}
-                        className="research-journal-name-link block whitespace-normal break-words text-[15px] font-normal leading-6 text-[#1F7180] dark:text-[#A8DADC]"
+                        className={`${journalDetailPlainLinkClass} block whitespace-normal break-words text-[15px] font-normal leading-6 text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]`}
                       >
                         {row.projectTitle || "Untitled submission"}
                       </Link>
@@ -303,13 +305,13 @@ function JournalSubmissionsTable({
                     {row.accountId ? (
                       <Link
                         href={`/accounts/${row.accountId}`}
-                        className="research-journal-name-link block min-w-0 text-[#1F7180] dark:text-[#A8DADC]"
+                        className={`${journalDetailPlainLinkClass} group/account grid min-w-0 gap-0.5 text-[#1F7180] dark:text-[#A8DADC]`}
                       >
-                        <span className="block truncate">
-                          {row.account || "No login ID"}
+                        <span className="whitespace-normal break-all text-[#1F7180] transition group-hover/account:text-[#155864] dark:text-[#A8DADC] dark:group-hover/account:text-[#C9F0F2]">
+                          ID: {row.account || "Not recorded"}
                         </span>
-                        <span className="block truncate text-[#B0B0B0]">
-                          {row.accountEmail || "No email"}
+                        <span className="whitespace-normal break-all text-[#B0B0B0]">
+                          Pass: {row.accountPassword || "Not recorded"}
                         </span>
                       </Link>
                     ) : (
@@ -628,7 +630,7 @@ export function JournalDetailTabs({
                         <td className="px-4 py-3 text-sm font-normal text-[#E4E4E4]">
                           <Link
                             href={`/accounts/${account.id}`}
-                            className={researchLinkClass}
+                            className={`${journalDetailPlainLinkClass} text-[#1F7180] hover:text-[#155864] dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]`}
                           >
                             {account.username}
                           </Link>

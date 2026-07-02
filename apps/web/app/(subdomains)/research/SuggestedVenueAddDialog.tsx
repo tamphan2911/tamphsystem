@@ -291,10 +291,9 @@ export function SuggestedVenueAddDialog({
         selectedVenue.kind === "journal" &&
         journalControlNoticeById.has(selectedVenue.item.venueId)
       )) ||
-      (activeTab === "journal"
-        ? manualJournalEntry &&
-          (freeVenueName.trim() || freeVenueLink.trim())
-        : freeVenueName.trim() || freeVenueLink.trim()),
+    (activeTab === "journal"
+      ? manualJournalEntry && (freeVenueName.trim() || freeVenueLink.trim())
+      : freeVenueName.trim() || freeVenueLink.trim()),
   );
 
   return (
@@ -320,7 +319,7 @@ export function SuggestedVenueAddDialog({
         <div className="grid gap-4">
           <div
             data-research-toggle-tabs="true"
-            className="suggested-venue-kind-tabs grid w-full grid-cols-2 gap-1 border border-slate-200 bg-slate-50/80 p-1 dark:border-[#444444] dark:bg-[#202020]"
+            className="suggested-venue-kind-tabs grid w-full grid-cols-2 gap-0 border border-[#D8D0C2] bg-[#F7F3EA] p-0 dark:gap-1 dark:border-[#444444] dark:bg-[#202020] dark:p-1"
           >
             {(["journal", "conference"] as const).map((tab) => (
               <button
@@ -338,10 +337,10 @@ export function SuggestedVenueAddDialog({
                 data-research-toggle-tab="true"
                 data-active={activeTab === tab}
                 className={cx(
-                  "suggested-venue-kind-tab cursor-pointer border px-3 py-2 text-sm font-normal transition duration-150 ease-out",
+                  "suggested-venue-kind-tab cursor-pointer border-0 border-r border-[#D8D0C2] bg-transparent px-3 py-3 text-sm font-normal transition duration-150 ease-out last:border-r-0 dark:border dark:px-3 dark:py-2",
                   activeTab === tab
-                    ? "border-sky-200 bg-sky-50/80 text-[#1F7180] dark:border-[#444444] dark:bg-[#383838] dark:text-[#A8DADC]"
-                    : "border-transparent text-[#667085] hover:border-slate-200 hover:bg-white hover:text-slate-900 dark:text-[#B0B0B0] dark:hover:border-[#444444] dark:hover:bg-[#303030] dark:hover:text-[#E4E4E4]",
+                    ? "text-[#1F7180] dark:border-[#444444] dark:bg-[#383838] dark:text-[#A8DADC]"
+                    : "text-[#667085] hover:bg-[#FCFAF4] hover:text-[#1F7180] dark:border-transparent dark:text-[#B0B0B0] dark:hover:border-[#444444] dark:hover:bg-[#303030] dark:hover:text-[#E4E4E4]",
                 )}
               >
                 {tab === "journal" ? "Journals" : "Conferences"}
@@ -349,109 +348,111 @@ export function SuggestedVenueAddDialog({
             ))}
           </div>
 
-        {activeTab === "journal" ? (
-          <>
-            {!manualJournalEntry ? (
-              <div className="animate-[modalPanelIn_180ms_ease-out]">
-                <AddVenuePicker
+          {activeTab === "journal" ? (
+            <>
+              {!manualJournalEntry ? (
+                <div className="animate-[modalPanelIn_180ms_ease-out]">
+                  <AddVenuePicker
+                    kind="journal"
+                    query={journalQuery}
+                    selectedVenue={
+                      selectedVenue?.kind === "journal" ? selectedVenue : null
+                    }
+                    notice={
+                      selectedVenue?.kind === "journal"
+                        ? journalControlNoticeById.get(
+                            selectedVenue.item.venueId,
+                          )
+                        : undefined
+                    }
+                    journals={journalResults}
+                    conferences={[]}
+                    placeholder="Search journal name, ISSN, field, rank, publisher..."
+                    onQueryChange={(value) => {
+                      setJournalQuery(value);
+                      setSelectedVenue(null);
+                    }}
+                    onSelect={(venue) => {
+                      setSelectedVenue(venue);
+                      setJournalQuery("");
+                    }}
+                    onClear={() => {
+                      setSelectedVenue(null);
+                      setJournalQuery("");
+                    }}
+                  />
+                </div>
+              ) : null}
+              <ManualVenueToggle
+                checked={manualJournalEntry}
+                onChange={setManualJournalMode}
+              />
+              {manualJournalEntry ? (
+                <FreeVenueFields
+                  name={freeVenueName}
+                  link={freeVenueLink}
+                  apc={freeJournalApc}
+                  submissionFee={freeJournalSubmissionFee}
+                  publishers={publishers}
+                  selectedPublisher={selectedPublisher}
+                  onNameChange={setFreeVenueName}
+                  onLinkChange={setFreeVenueLink}
+                  onApcChange={setFreeJournalApc}
+                  onSubmissionFeeChange={setFreeJournalSubmissionFee}
+                  onPublisherChange={setSelectedPublisher}
                   kind="journal"
-                  query={journalQuery}
-                  selectedVenue={
-                    selectedVenue?.kind === "journal" ? selectedVenue : null
-                  }
-                  notice={
-                    selectedVenue?.kind === "journal"
-                      ? journalControlNoticeById.get(selectedVenue.item.venueId)
-                      : undefined
-                  }
-                  journals={journalResults}
-                  conferences={[]}
-                  placeholder="Search journal name, ISSN, field, rank, publisher..."
-                  onQueryChange={(value) => {
-                    setJournalQuery(value);
-                    setSelectedVenue(null);
-                  }}
-                  onSelect={(venue) => {
-                    setSelectedVenue(venue);
-                    setJournalQuery("");
-                  }}
-                  onClear={() => {
-                    setSelectedVenue(null);
-                    setJournalQuery("");
-                  }}
                 />
-              </div>
-            ) : null}
-            <ManualVenueToggle
-              checked={manualJournalEntry}
-              onChange={setManualJournalMode}
-            />
-            {manualJournalEntry ? (
-              <FreeVenueFields
-                name={freeVenueName}
-                link={freeVenueLink}
-                apc={freeJournalApc}
-                submissionFee={freeJournalSubmissionFee}
-                publishers={publishers}
-                selectedPublisher={selectedPublisher}
-                onNameChange={setFreeVenueName}
-                onLinkChange={setFreeVenueLink}
-                onApcChange={setFreeJournalApc}
-                onSubmissionFeeChange={setFreeJournalSubmissionFee}
-                onPublisherChange={setSelectedPublisher}
-                kind="journal"
+              ) : null}
+              <textarea
+                value={freeVenueNote}
+                onChange={(event) => setFreeVenueNote(event.target.value)}
+                placeholder="Note for this suggested venue, for example why it fits this research, submission timing, or special reminder..."
+                aria-label="Suggested venue note"
+                className={`${researchTextareaClass} min-h-24`}
               />
-            ) : null}
-            <textarea
-              value={freeVenueNote}
-              onChange={(event) => setFreeVenueNote(event.target.value)}
-              placeholder="Note for this suggested venue, for example why it fits this research, submission timing, or special reminder..."
-              aria-label="Suggested venue note"
-              className={`${researchTextareaClass} min-h-24`}
-            />
-          </>
-        ) : (
-          <>
-            <AddVenuePicker
-              kind="conference"
-              query={conferenceQuery}
-              selectedVenue={
-                selectedVenue?.kind === "conference" ? selectedVenue : null
-              }
-              journals={[]}
-              conferences={conferenceResults}
-              placeholder="Search conference, organizer, theme, location..."
-              onQueryChange={(value) => {
-                setConferenceQuery(value);
-                setSelectedVenue(null);
-              }}
-              onSelect={(venue) => {
-                setSelectedVenue(venue);
-                setConferenceQuery("");
-              }}
-              onClear={() => {
-                setSelectedVenue(null);
-                setConferenceQuery("");
-              }}
-            />
-            {!selectedVenue && (
-              <FreeVenueFields
-                name={freeVenueName}
-                link={freeVenueLink}
-                onNameChange={setFreeVenueName}
-                onLinkChange={setFreeVenueLink}
+            </>
+          ) : (
+            <>
+              <AddVenuePicker
                 kind="conference"
+                query={conferenceQuery}
+                selectedVenue={
+                  selectedVenue?.kind === "conference" ? selectedVenue : null
+                }
+                journals={[]}
+                conferences={conferenceResults}
+                placeholder="Search conference, organizer, theme, location..."
+                onQueryChange={(value) => {
+                  setConferenceQuery(value);
+                  setSelectedVenue(null);
+                }}
+                onSelect={(venue) => {
+                  setSelectedVenue(venue);
+                  setConferenceQuery("");
+                }}
+                onClear={() => {
+                  setSelectedVenue(null);
+                  setConferenceQuery("");
+                }}
               />
-            )}
-            <textarea
-              value={freeVenueNote}
-              onChange={(event) => setFreeVenueNote(event.target.value)}
-              placeholder="Note for this suggested venue, for example why it fits this research, deadline timing, or special reminder..."
-              aria-label="Suggested venue note"
-              className={`${researchTextareaClass} min-h-24`}
-            />
-          </>
-        )}
+              {!selectedVenue && (
+                <FreeVenueFields
+                  name={freeVenueName}
+                  link={freeVenueLink}
+                  onNameChange={setFreeVenueName}
+                  onLinkChange={setFreeVenueLink}
+                  kind="conference"
+                />
+              )}
+              <textarea
+                value={freeVenueNote}
+                onChange={(event) => setFreeVenueNote(event.target.value)}
+                placeholder="Note for this suggested venue, for example why it fits this research, deadline timing, or special reminder..."
+                aria-label="Suggested venue note"
+                className={`${researchTextareaClass} min-h-24`}
+              />
+            </>
+          )}
         </div>
       </ResearchModal>
 

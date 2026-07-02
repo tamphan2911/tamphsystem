@@ -141,7 +141,14 @@ export default async function JournalDetailPage({
                   },
                 },
               },
-              account: { select: { id: true, username: true, email: true } },
+              account: {
+                select: {
+                  id: true,
+                  username: true,
+                  password: true,
+                  email: true,
+                },
+              },
             },
             orderBy: [{ updatedAt: "desc" }, { submittedAt: "desc" }],
           },
@@ -348,6 +355,7 @@ export default async function JournalDetailPage({
         submissionFeeCurrency: journal.submissionFeeCurrency,
         accountId: submission.account?.id ?? "",
         account: submission.account?.username ?? "",
+        accountPassword: submission.account?.password ?? "",
         accountEmail: submission.account?.email ?? "",
         status: submission.status,
         submittedAt: submission.submittedAt.toISOString(),
