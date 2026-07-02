@@ -109,6 +109,9 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const taskDetailPlainLinkClass =
+  "research-allow-transform border-0 bg-transparent p-0 shadow-none outline-none transition-[color,transform] duration-180 ease-out hover:border-0 hover:bg-transparent hover:shadow-none hover:[text-shadow:none] focus-visible:border-0 focus-visible:bg-transparent focus-visible:ring-0 active:bg-transparent active:shadow-none active:[transform:scale(0.985)]";
+
 function dateInputValue(value: Date | null) {
   if (!value) return "";
   return researchDateValue(value);
@@ -3869,7 +3872,7 @@ export default async function TaskDetailPage({
                       href={`/projects/${task.project.id}${
                         isSuggestVenueTask ? "#suggested-venues" : ""
                       }`}
-                      className="research-journal-name-link mt-2 block w-full border-0 bg-transparent p-0 text-sm font-normal text-[#1F7180] shadow-none outline-none hover:border-0 hover:bg-transparent hover:shadow-none focus-visible:border-0 focus-visible:bg-transparent focus-visible:ring-0 dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+                      className={`${taskDetailPlainLinkClass} mt-2 block w-full text-sm font-normal text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]`}
                     >
                       {task.project.title}
                     </Link>
@@ -3933,7 +3936,7 @@ export default async function TaskDetailPage({
                     <div className="mt-2 flex min-w-0 items-center gap-2">
                       <Link
                         href={`/journals/${task.journal.id}`}
-                        className={`min-w-0 text-sm ${researchLinkClass}`}
+                        className={`${taskDetailPlainLinkClass} min-w-0 text-sm font-normal text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]`}
                       >
                         {task.journal.name}
                       </Link>
