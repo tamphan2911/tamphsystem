@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../../auth";
+import { researchDownloadResponse } from "@/sites/research/lib/file-download";
 
 function scopedTaskWhere(taskId: string, userId: string) {
   return {
@@ -32,10 +33,7 @@ function scopedTaskWhere(taskId: string, userId: string) {
       },
       {
         organizedProject: {
-          OR: [
-            { createdById: userId },
-            { members: { some: { userId } } },
-          ],
+          OR: [{ createdById: userId }, { members: { some: { userId } } }],
         },
       },
     ],
@@ -88,10 +86,11 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  return new NextResponse(new Uint8Array(task.reportFileData), {
-    headers: {
-      "Content-Type": task.reportFileType || "application/octet-stream",
-      "Content-Disposition": `attachment; filename="${task.reportFileName.replaceAll('"', "")}"`,
-    },
-  });
+  return (
+    researchDownloadResponse({
+      data: task.reportFileData,
+      filename: task.reportFileName,
+      contentType: task.reportFileType,
+    }) ?? NextResponse.json({ error: "File not found" }, { status: 404 })
+  );
 }

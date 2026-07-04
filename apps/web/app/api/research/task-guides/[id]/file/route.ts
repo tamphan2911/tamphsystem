@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../../auth";
+import { researchDownloadResponse } from "@/sites/research/lib/file-download";
 
 function scopedGuideTaskWhere(userId: string) {
   return {
@@ -85,11 +86,11 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const bytes = new Uint8Array(guide.supportFileData);
-  return new NextResponse(bytes, {
-    headers: {
-      "Content-Type": guide.supportFileType || "application/octet-stream",
-      "Content-Disposition": `attachment; filename="${guide.supportFileName.replaceAll('"', "")}"`,
-    },
-  });
+  return (
+    researchDownloadResponse({
+      data: guide.supportFileData,
+      filename: guide.supportFileName,
+      contentType: guide.supportFileType,
+    }) ?? NextResponse.json({ error: "File not found" }, { status: 404 })
+  );
 }

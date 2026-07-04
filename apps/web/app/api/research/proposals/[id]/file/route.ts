@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../../auth";
 import { canAccessAllResearchProposals } from "@/sites/research/lib/proposalAccess";
+import { researchDownloadResponse } from "@/sites/research/lib/file-download";
 
 export async function GET(
   _request: Request,
@@ -56,12 +57,11 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const bytes = new Uint8Array(proposal.supportFileData);
-
-  return new NextResponse(bytes, {
-    headers: {
-      "Content-Type": proposal.supportFileType || "application/octet-stream",
-      "Content-Disposition": `attachment; filename="${proposal.supportFileName.replaceAll('"', "")}"`,
-    },
-  });
+  return (
+    researchDownloadResponse({
+      data: proposal.supportFileData,
+      filename: proposal.supportFileName,
+      contentType: proposal.supportFileType,
+    }) ?? NextResponse.json({ error: "File not found" }, { status: 404 })
+  );
 }

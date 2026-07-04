@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../../auth";
+import { researchDownloadResponse } from "@/sites/research/lib/file-download";
 
 function scopedTaskWhere(taskId: string, userId: string) {
   return {
@@ -82,10 +83,11 @@ export async function GET(
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
-  return new NextResponse(new Uint8Array(task.taskFileData), {
-    headers: {
-      "Content-Type": task.taskFileType || "application/octet-stream",
-      "Content-Disposition": `attachment; filename="${task.taskFileName.replaceAll('"', "")}"`,
-    },
-  });
+  return (
+    researchDownloadResponse({
+      data: task.taskFileData,
+      filename: task.taskFileName,
+      contentType: task.taskFileType,
+    }) ?? NextResponse.json({ error: "File not found" }, { status: 404 })
+  );
 }

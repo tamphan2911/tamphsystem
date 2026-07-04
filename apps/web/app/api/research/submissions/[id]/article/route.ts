@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../../../auth";
+import { researchDownloadResponse } from "@/sites/research/lib/file-download";
 
 export async function GET(
   _request: Request,
@@ -60,10 +61,11 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  return new NextResponse(new Uint8Array(submission.articleFileData), {
-    headers: {
-      "Content-Type": submission.articleFileType || "application/octet-stream",
-      "Content-Disposition": `attachment; filename="${submission.articleFileName.replaceAll('"', "")}"`,
-    },
-  });
+  return (
+    researchDownloadResponse({
+      data: submission.articleFileData,
+      filename: submission.articleFileName,
+      contentType: submission.articleFileType,
+    }) ?? NextResponse.json({ error: "File not found" }, { status: 404 })
+  );
 }
