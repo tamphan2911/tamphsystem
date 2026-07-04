@@ -1151,7 +1151,10 @@ export default async function TaskDetailPage({
           venueName: true,
           venueLink: true,
           apc: true,
+          apcCurrency: true,
+          hasApcOption: true,
           submissionFee: true,
+          submissionFeeCurrency: true,
           note: true,
           status: true,
           submissionTaskId: true,
@@ -1246,7 +1249,10 @@ export default async function TaskDetailPage({
           venueName: true,
           venueLink: true,
           apc: true,
+          apcCurrency: true,
+          hasApcOption: true,
           submissionFee: true,
+          submissionFeeCurrency: true,
           note: true,
           status: true,
           submissionTaskId: true,
@@ -1606,7 +1612,10 @@ export default async function TaskDetailPage({
             venueName: true,
             venueLink: true,
             apc: true,
+            apcCurrency: true,
+            hasApcOption: true,
             submissionFee: true,
+            submissionFeeCurrency: true,
             note: true,
             status: true,
             submissionTaskId: true,
@@ -2687,12 +2696,13 @@ export default async function TaskDetailPage({
           .filter(Boolean)
           .join(" - "),
         apc: journal?.apc ?? suggestion.apc ?? null,
-        apcCurrency: journal?.apcCurrency ?? "USD",
-        hasApcOption: journal ? journal.hasApcOption : null,
+        apcCurrency: journal?.apcCurrency ?? suggestion.apcCurrency,
+        hasApcOption: journal ? journal.hasApcOption : suggestion.hasApcOption,
         submissionFee:
           journal?.submissionFee ?? suggestion.submissionFee ?? null,
-        submissionFeeCurrency: journal?.submissionFeeCurrency ?? "USD",
-        useRawFeeText: !journal,
+        submissionFeeCurrency:
+          journal?.submissionFeeCurrency ?? suggestion.submissionFeeCurrency,
+        useRawFeeText: false,
         journalNote: journal?.note ?? null,
         venueNote: suggestion.note ?? null,
         suggestedByName: suggestion.createdBy
@@ -2757,18 +2767,20 @@ export default async function TaskDetailPage({
               linkedJournalSubmissionSuggestion.apc ??
               null,
             apcCurrency:
-              linkedJournalSubmissionSuggestion.journal?.apcCurrency ?? "USD",
+              linkedJournalSubmissionSuggestion.journal?.apcCurrency ??
+              linkedJournalSubmissionSuggestion.apcCurrency,
             hasApcOption: linkedJournalSubmissionSuggestion.journal
               ? linkedJournalSubmissionSuggestion.journal.hasApcOption
-              : null,
+              : linkedJournalSubmissionSuggestion.hasApcOption,
             submissionFee:
               linkedJournalSubmissionSuggestion.journal?.submissionFee ??
               linkedJournalSubmissionSuggestion.submissionFee ??
               null,
             submissionFeeCurrency:
               linkedJournalSubmissionSuggestion.journal
-                ?.submissionFeeCurrency ?? "USD",
-            useRawFeeText: !linkedJournalSubmissionSuggestion.journal,
+                ?.submissionFeeCurrency ??
+              linkedJournalSubmissionSuggestion.submissionFeeCurrency,
+            useRawFeeText: false,
             journalNote:
               linkedJournalSubmissionSuggestion.journal?.note ?? null,
             venueNote: linkedJournalSubmissionSuggestion.note ?? null,

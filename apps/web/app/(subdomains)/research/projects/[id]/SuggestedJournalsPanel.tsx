@@ -2231,7 +2231,9 @@ function JournalCard({
 }) {
   const submitTaskLock =
     journal.submitTaskLock &&
-    !venueStatesWithOwnSubmissionWorkflow.has(journal.venueState?.state ?? "idle")
+    !venueStatesWithOwnSubmissionWorkflow.has(
+      journal.venueState?.state ?? "idle",
+    )
       ? journal.submitTaskLock
       : null;
 
@@ -2306,9 +2308,9 @@ function JournalCard({
             apc={journal.apc}
             apcCurrency={journal.apcCurrency}
             hasApcOption={journal.hasApcOption}
+            showApcOptionStatus
             submissionFee={journal.submissionFee}
             submissionFeeCurrency={journal.submissionFeeCurrency}
-            rawTextFees
           />
         </>
       )}
@@ -2443,7 +2445,7 @@ function VenueFees({
     : apcIsFree
       ? "free"
       : formatResearchNumber(apc)
-        ? `${currencySymbol(apcCurrency)} ${formatResearchNumber(apc)}`
+        ? `${formatResearchNumber(apc)} ${currencySymbol(apcCurrency)}`
         : apc.trim();
   const submissionFeeLabel = rawTextFees
     ? feeIsFree
@@ -2452,15 +2454,15 @@ function VenueFees({
     : feeIsFree
       ? "free"
       : formatResearchNumber(submissionFee)
-        ? `${currencySymbol(submissionFeeCurrency)} ${formatResearchNumber(
-            submissionFee,
+        ? `${formatResearchNumber(submissionFee)} ${currencySymbol(
+            submissionFeeCurrency,
           )}`
         : submissionFee.trim();
   const apcClassName = apcIsFree
     ? "font-normal text-emerald-700 dark:text-emerald-300"
     : apcIsHigh
       ? "font-normal text-rose-700 dark:text-rose-300"
-      : "font-normal text-[#344054] dark:text-[#E4E4E4]";
+      : "font-normal text-emerald-700 dark:text-emerald-300";
   const feeClassName = feeIsFree
     ? "font-normal text-emerald-700 dark:text-emerald-300"
     : "font-normal text-rose-700 dark:text-rose-300";
@@ -2472,7 +2474,7 @@ function VenueFees({
     <p className="mt-2 flex flex-wrap items-center gap-x-1 text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
       <span>APC:</span>
       <span className={apcClassName}>{apcLabel}</span>
-      {showApcOptionStatus && !rawTextFees && !apcIsFree ? (
+      {showApcOptionStatus && !rawTextFees ? (
         <span className={apcOptionClassName}>
           ({hasApcOption ? "Option" : "No Option"})
         </span>

@@ -103,13 +103,13 @@ function feeMeta({
     label: rawText
       ? text
       : formatResearchNumber(text)
-        ? `${currencySymbol(currency)} ${formatResearchNumber(text)}`
+        ? `${formatResearchNumber(text)} ${currencySymbol(currency)}`
         : text,
     isFree: false,
     className:
       kind === "submissionFee" || isHighApc
         ? "font-normal text-rose-700 dark:text-rose-300"
-        : "font-normal text-[#344054] dark:text-[#E4E4E4]",
+        : "font-normal text-emerald-700 dark:text-emerald-300",
   };
 }
 
@@ -307,7 +307,7 @@ function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
   });
   const showApcOption =
     venue.kind === "journal" &&
-    !apc.isFree &&
+    !venue.useRawFeeText &&
     venue.hasApcOption !== null &&
     venue.hasApcOption !== undefined;
 
@@ -367,9 +367,7 @@ function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
           APC: <span className={apc.className}>{apc.label}</span>
           {showApcOption ? (
             <span
-              className={`ml-1 ${apcOptionClass(
-                venue.hasApcOption === true,
-              )}`}
+              className={`ml-1 ${apcOptionClass(venue.hasApcOption === true)}`}
             >
               ({venue.hasApcOption ? "Option" : "No Option"})
             </span>

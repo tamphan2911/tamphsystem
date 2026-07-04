@@ -890,10 +890,11 @@ export default async function ProjectDetailPage({
         publisherId:
           journal?.publisherId ?? suggestion.publisherId ?? undefined,
         apc: journal?.apc ?? suggestion.apc ?? "",
-        apcCurrency: journal?.apcCurrency ?? "USD",
-        hasApcOption: journal?.hasApcOption ?? false,
+        apcCurrency: journal?.apcCurrency ?? suggestion.apcCurrency,
+        hasApcOption: journal?.hasApcOption ?? suggestion.hasApcOption,
         submissionFee: journal?.submissionFee ?? suggestion.submissionFee ?? "",
-        submissionFeeCurrency: journal?.submissionFeeCurrency ?? "USD",
+        submissionFeeCurrency:
+          journal?.submissionFeeCurrency ?? suggestion.submissionFeeCurrency,
         note: journal?.note ?? "",
         venueNote: suggestion.note ?? "",
         accounts: (journal?.publisherRecord?.usesSingleAccount

@@ -9769,7 +9769,13 @@ export async function addTaskSuggestedVenue(
   const venueLink = optionalString(formData.get("venueLink"));
   const note = optionalString(formData.get("note"));
   const apc = optionalString(formData.get("apc"));
+  const apcCurrency =
+    enumValue(CurrencyCode, formData.get("apcCurrency")) ?? CurrencyCode.USD;
+  const hasApcOption = formData.get("hasApcOption") === "on";
   const submissionFee = optionalString(formData.get("submissionFee"));
+  const submissionFeeCurrency =
+    enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??
+    CurrencyCode.USD;
   const suggestedPublisherId =
     venueKind === "journal" && !journalId
       ? optionalString(formData.get("publisherId"))
@@ -9901,7 +9907,10 @@ export async function addTaskSuggestedVenue(
                 linkedJournal?.homepageLink ??
                 null,
               apc,
+              apcCurrency,
+              hasApcOption,
               submissionFee,
+              submissionFeeCurrency,
               note,
             },
             update: {
@@ -9921,7 +9930,10 @@ export async function addTaskSuggestedVenue(
                 linkedJournal?.homepageLink ??
                 null,
               apc,
+              apcCurrency,
+              hasApcOption,
               submissionFee,
+              submissionFeeCurrency,
               note,
             },
           })
@@ -9935,7 +9947,10 @@ export async function addTaskSuggestedVenue(
               venueName,
               venueLink,
               apc,
+              apcCurrency,
+              hasApcOption,
               submissionFee,
+              submissionFeeCurrency,
               publisherId: suggestedPublisher?.id ?? null,
               note,
             },
@@ -10021,7 +10036,13 @@ export async function addSuggestedJournal(
   const venueName = optionalString(formData.get("venueName"));
   const venueLink = optionalString(formData.get("venueLink"));
   const apc = optionalString(formData.get("apc"));
+  const apcCurrency =
+    enumValue(CurrencyCode, formData.get("apcCurrency")) ?? CurrencyCode.USD;
+  const hasApcOption = formData.get("hasApcOption") === "on";
   const submissionFee = optionalString(formData.get("submissionFee"));
+  const submissionFeeCurrency =
+    enumValue(CurrencyCode, formData.get("submissionFeeCurrency")) ??
+    CurrencyCode.USD;
   const note = optionalString(formData.get("note"));
   const suggestedPublisherId = !journalId
     ? optionalString(formData.get("publisherId"))
@@ -10114,7 +10135,10 @@ export async function addSuggestedJournal(
           venueName,
           venueLink,
           apc,
+          apcCurrency,
+          hasApcOption,
           submissionFee,
+          submissionFeeCurrency,
           publisherId: suggestedPublisher?.id ?? null,
           note,
           taskId,

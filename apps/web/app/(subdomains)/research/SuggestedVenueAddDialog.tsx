@@ -19,6 +19,7 @@ import {
   PublisherPicker,
   type PublisherPickerItem,
 } from "@/sites/research/components/PublisherPicker";
+import { currencyOptions } from "@/sites/research/lib/currency";
 
 export type SuggestedVenueAddJournalOption = {
   id: string;
@@ -122,7 +123,13 @@ export function SuggestedVenueAddDialog({
   const [freeVenueName, setFreeVenueName] = useState("");
   const [freeVenueLink, setFreeVenueLink] = useState("");
   const [freeJournalApc, setFreeJournalApc] = useState("");
+  const [freeJournalApcCurrency, setFreeJournalApcCurrency] = useState("USD");
+  const [freeJournalHasApcOption, setFreeJournalHasApcOption] = useState(false);
   const [freeJournalSubmissionFee, setFreeJournalSubmissionFee] = useState("");
+  const [
+    freeJournalSubmissionFeeCurrency,
+    setFreeJournalSubmissionFeeCurrency,
+  ] = useState("USD");
   const [freeVenueNote, setFreeVenueNote] = useState("");
   const [manualJournalEntry, setManualJournalEntry] = useState(false);
   const [selectedPublisher, setSelectedPublisher] =
@@ -200,7 +207,10 @@ export function SuggestedVenueAddDialog({
     setFreeVenueName("");
     setFreeVenueLink("");
     setFreeJournalApc("");
+    setFreeJournalApcCurrency("USD");
+    setFreeJournalHasApcOption(false);
     setFreeJournalSubmissionFee("");
+    setFreeJournalSubmissionFeeCurrency("USD");
     setFreeVenueNote("");
     setManualJournalEntry(false);
     setSelectedPublisher(null);
@@ -212,7 +222,10 @@ export function SuggestedVenueAddDialog({
     setFreeVenueName("");
     setFreeVenueLink("");
     setFreeJournalApc("");
+    setFreeJournalApcCurrency("USD");
+    setFreeJournalHasApcOption(false);
     setFreeJournalSubmissionFee("");
+    setFreeJournalSubmissionFeeCurrency("USD");
     setSelectedPublisher(null);
   }
 
@@ -264,8 +277,17 @@ export function SuggestedVenueAddDialog({
       if (activeTab === "journal" && freeJournalApc.trim()) {
         formData.set("apc", freeJournalApc.trim());
       }
+      if (activeTab === "journal") {
+        formData.set("apcCurrency", freeJournalApcCurrency);
+        if (freeJournalHasApcOption) {
+          formData.set("hasApcOption", "on");
+        }
+      }
       if (activeTab === "journal" && freeJournalSubmissionFee.trim()) {
         formData.set("submissionFee", freeJournalSubmissionFee.trim());
+      }
+      if (activeTab === "journal") {
+        formData.set("submissionFeeCurrency", freeJournalSubmissionFeeCurrency);
       }
       if (activeTab === "journal" && selectedPublisher) {
         formData.set("publisherId", selectedPublisher.id);
@@ -392,13 +414,21 @@ export function SuggestedVenueAddDialog({
                   name={freeVenueName}
                   link={freeVenueLink}
                   apc={freeJournalApc}
+                  apcCurrency={freeJournalApcCurrency}
+                  hasApcOption={freeJournalHasApcOption}
                   submissionFee={freeJournalSubmissionFee}
+                  submissionFeeCurrency={freeJournalSubmissionFeeCurrency}
                   publishers={publishers}
                   selectedPublisher={selectedPublisher}
                   onNameChange={setFreeVenueName}
                   onLinkChange={setFreeVenueLink}
                   onApcChange={setFreeJournalApc}
+                  onApcCurrencyChange={setFreeJournalApcCurrency}
+                  onHasApcOptionChange={setFreeJournalHasApcOption}
                   onSubmissionFeeChange={setFreeJournalSubmissionFee}
+                  onSubmissionFeeCurrencyChange={
+                    setFreeJournalSubmissionFeeCurrency
+                  }
                   onPublisherChange={setSelectedPublisher}
                   kind="journal"
                 />
@@ -705,26 +735,38 @@ function FreeVenueFields({
   name,
   link,
   apc,
+  apcCurrency,
+  hasApcOption,
   submissionFee,
+  submissionFeeCurrency,
   publishers = [],
   selectedPublisher,
   onNameChange,
   onLinkChange,
   onApcChange,
+  onApcCurrencyChange,
+  onHasApcOptionChange,
   onSubmissionFeeChange,
+  onSubmissionFeeCurrencyChange,
   onPublisherChange,
   kind,
 }: {
   name: string;
   link: string;
   apc?: string;
+  apcCurrency?: string;
+  hasApcOption?: boolean;
   submissionFee?: string;
+  submissionFeeCurrency?: string;
   publishers?: PublisherPickerItem[];
   selectedPublisher?: PublisherPickerItem | null;
   onNameChange: (value: string) => void;
   onLinkChange: (value: string) => void;
   onApcChange?: (value: string) => void;
+  onApcCurrencyChange?: (value: string) => void;
+  onHasApcOptionChange?: (value: boolean) => void;
   onSubmissionFeeChange?: (value: string) => void;
+  onSubmissionFeeCurrencyChange?: (value: string) => void;
   onPublisherChange?: (value: PublisherPickerItem | null) => void;
   kind: "journal" | "conference";
 }) {
@@ -751,17 +793,30 @@ function FreeVenueFields({
           </p>
         </div>
       ) : null}
-      <label className="grid gap-1.5 sm:col-span-2">
-        <span className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
-          {kind === "journal" ? "Journal name" : "Conference name"}
-        </span>
-        <input
-          value={name}
-          onChange={(event) => onNameChange(event.target.value)}
-          placeholder="Venue name"
-          className={researchFieldClass}
-        />
-      </label>
+      <div className="grid gap-2 sm:col-span-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <label className="grid gap-1.5">
+          <span className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
+            {kind === "journal" ? "Journal name" : "Conference name"}
+          </span>
+          <input
+            value={name}
+            onChange={(event) => onNameChange(event.target.value)}
+            placeholder="Venue name"
+            className={researchFieldClass}
+          />
+        </label>
+        {kind === "journal" ? (
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-3 text-sm text-[#344054] transition hover:border-[#1F7180] dark:border-[#444444] dark:bg-[#242424] dark:text-[#E4E4E4] dark:hover:border-[#A8DADC]">
+            <input
+              type="checkbox"
+              checked={hasApcOption ?? false}
+              onChange={(event) => onHasApcOptionChange?.(event.target.checked)}
+              className="h-4 w-4 cursor-pointer accent-[#1F7180] dark:accent-[#A8DADC]"
+            />
+            <span>APC option</span>
+          </label>
+        ) : null}
+      </div>
       <label className="grid gap-1.5 sm:col-span-2">
         <span className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
           Link
@@ -775,30 +830,71 @@ function FreeVenueFields({
       </label>
       {kind === "journal" ? (
         <>
-          <label className="grid gap-1.5">
-            <span className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
-              APC
-            </span>
-            <input
-              value={apc ?? ""}
-              onChange={(event) => onApcChange?.(event.target.value)}
-              placeholder="Example: free, USD 500, waived"
-              className={researchFieldClass}
-            />
-          </label>
-          <label className="grid gap-1.5">
-            <span className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
-              Submission fee
-            </span>
-            <input
-              value={submissionFee ?? ""}
-              onChange={(event) => onSubmissionFeeChange?.(event.target.value)}
-              placeholder="Example: no fee, USD 50"
-              className={researchFieldClass}
-            />
-          </label>
+          <MoneyInputRow
+            label="APC"
+            value={apc ?? ""}
+            currency={apcCurrency ?? "USD"}
+            placeholder="APC amount, use 0 if free"
+            onValueChange={(value) => onApcChange?.(value)}
+            onCurrencyChange={(value) => onApcCurrencyChange?.(value)}
+          />
+          <MoneyInputRow
+            label="Submission fee"
+            value={submissionFee ?? ""}
+            currency={submissionFeeCurrency ?? "USD"}
+            placeholder="Submission fee, use 0 if free"
+            onValueChange={(value) => onSubmissionFeeChange?.(value)}
+            onCurrencyChange={(value) => onSubmissionFeeCurrencyChange?.(value)}
+          />
         </>
       ) : null}
+    </div>
+  );
+}
+
+function MoneyInputRow({
+  label,
+  value,
+  currency,
+  placeholder,
+  onValueChange,
+  onCurrencyChange,
+}: {
+  label: string;
+  value: string;
+  currency: string;
+  placeholder: string;
+  onValueChange: (value: string) => void;
+  onCurrencyChange: (value: string) => void;
+}) {
+  return (
+    <div className="grid gap-1.5 sm:col-span-2">
+      <span className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
+        {label}
+      </span>
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_10rem]">
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          value={value}
+          onChange={(event) => onValueChange(event.target.value)}
+          placeholder={placeholder}
+          className={researchFieldClass}
+        />
+        <select
+          value={currency}
+          onChange={(event) => onCurrencyChange(event.target.value)}
+          className={researchFieldClass}
+          aria-label={`${label} currency`}
+        >
+          {currencyOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }

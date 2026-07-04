@@ -870,7 +870,10 @@ model SuggestedJournal {
   venueName                      String?
   venueLink                      String?
   apc                            String?
+  apcCurrency                    CurrencyCode          @default(USD)
+  hasApcOption                   Boolean               @default(false)
   submissionFee                  String?
+  submissionFeeCurrency          CurrencyCode          @default(USD)
   note                           String?
   status                         SuggestedVenueStatus @default(APPROVED)
   approvedAt                     DateTime?
