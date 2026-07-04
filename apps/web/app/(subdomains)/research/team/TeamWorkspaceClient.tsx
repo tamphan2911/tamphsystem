@@ -202,7 +202,7 @@ export function TeamWorkspaceClient({ teams }: { teams: TeamWorkspace[] }) {
         </div>
       ) : null}
 
-      <div className="border-b border-[#E2D9CC] pb-3 dark:border-[#444444]">
+      <div className="border-b border-[#E2D9CC] bg-[#F8F6EF] pb-3 dark:border-[#444444] dark:bg-transparent">
         <p className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
           Team leader
         </p>
