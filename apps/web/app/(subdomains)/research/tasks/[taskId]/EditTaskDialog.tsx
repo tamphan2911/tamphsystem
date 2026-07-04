@@ -135,7 +135,7 @@ const productionSubtypeOptions: Array<{
   {
     value: "WRITING",
     label: "Writing",
-    guideCodes: ["G007", "G009", "G011", "G008", "G010"],
+    guideCodes: ["G007", "G009", "G011", "G008", "G010", "G024"],
   },
   { value: "HUMANIZING", label: "Humanizing", guideCodes: ["G020"] },
   { value: "REFERENCES", label: "References", guideCodes: ["G006"] },

@@ -280,7 +280,7 @@ const productionSubtypeConfig = [
   {
     value: ResearchProductionSubtype.WRITING,
     label: "Writing",
-    guideCodes: ["G007", "G009", "G011", "G008", "G010"],
+    guideCodes: ["G007", "G009", "G011", "G008", "G010", "G024"],
   },
   {
     value: ResearchProductionSubtype.HUMANIZING,
