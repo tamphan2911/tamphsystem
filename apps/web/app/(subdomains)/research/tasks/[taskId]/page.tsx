@@ -474,6 +474,58 @@ function nextProductionTaskLabel(subtype: string | null) {
   return "";
 }
 
+const writingTaskGuideTitleOrder = [
+  "Guide for writing Chapter 2",
+  "Guide for writing Chapter 3",
+  "Guide for writing Chapter 4",
+  "Guide for writing Chapter 1",
+  "Guide for writing Chapter 5",
+  "Guide for writing the Abstract",
+  "General guide for writing manuscript",
+];
+const writingTaskGuideCodeOrder = [
+  "G007",
+  "G009",
+  "G011",
+  "G008",
+  "G010",
+  "G024",
+  "G014",
+];
+
+function orderedTaskGuidesForDisplay(
+  guides: TaskGuideOption[],
+  taskType: string | null,
+  productionSubtype?: string | null,
+) {
+  if (taskType !== "PRODUCTION" || productionSubtype !== "WRITING") {
+    return guides;
+  }
+
+  const orderByTitle = new Map(
+    writingTaskGuideTitleOrder.map((title, index) => [
+      title.trim().toLowerCase(),
+      index,
+    ]),
+  );
+  const orderByCode = new Map(
+    writingTaskGuideCodeOrder.map((guideCode, index) => [guideCode, index]),
+  );
+
+  return [...guides].sort((left, right) => {
+    const leftOrder =
+      orderByTitle.get(left.title.trim().toLowerCase()) ??
+      orderByCode.get(left.guideCode);
+    const rightOrder =
+      orderByTitle.get(right.title.trim().toLowerCase()) ??
+      orderByCode.get(right.guideCode);
+    if (leftOrder === undefined && rightOrder === undefined) return 0;
+    if (leftOrder === undefined) return 1;
+    if (rightOrder === undefined) return -1;
+    return leftOrder - rightOrder;
+  });
+}
+
 function taskTypeMeta(
   taskType: string | null,
   category: string | null,
@@ -2147,6 +2199,11 @@ export default async function TaskDetailPage({
   const taskType = taskTypeMeta(
     task.taskType,
     task.category,
+    task.productionSubtype,
+  );
+  const taskGuidesForDisplay = orderedTaskGuidesForDisplay(
+    task.guides,
+    task.taskType,
     task.productionSubtype,
   );
   const TaskTypeIcon = taskType.icon;
@@ -4062,7 +4119,7 @@ export default async function TaskDetailPage({
                 <h2 className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                   Task content
                 </h2>
-                <TaskGuideIcons guides={task.guides} />
+                <TaskGuideIcons guides={taskGuidesForDisplay} />
               </div>
               <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#B0B0B0]">
                 {task.description || "No task note."}
