@@ -11,9 +11,7 @@ import {
   Hash,
   Mail,
   Route,
-  ShieldCheck,
   Square,
-  UserRound,
   UsersRound,
 } from "lucide-react";
 import { usePersistentTableValue } from "@/sites/research/components/TableControls";
@@ -227,7 +225,7 @@ export function TeamWorkspaceClient({ teams }: { teams: TeamWorkspace[] }) {
     },
     {
       key: "research",
-      label: "Research",
+      label: "Research Assigned",
       value: activeTeam.research.length,
       icon: BookOpen,
     },
@@ -323,9 +321,8 @@ function MembersTable({ team }: { team: TeamWorkspace }) {
       <table className="w-full table-fixed text-left">
         <thead className="border-b border-[#E2D9CC] bg-[#EBE4D7] text-xs uppercase tracking-wide text-[#667085] dark:border-[#444444] dark:bg-[#1B1B1B] dark:text-[#B0B0B0]">
           <tr>
-            <th className="w-[42%] px-4 py-3">Member</th>
-            <th className="w-[31%] px-4 py-3">Affiliation</th>
-            <th className="w-[12rem] px-4 py-3">ORCID</th>
+            <th className="w-[48%] px-4 py-3">Member</th>
+            <th className="px-4 py-3">Affiliation</th>
             <th className="w-[14rem] px-4 py-3">Ongoing Tasks</th>
           </tr>
         </thead>
@@ -336,60 +333,47 @@ function MembersTable({ team }: { team: TeamWorkspace }) {
               className="align-top odd:bg-[#FFFDF8] even:bg-[#F7F4ED] hover:bg-[#F2EEE6] dark:odd:bg-[#2C2C2C] dark:even:bg-[#262626] dark:hover:bg-[#303030]"
             >
               <td className="px-4 py-4 align-top">
-                <div className="flex min-w-0 gap-3">
-                  <span className="mt-0.5 inline-flex h-7 w-7 flex-none items-center justify-center text-[#1F7180] dark:text-[#A8DADC]">
-                    {member.badge === "Leader" ? (
-                      <ShieldCheck className="h-4 w-4" />
-                    ) : (
-                      <UserRound className="h-4 w-4" />
-                    )}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <p className="min-w-0 whitespace-normal break-words text-sm font-normal text-[#1F2937] dark:text-[#E4E4E4]">
-                        {member.name}
-                      </p>
-                      <span className="border border-[#D8CEBF] bg-[#F5F2EC] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#667085] dark:border-[#444444] dark:bg-[#202020] dark:text-[#B0B0B0]">
-                        {member.badge}
-                      </span>
-                      <span className="border border-[#D8CEBF] bg-[#F5F2EC] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#A8DADC]">
-                        {member.role}
-                      </span>
-                    </div>
-                    <p className="mt-1 flex min-w-0 items-center gap-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
-                      <Mail className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
-                      <span className="min-w-0 break-all">{member.email}</span>
+                <div className="min-w-0">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <p className="min-w-0 whitespace-normal break-words text-sm font-normal text-[#1F2937] dark:text-[#E4E4E4]">
+                      {member.name}
                     </p>
+                    <span className="border border-[#D8CEBF] bg-[#F5F2EC] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#667085] dark:border-[#444444] dark:bg-[#202020] dark:text-[#B0B0B0]">
+                      {member.badge}
+                    </span>
+                    <span className="border border-[#D8CEBF] bg-[#F5F2EC] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#A8DADC]">
+                      {member.role}
+                    </span>
                   </div>
+                  <p className="mt-1 flex min-w-0 items-center gap-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
+                    <Mail className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+                    <span className="min-w-0 break-all">{member.email}</span>
+                  </p>
+                  {member.orcid ? (
+                    <a
+                      href={member.orcid}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="research-allow-transform mt-1 inline-flex min-w-0 items-center gap-1 text-xs text-[#1F7180] transition hover:-translate-y-0.5 hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-100"
+                    >
+                      <Hash className="h-3.5 w-3.5 flex-none" />
+                      <span className="break-all">{member.orcid}</span>
+                    </a>
+                  ) : null}
                 </div>
               </td>
               <td className="px-4 py-4 align-top text-sm leading-6 text-[#667085] dark:text-[#B0B0B0]">
                 {member.affiliation || "No affiliation recorded"}
               </td>
               <td className="px-4 py-4 align-top text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                {member.orcid ? (
-                  <a
-                    href={member.orcid}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="research-allow-transform inline-flex min-w-0 items-center gap-1 text-[#1F7180] transition hover:-translate-y-0.5 hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-100"
-                  >
-                    <Hash className="h-3.5 w-3.5 flex-none" />
-                    <span className="break-all">{member.orcid}</span>
-                  </a>
-                ) : (
-                  "Not set"
-                )}
-              </td>
-              <td className="px-4 py-4 align-top text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
                 <span className="block">
-                  Team research:{" "}
+                  Research assigned:{" "}
                   <span className="text-[#1F2937] dark:text-[#E4E4E4]">
                     {member.teamResearchOngoing}
                   </span>
                 </span>
                 <span className="block">
-                  Other tasks:{" "}
+                  Others:{" "}
                   <span className="text-[#1F2937] dark:text-[#E4E4E4]">
                     {member.otherOngoing}
                   </span>
