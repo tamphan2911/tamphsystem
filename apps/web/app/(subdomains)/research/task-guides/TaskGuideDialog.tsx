@@ -47,11 +47,11 @@ export function TaskGuideDialog({
   const hasUnlimitedSupportFileSize = initialValues?.guideCode === "G006";
   const canUploadSecondSupportFile = initialValues?.guideCode === "G014";
   const acceptedSupportFileText = hasUnlimitedSupportFileSize
-    ? ".doc, .docx, .pdf, .rar"
-    : ".doc, .docx, .pdf";
+    ? ".doc, .docx, .xls, .xlsx, .pdf, .rar"
+    : ".doc, .docx, .xls, .xlsx, .pdf";
   const supportFileAccept = hasUnlimitedSupportFileSize
-    ? ".doc,.docx,.pdf,.rar,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,application/vnd.rar,application/x-rar-compressed"
-    : ".doc,.docx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf";
+    ? ".doc,.docx,.xls,.xlsx,.pdf,.rar,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf,application/vnd.rar,application/x-rar-compressed"
+    : ".doc,.docx,.xls,.xlsx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf";
 
   return (
     <>
@@ -112,14 +112,16 @@ export function TaskGuideDialog({
             ) {
               toast.showError({
                 title: "Support file is too large",
-                detail: "Upload a Word or PDF file that is 2 MB or smaller.",
+                detail:
+                  "Upload a Word, Excel, or PDF file that is 2 MB or smaller.",
               });
               return;
             }
             if (file2 && file2.size > 2 * 1024 * 1024) {
               toast.showError({
                 title: "Second support file is too large",
-                detail: "Upload a Word or PDF file that is 2 MB or smaller.",
+                detail:
+                  "Upload a Word, Excel, or PDF file that is 2 MB or smaller.",
               });
               return;
             }
@@ -232,7 +234,7 @@ export function TaskGuideDialog({
                 <input
                   name="supportFile2"
                   type="file"
-                  accept=".doc,.docx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
+                  accept=".doc,.docx,.xls,.xlsx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf"
                   className="min-w-0 flex-1 cursor-pointer text-sm file:mr-3 file:border-0 file:bg-[#1F7180] file:px-3 file:py-1.5 file:text-sm file:font-normal file:text-white hover:file:bg-[#155864] dark:file:bg-[#A8DADC] dark:file:text-[#1F2937]"
                 />
               </span>
@@ -243,7 +245,7 @@ export function TaskGuideDialog({
                         ? ` (${initialValues.supportFile2Size})`
                         : ""
                     }. Optional replacement, maximum 2 MB.`
-                  : "Optional. Accepted formats: .doc, .docx, .pdf. Maximum 2 MB."}
+                  : "Optional. Accepted formats: .doc, .docx, .xls, .xlsx, .pdf. Maximum 2 MB."}
               </span>
             </label>
           ) : null}

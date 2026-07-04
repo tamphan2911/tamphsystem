@@ -12,6 +12,11 @@ const guideSupportFileTypes = new Map([
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ".docx",
   ],
+  ["application/vnd.ms-excel", ".xls"],
+  [
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".xlsx",
+  ],
 ]);
 const guideSupportFileTypesByExtension = new Map([
   ["pdf", "application/pdf"],
@@ -20,6 +25,8 @@ const guideSupportFileTypesByExtension = new Map([
     "docx",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ],
+  ["xls", "application/vnd.ms-excel"],
+  ["xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
 ]);
 const g006SupportFileTypes = new Map([
   ...guideSupportFileTypes,
@@ -80,8 +87,8 @@ async function guideSupportFileValues(
   if (!allowedByMime && !allowedByExtension) {
     throw new Error(
       options.allowRar
-        ? "Upload only .doc, .docx, .pdf, or .rar support files."
-        : "Upload only .doc, .docx, or .pdf support files.",
+        ? "Upload only .doc, .docx, .xls, .xlsx, .pdf, or .rar support files."
+        : "Upload only .doc, .docx, .xls, .xlsx, or .pdf support files.",
     );
   }
   if (!options.unlimitedSize && file.size > guideSupportMaxFileSize) {
