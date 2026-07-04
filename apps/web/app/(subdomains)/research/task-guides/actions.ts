@@ -157,12 +157,14 @@ export async function updateTaskGuide(id: string, formData: FormData) {
     where: { id },
     select: { guideCode: true },
   });
-  const isG014 = currentGuide?.guideCode === "G014";
+  const canUseSecondSupportFile = ["G014", "G016"].includes(
+    currentGuide?.guideCode ?? "",
+  );
   const supportFile = await guideSupportFileValues(formData, {
     allowRar: currentGuide?.guideCode === "G006",
     unlimitedSize: currentGuide?.guideCode === "G006",
   });
-  const supportFile2 = isG014
+  const supportFile2 = canUseSecondSupportFile
     ? await guideSupportFileValues(formData, {
         fieldName: "supportFile2",
         outputPrefix: "supportFile2",

@@ -52,7 +52,9 @@ export function TaskGuideDialog({
   const toast = useResearchToast();
   const isEdit = mode === "edit";
   const hasUnlimitedSupportFileSize = initialValues?.guideCode === "G006";
-  const canUploadSecondSupportFile = initialValues?.guideCode === "G014";
+  const canUploadSecondSupportFile = ["G014", "G016"].includes(
+    initialValues?.guideCode ?? "",
+  );
   const acceptedSupportFileText = hasUnlimitedSupportFileSize
     ? ".doc, .docx, .xls, .xlsx, .pdf, .rar"
     : ".doc, .docx, .xls, .xlsx, .pdf";
