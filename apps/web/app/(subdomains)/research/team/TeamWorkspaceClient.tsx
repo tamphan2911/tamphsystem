@@ -540,9 +540,9 @@ function PerformanceTable({
                 onClick={() => onPeriodChange(item)}
                 className={`cursor-pointer px-3 py-2 text-xs font-normal uppercase tracking-wide transition duration-200 ease-out ${
                   period === item
-                    ? "bg-[#A8DADC] text-[#202020]"
+                    ? "bg-[#F2EEE6] text-[#1F2937] dark:bg-[#383838] dark:text-[#E4E4E4]"
                     : "text-[#667085] hover:bg-[#F2EEE6] hover:text-[#1F2937] dark:text-[#B0B0B0] dark:hover:bg-[#383838] dark:hover:text-[#E4E4E4]"
-                }`}
+                } active:scale-[0.97]`}
               >
                 {periodLabel(item)}
               </button>
@@ -552,14 +552,14 @@ function PerformanceTable({
             type="button"
             onClick={onToggle}
             aria-pressed={teamOnly}
-            className="research-allow-transform inline-flex h-10 items-center justify-center gap-2 border border-[#D8D0C2] bg-[#F8F6EF] px-3 text-xs font-normal uppercase tracking-wide text-[#667085] transition hover:-translate-y-0.5 hover:border-[#1F7180]/40 hover:bg-[#F2EEE6] hover:text-[#1F2937] active:translate-y-0 active:scale-[0.98] dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0] dark:hover:bg-[#303030] dark:hover:text-[#E4E4E4]"
+            className="inline-flex h-10 items-center justify-center gap-2 border border-[#D8D0C2] bg-[#F8F6EF] px-3 text-xs font-normal uppercase tracking-wide text-[#667085] transition-colors hover:border-[#1F7180]/40 hover:bg-[#F2EEE6] hover:text-[#1F2937] dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0] dark:hover:bg-[#303030] dark:hover:text-[#E4E4E4]"
           >
             {teamOnly ? (
               <CheckSquare className="h-4 w-4 text-[#1F7180] dark:text-[#A8DADC]" />
             ) : (
               <Square className="h-4 w-4" />
             )}
-            Team research only
+            Research assigned
           </button>
         </div>
       </div>

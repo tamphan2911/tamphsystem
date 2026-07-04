@@ -722,9 +722,7 @@ export function ProfileClient({
             ) : null}
             {user.bio?.trim() ? (
               <p className="whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                <span className="text-[#344054] dark:text-[#E4E4E4]">
-                  Bio:
-                </span>{" "}
+                <span className="text-[#344054] dark:text-[#E4E4E4]">Bio:</span>{" "}
                 {user.bio.trim()}
               </p>
             ) : null}
@@ -1076,9 +1074,9 @@ function TaskDashboard({
               onClick={() => onPeriodChange(item)}
               className={`cursor-pointer px-3 py-2 text-xs font-normal uppercase tracking-wide transition duration-200 ease-out ${
                 period === item
-                  ? "bg-[#A8DADC] text-[#202020]"
-                  : "text-[#B0B0B0] hover:bg-[#383838] hover:text-[#E4E4E4]"
-              }`}
+                  ? "bg-[#F2EEE6] text-[#1F2937] dark:bg-[#383838] dark:text-[#E4E4E4]"
+                  : "text-[#667085] hover:bg-[#F2EEE6] hover:text-[#1F2937] dark:text-[#B0B0B0] dark:hover:bg-[#383838] dark:hover:text-[#E4E4E4]"
+              } active:scale-[0.97]`}
             >
               {periodLabel(item)}
             </button>
