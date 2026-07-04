@@ -49,12 +49,13 @@ export default async function ResearchTasksPage() {
           })
         ).map((member) => member.userId)
       : [];
+  const teamAssigneeIds = Array.from(new Set([...ledTeamMemberIds, userId]));
   const assigneeWhere = isRootAdmin
     ? { activeSites: { has: "research" } }
     : {
         activeSites: { has: "research" },
-        roles: { has: Role.ASSISTANT },
-        id: { in: ledTeamMemberIds },
+        id: { in: teamAssigneeIds },
+        OR: [{ roles: { has: Role.ASSISTANT } }, { id: userId }],
       };
   const scopedResearchWhere = isRootAdmin
     ? {}

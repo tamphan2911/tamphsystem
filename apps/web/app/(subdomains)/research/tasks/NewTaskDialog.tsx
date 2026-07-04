@@ -201,7 +201,7 @@ function createTaskErrorDetail(reason?: string) {
   if (reason === "INACTIVE_RESEARCH_ASSIGNEE")
     return "Choose only users who have activated their research-site account.";
   if (reason === "TEAM_MEMBER_REQUIRED")
-    return "Team leaders can assign this research only to assistants who belong to the assigned team.";
+    return "Team leaders can assign this research only to their team members or to themselves.";
   if (reason === "INVALID_CHECKER")
     return "Choose a chief assistant as checker, or leave checker empty.";
   if (reason === "ACTIVE_SUBMISSION_TASK_EXISTS")

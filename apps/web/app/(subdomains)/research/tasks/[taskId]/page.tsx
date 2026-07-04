@@ -1812,6 +1812,11 @@ export default async function TaskDetailPage({
     task.journalCreationSuggestion?.task?.checkerId === userId;
   const isAssignee = Boolean(myAssignment);
   const selfAssigned = isAssigner && isAssignee;
+  const selfManagedTask =
+    selfAssigned &&
+    isChecker &&
+    task.assignments.length === 1 &&
+    task.assignments[0]?.userId === userId;
   const isRelatedResearchTask =
     task.project?.leadResearcherId === userId ||
     task.project?.authors.some((author) => author.id === userId) ||
@@ -2218,7 +2223,7 @@ export default async function TaskDetailPage({
     !waitingForJournalCreation &&
     (!isAutomatedJournalTask || canReadyAutomatedJournalTask) &&
     isAssignee &&
-    !selfAssigned &&
+    !selfManagedTask &&
     !myAssignment?.finishedAt &&
     !myAssignment?.completedAt &&
     effectiveStatus !== ResearchTaskStatus.CHECKING &&
@@ -2227,9 +2232,9 @@ export default async function TaskDetailPage({
     !isClosed &&
     !waitingForJournalCreation &&
     !isAutomatedJournalTask &&
-    !isAssignee &&
+    (!isAssignee || selfManagedTask) &&
     (isAdmin || isAssigner || isActiveCheckerReferralTarget) &&
-    (selfAssigned ||
+    (selfManagedTask ||
       isAdmin ||
       isActiveCheckerReferralTarget ||
       effectiveStatus === ResearchTaskStatus.CHECKING);

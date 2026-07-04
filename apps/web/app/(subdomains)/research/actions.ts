@@ -1775,6 +1775,7 @@ async function researchTeamLeaderTaskContext({
   }
 
   const memberIds = new Set(team.members.map((member) => member.userId));
+  memberIds.add(user.id);
   const uniqueAssigneeIds = Array.from(new Set(assigneeIds));
   return {
     allowed:
@@ -12216,10 +12217,11 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     return;
   }
 
-  const isAssigned = task.assignments.some(
-    (assignment) => assignment.userId === user.id,
-  );
-  const selfAssigned = task.createdById === user.id && isAssigned;
+  const selfManagedTask =
+    task.createdById === user.id &&
+    task.checkerId === user.id &&
+    task.assignments.length === 1 &&
+    task.assignments[0]?.userId === user.id;
   const canManageAssignment =
     isAdmin ||
     task.createdById === user.id ||
@@ -12238,7 +12240,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     redirect("/401");
   if (assignmentId && !canManageAssignment) redirect("/401");
   if (
-    !selfAssigned &&
+    !selfManagedTask &&
     !isAdmin &&
     !assignmentId &&
     task.checkerId !== user.id &&

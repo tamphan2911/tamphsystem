@@ -317,12 +317,13 @@ export default async function ProjectDetailPage({
           })
         ).map((member) => member.userId)
       : [];
+  const teamAssigneeIds = Array.from(new Set([...ledTeamMemberIds, userId]));
   const taskAssigneeWhere = isRootAdmin
     ? { activeSites: { has: "research" } }
     : {
         activeSites: { has: "research" },
-        roles: { has: Role.ASSISTANT },
-        id: { in: ledTeamMemberIds },
+        id: { in: teamAssigneeIds },
+        OR: [{ roles: { has: Role.ASSISTANT } }, { id: userId }],
       };
   const [
     project,
