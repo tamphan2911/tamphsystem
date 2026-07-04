@@ -168,9 +168,33 @@ export async function updateTaskGuide(id: string, formData: FormData) {
         outputPrefix: "supportFile2",
       })
     : undefined;
+  const removeSupportFile =
+    formData.get("removeSupportFile") === "true" && !supportFile;
+  const removeSupportFile2 =
+    formData.get("removeSupportFile2") === "true" && !supportFile2;
   await prisma.taskGuide.update({
     where: { id },
-    data: { ...values, ...supportFile, ...supportFile2 },
+    data: {
+      ...values,
+      ...(removeSupportFile
+        ? {
+            supportFileName: null,
+            supportFileType: null,
+            supportFileSize: null,
+            supportFileData: null,
+          }
+        : {}),
+      ...(removeSupportFile2
+        ? {
+            supportFile2Name: null,
+            supportFile2Type: null,
+            supportFile2Size: null,
+            supportFile2Data: null,
+          }
+        : {}),
+      ...supportFile,
+      ...supportFile2,
+    },
   });
   revalidatePath("/task-guides");
   revalidatePath("/tasks");
