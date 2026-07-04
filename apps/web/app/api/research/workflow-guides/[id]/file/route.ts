@@ -10,11 +10,7 @@ export async function GET(
   const session = await auth();
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
-  const canView =
-    roles.includes(Role.ADMIN) ||
-    roles.includes(Role.CHIEF_ASSISTANT) ||
-    roles.includes(Role.ASSISTANT);
-  if (!canView) {
+  if (!roles.includes(Role.ADMIN)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

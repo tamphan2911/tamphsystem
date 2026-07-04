@@ -183,11 +183,7 @@ export default async function WorkflowGuidesPage() {
   const session = await auth();
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
-  const canView =
-    roles.includes(Role.ADMIN) ||
-    roles.includes(Role.CHIEF_ASSISTANT) ||
-    roles.includes(Role.ASSISTANT);
-  if (!canView) redirect("/401");
+  if (!roles.includes(Role.ADMIN)) redirect("/401");
   const isAdmin = roles.includes(Role.ADMIN);
 
   await ensureDemoWorkflowGuides();

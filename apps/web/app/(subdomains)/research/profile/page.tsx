@@ -490,11 +490,7 @@ export default async function ResearchProfilePage({
       checkerTaskRows={checkerTaskRows}
       canEditProfile={!viewingAnotherUser || viewer.roles.includes(Role.ADMIN)}
       canChangePassword={!viewingAnotherUser}
-      canViewWorkflowGuides={
-        viewer.roles.includes(Role.ADMIN) ||
-        viewer.roles.includes(Role.CHIEF_ASSISTANT) ||
-        viewer.roles.includes(Role.ASSISTANT)
-      }
+      canViewWorkflowGuides={viewer.roles.includes(Role.ADMIN)}
     />
   );
 }
