@@ -13,6 +13,17 @@ export default function NotFound() {
     setTheme(storedTheme === "dark" ? "dark" : "light");
   }, []);
 
+  const handleGoBack = () => {
+    const referrer = document.referrer;
+
+    if (referrer && referrer !== window.location.href) {
+      window.location.assign(referrer);
+      return;
+    }
+
+    window.location.assign("/");
+  };
+
   return (
     <main
       className={`research-site-root flex min-h-screen items-center justify-center px-6 py-10 ${
@@ -43,8 +54,8 @@ export default function NotFound() {
           <div>
             <button
               type="button"
-              onClick={() => window.history.back()}
-              className="research-allow-transform inline-flex cursor-pointer items-center gap-2 border border-[#A8DADC] bg-transparent px-4 py-2 text-sm font-normal text-[#A8DADC] transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-[#263636] hover:text-[#C9F0F2] active:translate-y-0 active:scale-95"
+              onClick={handleGoBack}
+              className="inline-flex cursor-pointer items-center gap-2 border border-[#A8DADC] bg-transparent px-4 py-2 text-sm font-normal text-[#A8DADC] transition-colors duration-180 ease-out hover:bg-[#263636] hover:text-[#C9F0F2]"
             >
               <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
               Go back
