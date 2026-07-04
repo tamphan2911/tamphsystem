@@ -77,9 +77,13 @@ export function ProposalFeedbackButton({
           action={async (formData) => {
             setIsSaving(true);
             try {
-              await reviewProposal(formData);
+              const result = await reviewProposal(formData);
               setOpen(false);
-              router.refresh();
+              if (decision === "ACCEPTED" && result?.href) {
+                router.push(result.href);
+              } else {
+                router.refresh();
+              }
               toast.showSuccess({
                 title:
                   decision === "ACCEPTED"

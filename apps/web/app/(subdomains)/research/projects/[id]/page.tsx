@@ -634,12 +634,17 @@ export default async function ProjectDetailPage({
   ) {
     notFound();
   }
-  if (project.stage === "PENDING" && !isRootAdmin) {
+  const canActivatePendingResearch =
+    project.stage === "PENDING" && isAssignedTeamLeader;
+  if (project.stage === "PENDING" && !isRootAdmin && !isAssignedTeamLeader) {
     notFound();
   }
   const canViewRegistrationClaim = isAdmin || isRegistrationUser;
   const canEditResearchInfo =
-    isRootAdmin || isCorrespondingAuthor || isFirstAuthor;
+    isRootAdmin ||
+    isCorrespondingAuthor ||
+    isFirstAuthor ||
+    canActivatePendingResearch;
   const canEditResearch = isAdmin || isCorrespondingAuthor;
   const canManageResearchTasks =
     isRootAdmin ||
@@ -1879,7 +1884,10 @@ export default async function ProjectDetailPage({
                     canEditRegistrationClaim={isRootAdmin}
                     disabled={researchContentLocked}
                     disabledReason="Research information is locked after accepted or published submission"
-                    initialOpen={project.stage === "PENDING" && isRootAdmin}
+                    initialOpen={
+                      project.stage === "PENDING" &&
+                      (isRootAdmin || isAssignedTeamLeader)
+                    }
                   />
                 )}
                 {isRootAdmin && (

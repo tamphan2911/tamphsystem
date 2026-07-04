@@ -840,6 +840,10 @@ export default async function ProposalDetailPage({
   const hasDescriptionSideContent =
     Boolean(proposal.task) || hasAssociatedAcceptedRecord;
   const canEditProposal = proposalIsOpenForEditing(effectiveStatus);
+  const canReviewProposal =
+    canAccessAll ||
+    proposal.task?.createdById === userId ||
+    proposal.task?.checkerId === userId;
 
   return (
     <>
@@ -886,7 +890,7 @@ export default async function ProposalDetailPage({
                     <Pencil className="h-4 w-4" aria-hidden="true" />
                   </HeaderIcon>
                 )}
-                {canAccessAll ? (
+                {canReviewProposal ? (
                   <ProposalFeedbackButton
                     proposalId={proposal.id}
                     proposalTitle={proposal.title}

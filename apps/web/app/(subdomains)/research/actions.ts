@@ -1486,6 +1486,7 @@ function proposalCombinedNote(
 
 async function createPendingRecordFromProposal(
   proposal: AcceptedProposalRecord,
+  options: { assistantTeamId?: string | null } = {},
 ) {
   if (proposal.type === ProposalType.RESEARCH) {
     if (proposal.createdResearchProjectId) {
@@ -1499,6 +1500,7 @@ async function createPendingRecordFromProposal(
         abstract: proposalCombinedNote(proposal),
         sharedFolderUrl: proposal.website,
         stage: ResearchStage.PENDING,
+        assistantTeamId: options.assistantTeamId ?? null,
         leadResearcherId: proposal.submittedById,
         authors: { connect: [{ id: proposal.submittedById }] },
         authorEntries: {
@@ -2743,7 +2745,7 @@ export async function deleteProposal(proposalId: string) {
 
 export async function reviewProposal(formData: FormData) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  const isRootAdmin = user.roles.includes(Role.ADMIN);
 
   const proposalId = optionalString(formData.get("proposalId"));
   const status = enumValue(ProposalStatus, formData.get("status"));
@@ -2779,6 +2781,11 @@ export async function reviewProposal(formData: FormData) {
     },
   });
   if (!proposal) throw new Error("Proposal not found.");
+  const canReviewProposal =
+    isRootAdmin ||
+    proposal.task?.createdById === user.id ||
+    proposal.task?.checkerId === user.id;
+  if (!canReviewProposal) redirect("/401");
   if (
     proposal.status === ProposalStatus.ACCEPTED ||
     proposal.status === ProposalStatus.DECLINED
@@ -2853,7 +2860,16 @@ export async function reviewProposal(formData: FormData) {
       proposal.type === ProposalType.RESEARCH ||
       proposal.type === ProposalType.PROJECT
     ) {
-      createdHref = await createPendingRecordFromProposal(proposal);
+      const assistantTeam =
+        proposal.type === ProposalType.RESEARCH && proposal.task?.createdById
+          ? await prisma.researchAssistantTeam.findFirst({
+              where: { leaderId: proposal.task.createdById },
+              select: { id: true },
+            })
+          : null;
+      createdHref = await createPendingRecordFromProposal(proposal, {
+        assistantTeamId: assistantTeam?.id,
+      });
     }
   }
 
@@ -3085,6 +3101,7 @@ export async function reviewProposal(formData: FormData) {
   revalidatePath("/journals");
   revalidatePath("/projects");
   revalidatePath("/organized-projects");
+  return { ok: true, href: accepted ? createdHref : null };
 }
 
 export async function createResearchProject(formData: FormData) {
@@ -3940,8 +3957,19 @@ export async function updateResearchProject(
     });
   }
 
+  const activatedFromPending =
+    projectLock.stage === ResearchStage.PENDING &&
+    updatedProject?.stage !== ResearchStage.PENDING;
+  const initialProductionTask = activatedFromPending
+    ? await createInitialProductionWorkflowTaskForResearch(projectId)
+    : null;
+
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
+  if (initialProductionTask) {
+    revalidatePath("/tasks");
+    revalidatePath(`/tasks/${initialProductionTask.id}`);
+  }
 }
 
 export async function deleteResearchProject(projectId: string) {
@@ -11998,6 +12026,140 @@ async function createNextProductionWorkflowTask({
       },
     },
   });
+}
+
+async function createInitialProductionWorkflowTaskForResearch(
+  projectId: string,
+) {
+  const proposal = await prisma.proposal.findFirst({
+    where: {
+      type: ProposalType.RESEARCH,
+      createdResearchProjectId: projectId,
+      task: { isNot: null },
+    },
+    select: {
+      task: {
+        select: {
+          id: true,
+          createdById: true,
+          checkerId: true,
+          assignments: {
+            select: {
+              userId: true,
+              user: { select: { email: true } },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+  const sourceTask = proposal?.task;
+  if (!sourceTask || sourceTask.assignments.length === 0) return null;
+
+  const existing = await prisma.researchTask.findFirst({
+    where: {
+      projectId,
+      taskType: ResearchTaskType.PRODUCTION,
+      productionSubtype: ResearchProductionSubtype.IDEA_FORMING,
+      status: { not: ResearchTaskStatus.REVOKED },
+    },
+    select: { id: true },
+  });
+  if (existing) return null;
+
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: { title: true },
+  });
+  if (!project) return null;
+
+  const dueDate = researchTaskDueDate(researchDateValue(new Date(), 7));
+  const guideIds = await defaultTaskGuideIdsForTask({
+    taskType: ResearchTaskType.PRODUCTION,
+    proposalScope: ProposalTaskScope.RESEARCH,
+    productionSubtype: ResearchProductionSubtype.IDEA_FORMING,
+  });
+
+  const task = await prisma.researchTask.create({
+    data: {
+      title: `Idea forming for ${project.title}`,
+      taskCode: await generateTaskCode(),
+      description: DEFAULT_TASK_DESCRIPTION,
+      category: ResearchTaskCategory.PRODUCTION,
+      taskType: ResearchTaskType.PRODUCTION,
+      productionSubtype: ResearchProductionSubtype.IDEA_FORMING,
+      proposalScope: ProposalTaskScope.RESEARCH,
+      status: ResearchTaskStatus.IN_PROGRESS,
+      projectId,
+      checkerId: sourceTask.checkerId,
+      dueDate,
+      createdById: sourceTask.createdById,
+      assignments: {
+        create: sourceTask.assignments.map((assignment) => ({
+          userId: assignment.userId,
+          dueDate,
+        })),
+      },
+      guides: {
+        connect: guideIds.map((id) => ({ id })),
+      },
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      checkerId: true,
+      assignments: {
+        select: {
+          userId: true,
+          user: { select: { email: true } },
+        },
+      },
+    },
+  });
+
+  await notifyUsers({
+    userIds: task.assignments.map((assignment) => assignment.userId),
+    type: "TASK_ASSIGNED",
+    title: "Idea forming task assigned",
+    summary: task.title,
+    body: "The research proposal was activated, so the first production task has been assigned automatically.",
+    href: `/tasks/${task.id}`,
+    entityType: "task",
+    entityId: task.id,
+  });
+  await sendTaskEmail({
+    to: task.assignments.map((assignment) => assignment.user.email),
+    subject: `New production task assigned: ${task.title}`,
+    heading: "Idea forming task assigned",
+    intro:
+      "The research proposal was activated and the production workflow has started.",
+    detail: task.description ?? undefined,
+    taskTitle: task.title,
+    taskId: task.id,
+    actionLabel: "Open task",
+  });
+  if (task.checkerId) {
+    await notifyUsers({
+      userIds: [task.checkerId],
+      type: "TASK_CHECKER_ASSIGNED",
+      title: "Task checker assigned",
+      summary: task.title,
+      body: "The first production workflow task was assigned automatically with you as checker.",
+      href: `/tasks/${task.id}`,
+      entityType: "task",
+      entityId: task.id,
+    });
+    await sendTaskCheckerAssignedEmail({
+      checkerId: task.checkerId,
+      taskTitle: task.title,
+      taskId: task.id,
+      detail: task.description ?? undefined,
+    });
+  }
+
+  return task;
 }
 
 export async function finishResearchTask(taskId: string, formData?: FormData) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
@@ -28,8 +28,9 @@ export function FinishTaskForm({
   const formRef = useRef<HTMLFormElement>(null);
   const [submissionDate, setSubmissionDate] = useState(researchDateValue);
   const [completionMessage, setCompletionMessage] = useState("");
-  const [createNextProductionTask, setCreateNextProductionTask] =
-    useState(false);
+  const [createNextProductionTask, setCreateNextProductionTask] = useState(
+    Boolean(nextProductionTaskLabel),
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const isReadyMode = mode === "ready";
@@ -44,6 +45,12 @@ export function FinishTaskForm({
   const description = isReadyMode
     ? "This tells the assigner that your work is ready for review. The task will move to Checking, but it will not be completed yet."
     : "This approves the work as complete. Related submission records will be created only after this approval when applicable.";
+
+  useEffect(() => {
+    if (isOpen && !isReadyMode) {
+      setCreateNextProductionTask(Boolean(nextProductionTaskLabel));
+    }
+  }, [isOpen, isReadyMode, nextProductionTaskLabel]);
 
   return (
     <>
@@ -85,7 +92,7 @@ export function FinishTaskForm({
         onClose={() => {
           setIsOpen(false);
           setCompletionMessage("");
-          setCreateNextProductionTask(false);
+          setCreateNextProductionTask(Boolean(nextProductionTaskLabel));
         }}
         title={title}
         description={description}
