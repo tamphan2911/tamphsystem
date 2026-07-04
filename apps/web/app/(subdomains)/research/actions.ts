@@ -256,6 +256,16 @@ function proposalTaskScopeFromForm(value: FormDataEntryValue | null) {
 
 const DEFAULT_TASK_DESCRIPTION =
   "Read the guide by click on icons right above.";
+const WRITING_PRODUCTION_TASK_DESCRIPTION = `Read the guide by click on icons right above
+
+- The sequence to write the manuscript must start from Chapter 2. Literature Review.
+- Next: Chapter 3. Methodology
+- Next: Chapter 4. Results
+- Next: Chapter 1. Introduction (now the objective must be aligned with the results that we already wrote, but not too much to raise supicous)
+- Next: Chapter 5. Conclusions & Recommendation
+- Next: Abstract, keywords, JEL codes, and refine the title.
+
+Paste the full references of citations that you used after each part, we will use them to make references later.`;
 const SUGGEST_VENUE_TASK_DESCRIPTION =
   "Read the general guide by click on icons right above.\nSuggest 2 venues.";
 const SUGGEST_VENUE_AFTER_PRODUCTION_DESCRIPTION =
@@ -338,7 +348,16 @@ function defaultTaskGuideCodesForTask({
   return [];
 }
 
-function defaultDescriptionForTask(taskType: ResearchTaskType) {
+function defaultDescriptionForTask(
+  taskType: ResearchTaskType,
+  productionSubtype?: ResearchProductionSubtype | null,
+) {
+  if (
+    taskType === ResearchTaskType.PRODUCTION &&
+    productionSubtype === ResearchProductionSubtype.WRITING
+  ) {
+    return WRITING_PRODUCTION_TASK_DESCRIPTION;
+  }
   return taskType === ResearchTaskType.SUGGEST_VENUE
     ? SUGGEST_VENUE_TASK_DESCRIPTION
     : DEFAULT_TASK_DESCRIPTION;
@@ -7616,7 +7635,7 @@ export async function createResearchTask(formData: FormData) {
       taskCode: await generateTaskCode(),
       description:
         optionalString(formData.get("description")) ??
-        defaultDescriptionForTask(taskType),
+        defaultDescriptionForTask(taskType, productionSubtype),
       category: taskCategoryFromForm(formData.get("category")),
       taskType,
       productionSubtype,
@@ -8072,7 +8091,7 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     optionalString(formData.get("title")) ?? "Untitled task";
   const nextTaskDescription =
     optionalString(formData.get("description")) ??
-    defaultDescriptionForTask(taskType);
+    defaultDescriptionForTask(taskType, productionSubtype);
   const nextTaskCategory = taskCategoryFromForm(formData.get("category"));
   const currentAssigneeLabels = currentTask.assignments.map((assignment) =>
     researchPersonLabel(assignment.user),
@@ -11987,7 +12006,7 @@ async function createNextProductionWorkflowTask({
       }`;
   const nextDescription = isSuggestVenueNext
     ? SUGGEST_VENUE_AFTER_PRODUCTION_DESCRIPTION
-    : DEFAULT_TASK_DESCRIPTION;
+    : defaultDescriptionForTask(nextTaskType, nextSubtype);
   const guideIds = await defaultTaskGuideIdsForTask({
     taskType: nextTaskType,
     proposalScope: ProposalTaskScope.RESEARCH,
@@ -12089,7 +12108,10 @@ async function createInitialProductionWorkflowTaskForResearch(
     data: {
       title: `Idea forming for ${project.title}`,
       taskCode: await generateTaskCode(),
-      description: DEFAULT_TASK_DESCRIPTION,
+      description: defaultDescriptionForTask(
+        ResearchTaskType.PRODUCTION,
+        ResearchProductionSubtype.IDEA_FORMING,
+      ),
       category: ResearchTaskCategory.PRODUCTION,
       taskType: ResearchTaskType.PRODUCTION,
       productionSubtype: ResearchProductionSubtype.IDEA_FORMING,

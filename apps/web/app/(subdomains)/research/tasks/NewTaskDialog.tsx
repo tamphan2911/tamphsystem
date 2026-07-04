@@ -139,6 +139,16 @@ type SearchPanelItem = {
 
 const inputClass = researchFieldClass;
 const defaultTaskDescription = "Read the guide by click on icons right above.";
+const writingProductionTaskDescription = `Read the guide by click on icons right above
+
+- The sequence to write the manuscript must start from Chapter 2. Literature Review.
+- Next: Chapter 3. Methodology
+- Next: Chapter 4. Results
+- Next: Chapter 1. Introduction (now the objective must be aligned with the results that we already wrote, but not too much to raise supicous)
+- Next: Chapter 5. Conclusions & Recommendation
+- Next: Abstract, keywords, JEL codes, and refine the title.
+
+Paste the full references of citations that you used after each part, we will use them to make references later.`;
 const suggestVenueTaskDescription =
   "Read the general guide by click on icons right above.\nSuggest 2 venues.";
 const finishedResearchStages = new Set(["ACCEPTED", "PUBLISHED"]);
@@ -149,7 +159,11 @@ const productionSubtypeOptions: Array<{
   label: string;
   guideCodes: string[];
 }> = [
-  { value: "IDEA_FORMING", label: "Idea forming", guideCodes: ["G016", "G015"] },
+  {
+    value: "IDEA_FORMING",
+    label: "Idea forming",
+    guideCodes: ["G016", "G015"],
+  },
   { value: "DATA_COLLECTION", label: "Data collection", guideCodes: ["G017"] },
   { value: "MODELING", label: "Modeling", guideCodes: ["G018"] },
   {
@@ -1357,7 +1371,7 @@ export function NewTaskDialog({
 
           <label className="grid gap-1.5">
             <textarea
-              key={mode}
+              key={`${mode}-${productionSubtype}`}
               name="description"
               rows={3}
               aria-label="Description"
@@ -1365,7 +1379,9 @@ export function NewTaskDialog({
               defaultValue={
                 mode === "suggestVenue"
                   ? suggestVenueTaskDescription
-                  : defaultTaskDescription
+                  : mode === "production" && productionSubtype === "WRITING"
+                    ? writingProductionTaskDescription
+                    : defaultTaskDescription
               }
               className={researchTextareaClass}
             />
