@@ -5,19 +5,31 @@ import { useMemo } from "react";
 import {
   BadgeCheck,
   BookOpen,
+  CheckSquare,
   CheckCircle2,
   ClipboardList,
-  Filter,
   Hash,
   Mail,
   Route,
   ShieldCheck,
+  Square,
   UserRound,
   UsersRound,
 } from "lucide-react";
 import { usePersistentTableValue } from "@/sites/research/components/TableControls";
+import {
+  researchStartOfDay,
+  researchStartOfMonth,
+  researchWeekday,
+} from "@/sites/research/lib/date-time";
 
 type TeamTab = "members" | "research" | "performance";
+type PeriodKey =
+  | "all"
+  | "currentWeek"
+  | "lastWeek"
+  | "currentMonth"
+  | "lastMonth";
 
 export type TeamWorkspace = {
   id: string;
@@ -86,6 +98,53 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
+function periodLabel(period: PeriodKey) {
+  if (period === "currentWeek") return "This week";
+  if (period === "lastWeek") return "Last week";
+  if (period === "currentMonth") return "This month";
+  if (period === "lastMonth") return "Last month";
+  return "All time";
+}
+
+function periodStart(period: PeriodKey) {
+  const currentDay = researchWeekday();
+  const weekOffset = currentDay === 0 ? 6 : currentDay - 1;
+  const startOfCurrentWeek = researchStartOfDay(new Date(), -weekOffset);
+
+  if (period === "currentWeek") return startOfCurrentWeek;
+  if (period === "lastWeek")
+    return researchStartOfDay(new Date(), -weekOffset - 7);
+  if (period === "currentMonth") return researchStartOfMonth();
+  if (period === "lastMonth") return researchStartOfMonth(new Date(), -1);
+  return null;
+}
+
+function periodEnd(period: PeriodKey) {
+  const currentDay = researchWeekday();
+  const weekOffset = currentDay === 0 ? 6 : currentDay - 1;
+  const startOfCurrentWeek = researchStartOfDay(new Date(), -weekOffset);
+
+  if (period === "lastWeek") return startOfCurrentWeek;
+  if (period === "currentWeek")
+    return researchStartOfDay(new Date(), 7 - weekOffset);
+  if (period === "lastMonth") return researchStartOfMonth();
+  if (period === "currentMonth") return researchStartOfMonth(new Date(), 1);
+  return null;
+}
+
+function isTaskInPeriod(
+  task: TeamWorkspace["performanceTasks"][number],
+  period: PeriodKey,
+) {
+  const start = periodStart(period);
+  const end = periodEnd(period);
+  if (!start) return true;
+  const date = new Date(task.completedAt ?? task.updatedAt);
+  if (date < start) return false;
+  if (end && date >= end) return false;
+  return true;
+}
+
 function stageLabel(value: string) {
   return value
     .toLowerCase()
@@ -108,19 +167,23 @@ export function TeamWorkspaceClient({ teams }: { teams: TeamWorkspace[] }) {
     "team",
     { persistDefaultValue: true },
   );
+  const [performancePeriod, setPerformancePeriod] =
+    usePersistentTableValue<PeriodKey>(
+      "team-workspace:performance-period",
+      "all",
+    );
 
   const activeTeam =
     teams.find((team) => team.id === activeTeamId) ?? teams[0] ?? null;
 
   const performanceTasks = useMemo(() => {
     if (!activeTeam) return [];
-    if (performanceScope === "team") {
-      return activeTeam.performanceTasks.filter(
-        (task) => task.isTeamResearchTask,
-      );
-    }
-    return activeTeam.performanceTasks;
-  }, [activeTeam, performanceScope]);
+    return activeTeam.performanceTasks
+      .filter((task) =>
+        performanceScope === "team" ? task.isTeamResearchTask : true,
+      )
+      .filter((task) => isTaskInPeriod(task, performancePeriod));
+  }, [activeTeam, performancePeriod, performanceScope]);
 
   const performanceRows = useMemo(() => {
     if (!activeTeam) return [];
@@ -243,6 +306,8 @@ export function TeamWorkspaceClient({ teams }: { teams: TeamWorkspace[] }) {
         <PerformanceTable
           rows={performanceRows}
           teamOnly={performanceScope === "team"}
+          period={performancePeriod}
+          onPeriodChange={setPerformancePeriod}
           onToggle={() =>
             setPerformanceScope((value) => (value === "team" ? "all" : "team"))
           }
@@ -416,10 +481,14 @@ function ResearchTable({ team }: { team: TeamWorkspace }) {
 function PerformanceTable({
   rows,
   teamOnly,
+  period,
+  onPeriodChange,
   onToggle,
 }: {
   rows: TeamPerformanceRow[];
   teamOnly: boolean;
+  period: PeriodKey;
+  onPeriodChange: (period: PeriodKey) => void;
   onToggle: () => void;
 }) {
   const totalTasks = rows.reduce((sum, row) => sum + row.total, 0);
@@ -430,7 +499,7 @@ function PerformanceTable({
 
   return (
     <div className="border border-[#E2D9CC] bg-[#FFFDF8] dark:border-[#444444] dark:bg-[#2C2C2C]">
-      <div className="flex flex-col gap-3 border-b border-[#E2D9CC] px-4 py-3 dark:border-[#444444] lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 border-b border-[#E2D9CC] px-4 py-3 dark:border-[#444444] xl:flex-row xl:items-center xl:justify-between">
         <div>
           <p className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
             Team Performance
@@ -444,19 +513,45 @@ function PerformanceTable({
               : "Showing all tasks assigned to this team's members."}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-pressed={teamOnly}
-          className="research-allow-transform inline-flex h-10 items-center justify-center gap-2 border border-[#1F7180] bg-transparent px-3 text-xs font-normal uppercase tracking-wide text-[#1F7180] transition hover:-translate-y-0.5 hover:bg-[#E9F8FA] active:translate-y-0 active:scale-[0.98] dark:border-[#A8DADC] dark:text-[#A8DADC] dark:hover:bg-[#303030]"
-        >
-          {teamOnly ? (
-            <CheckCircle2 className="h-4 w-4" />
-          ) : (
-            <Filter className="h-4 w-4" />
-          )}
-          Team research only
-        </button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="grid grid-cols-2 border border-[#D8D0C2] bg-[#F8F6EF] p-1 md:grid-cols-5 dark:border-[#444444] dark:bg-[#242424]">
+            {(
+              [
+                "all",
+                "currentWeek",
+                "lastWeek",
+                "currentMonth",
+                "lastMonth",
+              ] as PeriodKey[]
+            ).map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => onPeriodChange(item)}
+                className={`cursor-pointer px-3 py-2 text-xs font-normal uppercase tracking-wide transition duration-200 ease-out ${
+                  period === item
+                    ? "bg-[#A8DADC] text-[#202020]"
+                    : "text-[#667085] hover:bg-[#F2EEE6] hover:text-[#1F2937] dark:text-[#B0B0B0] dark:hover:bg-[#383838] dark:hover:text-[#E4E4E4]"
+                }`}
+              >
+                {periodLabel(item)}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-pressed={teamOnly}
+            className="research-allow-transform inline-flex h-10 items-center justify-center gap-2 border border-[#D8D0C2] bg-[#F8F6EF] px-3 text-xs font-normal uppercase tracking-wide text-[#667085] transition hover:-translate-y-0.5 hover:border-[#1F7180]/40 hover:bg-[#F2EEE6] hover:text-[#1F2937] active:translate-y-0 active:scale-[0.98] dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0] dark:hover:bg-[#303030] dark:hover:text-[#E4E4E4]"
+          >
+            {teamOnly ? (
+              <CheckSquare className="h-4 w-4 text-[#1F7180] dark:text-[#A8DADC]" />
+            ) : (
+              <Square className="h-4 w-4" />
+            )}
+            Team research only
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 border-b border-[#E2D9CC] text-sm dark:border-[#444444] md:grid-cols-4">
