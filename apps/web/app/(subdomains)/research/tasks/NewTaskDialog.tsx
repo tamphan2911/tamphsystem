@@ -154,7 +154,7 @@ const productionSubtypeOptions: Array<{
   { value: "MODELING", label: "Modeling", guideCode: "G018" },
   { value: "WRITING", label: "Writing", guideCode: "G019" },
   { value: "HUMANIZING", label: "Humanizing", guideCode: "G020" },
-  { value: "REFERENCES", label: "References", guideCode: "G021" },
+  { value: "REFERENCES", label: "References", guideCode: "G006" },
 ];
 
 function guideIdsForCode(guides: TaskGuideOption[], guideCode: string) {

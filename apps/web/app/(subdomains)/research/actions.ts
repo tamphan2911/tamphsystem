@@ -290,7 +290,7 @@ const productionSubtypeConfig = [
   {
     value: ResearchProductionSubtype.REFERENCES,
     label: "References",
-    guideCode: "G021",
+    guideCode: "G006",
   },
 ] as const;
 
