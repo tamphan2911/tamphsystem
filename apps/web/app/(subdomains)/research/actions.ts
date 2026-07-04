@@ -265,32 +265,32 @@ const productionSubtypeConfig = [
   {
     value: ResearchProductionSubtype.IDEA_FORMING,
     label: "Idea forming",
-    guideCode: "G016",
+    guideCodes: ["G016"],
   },
   {
     value: ResearchProductionSubtype.DATA_COLLECTION,
     label: "Data collection",
-    guideCode: "G017",
+    guideCodes: ["G017"],
   },
   {
     value: ResearchProductionSubtype.MODELING,
     label: "Modeling",
-    guideCode: "G018",
+    guideCodes: ["G018"],
   },
   {
     value: ResearchProductionSubtype.WRITING,
     label: "Writing",
-    guideCode: "G019",
+    guideCodes: ["G007", "G009", "G011", "G008", "G010"],
   },
   {
     value: ResearchProductionSubtype.HUMANIZING,
     label: "Humanizing",
-    guideCode: "G020",
+    guideCodes: ["G020"],
   },
   {
     value: ResearchProductionSubtype.REFERENCES,
     label: "References",
-    guideCode: "G006",
+    guideCodes: ["G006"],
   },
 ] as const;
 
@@ -324,7 +324,9 @@ function defaultTaskGuideCodesForTask({
   }
   if (taskType === ResearchTaskType.PRODUCTION) {
     return [
-      productionSubtypeMeta(productionSubtype ?? null)?.guideCode ?? "G014",
+      ...(productionSubtypeMeta(productionSubtype ?? null)?.guideCodes ?? [
+        "G014",
+      ]),
     ];
   }
   if (taskType === ResearchTaskType.ADD_JOURNAL) return ["G003"];

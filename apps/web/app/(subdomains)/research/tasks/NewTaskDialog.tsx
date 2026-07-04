@@ -147,14 +147,18 @@ const closedProjectStatuses = new Set(["COMPLETED"]);
 const productionSubtypeOptions: Array<{
   value: ProductionSubtype;
   label: string;
-  guideCode: string;
+  guideCodes: string[];
 }> = [
-  { value: "IDEA_FORMING", label: "Idea forming", guideCode: "G016" },
-  { value: "DATA_COLLECTION", label: "Data collection", guideCode: "G017" },
-  { value: "MODELING", label: "Modeling", guideCode: "G018" },
-  { value: "WRITING", label: "Writing", guideCode: "G019" },
-  { value: "HUMANIZING", label: "Humanizing", guideCode: "G020" },
-  { value: "REFERENCES", label: "References", guideCode: "G006" },
+  { value: "IDEA_FORMING", label: "Idea forming", guideCodes: ["G016"] },
+  { value: "DATA_COLLECTION", label: "Data collection", guideCodes: ["G017"] },
+  { value: "MODELING", label: "Modeling", guideCodes: ["G018"] },
+  {
+    value: "WRITING",
+    label: "Writing",
+    guideCodes: ["G007", "G009", "G011", "G008", "G010"],
+  },
+  { value: "HUMANIZING", label: "Humanizing", guideCodes: ["G020"] },
+  { value: "REFERENCES", label: "References", guideCodes: ["G006"] },
 ];
 
 function guideIdsForCode(guides: TaskGuideOption[], guideCode: string) {
@@ -242,10 +246,10 @@ function defaultTaskGuideIdsForMode(
   productionSubtype: ProductionSubtype = "IDEA_FORMING",
 ) {
   if (mode === "production") {
-    return guideIdsForCode(
+    return guideIdsForCodes(
       guides,
       productionSubtypeOptions.find((item) => item.value === productionSubtype)
-        ?.guideCode ?? "G016",
+        ?.guideCodes ?? ["G016"],
     );
   }
   if (mode === "suggestVenue")
