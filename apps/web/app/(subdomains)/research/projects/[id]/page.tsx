@@ -549,6 +549,8 @@ export default async function ProjectDetailPage({
         importantNote: true,
         supportFileName: true,
         supportFileSize: true,
+        supportFile2Name: true,
+        supportFile2Size: true,
       },
     }),
   ]);

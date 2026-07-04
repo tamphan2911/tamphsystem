@@ -31,6 +31,8 @@ export default async function TaskGuidesPage() {
       importantNote: true,
       supportFileName: true,
       supportFileSize: true,
+      supportFile2Name: true,
+      supportFile2Size: true,
       updatedAt: true,
       createdBy: { select: { name: true, email: true } },
     },
@@ -44,6 +46,8 @@ export default async function TaskGuidesPage() {
     importantNote: guide.importantNote ?? "",
     supportFileName: guide.supportFileName ?? "",
     supportFileSize: fileSizeLabel(guide.supportFileSize),
+    supportFile2Name: guide.supportFile2Name ?? "",
+    supportFile2Size: fileSizeLabel(guide.supportFile2Size),
     updatedAt: researchDateTimeFormat("en-GB", {
       day: "2-digit",
       month: "2-digit",

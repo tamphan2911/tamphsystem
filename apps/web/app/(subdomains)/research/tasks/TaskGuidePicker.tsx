@@ -32,6 +32,8 @@ export type TaskGuideOption = {
   importantNote?: string | null;
   supportFileName?: string | null;
   supportFileSize?: number | null;
+  supportFile2Name?: string | null;
+  supportFile2Size?: number | null;
 };
 
 const defaultGuideIconStyle: {
@@ -144,21 +146,39 @@ function GuideContentModal({
           </section>
         ) : null}
         <div className="whitespace-pre-wrap">{guide?.content}</div>
-        {guide?.supportFileName ? (
-          <a
-            href={`/api/research/task-guides/${guide.id}/file`}
-            className="research-clickable-icon mt-4 inline-flex max-w-full items-center gap-2 border-0 bg-transparent p-0 text-sm font-normal text-[#1F7180] shadow-none transition-[color,text-shadow,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none dark:text-[#A8DADC] dark:hover:text-cyan-200"
-          >
-            <FileText className="h-4 w-4 flex-none" />
-            <span className="min-w-0 truncate">{guide.supportFileName}</span>
-            {guide.supportFileSize ? (
-              <span className="flex-none text-xs text-[#667085] dark:text-[#B0B0B0]">
-                ({fileSizeLabel(guide.supportFileSize)})
-              </span>
-            ) : null}
-            <Download className="h-4 w-4 flex-none" />
-          </a>
-        ) : null}
+        <div className="mt-4 grid gap-2">
+          {[
+            {
+              name: guide?.supportFileName,
+              size: guide?.supportFileSize,
+              href: guide ? `/api/research/task-guides/${guide.id}/file` : "",
+            },
+            {
+              name: guide?.supportFile2Name,
+              size: guide?.supportFile2Size,
+              href: guide
+                ? `/api/research/task-guides/${guide.id}/file?slot=2`
+                : "",
+            },
+          ].map((file) =>
+            file.name ? (
+              <a
+                key={file.href}
+                href={file.href}
+                className="research-clickable-icon inline-flex max-w-full items-center gap-2 border-0 bg-transparent p-0 text-sm font-normal text-[#1F7180] shadow-none transition-[color,text-shadow,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none dark:text-[#A8DADC] dark:hover:text-cyan-200"
+              >
+                <FileText className="h-4 w-4 flex-none" />
+                <span className="min-w-0 truncate">{file.name}</span>
+                {file.size ? (
+                  <span className="flex-none text-xs text-[#667085] dark:text-[#B0B0B0]">
+                    ({fileSizeLabel(file.size)})
+                  </span>
+                ) : null}
+                <Download className="h-4 w-4 flex-none" />
+              </a>
+            ) : null,
+          )}
+        </div>
       </div>
     </ResearchModal>
   );
@@ -223,6 +243,7 @@ export function TaskGuidePicker({
           guide.content,
           guide.importantNote,
           guide.supportFileName,
+          guide.supportFile2Name,
         ]
           .join(" ")
           .toLowerCase()

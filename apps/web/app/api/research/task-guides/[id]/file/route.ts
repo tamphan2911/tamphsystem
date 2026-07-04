@@ -41,7 +41,7 @@ function scopedGuideTaskWhere(userId: string) {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await auth();
@@ -60,12 +60,17 @@ export async function GET(
       []) as Role[]);
 
   const { id } = await params;
+  const slot = new URL(request.url).searchParams.get("slot");
+  const useSecondFile = slot === "2";
   const guide = await prisma.taskGuide.findUnique({
     where: { id },
     select: {
       supportFileName: true,
       supportFileType: true,
       supportFileData: true,
+      supportFile2Name: true,
+      supportFile2Type: true,
+      supportFile2Data: true,
       tasks: {
         where: scopedGuideTaskWhere(userId),
         select: { id: true },
@@ -74,7 +79,21 @@ export async function GET(
     },
   });
 
-  if (!guide?.supportFileData || !guide.supportFileName) {
+  if (!guide) {
+    return NextResponse.json({ error: "File not found" }, { status: 404 });
+  }
+
+  const fileData = useSecondFile
+    ? guide.supportFile2Data
+    : guide.supportFileData;
+  const fileName = useSecondFile
+    ? guide.supportFile2Name
+    : guide.supportFileName;
+  const fileType = useSecondFile
+    ? guide.supportFile2Type
+    : guide.supportFileType;
+
+  if (!fileData || !fileName) {
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
@@ -88,9 +107,9 @@ export async function GET(
 
   return (
     researchDownloadResponse({
-      data: guide.supportFileData,
-      filename: guide.supportFileName,
-      contentType: guide.supportFileType,
+      data: fileData,
+      filename: fileName,
+      contentType: fileType,
     }) ?? NextResponse.json({ error: "File not found" }, { status: 404 })
   );
 }

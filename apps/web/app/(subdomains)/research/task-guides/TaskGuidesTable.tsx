@@ -20,6 +20,8 @@ export type TaskGuideRow = {
   importantNote: string;
   supportFileName: string;
   supportFileSize: string;
+  supportFile2Name: string;
+  supportFile2Size: string;
   updatedAt: string;
   createdBy: string;
 };
@@ -102,6 +104,7 @@ export function TaskGuidesTable({
         row.content,
         row.importantNote,
         row.supportFileName,
+        row.supportFile2Name,
       ]
         .join(" ")
         .toLowerCase()
@@ -154,23 +157,37 @@ export function TaskGuidesTable({
                       {guide.importantNote}
                     </p>
                   ) : null}
-                  {guide.supportFileName ? (
-                    <a
-                      href={`/api/research/task-guides/${guide.id}/file`}
-                      className="research-clickable-icon mt-2 inline-flex max-w-full items-center gap-2 border-0 bg-transparent p-0 text-xs font-normal text-[#1F7180] shadow-none transition-[color,text-shadow,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none dark:text-[#A8DADC] dark:hover:text-cyan-200"
-                    >
-                      <FileText className="h-3.5 w-3.5 flex-none" />
-                      <span className="min-w-0 truncate">
-                        {guide.supportFileName}
-                      </span>
-                      {guide.supportFileSize ? (
-                        <span className="flex-none text-[#667085] dark:text-[#B0B0B0]">
-                          ({guide.supportFileSize})
-                        </span>
-                      ) : null}
-                      <Download className="h-3.5 w-3.5 flex-none" />
-                    </a>
-                  ) : null}
+                  <div className="mt-2 grid gap-1">
+                    {[
+                      {
+                        name: guide.supportFileName,
+                        size: guide.supportFileSize,
+                        href: `/api/research/task-guides/${guide.id}/file`,
+                      },
+                      {
+                        name: guide.supportFile2Name,
+                        size: guide.supportFile2Size,
+                        href: `/api/research/task-guides/${guide.id}/file?slot=2`,
+                      },
+                    ].map((file) =>
+                      file.name ? (
+                        <a
+                          key={file.href}
+                          href={file.href}
+                          className="research-clickable-icon inline-flex max-w-full items-center gap-2 border-0 bg-transparent p-0 text-xs font-normal text-[#1F7180] shadow-none transition-[color,text-shadow,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none dark:text-[#A8DADC] dark:hover:text-cyan-200"
+                        >
+                          <FileText className="h-3.5 w-3.5 flex-none" />
+                          <span className="min-w-0 truncate">{file.name}</span>
+                          {file.size ? (
+                            <span className="flex-none text-[#667085] dark:text-[#B0B0B0]">
+                              ({file.size})
+                            </span>
+                          ) : null}
+                          <Download className="h-3.5 w-3.5 flex-none" />
+                        </a>
+                      ) : null,
+                    )}
+                  </div>
                   <p className="mt-1 text-[11px] text-slate-400 dark:text-[#777777]">
                     Created by {guide.createdBy}
                   </p>

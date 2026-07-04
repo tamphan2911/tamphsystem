@@ -56,9 +56,14 @@ function guideValues(formData: FormData) {
 
 async function guideSupportFileValues(
   formData: FormData,
-  options: { allowRar?: boolean; unlimitedSize?: boolean } = {},
+  options: {
+    allowRar?: boolean;
+    unlimitedSize?: boolean;
+    fieldName?: string;
+    outputPrefix?: "" | "supportFile2";
+  } = {},
 ) {
-  const file = formData.get("supportFile");
+  const file = formData.get(options.fieldName ?? "supportFile");
   if (!(file instanceof File) || file.size === 0) return undefined;
 
   const extension = file.name.toLowerCase().split(".").pop();
@@ -81,6 +86,16 @@ async function guideSupportFileValues(
   }
   if (!options.unlimitedSize && file.size > guideSupportMaxFileSize) {
     throw new Error("Support file must be 2 MB or smaller.");
+  }
+
+  if (options.outputPrefix === "supportFile2") {
+    return {
+      supportFile2Name: file.name,
+      supportFile2Type:
+        file.type || allowedExtensions.get(extension ?? "") || "",
+      supportFile2Size: file.size,
+      supportFile2Data: Buffer.from(await file.arrayBuffer()),
+    };
   }
 
   return {
@@ -135,13 +150,20 @@ export async function updateTaskGuide(id: string, formData: FormData) {
     where: { id },
     select: { guideCode: true },
   });
+  const isG014 = currentGuide?.guideCode === "G014";
   const supportFile = await guideSupportFileValues(formData, {
     allowRar: currentGuide?.guideCode === "G006",
     unlimitedSize: currentGuide?.guideCode === "G006",
   });
+  const supportFile2 = isG014
+    ? await guideSupportFileValues(formData, {
+        fieldName: "supportFile2",
+        outputPrefix: "supportFile2",
+      })
+    : undefined;
   await prisma.taskGuide.update({
     where: { id },
-    data: { ...values, ...supportFile },
+    data: { ...values, ...supportFile, ...supportFile2 },
   });
   revalidatePath("/task-guides");
   revalidatePath("/tasks");

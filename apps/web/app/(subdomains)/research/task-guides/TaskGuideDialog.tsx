@@ -26,6 +26,8 @@ export type TaskGuideFormValues = {
   importantNote: string;
   supportFileName?: string;
   supportFileSize?: string;
+  supportFile2Name?: string;
+  supportFile2Size?: string;
 };
 
 export function TaskGuideDialog({
@@ -43,6 +45,7 @@ export function TaskGuideDialog({
   const toast = useResearchToast();
   const isEdit = mode === "edit";
   const hasUnlimitedSupportFileSize = initialValues?.guideCode === "G006";
+  const canUploadSecondSupportFile = initialValues?.guideCode === "G014";
   const acceptedSupportFileText = hasUnlimitedSupportFileSize
     ? ".doc, .docx, .pdf, .rar"
     : ".doc, .docx, .pdf";
@@ -97,7 +100,11 @@ export function TaskGuideDialog({
             const supportFileInput = form.elements.namedItem(
               "supportFile",
             ) as HTMLInputElement | null;
+            const supportFile2Input = form.elements.namedItem(
+              "supportFile2",
+            ) as HTMLInputElement | null;
             const file = supportFileInput?.files?.[0];
+            const file2 = supportFile2Input?.files?.[0];
             if (
               file &&
               !hasUnlimitedSupportFileSize &&
@@ -105,6 +112,13 @@ export function TaskGuideDialog({
             ) {
               toast.showError({
                 title: "Support file is too large",
+                detail: "Upload a Word or PDF file that is 2 MB or smaller.",
+              });
+              return;
+            }
+            if (file2 && file2.size > 2 * 1024 * 1024) {
+              toast.showError({
+                title: "Second support file is too large",
                 detail: "Upload a Word or PDF file that is 2 MB or smaller.",
               });
               return;
@@ -208,6 +222,31 @@ export function TaskGuideDialog({
                   }`}
             </span>
           </label>
+          {canUploadSecondSupportFile ? (
+            <label className="grid gap-1.5 text-sm">
+              <span className="text-xs uppercase text-slate-500 dark:text-[#B0B0B0]">
+                Second support file
+              </span>
+              <span className="flex min-h-12 items-center gap-3 border border-slate-200 bg-white px-3 text-sm text-slate-700 dark:border-[#444444] dark:bg-[#202020] dark:text-[#E4E4E4]">
+                <FileText className="h-4 w-4 flex-none text-[#6F5AA8] dark:text-[#C8B6E2]" />
+                <input
+                  name="supportFile2"
+                  type="file"
+                  accept=".doc,.docx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
+                  className="min-w-0 flex-1 cursor-pointer text-sm file:mr-3 file:border-0 file:bg-[#1F7180] file:px-3 file:py-1.5 file:text-sm file:font-normal file:text-white hover:file:bg-[#155864] dark:file:bg-[#A8DADC] dark:file:text-[#1F2937]"
+                />
+              </span>
+              <span className="text-xs leading-5 text-slate-500 dark:text-[#B0B0B0]">
+                {initialValues?.supportFile2Name
+                  ? `Current: ${initialValues.supportFile2Name}${
+                      initialValues.supportFile2Size
+                        ? ` (${initialValues.supportFile2Size})`
+                        : ""
+                    }. Optional replacement, maximum 2 MB.`
+                  : "Optional. Accepted formats: .doc, .docx, .pdf. Maximum 2 MB."}
+              </span>
+            </label>
+          ) : null}
         </form>
       </ResearchModal>
     </>
