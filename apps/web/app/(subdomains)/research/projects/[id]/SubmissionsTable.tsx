@@ -49,6 +49,7 @@ import {
   currencySymbol,
   formatResearchNumber,
   isFreeResearchAmount,
+  normalizeResearchNumberInput,
 } from "@/sites/research/lib/currency";
 import {
   EditSubmissionDialog,
@@ -267,21 +268,31 @@ function MoneyCell({
   amount,
   currency,
   apcOption,
+  warnOverAmount,
 }: {
   amount: string;
   currency: string;
   apcOption?: boolean | null;
+  warnOverAmount?: number;
 }) {
   const isFree = isFreeResearchAmount(amount);
+  const numericAmount = Number(normalizeResearchNumberInput(amount));
+  const isHigh =
+    typeof warnOverAmount === "number" &&
+    Number.isFinite(numericAmount) &&
+    numericAmount > warnOverAmount;
   const amountNode = !amount ? (
     <span className="text-[#667085] dark:text-[#B0B0B0]">-</span>
-  ) : currency === "USD" ? (
-    <span className="inline-flex items-center gap-1.5 text-[#1F2937] dark:text-[#E4E4E4]">
-      <CircleDollarSign className="research-task-icon-motion h-4 w-4 text-[#1F7180] dark:text-[#A8DADC]" />
-      {formatResearchNumber(amount)}
-    </span>
+  ) : isFree ? (
+    <span className="text-emerald-700 dark:text-emerald-300">free</span>
   ) : (
-    <span className="text-[#1F2937] dark:text-[#E4E4E4]">
+    <span
+      className={
+        isHigh
+          ? "text-rose-700 dark:text-rose-300"
+          : "text-[#1F2937] dark:text-[#E4E4E4]"
+      }
+    >
       {currencySymbol(currency)} {formatResearchNumber(amount)}
     </span>
   );
@@ -1023,6 +1034,7 @@ export function SubmissionsTable({
                         <MoneyCell
                           amount={row.apc}
                           currency={row.apcCurrency}
+                          warnOverAmount={300}
                           apcOption={
                             row.kind === "journal" ? row.hasApcOption : null
                           }
