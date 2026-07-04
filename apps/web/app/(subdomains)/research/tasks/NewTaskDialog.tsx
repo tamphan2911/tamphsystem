@@ -149,7 +149,7 @@ const productionSubtypeOptions: Array<{
   label: string;
   guideCodes: string[];
 }> = [
-  { value: "IDEA_FORMING", label: "Idea forming", guideCodes: ["G016"] },
+  { value: "IDEA_FORMING", label: "Idea forming", guideCodes: ["G016", "G015"] },
   { value: "DATA_COLLECTION", label: "Data collection", guideCodes: ["G017"] },
   { value: "MODELING", label: "Modeling", guideCodes: ["G018"] },
   {
@@ -253,10 +253,10 @@ function defaultTaskGuideIdsForMode(
     );
   }
   if (mode === "suggestVenue")
-    return guideIdsForCodes(guides, ["G001", "G023"]);
+    return guideIdsForCodes(guides, ["G001", "G023", "G015"]);
   const guideCode =
     mode === "submit"
-      ? "G002"
+      ? ["G002", "G015"]
       : mode === "addJournal"
         ? "G003"
         : mode === "proposal"
@@ -264,10 +264,12 @@ function defaultTaskGuideIdsForMode(
             ? "G005"
             : "G004"
           : mode === "review"
-            ? "G013"
+            ? ["G013", "G015"]
             : null;
   if (!guideCode) return [];
-  return guideIdsForCode(guides, guideCode);
+  return Array.isArray(guideCode)
+    ? guideIdsForCodes(guides, guideCode)
+    : guideIdsForCode(guides, guideCode);
 }
 
 export function NewTaskDialog({

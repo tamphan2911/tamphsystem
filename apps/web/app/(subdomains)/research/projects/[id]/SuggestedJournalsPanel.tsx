@@ -159,8 +159,9 @@ export type SuggestedConferenceOption = {
 };
 
 function defaultSubmitTaskGuideIds(guides: TaskGuideOption[]) {
-  const guide = guides.find((item) => item.guideCode === "G002");
-  return guide ? [guide.id] : [];
+  return ["G002", "G015"]
+    .map((guideCode) => guides.find((item) => item.guideCode === guideCode)?.id)
+    .filter((id): id is string => Boolean(id));
 }
 
 export type SuggestedVenueTaskOption = {

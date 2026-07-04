@@ -51,8 +51,9 @@ type SearchPanelItem = {
 };
 
 function defaultReviewTaskGuideIds(guides: TaskGuideOption[]) {
-  const guide = guides.find((item) => item.guideCode === "G013");
-  return guide ? [guide.id] : [];
+  return ["G013", "G015"]
+    .map((guideCode) => guides.find((item) => item.guideCode === guideCode)?.id)
+    .filter((id): id is string => Boolean(id));
 }
 
 const defaultTaskDescription = "Read the guide by click on icons right above.";

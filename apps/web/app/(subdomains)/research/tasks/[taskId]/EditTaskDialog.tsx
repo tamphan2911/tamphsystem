@@ -129,7 +129,7 @@ const productionSubtypeOptions: Array<{
   label: string;
   guideCodes: string[];
 }> = [
-  { value: "IDEA_FORMING", label: "Idea forming", guideCodes: ["G016"] },
+  { value: "IDEA_FORMING", label: "Idea forming", guideCodes: ["G016", "G015"] },
   { value: "DATA_COLLECTION", label: "Data collection", guideCodes: ["G017"] },
   { value: "MODELING", label: "Modeling", guideCodes: ["G018"] },
   {
@@ -702,7 +702,20 @@ export function EditTaskDialog({
       }
       if (nextChoice === "SUGGEST_VENUE") {
         setSelectedTaskGuideIds(
-          guideIdsForCodes(taskGuideOptions, ["G001", "G023"]),
+          guideIdsForCodes(taskGuideOptions, ["G001", "G023", "G015"]),
+        );
+      }
+      if (
+        nextChoice === "SUBMIT_RESEARCH" ||
+        nextChoice === "SUBMIT_CONFERENCE"
+      ) {
+        setSelectedTaskGuideIds(
+          guideIdsForCodes(taskGuideOptions, ["G002", "G015"]),
+        );
+      }
+      if (nextChoice === "REVIEW") {
+        setSelectedTaskGuideIds(
+          guideIdsForCodes(taskGuideOptions, ["G013", "G015"]),
         );
       }
       setSelectedTaskType(nextChoice);

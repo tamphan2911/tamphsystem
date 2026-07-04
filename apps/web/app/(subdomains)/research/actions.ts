@@ -265,7 +265,7 @@ const productionSubtypeConfig = [
   {
     value: ResearchProductionSubtype.IDEA_FORMING,
     label: "Idea forming",
-    guideCodes: ["G016"],
+    guideCodes: ["G016", "G015"],
   },
   {
     value: ResearchProductionSubtype.DATA_COLLECTION,
@@ -315,12 +315,13 @@ function defaultTaskGuideCodesForTask({
   proposalScope: ProposalTaskScope;
   productionSubtype?: ResearchProductionSubtype | null;
 }) {
-  if (taskType === ResearchTaskType.SUGGEST_VENUE) return ["G001", "G023"];
+  if (taskType === ResearchTaskType.SUGGEST_VENUE)
+    return ["G001", "G023", "G015"];
   if (
     taskType === ResearchTaskType.SUBMIT_RESEARCH ||
     taskType === ResearchTaskType.SUBMIT_CONFERENCE
   ) {
-    return ["G002"];
+    return ["G002", "G015"];
   }
   if (taskType === ResearchTaskType.PRODUCTION) {
     return [
@@ -333,7 +334,7 @@ function defaultTaskGuideCodesForTask({
   if (taskType === ResearchTaskType.PROPOSAL) {
     return [proposalScope === ProposalTaskScope.PROJECT ? "G005" : "G004"];
   }
-  if (taskType === ResearchTaskType.REVIEW) return ["G013"];
+  if (taskType === ResearchTaskType.REVIEW) return ["G013", "G015"];
   return [];
 }
 
