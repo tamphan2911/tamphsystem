@@ -354,7 +354,7 @@ function MembersTable({ team }: { team: TeamWorkspace }) {
                       href={member.orcid}
                       target="_blank"
                       rel="noreferrer"
-                      className="research-allow-transform mt-1 inline-flex min-w-0 items-center gap-1 text-xs text-[#1F7180] transition hover:-translate-y-0.5 hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-100"
+                      className="mt-1 inline-flex min-w-0 items-center gap-1 text-xs text-[#1F7180] transition-colors hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-100"
                     >
                       <Hash className="h-3.5 w-3.5 flex-none" />
                       <span className="break-all">{member.orcid}</span>
