@@ -391,7 +391,10 @@ export default async function ResearchTeamPage() {
 
       <div className="mx-auto max-w-7xl space-y-4">
         {teams.length > 0 ? (
-          <TeamWorkspaceClient teams={teams} />
+          <TeamWorkspaceClient
+            teams={teams}
+            canOpenMemberProfiles={currentUser.roles.includes(Role.ADMIN)}
+          />
         ) : (
           <section className="border border-[#E2D9CC] bg-[#FFFDF8] p-5 dark:border-[#444444] dark:bg-[#2C2C2C]">
             <p className="text-sm leading-6 text-[#667085] dark:text-[#B0B0B0]">

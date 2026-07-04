@@ -150,7 +150,13 @@ function stageLabel(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-export function TeamWorkspaceClient({ teams }: { teams: TeamWorkspace[] }) {
+export function TeamWorkspaceClient({
+  teams,
+  canOpenMemberProfiles,
+}: {
+  teams: TeamWorkspace[];
+  canOpenMemberProfiles: boolean;
+}) {
   const [activeTeamId, setActiveTeamId] = usePersistentTableValue(
     "team-workspace:team",
     teams[0]?.id ?? "",
@@ -298,7 +304,12 @@ export function TeamWorkspaceClient({ teams }: { teams: TeamWorkspace[] }) {
         ))}
       </div>
 
-      {activeTab === "members" ? <MembersTable team={activeTeam} /> : null}
+      {activeTab === "members" ? (
+        <MembersTable
+          team={activeTeam}
+          canOpenMemberProfiles={canOpenMemberProfiles}
+        />
+      ) : null}
       {activeTab === "research" ? <ResearchTable team={activeTeam} /> : null}
       {activeTab === "performance" ? (
         <PerformanceTable
@@ -315,7 +326,13 @@ export function TeamWorkspaceClient({ teams }: { teams: TeamWorkspace[] }) {
   );
 }
 
-function MembersTable({ team }: { team: TeamWorkspace }) {
+function MembersTable({
+  team,
+  canOpenMemberProfiles,
+}: {
+  team: TeamWorkspace;
+  canOpenMemberProfiles: boolean;
+}) {
   return (
     <div className="overflow-hidden border border-[#E2D9CC] dark:border-[#444444]">
       <table className="w-full table-fixed text-left">
@@ -335,9 +352,18 @@ function MembersTable({ team }: { team: TeamWorkspace }) {
               <td className="px-4 py-4 align-top">
                 <div className="min-w-0">
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <p className="min-w-0 whitespace-normal break-words text-sm font-normal text-[#1F2937] dark:text-[#E4E4E4]">
-                      {member.name}
-                    </p>
+                    {canOpenMemberProfiles ? (
+                      <Link
+                        href={`/profile?userId=${encodeURIComponent(member.id)}`}
+                        className="research-allow-transform min-w-0 whitespace-normal break-words text-sm font-normal text-[#1F2937] transition-colors hover:text-[#1F7180] dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]"
+                      >
+                        {member.name}
+                      </Link>
+                    ) : (
+                      <p className="min-w-0 whitespace-normal break-words text-sm font-normal text-[#1F2937] dark:text-[#E4E4E4]">
+                        {member.name}
+                      </p>
+                    )}
                     <span className="border border-[#D8CEBF] bg-[#F5F2EC] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#667085] dark:border-[#444444] dark:bg-[#202020] dark:text-[#B0B0B0]">
                       {member.badge}
                     </span>
