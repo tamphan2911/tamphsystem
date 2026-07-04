@@ -9,8 +9,10 @@ import {
   GraduationCap,
   Mail,
   Search,
+  ShieldCheck,
   Star,
   UserRound,
+  UsersRound,
   X,
 } from "lucide-react";
 import {
@@ -36,6 +38,14 @@ export type FundingInstitutionOption = {
   name: string;
   shortName: string;
   country: string;
+};
+
+export type AssistantTeamOption = {
+  id: string;
+  name: string;
+  leaderName: string;
+  leaderEmail: string;
+  memberCount: number;
 };
 
 export type ResearchResultOption = {
@@ -176,6 +186,123 @@ export function FundingInstitutionPicker({
   );
 }
 
+export function AssistantTeamPicker({
+  teams,
+  defaultTeam,
+  disabled = false,
+}: {
+  teams: AssistantTeamOption[];
+  defaultTeam?: AssistantTeamOption | null;
+  disabled?: boolean;
+}) {
+  const [selected, setSelected] = useState<AssistantTeamOption | null>(
+    defaultTeam ?? null,
+  );
+  const [query, setQuery] = useState("");
+
+  const results = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return [];
+
+    return teams
+      .filter((team) => team.id !== selected?.id)
+      .filter((team) =>
+        [team.id, team.name, team.leaderName, team.leaderEmail]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+      .slice(0, 8);
+  }, [query, selected?.id, teams]);
+
+  const options = useMemo<ResearchSearchPickerOption<AssistantTeamOption>[]>(
+    () =>
+      results.map((team) => ({
+        id: team.id,
+        label: team.name,
+        description: [team.leaderName || team.leaderEmail, team.leaderEmail]
+          .filter(Boolean)
+          .join(" - "),
+        data: team,
+      })),
+    [results],
+  );
+
+  return (
+    <ResearchSearchPicker
+      label="Assistant team"
+      name="assistantTeamId"
+      selected={
+        selected
+          ? {
+              id: selected.id,
+              label: selected.name,
+              description: [
+                selected.leaderName || selected.leaderEmail,
+                selected.leaderEmail,
+              ]
+                .filter(Boolean)
+                .join(" - "),
+              data: selected,
+            }
+          : null
+      }
+      query={query}
+      onQueryChange={(value) => setQuery(value)}
+      onSelect={(option) => {
+        setSelected(option.data as AssistantTeamOption);
+        setQuery("");
+      }}
+      onClear={() => {
+        setSelected(null);
+        setQuery("");
+      }}
+      options={options}
+      placeholder="Search assistant team..."
+      emptyText="No assistant team matches this search."
+      disabled={disabled}
+      renderSelected={(option) => {
+        const team = option.data as AssistantTeamOption;
+        return (
+          <>
+            <span className="inline-flex h-4 w-4 flex-none items-center justify-center text-[#1F7180] dark:text-[#A8DADC]">
+              <UsersRound className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-bold text-slate-900 dark:text-[#E4E4E4]">
+                {team.name}
+              </span>
+              <span className="block truncate text-xs font-medium text-slate-500 dark:text-[#777777]">
+                {team.leaderName || team.leaderEmail} - {team.memberCount}{" "}
+                members
+              </span>
+            </span>
+          </>
+        );
+      }}
+      renderOption={(option) => {
+        const team = option.data as AssistantTeamOption;
+        return (
+          <>
+            <span className="ml-3 inline-flex h-4 w-4 flex-none items-center justify-center text-[#1F7180] dark:text-[#A8DADC]">
+              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-bold">
+                {team.name}
+              </span>
+              <span className="block truncate text-xs font-medium opacity-70">
+                {team.leaderName || team.leaderEmail} - {team.memberCount}{" "}
+                members
+              </span>
+            </span>
+          </>
+        );
+      }}
+    />
+  );
+}
+
 export function ProjectMembersPicker({
   users,
   defaultMembers,
@@ -185,13 +312,12 @@ export function ProjectMembersPicker({
   defaultMembers: SelectedProjectMember[];
   onWarning?: (message: string) => void;
 }) {
-  const [members, setMembers] =
-    useState<SelectedProjectMember[]>(
-      defaultMembers.map((member) => ({
-        ...member,
-        selectedEmail: member.selectedEmail || member.email,
-      })),
-    );
+  const [members, setMembers] = useState<SelectedProjectMember[]>(
+    defaultMembers.map((member) => ({
+      ...member,
+      selectedEmail: member.selectedEmail || member.email,
+    })),
+  );
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);

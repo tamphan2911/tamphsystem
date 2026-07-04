@@ -33,8 +33,8 @@ export type TeamPerson = {
 };
 
 export type TeamMemberOption = TeamPerson & {
-  currentTeamId: string;
-  currentTeamName: string;
+  currentTeamIds: string[];
+  currentTeamNames: string[];
 };
 
 export type ResearchAssistantTeamRow = {
@@ -128,7 +128,7 @@ function TeamForm({
               Members
             </h3>
             <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-[#8F8F8F]">
-              Each assistant can belong to only one team.
+              Assistants can belong to several teams at the same time.
             </p>
           </div>
           <UsersRound className="h-4 w-4 text-[#1F7180] dark:text-[#A8DADC]" />
@@ -138,24 +138,16 @@ function TeamForm({
             <div className="grid gap-2 md:grid-cols-2">
               {assistants.map((assistant) => {
                 const checked = selectedMemberIds.has(assistant.id);
-                const assignedElsewhere =
-                  assistant.currentTeamId &&
-                  assistant.currentTeamId !== team?.id;
                 return (
                   <label
                     key={assistant.id}
-                    className={`flex min-h-16 items-start gap-3 border px-3 py-2.5 text-sm transition ${
-                      assignedElsewhere
-                        ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 dark:border-[#3A3A3A] dark:bg-[#242424] dark:text-[#777777]"
-                        : "cursor-pointer border-slate-200 bg-[#FFFDF8] text-slate-800 hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#303030]"
-                    }`}
+                    className="flex min-h-16 cursor-pointer items-start gap-3 border border-slate-200 bg-[#FFFDF8] px-3 py-2.5 text-sm text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#303030]"
                   >
                     <input
                       type="checkbox"
                       name="memberIds"
                       value={assistant.id}
                       defaultChecked={checked}
-                      disabled={Boolean(assignedElsewhere)}
                       className="mt-1 h-4 w-4 rounded-none border-slate-300 text-[#1F7180] focus:ring-[#A8DADC] dark:border-[#5A5A5A] dark:bg-[#2C2C2C]"
                     />
                     <span className="min-w-0">
@@ -165,9 +157,19 @@ function TeamForm({
                       <span className="mt-0.5 block truncate text-xs opacity-75">
                         {personSubtext(assistant)}
                       </span>
-                      {assignedElsewhere ? (
-                        <span className="mt-1 block text-xs text-amber-700 dark:text-amber-300">
-                          Already in {assistant.currentTeamName}
+                      {assistant.currentTeamNames.filter(
+                        (name, index) =>
+                          assistant.currentTeamIds[index] !== team?.id && name,
+                      ).length > 0 ? (
+                        <span className="mt-1 block text-xs text-slate-500 dark:text-[#8F8F8F]">
+                          Also in{" "}
+                          {assistant.currentTeamNames
+                            .filter(
+                              (name, index) =>
+                                assistant.currentTeamIds[index] !== team?.id &&
+                                name,
+                            )
+                            .join(", ")}
                         </span>
                       ) : null}
                     </span>

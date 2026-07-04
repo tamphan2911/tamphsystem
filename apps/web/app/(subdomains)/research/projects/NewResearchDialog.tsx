@@ -27,6 +27,8 @@ import {
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import {
+  AssistantTeamPicker,
+  type AssistantTeamOption,
   FundingInstitutionPicker,
   type FundingInstitutionOption,
 } from "../organized-projects/ProjectFormControls";
@@ -243,10 +245,12 @@ export function NewResearchDialog({
   users,
   isAdmin,
   fundingInstitutions,
+  assistantTeams = [],
 }: {
   users: AuthorOption[];
   isAdmin: boolean;
   fundingInstitutions: FundingInstitutionOption[];
+  assistantTeams?: AssistantTeamOption[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [registerStatus, setRegisterStatus] = useState("NOT_REGISTERED");
@@ -404,6 +408,12 @@ export function NewResearchDialog({
                   defaultInstitution={null}
                 />
                 <PriorityResearchCheckbox />
+              </div>
+              <div className="mt-4">
+                <AssistantTeamPicker
+                  teams={assistantTeams}
+                  defaultTeam={null}
+                />
               </div>
             </section>
           )}

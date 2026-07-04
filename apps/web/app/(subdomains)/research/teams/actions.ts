@@ -40,7 +40,7 @@ function selectedIds(formData: FormData, name: string) {
   );
 }
 
-async function teamPayload(formData: FormData, currentTeamId?: string) {
+async function teamPayload(formData: FormData, _currentTeamId?: string) {
   const name = textValue(formData.get("name"));
   if (!name) throw new Error("Team name is required.");
 
@@ -57,6 +57,19 @@ async function teamPayload(formData: FormData, currentTeamId?: string) {
   });
   if (!leader) throw new Error("Choose an active chief assistant as leader.");
 
+  const existingLeaderTeam = await prisma.researchAssistantTeam.findFirst({
+    where: {
+      leaderId,
+      ...(_currentTeamId ? { NOT: { id: _currentTeamId } } : {}),
+    },
+    select: { name: true },
+  });
+  if (existingLeaderTeam) {
+    throw new Error(
+      `This chief assistant already leads ${existingLeaderTeam.name}. A chief assistant can lead only one team.`,
+    );
+  }
+
   const memberIds = selectedIds(formData, "memberIds");
   if (memberIds.length > 0) {
     const assistantMembers = await prisma.user.findMany({
@@ -70,25 +83,6 @@ async function teamPayload(formData: FormData, currentTeamId?: string) {
     });
     if (assistantMembers.length !== memberIds.length) {
       throw new Error("Team members must be active assistants.");
-    }
-
-    const assignedElsewhere = await prisma.researchAssistantTeamMember.findMany(
-      {
-        where: {
-          userId: { in: memberIds },
-          ...(currentTeamId ? { NOT: { teamId: currentTeamId } } : {}),
-        },
-        select: {
-          user: { select: { name: true, email: true } },
-          team: { select: { name: true } },
-        },
-      },
-    );
-    if (assignedElsewhere.length > 0) {
-      const assignment = assignedElsewhere[0]!;
-      throw new Error(
-        `${assignment.user.name || assignment.user.email} is already in ${assignment.team.name}. Remove them from that team first.`,
-      );
     }
   }
 

@@ -63,9 +63,7 @@ function journalFocusedResearchStage(project: {
   if (
     journalStatuses.some(
       (status) =>
-        status === "PENDING" ||
-        status === "REJECTED" ||
-        status === "WITHDRAWN",
+        status === "PENDING" || status === "REJECTED" || status === "WITHDRAWN",
     )
   ) {
     return "SUBMITTING";
@@ -156,70 +154,82 @@ export default async function ProjectsDashboard() {
           { authorEntries: { some: { userId } } },
           { registrationUserId: userId },
           { tasks: { some: { assignments: { some: { userId } } } } },
+          { assistantTeam: { leaderId: userId } },
+          { assistantTeam: { members: { some: { userId } } } },
           ...registrationIdentityFilters,
         ],
       };
 
-  const [projects, authorUsers, fundingInstitutions] = await Promise.all([
-    prisma.researchProject.findMany({
-      where: projectWhere,
-      include: {
-        leadResearcher: { select: { name: true, email: true } },
-        registrationUser: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            additionalEmails: true,
-            roles: true,
-          },
-        },
-        authors: {
-          select: { name: true, email: true, additionalEmails: true },
-          orderBy: [{ name: "asc" }, { email: "asc" }],
-        },
-        authorEntries: {
-          include: {
-            user: {
-              select: { name: true, email: true, additionalEmails: true },
+  const [projects, authorUsers, fundingInstitutions, assistantTeams] =
+    await Promise.all([
+      prisma.researchProject.findMany({
+        where: projectWhere,
+        include: {
+          leadResearcher: { select: { name: true, email: true } },
+          registrationUser: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              additionalEmails: true,
+              roles: true,
             },
           },
-          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-        },
-        submissions: {
-          select: { status: true },
-        },
-        _count: {
-          select: {
-            submissions: true,
-            publications: true,
-            tasks: {
-              where: { status: { notIn: ["COMPLETED", "REVOKED"] } },
+          authors: {
+            select: { name: true, email: true, additionalEmails: true },
+            orderBy: [{ name: "asc" }, { email: "asc" }],
+          },
+          authorEntries: {
+            include: {
+              user: {
+                select: { name: true, email: true, additionalEmails: true },
+              },
             },
-            folderAccessRequests: {
-              where: { status: "PENDING" },
+            orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          },
+          submissions: {
+            select: { status: true },
+          },
+          _count: {
+            select: {
+              submissions: true,
+              publications: true,
+              tasks: {
+                where: { status: { notIn: ["COMPLETED", "REVOKED"] } },
+              },
+              folderAccessRequests: {
+                where: { status: "PENDING" },
+              },
             },
           },
         },
-      },
-      orderBy: { updatedAt: "desc" },
-    }),
-    prisma.user.findMany({
-      where: { activeSites: { has: "research" } },
-      orderBy: [{ name: "asc" }, { email: "asc" }],
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        additionalEmails: true,
-        roles: true,
-      },
-    }),
-    prisma.fundingInstitution.findMany({
-      orderBy: [{ name: "asc" }],
-      select: { id: true, name: true, shortName: true, country: true },
-    }),
-  ]);
+        orderBy: { updatedAt: "desc" },
+      }),
+      prisma.user.findMany({
+        where: { activeSites: { has: "research" } },
+        orderBy: [{ name: "asc" }, { email: "asc" }],
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          additionalEmails: true,
+          roles: true,
+        },
+      }),
+      prisma.fundingInstitution.findMany({
+        orderBy: [{ name: "asc" }],
+        select: { id: true, name: true, shortName: true, country: true },
+      }),
+      prisma.researchAssistantTeam.findMany({
+        orderBy: [{ name: "asc" }],
+        select: {
+          id: true,
+          name: true,
+          leader: { select: { name: true, email: true } },
+          _count: { select: { members: true } },
+        },
+      }),
+    ]);
   const authorOptions = authorUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -376,6 +386,13 @@ export default async function ProjectsDashboard() {
                   name: institution.name,
                   shortName: institution.shortName ?? "",
                   country: institution.country ?? "",
+                }))}
+                assistantTeams={assistantTeams.map((team) => ({
+                  id: team.id,
+                  name: team.name,
+                  leaderName: team.leader.name ?? "",
+                  leaderEmail: team.leader.email,
+                  memberCount: team._count.members,
                 }))}
               />
             ) : (

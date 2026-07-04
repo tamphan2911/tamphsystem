@@ -66,7 +66,6 @@ export default async function ResearchTeamsPage() {
         email: true,
         researchAssistantTeamMemberships: {
           select: { teamId: true, team: { select: { name: true } } },
-          take: 1,
         },
       },
     }),
@@ -89,11 +88,11 @@ export default async function ResearchTeamsPage() {
 
   const leaderOptions: TeamPerson[] = leaders.map(person);
   const assistantOptions: TeamMemberOption[] = assistants.map((assistant) => {
-    const membership = assistant.researchAssistantTeamMemberships[0];
+    const memberships = assistant.researchAssistantTeamMemberships;
     return {
       ...person(assistant),
-      currentTeamId: membership?.teamId ?? "",
-      currentTeamName: membership?.team.name ?? "",
+      currentTeamIds: memberships.map((membership) => membership.teamId),
+      currentTeamNames: memberships.map((membership) => membership.team.name),
     };
   });
 

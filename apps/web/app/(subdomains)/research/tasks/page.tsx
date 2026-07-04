@@ -40,12 +40,21 @@ export default async function ResearchTasksPage() {
   const isRootAdmin = roles.includes(Role.ADMIN);
   const isChiefAssistant = roles.includes(Role.CHIEF_ASSISTANT);
   const canManageTasks = isRootAdmin || isChiefAssistant;
+  const ledTeamMemberIds =
+    isChiefAssistant && !isRootAdmin
+      ? (
+          await prisma.researchAssistantTeamMember.findMany({
+            where: { team: { leaderId: userId } },
+            select: { userId: true },
+          })
+        ).map((member) => member.userId)
+      : [];
   const assigneeWhere = isRootAdmin
     ? { activeSites: { has: "research" } }
     : {
         activeSites: { has: "research" },
         roles: { has: Role.ASSISTANT },
-        NOT: { id: userId },
+        id: { in: ledTeamMemberIds },
       };
   const scopedResearchWhere = isRootAdmin
     ? {}
@@ -55,6 +64,8 @@ export default async function ResearchTasksPage() {
           { authors: { some: { id: userId } } },
           { authorEntries: { some: { userId } } },
           { registrationUserId: userId },
+          { assistantTeam: { leaderId: userId } },
+          { assistantTeam: { members: { some: { userId } } } },
           {
             organizedProjectLinks: {
               some: {

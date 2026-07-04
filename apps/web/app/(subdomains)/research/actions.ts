@@ -794,6 +794,7 @@ async function canCreateResearchTaskForProject({
       where: { id: projectId },
       select: {
         leadResearcherId: true,
+        assistantTeam: { select: { leaderId: true } },
         authorEntries: {
           orderBy: [{ position: "asc" }, { createdAt: "asc" }],
           select: { userId: true, isCorresponding: true },
@@ -803,10 +804,14 @@ async function canCreateResearchTaskForProject({
 
     if (!project) return false;
     if (project.authorEntries.length === 0) {
-      return project.leadResearcherId === user.id;
+      return (
+        project.leadResearcherId === user.id ||
+        project.assistantTeam?.leaderId === user.id
+      );
     }
 
     return (
+      project.assistantTeam?.leaderId === user.id ||
       project.authorEntries[0]?.userId === user.id ||
       project.authorEntries.some(
         (entry) => entry.userId === user.id && entry.isCorresponding,
@@ -1171,6 +1176,7 @@ type ResearchNotificationSnapshot = {
   registrationName: string | null;
   registrationUser: { name: string | null; email: string } | null;
   fundingInstitution: { name: string } | null;
+  assistantTeam: { name: string } | null;
   authors: { id: string; name: string | null; email: string }[];
   authorEntries: {
     userId: string;
@@ -1277,6 +1283,11 @@ function researchProjectNotificationChanges(
     "Funding institution",
     before.fundingInstitution?.name ?? "",
     after.fundingInstitution?.name ?? "",
+  );
+  addChange(
+    "Assistant team",
+    before.assistantTeam?.name ?? "",
+    after.assistantTeam?.name ?? "",
   );
   addChange(
     "Registration status",
@@ -1726,6 +1737,49 @@ async function taskAssigneesAreSelectableByUser({
   });
 
   return selectableAssigneeCount === uniqueAssigneeIds.length;
+}
+
+async function researchTeamLeaderTaskContext({
+  user,
+  projectId,
+  assigneeIds,
+}: {
+  user: { id: string; roles: Role[] };
+  projectId: string | null;
+  assigneeIds: string[];
+}) {
+  if (
+    !projectId ||
+    user.roles.includes(Role.ADMIN) ||
+    !user.roles.includes(Role.CHIEF_ASSISTANT)
+  ) {
+    return { allowed: false, hasTeamResearch: false };
+  }
+
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: {
+      assistantTeam: {
+        select: {
+          leaderId: true,
+          members: { select: { userId: true } },
+        },
+      },
+    },
+  });
+  const team = project?.assistantTeam;
+  if (!team || team.leaderId !== user.id) {
+    return { allowed: false, hasTeamResearch: false };
+  }
+
+  const memberIds = new Set(team.members.map((member) => member.userId));
+  const uniqueAssigneeIds = Array.from(new Set(assigneeIds));
+  return {
+    allowed:
+      uniqueAssigneeIds.length > 0 &&
+      uniqueAssigneeIds.every((assigneeId) => memberIds.has(assigneeId)),
+    hasTeamResearch: true,
+  };
 }
 
 async function taskCheckerIsSelectableByAdmin({
@@ -3056,6 +3110,9 @@ export async function createResearchProject(formData: FormData) {
   const fundingInstitutionId = isAdmin
     ? optionalString(formData.get("fundingInstitutionId"))
     : null;
+  const assistantTeamId = user.roles.includes(Role.ADMIN)
+    ? optionalString(formData.get("assistantTeamId"))
+    : null;
   const isPriority =
     user.roles.includes(Role.ADMIN) && formData.get("isPriority") === "true";
 
@@ -3073,6 +3130,7 @@ export async function createResearchProject(formData: FormData) {
       registrationName: null,
       registrationUserId,
       fundingInstitutionId,
+      assistantTeamId,
       isPriority,
       registerStatus: isAdmin
         ? (enumValue(RegistrationStatus, formData.get("registerStatus")) ??
@@ -3624,6 +3682,7 @@ export async function updateResearchProject(
       registrationName: true,
       registrationUser: { select: { name: true, email: true } },
       fundingInstitution: { select: { name: true } },
+      assistantTeam: { select: { name: true } },
       stage: true,
       completedProductionSteps: true,
       productionTimelineLocked: true,
@@ -3732,6 +3791,7 @@ export async function updateResearchProject(
   const fundingInstitutionId = optionalString(
     formData.get("fundingInstitutionId"),
   );
+  const assistantTeamId = optionalString(formData.get("assistantTeamId"));
   const data = {
     title: optionalString(formData.get("title")) ?? "Untitled research",
     sharedFolderUrl: optionalString(formData.get("sharedFolderUrl")),
@@ -3745,6 +3805,7 @@ export async function updateResearchProject(
           registrationName: null,
           registrationUserId,
           fundingInstitutionId,
+          assistantTeamId,
           registerStatus:
             enumValue(RegistrationStatus, formData.get("registerStatus")) ??
             RegistrationStatus.NOT_REGISTERED,
@@ -3826,6 +3887,7 @@ export async function updateResearchProject(
       registrationName: true,
       registrationUser: { select: { name: true, email: true } },
       fundingInstitution: { select: { name: true } },
+      assistantTeam: { select: { name: true } },
       stage: true,
       completedProductionSteps: true,
       authors: { select: { id: true, name: true, email: true } },
@@ -7305,6 +7367,11 @@ export async function createResearchTask(formData: FormData) {
   const suggestedConferenceId = optionalString(
     formData.get("suggestedConferenceId"),
   );
+  const teamLeaderContext = await researchTeamLeaderTaskContext({
+    user,
+    projectId,
+    assigneeIds,
+  });
   const isSuggestedVenueSubmitTask =
     (taskType === ResearchTaskType.SUBMIT_RESEARCH &&
       Boolean(suggestedJournalId)) ||
@@ -7314,11 +7381,13 @@ export async function createResearchTask(formData: FormData) {
     user.roles.includes(Role.CHIEF_ASSISTANT) &&
     !user.roles.includes(Role.ADMIN) &&
     isSuggestedVenueSubmitTask;
-  const checkerId = isChiefAssistantSuggestedVenueSubmitTask
-    ? user.id
-    : optionalString(formData.get("checkerId"));
+  const checkerId =
+    teamLeaderContext.allowed || isChiefAssistantSuggestedVenueSubmitTask
+      ? user.id
+      : optionalString(formData.get("checkerId"));
 
   if (
+    !teamLeaderContext.allowed &&
     !(await taskAssigneesAreSelectableByUser({
       assigneeIds,
       user,
@@ -7327,8 +7396,12 @@ export async function createResearchTask(formData: FormData) {
   ) {
     return { ok: false, reason: "INACTIVE_RESEARCH_ASSIGNEE" };
   }
+  if (teamLeaderContext.hasTeamResearch && !teamLeaderContext.allowed) {
+    return { ok: false, reason: "TEAM_MEMBER_REQUIRED" };
+  }
 
   if (
+    !teamLeaderContext.allowed &&
     !isChiefAssistantSuggestedVenueSubmitTask &&
     !(await taskCheckerIsSelectableByAdmin({ checkerId, user }))
   ) {
@@ -7728,24 +7801,6 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     return { ok: false, reason: "NO_ASSIGNEE" };
   }
 
-  if (!(await taskAssigneesAreSelectableByUser({ assigneeIds, user }))) {
-    return { ok: false, reason: "INACTIVE_RESEARCH_ASSIGNEE" };
-  }
-
-  const requestedCheckerId = optionalString(formData.get("checkerId"));
-  if (
-    user.roles.includes(Role.ADMIN) &&
-    !(await taskCheckerIsSelectableByAdmin({
-      checkerId: requestedCheckerId,
-      user,
-    }))
-  ) {
-    return { ok: false, reason: "INVALID_CHECKER" };
-  }
-  const checkerId = user.roles.includes(Role.ADMIN)
-    ? requestedCheckerId
-    : currentTask.checkerId;
-
   const taskType = taskTypeFromForm(formData.get("taskType"));
   if (!taskType) return { ok: false, reason: "MISSING_ASSOCIATION" };
   const proposalScope = proposalTaskScopeFromForm(
@@ -7761,6 +7816,37 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
   const organizedProjectId = optionalString(formData.get("organizedProjectId"));
   const journalId = optionalString(formData.get("journalId"));
   const conferenceId = optionalString(formData.get("conferenceId"));
+  const teamLeaderContext = await researchTeamLeaderTaskContext({
+    user,
+    projectId,
+    assigneeIds,
+  });
+
+  if (
+    !teamLeaderContext.allowed &&
+    !(await taskAssigneesAreSelectableByUser({ assigneeIds, user }))
+  ) {
+    return { ok: false, reason: "INACTIVE_RESEARCH_ASSIGNEE" };
+  }
+  if (teamLeaderContext.hasTeamResearch && !teamLeaderContext.allowed) {
+    return { ok: false, reason: "TEAM_MEMBER_REQUIRED" };
+  }
+
+  const requestedCheckerId = optionalString(formData.get("checkerId"));
+  if (
+    user.roles.includes(Role.ADMIN) &&
+    !(await taskCheckerIsSelectableByAdmin({
+      checkerId: requestedCheckerId,
+      user,
+    }))
+  ) {
+    return { ok: false, reason: "INVALID_CHECKER" };
+  }
+  const checkerId = user.roles.includes(Role.ADMIN)
+    ? requestedCheckerId
+    : teamLeaderContext.allowed
+      ? user.id
+      : currentTask.checkerId;
   const reviewId = optionalString(formData.get("reviewId"));
   const accountId = optionalString(formData.get("accountId"));
   const allowAssigneeReportUpload =

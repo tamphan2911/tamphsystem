@@ -438,6 +438,8 @@ model ResearchProject {
   registrationUser         User?               @relation("ResearchRegistrationUser", fields: [registrationUserId], references: [id], onDelete: SetNull)
   fundingInstitutionId     String?
   fundingInstitution       FundingInstitution? @relation(fields: [fundingInstitutionId], references: [id], onDelete: SetNull)
+  assistantTeamId          String?
+  assistantTeam            ResearchAssistantTeam? @relation(fields: [assistantTeamId], references: [id], onDelete: SetNull)
   registerStatus           RegistrationStatus  @default(NOT_REGISTERED)
   claimStatus              ClaimStatus         @default(CANNOT_CLAIM)
   isPriority               Boolean             @default(false)
@@ -468,6 +470,7 @@ model ResearchProject {
 
   @@index([registrationUserId])
   @@index([fundingInstitutionId])
+  @@index([assistantTeamId])
 }
 
 model OrganizedProject {
@@ -1109,15 +1112,16 @@ model ResearchAssistantTeam {
 
   leader  User                          @relation("ResearchAssistantTeamLeader", fields: [leaderId], references: [id], onDelete: Restrict)
   members ResearchAssistantTeamMember[]
+  researchProjects ResearchProject[]
 
-  @@index([leaderId])
+  @@unique([leaderId])
   @@index([updatedAt])
 }
 
 model ResearchAssistantTeamMember {
   id       String   @id @default(uuid())
   teamId   String
-  userId   String   @unique
+  userId   String
   joinedAt DateTime @default(now())
 
   team ResearchAssistantTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)

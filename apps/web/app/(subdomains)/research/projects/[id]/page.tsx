@@ -308,17 +308,21 @@ export default async function ProjectDetailPage({
   const isRootAdmin = roles.includes(Role.ADMIN);
   const isChiefAssistant = roles.includes(Role.CHIEF_ASSISTANT);
   const isAdmin = isRootAdmin || isChiefAssistant;
+  const ledTeamMemberIds =
+    isChiefAssistant && !isRootAdmin
+      ? (
+          await prisma.researchAssistantTeamMember.findMany({
+            where: { team: { leaderId: userId } },
+            select: { userId: true },
+          })
+        ).map((member) => member.userId)
+      : [];
   const taskAssigneeWhere = isRootAdmin
     ? { activeSites: { has: "research" } }
     : {
         activeSites: { has: "research" },
-        OR: [
-          {
-            roles: { has: Role.ASSISTANT },
-            NOT: { id: userId },
-          },
-          ...(isChiefAssistant ? [{ id: userId }] : []),
-        ],
+        roles: { has: Role.ASSISTANT },
+        id: { in: ledTeamMemberIds },
       };
   const [
     project,
@@ -329,6 +333,7 @@ export default async function ProjectDetailPage({
     checkerUsers,
     authorUsers,
     fundingInstitutions,
+    assistantTeams,
     taskGuides,
   ] = await Promise.all([
     prisma.researchProject.findUnique({
@@ -348,6 +353,16 @@ export default async function ProjectDetailPage({
         },
         registrationUser: true,
         fundingInstitution: true,
+        assistantTeam: {
+          select: {
+            id: true,
+            name: true,
+            leaderId: true,
+            leader: { select: { name: true, email: true } },
+            members: { select: { userId: true } },
+            _count: { select: { members: true } },
+          },
+        },
         authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
         authorEntries: {
           orderBy: [{ position: "asc" }, { createdAt: "asc" }],
@@ -515,6 +530,15 @@ export default async function ProjectDetailPage({
       orderBy: [{ name: "asc" }],
       select: { id: true, name: true, shortName: true, country: true },
     }),
+    prisma.researchAssistantTeam.findMany({
+      orderBy: [{ name: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        leader: { select: { name: true, email: true } },
+        _count: { select: { members: true } },
+      },
+    }),
     prisma.taskGuide.findMany({
       orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
       select: {
@@ -594,10 +618,16 @@ export default async function ProjectDetailPage({
         project.registrationName.trim().toLowerCase(),
       ),
     );
+  const isAssignedTeamLeader = project.assistantTeam?.leaderId === userId;
+  const isAssignedTeamMember =
+    project.assistantTeam?.members.some((member) => member.userId === userId) ??
+    false;
   if (
     !isAdmin &&
     !isProjectAuthor &&
     !isRegistrationUser &&
+    !isAssignedTeamLeader &&
+    !isAssignedTeamMember &&
     !hasAssignedResearchTask
   ) {
     notFound();
@@ -610,7 +640,10 @@ export default async function ProjectDetailPage({
     isRootAdmin || isCorrespondingAuthor || isFirstAuthor;
   const canEditResearch = isAdmin || isCorrespondingAuthor;
   const canManageResearchTasks =
-    isRootAdmin || isFirstAuthor || isCorrespondingAuthor;
+    isRootAdmin ||
+    isFirstAuthor ||
+    isCorrespondingAuthor ||
+    isAssignedTeamLeader;
   const isSuggestVenueTaskAssigner = project.tasks.some(
     (task) => task.taskType === "SUGGEST_VENUE" && task.createdById === userId,
   );
@@ -1098,6 +1131,22 @@ export default async function ProjectDetailPage({
         country: project.fundingInstitution.country ?? "",
       }
     : null;
+  const assistantTeamOptions = assistantTeams.map((team) => ({
+    id: team.id,
+    name: team.name,
+    leaderName: team.leader.name ?? "",
+    leaderEmail: team.leader.email,
+    memberCount: team._count.members,
+  }));
+  const defaultAssistantTeam = project.assistantTeam
+    ? {
+        id: project.assistantTeam.id,
+        name: project.assistantTeam.name,
+        leaderName: project.assistantTeam.leader.name ?? "",
+        leaderEmail: project.assistantTeam.leader.email,
+        memberCount: project.assistantTeam._count.members,
+      }
+    : null;
   const defaultAuthors: SelectedAuthor[] =
     hydratedAuthorEntries.length > 0
       ? hydratedAuthorEntries.map((entry) => ({
@@ -1231,6 +1280,7 @@ export default async function ProjectDetailPage({
     isPriority: project.isPriority,
     registrationUser: defaultRegistrationUser,
     fundingInstitution: defaultFundingInstitution,
+    assistantTeam: defaultAssistantTeam,
   };
   const registrationParts =
     project.registerStatus === "NOT_REGISTERED"
@@ -1821,6 +1871,7 @@ export default async function ProjectDetailPage({
                     completedProductionSteps={completedProductionStepValues}
                     users={authorOptions}
                     fundingInstitutions={fundingInstitutionOptions}
+                    assistantTeams={assistantTeamOptions}
                     registerOptions={registerOptions}
                     claimOptions={claimOptions}
                     canEditRegistrationClaim={isRootAdmin}

@@ -34,8 +34,8 @@ export default async function ResearchTeamPage() {
   });
   if (!currentUser || !canUseTeamFeature(currentUser.roles)) redirect("/401");
 
-  const [membership, ledTeams, allTeamCount] = await Promise.all([
-    prisma.researchAssistantTeamMember.findUnique({
+  const [memberships, ledTeams, allTeamCount] = await Promise.all([
+    prisma.researchAssistantTeamMember.findMany({
       where: { userId },
       include: {
         team: {
@@ -50,6 +50,7 @@ export default async function ResearchTeamPage() {
           },
         },
       },
+      orderBy: [{ team: { name: "asc" } }],
     }),
     prisma.researchAssistantTeam.findMany({
       where: { leaderId: userId },
@@ -67,21 +68,27 @@ export default async function ResearchTeamPage() {
   ]);
 
   const ledTeam = ledTeams[0] ?? null;
-  const team = membership?.team
-    ? {
-        name: membership.team.name,
-        description: membership.team.description,
-        leader: membership.team.leader,
-        members: membership.team.members,
-      }
-    : ledTeam
-      ? {
-          name: ledTeam.name,
-          description: ledTeam.description,
-          leader: currentUser,
-          members: ledTeam.members,
-        }
-      : null;
+  const teams = [
+    ...memberships.map((membership) => ({
+      id: membership.team.id,
+      name: membership.team.name,
+      description: membership.team.description,
+      leader: membership.team.leader,
+      members: membership.team.members,
+    })),
+    ...(ledTeam &&
+    !memberships.some((membership) => membership.teamId === ledTeam.id)
+      ? [
+          {
+            id: ledTeam.id,
+            name: ledTeam.name,
+            description: ledTeam.description,
+            leader: currentUser,
+            members: ledTeam.members,
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
@@ -130,49 +137,53 @@ export default async function ResearchTeamPage() {
             <UsersRound className="h-4 w-4" />
             <span>Current team</span>
           </div>
-          {team ? (
-            <div className="mt-4">
-              <h2 className="text-xl font-normal text-slate-900 dark:text-[#E4E4E4]">
-                {team.name}
-              </h2>
-              {team.description ? (
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-[#B0B0B0]">
-                  {team.description}
-                </p>
-              ) : null}
-              <div className="mt-4 border border-cyan-100 bg-cyan-50 px-3 py-2.5 dark:border-cyan-400/20 dark:bg-cyan-950/25">
-                <div className="flex items-center gap-2 text-xs uppercase text-cyan-800 dark:text-cyan-200">
-                  <Crown className="h-4 w-4" />
-                  <span>Leader</span>
-                </div>
-                <p className="mt-1 text-sm text-slate-900 dark:text-[#E4E4E4]">
-                  {personLabel(team.leader) || team.leader.email}
-                </p>
-              </div>
-              <div className="mt-4">
-                <p className="text-xs uppercase text-slate-500 dark:text-[#B0B0B0]">
-                  Members
-                </p>
-                {team.members.length > 0 ? (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {team.members.map((member) => (
-                      <span
-                        key={member.user.id}
-                        className="inline-flex max-w-full items-center gap-2 border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-700 dark:border-[#444444] dark:bg-[#303030] dark:text-[#E4E4E4]"
-                      >
-                        <ShieldCheck className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
-                        <span className="truncate">
-                          {personLabel(member.user) || member.user.email}
-                        </span>
-                      </span>
-                    ))}
+          {teams.length > 0 ? (
+            <div className="mt-4 space-y-5">
+              {teams.map((team) => (
+                <div key={team.id}>
+                  <h2 className="text-xl font-normal text-slate-900 dark:text-[#E4E4E4]">
+                    {team.name}
+                  </h2>
+                  {team.description ? (
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-[#B0B0B0]">
+                      {team.description}
+                    </p>
+                  ) : null}
+                  <div className="mt-4 border border-cyan-100 bg-cyan-50 px-3 py-2.5 dark:border-cyan-400/20 dark:bg-cyan-950/25">
+                    <div className="flex items-center gap-2 text-xs uppercase text-cyan-800 dark:text-cyan-200">
+                      <Crown className="h-4 w-4" />
+                      <span>Leader</span>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-900 dark:text-[#E4E4E4]">
+                      {personLabel(team.leader) || team.leader.email}
+                    </p>
                   </div>
-                ) : (
-                  <p className="mt-2 text-sm text-slate-500 dark:text-[#8F8F8F]">
-                    No assistant members assigned yet.
-                  </p>
-                )}
-              </div>
+                  <div className="mt-4">
+                    <p className="text-xs uppercase text-slate-500 dark:text-[#B0B0B0]">
+                      Members
+                    </p>
+                    {team.members.length > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {team.members.map((member) => (
+                          <span
+                            key={member.user.id}
+                            className="inline-flex max-w-full items-center gap-2 border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-700 dark:border-[#444444] dark:bg-[#303030] dark:text-[#E4E4E4]"
+                          >
+                            <ShieldCheck className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+                            <span className="truncate">
+                              {personLabel(member.user) || member.user.email}
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm text-slate-500 dark:text-[#8F8F8F]">
+                        No assistant members assigned yet.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-[#B0B0B0]">

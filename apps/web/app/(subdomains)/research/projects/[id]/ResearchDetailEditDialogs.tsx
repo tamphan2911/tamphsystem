@@ -16,6 +16,8 @@ import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSele
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import {
+  AssistantTeamPicker,
+  type AssistantTeamOption,
   FundingInstitutionPicker,
   type FundingInstitutionOption,
 } from "../../organized-projects/ProjectFormControls";
@@ -44,6 +46,7 @@ type ResearchBasicValues = {
   isPriority: boolean;
   registrationUser: AuthorOption | null;
   fundingInstitution: FundingInstitutionOption | null;
+  assistantTeam: AssistantTeamOption | null;
 };
 
 const inputClass = researchFieldClass;
@@ -197,6 +200,11 @@ function HiddenBasic({ values }: { values: ResearchBasicValues }) {
       />
       <input
         type="hidden"
+        name="assistantTeamId"
+        value={values.assistantTeam?.id ?? ""}
+      />
+      <input
+        type="hidden"
         name="isPriority"
         value={values.isPriority ? "true" : "false"}
       />
@@ -276,6 +284,7 @@ export function ResearchBasicEditDialog({
   completedProductionSteps,
   users,
   fundingInstitutions,
+  assistantTeams,
   registerOptions,
   claimOptions,
   canEditRegistrationClaim,
@@ -290,6 +299,7 @@ export function ResearchBasicEditDialog({
   completedProductionSteps: string[];
   users: AuthorOption[];
   fundingInstitutions: FundingInstitutionOption[];
+  assistantTeams: AssistantTeamOption[];
   registerOptions: { value: string; label: string }[];
   claimOptions: { value: string; label: string }[];
   canEditRegistrationClaim: boolean;
@@ -440,6 +450,11 @@ export function ResearchBasicEditDialog({
                 disabled={!canEditRegistrationClaim}
               />
             </div>
+            <AssistantTeamPicker
+              teams={assistantTeams}
+              defaultTeam={values.assistantTeam}
+              disabled={!canEditRegistrationClaim}
+            />
           </div>
         </form>
       </DialogShell>
