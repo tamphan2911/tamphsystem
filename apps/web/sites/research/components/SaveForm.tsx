@@ -12,7 +12,7 @@ export function SaveForm({
   successDetail = "Research information, registration, claim status, and production checklist are now saved.",
   children,
 }: {
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<unknown>;
   className?: string;
   id?: string;
   successMessage?: string;

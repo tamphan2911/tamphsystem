@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
   Check,
+  CheckCircle2,
   Edit3,
   FileText,
   Loader2,
@@ -47,6 +49,17 @@ type ResearchBasicValues = {
   registrationUser: AuthorOption | null;
   fundingInstitution: FundingInstitutionOption | null;
   assistantTeam: AssistantTeamOption | null;
+};
+
+type AutoCreatedTask = {
+  id: string;
+  title: string;
+  taskCode: string | null;
+  description: string | null;
+  dueDate: string | null;
+  assigner: { name: string | null; email: string } | null;
+  checker: { name: string | null; email: string } | null;
+  assignees: { name: string | null; email: string }[];
 };
 
 const inputClass = researchFieldClass;
@@ -293,7 +306,9 @@ export function ResearchBasicEditDialog({
   initialOpen = false,
   lockUntilSaved = false,
 }: {
-  action: (formData: FormData) => Promise<void>;
+  action: (
+    formData: FormData,
+  ) => Promise<{ initialProductionTask?: AutoCreatedTask | null } | void>;
   values: ResearchBasicValues;
   authors: SelectedAuthor[];
   completedProductionSteps: string[];
@@ -309,6 +324,8 @@ export function ResearchBasicEditDialog({
   lockUntilSaved?: boolean;
 }) {
   const [open, setOpen] = useState(initialOpen);
+  const [autoCreatedTask, setAutoCreatedTask] =
+    useState<AutoCreatedTask | null>(null);
   const [isPending, startTransition] = useTransition();
   const toast = useResearchToast();
 
@@ -345,8 +362,11 @@ export function ResearchBasicEditDialog({
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
             startTransition(async () => {
-              await action(formData);
+              const result = await action(formData);
               setOpen(false);
+              if (result?.initialProductionTask) {
+                setAutoCreatedTask(result.initialProductionTask);
+              }
               toast.showSuccess({
                 title: "Research information saved",
                 detail:
@@ -458,6 +478,97 @@ export function ResearchBasicEditDialog({
           </div>
         </form>
       </DialogShell>
+      <DialogShell
+        open={Boolean(autoCreatedTask)}
+        onClose={() => setAutoCreatedTask(null)}
+        icon={<CheckCircle2 className="h-5 w-5" />}
+        title="Idea forming task created"
+        detail="The research is active now, and the first production task was assigned automatically."
+        headerActions={
+          autoCreatedTask ? (
+            <Link
+              href={`/tasks/${autoCreatedTask.id}`}
+              className="research-allow-transform inline-flex h-10 items-center gap-2 border border-[#A8DADC] px-4 text-sm font-normal text-[#1F7180] transition duration-180 ease-out hover:-translate-y-0.5 hover:border-[#1F7180] hover:bg-sky-50 hover:text-[#155864] active:translate-y-0 active:scale-[0.985] dark:text-[#A8DADC] dark:hover:border-cyan-200 dark:hover:bg-[#383838] dark:hover:text-cyan-200"
+            >
+              <FileText className="h-4 w-4" />
+              Open task
+            </Link>
+          ) : null
+        }
+      >
+        {autoCreatedTask ? (
+          <div className="space-y-5 px-6 py-5">
+            <div className="border border-emerald-200 bg-emerald-50/70 p-4 text-slate-900 dark:border-emerald-400/30 dark:bg-emerald-950/20 dark:text-[#E4E4E4]">
+              <Link
+                href={`/tasks/${autoCreatedTask.id}`}
+                className="research-link-quiet inline-block text-base font-normal text-[#1F7180] transition duration-150 ease-out hover:-translate-y-0.5 hover:text-[#155864] active:translate-y-0 active:scale-[0.99] dark:text-[#A8DADC] dark:hover:text-cyan-200"
+              >
+                {autoCreatedTask.title}
+              </Link>
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-600 dark:text-[#B0B0B0]">
+                <span>ID: {autoCreatedTask.taskCode ?? autoCreatedTask.id}</span>
+                {autoCreatedTask.dueDate ? (
+                  <>
+                    <span className="text-slate-300 dark:text-[#555555]">
+                      |
+                    </span>
+                    <span>
+                      Due:{" "}
+                      {new Intl.DateTimeFormat("en-GB", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "2-digit",
+                      }).format(new Date(autoCreatedTask.dueDate))}
+                    </span>
+                  </>
+                ) : null}
+              </div>
+            </div>
+            <div className="grid gap-4 text-sm md:grid-cols-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-[#B0B0B0]">
+                  Assignees
+                </p>
+                <p className="mt-1 text-slate-800 dark:text-[#E4E4E4]">
+                  {autoCreatedTask.assignees
+                    .map((assignee) => assignee.name || assignee.email)
+                    .join(", ") || "Not assigned"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-[#B0B0B0]">
+                  Checker
+                </p>
+                <p className="mt-1 text-slate-800 dark:text-[#E4E4E4]">
+                  {autoCreatedTask.checker?.name ||
+                    autoCreatedTask.checker?.email ||
+                    "No checker"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-[#B0B0B0]">
+                  Assigner
+                </p>
+                <p className="mt-1 text-slate-800 dark:text-[#E4E4E4]">
+                  {autoCreatedTask.assigner?.name ||
+                    autoCreatedTask.assigner?.email ||
+                    "Not recorded"}
+                </p>
+              </div>
+            </div>
+            {autoCreatedTask.description ? (
+              <div>
+                <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-[#B0B0B0]">
+                  Task content
+                </p>
+                <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700 dark:text-[#B0B0B0]">
+                  {autoCreatedTask.description}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </DialogShell>
     </>
   );
 }
@@ -472,7 +583,7 @@ export function ResearchAuthorsEditDialog({
   disabledReason,
   allowPendingEmail = false,
 }: {
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<unknown>;
   values: ResearchBasicValues;
   authors: SelectedAuthor[];
   completedProductionSteps: string[];

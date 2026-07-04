@@ -3993,6 +3993,7 @@ export async function updateResearchProject(
     revalidatePath("/tasks");
     revalidatePath(`/tasks/${initialProductionTask.id}`);
   }
+  return { initialProductionTask };
 }
 
 export async function deleteResearchProject(projectId: string) {
@@ -12134,12 +12135,16 @@ async function createInitialProductionWorkflowTaskForResearch(
     select: {
       id: true,
       title: true,
+      taskCode: true,
       description: true,
+      dueDate: true,
       checkerId: true,
+      createdBy: { select: { name: true, email: true } },
+      checker: { select: { name: true, email: true } },
       assignments: {
         select: {
           userId: true,
-          user: { select: { email: true } },
+          user: { select: { name: true, email: true } },
         },
       },
     },
@@ -12185,7 +12190,16 @@ async function createInitialProductionWorkflowTaskForResearch(
     });
   }
 
-  return task;
+  return {
+    id: task.id,
+    title: task.title,
+    taskCode: task.taskCode,
+    description: task.description,
+    dueDate: task.dueDate?.toISOString() ?? null,
+    assigner: task.createdBy,
+    checker: task.checker,
+    assignees: task.assignments.map((assignment) => assignment.user),
+  };
 }
 
 export async function finishResearchTask(taskId: string, formData?: FormData) {
