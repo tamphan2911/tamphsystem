@@ -2475,7 +2475,7 @@ function VenueFees({
     <p className="mt-2 flex flex-wrap items-center gap-x-1 text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
       <span>APC:</span>
       <span className={apcClassName}>{apcLabel}</span>
-      {showApcOptionStatus && !rawTextFees ? (
+      {showApcOptionStatus && !rawTextFees && !apcIsFree ? (
         <span className={apcOptionClassName}>
           ({hasApcOption ? "Option" : "No Option"})
         </span>

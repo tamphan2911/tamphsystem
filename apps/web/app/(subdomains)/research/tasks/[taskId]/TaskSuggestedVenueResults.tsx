@@ -308,6 +308,7 @@ function SuggestedVenueCard({ venue }: { venue: TaskSuggestedVenueResult }) {
   const showApcOption =
     venue.kind === "journal" &&
     !venue.useRawFeeText &&
+    !apc.isFree &&
     venue.hasApcOption !== null &&
     venue.hasApcOption !== undefined;
 
