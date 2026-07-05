@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   BadgeCheck,
@@ -74,6 +74,19 @@ type SortState = {
   column: SortColumn;
   direction: SortDirection;
 } | null;
+type ServerTableState = {
+  query: string;
+  stageValue: string;
+  claimValue: string;
+  registrationValue: string;
+  sortValue: string;
+  folderRequestValue: string;
+  priorityValue: string;
+  page: number;
+  pageSize: number;
+  total: number;
+  pendingFolderRequestCount: number;
+};
 
 const stages = [
   "ALL",
@@ -326,8 +339,8 @@ function ActiveTaskCount({
     overdueCount > 0
       ? "text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-rose-200"
       : count > 0
-      ? "text-violet-700 hover:text-violet-900 dark:text-[#B39CD0] dark:hover:text-[#D8C8EC]"
-      : "text-[#667085] hover:text-[#344054] dark:text-[#777777] dark:hover:text-[#B0B0B0]";
+        ? "text-violet-700 hover:text-violet-900 dark:text-[#B39CD0] dark:hover:text-[#D8C8EC]"
+        : "text-[#667085] hover:text-[#344054] dark:text-[#777777] dark:hover:text-[#B0B0B0]";
 
   return (
     <IconHint label={label}>
@@ -542,42 +555,56 @@ export function ResearchProjectsTable({
   deleteAction,
   showClaimRegistration = true,
   emptyMessage = "No research matches the current search.",
+  serverState,
 }: {
   rows: ResearchProjectRow[];
   isAdmin?: boolean;
   deleteAction?: (projectId: string) => Promise<void>;
   showClaimRegistration?: boolean;
   emptyMessage?: string;
+  serverState?: ServerTableState;
 }) {
-  const [query, setQuery] = usePersistentTableValue("projects:q", "");
-  const [stageValue, setStageValue] = usePersistentTableValue(
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [storedQuery, setStoredQuery] = usePersistentTableValue(
+    "projects:q",
+    "",
+  );
+  const [storedStageValue, setStoredStageValue] = usePersistentTableValue(
     "projects:stage",
     "ALL",
   );
-  const [claimValue, setClaimValue] = usePersistentTableValue(
+  const [storedClaimValue, setStoredClaimValue] = usePersistentTableValue(
     "projects:claim",
     "ALL",
   );
-  const [registrationValue, setRegistrationValue] = usePersistentTableValue(
-    "projects:registration",
-    "ALL",
-  );
-  const [sortValue, setSortValue] = usePersistentTableValue(
+  const [storedRegistrationValue, setStoredRegistrationValue] =
+    usePersistentTableValue("projects:registration", "ALL");
+  const [storedSortValue, setStoredSortValue] = usePersistentTableValue(
     "projects:sort",
     "NONE",
   );
-  const [folderRequestValue, setFolderRequestValue] = usePersistentTableValue(
-    "projects:folder-requests",
-    "0",
-  );
-  const [priorityValue, setPriorityValue] = usePersistentTableValue(
+  const [storedFolderRequestValue, setStoredFolderRequestValue] =
+    usePersistentTableValue("projects:folder-requests", "0");
+  const [storedPriorityValue, setStoredPriorityValue] = usePersistentTableValue(
     "projects:priority",
     "0",
   );
+  const query = serverState?.query ?? storedQuery;
+  const stageValue = serverState?.stageValue ?? storedStageValue;
+  const claimValue = serverState?.claimValue ?? storedClaimValue;
+  const registrationValue =
+    serverState?.registrationValue ?? storedRegistrationValue;
+  const sortValue = serverState?.sortValue ?? storedSortValue;
+  const folderRequestValue =
+    serverState?.folderRequestValue ?? storedFolderRequestValue;
+  const priorityValue = serverState?.priorityValue ?? storedPriorityValue;
   const pendingFolderRequestCount = useMemo(
     () =>
+      serverState?.pendingFolderRequestCount ??
       rows.reduce((total, row) => total + row.pendingFolderAccessRequests, 0),
-    [rows],
+    [rows, serverState?.pendingFolderRequestCount],
   );
   const hasPendingFolderRequests = pendingFolderRequestCount > 0;
   const showFolderRequestsOnly = isAdmin && folderRequestValue === "1";
@@ -595,11 +622,32 @@ export function ResearchProjectsTable({
     () => selectedFilterValues(registrationValue, registrations),
     [registrationValue],
   );
-  const showRegistrationClaim = rows.some(
-    (row) => showClaimRegistration && row.canViewRegistrationClaim,
-  );
+  const showRegistrationClaim = serverState
+    ? showClaimRegistration
+    : rows.some((row) => showClaimRegistration && row.canViewRegistrationClaim);
+  const hasActiveFilters =
+    query.trim().length > 0 ||
+    selectedStages.length > 0 ||
+    selectedClaims.length > 0 ||
+    selectedRegistrations.length > 0 ||
+    showFolderRequestsOnly ||
+    showPriorityOnly;
+
+  function updateServerParams(updates: Record<string, string | null>) {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (!value || value === "ALL" || value === "NONE" || value === "0") {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+    const next = params.toString();
+    router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
+  }
 
   const filtered = useMemo(() => {
+    if (serverState) return rows;
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
       const matchesStage =
@@ -649,9 +697,11 @@ export function ResearchProjectsTable({
     showFolderRequestsOnly,
     showPriorityOnly,
     showRegistrationClaim,
+    serverState,
   ]);
 
   const sortedRows = useMemo(() => {
+    if (serverState) return filtered;
     if (!sort) return filtered;
 
     return filtered
@@ -681,44 +731,93 @@ export function ResearchProjectsTable({
         return sort.direction === "desc" ? -comparison : comparison;
       })
       .map(({ row }) => row);
-  }, [filtered, sort]);
+  }, [filtered, serverState, sort]);
 
   const pagination = useTablePagination(sortedRows, 10, 1, "projects");
+  const page = serverState?.page ?? pagination.page;
+  const pageCount = serverState
+    ? Math.max(1, Math.ceil(serverState.total / serverState.pageSize))
+    : pagination.pageCount;
+  const total = serverState?.total ?? pagination.total;
+  const pageSize = serverState?.pageSize ?? pagination.pageSize;
+  const pagedRows = serverState ? sortedRows : pagination.pagedRows;
+
+  function setPage(pageNumber: number) {
+    if (serverState) {
+      updateServerParams({ page: pageNumber <= 1 ? null : String(pageNumber) });
+      return;
+    }
+    pagination.setPage(pageNumber);
+  }
 
   function updateSort(column: SortColumn) {
     const next = nextSortState(sort, column);
-    setSortValue(stringifySortValue(next));
-    pagination.setPage(1);
+    const nextValue = stringifySortValue(next);
+    if (serverState) {
+      updateServerParams({ sort: nextValue, page: null });
+      return;
+    }
+    setStoredSortValue(nextValue);
+    setPage(1);
   }
 
   function updateQuery(value: string) {
-    setQuery(value);
-    pagination.setPage(1);
+    if (serverState) {
+      updateServerParams({ q: value.trim(), page: null });
+      return;
+    }
+    setStoredQuery(value);
+    setPage(1);
   }
 
   function updateStages(values: string[]) {
-    setStageValue(values.length > 0 ? values.join(",") : "ALL");
-    pagination.setPage(1);
+    const next = values.length > 0 ? values.join(",") : "ALL";
+    if (serverState) {
+      updateServerParams({ stage: next, page: null });
+      return;
+    }
+    setStoredStageValue(next);
+    setPage(1);
   }
 
   function updateClaims(values: string[]) {
-    setClaimValue(values.length > 0 ? values.join(",") : "ALL");
-    pagination.setPage(1);
+    const next = values.length > 0 ? values.join(",") : "ALL";
+    if (serverState) {
+      updateServerParams({ claim: next, page: null });
+      return;
+    }
+    setStoredClaimValue(next);
+    setPage(1);
   }
 
   function updateRegistrations(values: string[]) {
-    setRegistrationValue(values.length > 0 ? values.join(",") : "ALL");
-    pagination.setPage(1);
+    const next = values.length > 0 ? values.join(",") : "ALL";
+    if (serverState) {
+      updateServerParams({ registration: next, page: null });
+      return;
+    }
+    setStoredRegistrationValue(next);
+    setPage(1);
   }
 
   function updateFolderRequestFilter(checked: boolean) {
-    setFolderRequestValue(checked ? "1" : "0");
-    pagination.setPage(1);
+    const next = checked ? "1" : "0";
+    if (serverState) {
+      updateServerParams({ folderRequests: next, page: null });
+      return;
+    }
+    setStoredFolderRequestValue(next);
+    setPage(1);
   }
 
   function updatePriorityFilter(checked: boolean) {
-    setPriorityValue(checked ? "1" : "0");
-    pagination.setPage(1);
+    const next = checked ? "1" : "0";
+    if (serverState) {
+      updateServerParams({ priority: next, page: null });
+      return;
+    }
+    setStoredPriorityValue(next);
+    setPage(1);
   }
 
   return (
@@ -889,7 +988,7 @@ export function ResearchProjectsTable({
             key={sortValue}
             className="research-sortable-table-body divide-y divide-[#444444]"
           >
-            {pagination.pagedRows.map((row) => (
+            {pagedRows.map((row) => (
               <tr
                 key={row.id}
                 className="group align-top transition-colors duration-150 hover:bg-[#383838]"
@@ -977,7 +1076,7 @@ export function ResearchProjectsTable({
                 )}
               </tr>
             ))}
-            {pagination.total === 0 && (
+            {total === 0 && (
               <tr>
                 <td
                   colSpan={
@@ -989,12 +1088,16 @@ export function ResearchProjectsTable({
                   <ResearchEmptyState
                     title={
                       rows.length === 0
-                        ? emptyMessage
+                        ? serverState && hasActiveFilters
+                          ? "No research matches the current search."
+                          : emptyMessage
                         : "No research matches the current search."
                     }
                     detail={
                       rows.length === 0
-                        ? "Create a new research record or adjust access filters when relevant."
+                        ? serverState && hasActiveFilters
+                          ? "Try another keyword, stage, registration, or claim filter."
+                          : "Create a new research record or adjust access filters when relevant."
                         : "Try another keyword, stage, registration, or claim filter."
                     }
                   />
@@ -1005,11 +1108,11 @@ export function ResearchProjectsTable({
         </table>
       </div>
       <TablePagination
-        page={pagination.page}
-        pageCount={pagination.pageCount}
-        total={pagination.total}
-        pageSize={pagination.pageSize}
-        onPageChange={pagination.setPage}
+        page={page}
+        pageCount={pageCount}
+        total={total}
+        pageSize={pageSize}
+        onPageChange={setPage}
       />
     </div>
   );
