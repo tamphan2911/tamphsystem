@@ -25,7 +25,6 @@ import {
   parseMultiFilterValue,
   TablePagination,
   TableSearchInput,
-  useTablePagination,
   usePersistentMultiFilter,
   usePersistentTableValue,
 } from "@/sites/research/components/TableControls";
@@ -138,6 +137,18 @@ const taskTypeFilterValues = [
 type TaskScopeTab = "assigned" | "related" | "checker";
 type TaskHeaderTab = TaskScopeTab | "all" | "need_action";
 type TimeSortDirection = "none" | "asc" | "desc";
+type TaskListMeta = {
+  page: number;
+  pageSize: number;
+  total: number;
+  scopeCounts: Record<TaskHeaderTab, number>;
+  checkerOptions: Array<{
+    value: string;
+    label: string;
+    isAdminChecker: boolean;
+  }>;
+  adminNeedActionDefaultCheckerIds: string[];
+};
 type TaskTabFilterState = {
   statuses: string[];
   setStatuses: (values: string[]) => void;
@@ -482,20 +493,15 @@ function activeWaitingForJournalCreation(task: TaskRow) {
   return task.waitingForJournalCreation && task.status === "IN_PROGRESS";
 }
 
-function activeAddJournalCorrection(
-  task: TaskRow,
-): task is TaskRow & {
+function activeAddJournalCorrection(task: TaskRow): task is TaskRow & {
   addJournalCorrection: NonNullable<TaskRow["addJournalCorrection"]>;
 } {
   return (
-    Boolean(task.addJournalCorrection) &&
-    task.status === "REVISION_REQUESTED"
+    Boolean(task.addJournalCorrection) && task.status === "REVISION_REQUESTED"
   );
 }
 
-function activeAddJournalReview(
-  task: TaskRow,
-): task is TaskRow & {
+function activeAddJournalReview(task: TaskRow): task is TaskRow & {
   addJournalReview: NonNullable<TaskRow["addJournalReview"]>;
 } {
   return Boolean(task.addJournalReview) && task.status === "CHECKING";
@@ -1050,6 +1056,7 @@ export function TasksClient({
     usePersistentTableValue("tasks:checkerNeedsActionOnly", "false", {
       persistDefaultValue: true,
     });
+  const [pageValue, setPageValue] = usePersistentTableValue("tasks:page", "1");
   const unfinishedOnly = unfinishedOnlyValue === "true";
   const checkerNeedsActionOnly = checkerNeedsActionOnlyValue === "true";
   const [statusBeforeUnfinishedByTab, setStatusBeforeUnfinishedByTab] =
@@ -1058,92 +1065,50 @@ export function TasksClient({
     statusBeforeUnfinishedByTab[activeHeaderTab] ?? null;
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-
-  const loadTasks = useCallback(async () => {
-    try {
-      const response = await fetch("/api/research/tasks", {
-        cache: "no-store",
-      });
-      if (!response.ok) {
-        setLoadError(true);
-        setIsLoading(false);
-        return;
-      }
-      const payload = (await response.json()) as { tasks: TaskRow[] };
-      setTasks(payload.tasks);
-      setLoadError(false);
-      setIsLoading(false);
-    } catch {
-      setLoadError(true);
-      setIsLoading(false);
-    }
-  }, []);
+  const [listMeta, setListMeta] = useState<TaskListMeta>({
+    page: 1,
+    pageSize: 10,
+    total: 0,
+    scopeCounts: {
+      all: 0,
+      need_action: 0,
+      assigned: 0,
+      checker: 0,
+      related: 0,
+    },
+    checkerOptions: [],
+    adminNeedActionDefaultCheckerIds: [],
+  });
+  const page = Math.max(Number.parseInt(pageValue, 10) || 1, 1);
+  const pageCount = Math.max(1, Math.ceil(listMeta.total / listMeta.pageSize));
 
   const removeTaskFromList = useCallback((taskId: string) => {
     setTasks((current) => current.filter((task) => task.id !== taskId));
   }, []);
-
-  useEffect(() => {
-    let active = true;
-    async function start() {
-      await loadTasks();
-      if (isAdmin) {
-        await fetch("/api/research/tasks/viewed", { method: "POST" });
-        if (active) await loadTasks();
-      }
-    }
-
-    start();
-    const interval = window.setInterval(() => {
-      loadTasks();
-    }, 4000);
-
-    return () => {
-      active = false;
-      window.clearInterval(interval);
-    };
-  }, [isAdmin, loadTasks]);
 
   const [taskTypes, setTaskTypes] = usePersistentMultiFilter(
     "tasks:type",
     taskTypeFilterValues,
   );
   const checkerFilterValues = useMemo(
-    () => [
-      "ALL",
-      ...Array.from(new Set(tasks.map((task) => task.checkerId))).filter(
-        Boolean,
-      ),
-    ],
-    [tasks],
+    () => ["ALL", ...listMeta.checkerOptions.map((option) => option.value)],
+    [listMeta.checkerOptions],
   );
   const adminCheckerIds = useMemo(
     () =>
       Array.from(
         new Set(
-          tasks
-            .filter((task) => task.checkerRoles.includes("ADMIN"))
-            .map((task) => task.checkerId)
+          listMeta.checkerOptions
+            .filter((option) => option.isAdminChecker)
+            .map((option) => option.value)
             .filter(Boolean),
         ),
       ),
-    [tasks],
+    [listMeta.checkerOptions],
   );
   const adminNeedActionDefaultCheckerIds = useMemo(
-    () =>
-      Array.from(
-        new Set([
-          ...adminCheckerIds,
-          ...tasks
-            .filter(
-              (task) =>
-                activeManagerAction(task)?.label === "Referred checker help" &&
-                task.checkerId,
-            )
-            .map((task) => task.checkerId),
-        ]),
-      ),
-    [adminCheckerIds, tasks],
+    () => listMeta.adminNeedActionDefaultCheckerIds,
+    [listMeta.adminNeedActionDefaultCheckerIds],
   );
   const [adminAllCheckerStoredValue, setAdminAllCheckerStoredValue] =
     usePersistentTableValue("tasks:checker:admin:all", "ALL", {
@@ -1184,6 +1149,74 @@ export function TasksClient({
     checkerFilterValues,
     isAdmin,
   ]);
+  const loadTasks = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (query.trim()) params.set("q", query.trim());
+      params.set("scope", activeHeaderTab);
+      if (statuses.length > 0) params.set("status", statuses.join(","));
+      if (taskTypes.length > 0) params.set("type", taskTypes.join(","));
+      if (checkerIds.length > 0) params.set("checker", checkerIds.join(","));
+      if (checkerNeedsActionOnly) params.set("checkerNeedsAction", "1");
+      if (timeSort !== "none") params.set("timeSort", timeSort);
+      if (page > 1) params.set("page", String(page));
+      const response = await fetch(`/api/research/tasks?${params.toString()}`, {
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        setLoadError(true);
+        setIsLoading(false);
+        return;
+      }
+      const payload = (await response.json()) as {
+        tasks: TaskRow[];
+        meta?: TaskListMeta;
+      };
+      setTasks(payload.tasks);
+      if (payload.meta) {
+        setListMeta(payload.meta);
+        if (payload.meta.page !== page) {
+          setPageValue(String(payload.meta.page));
+        }
+      }
+      setLoadError(false);
+      setIsLoading(false);
+    } catch {
+      setLoadError(true);
+      setIsLoading(false);
+    }
+  }, [
+    activeHeaderTab,
+    checkerIds,
+    checkerNeedsActionOnly,
+    page,
+    query,
+    setPageValue,
+    statuses,
+    taskTypes,
+    timeSort,
+  ]);
+
+  useEffect(() => {
+    let active = true;
+    async function start() {
+      await loadTasks();
+      if (isAdmin) {
+        await fetch("/api/research/tasks/viewed", { method: "POST" });
+        if (active) await loadTasks();
+      }
+    }
+
+    start();
+    const interval = window.setInterval(() => {
+      loadTasks();
+    }, 10000);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [isAdmin, loadTasks]);
   const setCheckerIds = useCallback(
     (values: string[]) => {
       const nextValue = values.length > 0 ? values.join(",") : "ALL";
@@ -1261,170 +1294,49 @@ export function TasksClient({
         {
           value: "all",
           label: "All tasks",
-          count: tasks.length,
+          count: listMeta.scopeCounts.all,
         },
         {
           value: "need_action",
           label: "Need actions",
-          count: tasks.filter(taskNeedsManagerAction).length,
+          count: listMeta.scopeCounts.need_action,
         },
       ]
     : [
         {
           value: "assigned",
           label: "Assigned to me",
-          count: tasks.filter((task) => task.scope.assignedToMe).length,
+          count: listMeta.scopeCounts.assigned,
         },
         ...(isChiefAssistant
           ? [
               {
                 value: "checker" as const,
                 label: "As checker",
-                count: tasks.filter((task) => task.scope.checkerForMe).length,
+                count: listMeta.scopeCounts.checker,
               },
             ]
           : []),
         {
           value: "related",
           label: "Related to me",
-          count: tasks.filter((task) => task.scope.relatedToMyItems).length,
+          count: listMeta.scopeCounts.related,
         },
       ];
 
   const checkerOptions = useMemo(() => {
-    const byId = new Map<string, { value: string; label: string }>();
-    tasks.forEach((task) => {
-      if (!task.checkerId) return;
-      byId.set(task.checkerId, {
-        value: task.checkerId,
-        label: task.checkerEmail
-          ? `${task.checker} - ${displayResearchEmail(task.checkerEmail)}`
-          : task.checker,
-      });
-    });
     return [
       { value: "ALL", label: "All checkers" },
-      ...Array.from(byId.values()).sort((left, right) =>
-        left.label.localeCompare(right.label, undefined, {
-          sensitivity: "base",
-        }),
-      ),
+      ...listMeta.checkerOptions.map((option) => ({
+        value: option.value,
+        label: option.label,
+      })),
     ];
-  }, [tasks]);
-
-  const filtered = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return tasks.filter((task) => {
-      const taskStatus = derivedStatus(task, activeHeaderTab);
-      const matchesScope = isAdmin
-        ? activeHeaderTab === "need_action"
-          ? taskNeedsManagerAction(task)
-          : true
-        : activeHeaderTab === "assigned"
-          ? task.scope.assignedToMe
-          : activeHeaderTab === "related"
-            ? task.scope.relatedToMyItems
-            : task.scope.checkerForMe;
-      const matchesStatus =
-        statuses.length === 0 || statuses.includes(taskStatus);
-      const matchesType =
-        taskTypes.length === 0 || taskTypes.includes(taskTypeFilterValue(task));
-      const selectedAdminChecker =
-        isAdmin &&
-        checkerIds.length > 0 &&
-        adminCheckerIds.some((checkerId) => checkerIds.includes(checkerId));
-      const referredToAdminForHelp =
-        activeManagerAction(task)?.label === "Referred checker help";
-      const matchesChecker =
-        !isAdmin ||
-        checkerIds.length === 0 ||
-        checkerIds.includes(task.checkerId) ||
-        (selectedAdminChecker && referredToAdminForHelp);
-      const matchesCheckerNeedsAction =
-        !checkerNeedsActionOnly ||
-        !isChiefAssistant ||
-        activeHeaderTab !== "checker" ||
-        taskNeedsManagerAction(task);
-      const haystack = [
-        displayTaskId(task),
-        task.title,
-        task.description,
-        task.taskType,
-        productionSubtypeLabel(task.productionSubtype),
-        task.category,
-        statusMeta(task).label,
-        assigneeTableStatusMeta(task, activeHeaderTab)?.label,
-        activeWaitingForJournalCreation(task)
-          ? "Waiting for assignee to add journal"
-          : "",
-        activeAddJournalCorrection(task)
-          ? task.addJournalCorrection?.detail
-          : "",
-        activeAddJournalReview(task) ? task.addJournalReview?.detail : "",
-        task.createdBy,
-        task.checker,
-        ...task.assignments.flatMap((item) => [
-          item.userName,
-          item.userEmail,
-          ...item.userRoles,
-        ]),
-      ]
-        .join(" ")
-        .toLowerCase();
-      return (
-        matchesScope &&
-        matchesStatus &&
-        matchesType &&
-        matchesChecker &&
-        matchesCheckerNeedsAction &&
-        (!needle || haystack.includes(needle))
-      );
-    });
-  }, [
-    activeHeaderTab,
-    adminCheckerIds,
-    checkerIds,
-    checkerNeedsActionOnly,
-    isAdmin,
-    isChiefAssistant,
-    query,
-    statuses,
-    taskTypes,
-    tasks,
-  ]);
-  const sortedRows = useMemo(() => {
-    if (timeSort === "none") return filtered;
-    const nowMs = Date.now();
-
-    return filtered
-      .map((task, index) => ({ task, index }))
-      .sort((left, right) => {
-        const leftTime = taskTimeLeftSortValue(left.task, nowMs);
-        const rightTime = taskTimeLeftSortValue(right.task, nowMs);
-        const leftHasTimeLeft = leftTime !== null;
-        const rightHasTimeLeft = rightTime !== null;
-        if (leftHasTimeLeft !== rightHasTimeLeft)
-          return leftHasTimeLeft ? -1 : 1;
-        if (leftTime === null || rightTime === null) {
-          return left.index - right.index;
-        }
-        const byTimeLeft =
-          timeSort === "asc" ? leftTime - rightTime : rightTime - leftTime;
-        if (byTimeLeft !== 0) return byTimeLeft;
-        const byUpdated =
-          new Date(right.task.updatedAt).getTime() -
-          new Date(left.task.updatedAt).getTime();
-        return byUpdated || left.index - right.index;
-      })
-      .map((item) => item.task);
-  }, [filtered, timeSort]);
-  const pagination = useTablePagination(sortedRows, 10, 1, "tasks", {
-    preservePageWhenEmpty: true,
-  });
+  }, [listMeta.checkerOptions]);
 
   function updateQuery(value: string) {
     setQuery(value);
-    pagination.setPage(1);
+    setPageValue("1");
   }
 
   function setStatusBeforeUnfinishedForTab(value: string[] | null) {
@@ -1438,7 +1350,7 @@ export function TasksClient({
     if (value === activeHeaderTab) return;
 
     setScopeTab(value);
-    pagination.setPage(1);
+    setPageValue("1");
 
     if (!isAdmin) {
       return;
@@ -1454,7 +1366,7 @@ export function TasksClient({
       setStatusBeforeUnfinishedForTab(null);
     }
     setStatuses(values);
-    pagination.setPage(1);
+    setPageValue("1");
   }
 
   function toggleUnfinishedOnly(checked: boolean) {
@@ -1466,29 +1378,29 @@ export function TasksClient({
       setStatuses(statusBeforeUnfinished ?? []);
       setStatusBeforeUnfinishedForTab(null);
     }
-    pagination.setPage(1);
+    setPageValue("1");
   }
 
   function toggleCheckerNeedsActionOnly(checked: boolean) {
     setCheckerNeedsActionOnlyValue(checked ? "true" : "false");
-    pagination.setPage(1);
+    setPageValue("1");
   }
 
   function updateTaskTypes(values: string[]) {
     setTaskTypes(values);
-    pagination.setPage(1);
+    setPageValue("1");
   }
 
   function updateCheckers(values: string[]) {
     setCheckerIds(values);
-    pagination.setPage(1);
+    setPageValue("1");
   }
 
   function toggleTimeSort() {
     setTimeSort((current) =>
       current === "none" ? "asc" : current === "asc" ? "desc" : "none",
     );
-    pagination.setPage(1);
+    setPageValue("1");
   }
 
   const adminFilterWidth = isAdmin ? "sm:w-40 lg:w-44" : undefined;
@@ -1649,7 +1561,7 @@ export function TasksClient({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#444444]">
-              {pagination.pagedRows.map((task) => {
+              {tasks.map((task) => {
                 const status = statusMeta(task);
                 const assigneeStatus = assigneeTableStatusMeta(
                   task,
@@ -1879,9 +1791,9 @@ export function TasksClient({
                   </tr>
                 );
               })}
-              {isLoading && pagination.total === 0 ? (
+              {isLoading && listMeta.total === 0 ? (
                 <TableSkeletonRows rows={7} columns={canDelete ? 6 : 5} />
-              ) : loadError && pagination.total === 0 ? (
+              ) : loadError && listMeta.total === 0 ? (
                 <tr>
                   <td colSpan={canDelete ? 6 : 5} className="px-4 py-2">
                     <ResearchErrorState
@@ -1890,7 +1802,7 @@ export function TasksClient({
                     />
                   </td>
                 </tr>
-              ) : pagination.total === 0 ? (
+              ) : listMeta.total === 0 ? (
                 <tr>
                   <td colSpan={canDelete ? 6 : 5} className="px-4 py-2">
                     <ResearchEmptyState
@@ -1908,11 +1820,11 @@ export function TasksClient({
           </table>
         </div>
         <TablePagination
-          page={pagination.page}
-          pageCount={pagination.pageCount}
-          total={pagination.total}
-          pageSize={pagination.pageSize}
-          onPageChange={pagination.setPage}
+          page={page}
+          pageCount={pageCount}
+          total={listMeta.total}
+          pageSize={listMeta.pageSize}
+          onPageChange={(nextPage) => setPageValue(String(nextPage))}
         />
       </div>
     </div>
