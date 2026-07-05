@@ -43,6 +43,16 @@ import {
 } from "@/sites/research/components/ResearchPrimitives";
 import { ResearchEmptyState } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
+import type { AuthorOption, SelectedAuthor } from "./[id]/AuthorsPicker";
+import {
+  ResearchBasicEditDialog,
+  type AutoCreatedTask,
+  type ResearchBasicValues,
+} from "./[id]/ResearchDetailEditDialogs";
+import type {
+  AssistantTeamOption,
+  FundingInstitutionOption,
+} from "../organized-projects/ProjectFormControls";
 
 export type ResearchProjectRow = {
   id: string;
@@ -69,6 +79,9 @@ export type ResearchProjectRow = {
   notSubmittedAnywhere: boolean;
   hasSubmittedSubmission: boolean;
   hasAcceptedSubmission: boolean;
+  editValues?: ResearchBasicValues;
+  editAuthors?: SelectedAuthor[];
+  completedProductionSteps?: string[];
 };
 
 type SortColumn = "stage" | "claim" | "registration" | "submit";
@@ -553,10 +566,61 @@ function DeleteResearchButton({
   );
 }
 
+function QuickEditResearchButton({
+  row,
+  action,
+  users,
+  fundingInstitutions,
+  assistantTeams,
+  registerOptions,
+  claimOptions,
+}: {
+  row: ResearchProjectRow;
+  action: (
+    projectId: string,
+    formData: FormData,
+  ) => Promise<{ initialProductionTask?: AutoCreatedTask | null } | void>;
+  users: AuthorOption[];
+  fundingInstitutions: FundingInstitutionOption[];
+  assistantTeams: AssistantTeamOption[];
+  registerOptions: { value: string; label: string }[];
+  claimOptions: { value: string; label: string }[];
+}) {
+  if (!row.editValues || !row.editAuthors || !row.completedProductionSteps) {
+    return null;
+  }
+
+  return (
+    <span
+      className="inline-flex flex-none align-middle"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <ResearchBasicEditDialog
+        action={(formData) => action(row.id, formData)}
+        values={row.editValues}
+        authors={row.editAuthors}
+        completedProductionSteps={row.completedProductionSteps}
+        users={users}
+        fundingInstitutions={fundingInstitutions}
+        assistantTeams={assistantTeams}
+        registerOptions={registerOptions}
+        claimOptions={claimOptions}
+        canEditRegistrationClaim
+      />
+    </span>
+  );
+}
+
 export function ResearchProjectsTable({
   rows,
   isAdmin = false,
   deleteAction,
+  quickEditAction,
+  users = [],
+  fundingInstitutions = [],
+  assistantTeams = [],
+  registerOptions = [],
+  claimOptions = [],
   showClaimRegistration = true,
   emptyMessage = "No research matches the current search.",
   serverState,
@@ -564,6 +628,15 @@ export function ResearchProjectsTable({
   rows: ResearchProjectRow[];
   isAdmin?: boolean;
   deleteAction?: (projectId: string) => Promise<void>;
+  quickEditAction?: (
+    projectId: string,
+    formData: FormData,
+  ) => Promise<{ initialProductionTask?: AutoCreatedTask | null } | void>;
+  users?: AuthorOption[];
+  fundingInstitutions?: FundingInstitutionOption[];
+  assistantTeams?: AssistantTeamOption[];
+  registerOptions?: { value: string; label: string }[];
+  claimOptions?: { value: string; label: string }[];
   showClaimRegistration?: boolean;
   emptyMessage?: string;
   serverState?: ServerTableState;
@@ -1100,12 +1173,30 @@ export function ResearchProjectsTable({
                   ) : null}
                 </td>
                 <td className="min-w-0 px-3 py-3 align-top">
-                  <Link href={`/projects/${row.id}`} className="group">
-                    <p
-                      className={`line-clamp-2 text-base group-hover:text-[#A8DADC] ${researchLinkClass}`}
+                  <div className="flex min-w-0 items-start gap-2">
+                    <Link
+                      href={`/projects/${row.id}`}
+                      className="group min-w-0"
                     >
-                      {row.title}
-                    </p>
+                      <p
+                        className={`line-clamp-2 text-base group-hover:text-[#A8DADC] ${researchLinkClass}`}
+                      >
+                        {row.title}
+                      </p>
+                    </Link>
+                    {isAdmin && quickEditAction ? (
+                      <QuickEditResearchButton
+                        row={row}
+                        action={quickEditAction}
+                        users={users}
+                        fundingInstitutions={fundingInstitutions}
+                        assistantTeams={assistantTeams}
+                        registerOptions={registerOptions}
+                        claimOptions={claimOptions}
+                      />
+                    ) : null}
+                  </div>
+                  <Link href={`/projects/${row.id}`} className="group">
                     <p className="mt-1 line-clamp-1 text-xs text-[#B0B0B0]">
                       {row.coAuthors || "No authors recorded"}
                     </p>

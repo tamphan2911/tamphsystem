@@ -38,7 +38,7 @@ import {
   type SelectedAuthor,
 } from "./AuthorsPicker";
 
-type ResearchBasicValues = {
+export type ResearchBasicValues = {
   title: string;
   sharedFolderUrl: string;
   abstract: string;
@@ -53,7 +53,7 @@ type ResearchBasicValues = {
   assistantTeam: AssistantTeamOption | null;
 };
 
-type AutoCreatedTask = {
+export type AutoCreatedTask = {
   id: string;
   title: string;
   taskCode: string | null;

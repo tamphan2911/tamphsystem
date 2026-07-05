@@ -4,6 +4,7 @@ import { auth } from "../../../../auth";
 import {
   deleteResearchProject,
   ensureAcceptedProposalRecords,
+  updateResearchProject,
 } from "../actions";
 import { ProposalDialog } from "@/sites/research/components/ProposalDialog";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
@@ -17,6 +18,8 @@ import {
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
 import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
+import type { SelectedAuthor } from "./[id]/AuthorsPicker";
+import type { ResearchBasicValues } from "./[id]/ResearchDetailEditDialogs";
 
 export const dynamic = "force-dynamic";
 const projectPageSize = 10;
@@ -270,14 +273,39 @@ export default async function ProjectsDashboard({
               roles: true,
             },
           },
+          fundingInstitution: true,
+          assistantTeam: {
+            select: {
+              id: true,
+              name: true,
+              leader: { select: { name: true, email: true } },
+              _count: { select: { members: true } },
+            },
+          },
           authors: {
-            select: { name: true, email: true, additionalEmails: true },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              additionalEmails: true,
+              affiliation: true,
+              orcid: true,
+              roles: true,
+            },
             orderBy: [{ name: "asc" }, { email: "asc" }],
           },
           authorEntries: {
             include: {
               user: {
-                select: { name: true, email: true, additionalEmails: true },
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  additionalEmails: true,
+                  affiliation: true,
+                  orcid: true,
+                  roles: true,
+                },
               },
             },
             orderBy: [{ position: "asc" }, { createdAt: "asc" }],
@@ -336,6 +364,18 @@ export default async function ProjectsDashboard({
     additionalEmails: user.additionalEmails,
     role: displayRole(user.roles),
   }));
+  const fundingInstitutionOptions = fundingInstitutions.map((institution) => ({
+    id: institution.id,
+    name: institution.name,
+    shortName: institution.shortName ?? "",
+    country: institution.country ?? "",
+  }));
+  const registerOptions = registrationFilterOptions
+    .filter((value) => value !== "ALL")
+    .map((value) => ({ value, label: registrationLabel(value) }));
+  const claimOptions = claimFilterOptions
+    .filter((value) => value !== "ALL")
+    .map((value) => ({ value, label: claimLabel(value) }));
 
   const claimed = projects.filter(
     (project) => project.claimStatus === "CLAIMED",
@@ -363,6 +403,71 @@ export default async function ProjectsDashboard({
     const hasAcceptedSubmission = journalSubmissionStatuses.some(
       (status) => status === "ACCEPTED",
     );
+
+    const editAuthors: SelectedAuthor[] =
+      project.authorEntries.length > 0
+        ? project.authorEntries.map((entry) => ({
+            id: entry.user.id,
+            name: entry.user.name ?? "",
+            email: entry.user.email,
+            additionalEmails: entry.user.additionalEmails,
+            selectedEmail: entry.selectedEmail ?? entry.user.email,
+            affiliation: entry.user.affiliation,
+            orcid: entry.user.orcid,
+            role: displayRole(entry.user.roles),
+            position: entry.position,
+            isCorresponding: entry.isCorresponding,
+          }))
+        : project.authors.map((author, index) => ({
+            id: author.id,
+            name: author.name ?? "",
+            email: author.email,
+            additionalEmails: author.additionalEmails,
+            selectedEmail: author.email,
+            affiliation: author.affiliation,
+            orcid: author.orcid,
+            role: displayRole(author.roles),
+            position: index + 1,
+            isCorresponding: index === 0,
+          }));
+    const editValues: ResearchBasicValues = {
+      title: project.title,
+      sharedFolderUrl: project.sharedFolderUrl ?? "",
+      abstract: project.abstract ?? "",
+      universityRegistration: project.universityRegistration ?? "",
+      registrationName: project.registrationName ?? "",
+      registerStatus: project.registerStatus,
+      claimStatus: project.claimStatus,
+      isPriority: project.isPriority,
+      productionPriorityQueuedAt:
+        project.productionPriorityQueuedAt?.toISOString() ?? "",
+      registrationUser: project.registrationUser
+        ? {
+            id: project.registrationUser.id,
+            name: project.registrationUser.name ?? "",
+            email: project.registrationUser.email,
+            additionalEmails: project.registrationUser.additionalEmails,
+            role: displayRole(project.registrationUser.roles),
+          }
+        : null,
+      fundingInstitution: project.fundingInstitution
+        ? {
+            id: project.fundingInstitution.id,
+            name: project.fundingInstitution.name,
+            shortName: project.fundingInstitution.shortName ?? "",
+            country: project.fundingInstitution.country ?? "",
+          }
+        : null,
+      assistantTeam: project.assistantTeam
+        ? {
+            id: project.assistantTeam.id,
+            name: project.assistantTeam.name,
+            leaderName: project.assistantTeam.leader.name ?? "",
+            leaderEmail: project.assistantTeam.leader.email,
+            memberCount: project.assistantTeam._count.members,
+          }
+        : null,
+    };
 
     return {
       id: project.id,
@@ -424,6 +529,9 @@ export default async function ProjectsDashboard({
         ),
       hasSubmittedSubmission,
       hasAcceptedSubmission,
+      editValues,
+      editAuthors,
+      completedProductionSteps: project.completedProductionSteps,
     };
   });
 
@@ -652,6 +760,18 @@ export default async function ProjectsDashboard({
         rows={pagedRows}
         isAdmin={isRootAdmin}
         deleteAction={deleteResearchProject}
+        quickEditAction={updateResearchProject}
+        users={authorOptions}
+        fundingInstitutions={fundingInstitutionOptions}
+        assistantTeams={assistantTeams.map((team) => ({
+          id: team.id,
+          name: team.name,
+          leaderName: team.leader.name ?? "",
+          leaderEmail: team.leader.email,
+          memberCount: team._count.members,
+        }))}
+        registerOptions={registerOptions}
+        claimOptions={claimOptions}
         showClaimRegistration={showRegistrationClaim}
         serverState={{
           query,
