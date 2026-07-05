@@ -125,6 +125,9 @@ const claimOptions = [
   { value: "CLAIMED", label: "Claimed" },
 ];
 
+const profileNameLinkClass =
+  "research-allow-transform border-0 bg-transparent p-0 font-normal text-[#243047] shadow-none outline-none transition-[color,transform] duration-180 ease-out hover:border-0 hover:bg-transparent hover:text-[#1F7180] hover:shadow-none hover:[text-shadow:none] focus-visible:border-0 focus-visible:bg-transparent focus-visible:ring-0 active:bg-transparent active:shadow-none active:[transform:scale(0.985)] dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]";
+
 const stageStyles = {
   PENDING: {
     label: "Pending",
@@ -2276,7 +2279,17 @@ export default async function ProjectDetailPage({
                       <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 flex-wrap items-center gap-2">
                           <p className="min-w-0 whitespace-normal break-words text-sm font-normal text-[#E4E4E4] lg:truncate">
-                            {displayResearchPersonName(author)}
+                            {isRootAdmin ? (
+                              <Link
+                                href={`/profile?userId=${encodeURIComponent(author.id)}`}
+                                className={profileNameLinkClass}
+                              >
+                                {displayResearchPersonName(author) ||
+                                  author.email}
+                              </Link>
+                            ) : (
+                              displayResearchPersonName(author) || author.email
+                            )}
                             {author.isCorresponding ? "*" : ""}
                           </p>
                           {author.bio?.trim() ? (
@@ -2375,9 +2388,18 @@ export default async function ProjectDetailPage({
                             aria-hidden="true"
                           />
                           <p className="min-w-0 break-words text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                            <span className="text-sm text-[#243047] dark:text-[#E4E4E4]">
-                              {folderUser.name || folderUser.email}
-                            </span>
+                            {isRootAdmin ? (
+                              <Link
+                                href={`/profile?userId=${encodeURIComponent(folderUser.id)}`}
+                                className={`${profileNameLinkClass} text-sm`}
+                              >
+                                {folderUser.name || folderUser.email}
+                              </Link>
+                            ) : (
+                              <span className="text-sm text-[#243047] dark:text-[#E4E4E4]">
+                                {folderUser.name || folderUser.email}
+                              </span>
+                            )}
                             <span
                               className="px-1.5 text-[#9AA4B2] dark:text-[#777777]"
                               aria-hidden="true"
