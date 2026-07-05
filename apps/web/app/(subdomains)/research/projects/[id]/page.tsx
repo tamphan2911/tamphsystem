@@ -1190,18 +1190,14 @@ export default async function ProjectDetailPage({
       }
     : null;
   const assignedTeamParticipants = project.assistantTeam
-    ? project.teamParticipants
-        .filter((participant) => participant.teamId === project.assistantTeamId)
-        .map((participant) => ({
-          id: participant.user.id,
-          name:
-            displayResearchPersonName(participant.user) ||
-            participant.user.email,
-          email: displayResearchEmail(participant.user.email),
-          affiliation: participant.user.affiliation ?? "",
-          orcid: participant.user.orcid ?? "",
-          role: displayRole(participant.user.roles),
-        }))
+    ? project.assistantTeam.members.map((member) => ({
+        id: member.user.id,
+        name: displayResearchPersonName(member.user) || member.user.email,
+        email: displayResearchEmail(member.user.email),
+        affiliation: member.user.affiliation ?? "",
+        orcid: member.user.orcid ?? "",
+        role: displayRole(member.user.roles),
+      }))
     : [];
   const assignedTeamPeople = project.assistantTeam
     ? [

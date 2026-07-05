@@ -279,7 +279,10 @@ export default async function ResearchTeamPage() {
           { name: string; email: string; relationships: Set<string> }
         >();
 
-        const addAssociation = (person: TeamPerson, relationship: string) => {
+        const addAssociation = (
+          person: { id: string; name: string | null; email: string },
+          relationship: string,
+        ) => {
           if (!memberIdSet.has(person.id)) return;
           const current =
             associations.get(person.id) ??
@@ -305,6 +308,11 @@ export default async function ResearchTeamPage() {
         for (const task of project.tasks) {
           for (const assignment of task.assignments) {
             addAssociation(assignment.user, "Assistant");
+          }
+        }
+        for (const member of members) {
+          if (member.badge === "Member") {
+            addAssociation(member, "Participating");
           }
         }
         for (const participant of project.teamParticipants) {
