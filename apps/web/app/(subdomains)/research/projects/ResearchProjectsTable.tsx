@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import {
   BadgeCheck,
   Ban,
@@ -699,7 +699,10 @@ export function ResearchProjectsTable({
   );
   const [storedProductionQueueValue, setStoredProductionQueueValue] =
     usePersistentTableValue("projects:production-queue", "0");
+  const hasServerState = Boolean(serverState);
   const query = serverState?.query ?? storedQuery;
+  const [serverQueryDraft, setServerQueryDraft] = useState(query);
+  const [, startServerQueryTransition] = useTransition();
   const stageValue = serverState?.stageValue ?? storedStageValue;
   const claimValue = serverState?.claimValue ?? storedClaimValue;
   const registrationValue =
@@ -737,7 +740,7 @@ export function ResearchProjectsTable({
     ? showClaimRegistration
     : rows.some((row) => showClaimRegistration && row.canViewRegistrationClaim);
   const hasActiveFilters =
-    query.trim().length > 0 ||
+    (serverState ? serverQueryDraft : query).trim().length > 0 ||
     selectedStages.length > 0 ||
     selectedClaims.length > 0 ||
     selectedRegistrations.length > 0 ||
@@ -745,7 +748,7 @@ export function ResearchProjectsTable({
     showPriorityOnly ||
     showProductionQueueOnly;
 
-  function updateServerParams(updates: Record<string, string | null>) {
+  const updateServerParams = useCallback((updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(updates).forEach(([key, value]) => {
       if (!value || value === "ALL" || value === "NONE" || value === "0") {
@@ -756,7 +759,26 @@ export function ResearchProjectsTable({
     });
     const next = params.toString();
     router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
-  }
+  }, [pathname, router, searchParams]);
+
+  useEffect(() => {
+    if (!hasServerState) return;
+    setServerQueryDraft(query);
+  }, [hasServerState, query]);
+
+  useEffect(() => {
+    if (!hasServerState) return;
+    const nextQuery = serverQueryDraft.trim();
+    if (nextQuery === query.trim()) return;
+
+    const timeout = window.setTimeout(() => {
+      startServerQueryTransition(() => {
+        updateServerParams({ q: nextQuery, page: null });
+      });
+    }, 350);
+
+    return () => window.clearTimeout(timeout);
+  }, [hasServerState, query, serverQueryDraft, updateServerParams]);
 
   const filtered = useMemo(() => {
     if (serverState) return rows;
@@ -895,7 +917,7 @@ export function ResearchProjectsTable({
 
   function updateQuery(value: string) {
     if (serverState) {
-      updateServerParams({ q: value.trim(), page: null });
+      setServerQueryDraft(value);
       return;
     }
     setStoredQuery(value);
@@ -966,7 +988,7 @@ export function ResearchProjectsTable({
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <TableSearchInput
-          value={query}
+          value={serverState ? serverQueryDraft : query}
           onChange={updateQuery}
           placeholder={
             showRegistrationClaim
