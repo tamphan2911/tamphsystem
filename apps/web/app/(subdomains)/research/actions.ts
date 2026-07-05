@@ -450,7 +450,10 @@ const taskReportFileTypesByExtension = new Map([
 ]);
 const taskReportMaxFileSize = 2 * 1024 * 1024;
 
-async function taskAssignerFileFromForm(formData: FormData) {
+async function taskAssignerFileFromForm(
+  formData: FormData,
+  { unlimitedSize = false }: { unlimitedSize?: boolean } = {},
+) {
   const file = formData.get("taskFile");
   if (!(file instanceof File) || file.size === 0) return null;
 
@@ -462,7 +465,7 @@ async function taskAssignerFileFromForm(formData: FormData) {
   if (!allowedByMime && !allowedByExtension) {
     return { ok: false as const, reason: "TASK_FILE_REJECTED" };
   }
-  if (file.size > taskReportMaxFileSize) {
+  if (!unlimitedSize && file.size > taskReportMaxFileSize) {
     return { ok: false as const, reason: "TASK_FILE_TOO_LARGE" };
   }
 
@@ -7656,7 +7659,9 @@ export async function createResearchTask(formData: FormData) {
     }
   }
 
-  const taskFile = await taskAssignerFileFromForm(formData);
+  const taskFile = await taskAssignerFileFromForm(formData, {
+    unlimitedSize: user.roles.includes(Role.ADMIN),
+  });
   if (taskFile?.ok === false) {
     return { ok: false, reason: taskFile.reason };
   }

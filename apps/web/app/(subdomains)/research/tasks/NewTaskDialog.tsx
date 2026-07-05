@@ -1396,7 +1396,7 @@ export function NewTaskDialog({
             <UrgentTaskField checked={isUrgent} onChange={toggleUrgentTask} />
           </div>
 
-          <TaskAttachmentField />
+          <TaskAttachmentField unlimitedSize={canChooseChecker} />
 
           <div className="grid items-start gap-4 lg:grid-cols-[1fr_18rem]">
             <div className="grid gap-4">
@@ -1516,7 +1516,11 @@ function UrgentTaskField({
   );
 }
 
-function TaskAttachmentField() {
+function TaskAttachmentField({
+  unlimitedSize = false,
+}: {
+  unlimitedSize?: boolean;
+}) {
   return (
     <label className="grid gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-4 py-3 text-sm text-[#6C778D] dark:border-[#444444] dark:bg-[#202020] dark:text-[#B0B0B0]">
       <span className="flex items-center gap-2 text-xs font-normal uppercase tracking-wide text-[#6C778D] dark:text-[#B0B0B0]">
@@ -1530,7 +1534,9 @@ function TaskAttachmentField() {
         className="block w-full cursor-pointer text-sm text-[#243047] file:mr-4 file:cursor-pointer file:border file:border-[#D8D0C2] file:bg-transparent file:px-3 file:py-2 file:text-sm file:font-normal file:text-[#1F7180] hover:file:border-[#A8DADC] dark:text-[#E4E4E4] dark:file:border-[#444444] dark:file:text-[#A8DADC] dark:hover:file:border-[#A8DADC]"
       />
       <span className="text-xs text-[#7C8798] dark:text-[#9CA3AF]">
-        PDF, DOC, DOCX, or XLSX. Maximum 2 MB.
+        {unlimitedSize
+          ? "PDF, DOC, DOCX, or XLSX."
+          : "PDF, DOC, DOCX, or XLSX. Maximum 2 MB."}
       </span>
     </label>
   );
