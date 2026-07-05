@@ -659,15 +659,20 @@ export default async function ProjectDetailPage({
   const isAssignedTeamMember =
     project.assistantTeam?.members.some((member) => member.userId === userId) ??
     false;
+  const isAssignedTeamParticipant = project.teamParticipants.some(
+    (participant) =>
+      participant.teamId === project.assistantTeamId &&
+      participant.userId === userId,
+  );
   const canViewAssignedTeamSection =
     isRootAdmin || isAssignedTeamLeader || isAssignedTeamMember;
   const canOpenAssignedTeamMemberProfiles = isRootAdmin || isAssignedTeamLeader;
   if (
-    !isAdmin &&
+    !isRootAdmin &&
     !isProjectAuthor &&
     !isRegistrationUser &&
     !isAssignedTeamLeader &&
-    !isAssignedTeamMember &&
+    !isAssignedTeamParticipant &&
     !hasAssignedResearchTask
   ) {
     notFound();

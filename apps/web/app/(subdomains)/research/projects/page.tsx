@@ -253,7 +253,7 @@ export default async function ProjectsDashboard({
           { registrationUserId: userId },
           { tasks: { some: { assignments: { some: { userId } } } } },
           { assistantTeam: { leaderId: userId } },
-          { assistantTeam: { members: { some: { userId } } } },
+          { teamParticipants: { some: { userId } } },
           ...registrationIdentityFilters,
         ],
       };

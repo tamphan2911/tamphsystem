@@ -315,14 +315,16 @@ export default async function ResearchTeamPage({
             addAssociation(assignment.user, "Assistant");
           }
         }
-        for (const member of members) {
-          if (member.badge === "Member") {
-            addAssociation(member, "Participating");
-          }
-        }
         for (const participant of project.teamParticipants) {
           addAssociation(participant.user, "Participating");
         }
+        const currentUserHasProjectTask = project.tasks.some((task) =>
+          task.assignments.some((assignment) => assignment.userId === userId),
+        );
+        const currentUserIsParticipant = project.teamParticipants.some(
+          (participant) =>
+            participant.teamId === team.id && participant.userId === userId,
+        );
 
         return {
           id: project.id,
@@ -330,6 +332,11 @@ export default async function ResearchTeamPage({
           title: project.title,
           stage: project.stage,
           updatedAt: project.updatedAt.toISOString(),
+          canOpenResearch:
+            currentUser.roles.includes(Role.ADMIN) ||
+            team.leader.id === userId ||
+            currentUserHasProjectTask ||
+            currentUserIsParticipant,
           canManageParticipants:
             currentUser.roles.includes(Role.ADMIN) || team.leader.id === userId,
           participantIds: project.teamParticipants

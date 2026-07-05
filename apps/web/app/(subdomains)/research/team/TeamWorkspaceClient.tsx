@@ -58,6 +58,7 @@ export type TeamWorkspace = {
     title: string;
     stage: string;
     updatedAt: string;
+    canOpenResearch: boolean;
     canManageParticipants: boolean;
     participantIds: string[];
     associatedMembers: {
@@ -455,9 +456,14 @@ function ResearchTable({
     formData: FormData,
   ) => Promise<unknown>;
 }) {
+  const [blockedResearch, setBlockedResearch] = useState<
+    TeamWorkspace["research"][number] | null
+  >(null);
+
   return (
-    <div className="overflow-hidden border border-[#E2D9CC] dark:border-[#444444]">
-      <table className="w-full table-fixed text-left">
+    <>
+      <div className="overflow-hidden border border-[#E2D9CC] dark:border-[#444444]">
+        <table className="w-full table-fixed text-left">
         <thead className="border-b border-[#E2D9CC] bg-[#EBE4D7] text-xs uppercase tracking-wide text-[#667085] dark:border-[#444444] dark:bg-[#1B1B1B] dark:text-[#B0B0B0]">
           <tr>
             <th className="w-[8rem] px-4 py-3">ID</th>
@@ -478,12 +484,22 @@ function ResearchTable({
                   {research.code || research.id.slice(0, 8).toUpperCase()}
                 </td>
                 <td className="px-4 py-4 align-top">
-                  <Link
-                    href={`/projects/${research.id}`}
-                    className="research-allow-transform block text-sm font-normal leading-5 text-[#1F2937] transition hover:-translate-y-0.5 hover:text-[#1F7180] active:translate-y-0 active:scale-[0.99] dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]"
-                  >
-                    {research.title}
-                  </Link>
+                  {research.canOpenResearch ? (
+                    <Link
+                      href={`/projects/${research.id}`}
+                      className="research-allow-transform block text-sm font-normal leading-5 text-[#1F2937] transition hover:-translate-y-0.5 hover:text-[#1F7180] active:translate-y-0 active:scale-[0.99] dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]"
+                    >
+                      {research.title}
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setBlockedResearch(research)}
+                      className="research-allow-transform block cursor-pointer border-0 bg-transparent p-0 text-left text-sm font-normal leading-5 text-[#1F2937] transition hover:-translate-y-0.5 hover:text-[#1F7180] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-[0.99] dark:text-[#E4E4E4] dark:hover:text-[#A8DADC]"
+                    >
+                      {research.title}
+                    </button>
+                  )}
                   <p className="mt-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
                     Updated {formatDate(research.updatedAt)}
                   </p>
@@ -534,8 +550,37 @@ function ResearchTable({
             </tr>
           )}
         </tbody>
-      </table>
-    </div>
+        </table>
+      </div>
+      <ResearchModal
+        open={Boolean(blockedResearch)}
+        onClose={() => setBlockedResearch(null)}
+        title="Research access is limited"
+        description="This research is assigned to your team, so it stays visible in the team workspace. You can open its detail page after you are linked as a participant or assigned a task for it."
+        icon={<Route className="h-5 w-5" aria-hidden="true" />}
+        maxWidth="max-w-xl"
+      >
+        <div className="space-y-3 px-6 py-5">
+          <div className="border border-[#E2D9CC] bg-[#FFFDF8] p-3 dark:border-[#444444] dark:bg-[#202020]">
+            <p className="text-sm text-[#1F2937] dark:text-[#E4E4E4]">
+              {blockedResearch?.title}
+            </p>
+            <p className="mt-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
+              Ask your team leader to link you as a participant or assign you a
+              task related to this research.
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <ResearchButton
+              type="button"
+              onClick={() => setBlockedResearch(null)}
+            >
+              I understand
+            </ResearchButton>
+          </div>
+        </div>
+      </ResearchModal>
+    </>
   );
 }
 
