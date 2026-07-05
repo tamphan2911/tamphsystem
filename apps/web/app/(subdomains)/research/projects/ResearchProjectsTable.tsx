@@ -1224,27 +1224,29 @@ export function ResearchProjectsTable({
                   ) : null}
                 </td>
                 <td className="min-w-0 px-3 py-3 align-top">
-                  <div className="flex min-w-0 items-start gap-2">
+                  <div className="min-w-0">
                     <Link
                       href={`/projects/${row.id}`}
-                      className="group min-w-0"
+                      className="group inline"
                     >
                       <p
-                        className={`line-clamp-2 text-base group-hover:text-[#A8DADC] ${researchLinkClass}`}
+                        className={`inline text-base leading-6 group-hover:text-[#A8DADC] ${researchLinkClass}`}
                       >
                         {row.title}
                       </p>
                     </Link>
                     {isAdmin && quickEditAction ? (
-                      <QuickEditResearchButton
-                        row={row}
-                        action={quickEditAction}
-                        users={users}
-                        fundingInstitutions={fundingInstitutions}
-                        assistantTeams={assistantTeams}
-                        registerOptions={registerOptions}
-                        claimOptions={claimOptions}
-                      />
+                      <span className="ml-1.5 inline-flex translate-y-0.5 align-baseline">
+                        <QuickEditResearchButton
+                          row={row}
+                          action={quickEditAction}
+                          users={users}
+                          fundingInstitutions={fundingInstitutions}
+                          assistantTeams={assistantTeams}
+                          registerOptions={registerOptions}
+                          claimOptions={claimOptions}
+                        />
+                      </span>
                     ) : null}
                   </div>
                   <Link href={`/projects/${row.id}`} className="group">
