@@ -1203,6 +1203,26 @@ export default async function ProjectDetailPage({
           role: displayRole(participant.user.roles),
         }))
     : [];
+  const assignedTeamPeople = project.assistantTeam
+    ? [
+        {
+          id: project.assistantTeam.leaderId,
+          name:
+            displayResearchPersonName(project.assistantTeam.leader) ||
+            project.assistantTeam.leader.email,
+          email: displayResearchEmail(project.assistantTeam.leader.email),
+          badge: "Leader",
+        },
+        ...assignedTeamParticipants
+          .filter((member) => member.id !== project.assistantTeam?.leaderId)
+          .map((member) => ({
+            id: member.id,
+            name: member.name,
+            email: member.email,
+            badge: "Member",
+          })),
+      ]
+    : [];
   const defaultAuthors: SelectedAuthor[] =
     hydratedAuthorEntries.length > 0
       ? hydratedAuthorEntries.map((entry) => ({
@@ -2572,66 +2592,34 @@ export default async function ProjectDetailPage({
                       aria-hidden="true"
                     />
                     <h3 className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
-                      Assigned team
+                      {project.assistantTeam.name}
                     </h3>
                   </div>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm font-normal text-[#1F2937] dark:text-[#E4E4E4]">
-                        {project.assistantTeam.name}
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                        Leader:{" "}
-                        {displayResearchPersonName(
-                          project.assistantTeam.leader,
-                        ) || project.assistantTeam.leader.email}
-                        <span
-                          className="px-1.5 text-[#9AA4B2] dark:text-[#777777]"
-                          aria-hidden="true"
-                        >
-                          |
-                        </span>
-                        <span className="break-all">
-                          {displayResearchEmail(
-                            project.assistantTeam.leader.email,
-                          )}
-                        </span>
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
-                        Participating members
-                      </p>
-                      {assignedTeamParticipants.length > 0 ? (
-                        <div className="mt-2 divide-y divide-[#E2D9CC] border-y border-[#E2D9CC] dark:divide-[#444444] dark:border-[#444444]">
-                          {assignedTeamParticipants.map((member) => (
-                            <div key={member.id} className="py-2.5">
-                              <p className="text-sm text-[#1F2937] dark:text-[#E4E4E4]">
-                                {member.name}
-                                <span
-                                  className="px-1.5 text-[#9AA4B2] dark:text-[#777777]"
-                                  aria-hidden="true"
-                                >
-                                  |
-                                </span>
-                                <span className="text-xs text-[#667085] dark:text-[#B0B0B0]">
-                                  {member.role}
-                                </span>
-                              </p>
-                              <p className="mt-0.5 break-all text-xs text-[#667085] dark:text-[#B0B0B0]">
-                                {member.email}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="mt-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
-                          No team member has been marked as participating in
-                          this research yet.
+                  <div className="divide-y divide-[#E2D9CC] border-y border-[#E2D9CC] dark:divide-[#444444] dark:border-[#444444]">
+                    {assignedTeamPeople.map((member) => (
+                      <div key={member.id} className="py-2.5">
+                        <p className="flex flex-wrap items-center gap-2 text-sm text-[#1F2937] dark:text-[#E4E4E4]">
+                          <span>{member.name}</span>
+                          <span className="border border-[#D8D0C2] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0]">
+                            {member.badge}
+                          </span>
                         </p>
-                      )}
-                    </div>
+                        <p className="mt-1 flex items-start gap-2 break-all text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                          <Mail
+                            className="mt-0.5 h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]"
+                            aria-hidden="true"
+                          />
+                          <span>{member.email}</span>
+                        </p>
+                      </div>
+                    ))}
                   </div>
+                  {assignedTeamParticipants.length === 0 ? (
+                    <p className="mt-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                      No team member has been marked as participating in this
+                      research yet.
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
             </ResearchDetailSection>
