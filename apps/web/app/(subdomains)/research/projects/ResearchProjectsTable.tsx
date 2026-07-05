@@ -74,6 +74,7 @@ export type ResearchProjectRow = {
   publications: number;
   activeTasks: number;
   overdueTasks: number;
+  canViewTaskCounts?: boolean;
   pendingFolderAccessRequests: number;
   updatedAt: string;
   notSubmittedAnywhere: boolean;
@@ -369,6 +370,34 @@ function ActiveTaskCount({
         {overdueCount}/{count}
       </Link>
     </IconHint>
+  );
+}
+
+export function ResearchStageIndicator({
+  row,
+  showTaskCounts = true,
+}: {
+  row: Pick<
+    ResearchProjectRow,
+    "id" | "stage" | "hasSubmittedSubmission" | "activeTasks" | "overdueTasks"
+  >;
+  showTaskCounts?: boolean;
+}) {
+  return (
+    <div className="inline-flex flex-col items-center">
+      <StatusIconChip
+        icon={stageIcon(row.stage)}
+        label={stageTooltip(row as ResearchProjectRow)}
+        className={stageStatusClass(row as ResearchProjectRow)}
+      />
+      {showTaskCounts ? (
+        <ActiveTaskCount
+          projectId={row.id}
+          count={row.activeTasks}
+          overdueCount={row.overdueTasks}
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -1209,15 +1238,9 @@ export function ResearchProjectsTable({
                 </td>
                 <td className="px-3 py-3 align-top">
                   <div className="inline-flex flex-col items-center">
-                    <StatusIconChip
-                      icon={stageIcon(row.stage)}
-                      label={stageTooltip(row)}
-                      className={stageStatusClass(row)}
-                    />
-                    <ActiveTaskCount
-                      projectId={row.id}
-                      count={row.activeTasks}
-                      overdueCount={row.overdueTasks}
+                    <ResearchStageIndicator
+                      row={row}
+                      showTaskCounts={row.canViewTaskCounts}
                     />
                     <FolderAccessRequestCount
                       count={row.pendingFolderAccessRequests}

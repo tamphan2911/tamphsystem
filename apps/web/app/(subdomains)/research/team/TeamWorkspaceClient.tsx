@@ -21,6 +21,7 @@ import {
   IconHint,
   ResearchButton,
 } from "@/sites/research/components/ResearchPrimitives";
+import { ResearchStageIndicator } from "../projects/ResearchProjectsTable";
 import {
   researchStartOfDay,
   researchStartOfMonth,
@@ -58,6 +59,10 @@ export type TeamWorkspace = {
     title: string;
     stage: string;
     updatedAt: string;
+    hasSubmittedSubmission: boolean;
+    activeTasks: number;
+    overdueTasks: number;
+    canViewTaskCounts: boolean;
     canOpenResearch: boolean;
     canManageParticipants: boolean;
     participantIds: string[];
@@ -151,13 +156,6 @@ function isTaskInPeriod(
   if (date < start) return false;
   if (end && date >= end) return false;
   return true;
-}
-
-function stageLabel(value: string) {
-  return value
-    .toLowerCase()
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export function TeamWorkspaceClient({
@@ -504,8 +502,11 @@ function ResearchTable({
                     Updated {formatDate(research.updatedAt)}
                   </p>
                 </td>
-                <td className="px-4 py-4 align-top text-sm text-[#1F2937] dark:text-[#E4E4E4]">
-                  {stageLabel(research.stage)}
+                <td className="px-4 py-4 align-top">
+                  <ResearchStageIndicator
+                    row={research}
+                    showTaskCounts={research.canViewTaskCounts}
+                  />
                 </td>
                 <td className="px-4 py-4 text-center align-top">
                   {research.canManageParticipants ? (

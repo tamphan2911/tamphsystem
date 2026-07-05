@@ -220,6 +220,7 @@ export default async function ResearchTeamPage({
           select: {
             id: true,
             status: true,
+            dueDate: true,
             assignments: {
               include: { user: { select: personSelect } },
             },
@@ -325,6 +326,12 @@ export default async function ResearchTeamPage({
           (participant) =>
             participant.teamId === team.id && participant.userId === userId,
         );
+        const activeTasks = project.tasks.filter(
+          (task) =>
+            task.status !== ResearchTaskStatus.COMPLETED &&
+            task.status !== ResearchTaskStatus.REVOKED,
+        );
+        const now = new Date();
 
         return {
           id: project.id,
@@ -332,6 +339,13 @@ export default async function ResearchTeamPage({
           title: project.title,
           stage: project.stage,
           updatedAt: project.updatedAt.toISOString(),
+          hasSubmittedSubmission: false,
+          activeTasks: activeTasks.length,
+          overdueTasks: activeTasks.filter(
+            (task) => task.dueDate && task.dueDate < now,
+          ).length,
+          canViewTaskCounts:
+            currentUser.roles.includes(Role.ADMIN) || team.leader.id === userId,
           canOpenResearch:
             currentUser.roles.includes(Role.ADMIN) ||
             team.leader.id === userId ||

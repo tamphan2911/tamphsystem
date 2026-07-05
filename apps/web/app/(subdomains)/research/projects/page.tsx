@@ -278,6 +278,7 @@ export default async function ProjectsDashboard({
             select: {
               id: true,
               name: true,
+              leaderId: true,
               leader: { select: { name: true, email: true } },
               _count: { select: { members: true } },
             },
@@ -520,6 +521,8 @@ export default async function ProjectsDashboard({
       overdueTasks: project.tasks.filter(
         (task) => task.dueDate && task.dueDate < now,
       ).length,
+      canViewTaskCounts:
+        isRootAdmin || project.assistantTeam?.leaderId === userId,
       pendingFolderAccessRequests: project._count.folderAccessRequests,
       updatedAt: researchDateTimeFormat("en-GB").format(project.updatedAt),
       notSubmittedAnywhere:
