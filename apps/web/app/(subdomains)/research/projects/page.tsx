@@ -460,7 +460,7 @@ export default async function ProjectsDashboard({
   );
   const showFolderRequestsOnly = isRootAdmin && folderRequestValue === "1";
   const showPriorityOnly = priorityValue === "1";
-  const showProductionQueueOnly = productionQueueValue === "1";
+  const showProductionQueueOnly = isRootAdmin && productionQueueValue === "1";
   const needle = query.toLowerCase();
   const filteredRows = rows.filter((row) => {
     const matchesStage =

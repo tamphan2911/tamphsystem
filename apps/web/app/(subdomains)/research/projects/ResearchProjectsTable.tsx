@@ -617,7 +617,7 @@ export function ResearchProjectsTable({
   const hasPendingFolderRequests = pendingFolderRequestCount > 0;
   const showFolderRequestsOnly = isAdmin && folderRequestValue === "1";
   const showPriorityOnly = priorityValue === "1";
-  const showProductionQueueOnly = productionQueueValue === "1";
+  const showProductionQueueOnly = isAdmin && productionQueueValue === "1";
   const sort = useMemo(() => parseSortValue(sortValue), [sortValue]);
   const selectedStages = useMemo(
     () => selectedFilterValues(stageValue, stages),
@@ -873,26 +873,6 @@ export function ResearchProjectsTable({
           }
         />
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-          <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 transition-colors duration-150 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white">
-            <input
-              type="checkbox"
-              checked={showPriorityOnly}
-              onChange={(event) =>
-                updatePriorityFilter(event.currentTarget.checked)
-              }
-              className="h-4 w-4 cursor-pointer rounded-none border-slate-300 text-amber-700 accent-amber-600 dark:border-[#666666] dark:accent-amber-300"
-            />
-            <IconHint label="Show only research marked as priority.">
-              <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-left">
-                <Star
-                  className="h-3.5 w-3.5 text-amber-700 dark:text-amber-300"
-                  fill={showPriorityOnly ? "currentColor" : "none"}
-                  aria-hidden="true"
-                />
-                Priority
-              </span>
-            </IconHint>
-          </label>
           <MultiFilterSelect
             values={selectedStages}
             onChange={updateStages}
@@ -937,38 +917,69 @@ export function ResearchProjectsTable({
               <th className="w-[5.75rem] px-3 py-3">
                 <span className="inline-flex items-center gap-1.5">
                   ID
-                  <IconHint
-                    label={
-                      showProductionQueueOnly
-                        ? "Show all research"
-                        : "Show production priority queue"
-                    }
-                  >
-                    <button
-                      type="button"
-                      aria-pressed={showProductionQueueOnly}
-                      aria-label={
+                  {isAdmin ? (
+                    <IconHint
+                      label={
                         showProductionQueueOnly
                           ? "Show all research"
                           : "Show production priority queue"
                       }
-                      onClick={() =>
-                        updateProductionQueueFilter(!showProductionQueueOnly)
-                      }
-                      className={`research-allow-transform inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
-                        showProductionQueueOnly
-                          ? "text-[#1F7180] drop-shadow-[0_0_0.45rem_rgba(31,113,128,0.22)] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-200"
-                          : "text-[#667085] hover:text-[#1F7180] dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
-                      }`}
                     >
-                      <ListOrdered className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  </IconHint>
+                      <button
+                        type="button"
+                        aria-pressed={showProductionQueueOnly}
+                        aria-label={
+                          showProductionQueueOnly
+                            ? "Show all research"
+                            : "Show production priority queue"
+                        }
+                        onClick={() =>
+                          updateProductionQueueFilter(!showProductionQueueOnly)
+                        }
+                        className={`research-allow-transform inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
+                          showProductionQueueOnly
+                            ? "text-[#1F7180] drop-shadow-[0_0_0.45rem_rgba(31,113,128,0.22)] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-200"
+                            : "text-[#667085] hover:text-[#1F7180] dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+                        }`}
+                      >
+                        <ListOrdered className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </IconHint>
+                  ) : null}
                 </span>
               </th>
               <th className="px-3 py-3">
                 <span className="inline-flex items-center gap-1.5">
                   Research
+                  <IconHint
+                    label={
+                      showPriorityOnly
+                        ? "Show all research"
+                        : "Show priority research"
+                    }
+                  >
+                    <button
+                      type="button"
+                      aria-pressed={showPriorityOnly}
+                      aria-label={
+                        showPriorityOnly
+                          ? "Show all research"
+                          : "Show priority research"
+                      }
+                      onClick={() => updatePriorityFilter(!showPriorityOnly)}
+                      className={`research-allow-transform inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
+                        showPriorityOnly
+                          ? "text-amber-700 drop-shadow-[0_0_0.45rem_rgba(217,119,6,0.22)] hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
+                          : "text-[#667085] hover:text-amber-700 dark:text-[#B0B0B0] dark:hover:text-amber-300"
+                      }`}
+                    >
+                      <Star
+                        className="h-4 w-4"
+                        fill={showPriorityOnly ? "currentColor" : "none"}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </IconHint>
                   {isAdmin && (
                     <IconHint
                       label={
@@ -1077,7 +1088,7 @@ export function ResearchProjectsTable({
                       <PriorityResearchIcon compact />
                     </div>
                   ) : null}
-                  {row.productionQueuePosition ? (
+                  {isAdmin && row.productionQueuePosition ? (
                     <IconHint
                       label={`Production queue position ${row.productionQueuePosition}`}
                     >
