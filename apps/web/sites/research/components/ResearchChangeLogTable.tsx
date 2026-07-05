@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, History } from "lucide-react";
+import { TablePagination } from "@/sites/research/components/TableControls";
 import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 
 export type ResearchChangeLogRow = {
@@ -23,6 +24,7 @@ const dateFormatter = researchDateTimeFormat("en-GB", {
   hour: "2-digit",
   minute: "2-digit",
 });
+const pageSize = 10;
 
 function sortValue(row: ResearchChangeLogRow, key: SortKey) {
   if (key === "changedAt") return new Date(row.changedAt).getTime();
@@ -82,6 +84,7 @@ export function ResearchChangeLogTable({
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("changedAt");
   const [direction, setDirection] = useState<SortDirection>("desc");
+  const [page, setPage] = useState(1);
   const sortedRows = useMemo(() => {
     return [...rows].sort((left, right) => {
       const leftValue = sortValue(left, sortKey);
@@ -101,8 +104,15 @@ export function ResearchChangeLogTable({
       return direction === "asc" ? result : -result;
     });
   }, [direction, rows, sortKey]);
+  const pageCount = Math.max(1, Math.ceil(sortedRows.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const pagedRows = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return sortedRows.slice(start, start + pageSize);
+  }, [currentPage, sortedRows]);
 
   function updateSort(nextKey: SortKey) {
+    setPage(1);
     if (nextKey === sortKey) {
       setDirection((current) => (current === "asc" ? "desc" : "asc"));
       return;
@@ -170,7 +180,7 @@ export function ResearchChangeLogTable({
             </thead>
             <tbody className="divide-y divide-[#E2D9CC] dark:divide-[#444444]">
               {sortedRows.length > 0 ? (
-                sortedRows.map((row) => (
+                pagedRows.map((row) => (
                   <tr
                     key={row.id}
                     className="align-top transition-colors duration-150 hover:bg-[#F7F3EA] dark:hover:bg-[#383838]"
@@ -205,6 +215,13 @@ export function ResearchChangeLogTable({
             </tbody>
           </table>
         </div>
+        <TablePagination
+          page={currentPage}
+          pageCount={pageCount}
+          total={sortedRows.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       </div>
     </section>
   );
