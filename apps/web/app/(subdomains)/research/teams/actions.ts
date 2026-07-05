@@ -160,3 +160,69 @@ export async function updateResearchAssistantTeam(
   revalidatePath("/teams");
   revalidatePath("/team");
 }
+
+export async function updateResearchTeamParticipants(
+  projectId: string,
+  formData: FormData,
+) {
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) redirect("/login");
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: true },
+  });
+  if (!user) redirect("/401");
+
+  const project = await prisma.researchProject.findUnique({
+    where: { id: projectId },
+    select: {
+      id: true,
+      assistantTeamId: true,
+      assistantTeam: {
+        select: {
+          leaderId: true,
+          members: { select: { userId: true } },
+        },
+      },
+    },
+  });
+  if (!project?.assistantTeamId || !project.assistantTeam) {
+    throw new Error("This research is not assigned to an assistant team.");
+  }
+  const teamId = project.assistantTeamId;
+
+  const canManage =
+    user.roles.includes(Role.ADMIN) ||
+    project.assistantTeam.leaderId === userId;
+  if (!canManage) redirect("/401");
+
+  const memberIds = new Set(
+    project.assistantTeam.members.map((member) => member.userId),
+  );
+  const participantIds = selectedIds(formData, "participantIds");
+  const invalidIds = participantIds.filter((id) => !memberIds.has(id));
+  if (invalidIds.length > 0) {
+    throw new Error("Only members of this team can be linked to the research.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.researchTeamParticipant.deleteMany({
+      where: { projectId, teamId },
+    });
+    if (participantIds.length > 0) {
+      await tx.researchTeamParticipant.createMany({
+        data: participantIds.map((participantId) => ({
+          projectId,
+          teamId,
+          userId: participantId,
+        })),
+        skipDuplicates: true,
+      });
+    }
+  });
+
+  revalidatePath("/team");
+  revalidatePath(`/projects/${projectId}`);
+}

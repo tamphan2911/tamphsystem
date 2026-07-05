@@ -151,6 +151,7 @@ model User {
   createdResearchCalendarItems     ResearchCalendarItem[]             @relation("ResearchCalendarItemCreator")
   ledResearchAssistantTeams        ResearchAssistantTeam[]            @relation("ResearchAssistantTeamLeader")
   researchAssistantTeamMemberships ResearchAssistantTeamMember[]      @relation("ResearchAssistantTeamMemberUser")
+  researchTeamParticipations       ResearchTeamParticipant[]          @relation("ResearchTeamParticipantUser")
   researchChangeLogs               ResearchChangeLog[]                @relation("ResearchChangeLogActor")
 }
 
@@ -435,18 +436,18 @@ model ResearchProject {
   universityRegistration   String? // Registration period, e.g., "Q1 2026"
   registrationName         String?
   registrationUserId       String?
-  registrationUser         User?               @relation("ResearchRegistrationUser", fields: [registrationUserId], references: [id], onDelete: SetNull)
+  registrationUser         User?                  @relation("ResearchRegistrationUser", fields: [registrationUserId], references: [id], onDelete: SetNull)
   fundingInstitutionId     String?
-  fundingInstitution       FundingInstitution? @relation(fields: [fundingInstitutionId], references: [id], onDelete: SetNull)
+  fundingInstitution       FundingInstitution?    @relation(fields: [fundingInstitutionId], references: [id], onDelete: SetNull)
   assistantTeamId          String?
   assistantTeam            ResearchAssistantTeam? @relation(fields: [assistantTeamId], references: [id], onDelete: SetNull)
-  registerStatus           RegistrationStatus  @default(NOT_REGISTERED)
-  claimStatus              ClaimStatus         @default(CANNOT_CLAIM)
-  isPriority               Boolean             @default(false)
-  completedProductionSteps String[]            @default([])
-  productionTimelineLocked Boolean             @default(false)
-  contentUnlocked          Boolean             @default(false)
-  authorsUnlocked          Boolean             @default(false)
+  registerStatus           RegistrationStatus     @default(NOT_REGISTERED)
+  claimStatus              ClaimStatus            @default(CANNOT_CLAIM)
+  isPriority               Boolean                @default(false)
+  completedProductionSteps String[]               @default([])
+  productionTimelineLocked Boolean                @default(false)
+  contentUnlocked          Boolean                @default(false)
+  authorsUnlocked          Boolean                @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -467,6 +468,7 @@ model ResearchProject {
   folderAccessRequests  ResearchFolderAccessRequest[]
   organizedProjectLinks OrganizedProjectResearch[]
   sourceProposal        Proposal?                     @relation("ProposalCreatedResearch")
+  teamParticipants      ResearchTeamParticipant[]
 
   @@index([registrationUserId])
   @@index([fundingInstitutionId])
@@ -873,10 +875,10 @@ model SuggestedJournal {
   venueName                      String?
   venueLink                      String?
   apc                            String?
-  apcCurrency                    CurrencyCode          @default(USD)
-  hasApcOption                   Boolean               @default(false)
+  apcCurrency                    CurrencyCode         @default(USD)
+  hasApcOption                   Boolean              @default(false)
   submissionFee                  String?
-  submissionFeeCurrency          CurrencyCode          @default(USD)
+  submissionFeeCurrency          CurrencyCode         @default(USD)
   note                           String?
   status                         SuggestedVenueStatus @default(APPROVED)
   approvedAt                     DateTime?
@@ -1114,12 +1116,29 @@ model ResearchAssistantTeam {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  leader  User                          @relation("ResearchAssistantTeamLeader", fields: [leaderId], references: [id], onDelete: Restrict)
-  members ResearchAssistantTeamMember[]
-  researchProjects ResearchProject[]
+  leader               User                          @relation("ResearchAssistantTeamLeader", fields: [leaderId], references: [id], onDelete: Restrict)
+  members              ResearchAssistantTeamMember[]
+  researchProjects     ResearchProject[]
+  researchParticipants ResearchTeamParticipant[]
 
   @@unique([leaderId])
   @@index([updatedAt])
+}
+
+model ResearchTeamParticipant {
+  id        String   @id @default(uuid())
+  projectId String
+  teamId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  project ResearchProject       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  team    ResearchAssistantTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user    User                  @relation("ResearchTeamParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, teamId, userId])
+  @@index([teamId])
+  @@index([userId])
 }
 
 model ResearchAssistantTeamMember {

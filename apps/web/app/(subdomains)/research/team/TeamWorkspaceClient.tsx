@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState, useTransition } from "react";
 import {
   BadgeCheck,
   BookOpen,
@@ -14,7 +14,13 @@ import {
   Square,
   UsersRound,
 } from "lucide-react";
+import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { usePersistentTableValue } from "@/sites/research/components/TableControls";
+import {
+  IconHint,
+  ResearchButton,
+} from "@/sites/research/components/ResearchPrimitives";
 import {
   researchStartOfDay,
   researchStartOfMonth,
@@ -51,6 +57,8 @@ export type TeamWorkspace = {
     title: string;
     stage: string;
     updatedAt: string;
+    canManageParticipants: boolean;
+    participantIds: string[];
     associatedMembers: {
       name: string;
       email: string;
@@ -153,9 +161,14 @@ function stageLabel(value: string) {
 export function TeamWorkspaceClient({
   teams,
   canOpenMemberProfiles,
+  updateParticipantsAction,
 }: {
   teams: TeamWorkspace[];
   canOpenMemberProfiles: boolean;
+  updateParticipantsAction: (
+    projectId: string,
+    formData: FormData,
+  ) => Promise<unknown>;
 }) {
   const [activeTeamId, setActiveTeamId] = usePersistentTableValue(
     "team-workspace:team",
@@ -310,7 +323,12 @@ export function TeamWorkspaceClient({
           canOpenMemberProfiles={canOpenMemberProfiles}
         />
       ) : null}
-      {activeTab === "research" ? <ResearchTable team={activeTeam} /> : null}
+      {activeTab === "research" ? (
+        <ResearchTable
+          team={activeTeam}
+          updateParticipantsAction={updateParticipantsAction}
+        />
+      ) : null}
       {activeTab === "performance" ? (
         <PerformanceTable
           rows={performanceRows}
@@ -413,7 +431,16 @@ function MembersTable({
   );
 }
 
-function ResearchTable({ team }: { team: TeamWorkspace }) {
+function ResearchTable({
+  team,
+  updateParticipantsAction,
+}: {
+  team: TeamWorkspace;
+  updateParticipantsAction: (
+    projectId: string,
+    formData: FormData,
+  ) => Promise<unknown>;
+}) {
   return (
     <div className="overflow-hidden border border-[#E2D9CC] dark:border-[#444444]">
       <table className="w-full table-fixed text-left">
@@ -422,6 +449,7 @@ function ResearchTable({ team }: { team: TeamWorkspace }) {
             <th className="w-[8rem] px-4 py-3">ID</th>
             <th className="px-4 py-3">Research</th>
             <th className="w-[14rem] px-4 py-3">Stage</th>
+            <th className="w-[4rem] px-4 py-3 text-center">Edit</th>
             <th className="w-[36%] px-4 py-3">Team Association</th>
           </tr>
         </thead>
@@ -449,6 +477,15 @@ function ResearchTable({ team }: { team: TeamWorkspace }) {
                 <td className="px-4 py-4 align-top text-sm text-[#1F2937] dark:text-[#E4E4E4]">
                   {stageLabel(research.stage)}
                 </td>
+                <td className="px-4 py-4 text-center align-top">
+                  {research.canManageParticipants ? (
+                    <ResearchParticipantsDialog
+                      team={team}
+                      research={research}
+                      action={updateParticipantsAction}
+                    />
+                  ) : null}
+                </td>
                 <td className="px-4 py-4 align-top">
                   {research.associatedMembers.length > 0 ? (
                     <div className="space-y-2">
@@ -475,7 +512,7 @@ function ResearchTable({ team }: { team: TeamWorkspace }) {
           ) : (
             <tr className="bg-[#FFFDF8] dark:bg-[#2C2C2C]">
               <td
-                colSpan={4}
+                colSpan={5}
                 className="px-4 py-8 text-center text-sm text-[#667085] dark:text-[#B0B0B0]"
               >
                 No research is assigned to this team yet.
@@ -485,6 +522,112 @@ function ResearchTable({ team }: { team: TeamWorkspace }) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+function ResearchParticipantsDialog({
+  team,
+  research,
+  action,
+}: {
+  team: TeamWorkspace;
+  research: TeamWorkspace["research"][number];
+  action: (projectId: string, formData: FormData) => Promise<unknown>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const toast = useResearchToast();
+  const selectableMembers = team.members.filter(
+    (member) => member.badge === "Member",
+  );
+
+  return (
+    <>
+      <IconHint label="Edit participating team members" position="bottom">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-[#1F7180] transition duration-180 ease-out hover:-translate-y-0.5 hover:text-[#155864] active:translate-y-0 active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-200"
+          aria-label="Edit participating team members"
+        >
+          <UsersRound className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </IconHint>
+      <ResearchModal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Research team participation"
+        description="Tick the team members who participated in this research."
+        icon={<UsersRound className="h-5 w-5" />}
+        maxWidth="max-w-2xl"
+        headerActions={
+          <ResearchButton
+            form={`team-participants-${research.id}`}
+            disabled={isPending}
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            Save members
+          </ResearchButton>
+        }
+      >
+        <form
+          id={`team-participants-${research.id}`}
+          className="space-y-4 px-6 py-5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            startTransition(async () => {
+              await action(research.id, formData);
+              setOpen(false);
+              toast.showSuccess({
+                title: "Team participation saved",
+                detail:
+                  "Participating members for this research are now updated.",
+              });
+            });
+          }}
+        >
+          <div className="border border-[#E2D9CC] bg-[#FFFDF8] p-3 dark:border-[#444444] dark:bg-[#202020]">
+            <p className="text-sm text-[#1F2937] dark:text-[#E4E4E4]">
+              {research.title}
+            </p>
+            <p className="mt-1 text-xs text-[#667085] dark:text-[#B0B0B0]">
+              Team: {team.name}
+            </p>
+          </div>
+          {selectableMembers.length > 0 ? (
+            <div className="divide-y divide-[#E2D9CC] border-y border-[#E2D9CC] dark:divide-[#444444] dark:border-[#444444]">
+              {selectableMembers.map((member) => (
+                <label
+                  key={member.id}
+                  className="group flex cursor-pointer items-start gap-3 py-3 transition hover:bg-[#F7F4ED] dark:hover:bg-[#303030]"
+                >
+                  <input
+                    type="checkbox"
+                    name="participantIds"
+                    value={member.id}
+                    defaultChecked={research.participantIds.includes(member.id)}
+                    className="mt-1 h-4 w-4 rounded-none border-[#D8D0C2] text-[#1F7180] focus:ring-[#1F7180]/20 dark:border-[#444444] dark:bg-[#202020] dark:text-[#A8DADC]"
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-sm text-[#1F2937] dark:text-[#E4E4E4]">
+                      {member.name}
+                    </span>
+                    <span className="mt-0.5 block break-all text-xs text-[#667085] dark:text-[#B0B0B0]">
+                      {member.email}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm leading-6 text-[#667085] dark:text-[#B0B0B0]">
+              This team has no assistant members to mark as participating.
+            </p>
+          )}
+        </form>
+      </ResearchModal>
+    </>
   );
 }
 

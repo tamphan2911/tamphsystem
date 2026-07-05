@@ -17,6 +17,7 @@ import {
   Rocket,
   SearchCheck,
   Star,
+  UsersRound,
 } from "lucide-react";
 import {
   prisma,
@@ -363,9 +364,39 @@ export default async function ProjectDetailPage({
             name: true,
             leaderId: true,
             leader: { select: { name: true, email: true } },
-            members: { select: { userId: true } },
+            members: {
+              select: {
+                userId: true,
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    affiliation: true,
+                    orcid: true,
+                    roles: true,
+                  },
+                },
+              },
+              orderBy: [{ user: { name: "asc" } }, { user: { email: "asc" } }],
+            },
             _count: { select: { members: true } },
           },
+        },
+        teamParticipants: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                affiliation: true,
+                orcid: true,
+                roles: true,
+              },
+            },
+          },
+          orderBy: [{ user: { name: "asc" } }, { user: { email: "asc" } }],
         },
         authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
         authorEntries: {
@@ -1158,6 +1189,20 @@ export default async function ProjectDetailPage({
         memberCount: project.assistantTeam._count.members,
       }
     : null;
+  const assignedTeamParticipants = project.assistantTeam
+    ? project.teamParticipants
+        .filter((participant) => participant.teamId === project.assistantTeamId)
+        .map((participant) => ({
+          id: participant.user.id,
+          name:
+            displayResearchPersonName(participant.user) ||
+            participant.user.email,
+          email: displayResearchEmail(participant.user.email),
+          affiliation: participant.user.affiliation ?? "",
+          orcid: participant.user.orcid ?? "",
+          role: displayRole(participant.user.roles),
+        }))
+    : [];
   const defaultAuthors: SelectedAuthor[] =
     hydratedAuthorEntries.length > 0
       ? hydratedAuthorEntries.map((entry) => ({
@@ -2511,6 +2556,76 @@ export default async function ProjectDetailPage({
                   );
                 })}
               </div>
+              {project.assistantTeam ? (
+                <div className="mt-5 border-t border-[#E2D9CC] pt-5 dark:border-[#444444]">
+                  <div className="mb-3 flex items-center gap-2">
+                    <UsersRound
+                      className="h-4 w-4 text-[#1F7180] dark:text-[#A8DADC]"
+                      aria-hidden="true"
+                    />
+                    <h3 className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
+                      Assigned team
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-normal text-[#1F2937] dark:text-[#E4E4E4]">
+                        {project.assistantTeam.name}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                        Leader:{" "}
+                        {displayResearchPersonName(
+                          project.assistantTeam.leader,
+                        ) || project.assistantTeam.leader.email}
+                        <span
+                          className="px-1.5 text-[#9AA4B2] dark:text-[#777777]"
+                          aria-hidden="true"
+                        >
+                          |
+                        </span>
+                        <span className="break-all">
+                          {displayResearchEmail(
+                            project.assistantTeam.leader.email,
+                          )}
+                        </span>
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
+                        Participating members
+                      </p>
+                      {assignedTeamParticipants.length > 0 ? (
+                        <div className="mt-2 divide-y divide-[#E2D9CC] border-y border-[#E2D9CC] dark:divide-[#444444] dark:border-[#444444]">
+                          {assignedTeamParticipants.map((member) => (
+                            <div key={member.id} className="py-2.5">
+                              <p className="text-sm text-[#1F2937] dark:text-[#E4E4E4]">
+                                {member.name}
+                                <span
+                                  className="px-1.5 text-[#9AA4B2] dark:text-[#777777]"
+                                  aria-hidden="true"
+                                >
+                                  |
+                                </span>
+                                <span className="text-xs text-[#667085] dark:text-[#B0B0B0]">
+                                  {member.role}
+                                </span>
+                              </p>
+                              <p className="mt-0.5 break-all text-xs text-[#667085] dark:text-[#B0B0B0]">
+                                {member.email}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                          No team member has been marked as participating in
+                          this research yet.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </ResearchDetailSection>
           </fieldset>
         </SaveForm>

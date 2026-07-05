@@ -9,6 +9,7 @@ import {
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
 import { TeamWorkspaceClient, type TeamWorkspace } from "./TeamWorkspaceClient";
+import { updateResearchTeamParticipants } from "../teams/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -219,6 +220,10 @@ export default async function ResearchTeamPage() {
             },
           },
         },
+        teamParticipants: {
+          include: { user: { select: personSelect } },
+          orderBy: [{ user: { name: "asc" } }, { user: { email: "asc" } }],
+        },
       },
       orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
     }),
@@ -302,6 +307,9 @@ export default async function ResearchTeamPage() {
             addAssociation(assignment.user, "Assistant");
           }
         }
+        for (const participant of project.teamParticipants) {
+          addAssociation(participant.user, "Participating");
+        }
 
         return {
           id: project.id,
@@ -309,6 +317,11 @@ export default async function ResearchTeamPage() {
           title: project.title,
           stage: project.stage,
           updatedAt: project.updatedAt.toISOString(),
+          canManageParticipants:
+            currentUser.roles.includes(Role.ADMIN) || team.leader.id === userId,
+          participantIds: project.teamParticipants
+            .filter((participant) => participant.teamId === team.id)
+            .map((participant) => participant.userId),
           associatedMembers: [...associations.values()]
             .map((item) => ({
               name: item.name,
@@ -394,6 +407,7 @@ export default async function ResearchTeamPage() {
           <TeamWorkspaceClient
             teams={teams}
             canOpenMemberProfiles={currentUser.roles.includes(Role.ADMIN)}
+            updateParticipantsAction={updateResearchTeamParticipants}
           />
         ) : (
           <section className="border border-[#E2D9CC] bg-[#FFFDF8] p-5 dark:border-[#444444] dark:bg-[#2C2C2C]">
