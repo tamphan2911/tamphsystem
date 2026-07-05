@@ -131,6 +131,7 @@ type ProjectSearchParams = {
   sort?: string;
   page?: string;
   priority?: string;
+  productionQueue?: string;
   folderRequests?: string;
 };
 
@@ -341,6 +342,16 @@ export default async function ProjectsDashboard({
   );
 
   const now = new Date();
+  const productionQueuePositionByProjectId = new Map(
+    projects
+      .filter((project) => project.productionPriorityQueuedAt)
+      .sort(
+        (left, right) =>
+          left.productionPriorityQueuedAt!.getTime() -
+          right.productionPriorityQueuedAt!.getTime(),
+      )
+      .map((project, index) => [project.id, index + 1]),
+  );
   const rows: ResearchProjectRow[] = projects.map((project) => {
     const journalSubmissionStatuses = project.submissions.map(
       (submission) => submission.status,
@@ -359,6 +370,10 @@ export default async function ProjectsDashboard({
       title: project.title,
       abstract: project.abstract ?? "",
       isPriority: project.isPriority,
+      productionPriorityQueuedAt:
+        project.productionPriorityQueuedAt?.toISOString() ?? "",
+      productionQueuePosition:
+        productionQueuePositionByProjectId.get(project.id) ?? null,
       stage: journalFocusedResearchStage(project),
       claimStatus: project.claimStatus,
       registerStatus: project.registerStatus,
@@ -430,6 +445,8 @@ export default async function ProjectsDashboard({
   const sortValue = resolvedSearchParams.sort || "NONE";
   const pageValue = Number.parseInt(resolvedSearchParams.page ?? "1", 10);
   const priorityValue = resolvedSearchParams.priority === "1" ? "1" : "0";
+  const productionQueueValue =
+    resolvedSearchParams.productionQueue === "1" ? "1" : "0";
   const folderRequestValue =
     resolvedSearchParams.folderRequests === "1" ? "1" : "0";
   const selectedStages = selectedValues(stageValue, stageFilterOptions);
@@ -443,6 +460,7 @@ export default async function ProjectsDashboard({
   );
   const showFolderRequestsOnly = isRootAdmin && folderRequestValue === "1";
   const showPriorityOnly = priorityValue === "1";
+  const showProductionQueueOnly = productionQueueValue === "1";
   const needle = query.toLowerCase();
   const filteredRows = rows.filter((row) => {
     const matchesStage =
@@ -459,11 +477,14 @@ export default async function ProjectsDashboard({
     const matchesFolderRequest =
       !showFolderRequestsOnly || row.pendingFolderAccessRequests > 0;
     const matchesPriority = !showPriorityOnly || row.isPriority;
+    const matchesProductionQueue =
+      !showProductionQueueOnly || Boolean(row.productionPriorityQueuedAt);
     const haystack = [
       row.title,
       row.researchCode,
       row.abstract,
       row.isPriority ? "priority" : "",
+      row.productionPriorityQueuedAt ? "production queue" : "",
       row.coAuthors,
       row.leadResearcher,
       row.stage,
@@ -480,12 +501,27 @@ export default async function ProjectsDashboard({
       matchesRegistration &&
       matchesFolderRequest &&
       matchesPriority &&
+      matchesProductionQueue &&
       (!needle || haystack.includes(needle))
     );
   });
   const sort = parseProjectSort(sortValue);
-  const sortedRows = sort
+  const sortedRows = showProductionQueueOnly
     ? filteredRows
+        .map((row, index) => ({ row, index }))
+        .sort((left, right) => {
+          const leftTime = new Date(
+            left.row.productionPriorityQueuedAt,
+          ).getTime();
+          const rightTime = new Date(
+            right.row.productionPriorityQueuedAt,
+          ).getTime();
+          if (leftTime === rightTime) return left.index - right.index;
+          return leftTime - rightTime;
+        })
+        .map(({ row }) => row)
+    : sort
+      ? filteredRows
         .map((row, index) => ({ row, index }))
         .sort((left, right) => {
           let comparison = 0;
@@ -512,7 +548,7 @@ export default async function ProjectsDashboard({
           return sort.direction === "desc" ? -comparison : comparison;
         })
         .map(({ row }) => row)
-    : filteredRows;
+      : filteredRows;
   const totalRows = sortedRows.length;
   const pendingFolderRequestCount = rows.reduce(
     (total, row) => total + row.pendingFolderAccessRequests,
@@ -625,6 +661,7 @@ export default async function ProjectsDashboard({
           sortValue,
           folderRequestValue,
           priorityValue,
+          productionQueueValue,
           page: currentPage,
           pageSize: projectPageSize,
           total: totalRows,

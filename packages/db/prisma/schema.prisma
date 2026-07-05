@@ -432,22 +432,23 @@ model ResearchProject {
   stage           ResearchStage @default(PRODUCTION)
 
   // Production Stage Tracking
-  coAuthors                String?
-  universityRegistration   String? // Registration period, e.g., "Q1 2026"
-  registrationName         String?
-  registrationUserId       String?
-  registrationUser         User?                  @relation("ResearchRegistrationUser", fields: [registrationUserId], references: [id], onDelete: SetNull)
-  fundingInstitutionId     String?
-  fundingInstitution       FundingInstitution?    @relation(fields: [fundingInstitutionId], references: [id], onDelete: SetNull)
-  assistantTeamId          String?
-  assistantTeam            ResearchAssistantTeam? @relation(fields: [assistantTeamId], references: [id], onDelete: SetNull)
-  registerStatus           RegistrationStatus     @default(NOT_REGISTERED)
-  claimStatus              ClaimStatus            @default(CANNOT_CLAIM)
-  isPriority               Boolean                @default(false)
-  completedProductionSteps String[]               @default([])
-  productionTimelineLocked Boolean                @default(false)
-  contentUnlocked          Boolean                @default(false)
-  authorsUnlocked          Boolean                @default(false)
+  coAuthors                  String?
+  universityRegistration     String? // Registration period, e.g., "Q1 2026"
+  registrationName           String?
+  registrationUserId         String?
+  registrationUser           User?                  @relation("ResearchRegistrationUser", fields: [registrationUserId], references: [id], onDelete: SetNull)
+  fundingInstitutionId       String?
+  fundingInstitution         FundingInstitution?    @relation(fields: [fundingInstitutionId], references: [id], onDelete: SetNull)
+  assistantTeamId            String?
+  assistantTeam              ResearchAssistantTeam? @relation(fields: [assistantTeamId], references: [id], onDelete: SetNull)
+  registerStatus             RegistrationStatus     @default(NOT_REGISTERED)
+  claimStatus                ClaimStatus            @default(CANNOT_CLAIM)
+  isPriority                 Boolean                @default(false)
+  productionPriorityQueuedAt DateTime?
+  completedProductionSteps   String[]               @default([])
+  productionTimelineLocked   Boolean                @default(false)
+  contentUnlocked            Boolean                @default(false)
+  authorsUnlocked            Boolean                @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -473,6 +474,7 @@ model ResearchProject {
   @@index([registrationUserId])
   @@index([fundingInstitutionId])
   @@index([assistantTeamId])
+  @@index([productionPriorityQueuedAt])
 }
 
 model OrganizedProject {

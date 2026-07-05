@@ -311,6 +311,16 @@ export default async function ResearchProfilePage({
     .map((value) => value.trim().toLowerCase());
 
   const now = new Date();
+  const productionQueuePositionByProjectId = new Map(
+    authoredResearch
+      .filter((project) => project.productionPriorityQueuedAt)
+      .sort(
+        (left, right) =>
+          left.productionPriorityQueuedAt!.getTime() -
+          right.productionPriorityQueuedAt!.getTime(),
+      )
+      .map((project, index) => [project.id, index + 1]),
+  );
   const researchRows: ResearchProjectRow[] = authoredResearch.map((project) => {
     const journalSubmissionStatuses = project.submissions.map(
       (submission) => submission.status,
@@ -329,6 +339,10 @@ export default async function ResearchProfilePage({
       title: project.title,
       abstract: project.abstract ?? "",
       isPriority: project.isPriority,
+      productionPriorityQueuedAt:
+        project.productionPriorityQueuedAt?.toISOString() ?? "",
+      productionQueuePosition:
+        productionQueuePositionByProjectId.get(project.id) ?? null,
       stage: journalFocusedResearchStage(project),
       claimStatus: project.claimStatus,
       registerStatus: project.registerStatus,

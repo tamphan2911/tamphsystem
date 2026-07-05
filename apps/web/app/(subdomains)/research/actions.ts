@@ -1197,6 +1197,7 @@ type ResearchNotificationSnapshot = {
   registerStatus: RegistrationStatus;
   claimStatus: ClaimStatus;
   isPriority: boolean;
+  productionPriorityQueuedAt: Date | null;
   completedProductionSteps: string[];
   registrationName: string | null;
   registrationUser: { name: string | null; email: string } | null;
@@ -1328,6 +1329,11 @@ function researchProjectNotificationChanges(
     "Priority",
     before.isPriority ? "Priority" : "Not priority",
     after.isPriority ? "Priority" : "Not priority",
+  );
+  addChange(
+    "Production queue",
+    before.productionPriorityQueuedAt ? "Queued" : "Not queued",
+    after.productionPriorityQueuedAt ? "Queued" : "Not queued",
   );
   addChange(
     "Authors",
@@ -3158,6 +3164,11 @@ export async function createResearchProject(formData: FormData) {
     : null;
   const isPriority =
     user.roles.includes(Role.ADMIN) && formData.get("isPriority") === "true";
+  const productionPriorityQueuedAt =
+    user.roles.includes(Role.ADMIN) &&
+    formData.get("productionPriorityQueued") === "true"
+      ? new Date()
+      : null;
 
   const createdProject = await prisma.researchProject.create({
     data: {
@@ -3175,6 +3186,7 @@ export async function createResearchProject(formData: FormData) {
       fundingInstitutionId,
       assistantTeamId,
       isPriority,
+      productionPriorityQueuedAt,
       registerStatus: isAdmin
         ? (enumValue(RegistrationStatus, formData.get("registerStatus")) ??
           RegistrationStatus.NOT_REGISTERED)
@@ -3722,6 +3734,7 @@ export async function updateResearchProject(
       registerStatus: true,
       claimStatus: true,
       isPriority: true,
+      productionPriorityQueuedAt: true,
       registrationName: true,
       registrationUser: { select: { name: true, email: true } },
       fundingInstitution: { select: { name: true } },
@@ -3835,6 +3848,16 @@ export async function updateResearchProject(
     formData.get("fundingInstitutionId"),
   );
   const assistantTeamId = optionalString(formData.get("assistantTeamId"));
+  const wantsProductionPriorityQueue =
+    formData.get("productionPriorityQueued") === "true";
+  const productionPriorityQueuedAtUpdate =
+    updateScope === "basic" && isRootAdmin
+      ? {
+          productionPriorityQueuedAt: wantsProductionPriorityQueue
+            ? (projectLock.productionPriorityQueuedAt ?? new Date())
+            : null,
+        }
+      : {};
   const data = {
     title: optionalString(formData.get("title")) ?? "Untitled research",
     sharedFolderUrl: optionalString(formData.get("sharedFolderUrl")),
@@ -3856,7 +3879,10 @@ export async function updateResearchProject(
             enumValue(ClaimStatus, formData.get("claimStatus")) ??
             ClaimStatus.CANNOT_CLAIM,
           ...(isRootAdmin
-            ? { isPriority: formData.get("isPriority") === "true" }
+            ? {
+                isPriority: formData.get("isPriority") === "true",
+                ...productionPriorityQueuedAtUpdate,
+              }
             : {}),
         }
       : {}),
@@ -3869,7 +3895,10 @@ export async function updateResearchProject(
   );
   const productionLockUpdate =
     updateScope === "production"
-      ? { productionTimelineLocked: productionIsComplete }
+      ? {
+          productionTimelineLocked: productionIsComplete,
+          ...(productionIsComplete ? { productionPriorityQueuedAt: null } : {}),
+        }
       : {};
 
   await prisma.$transaction(async (tx) => {
@@ -3927,6 +3956,7 @@ export async function updateResearchProject(
       registerStatus: true,
       claimStatus: true,
       isPriority: true,
+      productionPriorityQueuedAt: true,
       registrationName: true,
       registrationUser: { select: { name: true, email: true } },
       fundingInstitution: { select: { name: true } },
@@ -12501,6 +12531,9 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
               update: {
                 completedProductionSteps,
                 productionTimelineLocked: productionIsComplete,
+                ...(productionIsComplete
+                  ? { productionPriorityQueuedAt: null }
+                  : {}),
               },
             }
           : undefined,

@@ -18,6 +18,7 @@ import {
   FolderClock,
   FlaskConical,
   Hourglass,
+  ListOrdered,
   Send,
   SendHorizontal,
   ShieldCheck,
@@ -49,6 +50,8 @@ export type ResearchProjectRow = {
   title: string;
   abstract: string;
   isPriority: boolean;
+  productionPriorityQueuedAt: string;
+  productionQueuePosition: number | null;
   stage: string;
   claimStatus: string;
   registerStatus: string;
@@ -82,6 +85,7 @@ type ServerTableState = {
   sortValue: string;
   folderRequestValue: string;
   priorityValue: string;
+  productionQueueValue: string;
   page: number;
   pageSize: number;
   total: number;
@@ -591,6 +595,8 @@ export function ResearchProjectsTable({
     "projects:priority",
     "0",
   );
+  const [storedProductionQueueValue, setStoredProductionQueueValue] =
+    usePersistentTableValue("projects:production-queue", "0");
   const query = serverState?.query ?? storedQuery;
   const stageValue = serverState?.stageValue ?? storedStageValue;
   const claimValue = serverState?.claimValue ?? storedClaimValue;
@@ -600,6 +606,8 @@ export function ResearchProjectsTable({
   const folderRequestValue =
     serverState?.folderRequestValue ?? storedFolderRequestValue;
   const priorityValue = serverState?.priorityValue ?? storedPriorityValue;
+  const productionQueueValue =
+    serverState?.productionQueueValue ?? storedProductionQueueValue;
   const pendingFolderRequestCount = useMemo(
     () =>
       serverState?.pendingFolderRequestCount ??
@@ -609,6 +617,7 @@ export function ResearchProjectsTable({
   const hasPendingFolderRequests = pendingFolderRequestCount > 0;
   const showFolderRequestsOnly = isAdmin && folderRequestValue === "1";
   const showPriorityOnly = priorityValue === "1";
+  const showProductionQueueOnly = productionQueueValue === "1";
   const sort = useMemo(() => parseSortValue(sortValue), [sortValue]);
   const selectedStages = useMemo(
     () => selectedFilterValues(stageValue, stages),
@@ -631,7 +640,8 @@ export function ResearchProjectsTable({
     selectedClaims.length > 0 ||
     selectedRegistrations.length > 0 ||
     showFolderRequestsOnly ||
-    showPriorityOnly;
+    showPriorityOnly ||
+    showProductionQueueOnly;
 
   function updateServerParams(updates: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -664,11 +674,14 @@ export function ResearchProjectsTable({
       const matchesFolderRequest =
         !showFolderRequestsOnly || row.pendingFolderAccessRequests > 0;
       const matchesPriority = !showPriorityOnly || row.isPriority;
+      const matchesProductionQueue =
+        !showProductionQueueOnly || Boolean(row.productionPriorityQueuedAt);
       const haystack = [
         row.title,
         row.researchCode,
         row.abstract,
         row.isPriority ? "priority" : "",
+        row.productionPriorityQueuedAt ? "production queue" : "",
         row.coAuthors,
         row.leadResearcher,
         row.stage,
@@ -685,6 +698,7 @@ export function ResearchProjectsTable({
         matchesRegistration &&
         matchesFolderRequest &&
         matchesPriority &&
+        matchesProductionQueue &&
         (!needle || haystack.includes(needle))
       );
     });
@@ -695,6 +709,7 @@ export function ResearchProjectsTable({
     selectedRegistrations,
     selectedStages,
     showFolderRequestsOnly,
+    showProductionQueueOnly,
     showPriorityOnly,
     showRegistrationClaim,
     serverState,
@@ -702,6 +717,21 @@ export function ResearchProjectsTable({
 
   const sortedRows = useMemo(() => {
     if (serverState) return filtered;
+    if (showProductionQueueOnly) {
+      return filtered
+        .map((row, index) => ({ row, index }))
+        .sort((left, right) => {
+          const leftTime = new Date(
+            left.row.productionPriorityQueuedAt,
+          ).getTime();
+          const rightTime = new Date(
+            right.row.productionPriorityQueuedAt,
+          ).getTime();
+          if (leftTime === rightTime) return left.index - right.index;
+          return leftTime - rightTime;
+        })
+        .map(({ row }) => row);
+    }
     if (!sort) return filtered;
 
     return filtered
@@ -731,7 +761,7 @@ export function ResearchProjectsTable({
         return sort.direction === "desc" ? -comparison : comparison;
       })
       .map(({ row }) => row);
-  }, [filtered, serverState, sort]);
+  }, [filtered, serverState, showProductionQueueOnly, sort]);
 
   const pagination = useTablePagination(sortedRows, 10, 1, "projects");
   const page = serverState?.page ?? pagination.page;
@@ -820,6 +850,16 @@ export function ResearchProjectsTable({
     setPage(1);
   }
 
+  function updateProductionQueueFilter(checked: boolean) {
+    const next = checked ? "1" : "0";
+    if (serverState) {
+      updateServerParams({ productionQueue: next, page: null });
+      return;
+    }
+    setStoredProductionQueueValue(next);
+    setPage(1);
+  }
+
   return (
     <div className="overflow-hidden border border-[#444444] bg-[#2C2C2C]">
       <div className="flex flex-col gap-3 border-b border-[#444444] bg-[#2C2C2C] py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
@@ -894,7 +934,38 @@ export function ResearchProjectsTable({
         <table className="w-full table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
-              <th className="w-[5.75rem] px-3 py-3">ID</th>
+              <th className="w-[5.75rem] px-3 py-3">
+                <span className="inline-flex items-center gap-1.5">
+                  ID
+                  <IconHint
+                    label={
+                      showProductionQueueOnly
+                        ? "Show all research"
+                        : "Show production priority queue"
+                    }
+                  >
+                    <button
+                      type="button"
+                      aria-pressed={showProductionQueueOnly}
+                      aria-label={
+                        showProductionQueueOnly
+                          ? "Show all research"
+                          : "Show production priority queue"
+                      }
+                      onClick={() =>
+                        updateProductionQueueFilter(!showProductionQueueOnly)
+                      }
+                      className={`research-allow-transform inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
+                        showProductionQueueOnly
+                          ? "text-[#1F7180] drop-shadow-[0_0_0.45rem_rgba(31,113,128,0.22)] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-cyan-200"
+                          : "text-[#667085] hover:text-[#1F7180] dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+                      }`}
+                    >
+                      <ListOrdered className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </IconHint>
+                </span>
+              </th>
               <th className="px-3 py-3">
                 <span className="inline-flex items-center gap-1.5">
                   Research
@@ -1005,6 +1076,16 @@ export function ResearchProjectsTable({
                     <div className="mt-1">
                       <PriorityResearchIcon compact />
                     </div>
+                  ) : null}
+                  {row.productionQueuePosition ? (
+                    <IconHint
+                      label={`Production queue position ${row.productionQueuePosition}`}
+                    >
+                      <div className="mt-1 inline-flex items-center gap-1 border border-[#D8D0C2] bg-[#F5F2EC] px-1.5 py-0.5 font-mono text-[10px] font-normal text-[#1F7180] dark:border-[#444444] dark:bg-[#202020] dark:text-[#A8DADC]">
+                        <ListOrdered className="h-3 w-3" aria-hidden="true" />
+                        {row.productionQueuePosition}
+                      </div>
+                    </IconHint>
                   ) : null}
                 </td>
                 <td className="min-w-0 px-3 py-3 align-top">
