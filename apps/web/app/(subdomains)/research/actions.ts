@@ -12276,6 +12276,10 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
         },
       },
       journalCreationSuggestion: { select: { id: true } },
+      journalTargetCount: true,
+      addedJournals: {
+        select: { resultPosition: true },
+      },
       assignments: {
         select: {
           id: true,
@@ -12289,7 +12293,12 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
   });
 
   if (!task) return;
-  if (task.journalCreationSuggestion) return;
+  const automatedAddJournalReady =
+    task.journalCreationSuggestion &&
+    task.taskType === ResearchTaskType.ADD_JOURNAL &&
+    task.addedJournals.filter((journal) => journal.resultPosition !== null)
+      .length >= Math.max(1, task.journalTargetCount ?? 1);
+  if (task.journalCreationSuggestion && !automatedAddJournalReady) return;
   const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);
   if (
     task.status === ResearchTaskStatus.COMPLETED ||
