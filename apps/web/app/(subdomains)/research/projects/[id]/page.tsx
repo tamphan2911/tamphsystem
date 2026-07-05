@@ -2527,6 +2527,8 @@ export default async function ProjectDetailPage({
                       initialMode="production"
                       initialResearch={currentResearchTaskOption}
                       triggerVariant="production"
+                      triggerDisabled={productionTimelineLocked}
+                      triggerDisabledReason="Unlock the production process before creating a production task."
                     />
                   ) : null}
                 </div>

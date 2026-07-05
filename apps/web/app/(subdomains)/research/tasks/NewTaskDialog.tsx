@@ -301,6 +301,8 @@ export function NewTaskDialog({
   initialResearch = null,
   initialTitle = "",
   triggerVariant = "default",
+  triggerDisabled = false,
+  triggerDisabledReason,
 }: {
   assignees: TaskAssigneeOption[];
   researchOptions: TaskResearchOption[];
@@ -316,6 +318,8 @@ export function NewTaskDialog({
   initialResearch?: TaskResearchOption | null;
   initialTitle?: string;
   triggerVariant?: TaskTriggerVariant;
+  triggerDisabled?: boolean;
+  triggerDisabledReason?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<TaskMode>(initialMode);
@@ -820,26 +824,37 @@ export function NewTaskDialog({
   return (
     <>
       {triggerVariant === "default" ? (
-        <ResearchButton type="button" onClick={() => setIsOpen(true)}>
+        <ResearchButton
+          type="button"
+          onClick={() => setIsOpen(true)}
+          disabled={triggerDisabled}
+        >
           <PlusCircle className="h-4 w-4" />
           New Task
         </ResearchButton>
       ) : (
         <IconHint
           label={
-            triggerVariant === "production"
-              ? "Create production task"
-              : triggerVariant === "suggestVenue"
-                ? "Create suggest venue task"
-                : "Create other task"
+            triggerDisabled && triggerDisabledReason
+              ? triggerDisabledReason
+              : triggerVariant === "production"
+                ? "Create production task"
+                : triggerVariant === "suggestVenue"
+                  ? "Create suggest venue task"
+                  : "Create other task"
           }
           position="bottom"
         >
           <button
             type="button"
-            onClick={() => setIsOpen(true)}
+            onClick={() => {
+              if (!triggerDisabled) setIsOpen(true);
+            }}
+            disabled={triggerDisabled}
             className={`research-allow-transform inline-flex h-5 w-5 flex-none cursor-pointer items-center justify-center border-0 bg-transparent shadow-none transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 active:translate-y-0 active:scale-90 ${
-              triggerVariant === "production"
+              triggerDisabled
+                ? "cursor-not-allowed text-[#98A2B3] opacity-60 hover:translate-y-0 hover:scale-100 hover:text-[#98A2B3] active:scale-100 dark:text-[#777777] dark:hover:text-[#777777]"
+                : triggerVariant === "production"
                 ? "text-[#B85C78] hover:text-[#8F3E59] dark:text-[#FFC1CC] dark:hover:text-[#FFD7DF]"
                 : triggerVariant === "suggestVenue"
                   ? "text-[#1F7180] hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
