@@ -60,6 +60,7 @@ export type ResearchProjectRow = {
   submissions: number;
   publications: number;
   activeTasks: number;
+  overdueTasks: number;
   pendingFolderAccessRequests: number;
   updatedAt: string;
   notSubmittedAnywhere: boolean;
@@ -314,13 +315,17 @@ function StatusIconChip({
 function ActiveTaskCount({
   projectId,
   count,
+  overdueCount,
 }: {
   projectId: string;
   count: number;
+  overdueCount: number;
 }) {
-  const label = `${count} unfinished related ${count === 1 ? "task" : "tasks"}. Open related tasks.`;
+  const label = `${overdueCount} overdue and ${count} unfinished related ${count === 1 ? "task" : "tasks"}. Open related tasks.`;
   const colorClass =
-    count > 0
+    overdueCount > 0
+      ? "text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-rose-200"
+      : count > 0
       ? "text-violet-700 hover:text-violet-900 dark:text-[#B39CD0] dark:hover:text-[#D8C8EC]"
       : "text-[#667085] hover:text-[#344054] dark:text-[#777777] dark:hover:text-[#B0B0B0]";
 
@@ -331,7 +336,7 @@ function ActiveTaskCount({
         aria-label={label}
         className={`research-allow-transform inline-flex min-h-5 min-w-8 items-center justify-center px-1 font-mono text-[11px] font-normal transition-[color,transform] duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-95 ${colorClass}`}
       >
-        {count}
+        {overdueCount}/{count}
       </Link>
     </IconHint>
   );
@@ -930,6 +935,7 @@ export function ResearchProjectsTable({
                     <ActiveTaskCount
                       projectId={row.id}
                       count={row.activeTasks}
+                      overdueCount={row.overdueTasks}
                     />
                     <FolderAccessRequestCount
                       count={row.pendingFolderAccessRequests}

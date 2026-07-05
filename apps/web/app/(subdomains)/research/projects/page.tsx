@@ -190,6 +190,10 @@ export default async function ProjectsDashboard() {
           submissions: {
             select: { status: true },
           },
+          tasks: {
+            where: { status: { notIn: ["COMPLETED", "REVOKED"] } },
+            select: { dueDate: true },
+          },
           _count: {
             select: {
               submissions: true,
@@ -242,6 +246,7 @@ export default async function ProjectsDashboard() {
     (project) => project.claimStatus === "CLAIMED",
   );
 
+  const now = new Date();
   const rows: ResearchProjectRow[] = projects.map((project) => {
     const journalSubmissionStatuses = project.submissions.map(
       (submission) => submission.status,
@@ -298,6 +303,9 @@ export default async function ProjectsDashboard() {
       submissions: project._count.submissions,
       publications: project._count.publications,
       activeTasks: project._count.tasks,
+      overdueTasks: project.tasks.filter(
+        (task) => task.dueDate && task.dueDate < now,
+      ).length,
       pendingFolderAccessRequests: project._count.folderAccessRequests,
       updatedAt: researchDateTimeFormat("en-GB").format(project.updatedAt),
       notSubmittedAnywhere:
