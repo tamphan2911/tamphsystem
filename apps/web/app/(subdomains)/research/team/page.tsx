@@ -138,10 +138,15 @@ function publicMember(
   };
 }
 
-export default async function ResearchTeamPage() {
+export default async function ResearchTeamPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ teamId?: string }>;
+}) {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) redirect("/login");
+  const linkedTeamId = (await searchParams).teamId?.trim() ?? "";
 
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -414,7 +419,11 @@ export default async function ResearchTeamPage() {
         {teams.length > 0 ? (
           <TeamWorkspaceClient
             teams={teams}
-            canOpenMemberProfiles={currentUser.roles.includes(Role.ADMIN)}
+            canOpenMemberProfiles={
+              currentUser.roles.includes(Role.ADMIN) ||
+              currentUser.roles.includes(Role.CHIEF_ASSISTANT)
+            }
+            initialTeamId={linkedTeamId}
             updateParticipantsAction={updateResearchTeamParticipants}
           />
         ) : (

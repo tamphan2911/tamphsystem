@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   BadgeCheck,
   BookOpen,
@@ -161,10 +161,12 @@ function stageLabel(value: string) {
 export function TeamWorkspaceClient({
   teams,
   canOpenMemberProfiles,
+  initialTeamId,
   updateParticipantsAction,
 }: {
   teams: TeamWorkspace[];
   canOpenMemberProfiles: boolean;
+  initialTeamId?: string;
   updateParticipantsAction: (
     projectId: string,
     formData: FormData,
@@ -172,7 +174,7 @@ export function TeamWorkspaceClient({
 }) {
   const [activeTeamId, setActiveTeamId] = usePersistentTableValue(
     "team-workspace:team",
-    teams[0]?.id ?? "",
+    initialTeamId || teams[0]?.id || "",
     { persistDefaultValue: true },
   );
   const [activeTab, setActiveTab] = usePersistentTableValue<TeamTab>(
@@ -192,6 +194,13 @@ export function TeamWorkspaceClient({
 
   const activeTeam =
     teams.find((team) => team.id === activeTeamId) ?? teams[0] ?? null;
+
+  useEffect(() => {
+    if (!initialTeamId) return;
+    if (teams.some((team) => team.id === initialTeamId)) {
+      setActiveTeamId(initialTeamId);
+    }
+  }, [initialTeamId, setActiveTeamId, teams]);
 
   const performanceTasks = useMemo(() => {
     if (!activeTeam) return [];

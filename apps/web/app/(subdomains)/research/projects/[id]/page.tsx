@@ -659,6 +659,9 @@ export default async function ProjectDetailPage({
   const isAssignedTeamMember =
     project.assistantTeam?.members.some((member) => member.userId === userId) ??
     false;
+  const canViewAssignedTeamSection =
+    isRootAdmin || isAssignedTeamLeader || isAssignedTeamMember;
+  const canOpenAssignedTeamMemberProfiles = isRootAdmin || isAssignedTeamLeader;
   if (
     !isAdmin &&
     !isProjectAuthor &&
@@ -2580,7 +2583,7 @@ export default async function ProjectDetailPage({
                   );
                 })}
               </div>
-              {project.assistantTeam ? (
+              {project.assistantTeam && canViewAssignedTeamSection ? (
                 <div className="mt-5 border-t border-[#E2D9CC] pt-5 dark:border-[#444444]">
                   <div className="mb-3 flex items-center gap-2">
                     <UsersRound
@@ -2588,14 +2591,28 @@ export default async function ProjectDetailPage({
                       aria-hidden="true"
                     />
                     <h3 className="text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-[#B0B0B0]">
-                      {project.assistantTeam.name}
+                      <Link
+                        href={`/team?teamId=${encodeURIComponent(project.assistantTeam.id)}`}
+                        className="research-allow-transform inline-flex cursor-pointer text-[#1F7180] transition duration-200 ease-out hover:-translate-y-0.5 hover:text-[#155864] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-200"
+                      >
+                        {project.assistantTeam.name}
+                      </Link>
                     </h3>
                   </div>
                   <div className="divide-y divide-[#E2D9CC] border-y border-[#E2D9CC] dark:divide-[#444444] dark:border-[#444444]">
                     {assignedTeamPeople.map((member) => (
                       <div key={member.id} className="py-2.5">
                         <p className="flex flex-wrap items-center gap-2 text-sm text-[#1F2937] dark:text-[#E4E4E4]">
-                          <span>{member.name}</span>
+                          {canOpenAssignedTeamMemberProfiles ? (
+                            <Link
+                              href={`/profile?userId=${encodeURIComponent(member.id)}`}
+                              className={profileNameLinkClass}
+                            >
+                              {member.name}
+                            </Link>
+                          ) : (
+                            <span>{member.name}</span>
+                          )}
                           <span className="border border-[#D8D0C2] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0]">
                             {member.badge}
                           </span>

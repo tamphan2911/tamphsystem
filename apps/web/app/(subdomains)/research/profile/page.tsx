@@ -140,14 +140,27 @@ export default async function ResearchProfilePage({
   const viewingAnotherUser = Boolean(
     requestedUserId && requestedUserId !== viewerUserId,
   );
+  const profileUserId = requestedUserId || viewerUserId;
+  const canViewTeamMemberProfile =
+    viewingAnotherUser &&
+    viewer.roles.includes(Role.CHIEF_ASSISTANT)
+      ? Boolean(
+          await prisma.researchAssistantTeam.findFirst({
+            where: {
+              leaderId: viewerUserId,
+              members: { some: { userId: profileUserId } },
+            },
+            select: { id: true },
+          }),
+        )
+      : false;
   if (
     viewingAnotherUser &&
     !viewer.roles.includes(Role.ADMIN) &&
-    !viewer.roles.includes(Role.CHIEF_ASSISTANT)
+    !canViewTeamMemberProfile
   ) {
     redirect("/401");
   }
-  const profileUserId = requestedUserId || viewerUserId;
 
   const [
     user,
