@@ -39,6 +39,7 @@ export type TeamWorkspace = {
   id: string;
   name: string;
   description: string;
+  leaderId: string;
   leaderName: string;
   members: {
     id: string;
@@ -161,11 +162,13 @@ function stageLabel(value: string) {
 export function TeamWorkspaceClient({
   teams,
   canOpenMemberProfiles,
+  currentUserId,
   initialTeamId,
   updateParticipantsAction,
 }: {
   teams: TeamWorkspace[];
   canOpenMemberProfiles: boolean;
+  currentUserId: string;
   initialTeamId?: string;
   updateParticipantsAction: (
     projectId: string,
@@ -194,6 +197,8 @@ export function TeamWorkspaceClient({
 
   const activeTeam =
     teams.find((team) => team.id === activeTeamId) ?? teams[0] ?? null;
+  const activeTeamCanOpenProfiles =
+    canOpenMemberProfiles || activeTeam?.leaderId === currentUserId;
 
   useEffect(() => {
     if (!initialTeamId) return;
@@ -329,7 +334,7 @@ export function TeamWorkspaceClient({
       {activeTab === "members" ? (
         <MembersTable
           team={activeTeam}
-          canOpenMemberProfiles={canOpenMemberProfiles}
+          canOpenMemberProfiles={activeTeamCanOpenProfiles}
         />
       ) : null}
       {activeTab === "research" ? (

@@ -381,6 +381,7 @@ export default async function ResearchTeamPage({
       id: team.id,
       name: team.name,
       description: team.description || "",
+      leaderId: team.leader.id,
       leaderName: personName(team.leader) || team.leader.email,
       members: members.map(publicMember),
       research,
@@ -419,10 +420,8 @@ export default async function ResearchTeamPage({
         {teams.length > 0 ? (
           <TeamWorkspaceClient
             teams={teams}
-            canOpenMemberProfiles={
-              currentUser.roles.includes(Role.ADMIN) ||
-              currentUser.roles.includes(Role.CHIEF_ASSISTANT)
-            }
+            canOpenMemberProfiles={currentUser.roles.includes(Role.ADMIN)}
+            currentUserId={currentUser.id}
             initialTeamId={linkedTeamId}
             updateParticipantsAction={updateResearchTeamParticipants}
           />
