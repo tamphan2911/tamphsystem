@@ -91,7 +91,7 @@ export function SharedFolderUsersDialog({
       <ResearchButton
         type="button"
         onClick={() => setOpen(true)}
-        className="research-allow-transform !h-8 !px-3 !py-1.5 text-xs"
+        className="!h-8 !transform-none !px-3 !py-1.5 text-xs hover:!transform-none active:!transform-none"
       >
         <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />
         Shared users
