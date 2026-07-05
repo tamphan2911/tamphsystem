@@ -4714,15 +4714,40 @@ export async function linkJournalToTaskSlot(
   journalId: string,
 ) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
 
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
-    select: { id: true, taskType: true, journalTargetCount: true },
+    select: {
+      id: true,
+      taskType: true,
+      journalTargetCount: true,
+      status: true,
+      createdById: true,
+      checkerId: true,
+      journalCreationSuggestion: {
+        select: {
+          task: { select: { createdById: true, checkerId: true } },
+        },
+      },
+    },
   });
   if (!task || task.taskType !== ResearchTaskType.ADD_JOURNAL) {
     throw new Error("This task cannot receive journal results.");
   }
+  if (
+    task.status === ResearchTaskStatus.COMPLETED ||
+    task.status === ResearchTaskStatus.REVOKED
+  ) {
+    throw new Error("This task is already closed.");
+  }
+  const canLink =
+    user.roles.includes(Role.ADMIN) ||
+    task.createdById === user.id ||
+    task.checkerId === user.id ||
+    task.journalCreationSuggestion?.task?.createdById === user.id ||
+    task.journalCreationSuggestion?.task?.checkerId === user.id;
+  if (!canLink) redirect("/401");
+
   const targetCount = Math.max(1, task.journalTargetCount ?? 1);
   if (resultPosition < 0 || resultPosition >= targetCount) {
     throw new Error("This journal result slot is not available.");
@@ -4737,11 +4762,14 @@ export async function linkJournalToTaskSlot(
     select: { id: true, resultTaskId: true, name: true },
   });
   if (!journal) throw new Error("Choose a journal before linking.");
-  if (journal.resultTaskId && journal.id !== existingSlotJournal?.id) {
-    throw new Error("This journal is already linked to a task slot.");
-  }
 
   await prisma.$transaction(async (tx) => {
+    if (journal.resultTaskId && journal.id !== existingSlotJournal?.id) {
+      await tx.journal.update({
+        where: { id: journal.id },
+        data: { resultTaskId: null, resultPosition: null },
+      });
+    }
     if (existingSlotJournal && existingSlotJournal.id !== journalId) {
       await tx.journal.update({
         where: { id: existingSlotJournal.id },
@@ -4752,6 +4780,20 @@ export async function linkJournalToTaskSlot(
       where: { id: journalId },
       data: { resultTaskId: taskId, resultPosition },
     });
+    const filledJournalCount = await tx.journal.count({
+      where: { resultTaskId: taskId, resultPosition: { not: null } },
+    });
+    if (filledJournalCount >= targetCount) {
+      await tx.researchTask.update({
+        where: { id: taskId },
+        data: {
+          status: ResearchTaskStatus.CHECKING,
+          completedAt: null,
+          revokedAt: null,
+          adminViewedAt: null,
+        },
+      });
+    }
   });
 
   revalidatePath("/tasks");

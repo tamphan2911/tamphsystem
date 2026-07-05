@@ -589,7 +589,7 @@ function LinkExistingJournalDialog({
           }}
           options={options}
           placeholder="Search journal by name, ISSN, publisher, rank, or field..."
-          emptyText="No unlinked journal matches this search."
+          emptyText="No journal on the site matches this search."
         />
         {selectedJournal ? (
           <section className="border border-[#D8D0C2] bg-[#FFFDF8] p-4 dark:border-[#444444] dark:bg-[#262626]">

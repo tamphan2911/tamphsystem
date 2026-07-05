@@ -1907,10 +1907,10 @@ export default async function TaskDetailPage({
         })
       : [];
   const linkableTaskJournals: LinkableTaskJournal[] =
-    task.taskType === "ADD_JOURNAL" && isRootAdmin
+    task.taskType === "ADD_JOURNAL" &&
+    (isRootAdmin || isAssigner || isChecker || isSourceJournalSuggestionChecker)
       ? (
           await prisma.journal.findMany({
-            where: { resultTaskId: null },
             orderBy: [{ name: "asc" }],
             select: {
               id: true,
@@ -2275,6 +2275,11 @@ export default async function TaskDetailPage({
     isAutomatedJournalTask &&
     task.taskType === ResearchTaskType.ADD_JOURNAL &&
     task.status === ResearchTaskStatus.REVISION_REQUESTED;
+  const automatedAddJournalReady =
+    isAutomatedJournalTask &&
+    task.taskType === ResearchTaskType.ADD_JOURNAL &&
+    task.addedJournals.filter((journal) => journal.resultPosition !== null)
+      .length >= Math.max(1, task.journalTargetCount ?? 1);
   const canMarkReady =
     !isClosed &&
     !waitingForJournalCreation &&
@@ -2288,11 +2293,12 @@ export default async function TaskDetailPage({
   const canApprove =
     !isClosed &&
     !waitingForJournalCreation &&
-    !isAutomatedJournalTask &&
+    (!isAutomatedJournalTask || automatedAddJournalReady) &&
     (!isAssignee || selfManagedTask) &&
-    (isAdmin || isAssigner || isActiveCheckerReferralTarget) &&
+    (isAdmin || isAssigner || isChecker || isActiveCheckerReferralTarget) &&
     (selfManagedTask ||
       isAdmin ||
+      isChecker ||
       isActiveCheckerReferralTarget ||
       effectiveStatus === ResearchTaskStatus.CHECKING);
   const canRedo =
@@ -2399,6 +2405,7 @@ export default async function TaskDetailPage({
       isAssigner ||
       isChecker ||
       isSourceJournalSuggestionChecker);
+  const canLinkExistingTaskJournals = canApproveTaskJournals && !isClosed;
   const journalReviewUserIds = Array.from(
     new Set(
       task.addedJournals
@@ -4089,7 +4096,7 @@ export default async function TaskDetailPage({
               duplicateJournals={taskDuplicateJournals}
               canAdd={canAddTaskJournals}
               canApprove={canApproveTaskJournals}
-              canLinkExisting={isRootAdmin}
+              canLinkExisting={canLinkExistingTaskJournals}
             />
           ) : null}
 
