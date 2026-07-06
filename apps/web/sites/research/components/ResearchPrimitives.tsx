@@ -127,7 +127,8 @@ export function ResearchButton({
       aria-busy={isClickLoading || undefined}
       onClick={(event) => {
         const clickResult = onClick?.(event);
-        if (event.defaultPrevented || !isSubmitButton || disabled) return;
+        if (event.defaultPrevented || disabled) return;
+        if (isSubmitButton) return;
 
         const relatedForm = form
           ? document.getElementById(form)
