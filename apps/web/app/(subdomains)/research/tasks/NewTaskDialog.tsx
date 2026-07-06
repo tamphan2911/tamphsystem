@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   useTransition,
+  type FormEvent,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -628,8 +629,8 @@ export function NewTaskDialog({
     setSelectedSubmission(null);
     setProposalScope("research");
     setProductionSubtype(defaultProductionSubtype);
-    setAllowReportUpload(false);
     setIsUrgent(false);
+    setAllowReportUpload(false);
     setJournalTargetCount("1");
   }
 
@@ -849,6 +850,13 @@ export function NewTaskDialog({
     });
   }
 
+  function handleTaskFormSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation();
+    submitTask(new FormData(event.currentTarget));
+  }
+
   const needsResearch =
     mode === "submit" || mode === "production" || mode === "suggestVenue";
   const showsResearch =
@@ -980,7 +988,7 @@ export function NewTaskDialog({
         <form
           ref={formRef}
           id={formId}
-          action={submitTask}
+          onSubmit={handleTaskFormSubmit}
           className="grid gap-5"
         >
           {selectedIds.map((id) => (
