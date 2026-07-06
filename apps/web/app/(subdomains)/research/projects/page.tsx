@@ -22,7 +22,6 @@ import type { SelectedAuthor } from "./[id]/AuthorsPicker";
 import type { ResearchBasicValues } from "./[id]/ResearchDetailEditDialogs";
 
 export const dynamic = "force-dynamic";
-const projectPageSize = 10;
 
 function displayRole(roles: Role[]) {
   if (roles.includes(Role.ADMIN)) return "Admin";
@@ -126,34 +125,6 @@ async function ensureResearchCodes() {
   }
 }
 
-type ProjectSearchParams = {
-  q?: string;
-  stage?: string;
-  claim?: string;
-  registration?: string;
-  sort?: string;
-  page?: string;
-  priority?: string;
-  productionQueue?: string;
-  folderRequests?: string;
-};
-
-function selectedValues(value: string | undefined, options: string[]) {
-  if (!value || value === "ALL") return [];
-  const valid = new Set(options.filter((option) => option !== "ALL"));
-  return value.split(",").filter((option) => valid.has(option));
-}
-
-const stageFilterOptions = [
-  "ALL",
-  "PENDING",
-  "PRODUCTION",
-  "NEED_SUBMIT",
-  "SUBMITTED",
-  "REVIEW",
-  "ACCEPTED",
-  "PUBLISHED",
-];
 const claimFilterOptions = [
   "ALL",
   "CANNOT_CLAIM",
@@ -169,27 +140,6 @@ const registrationFilterOptions = [
   "SUBMITTED",
   "APPROVED",
 ];
-
-function parseProjectSort(value: string | undefined) {
-  const [column, direction] = (value ?? "NONE").split(":");
-  if (
-    (column === "stage" ||
-      column === "claim" ||
-      column === "registration" ||
-      column === "submit") &&
-    (direction === "asc" || direction === "desc")
-  ) {
-    return { column, direction };
-  }
-  return null;
-}
-
-function stageFilterKey(row: ResearchProjectRow) {
-  if (row.stage === "SUBMITTING") {
-    return row.hasSubmittedSubmission ? "SUBMITTED" : "NEED_SUBMIT";
-  }
-  return row.stage;
-}
 
 function claimLabel(claim: string) {
   if (claim === "CANNOT_CLAIM") return "Cannot claim";
@@ -207,20 +157,7 @@ function registrationLabel(status: string) {
   return "Not registered";
 }
 
-function registrationSortLabel(row: ResearchProjectRow) {
-  const label = registrationLabel(row.registerStatus);
-  const registerName = row.registerName.trim();
-  return row.registerStatus !== "NOT_REGISTERED" && registerName
-    ? `${label} - ${registerName}`
-    : label;
-}
-
-export default async function ProjectsDashboard({
-  searchParams,
-}: {
-  searchParams: Promise<ProjectSearchParams>;
-}) {
-  const resolvedSearchParams = await searchParams;
+export default async function ProjectsDashboard() {
   await ensureAcceptedProposalRecords(ProposalType.RESEARCH);
   await ensureResearchCodes();
   const session = await auth();
@@ -559,130 +496,8 @@ export default async function ProjectsDashboard({
   );
   const accepted = rows.filter((row) => row.hasAcceptedSubmission);
   const published = rows.filter((row) => row.stage === "PUBLISHED");
-  const query = (resolvedSearchParams.q ?? "").trim();
-  const stageValue = resolvedSearchParams.stage || "ALL";
-  const claimValue = resolvedSearchParams.claim || "ALL";
-  const registrationValue = resolvedSearchParams.registration || "ALL";
-  const sortValue = resolvedSearchParams.sort || "NONE";
-  const pageValue = Number.parseInt(resolvedSearchParams.page ?? "1", 10);
-  const priorityValue = resolvedSearchParams.priority === "1" ? "1" : "0";
-  const productionQueueValue =
-    resolvedSearchParams.productionQueue === "1" ? "1" : "0";
-  const folderRequestValue =
-    resolvedSearchParams.folderRequests === "1" ? "1" : "0";
-  const selectedStages = selectedValues(stageValue, stageFilterOptions);
-  const selectedClaims = selectedValues(claimValue, claimFilterOptions);
-  const selectedRegistrations = selectedValues(
-    registrationValue,
-    registrationFilterOptions,
-  );
   const showRegistrationClaim = rows.some(
     (row) => row.canViewRegistrationClaim,
-  );
-  const showFolderRequestsOnly = isRootAdmin && folderRequestValue === "1";
-  const showPriorityOnly = priorityValue === "1";
-  const showProductionQueueOnly = isRootAdmin && productionQueueValue === "1";
-  const needle = query.toLowerCase();
-  const filteredRows = rows.filter((row) => {
-    const matchesStage =
-      selectedStages.length === 0 ||
-      selectedStages.includes(stageFilterKey(row));
-    const matchesClaim =
-      !showRegistrationClaim ||
-      selectedClaims.length === 0 ||
-      selectedClaims.includes(row.claimStatus);
-    const matchesRegistration =
-      !showRegistrationClaim ||
-      selectedRegistrations.length === 0 ||
-      selectedRegistrations.includes(row.registerStatus);
-    const matchesFolderRequest =
-      !showFolderRequestsOnly || row.pendingFolderAccessRequests > 0;
-    const matchesPriority = !showPriorityOnly || row.isPriority;
-    const matchesProductionQueue =
-      !showProductionQueueOnly || Boolean(row.productionPriorityQueuedAt);
-    const haystack = [
-      row.title,
-      row.researchCode,
-      row.abstract,
-      row.isPriority ? "priority" : "",
-      row.productionPriorityQueuedAt ? "production queue" : "",
-      row.coAuthors,
-      row.leadResearcher,
-      row.stage,
-      row.canViewRegistrationClaim ? row.universityRegistration : "",
-      row.canViewRegistrationClaim ? row.registerName : "",
-      row.canViewRegistrationClaim ? row.registerStatus : "",
-      row.canViewRegistrationClaim ? row.claimStatus : "",
-    ]
-      .join(" ")
-      .toLowerCase();
-    return (
-      matchesStage &&
-      matchesClaim &&
-      matchesRegistration &&
-      matchesFolderRequest &&
-      matchesPriority &&
-      matchesProductionQueue &&
-      (!needle || haystack.includes(needle))
-    );
-  });
-  const sort = parseProjectSort(sortValue);
-  const sortedRows = showProductionQueueOnly
-    ? filteredRows
-        .map((row, index) => ({ row, index }))
-        .sort((left, right) => {
-          const leftTime = new Date(
-            left.row.productionPriorityQueuedAt,
-          ).getTime();
-          const rightTime = new Date(
-            right.row.productionPriorityQueuedAt,
-          ).getTime();
-          if (leftTime === rightTime) return left.index - right.index;
-          return leftTime - rightTime;
-        })
-        .map(({ row }) => row)
-    : sort
-      ? filteredRows
-        .map((row, index) => ({ row, index }))
-        .sort((left, right) => {
-          let comparison = 0;
-
-          if (sort.column === "stage") {
-            comparison = left.row.activeTasks - right.row.activeTasks;
-          } else if (sort.column === "submit") {
-            comparison = left.row.submissions - right.row.submissions;
-          } else if (sort.column === "claim") {
-            comparison = claimLabel(left.row.claimStatus).localeCompare(
-              claimLabel(right.row.claimStatus),
-              undefined,
-              { sensitivity: "base" },
-            );
-          } else {
-            comparison = registrationSortLabel(left.row).localeCompare(
-              registrationSortLabel(right.row),
-              undefined,
-              { sensitivity: "base" },
-            );
-          }
-
-          if (comparison === 0) return left.index - right.index;
-          return sort.direction === "desc" ? -comparison : comparison;
-        })
-        .map(({ row }) => row)
-      : filteredRows;
-  const totalRows = sortedRows.length;
-  const pendingFolderRequestCount = rows.reduce(
-    (total, row) => total + row.pendingFolderAccessRequests,
-    0,
-  );
-  const pageCount = Math.max(1, Math.ceil(totalRows / projectPageSize));
-  const currentPage = Math.min(
-    Math.max(Number.isFinite(pageValue) ? pageValue : 1, 1),
-    pageCount,
-  );
-  const pagedRows = sortedRows.slice(
-    (currentPage - 1) * projectPageSize,
-    currentPage * projectPageSize,
   );
 
   const stats = [
@@ -770,7 +585,7 @@ export default async function ProjectsDashboard({
       </ResearchPageHeaderPortal>
 
       <ResearchProjectsTable
-        rows={pagedRows}
+        rows={rows}
         isAdmin={isRootAdmin}
         deleteAction={deleteResearchProject}
         quickEditAction={updateResearchProject}
@@ -786,20 +601,6 @@ export default async function ProjectsDashboard({
         registerOptions={registerOptions}
         claimOptions={claimOptions}
         showClaimRegistration={showRegistrationClaim}
-        serverState={{
-          query,
-          stageValue,
-          claimValue,
-          registrationValue,
-          sortValue,
-          folderRequestValue,
-          priorityValue,
-          productionQueueValue,
-          page: currentPage,
-          pageSize: projectPageSize,
-          total: totalRows,
-          pendingFolderRequestCount,
-        }}
         emptyMessage="No research is connected to your account yet. When you join a study, author a paper, or receive a research task, it will appear here."
       />
     </div>
