@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -321,6 +322,7 @@ export function NewTaskDialog({
   triggerDisabled?: boolean;
   triggerDisabledReason?: string;
 }) {
+  const formId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<TaskMode>(initialMode);
   const [assigneeQuery, setAssigneeQuery] = useState("");
@@ -890,7 +892,7 @@ export function NewTaskDialog({
         headerActions={
           <ResearchButton
             type="submit"
-            form="new-task-form"
+            form={formId}
             disabled={!canSubmit || isPending}
           >
             <PlusCircle className="h-4 w-4" />
@@ -898,7 +900,7 @@ export function NewTaskDialog({
           </ResearchButton>
         }
       >
-        <form id="new-task-form" action={submitTask} className="grid gap-5">
+        <form id={formId} action={submitTask} className="grid gap-5">
           {selectedIds.map((id) => (
             <input key={id} type="hidden" name="assigneeIds" value={id} />
           ))}
