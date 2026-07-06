@@ -3789,12 +3789,11 @@ export async function updateResearchProject(
       submission.status === SubmissionStatus.ACCEPTED ||
       submission.status === SubmissionStatus.PUBLISHED,
   );
-  const hasLockedConferenceSubmission =
-    projectLock?.conferenceSubmissions.some(
-      (submission) =>
-        submission.status === ConferenceSubmissionStatus.ACCEPTED ||
-        submission.status === ConferenceSubmissionStatus.PUBLISHED,
-    );
+  const hasLockedConferenceSubmission = projectLock?.conferenceSubmissions.some(
+    (submission) =>
+      submission.status === ConferenceSubmissionStatus.ACCEPTED ||
+      submission.status === ConferenceSubmissionStatus.PUBLISHED,
+  );
   const hasAcceptedResearch =
     hasLockedJournalSubmission || hasLockedConferenceSubmission;
   const authorsLocked = hasAcceptedResearch && !projectLock.authorsUnlocked;
@@ -7806,62 +7805,71 @@ export async function createResearchTask(formData: FormData) {
     });
   }
 
-  await notifyUsers({
-    userIds: assigneeIds,
-    type: "TASK_ASSIGNED",
-    title: "Task assigned",
-    summary: task.title,
-    body: task.description
-      ? `Assigned to you. Note: ${task.description}`
-      : "Assigned to you.",
-    href: `/tasks/${task.id}`,
-    entityType: "task",
-    entityId: task.id,
-  });
   try {
-    await sendTaskEmail({
-      to: task.assignments.map((assignment) => assignment.user.email),
-      subject: `Task assigned: ${task.title}`,
-      heading: "Task assigned",
-      intro: "A new research task has been assigned to you.",
-      detail: task.description ?? undefined,
-      taskTitle: task.title,
-      taskId: task.id,
-      actionLabel: "Open task",
-    });
-  } catch (error) {
-    console.error("[research tasks] assignment email failed", error);
-  }
-  if (task.checkerId) {
     await notifyUsers({
-      userIds: [task.checkerId],
-      type: "TASK_CHECKER_ASSIGNED",
-      title: "Task checker assigned",
+      userIds: assigneeIds,
+      type: "TASK_ASSIGNED",
+      title: "Task assigned",
       summary: task.title,
-      body: "Admin assigned you as checker for this task. You can review clarification requests, approve completion, request redo, revoke, and edit this task.",
+      body: task.description
+        ? `Assigned to you. Note: ${task.description}`
+        : "Assigned to you.",
       href: `/tasks/${task.id}`,
       entityType: "task",
       entityId: task.id,
-      excludeUserId: user.id,
     });
+  } catch (error) {
+    console.error("[research tasks] assignment notification failed", error);
+  }
+  void sendTaskEmail({
+    to: task.assignments.map((assignment) => assignment.user.email),
+    subject: `Task assigned: ${task.title}`,
+    heading: "Task assigned",
+    intro: "A new research task has been assigned to you.",
+    detail: task.description ?? undefined,
+    taskTitle: task.title,
+    taskId: task.id,
+    actionLabel: "Open task",
+  }).catch((error) => {
+    console.error("[research tasks] assignment email failed", error);
+  });
+  if (task.checkerId) {
     try {
-      await sendTaskCheckerAssignedEmail({
-        checkerId: task.checkerId,
-        taskTitle: task.title,
-        taskId: task.id,
-        detail: task.description ?? undefined,
+      await notifyUsers({
+        userIds: [task.checkerId],
+        type: "TASK_CHECKER_ASSIGNED",
+        title: "Task checker assigned",
+        summary: task.title,
+        body: "Admin assigned you as checker for this task. You can review clarification requests, approve completion, request redo, revoke, and edit this task.",
+        href: `/tasks/${task.id}`,
+        entityType: "task",
+        entityId: task.id,
+        excludeUserId: user.id,
       });
     } catch (error) {
-      console.error("[research tasks] checker email failed", error);
+      console.error("[research tasks] checker notification failed", error);
     }
+    void sendTaskCheckerAssignedEmail({
+      checkerId: task.checkerId,
+      taskTitle: task.title,
+      taskId: task.id,
+      detail: task.description ?? undefined,
+    }).catch((error) => {
+      console.error("[research tasks] checker email failed", error);
+    });
   }
 
   revalidatePath("/tasks");
+  revalidatePath("/research/tasks");
   if (projectId) revalidatePath(`/projects/${projectId}`);
+  if (projectId) revalidatePath(`/research/projects/${projectId}`);
   if (reviewId) revalidatePath(`/reviews/${reviewId}`);
+  if (reviewId) revalidatePath(`/research/reviews/${reviewId}`);
   if (organizedProjectId)
     revalidatePath(`/organized-projects/${organizedProjectId}`);
-  return { ok: true };
+  if (organizedProjectId)
+    revalidatePath(`/research/organized-projects/${organizedProjectId}`);
+  return { ok: true, taskId: task.id };
 }
 
 export async function updateResearchTask(taskId: string, formData: FormData) {
