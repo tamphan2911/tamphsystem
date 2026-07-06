@@ -270,9 +270,9 @@ function JournalSubmissionsTable({
                     )}
                   </td>
                   <td className="min-w-0 px-3 py-3 align-top">
-                    {linkSubmissions ? (
+                    {linkSubmissions && row.projectId ? (
                       <Link
-                        href={`/submissions/${row.id}`}
+                        href={`/projects/${row.projectId}`}
                         className={`${journalDetailPlainLinkClass} block whitespace-normal break-words text-[15px] font-normal leading-6 text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]`}
                       >
                         {row.projectTitle || "Untitled submission"}
