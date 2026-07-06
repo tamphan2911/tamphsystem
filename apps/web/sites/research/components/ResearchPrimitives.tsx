@@ -37,10 +37,10 @@ export const researchTextareaClass =
   "min-h-28 w-full rounded-none border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal text-slate-800 outline-none transition duration-150 ease-out placeholder:text-slate-400 hover:border-slate-300 hover:bg-slate-50 focus:border-sky-500 focus:bg-white disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:placeholder:text-[#5A5A5A] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:focus:border-[#A8DADC] dark:focus:bg-[#383838] dark:disabled:border-[#3A3A3A] dark:disabled:bg-[#383838] dark:disabled:text-[#B0B0B0]";
 
 export const researchLinkClass =
-  "font-normal text-[#E4E4E4] transition-[color,text-shadow,filter,transform] duration-180 ease-out hover:text-[#A8DADC] hover:[text-shadow:0_0_0.65rem_rgba(168,218,220,0.22)] active:[transform:scale(0.985)] active:brightness-110 motion-reduce:transform-none motion-reduce:transition-none";
+  "research-allow-transform border-0 bg-transparent font-normal text-[#E4E4E4] shadow-none transition-[color,text-shadow,filter,transform] duration-180 ease-out hover:border-0 hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none hover:[text-shadow:0_0_0.65rem_rgba(168,218,220,0.22)] focus-visible:ring-0 active:bg-transparent active:shadow-none active:[transform:scale(0.985)] active:brightness-110 motion-reduce:transform-none motion-reduce:transition-none";
 
 export const researchMutedLinkClass =
-  "font-normal text-[#B0B0B0] transition-[color,text-shadow,filter,transform] duration-180 ease-out hover:text-[#A8DADC] hover:[text-shadow:0_0_0.65rem_rgba(168,218,220,0.2)] active:[transform:scale(0.985)] active:brightness-110 motion-reduce:transform-none motion-reduce:transition-none";
+  "research-allow-transform border-0 bg-transparent font-normal text-[#B0B0B0] shadow-none transition-[color,text-shadow,filter,transform] duration-180 ease-out hover:border-0 hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none hover:[text-shadow:0_0_0.65rem_rgba(168,218,220,0.2)] focus-visible:ring-0 active:bg-transparent active:shadow-none active:[transform:scale(0.985)] active:brightness-110 motion-reduce:transform-none motion-reduce:transition-none";
 
 export const researchLabelClass =
   "grid gap-1.5 text-sm font-normal text-slate-800 dark:text-[#E4E4E4]";
