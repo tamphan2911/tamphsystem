@@ -9,6 +9,7 @@ import {
   useTransition,
   type ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
 import {
   Check,
   ClipboardList,
@@ -349,6 +350,7 @@ export function NewTaskDialog({
   triggerDisabled?: boolean;
   triggerDisabledReason?: string;
 }) {
+  const router = useRouter();
   const formId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<TaskMode>(initialMode);
@@ -842,6 +844,7 @@ export function NewTaskDialog({
       });
       reset();
       setIsOpen(false);
+      router.refresh();
     });
   }
 
@@ -930,10 +933,10 @@ export function NewTaskDialog({
               triggerDisabled
                 ? "cursor-not-allowed text-[#98A2B3] opacity-60 hover:translate-y-0 hover:scale-100 hover:text-[#98A2B3] active:scale-100 dark:text-[#777777] dark:hover:text-[#777777]"
                 : triggerVariant === "production"
-                ? "text-[#B85C78] hover:text-[#8F3E59] dark:text-[#FFC1CC] dark:hover:text-[#FFD7DF]"
-                : triggerVariant === "suggestVenue"
-                  ? "text-[#1F7180] hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
-                  : "text-[#70549B] hover:text-[#563B7E] dark:text-[#B39CD0] dark:hover:text-[#D0BCE5]"
+                  ? "text-[#B85C78] hover:text-[#8F3E59] dark:text-[#FFC1CC] dark:hover:text-[#FFD7DF]"
+                  : triggerVariant === "suggestVenue"
+                    ? "text-[#1F7180] hover:text-[#155967] dark:text-[#A8DADC] dark:hover:text-[#D6F5F8]"
+                    : "text-[#70549B] hover:text-[#563B7E] dark:text-[#B39CD0] dark:hover:text-[#D0BCE5]"
             }`}
             aria-label={
               triggerVariant === "production"
