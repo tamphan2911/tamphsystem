@@ -71,6 +71,7 @@ export type ResearchProjectRow = {
   registerName: string;
   leadResearcher: string;
   submissions: number;
+  ongoingSubmissions?: number;
   publications: number;
   activeTasks: number;
   overdueTasks: number;
@@ -80,6 +81,7 @@ export type ResearchProjectRow = {
   notSubmittedAnywhere: boolean;
   hasSubmittedSubmission: boolean;
   hasAcceptedSubmission: boolean;
+  hasAcceptedOrPublishedSubmission?: boolean;
   editValues?: ResearchBasicValues;
   editAuthors?: SelectedAuthor[];
   completedProductionSteps?: string[];
@@ -480,14 +482,23 @@ function RegistrationCell({
   );
 }
 
-function SubmitCount({ count }: { count: number }) {
-  const isZero = count === 0;
-  const isHigh = count > 10;
+function SubmitCount({
+  total,
+  ongoing,
+  acceptedOrPublished,
+}: {
+  total: number;
+  ongoing: number;
+  acceptedOrPublished: boolean;
+}) {
+  const isZero = total === 0;
+  const isHigh = total > 10;
+  const display = acceptedOrPublished ? String(total) : `${ongoing}/${total}`;
   const label = isZero
     ? "No submissions yet"
-    : isHigh
-      ? `${count} submissions, high submission count`
-      : `${count} submissions`;
+    : acceptedOrPublished
+      ? `${total} total ${total === 1 ? "submission" : "submissions"}`
+      : `${ongoing} ongoing of ${total} total ${total === 1 ? "submission" : "submissions"}`;
   const className = isZero
     ? "text-[#1F7180] dark:text-[#A8DADC]"
     : isHigh
@@ -499,7 +510,7 @@ function SubmitCount({ count }: { count: number }) {
       <span
         className={`inline-flex h-8 min-w-8 items-center justify-center px-2 text-sm font-normal transition-colors duration-150 ${className}`}
       >
-        {count}
+        {display}
         <span className="sr-only">{label}</span>
       </span>
     </IconHint>
@@ -1294,7 +1305,13 @@ export function ResearchProjectsTable({
                   </>
                 )}
                 <td className="px-3 py-3 text-center align-top">
-                  <SubmitCount count={row.submissions} />
+                  <SubmitCount
+                    total={row.submissions}
+                    ongoing={row.ongoingSubmissions ?? row.submissions}
+                    acceptedOrPublished={Boolean(
+                      row.hasAcceptedOrPublishedSubmission,
+                    )}
+                  />
                 </td>
                 {isAdmin && deleteAction && (
                   <td className="px-3 py-3 text-center align-top">

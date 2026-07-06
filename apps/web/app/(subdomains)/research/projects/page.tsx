@@ -404,6 +404,13 @@ export default async function ProjectsDashboard({
     const hasAcceptedSubmission = journalSubmissionStatuses.some(
       (status) => status === "ACCEPTED",
     );
+    const hasPublishedSubmission = journalSubmissionStatuses.some(
+      (status) => status === "PUBLISHED",
+    );
+    const ongoingSubmissionCount = journalSubmissionStatuses.filter(
+      (status) =>
+        !["REJECTED", "WITHDRAWN", "ACCEPTED", "PUBLISHED"].includes(status),
+    ).length;
 
     const editAuthors: SelectedAuthor[] =
       project.authorEntries.length > 0
@@ -516,6 +523,7 @@ export default async function ProjectsDashboard({
         ),
       leadResearcher: displayResearchPersonName(project.leadResearcher),
       submissions: project._count.submissions,
+      ongoingSubmissions: ongoingSubmissionCount,
       publications: project._count.publications,
       activeTasks: project._count.tasks,
       overdueTasks: project.tasks.filter(
@@ -532,6 +540,8 @@ export default async function ProjectsDashboard({
         ),
       hasSubmittedSubmission,
       hasAcceptedSubmission,
+      hasAcceptedOrPublishedSubmission:
+        hasAcceptedSubmission || hasPublishedSubmission,
       editValues,
       editAuthors,
       completedProductionSteps: project.completedProductionSteps,

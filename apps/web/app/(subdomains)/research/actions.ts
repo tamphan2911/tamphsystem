@@ -3757,6 +3757,7 @@ export async function updateResearchProject(
         },
       },
       submissions: { select: { status: true } },
+      conferenceSubmissions: { select: { status: true } },
     },
   });
   if (!projectLock) return;
@@ -3788,7 +3789,14 @@ export async function updateResearchProject(
       submission.status === SubmissionStatus.ACCEPTED ||
       submission.status === SubmissionStatus.PUBLISHED,
   );
-  const hasAcceptedResearch = hasLockedJournalSubmission;
+  const hasLockedConferenceSubmission =
+    projectLock?.conferenceSubmissions.some(
+      (submission) =>
+        submission.status === ConferenceSubmissionStatus.ACCEPTED ||
+        submission.status === ConferenceSubmissionStatus.PUBLISHED,
+    );
+  const hasAcceptedResearch =
+    hasLockedJournalSubmission || hasLockedConferenceSubmission;
   const authorsLocked = hasAcceptedResearch && !projectLock.authorsUnlocked;
 
   if (updateScope === "authors" && authorsLocked) {
@@ -3880,7 +3888,9 @@ export async function updateResearchProject(
             ClaimStatus.CANNOT_CLAIM,
           ...(isRootAdmin
             ? {
-                isPriority: formData.get("isPriority") === "true",
+                isPriority: hasAcceptedResearch
+                  ? false
+                  : formData.get("isPriority") === "true",
                 ...productionPriorityQueuedAtUpdate,
               }
             : {}),
@@ -9033,6 +9043,7 @@ export async function updateSubmissionStatus(formData: FormData) {
                 update: {
                   contentUnlocked: false,
                   authorsUnlocked: false,
+                  isPriority: false,
                 },
               }
             : undefined,
@@ -9205,7 +9216,7 @@ export async function updateSubmissionStatus(formData: FormData) {
         project:
           conferenceStatus === ConferenceSubmissionStatus.ACCEPTED ||
           conferenceStatus === ConferenceSubmissionStatus.PUBLISHED
-            ? { update: { authorsUnlocked: false } }
+            ? { update: { authorsUnlocked: false, isPriority: false } }
             : undefined,
       },
       select: {
