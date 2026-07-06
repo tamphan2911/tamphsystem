@@ -2097,16 +2097,15 @@ body:has(.research-site-root) {
   border-radius: 0;
   color: #e4e4e4;
   box-shadow:
-    0 24px 70px rgba(0, 0, 0, 0.38),
+    0 16px 42px rgba(0, 0, 0, 0.3),
     0 1px 0 rgba(255, 255, 255, 0.05) inset;
-  will-change: transform, opacity;
 }
 
 .dark .research-site-root .fixed.inset-0 [class*="modalPanelIn_"] {
   background: #2c2c2c !important;
   border-color: #444444 !important;
   box-shadow:
-    0 28px 82px rgba(0, 0, 0, 0.58),
+    0 18px 48px rgba(0, 0, 0, 0.46),
     0 1px 0 rgba(255, 255, 255, 0.06) inset;
 }
 

@@ -139,9 +139,9 @@ export function AuthorNotificationActions({
       {selected && (
         <div
           data-research-modal-overlay="true"
-          className="fixed inset-0 z-[1010] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
+          className="fixed inset-0 z-[1010] flex overflow-y-auto animate-[modalOverlayIn_140ms_ease-out] items-center justify-center bg-black/68 px-4 py-8"
         >
-          <div className="w-full max-w-md animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] shadow-2xl shadow-black/40">
+          <div className="w-full max-w-md animate-[modalPanelIn_160ms_ease-out] overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] shadow-xl shadow-black/35">
             <div className="flex items-start justify-between gap-4 border-b border-[#444444] px-5 py-4">
               <div className="flex items-start gap-3">
                 <span className="flex h-10 w-6 items-center justify-center text-[#A8DADC]">
@@ -184,9 +184,9 @@ export function AuthorNotificationActions({
       {results && (
         <div
           data-research-modal-overlay="true"
-          className="fixed inset-0 z-[1010] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
+          className="fixed inset-0 z-[1010] flex overflow-y-auto animate-[modalOverlayIn_140ms_ease-out] items-center justify-center bg-black/68 px-4 py-8"
         >
-          <div className="w-full max-w-2xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] shadow-2xl shadow-black/40">
+          <div className="w-full max-w-2xl animate-[modalPanelIn_160ms_ease-out] overflow-hidden rounded-none border border-[#444444] bg-[#2C2C2C] shadow-xl shadow-black/35">
             <div className="flex items-start justify-between gap-4 border-b border-[#444444] px-5 py-4">
               <div>
                 <h3 className="text-base font-normal text-[#E4E4E4]">

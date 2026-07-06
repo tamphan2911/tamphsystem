@@ -34,10 +34,10 @@ export function ResearchModal({
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-slate-950/38 px-2 py-3 backdrop-blur-sm animate-[modalOverlayIn_180ms_ease-out] sm:px-4 sm:py-8 dark:bg-black/60"
+      className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-slate-950/45 px-2 py-3 animate-[modalOverlayIn_140ms_ease-out] sm:px-4 sm:py-8 dark:bg-black/68"
     >
       <div
-        className={`flex max-h-[calc(100dvh-1.5rem)] w-full ${maxWidth} animate-[modalPanelIn_220ms_ease-out] flex-col overflow-visible rounded-none border border-slate-200 bg-white text-slate-800 shadow-2xl shadow-slate-950/16 sm:max-h-[90vh] dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:shadow-black/40`}
+        className={`flex max-h-[calc(100dvh-1.5rem)] w-full ${maxWidth} animate-[modalPanelIn_160ms_ease-out] flex-col overflow-visible rounded-none border border-slate-200 bg-white text-slate-800 shadow-xl shadow-slate-950/14 sm:max-h-[90vh] dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:shadow-black/35`}
       >
         <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5 dark:border-[#444444]">
           <div className="flex min-w-0 items-center gap-3 text-left">

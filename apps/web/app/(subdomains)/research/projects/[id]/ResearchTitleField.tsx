@@ -41,9 +41,9 @@ export function ResearchTitleField({
       {open && (
         <div
           data-research-modal-overlay="true"
-          className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_180ms_ease-out] items-center justify-center bg-slate-950/55 px-4 py-8 backdrop-blur-sm"
+          className="fixed inset-0 z-[1000] flex overflow-y-auto animate-[modalOverlayIn_140ms_ease-out] items-center justify-center bg-slate-950/62 px-4 py-8"
         >
-          <div className="w-full max-w-2xl animate-[modalPanelIn_220ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+          <div className="w-full max-w-2xl animate-[modalPanelIn_160ms_ease-out] overflow-hidden border border-[#444444] bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
               <div>
                 <h2 className="text-lg font-bold text-[#E4E4E4]">Notes</h2>
