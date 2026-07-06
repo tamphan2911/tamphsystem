@@ -351,6 +351,7 @@ export function NewTaskDialog({
   triggerDisabledReason?: string;
 }) {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const formId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<TaskMode>(initialMode);
@@ -967,8 +968,8 @@ export function NewTaskDialog({
         maxWidth="max-w-5xl"
         headerActions={
           <ResearchButton
-            type="submit"
-            form={formId}
+            type="button"
+            onClick={() => formRef.current?.requestSubmit()}
             disabled={!canSubmit || isPending}
           >
             <PlusCircle className="h-4 w-4" />
@@ -976,7 +977,12 @@ export function NewTaskDialog({
           </ResearchButton>
         }
       >
-        <form id={formId} action={submitTask} className="grid gap-5">
+        <form
+          ref={formRef}
+          id={formId}
+          action={submitTask}
+          className="grid gap-5"
+        >
           {selectedIds.map((id) => (
             <input key={id} type="hidden" name="assigneeIds" value={id} />
           ))}
