@@ -153,12 +153,12 @@ function statusLabel(value: string) {
 
 function badgeClass(value: string) {
   const normalized = normalizedStatus(value);
-  if (normalized === "ACCEPTED") return "text-[#A8DADC]";
-  if (normalized === "PUBLISHED") return "text-[#A8DADC]";
-  if (normalized === "REJECTED") return "text-[#B0B0B0]";
-  if (normalized === "WITHDRAWN") return "text-rose-300";
-  if (normalized === "REVIEWING") return "text-[#B39CD0]";
-  return "text-[#FFC1CC]";
+  if (normalized === "PUBLISHED") return "text-emerald-700 dark:text-emerald-300";
+  if (normalized === "ACCEPTED") return "text-cyan-700 dark:text-[#A8DADC]";
+  if (normalized === "REVIEWING") return "text-violet-700 dark:text-violet-300";
+  if (normalized === "REJECTED") return "text-rose-700 dark:text-rose-300";
+  if (normalized === "WITHDRAWN") return "text-amber-700 dark:text-amber-300";
+  return "text-sky-700 dark:text-sky-300";
 }
 
 function statusIcon(value: string) {
