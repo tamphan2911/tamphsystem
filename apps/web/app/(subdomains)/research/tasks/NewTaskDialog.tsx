@@ -204,6 +204,33 @@ function taskChoiceLabel(choice: TaskModeChoice) {
   return modeLabel(choice);
 }
 
+function productionSubtypeLabel(subtype: ProductionSubtype) {
+  return (
+    productionSubtypeOptions.find((option) => option.value === subtype)
+      ?.label ?? "Production"
+  );
+}
+
+function defaultTaskTitleForDialog({
+  triggerVariant,
+  mode,
+  productionSubtype,
+  research,
+  initialTitle,
+}: {
+  triggerVariant: TaskTriggerVariant;
+  mode: TaskMode;
+  productionSubtype: ProductionSubtype;
+  research: TaskResearchOption | null;
+  initialTitle: string;
+}) {
+  if (initialTitle.trim()) return initialTitle;
+  if (triggerVariant === "production" && mode === "production" && research) {
+    return `${productionSubtypeLabel(productionSubtype)} task for ${research.title}`;
+  }
+  return "";
+}
+
 function createTaskErrorDetail(reason?: string) {
   if (reason === "PRODUCTION_INCOMPLETE")
     return "Complete the production timeline before assigning a submission task.";
@@ -355,9 +382,22 @@ export function NewTaskDialog({
   const [proposalScope, setProposalScope] = useState<ProposalScope>("research");
   const [productionSubtype, setProductionSubtype] =
     useState<ProductionSubtype>("IDEA_FORMING");
+  const [taskTitle, setTaskTitle] = useState(() =>
+    defaultTaskTitleForDialog({
+      triggerVariant,
+      mode: initialMode,
+      productionSubtype: "IDEA_FORMING",
+      research: initialResearch,
+      initialTitle,
+    }),
+  );
+  const [taskTitleTouched, setTaskTitleTouched] = useState(
+    Boolean(initialTitle.trim()),
+  );
   const [allowReportUpload, setAllowReportUpload] = useState(false);
   const [isUrgent, setIsUrgent] = useState(false);
   const [submissionBlockedDetail, setSubmissionBlockedDetail] = useState("");
+  const [taskCreateErrorDetail, setTaskCreateErrorDetail] = useState("");
   const [journalTargetCount, setJournalTargetCount] = useState("1");
   const [suggestedVenueTargetCount, setSuggestedVenueTargetCount] =
     useState("2");
@@ -482,6 +522,26 @@ export function NewTaskDialog({
     );
   }, [isOpen, mode, productionSubtype, proposalScope, taskGuideOptions]);
 
+  useEffect(() => {
+    if (taskTitleTouched) return;
+    setTaskTitle(
+      defaultTaskTitleForDialog({
+        triggerVariant,
+        mode,
+        productionSubtype,
+        research: selectedResearch,
+        initialTitle,
+      }),
+    );
+  }, [
+    initialTitle,
+    mode,
+    productionSubtype,
+    selectedResearch,
+    taskTitleTouched,
+    triggerVariant,
+  ]);
+
   const filteredReviews = useMemo(() => {
     const needle = reviewQuery.trim().toLowerCase();
     if (!needle) return [];
@@ -546,6 +606,17 @@ export function NewTaskDialog({
     setSelectedTaskGuideIds(
       defaultTaskGuideIdsForMode(initialMode, taskGuideOptions),
     );
+    const defaultProductionSubtype = "IDEA_FORMING";
+    setTaskTitle(
+      defaultTaskTitleForDialog({
+        triggerVariant,
+        mode: initialMode,
+        productionSubtype: defaultProductionSubtype,
+        research: initialResearch,
+        initialTitle,
+      }),
+    );
+    setTaskTitleTouched(Boolean(initialTitle.trim()));
     setSelectedResearch(initialResearch);
     setSelectedVenue(null);
     setSelectedAccountId("");
@@ -553,7 +624,7 @@ export function NewTaskDialog({
     setSelectedOrganizedProject(null);
     setSelectedSubmission(null);
     setProposalScope("research");
-    setProductionSubtype("IDEA_FORMING");
+    setProductionSubtype(defaultProductionSubtype);
     setAllowReportUpload(false);
     setIsUrgent(false);
     setJournalTargetCount("1");
@@ -743,6 +814,9 @@ export function NewTaskDialog({
           detail:
             "The server could not finish creating this task. Please try again.",
         });
+        setTaskCreateErrorDetail(
+          "The server could not finish creating this task. Please try again.",
+        );
         return;
       }
       if (!result?.ok) {
@@ -754,13 +828,12 @@ export function NewTaskDialog({
           );
           return;
         }
-        showError({
-          title: "Task was not created",
-          detail:
-            result && "message" in result && result.message
-              ? result.message
-              : createTaskErrorDetail(result?.reason),
-        });
+        const detail =
+          result && "message" in result && result.message
+            ? result.message
+            : createTaskErrorDetail(result?.reason);
+        showError({ title: "Task was not created", detail });
+        setTaskCreateErrorDetail(detail);
         return;
       }
       showSuccess({
@@ -1037,7 +1110,11 @@ export function NewTaskDialog({
               <input
                 name="title"
                 required
-                defaultValue={initialTitle}
+                value={taskTitle}
+                onChange={(event) => {
+                  setTaskTitle(event.target.value);
+                  setTaskTitleTouched(true);
+                }}
                 aria-label="Task title"
                 placeholder="Task title (*)"
                 className={inputClass}
@@ -1487,7 +1564,44 @@ export function NewTaskDialog({
         detail={submissionBlockedDetail}
         onClose={() => setSubmissionBlockedDetail("")}
       />
+      <TaskCreateErrorDialog
+        open={Boolean(taskCreateErrorDetail)}
+        detail={taskCreateErrorDetail}
+        onClose={() => setTaskCreateErrorDetail("")}
+      />
     </>
+  );
+}
+
+function TaskCreateErrorDialog({
+  open,
+  detail,
+  onClose,
+}: {
+  open: boolean;
+  detail: string;
+  onClose: () => void;
+}) {
+  return (
+    <ResearchModal
+      open={open}
+      onClose={onClose}
+      title="Task was not created"
+      icon={<ClipboardList className="h-5 w-5" />}
+      maxWidth="max-w-2xl"
+      footer={
+        <div className="flex justify-end">
+          <ResearchButton type="button" onClick={onClose}>
+            <X className="h-4 w-4" />
+            Close
+          </ResearchButton>
+        </div>
+      }
+    >
+      <div className="border border-rose-200 bg-rose-50/75 px-4 py-3 text-sm leading-6 text-rose-900 dark:border-rose-300/30 dark:bg-rose-300/10 dark:text-rose-100">
+        <p className="whitespace-pre-line">{detail}</p>
+      </div>
+    </ResearchModal>
   );
 }
 
