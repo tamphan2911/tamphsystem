@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
-import { AnimatedResize } from "./AnimatedResize";
 
 export function ResearchModal({
   open,
@@ -66,12 +65,9 @@ export function ResearchModal({
           </div>
         </div>
 
-        <AnimatedResize
-          className="min-h-0 flex-1 overflow-y-auto"
-          contentClassName={`min-h-0 ${bodyClassName}`}
-        >
+        <div className={`min-h-0 flex-1 overflow-y-auto ${bodyClassName}`}>
           {children}
-        </AnimatedResize>
+        </div>
 
         {footer && (
           <div className="border-t border-slate-200 px-4 py-3 sm:px-6 sm:py-4 dark:border-[#444444]">

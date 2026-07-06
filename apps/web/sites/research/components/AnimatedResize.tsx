@@ -21,6 +21,7 @@ export function AnimatedResize({
   contentStyle?: CSSProperties;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<number | null>(null);
   const [height, setHeight] = useState<number | null>(null);
 
   useBrowserLayoutEffect(() => {
@@ -28,14 +29,29 @@ export function AnimatedResize({
     if (!content) return;
 
     const updateHeight = () => {
-      setHeight(content.scrollHeight);
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+      }
+      frameRef.current = window.requestAnimationFrame(() => {
+        frameRef.current = null;
+        const nextHeight = content.scrollHeight;
+        setHeight((currentHeight) =>
+          currentHeight === nextHeight ? currentHeight : nextHeight,
+        );
+      });
     };
 
     updateHeight();
     const observer = new ResizeObserver(updateHeight);
     observer.observe(content);
-    return () => observer.disconnect();
-  }, [children]);
+    return () => {
+      observer.disconnect();
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <div
