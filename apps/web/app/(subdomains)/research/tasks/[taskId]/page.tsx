@@ -966,6 +966,16 @@ function journalMetaLine(journal: {
   return `${journal.publisher || "No publisher"} - ${rankLabel}`;
 }
 
+function suggestedJournalRankLabel(journal: {
+  rank: string | null;
+  localRank?: string | null;
+  type?: string | null;
+}) {
+  return journal.type === "LOCAL"
+    ? journal.localRank || "No local rank"
+    : journal.rank || "No rank";
+}
+
 function resultLabel(value: string) {
   return value
     .toLowerCase()
@@ -1227,6 +1237,7 @@ export default async function TaskDetailPage({
               publisherId: true,
               rank: true,
               localRank: true,
+              type: true,
               apc: true,
               apcCurrency: true,
               hasApcOption: true,
@@ -1327,6 +1338,7 @@ export default async function TaskDetailPage({
               publisherId: true,
               rank: true,
               localRank: true,
+              type: true,
               apc: true,
               apcCurrency: true,
               hasApcOption: true,
@@ -1352,6 +1364,7 @@ export default async function TaskDetailPage({
                   publisherId: true,
                   rank: true,
                   localRank: true,
+                  type: true,
                   apc: true,
                   apcCurrency: true,
                   hasApcOption: true,
@@ -1690,6 +1703,7 @@ export default async function TaskDetailPage({
                 publisherId: true,
                 rank: true,
                 localRank: true,
+                type: true,
                 apc: true,
                 apcCurrency: true,
                 hasApcOption: true,
@@ -1919,6 +1933,7 @@ export default async function TaskDetailPage({
               publisher: true,
               rank: true,
               localRank: true,
+              type: true,
               fields: true,
               field: true,
               country: true,
@@ -2762,7 +2777,7 @@ export default async function TaskDetailPage({
         meta: [
           journal?.issn ? `ISSN ${journal.issn}` : null,
           journal?.publisher ?? suggestion.publisher?.name,
-          journal?.rank ?? journal?.localRank,
+          journal ? suggestedJournalRankLabel(journal) : null,
         ]
           .filter(Boolean)
           .join(" - "),
@@ -2828,8 +2843,11 @@ export default async function TaskDetailPage({
                 : null,
               linkedJournalSubmissionSuggestion.journal?.publisher ??
                 linkedJournalSubmissionSuggestion.publisher?.name,
-              linkedJournalSubmissionSuggestion.journal?.rank ??
-                linkedJournalSubmissionSuggestion.journal?.localRank,
+              linkedJournalSubmissionSuggestion.journal
+                ? suggestedJournalRankLabel(
+                    linkedJournalSubmissionSuggestion.journal,
+                  )
+                : null,
             ]
               .filter(Boolean)
               .join(" - "),
