@@ -307,13 +307,6 @@ function shouldUseAssigneeStatus(task: TaskRow, activeTab: TaskHeaderTab) {
   );
 }
 
-function assigneeStatusValue(assignment: TaskAssignment) {
-  if (assignment.completedAt) return "COMPLETED";
-  if (assignment.redoRequestedAt) return "REVISION_REQUESTED";
-  if (assignment.finishedAt) return "CHECKING";
-  return "IN_PROGRESS";
-}
-
 function assigneeTableStatusMeta(task: TaskRow, activeTab: TaskHeaderTab) {
   if (!shouldUseAssigneeStatus(task, activeTab)) return null;
   if (task.status === "REVOKED") return null;
@@ -432,31 +425,6 @@ function taskTypeLines(task: TaskRow) {
   }
 
   return { typeLabel: titleCase(type), subtypeLabel: "" };
-}
-
-function taskTypeFilterValue(task: TaskRow) {
-  if (
-    task.taskType === "SUBMIT_RESEARCH" ||
-    task.taskType === "SUBMIT_CONFERENCE"
-  ) {
-    return "SUBMIT";
-  }
-  if (
-    task.taskType === "PROJECT_PRODUCTION" ||
-    task.taskType === "PROJECT_RESEARCH_ASSOCIATED"
-  ) {
-    return "PROJECT";
-  }
-  if (task.taskType === "PRODUCTION") return "PRODUCTION";
-  if (task.taskType === "SUGGEST_VENUE") return "SUGGEST_VENUE";
-  if (task.taskType === "ADD_JOURNAL") return "ADD_JOURNAL";
-  if (task.taskType === "PROPOSAL") {
-    return task.proposalScope === "project"
-      ? "PROPOSAL_PROJECT"
-      : "PROPOSAL_RESEARCH";
-  }
-  if (task.taskType === "REVIEW") return "REVIEW";
-  return "OTHER";
 }
 
 function taskTypeFilterLabel(value: string) {
@@ -690,23 +658,6 @@ function statusMeta(task: TaskRow) {
   };
 }
 
-function taskTimeLeftSortValue(task: TaskRow, nowMs: number) {
-  if (task.status === "COMPLETED" || task.status === "REVOKED") return null;
-
-  const managerAction = activeManagerAction(task);
-  if (managerAction) {
-    const startedAt = new Date(managerAction.startedAt).getTime();
-    if (!Number.isNaN(startedAt)) {
-      return startedAt + managerActionSlaMs - nowMs;
-    }
-  }
-
-  const due = task.dueDate ? new Date(task.dueDate).getTime() : null;
-  if (!due || Number.isNaN(due)) return null;
-
-  return due - nowMs;
-}
-
 function managerActionMeta(task: TaskRow, nowMs: number) {
   const managerAction = activeManagerAction(task);
   if (!managerAction) return null;
@@ -818,42 +769,6 @@ function statusIconMeta(task: TaskRow): {
     className:
       "text-yellow-700 hover:text-yellow-800 dark:text-yellow-300 dark:hover:text-yellow-200",
   };
-}
-
-function derivedStatus(task: TaskRow, activeTab: TaskHeaderTab) {
-  if (shouldUseAssigneeStatus(task, activeTab)) {
-    const assignment = currentUserAssignment(task);
-    if (assignment && task.status !== "REVOKED") {
-      return assigneeStatusValue(assignment);
-    }
-  }
-
-  if (activeWaitingForJournalCreation(task)) return "IN_PROGRESS";
-  if (activeAddJournalCorrection(task)) return "REVISION_REQUESTED";
-  if (activeAddJournalReview(task)) return "CHECKING";
-  if (
-    task.status === "CHECKING" ||
-    task.status === "NEED_CLARIFY" ||
-    task.status === "REVISION_REQUESTED"
-  ) {
-    return task.status;
-  }
-  const label = statusMeta(task).label;
-  if (label === "Complete" || label === "Completed overdue") {
-    return "COMPLETED";
-  }
-  if (label === "Revoked") return "REVOKED";
-  return label.toUpperCase().replace(" ", "_");
-}
-
-function taskNeedsManagerAction(task: TaskRow) {
-  return Boolean(
-    activeManagerAction(task) ||
-    pendingReadyAssignmentText(task) ||
-    task.status === "CHECKING" ||
-    (task.status === "NEED_CLARIFY" &&
-      task.clarifyDirection !== "MANAGER_TO_ASSIGNEE"),
-  );
 }
 
 function DeleteTaskButton({
@@ -1081,6 +996,7 @@ export function TasksClient({
   });
   const page = Math.max(Number.parseInt(pageValue, 10) || 1, 1);
   const pageCount = Math.max(1, Math.ceil(listMeta.total / listMeta.pageSize));
+  const loadRequestIdRef = useRef(0);
 
   const removeTaskFromList = useCallback((taskId: string) => {
     setTasks((current) => current.filter((task) => task.id !== taskId));
@@ -1092,18 +1008,6 @@ export function TasksClient({
   );
   const checkerFilterValues = useMemo(
     () => ["ALL", ...listMeta.checkerOptions.map((option) => option.value)],
-    [listMeta.checkerOptions],
-  );
-  const adminCheckerIds = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          listMeta.checkerOptions
-            .filter((option) => option.isAdminChecker)
-            .map((option) => option.value)
-            .filter(Boolean),
-        ),
-      ),
     [listMeta.checkerOptions],
   );
   const adminNeedActionDefaultCheckerIds = useMemo(
@@ -1149,58 +1053,73 @@ export function TasksClient({
     checkerFilterValues,
     isAdmin,
   ]);
-  const loadTasks = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (query.trim()) params.set("q", query.trim());
-      params.set("scope", activeHeaderTab);
-      if (statuses.length > 0) params.set("status", statuses.join(","));
-      if (taskTypes.length > 0) params.set("type", taskTypes.join(","));
-      if (checkerIds.length > 0) params.set("checker", checkerIds.join(","));
-      if (checkerNeedsActionOnly) params.set("checkerNeedsAction", "1");
-      if (timeSort !== "none") params.set("timeSort", timeSort);
-      if (page > 1) params.set("page", String(page));
-      const response = await fetch(`/api/research/tasks?${params.toString()}`, {
-        cache: "no-store",
-      });
-      if (!response.ok) {
+  const loadTasks = useCallback(
+    async (options?: { showLoading?: boolean }) => {
+      const requestId = loadRequestIdRef.current + 1;
+      loadRequestIdRef.current = requestId;
+      if (options?.showLoading) {
+        setIsLoading(true);
+        setLoadError(false);
+      }
+      try {
+        const params = new URLSearchParams();
+        if (query.trim()) params.set("q", query.trim());
+        params.set("scope", activeHeaderTab);
+        if (statuses.length > 0) params.set("status", statuses.join(","));
+        if (taskTypes.length > 0) params.set("type", taskTypes.join(","));
+        if (checkerIds.length > 0) params.set("checker", checkerIds.join(","));
+        if (checkerNeedsActionOnly) params.set("checkerNeedsAction", "1");
+        if (timeSort !== "none") params.set("timeSort", timeSort);
+        if (page > 1) params.set("page", String(page));
+        const response = await fetch(
+          `/api/research/tasks?${params.toString()}`,
+          {
+            cache: "no-store",
+          },
+        );
+        if (requestId !== loadRequestIdRef.current) return;
+        if (!response.ok) {
+          setLoadError(true);
+          setIsLoading(false);
+          return;
+        }
+        const payload = (await response.json()) as {
+          tasks: TaskRow[];
+          meta?: TaskListMeta;
+        };
+        if (requestId !== loadRequestIdRef.current) return;
+        setTasks(payload.tasks);
+        if (payload.meta) {
+          setListMeta(payload.meta);
+          if (payload.meta.page !== page) {
+            setPageValue(String(payload.meta.page));
+          }
+        }
+        setLoadError(false);
+        setIsLoading(false);
+      } catch {
+        if (requestId !== loadRequestIdRef.current) return;
         setLoadError(true);
         setIsLoading(false);
-        return;
       }
-      const payload = (await response.json()) as {
-        tasks: TaskRow[];
-        meta?: TaskListMeta;
-      };
-      setTasks(payload.tasks);
-      if (payload.meta) {
-        setListMeta(payload.meta);
-        if (payload.meta.page !== page) {
-          setPageValue(String(payload.meta.page));
-        }
-      }
-      setLoadError(false);
-      setIsLoading(false);
-    } catch {
-      setLoadError(true);
-      setIsLoading(false);
-    }
-  }, [
-    activeHeaderTab,
-    checkerIds,
-    checkerNeedsActionOnly,
-    page,
-    query,
-    setPageValue,
-    statuses,
-    taskTypes,
-    timeSort,
-  ]);
+    },
+    [
+      activeHeaderTab,
+      checkerIds,
+      checkerNeedsActionOnly,
+      page,
+      query,
+      setPageValue,
+      statuses,
+      taskTypes,
+      timeSort,
+    ],
+  );
 
   useEffect(() => {
     let active = true;
     async function start() {
-      await loadTasks();
+      await loadTasks({ showLoading: true });
       if (isAdmin) {
         await fetch("/api/research/tasks/viewed", { method: "POST" });
         if (active) await loadTasks();
@@ -1561,7 +1480,7 @@ export function TasksClient({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#444444]">
-              {tasks.map((task) => {
+              {!isLoading && tasks.map((task) => {
                 const status = statusMeta(task);
                 const assigneeStatus = assigneeTableStatusMeta(
                   task,
@@ -1791,8 +1710,11 @@ export function TasksClient({
                   </tr>
                 );
               })}
-              {isLoading && listMeta.total === 0 ? (
-                <TableSkeletonRows rows={7} columns={canDelete ? 6 : 5} />
+              {isLoading ? (
+                <TableSkeletonRows
+                  rows={Math.min(Math.max(listMeta.pageSize || 7, 5), 10)}
+                  columns={canDelete ? 6 : 5}
+                />
               ) : loadError && listMeta.total === 0 ? (
                 <tr>
                   <td colSpan={canDelete ? 6 : 5} className="px-4 py-2">
