@@ -1471,16 +1471,28 @@ function orderedUniqueStrings(values: FormDataEntryValue[]) {
   });
 }
 
-function linesFromForm(value: FormDataEntryValue | null) {
-  if (typeof value !== "string") return [];
-  return Array.from(
-    new Set(
-      value
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean),
-    ),
-  );
+function requiredProductTitlesFromForm(formData: FormData) {
+  const values = formData.getAll("requiredProductTitles");
+  const source =
+    values.length > 0 ? values : [formData.get("requiredProducts") ?? ""];
+  const seen = new Set<string>();
+  const titles: string[] = [];
+
+  source.forEach((value) => {
+    if (typeof value !== "string") return;
+    value
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .forEach((title) => {
+        const key = title.toLowerCase();
+        if (seen.has(key)) return;
+        seen.add(key);
+        titles.push(title);
+      });
+  });
+
+  return titles;
 }
 
 function stageFromResearchState(
@@ -3333,6 +3345,7 @@ export async function createOrganizedProject(formData: FormData) {
   const fundingInstitutionId = optionalString(
     formData.get("fundingInstitutionId"),
   );
+  const requiredProductTitles = requiredProductTitlesFromForm(formData);
   const fundingInstitution = fundingInstitutionId
     ? await prisma.fundingInstitution.findUnique({
         where: { id: fundingInstitutionId },
@@ -3370,8 +3383,14 @@ export async function createOrganizedProject(formData: FormData) {
         enumValue(CurrencyCode, formData.get("fundingCurrency")) ??
         CurrencyCode.VND,
       requiredResearchCount: null,
-      requiredProducts: linesFromForm(formData.get("requiredProducts")),
+      requiredProducts: requiredProductTitles,
       completedProducts: [],
+      products: {
+        create: requiredProductTitles.map((title, position) => ({
+          title,
+          position,
+        })),
+      },
       fundingInstitutionId,
       startDate,
       durationMonths,
@@ -3456,6 +3475,15 @@ export async function updateOrganizedProject(
           researchProjectId: true,
           researchProject: { select: { title: true, researchCode: true } },
         },
+      },
+      products: {
+        select: {
+          id: true,
+          title: true,
+          completed: true,
+          linkedResearchProjectId: true,
+        },
+        orderBy: { position: "asc" },
       },
     },
   });
@@ -3564,6 +3592,26 @@ export async function updateOrganizedProject(
   const projectType =
     enumValue(OrganizedProjectType, formData.get("projectType")) ??
     OrganizedProjectType.STUDENT;
+  const requiredProductTitles = requiredProductTitlesFromForm(formData);
+  const previousProductsByTitle = new Map(
+    previousProject.products.map((product) => [
+      product.title.trim().toLowerCase(),
+      product,
+    ]),
+  );
+  const nextProducts = requiredProductTitles.map((title, position) => {
+    const previousProduct = previousProductsByTitle.get(title.toLowerCase());
+    const completed =
+      previousProduct?.completed ??
+      previousProject.completedProducts.includes(title);
+
+    return {
+      title,
+      position,
+      completed,
+      linkedResearchProjectId: previousProduct?.linkedResearchProjectId ?? null,
+    };
+  });
 
   await prisma.organizedProject.update({
     where: { id: projectId },
@@ -3586,11 +3634,18 @@ export async function updateOrganizedProject(
       fundingCurrency:
         enumValue(CurrencyCode, formData.get("fundingCurrency")) ??
         CurrencyCode.VND,
-      requiredProducts: linesFromForm(formData.get("requiredProducts")),
+      requiredProducts: requiredProductTitles,
+      completedProducts: nextProducts
+        .filter((product) => product.completed)
+        .map((product) => product.title),
       fundingInstitutionId,
       startDate,
       durationMonths,
       endDate: addMonths(startDate, durationMonths),
+      products: {
+        deleteMany: {},
+        create: nextProducts,
+      },
       members: {
         deleteMany: {},
         create: memberUserIds.map((userId, index) => ({
@@ -3660,7 +3715,7 @@ export async function updateOrganizedProject(
     auditChange("Duration months", previousProject.durationMonths, durationMonths),
     auditChange("Members", previousMemberLabels, nextMemberLabels),
     auditChange("Associated research", previousResearchLabels, nextResearchLabels),
-    auditChange("Required products", previousProject.requiredProducts, linesFromForm(formData.get("requiredProducts"))),
+    auditChange("Required products", previousProject.requiredProducts, requiredProductTitles),
     auditChange("Shared folder", previousProject.sharedFolderUrl, formData.get("sharedFolderUrl")),
     auditChange("Description", previousProject.description, formData.get("description")),
     auditChange("Note", previousProject.note, formData.get("note")),
@@ -3724,6 +3779,10 @@ export async function updateOrganizedProjectProducts(
       title: true,
       requiredProducts: true,
       completedProducts: true,
+      products: {
+        select: { id: true, title: true, completed: true },
+        orderBy: { position: "asc" },
+      },
       members: { select: { userId: true, isTeamLead: true } },
     },
   });
@@ -3735,21 +3794,45 @@ export async function updateOrganizedProjectProducts(
     );
   if (!canEdit) redirect("/401");
 
-  const completedProducts = orderedUniqueStrings(
-    formData.getAll("completedProducts"),
-  ).filter((product) => project.requiredProducts.includes(product));
+  const productRows =
+    project.products.length > 0
+      ? project.products
+      : project.requiredProducts.map((title, index) => ({
+          id: `legacy-${index}`,
+          title,
+          completed: project.completedProducts.includes(title),
+        }));
+  const completedProductIds = new Set(
+    orderedUniqueStrings(formData.getAll("completedProductIds")),
+  );
+  const completedProductTitles = new Set(
+    orderedUniqueStrings(formData.getAll("completedProducts")),
+  );
+  const completedProducts = productRows
+    .filter(
+      (product) =>
+        completedProductIds.has(product.id) ||
+        completedProductTitles.has(product.title),
+    )
+    .map((product) => product.title);
   const isComplete =
-    project.requiredProducts.length > 0 &&
-    project.requiredProducts.every((product) =>
-      completedProducts.includes(product),
-    );
+    productRows.length > 0 &&
+    productRows.every((product) => completedProducts.includes(product.title));
 
-  await prisma.organizedProject.update({
-    where: { id: projectId },
-    data: {
-      completedProducts,
-      status: isComplete ? OrganizedProjectStatus.COMPLETED : undefined,
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.organizedProject.update({
+      where: { id: projectId },
+      data: {
+        completedProducts,
+        status: isComplete ? OrganizedProjectStatus.COMPLETED : undefined,
+      },
+    });
+    for (const product of project.products) {
+      await tx.organizedProjectProduct.update({
+        where: { id: product.id },
+        data: { completed: completedProducts.includes(product.title) },
+      });
+    }
   });
   const productDetail = auditDetail([
     auditChange("Completed products", project.completedProducts, completedProducts),
@@ -3784,6 +3867,107 @@ export async function updateOrganizedProjectProducts(
 
   revalidatePath("/organized-projects");
   revalidatePath(`/organized-projects/${projectId}`);
+}
+
+export async function updateOrganizedProjectProductResearch(
+  productId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  const product = await prisma.organizedProjectProduct.findUnique({
+    where: { id: productId },
+    include: {
+      linkedResearchProject: {
+        select: { title: true, researchCode: true },
+      },
+      organizedProject: {
+        select: {
+          id: true,
+          title: true,
+          members: { select: { userId: true, isTeamLead: true } },
+          research: {
+            select: {
+              researchProjectId: true,
+              researchProject: {
+                select: { title: true, researchCode: true, stage: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!product) return { ok: false, reason: "PRODUCT_NOT_FOUND" };
+
+  const canEdit =
+    isResearchAdminRole(user.roles) ||
+    product.organizedProject.members.some(
+      (member) => member.userId === user.id && member.isTeamLead,
+    );
+  if (!canEdit) return { ok: false, reason: "UNAUTHORIZED" };
+
+  const linkedResearchProjectId = optionalString(
+    formData.get("linkedResearchProjectId"),
+  );
+  let nextResearch:
+    | {
+        id: string;
+        title: string;
+        researchCode: string | null;
+        stage: ResearchStage;
+      }
+    | null = null;
+
+  if (linkedResearchProjectId) {
+    const linkedResearch = product.organizedProject.research.find(
+      (item) => item.researchProjectId === linkedResearchProjectId,
+    )?.researchProject;
+    if (
+      !linkedResearch ||
+      (linkedResearch.stage !== ResearchStage.ACCEPTED &&
+        linkedResearch.stage !== ResearchStage.PUBLISHED)
+    ) {
+      return { ok: false, reason: "RESEARCH_NOT_AVAILABLE" };
+    }
+    nextResearch = {
+      id: linkedResearchProjectId,
+      title: linkedResearch.title,
+      researchCode: linkedResearch.researchCode,
+      stage: linkedResearch.stage,
+    };
+  }
+
+  await prisma.organizedProjectProduct.update({
+    where: { id: productId },
+    data: { linkedResearchProjectId },
+  });
+
+  const previousLabel = product.linkedResearchProject
+    ? [product.linkedResearchProject.researchCode, product.linkedResearchProject.title]
+        .filter(Boolean)
+        .join(" - ")
+    : "Not linked";
+  const nextLabel = nextResearch
+    ? [nextResearch.researchCode, nextResearch.title].filter(Boolean).join(" - ")
+    : "Not linked";
+  await prisma.researchChangeLog.create({
+    data: {
+      entityType: "organizedProject",
+      entityId: product.organizedProject.id,
+      area: "Required products",
+      action: "Updated",
+      detail: auditChange(
+        `Linked research for ${product.title}`,
+        previousLabel,
+        nextLabel,
+      ) ?? `Linked research for ${product.title}: unchanged.`,
+      actorId: user.id,
+    },
+  });
+
+  revalidatePath("/organized-projects");
+  revalidatePath(`/organized-projects/${product.organizedProject.id}`);
+  return { ok: true };
 }
 
 export async function createResearchForOrganizedProject(

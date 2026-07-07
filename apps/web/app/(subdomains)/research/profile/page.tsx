@@ -408,7 +408,6 @@ export default async function ResearchProfilePage({
       startDate: shortDate(project.startDate),
       endDate: shortDate(project.endDate),
       note: project.note ?? "",
-      hasSharedFolder: Boolean(project.sharedFolderUrl),
       members: project.members.map((member) => ({
         id: member.user.id,
         name: member.user.name ?? "",

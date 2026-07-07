@@ -32,6 +32,7 @@ import {
   FundingInstitutionPicker,
   ProjectMembersPicker,
   ProjectResearchPicker,
+  ProjectRequiredProductsEditor,
 } from "../ProjectFormControls";
 
 type ProjectInfo = {
@@ -103,11 +104,14 @@ function HiddenProjectInfo({ info }: { info: ProjectInfo }) {
         name="durationMonths"
         value={String(info.durationMonths || 1)}
       />
-      <input
-        type="hidden"
-        name="requiredProducts"
-        value={info.requiredProducts.join("\n")}
-      />
+      {info.requiredProducts.map((product) => (
+        <input
+          key={product}
+          type="hidden"
+          name="requiredProductTitles"
+          value={product}
+        />
+      ))}
       <input
         type="hidden"
         name="sharedFolderUrl"
@@ -458,15 +462,7 @@ export function ProjectInfoEditDialog({
           )}
 
           <div className="mt-4 grid gap-4">
-            <label className={labelClass}>
-              Required products
-              <textarea
-                name="requiredProducts"
-                defaultValue={info.requiredProducts.join("\n")}
-                placeholder="One required project output per line..."
-                className="min-h-20 border border-[#444444] bg-[#2C2C2C] px-3 py-2.5 text-sm font-normal text-[#E4E4E4] outline-none transition placeholder:text-[#5A5A5A] hover:border-[#5A5A5A] hover:bg-[#383838] focus:border-[#A8DADC] focus:bg-[#383838]"
-              />
-            </label>
+            <ProjectRequiredProductsEditor defaultProducts={info.requiredProducts} />
             <label className={labelClass}>
               Shared project folder
               <input

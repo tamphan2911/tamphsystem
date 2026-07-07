@@ -28,7 +28,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { prisma, OrganizedProjectStatus, Role } from "@repo/db";
+import { prisma, OrganizedProjectStatus, ResearchStage, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import {
   researchLinkClass,
@@ -38,6 +38,7 @@ import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPa
 import {
   createResearchForOrganizedProject,
   updateOrganizedProject,
+  updateOrganizedProjectProductResearch,
   updateOrganizedProjectProducts,
 } from "../../actions";
 import {
@@ -384,6 +385,19 @@ export default async function OrganizedProjectDetailPage({
             include: { user: true },
             orderBy: { position: "asc" },
           },
+          products: {
+            include: {
+              linkedResearchProject: {
+                select: {
+                  id: true,
+                  title: true,
+                  researchCode: true,
+                  stage: true,
+                },
+              },
+            },
+            orderBy: { position: "asc" },
+          },
           research: {
             include: {
               researchProject: {
@@ -478,6 +492,7 @@ export default async function OrganizedProjectDetailPage({
 
   const saveProject = updateOrganizedProject.bind(null, project.id);
   const saveProducts = updateOrganizedProjectProducts.bind(null, project.id);
+  const saveProductResearch = updateOrganizedProjectProductResearch;
   const createProjectResearch = createResearchForOrganizedProject.bind(
     null,
     project.id,
@@ -508,6 +523,39 @@ export default async function OrganizedProjectDetailPage({
     title: researchProject.title,
     stage: researchProject.stage,
   }));
+  const projectProducts =
+    project.products.length > 0
+      ? project.products.map((product) => ({
+          id: product.id,
+          title: product.title,
+          completed: product.completed,
+          linkedResearch: product.linkedResearchProject
+            ? {
+                id: product.linkedResearchProject.id,
+                title: product.linkedResearchProject.title,
+                researchCode: product.linkedResearchProject.researchCode ?? "",
+                stage: product.linkedResearchProject.stage,
+              }
+            : null,
+        }))
+      : project.requiredProducts.map((title, index) => ({
+          id: `legacy-${index}`,
+          title,
+          completed: project.completedProducts.includes(title),
+          linkedResearch: null,
+        }));
+  const linkableProductResearch = project.research
+    .map(({ researchProject }) => researchProject)
+    .filter((researchProject) =>
+      researchProject.stage === ResearchStage.ACCEPTED ||
+      researchProject.stage === ResearchStage.PUBLISHED,
+    )
+    .map((researchProject) => ({
+      id: researchProject.id,
+      researchCode: researchProject.researchCode ?? "",
+      title: researchProject.title,
+      stage: researchProject.stage,
+    }));
   const canEditProject =
     currentRoles.includes(Role.ADMIN) ||
     currentRoles.includes(Role.CHIEF_ASSISTANT) ||
@@ -597,7 +645,7 @@ export default async function OrganizedProjectDetailPage({
     fundingCurrency: project.fundingCurrency,
     startDate: dateInputValue(project.startDate),
     durationMonths: project.durationMonths ?? 1,
-    requiredProducts: project.requiredProducts,
+    requiredProducts: projectProducts.map((product) => product.title),
     sharedFolderUrl: project.sharedFolderUrl ?? "",
     description: project.description ?? "",
     note: project.note ?? "",
@@ -806,9 +854,10 @@ export default async function OrganizedProjectDetailPage({
           <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
             <div>
               <ProjectProductsForm
-                requiredProducts={project.requiredProducts}
-                completedProducts={project.completedProducts}
+                products={projectProducts}
+                researchOptions={linkableProductResearch}
                 action={saveProducts}
+                linkAction={saveProductResearch}
                 embedded
               />
             </div>

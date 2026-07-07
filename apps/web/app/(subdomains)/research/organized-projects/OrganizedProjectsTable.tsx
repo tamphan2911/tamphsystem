@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   CircleOff,
   Clock3,
-  FolderOpen,
   Hourglass,
   RotateCcw,
   ShieldCheck,
@@ -61,7 +60,6 @@ export type OrganizedProjectRow = {
   startDate: string;
   endDate: string;
   note: string;
-  hasSharedFolder: boolean;
   members: OrganizedProjectMemberRow[];
   researchCount: number;
   research: OrganizedProjectResearchRow[];
@@ -493,16 +491,6 @@ export function OrganizedProjectsTable({
                       {project.referenceCode ||
                         project.id.slice(0, 8).toUpperCase()}
                     </span>
-                    {project.hasSharedFolder ? (
-                      <IconHint label="Project has shared folder">
-                        <span className="research-task-icon-motion mt-1 inline-flex h-5 w-5 items-center justify-center text-[#1F7180] dark:text-[#A8DADC]">
-                          <FolderOpen
-                            className="h-3.5 w-3.5"
-                            aria-hidden="true"
-                          />
-                        </span>
-                      </IconHint>
-                    ) : null}
                   </td>
                   <td className="min-w-0 px-3 py-3 align-top">
                     <Link

@@ -21,6 +21,7 @@ import {
   FundingInstitutionPicker,
   ProjectMembersPicker,
   ProjectResearchPicker,
+  ProjectRequiredProductsEditor,
   type FundingInstitutionOption,
   type ResearchResultOption,
 } from "./ProjectFormControls";
@@ -265,14 +266,7 @@ export function NewOrganizedProjectDialog({
                 </div>
               )}
 
-              <label className={researchLabelClass}>
-                Required products
-                <textarea
-                  name="requiredProducts"
-                  placeholder="One required project output per line..."
-                  className={researchTextareaClass}
-                />
-              </label>
+              <ProjectRequiredProductsEditor />
 
               <label className={researchLabelClass}>
                 Shared project folder

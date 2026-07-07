@@ -67,6 +67,111 @@ function userName(user: AuthorOption) {
   return displayResearchPersonName(user);
 }
 
+export function ProjectRequiredProductsEditor({
+  defaultProducts = [],
+}: {
+  defaultProducts?: string[];
+}) {
+  const [products, setProducts] = useState(() =>
+    defaultProducts.length > 0 ? defaultProducts : [""],
+  );
+
+  function updateProduct(index: number, value: string) {
+    setProducts((current) =>
+      current.map((product, productIndex) =>
+        productIndex === index ? value : product,
+      ),
+    );
+  }
+
+  function addProduct() {
+    setProducts((current) => [...current, ""]);
+  }
+
+  function removeProduct(index: number) {
+    setProducts((current) => {
+      const next = current.filter((_, productIndex) => productIndex !== index);
+      return next.length > 0 ? next : [""];
+    });
+  }
+
+  function moveProduct(index: number, direction: -1 | 1) {
+    setProducts((current) => {
+      const target = index + direction;
+      if (target < 0 || target >= current.length) return current;
+      const next = [...current];
+      const [product] = next.splice(index, 1);
+      if (product === undefined) return current;
+      next.splice(target, 0, product);
+      return next;
+    });
+  }
+
+  return (
+    <div className="grid gap-2 text-sm font-semibold text-[#1f2937] dark:text-[#E4E4E4]">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span>Required products</span>
+        <button
+          type="button"
+          onClick={addProduct}
+          className="research-allow-transform inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-xs font-normal text-[#1F7180] transition hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] active:translate-y-0 active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-200"
+        >
+          <Check className="h-3.5 w-3.5" aria-hidden="true" />
+          Add product
+        </button>
+      </div>
+      <div className="divide-y divide-[#D8D0C2] border-y border-[#D8D0C2] bg-[#FFFDF8] dark:divide-[#444444] dark:border-[#444444] dark:bg-[#2C2C2C]">
+        {products.map((product, index) => (
+          <div
+            key={index}
+            className="grid gap-3 py-3 md:grid-cols-[auto_minmax(0,1fr)_auto]"
+          >
+            <div className="flex items-center px-2 md:flex-col md:px-0">
+              <button
+                type="button"
+                aria-label="Move product up"
+                disabled={index === 0}
+                onClick={() => moveProduct(index, -1)}
+                className="inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent text-[#667085] transition hover:text-[#1F7180] disabled:cursor-not-allowed disabled:opacity-30 dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+              >
+                <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                aria-label="Move product down"
+                disabled={index === products.length - 1}
+                onClick={() => moveProduct(index, 1)}
+                className="inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent text-[#667085] transition hover:text-[#1F7180] disabled:cursor-not-allowed disabled:opacity-30 dark:text-[#B0B0B0] dark:hover:text-[#A8DADC]"
+              >
+                <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </div>
+            <input
+              name="requiredProductTitles"
+              value={product}
+              onChange={(event) => updateProduct(index, event.target.value)}
+              placeholder={`Required product ${index + 1}`}
+              className={researchSearchFieldClass}
+            />
+            <button
+              type="button"
+              aria-label="Remove required product"
+              onClick={() => removeProduct(index)}
+              className="research-allow-transform mx-2 inline-flex h-10 w-10 cursor-pointer items-center justify-center self-center border-0 bg-transparent text-[#667085] transition hover:-translate-y-0.5 hover:bg-transparent hover:text-rose-600 active:translate-y-0 active:scale-95 dark:text-[#B0B0B0] dark:hover:text-rose-300"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]">
+        Add each expected output as a separate line item. You can link a finished
+        research record to each product later from the project detail page.
+      </p>
+    </div>
+  );
+}
+
 export function FundingInstitutionPicker({
   institutions,
   defaultInstitution,

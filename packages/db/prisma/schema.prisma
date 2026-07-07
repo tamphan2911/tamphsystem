@@ -459,17 +459,18 @@ model ResearchProject {
   folderSharedUsers User[]                  @relation("ResearchFolderSharedUsers")
   authorEntries     ResearchProjectAuthor[]
 
-  publications          Publication[]
-  submissions           ResearchSubmission[]
-  conferenceSubmissions ConferenceSubmission[]
-  suggestedJournals     SuggestedJournal[]
-  suggestedConferences  SuggestedConference[]
-  tasks                 ResearchTask[]
-  authorNotifications   ResearchAuthorNotification[]
-  folderAccessRequests  ResearchFolderAccessRequest[]
-  organizedProjectLinks OrganizedProjectResearch[]
-  sourceProposal        Proposal?                     @relation("ProposalCreatedResearch")
-  teamParticipants      ResearchTeamParticipant[]
+  publications             Publication[]
+  submissions              ResearchSubmission[]
+  conferenceSubmissions    ConferenceSubmission[]
+  suggestedJournals        SuggestedJournal[]
+  suggestedConferences     SuggestedConference[]
+  tasks                    ResearchTask[]
+  authorNotifications      ResearchAuthorNotification[]
+  folderAccessRequests     ResearchFolderAccessRequest[]
+  organizedProjectLinks    OrganizedProjectResearch[]
+  organizedProjectProducts OrganizedProjectProduct[]
+  sourceProposal           Proposal?                     @relation("ProposalCreatedResearch")
+  teamParticipants         ResearchTeamParticipant[]
 
   @@index([registrationUserId])
   @@index([fundingInstitutionId])
@@ -507,6 +508,7 @@ model OrganizedProject {
 
   members        OrganizedProjectMember[]
   research       OrganizedProjectResearch[]
+  products       OrganizedProjectProduct[]
   tasks          ResearchTask[]
   sourceProposal Proposal?                  @relation("ProposalCreatedProject")
 
@@ -566,6 +568,23 @@ model OrganizedProjectResearch {
 
   @@unique([organizedProjectId, researchProjectId])
   @@index([researchProjectId])
+}
+
+model OrganizedProjectProduct {
+  id                      String   @id @default(uuid())
+  organizedProjectId      String
+  title                   String
+  position                Int
+  completed               Boolean  @default(false)
+  linkedResearchProjectId String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  organizedProject      OrganizedProject @relation(fields: [organizedProjectId], references: [id], onDelete: Cascade)
+  linkedResearchProject ResearchProject? @relation(fields: [linkedResearchProjectId], references: [id], onDelete: SetNull)
+
+  @@index([organizedProjectId, position])
+  @@index([linkedResearchProjectId])
 }
 
 model ResearchAuthorNotification {
