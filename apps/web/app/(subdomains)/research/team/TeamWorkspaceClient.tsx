@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Hash,
   Mail,
+  Pencil,
   Route,
   Square,
   UsersRound,
@@ -457,20 +458,27 @@ function ResearchTable({
   const [blockedResearch, setBlockedResearch] = useState<
     TeamWorkspace["research"][number] | null
   >(null);
+  const showEditColumn = team.research.some(
+    (research) => research.canManageParticipants,
+  );
 
   return (
     <>
       <div className="overflow-hidden border border-[#E2D9CC] dark:border-[#444444]">
-        <table className="w-full table-fixed text-left">
-        <thead className="border-b border-[#E2D9CC] bg-[#EBE4D7] text-xs uppercase tracking-wide text-[#667085] dark:border-[#444444] dark:bg-[#1B1B1B] dark:text-[#B0B0B0]">
-          <tr>
-            <th className="w-[8rem] px-4 py-3">ID</th>
-            <th className="px-4 py-3">Research</th>
-            <th className="w-[14rem] px-4 py-3">Stage</th>
-            <th className="w-[4rem] px-4 py-3 text-center">Edit</th>
-            <th className="w-[36%] px-4 py-3">Team Association</th>
-          </tr>
-        </thead>
+        <table className="w-full min-w-[58rem] table-auto text-left">
+          <thead className="border-b border-[#E2D9CC] bg-[#EBE4D7] text-xs uppercase tracking-wide text-[#667085] dark:border-[#444444] dark:bg-[#1B1B1B] dark:text-[#B0B0B0]">
+            <tr>
+              <th className="w-[7rem] px-4 py-3">ID</th>
+              <th className="w-[38%] px-4 py-3">Research</th>
+              <th className="w-[11rem] px-4 py-3">Stage</th>
+              <th className="w-[34%] px-4 py-3">Member assigned</th>
+              {showEditColumn ? (
+                <th className="w-[6rem] px-4 py-3 text-center">
+                  Edit member
+                </th>
+              ) : null}
+            </tr>
+          </thead>
         <tbody className="divide-y divide-[#E2D9CC] dark:divide-[#444444]">
           {team.research.length > 0 ? (
             team.research.map((research) => (
@@ -508,15 +516,6 @@ function ResearchTable({
                     showTaskCounts={research.canViewTaskCounts}
                   />
                 </td>
-                <td className="px-4 py-4 text-center align-top">
-                  {research.canManageParticipants ? (
-                    <ResearchParticipantsDialog
-                      team={team}
-                      research={research}
-                      action={updateParticipantsAction}
-                    />
-                  ) : null}
-                </td>
                 <td className="px-4 py-4 align-top">
                   {research.associatedMembers.length > 0 ? (
                     <div className="space-y-2">
@@ -538,12 +537,23 @@ function ResearchTable({
                     </p>
                   )}
                 </td>
+                {showEditColumn ? (
+                  <td className="px-4 py-4 text-center align-top">
+                    {research.canManageParticipants ? (
+                      <ResearchParticipantsDialog
+                        team={team}
+                        research={research}
+                        action={updateParticipantsAction}
+                      />
+                    ) : null}
+                  </td>
+                ) : null}
               </tr>
             ))
           ) : (
             <tr className="bg-[#FFFDF8] dark:bg-[#2C2C2C]">
               <td
-                colSpan={5}
+                colSpan={showEditColumn ? 5 : 4}
                 className="px-4 py-8 text-center text-sm text-[#667085] dark:text-[#B0B0B0]"
               >
                 No research is assigned to this team yet.
@@ -610,7 +620,7 @@ function ResearchParticipantsDialog({
           className="research-allow-transform inline-flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-[#1F7180] transition duration-180 ease-out hover:-translate-y-0.5 hover:text-[#155864] active:translate-y-0 active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-200"
           aria-label="Edit participating team members"
         >
-          <UsersRound className="h-4 w-4" aria-hidden="true" />
+          <Pencil className="h-4 w-4" aria-hidden="true" />
         </button>
       </IconHint>
       <ResearchModal

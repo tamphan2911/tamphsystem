@@ -138,6 +138,13 @@ function publicMember(
   };
 }
 
+function researchAuthorRoleLabel(index: number, isCorresponding: boolean) {
+  if (index === 0 && isCorresponding) return "Corresponding & first author";
+  if (index === 0) return "First author";
+  if (isCorresponding) return "Corresponding author";
+  return "Co-author";
+}
+
 export default async function ResearchTeamPage({
   searchParams,
 }: {
@@ -282,42 +289,66 @@ export default async function ResearchTeamPage({
       .map((project) => {
         const associations = new Map<
           string,
-          { name: string; email: string; relationships: Set<string> }
+          {
+            name: string;
+            email: string;
+            authorRole: string | null;
+            isAssistant: boolean;
+            isParticipant: boolean;
+          }
         >();
 
-        const addAssociation = (
-          person: { id: string; name: string | null; email: string },
-          relationship: string,
-        ) => {
+        const ensureAssociation = (person: {
+          id: string;
+          name: string | null;
+          email: string;
+        }) => {
           if (!memberIdSet.has(person.id)) return;
           const current =
             associations.get(person.id) ??
             ({
               name: personName(person) || person.email,
               email: displayResearchEmail(person.email),
-              relationships: new Set<string>(),
+              authorRole: null,
+              isAssistant: false,
+              isParticipant: false,
             } satisfies {
               name: string;
               email: string;
-              relationships: Set<string>;
+              authorRole: string | null;
+              isAssistant: boolean;
+              isParticipant: boolean;
             });
-          current.relationships.add(relationship);
           associations.set(person.id, current);
+          return current;
         };
 
-        for (const entry of project.authorEntries) {
-          addAssociation(entry.user, "Author");
-        }
-        for (const author of project.authors) {
-          addAssociation(author, "Author");
+        project.authorEntries.forEach((entry, index) => {
+          const current = ensureAssociation(entry.user);
+          if (current) {
+            current.authorRole = researchAuthorRoleLabel(
+              index,
+              entry.isCorresponding,
+            );
+          }
+        });
+        if (project.authorEntries.length === 0) {
+          for (const author of project.authors) {
+            const current = ensureAssociation(author);
+            if (current && !current.authorRole) {
+              current.authorRole = "Co-author";
+            }
+          }
         }
         for (const task of project.tasks) {
           for (const assignment of task.assignments) {
-            addAssociation(assignment.user, "Assistant");
+            const current = ensureAssociation(assignment.user);
+            if (current) current.isAssistant = true;
           }
         }
         for (const participant of project.teamParticipants) {
-          addAssociation(participant.user, "Participating");
+          const current = ensureAssociation(participant.user);
+          if (current) current.isParticipant = true;
         }
         const currentUserHasProjectTask = project.tasks.some((task) =>
           task.assignments.some((assignment) => assignment.userId === userId),
@@ -352,7 +383,7 @@ export default async function ResearchTeamPage({
             currentUserHasProjectTask ||
             currentUserIsParticipant,
           canManageParticipants:
-            currentUser.roles.includes(Role.ADMIN) || team.leader.id === userId,
+            team.leader.id === userId,
           participantIds: project.teamParticipants
             .filter((participant) => participant.teamId === team.id)
             .map((participant) => participant.userId),
@@ -360,8 +391,14 @@ export default async function ResearchTeamPage({
             .map((item) => ({
               name: item.name,
               email: item.email,
-              relationships: [...item.relationships].sort(),
+              relationships: item.authorRole
+                ? [item.authorRole]
+                : [
+                    item.isAssistant ? "Assistant" : "",
+                    item.isParticipant ? "Assigned member" : "",
+                  ].filter(Boolean),
             }))
+            .filter((item) => item.relationships.length > 0)
             .sort((left, right) => left.name.localeCompare(right.name)),
         };
       });
