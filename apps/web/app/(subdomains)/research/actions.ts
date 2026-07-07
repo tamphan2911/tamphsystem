@@ -3316,7 +3316,6 @@ export async function createOrganizedProject(formData: FormData) {
     memberUserIds,
     selectedContactEmailMap(formData),
   );
-
   if (
     !title ||
     !referenceCode ||
@@ -3439,9 +3438,20 @@ export async function updateOrganizedProject(
     where: { id: projectId },
     include: {
       members: {
-        select: { userId: true, isTeamLead: true, isInstructor: true },
+        select: {
+          userId: true,
+          isTeamLead: true,
+          isInstructor: true,
+          user: { select: { name: true, email: true } },
+        },
+        orderBy: { position: "asc" },
       },
-      research: { select: { researchProjectId: true } },
+      research: {
+        select: {
+          researchProjectId: true,
+          researchProject: { select: { title: true, researchCode: true } },
+        },
+      },
     },
   });
   if (!previousProject) return;
@@ -3451,19 +3461,7 @@ export async function updateOrganizedProject(
     (member) => member.userId === user.id && member.isTeamLead,
   );
   const canEditProject = isAdmin || isTeamLead;
-  let canEditResearchAssociated = canEditProject;
-  if (!canEditResearchAssociated && updateScope === "research") {
-    const assignedEditTask = await prisma.researchTask.findFirst({
-      where: {
-        organizedProjectId: projectId,
-        taskType: ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED,
-        status: ResearchTaskStatus.IN_PROGRESS,
-        assignments: { some: { userId: user.id } },
-      },
-      select: { id: true },
-    });
-    canEditResearchAssociated = Boolean(assignedEditTask);
-  }
+  const canEditResearchAssociated = isAdmin || isTeamLead;
 
   if (
     (updateScope === "research" && !canEditResearchAssociated) ||
@@ -3491,6 +3489,43 @@ export async function updateOrganizedProject(
   const memberContactEmails = await validatedSelectedContactEmails(
     memberUserIds,
     selectedContactEmailMap(formData),
+  );
+  const nextResearchRecords =
+    researchProjectIds.length > 0
+      ? await prisma.researchProject.findMany({
+          where: { id: { in: researchProjectIds } },
+          select: { id: true, title: true, researchCode: true },
+        })
+      : [];
+  const nextResearchLabelById = new Map(
+    nextResearchRecords.map((research) => [
+      research.id,
+      [research.researchCode, research.title].filter(Boolean).join(" - "),
+    ]),
+  );
+  const previousResearchLabels = previousProject.research.map((item) =>
+    [item.researchProject.researchCode, item.researchProject.title]
+      .filter(Boolean)
+      .join(" - "),
+  );
+  const nextResearchLabels = researchProjectIds.map(
+    (researchId) => nextResearchLabelById.get(researchId) ?? researchId,
+  );
+  const previousMemberLabels = previousProject.members.map(
+    (member) => member.user.name || member.user.email,
+  );
+  const nextMemberRecords =
+    memberUserIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: memberUserIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : [];
+  const nextMemberLabelById = new Map(
+    nextMemberRecords.map((member) => [member.id, member.name || member.email]),
+  );
+  const nextMemberLabels = memberUserIds.map(
+    (memberId) => nextMemberLabelById.get(memberId) ?? memberId,
   );
 
   if (
@@ -3587,6 +3622,40 @@ export async function updateOrganizedProject(
   const durationChanged =
     previousProject.durationMonths !== durationMonths ||
     previousProject.startDate?.getTime() !== startDate.getTime();
+  const updateDetail = auditDetail([
+    auditChange("Title", previousProject.title, title),
+    auditChange("Project ID", previousProject.referenceCode, referenceCode),
+    auditChange("Funding institution", previousProject.organizer, fundingInstitution?.name),
+    auditChange("Status", previousProject.status, formData.get("status")),
+    auditChange("Project type", previousProject.projectType, projectType),
+    auditChange(
+      "Financial",
+      previousProject.financialClaimStatus,
+      financialClaimStatus,
+    ),
+    auditChange(
+      "Funding amount",
+      auditMoney(
+        previousProject.fundingAmount?.toString() ?? null,
+        previousProject.fundingCurrency,
+      ),
+      auditMoney(
+        financialClaimStatus === OrganizedProjectFinancialClaimStatus.NONE
+          ? null
+          : numericStringFromForm(formData.get("fundingAmount")),
+        enumValue(CurrencyCode, formData.get("fundingCurrency")) ??
+          CurrencyCode.VND,
+      ),
+    ),
+    auditChange("Start date", previousProject.startDate, startDate),
+    auditChange("Duration months", previousProject.durationMonths, durationMonths),
+    auditChange("Members", previousMemberLabels, nextMemberLabels),
+    auditChange("Associated research", previousResearchLabels, nextResearchLabels),
+    auditChange("Required products", previousProject.requiredProducts, linesFromForm(formData.get("requiredProducts"))),
+    auditChange("Shared folder", previousProject.sharedFolderUrl, formData.get("sharedFolderUrl")),
+    auditChange("Description", previousProject.description, formData.get("description")),
+    auditChange("Note", previousProject.note, formData.get("note")),
+  ]);
 
   const changedParts = [
     statusChanged ? "status" : "",
@@ -3594,9 +3663,25 @@ export async function updateOrganizedProject(
     memberChanged ? "members" : "",
     researchChanged ? "associated research" : "",
     durationChanged ? "duration" : "",
+    updateDetail ? "information" : "",
   ].filter(Boolean);
 
   if (changedParts.length > 0) {
+    await prisma.researchChangeLog.create({
+      data: {
+        entityType: "organizedProject",
+        entityId: projectId,
+        area:
+          updateScope === "research"
+            ? "Research associated"
+            : updateScope === "members"
+              ? "Members"
+              : "Project information",
+        action: "Updated",
+        detail: updateDetail || `Changed: ${changedParts.join(", ")}.`,
+        actorId: user.id,
+      },
+    });
     await notifyUsers({
       userIds: [...memberUserIds, ...(await adminUserIds())],
       type: researchChanged
@@ -3629,6 +3714,7 @@ export async function updateOrganizedProjectProducts(
     select: {
       title: true,
       requiredProducts: true,
+      completedProducts: true,
       members: { select: { userId: true, isTeamLead: true } },
     },
   });
@@ -3656,6 +3742,22 @@ export async function updateOrganizedProjectProducts(
       status: isComplete ? OrganizedProjectStatus.COMPLETED : undefined,
     },
   });
+  const productDetail = auditDetail([
+    auditChange("Completed products", project.completedProducts, completedProducts),
+    isComplete ? "Project status: Completed" : null,
+  ]);
+  if (productDetail) {
+    await prisma.researchChangeLog.create({
+      data: {
+        entityType: "organizedProject",
+        entityId: projectId,
+        area: "Required products",
+        action: "Updated",
+        detail: productDetail,
+        actorId: user.id,
+      },
+    });
+  }
 
   if (isComplete) {
     await notifyUsers({
@@ -3689,24 +3791,9 @@ export async function createResearchForOrganizedProject(
     },
   });
   if (!organizedProject) return { ok: false, reason: "PROJECT_NOT_FOUND" };
-  const canEdit =
-    isResearchAdminRole(user.roles) ||
-    organizedProject.members.some(
-      (member) => member.userId === user.id && member.isTeamLead,
-    );
-  const assignedEditTask = canEdit
-    ? null
-    : await prisma.researchTask.findFirst({
-        where: {
-          organizedProjectId,
-          taskType: ResearchTaskType.PROJECT_RESEARCH_ASSOCIATED,
-          status: ResearchTaskStatus.IN_PROGRESS,
-          assignments: { some: { userId: user.id } },
-        },
-        select: { id: true },
-      });
-  if (!canEdit && !assignedEditTask)
+  if (!isResearchAdminRole(user.roles)) {
     return { ok: false, reason: "UNAUTHORIZED" };
+  }
 
   const title = optionalString(formData.get("title"));
   const authorIds = orderedUniqueStrings(formData.getAll("authorUserIds"));

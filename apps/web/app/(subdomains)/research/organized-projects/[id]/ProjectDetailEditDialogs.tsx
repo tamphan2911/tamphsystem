@@ -16,7 +16,10 @@ import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePick
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
 import { ResearchNumberInput } from "@/sites/research/components/ResearchNumberInput";
-import { ResearchButton } from "@/sites/research/components/ResearchPrimitives";
+import {
+  IconHint,
+  ResearchButton,
+} from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { currencyOptions } from "@/sites/research/lib/currency";
 import { AuthorsPicker } from "../../projects/[id]/AuthorsPicker";
@@ -213,14 +216,16 @@ function EditIconButton({
   className?: string;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className={`research-clickable-icon research-allow-transform inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none focus-visible:ring-0 ${className}`}
-    >
-      {icon ?? <Pencil className="h-4 w-4" />}
-    </button>
+    <IconHint label={label} position="bottom">
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={label}
+        className={`research-clickable-icon research-allow-transform inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#1F7180] shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-200 ${className}`}
+      >
+        {icon ?? <Pencil className="h-4 w-4" />}
+      </button>
+    </IconHint>
   );
 }
 

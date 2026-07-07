@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   CircleOff,
   Clock3,
+  Fingerprint,
   FileSearch,
   FlaskConical,
   FolderOpen,
@@ -52,6 +53,12 @@ import {
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
 import { IconHint } from "@/sites/research/components/ResearchPrimitives";
+import { AuthorBioButton } from "../../projects/[id]/AuthorBioButton";
+import {
+  ResearchChangeLogTable,
+  type ResearchChangeLogRow,
+} from "@/sites/research/components/ResearchChangeLogTable";
+import { ProjectDescriptionPreview } from "./ProjectDescriptionPreview";
 
 export const dynamic = "force-dynamic";
 
@@ -427,12 +434,26 @@ export default async function OrganizedProjectDetailPage({
           email: true,
           additionalEmails: true,
           affiliation: true,
+          orcid: true,
+          bio: true,
           roles: true,
         },
         orderBy: [{ name: "asc" }, { email: "asc" }],
       }),
       prisma.researchProject.findMany({
-        select: { id: true, researchCode: true, title: true, stage: true },
+        select: {
+          id: true,
+          researchCode: true,
+          title: true,
+          stage: true,
+          authors: { select: { id: true } },
+          authorEntries: { select: { userId: true } },
+          tasks: {
+            select: {
+              assignments: { select: { userId: true } },
+            },
+          },
+        },
         orderBy: { updatedAt: "desc" },
       }),
       prisma.fundingInstitution.findMany({
@@ -474,6 +495,8 @@ export default async function OrganizedProjectDetailPage({
     additionalEmails: member.user.additionalEmails,
     selectedEmail: member.selectedEmail ?? member.user.email,
     affiliation: member.user.affiliation,
+    orcid: member.user.orcid ?? "",
+    bio: member.user.bio ?? "",
     role: member.user.roles.join(", "),
     isTeamLead: member.isTeamLead,
     isInstructor: member.isInstructor,
@@ -500,14 +523,39 @@ export default async function OrganizedProjectDetailPage({
     notFound();
   }
   if (!canViewProject) notFound();
-  const canEditResearchAssociated =
-    canEditProject || Boolean(assignedResearchEditTask);
-  const mappedResearchOptions = researchOptions.map((research) => ({
-    id: research.id,
-    researchCode: research.researchCode ?? "",
-    title: research.title,
-    stage: research.stage,
-  }));
+  const isProjectTeamLead = project.members.some(
+    (member) => member.userId === currentUserId && member.isTeamLead,
+  );
+  const canCreateResearchAssociated = isRootAdmin;
+  const canLinkResearchAssociated = isRootAdmin || isProjectTeamLead;
+  const canViewChangeLog = isRootAdmin || isProjectTeamLead;
+  const auditLogs = canViewChangeLog
+    ? await prisma.researchChangeLog.findMany({
+        where: { entityType: "organizedProject", entityId: project.id },
+        include: { actor: { select: { name: true, email: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+      })
+    : [];
+  const mappedResearchOptions = researchOptions
+    .filter((research) => {
+      if (isRootAdmin) return true;
+      return (
+        research.authors.some((author) => author.id === currentUserId) ||
+        research.authorEntries.some((entry) => entry.userId === currentUserId) ||
+        research.tasks.some((task) =>
+          task.assignments.some(
+            (assignment) => assignment.userId === currentUserId,
+          ),
+        )
+      );
+    })
+    .map((research) => ({
+      id: research.id,
+      researchCode: research.researchCode ?? "",
+      title: research.title,
+      stage: research.stage,
+    }));
   const userOptions = users.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -556,6 +604,16 @@ export default async function OrganizedProjectDetailPage({
       ? ` (${durationLabel(project.durationMonths)})`
       : ""
   }`;
+  const projectChangeRows: ResearchChangeLogRow[] = auditLogs.map((log) => ({
+    id: `project-audit-${log.id}`,
+    changedAt: log.createdAt.toISOString(),
+    area: log.area,
+    action: log.action,
+    actor: log.actor
+      ? displayResearchPersonName(log.actor) || log.actor.email
+      : "",
+    detail: log.detail,
+  }));
 
   return (
     <>
@@ -597,10 +655,10 @@ export default async function OrganizedProjectDetailPage({
       </ResearchPageHeaderPortal>
 
       <div className="mx-auto max-w-7xl space-y-5">
-        <header className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
+        <header className="border-b border-[#D8D0C2] pb-5 dark:border-[#444444]">
           <div className="min-w-0">
             <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-[#B0B0B0]">
-              <span className="font-mono text-xs font-bold uppercase tracking-wide text-slate-400">
+              <span className="font-mono text-xs font-normal uppercase tracking-wide text-[#667085] dark:text-slate-400">
                 {project.referenceCode || project.id.slice(0, 8).toUpperCase()}
               </span>
               <span className="text-[#777777]">|</span>
@@ -617,27 +675,25 @@ export default async function OrganizedProjectDetailPage({
                 </span>
               </IconHint>
               <IconHint label={`Project type: ${projectType.label}`}>
-                <span className="research-task-icon-motion inline-flex h-7 w-7 items-center justify-center text-[#B0B0B0] hover:text-[#A8DADC]">
+                <span className="research-task-icon-motion inline-flex h-7 w-7 items-center justify-center text-[#1F7180] dark:text-[#A8DADC]">
                   <ProjectTypeIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
               </IconHint>
               {fundingAmountLabel && (
-                <span className="text-sm font-normal text-[#B0B0B0]">
+                <span className="text-sm font-normal text-[#667085] dark:text-[#B0B0B0]">
                   ({fundingAmountLabel})
                 </span>
               )}
               <span className="text-[#777777]">|</span>
-              <span className="text-sm font-normal text-[#B0B0B0]">
+              <span className="text-sm font-normal text-[#667085] dark:text-[#B0B0B0]">
                 {projectTimeLabel}
               </span>
             </div>
             {project.description && (
-              <p className="mt-1 max-w-4xl text-sm leading-6 text-[#B0B0B0]">
-                {project.description}
-              </p>
+              <ProjectDescriptionPreview description={project.description} />
             )}
             {project.note && (
-              <p className="mt-1 max-w-4xl text-xs leading-5 text-[#777777]">
+              <p className="mt-1 max-w-4xl text-xs leading-5 text-[#667085] dark:text-[#777777]">
                 {project.note}
               </p>
             )}
@@ -671,6 +727,12 @@ export default async function OrganizedProjectDetailPage({
                       <p className="min-w-0 text-sm font-medium text-[#E4E4E4]">
                         {memberName(member)}
                       </p>
+                      {member.bio ? (
+                        <AuthorBioButton
+                          authorName={memberName(member)}
+                          bio={member.bio}
+                        />
+                      ) : null}
                       <ProjectMemberRoleBadges
                         isTeamLead={member.isTeamLead}
                         isInstructor={member.isInstructor}
@@ -684,6 +746,15 @@ export default async function OrganizedProjectDetailPage({
                         )}
                       </span>
                     </p>
+                    {member.orcid ? (
+                      <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#667085] dark:text-[#B0B0B0]">
+                        <Fingerprint
+                          className="research-task-icon-motion h-3 w-3 flex-none text-[#1F7180] dark:text-[#A8DADC]"
+                          aria-hidden="true"
+                        />
+                        <span className="truncate">{member.orcid}</span>
+                      </p>
+                    ) : null}
                     <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs leading-5 text-[#B0B0B0]">
                       <Building2 className="research-task-icon-motion mt-1 h-3 w-3 flex-none text-[#B39CD0]" />
                       <span className="min-w-0 whitespace-normal break-words lg:line-clamp-2">
@@ -712,7 +783,7 @@ export default async function OrganizedProjectDetailPage({
                     href={project.sharedFolderUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="research-task-icon-motion inline-flex h-7 w-7 items-center justify-center text-[#A8DADC] transition-colors duration-180 hover:text-[#C9F0F2] active:text-[#88C8CB]"
+                    className="research-clickable-icon research-allow-transform inline-flex h-7 w-7 items-center justify-center border-0 bg-transparent text-[#1F7180] shadow-none outline-none transition-[color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-200"
                   >
                     <FolderOpen className="h-4 w-4" aria-hidden="true" />
                     <span className="sr-only">Open project folder</span>
@@ -736,14 +807,14 @@ export default async function OrganizedProjectDetailPage({
             <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
               Research associated
             </h2>
-            {canEditResearchAssociated && (
+            {canCreateResearchAssociated && (
               <CreateProjectResearchDialog
                 action={createProjectResearch}
                 users={userOptions}
                 members={memberDefaults}
               />
             )}
-            {canEditResearchAssociated && (
+            {canLinkResearchAssociated && (
               <ProjectResearchEditDialog
                 action={saveProject}
                 info={projectInfo}
@@ -837,6 +908,9 @@ export default async function OrganizedProjectDetailPage({
             </table>
           </div>
         </section>
+        {canViewChangeLog ? (
+          <ResearchChangeLogTable rows={projectChangeRows} />
+        ) : null}
       </div>
     </>
   );
