@@ -11,6 +11,7 @@ import {
   FileSearch,
   FileText,
   FolderGit2,
+  Sparkles,
   Trash2,
   XCircle,
 } from "lucide-react";
@@ -110,6 +111,9 @@ function statusClass(status: string) {
   if (status === "DECLINED") {
     return "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900";
   }
+  if (status === "NEW") {
+    return "bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-100 dark:bg-fuchsia-950/40 dark:text-fuchsia-300 dark:ring-fuchsia-900";
+  }
   return "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900";
 }
 
@@ -117,6 +121,7 @@ function statusIcon(status: string) {
   if (status === "ACCEPTED") return CheckCircle2;
   if (status === "REVIEWING") return FileSearch;
   if (status === "DECLINED") return XCircle;
+  if (status === "NEW") return Sparkles;
   return FolderGit2;
 }
 
@@ -408,7 +413,7 @@ export function ProposalsTable({
                 key={proposal.id}
                 className={`group align-top transition ${
                   proposal.status === "NEW"
-                    ? "bg-amber-50/70 ring-1 ring-inset ring-amber-100 hover:bg-amber-50 dark:bg-amber-950/20 dark:ring-amber-900/60 dark:hover:bg-amber-950/30"
+                    ? "bg-fuchsia-50/60 ring-1 ring-inset ring-fuchsia-100 hover:bg-fuchsia-50 dark:bg-fuchsia-950/20 dark:ring-fuchsia-900/60 dark:hover:bg-fuchsia-950/30"
                     : "hover:bg-slate-50 dark:hover:bg-slate-800/40"
                 }`}
               >

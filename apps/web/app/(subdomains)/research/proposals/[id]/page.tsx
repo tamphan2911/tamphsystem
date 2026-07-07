@@ -16,6 +16,7 @@ import {
   Pencil,
   Phone,
   ShieldCheck,
+  Sparkles,
   UserRound,
   XCircle,
 } from "lucide-react";
@@ -125,8 +126,8 @@ function statusMeta(status: ProposalStatus) {
     };
   }
   return {
-    icon: FolderGit2,
-    className: "text-amber-700 dark:text-amber-300",
+    icon: Sparkles,
+    className: "text-fuchsia-700 dark:text-fuchsia-300",
   };
 }
 
