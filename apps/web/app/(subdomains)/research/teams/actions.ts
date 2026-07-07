@@ -161,6 +161,43 @@ export async function updateResearchAssistantTeam(
   revalidatePath("/team");
 }
 
+export async function updateResearchAssistantTeamName(
+  teamId: string,
+  formData: FormData,
+) {
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) redirect("/login");
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: true },
+  });
+  if (!user) redirect("/401");
+
+  const team = await prisma.researchAssistantTeam.findUnique({
+    where: { id: teamId },
+    select: { id: true, leaderId: true },
+  });
+  if (!team) throw new Error("Team was not found.");
+
+  const canRename = user.roles.includes(Role.ADMIN) || team.leaderId === userId;
+  if (!canRename) redirect("/401");
+
+  const name = textValue(formData.get("name"));
+  if (!name) throw new Error("Team name is required.");
+
+  const updatedTeam = await prisma.researchAssistantTeam.update({
+    where: { id: teamId },
+    data: { name: name.slice(0, 160) },
+    select: { name: true },
+  });
+
+  revalidatePath("/teams");
+  revalidatePath("/team");
+  return { name: updatedTeam.name };
+}
+
 export async function updateResearchTeamParticipants(
   projectId: string,
   formData: FormData,

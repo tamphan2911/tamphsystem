@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   BadgeCheck,
@@ -16,6 +17,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { ResearchModal } from "@/sites/research/components/ResearchModal";
+import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { usePersistentTableValue } from "@/sites/research/components/TableControls";
 import {
@@ -162,19 +164,29 @@ function isTaskInPeriod(
 export function TeamWorkspaceClient({
   teams,
   canOpenMemberProfiles,
+  canManageTeams,
   currentUserId,
   initialTeamId,
+  updateTeamNameAction,
   updateParticipantsAction,
 }: {
   teams: TeamWorkspace[];
   canOpenMemberProfiles: boolean;
+  canManageTeams: boolean;
   currentUserId: string;
   initialTeamId?: string;
+  updateTeamNameAction: (
+    teamId: string,
+    formData: FormData,
+  ) => Promise<{ name: string } | void>;
   updateParticipantsAction: (
     projectId: string,
     formData: FormData,
   ) => Promise<unknown>;
 }) {
+  const [renamedTeamNames, setRenamedTeamNames] = useState<
+    Record<string, string>
+  >({});
   const [activeTeamId, setActiveTeamId] = usePersistentTableValue(
     "team-workspace:team",
     initialTeamId || teams[0]?.id || "",
@@ -197,8 +209,13 @@ export function TeamWorkspaceClient({
 
   const activeTeam =
     teams.find((team) => team.id === activeTeamId) ?? teams[0] ?? null;
+  const activeTeamName = activeTeam
+    ? renamedTeamNames[activeTeam.id] ?? activeTeam.name
+    : "";
   const activeTeamCanOpenProfiles =
     canOpenMemberProfiles || activeTeam?.leaderId === currentUserId;
+  const activeTeamCanRename =
+    canManageTeams || activeTeam?.leaderId === currentUserId;
 
   useEffect(() => {
     if (!initialTeamId) return;
@@ -272,6 +289,37 @@ export function TeamWorkspaceClient({
 
   return (
     <section className="space-y-4">
+      <ResearchPageHeaderPortal>
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="min-w-0 truncate text-base font-normal text-slate-900 dark:text-[#E4E4E4]">
+              {activeTeamName}
+            </p>
+            {activeTeamCanRename ? (
+              <TeamNameEditDialog
+                teamId={activeTeam.id}
+                teamName={activeTeamName}
+                action={updateTeamNameAction}
+                onRenamed={(name) =>
+                  setRenamedTeamNames((current) => ({
+                    ...current,
+                    [activeTeam.id]: name,
+                  }))
+                }
+              />
+            ) : null}
+          </div>
+          {canManageTeams ? (
+            <Link
+              href="/teams"
+              className="research-allow-transform inline-flex h-10 items-center justify-center gap-2 border border-[#1F7180] bg-transparent px-4 text-sm font-normal text-[#1F7180] shadow-sm transition hover:-translate-y-0.5 hover:border-[#155864] hover:bg-[#E9F8FA] hover:text-[#155864] active:translate-y-0 active:scale-[0.98] dark:border-[#A8DADC] dark:text-[#A8DADC] dark:hover:border-[#C9F0F2] dark:hover:bg-[#303030] dark:hover:text-[#C9F0F2]"
+            >
+              <UsersRound className="h-4 w-4" />
+              Manage teams
+            </Link>
+          ) : null}
+        </div>
+      </ResearchPageHeaderPortal>
       {teams.length > 1 ? (
         <div className="journal-detail-tabs grid w-full border border-[#E2D9CC] bg-[#F5F2EC] p-1 text-center dark:border-[#444444] dark:bg-[#242424] sm:grid-cols-3">
           {teams.map((team) => (
@@ -285,7 +333,7 @@ export function TeamWorkspaceClient({
             >
               <span className="relative z-10 flex items-center justify-between gap-2">
                 <span className="line-clamp-1 text-[11px] font-normal uppercase tracking-wide">
-                  {team.name}
+                  {renamedTeamNames[team.id] ?? team.name}
                 </span>
                 <span className="text-sm font-normal">
                   {team.members.length}
@@ -590,6 +638,101 @@ function ResearchTable({
             </ResearchButton>
           </div>
         </div>
+      </ResearchModal>
+    </>
+  );
+}
+
+function TeamNameEditDialog({
+  teamId,
+  teamName,
+  action,
+  onRenamed,
+}: {
+  teamId: string;
+  teamName: string;
+  action: (teamId: string, formData: FormData) => Promise<{ name: string } | void>;
+  onRenamed: (name: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const toast = useResearchToast();
+
+  return (
+    <>
+      <IconHint label="Edit team name" position="bottom">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="research-allow-transform inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-[#1F7180] transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-200"
+          aria-label="Edit team name"
+        >
+          <Pencil className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </IconHint>
+      <ResearchModal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Edit team name"
+        description="Rename this assistant team. The new name will appear in the team workspace and assigned research."
+        icon={<Pencil className="h-5 w-5" />}
+        maxWidth="max-w-xl"
+        headerActions={
+          <ResearchButton form={`rename-team-${teamId}`} disabled={isPending}>
+            <CheckCircle2 className="h-4 w-4" />
+            Save name
+          </ResearchButton>
+        }
+      >
+        <form
+          id={`rename-team-${teamId}`}
+          className="space-y-4 px-6 py-5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            startTransition(async () => {
+              try {
+                const result = await action(teamId, formData);
+                const nextName =
+                  result?.name ||
+                  String(formData.get("name") ?? "")
+                    .replace(/\s+/g, " ")
+                    .trim();
+                if (nextName) onRenamed(nextName);
+                setOpen(false);
+                router.refresh();
+                toast.showSuccess({
+                  title: "Team name updated",
+                  detail:
+                    "The team header and team workspace now use the new name.",
+                });
+              } catch (error) {
+                toast.showError({
+                  title: "Team name could not be updated",
+                  detail:
+                    error instanceof Error
+                      ? error.message
+                      : "Please check the team name and try again.",
+                });
+              }
+            });
+          }}
+        >
+          <label className="grid gap-2 text-sm font-normal text-[#1F2937] dark:text-[#E4E4E4]">
+            <span>
+              Team name <span className="font-normal text-[#9A3412]">*</span>
+            </span>
+            <input
+              name="name"
+              defaultValue={teamName}
+              required
+              maxLength={160}
+              className="h-12 border border-[#D8D0C2] bg-[#FFFDF8] px-3 text-sm font-normal text-[#1F2937] outline-none transition placeholder:text-[#9AA3B2] hover:border-[#BCAED4] focus:border-[#1F7180] dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:placeholder:text-[#777777] dark:hover:border-[#5A5A5A] dark:focus:border-[#A8DADC]"
+              placeholder="Team name (*)"
+            />
+          </label>
+        </form>
       </ResearchModal>
     </>
   );

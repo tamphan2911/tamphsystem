@@ -9,7 +9,10 @@ import {
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
 import { TeamWorkspaceClient, type TeamWorkspace } from "./TeamWorkspaceClient";
-import { updateResearchTeamParticipants } from "../teams/actions";
+import {
+  updateResearchAssistantTeamName,
+  updateResearchTeamParticipants,
+} from "../teams/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -457,30 +460,34 @@ export default async function ResearchTeamPage({
 
   return (
     <>
-      <ResearchPageHeaderPortal>
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
-          <p className="min-w-0 truncate text-base font-normal text-slate-900 dark:text-[#E4E4E4]">
-            {headerTitle}
-          </p>
-          {currentUser.roles.includes(Role.ADMIN) ? (
-            <Link
-              href="/teams"
-              className="research-allow-transform inline-flex h-10 items-center justify-center gap-2 border border-[#1F7180] bg-transparent px-4 text-sm font-normal text-[#1F7180] shadow-sm transition hover:-translate-y-0.5 hover:border-[#155864] hover:bg-[#E9F8FA] hover:text-[#155864] active:translate-y-0 active:scale-[0.98] dark:border-[#A8DADC] dark:text-[#A8DADC] dark:hover:border-[#C9F0F2] dark:hover:bg-[#303030] dark:hover:text-[#C9F0F2]"
-            >
-              <UsersRound className="h-4 w-4" />
-              Manage teams
-            </Link>
-          ) : null}
-        </div>
-      </ResearchPageHeaderPortal>
+      {teams.length === 0 ? (
+        <ResearchPageHeaderPortal>
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
+            <p className="min-w-0 truncate text-base font-normal text-slate-900 dark:text-[#E4E4E4]">
+              {headerTitle}
+            </p>
+            {currentUser.roles.includes(Role.ADMIN) ? (
+              <Link
+                href="/teams"
+                className="research-allow-transform inline-flex h-10 items-center justify-center gap-2 border border-[#1F7180] bg-transparent px-4 text-sm font-normal text-[#1F7180] shadow-sm transition hover:-translate-y-0.5 hover:border-[#155864] hover:bg-[#E9F8FA] hover:text-[#155864] active:translate-y-0 active:scale-[0.98] dark:border-[#A8DADC] dark:text-[#A8DADC] dark:hover:border-[#C9F0F2] dark:hover:bg-[#303030] dark:hover:text-[#C9F0F2]"
+              >
+                <UsersRound className="h-4 w-4" />
+                Manage teams
+              </Link>
+            ) : null}
+          </div>
+        </ResearchPageHeaderPortal>
+      ) : null}
 
       <div className="mx-auto max-w-7xl space-y-4">
         {teams.length > 0 ? (
           <TeamWorkspaceClient
             teams={teams}
             canOpenMemberProfiles={currentUser.roles.includes(Role.ADMIN)}
+            canManageTeams={currentUser.roles.includes(Role.ADMIN)}
             currentUserId={currentUser.id}
             initialTeamId={linkedTeamId}
+            updateTeamNameAction={updateResearchAssistantTeamName}
             updateParticipantsAction={updateResearchTeamParticipants}
           />
         ) : (
