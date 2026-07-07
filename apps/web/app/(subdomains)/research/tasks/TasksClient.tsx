@@ -1053,6 +1053,9 @@ export function TasksClient({
     checkerFilterValues,
     isAdmin,
   ]);
+  const statusParam = statuses.join(",");
+  const taskTypeParam = taskTypes.join(",");
+  const checkerParam = checkerIds.join(",");
   const loadTasks = useCallback(
     async (options?: { showLoading?: boolean }) => {
       const requestId = loadRequestIdRef.current + 1;
@@ -1065,9 +1068,9 @@ export function TasksClient({
         const params = new URLSearchParams();
         if (query.trim()) params.set("q", query.trim());
         params.set("scope", activeHeaderTab);
-        if (statuses.length > 0) params.set("status", statuses.join(","));
-        if (taskTypes.length > 0) params.set("type", taskTypes.join(","));
-        if (checkerIds.length > 0) params.set("checker", checkerIds.join(","));
+        if (statusParam) params.set("status", statusParam);
+        if (taskTypeParam) params.set("type", taskTypeParam);
+        if (checkerParam) params.set("checker", checkerParam);
         if (checkerNeedsActionOnly) params.set("checkerNeedsAction", "1");
         if (timeSort !== "none") params.set("timeSort", timeSort);
         if (page > 1) params.set("page", String(page));
@@ -1105,13 +1108,13 @@ export function TasksClient({
     },
     [
       activeHeaderTab,
-      checkerIds,
+      checkerParam,
       checkerNeedsActionOnly,
       page,
       query,
       setPageValue,
-      statuses,
-      taskTypes,
+      statusParam,
+      taskTypeParam,
       timeSort,
     ],
   );
