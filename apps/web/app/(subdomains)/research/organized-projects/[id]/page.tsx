@@ -500,6 +500,7 @@ export default async function OrganizedProjectDetailPage({
     role: member.user.roles.join(", "),
     isTeamLead: member.isTeamLead,
     isInstructor: member.isInstructor,
+    folderShared: member.folderShared,
   }));
   const researchDefaults = project.research.map(({ researchProject }) => ({
     id: researchProject.id,
@@ -529,6 +530,14 @@ export default async function OrganizedProjectDetailPage({
   const canCreateResearchAssociated = isRootAdmin;
   const canLinkResearchAssociated = isRootAdmin || isProjectTeamLead;
   const canViewChangeLog = isRootAdmin || isProjectTeamLead;
+  const currentProjectMember = project.members.find(
+    (member) => member.userId === currentUserId,
+  );
+  const canOpenProjectFolder =
+    Boolean(project.sharedFolderUrl) &&
+    (isRootAdmin ||
+      Boolean(currentProjectMember?.isTeamLead) ||
+      Boolean(currentProjectMember?.folderShared));
   const auditLogs = canViewChangeLog
     ? await prisma.researchChangeLog.findMany({
         where: { entityType: "organizedProject", entityId: project.id },
@@ -624,13 +633,26 @@ export default async function OrganizedProjectDetailPage({
               <h1 className="min-w-0 max-w-full whitespace-normal break-words text-[15px] font-normal leading-5 text-[#E4E4E4]">
                 {project.title}
               </h1>
-              <IconHint label={`Status: ${status.label}`}>
+              <IconHint label={`Status: ${status.label}`} position="bottom">
                 <span
                   className={`research-task-icon-motion inline-flex h-7 w-7 items-center justify-center ${status.className}`}
                 >
                   <StatusIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
               </IconHint>
+              {canOpenProjectFolder ? (
+                <IconHint label="Open project folder" position="bottom">
+                  <Link
+                    href={project.sharedFolderUrl ?? "#"}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="research-clickable-icon research-allow-transform inline-flex h-7 w-7 items-center justify-center border-0 bg-transparent text-[#1F7180] shadow-none outline-none transition-[color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-200"
+                  >
+                    <FolderOpen className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">Open project folder</span>
+                  </Link>
+                </IconHint>
+              ) : null}
               {canEditProject && (
                 <ProjectInfoEditDialog
                   action={saveProject}
@@ -667,14 +689,14 @@ export default async function OrganizedProjectDetailPage({
                   project.organizer ||
                   "No funding institution"}
               </span>
-              <IconHint label={`Financial: ${claim.label}`}>
+              <IconHint label={`Financial: ${claim.label}`} position="bottom">
                 <span
                   className={`research-task-icon-motion inline-flex h-7 w-7 items-center justify-center ${claim.className}`}
                 >
                   <ClaimIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
               </IconHint>
-              <IconHint label={`Project type: ${projectType.label}`}>
+              <IconHint label={`Project type: ${projectType.label}`} position="bottom">
                 <span className="research-task-icon-motion inline-flex h-7 w-7 items-center justify-center text-[#1F7180] dark:text-[#A8DADC]">
                   <ProjectTypeIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
@@ -738,12 +760,18 @@ export default async function OrganizedProjectDetailPage({
                         isInstructor={member.isInstructor}
                       />
                     </div>
-                    <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#777777]">
+                    <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
                       <Mail className="research-task-icon-motion h-3 w-3 flex-none text-[#A8DADC]" />
                       <span className="truncate">
                         {displayResearchEmail(
                           member.selectedEmail || member.email,
                         )}
+                      </span>
+                    </p>
+                    <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
+                      <Building2 className="research-task-icon-motion mt-1 h-3 w-3 flex-none text-[#B39CD0]" />
+                      <span className="min-w-0 whitespace-normal break-words lg:line-clamp-2">
+                        {member.affiliation || "No affiliation recorded"}
                       </span>
                     </p>
                     {member.orcid ? (
@@ -755,12 +783,15 @@ export default async function OrganizedProjectDetailPage({
                         <span className="truncate">{member.orcid}</span>
                       </p>
                     ) : null}
-                    <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs leading-5 text-[#B0B0B0]">
-                      <Building2 className="research-task-icon-motion mt-1 h-3 w-3 flex-none text-[#B39CD0]" />
-                      <span className="min-w-0 whitespace-normal break-words lg:line-clamp-2">
-                        {member.affiliation || "No affiliation recorded"}
-                      </span>
-                    </p>
+                    {member.folderShared ? (
+                      <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-emerald-700 dark:text-emerald-300">
+                        <FolderOpen
+                          className="research-task-icon-motion h-3 w-3 flex-none"
+                          aria-hidden="true"
+                        />
+                        <span className="truncate">Project folder shared</span>
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               ))}
@@ -773,25 +804,7 @@ export default async function OrganizedProjectDetailPage({
           </section>
 
           <section className="border border-[#444444] bg-[#2C2C2C] p-5 shadow-none">
-            <div className="mb-4 flex items-center gap-2">
-              <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
-                Project folder
-              </h2>
-              {project.sharedFolderUrl ? (
-                <IconHint label="Open project folder">
-                  <Link
-                    href={project.sharedFolderUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="research-clickable-icon research-allow-transform inline-flex h-7 w-7 items-center justify-center border-0 bg-transparent text-[#1F7180] shadow-none outline-none transition-[color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:text-[#155864] hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 dark:text-[#A8DADC] dark:hover:text-cyan-200"
-                  >
-                    <FolderOpen className="h-4 w-4" aria-hidden="true" />
-                    <span className="sr-only">Open project folder</span>
-                  </Link>
-                </IconHint>
-              ) : null}
-            </div>
-            <div className="mt-5 border-t border-[#444444] pt-5">
+            <div>
               <ProjectProductsForm
                 requiredProducts={project.requiredProducts}
                 completedProducts={project.completedProducts}

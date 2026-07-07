@@ -6,6 +6,7 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
+  FolderCheck,
   GraduationCap,
   Mail,
   Search,
@@ -21,6 +22,7 @@ import {
 } from "@/sites/research/components/ResearchSearchPicker";
 import { FloatingDropdownPortal } from "@/sites/research/components/FloatingDropdownPortal";
 import {
+  IconHint,
   researchDropdownItemClass,
   researchDropdownItemIdleClass,
   researchDropdownPanelClass,
@@ -58,6 +60,7 @@ export type ResearchResultOption = {
 export type SelectedProjectMember = AuthorOption & {
   isTeamLead: boolean;
   isInstructor: boolean;
+  folderShared?: boolean;
 };
 
 function userName(user: AuthorOption) {
@@ -353,6 +356,7 @@ export function ProjectMembersPicker({
         selectedEmail: user.selectedEmail || user.email,
         isTeamLead: current.length === 0,
         isInstructor: false,
+        folderShared: false,
       },
     ]);
     setQuery("");
@@ -395,6 +399,16 @@ export function ProjectMembersPicker({
       current.map((member) =>
         member.id === userId
           ? { ...member, isInstructor: !member.isInstructor }
+          : member,
+      ),
+    );
+  }
+
+  function toggleFolderShared(userId: string) {
+    setMembers((current) =>
+      current.map((member) =>
+        member.id === userId
+          ? { ...member, folderShared: !member.folderShared }
           : member,
       ),
     );
@@ -454,6 +468,16 @@ export function ProjectMembersPicker({
             key={`instructor-${member.id}`}
             type="hidden"
             name="instructorUserIds"
+            value={member.id}
+          />
+        ))}
+      {members
+        .filter((member) => member.folderShared)
+        .map((member) => (
+          <input
+            key={`folder-shared-${member.id}`}
+            type="hidden"
+            name="folderSharedMemberIds"
             value={member.id}
           />
         ))}
@@ -575,6 +599,31 @@ export function ProjectMembersPicker({
                   />
                 </p>
               </div>
+              <IconHint
+                label={
+                  member.folderShared
+                    ? "Project folder shared"
+                    : "Mark project folder as shared"
+                }
+                position="bottom"
+              >
+                <button
+                  type="button"
+                  aria-label={
+                    member.folderShared
+                      ? `${userName(member)} has access to the project folder`
+                      : `Mark project folder shared with ${userName(member)}`
+                  }
+                  onClick={() => toggleFolderShared(member.id)}
+                  className={`research-allow-transform cursor-pointer border-0 bg-transparent p-2 transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent active:translate-y-0 active:scale-95 ${
+                    member.folderShared
+                      ? "text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
+                      : "text-[#777777] hover:text-emerald-700 dark:hover:text-emerald-300"
+                  }`}
+                >
+                  <FolderCheck className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </IconHint>
               <button
                 type="button"
                 aria-label={`Set ${userName(member)} as team lead`}
@@ -665,7 +714,7 @@ export function ProjectResearchPicker({
           value={research.id}
         />
       ))}
-      <div className="border border-[#444444] bg-[#2C2C2C] p-3 shadow-none">
+      <div className="border border-[#D8D0C2] bg-[#FFFDF8] p-3 shadow-none dark:border-[#444444] dark:bg-[#2C2C2C]">
         <div ref={researchSearchRef} className="relative">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
@@ -701,10 +750,10 @@ export function ProjectResearchPicker({
                       className={`${researchDropdownItemClass} cursor-pointer ${researchDropdownItemIdleClass}`}
                     >
                       <span className="min-w-0 flex-1 px-3">
-                        <span className="block truncate text-sm font-normal text-[#E4E4E4]">
+                        <span className="block truncate text-sm font-normal text-[#1F2937] dark:text-[#E4E4E4]">
                           {research.title}
                         </span>
-                        <span className="block truncate text-xs font-medium text-[#777777]">
+                        <span className="block truncate text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
                           {[research.researchCode, research.stage]
                             .filter(Boolean)
                             .join(" - ")}
@@ -714,7 +763,7 @@ export function ProjectResearchPicker({
                     </button>
                   ))
                 ) : (
-                  <div className="px-3 py-8 text-center text-sm font-medium text-slate-400">
+                  <div className="px-3 py-8 text-center text-sm font-normal text-slate-500 dark:text-[#B0B0B0]">
                     No research records match this search.
                   </div>
                 )}
@@ -727,7 +776,7 @@ export function ProjectResearchPicker({
           {selected.map((research) => (
             <span
               key={research.id}
-              className="inline-flex max-w-full items-center gap-2 border border-[#444444] bg-[#2C2C2C] px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-sm shadow-slate-900/[0.02] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+              className="inline-flex max-w-full items-center gap-2 border border-[#D8D0C2] bg-[#F8F6EF] px-2.5 py-1.5 text-xs font-normal text-[#1F2937] shadow-none dark:border-[#444444] dark:bg-[#242424] dark:text-[#E4E4E4]"
             >
               <span className="truncate">
                 {research.researchCode ? `${research.researchCode} - ` : ""}
@@ -740,7 +789,7 @@ export function ProjectResearchPicker({
                     current.filter((item) => item.id !== research.id),
                   )
                 }
-                className="rounded-none p-0.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                className="research-allow-transform border-0 bg-transparent p-0.5 text-[#667085] transition hover:-translate-y-0.5 hover:bg-transparent hover:text-rose-600 active:translate-y-0 active:scale-95 dark:text-[#B0B0B0] dark:hover:text-rose-300"
                 aria-label={`Remove ${research.title}`}
               >
                 <X className="h-3.5 w-3.5" aria-hidden="true" />
@@ -748,7 +797,7 @@ export function ProjectResearchPicker({
             </span>
           ))}
           {selected.length === 0 && (
-            <span className="inline-flex items-center gap-2 rounded-none border border-dashed border-slate-300 px-3 py-2 text-xs font-semibold text-slate-400 dark:border-slate-700">
+            <span className="inline-flex items-center gap-2 rounded-none border border-dashed border-[#D8D0C2] px-3 py-2 text-xs font-normal text-[#667085] dark:border-[#444444] dark:text-[#B0B0B0]">
               <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
               No research selected
             </span>

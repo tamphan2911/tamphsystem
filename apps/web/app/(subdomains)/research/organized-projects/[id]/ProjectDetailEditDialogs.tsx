@@ -152,6 +152,16 @@ function HiddenMembers({ members }: { members: SelectedProjectMember[] }) {
             value={member.id}
           />
         ))}
+      {members
+        .filter((member) => member.folderShared)
+        .map((member) => (
+          <input
+            key={`folder-shared-${member.id}`}
+            type="hidden"
+            name="folderSharedMemberIds"
+            value={member.id}
+          />
+        ))}
     </>
   );
 }

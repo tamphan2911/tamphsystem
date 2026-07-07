@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Check, Loader2, Save } from "lucide-react";
+import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 
 export function ProjectProductsForm({
@@ -53,17 +54,19 @@ export function ProjectProductsForm({
             <h2 className="text-sm font-normal uppercase tracking-wide text-[#B0B0B0]">
               Required products
             </h2>
-            <button
-              disabled={isPending || requiredProducts.length === 0}
-              className="research-clickable-icon research-allow-transform inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#B0B0B0] shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:bg-transparent hover:text-[#A8DADC] hover:shadow-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Save required products"
-            >
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-            </button>
+            <IconHint label="Save required products" position="bottom">
+              <button
+                disabled={isPending || requiredProducts.length === 0}
+                className="research-clickable-icon research-allow-transform inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-[#1F7180] shadow-none outline-none transition-[color,transform] duration-200 ease-out hover:bg-transparent hover:text-[#155864] hover:shadow-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-40 dark:text-[#A8DADC] dark:hover:text-cyan-200"
+                aria-label="Save required products"
+              >
+                {isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+              </button>
+            </IconHint>
           </div>
         </div>
         <div className="divide-y divide-[#444444] border-y border-[#444444]">

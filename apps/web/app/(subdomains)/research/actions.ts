@@ -3308,6 +3308,9 @@ export async function createOrganizedProject(formData: FormData) {
   const instructorUserIds = new Set(
     orderedUniqueStrings(formData.getAll("instructorUserIds")),
   );
+  const folderSharedMemberIds = new Set(
+    orderedUniqueStrings(formData.getAll("folderSharedMemberIds")),
+  );
   const selectedTeamLeadId =
     teamLeadUserId && memberUserIds.includes(teamLeadUserId)
       ? teamLeadUserId
@@ -3381,6 +3384,7 @@ export async function createOrganizedProject(formData: FormData) {
           selectedEmail: memberContactEmails.get(userId),
           isTeamLead: userId === selectedTeamLeadId,
           isInstructor: instructorUserIds.has(userId),
+          folderShared: folderSharedMemberIds.has(userId),
         })),
       },
       research: {
@@ -3442,6 +3446,7 @@ export async function updateOrganizedProject(
           userId: true,
           isTeamLead: true,
           isInstructor: true,
+          folderShared: true,
           user: { select: { name: true, email: true } },
         },
         orderBy: { position: "asc" },
@@ -3481,6 +3486,9 @@ export async function updateOrganizedProject(
   const teamLeadUserId = optionalString(formData.get("teamLeadUserId"));
   const instructorUserIds = new Set(
     orderedUniqueStrings(formData.getAll("instructorUserIds")),
+  );
+  const folderSharedMemberIds = new Set(
+    orderedUniqueStrings(formData.getAll("folderSharedMemberIds")),
   );
   const selectedTeamLeadId =
     teamLeadUserId && memberUserIds.includes(teamLeadUserId)
@@ -3591,6 +3599,7 @@ export async function updateOrganizedProject(
           selectedEmail: memberContactEmails.get(userId),
           isTeamLead: userId === selectedTeamLeadId,
           isInstructor: instructorUserIds.has(userId),
+          folderShared: folderSharedMemberIds.has(userId),
         })),
       },
       research: {
