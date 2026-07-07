@@ -908,13 +908,21 @@ function PerformanceTable({
             type="button"
             onClick={onToggle}
             aria-pressed={teamOnly}
-            className="inline-flex h-10 items-center justify-center gap-2 border border-[#D8D0C2] bg-[#F8F6EF] px-3 text-xs font-normal uppercase tracking-wide text-[#667085] transition-colors hover:border-[#1F7180]/40 hover:bg-[#F2EEE6] hover:text-[#1F2937] dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0] dark:hover:bg-[#303030] dark:hover:text-[#E4E4E4]"
+            className="group inline-flex h-10 items-center justify-center gap-2 border border-[#D8D0C2] bg-[#F8F6EF] px-3 text-xs font-normal uppercase tracking-wide text-[#667085] transition-colors hover:border-[#1F7180]/40 hover:bg-[#F2EEE6] hover:text-[#1F2937] dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0] dark:hover:bg-[#303030] dark:hover:text-[#E4E4E4]"
           >
-            {teamOnly ? (
-              <CheckSquare className="h-4 w-4 text-[#1F7180] dark:text-[#A8DADC]" />
-            ) : (
-              <Square className="h-4 w-4" />
-            )}
+            <span
+              className={`inline-flex h-5 w-5 flex-none items-center justify-center border transition-colors ${
+                teamOnly
+                  ? "border-[#1F7180] bg-white text-[#1F7180] group-hover:border-[#155864] group-hover:text-[#155864] dark:border-[#A8DADC] dark:bg-[#1B1B1B] dark:text-[#A8DADC] dark:group-hover:border-cyan-200 dark:group-hover:text-cyan-200"
+                  : "border-[#8B93A1] bg-white text-[#667085] group-hover:border-[#1F2937] group-hover:text-[#1F2937] dark:border-[#777777] dark:bg-[#1B1B1B] dark:text-[#B0B0B0] dark:group-hover:border-[#E4E4E4] dark:group-hover:text-[#E4E4E4]"
+              }`}
+            >
+              {teamOnly ? (
+                <CheckSquare className="h-3.5 w-3.5" aria-hidden="true" />
+              ) : (
+                <Square className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
+            </span>
             Research assigned
           </button>
         </div>

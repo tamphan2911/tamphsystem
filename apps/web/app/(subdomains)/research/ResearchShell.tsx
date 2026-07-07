@@ -658,7 +658,7 @@ export function ResearchShell({
                   showAdminConsole={isRootAdmin}
                   showTeam={isRootAdmin || isAssistant}
                   teamHref="/team"
-                  teamLabel="Team (under construction)"
+                  teamLabel="Team"
                   variant="research"
                 />
               </div>
