@@ -364,7 +364,16 @@ export default async function ProjectDetailPage({
             id: true,
             name: true,
             leaderId: true,
-            leader: { select: { name: true, email: true } },
+            leader: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                affiliation: true,
+                orcid: true,
+                roles: true,
+              },
+            },
             members: {
               select: {
                 userId: true,
@@ -1220,12 +1229,24 @@ export default async function ProjectDetailPage({
         }))
     : [];
   const assignedTeamPeople = project.assistantTeam
-    ? assignedTeamParticipants.map((member) => ({
-        id: member.id,
-        name: member.name,
-        email: member.email,
-        badge: "Member",
-      }))
+    ? [
+        {
+          id: project.assistantTeam.leader.id,
+          name:
+            displayResearchPersonName(project.assistantTeam.leader) ||
+            project.assistantTeam.leader.email,
+          email: displayResearchEmail(project.assistantTeam.leader.email),
+          badge: "Leader",
+        },
+        ...assignedTeamParticipants
+          .filter((member) => member.id !== project.assistantTeam?.leaderId)
+          .map((member) => ({
+            id: member.id,
+            name: member.name,
+            email: member.email,
+            badge: "Member",
+          })),
+      ]
     : [];
   const defaultAuthors: SelectedAuthor[] =
     hydratedAuthorEntries.length > 0
@@ -2623,7 +2644,7 @@ export default async function ProjectDetailPage({
                       </div>
                     ))}
                   </div>
-                  {assignedTeamParticipants.length === 0 ? (
+                  {assignedTeamPeople.length <= 1 ? (
                     <p className="mt-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
                       No team member has been marked as participating in this
                       research yet.
