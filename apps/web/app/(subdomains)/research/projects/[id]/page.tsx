@@ -1688,19 +1688,6 @@ export default async function ProjectDetailPage({
             : "",
           detail: project.title,
         },
-        ...project.authorEntries.map((entry) => {
-          const authorUser = linkedAuthorUserById.get(entry.userId);
-          return {
-            id: `author-${entry.id}`,
-            changedAt: entry.updatedAt.toISOString(),
-            area: "Authors",
-            action: entry.isCorresponding ? "Corresponding author" : "Updated",
-            actor: authorUser
-              ? displayResearchPersonName(authorUser) || authorUser.email
-              : "",
-            detail: entry.selectedEmail ?? "",
-          };
-        }),
         ...project.submissions.flatMap((submission) =>
           [
             {

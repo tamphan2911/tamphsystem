@@ -1208,6 +1208,7 @@ type ResearchNotificationSnapshot = {
     userId: string;
     selectedEmail: string | null;
     isCorresponding: boolean;
+    folderShared: boolean;
     user: { name: string | null; email: string };
   }[];
 };
@@ -1251,6 +1252,87 @@ function researchRegistrationUserNotificationValue(
     return researchPersonLabel(snapshot.registrationUser);
   }
   return snapshot.registrationName ?? "";
+}
+
+function researchAuthorEntryEmail(entry: {
+  selectedEmail: string | null;
+  user: { email: string };
+}) {
+  return entry.selectedEmail || entry.user.email;
+}
+
+function researchAuthorEntryLabel(entry: {
+  user: { name: string | null; email: string };
+}) {
+  return researchPersonLabel(entry.user);
+}
+
+function authorEntryChanges(
+  before: ResearchNotificationSnapshot,
+  after: ResearchNotificationSnapshot,
+) {
+  const changes: string[] = [];
+  const beforeByUserId = new Map(
+    before.authorEntries.map((entry, index) => [
+      entry.userId,
+      { ...entry, position: index + 1 },
+    ]),
+  );
+  const afterByUserId = new Map(
+    after.authorEntries.map((entry, index) => [
+      entry.userId,
+      { ...entry, position: index + 1 },
+    ]),
+  );
+
+  for (const entry of afterByUserId.values()) {
+    const previous = beforeByUserId.get(entry.userId);
+    const authorName = researchAuthorEntryLabel(entry);
+    if (!previous) {
+      changes.push(
+        `${authorName}: Added as author at position ${entry.position}.`,
+      );
+      continue;
+    }
+
+    if (previous.position !== entry.position) {
+      changes.push(
+        `${authorName}: Author order changed from ${previous.position} to ${entry.position}.`,
+      );
+    }
+
+    if (previous.isCorresponding !== entry.isCorresponding) {
+      changes.push(
+        `${authorName}: Corresponding author changed from ${
+          previous.isCorresponding ? "Yes" : "No"
+        } to ${entry.isCorresponding ? "Yes" : "No"}.`,
+      );
+    }
+
+    const previousEmail = researchAuthorEntryEmail(previous);
+    const nextEmail = researchAuthorEntryEmail(entry);
+    if (previousEmail !== nextEmail) {
+      changes.push(
+        `${authorName}: Contact email changed from "${previousEmail}" to "${nextEmail}".`,
+      );
+    }
+
+    if (previous.folderShared !== entry.folderShared) {
+      changes.push(
+        `${authorName}: Shared-folder access changed from ${
+          previous.folderShared ? "Shared" : "Not shared"
+        } to ${entry.folderShared ? "Shared" : "Not shared"}.`,
+      );
+    }
+  }
+
+  for (const entry of beforeByUserId.values()) {
+    if (!afterByUserId.has(entry.userId)) {
+      changes.push(`${researchAuthorEntryLabel(entry)}: Removed from authors.`);
+    }
+  }
+
+  return changes;
 }
 
 function researchProjectNotificationChanges(
@@ -1335,29 +1417,17 @@ function researchProjectNotificationChanges(
     before.productionPriorityQueuedAt ? "Queued" : "Not queued",
     after.productionPriorityQueuedAt ? "Queued" : "Not queued",
   );
-  addChange(
-    "Authors",
-    researchAuthorsNotificationValue(before),
-    researchAuthorsNotificationValue(after),
-  );
-  if (
-    researchAuthorsNotificationValue(before) ===
-    researchAuthorsNotificationValue(after)
-  ) {
+  const authorChanges = authorEntryChanges(before, after);
+  if (authorChanges.length > 0) {
+    changes.push({
+      label: "Authors",
+      detail: authorChanges.join("\n"),
+    });
+  } else {
     addChange(
-      "Author contact email",
-      before.authorEntries
-        .map(
-          (entry) =>
-            `${entry.userId}:${entry.selectedEmail ?? entry.user.email}`,
-        )
-        .join("|"),
-      after.authorEntries
-        .map(
-          (entry) =>
-            `${entry.userId}:${entry.selectedEmail ?? entry.user.email}`,
-        )
-        .join("|"),
+      "Authors",
+      researchAuthorsNotificationValue(before),
+      researchAuthorsNotificationValue(after),
     );
   }
 
