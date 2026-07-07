@@ -408,7 +408,19 @@ export default async function ProjectDetailPage({
           },
           orderBy: [{ user: { name: "asc" } }, { user: { email: "asc" } }],
         },
-        authors: { orderBy: [{ name: "asc" }, { email: "asc" }] },
+        authors: {
+          orderBy: [{ name: "asc" }, { email: "asc" }],
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            additionalEmails: true,
+            affiliation: true,
+            orcid: true,
+            bio: true,
+            roles: true,
+          },
+        },
         authorEntries: {
           orderBy: [{ position: "asc" }, { createdAt: "asc" }],
         },
@@ -614,6 +626,7 @@ export default async function ProjectDetailPage({
         in: Array.from(
           new Set([
             project.leadResearcherId,
+            ...project.authors.map((author) => author.id),
             ...project.authorEntries.map((entry) => entry.userId),
           ]),
         ),
