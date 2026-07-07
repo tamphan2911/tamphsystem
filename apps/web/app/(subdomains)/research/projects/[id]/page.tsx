@@ -340,6 +340,7 @@ export default async function ProjectDetailPage({
     fundingInstitutions,
     assistantTeams,
     taskGuides,
+    researchAuditLogs,
   ] = await Promise.all([
     prisma.researchProject.findUnique({
       where: { id },
@@ -588,6 +589,13 @@ export default async function ProjectDetailPage({
         supportFile2Size: true,
       },
     }),
+    isAdmin
+      ? prisma.researchChangeLog.findMany({
+          where: { entityType: "research", entityId: id },
+          include: { actor: { select: { name: true, email: true } } },
+          orderBy: { createdAt: "desc" },
+        })
+      : [],
   ]);
 
   if (!project) notFound();
@@ -1660,6 +1668,16 @@ export default async function ProjectDetailPage({
   );
   const researchChangeRows: ResearchChangeLogRow[] = isAdmin
     ? [
+        ...researchAuditLogs.map((log) => ({
+          id: `research-audit-${log.id}`,
+          changedAt: log.createdAt.toISOString(),
+          area: log.area,
+          action: log.action,
+          actor: log.actor
+            ? displayResearchPersonName(log.actor) || log.actor.email
+            : "",
+          detail: log.detail,
+        })),
         {
           id: "research-created",
           changedAt: project.createdAt.toISOString(),
@@ -1669,14 +1687,6 @@ export default async function ProjectDetailPage({
             ? displayResearchPersonName(leadResearcher) || leadResearcher.email
             : "",
           detail: project.title,
-        },
-        {
-          id: "research-updated",
-          changedAt: project.updatedAt.toISOString(),
-          area: "Research",
-          action: "Updated",
-          actor: "",
-          detail: `${project.stage} | ${project.researchCode ?? "No research ID"}`,
         },
         ...project.authorEntries.map((entry) => {
           const authorUser = linkedAuthorUserById.get(entry.userId);

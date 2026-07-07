@@ -3990,6 +3990,25 @@ export async function updateResearchProject(
     ? researchProjectNotificationChanges(projectLock, updatedProject)
     : [];
 
+  if (updatedProject && notificationChanges.length > 0) {
+    const auditArea =
+      updateScope === "production"
+        ? "Production"
+        : updateScope === "authors"
+          ? "Authors"
+          : "Research";
+    await prisma.researchChangeLog.create({
+      data: {
+        entityType: "research",
+        entityId: projectId,
+        area: auditArea,
+        action: "Updated",
+        detail: notificationChanges.map((change) => change.detail).join("\n"),
+        actorId: user.id,
+      },
+    });
+  }
+
   const productionWasComplete = productionStepLabels.every((step) =>
     projectLock?.completedProductionSteps.includes(step),
   );
