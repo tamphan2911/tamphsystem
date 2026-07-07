@@ -577,6 +577,7 @@ export default async function OrganizedProjectDetailPage({
   );
   const canCreateResearchAssociated = isRootAdmin;
   const canLinkResearchAssociated = isRootAdmin || isProjectTeamLead;
+  const canLinkRequiredProductResearch = isRootAdmin || isProjectTeamLead;
   const canViewChangeLog = isRootAdmin || isProjectTeamLead;
   const currentProjectMember = project.members.find(
     (member) => member.userId === currentUserId,
@@ -858,6 +859,7 @@ export default async function OrganizedProjectDetailPage({
                 researchOptions={linkableProductResearch}
                 action={saveProducts}
                 linkAction={saveProductResearch}
+                canLinkProducts={canLinkRequiredProductResearch}
                 embedded
               />
             </div>

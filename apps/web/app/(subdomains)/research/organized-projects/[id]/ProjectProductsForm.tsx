@@ -245,6 +245,7 @@ export function ProjectProductsForm({
   researchOptions,
   action,
   linkAction,
+  canLinkProducts = false,
   embedded = false,
 }: {
   products: ProjectProductRow[];
@@ -254,6 +255,7 @@ export function ProjectProductsForm({
     ok: boolean;
     reason?: string;
   }>;
+  canLinkProducts?: boolean;
   embedded?: boolean;
 }) {
   const [selected, setSelected] = useState(
@@ -348,31 +350,55 @@ export function ProjectProductsForm({
                     />
                   </span>
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setLinkingProduct(product)}
-                  className="research-allow-transform min-w-0 cursor-pointer border-0 bg-transparent p-0 text-left transition hover:bg-transparent active:scale-[0.995]"
-                >
-                  <span className="block whitespace-normal break-words text-sm font-normal leading-5 text-[#1f2937] transition group-hover/product:text-[#1F7180] dark:text-[#E4E4E4] dark:group-hover/product:text-[#A8DADC]">
-                    {product.title}
-                  </span>
-                  <span className="mt-1 flex min-w-0 items-center gap-1 text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
-                    <Link2
-                      className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]"
-                      aria-hidden="true"
-                    />
-                    <span className="truncate">
-                      {product.linkedResearch
-                        ? `Linked: ${[
-                            product.linkedResearch.researchCode,
-                            product.linkedResearch.title,
-                          ]
-                            .filter(Boolean)
-                            .join(" - ")}`
-                        : "Click to link an accepted or published research result"}
+                {canLinkProducts ? (
+                  <button
+                    type="button"
+                    onClick={() => setLinkingProduct(product)}
+                    className="research-allow-transform min-w-0 cursor-pointer border-0 bg-transparent p-0 text-left transition hover:bg-transparent active:scale-[0.995]"
+                  >
+                    <span className="block whitespace-normal break-words text-sm font-normal leading-5 text-[#1f2937] transition group-hover/product:text-[#1F7180] dark:text-[#E4E4E4] dark:group-hover/product:text-[#A8DADC]">
+                      {product.title}
                     </span>
-                  </span>
-                </button>
+                    <span className="mt-1 flex min-w-0 items-center gap-1 text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
+                      <Link2
+                        className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]"
+                        aria-hidden="true"
+                      />
+                      <span className="truncate">
+                        {product.linkedResearch
+                          ? `Linked: ${[
+                              product.linkedResearch.researchCode,
+                              product.linkedResearch.title,
+                            ]
+                              .filter(Boolean)
+                              .join(" - ")}`
+                          : "Click to link an accepted or published research result"}
+                      </span>
+                    </span>
+                  </button>
+                ) : (
+                  <div className="min-w-0">
+                    <span className="block whitespace-normal break-words text-sm font-normal leading-5 text-[#1f2937] dark:text-[#E4E4E4]">
+                      {product.title}
+                    </span>
+                    <span className="mt-1 flex min-w-0 items-center gap-1 text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
+                      <Link2
+                        className="h-3.5 w-3.5 flex-none text-[#1F7180] dark:text-[#A8DADC]"
+                        aria-hidden="true"
+                      />
+                      <span className="truncate">
+                        {product.linkedResearch
+                          ? `Linked: ${[
+                              product.linkedResearch.researchCode,
+                              product.linkedResearch.title,
+                            ]
+                              .filter(Boolean)
+                              .join(" - ")}`
+                          : "No linked research result"}
+                      </span>
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -384,7 +410,7 @@ export function ProjectProductsForm({
         </div>
       </form>
 
-      {linkingProduct ? (
+      {canLinkProducts && linkingProduct ? (
         <LinkedResearchDialog
           product={linkingProduct}
           researchOptions={researchOptions}
