@@ -1170,6 +1170,7 @@ export function ResearchProjectsTable({
                     >
                       <BookmarkCheck
                         className="h-4 w-4"
+                        fill={showFollowUpOnly ? "currentColor" : "none"}
                         aria-hidden="true"
                       />
                     </button>

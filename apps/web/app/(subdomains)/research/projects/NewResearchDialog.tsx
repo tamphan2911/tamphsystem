@@ -290,6 +290,7 @@ function FollowUpResearchCheckbox({
       </span>
       <BookmarkCheck
         className="h-4 w-4 flex-none text-slate-400 transition peer-checked:text-violet-700 dark:text-[#777777] dark:peer-checked:text-[#B39CD0]"
+        fill="currentColor"
         aria-hidden="true"
       />
       <span className="whitespace-nowrap text-slate-700 transition group-hover:text-slate-950 peer-checked:text-violet-800 dark:text-[#E4E4E4] dark:group-hover:text-white dark:peer-checked:text-[#D8C8EC]">
