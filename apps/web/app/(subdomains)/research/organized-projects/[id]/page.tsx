@@ -16,6 +16,7 @@ import {
   Fingerprint,
   FileSearch,
   FlaskConical,
+  FolderCheck,
   FolderOpen,
   GraduationCap,
   Hourglass,
@@ -808,6 +809,19 @@ export default async function OrganizedProjectDetailPage({
                         isTeamLead={member.isTeamLead}
                         isInstructor={member.isInstructor}
                       />
+                      {member.folderShared ? (
+                        <IconHint
+                          label="Project folder shared with this member"
+                          position="bottom"
+                        >
+                          <span className="research-allow-transform inline-flex cursor-help items-center justify-center text-emerald-700 transition duration-180 ease-out hover:-translate-y-0.5 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200">
+                            <FolderCheck
+                              className="h-3.5 w-3.5"
+                              aria-hidden="true"
+                            />
+                          </span>
+                        </IconHint>
+                      ) : null}
                     </div>
                     <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs font-normal text-[#667085] dark:text-[#B0B0B0]">
                       <Mail className="research-task-icon-motion h-3 w-3 flex-none text-[#A8DADC]" />
@@ -830,15 +844,6 @@ export default async function OrganizedProjectDetailPage({
                           aria-hidden="true"
                         />
                         <span className="truncate">{member.orcid}</span>
-                      </p>
-                    ) : null}
-                    {member.folderShared ? (
-                      <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-emerald-700 dark:text-emerald-300">
-                        <FolderOpen
-                          className="research-task-icon-motion h-3 w-3 flex-none"
-                          aria-hidden="true"
-                        />
-                        <span className="truncate">Project folder shared</span>
                       </p>
                     ) : null}
                   </div>
