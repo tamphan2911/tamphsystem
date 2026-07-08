@@ -1197,6 +1197,7 @@ type ResearchNotificationSnapshot = {
   registerStatus: RegistrationStatus;
   claimStatus: ClaimStatus;
   isPriority: boolean;
+  needsFollowUp: boolean;
   productionPriorityQueuedAt: Date | null;
   completedProductionSteps: string[];
   registrationName: string | null;
@@ -1411,6 +1412,11 @@ function researchProjectNotificationChanges(
     "Priority",
     before.isPriority ? "Priority" : "Not priority",
     after.isPriority ? "Priority" : "Not priority",
+  );
+  addChange(
+    "Come back later",
+    before.needsFollowUp ? "Marked" : "Not marked",
+    after.needsFollowUp ? "Marked" : "Not marked",
   );
   addChange(
     "Production queue",
@@ -3246,6 +3252,8 @@ export async function createResearchProject(formData: FormData) {
     : null;
   const isPriority =
     user.roles.includes(Role.ADMIN) && formData.get("isPriority") === "true";
+  const needsFollowUp =
+    user.roles.includes(Role.ADMIN) && formData.get("needsFollowUp") === "true";
   const productionPriorityQueuedAt =
     user.roles.includes(Role.ADMIN) &&
     formData.get("productionPriorityQueued") === "true"
@@ -3268,6 +3276,7 @@ export async function createResearchProject(formData: FormData) {
       fundingInstitutionId,
       assistantTeamId,
       isPriority,
+      needsFollowUp,
       productionPriorityQueuedAt,
       registerStatus: isAdmin
         ? (enumValue(RegistrationStatus, formData.get("registerStatus")) ??
@@ -4084,6 +4093,7 @@ export async function updateResearchProject(
       registerStatus: true,
       claimStatus: true,
       isPriority: true,
+      needsFollowUp: true,
       productionPriorityQueuedAt: true,
       registrationName: true,
       registrationUser: { select: { name: true, email: true } },
@@ -4240,6 +4250,7 @@ export async function updateResearchProject(
                 isPriority: hasAcceptedResearch
                   ? false
                   : formData.get("isPriority") === "true",
+                needsFollowUp: formData.get("needsFollowUp") === "true",
                 ...productionPriorityQueuedAtUpdate,
               }
             : {}),
@@ -4315,6 +4326,7 @@ export async function updateResearchProject(
       registerStatus: true,
       claimStatus: true,
       isPriority: true,
+      needsFollowUp: true,
       productionPriorityQueuedAt: true,
       registrationName: true,
       registrationUser: { select: { name: true, email: true } },

@@ -1408,6 +1408,7 @@ export default async function ProjectDetailPage({
     registerStatus: project.registerStatus,
     claimStatus: project.claimStatus,
     isPriority: project.isPriority,
+    needsFollowUp: project.needsFollowUp,
     productionPriorityQueuedAt: isoDate(project.productionPriorityQueuedAt),
     registrationUser: defaultRegistrationUser,
     fundingInstitution: defaultFundingInstitution,
@@ -2305,6 +2306,11 @@ export default async function ProjectDetailPage({
                 type="hidden"
                 name="isPriority"
                 value={project.isPriority ? "true" : "false"}
+              />
+              <input
+                type="hidden"
+                name="needsFollowUp"
+                value={project.needsFollowUp ? "true" : "false"}
               />
               {project.productionPriorityQueuedAt ? (
                 <input

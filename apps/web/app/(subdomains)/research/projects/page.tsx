@@ -384,6 +384,7 @@ export default async function ProjectsDashboard() {
       registerStatus: project.registerStatus,
       claimStatus: project.claimStatus,
       isPriority: project.isPriority,
+      needsFollowUp: project.needsFollowUp,
       productionPriorityQueuedAt:
         project.productionPriorityQueuedAt?.toISOString() ?? "",
       registrationUser: project.registrationUser
@@ -420,6 +421,7 @@ export default async function ProjectsDashboard() {
       title: project.title,
       abstract: project.abstract ?? "",
       isPriority: project.isPriority,
+      needsFollowUp: project.needsFollowUp,
       productionPriorityQueuedAt:
         project.productionPriorityQueuedAt?.toISOString() ?? "",
       productionQueuePosition:

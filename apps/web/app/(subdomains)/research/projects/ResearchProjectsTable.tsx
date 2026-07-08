@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import {
   BadgeCheck,
   Ban,
+  BookmarkCheck,
   BookMarked,
   BookOpenCheck,
   CalendarCheck2,
@@ -60,6 +61,7 @@ export type ResearchProjectRow = {
   title: string;
   abstract: string;
   isPriority: boolean;
+  needsFollowUp: boolean;
   productionPriorityQueuedAt: string;
   productionQueuePosition: number | null;
   stage: string;
@@ -101,6 +103,7 @@ type ServerTableState = {
   sortValue: string;
   folderRequestValue: string;
   priorityValue: string;
+  followUpValue?: string;
   productionQueueValue: string;
   page: number;
   pageSize: number;
@@ -708,6 +711,8 @@ export function ResearchProjectsTable({
     "projects:priority",
     "0",
   );
+  const [storedFollowUpValue, setStoredFollowUpValue] =
+    usePersistentTableValue("projects:follow-up", "0");
   const [storedProductionQueueValue, setStoredProductionQueueValue] =
     usePersistentTableValue("projects:production-queue", "0");
   const hasServerState = Boolean(serverState);
@@ -722,6 +727,7 @@ export function ResearchProjectsTable({
   const folderRequestValue =
     serverState?.folderRequestValue ?? storedFolderRequestValue;
   const priorityValue = serverState?.priorityValue ?? storedPriorityValue;
+  const followUpValue = serverState?.followUpValue ?? storedFollowUpValue;
   const productionQueueValue =
     serverState?.productionQueueValue ?? storedProductionQueueValue;
   const pendingFolderRequestCount = useMemo(
@@ -731,8 +737,14 @@ export function ResearchProjectsTable({
     [rows, serverState?.pendingFolderRequestCount],
   );
   const hasPendingFolderRequests = pendingFolderRequestCount > 0;
+  const followUpCount = useMemo(
+    () => rows.reduce((total, row) => total + (row.needsFollowUp ? 1 : 0), 0),
+    [rows],
+  );
+  const hasFollowUpResearch = followUpCount > 0;
   const showFolderRequestsOnly = isAdmin && folderRequestValue === "1";
   const showPriorityOnly = priorityValue === "1";
+  const showFollowUpOnly = followUpValue === "1";
   const showProductionQueueOnly = isAdmin && productionQueueValue === "1";
   const sort = useMemo(() => parseSortValue(sortValue), [sortValue]);
   const selectedStages = useMemo(
@@ -757,6 +769,7 @@ export function ResearchProjectsTable({
     selectedRegistrations.length > 0 ||
     showFolderRequestsOnly ||
     showPriorityOnly ||
+    showFollowUpOnly ||
     showProductionQueueOnly;
 
   const updateServerParams = useCallback((updates: Record<string, string | null>) => {
@@ -809,6 +822,7 @@ export function ResearchProjectsTable({
       const matchesFolderRequest =
         !showFolderRequestsOnly || row.pendingFolderAccessRequests > 0;
       const matchesPriority = !showPriorityOnly || row.isPriority;
+      const matchesFollowUp = !showFollowUpOnly || row.needsFollowUp;
       const matchesProductionQueue =
         !showProductionQueueOnly || Boolean(row.productionPriorityQueuedAt);
       const haystack = [
@@ -816,6 +830,7 @@ export function ResearchProjectsTable({
         row.researchCode,
         row.abstract,
         row.isPriority ? "priority" : "",
+        row.needsFollowUp ? "come back later follow up unfinished" : "",
         row.productionPriorityQueuedAt ? "production queue" : "",
         row.coAuthors,
         row.leadResearcher,
@@ -833,6 +848,7 @@ export function ResearchProjectsTable({
         matchesRegistration &&
         matchesFolderRequest &&
         matchesPriority &&
+        matchesFollowUp &&
         matchesProductionQueue &&
         (!needle || haystack.includes(needle))
       );
@@ -844,6 +860,7 @@ export function ResearchProjectsTable({
     selectedRegistrations,
     selectedStages,
     showFolderRequestsOnly,
+    showFollowUpOnly,
     showProductionQueueOnly,
     showPriorityOnly,
     showRegistrationClaim,
@@ -985,6 +1002,16 @@ export function ResearchProjectsTable({
     setPage(1);
   }
 
+  function updateFollowUpFilter(checked: boolean) {
+    const next = checked ? "1" : "0";
+    if (serverState) {
+      updateServerParams({ followUp: next, page: null });
+      return;
+    }
+    setStoredFollowUpValue(next);
+    setPage(1);
+  }
+
   function updateProductionQueueFilter(checked: boolean) {
     const next = checked ? "1" : "0";
     if (serverState) {
@@ -1111,6 +1138,38 @@ export function ResearchProjectsTable({
                       <Star
                         className="h-4 w-4"
                         fill={showPriorityOnly ? "currentColor" : "none"}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </IconHint>
+                  <IconHint
+                    label={
+                      showFollowUpOnly
+                        ? "Show all research"
+                        : hasFollowUpResearch
+                          ? `${followUpCount} research ${followUpCount === 1 ? "needs" : "need"} a later follow-up`
+                          : "Show research marked come back later"
+                    }
+                  >
+                    <button
+                      type="button"
+                      aria-pressed={showFollowUpOnly}
+                      aria-label={
+                        showFollowUpOnly
+                          ? "Show all research"
+                          : "Show research marked come back later"
+                      }
+                      onClick={() => updateFollowUpFilter(!showFollowUpOnly)}
+                      className={`research-allow-transform inline-flex h-6 w-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
+                        showFollowUpOnly
+                          ? "text-violet-700 drop-shadow-[0_0_0.45rem_rgba(124,58,237,0.22)] hover:text-violet-800 dark:text-[#B39CD0] dark:hover:text-[#D8C8EC]"
+                          : hasFollowUpResearch
+                            ? "research-folder-request-alert text-violet-700 drop-shadow-[0_0_0.45rem_rgba(124,58,237,0.26)] hover:text-violet-800 dark:text-[#B39CD0] dark:hover:text-[#D8C8EC]"
+                            : "text-[#667085] hover:text-violet-700 dark:text-[#B0B0B0] dark:hover:text-[#B39CD0]"
+                      }`}
+                    >
+                      <BookmarkCheck
+                        className="h-4 w-4"
                         aria-hidden="true"
                       />
                     </button>

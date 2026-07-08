@@ -444,6 +444,7 @@ model ResearchProject {
   registerStatus             RegistrationStatus     @default(NOT_REGISTERED)
   claimStatus                ClaimStatus            @default(CANNOT_CLAIM)
   isPriority                 Boolean                @default(false)
+  needsFollowUp              Boolean                @default(false)
   productionPriorityQueuedAt DateTime?
   completedProductionSteps   String[]               @default([])
   productionTimelineLocked   Boolean                @default(false)
@@ -475,6 +476,7 @@ model ResearchProject {
   @@index([registrationUserId])
   @@index([fundingInstitutionId])
   @@index([assistantTeamId])
+  @@index([needsFollowUp])
   @@index([productionPriorityQueuedAt])
 }
 

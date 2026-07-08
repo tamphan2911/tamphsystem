@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import {
   AlertTriangle,
+  BookmarkCheck,
   Check,
   ListOrdered,
   Mail,
@@ -270,6 +271,34 @@ function ProductionQueueCheckbox({
   );
 }
 
+function FollowUpResearchCheckbox({
+  defaultChecked = false,
+}: {
+  defaultChecked?: boolean;
+}) {
+  return (
+    <label className="group flex h-12 cursor-pointer items-center gap-3 border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 transition duration-150 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 active:translate-y-0 active:scale-[0.985] dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white">
+      <input
+        type="checkbox"
+        name="needsFollowUp"
+        value="true"
+        defaultChecked={defaultChecked}
+        className="peer sr-only"
+      />
+      <span className="flex h-5 w-5 flex-none items-center justify-center border border-slate-300 bg-white text-transparent transition peer-checked:border-violet-500 peer-checked:bg-violet-50 peer-checked:text-violet-700 group-hover:border-slate-400 dark:border-[#666666] dark:bg-[#202020] dark:peer-checked:border-[#B39CD0] dark:peer-checked:bg-violet-950/35 dark:peer-checked:text-[#B39CD0]">
+        <Check className="h-3.5 w-3.5" aria-hidden="true" />
+      </span>
+      <BookmarkCheck
+        className="h-4 w-4 flex-none text-slate-400 transition peer-checked:text-violet-700 dark:text-[#777777] dark:peer-checked:text-[#B39CD0]"
+        aria-hidden="true"
+      />
+      <span className="whitespace-nowrap text-slate-700 transition group-hover:text-slate-950 peer-checked:text-violet-800 dark:text-[#E4E4E4] dark:group-hover:text-white dark:peer-checked:text-[#D8C8EC]">
+        Come back later
+      </span>
+    </label>
+  );
+}
+
 export function NewResearchDialog({
   users,
   isAdmin,
@@ -439,11 +468,12 @@ export function NewResearchDialog({
                 <PriorityResearchCheckbox />
                 <ProductionQueueCheckbox />
               </div>
-              <div className="mt-4">
+              <div className="mt-4 grid items-end gap-4 lg:grid-cols-[minmax(0,1fr)_14rem]">
                 <AssistantTeamPicker
                   teams={assistantTeams}
                   defaultTeam={null}
                 />
+                <FollowUpResearchCheckbox />
               </div>
             </section>
           )}

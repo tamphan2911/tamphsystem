@@ -11,6 +11,7 @@ import {
   FileText,
   ListOrdered,
   Loader2,
+  BookmarkCheck,
   Save,
   Star,
   UserRound,
@@ -47,6 +48,7 @@ export type ResearchBasicValues = {
   registerStatus: string;
   claimStatus: string;
   isPriority: boolean;
+  needsFollowUp: boolean;
   productionPriorityQueuedAt: string;
   registrationUser: AuthorOption | null;
   fundingInstitution: FundingInstitutionOption | null;
@@ -223,6 +225,11 @@ function HiddenBasic({ values }: { values: ResearchBasicValues }) {
         name="isPriority"
         value={values.isPriority ? "true" : "false"}
       />
+      <input
+        type="hidden"
+        name="needsFollowUp"
+        value={values.needsFollowUp ? "true" : "false"}
+      />
       {values.productionPriorityQueuedAt && (
         <input
           type="hidden"
@@ -331,6 +338,43 @@ function ProductionQueueCheckbox({
       />
       <span className="whitespace-nowrap text-slate-700 transition group-hover:text-slate-950 peer-checked:text-[#155864] dark:text-[#E4E4E4] dark:group-hover:text-white dark:peer-checked:text-[#A8DADC]">
         Production queue
+      </span>
+    </label>
+  );
+}
+
+function FollowUpResearchCheckbox({
+  defaultChecked,
+  disabled = false,
+}: {
+  defaultChecked: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <label
+      className={`group flex h-12 items-center gap-3 border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 transition duration-150 ease-out dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] ${
+        disabled
+          ? "cursor-not-allowed opacity-60"
+          : "cursor-pointer hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 active:translate-y-0 active:scale-[0.985] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white"
+      }`}
+    >
+      <input
+        type="checkbox"
+        name="needsFollowUp"
+        value="true"
+        defaultChecked={defaultChecked}
+        disabled={disabled}
+        className="peer sr-only"
+      />
+      <span className="flex h-5 w-5 flex-none items-center justify-center border border-slate-300 bg-white text-transparent transition peer-checked:border-violet-500 peer-checked:bg-violet-50 peer-checked:text-violet-700 dark:border-[#666666] dark:bg-[#202020] dark:peer-checked:border-[#B39CD0] dark:peer-checked:bg-violet-950/35 dark:peer-checked:text-[#B39CD0]">
+        <Check className="h-3.5 w-3.5" aria-hidden="true" />
+      </span>
+      <BookmarkCheck
+        className="h-4 w-4 flex-none text-slate-400 transition peer-checked:text-violet-700 dark:text-[#777777] dark:peer-checked:text-[#B39CD0]"
+        aria-hidden="true"
+      />
+      <span className="whitespace-nowrap text-slate-700 transition group-hover:text-slate-950 peer-checked:text-violet-800 dark:text-[#E4E4E4] dark:group-hover:text-white dark:peer-checked:text-[#D8C8EC]">
+        Come back later
       </span>
     </label>
   );
@@ -520,11 +564,17 @@ export function ResearchBasicEditDialog({
                 disabled={!canEditRegistrationClaim}
               />
             </div>
-            <AssistantTeamPicker
-              teams={assistantTeams}
-              defaultTeam={values.assistantTeam}
-              disabled={!canEditRegistrationClaim}
-            />
+            <div className="grid items-end gap-4 lg:grid-cols-[minmax(0,1fr)_14rem]">
+              <AssistantTeamPicker
+                teams={assistantTeams}
+                defaultTeam={values.assistantTeam}
+                disabled={!canEditRegistrationClaim}
+              />
+              <FollowUpResearchCheckbox
+                defaultChecked={values.needsFollowUp}
+                disabled={!canEditRegistrationClaim}
+              />
+            </div>
           </div>
         </form>
       </DialogShell>

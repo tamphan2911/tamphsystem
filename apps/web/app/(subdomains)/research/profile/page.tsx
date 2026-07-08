@@ -352,6 +352,7 @@ export default async function ResearchProfilePage({
       title: project.title,
       abstract: project.abstract ?? "",
       isPriority: project.isPriority,
+      needsFollowUp: project.needsFollowUp,
       productionPriorityQueuedAt:
         project.productionPriorityQueuedAt?.toISOString() ?? "",
       productionQueuePosition:
