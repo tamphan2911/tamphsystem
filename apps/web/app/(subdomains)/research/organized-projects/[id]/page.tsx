@@ -13,12 +13,12 @@ import {
   CheckCircle2,
   CircleOff,
   Clock3,
-  Fingerprint,
   FileSearch,
   FlaskConical,
   FolderCheck,
   FolderOpen,
   GraduationCap,
+  Hash,
   Hourglass,
   Landmark,
   Mail,
@@ -838,12 +838,19 @@ export default async function OrganizedProjectDetailPage({
                       </span>
                     </p>
                     {member.orcid ? (
-                      <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-[#667085] dark:text-[#B0B0B0]">
-                        <Fingerprint
-                          className="research-task-icon-motion h-3 w-3 flex-none text-[#1F7180] dark:text-[#A8DADC]"
+                      <p className="mt-0.5 flex min-w-0 items-start gap-1 text-xs font-normal leading-5 text-[#B0B0B0] lg:items-center lg:truncate">
+                        <Hash
+                          className="mt-[3px] h-3.5 w-3.5 flex-none text-emerald-700 dark:text-emerald-200 lg:mt-0"
                           aria-hidden="true"
                         />
-                        <span className="truncate">{member.orcid}</span>
+                        <a
+                          href={member.orcid}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`${researchLinkClass} min-w-0 whitespace-normal break-all lg:truncate`}
+                        >
+                          {member.orcid}
+                        </a>
                       </p>
                     ) : null}
                   </div>
