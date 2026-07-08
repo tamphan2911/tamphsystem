@@ -63,6 +63,7 @@ import { ResearchAuthorsLockButton } from "./ResearchAuthorsLockButton";
 import { ProductionTimelineActions } from "./ProductionTimelineActions";
 import { AuthorNotificationActions } from "./AuthorNotificationActions";
 import { AuthorBioButton } from "./AuthorBioButton";
+import { AuthorBioModal } from "./AuthorBioModal";
 import {
   ResearchAuthorsEditDialog,
   ResearchBasicEditDialog,
@@ -291,10 +292,19 @@ function readableSubmissionStatus(status: string) {
 
 export default async function ProjectDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ authorBio?: string | string[] }>;
 }) {
   const { id } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const authorBioId =
+    typeof resolvedSearchParams.authorBio === "string"
+      ? resolvedSearchParams.authorBio
+      : Array.isArray(resolvedSearchParams.authorBio)
+        ? resolvedSearchParams.authorBio[0]
+        : "";
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!session || !userId) redirect("/login");
@@ -1307,6 +1317,12 @@ export default async function ProjectDetailPage({
               },
             ]
           : [];
+  const selectedBioAuthor =
+    authorBioId && defaultAuthors.length > 0
+      ? defaultAuthors.find(
+          (author) => author.id === authorBioId && Boolean(author.bio?.trim()),
+        )
+      : undefined;
   const authorIdSet = new Set(defaultAuthors.map((author) => author.id));
   const taskAssociatedUsers = project.tasks.flatMap((task) => [
     task.createdBy,
@@ -1895,6 +1911,16 @@ export default async function ProjectDetailPage({
 
   return (
     <>
+      {selectedBioAuthor ? (
+        <AuthorBioModal
+          authorName={
+            displayResearchPersonName(selectedBioAuthor) ||
+            selectedBioAuthor.email
+          }
+          bio={selectedBioAuthor.bio ?? ""}
+          researchId={project.id}
+        />
+      ) : null}
       <ResearchPageHeaderPortal>
         <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
@@ -2394,11 +2420,12 @@ export default async function ProjectDetailPage({
                           </p>
                           {author.bio?.trim() ? (
                             <AuthorBioButton
+                              authorId={author.id}
                               authorName={
                                 displayResearchPersonName(author) ||
                                 author.email
                               }
-                              bio={author.bio}
+                              researchId={project.id}
                             />
                           ) : null}
                           <span className="border border-[#444444] bg-[#202020] px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-[#B0B0B0]">
