@@ -280,27 +280,36 @@ const productionSubtypeConfig = [
   {
     value: ResearchProductionSubtype.DATA_COLLECTION,
     label: "Data collection",
-    guideCodes: ["G017"],
+    guideCodes: ["G017", "G015"],
   },
   {
     value: ResearchProductionSubtype.MODELING,
     label: "Modeling",
-    guideCodes: ["G018"],
+    guideCodes: ["G018", "G015"],
   },
   {
     value: ResearchProductionSubtype.WRITING,
     label: "Writing",
-    guideCodes: ["G007", "G009", "G011", "G008", "G010", "G024", "G014"],
+    guideCodes: [
+      "G007",
+      "G009",
+      "G011",
+      "G008",
+      "G010",
+      "G024",
+      "G014",
+      "G015",
+    ],
   },
   {
     value: ResearchProductionSubtype.HUMANIZING,
     label: "Humanizing",
-    guideCodes: ["G020"],
+    guideCodes: ["G020", "G015"],
   },
   {
     value: ResearchProductionSubtype.REFERENCES,
     label: "References",
-    guideCodes: ["G006"],
+    guideCodes: ["G006", "G015"],
   },
 ] as const;
 
@@ -337,6 +346,7 @@ function defaultTaskGuideCodesForTask({
     return [
       ...(productionSubtypeMeta(productionSubtype ?? null)?.guideCodes ?? [
         "G014",
+        "G015",
       ]),
     ];
   }
