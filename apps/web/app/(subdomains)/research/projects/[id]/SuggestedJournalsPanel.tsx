@@ -108,6 +108,7 @@ export type SuggestedJournalOption = {
   journalCreationPending?: boolean;
   taskId?: string;
   linkedTask?: SuggestedVenueTaskOption;
+  approvableByCurrentUser?: boolean;
   venueState?: SuggestedVenueState;
   submitTaskLock?: SuggestedVenueSubmitTaskLock;
 };
@@ -155,6 +156,7 @@ export type SuggestedConferenceOption = {
   declineReason?: string;
   taskId?: string;
   linkedTask?: SuggestedVenueTaskOption;
+  approvableByCurrentUser?: boolean;
   venueState?: SuggestedVenueState;
 };
 
@@ -170,6 +172,7 @@ export type SuggestedVenueTaskOption = {
   title: string;
   status: string;
   assignees: string;
+  createdById: string;
 };
 
 export type SuggestedVenueState = {
@@ -997,8 +1000,12 @@ export function SuggestedJournalsPanel({
               journal={journal}
               canDeleteVenue={canDeleteVenue}
               canAssignTask={canAssignTask}
-              canApproveSuggestion={canApproveSuggestion}
-              canEditVenue={canApproveSuggestion}
+              canApproveSuggestion={
+                canApproveSuggestion && Boolean(journal.approvableByCurrentUser)
+              }
+              canEditVenue={
+                canApproveSuggestion && Boolean(journal.approvableByCurrentUser)
+              }
               disabled={disabled}
               onAssign={() =>
                 openSubmitTask({ kind: "journal", item: journal })
@@ -1021,8 +1028,14 @@ export function SuggestedJournalsPanel({
               conference={conference}
               canDeleteVenue={canDeleteVenue}
               canAssignTask={canAssignTask}
-              canApproveSuggestion={canApproveSuggestion}
-              canEditVenue={canApproveSuggestion}
+              canApproveSuggestion={
+                canApproveSuggestion &&
+                Boolean(conference.approvableByCurrentUser)
+              }
+              canEditVenue={
+                canApproveSuggestion &&
+                Boolean(conference.approvableByCurrentUser)
+              }
               disabled={disabled}
               onAssign={() =>
                 openSubmitTask({ kind: "conference", item: conference })

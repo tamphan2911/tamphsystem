@@ -798,7 +798,7 @@ export default async function ProjectDetailPage({
     (canCreateSubmitOrOtherTask || isChiefAssistant) && !researchContentLocked;
   const canCreateProductionTask = canCreateSubmitOrOtherTask;
   const canApproveVenueSuggestion =
-    (isRootAdmin || isChiefAssistant || isSuggestVenueTaskAssigner) &&
+    (isRootAdmin || isSuggestVenueTaskAssigner) &&
     !researchContentLocked;
   const authorNames =
     hydratedAuthorEntries.length > 0
@@ -905,6 +905,7 @@ export default async function ProjectDetailPage({
         task.taskCode ?? task.id.replaceAll("-", "").slice(0, 10).toUpperCase(),
       title: task.title,
       status: task.status,
+      createdById: task.createdById ?? "",
       assignees: task.assignments
         .map((assignment) => displayResearchPersonName(assignment.user))
         .filter(Boolean)
@@ -913,6 +914,11 @@ export default async function ProjectDetailPage({
   const suggestVenueTaskById = new Map(
     suggestVenueTaskOptions.map((task) => [task.id, task]),
   );
+  const canApproveSuggestedVenueTask = (taskId?: string | null) => {
+    if (isRootAdmin) return true;
+    if (!taskId) return false;
+    return suggestVenueTaskById.get(taskId)?.createdById === userId;
+  };
   const suggestedJournalState = (journalId: string): SuggestedVenueState => {
     const submission = project.submissions.find(
       (item) => item.journalId === journalId,
@@ -1043,6 +1049,9 @@ export default async function ProjectDetailPage({
         linkedTask: suggestion.taskId
           ? suggestVenueTaskById.get(suggestion.taskId)
           : undefined,
+        approvableByCurrentUser: canApproveSuggestedVenueTask(
+          suggestion.taskId,
+        ),
         submitTaskLock: submitTaskLockForPublisher({
           publisherId: journal?.publisherId ?? suggestion.publisherId,
           publisherName: journal?.publisher ?? publisher?.name,
@@ -1147,6 +1156,9 @@ export default async function ProjectDetailPage({
         linkedTask: suggestion.taskId
           ? suggestVenueTaskById.get(suggestion.taskId)
           : undefined,
+        approvableByCurrentUser: canApproveSuggestedVenueTask(
+          suggestion.taskId,
+        ),
         approvedByName: approvedBy
           ? displayResearchPersonName(approvedBy) || "Unknown user"
           : undefined,

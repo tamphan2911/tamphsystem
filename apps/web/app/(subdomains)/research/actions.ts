@@ -10709,6 +10709,7 @@ export async function addSuggestedJournal(
       projectId,
       user.id,
       user.roles,
+      taskId,
     ));
   const status = canApprove
     ? SuggestedVenueStatus.APPROVED
@@ -10893,6 +10894,7 @@ export async function updateSuggestedJournal(
       projectId,
       user.id,
       user.roles,
+      taskId ?? suggestion.taskId,
     ));
 
   try {
@@ -11039,6 +11041,7 @@ export async function addSuggestedConference(
       projectId,
       user.id,
       user.roles,
+      taskId,
     ));
   const status = canApprove
     ? SuggestedVenueStatus.APPROVED
@@ -11218,6 +11221,7 @@ export async function updateSuggestedConference(
       projectId,
       user.id,
       user.roles,
+      taskId ?? suggestion.taskId,
     ));
 
   try {
@@ -11324,15 +11328,22 @@ async function canApproveVenueSuggestionForResearch(
   projectId: string,
   userId: string,
   roles: Role[],
+  taskId?: string | null,
 ) {
-  if (roles.includes(Role.ADMIN) || roles.includes(Role.CHIEF_ASSISTANT)) {
+  if (roles.includes(Role.ADMIN)) {
     return true;
+  }
+  if (roles.includes(Role.CHIEF_ASSISTANT) && !taskId) {
+    return false;
   }
   const project = await prisma.researchProject.findUnique({
     where: { id: projectId },
     select: {
       tasks: {
-        where: { taskType: ResearchTaskType.SUGGEST_VENUE },
+        where: {
+          ...(taskId ? { id: taskId } : {}),
+          taskType: ResearchTaskType.SUGGEST_VENUE,
+        },
         select: { createdById: true },
       },
     },
@@ -11459,16 +11470,6 @@ export async function approveSuggestedJournal(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
-  if (
-    !(await canApproveVenueSuggestionForResearch(
-      projectId,
-      user.id,
-      user.roles,
-    ))
-  ) {
-    redirect("/401");
-  }
-
   const suggestion = await prisma.suggestedJournal.findUnique({
     where: { id: suggestionId },
     select: {
@@ -11488,6 +11489,16 @@ export async function approveSuggestedJournal(
     },
   });
   if (!suggestion || suggestion.projectId !== projectId) return;
+  if (
+    !(await canApproveVenueSuggestionForResearch(
+      projectId,
+      user.id,
+      user.roles,
+      suggestion.taskId,
+    ))
+  ) {
+    redirect("/401");
+  }
 
   const createJournalTask =
     formData.get("createJournalTask") === "true" && !suggestion.journalId;
@@ -11689,16 +11700,6 @@ export async function approveSuggestedConference(
   formData: FormData,
 ) {
   const user = await requireCurrentUser();
-  if (
-    !(await canApproveVenueSuggestionForResearch(
-      projectId,
-      user.id,
-      user.roles,
-    ))
-  ) {
-    redirect("/401");
-  }
-
   const suggestion = await prisma.suggestedConference.findUnique({
     where: { id: suggestionId },
     select: {
@@ -11714,6 +11715,16 @@ export async function approveSuggestedConference(
     },
   });
   if (!suggestion || suggestion.projectId !== projectId) return;
+  if (
+    !(await canApproveVenueSuggestionForResearch(
+      projectId,
+      user.id,
+      user.roles,
+      suggestion.taskId,
+    ))
+  ) {
+    redirect("/401");
+  }
 
   const linkedConferenceId =
     suggestion.conferenceId ?? optionalString(formData.get("conferenceId"));
@@ -11795,16 +11806,6 @@ export async function declineSuggestedJournal(
   reason: string,
 ) {
   const user = await requireCurrentUser();
-  if (
-    !(await canApproveVenueSuggestionForResearch(
-      projectId,
-      user.id,
-      user.roles,
-    ))
-  ) {
-    redirect("/401");
-  }
-
   const declineReason = reason.trim();
   if (!declineReason) {
     return { ok: false, message: "Enter a reason for declining this venue." };
@@ -11823,6 +11824,16 @@ export async function declineSuggestedJournal(
   });
   if (!suggestion || suggestion.projectId !== projectId) {
     return { ok: false, message: "Venue suggestion was not found." };
+  }
+  if (
+    !(await canApproveVenueSuggestionForResearch(
+      projectId,
+      user.id,
+      user.roles,
+      suggestion.taskId,
+    ))
+  ) {
+    redirect("/401");
   }
   if (suggestion.status !== SuggestedVenueStatus.PENDING) {
     return { ok: false, message: "Only pending suggestions can be declined." };
@@ -11870,16 +11881,6 @@ export async function declineSuggestedConference(
   reason: string,
 ) {
   const user = await requireCurrentUser();
-  if (
-    !(await canApproveVenueSuggestionForResearch(
-      projectId,
-      user.id,
-      user.roles,
-    ))
-  ) {
-    redirect("/401");
-  }
-
   const declineReason = reason.trim();
   if (!declineReason) {
     return { ok: false, message: "Enter a reason for declining this venue." };
@@ -11898,6 +11899,16 @@ export async function declineSuggestedConference(
   });
   if (!suggestion || suggestion.projectId !== projectId) {
     return { ok: false, message: "Venue suggestion was not found." };
+  }
+  if (
+    !(await canApproveVenueSuggestionForResearch(
+      projectId,
+      user.id,
+      user.roles,
+      suggestion.taskId,
+    ))
+  ) {
+    redirect("/401");
   }
   if (suggestion.status !== SuggestedVenueStatus.PENDING) {
     return { ok: false, message: "Only pending suggestions can be declined." };
