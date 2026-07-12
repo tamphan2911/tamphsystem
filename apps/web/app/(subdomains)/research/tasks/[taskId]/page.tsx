@@ -2198,6 +2198,8 @@ export default async function TaskDetailPage({
   const resultUnderChecker = Boolean(
     taskResult && actionBelongsUnderChecker(taskResult.actorId),
   );
+  const assignmentScopedApprovalResult =
+    task.assignments.length > 1 && taskResult?.kind === "approved";
   const redoInfo =
     task.status !== ResearchTaskStatus.COMPLETED &&
     task.status !== ResearchTaskStatus.REVOKED &&
@@ -4294,6 +4296,31 @@ export default async function TaskDetailPage({
                                 ? "This task is fully completed."
                                 : "This assignee is complete. Waiting for other assignees."}
                             </span>
+                            {assignment.completionMessage ? (
+                              <div className="border-t border-[#D8D0C2] pt-2 dark:border-[#444444]">
+                                <span className="block text-[#1F2937] dark:text-[#E4E4E4]">
+                                  Feedback
+                                  {assignment.completedAt
+                                    ? ` - ${formatDate(assignment.completedAt)}`
+                                    : ""}
+                                </span>
+                                <p className="mt-1 whitespace-pre-wrap text-[#667085] dark:text-[#B0B0B0]">
+                                  {assignment.completionMessage}
+                                </p>
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
+                        {assignment.redoRequestedAt &&
+                        assignment.redoReason ? (
+                          <div className="grid gap-1 border-t border-[#D8D0C2] pt-2 text-[11px] leading-4 text-[#7A4B00] dark:border-[#444444] dark:text-orange-200">
+                            <span className="text-orange-700 dark:text-orange-300">
+                              Revision feedback -{" "}
+                              {formatDate(assignment.redoRequestedAt)}
+                            </span>
+                            <p className="whitespace-pre-wrap">
+                              {assignment.redoReason}
+                            </p>
                           </div>
                         ) : null}
                       </div>
@@ -4316,7 +4343,9 @@ export default async function TaskDetailPage({
                   person={checkerPerson}
                   showEmail={showCheckerEmail}
                 />
-                {taskResult && resultUnderChecker ? (
+                {taskResult &&
+                resultUnderChecker &&
+                !assignmentScopedApprovalResult ? (
                   <TaskResultBlock result={taskResult} />
                 ) : null}
                 {redoInfo && redoUnderChecker ? (
@@ -4331,7 +4360,9 @@ export default async function TaskDetailPage({
               </h2>
               <div className="border-t border-[#D8D0C2] py-3 dark:border-[#444444]">
                 <TaskPersonLine person={task.createdBy} />
-                {taskResult && !resultUnderChecker ? (
+                {taskResult &&
+                !resultUnderChecker &&
+                !assignmentScopedApprovalResult ? (
                   <TaskResultBlock result={taskResult} />
                 ) : null}
                 {redoInfo && !redoUnderChecker ? (
