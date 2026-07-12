@@ -165,10 +165,10 @@ function taskNeedsManagerAction(task: Record<string, any>) {
   );
 }
 
-function derivedStatus(task: Record<string, any>, activeTab: string) {
+function derivedStatus(task: Record<string, any>, _activeTab: string) {
   if (
-    activeTab === "assigned" &&
     task.scope?.assignedToMe &&
+    !task.scope?.adminAccess &&
     task.assignments?.length > 1 &&
     task.currentUserAssignmentId &&
     task.status !== "REVOKED"

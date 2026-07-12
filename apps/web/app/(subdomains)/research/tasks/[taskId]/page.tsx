@@ -2156,12 +2156,49 @@ export default async function TaskDetailPage({
         ? "Waiting assignee to correct the added journal"
         : `Waiting assignee to correct ${activeJournalCorrectionCount} added journals`
       : null;
-  const meta = statusMeta({
-    ...task,
-    clarifyDirection,
-    waitingForJournalCreation,
-    addJournalCorrection,
-  });
+  const assignmentScopedViewerStatus =
+    task.assignments.length > 1 &&
+    isAssignee &&
+    !isRootAdmin &&
+    !isAssigner &&
+    !isChecker &&
+    task.status !== ResearchTaskStatus.REVOKED
+      ? myAssignment?.completedAt
+        ? ResearchTaskStatus.COMPLETED
+        : myAssignment?.redoRequestedAt
+          ? ResearchTaskStatus.REVISION_REQUESTED
+          : myAssignment?.finishedAt
+            ? ResearchTaskStatus.CHECKING
+            : ResearchTaskStatus.IN_PROGRESS
+      : null;
+  const viewerStatusTask: {
+    status: string;
+    dueDate: Date | null;
+    completedAt: Date | null;
+    revokedAt?: Date | null;
+    clarifyDirection?: "ASSIGNEE_TO_MANAGER" | "MANAGER_TO_ASSIGNEE" | null;
+    waitingForJournalCreation?: boolean;
+    addJournalCorrection?: string | null;
+  } = assignmentScopedViewerStatus
+    ? {
+        status: assignmentScopedViewerStatus,
+        dueDate: myAssignment?.dueDate ?? task.dueDate,
+        completedAt: myAssignment?.completedAt ?? null,
+        revokedAt: null,
+        clarifyDirection,
+        waitingForJournalCreation: false,
+        addJournalCorrection: null,
+      }
+    : {
+        status: task.status,
+        dueDate: task.dueDate,
+        completedAt: task.completedAt,
+        revokedAt: task.revokedAt,
+        clarifyDirection,
+        waitingForJournalCreation,
+        addJournalCorrection,
+      };
+  const meta = statusMeta(viewerStatusTask);
   const taskResult =
     task.status === ResearchTaskStatus.COMPLETED
       ? {
@@ -2226,7 +2263,7 @@ export default async function TaskDetailPage({
     task.productionSubtype,
   );
   const TaskTypeIcon = taskType.icon;
-  const statusIcon = statusIconMeta(task, meta.label);
+  const statusIcon = statusIconMeta(viewerStatusTask, meta.label);
   const StatusIcon = statusIcon.icon;
   const finishAction = finishResearchTask.bind(null, task.id);
   const readyAction = markResearchTaskReadyForCheck.bind(null, task.id);
@@ -2331,6 +2368,8 @@ export default async function TaskDetailPage({
     !waitingForJournalCreation &&
     isAssignee &&
     !selfAssigned &&
+    !myAssignment?.finishedAt &&
+    !myAssignment?.completedAt &&
     effectiveStatus !== ResearchTaskStatus.CHECKING &&
     effectiveStatus !== ResearchTaskStatus.NEED_CLARIFY &&
     !hasOpenClarification;

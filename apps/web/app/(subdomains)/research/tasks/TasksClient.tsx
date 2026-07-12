@@ -298,10 +298,10 @@ function currentUserAssignment(task: TaskRow) {
   );
 }
 
-function shouldUseAssigneeStatus(task: TaskRow, activeTab: TaskHeaderTab) {
+function shouldUseAssigneeStatus(task: TaskRow, _activeTab: TaskHeaderTab) {
   return (
-    activeTab === "assigned" &&
     task.scope.assignedToMe &&
+    !task.scope.adminAccess &&
     task.assignments.length > 1 &&
     Boolean(currentUserAssignment(task))
   );
