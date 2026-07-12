@@ -129,13 +129,21 @@ const productionSubtypeOptions: Array<{
   label: string;
   guideCodes: string[];
 }> = [
-  { value: "IDEA_FORMING", label: "Idea forming", guideCodes: ["G016", "G015"] },
+  {
+    value: "IDEA_FORMING",
+    label: "Idea forming",
+    guideCodes: ["G016", "G014", "G015"],
+  },
   {
     value: "DATA_COLLECTION",
     label: "Data collection",
-    guideCodes: ["G017", "G015"],
+    guideCodes: ["G017", "G014", "G015"],
   },
-  { value: "MODELING", label: "Modeling", guideCodes: ["G018", "G015"] },
+  {
+    value: "MODELING",
+    label: "Modeling",
+    guideCodes: ["G018", "G014", "G015"],
+  },
   {
     value: "WRITING",
     label: "Writing",
@@ -150,8 +158,16 @@ const productionSubtypeOptions: Array<{
       "G015",
     ],
   },
-  { value: "HUMANIZING", label: "Humanizing", guideCodes: ["G020", "G015"] },
-  { value: "REFERENCES", label: "References", guideCodes: ["G006", "G015"] },
+  {
+    value: "HUMANIZING",
+    label: "Humanizing",
+    guideCodes: ["G020", "G014", "G015"],
+  },
+  {
+    value: "REFERENCES",
+    label: "References",
+    guideCodes: ["G006", "G014", "G015"],
+  },
 ];
 
 function isProductionSubtype(value: string | null): value is ProductionSubtype {
@@ -682,7 +698,7 @@ export function EditTaskDialog({
       guideIdsForCodes(
         taskGuideOptions,
         productionSubtypeOptions.find((option) => option.value === nextSubtype)
-          ?.guideCodes ?? ["G016", "G015"],
+          ?.guideCodes ?? ["G016", "G014", "G015"],
       ),
     );
   }
@@ -709,7 +725,7 @@ export function EditTaskDialog({
             taskGuideOptions,
             productionSubtypeOptions.find(
               (option) => option.value === productionSubtype,
-            )?.guideCodes ?? ["G016", "G015"],
+            )?.guideCodes ?? ["G016", "G014", "G015"],
           ),
         );
       }

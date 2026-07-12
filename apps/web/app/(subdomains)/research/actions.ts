@@ -275,17 +275,17 @@ const productionSubtypeConfig = [
   {
     value: ResearchProductionSubtype.IDEA_FORMING,
     label: "Idea forming",
-    guideCodes: ["G016", "G015"],
+    guideCodes: ["G016", "G014", "G015"],
   },
   {
     value: ResearchProductionSubtype.DATA_COLLECTION,
     label: "Data collection",
-    guideCodes: ["G017", "G015"],
+    guideCodes: ["G017", "G014", "G015"],
   },
   {
     value: ResearchProductionSubtype.MODELING,
     label: "Modeling",
-    guideCodes: ["G018", "G015"],
+    guideCodes: ["G018", "G014", "G015"],
   },
   {
     value: ResearchProductionSubtype.WRITING,
@@ -304,12 +304,12 @@ const productionSubtypeConfig = [
   {
     value: ResearchProductionSubtype.HUMANIZING,
     label: "Humanizing",
-    guideCodes: ["G020", "G015"],
+    guideCodes: ["G020", "G014", "G015"],
   },
   {
     value: ResearchProductionSubtype.REFERENCES,
     label: "References",
-    guideCodes: ["G006", "G015"],
+    guideCodes: ["G006", "G014", "G015"],
   },
 ] as const;
 

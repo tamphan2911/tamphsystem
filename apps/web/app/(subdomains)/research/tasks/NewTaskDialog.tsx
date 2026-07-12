@@ -165,14 +165,18 @@ const productionSubtypeOptions: Array<{
   {
     value: "IDEA_FORMING",
     label: "Idea forming",
-    guideCodes: ["G016", "G015"],
+    guideCodes: ["G016", "G014", "G015"],
   },
   {
     value: "DATA_COLLECTION",
     label: "Data collection",
-    guideCodes: ["G017", "G015"],
+    guideCodes: ["G017", "G014", "G015"],
   },
-  { value: "MODELING", label: "Modeling", guideCodes: ["G018", "G015"] },
+  {
+    value: "MODELING",
+    label: "Modeling",
+    guideCodes: ["G018", "G014", "G015"],
+  },
   {
     value: "WRITING",
     label: "Writing",
@@ -187,8 +191,16 @@ const productionSubtypeOptions: Array<{
       "G015",
     ],
   },
-  { value: "HUMANIZING", label: "Humanizing", guideCodes: ["G020", "G015"] },
-  { value: "REFERENCES", label: "References", guideCodes: ["G006", "G015"] },
+  {
+    value: "HUMANIZING",
+    label: "Humanizing",
+    guideCodes: ["G020", "G014", "G015"],
+  },
+  {
+    value: "REFERENCES",
+    label: "References",
+    guideCodes: ["G006", "G014", "G015"],
+  },
 ];
 
 function guideIdsForCode(guides: TaskGuideOption[], guideCode: string) {
@@ -306,7 +318,7 @@ function defaultTaskGuideIdsForMode(
     return guideIdsForCodes(
       guides,
       productionSubtypeOptions.find((item) => item.value === productionSubtype)
-        ?.guideCodes ?? ["G016", "G015"],
+        ?.guideCodes ?? ["G016", "G014", "G015"],
     );
   }
   if (mode === "suggestVenue")
