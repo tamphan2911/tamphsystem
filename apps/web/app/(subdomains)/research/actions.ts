@@ -12550,6 +12550,72 @@ async function createNextProductionWorkflowTask({
   });
 }
 
+async function createReferencesFollowUpTask({
+  sourceTask,
+}: {
+  sourceTask: {
+    id: string;
+    projectId: string | null;
+    productionSubtype: ResearchProductionSubtype | null;
+    createdById: string;
+    checkerId: string | null;
+    project: { title: string } | null;
+    assignments: { userId: string; user: { email: string } }[];
+  };
+}) {
+  if (
+    sourceTask.productionSubtype !== ResearchProductionSubtype.REFERENCES ||
+    !sourceTask.projectId ||
+    sourceTask.assignments.length === 0
+  ) {
+    return null;
+  }
+
+  const guide = await prisma.taskGuide.findUnique({
+    where: { guideCode: "G026" },
+    select: { id: true },
+  });
+  const dueDate = researchTaskDueDate(researchDateValue(new Date(), 2));
+  const title = `Final research follow-up for ${sourceTask.project?.title ?? "research"}`;
+
+  return prisma.researchTask.create({
+    data: {
+      title,
+      taskCode: await generateTaskCode(),
+      description: "Read the guide by click on icons right above.",
+      taskType: ResearchTaskType.OTHER,
+      proposalScope: ProposalTaskScope.RESEARCH,
+      status: ResearchTaskStatus.IN_PROGRESS,
+      projectId: sourceTask.projectId,
+      checkerId: sourceTask.checkerId,
+      dueDate,
+      createdById: sourceTask.createdById,
+      assignments: {
+        create: sourceTask.assignments.map((assignment) => ({
+          userId: assignment.userId,
+          dueDate,
+        })),
+      },
+      ...(guide
+        ? {
+            guides: {
+              connect: [{ id: guide.id }],
+            },
+          }
+        : {}),
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      checkerId: true,
+      assignments: {
+        select: { user: { select: { email: true } } },
+      },
+    },
+  });
+}
+
 async function createInitialProductionWorkflowTaskForResearch(
   projectId: string,
 ) {
@@ -12708,6 +12774,8 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
   )?.slice(0, 2000);
   const createNextProductionTask =
     formData?.get("createNextProductionTask") === "true";
+  const createReferenceFollowUpTask =
+    formData?.get("createReferenceFollowUpTask") === "true";
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
     select: {
@@ -13002,10 +13070,14 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
         createdById: task.createdById,
       })
     : null;
+  const referenceFollowUpTask = createReferenceFollowUpTask
+    ? await createReferencesFollowUpTask({ sourceTask: task })
+    : null;
 
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
   if (nextTask) revalidatePath(`/tasks/${nextTask.id}`);
+  if (referenceFollowUpTask) revalidatePath(`/tasks/${referenceFollowUpTask.id}`);
   if (task.projectId) revalidatePath(`/projects/${task.projectId}`);
   if (task.reviewId) revalidatePath(`/reviews/${task.reviewId}`);
 
@@ -13064,6 +13136,51 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
         taskTitle: nextTask.title,
         taskId: nextTask.id,
         detail: nextTask.description ?? undefined,
+      });
+    }
+  }
+  if (referenceFollowUpTask) {
+    await notifyUsers({
+      userIds: task.assignments.map((assignment) => assignment.userId),
+      type: "TASK_ASSIGNED",
+      title: "References follow-up task assigned",
+      summary: referenceFollowUpTask.title,
+      body: `The references task "${task.title}" was approved and a follow-up task was assigned automatically.`,
+      href: `/tasks/${referenceFollowUpTask.id}`,
+      entityType: "task",
+      entityId: referenceFollowUpTask.id,
+      excludeUserId: user.id,
+    });
+    await sendTaskEmail({
+      to: referenceFollowUpTask.assignments.map(
+        (assignment) => assignment.user.email,
+      ),
+      subject: `New follow-up task assigned: ${referenceFollowUpTask.title}`,
+      heading: "References follow-up task assigned",
+      intro:
+        "The references task was approved and a follow-up task has been assigned automatically.",
+      detail: referenceFollowUpTask.description ?? undefined,
+      taskTitle: referenceFollowUpTask.title,
+      taskId: referenceFollowUpTask.id,
+      actionLabel: "Open follow-up task",
+    });
+    if (referenceFollowUpTask.checkerId) {
+      await notifyUsers({
+        userIds: [referenceFollowUpTask.checkerId],
+        type: "TASK_CHECKER_ASSIGNED",
+        title: "Task checker assigned",
+        summary: referenceFollowUpTask.title,
+        body: "A references follow-up task was assigned automatically with you as checker.",
+        href: `/tasks/${referenceFollowUpTask.id}`,
+        entityType: "task",
+        entityId: referenceFollowUpTask.id,
+        excludeUserId: user.id,
+      });
+      await sendTaskCheckerAssignedEmail({
+        checkerId: referenceFollowUpTask.checkerId,
+        taskTitle: referenceFollowUpTask.title,
+        taskId: referenceFollowUpTask.id,
+        detail: referenceFollowUpTask.description ?? undefined,
       });
     }
   }

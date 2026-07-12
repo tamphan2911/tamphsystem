@@ -16,6 +16,7 @@ export function AssigneeReviewActions({
   accountId,
   requiresSubmissionDate = false,
   nextProductionTaskLabel = "",
+  referenceFollowUpTaskLabel = "",
   iconClassName,
   label,
   detail,
@@ -26,6 +27,7 @@ export function AssigneeReviewActions({
   accountId?: string | null;
   requiresSubmissionDate?: boolean;
   nextProductionTaskLabel?: string;
+  referenceFollowUpTaskLabel?: string;
   iconClassName: string;
   label: string;
   detail: string;
@@ -149,6 +151,7 @@ export function AssigneeReviewActions({
                   requiresSubmissionDate={requiresSubmissionDate}
                   mode="approve"
                   nextProductionTaskLabel={nextProductionTaskLabel}
+                  referenceFollowUpTaskLabel={referenceFollowUpTaskLabel}
                 />
                 <RedoTaskForm action={redoAction} assignmentId={assignmentId} />
               </div>

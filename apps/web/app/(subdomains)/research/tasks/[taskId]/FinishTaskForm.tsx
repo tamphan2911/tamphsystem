@@ -17,6 +17,7 @@ export function FinishTaskForm({
   requiresSubmissionDate = false,
   mode = "approve",
   nextProductionTaskLabel = "",
+  referenceFollowUpTaskLabel = "",
 }: {
   action: (formData: FormData) => void | Promise<void>;
   accountId?: string | null;
@@ -24,6 +25,7 @@ export function FinishTaskForm({
   requiresSubmissionDate?: boolean;
   mode?: "ready" | "approve";
   nextProductionTaskLabel?: string;
+  referenceFollowUpTaskLabel?: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [submissionDate, setSubmissionDate] = useState(researchDateValue);
@@ -31,6 +33,8 @@ export function FinishTaskForm({
   const [createNextProductionTask, setCreateNextProductionTask] = useState(
     Boolean(nextProductionTaskLabel),
   );
+  const [createReferenceFollowUpTask, setCreateReferenceFollowUpTask] =
+    useState(Boolean(referenceFollowUpTaskLabel));
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const isReadyMode = mode === "ready";
@@ -49,8 +53,14 @@ export function FinishTaskForm({
   useEffect(() => {
     if (isOpen && !isReadyMode) {
       setCreateNextProductionTask(Boolean(nextProductionTaskLabel));
+      setCreateReferenceFollowUpTask(Boolean(referenceFollowUpTaskLabel));
     }
-  }, [isOpen, isReadyMode, nextProductionTaskLabel]);
+  }, [
+    isOpen,
+    isReadyMode,
+    nextProductionTaskLabel,
+    referenceFollowUpTaskLabel,
+  ]);
 
   return (
     <>
@@ -73,6 +83,13 @@ export function FinishTaskForm({
             value={createNextProductionTask ? "true" : "false"}
           />
         ) : null}
+        {!isReadyMode && referenceFollowUpTaskLabel ? (
+          <input
+            type="hidden"
+            name="createReferenceFollowUpTask"
+            value={createReferenceFollowUpTask ? "true" : "false"}
+          />
+        ) : null}
         <button
           type="button"
           onClick={() => setIsOpen(true)}
@@ -93,6 +110,7 @@ export function FinishTaskForm({
           setIsOpen(false);
           setCompletionMessage("");
           setCreateNextProductionTask(Boolean(nextProductionTaskLabel));
+          setCreateReferenceFollowUpTask(Boolean(referenceFollowUpTaskLabel));
         }}
         title={title}
         description={description}
@@ -174,6 +192,24 @@ export function FinishTaskForm({
               <span>
                 After approval, assign the next task automatically:{" "}
                 <span className="font-semibold">{nextProductionTaskLabel}</span>
+              </span>
+            </label>
+          ) : null}
+          {!isReadyMode && referenceFollowUpTaskLabel ? (
+            <label className="flex cursor-pointer items-start gap-3 border border-sky-200 bg-sky-50 px-3 py-3 text-sm leading-5 text-slate-700 transition hover:border-sky-400 dark:border-[#A8DADC]/30 dark:bg-[#A8DADC]/10 dark:text-[#D6F5F8]">
+              <input
+                type="checkbox"
+                checked={createReferenceFollowUpTask}
+                onChange={(event) =>
+                  setCreateReferenceFollowUpTask(event.target.checked)
+                }
+                className="mt-0.5 h-4 w-4 flex-none accent-[#1F7180]"
+              />
+              <span>
+                After approving references, create follow-up task:{" "}
+                <span className="font-semibold">
+                  {referenceFollowUpTaskLabel}
+                </span>
               </span>
             </label>
           ) : null}

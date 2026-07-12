@@ -31,6 +31,7 @@ import {
   prisma,
   JournalApprovalStatus,
   ProposalType,
+  ResearchProductionSubtype,
   ResearchTaskStatus,
   ResearchTaskType,
   Role,
@@ -3898,6 +3899,12 @@ export default async function TaskDetailPage({
                     ? nextProductionTaskLabel(task.productionSubtype)
                     : ""
                 }
+                referenceFollowUpTaskLabel={
+                  task.taskType === "PRODUCTION" &&
+                  task.productionSubtype === "REFERENCES"
+                    ? "Final research follow-up"
+                    : ""
+                }
               />
             )}
           </div>
@@ -4233,6 +4240,14 @@ export default async function TaskDetailPage({
                           approvingThisAssigneeCompletesTask &&
                           task.taskType === ResearchTaskType.PRODUCTION
                             ? nextProductionTaskLabel(task.productionSubtype)
+                            : ""
+                        }
+                        referenceFollowUpTaskLabel={
+                          approvingThisAssigneeCompletesTask &&
+                          task.taskType === ResearchTaskType.PRODUCTION &&
+                          task.productionSubtype ===
+                            ResearchProductionSubtype.REFERENCES
+                            ? "Final research follow-up"
                             : ""
                         }
                         iconClassName={workflow.className}
