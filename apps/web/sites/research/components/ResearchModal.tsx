@@ -31,9 +31,6 @@ export function ResearchModal({
   return createPortal(
     <div
       data-research-modal-overlay="true"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
       className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-slate-950/45 px-2 py-3 animate-[modalOverlayIn_140ms_ease-out] sm:px-4 sm:py-8 dark:bg-black/68"
     >
       <div
