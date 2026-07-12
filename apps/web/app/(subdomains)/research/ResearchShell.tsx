@@ -452,18 +452,9 @@ export function ResearchShell({
       closeResearchModal(overlay);
     }
 
-    function closeOnBackdrop(event: MouseEvent) {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (!isResearchModalOverlay(target)) return;
-      closeResearchModal(target);
-    }
-
     document.addEventListener("keydown", closeOnEscape);
-    document.addEventListener("mousedown", closeOnBackdrop);
     return () => {
       document.removeEventListener("keydown", closeOnEscape);
-      document.removeEventListener("mousedown", closeOnBackdrop);
     };
   }, []);
 
