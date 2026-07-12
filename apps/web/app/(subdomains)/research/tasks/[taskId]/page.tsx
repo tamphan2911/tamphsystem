@@ -2198,8 +2198,9 @@ export default async function TaskDetailPage({
   const resultUnderChecker = Boolean(
     taskResult && actionBelongsUnderChecker(taskResult.actorId),
   );
+  const assignmentScopedFeedback = task.assignments.length > 1;
   const assignmentScopedApprovalResult =
-    task.assignments.length > 1 && taskResult?.kind === "approved";
+    assignmentScopedFeedback && taskResult?.kind === "approved";
   const redoInfo =
     task.status !== ResearchTaskStatus.COMPLETED &&
     task.status !== ResearchTaskStatus.REVOKED &&
@@ -4348,7 +4349,7 @@ export default async function TaskDetailPage({
                 !assignmentScopedApprovalResult ? (
                   <TaskResultBlock result={taskResult} />
                 ) : null}
-                {redoInfo && redoUnderChecker ? (
+                {redoInfo && redoUnderChecker && !assignmentScopedFeedback ? (
                   <TaskRedoBlock redo={redoInfo} />
                 ) : null}
               </div>
@@ -4365,7 +4366,7 @@ export default async function TaskDetailPage({
                 !assignmentScopedApprovalResult ? (
                   <TaskResultBlock result={taskResult} />
                 ) : null}
-                {redoInfo && !redoUnderChecker ? (
+                {redoInfo && !redoUnderChecker && !assignmentScopedFeedback ? (
                   <TaskRedoBlock redo={redoInfo} />
                 ) : null}
               </div>
