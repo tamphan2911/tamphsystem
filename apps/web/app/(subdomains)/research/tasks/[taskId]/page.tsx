@@ -494,6 +494,57 @@ const writingTaskGuideCodeOrder = [
   "G014",
 ];
 
+function defaultTaskGuideCodesForDisplay(
+  taskType: string | null,
+  proposalScope?: string | null,
+  productionSubtype?: string | null,
+) {
+  if (taskType === "SUGGEST_VENUE") return ["G001", "G023", "G015"];
+  if (taskType === "SUBMIT_RESEARCH" || taskType === "SUBMIT_CONFERENCE") {
+    return ["G002", "G015"];
+  }
+  if (taskType === "ADD_JOURNAL") return ["G003"];
+  if (taskType === "PROPOSAL") {
+    return [proposalScope === "PROJECT" ? "G005" : "G004"];
+  }
+  if (taskType === "REVIEW") return ["G013", "G015"];
+  if (taskType !== "PRODUCTION") return [];
+
+  if (productionSubtype === "IDEA_FORMING") return ["G016", "G014", "G015"];
+  if (productionSubtype === "DATA_COLLECTION") return ["G017", "G014", "G015"];
+  if (productionSubtype === "MODELING") return ["G018", "G014", "G015"];
+  if (productionSubtype === "WRITING") {
+    return ["G007", "G009", "G011", "G008", "G010", "G024", "G014", "G015"];
+  }
+  if (productionSubtype === "HUMANIZING") return ["G020", "G014", "G015"];
+  if (productionSubtype === "REFERENCES") return ["G006", "G014", "G015"];
+  return ["G014", "G015"];
+}
+
+function mergeTaskGuidesForDisplay(
+  savedGuides: TaskGuideOption[],
+  availableGuides: TaskGuideOption[],
+  taskType: string | null,
+  proposalScope?: string | null,
+  productionSubtype?: string | null,
+) {
+  const guidesByCode = new Map(
+    availableGuides.map((guide) => [guide.guideCode, guide]),
+  );
+  const selectedById = new Map(savedGuides.map((guide) => [guide.id, guide]));
+
+  defaultTaskGuideCodesForDisplay(
+    taskType,
+    proposalScope,
+    productionSubtype,
+  ).forEach((guideCode) => {
+    const guide = guidesByCode.get(guideCode);
+    if (guide && !selectedById.has(guide.id)) selectedById.set(guide.id, guide);
+  });
+
+  return Array.from(selectedById.values());
+}
+
 function orderedTaskGuidesForDisplay(
   guides: TaskGuideOption[],
   taskType: string | null,
@@ -2257,11 +2308,6 @@ export default async function TaskDetailPage({
     task.category,
     task.productionSubtype,
   );
-  const taskGuidesForDisplay = orderedTaskGuidesForDisplay(
-    task.guides,
-    task.taskType,
-    task.productionSubtype,
-  );
   const TaskTypeIcon = taskType.icon;
   const statusIcon = statusIconMeta(viewerStatusTask, meta.label);
   const StatusIcon = statusIcon.icon;
@@ -3312,6 +3358,45 @@ export default async function TaskDetailPage({
           }),
         ])
       : [[], [], [], [], [], [], [], [], [], [], []];
+  const savedTaskGuideCodes = new Set(
+    task.guides.map((guide) => guide.guideCode),
+  );
+  const missingDefaultGuideCodes = defaultTaskGuideCodesForDisplay(
+    task.taskType,
+    task.proposalScope,
+    task.productionSubtype,
+  ).filter((guideCode) => !savedTaskGuideCodes.has(guideCode));
+  const missingDefaultGuides =
+    missingDefaultGuideCodes.length > 0 && taskGuideOptions.length === 0
+      ? await prisma.taskGuide.findMany({
+          where: { guideCode: { in: missingDefaultGuideCodes } },
+          orderBy: [{ updatedAt: "desc" }, { guideCode: "asc" }],
+          select: {
+            id: true,
+            guideCode: true,
+            title: true,
+            content: true,
+            importantNote: true,
+            supportFileName: true,
+            supportFileSize: true,
+            supportFile2Name: true,
+            supportFile2Size: true,
+          },
+        })
+      : [];
+  const taskGuidesForDisplay = orderedTaskGuidesForDisplay(
+    mergeTaskGuidesForDisplay(
+      task.guides,
+      taskGuideOptions.length > 0
+        ? (taskGuideOptions as TaskGuideOption[])
+        : missingDefaultGuides,
+      task.taskType,
+      task.proposalScope,
+      task.productionSubtype,
+    ),
+    task.taskType,
+    task.productionSubtype,
+  );
   const assignees = assigneeUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -4351,8 +4436,7 @@ export default async function TaskDetailPage({
                             ) : null}
                           </div>
                         ) : null}
-                        {assignment.redoRequestedAt &&
-                        assignment.redoReason ? (
+                        {assignment.redoRequestedAt && assignment.redoReason ? (
                           <div className="grid gap-1 border-t border-[#D8D0C2] pt-2 text-[11px] leading-4 text-[#7A4B00] dark:border-[#444444] dark:text-orange-200">
                             <span className="text-orange-700 dark:text-orange-300">
                               Revision feedback -{" "}
