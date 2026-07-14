@@ -22,6 +22,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { updateResearchTask } from "../../actions";
 import { ResearchDatePicker } from "@/sites/research/components/ResearchDatePicker";
 import { ResearchFormSelect } from "@/sites/research/components/ResearchFormSelect";
@@ -298,6 +299,7 @@ export function EditTaskDialog({
   taskGuideOptions?: TaskGuideOption[];
   canChooseChecker?: boolean;
 }) {
+  const router = useRouter();
   const initialMode = modeFromTaskType(task.taskType);
   const initialResearch =
     researchOptions.find((option) => option.id === task.projectId) ?? null;
@@ -677,6 +679,7 @@ export function EditTaskDialog({
         title: "Task updated",
         detail: "Task details and assignments were saved successfully.",
       });
+      router.refresh();
       setIsOpen(false);
     });
   }
