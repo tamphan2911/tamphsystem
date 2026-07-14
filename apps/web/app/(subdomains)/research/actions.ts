@@ -340,7 +340,7 @@ function defaultTaskGuideCodesForTask({
     taskType === ResearchTaskType.SUBMIT_RESEARCH ||
     taskType === ResearchTaskType.SUBMIT_CONFERENCE
   ) {
-    return ["G002", "G015"];
+    return ["G002", "G015", "G026"];
   }
   if (taskType === ResearchTaskType.PRODUCTION) {
     return [
@@ -6378,7 +6378,7 @@ async function createSubmitTaskForSuggestedJournalApproval({
     };
   }
 
-  const [project, journal, guide, accounts] = await Promise.all([
+  const [project, journal, guideIds, accounts] = await Promise.all([
     prisma.researchProject.findUnique({
       where: { id: projectId },
       select: { title: true },
@@ -6387,9 +6387,9 @@ async function createSubmitTaskForSuggestedJournalApproval({
       where: { id: journalId },
       select: { name: true },
     }),
-    prisma.taskGuide.findUnique({
-      where: { guideCode: "G002" },
-      select: { id: true },
+    defaultTaskGuideIdsForTask({
+      taskType: ResearchTaskType.SUBMIT_RESEARCH,
+      proposalScope: ProposalTaskScope.RESEARCH,
     }),
     journalAccountIds(journalId),
   ]);
@@ -6418,7 +6418,9 @@ async function createSubmitTaskForSuggestedJournalApproval({
         assignments: {
           create: { userId: suggestedById, dueDate: taskDueDate },
         },
-        ...(guide ? { guides: { connect: { id: guide.id } } } : {}),
+        ...(guideIds.length > 0
+          ? { guides: { connect: guideIds.map((id) => ({ id })) } }
+          : {}),
       },
       select: {
         id: true,
@@ -6503,7 +6505,7 @@ async function createSubmitTaskForSuggestedConferenceApproval({
     };
   }
 
-  const [project, conference, guide] = await Promise.all([
+  const [project, conference, guideIds] = await Promise.all([
     prisma.researchProject.findUnique({
       where: { id: projectId },
       select: { title: true },
@@ -6512,9 +6514,9 @@ async function createSubmitTaskForSuggestedConferenceApproval({
       where: { id: conferenceId },
       select: { name: true },
     }),
-    prisma.taskGuide.findUnique({
-      where: { guideCode: "G002" },
-      select: { id: true },
+    defaultTaskGuideIdsForTask({
+      taskType: ResearchTaskType.SUBMIT_CONFERENCE,
+      proposalScope: ProposalTaskScope.RESEARCH,
     }),
   ]);
   if (!project || !conference) {
@@ -6541,7 +6543,9 @@ async function createSubmitTaskForSuggestedConferenceApproval({
         assignments: {
           create: { userId: suggestedById, dueDate: taskDueDate },
         },
-        ...(guide ? { guides: { connect: { id: guide.id } } } : {}),
+        ...(guideIds.length > 0
+          ? { guides: { connect: guideIds.map((id) => ({ id })) } }
+          : {}),
       },
       select: {
         id: true,

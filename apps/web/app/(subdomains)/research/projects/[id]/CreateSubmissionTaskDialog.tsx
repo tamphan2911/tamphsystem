@@ -87,7 +87,7 @@ const inputClass = researchFieldClass;
 const defaultTaskDescription = "Read the guide by click on icons right above.";
 
 function defaultSubmissionTaskGuideIds(guides: TaskGuideOption[]) {
-  return ["G002", "G015"]
+  return ["G002", "G015", "G026"]
     .map((guideCode) => guides.find((item) => item.guideCode === guideCode)?.id)
     .filter((id): id is string => Boolean(id));
 }

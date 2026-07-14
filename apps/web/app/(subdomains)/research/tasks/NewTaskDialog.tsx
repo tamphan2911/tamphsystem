@@ -325,7 +325,7 @@ function defaultTaskGuideIdsForMode(
     return guideIdsForCodes(guides, ["G001", "G023", "G015"]);
   const guideCode =
     mode === "submit"
-      ? ["G002", "G015"]
+      ? ["G002", "G015", "G026"]
       : mode === "addJournal"
         ? "G003"
         : mode === "proposal"

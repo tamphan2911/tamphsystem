@@ -501,7 +501,7 @@ function defaultTaskGuideCodesForDisplay(
 ) {
   if (taskType === "SUGGEST_VENUE") return ["G001", "G023", "G015"];
   if (taskType === "SUBMIT_RESEARCH" || taskType === "SUBMIT_CONFERENCE") {
-    return ["G002", "G015"];
+    return ["G002", "G015", "G026"];
   }
   if (taskType === "ADD_JOURNAL") return ["G003"];
   if (taskType === "PROPOSAL") {

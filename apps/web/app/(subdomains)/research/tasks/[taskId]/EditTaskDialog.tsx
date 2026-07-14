@@ -742,7 +742,7 @@ export function EditTaskDialog({
         nextChoice === "SUBMIT_CONFERENCE"
       ) {
         setSelectedTaskGuideIds(
-          guideIdsForCodes(taskGuideOptions, ["G002", "G015"]),
+          guideIdsForCodes(taskGuideOptions, ["G002", "G015", "G026"]),
         );
       }
       if (nextChoice === "REVIEW") {
