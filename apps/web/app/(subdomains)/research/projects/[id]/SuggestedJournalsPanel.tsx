@@ -21,6 +21,7 @@ import {
   Info,
   Pencil,
   Save,
+  type LucideIcon,
 } from "lucide-react";
 import {
   addSuggestedConference,
@@ -226,6 +227,15 @@ const activeVenueWorkflowStates = new Set<SuggestedVenueState["state"]>([
   "submitted",
   "reviewing",
 ]);
+
+type VenueStateMeta = {
+  cardClass: string;
+  badge: string | null;
+  badgeClass: string;
+  tooltip: string;
+  icon?: LucideIcon;
+  iconClassName?: string;
+};
 
 function readableSuggestionStatus(status: string) {
   if (status === "APPROVED") return "approved";
@@ -2629,6 +2639,7 @@ function VenueCard({
   children: ReactNode;
 }) {
   const meta = venueStateMeta(state);
+  const TooltipIcon = meta.icon ?? Info;
   const canAssign =
     canAssignTask &&
     !disabled &&
@@ -2738,8 +2749,14 @@ function VenueCard({
         ) : meta.tooltip ? (
           <div className="flex-none">
             <IconHint label={meta.tooltip} position="bottom">
-              <span className="inline-flex h-6 w-6 items-center justify-center text-[#B0B0B0] transition hover:text-[#A8DADC]">
-                <Info className="h-4 w-4" aria-hidden="true" />
+              <span
+                className={cx(
+                  "inline-flex h-6 w-6 items-center justify-center transition",
+                  meta.iconClassName ??
+                    "text-[#B0B0B0] hover:text-[#A8DADC]",
+                )}
+              >
+                <TooltipIcon className="h-4 w-4" aria-hidden="true" />
               </span>
             </IconHint>
           </div>
@@ -2760,7 +2777,7 @@ function shortDate(value: string) {
   }).format(date);
 }
 
-function venueStateMeta(state: SuggestedVenueState) {
+function venueStateMeta(state: SuggestedVenueState): VenueStateMeta {
   if (state.state === "addingJournal") {
     return {
       cardClass:
@@ -2852,6 +2869,9 @@ function venueStateMeta(state: SuggestedVenueState) {
         "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#303030] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838]",
       badge: null,
       badgeClass: "",
+      icon: Ban,
+      iconClassName:
+        "text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-rose-200",
       tooltip:
         "The submission to this venue is rejected. You could reassign another task to resubmit it.",
     };
