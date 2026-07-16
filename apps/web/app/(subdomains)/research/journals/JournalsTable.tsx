@@ -261,14 +261,14 @@ function MoneyIndicator({
 
   return (
     <IconHint label={detail}>
-      <span className="inline-flex cursor-help items-center gap-1.5 text-[#B0B0B0] transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-105 hover:text-[#E4E4E4] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.16)]">
+      <span className="inline-flex cursor-help items-start gap-1.5 text-[#B0B0B0] transition-[color,filter,transform] duration-200 ease-out hover:-translate-y-0.5 hover:scale-105 hover:text-[#E4E4E4] hover:drop-shadow-[0_0_0.45rem_rgba(168,218,220,0.16)]">
         {showIcon && isFree ? (
           <CircleOff
             className="research-task-icon-motion h-4 w-4 flex-none text-[#8FCFD1]"
             aria-hidden="true"
           />
         ) : null}
-        <span className="min-w-0 text-sm">
+        <span className="flex min-w-0 flex-col text-sm leading-5">
           <span className="block">
             {isFree
               ? "Free"
