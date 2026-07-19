@@ -415,6 +415,10 @@ export default async function ProjectsDashboard() {
         : null,
     };
 
+    const unfinishedProductionSteps = productionStepLabels.filter(
+      (step) => !project.completedProductionSteps.includes(step),
+    );
+
     return {
       id: project.id,
       researchCode: project.researchCode ?? "",
@@ -484,6 +488,7 @@ export default async function ProjectsDashboard() {
       editValues,
       editAuthors,
       completedProductionSteps: project.completedProductionSteps,
+      unfinishedProductionSteps,
     };
   });
 

@@ -87,6 +87,7 @@ export type ResearchProjectRow = {
   editValues?: ResearchBasicValues;
   editAuthors?: SelectedAuthor[];
   completedProductionSteps?: string[];
+  unfinishedProductionSteps?: string[];
 };
 
 type SortColumn = "stage" | "claim" | "registration" | "submit";
@@ -378,16 +379,40 @@ function ActiveTaskCount({
   );
 }
 
+function ProductionUnfinishedSteps({ steps }: { steps: string[] }) {
+  if (steps.length === 0) return null;
+
+  return (
+    <div className="mt-1 max-w-28 space-y-0.5 text-center text-[10px] leading-4 text-[#667085] dark:text-[#8F98A8]">
+      {steps.map((step) => (
+        <div key={step} className="whitespace-normal break-words">
+          {step}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function ResearchStageIndicator({
   row,
   showTaskCounts = true,
 }: {
   row: Pick<
     ResearchProjectRow,
-    "id" | "stage" | "hasSubmittedSubmission" | "activeTasks" | "overdueTasks"
+    | "id"
+    | "stage"
+    | "hasSubmittedSubmission"
+    | "activeTasks"
+    | "overdueTasks"
+    | "unfinishedProductionSteps"
   >;
   showTaskCounts?: boolean;
 }) {
+  const unfinishedProductionSteps =
+    stageFilterKey(row as ResearchProjectRow) === "PRODUCTION"
+      ? (row.unfinishedProductionSteps ?? [])
+      : [];
+
   return (
     <div className="inline-flex flex-col items-center">
       <StatusIconChip
@@ -402,6 +427,7 @@ export function ResearchStageIndicator({
           overdueCount={row.overdueTasks}
         />
       ) : null}
+      <ProductionUnfinishedSteps steps={unfinishedProductionSteps} />
     </div>
   );
 }
