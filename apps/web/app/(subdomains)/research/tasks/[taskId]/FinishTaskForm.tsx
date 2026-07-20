@@ -18,6 +18,7 @@ export function FinishTaskForm({
   mode = "approve",
   nextProductionTaskLabel = "",
   referenceFollowUpTaskLabel = "",
+  suggestVenueTaskLabel = "",
 }: {
   action: (formData: FormData) => void | Promise<void>;
   accountId?: string | null;
@@ -26,6 +27,7 @@ export function FinishTaskForm({
   mode?: "ready" | "approve";
   nextProductionTaskLabel?: string;
   referenceFollowUpTaskLabel?: string;
+  suggestVenueTaskLabel?: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [submissionDate, setSubmissionDate] = useState(researchDateValue);
@@ -35,6 +37,9 @@ export function FinishTaskForm({
   );
   const [createReferenceFollowUpTask, setCreateReferenceFollowUpTask] =
     useState(Boolean(referenceFollowUpTaskLabel));
+  const [createSuggestVenueTask, setCreateSuggestVenueTask] = useState(
+    Boolean(suggestVenueTaskLabel),
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const isReadyMode = mode === "ready";
@@ -54,12 +59,14 @@ export function FinishTaskForm({
     if (isOpen && !isReadyMode) {
       setCreateNextProductionTask(Boolean(nextProductionTaskLabel));
       setCreateReferenceFollowUpTask(Boolean(referenceFollowUpTaskLabel));
+      setCreateSuggestVenueTask(Boolean(suggestVenueTaskLabel));
     }
   }, [
     isOpen,
     isReadyMode,
     nextProductionTaskLabel,
     referenceFollowUpTaskLabel,
+    suggestVenueTaskLabel,
   ]);
 
   return (
@@ -90,6 +97,13 @@ export function FinishTaskForm({
             value={createReferenceFollowUpTask ? "true" : "false"}
           />
         ) : null}
+        {!isReadyMode && suggestVenueTaskLabel ? (
+          <input
+            type="hidden"
+            name="createSuggestVenueTask"
+            value={createSuggestVenueTask ? "true" : "false"}
+          />
+        ) : null}
         <button
           type="button"
           onClick={() => setIsOpen(true)}
@@ -111,6 +125,7 @@ export function FinishTaskForm({
           setCompletionMessage("");
           setCreateNextProductionTask(Boolean(nextProductionTaskLabel));
           setCreateReferenceFollowUpTask(Boolean(referenceFollowUpTaskLabel));
+          setCreateSuggestVenueTask(Boolean(suggestVenueTaskLabel));
         }}
         title={title}
         description={description}
@@ -206,10 +221,28 @@ export function FinishTaskForm({
                 className="mt-0.5 h-4 w-4 flex-none accent-[#1F7180]"
               />
               <span>
-                After approving references, create follow-up task:{" "}
+                After approving references, create final research follow-up
+                task due in 2 days:{" "}
                 <span className="font-semibold">
                   {referenceFollowUpTaskLabel}
                 </span>
+              </span>
+            </label>
+          ) : null}
+          {!isReadyMode && suggestVenueTaskLabel ? (
+            <label className="flex cursor-pointer items-start gap-3 border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm leading-5 text-emerald-800 transition hover:border-emerald-400 dark:border-emerald-300/30 dark:bg-emerald-950/25 dark:text-emerald-200">
+              <input
+                type="checkbox"
+                checked={createSuggestVenueTask}
+                onChange={(event) =>
+                  setCreateSuggestVenueTask(event.target.checked)
+                }
+                className="mt-0.5 h-4 w-4 flex-none accent-emerald-600"
+              />
+              <span>
+                After approving final research follow-up, create suggest venue
+                task due in 4 days:{" "}
+                <span className="font-semibold">{suggestVenueTaskLabel}</span>
               </span>
             </label>
           ) : null}

@@ -12495,21 +12495,16 @@ async function createNextProductionWorkflowTask({
 
   const nextSubtype = nextProductionSubtype(sourceTask.productionSubtype);
   const nextSubtypeMeta = productionSubtypeMeta(nextSubtype);
-  const isSuggestVenueNext =
-    sourceTask.productionSubtype === ResearchProductionSubtype.REFERENCES;
-  if (!nextSubtypeMeta && !isSuggestVenueNext) return null;
+  if (!nextSubtypeMeta) return null;
 
-  const nextTaskType = isSuggestVenueNext
-    ? ResearchTaskType.SUGGEST_VENUE
-    : ResearchTaskType.PRODUCTION;
-  const nextTitle = isSuggestVenueNext
-    ? `Suggest venues for ${sourceTask.project?.title ?? "research"}`
-    : `${nextSubtypeMeta?.label ?? "Production"} for ${
-        sourceTask.project?.title ?? "research"
-      }`;
-  const nextDescription = isSuggestVenueNext
-    ? SUGGEST_VENUE_AFTER_PRODUCTION_DESCRIPTION
-    : defaultDescriptionForTask(nextTaskType, nextSubtype);
+  const nextTaskType = ResearchTaskType.PRODUCTION;
+  const nextTitle = `${nextSubtypeMeta.label} for ${
+    sourceTask.project?.title ?? "research"
+  }`;
+  const nextDescription = defaultDescriptionForTask(
+    nextTaskType,
+    nextSubtype,
+  );
   const guideIds = await defaultTaskGuideIdsForTask({
     taskType: nextTaskType,
     proposalScope: ProposalTaskScope.RESEARCH,
@@ -12522,10 +12517,9 @@ async function createNextProductionWorkflowTask({
       title: nextTitle,
       taskCode: await generateTaskCode(),
       description: nextDescription,
-      category: isSuggestVenueNext ? null : ResearchTaskCategory.PRODUCTION,
+      category: ResearchTaskCategory.PRODUCTION,
       taskType: nextTaskType,
-      suggestedVenueTargetCount: isSuggestVenueNext ? 2 : null,
-      productionSubtype: isSuggestVenueNext ? null : nextSubtype,
+      productionSubtype: nextSubtype,
       proposalScope: ProposalTaskScope.RESEARCH,
       status: ResearchTaskStatus.IN_PROGRESS,
       projectId: sourceTask.projectId,
@@ -12536,6 +12530,72 @@ async function createNextProductionWorkflowTask({
         create: sourceTask.assignments.map((assignment) => ({
           userId: assignment.userId,
           dueDate: nextDueDate,
+        })),
+      },
+      guides: {
+        connect: guideIds.map((id) => ({ id })),
+      },
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      checkerId: true,
+      assignments: {
+        select: { user: { select: { email: true } } },
+      },
+    },
+  });
+}
+
+async function createSuggestVenueTaskAfterFinalFollowUp({
+  sourceTask,
+  createdById,
+}: {
+  sourceTask: {
+    id: string;
+    projectId: string | null;
+    taskType: ResearchTaskType | null;
+    checkerId: string | null;
+    project: { title: string } | null;
+    guides: { guideCode: string | null }[];
+    assignments: { userId: string; user: { email: string } }[];
+  };
+  createdById: string;
+}) {
+  if (
+    sourceTask.taskType !== ResearchTaskType.OTHER ||
+    !sourceTask.projectId ||
+    sourceTask.assignments.length === 0 ||
+    !sourceTask.guides.some((guide) => guide.guideCode === "G026")
+  ) {
+    return null;
+  }
+
+  const guideIds = await defaultTaskGuideIdsForTask({
+    taskType: ResearchTaskType.SUGGEST_VENUE,
+    proposalScope: ProposalTaskScope.RESEARCH,
+  });
+  const dueDate = researchTaskDueDate(researchDateValue(new Date(), 4));
+  const title = `Suggest venues for ${sourceTask.project?.title ?? "research"}`;
+
+  return prisma.researchTask.create({
+    data: {
+      title,
+      taskCode: await generateTaskCode(),
+      description: SUGGEST_VENUE_AFTER_PRODUCTION_DESCRIPTION,
+      taskType: ResearchTaskType.SUGGEST_VENUE,
+      suggestedVenueTargetCount: 2,
+      proposalScope: ProposalTaskScope.RESEARCH,
+      status: ResearchTaskStatus.IN_PROGRESS,
+      projectId: sourceTask.projectId,
+      checkerId: sourceTask.checkerId,
+      dueDate,
+      createdById,
+      assignments: {
+        create: sourceTask.assignments.map((assignment) => ({
+          userId: assignment.userId,
+          dueDate,
         })),
       },
       guides: {
@@ -12780,6 +12840,8 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     formData?.get("createNextProductionTask") === "true";
   const createReferenceFollowUpTask =
     formData?.get("createReferenceFollowUpTask") === "true";
+  const createSuggestVenueTask =
+    formData?.get("createSuggestVenueTask") === "true";
   const task = await prisma.researchTask.findUnique({
     where: { id: taskId },
     select: {
@@ -12795,6 +12857,11 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       title: true,
       createdById: true,
       checkerId: true,
+      guides: {
+        select: {
+          guideCode: true,
+        },
+      },
       checkerReferralTargetIds: true,
       checkerReferralAction: true,
       project: {
@@ -13068,12 +13135,21 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     }
   }
 
-  const nextTask = createNextProductionTask
+  const nextProductionTask = createNextProductionTask
     ? await createNextProductionWorkflowTask({
         sourceTask: task,
         createdById: task.createdById,
       })
     : null;
+  const suggestVenueTask =
+    !nextProductionTask && createSuggestVenueTask
+      ? await createSuggestVenueTaskAfterFinalFollowUp({
+          sourceTask: task,
+          createdById: task.createdById,
+        })
+      : null;
+  const nextTask = nextProductionTask ?? suggestVenueTask;
+  const nextTaskKind = suggestVenueTask ? "suggestVenue" : "production";
   const referenceFollowUpTask = createReferenceFollowUpTask
     ? await createReferencesFollowUpTask({ sourceTask: task })
     : null;
@@ -13093,7 +13169,9 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       : "Task completed",
     summary: nextTask ? nextTask.title : task.title,
     body: nextTask
-      ? `The assigner approved "${task.title}" as complete and automatically assigned the next task: ${nextTask.title}.`
+      ? nextTaskKind === "suggestVenue"
+        ? `The assigner approved "${task.title}" as complete and automatically assigned the suggest venue task: ${nextTask.title}.`
+        : `The assigner approved "${task.title}" as complete and automatically assigned the next task: ${nextTask.title}.`
       : completionMessage
         ? `The assigner reviewed and approved this task as complete. Completion note: ${completionMessage}`
         : "The assigner reviewed and approved this task as complete.",
@@ -13111,7 +13189,9 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
       ? "Task completed and next task assigned"
       : "Task approved as complete",
     intro: nextTask
-      ? "The previous production task was approved and the next workflow task has been assigned automatically."
+      ? nextTaskKind === "suggestVenue"
+        ? "The final research follow-up task was approved and the suggest venue task has been assigned automatically."
+        : "The previous production task was approved and the next workflow task has been assigned automatically."
       : "The assigner reviewed the submitted work and marked the task as complete.",
     detail: nextTask
       ? (nextTask.description ?? undefined)
@@ -13129,7 +13209,10 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
         type: "TASK_CHECKER_ASSIGNED",
         title: "Task checker assigned",
         summary: nextTask.title,
-        body: "A follow-up production workflow task was assigned automatically with you as checker.",
+        body:
+          nextTaskKind === "suggestVenue"
+            ? "A suggest venue task was assigned automatically with you as checker."
+            : "A follow-up production workflow task was assigned automatically with you as checker.",
         href: `/tasks/${nextTask.id}`,
         entityType: "task",
         entityId: nextTask.id,

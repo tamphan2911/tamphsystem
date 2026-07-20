@@ -471,8 +471,17 @@ function nextProductionTaskLabel(subtype: string | null) {
   if (subtype === "MODELING") return "Writing";
   if (subtype === "WRITING") return "Humanizing";
   if (subtype === "HUMANIZING") return "References";
-  if (subtype === "REFERENCES") return "Suggest venue";
   return "";
+}
+
+function isFinalResearchFollowUpTask(task: {
+  taskType: string | null;
+  guides: { guideCode: string | null }[];
+}) {
+  return (
+    task.taskType === "OTHER" &&
+    task.guides.some((guide) => guide.guideCode === "G026")
+  );
 }
 
 const writingTaskGuideTitleOrder = [
@@ -3397,6 +3406,7 @@ export default async function TaskDetailPage({
     task.taskType,
     task.productionSubtype,
   );
+  const canCreateSuggestVenueAfterFollowUp = isFinalResearchFollowUpTask(task);
   const assignees = assigneeUsers.map((user) => ({
     id: user.id,
     name: user.name ?? "",
@@ -4032,6 +4042,9 @@ export default async function TaskDetailPage({
                     ? "Final research follow-up"
                     : ""
                 }
+                suggestVenueTaskLabel={
+                  canCreateSuggestVenueAfterFollowUp ? "Suggest venue" : ""
+                }
               />
             )}
           </div>
@@ -4375,6 +4388,12 @@ export default async function TaskDetailPage({
                           task.productionSubtype ===
                             ResearchProductionSubtype.REFERENCES
                             ? "Final research follow-up"
+                            : ""
+                        }
+                        suggestVenueTaskLabel={
+                          approvingThisAssigneeCompletesTask &&
+                          canCreateSuggestVenueAfterFollowUp
+                            ? "Suggest venue"
                             : ""
                         }
                         iconClassName={workflow.className}
