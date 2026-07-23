@@ -512,7 +512,7 @@ function ClaimStatusChip({ status }: { status: string }) {
     <IconHint label={label}>
       <span className="inline-flex min-w-16 flex-col items-center justify-start gap-1">
         <span
-          className={`inline-flex h-5 w-5 items-center justify-center rounded-none transition-colors duration-150 ${claimClass(status)}`}
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-none transition-colors duration-150 ${claimClass(status)}`}
         >
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
