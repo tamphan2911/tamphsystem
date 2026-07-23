@@ -11974,25 +11974,47 @@ async function createSubmissionAfterTaskApproval(
       task.taskType === ResearchTaskType.SUBMIT_CONFERENCE) &&
     !submittedAt
   ) {
-    return false;
+    return {
+      ok: false,
+      reason: "SUBMISSION_DATE_REQUIRED",
+      detail:
+        "Choose the actual submission date before approving this submit task.",
+    };
   }
 
-  if (
-    task.taskType === ResearchTaskType.SUBMIT_RESEARCH &&
-    task.projectId &&
-    task.journalId &&
-    submittedAt
-  ) {
+  if (task.taskType === ResearchTaskType.SUBMIT_RESEARCH && submittedAt) {
+    if (!task.projectId || !task.journalId) {
+      return {
+        ok: false,
+        reason: "MISSING_SUBMISSION_TARGET",
+        detail:
+          "This submit task is missing its linked research or journal. Edit the task and choose the correct research and journal before approval.",
+      };
+    }
+
     const journalAccounts = await journalAccountIds(task.journalId);
     accountId = accountId ?? task.accountId;
     if (!accountId && journalAccounts.length === 1) {
       accountId = journalAccounts[0]?.id ?? null;
     }
+    if (!accountId) {
+      return {
+        ok: false,
+        reason: "ACCOUNT_REQUIRED",
+        detail:
+          "Choose the journal account used for submission before approving this submit task.",
+      };
+    }
     if (
       accountId &&
       !journalAccounts.some((account) => account.id === accountId)
     ) {
-      return false;
+      return {
+        ok: false,
+        reason: "ACCOUNT_NOT_FOR_JOURNAL",
+        detail:
+          "The selected submission account does not belong to this journal. Edit the task and choose a valid journal account before approval.",
+      };
     }
 
     await prisma.researchSubmission.create({
@@ -12037,12 +12059,16 @@ async function createSubmissionAfterTaskApproval(
     revalidatePath("/accounts");
   }
 
-  if (
-    task.taskType === ResearchTaskType.SUBMIT_CONFERENCE &&
-    task.projectId &&
-    task.conferenceId &&
-    submittedAt
-  ) {
+  if (task.taskType === ResearchTaskType.SUBMIT_CONFERENCE && submittedAt) {
+    if (!task.projectId || !task.conferenceId) {
+      return {
+        ok: false,
+        reason: "MISSING_SUBMISSION_TARGET",
+        detail:
+          "This submit task is missing its linked research or conference. Edit the task and choose the correct research and conference before approval.",
+      };
+    }
+
     await prisma.conferenceSubmission.upsert({
       where: {
         conferenceId_researchProjectId: {
@@ -12091,7 +12117,7 @@ async function createSubmissionAfterTaskApproval(
     revalidatePath(`/conferences/${task.conferenceId}`);
   }
 
-  return true;
+  return { ok: true };
 }
 
 export async function markResearchTaskReadyForCheck(taskId: string) {
@@ -12887,19 +12913,38 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     },
   });
 
-  if (!task) return;
+  if (!task) {
+    return {
+      ok: false,
+      reason: "TASK_NOT_FOUND",
+      detail:
+        "This task could not be found. Refresh the task list and try again.",
+    };
+  }
   const automatedAddJournalReady =
     task.journalCreationSuggestion &&
     task.taskType === ResearchTaskType.ADD_JOURNAL &&
     task.addedJournals.filter((journal) => journal.resultPosition !== null)
       .length >= Math.max(1, task.journalTargetCount ?? 1);
-  if (task.journalCreationSuggestion && !automatedAddJournalReady) return;
+  if (task.journalCreationSuggestion && !automatedAddJournalReady) {
+    return {
+      ok: false,
+      reason: "AUTOMATED_JOURNAL_NOT_READY",
+      detail:
+        "This automated Add Journal task cannot be approved yet. The assignee must add the required journal result before it can be checked.",
+    };
+  }
   const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);
   if (
     task.status === ResearchTaskStatus.COMPLETED ||
     task.status === ResearchTaskStatus.REVOKED
   ) {
-    return;
+    return {
+      ok: false,
+      reason: "TASK_CLOSED",
+      detail:
+        "This task is already closed, so it cannot be approved again. Refresh the page to see the latest status.",
+    };
   }
 
   const selfManagedTask =
@@ -12931,7 +12976,12 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     task.checkerId !== user.id &&
     task.status !== ResearchTaskStatus.CHECKING
   ) {
-    return;
+    return {
+      ok: false,
+      reason: "TASK_NOT_READY_FOR_APPROVAL",
+      detail:
+        "This task is not waiting for approval yet. Ask the assignee to mark the work ready for check first.",
+    };
   }
 
   if (assignmentId) {
@@ -13019,7 +13069,12 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     if (!result.ok || !result.targetAssignment) {
       revalidatePath("/tasks");
       revalidatePath(`/tasks/${taskId}`);
-      return;
+      return {
+        ok: false,
+        reason: "ASSIGNMENT_NOT_READY",
+        detail:
+          "This assignee is not ready for approval. Refresh the page and check the assignee status.",
+      };
     }
 
     await notifyUsers({
@@ -13041,11 +13096,15 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     if (!result.allComplete) {
       revalidatePath("/tasks");
       revalidatePath(`/tasks/${taskId}`);
-      return;
+      return { ok: true };
     }
   }
 
-  if (!(await createSubmissionAfterTaskApproval(task, formData))) return;
+  const submissionResult = await createSubmissionAfterTaskApproval(
+    task,
+    formData,
+  );
+  if (!submissionResult.ok) return submissionResult;
 
   const completedAt = new Date();
   const completedProductionStep =
@@ -13280,6 +13339,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
     body: "This task was approved as complete by another task manager.",
     excludeUserId: user.id,
   });
+  return { ok: true };
 }
 
 export async function sendTaskReminderEmail(

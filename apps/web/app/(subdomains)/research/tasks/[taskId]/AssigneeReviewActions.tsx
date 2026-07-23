@@ -7,14 +7,34 @@ import { IconHint } from "@/sites/research/components/ResearchPrimitives";
 import { FinishTaskForm } from "./FinishTaskForm";
 import { RedoTaskForm } from "./TaskWorkflowForms";
 
-type TaskAction = (formData: FormData) => void | Promise<void>;
+type TaskActionResult =
+  | void
+  | { ok: true }
+  | {
+      ok: false;
+      reason?: string;
+      title?: string;
+      detail?: string;
+      message?: string;
+    };
+type TaskAction = (
+  formData: FormData,
+) => TaskActionResult | Promise<TaskActionResult>;
+type PlainTaskAction = (formData: FormData) => void | Promise<void>;
+type SubmissionAccountOption = {
+  id: string;
+  username: string;
+  email?: string | null;
+};
 
 export function AssigneeReviewActions({
   assignmentId,
   finishAction,
   redoAction,
   accountId,
+  accountOptions = [],
   requiresSubmissionDate = false,
+  requiresJournalAccount = false,
   nextProductionTaskLabel = "",
   referenceFollowUpTaskLabel = "",
   suggestVenueTaskLabel = "",
@@ -24,9 +44,11 @@ export function AssigneeReviewActions({
 }: {
   assignmentId: string;
   finishAction: TaskAction;
-  redoAction: TaskAction;
+  redoAction: PlainTaskAction;
   accountId?: string | null;
+  accountOptions?: SubmissionAccountOption[];
   requiresSubmissionDate?: boolean;
+  requiresJournalAccount?: boolean;
   nextProductionTaskLabel?: string;
   referenceFollowUpTaskLabel?: string;
   suggestVenueTaskLabel?: string;
@@ -149,8 +171,10 @@ export function AssigneeReviewActions({
                 <FinishTaskForm
                   action={finishAction}
                   accountId={accountId}
+                  accountOptions={accountOptions}
                   assignmentId={assignmentId}
                   requiresSubmissionDate={requiresSubmissionDate}
+                  requiresJournalAccount={requiresJournalAccount}
                   mode="approve"
                   nextProductionTaskLabel={nextProductionTaskLabel}
                   referenceFollowUpTaskLabel={referenceFollowUpTaskLabel}

@@ -3511,6 +3511,16 @@ export default async function TaskDetailPage({
         email: account.email ?? "",
       }));
   });
+  const taskSubmissionAccountOptions =
+    task.taskType === ResearchTaskType.SUBMIT_RESEARCH && task.journalId
+      ? accountOptions
+          .filter((account) => account.journalId === task.journalId)
+          .map((account) => ({
+            id: account.id,
+            username: account.username,
+            email: account.email,
+          }))
+      : [];
   const reviewOptions = reviews.map((review) => ({
     id: review.id,
     title: review.manuscriptTitle,
@@ -4026,10 +4036,14 @@ export default async function TaskDetailPage({
               <FinishTaskForm
                 action={finishAction}
                 accountId={task.accountId}
+                accountOptions={taskSubmissionAccountOptions}
                 mode="approve"
                 requiresSubmissionDate={
                   task.taskType === "SUBMIT_RESEARCH" ||
                   task.taskType === "SUBMIT_CONFERENCE"
+                }
+                requiresJournalAccount={
+                  task.taskType === ResearchTaskType.SUBMIT_RESEARCH
                 }
                 nextProductionTaskLabel={
                   task.taskType === "PRODUCTION"
@@ -4370,11 +4384,16 @@ export default async function TaskDetailPage({
                         finishAction={finishAction}
                         redoAction={redoAction}
                         accountId={task.accountId}
+                        accountOptions={taskSubmissionAccountOptions}
                         requiresSubmissionDate={
                           approvingThisAssigneeCompletesTask &&
                           (task.taskType === ResearchTaskType.SUBMIT_RESEARCH ||
                             task.taskType ===
                               ResearchTaskType.SUBMIT_CONFERENCE)
+                        }
+                        requiresJournalAccount={
+                          approvingThisAssigneeCompletesTask &&
+                          task.taskType === ResearchTaskType.SUBMIT_RESEARCH
                         }
                         nextProductionTaskLabel={
                           approvingThisAssigneeCompletesTask &&
