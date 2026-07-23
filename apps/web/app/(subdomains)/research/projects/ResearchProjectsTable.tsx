@@ -4,9 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import {
-  ArrowDownNarrowWide,
-  ArrowDownUp,
-  ArrowUpNarrowWide,
   BadgeCheck,
   Ban,
   BookmarkCheck,
@@ -338,12 +335,6 @@ function ProductionStepSortHeaderButton({
 }) {
   const column: SortColumn = "productionSteps";
   const active = sort?.column === column;
-  const Icon =
-    active && sort.direction === "desc"
-      ? ArrowDownNarrowWide
-      : active && sort.direction === "asc"
-        ? ArrowUpNarrowWide
-        : ArrowDownUp;
   const hint = sortHint(column, sort);
 
   return (
@@ -353,14 +344,13 @@ function ProductionStepSortHeaderButton({
         aria-label={hint}
         aria-pressed={active}
         onClick={() => onChange(column)}
-        className={`research-allow-transform inline-flex h-5 min-w-8 cursor-pointer items-center justify-center gap-0.5 border-0 bg-transparent p-0 shadow-none outline-none transition-[color,filter,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
+        className={`research-allow-transform inline-flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 shadow-none outline-none transition-[color,filter,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
           active
             ? "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
             : "text-slate-500 hover:text-slate-900 dark:text-[#8F98A8] dark:hover:text-[#E4E4E4]"
         }`}
       >
         <ListChecks className="h-3.5 w-3.5" aria-hidden="true" />
-        <Icon className="h-3 w-3" aria-hidden="true" />
       </button>
     </IconHint>
   );
@@ -1298,13 +1288,13 @@ export function ResearchProjectsTable({
                   )}
                 </span>
               </th>
-              <th className="w-[7rem] px-3 py-3">
-                <span className="inline-flex items-center gap-1.5">
+              <th className="w-[6.5rem] px-3 py-3">
+                <span className="mx-auto grid grid-cols-[1.25rem_auto_1.25rem] items-center justify-center gap-1.5">
                   <ProductionStepSortHeaderButton
                     sort={sort}
                     onChange={updateSort}
                   />
-                  Stage
+                  <span className="text-center">Stage</span>
                   <SortHeaderButton
                     column="stage"
                     sort={sort}
