@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import {
+  ArrowDownNarrowWide,
+  ArrowDownUp,
+  ArrowUpNarrowWide,
   BadgeCheck,
   Ban,
   BookmarkCheck,
@@ -19,6 +22,7 @@ import {
   FolderClock,
   FlaskConical,
   Hourglass,
+  ListChecks,
   ListOrdered,
   Send,
   SendHorizontal,
@@ -90,7 +94,12 @@ export type ResearchProjectRow = {
   unfinishedProductionSteps?: string[];
 };
 
-type SortColumn = "stage" | "claim" | "registration" | "submit";
+type SortColumn =
+  | "productionSteps"
+  | "stage"
+  | "claim"
+  | "registration"
+  | "submit";
 type SortDirection = "asc" | "desc";
 type SortState = {
   column: SortColumn;
@@ -251,7 +260,8 @@ function registrationSortLabel(row: ResearchProjectRow) {
 function parseSortValue(value: string): SortState {
   const [column, direction] = value.split(":");
   if (
-    (column === "stage" ||
+    (column === "productionSteps" ||
+      column === "stage" ||
       column === "claim" ||
       column === "registration" ||
       column === "submit") &&
@@ -287,6 +297,11 @@ function sortHint(column: SortColumn, current: SortState) {
       ? "Sort by unfinished tasks: high to low"
       : "Sort by unfinished tasks: low to high";
   }
+  if (column === "productionSteps") {
+    return next.direction === "desc"
+      ? "Sort by unfinished production steps: high to low"
+      : "Sort by unfinished production steps: low to high";
+  }
   return next.direction === "desc"
     ? "Sort submissions: high to low"
     : "Sort submissions: low to high";
@@ -311,6 +326,43 @@ function SortHeaderButton({
       hint={sortHint(column, sort)}
       alphabetical={column === "claim" || column === "registration"}
     />
+  );
+}
+
+function ProductionStepSortHeaderButton({
+  sort,
+  onChange,
+}: {
+  sort: SortState;
+  onChange: (column: SortColumn) => void;
+}) {
+  const column: SortColumn = "productionSteps";
+  const active = sort?.column === column;
+  const Icon =
+    active && sort.direction === "desc"
+      ? ArrowDownNarrowWide
+      : active && sort.direction === "asc"
+        ? ArrowUpNarrowWide
+        : ArrowDownUp;
+  const hint = sortHint(column, sort);
+
+  return (
+    <IconHint label={hint}>
+      <button
+        type="button"
+        aria-label={hint}
+        aria-pressed={active}
+        onClick={() => onChange(column)}
+        className={`research-allow-transform inline-flex h-5 min-w-8 cursor-pointer items-center justify-center gap-0.5 border-0 bg-transparent p-0 shadow-none outline-none transition-[color,filter,transform] duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none focus-visible:ring-0 active:translate-y-0 active:scale-95 ${
+          active
+            ? "text-[#1F7180] hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+            : "text-slate-500 hover:text-slate-900 dark:text-[#8F98A8] dark:hover:text-[#E4E4E4]"
+        }`}
+      >
+        <ListChecks className="h-3.5 w-3.5" aria-hidden="true" />
+        <Icon className="h-3 w-3" aria-hidden="true" />
+      </button>
+    </IconHint>
   );
 }
 
@@ -377,6 +429,12 @@ function ActiveTaskCount({
       </Link>
     </IconHint>
   );
+}
+
+function unfinishedProductionStepCount(row: ResearchProjectRow) {
+  return stageFilterKey(row) === "PRODUCTION"
+    ? (row.unfinishedProductionSteps?.length ?? 0)
+    : 0;
 }
 
 function ProductionUnfinishedSteps({ steps }: { steps: string[] }) {
@@ -917,7 +975,11 @@ export function ResearchProjectsTable({
       .sort((left, right) => {
         let comparison = 0;
 
-        if (sort.column === "stage") {
+        if (sort.column === "productionSteps") {
+          comparison =
+            unfinishedProductionStepCount(left.row) -
+            unfinishedProductionStepCount(right.row);
+        } else if (sort.column === "stage") {
           comparison = left.row.activeTasks - right.row.activeTasks;
         } else if (sort.column === "submit") {
           comparison = left.row.submissions - right.row.submissions;
@@ -1236,8 +1298,12 @@ export function ResearchProjectsTable({
                   )}
                 </span>
               </th>
-              <th className="w-[5.75rem] px-3 py-3">
+              <th className="w-[7rem] px-3 py-3">
                 <span className="inline-flex items-center gap-1.5">
+                  <ProductionStepSortHeaderButton
+                    sort={sort}
+                    onChange={updateSort}
+                  />
                   Stage
                   <SortHeaderButton
                     column="stage"
