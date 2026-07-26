@@ -2356,6 +2356,10 @@ export default async function TaskDetailPage({
     task.checkerReferralTargetIds.length > 0;
   const isActiveCheckerReferralTarget =
     hasActiveCheckerReferral && task.checkerReferralTargetIds.includes(userId);
+  const canUseTaskManagerActions =
+    isRootAdmin || isAssigner || isChecker || isActiveCheckerReferralTarget;
+  const canUseTaskConversation =
+    canUseTaskManagerActions || Boolean(myAssignment);
   const canReferCheckerAction =
     !isClosed &&
     !waitingForJournalCreation &&
@@ -2406,9 +2410,9 @@ export default async function TaskDetailPage({
     !waitingForJournalCreation &&
     (!isAutomatedJournalTask || automatedAddJournalReady) &&
     (!isAssignee || selfManagedTask) &&
-    (isAdmin || isAssigner || isChecker || isActiveCheckerReferralTarget) &&
+    canUseTaskManagerActions &&
     (selfManagedTask ||
-      isAdmin ||
+      isRootAdmin ||
       isChecker ||
       isActiveCheckerReferralTarget ||
       effectiveStatus === ResearchTaskStatus.CHECKING);
@@ -2416,7 +2420,7 @@ export default async function TaskDetailPage({
     !isClosed &&
     !waitingForJournalCreation &&
     !isAssignee &&
-    (isAdmin || isAssigner || isActiveCheckerReferralTarget) &&
+    canUseTaskManagerActions &&
     effectiveStatus === ResearchTaskStatus.CHECKING;
   const canRequestClarification =
     !isClosed &&
@@ -2431,7 +2435,7 @@ export default async function TaskDetailPage({
   const canRequestAssigneeClarification =
     !isClosed &&
     !waitingForJournalCreation &&
-    (isRootAdmin || isAssigner || isChecker || isActiveCheckerReferralTarget) &&
+    canUseTaskManagerActions &&
     (effectiveStatus === ResearchTaskStatus.CHECKING ||
       effectiveStatus === ResearchTaskStatus.REVISION_REQUESTED) &&
     !hasOpenClarification;
@@ -2439,17 +2443,19 @@ export default async function TaskDetailPage({
     !isClosed &&
     !waitingForJournalCreation &&
     !isAssignee &&
-    (isRootAdmin || isAssigner || isChecker || isActiveCheckerReferralTarget);
-  const canRevoke = !isClosed && !isAssignee && (isAdmin || isAssigner);
+    canUseTaskManagerActions;
+  const canRevoke = !isClosed && !isAssignee && (isRootAdmin || isAssigner);
   const canEdit =
-    !isAssignee && (isRootAdmin || (!isClosed && isChiefAssistant));
+    !isAssignee &&
+    (isRootAdmin ||
+      (!isClosed && isChiefAssistant && (isAssigner || isChecker)));
   const canLoadTaskFormOptions = canEdit || isRootAdmin;
   const canLoadSuggestedVenueOptions =
     task.taskType === ResearchTaskType.SUGGEST_VENUE &&
     !isClosed &&
     isAssignee &&
     Boolean(task.projectId);
-  const canUseReminder = !isAssignee && (isAdmin || isAssigner);
+  const canUseReminder = !isAssignee && (isRootAdmin || isAssigner);
   const reminderBlock =
     task.assignments.length === 0
       ? {
@@ -2489,13 +2495,7 @@ export default async function TaskDetailPage({
                       "Assignees are waiting for clarification feedback from the task manager. Please answer the clarification request before sending finish reminders.",
                   }
                 : null;
-  const canAnswerClarification =
-    !isClosed &&
-    (isRootAdmin ||
-      isAssigner ||
-      isChecker ||
-      isAssignee ||
-      isActiveCheckerReferralTarget);
+  const canAnswerClarification = !isClosed && canUseTaskConversation;
   const reportEnabled = task.allowAssigneeReportUpload;
   const isJournalSubmitTask =
     task.taskType === "SUBMIT_RESEARCH" && Boolean(task.journal);
@@ -3613,10 +3613,14 @@ export default async function TaskDetailPage({
           ? isRootAdmin || isAssigner || isChecker
           : isAssignee);
       const canAddRequestMessage =
+        !isClosed &&
+        canUseTaskConversation &&
         !clarification.answer &&
         clarification.requestedBy.id === userId &&
         requestSideExtraCount < 2;
       const canAddAnswerMessage =
+        !isClosed &&
+        canUseTaskConversation &&
         Boolean(clarification.answer) &&
         clarification.answeredBy?.id === userId &&
         answerSideExtraCount < 2;

@@ -8320,7 +8320,11 @@ export async function updateResearchTask(taskId: string, formData: FormData) {
     },
   });
   if (!currentTask) return { ok: false, reason: "NOT_FOUND" };
-  if (!(await canManageTaskAsResearchAdmin(taskId, user))) redirect("/401");
+  const canEditTask =
+    user.roles.includes(Role.ADMIN) ||
+    currentTask.createdById === user.id ||
+    currentTask.checkerId === user.id;
+  if (!canEditTask) redirect("/401");
   const isClosedTask =
     currentTask.status === ResearchTaskStatus.COMPLETED ||
     currentTask.status === ResearchTaskStatus.REVOKED;
@@ -8977,7 +8981,7 @@ export async function updateTaskSuggestedReviewers(
 
 export async function revokeResearchTask(taskId: string, formData?: FormData) {
   const user = await requireCurrentUser();
-  const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);
+  const isAdmin = user.roles.includes(Role.ADMIN);
   const reason = optionalString(formData?.get("reason") ?? null);
   const transferTask = formData?.get("transferTask") === "true";
   const transferAssigneeIds = orderedUniqueStrings(
@@ -12934,7 +12938,7 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
         "This automated Add Journal task cannot be approved yet. The assignee must add the required journal result before it can be checked.",
     };
   }
-  const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);
+  const isAdmin = user.roles.includes(Role.ADMIN);
   if (
     task.status === ResearchTaskStatus.COMPLETED ||
     task.status === ResearchTaskStatus.REVOKED
@@ -13391,7 +13395,7 @@ export async function sendTaskReminderEmail(
     };
   }
 
-  const isAdmin = await canManageTaskAsResearchAdmin(taskId, user);
+  const isAdmin = user.roles.includes(Role.ADMIN);
   const isAssigner = task.createdById === user.id;
   if (!isAdmin && !isAssigner) redirect("/401");
 
@@ -13629,7 +13633,7 @@ export async function requestTaskRedo(taskId: string, formData: FormData) {
   });
   if (!task) return;
   if (
-    !(await canManageTaskAsResearchAdmin(taskId, user)) &&
+    !user.roles.includes(Role.ADMIN) &&
     task.createdById !== user.id &&
     task.checkerId !== user.id &&
     !(
@@ -13852,7 +13856,7 @@ export async function answerTaskClarification(
     (assignment) => assignment.userId === user.id,
   );
   const userCanManage =
-    (await canManageTaskAsResearchAdmin(taskId, user)) ||
+    user.roles.includes(Role.ADMIN) ||
     task.createdById === user.id ||
     task.checkerId === user.id ||
     (task.checkerReferralAction ===
@@ -13982,7 +13986,7 @@ export async function requestAssigneeClarification(
   });
   if (!task) return;
   const canManage =
-    (await canManageTaskAsResearchAdmin(taskId, user)) ||
+    user.roles.includes(Role.ADMIN) ||
     task.createdById === user.id ||
     task.checkerId === user.id ||
     (task.checkerReferralAction === checkerReferralActions.checkingReview &&
@@ -14099,7 +14103,7 @@ export async function sendTaskClarificationChatMessage(
     (assignment) => assignment.userId === currentUserId,
   );
   const userCanManage =
-    (await canManageTaskAsResearchAdmin(taskId, user)) ||
+    user.roles.includes(Role.ADMIN) ||
     checkedTask.createdById === currentUserId ||
     checkedTask.checkerId === currentUserId ||
     (checkedTask.checkerReferralAction ===
@@ -14108,6 +14112,7 @@ export async function sendTaskClarificationChatMessage(
     (checkedTask.checkerReferralAction ===
       checkerReferralActions.answerAssigneeClarification &&
       checkedTask.checkerReferralTargetIds.includes(currentUserId));
+  if (!userIsAssignee && !userCanManage) redirect("/401");
   const clarification = checkedTask.clarifications[0] ?? null;
   const requesterIsAssignee = clarification
     ? checkedTask.assignments.some(
