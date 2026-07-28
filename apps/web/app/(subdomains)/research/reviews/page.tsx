@@ -32,7 +32,9 @@ export default async function AcademicReviewsPage() {
       orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
     }),
     prisma.journal.findMany({
-      where: { approvalStatus: JournalApprovalStatus.APPROVED },
+      where: {
+        approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL },
+      },
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
       include: {
         accounts: {

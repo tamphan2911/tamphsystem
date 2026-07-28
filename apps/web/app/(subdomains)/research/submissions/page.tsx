@@ -96,7 +96,9 @@ export default async function SubmissionsPage() {
       orderBy: { title: "asc" },
     }),
     prisma.journal.findMany({
-      where: { approvalStatus: JournalApprovalStatus.APPROVED },
+      where: {
+        approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL },
+      },
       select: {
         id: true,
         name: true,

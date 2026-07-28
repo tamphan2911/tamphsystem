@@ -3238,7 +3238,9 @@ export default async function TaskDetailPage({
             select: { id: true, researchCode: true, title: true, stage: true },
           }),
           prisma.journal.findMany({
-            where: { approvalStatus: JournalApprovalStatus.APPROVED },
+            where: {
+              approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL },
+            },
             orderBy: [{ name: "asc" }],
             select: {
               id: true,

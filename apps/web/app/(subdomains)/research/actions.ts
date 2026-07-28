@@ -10431,7 +10431,7 @@ export async function addTaskSuggestedVenue(
       ? await prisma.journal.findFirst({
           where: {
             id: journalId,
-            approvalStatus: JournalApprovalStatus.APPROVED,
+            approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL },
           },
           select: {
             id: true,
@@ -10449,7 +10449,10 @@ export async function addTaskSuggestedVenue(
         })
       : null;
   if (journalId && !linkedJournal) {
-    return { ok: false, message: "Choose an approved journal on the site." };
+    return {
+      ok: false,
+      message: "Choose a non-pending journal on the site.",
+    };
   }
   if (conferenceId && !linkedConference) {
     return { ok: false, message: "Choose a conference on the site." };

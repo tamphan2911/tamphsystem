@@ -1,4 +1,4 @@
-import { Prisma, Role } from "@repo/db";
+import { JournalApprovalStatus, Prisma, Role } from "@repo/db";
 
 export function hasUnrestrictedVenueAccess(roles: Role[]) {
   return roles.some(
@@ -13,8 +13,12 @@ export function staffJournalAccessWhere(
   roles: Role[],
 ): Prisma.JournalWhereInput | null {
   if (roles.includes(Role.ADMIN)) return {};
-  if (roles.includes(Role.CHIEF_ASSISTANT)) return {};
-  if (roles.includes(Role.ASSISTANT)) return {};
+  if (roles.includes(Role.CHIEF_ASSISTANT)) {
+    return { approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL } };
+  }
+  if (roles.includes(Role.ASSISTANT)) {
+    return { approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL } };
+  }
   return null;
 }
 

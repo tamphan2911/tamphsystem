@@ -523,7 +523,9 @@ export default async function ProjectDetailPage({
       },
     }),
     prisma.journal.findMany({
-      where: { approvalStatus: JournalApprovalStatus.APPROVED },
+      where: {
+        approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL },
+      },
       include: {
         accounts: { orderBy: [{ updatedAt: "desc" }] },
         publisherRecord: {
