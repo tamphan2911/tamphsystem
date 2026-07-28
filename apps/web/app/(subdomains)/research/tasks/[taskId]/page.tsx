@@ -1682,6 +1682,7 @@ export default async function TaskDetailPage({
           homepageLink: true,
           submissionLink: true,
           note: true,
+          publisherRecord: { select: { note: true } },
         },
       },
       conference: {
@@ -4218,6 +4219,11 @@ export default async function TaskDetailPage({
                     <p className="mt-1 text-xs text-[#B0B0B0]">
                       {journalMetaLine(task.journal)}
                     </p>
+                    {task.journal.publisherRecord?.note ? (
+                      <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-slate-600 dark:text-[#B0B0B0]">
+                        Publisher note: {task.journal.publisherRecord.note}
+                      </p>
+                    ) : null}
                     {task.journal.note ? (
                       <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-slate-600 dark:text-[#B0B0B0]">
                         Journal note: {task.journal.note}
