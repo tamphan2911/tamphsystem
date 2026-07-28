@@ -6318,6 +6318,10 @@ type AutoCompletedSuggestVenueTask = {
   assigneeEmails: string[];
 };
 
+function autoSubmitTaskDueDate(referenceDate = new Date()) {
+  return new Date(referenceDate.getTime() + 96 * 60 * 60 * 1000);
+}
+
 async function createSubmitTaskForSuggestedJournalApproval({
   projectId,
   suggestionId,
@@ -6399,7 +6403,7 @@ async function createSubmitTaskForSuggestedJournalApproval({
 
   const taskTitle = `Submit "${project.title}" to ${journal.name}`;
   const taskDescription = DEFAULT_TASK_DESCRIPTION;
-  const taskDueDate = researchTaskDueDate(researchDateValue(new Date(), 7));
+  const taskDueDate = autoSubmitTaskDueDate();
   const task = await prisma.$transaction(async (tx) => {
     const createdTask = await tx.researchTask.create({
       data: {
@@ -6525,7 +6529,7 @@ async function createSubmitTaskForSuggestedConferenceApproval({
 
   const taskTitle = `Submit "${project.title}" to ${conference.name}`;
   const taskDescription = DEFAULT_TASK_DESCRIPTION;
-  const taskDueDate = researchTaskDueDate(researchDateValue(new Date(), 7));
+  const taskDueDate = autoSubmitTaskDueDate();
   const task = await prisma.$transaction(async (tx) => {
     const createdTask = await tx.researchTask.create({
       data: {

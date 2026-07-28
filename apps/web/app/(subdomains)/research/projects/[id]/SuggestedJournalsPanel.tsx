@@ -1449,8 +1449,8 @@ export function SuggestedJournalsPanel({
                   </span>
                   <span className="mt-1 block text-xs leading-5 text-slate-500 dark:text-[#B0B0B0]">
                     {approvalUsesJournalTask
-                      ? "After the new journal is approved, the submit task will be assigned to the suggester with the same assigner and checker as the suggested-venue task."
-                      : "The task will be assigned to the suggester, with the same assigner and checker as the suggested-venue task."}
+                      ? "After the new journal is approved, the submit task will be assigned to the suggester with the same assigner and checker as the suggested-venue task. Due: 96 hours after creation."
+                      : "The task will be assigned to the suggester, with the same assigner and checker as the suggested-venue task. Due: 96 hours after creation."}
                   </span>
                   {approvalSubmitTaskLock ? (
                     <span className="mt-2 block whitespace-pre-line border border-amber-200 bg-white/70 px-3 py-2 text-xs leading-5 text-amber-900 dark:border-amber-900/60 dark:bg-[#202020] dark:text-amber-200">
@@ -1536,7 +1536,8 @@ export function SuggestedJournalsPanel({
             {autoCreateSubmitTask && !approvalSubmitTaskLock ? (
               <div className="mt-2 border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs leading-5 text-emerald-800 dark:border-emerald-300/30 dark:bg-emerald-950/25 dark:text-emerald-200">
                 After that journal is added and approved, a submit task will be
-                created or linked automatically for this venue.
+                created or linked automatically for this venue. New submit tasks
+                are due 96 hours after creation.
               </div>
             ) : null}
           </div>
