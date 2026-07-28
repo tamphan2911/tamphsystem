@@ -38,6 +38,9 @@ export function AssigneeReviewActions({
   nextProductionTaskLabel = "",
   referenceFollowUpTaskLabel = "",
   suggestVenueTaskLabel = "",
+  assigneeSummary,
+  assignerSummary,
+  checkerSummary,
   iconClassName,
   label,
   detail,
@@ -52,6 +55,9 @@ export function AssigneeReviewActions({
   nextProductionTaskLabel?: string;
   referenceFollowUpTaskLabel?: string;
   suggestVenueTaskLabel?: string;
+  assigneeSummary?: string;
+  assignerSummary?: string;
+  checkerSummary?: string;
   iconClassName: string;
   label: string;
   detail: string;
@@ -179,6 +185,9 @@ export function AssigneeReviewActions({
                   nextProductionTaskLabel={nextProductionTaskLabel}
                   referenceFollowUpTaskLabel={referenceFollowUpTaskLabel}
                   suggestVenueTaskLabel={suggestVenueTaskLabel}
+                  assigneeSummary={assigneeSummary}
+                  assignerSummary={assignerSummary}
+                  checkerSummary={checkerSummary}
                 />
                 <RedoTaskForm action={redoAction} assignmentId={assignmentId} />
               </div>

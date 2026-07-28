@@ -1506,6 +1506,40 @@ export function SuggestedJournalsPanel({
               ? " A submit task will be created or linked automatically after that approval."
               : " No submit task will be created automatically after that approval."}
           </p>
+          <div className="border-t border-slate-200 pt-4 dark:border-[#444444]">
+            <p className="text-xs font-normal uppercase tracking-wide text-slate-500 dark:text-[#B0B0B0]">
+              Will be created after confirm
+            </p>
+            <div className="mt-2 border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-600 dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0]">
+              <p className="text-sm font-normal text-slate-900 dark:text-[#E4E4E4]">
+                Add Journal task: Add {approveVenue.item.name}
+              </p>
+              <p className="mt-1">
+                Assign to:{" "}
+                {displayResearchPersonName({
+                  name: approveVenue.item.suggestedByName ?? null,
+                  email: approveVenue.item.suggestedByEmail ?? "",
+                }) || "venue suggester"}
+                <span className="px-2 text-slate-400 dark:text-[#777777]">
+                  |
+                </span>
+                Due tomorrow
+              </p>
+              <p>
+                Guide: G003
+                <span className="px-2 text-slate-400 dark:text-[#777777]">
+                  |
+                </span>
+                Same assigner and checker as the suggested-venue task
+              </p>
+            </div>
+            {autoCreateSubmitTask && !approvalSubmitTaskLock ? (
+              <div className="mt-2 border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs leading-5 text-emerald-800 dark:border-emerald-300/30 dark:bg-emerald-950/25 dark:text-emerald-200">
+                After that journal is added and approved, a submit task will be
+                created or linked automatically for this venue.
+              </div>
+            ) : null}
+          </div>
         </ResearchConfirmDialog>
       )}
 

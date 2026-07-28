@@ -20,10 +20,12 @@ import {
 export function ProposalFeedbackButton({
   proposalId,
   proposalTitle,
+  proposalType,
   disabled = false,
 }: {
   proposalId: string;
   proposalTitle: string;
+  proposalType: "RESEARCH" | "PROJECT" | "CONFERENCE" | "JOURNAL";
   disabled?: boolean;
 }) {
   const router = useRouter();
@@ -162,6 +164,36 @@ export function ProposalFeedbackButton({
               }
             />
           </label>
+          {decision === "ACCEPTED" ? (
+            <div className="border-t border-slate-200 pt-4 dark:border-[#444444]">
+              <p className="text-xs font-normal uppercase tracking-wide text-slate-500 dark:text-[#B0B0B0]">
+                Will be created after confirm
+              </p>
+              <div className="mt-2 border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-600 dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0]">
+                <p className="text-sm font-normal text-slate-900 dark:text-[#E4E4E4]">
+                  {proposalType === "PROJECT"
+                    ? "Project record"
+                    : proposalType === "RESEARCH"
+                      ? "Research record"
+                      : proposalType === "CONFERENCE"
+                        ? "Conference venue record"
+                        : "Journal venue record"}
+                  : {proposalTitle}
+                </p>
+                <p className="mt-1">
+                  Source: accepted proposal
+                  <span className="px-2 text-slate-400 dark:text-[#777777]">
+                    |
+                  </span>
+                  Status will be initialized from the proposal workflow
+                </p>
+                <p>
+                  The new record will be linked back to this proposal for
+                  tracking.
+                </p>
+              </div>
+            </div>
+          ) : null}
         </form>
       </ResearchModal>
     </>

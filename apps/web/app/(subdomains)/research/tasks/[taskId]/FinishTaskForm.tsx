@@ -79,6 +79,9 @@ export function FinishTaskForm({
   nextProductionTaskLabel = "",
   referenceFollowUpTaskLabel = "",
   suggestVenueTaskLabel = "",
+  assigneeSummary = "Same assignees as this task",
+  assignerSummary = "Same assigner as this task",
+  checkerSummary = "Same checker as this task",
 }: {
   action: (
     formData: FormData,
@@ -92,6 +95,9 @@ export function FinishTaskForm({
   nextProductionTaskLabel?: string;
   referenceFollowUpTaskLabel?: string;
   suggestVenueTaskLabel?: string;
+  assigneeSummary?: string;
+  assignerSummary?: string;
+  checkerSummary?: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [submissionDate, setSubmissionDate] = useState(researchDateValue);
@@ -222,6 +228,34 @@ export function FinishTaskForm({
   }
   const showAccountPicker =
     !isReadyMode && requiresJournalAccount && accountOptions.length > 0;
+  const autoCreatedItems = [
+    !isReadyMode && nextProductionTaskLabel && createNextProductionTask
+      ? {
+          title: nextProductionTaskLabel,
+          kind: "Production task",
+          due: "Due in 7 days",
+          guide: "Default production guides",
+        }
+      : null,
+    !isReadyMode &&
+    referenceFollowUpTaskLabel &&
+    createReferenceFollowUpTask
+      ? {
+          title: referenceFollowUpTaskLabel,
+          kind: "Final research follow-up task",
+          due: "Due in 2 days",
+          guide: "Guide G026",
+        }
+      : null,
+    !isReadyMode && suggestVenueTaskLabel && createSuggestVenueTask
+      ? {
+          title: suggestVenueTaskLabel,
+          kind: "Suggest venue task",
+          due: "Due in 4 days",
+          guide: "Default suggest-venue guides",
+        }
+      : null,
+  ].filter((item): item is NonNullable<typeof item> => Boolean(item));
 
   return (
     <>
@@ -421,6 +455,43 @@ export function FinishTaskForm({
                 <span className="font-semibold">{suggestVenueTaskLabel}</span>
               </span>
             </label>
+          ) : null}
+          {autoCreatedItems.length > 0 ? (
+            <div className="border-t border-slate-200 pt-4 dark:border-[#444444]">
+              <p className="text-xs font-normal uppercase tracking-wide text-slate-500 dark:text-[#B0B0B0]">
+                Will be created after confirm
+              </p>
+              <div className="mt-2 grid gap-2">
+                {autoCreatedItems.map((item) => (
+                  <div
+                    key={`${item.kind}-${item.title}`}
+                    className="border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-600 dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0]"
+                  >
+                    <p className="text-sm font-normal text-slate-900 dark:text-[#E4E4E4]">
+                      {item.kind}: {item.title}
+                    </p>
+                    <p className="mt-1">
+                      Assign to: {assigneeSummary}
+                      <span className="px-2 text-slate-400 dark:text-[#777777]">
+                        |
+                      </span>
+                      Checker: {checkerSummary}
+                    </p>
+                    <p>
+                      Assigner: {assignerSummary}
+                      <span className="px-2 text-slate-400 dark:text-[#777777]">
+                        |
+                      </span>
+                      {item.due}
+                      <span className="px-2 text-slate-400 dark:text-[#777777]">
+                        |
+                      </span>
+                      {item.guide}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : null}
         </div>
       </ResearchModal>

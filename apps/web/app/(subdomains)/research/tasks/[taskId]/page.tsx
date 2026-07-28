@@ -2281,6 +2281,22 @@ export default async function TaskDetailPage({
         : null;
   const transferredFromTask = task.transferredFromTask;
   const checkerPerson = task.checker ?? task.createdBy;
+  const taskAssigneeSummary =
+    task.assignments.length > 0
+      ? task.assignments
+          .map(
+            (assignment) =>
+              displayResearchPersonName(assignment.user) ||
+              displayResearchEmail(assignment.user.email),
+          )
+          .join(", ")
+      : "No assignee";
+  const taskAssignerSummary =
+    displayResearchPersonName(task.createdBy) ||
+    displayResearchEmail(task.createdBy.email);
+  const taskCheckerSummary =
+    displayResearchPersonName(checkerPerson) ||
+    displayResearchEmail(checkerPerson.email);
   const showCheckerEmail = Boolean(
     task.checker && !task.checker.roles.includes(Role.ADMIN),
   );
@@ -4066,6 +4082,9 @@ export default async function TaskDetailPage({
                 suggestVenueTaskLabel={
                   canCreateSuggestVenueAfterFollowUp ? "Suggest venue" : ""
                 }
+                assigneeSummary={taskAssigneeSummary}
+                assignerSummary={taskAssignerSummary}
+                checkerSummary={taskCheckerSummary}
               />
             )}
           </div>
@@ -4427,6 +4446,9 @@ export default async function TaskDetailPage({
                             ? "Suggest venue"
                             : ""
                         }
+                        assigneeSummary={taskAssigneeSummary}
+                        assignerSummary={taskAssignerSummary}
+                        checkerSummary={taskCheckerSummary}
                         iconClassName={workflow.className}
                         label={workflow.label}
                         detail={workflow.detail}

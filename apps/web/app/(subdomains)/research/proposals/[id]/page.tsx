@@ -895,6 +895,7 @@ export default async function ProposalDetailPage({
                   <ProposalFeedbackButton
                     proposalId={proposal.id}
                     proposalTitle={proposal.title}
+                    proposalType={proposal.type}
                     disabled={
                       effectiveStatus === ProposalStatus.ACCEPTED ||
                       effectiveStatus === ProposalStatus.DECLINED
