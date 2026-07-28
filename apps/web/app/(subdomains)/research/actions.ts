@@ -7327,18 +7327,20 @@ export async function updatePublisher(publisherId: string, formData: FormData) {
   });
   if (duplicate) throw new Error("A publisher with this name already exists.");
   const usesSingleAccount = formData.get("usesSingleAccount") === "on";
+  const accountPolicyChanged =
+    usesSingleAccount !== currentPublisher.usesSingleAccount;
   const linkedPublisherAccounts = await prisma.publisherAccount.count({
     where: {
       publisherId,
       accountType: PublisherAccountType.PUBLISHER,
     },
   });
-  if (usesSingleAccount && linkedPublisherAccounts === 0) {
+  if (accountPolicyChanged && usesSingleAccount && linkedPublisherAccounts === 0) {
     throw new Error(
       "Add a publisher-wide account from Accounts before enabling this policy.",
     );
   }
-  if (!usesSingleAccount && linkedPublisherAccounts > 0) {
+  if (accountPolicyChanged && !usesSingleAccount && linkedPublisherAccounts > 0) {
     throw new Error(
       "Delete or reassign the publisher-wide account before switching to separate journal accounts.",
     );
