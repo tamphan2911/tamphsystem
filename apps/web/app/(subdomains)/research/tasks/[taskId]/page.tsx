@@ -1624,6 +1624,7 @@ export default async function TaskDetailPage({
         select: {
           id: true,
           title: true,
+          abstract: true,
           researchCode: true,
           stage: true,
           coAuthors: true,
@@ -4169,6 +4170,11 @@ export default async function TaskDetailPage({
                     <p className="mt-1 w-full text-xs leading-5 text-[#B0B0B0]">
                       {researchAuthors(task.project)}
                     </p>
+                    {task.project.abstract ? (
+                      <p className="mt-1 w-full whitespace-pre-wrap break-words text-xs leading-5 text-[#667085] dark:text-[#8F98A8]">
+                        {task.project.abstract}
+                      </p>
+                    ) : null}
                     {linkedSubmitSuggestedVenue ? (
                       <p className="mt-2 text-xs leading-5 text-[#667085] dark:text-[#B0B0B0]">
                         This submit task is linked to suggested venue:{" "}
