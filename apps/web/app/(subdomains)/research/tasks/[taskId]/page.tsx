@@ -2414,13 +2414,14 @@ export default async function TaskDetailPage({
     task.taskType === ResearchTaskType.ADD_JOURNAL &&
     task.addedJournals.filter((journal) => journal.resultPosition !== null)
       .length >= Math.max(1, task.journalTargetCount ?? 1);
+  const assigneeNeedsRevision = Boolean(myAssignment?.redoRequestedAt);
   const canMarkReady =
     !isClosed &&
     !waitingForJournalCreation &&
     (!isAutomatedJournalTask || canReadyAutomatedJournalTask) &&
     isAssignee &&
     !selfManagedTask &&
-    !myAssignment?.finishedAt &&
+    (!myAssignment?.finishedAt || assigneeNeedsRevision) &&
     !myAssignment?.completedAt &&
     effectiveStatus !== ResearchTaskStatus.CHECKING &&
     effectiveStatus !== ResearchTaskStatus.NEED_CLARIFY;
@@ -2446,7 +2447,7 @@ export default async function TaskDetailPage({
     !waitingForJournalCreation &&
     isAssignee &&
     !selfAssigned &&
-    !myAssignment?.finishedAt &&
+    (!myAssignment?.finishedAt || assigneeNeedsRevision) &&
     !myAssignment?.completedAt &&
     effectiveStatus !== ResearchTaskStatus.CHECKING &&
     effectiveStatus !== ResearchTaskStatus.NEED_CLARIFY &&
