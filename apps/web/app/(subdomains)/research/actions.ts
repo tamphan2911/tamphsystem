@@ -12157,11 +12157,6 @@ export async function markResearchTaskReadyForCheck(taskId: string) {
   });
 
   if (!task) return;
-  const canReadyAutomatedJournalTask =
-    task.journalCreationSuggestion &&
-    task.taskType === ResearchTaskType.ADD_JOURNAL &&
-    task.status === ResearchTaskStatus.REVISION_REQUESTED;
-  if (task.journalCreationSuggestion && !canReadyAutomatedJournalTask) return;
   if (
     task.status === ResearchTaskStatus.COMPLETED ||
     task.status === ResearchTaskStatus.REVOKED
@@ -13771,7 +13766,6 @@ export async function requestTaskClarification(
   if (
     task.status === ResearchTaskStatus.COMPLETED ||
     task.status === ResearchTaskStatus.REVOKED ||
-    task.status === ResearchTaskStatus.CHECKING ||
     task.clarifications.length > 0
   ) {
     return;

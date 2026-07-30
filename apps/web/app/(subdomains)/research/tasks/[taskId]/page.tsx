@@ -2405,26 +2405,16 @@ export default async function TaskDetailPage({
     ? ResearchTaskStatus.IN_PROGRESS
     : task.status;
   const isAutomatedJournalTask = Boolean(task.journalCreationSuggestion);
-  const canReadyAutomatedJournalTask =
-    isAutomatedJournalTask &&
-    task.taskType === ResearchTaskType.ADD_JOURNAL &&
-    task.status === ResearchTaskStatus.REVISION_REQUESTED;
   const automatedAddJournalReady =
     isAutomatedJournalTask &&
     task.taskType === ResearchTaskType.ADD_JOURNAL &&
     task.addedJournals.filter((journal) => journal.resultPosition !== null)
       .length >= Math.max(1, task.journalTargetCount ?? 1);
-  const assigneeNeedsRevision = Boolean(myAssignment?.redoRequestedAt);
   const canMarkReady =
     !isClosed &&
-    !waitingForJournalCreation &&
-    (!isAutomatedJournalTask || canReadyAutomatedJournalTask) &&
     isAssignee &&
     !selfManagedTask &&
-    (!myAssignment?.finishedAt || assigneeNeedsRevision) &&
-    !myAssignment?.completedAt &&
-    effectiveStatus !== ResearchTaskStatus.CHECKING &&
-    effectiveStatus !== ResearchTaskStatus.NEED_CLARIFY;
+    !myAssignment?.completedAt;
   const canApprove =
     !isClosed &&
     !waitingForJournalCreation &&
@@ -2444,13 +2434,9 @@ export default async function TaskDetailPage({
     effectiveStatus === ResearchTaskStatus.CHECKING;
   const canRequestClarification =
     !isClosed &&
-    !waitingForJournalCreation &&
     isAssignee &&
     !selfAssigned &&
-    (!myAssignment?.finishedAt || assigneeNeedsRevision) &&
     !myAssignment?.completedAt &&
-    effectiveStatus !== ResearchTaskStatus.CHECKING &&
-    effectiveStatus !== ResearchTaskStatus.NEED_CLARIFY &&
     !hasOpenClarification;
   const canRequestAssigneeClarification =
     !isClosed &&
