@@ -1,10 +1,5 @@
 import { redirect } from "next/navigation";
-import {
-  prisma,
-  JournalApprovalStatus,
-  ResearchTaskStatus,
-  Role,
-} from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { deleteResearchTask } from "../actions";
 import {
@@ -20,6 +15,7 @@ import {
 import { TasksClient } from "./TasksClient";
 import { displayResearchEmail } from "@/sites/research/lib/display";
 import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
+import { journalOptionAccessWhere } from "@/sites/research/lib/venueAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -114,9 +110,7 @@ export default async function ResearchTasksPage() {
           select: { id: true, researchCode: true, title: true, stage: true },
         }),
         prisma.journal.findMany({
-          where: {
-            approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL },
-          },
+          where: journalOptionAccessWhere(roles),
           orderBy: [{ name: "asc" }],
           select: {
             id: true,

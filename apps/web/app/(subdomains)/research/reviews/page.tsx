@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { prisma, JournalApprovalStatus, Role } from "@repo/db";
+import { prisma, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { deleteAcademicReview } from "../actions";
@@ -10,6 +10,7 @@ import {
   canAccessAllResearchReviews,
 } from "@/sites/research/lib/reviewAccess";
 import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
+import { journalOptionAccessWhere } from "@/sites/research/lib/venueAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -32,9 +33,7 @@ export default async function AcademicReviewsPage() {
       orderBy: [{ updatedAt: "desc" }, { requestedAt: "desc" }],
     }),
     prisma.journal.findMany({
-      where: {
-        approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL },
-      },
+      where: journalOptionAccessWhere(roles),
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
       include: {
         accounts: {

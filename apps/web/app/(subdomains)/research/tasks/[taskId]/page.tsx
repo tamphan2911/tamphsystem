@@ -40,6 +40,7 @@ import {
 } from "@repo/db";
 import { auth } from "../../../../../auth";
 import { accessibleResearchReviewWhere } from "@/sites/research/lib/reviewAccess";
+import { journalOptionAccessWhere } from "@/sites/research/lib/venueAccess";
 import {
   finishResearchTask,
   markResearchTaskReadyForCheck,
@@ -3256,9 +3257,7 @@ export default async function TaskDetailPage({
             select: { id: true, researchCode: true, title: true, stage: true },
           }),
           prisma.journal.findMany({
-            where: {
-              approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL },
-            },
+            where: journalOptionAccessWhere(roles),
             orderBy: [{ name: "asc" }],
             select: {
               id: true,

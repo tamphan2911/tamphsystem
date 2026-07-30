@@ -1,12 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AtSign, KeyRound, LockKeyhole, Send } from "lucide-react";
-import {
-  prisma,
-  JournalApprovalStatus,
-  ResearchTaskStatus,
-  Role,
-} from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../../auth";
 import {
   SubmissionsTable,
@@ -16,6 +11,7 @@ import { researchLinkClass } from "@/sites/research/components/ResearchPrimitive
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { displayResearchPersonName } from "@/sites/research/lib/display";
 import { canManageAllResearchAccounts } from "@/sites/research/lib/accountAccess";
+import { journalOptionAccessWhere } from "@/sites/research/lib/venueAccess";
 import { EditAccountDialog } from "./EditAccountDialog";
 
 export const dynamic = "force-dynamic";
@@ -109,9 +105,7 @@ export default async function AccountDetailPage({
       },
     }),
     prisma.journal.findMany({
-      where: {
-        approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL },
-      },
+      where: journalOptionAccessWhere(roles),
       orderBy: [{ name: "asc" }],
       select: { id: true, name: true, publisher: true },
     }),

@@ -21,13 +21,13 @@ import {
 } from "lucide-react";
 import {
   prisma,
-  JournalApprovalStatus,
   ResearchFolderAccessRequestStatus,
   ResearchTaskStatus,
   ResearchTaskType,
   Role,
 } from "@repo/db";
 import { auth } from "../../../../../auth";
+import { journalOptionAccessWhere } from "@/sites/research/lib/venueAccess";
 import {
   updateResearchFolderSharedUsers,
   updateResearchProject,
@@ -523,9 +523,7 @@ export default async function ProjectDetailPage({
       },
     }),
     prisma.journal.findMany({
-      where: {
-        approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL },
-      },
+      where: journalOptionAccessWhere(roles),
       include: {
         accounts: { orderBy: [{ updatedAt: "desc" }] },
         publisherRecord: {

@@ -1,12 +1,6 @@
 import { researchDateTimeFormat } from "@/sites/research/lib/date-time";
 import { redirect } from "next/navigation";
-import {
-  prisma,
-  JournalApprovalStatus,
-  ResearchTaskStatus,
-  ResearchTaskType,
-  Role,
-} from "@repo/db";
+import { prisma, ResearchTaskStatus, ResearchTaskType, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import {
@@ -18,6 +12,7 @@ import {
   displayResearchEmail,
   displayResearchPersonName,
 } from "@/sites/research/lib/display";
+import { journalOptionAccessWhere } from "@/sites/research/lib/venueAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -96,9 +91,7 @@ export default async function SubmissionsPage() {
       orderBy: { title: "asc" },
     }),
     prisma.journal.findMany({
-      where: {
-        approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL },
-      },
+      where: journalOptionAccessWhere(roles),
       select: {
         id: true,
         name: true,

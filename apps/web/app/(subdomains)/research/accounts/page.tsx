@@ -1,13 +1,9 @@
 import { redirect } from "next/navigation";
-import {
-  prisma,
-  JournalApprovalStatus,
-  ResearchTaskStatus,
-  Role,
-} from "@repo/db";
+import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
 import { canManageAllResearchAccounts } from "@/sites/research/lib/accountAccess";
+import { journalOptionAccessWhere } from "@/sites/research/lib/venueAccess";
 import { deletePublisherAccount } from "../actions";
 import { AccountsTable, type AccountRow } from "./AccountsTable";
 import { NewAccountDialog } from "./NewAccountDialog";
@@ -51,9 +47,7 @@ export default async function PublisherAccountsPage() {
       orderBy: { updatedAt: "desc" },
     }),
     prisma.journal.findMany({
-      where: {
-        approvalStatus: { not: JournalApprovalStatus.PENDING_APPROVAL },
-      },
+      where: journalOptionAccessWhere(roles),
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
     }),
     prisma.publisher.findMany({
