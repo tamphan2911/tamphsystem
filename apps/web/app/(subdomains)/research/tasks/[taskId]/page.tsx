@@ -2299,6 +2299,8 @@ export default async function TaskDetailPage({
   const taskCheckerSummary =
     displayResearchPersonName(checkerPerson) ||
     displayResearchEmail(checkerPerson.email);
+  const canOpenAssigneeProfiles =
+    isRootAdmin || isAssigner || (isChiefAssistant && isChecker);
   const showCheckerEmail = Boolean(
     task.checker && !task.checker.roles.includes(Role.ADMIN),
   );
@@ -4461,7 +4463,7 @@ export default async function TaskDetailPage({
                           person={assignment.user}
                           showEmail
                           profileHref={
-                            isRootAdmin
+                            canOpenAssigneeProfiles
                               ? `/profile?userId=${encodeURIComponent(
                                   assignment.user.id,
                                 )}`
