@@ -440,6 +440,11 @@ export default async function JournalDetailPage({
       ? journal.localRank || "No local rank"
       : journal.rank || "No rank";
   const journalTypeLabel = journal.type === "LOCAL" ? "Local" : "International";
+  const apcHasValue = !isFreeResearchAmount(journal.apc);
+  const apcValueClassName =
+    apcHasValue && !journal.hasApcOption
+      ? "text-rose-700 dark:text-rose-300"
+      : "text-[#A8DADC]";
   const hasAuditRow = (area: string, action: string) =>
     auditLogs.some((log) => log.area === area && log.action === action);
   const journalChangeRows: ResearchChangeLogRow[] = canViewChangeLog
@@ -633,9 +638,9 @@ export default async function JournalDetailPage({
                 <dt className="text-xs font-bold uppercase text-slate-400">
                   APC
                 </dt>
-                <dd className="mt-1 text-base font-normal text-[#A8DADC]">
+                <dd className={`mt-1 text-base font-normal ${apcValueClassName}`}>
                   {formatMoney(journal.apc, journal.apcCurrency)}
-                  {!isFreeResearchAmount(journal.apc)
+                  {apcHasValue
                     ? journal.hasApcOption
                       ? " (Option)"
                       : " (No Option)"
