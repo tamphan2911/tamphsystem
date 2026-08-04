@@ -245,11 +245,14 @@ export function RevokeTaskForm({
                   .join(", ")}
               </p>
               <p>
-                Due date: same as the revoked task
+                Due date: 3 days from transfer day
                 <span className="px-2 text-slate-400 dark:text-[#777777]">
                   |
                 </span>
                 Same research, venue, guides, checker, files, and task settings
+              </p>
+              <p className="mt-1">
+                Task content: transferred task default handoff instruction
               </p>
             </div>
           </div>

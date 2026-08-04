@@ -97,6 +97,9 @@ const checkerReferralActions = {
   answerAssigneeClarification: "ANSWER_ASSIGNEE_CLARIFICATION",
 } as const;
 
+const transferredTaskDefaultDescription =
+  "Read the guide by click on icons right above.\nThis task is transferred from another assistant who could not finish this task on time.\nFirst check the progress of that assistant, and finish the work.";
+
 function clearCheckerReferralData() {
   return {
     checkerReferralTargetIds: { set: [] },
@@ -9055,6 +9058,9 @@ export async function revokeResearchTask(taskId: string, formData?: FormData) {
   }
 
   const newTaskCode = transferTask ? await generateTaskCode() : null;
+  const transferDueDate = transferTask
+    ? researchTaskDueDate(researchDateValue(new Date(), 3))
+    : null;
   const { task, transferredTask } = await prisma.$transaction(async (tx) => {
     const revokedTask = await tx.researchTask.update({
       where: { id: taskId },
@@ -9091,7 +9097,7 @@ export async function revokeResearchTask(taskId: string, formData?: FormData) {
             data: {
               title: currentTask.title,
               taskCode: newTaskCode,
-              description: currentTask.description,
+              description: transferredTaskDefaultDescription,
               category: currentTask.category,
               taskType: currentTask.taskType,
               proposalScope: currentTask.proposalScope,
@@ -9102,7 +9108,7 @@ export async function revokeResearchTask(taskId: string, formData?: FormData) {
               conferenceId: currentTask.conferenceId,
               reviewId: currentTask.reviewId,
               accountId: currentTask.accountId,
-              dueDate: currentTask.dueDate,
+              dueDate: transferDueDate,
               createdById: currentTask.createdById,
               checkerId: currentTask.checkerId,
               taskFileName: currentTask.taskFileName,
@@ -9116,7 +9122,7 @@ export async function revokeResearchTask(taskId: string, formData?: FormData) {
               assignments: {
                 create: transferAssigneeIds.map((userId) => ({
                   userId,
-                  dueDate: currentTask.dueDate,
+                  dueDate: transferDueDate,
                 })),
               },
               guides:
