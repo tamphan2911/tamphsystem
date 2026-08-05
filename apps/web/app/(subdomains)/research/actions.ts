@@ -98,7 +98,7 @@ const checkerReferralActions = {
 } as const;
 
 const transferredTaskDefaultDescription =
-  "Read the guide by click on icons right above.\nThis task is transferred from another assistant who could not finish this task on time.\nFirst check the progress of that assistant, and finish the work.";
+  "Read the guide by click on icons right above.\n**This task is transferred from another assistant who could not finish this task on time.\nFirst check the progress of that assistant, and finish the work.**";
 
 function clearCheckerReferralData() {
   return {

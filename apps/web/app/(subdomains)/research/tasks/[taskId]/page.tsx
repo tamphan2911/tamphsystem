@@ -119,6 +119,29 @@ function dateInputValue(value: Date | null) {
   return researchDateValue(value);
 }
 
+function TaskContentText({ content }: { content: string | null }) {
+  const text = content?.trim() || "No task note.";
+  const parts = text.split(/(\*\*[\s\S]+?\*\*)/g).filter(Boolean);
+
+  return (
+    <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#B0B0B0]">
+      {parts.map((part, index) => {
+        const isWarning = part.startsWith("**") && part.endsWith("**");
+        if (!isWarning) return <span key={index}>{part}</span>;
+
+        return (
+          <span
+            key={index}
+            className="my-1 inline-block border border-amber-300 bg-amber-50 px-3 py-2 text-[#5F4208] dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100"
+          >
+            {part.slice(2, -2)}
+          </span>
+        );
+      })}
+    </p>
+  );
+}
+
 function formatDate(value: Date | null) {
   if (!value) return "-";
   return researchDateTimeFormat("en-GB", {
@@ -4332,9 +4355,7 @@ export default async function TaskDetailPage({
                 </h2>
                 <TaskGuideIcons guides={taskGuidesForDisplay} />
               </div>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#B0B0B0]">
-                {task.description || "No task note."}
-              </p>
+              <TaskContentText content={task.description} />
             </section>
 
             <TaskClarificationPanel
