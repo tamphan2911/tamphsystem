@@ -438,24 +438,40 @@ export async function GET(request: Request) {
       Boolean(checkerReferralAction) &&
       task.checkerReferralAction === checkerReferralAction &&
       task.checkerReferralTargetIds.includes(userId);
+    const effectiveFinishedAt = (
+      assignment: (typeof task.assignments)[number],
+    ) => {
+      const finishedAt = assignment.finishedAt;
+      if (!finishedAt) return null;
+      const reopenedByManagerAnswer = task.clarifications.some(
+        (clarification) =>
+          clarification.requestedById === assignment.userId &&
+          clarification.answer &&
+          clarification.answeredAt &&
+          clarification.answeredAt > finishedAt,
+      );
+      return reopenedByManagerAnswer ? null : finishedAt;
+    };
     const latestFinishedAt = task.assignments.reduce<Date | null>(
       (latest, assignment) => {
-        if (!assignment.finishedAt) return latest;
-        return !latest || assignment.finishedAt > latest
-          ? assignment.finishedAt
+        const finishedAt = effectiveFinishedAt(assignment);
+        if (!finishedAt) return latest;
+        return !latest || finishedAt > latest
+          ? finishedAt
           : latest;
       },
       null,
     );
     const readyAssignmentsWaitingForReview = task.assignments.filter(
-      (assignment) => assignment.finishedAt && !assignment.completedAt,
+      (assignment) => effectiveFinishedAt(assignment) && !assignment.completedAt,
     );
     const earliestReadyAssignmentAt =
       readyAssignmentsWaitingForReview.reduce<Date | null>(
         (earliest, assignment) => {
-          if (!assignment.finishedAt) return earliest;
-          return !earliest || assignment.finishedAt < earliest
-            ? assignment.finishedAt
+          const finishedAt = effectiveFinishedAt(assignment);
+          if (!finishedAt) return earliest;
+          return !earliest || finishedAt < earliest
+            ? finishedAt
             : earliest;
         },
         null,
@@ -648,7 +664,7 @@ export async function GET(request: Request) {
         userEmail: assignment.user.email,
         userRoles: assignment.user.roles,
         dueDate: assignment.dueDate?.toISOString() ?? null,
-        finishedAt: assignment.finishedAt?.toISOString() ?? null,
+        finishedAt: effectiveFinishedAt(assignment)?.toISOString() ?? null,
         completedAt: assignment.completedAt?.toISOString() ?? null,
         redoRequestedAt: assignment.redoRequestedAt?.toISOString() ?? null,
         redoReason: assignment.redoReason ?? null,

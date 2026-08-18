@@ -109,6 +109,22 @@ function clearCheckerReferralData() {
   };
 }
 
+async function reopenClarificationRequesterAssignment(
+  taskId: string,
+  userId: string,
+) {
+  await prisma.researchTaskAssignment.updateMany({
+    where: {
+      taskId,
+      userId,
+      completedAt: null,
+    },
+    data: {
+      finishedAt: null,
+    },
+  });
+}
+
 function optionalOrcid(value: FormDataEntryValue | null) {
   const orcid = optionalString(value);
   if (!orcid) return { ok: true as const, value: null };
@@ -13895,6 +13911,12 @@ export async function answerTaskClarification(
     },
   });
   if (requesterIsAssignee) {
+    await reopenClarificationRequesterAssignment(
+      taskId,
+      clarification.requestedById,
+    );
+  }
+  if (requesterIsAssignee) {
     await notifyUsers({
       userIds: task.assignments.map((assignment) => assignment.userId),
       type: "TASK_CLARIFICATION_ANSWERED",
@@ -14307,6 +14329,12 @@ export async function sendTaskClarificationChatMessage(
         ...clearCheckerReferralData(),
       },
     });
+    if (requesterIsAssignee) {
+      await reopenClarificationRequesterAssignment(
+        taskId,
+        clarification.requestedById,
+      );
+    }
 
     if (requesterIsAssignee) {
       await notifyUsers({
