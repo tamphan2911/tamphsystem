@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import {
+  BadgeCheck,
   BookOpen,
   ClipboardCheck,
   CheckCircle2,
@@ -11,7 +12,6 @@ import {
   MessageSquareWarning,
   Plus,
   SearchCheck,
-  ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -717,14 +717,14 @@ function JournalResultCard({
               </button>
             </IconHint>
           ) : canApprove && publisherPending ? (
-            <IconHint label="Approve publisher before approving this journal">
+            <IconHint label="Approve publisher record before reviewing this journal">
               <button
                 type="button"
                 onClick={onApprovePublisher}
-                className="research-allow-transform inline-flex h-7 w-7 items-center justify-center border-0 bg-transparent text-amber-700 transition-[color,transform] hover:-translate-y-0.5 hover:text-amber-900 active:translate-y-0 active:scale-90 dark:text-amber-300 dark:hover:text-amber-100"
-                aria-label="Approve publisher before approving this journal"
+                className="research-allow-transform inline-flex h-7 w-7 items-center justify-center border-0 bg-transparent text-emerald-700 transition-[color,filter,transform] hover:-translate-y-0.5 hover:text-teal-800 hover:drop-shadow-[0_0_0.45rem_rgba(16,185,129,0.22)] active:translate-y-0 active:scale-90 dark:text-emerald-300 dark:hover:text-emerald-100 dark:hover:drop-shadow-[0_0_0.55rem_rgba(110,231,183,0.26)]"
+                aria-label="Approve publisher record before reviewing this journal"
               >
-                <ShieldAlert className="h-4 w-4" />
+                <BadgeCheck className="h-4 w-4" />
               </button>
             </IconHint>
           ) : null}
