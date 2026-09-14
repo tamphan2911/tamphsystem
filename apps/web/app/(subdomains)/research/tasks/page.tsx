@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { Archive } from "lucide-react";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import { deleteResearchTask } from "../actions";
@@ -35,7 +37,9 @@ export default async function ResearchTasksPage() {
 
   const isRootAdmin = roles.includes(Role.ADMIN);
   const isChiefAssistant = roles.includes(Role.CHIEF_ASSISTANT);
+  const isAssistant = roles.includes(Role.ASSISTANT);
   const canManageTasks = isRootAdmin || isChiefAssistant;
+  const canUseTaskArchive = isRootAdmin || isChiefAssistant || isAssistant;
   const ledTeamMemberIds =
     isChiefAssistant && !isRootAdmin
       ? (
@@ -303,6 +307,16 @@ export default async function ResearchTasksPage() {
     })),
   ];
 
+  const archivedTaskButton = canUseTaskArchive ? (
+    <Link
+      href="/tasks/archived"
+      className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-none border border-[#1F7180] bg-transparent px-4 text-sm font-normal text-[#1F7180] shadow-sm outline-none transition duration-150 ease-out hover:border-[#155864] hover:bg-[#E9F8FA] hover:text-[#155864] hover:shadow-md focus:ring-2 focus:ring-[#1F7180]/20 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#A8DADC] dark:text-[#A8DADC] dark:hover:border-[#C9F0F2] dark:hover:bg-[#303030] dark:hover:text-[#C9F0F2]"
+    >
+      <Archive className="h-4 w-4" aria-hidden="true" />
+      Archived task
+    </Link>
+  ) : null;
+
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <TasksClient
@@ -311,19 +325,24 @@ export default async function ResearchTasksPage() {
         canDelete={isRootAdmin}
         deleteAction={deleteResearchTask}
         action={
-          canManageTasks ? (
-            <NewTaskDialog
-              assignees={assignees}
-              researchOptions={researchOptions}
-              venueOptions={venueOptions}
-              accountOptions={accountOptions}
-              reviewOptions={reviewOptions}
-              organizedProjectOptions={organizedProjectOptions}
-              submissionOptions={submissionOptions}
-              checkerOptions={checkerOptions}
-              taskGuideOptions={taskGuides}
-              canChooseChecker={isRootAdmin}
-            />
+          archivedTaskButton || canManageTasks ? (
+            <div className="flex items-center gap-2">
+              {archivedTaskButton}
+              {canManageTasks ? (
+                <NewTaskDialog
+                  assignees={assignees}
+                  researchOptions={researchOptions}
+                  venueOptions={venueOptions}
+                  accountOptions={accountOptions}
+                  reviewOptions={reviewOptions}
+                  organizedProjectOptions={organizedProjectOptions}
+                  submissionOptions={submissionOptions}
+                  checkerOptions={checkerOptions}
+                  taskGuideOptions={taskGuides}
+                  canChooseChecker={isRootAdmin}
+                />
+              ) : null}
+            </div>
           ) : null
         }
       />

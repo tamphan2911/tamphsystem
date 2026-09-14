@@ -71,6 +71,7 @@ const taskTypeFilterValues = [
   "OTHER",
 ];
 const managerActionSlaMs = 24 * 60 * 60 * 1000;
+const taskArchiveDelayMs = 7 * 24 * 60 * 60 * 1000;
 
 function parseListParam(value: string | null, allowed: readonly string[]) {
   if (!value || value === "ALL") return [];
@@ -303,6 +304,7 @@ export async function GET(request: Request) {
         .filter((item) => item && item !== "ALL" && item !== "__DEFAULT__");
   const checkerNeedsActionOnly =
     url.searchParams.get("checkerNeedsAction") === "1";
+  const archivedMode = url.searchParams.get("archived") === "1";
   const timeSort = url.searchParams.get("timeSort");
   const requestedPage = Number(url.searchParams.get("page") ?? "1");
   const pageSize = taskListPageSize;
@@ -310,13 +312,40 @@ export async function GET(request: Request) {
     where: { status: ResearchTaskStatus.OPEN },
     data: { status: ResearchTaskStatus.IN_PROGRESS },
   });
+  await prisma.researchTask.updateMany({
+    where: {
+      status: ResearchTaskStatus.COMPLETED,
+      completedAt: { lte: new Date(Date.now() - taskArchiveDelayMs) },
+      archivedAt: null,
+    },
+    data: { archivedAt: new Date() },
+  });
 
   const relatedTaskWhere = scopedTaskWhere(userId);
-  const where = isRootAdmin ? {} : relatedTaskWhere;
+  const baseWhere = isRootAdmin ? {} : relatedTaskWhere;
+  const archiveWhere = archivedMode
+    ? {
+        AND: [
+          baseWhere,
+          { status: ResearchTaskStatus.COMPLETED },
+          { archivedAt: { not: null } },
+        ],
+      }
+    : {
+        AND: [
+          baseWhere,
+          {
+            OR: [
+              { archivedAt: null },
+              { status: { not: ResearchTaskStatus.COMPLETED } },
+            ],
+          },
+        ],
+      };
 
   const [tasks, notificationCount] = await Promise.all([
     prisma.researchTask.findMany({
-      where,
+      where: archiveWhere,
       include: {
         createdBy: {
           select: { id: true, name: true, email: true, roles: true },
@@ -456,23 +485,20 @@ export async function GET(request: Request) {
       (latest, assignment) => {
         const finishedAt = effectiveFinishedAt(assignment);
         if (!finishedAt) return latest;
-        return !latest || finishedAt > latest
-          ? finishedAt
-          : latest;
+        return !latest || finishedAt > latest ? finishedAt : latest;
       },
       null,
     );
     const readyAssignmentsWaitingForReview = task.assignments.filter(
-      (assignment) => effectiveFinishedAt(assignment) && !assignment.completedAt,
+      (assignment) =>
+        effectiveFinishedAt(assignment) && !assignment.completedAt,
     );
     const earliestReadyAssignmentAt =
       readyAssignmentsWaitingForReview.reduce<Date | null>(
         (earliest, assignment) => {
           const finishedAt = effectiveFinishedAt(assignment);
           if (!finishedAt) return earliest;
-          return !earliest || finishedAt < earliest
-            ? finishedAt
-            : earliest;
+          return !earliest || finishedAt < earliest ? finishedAt : earliest;
         },
         null,
       );

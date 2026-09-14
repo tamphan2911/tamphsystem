@@ -848,78 +848,104 @@ export function TasksClient({
   canDelete,
   deleteAction,
   action,
+  archivedMode = false,
 }: {
   isAdmin: boolean;
   isChiefAssistant: boolean;
   canDelete: boolean;
   deleteAction: (taskId: string) => Promise<void>;
   action?: ReactNode;
+  archivedMode?: boolean;
 }) {
   const [tasks, setTasks] = useState<TaskRow[]>([]);
-  const [query, setQuery] = usePersistentTableValue("tasks:q", "");
+  const storagePrefix = archivedMode ? "archived-tasks" : "tasks";
+  const [query, setQuery] = usePersistentTableValue(`${storagePrefix}:q`, "");
   const scopeStorageKey = isAdmin
-    ? "tasks:scope:admin"
+    ? `${storagePrefix}:scope:admin`
     : isChiefAssistant
-      ? "tasks:scope:chief-assistant"
-      : "tasks:scope:user";
+      ? `${storagePrefix}:scope:chief-assistant`
+      : `${storagePrefix}:scope:user`;
   const defaultScopeTab: TaskHeaderTab = isAdmin ? "all" : "assigned";
   const [scopeTab, setScopeTab] = usePersistentTableValue<TaskHeaderTab>(
     scopeStorageKey,
     defaultScopeTab,
   );
   const activeHeaderTab: TaskHeaderTab = isAdmin
-    ? scopeTab === "need_action"
-      ? "need_action"
-      : "all"
+    ? archivedMode
+      ? "all"
+      : scopeTab === "need_action"
+        ? "need_action"
+        : "all"
     : scopeTab === "checker" && !isChiefAssistant
       ? "assigned"
       : scopeTab === "related" || scopeTab === "checker"
         ? scopeTab
         : "assigned";
   const [userStatuses, setUserStatuses] = usePersistentMultiFilter(
-    "tasks:status",
+    `${storagePrefix}:status`,
     taskStatusValues,
   );
   const [adminAllStatuses, setAdminAllStatuses] = usePersistentMultiFilter(
-    "tasks:status:admin:all",
+    `${storagePrefix}:status:admin:all`,
     taskStatusValues,
   );
   const [adminNeedActionStatuses, setAdminNeedActionStatuses] =
     usePersistentMultiFilter(
-      "tasks:status:admin:need-action",
+      `${storagePrefix}:status:admin:need-action`,
       taskStatusValues,
     );
   const [chiefAssignedStatuses, setChiefAssignedStatuses] =
-    usePersistentMultiFilter("tasks:status:chief:assigned", taskStatusValues);
+    usePersistentMultiFilter(
+      `${storagePrefix}:status:chief:assigned`,
+      taskStatusValues,
+    );
   const [chiefCheckerStatuses, setChiefCheckerStatuses] =
-    usePersistentMultiFilter("tasks:status:chief:checker", taskStatusValues);
+    usePersistentMultiFilter(
+      `${storagePrefix}:status:chief:checker`,
+      taskStatusValues,
+    );
   const [chiefRelatedStatuses, setChiefRelatedStatuses] =
-    usePersistentMultiFilter("tasks:status:chief:related", taskStatusValues);
+    usePersistentMultiFilter(
+      `${storagePrefix}:status:chief:related`,
+      taskStatusValues,
+    );
   const legacyUnfinishedOnlyValue =
     typeof window !== "undefined"
       ? window.sessionStorage.getItem("research:/tasks:tasks:unfinished")
       : null;
   const [userUnfinishedOnlyValue, setUserUnfinishedOnlyValue] =
     usePersistentTableValue(
-      "tasks:unfinished",
+      `${storagePrefix}:unfinished`,
       !isAdmin && !isChiefAssistant
         ? (legacyUnfinishedOnlyValue ?? "false")
         : "false",
     );
   const [adminAllUnfinishedOnlyValue, setAdminAllUnfinishedOnlyValue] =
-    usePersistentTableValue("tasks:unfinished:admin:all", "true");
+    usePersistentTableValue(`${storagePrefix}:unfinished:admin:all`, "true");
   const [
     adminNeedActionUnfinishedOnlyValue,
     setAdminNeedActionUnfinishedOnlyValue,
-  ] = usePersistentTableValue("tasks:unfinished:admin:need-action", "false");
+  ] = usePersistentTableValue(
+    `${storagePrefix}:unfinished:admin:need-action`,
+    "false",
+  );
   const [
     chiefAssignedUnfinishedOnlyValue,
     setChiefAssignedUnfinishedOnlyValue,
-  ] = usePersistentTableValue("tasks:unfinished:chief:assigned", "false");
+  ] = usePersistentTableValue(
+    `${storagePrefix}:unfinished:chief:assigned`,
+    "false",
+  );
   const [chiefCheckerUnfinishedOnlyValue, setChiefCheckerUnfinishedOnlyValue] =
-    usePersistentTableValue("tasks:unfinished:chief:checker", "false");
+    usePersistentTableValue(
+      `${storagePrefix}:unfinished:chief:checker`,
+      "false",
+    );
   const [chiefRelatedUnfinishedOnlyValue, setChiefRelatedUnfinishedOnlyValue] =
-    usePersistentTableValue("tasks:unfinished:chief:related", "false");
+    usePersistentTableValue(
+      `${storagePrefix}:unfinished:chief:related`,
+      "false",
+    );
   const currentTabFilter: TaskTabFilterState = isAdmin
     ? activeHeaderTab === "need_action"
       ? {
@@ -964,15 +990,22 @@ export function TasksClient({
   const { statuses, setStatuses, unfinishedOnlyValue, setUnfinishedOnlyValue } =
     currentTabFilter;
   const [timeSort, setTimeSort] = usePersistentTableValue<TimeSortDirection>(
-    "tasks:timeSort",
+    `${storagePrefix}:timeSort`,
     "none",
   );
   const [checkerNeedsActionOnlyValue, setCheckerNeedsActionOnlyValue] =
-    usePersistentTableValue("tasks:checkerNeedsActionOnly", "false", {
-      persistDefaultValue: true,
-    });
-  const [pageValue, setPageValue] = usePersistentTableValue("tasks:page", "1");
-  const unfinishedOnly = unfinishedOnlyValue === "true";
+    usePersistentTableValue(
+      `${storagePrefix}:checkerNeedsActionOnly`,
+      "false",
+      {
+        persistDefaultValue: true,
+      },
+    );
+  const [pageValue, setPageValue] = usePersistentTableValue(
+    `${storagePrefix}:page`,
+    "1",
+  );
+  const unfinishedOnly = !archivedMode && unfinishedOnlyValue === "true";
   const checkerNeedsActionOnly = checkerNeedsActionOnlyValue === "true";
   const [statusBeforeUnfinishedByTab, setStatusBeforeUnfinishedByTab] =
     useState<Partial<Record<TaskHeaderTab, string[] | null>>>({});
@@ -1003,7 +1036,7 @@ export function TasksClient({
   }, []);
 
   const [taskTypes, setTaskTypes] = usePersistentMultiFilter(
-    "tasks:type",
+    `${storagePrefix}:type`,
     taskTypeFilterValues,
   );
   const checkerFilterValues = useMemo(
@@ -1015,21 +1048,21 @@ export function TasksClient({
     [listMeta.adminNeedActionDefaultCheckerIds],
   );
   const [adminAllCheckerStoredValue, setAdminAllCheckerStoredValue] =
-    usePersistentTableValue("tasks:checker:admin:all", "ALL", {
+    usePersistentTableValue(`${storagePrefix}:checker:admin:all`, "ALL", {
       persistDefaultValue: true,
     });
   const [
     adminNeedActionCheckerStoredValue,
     setAdminNeedActionCheckerStoredValue,
   ] = usePersistentTableValue(
-    "tasks:checker:admin:need-action",
+    `${storagePrefix}:checker:admin:need-action`,
     "__DEFAULT__",
     {
       persistDefaultValue: true,
     },
   );
   const [userCheckerStoredValue, setUserCheckerStoredValue] =
-    usePersistentTableValue("tasks:checker", "ALL");
+    usePersistentTableValue(`${storagePrefix}:checker`, "ALL");
   const activeCheckerStoredValue = isAdmin
     ? activeHeaderTab === "need_action"
       ? adminNeedActionCheckerStoredValue
@@ -1053,7 +1086,7 @@ export function TasksClient({
     checkerFilterValues,
     isAdmin,
   ]);
-  const statusParam = statuses.join(",");
+  const statusParam = archivedMode ? "" : statuses.join(",");
   const taskTypeParam = taskTypes.join(",");
   const checkerParam = checkerIds.join(",");
   const loadTasks = useCallback(
@@ -1067,6 +1100,7 @@ export function TasksClient({
       try {
         const params = new URLSearchParams();
         if (query.trim()) params.set("q", query.trim());
+        if (archivedMode) params.set("archived", "1");
         params.set("scope", activeHeaderTab);
         if (statusParam) params.set("status", statusParam);
         if (taskTypeParam) params.set("type", taskTypeParam);
@@ -1108,6 +1142,7 @@ export function TasksClient({
     },
     [
       activeHeaderTab,
+      archivedMode,
       checkerParam,
       checkerNeedsActionOnly,
       page,
@@ -1176,10 +1211,11 @@ export function TasksClient({
       return;
     }
 
-    if (unfinishedOnly && statuses.length === 0) {
+    if (!archivedMode && unfinishedOnly && statuses.length === 0) {
       setStatuses(unfinishedTaskStatusValues);
     }
   }, [
+    archivedMode,
     isAdmin,
     setScopeTab,
     setCheckerIds,
@@ -1202,28 +1238,36 @@ export function TasksClient({
 
   useEffect(() => {
     if (isAdmin) return;
-    if (unfinishedOnly && statuses.length === 0) {
+    if (!archivedMode && unfinishedOnly && statuses.length === 0) {
       setStatuses(unfinishedTaskStatusValues);
     }
-  }, [isAdmin, setStatuses, statuses.length, unfinishedOnly]);
+  }, [archivedMode, isAdmin, setStatuses, statuses.length, unfinishedOnly]);
 
   const scopeTabs: Array<{
     value: TaskHeaderTab;
     label: string;
     count: number;
   }> = isAdmin
-    ? [
-        {
-          value: "all",
-          label: "All tasks",
-          count: listMeta.scopeCounts.all,
-        },
-        {
-          value: "need_action",
-          label: "Need actions",
-          count: listMeta.scopeCounts.need_action,
-        },
-      ]
+    ? archivedMode
+      ? [
+          {
+            value: "all",
+            label: "Archived task",
+            count: listMeta.scopeCounts.all,
+          },
+        ]
+      : [
+          {
+            value: "all",
+            label: "All tasks",
+            count: listMeta.scopeCounts.all,
+          },
+          {
+            value: "need_action",
+            label: "Need actions",
+            count: listMeta.scopeCounts.need_action,
+          },
+        ]
     : [
         {
           value: "assigned",
@@ -1375,19 +1419,23 @@ export function TasksClient({
             />
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:flex-nowrap lg:justify-end">
-            <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 transition-colors duration-150 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white">
-              <input
-                type="checkbox"
-                checked={unfinishedOnly}
-                onChange={(event) =>
-                  toggleUnfinishedOnly(event.currentTarget.checked)
-                }
-                className="h-4 w-4 cursor-pointer rounded-none border-slate-300 text-sky-700 accent-[#1F7180] dark:border-[#666666] dark:accent-[#A8DADC]"
-              />
-              <IconHint label="Selects every status except completed and revoked. Turn it off to restore your previous status filter.">
-                <span className="whitespace-nowrap text-left">Unfinished</span>
-              </IconHint>
-            </label>
+            {!archivedMode ? (
+              <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 transition-colors duration-150 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white">
+                <input
+                  type="checkbox"
+                  checked={unfinishedOnly}
+                  onChange={(event) =>
+                    toggleUnfinishedOnly(event.currentTarget.checked)
+                  }
+                  className="h-4 w-4 cursor-pointer rounded-none border-slate-300 text-sky-700 accent-[#1F7180] dark:border-[#666666] dark:accent-[#A8DADC]"
+                />
+                <IconHint label="Selects every status except completed and revoked. Turn it off to restore your previous status filter.">
+                  <span className="whitespace-nowrap text-left">
+                    Unfinished
+                  </span>
+                </IconHint>
+              </label>
+            ) : null}
             {isAdmin ? (
               <MultiFilterSelect
                 className={adminFilterWidth}
@@ -1397,7 +1445,10 @@ export function TasksClient({
                 options={checkerOptions}
               />
             ) : null}
-            {!isAdmin && isChiefAssistant && activeHeaderTab === "checker" ? (
+            {!archivedMode &&
+            !isAdmin &&
+            isChiefAssistant &&
+            activeHeaderTab === "checker" ? (
               <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 border border-slate-200 bg-white px-3 text-sm font-normal text-slate-700 transition-colors duration-150 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 sm:w-auto dark:border-[#444444] dark:bg-[#2C2C2C] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#383838] dark:hover:text-white">
                 <input
                   type="checkbox"
@@ -1424,26 +1475,28 @@ export function TasksClient({
                 label: taskTypeFilterLabel(value),
               }))}
             />
-            <MultiFilterSelect
-              className={adminFilterWidth}
-              values={statuses}
-              onChange={updateStatuses}
-              ariaLabel="Filter by task status"
-              options={taskStatusValues.map((value) => ({
-                value,
-                label:
-                  value === "ALL"
-                    ? "All status"
-                    : value === "CHECKING"
-                      ? "Ready to check"
-                      : value === "REVISION_REQUESTED"
-                        ? "Revision requested"
-                        : value
-                            .toLowerCase()
-                            .replaceAll("_", " ")
-                            .replace(/^\w/, (letter) => letter.toUpperCase()),
-              }))}
-            />
+            {!archivedMode ? (
+              <MultiFilterSelect
+                className={adminFilterWidth}
+                values={statuses}
+                onChange={updateStatuses}
+                ariaLabel="Filter by task status"
+                options={taskStatusValues.map((value) => ({
+                  value,
+                  label:
+                    value === "ALL"
+                      ? "All status"
+                      : value === "CHECKING"
+                        ? "Ready to check"
+                        : value === "REVISION_REQUESTED"
+                          ? "Revision requested"
+                          : value
+                              .toLowerCase()
+                              .replaceAll("_", " ")
+                              .replace(/^\w/, (letter) => letter.toUpperCase()),
+                }))}
+              />
+            ) : null}
           </div>
         </div>
 
@@ -1483,236 +1536,242 @@ export function TasksClient({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#444444]">
-              {!isLoading && tasks.map((task) => {
-                const status = statusMeta(task);
-                const assigneeStatus = assigneeTableStatusMeta(
-                  task,
-                  activeHeaderTab,
-                );
-                const statusIcon = assigneeStatus ?? statusIconMeta(task);
-                const StatusIcon = statusIcon.icon;
-                const statusLabel = assigneeStatus?.label ?? status.label;
-                const statusActionText =
-                  assigneeStatus?.text ?? pendingReadyAssignmentText(task);
-                const statusActionClassName =
-                  assigneeStatus?.textClassName ??
-                  "text-violet-700 dark:text-violet-300";
-                const typeLines = taskTypeLines(task);
-                const relationshipLabels = taskRelationshipLabels(task);
-                const managerAction = managerActionMeta(task, Date.now());
-                return (
-                  <tr
-                    key={task.id}
-                    className="group align-top transition-colors duration-150 hover:bg-[#383838]"
-                  >
-                    <td className="px-3 py-3 align-top">
-                      <span className="font-mono text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
-                        {displayTaskId(task)}
-                      </span>
-                      <p className="mt-1 text-[11px] font-normal leading-4 text-[#B0B0B0]">
-                        {typeLines.typeLabel}
-                      </p>
-                      {typeLines.subtypeLabel && (
-                        <p className="text-[11px] leading-4 text-[#777777]">
-                          {typeLines.subtypeLabel}
-                        </p>
-                      )}
-                    </td>
-                    <td className="min-w-0 px-3 py-3 align-top">
-                      <Link
-                        href={`/tasks/${task.id}`}
-                        className={`research-allow-transform text-sm font-normal leading-5 ${researchLinkClass}`}
-                      >
-                        {task.title}
-                      </Link>
-                      <p className="mt-1 line-clamp-3 whitespace-pre-line break-words text-xs font-normal leading-5 text-[#B0B0B0]">
-                        {task.description || "No description"}
-                      </p>
-                      {relationshipLabels.length > 0 ? (
-                        <p className="mt-1 flex flex-wrap items-center text-[11px] font-normal leading-4 text-[#1F7180] dark:text-[#A8DADC]">
-                          {relationshipLabels.map((relationship, index) => (
-                            <span
-                              key={relationship}
-                              className="inline-flex items-center"
-                            >
-                              {index > 0 ? (
-                                <span className="px-2 text-[#A0A8B5] dark:text-[#777777]">
-                                  |
-                                </span>
-                              ) : null}
-                              <span>{relationship}</span>
-                            </span>
-                          ))}
-                        </p>
-                      ) : null}
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      <IconHint
-                        label={
-                          statusActionText
-                            ? `${statusLabel}: ${statusActionText}`
-                            : statusLabel
-                        }
-                      >
-                        <span className="inline-flex flex-col items-start gap-1">
-                          <span
-                            className={`research-allow-transform inline-flex cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${statusIcon.className}`}
-                          >
-                            <StatusIcon
-                              className="h-4 w-4"
-                              aria-hidden="true"
-                            />
-                            <span className="sr-only">{statusLabel}</span>
-                          </span>
-                          {statusActionText ? (
-                            <span
-                              className={`max-w-[6.25rem] text-[11px] font-semibold leading-4 ${statusActionClassName}`}
-                            >
-                              {statusActionText}
-                            </span>
-                          ) : null}
+              {!isLoading &&
+                tasks.map((task) => {
+                  const status = statusMeta(task);
+                  const assigneeStatus = assigneeTableStatusMeta(
+                    task,
+                    activeHeaderTab,
+                  );
+                  const statusIcon = assigneeStatus ?? statusIconMeta(task);
+                  const StatusIcon = statusIcon.icon;
+                  const statusLabel = assigneeStatus?.label ?? status.label;
+                  const statusActionText =
+                    assigneeStatus?.text ?? pendingReadyAssignmentText(task);
+                  const statusActionClassName =
+                    assigneeStatus?.textClassName ??
+                    "text-violet-700 dark:text-violet-300";
+                  const typeLines = taskTypeLines(task);
+                  const relationshipLabels = taskRelationshipLabels(task);
+                  const managerAction = managerActionMeta(task, Date.now());
+                  return (
+                    <tr
+                      key={task.id}
+                      className="group align-top transition-colors duration-150 hover:bg-[#383838]"
+                    >
+                      <td className="px-3 py-3 align-top">
+                        <span className="font-mono text-xs font-normal uppercase tracking-wide text-[#B0B0B0]">
+                          {displayTaskId(task)}
                         </span>
-                      </IconHint>
-                    </td>
-                    <td className="px-3 py-3 align-top text-xs leading-5 text-[#B0B0B0]">
-                      {task.assignments.length > 0 ? (
-                        <div
-                          className={
-                            task.assignments.length > 1
-                              ? "divide-y divide-[#D8D0C2] dark:divide-[#444444]"
-                              : ""
-                          }
+                        <p className="mt-1 text-[11px] font-normal leading-4 text-[#B0B0B0]">
+                          {typeLines.typeLabel}
+                        </p>
+                        {typeLines.subtypeLabel && (
+                          <p className="text-[11px] leading-4 text-[#777777]">
+                            {typeLines.subtypeLabel}
+                          </p>
+                        )}
+                      </td>
+                      <td className="min-w-0 px-3 py-3 align-top">
+                        <Link
+                          href={`/tasks/${task.id}`}
+                          className={`research-allow-transform text-sm font-normal leading-5 ${researchLinkClass}`}
                         >
-                          {task.assignments.map((assignment) => {
-                            const assignmentWorkflow =
-                              assignmentWorkflowMeta(assignment);
-                            const AssignmentIcon = assignmentWorkflow.icon;
-                            const showEmail = task.assignments.length === 1;
-                            const showAssignmentIcon =
-                              task.assignments.length > 1;
-                            const assignmentTiming = assignmentTimingMeta({
-                              dueDate: assignment.dueDate ?? task.dueDate,
-                              finishedAt: assignment.finishedAt,
-                              completedAt: assignment.completedAt,
-                            });
-                            return (
-                              <div
-                                key={assignment.id}
-                                className={`space-y-0.5 font-normal ${
-                                  task.assignments.length > 1
-                                    ? "py-2 first:pt-0 last:pb-0"
-                                    : ""
-                                }`}
-                                title={displayResearchEmail(
-                                  assignment.userEmail,
-                                )}
+                          {task.title}
+                        </Link>
+                        <p className="mt-1 line-clamp-3 whitespace-pre-line break-words text-xs font-normal leading-5 text-[#B0B0B0]">
+                          {task.description || "No description"}
+                        </p>
+                        {relationshipLabels.length > 0 ? (
+                          <p className="mt-1 flex flex-wrap items-center text-[11px] font-normal leading-4 text-[#1F7180] dark:text-[#A8DADC]">
+                            {relationshipLabels.map((relationship, index) => (
+                              <span
+                                key={relationship}
+                                className="inline-flex items-center"
                               >
-                                <div className="flex items-start gap-1.5">
-                                  <span className="min-w-0 break-words">
-                                    {displayResearchPersonName({
-                                      name: assignment.userName,
-                                      email: assignment.userEmail,
-                                    })}
+                                {index > 0 ? (
+                                  <span className="px-2 text-[#A0A8B5] dark:text-[#777777]">
+                                    |
                                   </span>
-                                  {showAssignmentIcon ? (
-                                    <IconHint label={assignmentWorkflow.detail}>
-                                      <span
-                                        className={`research-allow-transform mt-0.5 inline-flex h-4 w-4 flex-none cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${assignmentWorkflow.className}`}
-                                      >
-                                        <AssignmentIcon
-                                          className="h-3.5 w-3.5"
-                                          aria-hidden="true"
-                                        />
-                                        <span className="sr-only">
-                                          {assignmentWorkflow.label}
-                                        </span>
-                                      </span>
-                                    </IconHint>
-                                  ) : null}
-                                </div>
-                                {showEmail ? (
-                                  <div className="break-all text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
-                                    {displayResearchEmail(assignment.userEmail)}
-                                  </div>
                                 ) : null}
-                                {task.assignments.length > 1 &&
-                                assignmentTiming ? (
-                                  <div
-                                    className={`text-[11px] leading-4 ${assignmentTiming.className}`}
-                                  >
-                                    {assignmentTiming.label}
-                                  </div>
-                                ) : null}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="text-[#777777]">Unassigned</div>
-                      )}
-                      {task.isUrgent ? (
-                        <p className="mt-1 text-[11px] font-normal uppercase tracking-wide text-[#B33E5C] dark:text-[#FF9DAE]">
-                          Urgent
-                        </p>
-                      ) : null}
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      {status.dateLines.map((line) => (
-                        <p
-                          key={line}
-                          className="break-words text-xs font-normal leading-5 text-[#B0B0B0]"
-                        >
-                          {line}
-                        </p>
-                      ))}
-                      {status.detail && (
-                        <p
-                          className={`max-w-full break-words text-xs font-normal leading-5 ${status.detailClassName}`}
-                        >
-                          {status.detail}
-                        </p>
-                      )}
-                      {"secondaryDetail" in status && status.secondaryDetail ? (
-                        <p
-                          className={`max-w-full break-words text-xs font-normal leading-5 ${status.secondaryDetailClassName}`}
-                        >
-                          {status.secondaryDetail}
-                        </p>
-                      ) : null}
-                      <div className="mt-2 border-t border-slate-200 pt-2 dark:border-[#555555]">
-                        <p
-                          className="max-w-full truncate whitespace-nowrap text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]"
-                          title={`Checker: ${task.checker}`}
-                        >
-                          Checker: {task.checker}
-                        </p>
-                        <p
-                          className="max-w-full truncate whitespace-nowrap text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]"
-                          title={`Assigner: ${task.createdBy}`}
-                        >
-                          Assigner: {task.createdBy}
-                        </p>
-                        {managerAction ? (
-                          <p
-                            className={`max-w-full break-words text-xs font-semibold leading-5 ${managerAction.className}`}
-                          >
-                            {managerAction.label}: {managerAction.text}
+                                <span>{relationship}</span>
+                              </span>
+                            ))}
                           </p>
                         ) : null}
-                      </div>
-                    </td>
-                    {canDelete && (
-                      <td className="px-2 py-3 text-center align-top">
-                        <DeleteTaskButton
-                          task={task}
-                          deleteAction={deleteAction}
-                          onDeleted={removeTaskFromList}
-                        />
                       </td>
-                    )}
-                  </tr>
-                );
-              })}
+                      <td className="px-3 py-3 align-top">
+                        <IconHint
+                          label={
+                            statusActionText
+                              ? `${statusLabel}: ${statusActionText}`
+                              : statusLabel
+                          }
+                        >
+                          <span className="inline-flex flex-col items-start gap-1">
+                            <span
+                              className={`research-allow-transform inline-flex cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${statusIcon.className}`}
+                            >
+                              <StatusIcon
+                                className="h-4 w-4"
+                                aria-hidden="true"
+                              />
+                              <span className="sr-only">{statusLabel}</span>
+                            </span>
+                            {statusActionText ? (
+                              <span
+                                className={`max-w-[6.25rem] text-[11px] font-semibold leading-4 ${statusActionClassName}`}
+                              >
+                                {statusActionText}
+                              </span>
+                            ) : null}
+                          </span>
+                        </IconHint>
+                      </td>
+                      <td className="px-3 py-3 align-top text-xs leading-5 text-[#B0B0B0]">
+                        {task.assignments.length > 0 ? (
+                          <div
+                            className={
+                              task.assignments.length > 1
+                                ? "divide-y divide-[#D8D0C2] dark:divide-[#444444]"
+                                : ""
+                            }
+                          >
+                            {task.assignments.map((assignment) => {
+                              const assignmentWorkflow =
+                                assignmentWorkflowMeta(assignment);
+                              const AssignmentIcon = assignmentWorkflow.icon;
+                              const showEmail = task.assignments.length === 1;
+                              const showAssignmentIcon =
+                                task.assignments.length > 1;
+                              const assignmentTiming = assignmentTimingMeta({
+                                dueDate: assignment.dueDate ?? task.dueDate,
+                                finishedAt: assignment.finishedAt,
+                                completedAt: assignment.completedAt,
+                              });
+                              return (
+                                <div
+                                  key={assignment.id}
+                                  className={`space-y-0.5 font-normal ${
+                                    task.assignments.length > 1
+                                      ? "py-2 first:pt-0 last:pb-0"
+                                      : ""
+                                  }`}
+                                  title={displayResearchEmail(
+                                    assignment.userEmail,
+                                  )}
+                                >
+                                  <div className="flex items-start gap-1.5">
+                                    <span className="min-w-0 break-words">
+                                      {displayResearchPersonName({
+                                        name: assignment.userName,
+                                        email: assignment.userEmail,
+                                      })}
+                                    </span>
+                                    {showAssignmentIcon ? (
+                                      <IconHint
+                                        label={assignmentWorkflow.detail}
+                                      >
+                                        <span
+                                          className={`research-allow-transform mt-0.5 inline-flex h-4 w-4 flex-none cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${assignmentWorkflow.className}`}
+                                        >
+                                          <AssignmentIcon
+                                            className="h-3.5 w-3.5"
+                                            aria-hidden="true"
+                                          />
+                                          <span className="sr-only">
+                                            {assignmentWorkflow.label}
+                                          </span>
+                                        </span>
+                                      </IconHint>
+                                    ) : null}
+                                  </div>
+                                  {showEmail ? (
+                                    <div className="break-all text-[11px] leading-4 text-[#667085] dark:text-[#8F98A8]">
+                                      {displayResearchEmail(
+                                        assignment.userEmail,
+                                      )}
+                                    </div>
+                                  ) : null}
+                                  {task.assignments.length > 1 &&
+                                  assignmentTiming ? (
+                                    <div
+                                      className={`text-[11px] leading-4 ${assignmentTiming.className}`}
+                                    >
+                                      {assignmentTiming.label}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-[#777777]">Unassigned</div>
+                        )}
+                        {task.isUrgent ? (
+                          <p className="mt-1 text-[11px] font-normal uppercase tracking-wide text-[#B33E5C] dark:text-[#FF9DAE]">
+                            Urgent
+                          </p>
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-3 align-top">
+                        {status.dateLines.map((line) => (
+                          <p
+                            key={line}
+                            className="break-words text-xs font-normal leading-5 text-[#B0B0B0]"
+                          >
+                            {line}
+                          </p>
+                        ))}
+                        {status.detail && (
+                          <p
+                            className={`max-w-full break-words text-xs font-normal leading-5 ${status.detailClassName}`}
+                          >
+                            {status.detail}
+                          </p>
+                        )}
+                        {"secondaryDetail" in status &&
+                        status.secondaryDetail ? (
+                          <p
+                            className={`max-w-full break-words text-xs font-normal leading-5 ${status.secondaryDetailClassName}`}
+                          >
+                            {status.secondaryDetail}
+                          </p>
+                        ) : null}
+                        <div className="mt-2 border-t border-slate-200 pt-2 dark:border-[#555555]">
+                          <p
+                            className="max-w-full truncate whitespace-nowrap text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]"
+                            title={`Checker: ${task.checker}`}
+                          >
+                            Checker: {task.checker}
+                          </p>
+                          <p
+                            className="max-w-full truncate whitespace-nowrap text-xs font-normal leading-5 text-[#667085] dark:text-[#B0B0B0]"
+                            title={`Assigner: ${task.createdBy}`}
+                          >
+                            Assigner: {task.createdBy}
+                          </p>
+                          {managerAction ? (
+                            <p
+                              className={`max-w-full break-words text-xs font-semibold leading-5 ${managerAction.className}`}
+                            >
+                              {managerAction.label}: {managerAction.text}
+                            </p>
+                          ) : null}
+                        </div>
+                      </td>
+                      {canDelete && (
+                        <td className="px-2 py-3 text-center align-top">
+                          <DeleteTaskButton
+                            task={task}
+                            deleteAction={deleteAction}
+                            onDeleted={removeTaskFromList}
+                          />
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
               {isLoading ? (
                 <TableSkeletonRows
                   rows={Math.min(Math.max(listMeta.pageSize || 7, 5), 10)}
@@ -1731,10 +1790,16 @@ export function TasksClient({
                 <tr>
                   <td colSpan={canDelete ? 6 : 5} className="px-4 py-2">
                     <ResearchEmptyState
-                      title="No tasks match the current filters."
+                      title={
+                        archivedMode
+                          ? "No archived tasks match the current filters."
+                          : "No tasks match the current filters."
+                      }
                       detail={
                         tasks.length === 0
-                          ? "Create a task to start tracking assigned work."
+                          ? archivedMode
+                            ? "Completed tasks move here 7 days after completion."
+                            : "Create a task to start tracking assigned work."
                           : "Try another keyword, status, or task type."
                       }
                     />

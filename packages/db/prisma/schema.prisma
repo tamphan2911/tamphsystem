@@ -978,6 +978,7 @@ model ResearchTask {
   revokedAt                 DateTime?
   revokedById               String?
   revokeReason              String?
+  archivedAt                DateTime?
   adminViewedAt             DateTime?
   taskFileName              String?
   taskFileType              String?
@@ -1044,6 +1045,7 @@ model ResearchTask {
   @@index([completedById])
   @@index([redoRequestedById])
   @@index([revokedById])
+  @@index([archivedAt])
   @@index([transferredFromTaskId])
 }
 
