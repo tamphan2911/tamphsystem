@@ -93,7 +93,7 @@ export default async function JournalsPage() {
     );
     const publisherAccountCount = journal.publisherRecord?.accounts.length ?? 0;
     const accountCount = usesPublisherAccount
-      ? publisherAccountCount
+      ? publisherAccountCount + journal._count.accounts
       : journal._count.accounts;
 
     return {

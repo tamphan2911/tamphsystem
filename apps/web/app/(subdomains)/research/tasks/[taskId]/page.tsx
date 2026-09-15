@@ -2436,10 +2436,7 @@ export default async function TaskDetailPage({
     task.addedJournals.filter((journal) => journal.resultPosition !== null)
       .length >= Math.max(1, task.journalTargetCount ?? 1);
   const canMarkReady =
-    !isClosed &&
-    isAssignee &&
-    !selfManagedTask &&
-    !myAssignment?.completedAt;
+    !isClosed && isAssignee && !selfManagedTask && !myAssignment?.completedAt;
   const canApprove =
     !isClosed &&
     !waitingForJournalCreation &&
@@ -3517,17 +3514,14 @@ export default async function TaskDetailPage({
     }));
   const accountOptions = accounts.flatMap((account) => {
     if (account.journalId) {
-      const journal = journals.find((item) => item.id === account.journalId);
-      return journal?.publisherRecord?.usesSingleAccount
-        ? []
-        : [
-            {
-              id: account.id,
-              journalId: account.journalId,
-              username: account.username,
-              email: account.email ?? "",
-            },
-          ];
+      return [
+        {
+          id: account.id,
+          journalId: account.journalId,
+          username: account.username,
+          email: account.email ?? "",
+        },
+      ];
     }
     return journals
       .filter(

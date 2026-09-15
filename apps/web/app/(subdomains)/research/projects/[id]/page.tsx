@@ -798,8 +798,7 @@ export default async function ProjectDetailPage({
     (canCreateSubmitOrOtherTask || isChiefAssistant) && !researchContentLocked;
   const canCreateProductionTask = canCreateSubmitOrOtherTask;
   const canApproveVenueSuggestion =
-    (isRootAdmin || isSuggestVenueTaskAssigner) &&
-    !researchContentLocked;
+    (isRootAdmin || isSuggestVenueTaskAssigner) && !researchContentLocked;
   const authorNames =
     hydratedAuthorEntries.length > 0
       ? hydratedAuthorEntries.map(
@@ -958,6 +957,15 @@ export default async function ProjectDetailPage({
     if (journalSuccessState) return { state: "blocked" };
     return { state: "idle" };
   };
+  const journalSubmissionAccounts = (journal: (typeof journals)[number]) => [
+    ...(journal.publisherRecord?.usesSingleAccount
+      ? (journal.publisherRecord.accounts ?? []).map((account) => ({
+          ...account,
+          journalId: journal.id,
+        }))
+      : []),
+    ...journal.accounts,
+  ];
   const allJournalOptions: SuggestedJournalOption[] = journals.map(
     (journal) => ({
       id: journal.id,
@@ -979,10 +987,7 @@ export default async function ProjectDetailPage({
       submissionFeeCurrency: journal.submissionFeeCurrency,
       note: journal.note ?? "",
       venueNote: "",
-      accounts: (journal.publisherRecord?.usesSingleAccount
-        ? (journal.publisherRecord.accounts ?? [])
-        : journal.accounts
-      ).map((account) => ({
+      accounts: journalSubmissionAccounts(journal).map((account) => ({
         id: account.id,
         journalId: account.journalId ?? "",
         username: account.username,
@@ -1026,15 +1031,14 @@ export default async function ProjectDetailPage({
           journal?.submissionFeeCurrency ?? suggestion.submissionFeeCurrency,
         note: journal?.note ?? "",
         venueNote: suggestion.note ?? "",
-        accounts: (journal?.publisherRecord?.usesSingleAccount
-          ? (journal.publisherRecord.accounts ?? [])
-          : (journal?.accounts ?? [])
-        ).map((account) => ({
-          id: account.id,
-          journalId: account.journalId ?? "",
-          username: account.username,
-          email: account.email ?? "",
-        })),
+        accounts: journal
+          ? journalSubmissionAccounts(journal).map((account) => ({
+              id: account.id,
+              journalId: account.journalId ?? "",
+              username: account.username,
+              email: account.email ?? "",
+            }))
+          : [],
         suggestedByName: createdBy
           ? displayResearchPersonName(createdBy) || "Unknown user"
           : "Unknown user",
@@ -1467,10 +1471,7 @@ export default async function ProjectDetailPage({
       issn: journal.issn ?? "",
       publisher: journal.publisher ?? "",
       rank: journal.rank ?? "",
-      accounts: (journal.publisherRecord?.usesSingleAccount
-        ? (journal.publisherRecord.accounts ?? [])
-        : journal.accounts
-      ).map((account) => ({
+      accounts: journalSubmissionAccounts(journal).map((account) => ({
         id: account.id,
         journalId: account.journalId ?? "",
         username: account.username,
@@ -1522,9 +1523,7 @@ export default async function ProjectDetailPage({
     { id: string; username: string; password: string; email: string | null }
   >();
   for (const journal of journals) {
-    const accounts = journal.publisherRecord?.usesSingleAccount
-      ? (journal.publisherRecord.accounts ?? [])
-      : journal.accounts;
+    const accounts = journalSubmissionAccounts(journal);
     if (accounts.length === 1 && accounts[0]) {
       singleAccountByJournalId.set(journal.id, accounts[0]);
     }

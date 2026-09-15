@@ -222,17 +222,14 @@ export default async function ResearchTasksPage() {
   ];
   const accountOptions: TaskAccountOption[] = accounts.flatMap((account) => {
     if (account.journalId) {
-      const journal = journals.find((item) => item.id === account.journalId);
-      return journal?.publisherRecord?.usesSingleAccount
-        ? []
-        : [
-            {
-              id: account.id,
-              journalId: account.journalId,
-              username: account.username,
-              email: account.email ?? "",
-            },
-          ];
+      return [
+        {
+          id: account.id,
+          journalId: account.journalId,
+          username: account.username,
+          email: account.email ?? "",
+        },
+      ];
     }
     return journals
       .filter(

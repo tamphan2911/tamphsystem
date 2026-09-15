@@ -157,10 +157,17 @@ export default async function SubmissionsPage() {
     string,
     { id: string; username: string; password: string; email: string | null }
   >();
+  const journalSubmissionAccounts = (journal: (typeof journals)[number]) => [
+    ...(journal.publisherRecord?.usesSingleAccount
+      ? (journal.publisherRecord.accounts ?? []).map((account) => ({
+          ...account,
+          journalId: journal.id,
+        }))
+      : []),
+    ...journal.accounts,
+  ];
   for (const journal of journals) {
-    const accounts = journal.publisherRecord?.usesSingleAccount
-      ? (journal.publisherRecord.accounts ?? [])
-      : journal.accounts;
+    const accounts = journalSubmissionAccounts(journal);
     if (accounts.length === 1 && accounts[0]) {
       singleAccountByJournalId.set(journal.id, accounts[0]);
     }
@@ -306,10 +313,7 @@ export default async function SubmissionsPage() {
       label: journal.publisher
         ? `${journal.name} - ${journal.publisher}`
         : journal.name,
-      accounts: (journal.publisherRecord?.usesSingleAccount
-        ? (journal.publisherRecord.accounts ?? [])
-        : journal.accounts
-      ).map((account) => ({
+      accounts: journalSubmissionAccounts(journal).map((account) => ({
         id: account.id,
         label: account.email
           ? `${account.username} - ${account.email}`

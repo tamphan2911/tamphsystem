@@ -370,9 +370,12 @@ export default async function JournalDetailPage({
     },
   );
 
-  const journalAccounts = journal.publisherRecord?.usesSingleAccount
-    ? (journal.publisherRecord.accounts ?? [])
-    : journal.accounts;
+  const journalAccounts = [
+    ...(journal.publisherRecord?.usesSingleAccount
+      ? (journal.publisherRecord.accounts ?? [])
+      : []),
+    ...journal.accounts,
+  ];
   const accountRows: JournalAccountRow[] = journalAccounts.map((account) => ({
     id: account.id,
     username: account.username,
@@ -638,7 +641,9 @@ export default async function JournalDetailPage({
                 <dt className="text-xs font-bold uppercase text-slate-400">
                   APC
                 </dt>
-                <dd className={`mt-1 text-base font-normal ${apcValueClassName}`}>
+                <dd
+                  className={`mt-1 text-base font-normal ${apcValueClassName}`}
+                >
                   {formatMoney(journal.apc, journal.apcCurrency)}
                   {apcHasValue
                     ? journal.hasApcOption

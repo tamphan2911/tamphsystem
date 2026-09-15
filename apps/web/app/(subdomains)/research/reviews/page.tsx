@@ -111,14 +111,21 @@ export default async function AcademicReviewsPage() {
     },
   ];
 
+  const journalAccountOptions = (journal: (typeof journals)[number]) => [
+    ...(journal.publisherRecord?.usesSingleAccount
+      ? (journal.publisherRecord.accounts ?? []).map((account) => ({
+          ...account,
+          journalId: journal.id,
+        }))
+      : []),
+    ...journal.accounts,
+  ];
+
   const journalOptions = journals.map((journal) => ({
     id: journal.id,
     name: journal.name,
     publisher: journal.publisher ?? "",
-    accounts: (journal.publisherRecord?.usesSingleAccount
-      ? (journal.publisherRecord.accounts ?? [])
-      : journal.accounts
-    ).map((account) => ({
+    accounts: journalAccountOptions(journal).map((account) => ({
       id: account.id,
       username: account.username,
       password: account.password,

@@ -3727,7 +3727,11 @@ export async function updateOrganizedProject(
   const updateDetail = auditDetail([
     auditChange("Title", previousProject.title, title),
     auditChange("Project ID", previousProject.referenceCode, referenceCode),
-    auditChange("Funding institution", previousProject.organizer, fundingInstitution?.name),
+    auditChange(
+      "Funding institution",
+      previousProject.organizer,
+      fundingInstitution?.name,
+    ),
     auditChange("Status", previousProject.status, formData.get("status")),
     auditChange("Project type", previousProject.projectType, projectType),
     auditChange(
@@ -3750,12 +3754,32 @@ export async function updateOrganizedProject(
       ),
     ),
     auditChange("Start date", previousProject.startDate, startDate),
-    auditChange("Duration months", previousProject.durationMonths, durationMonths),
+    auditChange(
+      "Duration months",
+      previousProject.durationMonths,
+      durationMonths,
+    ),
     auditChange("Members", previousMemberLabels, nextMemberLabels),
-    auditChange("Associated research", previousResearchLabels, nextResearchLabels),
-    auditChange("Required products", previousProject.requiredProducts, requiredProductTitles),
-    auditChange("Shared folder", previousProject.sharedFolderUrl, formData.get("sharedFolderUrl")),
-    auditChange("Description", previousProject.description, formData.get("description")),
+    auditChange(
+      "Associated research",
+      previousResearchLabels,
+      nextResearchLabels,
+    ),
+    auditChange(
+      "Required products",
+      previousProject.requiredProducts,
+      requiredProductTitles,
+    ),
+    auditChange(
+      "Shared folder",
+      previousProject.sharedFolderUrl,
+      formData.get("sharedFolderUrl"),
+    ),
+    auditChange(
+      "Description",
+      previousProject.description,
+      formData.get("description"),
+    ),
     auditChange("Note", previousProject.note, formData.get("note")),
   ]);
 
@@ -3873,7 +3897,11 @@ export async function updateOrganizedProjectProducts(
     }
   });
   const productDetail = auditDetail([
-    auditChange("Completed products", project.completedProducts, completedProducts),
+    auditChange(
+      "Completed products",
+      project.completedProducts,
+      completedProducts,
+    ),
     isComplete ? "Project status: Completed" : null,
   ]);
   if (productDetail) {
@@ -3947,14 +3975,12 @@ export async function updateOrganizedProjectProductResearch(
   const linkedResearchProjectId = optionalString(
     formData.get("linkedResearchProjectId"),
   );
-  let nextResearch:
-    | {
-        id: string;
-        title: string;
-        researchCode: string | null;
-        stage: ResearchStage;
-      }
-    | null = null;
+  let nextResearch: {
+    id: string;
+    title: string;
+    researchCode: string | null;
+    stage: ResearchStage;
+  } | null = null;
 
   if (linkedResearchProjectId) {
     const linkedResearch = product.organizedProject.research.find(
@@ -3981,12 +4007,17 @@ export async function updateOrganizedProjectProductResearch(
   });
 
   const previousLabel = product.linkedResearchProject
-    ? [product.linkedResearchProject.researchCode, product.linkedResearchProject.title]
+    ? [
+        product.linkedResearchProject.researchCode,
+        product.linkedResearchProject.title,
+      ]
         .filter(Boolean)
         .join(" - ")
     : "Not linked";
   const nextLabel = nextResearch
-    ? [nextResearch.researchCode, nextResearch.title].filter(Boolean).join(" - ")
+    ? [nextResearch.researchCode, nextResearch.title]
+        .filter(Boolean)
+        .join(" - ")
     : "Not linked";
   await prisma.researchChangeLog.create({
     data: {
@@ -3994,11 +4025,12 @@ export async function updateOrganizedProjectProductResearch(
       entityId: product.organizedProject.id,
       area: "Required products",
       action: "Updated",
-      detail: auditChange(
-        `Linked research for ${product.title}`,
-        previousLabel,
-        nextLabel,
-      ) ?? `Linked research for ${product.title}: unchanged.`,
+      detail:
+        auditChange(
+          `Linked research for ${product.title}`,
+          previousLabel,
+          nextLabel,
+        ) ?? `Linked research for ${product.title}: unchanged.`,
       actorId: user.id,
     },
   });
@@ -4938,8 +4970,7 @@ async function createJournalRecord({
   const publisher = await publisherSelection(formData);
   if (!publisher)
     throw new Error("Choose a publisher before saving the journal.");
-  const shouldCreateAccount =
-    Boolean(accountUsername) && !publisher.usesSingleAccount;
+  const shouldCreateAccount = Boolean(accountUsername);
   const duplicateFilters: Prisma.JournalWhereInput[] = [
     { name: { equals: name, mode: Prisma.QueryMode.insensitive } },
   ];
@@ -5005,7 +5036,7 @@ async function createJournalRecord({
       },
     });
 
-    if (accountUsername && !publisher.usesSingleAccount) {
+    if (accountUsername) {
       await tx.publisherAccount.create({
         data: {
           username: accountUsername,
@@ -6303,13 +6334,19 @@ async function journalAccountIds(journalId: string) {
   });
   if (!journal) return [];
   return prisma.publisherAccount.findMany({
-    where:
-      journal.publisherRecord?.usesSingleAccount && journal.publisherId
-        ? {
-            accountType: PublisherAccountType.PUBLISHER,
-            publisherId: journal.publisherId,
-          }
-        : { accountType: PublisherAccountType.JOURNAL, journalId },
+    where: {
+      OR: [
+        { accountType: PublisherAccountType.JOURNAL, journalId },
+        ...(journal.publisherRecord?.usesSingleAccount && journal.publisherId
+          ? [
+              {
+                accountType: PublisherAccountType.PUBLISHER,
+                publisherId: journal.publisherId,
+              },
+            ]
+          : []),
+      ],
+    },
     select: { id: true },
   });
 }
@@ -7086,6 +7123,8 @@ export async function createPublisherAccount(formData: FormData) {
 
   revalidatePath("/accounts");
   revalidatePath("/journals");
+  if (scope.journalId) revalidatePath(`/journals/${scope.journalId}`);
+  if (scope.publisherId) revalidatePath(`/publishers/${scope.publisherId}`);
   const projectId = optionalString(formData.get("projectId"));
   if (projectId) revalidatePath(`/projects/${projectId}`);
 }
@@ -7146,6 +7185,8 @@ export async function updatePublisherAccount(
   revalidatePath("/accounts");
   revalidatePath(`/accounts/${accountId}`);
   revalidatePath("/journals");
+  if (scope.journalId) revalidatePath(`/journals/${scope.journalId}`);
+  if (scope.publisherId) revalidatePath(`/publishers/${scope.publisherId}`);
   revalidatePath("/submissions");
 }
 
@@ -7358,12 +7399,20 @@ export async function updatePublisher(publisherId: string, formData: FormData) {
       accountType: PublisherAccountType.PUBLISHER,
     },
   });
-  if (accountPolicyChanged && usesSingleAccount && linkedPublisherAccounts === 0) {
+  if (
+    accountPolicyChanged &&
+    usesSingleAccount &&
+    linkedPublisherAccounts === 0
+  ) {
     throw new Error(
       "Add a publisher-wide account from Accounts before enabling this policy.",
     );
   }
-  if (accountPolicyChanged && !usesSingleAccount && linkedPublisherAccounts > 0) {
+  if (
+    accountPolicyChanged &&
+    !usesSingleAccount &&
+    linkedPublisherAccounts > 0
+  ) {
     throw new Error(
       "Delete or reassign the publisher-wide account before switching to separate journal accounts.",
     );
@@ -12554,10 +12603,7 @@ async function createNextProductionWorkflowTask({
   const nextTitle = `${nextSubtypeMeta.label} for ${
     sourceTask.project?.title ?? "research"
   }`;
-  const nextDescription = defaultDescriptionForTask(
-    nextTaskType,
-    nextSubtype,
-  );
+  const nextDescription = defaultDescriptionForTask(nextTaskType, nextSubtype);
   const guideIds = await defaultTaskGuideIdsForTask({
     taskType: nextTaskType,
     proposalScope: ProposalTaskScope.RESEARCH,
@@ -13243,7 +13289,8 @@ export async function finishResearchTask(taskId: string, formData?: FormData) {
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
   if (nextTask) revalidatePath(`/tasks/${nextTask.id}`);
-  if (referenceFollowUpTask) revalidatePath(`/tasks/${referenceFollowUpTask.id}`);
+  if (referenceFollowUpTask)
+    revalidatePath(`/tasks/${referenceFollowUpTask.id}`);
   if (task.projectId) revalidatePath(`/projects/${task.projectId}`);
   if (task.reviewId) revalidatePath(`/reviews/${task.reviewId}`);
 
