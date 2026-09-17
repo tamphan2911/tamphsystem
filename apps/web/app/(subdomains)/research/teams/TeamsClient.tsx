@@ -3,10 +3,13 @@
 import { useMemo, useState, useTransition } from "react";
 import {
   Crown,
+  Mail,
   Pencil,
   PlusCircle,
   ShieldCheck,
+  UserRound,
   UsersRound,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
@@ -21,6 +24,10 @@ import {
   researchTextareaClass,
 } from "@/sites/research/components/ResearchPrimitives";
 import { TableSearchInput } from "@/sites/research/components/TableControls";
+import {
+  ResearchSearchPicker,
+  type ResearchSearchPickerOption,
+} from "@/sites/research/components/ResearchSearchPicker";
 import {
   displayResearchEmail,
   displayResearchPersonName,
@@ -67,11 +74,61 @@ function TeamForm({
   assistants: TeamMemberOption[];
   onSubmit: (formData: FormData) => void;
 }) {
-  const selectedMemberIds = new Set(team?.members.map((member) => member.id));
+  const [memberQuery, setMemberQuery] = useState("");
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>(
+    team?.members.map((member) => member.id) ?? [],
+  );
   const leaderDefault = team?.leader.id ?? leaders[0]?.id ?? "";
+  const selectedMembers = selectedMemberIds
+    .map((memberId) =>
+      assistants.find((assistant) => assistant.id === memberId),
+    )
+    .filter((assistant): assistant is TeamMemberOption => Boolean(assistant));
+  const availableMembers = useMemo(() => {
+    const needle = memberQuery.trim().toLowerCase();
+
+    return assistants
+      .filter((assistant) => !selectedMemberIds.includes(assistant.id))
+      .filter((assistant) => {
+        if (!needle) return true;
+        return [assistant.id, assistant.name, assistant.email]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle);
+      })
+      .slice(0, 10);
+  }, [assistants, memberQuery, selectedMemberIds]);
+  const memberOptions = useMemo<ResearchSearchPickerOption<TeamMemberOption>[]>(
+    () =>
+      availableMembers.map((assistant) => ({
+        id: assistant.id,
+        label: personLabel(assistant),
+        description: [personSubtext(assistant), assistant.id.slice(0, 8)]
+          .filter(Boolean)
+          .join(" - "),
+        data: assistant,
+      })),
+    [availableMembers],
+  );
+
+  function addMember(assistantId: string) {
+    setSelectedMemberIds((current) =>
+      current.includes(assistantId) ? current : [...current, assistantId],
+    );
+    setMemberQuery("");
+  }
+
+  function removeMember(assistantId: string) {
+    setSelectedMemberIds((current) =>
+      current.filter((memberId) => memberId !== assistantId),
+    );
+  }
 
   return (
     <form id={id} action={onSubmit} className="grid gap-5">
+      {selectedMemberIds.map((memberId) => (
+        <input key={memberId} type="hidden" name="memberIds" value={memberId} />
+      ))}
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(16rem,0.55fr)]">
         <label className={researchLabelClass}>
           <span>
@@ -133,50 +190,85 @@ function TeamForm({
           </div>
           <UsersRound className="h-4 w-4 text-[#1F7180] dark:text-[#A8DADC]" />
         </div>
-        <div className="max-h-80 overflow-y-auto p-2">
+        <div className="grid gap-3 p-3">
           {assistants.length > 0 ? (
-            <div className="grid gap-2 md:grid-cols-2">
-              {assistants.map((assistant) => {
-                const checked = selectedMemberIds.has(assistant.id);
-                return (
-                  <label
-                    key={assistant.id}
-                    className="flex min-h-16 cursor-pointer items-start gap-3 border border-slate-200 bg-[#FFFDF8] px-3 py-2.5 text-sm text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4] dark:hover:border-[#5A5A5A] dark:hover:bg-[#303030]"
-                  >
-                    <input
-                      type="checkbox"
-                      name="memberIds"
-                      value={assistant.id}
-                      defaultChecked={checked}
-                      className="mt-1 h-4 w-4 rounded-none border-slate-300 text-[#1F7180] focus:ring-[#A8DADC] dark:border-[#5A5A5A] dark:bg-[#2C2C2C]"
-                    />
-                    <span className="min-w-0">
-                      <span className="block truncate">
-                        {personLabel(assistant)}
-                      </span>
-                      <span className="mt-0.5 block truncate text-xs opacity-75">
-                        {personSubtext(assistant)}
-                      </span>
-                      {assistant.currentTeamNames.filter(
-                        (name, index) =>
-                          assistant.currentTeamIds[index] !== team?.id && name,
-                      ).length > 0 ? (
-                        <span className="mt-1 block text-xs text-slate-500 dark:text-[#8F8F8F]">
-                          Also in{" "}
-                          {assistant.currentTeamNames
-                            .filter(
-                              (name, index) =>
-                                assistant.currentTeamIds[index] !== team?.id &&
-                                name,
-                            )
-                            .join(", ")}
+            <>
+              <ResearchSearchPicker
+                label="Add member"
+                selected={null}
+                query={memberQuery}
+                onQueryChange={setMemberQuery}
+                onSelect={(option) => addMember(option.id)}
+                onClear={() => setMemberQuery("")}
+                options={memberOptions}
+                placeholder="Search assistant by name, email, or ID..."
+                emptyText="No assistant matches this search."
+                renderOption={(option) => {
+                  const assistant = option.data as TeamMemberOption;
+                  return (
+                    <>
+                      <UserRound className="ml-3 h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm">
+                          {option.label}
                         </span>
-                      ) : null}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
+                        <span className="block truncate text-xs opacity-70">
+                          {option.description}
+                        </span>
+                      </span>
+                    </>
+                  );
+                }}
+              />
+
+              {selectedMembers.length > 0 ? (
+                <div className="grid gap-2 md:grid-cols-2">
+                  {selectedMembers.map((assistant) => {
+                    const otherTeams = assistant.currentTeamNames.filter(
+                      (name, index) =>
+                        assistant.currentTeamIds[index] !== team?.id && name,
+                    );
+
+                    return (
+                      <div
+                        key={assistant.id}
+                        className="flex min-h-16 items-start gap-3 border border-slate-200 bg-[#FFFDF8] px-3 py-2.5 text-sm text-slate-800 dark:border-[#444444] dark:bg-[#262626] dark:text-[#E4E4E4]"
+                      >
+                        <UserRound className="mt-0.5 h-4 w-4 flex-none text-[#1F7180] dark:text-[#A8DADC]" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate">
+                            {personLabel(assistant)}
+                          </span>
+                          <span className="mt-0.5 flex items-center gap-1 truncate text-xs opacity-75">
+                            <Mail className="h-3 w-3 flex-none" />
+                            {personSubtext(assistant)}
+                          </span>
+                          {otherTeams.length > 0 ? (
+                            <span className="mt-1 block text-xs text-slate-500 dark:text-[#8F8F8F]">
+                              Also in {otherTeams.join(", ")}
+                            </span>
+                          ) : null}
+                        </span>
+                        <IconHint label={`Remove ${personLabel(assistant)}`}>
+                          <button
+                            type="button"
+                            onClick={() => removeMember(assistant.id)}
+                            className="research-allow-transform inline-flex h-7 w-7 flex-none items-center justify-center border-0 bg-transparent text-slate-500 transition-[color,transform] hover:-translate-y-0.5 hover:text-rose-600 active:translate-y-0 active:scale-95 dark:text-[#B0B0B0] dark:hover:text-rose-300"
+                            aria-label={`Remove ${personLabel(assistant)}`}
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </IconHint>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="px-1 py-2 text-sm text-slate-500 dark:text-[#8F8F8F]">
+                  No assistants selected for this team.
+                </p>
+              )}
+            </>
           ) : (
             <ResearchEmptyState
               title="No assistants available"
