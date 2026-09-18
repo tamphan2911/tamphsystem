@@ -88,8 +88,8 @@ export default async function SuggestionsPage() {
       venueHref: suggestion.journalId
         ? `/journals/${suggestion.journalId}`
         : suggestion.venueLink || "",
+      status: suggestion.status,
       venueMeta: [
-        suggestion.status === "PENDING" ? "Waiting approval" : "",
         suggestion.journal?.publisher || "No publisher",
         suggestion.journal?.rank || "No rank",
         suggestion.journal?.issn ? `ISSN ${suggestion.journal.issn}` : "",
@@ -124,8 +124,8 @@ export default async function SuggestionsPage() {
       venueHref: suggestion.conferenceId
         ? `/conferences/${suggestion.conferenceId}`
         : suggestion.venueLink || "",
+      status: suggestion.status,
       venueMeta: [
-        suggestion.status === "PENDING" ? "Waiting approval" : "",
         suggestion.conference?.organizer || "No organizer",
         suggestion.conference?.type || "No type",
         suggestion.conference?.location || "No location",

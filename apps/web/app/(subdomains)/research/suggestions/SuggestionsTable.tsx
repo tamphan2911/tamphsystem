@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, CalendarDays, Trash2 } from "lucide-react";
+import {
+  BookOpen,
+  CalendarDays,
+  CircleCheck,
+  CircleX,
+  Clock3,
+  Trash2,
+} from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
 import {
   cx,
@@ -22,6 +29,7 @@ import {
 } from "@/sites/research/components/TableControls";
 
 export type SuggestionKind = "Journal" | "Conference";
+export type SuggestionStatus = "PENDING" | "APPROVED" | "DECLINED";
 
 export type SuggestionRow = {
   id: string;
@@ -32,6 +40,7 @@ export type SuggestionRow = {
   venueId: string;
   venueName: string;
   venueHref: string;
+  status: SuggestionStatus;
   venueMeta: string;
   scope: string;
   suggestedBy: string;
@@ -50,6 +59,28 @@ function typeClass(kind: SuggestionKind) {
     return "text-[#1F7180] hover:text-[#155864] dark:text-[#8FCFD1] dark:hover:text-[#C9F0F2]";
   }
   return "text-[#6F5AA8] hover:text-[#513E86] dark:text-[#CDB6E8] dark:hover:text-[#E7D8F7]";
+}
+
+function statusPresentation(status: SuggestionStatus) {
+  if (status === "APPROVED") {
+    return {
+      label: "Approved",
+      icon: CircleCheck,
+      className: "text-emerald-700 dark:text-emerald-300",
+    };
+  }
+  if (status === "DECLINED") {
+    return {
+      label: "Declined",
+      icon: CircleX,
+      className: "text-rose-700 dark:text-rose-300",
+    };
+  }
+  return {
+    label: "Waiting approval",
+    icon: Clock3,
+    className: "text-amber-700 dark:text-amber-300",
+  };
 }
 
 function DeleteSuggestionButton({
@@ -163,24 +194,7 @@ export function SuggestionsTable({
 }) {
   const [query, setQuery] = usePersistentTableValue("suggestions:q", "");
   const suggestionKinds = ["ALL", "Journal", "Conference"];
-
-  const projectOptions = useMemo(
-    () => [
-      "ALL",
-      ...Array.from(
-        new Set(
-          rows
-            .map((row) =>
-              row.projectCode
-                ? `${row.projectCode} - ${row.projectTitle}`
-                : row.projectTitle,
-            )
-            .filter(Boolean),
-        ),
-      ).sort(),
-    ],
-    [rows],
-  );
+  const suggestionStatuses = ["ALL", "PENDING", "APPROVED", "DECLINED"];
   const suggestedByOptions = useMemo(
     () => [
       "ALL",
@@ -192,9 +206,9 @@ export function SuggestionsTable({
     "suggestions:kind",
     suggestionKinds,
   );
-  const [projects, setProjects] = usePersistentMultiFilter(
-    "suggestions:project",
-    projectOptions,
+  const [statuses, setStatuses] = usePersistentMultiFilter(
+    "suggestions:status",
+    suggestionStatuses,
   );
   const [suggestedUsers, setSuggestedUsers] = usePersistentMultiFilter(
     "suggestions:suggestedBy",
@@ -204,12 +218,9 @@ export function SuggestionsTable({
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
-      const projectLabel = row.projectCode
-        ? `${row.projectCode} - ${row.projectTitle}`
-        : row.projectTitle;
       const matchesKind = kinds.length === 0 || kinds.includes(row.kind);
-      const matchesProject =
-        projects.length === 0 || projects.includes(projectLabel);
+      const matchesStatus =
+        statuses.length === 0 || statuses.includes(row.status);
       const matchesSuggestedBy =
         suggestedUsers.length === 0 || suggestedUsers.includes(row.suggestedBy);
       const haystack = [
@@ -218,6 +229,7 @@ export function SuggestionsTable({
         row.projectTitle,
         row.venueName,
         row.venueMeta,
+        statusPresentation(row.status).label,
         row.scope,
         row.suggestedBy,
         row.suggestedByMeta,
@@ -228,12 +240,12 @@ export function SuggestionsTable({
 
       return (
         matchesKind &&
-        matchesProject &&
+        matchesStatus &&
         matchesSuggestedBy &&
         (!needle || haystack.includes(needle))
       );
     });
-  }, [kinds, projects, query, rows, suggestedUsers]);
+  }, [kinds, query, rows, statuses, suggestedUsers]);
 
   const pagination = useTablePagination(filtered, 10, 1, "suggestions");
 
@@ -264,13 +276,15 @@ export function SuggestionsTable({
             ]}
           />
           <MultiFilterSelect
-            values={projects}
-            onChange={resetPageAfter(setProjects)}
-            ariaLabel="Filter by research"
-            options={projectOptions.map((item) => ({
-              value: item,
-              label: item === "ALL" ? "All research" : item,
-            }))}
+            values={statuses}
+            onChange={resetPageAfter(setStatuses)}
+            ariaLabel="Filter by suggested venue status"
+            options={[
+              { value: "ALL", label: "All statuses" },
+              { value: "PENDING", label: "Waiting approval" },
+              { value: "APPROVED", label: "Approved" },
+              { value: "DECLINED", label: "Declined" },
+            ]}
           />
           <MultiFilterSelect
             values={suggestedUsers}
@@ -288,14 +302,15 @@ export function SuggestionsTable({
         <table className="w-full table-fixed text-left">
           <thead className="border-b border-[#444444] bg-[#383838] text-xs uppercase tracking-wide text-[#B0B0B0]">
             <tr>
-              <th className="w-[25%] px-3 py-3">Research</th>
-              <th className="w-[27%] px-3 py-3">Suggested venue</th>
-              <th className="w-[10%] px-3 py-3">Type</th>
-              <th className="w-[18%] px-3 py-3">Scope</th>
-              <th className="w-[12%] px-3 py-3">Suggested by</th>
+              <th className="w-[23%] px-3 py-3">Research</th>
+              <th className="w-[24%] px-3 py-3">Suggested venue</th>
+              <th className="w-[8%] px-3 py-3">Type</th>
+              <th className="w-[11%] px-3 py-3">Status</th>
+              <th className="w-[16%] px-3 py-3">Scope</th>
+              <th className="w-[11%] px-3 py-3">Suggested by</th>
               <th className="w-[5%] px-3 py-3">Date</th>
               <th
-                className="w-[3%] px-3 py-3 text-center"
+                className="w-[2%] px-3 py-3 text-center"
                 aria-label="Delete"
               />
             </tr>
@@ -304,6 +319,8 @@ export function SuggestionsTable({
             {pagination.pagedRows.map((suggestion) => {
               const TypeIcon =
                 suggestion.kind === "Journal" ? BookOpen : CalendarDays;
+              const status = statusPresentation(suggestion.status);
+              const StatusIcon = status.icon;
 
               return (
                 <tr
@@ -348,6 +365,17 @@ export function SuggestionsTable({
                       </span>
                     </IconHint>
                   </td>
+                  <td className="px-3 py-3 align-top">
+                    <span
+                      className={`inline-flex items-start gap-1.5 text-xs leading-5 ${status.className}`}
+                    >
+                      <StatusIcon
+                        className="mt-0.5 h-3.5 w-3.5 flex-none"
+                        aria-hidden="true"
+                      />
+                      <span>{status.label}</span>
+                    </span>
+                  </td>
                   <td className="px-3 py-3 text-xs leading-5 text-[#B0B0B0]">
                     <span className="line-clamp-3">
                       {suggestion.scope || "-"}
@@ -376,10 +404,10 @@ export function SuggestionsTable({
             })}
             {pagination.total === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-2">
+                <td colSpan={8} className="px-4 py-2">
                   <ResearchEmptyState
                     title="No suggestions match the current search."
-                    detail="Try another research title, venue name, user, type, or scope."
+                    detail="Try another venue status, title, user, type, or scope."
                   />
                 </td>
               </tr>
