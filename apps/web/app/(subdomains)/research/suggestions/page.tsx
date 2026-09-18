@@ -39,8 +39,11 @@ export default async function SuggestionsPage() {
             rank: true,
             fields: true,
             field: true,
+            approvalStatus: true,
+            publisherRecord: { select: { approvalStatus: true } },
           },
         },
+        publisher: { select: { approvalStatus: true } },
         createdBy: { select: { name: true, email: true, roles: true } },
       },
       orderBy: [{ createdAt: "desc" }],
@@ -76,6 +79,21 @@ export default async function SuggestionsPage() {
             .filter(Boolean)
         : [];
 
+    const publisherApprovalStatus =
+      suggestion.journal?.publisherRecord?.approvalStatus ??
+      suggestion.publisher?.approvalStatus;
+    const displayStatus =
+      suggestion.status === "APPROVED"
+        ? "APPROVED"
+        : suggestion.status === "DECLINED"
+          ? "DECLINED"
+          : publisherApprovalStatus === "PENDING_APPROVAL"
+            ? "PENDING_PUBLISHER_ADDING"
+            : suggestion.journalCreationTaskId ||
+                suggestion.journal?.approvalStatus === "PENDING_APPROVAL"
+              ? "PENDING_JOURNAL_ADDING"
+              : "WAITING_APPROVAL";
+
     return {
       id: suggestion.id,
       kind: "Journal",
@@ -88,7 +106,7 @@ export default async function SuggestionsPage() {
       venueHref: suggestion.journalId
         ? `/journals/${suggestion.journalId}`
         : suggestion.venueLink || "",
-      status: suggestion.status,
+      status: displayStatus,
       venueMeta: [
         suggestion.journal?.publisher || "No publisher",
         suggestion.journal?.rank || "No rank",
@@ -124,7 +142,12 @@ export default async function SuggestionsPage() {
       venueHref: suggestion.conferenceId
         ? `/conferences/${suggestion.conferenceId}`
         : suggestion.venueLink || "",
-      status: suggestion.status,
+      status:
+        suggestion.status === "APPROVED"
+          ? "APPROVED"
+          : suggestion.status === "DECLINED"
+            ? "DECLINED"
+            : "WAITING_APPROVAL",
       venueMeta: [
         suggestion.conference?.organizer || "No organizer",
         suggestion.conference?.type || "No type",

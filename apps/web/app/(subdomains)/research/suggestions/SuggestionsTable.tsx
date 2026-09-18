@@ -9,6 +9,8 @@ import {
   CircleCheck,
   CircleX,
   Clock3,
+  LibraryBig,
+  Building2,
   Trash2,
 } from "lucide-react";
 import { ResearchConfirmDialog } from "@/sites/research/components/ResearchConfirmDialog";
@@ -29,7 +31,12 @@ import {
 } from "@/sites/research/components/TableControls";
 
 export type SuggestionKind = "Journal" | "Conference";
-export type SuggestionStatus = "PENDING" | "APPROVED" | "DECLINED";
+export type SuggestionStatus =
+  | "WAITING_APPROVAL"
+  | "PENDING_JOURNAL_ADDING"
+  | "PENDING_PUBLISHER_ADDING"
+  | "APPROVED"
+  | "DECLINED";
 
 export type SuggestionRow = {
   id: string;
@@ -74,6 +81,20 @@ function statusPresentation(status: SuggestionStatus) {
       label: "Declined",
       icon: CircleX,
       className: "text-rose-700 dark:text-rose-300",
+    };
+  }
+  if (status === "PENDING_JOURNAL_ADDING") {
+    return {
+      label: "Pending journal adding",
+      icon: LibraryBig,
+      className: "text-sky-700 dark:text-sky-300",
+    };
+  }
+  if (status === "PENDING_PUBLISHER_ADDING") {
+    return {
+      label: "Pending publisher adding",
+      icon: Building2,
+      className: "text-violet-700 dark:text-violet-300",
     };
   }
   return {
@@ -194,7 +215,14 @@ export function SuggestionsTable({
 }) {
   const [query, setQuery] = usePersistentTableValue("suggestions:q", "");
   const suggestionKinds = ["ALL", "Journal", "Conference"];
-  const suggestionStatuses = ["ALL", "PENDING", "APPROVED", "DECLINED"];
+  const suggestionStatuses = [
+    "ALL",
+    "WAITING_APPROVAL",
+    "PENDING_JOURNAL_ADDING",
+    "PENDING_PUBLISHER_ADDING",
+    "APPROVED",
+    "DECLINED",
+  ];
   const suggestedByOptions = useMemo(
     () => [
       "ALL",
@@ -281,7 +309,15 @@ export function SuggestionsTable({
             ariaLabel="Filter by suggested venue status"
             options={[
               { value: "ALL", label: "All statuses" },
-              { value: "PENDING", label: "Waiting approval" },
+              { value: "WAITING_APPROVAL", label: "Waiting approval" },
+              {
+                value: "PENDING_JOURNAL_ADDING",
+                label: "Pending journal adding",
+              },
+              {
+                value: "PENDING_PUBLISHER_ADDING",
+                label: "Pending publisher adding",
+              },
               { value: "APPROVED", label: "Approved" },
               { value: "DECLINED", label: "Declined" },
             ]}
