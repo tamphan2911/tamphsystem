@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ArrowDownUp, Download, ExternalLink } from "lucide-react";
 import {
   FilterSelect,
@@ -42,7 +42,7 @@ export type AcceptedPublishedResearchRow = {
 };
 
 type SortDirection = "asc" | "desc";
-type JournalTypeFilter = "INTERNATIONAL" | "LOCAL";
+type JournalTypeFilter = "ALL" | "INTERNATIONAL" | "LOCAL";
 const internationalRankOptions = ["Q1", "Q2", "Q3", "Q4"];
 const noRankLabel = "No rank";
 
@@ -154,16 +154,10 @@ export function AcceptedPublishedResearchTable({
   const [query, setQuery] = useState("");
   const [includeAccepted, setIncludeAccepted] = useState(false);
   const [includeConferences, setIncludeConferences] = useState(false);
-  const [journalType, setJournalType] =
-    useState<JournalTypeFilter>("INTERNATIONAL");
-  const [selectedRanks, setSelectedRanks] = useState<string[]>(
-    internationalRankOptions,
-  );
+  const [journalType, setJournalType] = useState<JournalTypeFilter>("ALL");
+  const [selectedRanks, setSelectedRanks] = useState<string[]>([]);
   const [dateSort, setDateSort] = useState<SortDirection>("desc");
   const tableTopRef = useRef<HTMLDivElement | null>(null);
-  const tableScrollRef = useRef<HTMLDivElement | null>(null);
-  const [scrollMax, setScrollMax] = useState(0);
-  const [scrollValue, setScrollValue] = useState(0);
 
   const localRankOptions = useMemo(() => {
     const ranks = Array.from(
@@ -191,13 +185,22 @@ export function AcceptedPublishedResearchTable({
   }, [rows]);
 
   const rankOptions =
-    journalType === "INTERNATIONAL"
-      ? [
-          ...internationalRankOptions,
-          noRankLabel,
-          ...otherInternationalRankOptions,
-        ]
-      : localRankOptions;
+    journalType === "LOCAL"
+      ? localRankOptions
+      : journalType === "INTERNATIONAL"
+        ? [
+            ...internationalRankOptions,
+            noRankLabel,
+            ...otherInternationalRankOptions,
+          ]
+        : Array.from(
+            new Set([
+              ...internationalRankOptions,
+              noRankLabel,
+              ...otherInternationalRankOptions,
+              ...localRankOptions,
+            ]),
+          );
   const rankFilterOptions = [
     { value: "ALL", label: "All ranks" },
     ...rankOptions.map((rank) => ({ value: rank, label: rank })),
@@ -205,11 +208,7 @@ export function AcceptedPublishedResearchTable({
 
   function changeJournalType(nextType: JournalTypeFilter) {
     setJournalType(nextType);
-    setSelectedRanks(
-      nextType === "INTERNATIONAL"
-        ? internationalRankOptions
-        : localRankOptions,
-    );
+    setSelectedRanks([]);
   }
 
   const filteredRows = useMemo(() => {
@@ -219,9 +218,11 @@ export function AcceptedPublishedResearchTable({
       .filter((row) => includeConferences || row.venueKind === "journal")
       .filter((row) => {
         if (row.venueKind === "conference") return includeConferences;
-        return (
-          row.journalType === journalType && selectedRanks.includes(row.rank)
-        );
+        const typeMatches =
+          journalType === "ALL" || row.journalType === journalType;
+        const rankMatches =
+          selectedRanks.length === 0 || selectedRanks.includes(row.rank);
+        return typeMatches && rankMatches;
       })
       .filter((row) => {
         if (!needle) return true;
@@ -264,35 +265,6 @@ export function AcceptedPublishedResearchTable({
     1,
     "accepted-published-research",
   );
-
-  function updateScrollMetrics() {
-    const element = tableScrollRef.current;
-    if (!element) return;
-    setScrollMax(Math.max(0, element.scrollWidth - element.clientWidth));
-    setScrollValue(element.scrollLeft);
-  }
-
-  useEffect(() => {
-    updateScrollMetrics();
-    const element = tableScrollRef.current;
-    if (!element) return undefined;
-    const resizeObserver = new ResizeObserver(updateScrollMetrics);
-    resizeObserver.observe(element);
-    const table = element.querySelector("table");
-    if (table) resizeObserver.observe(table);
-    window.addEventListener("resize", updateScrollMetrics);
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", updateScrollMetrics);
-    };
-  }, [filteredRows.length, pagination.page]);
-
-  function slideTableScroll(value: number) {
-    const element = tableScrollRef.current;
-    if (!element) return;
-    element.scrollLeft = value;
-    setScrollValue(value);
-  }
 
   function downloadCurrentView() {
     downloadXlsx({
@@ -376,20 +348,15 @@ export function AcceptedPublishedResearchTable({
                   changeJournalType(value as JournalTypeFilter)
                 }
                 options={[
+                  { value: "ALL", label: "All type" },
                   { value: "INTERNATIONAL", label: "International" },
                   { value: "LOCAL", label: "Local" },
                 ]}
                 ariaLabel="Filter journal type"
               />
               <MultiFilterSelect
-                values={
-                  selectedRanks.length === rankOptions.length
-                    ? []
-                    : selectedRanks
-                }
-                onChange={(values) =>
-                  setSelectedRanks(values.length === 0 ? rankOptions : values)
-                }
+                values={selectedRanks}
+                onChange={setSelectedRanks}
                 options={rankFilterOptions}
                 ariaLabel="Filter rank"
               />
@@ -408,30 +375,7 @@ export function AcceptedPublishedResearchTable({
             />
           ) : (
             <>
-              <div className="border-b border-[#D8D0C2] bg-[#F8F6EF] px-3 py-2 dark:border-[#333333] dark:bg-[#242424]">
-                <div className="flex items-center gap-3">
-                  <span className="whitespace-nowrap text-xs uppercase tracking-wide text-[#667085] dark:text-[#A0A0A0]">
-                    Slide table
-                  </span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={scrollMax}
-                    value={Math.min(scrollValue, scrollMax)}
-                    onChange={(event) =>
-                      slideTableScroll(Number(event.target.value))
-                    }
-                    className="research-report-scroll-range h-7 min-w-0 flex-1"
-                    disabled={scrollMax <= 0}
-                    aria-label="Slide table horizontally"
-                  />
-                </div>
-              </div>
-              <div
-                ref={tableScrollRef}
-                onScroll={updateScrollMetrics}
-                className="research-report-table-scroll w-full max-w-full overflow-x-scroll overflow-y-visible pb-2 [scrollbar-gutter:stable]"
-              >
+              <div className="research-report-table-scroll w-full max-w-full overflow-x-scroll overflow-y-visible pb-2 [scrollbar-gutter:stable]">
                 <table className="min-w-[180rem] table-fixed border-collapse text-left text-sm">
                   <colgroup>
                     <col className="w-16" />

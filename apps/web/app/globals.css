@@ -2720,6 +2720,7 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
   content-visibility: visible !important;
   contain-intrinsic-size: none !important;
   display: block;
+  width: min(100%, calc(100vw - 2rem));
   max-width: 100%;
   min-width: 0;
   scrollbar-color: #9fb6bd #f1ece2;
@@ -2729,8 +2730,23 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
 .research-site-root .research-report-table-shell {
   content-visibility: visible !important;
   contain-intrinsic-size: none !important;
+  width: min(100%, calc(100vw - 2rem));
   max-width: 100%;
   min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .research-site-root .research-report-table-scroll,
+  .research-site-root .research-report-table-shell {
+    width: min(100%, calc(100vw - 4rem));
+  }
+}
+
+@media (min-width: 1024px) {
+  .research-site-root .research-report-table-scroll,
+  .research-site-root .research-report-table-shell {
+    width: min(100%, calc(100vw - 22rem));
+  }
 }
 
 .research-site-root .research-report-table-scroll::-webkit-scrollbar {
@@ -2769,49 +2785,6 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
 .research-site-root:not(.research-theme-light)
   .research-report-table-scroll::-webkit-scrollbar-thumb:hover {
   background: #a8dadc;
-}
-
-.research-site-root .research-report-scroll-range {
-  accent-color: #1f7180;
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-}
-
-.research-site-root
-  .research-report-scroll-range::-webkit-slider-runnable-track {
-  height: 0.375rem;
-  background: #e6ded0;
-}
-
-.research-site-root .research-report-scroll-range::-webkit-slider-thumb {
-  margin-top: -0.3125rem;
-  height: 1rem;
-  width: 2.5rem;
-  border: 1px solid #1f7180;
-  border-radius: 0;
-  background: #fffdf8;
-  cursor: ew-resize;
-  -webkit-appearance: none;
-}
-
-.research-site-root .research-report-scroll-range:disabled {
-  opacity: 0.45;
-}
-
-.research-site-root:not(.research-theme-light) .research-report-scroll-range {
-  accent-color: #a8dadc;
-}
-
-.research-site-root:not(.research-theme-light)
-  .research-report-scroll-range::-webkit-slider-runnable-track {
-  background: #333333;
-}
-
-.research-site-root:not(.research-theme-light)
-  .research-report-scroll-range::-webkit-slider-thumb {
-  border-color: #a8dadc;
-  background: #242424;
 }
 
 .research-site-root .research-download-button {
