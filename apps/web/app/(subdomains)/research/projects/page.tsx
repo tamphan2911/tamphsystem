@@ -568,7 +568,7 @@ export default async function ProjectsDashboard() {
               <>
                 <Link
                   href="/projects/accepted-published"
-                  className="research-new-button research-allow-transform inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-none border border-[#B39CD0] bg-[#B39CD0] text-[#2C2C2C] shadow-sm outline-none transition duration-150 ease-out hover:border-[#C8B6E2] hover:bg-[#C8B6E2] hover:shadow-md focus:ring-2 focus:ring-[#B39CD0]/30 active:translate-y-0 active:scale-95"
+                  className="research-new-button research-report-link-button research-allow-transform inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-none border border-[#B39CD0] bg-[#B39CD0] text-[#2C2C2C] shadow-sm outline-none transition duration-150 ease-out hover:border-[#C8B6E2] hover:bg-[#C8B6E2] hover:shadow-md focus:ring-2 focus:ring-[#B39CD0]/30 active:translate-y-0"
                   aria-label="Open accepted and published research report"
                   title="Accepted and published research report"
                 >

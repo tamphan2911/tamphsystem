@@ -2688,6 +2688,34 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
   --research-new-button-ink: #f7fbfb;
 }
 
+.research-site-root .research-report-link-button {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease !important;
+}
+
+.research-site-root .research-report-link-button::before,
+.research-site-root .research-report-link-button::after {
+  content: none;
+}
+
+.research-site-root .research-report-link-button:hover {
+  border-color: var(--research-new-button-color) !important;
+  background-color: color-mix(
+    in srgb,
+    var(--research-new-button-color) 12%,
+    transparent
+  ) !important;
+  color: var(--research-new-button-color) !important;
+  transform: none !important;
+}
+
+.research-site-root .research-report-link-button:active {
+  filter: none;
+  transform: none !important;
+}
+
 .research-site-root .research-download-button {
   position: relative;
   display: inline-flex;
