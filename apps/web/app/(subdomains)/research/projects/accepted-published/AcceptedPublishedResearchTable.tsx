@@ -5,6 +5,8 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownUp, Download, ExternalLink } from "lucide-react";
 import {
+  FilterSelect,
+  MultiFilterSelect,
   ResearchSortHeaderButton,
   TablePagination,
   TableSearchInput,
@@ -42,6 +44,7 @@ export type AcceptedPublishedResearchRow = {
 type SortDirection = "asc" | "desc";
 type JournalTypeFilter = "INTERNATIONAL" | "LOCAL";
 const internationalRankOptions = ["Q1", "Q2", "Q3", "Q4"];
+const noRankLabel = "No rank";
 
 function normalize(value: string) {
   return value.trim().toLowerCase();
@@ -124,64 +127,6 @@ function CheckboxFilter({
   );
 }
 
-function TypeFilterButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`h-9 border px-3 text-sm font-normal transition ${
-        active
-          ? "border-[#1F7180] bg-[#E5F3F4] text-[#155967] dark:border-[#A8DADC] dark:bg-[#17383E] dark:text-[#D8FBFF]"
-          : "border-[#D8D0C2] bg-[#FFFDF8] text-[#667085] hover:border-[#1F7180] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0] dark:hover:border-[#A8DADC] dark:hover:text-[#A8DADC]"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function RankFilterButton({
-  checked,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  label: string;
-}) {
-  return (
-    <label className="inline-flex h-9 cursor-pointer items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-2.5 text-xs font-normal text-[#667085] transition hover:border-[#1F7180] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0] dark:hover:border-[#A8DADC] dark:hover:text-[#A8DADC]">
-      <span
-        className={`inline-flex h-3.5 w-3.5 flex-none items-center justify-center border transition ${
-          checked
-            ? "border-[#1F7180] bg-[#1F7180] dark:border-[#A8DADC] dark:bg-[#A8DADC]"
-            : "border-[#C9BEAD] bg-white dark:border-[#666666] dark:bg-[#202020]"
-        }`}
-        aria-hidden="true"
-      >
-        {checked ? (
-          <span className="h-1.5 w-1.5 bg-white dark:bg-[#202020]" />
-        ) : null}
-      </span>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-        className="sr-only"
-      />
-      <span>{label}</span>
-    </label>
-  );
-}
-
 function StickyCell({
   children,
   className = "",
@@ -225,16 +170,38 @@ export function AcceptedPublishedResearchTable({
       new Set(
         rows
           .filter((row) => row.journalType === "LOCAL")
-          .map((row) => row.rank.trim() || "Unranked"),
+          .map((row) => row.rank.trim() || noRankLabel),
       ),
     ).sort((left, right) => left.localeCompare(right));
-    return ranks.length > 0 ? ranks : ["Unranked"];
+    return ranks.length > 0 ? ranks : [noRankLabel];
+  }, [rows]);
+
+  const otherInternationalRankOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        rows
+          .filter((row) => row.journalType === "INTERNATIONAL")
+          .map((row) => row.rank.trim() || noRankLabel)
+          .filter(
+            (rank) =>
+              !internationalRankOptions.includes(rank) && rank !== noRankLabel,
+          ),
+      ),
+    ).sort((left, right) => left.localeCompare(right));
   }, [rows]);
 
   const rankOptions =
     journalType === "INTERNATIONAL"
-      ? internationalRankOptions
+      ? [
+          ...internationalRankOptions,
+          noRankLabel,
+          ...otherInternationalRankOptions,
+        ]
       : localRankOptions;
+  const rankFilterOptions = [
+    { value: "ALL", label: "All ranks" },
+    ...rankOptions.map((rank) => ({ value: rank, label: rank })),
+  ];
 
   function changeJournalType(nextType: JournalTypeFilter) {
     setJournalType(nextType);
@@ -242,14 +209,6 @@ export function AcceptedPublishedResearchTable({
       nextType === "INTERNATIONAL"
         ? internationalRankOptions
         : localRankOptions,
-    );
-  }
-
-  function toggleRank(rank: string, checked: boolean) {
-    setSelectedRanks((current) =>
-      checked
-        ? Array.from(new Set([...current, rank]))
-        : current.filter((item) => item !== rank),
     );
   }
 
@@ -390,7 +349,7 @@ export function AcceptedPublishedResearchTable({
         </div>
       </ResearchPageHeaderPortal>
 
-      <div className="w-full max-w-none space-y-4">
+      <div className="w-full min-w-0 max-w-full space-y-4">
         <div className="border border-[#D8D0C2] bg-[#F8F6EF] p-3 dark:border-[#333333] dark:bg-[#242424]">
           <div className="flex flex-col gap-3">
             <TableSearchInput
@@ -411,43 +370,36 @@ export function AcceptedPublishedResearchTable({
                 label="Include conferences"
                 hint="Unchecked shows journal results only. Checked also includes conference results."
               />
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs uppercase tracking-wide text-[#667085] dark:text-[#A0A0A0]">
-                  Type
-                </span>
-                <TypeFilterButton
-                  active={journalType === "INTERNATIONAL"}
-                  onClick={() => changeJournalType("INTERNATIONAL")}
-                >
-                  International
-                </TypeFilterButton>
-                <TypeFilterButton
-                  active={journalType === "LOCAL"}
-                  onClick={() => changeJournalType("LOCAL")}
-                >
-                  Local
-                </TypeFilterButton>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs uppercase tracking-wide text-[#667085] dark:text-[#A0A0A0]">
-                  Rank
-                </span>
-                {rankOptions.map((rank) => (
-                  <RankFilterButton
-                    key={rank}
-                    checked={selectedRanks.includes(rank)}
-                    onChange={(checked) => toggleRank(rank, checked)}
-                    label={rank}
-                  />
-                ))}
-              </div>
+              <FilterSelect
+                value={journalType}
+                onChange={(value) =>
+                  changeJournalType(value as JournalTypeFilter)
+                }
+                options={[
+                  { value: "INTERNATIONAL", label: "International" },
+                  { value: "LOCAL", label: "Local" },
+                ]}
+                ariaLabel="Filter journal type"
+              />
+              <MultiFilterSelect
+                values={
+                  selectedRanks.length === rankOptions.length
+                    ? []
+                    : selectedRanks
+                }
+                onChange={(values) =>
+                  setSelectedRanks(values.length === 0 ? rankOptions : values)
+                }
+                options={rankFilterOptions}
+                ariaLabel="Filter rank"
+              />
             </div>
           </div>
         </div>
 
         <div
           ref={tableTopRef}
-          className="scroll-mt-28 overflow-hidden border border-[#D8D0C2] bg-[#FFFDF8] dark:border-[#333333] dark:bg-[#242424]"
+          className="research-report-table-shell scroll-mt-28 min-w-0 overflow-hidden border border-[#D8D0C2] bg-[#FFFDF8] dark:border-[#333333] dark:bg-[#242424]"
         >
           {filteredRows.length === 0 ? (
             <ResearchEmptyState

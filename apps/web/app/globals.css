@@ -2717,8 +2717,20 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
 }
 
 .research-site-root .research-report-table-scroll {
+  content-visibility: visible !important;
+  contain-intrinsic-size: none !important;
+  display: block;
+  max-width: 100%;
+  min-width: 0;
   scrollbar-color: #9fb6bd #f1ece2;
   scrollbar-width: thin;
+}
+
+.research-site-root .research-report-table-shell {
+  content-visibility: visible !important;
+  contain-intrinsic-size: none !important;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .research-site-root .research-report-table-scroll::-webkit-scrollbar {

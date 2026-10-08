@@ -82,7 +82,7 @@ function journalTypeLabel(type: "INTERNATIONAL" | "LOCAL") {
 }
 
 function rankValue(value: string | null | undefined) {
-  return value?.trim() || "Unranked";
+  return value?.trim() || "No rank";
 }
 
 function citationParts(parts: Array<string | null | undefined>) {
