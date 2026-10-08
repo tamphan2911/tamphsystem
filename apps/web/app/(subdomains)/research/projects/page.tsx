@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma, ProposalType, Role } from "@repo/db";
+import Link from "next/link";
+import { FileSpreadsheet } from "lucide-react";
 import { auth } from "../../../../auth";
 import {
   deleteResearchProject,
@@ -561,25 +563,37 @@ export default async function ProjectsDashboard() {
               </div>
             ))}
           </div>
-          <div className="flex flex-none items-center">
+          <div className="flex flex-none items-center gap-2">
             {isRootAdmin ? (
-              <NewResearchDialog
-                users={authorOptions}
-                isAdmin={isRootAdmin}
-                fundingInstitutions={fundingInstitutions.map((institution) => ({
-                  id: institution.id,
-                  name: institution.name,
-                  shortName: institution.shortName ?? "",
-                  country: institution.country ?? "",
-                }))}
-                assistantTeams={assistantTeams.map((team) => ({
-                  id: team.id,
-                  name: team.name,
-                  leaderName: team.leader.name ?? "",
-                  leaderEmail: team.leader.email,
-                  memberCount: team._count.members,
-                }))}
-              />
+              <>
+                <Link
+                  href="/projects/accepted-published"
+                  className="research-new-button research-allow-transform inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-none border border-[#B39CD0] bg-[#B39CD0] text-[#2C2C2C] shadow-sm outline-none transition duration-150 ease-out hover:border-[#C8B6E2] hover:bg-[#C8B6E2] hover:shadow-md focus:ring-2 focus:ring-[#B39CD0]/30 active:translate-y-0 active:scale-95"
+                  aria-label="Open accepted and published research report"
+                  title="Accepted and published research report"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                </Link>
+                <NewResearchDialog
+                  users={authorOptions}
+                  isAdmin={isRootAdmin}
+                  fundingInstitutions={fundingInstitutions.map(
+                    (institution) => ({
+                      id: institution.id,
+                      name: institution.name,
+                      shortName: institution.shortName ?? "",
+                      country: institution.country ?? "",
+                    }),
+                  )}
+                  assistantTeams={assistantTeams.map((team) => ({
+                    id: team.id,
+                    name: team.name,
+                    leaderName: team.leader.name ?? "",
+                    leaderEmail: team.leader.email,
+                    memberCount: team._count.members,
+                  }))}
+                />
+              </>
             ) : (
               <ProposalDialog
                 type="RESEARCH"
