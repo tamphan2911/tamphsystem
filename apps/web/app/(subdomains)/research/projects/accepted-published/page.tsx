@@ -27,10 +27,11 @@ function citationYear(value: Date) {
 function authorNames(project: {
   coAuthors: string | null;
   authorEntries: Array<{
+    userId: string;
     user: { name: string | null; email: string };
     isCorresponding: boolean;
   }>;
-  authors: Array<{ name: string | null; email: string }>;
+  authors: Array<{ id: string; name: string | null; email: string }>;
 }) {
   if (project.authorEntries.length > 0) {
     return project.authorEntries
@@ -47,6 +48,35 @@ function authorNames(project: {
   return project.coAuthors ?? "";
 }
 
+function authorRole(
+  project: {
+    authorEntries: Array<{
+      userId: string;
+      isCorresponding: boolean;
+    }>;
+    authors: Array<{ id: string; email: string }>;
+  },
+  userId: string,
+  userEmail: string,
+) {
+  const authorEntryIndex = project.authorEntries.findIndex(
+    (entry) => entry.userId === userId,
+  );
+  const authorEntry =
+    authorEntryIndex >= 0 ? project.authorEntries[authorEntryIndex] : null;
+  if (authorEntry?.isCorresponding) return "Corresponding author";
+  if (authorEntryIndex === 0) return "First author";
+
+  const legacyAuthor = project.authors.some(
+    (author) =>
+      author.id === userId ||
+      author.email.trim().toLowerCase() === userEmail.trim().toLowerCase(),
+  );
+  if (legacyAuthor) return "Co-author";
+
+  return "Co-author";
+}
+
 function citationParts(parts: Array<string | null | undefined>) {
   return parts
     .map((part) => part?.trim())
@@ -57,6 +87,8 @@ export default async function AcceptedPublishedResearchPage() {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!session || !userId) redirect("/login");
+  const userEmail =
+    (session.user as { email?: string | null } | undefined)?.email ?? "";
 
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
@@ -81,13 +113,14 @@ export default async function AcceptedPublishedResearchPage() {
       coAuthors: true,
       authorEntries: {
         select: {
+          userId: true,
           isCorresponding: true,
           user: { select: { name: true, email: true } },
         },
         orderBy: [{ position: "asc" }, { createdAt: "asc" }],
       },
       authors: {
-        select: { name: true, email: true },
+        select: { id: true, name: true, email: true },
         orderBy: [{ name: "asc" }, { email: "asc" }],
       },
       submissions: {
@@ -127,6 +160,7 @@ export default async function AcceptedPublishedResearchPage() {
 
   const rows: AcceptedPublishedResearchRow[] = projects.flatMap((project) => {
     const authors = authorNames(project);
+    const role = authorRole(project, userId, userEmail);
     const journalRows: AcceptedPublishedResearchRow[] = project.submissions.map(
       (submission) => {
         const status =
@@ -160,6 +194,7 @@ export default async function AcceptedPublishedResearchPage() {
           publisher: submission.journal.publisher ?? "",
           rank,
           authors,
+          role,
           status,
           dateLabel,
           dateValue: date.toISOString(),
@@ -205,6 +240,7 @@ export default async function AcceptedPublishedResearchPage() {
           publisher: submission.conference.organizer ?? "",
           rank: conferenceType,
           authors,
+          role,
           status,
           dateLabel,
           dateValue: date.toISOString(),

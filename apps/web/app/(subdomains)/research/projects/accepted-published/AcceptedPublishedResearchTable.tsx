@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ArrowDownUp, Download } from "lucide-react";
 import {
   ResearchSortHeaderButton,
@@ -24,6 +24,7 @@ export type AcceptedPublishedResearchRow = {
   publisher: string;
   rank: string;
   authors: string;
+  role: string;
   status: "ACCEPTED" | "PUBLISHED";
   dateLabel: string;
   dateValue: string;
@@ -47,6 +48,7 @@ function xlsxRows(rows: AcceptedPublishedResearchRow[]) {
       "Publisher",
       "Rank",
       "Authors",
+      "Role",
       "Published date / accepted date",
       "Full citation",
     ],
@@ -57,6 +59,7 @@ function xlsxRows(rows: AcceptedPublishedResearchRow[]) {
       row.publisher,
       row.rank,
       row.authors,
+      row.role,
       row.dateLabel,
       row.fullCitation,
     ]),
@@ -130,6 +133,7 @@ export function AcceptedPublishedResearchTable({
   const [includeConferences, setIncludeConferences] = useState(false);
   const [includeAllRanks, setIncludeAllRanks] = useState(false);
   const [dateSort, setDateSort] = useState<SortDirection>("desc");
+  const tableTopRef = useRef<HTMLDivElement | null>(null);
 
   const filteredRows = useMemo(() => {
     const needle = normalize(query);
@@ -145,6 +149,7 @@ export function AcceptedPublishedResearchTable({
           row.publisher,
           row.rank,
           row.authors,
+          row.role,
           row.dateLabel,
           row.fullCitation,
         ]
@@ -178,6 +183,16 @@ export function AcceptedPublishedResearchTable({
       rows: xlsxRows(filteredRows),
       sheetName: "Accepted Published",
       filename: `accepted-published-research-${new Date().toISOString().slice(0, 10)}.xlsx`,
+    });
+  }
+
+  function changePage(nextPage: number) {
+    pagination.setPage(nextPage);
+    window.requestAnimationFrame(() => {
+      tableTopRef.current?.scrollIntoView({
+        block: "start",
+        behavior: "smooth",
+      });
     });
   }
 
@@ -218,7 +233,7 @@ export function AcceptedPublishedResearchTable({
         </div>
       </ResearchPageHeaderPortal>
 
-      <div className="mx-auto max-w-7xl space-y-4">
+      <div className="w-full max-w-none space-y-4">
         <div className="border border-[#D8D0C2] bg-[#F8F6EF] p-3 dark:border-[#333333] dark:bg-[#242424]">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <TableSearchInput
@@ -249,7 +264,10 @@ export function AcceptedPublishedResearchTable({
           </div>
         </div>
 
-        <div className="overflow-hidden border border-[#D8D0C2] bg-[#FFFDF8] dark:border-[#333333] dark:bg-[#242424]">
+        <div
+          ref={tableTopRef}
+          className="scroll-mt-28 overflow-hidden border border-[#D8D0C2] bg-[#FFFDF8] dark:border-[#333333] dark:bg-[#242424]"
+        >
           {filteredRows.length === 0 ? (
             <ResearchEmptyState
               title="No matching research"
@@ -257,8 +275,8 @@ export function AcceptedPublishedResearchTable({
             />
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="min-w-[116rem] table-fixed border-collapse text-left text-sm">
+              <div className="research-report-table-scroll w-full max-w-full overflow-x-scroll overflow-y-visible pb-2 [scrollbar-gutter:stable]">
+                <table className="min-w-[128rem] table-fixed border-collapse text-left text-sm">
                   <colgroup>
                     <col className="w-16" />
                     <col className="w-[22rem]" />
@@ -266,6 +284,7 @@ export function AcceptedPublishedResearchTable({
                     <col className="w-[14rem]" />
                     <col className="w-[7rem]" />
                     <col className="w-[18rem]" />
+                    <col className="w-[10rem]" />
                     <col className="w-[13rem]" />
                     <col className="w-[24rem]" />
                   </colgroup>
@@ -292,6 +311,7 @@ export function AcceptedPublishedResearchTable({
                       <th className="px-3 py-3 font-normal">Publisher</th>
                       <th className="px-3 py-3 font-normal">Rank</th>
                       <th className="px-3 py-3 font-normal">Authors</th>
+                      <th className="px-3 py-3 font-normal">Role</th>
                       <th className="px-3 py-3 font-normal">
                         <span className="inline-flex items-center gap-1.5">
                           Published / accepted
@@ -325,26 +345,39 @@ export function AcceptedPublishedResearchTable({
                         <StickyCell className="left-16 px-3 py-3">
                           <Link
                             href={`/projects/${row.projectId}`}
-                            className="line-clamp-2 border-0 bg-transparent text-[#1F7180] shadow-none transition hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
+                            className="line-clamp-2 break-words border-0 bg-transparent text-[#1F7180] shadow-none transition hover:text-[#155864] dark:text-[#A8DADC] dark:hover:text-[#C9F0F2]"
                           >
                             {row.title}
                           </Link>
                         </StickyCell>
                         <StickyCell className="left-[26rem] px-3 py-3">
-                          <span className="line-clamp-2">{row.venue}</span>
+                          <span className="line-clamp-2 break-words">
+                            {row.venue}
+                          </span>
                         </StickyCell>
                         <td className="px-3 py-3 align-top">
-                          <span className="line-clamp-2">{row.publisher}</span>
+                          <span className="line-clamp-2 break-words">
+                            {row.publisher}
+                          </span>
                         </td>
                         <td className="px-3 py-3 align-top">
-                          <span className="line-clamp-2">{row.rank}</span>
+                          <span className="line-clamp-2 break-words">
+                            {row.rank}
+                          </span>
                         </td>
                         <td className="px-3 py-3 align-top">
-                          <span className="line-clamp-2">{row.authors}</span>
+                          <span className="line-clamp-2 break-words">
+                            {row.authors}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 align-top">
+                          <span className="line-clamp-2 break-words text-[#5B6D87] dark:text-[#B0B0B0]">
+                            {row.role}
+                          </span>
                         </td>
                         <td className="px-3 py-3 align-top">
                           <span
-                            className={`line-clamp-2 ${
+                            className={`line-clamp-2 break-words ${
                               row.status === "PUBLISHED"
                                 ? "text-sky-700 dark:text-sky-300"
                                 : "text-emerald-700 dark:text-emerald-300"
@@ -354,7 +387,7 @@ export function AcceptedPublishedResearchTable({
                           </span>
                         </td>
                         <td className="px-3 py-3 align-top">
-                          <span className="line-clamp-2">
+                          <span className="line-clamp-2 break-words">
                             {row.fullCitation}
                           </span>
                         </td>
@@ -368,7 +401,7 @@ export function AcceptedPublishedResearchTable({
                 pageCount={pagination.pageCount}
                 total={pagination.total}
                 pageSize={pagination.pageSize}
-                onPageChange={pagination.setPage}
+                onPageChange={changePage}
               />
             </>
           )}
