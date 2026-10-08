@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useMemo, useRef, useState } from "react";
-import { ArrowDownUp, Download } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDownUp, Download, ExternalLink } from "lucide-react";
 import {
   ResearchSortHeaderButton,
   TablePagination,
@@ -21,6 +21,9 @@ export type AcceptedPublishedResearchRow = {
   title: string;
   venue: string;
   venueKind: "journal" | "conference";
+  issn: string;
+  journalType: "INTERNATIONAL" | "LOCAL" | "CONFERENCE";
+  journalTypeLabel: string;
   publisher: string;
   rank: string;
   authors: string;
@@ -30,10 +33,14 @@ export type AcceptedPublishedResearchRow = {
   dateValue: string;
   dateMs: number;
   fullCitation: string;
+  articleDownloadHref: string;
+  articleUrl: string;
   isRankedScopusJournal: boolean;
 };
 
 type SortDirection = "asc" | "desc";
+type JournalTypeFilter = "INTERNATIONAL" | "LOCAL";
+const internationalRankOptions = ["Q1", "Q2", "Q3", "Q4"];
 
 function normalize(value: string) {
   return value.trim().toLowerCase();
@@ -45,23 +52,33 @@ function xlsxRows(rows: AcceptedPublishedResearchRow[]) {
       "No.",
       "Title",
       "Journal",
+      "ISSN",
       "Publisher",
+      "Type",
       "Rank",
+      "Article",
       "Authors",
       "Role",
       "Published date / accepted date",
       "Full citation",
+      "Status",
     ],
     ...rows.map((row, index) => [
       index + 1,
       row.title,
       row.venue,
+      row.issn,
       row.publisher,
+      row.journalTypeLabel,
       row.rank,
+      [row.articleDownloadHref ? "File" : "", row.articleUrl ? "Link" : ""]
+        .filter(Boolean)
+        .join(" / "),
       row.authors,
       row.role,
       row.dateLabel,
       row.fullCitation,
+      row.status === "PUBLISHED" ? "Published" : "Accepted",
     ]),
   ];
 }
@@ -104,6 +121,64 @@ function CheckboxFilter({
   );
 }
 
+function TypeFilterButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-9 border px-3 text-sm font-normal transition ${
+        active
+          ? "border-[#1F7180] bg-[#E5F3F4] text-[#155967] dark:border-[#A8DADC] dark:bg-[#17383E] dark:text-[#D8FBFF]"
+          : "border-[#D8D0C2] bg-[#FFFDF8] text-[#667085] hover:border-[#1F7180] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0] dark:hover:border-[#A8DADC] dark:hover:text-[#A8DADC]"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function RankFilterButton({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+}) {
+  return (
+    <label className="inline-flex h-9 cursor-pointer items-center gap-2 border border-[#D8D0C2] bg-[#FFFDF8] px-2.5 text-xs font-normal text-[#667085] transition hover:border-[#1F7180] hover:text-[#1F7180] dark:border-[#444444] dark:bg-[#242424] dark:text-[#B0B0B0] dark:hover:border-[#A8DADC] dark:hover:text-[#A8DADC]">
+      <span
+        className={`inline-flex h-3.5 w-3.5 flex-none items-center justify-center border transition ${
+          checked
+            ? "border-[#1F7180] bg-[#1F7180] dark:border-[#A8DADC] dark:bg-[#A8DADC]"
+            : "border-[#C9BEAD] bg-white dark:border-[#666666] dark:bg-[#202020]"
+        }`}
+        aria-hidden="true"
+      >
+        {checked ? (
+          <span className="h-1.5 w-1.5 bg-white dark:bg-[#202020]" />
+        ) : null}
+      </span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="sr-only"
+      />
+      <span>{label}</span>
+    </label>
+  );
+}
+
 function StickyCell({
   children,
   className = "",
@@ -131,25 +206,73 @@ export function AcceptedPublishedResearchTable({
   const [query, setQuery] = useState("");
   const [includeAccepted, setIncludeAccepted] = useState(false);
   const [includeConferences, setIncludeConferences] = useState(false);
-  const [includeAllRanks, setIncludeAllRanks] = useState(false);
+  const [journalType, setJournalType] =
+    useState<JournalTypeFilter>("INTERNATIONAL");
+  const [selectedRanks, setSelectedRanks] = useState<string[]>(
+    internationalRankOptions,
+  );
   const [dateSort, setDateSort] = useState<SortDirection>("desc");
   const tableTopRef = useRef<HTMLDivElement | null>(null);
+  const tableScrollRef = useRef<HTMLDivElement | null>(null);
+  const [scrollMax, setScrollMax] = useState(0);
+  const [scrollValue, setScrollValue] = useState(0);
+
+  const localRankOptions = useMemo(() => {
+    const ranks = Array.from(
+      new Set(
+        rows
+          .filter((row) => row.journalType === "LOCAL")
+          .map((row) => row.rank.trim() || "Unranked"),
+      ),
+    ).sort((left, right) => left.localeCompare(right));
+    return ranks.length > 0 ? ranks : ["Unranked"];
+  }, [rows]);
+
+  const rankOptions =
+    journalType === "INTERNATIONAL"
+      ? internationalRankOptions
+      : localRankOptions;
+
+  function changeJournalType(nextType: JournalTypeFilter) {
+    setJournalType(nextType);
+    setSelectedRanks(
+      nextType === "INTERNATIONAL"
+        ? internationalRankOptions
+        : localRankOptions,
+    );
+  }
+
+  function toggleRank(rank: string, checked: boolean) {
+    setSelectedRanks((current) =>
+      checked
+        ? Array.from(new Set([...current, rank]))
+        : current.filter((item) => item !== rank),
+    );
+  }
 
   const filteredRows = useMemo(() => {
     const needle = normalize(query);
     return rows
       .filter((row) => includeAccepted || row.status === "PUBLISHED")
       .filter((row) => includeConferences || row.venueKind === "journal")
-      .filter((row) => includeAllRanks || row.isRankedScopusJournal)
+      .filter((row) => {
+        if (row.venueKind === "conference") return includeConferences;
+        return (
+          row.journalType === journalType && selectedRanks.includes(row.rank)
+        );
+      })
       .filter((row) => {
         if (!needle) return true;
         return [
           row.title,
           row.venue,
+          row.issn,
           row.publisher,
+          row.journalTypeLabel,
           row.rank,
           row.authors,
           row.role,
+          row.status,
           row.dateLabel,
           row.fullCitation,
         ]
@@ -165,18 +288,48 @@ export function AcceptedPublishedResearchTable({
   }, [
     dateSort,
     includeAccepted,
-    includeAllRanks,
     includeConferences,
+    journalType,
     query,
     rows,
+    selectedRanks,
   ]);
 
   const pagination = useTablePagination(
     filteredRows,
-    20,
+    10,
     1,
     "accepted-published-research",
   );
+
+  function updateScrollMetrics() {
+    const element = tableScrollRef.current;
+    if (!element) return;
+    setScrollMax(Math.max(0, element.scrollWidth - element.clientWidth));
+    setScrollValue(element.scrollLeft);
+  }
+
+  useEffect(() => {
+    updateScrollMetrics();
+    const element = tableScrollRef.current;
+    if (!element) return undefined;
+    const resizeObserver = new ResizeObserver(updateScrollMetrics);
+    resizeObserver.observe(element);
+    const table = element.querySelector("table");
+    if (table) resizeObserver.observe(table);
+    window.addEventListener("resize", updateScrollMetrics);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateScrollMetrics);
+    };
+  }, [filteredRows.length, pagination.page]);
+
+  function slideTableScroll(value: number) {
+    const element = tableScrollRef.current;
+    if (!element) return;
+    element.scrollLeft = value;
+    setScrollValue(value);
+  }
 
   function downloadCurrentView() {
     downloadXlsx({
@@ -224,7 +377,7 @@ export function AcceptedPublishedResearchTable({
           <button
             type="button"
             onClick={downloadCurrentView}
-            className="research-new-button research-allow-transform inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-none border border-[#B39CD0] bg-[#B39CD0] text-[#2C2C2C] shadow-sm outline-none transition duration-150 ease-out hover:border-[#C8B6E2] hover:bg-[#C8B6E2] hover:shadow-md focus:ring-2 focus:ring-[#B39CD0]/30 active:translate-y-0 active:scale-95"
+            className="research-new-button research-report-link-button research-allow-transform inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-none border border-[#B39CD0] bg-[#B39CD0] text-[#2C2C2C] shadow-sm outline-none transition duration-150 ease-out hover:border-[#C8B6E2] hover:bg-[#C8B6E2] hover:shadow-md focus:ring-2 focus:ring-[#B39CD0]/30 active:translate-y-0"
             aria-label="Download current report view as Excel"
             title="Download current view as Excel"
           >
@@ -235,13 +388,13 @@ export function AcceptedPublishedResearchTable({
 
       <div className="w-full max-w-none space-y-4">
         <div className="border border-[#D8D0C2] bg-[#F8F6EF] p-3 dark:border-[#333333] dark:bg-[#242424]">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-col gap-3">
             <TableSearchInput
               value={query}
               onChange={setQuery}
-              placeholder="Search title, journal, publisher, rank, author, citation..."
+              placeholder="Search title, journal, ISSN, publisher, rank, author, citation..."
             />
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <CheckboxFilter
                 checked={includeAccepted}
                 onChange={setIncludeAccepted}
@@ -254,12 +407,36 @@ export function AcceptedPublishedResearchTable({
                 label="Include conferences"
                 hint="Unchecked shows journal results only. Checked also includes conference results."
               />
-              <CheckboxFilter
-                checked={includeAllRanks}
-                onChange={setIncludeAllRanks}
-                label="All ranks"
-                hint="Unchecked shows only ranked Scopus journals. Checked includes all ranks and conferences."
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs uppercase tracking-wide text-[#667085] dark:text-[#A0A0A0]">
+                  Type
+                </span>
+                <TypeFilterButton
+                  active={journalType === "INTERNATIONAL"}
+                  onClick={() => changeJournalType("INTERNATIONAL")}
+                >
+                  International
+                </TypeFilterButton>
+                <TypeFilterButton
+                  active={journalType === "LOCAL"}
+                  onClick={() => changeJournalType("LOCAL")}
+                >
+                  Local
+                </TypeFilterButton>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs uppercase tracking-wide text-[#667085] dark:text-[#A0A0A0]">
+                  Rank
+                </span>
+                {rankOptions.map((rank) => (
+                  <RankFilterButton
+                    key={rank}
+                    checked={selectedRanks.includes(rank)}
+                    onChange={(checked) => toggleRank(rank, checked)}
+                    label={rank}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -275,18 +452,45 @@ export function AcceptedPublishedResearchTable({
             />
           ) : (
             <>
-              <div className="research-report-table-scroll w-full max-w-full overflow-x-scroll overflow-y-visible pb-2 [scrollbar-gutter:stable]">
-                <table className="min-w-[128rem] table-fixed border-collapse text-left text-sm">
+              <div className="border-b border-[#D8D0C2] bg-[#F8F6EF] px-3 py-2 dark:border-[#333333] dark:bg-[#242424]">
+                <div className="flex items-center gap-3">
+                  <span className="whitespace-nowrap text-xs uppercase tracking-wide text-[#667085] dark:text-[#A0A0A0]">
+                    Slide table
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={scrollMax}
+                    value={Math.min(scrollValue, scrollMax)}
+                    onChange={(event) =>
+                      slideTableScroll(Number(event.target.value))
+                    }
+                    className="research-report-scroll-range h-7 min-w-0 flex-1"
+                    disabled={scrollMax <= 0}
+                    aria-label="Slide table horizontally"
+                  />
+                </div>
+              </div>
+              <div
+                ref={tableScrollRef}
+                onScroll={updateScrollMetrics}
+                className="research-report-table-scroll w-full max-w-full overflow-x-scroll overflow-y-visible pb-2 [scrollbar-gutter:stable]"
+              >
+                <table className="min-w-[170rem] table-fixed border-collapse text-left text-sm">
                   <colgroup>
                     <col className="w-16" />
                     <col className="w-[22rem]" />
-                    <col className="w-[18rem]" />
+                    <col className="w-[20rem]" />
+                    <col className="w-[10rem]" />
                     <col className="w-[14rem]" />
+                    <col className="w-[10rem]" />
                     <col className="w-[7rem]" />
+                    <col className="w-[8rem]" />
                     <col className="w-[18rem]" />
                     <col className="w-[10rem]" />
                     <col className="w-[13rem]" />
                     <col className="w-[24rem]" />
+                    <col className="w-[10rem]" />
                   </colgroup>
                   <thead>
                     <tr className="border-b border-[#D8D0C2] text-xs uppercase tracking-wide text-[#667085] dark:border-[#333333] dark:text-[#B0B0B0]">
@@ -308,8 +512,11 @@ export function AcceptedPublishedResearchTable({
                       >
                         Journal
                       </StickyCell>
+                      <th className="px-3 py-3 font-normal">ISSN</th>
                       <th className="px-3 py-3 font-normal">Publisher</th>
+                      <th className="px-3 py-3 font-normal">Type</th>
                       <th className="px-3 py-3 font-normal">Rank</th>
+                      <th className="px-3 py-3 font-normal">Article</th>
                       <th className="px-3 py-3 font-normal">Authors</th>
                       <th className="px-3 py-3 font-normal">Role</th>
                       <th className="px-3 py-3 font-normal">
@@ -329,6 +536,7 @@ export function AcceptedPublishedResearchTable({
                         </span>
                       </th>
                       <th className="px-3 py-3 font-normal">Full citation</th>
+                      <th className="px-3 py-3 font-normal">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -357,13 +565,69 @@ export function AcceptedPublishedResearchTable({
                         </StickyCell>
                         <td className="px-3 py-3 align-top">
                           <span className="line-clamp-2 break-words">
+                            {row.issn || "-"}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 align-top">
+                          <span className="line-clamp-2 break-words">
                             {row.publisher}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 align-top">
+                          <span className="line-clamp-2 break-words text-[#5B6D87] dark:text-[#B0B0B0]">
+                            {row.journalTypeLabel}
                           </span>
                         </td>
                         <td className="px-3 py-3 align-top">
                           <span className="line-clamp-2 break-words">
                             {row.rank}
                           </span>
+                        </td>
+                        <td className="px-3 py-3 align-top">
+                          <div className="flex items-center gap-2">
+                            {row.articleDownloadHref ? (
+                              <IconHint
+                                label="Download published article file"
+                                position="bottom"
+                              >
+                                <a
+                                  href={row.articleDownloadHref}
+                                  className="research-allow-transform research-download-button"
+                                  aria-label="Download published article file"
+                                >
+                                  <Download
+                                    className="svgIcon h-4 w-4"
+                                    aria-hidden="true"
+                                  />
+                                  <span className="icon2" aria-hidden="true" />
+                                </a>
+                              </IconHint>
+                            ) : null}
+                            {row.articleUrl ? (
+                              <IconHint
+                                label="Open published article link"
+                                position="bottom"
+                              >
+                                <a
+                                  href={row.articleUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="research-allow-transform research-title-icon-button"
+                                  aria-label="Open published article link"
+                                >
+                                  <ExternalLink
+                                    className="h-4 w-4"
+                                    aria-hidden="true"
+                                  />
+                                </a>
+                              </IconHint>
+                            ) : null}
+                            {!row.articleDownloadHref && !row.articleUrl ? (
+                              <span className="text-xs text-[#98A2B3] dark:text-[#777777]">
+                                -
+                              </span>
+                            ) : null}
+                          </div>
                         </td>
                         <td className="px-3 py-3 align-top">
                           <span className="line-clamp-2 break-words">
@@ -389,6 +653,19 @@ export function AcceptedPublishedResearchTable({
                         <td className="px-3 py-3 align-top">
                           <span className="line-clamp-2 break-words">
                             {row.fullCitation}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 align-top">
+                          <span
+                            className={`line-clamp-2 break-words ${
+                              row.status === "PUBLISHED"
+                                ? "text-sky-700 dark:text-sky-300"
+                                : "text-emerald-700 dark:text-emerald-300"
+                            }`}
+                          >
+                            {row.status === "PUBLISHED"
+                              ? "Published"
+                              : "Accepted"}
                           </span>
                         </td>
                       </tr>

@@ -2759,6 +2759,49 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
   background: #a8dadc;
 }
 
+.research-site-root .research-report-scroll-range {
+  accent-color: #1f7180;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+.research-site-root
+  .research-report-scroll-range::-webkit-slider-runnable-track {
+  height: 0.375rem;
+  background: #e6ded0;
+}
+
+.research-site-root .research-report-scroll-range::-webkit-slider-thumb {
+  margin-top: -0.3125rem;
+  height: 1rem;
+  width: 2.5rem;
+  border: 1px solid #1f7180;
+  border-radius: 0;
+  background: #fffdf8;
+  cursor: ew-resize;
+  -webkit-appearance: none;
+}
+
+.research-site-root .research-report-scroll-range:disabled {
+  opacity: 0.45;
+}
+
+.research-site-root:not(.research-theme-light) .research-report-scroll-range {
+  accent-color: #a8dadc;
+}
+
+.research-site-root:not(.research-theme-light)
+  .research-report-scroll-range::-webkit-slider-runnable-track {
+  background: #333333;
+}
+
+.research-site-root:not(.research-theme-light)
+  .research-report-scroll-range::-webkit-slider-thumb {
+  border-color: #a8dadc;
+  background: #242424;
+}
+
 .research-site-root .research-download-button {
   position: relative;
   display: inline-flex;

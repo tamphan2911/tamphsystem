@@ -77,6 +77,14 @@ function authorRole(
   return "Co-author";
 }
 
+function journalTypeLabel(type: "INTERNATIONAL" | "LOCAL") {
+  return type === "LOCAL" ? "Local" : "International";
+}
+
+function rankValue(value: string | null | undefined) {
+  return value?.trim() || "Unranked";
+}
+
 function citationParts(parts: Array<string | null | undefined>) {
   return parts
     .map((part) => part?.trim())
@@ -93,6 +101,13 @@ export default async function AcceptedPublishedResearchPage() {
   const roles = ((session?.user as { roles?: Role[] } | undefined)?.roles ??
     []) as Role[];
   if (!roles.includes(Role.ADMIN)) redirect("/401");
+
+  const tamphUser = await prisma.user.findUnique({
+    where: { email: "tamph@uel.edu.vn" },
+    select: { id: true, email: true },
+  });
+  const roleUserId = tamphUser?.id ?? userId;
+  const roleUserEmail = tamphUser?.email ?? userEmail;
 
   const projects = await prisma.researchProject.findMany({
     where: {
@@ -130,10 +145,14 @@ export default async function AcceptedPublishedResearchPage() {
           status: true,
           acceptedAt: true,
           publishedAt: true,
+          articleUrl: true,
+          articleFileName: true,
           updatedAt: true,
           journal: {
             select: {
               name: true,
+              issn: true,
+              type: true,
               publisher: true,
               rank: true,
               localRank: true,
@@ -160,7 +179,7 @@ export default async function AcceptedPublishedResearchPage() {
 
   const rows: AcceptedPublishedResearchRow[] = projects.flatMap((project) => {
     const authors = authorNames(project);
-    const role = authorRole(project, userId, userEmail);
+    const role = authorRole(project, roleUserId, roleUserEmail);
     const journalRows: AcceptedPublishedResearchRow[] = project.submissions.map(
       (submission) => {
         const status =
@@ -171,8 +190,12 @@ export default async function AcceptedPublishedResearchPage() {
               submission.acceptedAt ??
               submission.updatedAt)
             : (submission.acceptedAt ?? submission.updatedAt);
+        const journalType =
+          submission.journal.type === "LOCAL" ? "LOCAL" : "INTERNATIONAL";
         const rank =
-          submission.journal.rank ?? submission.journal.localRank ?? "";
+          journalType === "LOCAL"
+            ? rankValue(submission.journal.localRank)
+            : rankValue(submission.journal.rank);
         const statusLabel = status === "PUBLISHED" ? "Published" : "Accepted";
         const dateLabel = `${statusLabel}: ${dateText(date)}`;
         const citation = citationParts([
@@ -191,6 +214,9 @@ export default async function AcceptedPublishedResearchPage() {
           title: project.title,
           venue: submission.journal.name,
           venueKind: "journal",
+          issn: submission.journal.issn ?? "",
+          journalType,
+          journalTypeLabel: journalTypeLabel(journalType),
           publisher: submission.journal.publisher ?? "",
           rank,
           authors,
@@ -200,6 +226,10 @@ export default async function AcceptedPublishedResearchPage() {
           dateValue: date.toISOString(),
           dateMs: date.getTime(),
           fullCitation: citation,
+          articleDownloadHref: submission.articleFileName
+            ? `/api/research/submissions/${submission.id}/article`
+            : "",
+          articleUrl: submission.articleUrl ?? "",
           isRankedScopusJournal: Boolean(submission.journal.rank?.trim()),
         };
       },
@@ -237,6 +267,9 @@ export default async function AcceptedPublishedResearchPage() {
           title: project.title,
           venue: submission.conference.name,
           venueKind: "conference",
+          issn: "",
+          journalType: "CONFERENCE",
+          journalTypeLabel: "Conference",
           publisher: submission.conference.organizer ?? "",
           rank: conferenceType,
           authors,
@@ -246,6 +279,8 @@ export default async function AcceptedPublishedResearchPage() {
           dateValue: date.toISOString(),
           dateMs: date.getTime(),
           fullCitation: citation,
+          articleDownloadHref: "",
+          articleUrl: "",
           isRankedScopusJournal: false,
         };
       });
