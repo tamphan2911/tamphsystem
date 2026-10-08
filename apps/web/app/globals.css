@@ -2720,7 +2720,7 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
   content-visibility: visible !important;
   contain-intrinsic-size: none !important;
   display: block;
-  width: min(100%, calc(100vw - 2rem));
+  width: 100%;
   max-width: 100%;
   min-width: 0;
   scrollbar-color: #9fb6bd #f1ece2;
@@ -2730,23 +2730,9 @@ html[data-research-theme="light"] .research-site-root .research-new-button {
 .research-site-root .research-report-table-shell {
   content-visibility: visible !important;
   contain-intrinsic-size: none !important;
-  width: min(100%, calc(100vw - 2rem));
+  width: 100%;
   max-width: 100%;
   min-width: 0;
-}
-
-@media (min-width: 640px) {
-  .research-site-root .research-report-table-scroll,
-  .research-site-root .research-report-table-shell {
-    width: min(100%, calc(100vw - 4rem));
-  }
-}
-
-@media (min-width: 1024px) {
-  .research-site-root .research-report-table-scroll,
-  .research-site-root .research-report-table-shell {
-    width: min(100%, calc(100vw - 22rem));
-  }
 }
 
 .research-site-root .research-report-table-scroll::-webkit-scrollbar {

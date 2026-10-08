@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { useMemo, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownUp, Download, ExternalLink } from "lucide-react";
 import {
   FilterSelect,
@@ -158,6 +158,9 @@ export function AcceptedPublishedResearchTable({
   const [selectedRanks, setSelectedRanks] = useState<string[]>([]);
   const [dateSort, setDateSort] = useState<SortDirection>("desc");
   const tableTopRef = useRef<HTMLDivElement | null>(null);
+  const [tableViewportWidth, setTableViewportWidth] = useState<number | null>(
+    null,
+  );
 
   const localRankOptions = useMemo(() => {
     const ranks = Array.from(
@@ -266,6 +269,41 @@ export function AcceptedPublishedResearchTable({
     "accepted-published-research",
   );
 
+  useEffect(() => {
+    function updateTableViewportWidth() {
+      const element = tableTopRef.current;
+      const main = element?.closest("main");
+      if (!main) return;
+      const style = window.getComputedStyle(main);
+      const horizontalPadding =
+        Number.parseFloat(style.paddingLeft || "0") +
+        Number.parseFloat(style.paddingRight || "0");
+      const nextWidth = Math.max(
+        320,
+        Math.floor(main.clientWidth - horizontalPadding),
+      );
+      setTableViewportWidth(nextWidth);
+    }
+
+    updateTableViewportWidth();
+    const resizeObserver = new ResizeObserver(updateTableViewportWidth);
+    const main = tableTopRef.current?.closest("main");
+    if (main) resizeObserver.observe(main);
+    window.addEventListener("resize", updateTableViewportWidth);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateTableViewportWidth);
+    };
+  }, []);
+
+  const tableViewportStyle: CSSProperties | undefined = tableViewportWidth
+    ? {
+        maxWidth: `${tableViewportWidth}px`,
+        width: `${tableViewportWidth}px`,
+      }
+    : undefined;
+
   function downloadCurrentView() {
     downloadXlsx({
       rows: xlsxRows(filteredRows),
@@ -366,6 +404,7 @@ export function AcceptedPublishedResearchTable({
 
         <div
           ref={tableTopRef}
+          style={tableViewportStyle}
           className="research-report-table-shell scroll-mt-28 min-w-0 overflow-hidden border border-[#D8D0C2] bg-[#FFFDF8] dark:border-[#333333] dark:bg-[#242424]"
         >
           {filteredRows.length === 0 ? (
@@ -375,7 +414,10 @@ export function AcceptedPublishedResearchTable({
             />
           ) : (
             <>
-              <div className="research-report-table-scroll w-full max-w-full overflow-x-scroll overflow-y-visible pb-2 [scrollbar-gutter:stable]">
+              <div
+                style={tableViewportStyle}
+                className="research-report-table-scroll w-full max-w-full overflow-x-auto overflow-y-visible pb-2 [scrollbar-gutter:stable]"
+              >
                 <table className="min-w-[180rem] table-fixed border-collapse text-left text-sm">
                   <colgroup>
                     <col className="w-16" />
