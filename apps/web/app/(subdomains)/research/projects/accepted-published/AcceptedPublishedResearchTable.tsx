@@ -22,6 +22,7 @@ export type AcceptedPublishedResearchRow = {
   venue: string;
   venueKind: "journal" | "conference";
   issn: string;
+  venueTypeLabel: "Journal" | "Conference";
   journalType: "INTERNATIONAL" | "LOCAL" | "CONFERENCE";
   journalTypeLabel: string;
   publisher: string;
@@ -52,9 +53,10 @@ function xlsxRows(rows: AcceptedPublishedResearchRow[]) {
       "No.",
       "Title",
       "Journal",
-      "ISSN",
+      "ISSN / ISBN",
+      "Venue type",
       "Publisher",
-      "Type",
+      "Journal type",
       "Rank",
       "Article",
       "Authors",
@@ -68,6 +70,7 @@ function xlsxRows(rows: AcceptedPublishedResearchRow[]) {
       row.title,
       row.venue,
       row.issn,
+      row.venueTypeLabel,
       row.publisher,
       row.journalTypeLabel,
       row.rank,
@@ -267,6 +270,7 @@ export function AcceptedPublishedResearchTable({
           row.title,
           row.venue,
           row.issn,
+          row.venueTypeLabel,
           row.publisher,
           row.journalTypeLabel,
           row.rank,
@@ -392,7 +396,7 @@ export function AcceptedPublishedResearchTable({
             <TableSearchInput
               value={query}
               onChange={setQuery}
-              placeholder="Search title, journal, ISSN, publisher, rank, author, citation..."
+              placeholder="Search title, journal, ISSN, ISBN, publisher, rank, author, citation..."
             />
             <div className="flex flex-wrap items-center gap-2">
               <CheckboxFilter
@@ -476,11 +480,12 @@ export function AcceptedPublishedResearchTable({
                 onScroll={updateScrollMetrics}
                 className="research-report-table-scroll w-full max-w-full overflow-x-scroll overflow-y-visible pb-2 [scrollbar-gutter:stable]"
               >
-                <table className="min-w-[170rem] table-fixed border-collapse text-left text-sm">
+                <table className="min-w-[180rem] table-fixed border-collapse text-left text-sm">
                   <colgroup>
                     <col className="w-16" />
                     <col className="w-[22rem]" />
                     <col className="w-[20rem]" />
+                    <col className="w-[10rem]" />
                     <col className="w-[10rem]" />
                     <col className="w-[14rem]" />
                     <col className="w-[10rem]" />
@@ -512,9 +517,10 @@ export function AcceptedPublishedResearchTable({
                       >
                         Journal
                       </StickyCell>
-                      <th className="px-3 py-3 font-normal">ISSN</th>
+                      <th className="px-3 py-3 font-normal">ISSN / ISBN</th>
+                      <th className="px-3 py-3 font-normal">Venue type</th>
                       <th className="px-3 py-3 font-normal">Publisher</th>
-                      <th className="px-3 py-3 font-normal">Type</th>
+                      <th className="px-3 py-3 font-normal">Journal type</th>
                       <th className="px-3 py-3 font-normal">Rank</th>
                       <th className="px-3 py-3 font-normal">Article</th>
                       <th className="px-3 py-3 font-normal">Authors</th>
@@ -566,6 +572,11 @@ export function AcceptedPublishedResearchTable({
                         <td className="px-3 py-3 align-top">
                           <span className="line-clamp-2 break-words">
                             {row.issn || "-"}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 align-top">
+                          <span className="line-clamp-2 break-words text-[#5B6D87] dark:text-[#B0B0B0]">
+                            {row.venueTypeLabel}
                           </span>
                         </td>
                         <td className="px-3 py-3 align-top">
