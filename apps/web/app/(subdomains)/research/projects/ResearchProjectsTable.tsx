@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import {
   BadgeCheck,
   Ban,
@@ -13,6 +19,8 @@ import {
   CheckCircle2,
   CircleDollarSign,
   CircleOff,
+  Download,
+  ExternalLink,
   FileCheck2,
   FileClock,
   FileSearch,
@@ -85,6 +93,9 @@ export type ResearchProjectRow = {
   hasSubmittedSubmission: boolean;
   hasAcceptedSubmission: boolean;
   hasAcceptedOrPublishedSubmission?: boolean;
+  publishedArticleSubmissionId: string;
+  publishedArticleFileName: string;
+  publishedArticleUrl: string;
   editValues?: ResearchBasicValues;
   editAuthors?: SelectedAuthor[];
   completedProductionSteps?: string[];
@@ -421,6 +432,48 @@ function ActiveTaskCount({
   );
 }
 
+function PublishedArticleLinks({
+  submissionId,
+  fileName,
+  articleUrl,
+}: {
+  submissionId?: string;
+  fileName?: string;
+  articleUrl?: string;
+}) {
+  if (!fileName && !articleUrl) return null;
+
+  return (
+    <div className="mt-0.5 flex items-center justify-center gap-1">
+      {fileName && submissionId ? (
+        <IconHint label="Download published article file" position="bottom">
+          <a
+            href={`/api/research/submissions/${submissionId}/article`}
+            className="research-allow-transform research-download-button"
+            aria-label="Download published article file"
+          >
+            <Download className="svgIcon h-3.5 w-3.5" aria-hidden="true" />
+            <span className="icon2" aria-hidden="true" />
+          </a>
+        </IconHint>
+      ) : null}
+      {articleUrl ? (
+        <IconHint label="Open published article link" position="bottom">
+          <a
+            href={articleUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="research-allow-transform research-title-icon-button"
+            aria-label="Open published article link"
+          >
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+          </a>
+        </IconHint>
+      ) : null}
+    </div>
+  );
+}
+
 function unfinishedProductionStepCount(row: ResearchProjectRow) {
   return stageFilterKey(row) === "PRODUCTION"
     ? (row.unfinishedProductionSteps?.length ?? 0)
@@ -453,7 +506,15 @@ export function ResearchStageIndicator({
     | "activeTasks"
     | "overdueTasks"
     | "unfinishedProductionSteps"
-  >;
+  > &
+    Partial<
+      Pick<
+        ResearchProjectRow,
+        | "publishedArticleSubmissionId"
+        | "publishedArticleFileName"
+        | "publishedArticleUrl"
+      >
+    >;
   showTaskCounts?: boolean;
 }) {
   const unfinishedProductionSteps =
@@ -475,6 +536,11 @@ export function ResearchStageIndicator({
           overdueCount={row.overdueTasks}
         />
       ) : null}
+      <PublishedArticleLinks
+        submissionId={row.publishedArticleSubmissionId}
+        fileName={row.publishedArticleFileName}
+        articleUrl={row.publishedArticleUrl}
+      />
       <ProductionUnfinishedSteps steps={unfinishedProductionSteps} />
     </div>
   );
@@ -785,8 +851,10 @@ export function ResearchProjectsTable({
     "projects:priority",
     "0",
   );
-  const [storedFollowUpValue, setStoredFollowUpValue] =
-    usePersistentTableValue("projects:follow-up", "0");
+  const [storedFollowUpValue, setStoredFollowUpValue] = usePersistentTableValue(
+    "projects:follow-up",
+    "0",
+  );
   const [storedProductionQueueValue, setStoredProductionQueueValue] =
     usePersistentTableValue("projects:production-queue", "0");
   const hasServerState = Boolean(serverState);
@@ -846,18 +914,23 @@ export function ResearchProjectsTable({
     showFollowUpOnly ||
     showProductionQueueOnly;
 
-  const updateServerParams = useCallback((updates: Record<string, string | null>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    Object.entries(updates).forEach(([key, value]) => {
-      if (!value || value === "ALL" || value === "NONE" || value === "0") {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    });
-    const next = params.toString();
-    router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
-  }, [pathname, router, searchParams]);
+  const updateServerParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(updates).forEach(([key, value]) => {
+        if (!value || value === "ALL" || value === "NONE" || value === "0") {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      });
+      const next = params.toString();
+      router.replace(next ? `${pathname}?${next}` : pathname, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams],
+  );
 
   useEffect(() => {
     if (!hasServerState) return;
@@ -909,6 +982,7 @@ export function ResearchProjectsTable({
         row.coAuthors,
         row.leadResearcher,
         row.stage,
+        row.publishedArticleUrl,
         row.canViewRegistrationClaim ? row.universityRegistration : "",
         row.canViewRegistrationClaim ? row.registerName : "",
         row.canViewRegistrationClaim ? row.registerStatus : "",
@@ -1378,10 +1452,7 @@ export function ResearchProjectsTable({
                 </td>
                 <td className="min-w-0 px-3 py-3 align-top">
                   <div className="min-w-0">
-                    <Link
-                      href={`/projects/${row.id}`}
-                      className="group inline"
-                    >
+                    <Link href={`/projects/${row.id}`} className="group inline">
                       <p
                         className={`inline text-base leading-6 group-hover:text-[#A8DADC] ${researchLinkClass}`}
                       >

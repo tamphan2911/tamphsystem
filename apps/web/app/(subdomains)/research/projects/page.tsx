@@ -251,7 +251,12 @@ export default async function ProjectsDashboard() {
             orderBy: [{ position: "asc" }, { createdAt: "asc" }],
           },
           submissions: {
-            select: { status: true },
+            select: {
+              id: true,
+              status: true,
+              articleUrl: true,
+              articleFileName: true,
+            },
           },
           tasks: {
             where: { status: { notIn: ["COMPLETED", "REVOKED"] } },
@@ -345,6 +350,9 @@ export default async function ProjectsDashboard() {
     );
     const hasPublishedSubmission = journalSubmissionStatuses.some(
       (status) => status === "PUBLISHED",
+    );
+    const publishedArticleSubmission = project.submissions.find(
+      (submission) => submission.status === "PUBLISHED",
     );
     const ongoingSubmissionCount = journalSubmissionStatuses.filter(
       (status) =>
@@ -487,6 +495,10 @@ export default async function ProjectsDashboard() {
       hasAcceptedSubmission,
       hasAcceptedOrPublishedSubmission:
         hasAcceptedSubmission || hasPublishedSubmission,
+      publishedArticleSubmissionId: publishedArticleSubmission?.id ?? "",
+      publishedArticleFileName:
+        publishedArticleSubmission?.articleFileName ?? "",
+      publishedArticleUrl: publishedArticleSubmission?.articleUrl ?? "",
       editValues,
       editAuthors,
       completedProductionSteps: project.completedProductionSteps,
