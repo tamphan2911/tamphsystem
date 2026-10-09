@@ -62,6 +62,7 @@ function xlsxRows(rows: AcceptedPublishedResearchRow[]) {
       "Journal type",
       "Rank",
       "Article",
+      "Paper link",
       "Authors",
       "Role",
       "Published date / accepted date",
@@ -80,6 +81,7 @@ function xlsxRows(rows: AcceptedPublishedResearchRow[]) {
       [row.articleDownloadHref ? "File" : "", row.articleUrl ? "Link" : ""]
         .filter(Boolean)
         .join(" / "),
+      row.articleUrl,
       row.authors,
       row.role,
       row.dateLabel,
@@ -241,6 +243,7 @@ export function AcceptedPublishedResearchTable({
           row.role,
           row.status,
           row.dateLabel,
+          row.articleUrl,
           row.fullCitation,
         ]
           .join(" ")
@@ -418,7 +421,7 @@ export function AcceptedPublishedResearchTable({
                 style={tableViewportStyle}
                 className="research-report-table-scroll w-full max-w-full overflow-x-auto overflow-y-visible pb-2 [scrollbar-gutter:stable]"
               >
-                <table className="min-w-[180rem] table-fixed border-collapse text-left text-sm">
+                <table className="min-w-[202rem] table-fixed border-collapse text-left text-sm">
                   <colgroup>
                     <col className="w-16" />
                     <col className="w-[22rem]" />
@@ -429,6 +432,7 @@ export function AcceptedPublishedResearchTable({
                     <col className="w-[10rem]" />
                     <col className="w-[7rem]" />
                     <col className="w-[8rem]" />
+                    <col className="w-[22rem]" />
                     <col className="w-[18rem]" />
                     <col className="w-[10rem]" />
                     <col className="w-[13rem]" />
@@ -461,6 +465,7 @@ export function AcceptedPublishedResearchTable({
                       <th className="px-3 py-3 font-normal">Journal type</th>
                       <th className="px-3 py-3 font-normal">Rank</th>
                       <th className="px-3 py-3 font-normal">Article</th>
+                      <th className="px-3 py-3 font-normal">Paper link</th>
                       <th className="px-3 py-3 font-normal">Authors</th>
                       <th className="px-3 py-3 font-normal">Role</th>
                       <th className="px-3 py-3 font-normal">
@@ -577,6 +582,11 @@ export function AcceptedPublishedResearchTable({
                               </span>
                             ) : null}
                           </div>
+                        </td>
+                        <td className="px-3 py-3 align-top">
+                          <span className="line-clamp-2 break-all text-[#5B6D87] dark:text-[#B0B0B0]">
+                            {row.articleUrl || "-"}
+                          </span>
                         </td>
                         <td className="px-3 py-3 align-top">
                           <span className="line-clamp-2 break-words">

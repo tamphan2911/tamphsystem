@@ -196,8 +196,7 @@ export default async function AcceptedPublishedResearchPage() {
           journalType === "LOCAL"
             ? rankValue(submission.journal.localRank)
             : rankValue(submission.journal.rank);
-        const statusLabel = status === "PUBLISHED" ? "Published" : "Accepted";
-        const dateLabel = `${statusLabel}: ${dateText(date)}`;
+        const dateLabel = dateText(date);
         const citation = citationParts([
           authors,
           `(${citationYear(date)})`,
@@ -250,8 +249,7 @@ export default async function AcceptedPublishedResearchPage() {
               .toLowerCase()
               .replace(/\b\w/g, (letter) => letter.toUpperCase())
           : "";
-        const statusLabel = status === "PUBLISHED" ? "Published" : "Accepted";
-        const dateLabel = `${statusLabel}: ${dateText(date)}`;
+        const dateLabel = dateText(date);
         const citation = citationParts([
           authors,
           `(${citationYear(date)})`,
