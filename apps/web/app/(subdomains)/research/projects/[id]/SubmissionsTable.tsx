@@ -153,7 +153,8 @@ function statusLabel(value: string) {
 
 function badgeClass(value: string) {
   const normalized = normalizedStatus(value);
-  if (normalized === "PUBLISHED") return "text-emerald-700 dark:text-emerald-300";
+  if (normalized === "PUBLISHED")
+    return "text-emerald-700 dark:text-emerald-300";
   if (normalized === "ACCEPTED") return "text-cyan-700 dark:text-[#A8DADC]";
   if (normalized === "REVIEWING") return "text-violet-700 dark:text-violet-300";
   if (normalized === "REJECTED") return "text-rose-700 dark:text-rose-300";
@@ -634,19 +635,6 @@ export function SubmissionsTable({
 
     const formData = new FormData(event.currentTarget);
     const nextStatus = String(formData.get("status") ?? "");
-    if (
-      editing.kind === "journal" &&
-      normalizedStatus(nextStatus) === "PUBLISHED"
-    ) {
-      const articleUrl = String(formData.get("articleUrl") ?? "").trim();
-      if (!articleUrl) {
-        showError({
-          title: "Published article link required",
-          detail: "Add the article link before saving Published status.",
-        });
-        return;
-      }
-    }
     const movesToAccepted =
       editing.kind === "journal" &&
       normalizedStatus(nextStatus) === "ACCEPTED" &&
@@ -1226,7 +1214,6 @@ export function SubmissionsTable({
                   <label className="grid gap-1.5">
                     <span className="text-xs font-bold uppercase tracking-wide text-[#B0B0B0]">
                       Published article link
-                      <span className="research-required-mark">(*)</span>
                     </span>
                     <span className="research-auth-input-shell research-published-article-link-field">
                       <input

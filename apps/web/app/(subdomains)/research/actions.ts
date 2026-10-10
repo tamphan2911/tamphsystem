@@ -9437,27 +9437,25 @@ export async function updateSubmissionStatus(formData: FormData) {
     const hasNewArticleFile =
       articleFile instanceof File && articleFile.size > 0;
     if (journalStatus === SubmissionStatus.PUBLISHED) {
-      if (!articleUrl) {
-        return {
-          ok: false,
-          message:
-            "Add the published article link before changing this submission to published.",
-        };
-      }
-      try {
-        const parsedUrl = new URL(articleUrl);
-        if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+      if (articleUrl) {
+        try {
+          const parsedUrl = new URL(articleUrl);
+          if (
+            parsedUrl.protocol !== "http:" &&
+            parsedUrl.protocol !== "https:"
+          ) {
+            return {
+              ok: false,
+              message:
+                "Published article link must start with http:// or https://.",
+            };
+          }
+        } catch {
           return {
             ok: false,
-            message:
-              "Published article link must start with http:// or https://.",
+            message: "Published article link is not a valid URL.",
           };
         }
-      } catch {
-        return {
-          ok: false,
-          message: "Published article link is not a valid URL.",
-        };
       }
       if (hasNewArticleFile) {
         const extension = articleFile.name.toLowerCase().split(".").pop();
