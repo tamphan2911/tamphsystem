@@ -6438,7 +6438,7 @@ async function createSubmitTaskForSuggestedJournalApproval({
     };
   }
 
-  const [project, journal, guideIds, accounts] = await Promise.all([
+  const [project, journal, guideIds] = await Promise.all([
     prisma.researchProject.findUnique({
       where: { id: projectId },
       select: { title: true },
@@ -6451,7 +6451,6 @@ async function createSubmitTaskForSuggestedJournalApproval({
       taskType: ResearchTaskType.SUBMIT_RESEARCH,
       proposalScope: ProposalTaskScope.RESEARCH,
     }),
-    journalAccountIds(journalId),
   ]);
   if (!project || !journal) {
     throw new Error("The linked research or journal was not found.");
@@ -6471,7 +6470,7 @@ async function createSubmitTaskForSuggestedJournalApproval({
         status: ResearchTaskStatus.IN_PROGRESS,
         projectId,
         journalId,
-        accountId: accounts.length === 1 ? accounts[0]?.id : null,
+        accountId: null,
         dueDate: taskDueDate,
         createdById: originalTask?.createdById ?? approverId,
         checkerId: originalTask?.checkerId ?? null,
