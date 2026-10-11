@@ -93,9 +93,9 @@ export type ResearchProjectRow = {
   hasSubmittedSubmission: boolean;
   hasAcceptedSubmission: boolean;
   hasAcceptedOrPublishedSubmission?: boolean;
-  publishedArticleSubmissionId: string;
-  publishedArticleFileName: string;
-  publishedArticleUrl: string;
+  publishedArticleSubmissionId?: string;
+  publishedArticleFileName?: string;
+  publishedArticleUrl?: string;
   editValues?: ResearchBasicValues;
   editAuthors?: SelectedAuthor[];
   completedProductionSteps?: string[];
