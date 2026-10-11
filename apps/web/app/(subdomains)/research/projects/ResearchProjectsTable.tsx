@@ -446,7 +446,7 @@ function PublishedArticleLinks({
   return (
     <div className="mt-0.5 flex items-center justify-center gap-1">
       {fileName && submissionId ? (
-        <IconHint label="Download published article file" position="bottom">
+        <IconHint label="Download published article file">
           <a
             href={`/api/research/submissions/${submissionId}/article`}
             className="research-allow-transform research-download-button"
@@ -458,7 +458,7 @@ function PublishedArticleLinks({
         </IconHint>
       ) : null}
       {articleUrl ? (
-        <IconHint label="Open published article link" position="bottom">
+        <IconHint label="Open published article link">
           <a
             href={articleUrl}
             target="_blank"
