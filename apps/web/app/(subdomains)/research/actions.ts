@@ -13563,6 +13563,35 @@ export async function sendTaskReminderEmail(
   };
 }
 
+export async function sendOverdueTaskReminderEmailFromList(
+  taskId: string,
+  formData: FormData,
+) {
+  const user = await requireCurrentUser();
+  if (!user.roles.includes(Role.ADMIN)) redirect("/401");
+
+  const task = await prisma.researchTask.findUnique({
+    where: { id: taskId },
+    select: { dueDate: true },
+  });
+  if (!task) {
+    return {
+      ok: false,
+      title: "Task not found",
+      detail: "This task could not be found. Refresh the page and try again.",
+    };
+  }
+  if (!task.dueDate || task.dueDate.getTime() >= Date.now()) {
+    return {
+      ok: false,
+      title: "Reminder not available",
+      detail: "Task-list reminders are available only after a task is overdue.",
+    };
+  }
+
+  return sendTaskReminderEmail(taskId, formData);
+}
+
 export async function referTaskCheckerHelp(taskId: string, formData: FormData) {
   const user = await requireCurrentUser();
   const requestedTargets = new Set(

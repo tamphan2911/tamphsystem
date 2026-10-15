@@ -37,6 +37,7 @@ import {
 } from "@/sites/research/components/ResearchState";
 import { useResearchToast } from "@/sites/research/components/ResearchToast";
 import { ResearchPageHeaderPortal } from "@/sites/research/components/ResearchPageHeaderPortal";
+import { TaskReminderButton } from "./[taskId]/TaskReminderButton";
 import {
   displayResearchEmail,
   displayResearchPersonName,
@@ -842,11 +843,31 @@ function DeleteTaskButton({
   );
 }
 
+function canSendOverdueReminder(task: TaskRow) {
+  if (!task.dueDate || new Date(task.dueDate).getTime() >= Date.now()) {
+    return false;
+  }
+  if (
+    task.assignments.length === 0 ||
+    task.status === "COMPLETED" ||
+    task.status === "REVOKED" ||
+    task.status === "CHECKING" ||
+    task.waitingForJournalCreation
+  ) {
+    return false;
+  }
+  return !(
+    task.status === "NEED_CLARIFY" &&
+    task.clarifyDirection !== "MANAGER_TO_ASSIGNEE"
+  );
+}
+
 export function TasksClient({
   isAdmin,
   isChiefAssistant,
   canDelete,
   deleteAction,
+  reminderAction,
   action,
   archivedMode = false,
 }: {
@@ -854,6 +875,10 @@ export function TasksClient({
   isChiefAssistant: boolean;
   canDelete: boolean;
   deleteAction: (taskId: string) => Promise<void>;
+  reminderAction?: (
+    taskId: string,
+    formData: FormData,
+  ) => Promise<{ ok: boolean; title: string; detail: string }>;
   action?: ReactNode;
   archivedMode?: boolean;
 }) {
@@ -1762,11 +1787,29 @@ export function TasksClient({
                       </td>
                       {canDelete && (
                         <td className="px-2 py-3 text-center align-top">
-                          <DeleteTaskButton
-                            task={task}
-                            deleteAction={deleteAction}
-                            onDeleted={removeTaskFromList}
-                          />
+                          <div className="flex flex-col items-center gap-2">
+                            <DeleteTaskButton
+                              task={task}
+                              deleteAction={deleteAction}
+                              onDeleted={removeTaskFromList}
+                            />
+                            {reminderAction && canSendOverdueReminder(task) ? (
+                              <TaskReminderButton
+                                taskTitle={task.title}
+                                action={(formData) =>
+                                  reminderAction(task.id, formData)
+                                }
+                                block={null}
+                                assignees={task.assignments.map(
+                                  (assignment) => ({
+                                    id: assignment.userId,
+                                    name: assignment.userName,
+                                    email: assignment.userEmail,
+                                  }),
+                                )}
+                              />
+                            ) : null}
+                          </div>
                         </td>
                       )}
                     </tr>

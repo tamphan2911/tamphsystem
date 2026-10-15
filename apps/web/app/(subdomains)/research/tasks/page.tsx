@@ -3,7 +3,10 @@ import Link from "next/link";
 import { Archive } from "lucide-react";
 import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
-import { deleteResearchTask } from "../actions";
+import {
+  deleteResearchTask,
+  sendOverdueTaskReminderEmailFromList,
+} from "../actions";
 import {
   NewTaskDialog,
   type TaskAssigneeOption,
@@ -321,6 +324,7 @@ export default async function ResearchTasksPage() {
         isChiefAssistant={isChiefAssistant}
         canDelete={isRootAdmin}
         deleteAction={deleteResearchTask}
+        reminderAction={sendOverdueTaskReminderEmailFromList}
         action={
           archivedTaskButton || canManageTasks ? (
             <div className="flex items-center gap-2">
