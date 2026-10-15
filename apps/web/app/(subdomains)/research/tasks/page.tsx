@@ -5,6 +5,7 @@ import { prisma, ResearchTaskStatus, Role } from "@repo/db";
 import { auth } from "../../../../auth";
 import {
   deleteResearchTask,
+  sendAllOverdueTaskReminderEmails,
   sendOverdueTaskReminderEmailFromList,
 } from "../actions";
 import {
@@ -325,6 +326,7 @@ export default async function ResearchTasksPage() {
         canDelete={isRootAdmin}
         deleteAction={deleteResearchTask}
         reminderAction={sendOverdueTaskReminderEmailFromList}
+        bulkReminderAction={sendAllOverdueTaskReminderEmails}
         action={
           archivedTaskButton || canManageTasks ? (
             <div className="flex items-center gap-2">

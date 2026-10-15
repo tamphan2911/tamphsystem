@@ -13592,6 +13592,106 @@ export async function sendOverdueTaskReminderEmailFromList(
   return sendTaskReminderEmail(taskId, formData);
 }
 
+export async function sendAllOverdueTaskReminderEmails() {
+  const user = await requireCurrentUser();
+  if (!user.roles.includes(Role.ADMIN)) redirect("/401");
+
+  const overdueTasks = await prisma.researchTask.findMany({
+    where: {
+      dueDate: { lt: new Date() },
+      status: {
+        in: [
+          ResearchTaskStatus.OPEN,
+          ResearchTaskStatus.IN_PROGRESS,
+          ResearchTaskStatus.REVISION_REQUESTED,
+          ResearchTaskStatus.NEED_CLARIFY,
+        ],
+      },
+      assignments: { some: { completedAt: null } },
+    },
+    select: {
+      id: true,
+      taskType: true,
+      assignments: {
+        where: { completedAt: null },
+        select: { userId: true },
+      },
+      suggestedJournals: {
+        select: {
+          status: true,
+          journalCreationTask: { select: { status: true } },
+        },
+      },
+    },
+    orderBy: [{ dueDate: "asc" }],
+  });
+
+  const eligibleTasks = overdueTasks.filter(
+    (task) =>
+      !(
+        task.taskType === ResearchTaskType.SUGGEST_VENUE &&
+        task.suggestedJournals.some(
+          (suggestion) =>
+            suggestion.status !== SuggestedVenueStatus.DECLINED &&
+            suggestion.journalCreationTask &&
+            suggestion.journalCreationTask.status !==
+              ResearchTaskStatus.COMPLETED &&
+            suggestion.journalCreationTask.status !==
+              ResearchTaskStatus.REVOKED,
+        )
+      ),
+  );
+
+  let taskCount = 0;
+  let recipientCount = 0;
+  let skippedCount = overdueTasks.length - eligibleTasks.length;
+  const batchSize = 4;
+
+  for (let index = 0; index < eligibleTasks.length; index += batchSize) {
+    const batch = eligibleTasks.slice(index, index + batchSize);
+    const results = await Promise.all(
+      batch.map(async (task) => {
+        const formData = new FormData();
+        task.assignments.forEach((assignment) =>
+          formData.append("assigneeIds", assignment.userId),
+        );
+        try {
+          const result = await sendTaskReminderEmail(task.id, formData);
+          return {
+            sent: result.ok,
+            recipients: result.ok ? task.assignments.length : 0,
+          };
+        } catch {
+          return { sent: false, recipients: 0 };
+        }
+      }),
+    );
+    results.forEach((result) => {
+      if (result.sent) {
+        taskCount += 1;
+        recipientCount += result.recipients;
+      } else {
+        skippedCount += 1;
+      }
+    });
+  }
+
+  if (taskCount === 0) {
+    return {
+      ok: true,
+      title: "No reminders sent",
+      detail:
+        "There are no overdue tasks currently waiting for assignee action.",
+    };
+  }
+
+  return {
+    ok: true,
+    title: "Overdue reminders sent",
+    detail: `Sent reminders for ${taskCount} overdue task${taskCount === 1 ? "" : "s"} to ${recipientCount} assignee${recipientCount === 1 ? "" : "s"}.${skippedCount > 0 ? ` Skipped ${skippedCount} task${skippedCount === 1 ? "" : "s"} that no longer allowed a reminder.` : ""}`,
+  };
+}
+
 export async function referTaskCheckerHelp(taskId: string, formData: FormData) {
   const user = await requireCurrentUser();
   const requestedTargets = new Set(

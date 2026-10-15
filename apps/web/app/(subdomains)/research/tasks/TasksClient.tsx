@@ -12,9 +12,11 @@ import {
   AlertTriangle,
   ArrowUpDown,
   Ban,
+  BellRing,
   CheckCircle2,
   CircleHelp,
   Clock3,
+  Loader2,
   RotateCcw,
   SearchCheck,
   Trash2,
@@ -901,6 +903,7 @@ export function TasksClient({
   canDelete,
   deleteAction,
   reminderAction,
+  bulkReminderAction,
   action,
   archivedMode = false,
 }: {
@@ -912,10 +915,18 @@ export function TasksClient({
     taskId: string,
     formData: FormData,
   ) => Promise<{ ok: boolean; title: string; detail: string }>;
+  bulkReminderAction?: () => Promise<{
+    ok: boolean;
+    title: string;
+    detail: string;
+  }>;
   action?: ReactNode;
   archivedMode?: boolean;
 }) {
   const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [bulkReminderOpen, setBulkReminderOpen] = useState(false);
+  const [bulkReminderPending, setBulkReminderPending] = useState(false);
+  const toast = useResearchToast();
   const storagePrefix = archivedMode ? "archived-tasks" : "tasks";
   const [query, setQuery] = usePersistentTableValue(`${storagePrefix}:q`, "");
   const scopeStorageKey = isAdmin
@@ -1440,28 +1451,42 @@ export function TasksClient({
     <div className="space-y-4">
       <ResearchPageHeaderPortal>
         <div className="flex w-full min-w-0 items-center justify-between gap-4">
-          <div
-            className={`journal-detail-tabs grid min-w-0 flex-1 grid-cols-2 border border-[#444444] bg-[#242424] p-1 text-center lg:max-w-2xl ${
-              scopeTabs.length > 2 ? "lg:grid-cols-3" : "lg:grid-cols-2"
-            }`}
-          >
-            {scopeTabs.map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                data-active={activeHeaderTab === tab.value}
-                aria-pressed={activeHeaderTab === tab.value}
-                onClick={() => updateScopeTab(tab.value)}
-                className="journal-detail-tab-button cursor-pointer rounded-none px-4 py-3 text-left"
-              >
-                <span className="relative z-10 flex items-center justify-between gap-2">
-                  <span className="truncate text-[11px] font-normal uppercase tracking-wide">
-                    {tab.label}
+          <div className="flex min-w-0 flex-1 items-center gap-2 lg:max-w-[45rem]">
+            <div
+              className={`journal-detail-tabs grid min-w-0 flex-1 grid-cols-2 border border-[#444444] bg-[#242424] p-1 text-center lg:max-w-2xl ${
+                scopeTabs.length > 2 ? "lg:grid-cols-3" : "lg:grid-cols-2"
+              }`}
+            >
+              {scopeTabs.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  data-active={activeHeaderTab === tab.value}
+                  aria-pressed={activeHeaderTab === tab.value}
+                  onClick={() => updateScopeTab(tab.value)}
+                  className="journal-detail-tab-button cursor-pointer rounded-none px-4 py-3 text-left"
+                >
+                  <span className="relative z-10 flex items-center justify-between gap-2">
+                    <span className="truncate text-[11px] font-normal uppercase tracking-wide">
+                      {tab.label}
+                    </span>
+                    <span className="text-base font-normal">{tab.count}</span>
                   </span>
-                  <span className="text-base font-normal">{tab.count}</span>
-                </span>
-              </button>
-            ))}
+                </button>
+              ))}
+            </div>
+            {isAdmin && !archivedMode && bulkReminderAction ? (
+              <IconHint label="Email reminders for all overdue tasks">
+                <button
+                  type="button"
+                  onClick={() => setBulkReminderOpen(true)}
+                  aria-label="Email reminders for all overdue tasks"
+                  className="research-allow-transform inline-flex h-11 w-11 flex-none cursor-pointer items-center justify-center border border-rose-300 bg-rose-50 text-rose-700 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:border-rose-400 hover:bg-rose-100 hover:text-rose-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/25 active:translate-y-0 active:scale-95 dark:border-rose-700/70 dark:bg-rose-950/25 dark:text-rose-300 dark:hover:border-rose-500 dark:hover:bg-rose-950/45 dark:hover:text-rose-200"
+                >
+                  <BellRing className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </IconHint>
+            ) : null}
           </div>
           <div className="flex flex-none items-center">{action}</div>
         </div>
@@ -1659,32 +1684,48 @@ export function TasksClient({
                         ) : null}
                       </td>
                       <td className="px-3 py-3 align-top">
-                        <IconHint
-                          label={
-                            statusActionText
-                              ? `${statusLabel}: ${statusActionText}`
-                              : statusLabel
-                          }
-                        >
-                          <span className="inline-flex flex-col items-start gap-1">
-                            <span
-                              className={`research-allow-transform inline-flex cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${statusIcon.className}`}
-                            >
-                              <StatusIcon
-                                className="h-4 w-4"
-                                aria-hidden="true"
-                              />
-                              <span className="sr-only">{statusLabel}</span>
-                            </span>
-                            {statusActionText ? (
+                        <div className="inline-flex flex-col items-start gap-2">
+                          <IconHint
+                            label={
+                              statusActionText
+                                ? `${statusLabel}: ${statusActionText}`
+                                : statusLabel
+                            }
+                          >
+                            <span className="inline-flex flex-col items-start gap-1">
                               <span
-                                className={`max-w-[6.25rem] text-[11px] font-semibold leading-4 ${statusActionClassName}`}
+                                className={`research-allow-transform inline-flex cursor-default items-center justify-center border-0 bg-transparent p-0 shadow-none transition duration-180 ease-out hover:-translate-y-0.5 hover:bg-transparent hover:shadow-none ${statusIcon.className}`}
                               >
-                                {statusActionText}
+                                <StatusIcon
+                                  className="h-4 w-4"
+                                  aria-hidden="true"
+                                />
+                                <span className="sr-only">{statusLabel}</span>
                               </span>
-                            ) : null}
-                          </span>
-                        </IconHint>
+                              {statusActionText ? (
+                                <span
+                                  className={`max-w-[6.25rem] text-[11px] font-semibold leading-4 ${statusActionClassName}`}
+                                >
+                                  {statusActionText}
+                                </span>
+                              ) : null}
+                            </span>
+                          </IconHint>
+                          {reminderAction && status.label === "Overdue" ? (
+                            <TaskReminderButton
+                              taskTitle={task.title}
+                              action={(formData) =>
+                                reminderAction(task.id, formData)
+                              }
+                              block={taskListReminderBlock(task)}
+                              assignees={task.assignments.map((assignment) => ({
+                                id: assignment.userId,
+                                name: assignment.userName,
+                                email: assignment.userEmail,
+                              }))}
+                            />
+                          ) : null}
+                        </div>
                       </td>
                       <td className="px-3 py-3 align-top text-xs leading-5 text-[#B0B0B0]">
                         {task.assignments.length > 0 ? (
@@ -1826,22 +1867,6 @@ export function TasksClient({
                               deleteAction={deleteAction}
                               onDeleted={removeTaskFromList}
                             />
-                            {reminderAction ? (
-                              <TaskReminderButton
-                                taskTitle={task.title}
-                                action={(formData) =>
-                                  reminderAction(task.id, formData)
-                                }
-                                block={taskListReminderBlock(task)}
-                                assignees={task.assignments.map(
-                                  (assignment) => ({
-                                    id: assignment.userId,
-                                    name: assignment.userName,
-                                    email: assignment.userEmail,
-                                  }),
-                                )}
-                              />
-                            ) : null}
                           </div>
                         </td>
                       )}
@@ -1893,6 +1918,60 @@ export function TasksClient({
           onPageChange={(nextPage) => setPageValue(String(nextPage))}
         />
       </div>
+      <ResearchConfirmDialog
+        open={bulkReminderOpen}
+        title="Remind all overdue assignees?"
+        confirmLabel={bulkReminderPending ? "Sending..." : "Send reminders"}
+        isConfirming={bulkReminderPending}
+        tone="danger"
+        icon={<BellRing className="h-5 w-5" />}
+        confirmIcon={
+          bulkReminderPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <BellRing className="h-4 w-4" />
+          )
+        }
+        onCancel={() => setBulkReminderOpen(false)}
+        onConfirm={async () => {
+          if (!bulkReminderAction) return;
+          setBulkReminderPending(true);
+          try {
+            const result = await bulkReminderAction();
+            setBulkReminderOpen(false);
+            if (result.ok) {
+              toast.showSuccess({
+                title: result.title,
+                detail: result.detail,
+              });
+            } else {
+              toast.showError({
+                title: result.title,
+                detail: result.detail,
+              });
+            }
+          } catch (error) {
+            toast.showError({
+              title: "Reminders could not be sent",
+              detail:
+                error instanceof Error
+                  ? error.message
+                  : "Please refresh and try again.",
+            });
+          } finally {
+            setBulkReminderPending(false);
+          }
+        }}
+      >
+        <p>
+          This sends a separate task reminder email to every incomplete assignee
+          on each eligible overdue task across the full task list.
+        </p>
+        <p>
+          Tasks waiting for checker action, manager clarification, or linked
+          journal creation are skipped.
+        </p>
+      </ResearchConfirmDialog>
     </div>
   );
 }
