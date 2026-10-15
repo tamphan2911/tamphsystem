@@ -843,23 +843,56 @@ function DeleteTaskButton({
   );
 }
 
-function canSendOverdueReminder(task: TaskRow) {
-  if (!task.dueDate || new Date(task.dueDate).getTime() >= Date.now()) {
-    return false;
+function taskListReminderBlock(task: TaskRow) {
+  const dueAt = task.dueDate ? new Date(task.dueDate).getTime() : Number.NaN;
+  if (!Number.isFinite(dueAt) || dueAt >= Date.now()) {
+    return {
+      title: "Reminder not available",
+      detail: "Task-list reminders become available after the task is overdue.",
+    };
+  }
+  if (task.assignments.length === 0) {
+    return {
+      title: "Reminder not available",
+      detail: "This task has no assignees who can receive a reminder.",
+    };
+  }
+  if (task.status === "COMPLETED") {
+    return {
+      title: "Reminder not available",
+      detail: "This task is already completed.",
+    };
+  }
+  if (task.status === "REVOKED") {
+    return {
+      title: "Reminder not available",
+      detail: "This task has been revoked.",
+    };
+  }
+  if (task.status === "CHECKING") {
+    return {
+      title: "Reminder not available",
+      detail: "This task is waiting for checker action, not assignee action.",
+    };
+  }
+  if (task.waitingForJournalCreation) {
+    return {
+      title: "Reminder not available",
+      detail:
+        "This task is waiting for completion of its linked Add Journal task.",
+    };
   }
   if (
-    task.assignments.length === 0 ||
-    task.status === "COMPLETED" ||
-    task.status === "REVOKED" ||
-    task.status === "CHECKING" ||
-    task.waitingForJournalCreation
-  ) {
-    return false;
-  }
-  return !(
     task.status === "NEED_CLARIFY" &&
     task.clarifyDirection !== "MANAGER_TO_ASSIGNEE"
-  );
+  ) {
+    return {
+      title: "Reminder not available",
+      detail:
+        "The assignees are waiting for a task manager to answer their clarification request.",
+    };
+  }
+  return null;
 }
 
 export function TasksClient({
@@ -1793,13 +1826,13 @@ export function TasksClient({
                               deleteAction={deleteAction}
                               onDeleted={removeTaskFromList}
                             />
-                            {reminderAction && canSendOverdueReminder(task) ? (
+                            {reminderAction ? (
                               <TaskReminderButton
                                 taskTitle={task.title}
                                 action={(formData) =>
                                   reminderAction(task.id, formData)
                                 }
-                                block={null}
+                                block={taskListReminderBlock(task)}
                                 assignees={task.assignments.map(
                                   (assignment) => ({
                                     id: assignment.userId,
