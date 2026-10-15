@@ -555,13 +555,15 @@ function statusMeta(task: TaskRow) {
 
   if (activeWaitingForJournalCreation(task)) {
     const activeDue = activeDueMeta(due, remainingMs);
+    const isOverdue = remainingMs !== null && remainingMs < 0;
     return {
-      label: "In progress",
+      label: isOverdue ? "Overdue" : "In progress",
       detail: activeDue.detail,
       dateLines: due ? [`Due: ${formatDate(task.dueDate)}`] : [],
       secondaryDetail: "Waiting for assignee to add journal",
-      className:
-        "border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-300/40 dark:bg-yellow-950/25 dark:text-yellow-200",
+      className: isOverdue
+        ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-300/40 dark:bg-rose-950/25 dark:text-rose-300"
+        : "border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-300/40 dark:bg-yellow-950/25 dark:text-yellow-200",
       detailClassName: activeDue.detailClassName,
       secondaryDetailClassName: "text-[#1F7180] dark:text-[#A8DADC]",
     };
@@ -845,9 +847,13 @@ function DeleteTaskButton({
   );
 }
 
-function taskListReminderBlock(task: TaskRow) {
+function taskIsPastDue(task: TaskRow) {
   const dueAt = task.dueDate ? new Date(task.dueDate).getTime() : Number.NaN;
-  if (!Number.isFinite(dueAt) || dueAt >= Date.now()) {
+  return Number.isFinite(dueAt) && dueAt < Date.now();
+}
+
+function taskListReminderBlock(task: TaskRow) {
+  if (!taskIsPastDue(task)) {
     return {
       title: "Reminder not available",
       detail: "Task-list reminders become available after the task is overdue.",
@@ -875,13 +881,6 @@ function taskListReminderBlock(task: TaskRow) {
     return {
       title: "Reminder not available",
       detail: "This task is waiting for checker action, not assignee action.",
-    };
-  }
-  if (task.waitingForJournalCreation) {
-    return {
-      title: "Reminder not available",
-      detail:
-        "This task is waiting for completion of its linked Add Journal task.",
     };
   }
   if (
@@ -1711,7 +1710,10 @@ export function TasksClient({
                               ) : null}
                             </span>
                           </IconHint>
-                          {reminderAction && status.label === "Overdue" ? (
+                          {reminderAction &&
+                          taskIsPastDue(task) &&
+                          (status.label === "Overdue" ||
+                            task.status === "REVISION_REQUESTED") ? (
                             <TaskReminderButton
                               taskTitle={task.title}
                               action={(formData) =>
@@ -1968,8 +1970,8 @@ export function TasksClient({
           on each eligible overdue task across the full task list.
         </p>
         <p>
-          Tasks waiting for checker action, manager clarification, or linked
-          journal creation are skipped.
+          Tasks waiting for checker action or manager clarification are skipped.
+          Overdue suggest-venue tasks waiting for journal creation are included.
         </p>
       </ResearchConfirmDialog>
     </div>

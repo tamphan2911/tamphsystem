@@ -13611,44 +13611,21 @@ export async function sendAllOverdueTaskReminderEmails() {
     },
     select: {
       id: true,
-      taskType: true,
       assignments: {
         where: { completedAt: null },
         select: { userId: true },
-      },
-      suggestedJournals: {
-        select: {
-          status: true,
-          journalCreationTask: { select: { status: true } },
-        },
       },
     },
     orderBy: [{ dueDate: "asc" }],
   });
 
-  const eligibleTasks = overdueTasks.filter(
-    (task) =>
-      !(
-        task.taskType === ResearchTaskType.SUGGEST_VENUE &&
-        task.suggestedJournals.some(
-          (suggestion) =>
-            suggestion.status !== SuggestedVenueStatus.DECLINED &&
-            suggestion.journalCreationTask &&
-            suggestion.journalCreationTask.status !==
-              ResearchTaskStatus.COMPLETED &&
-            suggestion.journalCreationTask.status !==
-              ResearchTaskStatus.REVOKED,
-        )
-      ),
-  );
-
   let taskCount = 0;
   let recipientCount = 0;
-  let skippedCount = overdueTasks.length - eligibleTasks.length;
+  let skippedCount = 0;
   const batchSize = 4;
 
-  for (let index = 0; index < eligibleTasks.length; index += batchSize) {
-    const batch = eligibleTasks.slice(index, index + batchSize);
+  for (let index = 0; index < overdueTasks.length; index += batchSize) {
+    const batch = overdueTasks.slice(index, index + batchSize);
     const results = await Promise.all(
       batch.map(async (task) => {
         const formData = new FormData();
