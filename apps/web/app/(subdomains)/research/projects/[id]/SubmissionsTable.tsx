@@ -456,8 +456,9 @@ function AssigneesCell({
 export function SubmissionsTable({
   rows,
   isAdmin,
+  canEditStatus = isAdmin,
   disabled = false,
-  actionMode = isAdmin ? "edit" : "none",
+  actionMode = canEditStatus ? "edit" : "none",
   view = "venue",
   linkVenue = true,
   showSubmitter = false,
@@ -467,6 +468,7 @@ export function SubmissionsTable({
 }: {
   rows: SubmissionRow[];
   isAdmin: boolean;
+  canEditStatus?: boolean;
   disabled?: boolean;
   actionMode?: "none" | "edit" | "delete" | "manage";
   view?: "venue" | "research";
@@ -477,15 +479,15 @@ export function SubmissionsTable({
   editOptions?: SubmissionEditOptions;
 }) {
   const router = useRouter();
-  const hasAction = isAdmin && actionMode !== "none";
   const isResearchView = view === "research";
   const showRegistrationClaim =
     !isResearchView || rows.some((row) => row.canViewRegistrationClaim);
-  const showStatusEdit = isAdmin && actionMode === "edit";
+  const showStatusEdit = canEditStatus && actionMode === "edit";
   const showDetailsEdit =
     isAdmin && actionMode === "manage" && Boolean(editOptions);
   const showDelete =
     isAdmin && (actionMode === "delete" || actionMode === "manage");
+  const hasAction = showStatusEdit || showDetailsEdit || showDelete;
   const isAdminListing = !isResearchView && showSubmitter;
   const showInternalSubmissionColumns = !isResearchView && showInternalColumns;
   const [query, setQuery] = usePersistentTableValue(

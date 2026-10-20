@@ -1785,6 +1785,18 @@ function requireAdmin(roles: Role[]) {
   }
 }
 
+const submissionStatusManagerEmails = new Set(["hongtuyetph.ntc@gmail.com"]);
+
+function canManageSubmissionStatus(user: {
+  roles: Role[];
+  email: string | null;
+}) {
+  return (
+    user.roles.includes(Role.ADMIN) ||
+    submissionStatusManagerEmails.has(user.email?.trim().toLowerCase() ?? "")
+  );
+}
+
 function requireResearchAdmin(roles: Role[]) {
   if (!isResearchAdminRole(roles)) {
     redirect("/401");
@@ -9340,7 +9352,7 @@ export async function deleteResearchNotification(notificationId: string) {
 
 export async function updateSubmissionStatus(formData: FormData) {
   const user = await requireCurrentUser();
-  requireAdmin(user.roles);
+  if (!canManageSubmissionStatus(user)) redirect("/401");
 
   const submissionId = optionalString(formData.get("submissionId"));
   const submissionKind = optionalString(formData.get("submissionKind"));

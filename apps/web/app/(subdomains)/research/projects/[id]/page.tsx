@@ -313,7 +313,7 @@ export default async function ProjectDetailPage({
     .map((value) => value.trim().toLowerCase());
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { roles: true },
+    select: { roles: true, email: true },
   });
   const roles =
     currentUser?.roles ??
@@ -322,6 +322,10 @@ export default async function ProjectDetailPage({
   const isRootAdmin = roles.includes(Role.ADMIN);
   const isChiefAssistant = roles.includes(Role.CHIEF_ASSISTANT);
   const isAdmin = isRootAdmin || isChiefAssistant;
+  const canEditSubmissionStatus =
+    isAdmin ||
+    (currentUser?.email ?? session.user?.email)?.trim().toLowerCase() ===
+      "hongtuyetph.ntc@gmail.com";
   const ledTeamMemberIds =
     isChiefAssistant && !isRootAdmin
       ? (
@@ -2748,6 +2752,7 @@ export default async function ProjectDetailPage({
           <SubmissionsTable
             rows={submissionRows}
             isAdmin={isAdmin}
+            canEditStatus={canEditSubmissionStatus}
             disabled={researchContentLocked}
             showInternalColumns={canViewSubmissionInternalColumns}
             flushControls
