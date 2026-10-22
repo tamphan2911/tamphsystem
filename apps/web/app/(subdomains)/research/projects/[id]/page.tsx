@@ -717,13 +717,19 @@ export default async function ProjectDetailPage({
     !isRegistrationUser &&
     !isAssignedTeamLeader &&
     !isAssignedTeamParticipant &&
+    !isTaskCheckerForResearch &&
     !hasAssignedResearchTask
   ) {
     notFound();
   }
   const canActivatePendingResearch =
     project.stage === "PENDING" && isAssignedTeamLeader;
-  if (project.stage === "PENDING" && !isRootAdmin && !isAssignedTeamLeader) {
+  if (
+    project.stage === "PENDING" &&
+    !isRootAdmin &&
+    !isAssignedTeamLeader &&
+    !isTaskCheckerForResearch
+  ) {
     notFound();
   }
   const canViewRegistrationClaim = isAdmin || isRegistrationUser;
