@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
+import { isPublicResearchQuestionnaire } from "./sites/research/lib/publicQuestionnaire";
 
 const { auth } = NextAuth(authConfig);
 
@@ -127,6 +128,11 @@ export default auth((req) => {
   }
 
   if (currentHost === "research") {
+    // Public questionnaires have their own layout and never require a research account.
+    if (isPublicResearchQuestionnaire(url.pathname)) {
+      return NextResponse.next();
+    }
+
     if (url.pathname === "/") {
       return NextResponse.redirect(new URL("/login?callbackUrl=%2F", req.url));
     }
