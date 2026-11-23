@@ -859,7 +859,7 @@
     try {
       const session = await camRequest("/session");
       if (!session.configured) {
-        setGateStatus("Secure sync is waiting for Railway configuration.", true);
+        setGateStatus("Cam’s log is taking a nap. Please try again soon.", true);
         $("#sync-access-submit").disabled = true;
         return;
       }
@@ -867,8 +867,8 @@
         await openSyncedApp(session.user);
         return;
       }
-      setGateStatus("Enter your LittleLog ID and password to continue.");
-      $("#sync-username").focus();
+      setGateStatus("");
+      $("#sync-password").focus();
     } catch (error) {
       setGateStatus(error.message || "LittleLog could not reach the server.", true);
     }
@@ -876,15 +876,14 @@
 
   async function submitLogin(event) {
     event.preventDefault();
-    const username = $("#sync-username").value;
     const password = $("#sync-password").value;
     const submit = $("#sync-access-submit");
     submit.disabled = true;
-    setGateStatus("Signing in…");
+    setGateStatus("Opening Cam’s log…");
     try {
       const session = await camRequest("/session", {
         method: "POST",
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username: "traph", password })
       });
       $("#sync-password").value = "";
       await openSyncedApp(session.user);

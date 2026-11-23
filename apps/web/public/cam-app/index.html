@@ -14,41 +14,22 @@
   <body>
     <section class="sync-gate" id="sync-gate" aria-labelledby="sync-gate-title">
       <div class="sync-gate-card">
-        <div class="guide-mark" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </div>
-        <p class="eyebrow">LittleLog sign in</p>
-        <h1 id="sync-gate-title">Welcome back</h1>
-        <p class="sync-gate-copy">
-          Sign in to securely sync Cam’s feeds, diapers, sleep, and notes across
-          your devices.
-        </p>
+        <h1 id="sync-gate-title">Family access code</h1>
+        <p class="sync-gate-copy">A little secret for Cam’s favorite grown-ups.</p>
         <form id="sync-access-form">
-          <label for="sync-username">LittleLog ID</label>
-          <input
-            id="sync-username"
-            name="username"
-            type="text"
-            autocomplete="username"
-            autocapitalize="none"
-            maxlength="100"
-            required
-          />
-          <label for="sync-password">Password</label>
+          <label class="sr-only" for="sync-password">Family access code</label>
           <input
             id="sync-password"
             name="password"
             type="password"
             autocomplete="current-password"
             maxlength="200"
+            placeholder="Enter the secret code"
             required
           />
-          <button id="sync-access-submit" type="submit">Sign in</button>
+          <button id="sync-access-submit" type="submit">Open Cam’s pooping log</button>
         </form>
-        <p class="sync-gate-status" id="sync-gate-status" role="status" aria-live="polite">
-          Checking secure access…
-        </p>
-        <p class="sync-gate-note">No Research Hub account is required. Registration is not available yet.</p>
+        <p class="sync-gate-status" id="sync-gate-status" role="status" aria-live="polite"></p>
       </div>
     </section>
 
