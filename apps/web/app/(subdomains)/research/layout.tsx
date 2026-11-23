@@ -54,6 +54,10 @@ export default async function ResearchLayout({
   children: React.ReactNode;
 }) {
   const sitePathname = (await headers()).get("x-site-pathname") ?? "";
+  if (sitePathname === "/cam") {
+    return children;
+  }
+
   if (
     sitePathname === "/" ||
     sitePathname === "/learn" ||

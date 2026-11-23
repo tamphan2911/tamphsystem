@@ -127,12 +127,18 @@ export default auth((req) => {
   }
 
   if (currentHost === "research") {
+    if (url.pathname.startsWith("/cam-app/")) {
+      return NextResponse.next();
+    }
+
     if (url.pathname === "/") {
       return NextResponse.redirect(new URL("/login?callbackUrl=%2F", req.url));
     }
 
     const isPublicConstructionRoute =
-      url.pathname === "/portfolio" || url.pathname === "/learn";
+      url.pathname === "/portfolio" ||
+      url.pathname === "/learn" ||
+      url.pathname === "/cam";
     if (isPublicConstructionRoute) {
       const requestHeaders = new Headers(req.headers);
       requestHeaders.set("x-site-pathname", url.pathname);
