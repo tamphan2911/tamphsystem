@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "LittleLog — Cam's Baby Care",
-  description: "Cam's private-on-device feeding, diaper, sleep, and care log.",
+  description: "Cam's securely synced feeding, diaper, sleep, and care log.",
 };
 
 export default function CamBabyCarePage() {

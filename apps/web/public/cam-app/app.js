@@ -1,7 +1,9 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "littlelog-cam-v1";
+  const STORAGE_KEY = "littlelog-cam-v2";
+  const LEGACY_STORAGE_KEY = "littlelog-cam-v1";
+  const CAM_API = "/api/cam";
   const BABY = {
     shortName: "Cam",
     fullName: "Phan Hoa Trà",
@@ -25,7 +27,7 @@
   };
 
   const now = () => new Date();
-  const uid = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const uid = () => crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const startOfDay = (date = now()) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const dateAtOffset = (days, hour, minute) => {
     const date = startOfDay();
@@ -71,20 +73,23 @@
     return {
       events: [],
       activeSessions: {
-        sleep: { startedAt: new Date("2026-11-23T20:30:00+07:00").toISOString() },
+        sleep: null,
         feed: null
       },
       settings: { dailyReport: true, weeklyReport: true },
-      statsPeriod: "week"
+      statsPeriod: "week",
+      deletedEventIds: []
     };
   }
 
   function loadState() {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY));
       if (saved && Array.isArray(saved.events)) {
         saved.activeSessions ||= { sleep: null, feed: null };
         saved.settings ||= { dailyReport: true, weeklyReport: true };
+        saved.statsPeriod ||= "week";
+        saved.deletedEventIds = Array.isArray(saved.deletedEventIds) ? saved.deletedEventIds : [];
         return saved;
       }
     } catch (_) {
@@ -95,9 +100,102 @@
 
   let state = loadState();
   let sessionTicker = null;
+  let syncReady = false;
+  let syncChain = Promise.resolve();
+
+  function persistLocalState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function setSyncStatus(mode, message) {
+    const text = $("#sync-status-text");
+    const badge = $("#sync-status-badge");
+    if (text) text.textContent = message;
+    if (badge) {
+      badge.textContent = mode === "syncing" ? "Syncing" : mode === "pending" ? "Pending" : "Synced";
+      badge.dataset.syncState = mode;
+    }
+  }
+
+  async function camRequest(path, options = {}) {
+    const response = await fetch(`${CAM_API}${path}`, {
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      ...options
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const error = new Error(payload.error || "LittleLog could not reach the server.");
+      error.status = response.status;
+      throw error;
+    }
+    return payload;
+  }
+
+  function mergeServerState(serverState, preferLocal = true) {
+    const deletedIds = new Set([
+      ...(Array.isArray(state.deletedEventIds) ? state.deletedEventIds : []),
+      ...(Array.isArray(serverState.deletedEventIds) ? serverState.deletedEventIds : [])
+    ]);
+    const mergedEvents = new Map();
+    const firstEvents = preferLocal ? serverState.events : state.events;
+    const secondEvents = preferLocal ? state.events : serverState.events;
+    for (const event of Array.isArray(firstEvents) ? firstEvents : []) mergedEvents.set(event.id, event);
+    for (const event of Array.isArray(secondEvents) ? secondEvents : []) mergedEvents.set(event.id, event);
+
+    state.events = [...mergedEvents.values()].filter((event) => !deletedIds.has(event.id));
+    state.deletedEventIds = [...deletedIds];
+    if (!preferLocal || Number(serverState.revision) > 0) {
+      state.activeSessions = serverState.activeSessions || { sleep: null, feed: null };
+      state.settings = serverState.settings || { dailyReport: true, weeklyReport: true };
+    }
+    persistLocalState();
+  }
+
+  function syncSnapshot() {
+    if (!syncReady) return;
+    const snapshot = JSON.parse(JSON.stringify({
+      events: state.events,
+      activeSessions: state.activeSessions,
+      settings: state.settings,
+      deletedEventIds: state.deletedEventIds
+    }));
+
+    syncChain = syncChain
+      .then(async () => {
+        setSyncStatus("syncing", "Syncing with Railway…");
+        const serverState = await camRequest("/state", {
+          method: "PUT",
+          body: JSON.stringify(snapshot)
+        });
+        mergeServerState(serverState, true);
+        setSyncStatus("synced", "Secure Railway sync");
+      })
+      .catch(() => {
+        setSyncStatus("pending", "Saved locally · sync pending");
+      });
+  }
 
   function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    persistLocalState();
+    syncSnapshot();
+  }
+
+  async function refreshFromServer() {
+    if (!syncReady) return;
+    await syncChain;
+    try {
+      const serverState = await camRequest("/state");
+      mergeServerState(serverState, false);
+      renderAll();
+      setSyncStatus("synced", "Secure Railway sync");
+    } catch (error) {
+      if (error.status === 401) {
+        window.location.reload();
+        return;
+      }
+      setSyncStatus("pending", "Saved locally · sync pending");
+    }
   }
 
   function eventsSince(days) {
@@ -374,6 +472,7 @@
     const event = state.events.find((item) => item.id === eventId);
     if (!event) return;
     state.events = state.events.filter((item) => item.id !== eventId);
+    state.deletedEventIds = [...new Set([...(state.deletedEventIds || []), eventId])];
     saveState();
     renderAll();
     closeSheet();
@@ -630,23 +729,35 @@
 
   function openSettings() {
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Settings</p><h2 id="sheet-title">Preferences</h2><p class="sheet-subtitle">These settings are saved on this device.</p></header>
+      <header class="sheet-header"><p class="eyebrow">Settings</p><h2 id="sheet-title">Preferences</h2><p class="sheet-subtitle">Care records and preferences sync securely across approved devices.</p></header>
       <div class="mini-report">
         <div class="mini-report-row"><span>Time zone</span><strong>Asia/Saigon</strong></div>
         <div class="mini-report-row"><span>Units</span><strong>Metric</strong></div>
         <div class="mini-report-row"><span>Daily report</span><strong>8:00 PM</strong></div>
         <div class="mini-report-row"><span>Weekly report</span><strong>Sunday · 8:00 PM</strong></div>
+        <div class="mini-report-row"><span>Storage</span><strong>Railway PostgreSQL</strong></div>
       </div>
-      <div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
+      <div class="sheet-actions two"><button class="sheet-secondary" id="lock-littlelog" type="button">Lock device</button><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
     `);
     $('[data-close-sheet]').addEventListener("click", closeSheet);
+    $("#lock-littlelog").addEventListener("click", lockLittleLog);
   }
 
   function clearHistory() {
+    state.deletedEventIds = [...new Set([...(state.deletedEventIds || []), ...state.events.map((event) => event.id)])];
     state.events = [];
     saveState();
     renderAll();
     closeSheet();
+  }
+
+  async function lockLittleLog() {
+    try {
+      await camRequest("/session", { method: "DELETE" });
+    } finally {
+      localStorage.removeItem(STORAGE_KEY);
+      window.location.reload();
+    }
   }
 
   function confirmClearHistory() {
@@ -713,12 +824,79 @@
     $("#status-time").textContent = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(now());
   }
 
+  function setGateStatus(message, isError = false) {
+    const status = $("#sync-gate-status");
+    status.textContent = message;
+    status.classList.toggle("is-error", isError);
+  }
+
+  async function openSyncedApp() {
+    setGateStatus("Loading Cam’s care records…");
+    const serverState = await camRequest("/state");
+    mergeServerState(serverState, true);
+    syncReady = true;
+    renderAll();
+    updateStatusTime();
+    $("#app-stage").classList.remove("is-locked");
+    $("#app-stage").setAttribute("aria-hidden", "false");
+    $("#sync-gate").classList.add("is-hidden");
+    setSyncStatus("synced", "Secure Railway sync");
+    syncSnapshot();
+  }
+
+  async function initializeSync() {
+    try {
+      const session = await camRequest("/session");
+      if (!session.configured) {
+        setGateStatus("Secure sync is waiting for Railway configuration.", true);
+        $("#sync-access-submit").disabled = true;
+        return;
+      }
+      if (session.authenticated) {
+        await openSyncedApp();
+        return;
+      }
+      setGateStatus("Enter the family code to continue.");
+      $("#sync-access-code").focus();
+    } catch (error) {
+      setGateStatus(error.message || "LittleLog could not reach the server.", true);
+    }
+  }
+
+  async function submitFamilyAccess(event) {
+    event.preventDefault();
+    const accessCode = $("#sync-access-code").value;
+    const submit = $("#sync-access-submit");
+    submit.disabled = true;
+    setGateStatus("Checking family access…");
+    try {
+      await camRequest("/session", {
+        method: "POST",
+        body: JSON.stringify({ accessCode })
+      });
+      $("#sync-access-code").value = "";
+      await openSyncedApp();
+    } catch (error) {
+      setGateStatus(error.message || "Family access could not be verified.", true);
+      $("#sync-access-code").select();
+    } finally {
+      submit.disabled = false;
+    }
+  }
+
   bindGlobalEvents();
-  renderAll();
-  updateStatusTime();
+  $("#sync-access-form").addEventListener("submit", submitFamilyAccess);
+  initializeSync();
+  window.addEventListener("online", () => syncSnapshot());
+  window.addEventListener("focus", refreshFromServer);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") refreshFromServer();
+  });
   setInterval(() => {
     updateStatusTime();
+    if (!syncReady) return;
     renderLastFeed();
     if (state.activeSessions?.sleep) renderCharts();
   }, 30000);
+  setInterval(refreshFromServer, 45000);
 })();

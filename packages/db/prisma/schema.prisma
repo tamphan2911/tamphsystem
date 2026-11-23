@@ -1291,3 +1291,33 @@ model Publication {
   projectId     String
   project       ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
+
+// ---------------------------------------------
+// Cam Care — standalone baby tracking storage
+// ---------------------------------------------
+
+model CamCareState {
+  id             String   @id @default("cam")
+  activeSessions Json
+  settings       Json
+  revision       Int      @default(0)
+  updatedAt      DateTime @updatedAt
+
+  @@map("cam_care_state")
+}
+
+model CamCareEvent {
+  id        String    @id
+  type      String
+  title     String
+  detail    String
+  timestamp DateTime
+  data      Json
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([timestamp])
+  @@index([deletedAt])
+  @@map("cam_care_event")
+}

@@ -12,7 +12,37 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="prototype-stage">
+    <section class="sync-gate" id="sync-gate" aria-labelledby="sync-gate-title">
+      <div class="sync-gate-card">
+        <div class="guide-mark" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <p class="eyebrow">LittleLog family access</p>
+        <h1 id="sync-gate-title">Open Cam’s care log</h1>
+        <p class="sync-gate-copy">
+          Enter the private family code to securely sync feeds, diapers, sleep,
+          and notes across your devices.
+        </p>
+        <form id="sync-access-form">
+          <label for="sync-access-code">Family access code</label>
+          <input
+            id="sync-access-code"
+            name="accessCode"
+            type="password"
+            autocomplete="current-password"
+            maxlength="128"
+            required
+          />
+          <button id="sync-access-submit" type="submit">Open LittleLog</button>
+        </form>
+        <p class="sync-gate-status" id="sync-gate-status" role="status" aria-live="polite">
+          Checking secure access…
+        </p>
+        <p class="sync-gate-note">This access is separate from Research Hub accounts.</p>
+      </div>
+    </section>
+
+    <main class="prototype-stage is-locked" id="app-stage" aria-hidden="true">
       <aside class="prototype-guide" aria-label="LittleLog introduction">
         <div class="guide-mark" aria-hidden="true">
           <span></span><span></span><span></span>
@@ -30,7 +60,7 @@
         </div>
         <div class="prototype-note">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Zm0 5v4m0 3v.1" /></svg>
-          <p>Records are saved on this device. Age comparisons are educational and do not replace medical advice.</p>
+          <p>Records sync securely across approved devices. Age comparisons are educational and do not replace medical advice.</p>
         </div>
       </aside>
 
@@ -169,7 +199,7 @@
                 <div class="profile-section">
                   <h3>Preferences</h3>
                   <div class="setting-row static"><span class="setting-icon units"><svg viewBox="0 0 24 24"><path d="M7 3h10v18H7zM7 7h4m-4 4h3m-3 4h4" /></svg></span><span><strong>Units</strong><small>Metric · ml, kg, cm</small></span><span class="setting-value">Metric</span></div>
-                  <div class="setting-row static"><span class="setting-icon cloud"><svg viewBox="0 0 24 24"><path d="M7 18h11a4 4 0 0 0 .7-7.9A7 7 0 0 0 5.2 9 4.5 4.5 0 0 0 7 18Z" /></svg></span><span><strong>Data storage</strong><small>Saved on this device</small></span><span class="sync-badge">Active</span></div>
+                  <div class="setting-row static"><span class="setting-icon cloud"><svg viewBox="0 0 24 24"><path d="M7 18h11a4 4 0 0 0 .7-7.9A7 7 0 0 0 5.2 9 4.5 4.5 0 0 0 7 18Z" /></svg></span><span><strong>Data storage</strong><small id="sync-status-text">Secure Railway sync</small></span><span class="sync-badge" id="sync-status-badge">Synced</span></div>
                 </div>
                 <div class="safe-bottom-space"></div>
               </section>
