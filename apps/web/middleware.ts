@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
+import { isPublicResearchQuestionnaire } from "./sites/research/lib/publicQuestionnaire";
 
 const { auth } = NextAuth(authConfig);
 
@@ -127,7 +128,11 @@ export default auth((req) => {
   }
 
   if (currentHost === "research") {
-    if (url.pathname.startsWith("/cam-app/")) {
+    // Public assets and questionnaires never require a research account.
+    if (
+      url.pathname.startsWith("/cam-app/") ||
+      isPublicResearchQuestionnaire(url.pathname)
+    ) {
       return NextResponse.next();
     }
 
