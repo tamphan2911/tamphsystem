@@ -1,8 +1,8 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "littlelog-cam-v2";
-  const LEGACY_STORAGE_KEY = "littlelog-cam-v1";
+  const STORAGE_KEY_PREFIX = "littlelog-cam-user";
+  const LEGACY_STORAGE_KEYS = ["littlelog-cam-v2", "littlelog-cam-v1"];
   const CAM_API = "/api/cam";
   const BABY = {
     shortName: "Cam",
@@ -82,9 +82,12 @@
     };
   }
 
-  function loadState() {
+  function loadState(storageKey, allowLegacy = false) {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY));
+      const legacyValue = allowLegacy
+        ? LEGACY_STORAGE_KEYS.map((key) => localStorage.getItem(key)).find(Boolean)
+        : null;
+      const saved = JSON.parse(localStorage.getItem(storageKey) || legacyValue);
       if (saved && Array.isArray(saved.events)) {
         saved.activeSessions ||= { sleep: null, feed: null };
         saved.settings ||= { dailyReport: true, weeklyReport: true };
@@ -98,13 +101,15 @@
     return seedState();
   }
 
-  let state = loadState();
+  let state = seedState();
+  let activeStorageKey = null;
+  let currentUser = null;
   let sessionTicker = null;
   let syncReady = false;
   let syncChain = Promise.resolve();
 
   function persistLocalState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (activeStorageKey) localStorage.setItem(activeStorageKey, JSON.stringify(state));
   }
 
   function setSyncStatus(mode, message) {
@@ -399,6 +404,9 @@
   function renderBabyDetails() {
     $("#baby-age-label").textContent = babyAgeLabel();
     $("#greeting-text").textContent = `How is ${BABY.shortName} doing?`;
+    $$('[data-user-avatar]').forEach((image) => {
+      image.src = currentUser?.avatarUrl || "./house_cam.jpg";
+    });
   }
 
   function renderSession() {
@@ -737,10 +745,10 @@
         <div class="mini-report-row"><span>Weekly report</span><strong>Sunday · 8:00 PM</strong></div>
         <div class="mini-report-row"><span>Storage</span><strong>Railway PostgreSQL</strong></div>
       </div>
-      <div class="sheet-actions two"><button class="sheet-secondary" id="lock-littlelog" type="button">Lock device</button><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
+      <div class="sheet-actions two"><button class="sheet-secondary" id="sign-out-littlelog" type="button">Sign out</button><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
     `);
     $('[data-close-sheet]').addEventListener("click", closeSheet);
-    $("#lock-littlelog").addEventListener("click", lockLittleLog);
+    $("#sign-out-littlelog").addEventListener("click", signOutLittleLog);
   }
 
   function clearHistory() {
@@ -751,11 +759,11 @@
     closeSheet();
   }
 
-  async function lockLittleLog() {
+  async function signOutLittleLog() {
     try {
       await camRequest("/session", { method: "DELETE" });
     } finally {
-      localStorage.removeItem(STORAGE_KEY);
+      if (activeStorageKey) localStorage.removeItem(activeStorageKey);
       window.location.reload();
     }
   }
@@ -830,8 +838,11 @@
     status.classList.toggle("is-error", isError);
   }
 
-  async function openSyncedApp() {
+  async function openSyncedApp(user) {
     setGateStatus("Loading Cam’s care records…");
+    currentUser = user;
+    activeStorageKey = `${STORAGE_KEY_PREFIX}-${user.id}-v1`;
+    state = loadState(activeStorageKey, user.username === "traph");
     const serverState = await camRequest("/state");
     mergeServerState(serverState, true);
     syncReady = true;
@@ -853,39 +864,40 @@
         return;
       }
       if (session.authenticated) {
-        await openSyncedApp();
+        await openSyncedApp(session.user);
         return;
       }
-      setGateStatus("Enter the family code to continue.");
-      $("#sync-access-code").focus();
+      setGateStatus("Enter your LittleLog ID and password to continue.");
+      $("#sync-username").focus();
     } catch (error) {
       setGateStatus(error.message || "LittleLog could not reach the server.", true);
     }
   }
 
-  async function submitFamilyAccess(event) {
+  async function submitLogin(event) {
     event.preventDefault();
-    const accessCode = $("#sync-access-code").value;
+    const username = $("#sync-username").value;
+    const password = $("#sync-password").value;
     const submit = $("#sync-access-submit");
     submit.disabled = true;
-    setGateStatus("Checking family access…");
+    setGateStatus("Signing in…");
     try {
-      await camRequest("/session", {
+      const session = await camRequest("/session", {
         method: "POST",
-        body: JSON.stringify({ accessCode })
+        body: JSON.stringify({ username, password })
       });
-      $("#sync-access-code").value = "";
-      await openSyncedApp();
+      $("#sync-password").value = "";
+      await openSyncedApp(session.user);
     } catch (error) {
-      setGateStatus(error.message || "Family access could not be verified.", true);
-      $("#sync-access-code").select();
+      setGateStatus(error.message || "LittleLog could not sign in.", true);
+      $("#sync-password").select();
     } finally {
       submit.disabled = false;
     }
   }
 
   bindGlobalEvents();
-  $("#sync-access-form").addEventListener("submit", submitFamilyAccess);
+  $("#sync-access-form").addEventListener("submit", submitLogin);
   initializeSync();
   window.addEventListener("online", () => syncSnapshot());
   window.addEventListener("focus", refreshFromServer);

@@ -5,13 +5,14 @@ const CAM_SESSION_COOKIE = "cam_family_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 90;
 
 function configuration() {
-  const accessCode = process.env.CAM_FAMILY_ACCESS_CODE?.trim() ?? "";
-  const sessionSecret = process.env.CAM_SESSION_SECRET?.trim() ?? "";
+  const sessionSecret =
+    process.env.CAM_SESSION_SECRET?.trim() ||
+    process.env.AUTH_SECRET?.trim() ||
+    "";
 
   return {
-    accessCode,
     sessionSecret,
-    ready: accessCode.length >= 6 && sessionSecret.length >= 32,
+    ready: sessionSecret.length >= 32,
   };
 }
 
@@ -28,10 +29,11 @@ function safeEqual(left: string, right: string) {
   );
 }
 
-function createSessionToken(secret: string) {
+function createSessionToken(secret: string, userId: string) {
   const payload = Buffer.from(
     JSON.stringify({
-      scope: "cam-family",
+      scope: "cam-user",
+      userId,
       expiresAt: Date.now() + SESSION_MAX_AGE_SECONDS * 1000,
     }),
   ).toString("base64url");
@@ -42,51 +44,45 @@ function createSessionToken(secret: string) {
 function verifySessionToken(token: string, secret: string) {
   const [payload, signature] = token.split(".");
   if (!payload || !signature || !safeEqual(signature, sign(payload, secret))) {
-    return false;
+    return null;
   }
 
   try {
     const parsed = JSON.parse(
       Buffer.from(payload, "base64url").toString("utf8"),
-    ) as { scope?: string; expiresAt?: number };
-    return (
-      parsed.scope === "cam-family" &&
+    ) as { scope?: string; userId?: string; expiresAt?: number };
+    const userId = parsed.userId;
+    const valid =
+      parsed.scope === "cam-user" &&
+      typeof userId === "string" &&
+      userId.length > 0 &&
       typeof parsed.expiresAt === "number" &&
-      parsed.expiresAt > Date.now()
-    );
+      parsed.expiresAt > Date.now();
+    return valid && userId ? { userId } : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
-export function camSyncIsConfigured() {
+export function camAuthIsConfigured() {
   return configuration().ready;
-}
-
-export function camAccessCodeMatches(candidate: string) {
-  const config = configuration();
-  if (!config.ready) return false;
-
-  const candidateDigest = sign(candidate.trim(), config.sessionSecret);
-  const expectedDigest = sign(config.accessCode, config.sessionSecret);
-  return safeEqual(candidateDigest, expectedDigest);
 }
 
 export async function hasCamSession() {
   const config = configuration();
-  if (!config.ready) return false;
+  if (!config.ready) return null;
 
   const token = (await cookies()).get(CAM_SESSION_COOKIE)?.value;
-  return token ? verifySessionToken(token, config.sessionSecret) : false;
+  return token ? verifySessionToken(token, config.sessionSecret) : null;
 }
 
-export async function createCamSession() {
+export async function createCamSession(userId: string) {
   const config = configuration();
-  if (!config.ready) throw new Error("Cam sync is not configured");
+  if (!config.ready) throw new Error("Cam authentication is not configured");
 
   (await cookies()).set(
     CAM_SESSION_COOKIE,
-    createSessionToken(config.sessionSecret),
+    createSessionToken(config.sessionSecret, userId),
     {
       httpOnly: true,
       maxAge: SESSION_MAX_AGE_SECONDS,

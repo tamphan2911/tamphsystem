@@ -1,7 +1,8 @@
+import bcrypt from "bcrypt";
+import { prisma } from "@repo/db";
 import { NextRequest, NextResponse } from "next/server";
 import {
-  camAccessCodeMatches,
-  camSyncIsConfigured,
+  camAuthIsConfigured,
   clearCamSession,
   createCamSession,
   hasCamSession,
@@ -12,6 +13,8 @@ export const dynamic = "force-dynamic";
 const noStoreHeaders = { "Cache-Control": "no-store" };
 const ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 8;
+const DUMMY_PASSWORD_HASH =
+  "$2b$12$glAfJAYlg9kZDAxG76vSN.8Fu8qRpjn0DgjeIbDYDXX/TjcYcYmDi";
 
 type AttemptRecord = { count: number; resetAt: number };
 const globalForCamAccess = globalThis as unknown as {
@@ -39,19 +42,33 @@ function activeAttemptRecord(key: string) {
 }
 
 export async function GET() {
+  const session = await hasCamSession();
+  const user = session
+    ? await prisma.camCareUser.findUnique({
+        where: { id: session.userId },
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+        },
+      })
+    : null;
+
   return NextResponse.json(
     {
-      authenticated: await hasCamSession(),
-      configured: camSyncIsConfigured(),
+      authenticated: Boolean(user),
+      configured: camAuthIsConfigured(),
+      user,
     },
     { headers: noStoreHeaders },
   );
 }
 
 export async function POST(request: NextRequest) {
-  if (!camSyncIsConfigured()) {
+  if (!camAuthIsConfigured()) {
     return NextResponse.json(
-      { error: "Cam sync has not been configured on the server." },
+      { error: "LittleLog authentication has not been configured." },
       { status: 503, headers: noStoreHeaders },
     );
   }
@@ -66,26 +83,53 @@ export async function POST(request: NextRequest) {
   }
 
   const body = (await request.json().catch(() => null)) as {
-    accessCode?: unknown;
+    username?: unknown;
+    password?: unknown;
   } | null;
-  const accessCode =
-    typeof body?.accessCode === "string" ? body.accessCode.slice(0, 128) : "";
+  const username =
+    typeof body?.username === "string"
+      ? body.username.trim().toLowerCase().slice(0, 100)
+      : "";
+  const password =
+    typeof body?.password === "string" ? body.password.slice(0, 200) : "";
+  const user = username
+    ? await prisma.camCareUser.findUnique({ where: { username } })
+    : null;
+  const passwordMatches = await bcrypt.compare(
+    password,
+    user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+  );
 
-  if (!camAccessCodeMatches(accessCode)) {
+  if (!user || !passwordMatches) {
     camAccessAttempts.set(attemptKey, {
       count: (currentAttempts?.count ?? 0) + 1,
       resetAt: currentAttempts?.resetAt ?? Date.now() + ATTEMPT_WINDOW_MS,
     });
     return NextResponse.json(
-      { error: "That family access code is not correct." },
+      { error: "The LittleLog ID or password is not correct." },
       { status: 401, headers: noStoreHeaders },
     );
   }
 
   camAccessAttempts.delete(attemptKey);
-  await createCamSession();
+  await Promise.all([
+    createCamSession(user.id),
+    prisma.camCareUser.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    }),
+  ]);
   return NextResponse.json(
-    { authenticated: true, configured: true },
+    {
+      authenticated: true,
+      configured: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+      },
+    },
     { headers: noStoreHeaders },
   );
 }
@@ -93,7 +137,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE() {
   await clearCamSession();
   return NextResponse.json(
-    { authenticated: false, configured: camSyncIsConfigured() },
+    { authenticated: false, configured: camAuthIsConfigured(), user: null },
     { headers: noStoreHeaders },
   );
 }

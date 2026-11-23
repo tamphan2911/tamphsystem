@@ -1296,18 +1296,37 @@ model Publication {
 // Cam Care — standalone baby tracking storage
 // ---------------------------------------------
 
+model CamCareUser {
+  id           String    @id @default(uuid())
+  username     String    @unique
+  displayName  String
+  avatarUrl    String?
+  passwordHash String
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  state  CamCareState?
+  events CamCareEvent[]
+
+  @@map("cam_care_user")
+}
+
 model CamCareState {
-  id             String   @id @default("cam")
+  userId         String   @id
   activeSessions Json
   settings       Json
   revision       Int      @default(0)
   updatedAt      DateTime @updatedAt
 
+  user CamCareUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("cam_care_state")
 }
 
 model CamCareEvent {
-  id        String    @id
+  userId    String
+  id        String
   type      String
   title     String
   detail    String
@@ -1317,7 +1336,10 @@ model CamCareEvent {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  @@index([timestamp])
-  @@index([deletedAt])
+  user CamCareUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, id])
+  @@index([userId, timestamp])
+  @@index([userId, deletedAt])
   @@map("cam_care_event")
 }

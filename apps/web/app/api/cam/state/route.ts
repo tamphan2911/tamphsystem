@@ -19,7 +19,7 @@ type CamEventInput = {
 
 function unauthorized() {
   return NextResponse.json(
-    { error: "Family access is required." },
+    { error: "LittleLog sign-in is required." },
     { status: 401, headers: noStoreHeaders },
   );
 }
@@ -70,15 +70,15 @@ function normalizeObject(value: unknown, fallback: Record<string, unknown>) {
   return (isRecord(value) ? value : fallback) as Prisma.InputJsonValue;
 }
 
-async function readState() {
+async function readState(userId: string) {
   const [storedState, liveEvents, deletedEvents] = await Promise.all([
-    prisma.camCareState.findUnique({ where: { id: "cam" } }),
+    prisma.camCareState.findUnique({ where: { userId } }),
     prisma.camCareEvent.findMany({
-      where: { deletedAt: null },
+      where: { userId, deletedAt: null },
       orderBy: { timestamp: "asc" },
     }),
     prisma.camCareEvent.findMany({
-      where: { deletedAt: { not: null } },
+      where: { userId, deletedAt: { not: null } },
       select: { id: true },
     }),
   ]);
@@ -101,13 +101,17 @@ async function readState() {
 }
 
 export async function GET() {
-  if (!(await hasCamSession())) return unauthorized();
+  const session = await hasCamSession();
+  if (!session) return unauthorized();
 
-  return NextResponse.json(await readState(), { headers: noStoreHeaders });
+  return NextResponse.json(await readState(session.userId), {
+    headers: noStoreHeaders,
+  });
 }
 
 export async function PUT(request: Request) {
-  if (!(await hasCamSession())) return unauthorized();
+  const session = await hasCamSession();
+  if (!session) return unauthorized();
 
   const body = (await request.json().catch(() => null)) as unknown;
   if (!isRecord(body)) {
@@ -152,8 +156,10 @@ export async function PUT(request: Request) {
   await prisma.$transaction(async (tx) => {
     for (const event of events as CamEventInput[]) {
       await tx.camCareEvent.upsert({
-        where: { id: event.id },
-        create: event,
+        where: {
+          userId_id: { userId: session.userId, id: event.id },
+        },
+        create: { userId: session.userId, ...event },
         update: {
           type: event.type,
           title: event.title,
@@ -166,15 +172,19 @@ export async function PUT(request: Request) {
 
     if (deletedEventIds.length) {
       await tx.camCareEvent.updateMany({
-        where: { id: { in: deletedEventIds }, deletedAt: null },
+        where: {
+          userId: session.userId,
+          id: { in: deletedEventIds },
+          deletedAt: null,
+        },
         data: { deletedAt: new Date() },
       });
     }
 
     await tx.camCareState.upsert({
-      where: { id: "cam" },
+      where: { userId: session.userId },
       create: {
-        id: "cam",
+        userId: session.userId,
         activeSessions,
         settings,
         revision: 1,
@@ -187,5 +197,7 @@ export async function PUT(request: Request) {
     });
   });
 
-  return NextResponse.json(await readState(), { headers: noStoreHeaders });
+  return NextResponse.json(await readState(session.userId), {
+    headers: noStoreHeaders,
+  });
 }

@@ -89,6 +89,7 @@ body {
 
 .sync-gate-card form { display: grid; gap: 9px; }
 .sync-gate-card label { color: #464255; font-size: 0.9rem; font-weight: 800; }
+.sync-gate-card label:not(:first-child) { margin-top: 5px; }
 .sync-gate-card input {
   width: 100%;
   height: 52px;
@@ -375,6 +376,7 @@ svg {
 
 .baby-avatar {
   display: grid;
+  overflow: hidden;
   width: 39px;
   height: 39px;
   place-items: center;
@@ -386,6 +388,8 @@ svg {
   font-size: 0.9rem;
   font-weight: 800;
 }
+.baby-avatar img,
+.large-avatar img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 
 .baby-chip strong,
 .baby-chip small {
@@ -796,7 +800,7 @@ svg {
 .weekly-metrics small { margin-top: 2px; color: var(--muted); font-size: .53rem; }
 
 .profile-card { display: grid; grid-template-columns: 55px 1fr auto; align-items: center; gap: 11px; padding: 14px; border-radius: 20px; color: #fff; background: linear-gradient(140deg, #5c4bbd, #806fe1); box-shadow: 0 11px 24px rgba(81,64,173,.18); }
-.large-avatar { display: grid; width: 52px; height: 52px; place-items: center; border: 3px solid rgba(255,255,255,.55); border-radius: 50%; background: rgba(255,255,255,.18); font-size: 1.15rem; font-weight: 800; }
+.large-avatar { display: grid; width: 52px; height: 52px; place-items: center; overflow: hidden; border: 3px solid rgba(255,255,255,.55); border-radius: 50%; background: rgba(255,255,255,.18); font-size: 1.15rem; font-weight: 800; }
 .profile-card h3 { margin: 0; font-size: .86rem; }
 .profile-card p { margin: 4px 0 0; opacity: .75; font-size: .56rem; }
 .profile-card button { min-height: 32px; padding: 0 10px; border: 1px solid rgba(255,255,255,.25); border-radius: 10px; color: #fff; background: rgba(255,255,255,.12); font-size: .58rem; font-weight: 750; cursor: pointer; }

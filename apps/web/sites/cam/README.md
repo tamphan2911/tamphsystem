@@ -6,9 +6,13 @@ service, but it does not use Research Hub users, sessions, or domain models.
 
 ## Runtime configuration
 
-- `CAM_FAMILY_ACCESS_CODE`: private code entered on each approved device.
-- `CAM_SESSION_SECRET`: random secret of at least 32 characters used to sign the
-  dedicated `cam_family_session` cookie.
+- `CAM_SESSION_SECRET`: optional dedicated secret of at least 32 characters used
+  to sign the `cam_family_session` cookie. When omitted, the existing
+  `AUTH_SECRET` is used with a LittleLog-only session scope.
+
+LittleLog has its own username/password login and no registration route. The
+initial `traph` account is created by the Cam Care migration. Its password is
+stored only as a bcrypt hash.
 
 ## Storage isolation
 
@@ -16,6 +20,7 @@ The Prisma models map only to these prefixed tables:
 
 - `cam_care_state`
 - `cam_care_event`
+- `cam_care_user`
 
 The `/api/cam/session` and `/api/cam/state` routes are the only server entry
 points for this data. Deleted events are retained as tombstones so a stale
