@@ -577,13 +577,12 @@
     `;
 
     const reference = referenceForAgeDays();
-    $("#range-insight").textContent = `${BABY.shortName} is ${babyAgeDays()} days old and full-term. Her fill and pin show recorded progress on a wider scale; the green band marks the broad ${reference.ageLabel} reference range.`;
     const countScaleMax = (range, value) => Math.ceil(Math.max(range.max + 4, range.max * 1.35, value * 1.1) / 2) * 2;
     const milkScaleMax = Math.ceil(Math.max(reference.bottleMl.max + 200, reference.bottleMl.max * 1.35, dailyBottleMilk * 1.1) / 100) * 100;
     const sleepScaleMax = Math.ceil(Math.max(24, (dailySleep / 60) * 1.1) / 2) * 2;
     const comparisons = [
       { key: "feeds", label: "Feeds", value: dailyFeeds, range: reference.feeds, scaleMax: countScaleMax(reference.feeds, dailyFeeds), display: `${statNumber(dailyFeeds)} / day`, average: `${reference.feeds.average} / day`, format: (value) => `${value}` },
-      { key: "milk", label: "Bottle milk", value: dailyBottleMilk, range: reference.bottleMl, scaleMax: milkScaleMax, display: `${Math.round(dailyBottleMilk)} ml`, average: `${reference.bottleMl.average} ml`, format: (value) => `${Math.round(value).toLocaleString()} ml` },
+      { key: "milk", label: "Milk", value: dailyBottleMilk, range: reference.bottleMl, scaleMax: milkScaleMax, display: `${Math.round(dailyBottleMilk)} ml`, average: `${reference.bottleMl.average} ml`, format: (value) => `${Math.round(value).toLocaleString()} ml` },
       { key: "diapers", label: "Diapers", value: dailyDiapers, range: reference.diapers, scaleMax: countScaleMax(reference.diapers, dailyDiapers), display: `${statNumber(dailyDiapers)} / day`, average: `${reference.diapers.average} / day`, format: (value) => `${value}` },
       { key: "sleep", label: "Sleep", value: dailySleep / 60, range: reference.sleepHours, scaleMax: sleepScaleMax, display: formatDuration(dailySleep), average: `${reference.sleepHours.average}h`, format: (value) => `${value}h` }
     ];
@@ -591,7 +590,7 @@
       const position = Math.max(0, Math.min(100, (item.value / item.scaleMax) * 100));
       const typicalStart = Math.max(0, Math.min(100, (item.range.min / item.scaleMax) * 100));
       const typicalEnd = Math.max(typicalStart, Math.min(100, (item.range.max / item.scaleMax) * 100));
-      return `<div class="comparison-row signal-${item.key}"><div class="comparison-heading"><span class="comparison-label"><strong>${item.label}</strong><small>Reference average ${item.average}</small></span><strong class="comparison-current">${item.display}</strong></div><div class="comparison-track-wrap"><span class="comparison-track" role="img" aria-label="${item.label}: ${item.display}; reference ${item.format(item.range.min)} to ${item.format(item.range.max)}; scale zero to ${item.format(item.scaleMax)}" style="--cam-position:${position}%;--typical-start:${typicalStart}%;--typical-width:${typicalEnd - typicalStart}%"><span class="comparison-fill"></span><span class="comparison-typical"></span><i class="range-start"></i><i class="range-end"></i><i class="comparison-pin" title="${BABY.shortName}: ${item.display}"></i></span><span class="comparison-scale"><span>${item.format(0)}</span><span>Reference ${item.format(item.range.min)}–${item.format(item.range.max)}</span><span>${item.format(item.scaleMax)}</span></span></div></div>`;
+      return `<div class="comparison-row signal-${item.key}"><div class="comparison-heading"><span class="comparison-label"><strong>${item.label}</strong><i aria-hidden="true"></i><small>Reference average ${item.average}</small></span><strong class="comparison-current">${item.display}</strong></div><div class="comparison-track-wrap"><span class="comparison-track" role="img" aria-label="${item.label}: ${item.display}; reference ${item.format(item.range.min)} to ${item.format(item.range.max)}; scale zero to ${item.format(item.scaleMax)}" style="--cam-position:${position}%;--typical-start:${typicalStart}%;--typical-width:${typicalEnd - typicalStart}%;--typical-end:${typicalEnd}%"><span class="comparison-zone range-below"></span><span class="comparison-zone range-reference"></span><span class="comparison-zone range-above"></span><i class="range-start"></i><i class="range-end"></i><i class="comparison-pin" title="${BABY.shortName}: ${item.display}"></i></span><span class="comparison-scale"><span>${item.format(0)}</span><span>Reference ${item.format(item.range.min)}–${item.format(item.range.max)}</span><span>${item.format(item.scaleMax)}</span></span></div></div>`;
     }).join("");
 
     renderCharts();

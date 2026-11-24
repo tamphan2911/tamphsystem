@@ -777,20 +777,23 @@ svg {
 .insight-card > p { margin: 11px 0 7px; color: #676577; font-size: .69rem; line-height: 1.5; }
 .text-button { padding: 5px 0; border: 0; color: var(--plum); background: transparent; font-size: .65rem; font-weight: 800; cursor: pointer; }
 .comparison-list { display: grid; gap: 17px; margin: 18px 0 10px; }
-.comparison-row { --signal: var(--plum); --signal-soft: #a99ceb; min-width: 0; }
-.comparison-row.signal-milk { --signal: var(--coral); --signal-soft: #f0a196; }
-.comparison-row.signal-diapers { --signal: var(--mint); --signal-soft: #79cdb8; }
-.comparison-row.signal-sleep { --signal: var(--blue); --signal-soft: #8bb5ec; }
-.comparison-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
-.comparison-label strong, .comparison-label small { display: block; }
-.comparison-label strong { font-size: .69rem; }
-.comparison-label small { margin-top: 2px; color: var(--muted); font-size: .54rem; }
+.comparison-row { --signal: var(--plum); min-width: 0; }
+.comparison-row.signal-milk { --signal: var(--coral); }
+.comparison-row.signal-diapers { --signal: var(--mint); }
+.comparison-row.signal-sleep { --signal: var(--blue); }
+.comparison-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.comparison-label { display: flex; min-width: 0; align-items: center; gap: 8px; }
+.comparison-label strong { flex: 0 0 auto; color: var(--signal); font-size: .69rem; }
+.comparison-label i { width: 1px; height: 14px; flex: 0 0 auto; background: #d9d6e1; }
+.comparison-label small { min-width: 0; overflow: hidden; color: var(--muted); font-size: .54rem; text-overflow: ellipsis; white-space: nowrap; }
 .comparison-current { flex: 0 0 auto; color: var(--signal); font-size: .68rem; font-variant-numeric: tabular-nums; }
 .comparison-track-wrap { min-width: 0; padding-top: 9px; }
-.comparison-track { position: relative; display: block; height: 13px; border-radius: 10px; background: #ebeaf1; box-shadow: inset 0 0 0 1px rgba(73, 67, 96, .06); }
-.comparison-fill { position: absolute; z-index: 1; inset: 0 auto 0 0; width: var(--cam-position); border-radius: inherit; background: linear-gradient(90deg, var(--signal-soft), var(--signal)); transition: width 220ms ease; }
-.comparison-typical { position: absolute; z-index: 2; top: 0; bottom: 0; left: var(--typical-start); width: var(--typical-width); background: rgba(178, 229, 213, .78); box-shadow: inset 0 0 0 1px rgba(69, 155, 131, .25); pointer-events: none; }
-.comparison-track i { position: absolute; z-index: 3; top: 0; width: 2px; height: 100%; background: rgba(47, 128, 106, .62); }
+.comparison-track { position: relative; display: block; height: 13px; border-radius: 10px; background: #ebeaf1; box-shadow: inset 0 0 0 1px rgba(73, 67, 96, .08); }
+.comparison-zone { position: absolute; z-index: 1; top: 0; bottom: 0; }
+.comparison-zone.range-below { left: 0; width: var(--typical-start); border-radius: 10px 0 0 10px; background: #f6ddd3; }
+.comparison-zone.range-reference { left: var(--typical-start); width: var(--typical-width); background: #bfe6d8; }
+.comparison-zone.range-above { right: 0; left: var(--typical-end); border-radius: 0 10px 10px 0; background: #d9def5; }
+.comparison-track i { position: absolute; z-index: 3; top: 0; width: 1px; height: 100%; background: rgba(73, 67, 96, .25); }
 .comparison-track .range-start { left: var(--typical-start); }
 .comparison-track .range-end { left: calc(var(--typical-start) + var(--typical-width)); }
 .comparison-track .comparison-pin { z-index: 5; top: -5px; left: var(--cam-position); width: 2px; height: 23px; border-radius: 2px; background: var(--signal); box-shadow: 0 1px 4px rgba(67, 52, 150, .28); transform: translateX(-50%); }
