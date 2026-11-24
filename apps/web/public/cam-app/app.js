@@ -8,8 +8,12 @@
     shortName: "Cam",
     fullName: "Phan Hoa Trà",
     sex: "Girl",
+    ethnicity: "Vietnamese",
     bornAt: new Date("2026-11-18T08:00:00+07:00"),
-    birthWeightKg: 3.4
+    birthWeightKg: 3.4,
+    currentWeightKg: null,
+    gestationalAgeWeeks: 39.5,
+    feedingProfile: "Mostly expressed breast milk by bottle · 2–3 formula feeds daily"
   };
   const WEEK_MS = 7 * 86400000;
   const FIRST_WEEK_GENERATION_AT = new Date("2026-11-25T20:00:00+07:00");
@@ -88,6 +92,7 @@
     if (ageDays <= 1) return { ageLabel: "first 2 days", feeds: { min: 3, average: 4, max: 6 }, bottleMl: { min: 30, average: 90, max: 180 }, diapers: { min: 2, average: 3, max: 4 }, sleepHours: { min: 14, average: 15.5, max: 17 } };
     if (ageDays <= 3) return { ageLabel: "days 3–4", feeds: { min: 6, average: 9, max: 12 }, bottleMl: { min: 120, average: 240, max: 360 }, diapers: { min: 3, average: 5, max: 7 }, sleepHours: { min: 14, average: 15.5, max: 17 } };
     if (ageDays <= 5) return { ageLabel: "days 5–6", feeds: { min: 8, average: 10, max: 12 }, bottleMl: { min: 240, average: 360, max: 540 }, diapers: { min: 5, average: 7, max: 9 }, sleepHours: { min: 14, average: 15.5, max: 17 } };
+    if (ageDays <= 7) return { ageLabel: "full-term first week · mixed expressed milk", feeds: { min: 8, average: 10, max: 12 }, bottleMl: { min: 240, average: 480, max: 720 }, diapers: { min: 6, average: 8, max: 12 }, sleepHours: { min: 14, average: 15.5, max: 17 } };
     if (ageDays <= 30) return { ageLabel: "newborn · 1–4 weeks", feeds: { min: 8, average: 10, max: 12 }, bottleMl: { min: 450, average: 650, max: 850 }, diapers: { min: 6, average: 8, max: 10 }, sleepHours: { min: 14, average: 15.5, max: 17 } };
     if (ageDays <= 120) return { ageLabel: "1–3 months", feeds: { min: 6, average: 8, max: 10 }, bottleMl: { min: 600, average: 750, max: 900 }, diapers: { min: 5, average: 7, max: 9 }, sleepHours: { min: 14, average: 15.5, max: 17 } };
     if (ageDays <= 180) return { ageLabel: "4–6 months", feeds: { min: 5, average: 7, max: 9 }, bottleMl: { min: 700, average: 850, max: 1000 }, diapers: { min: 5, average: 7, max: 9 }, sleepHours: { min: 12, average: 14, max: 16 } };
@@ -552,17 +557,21 @@
     `;
 
     const reference = referenceForAgeDays();
-    $("#range-insight").textContent = `${BABY.shortName} is ${babyAgeDays()} days old. Each numbered scale adapts to broad ${reference.ageLabel} patterns and shows the recorded average for logged days only.`;
+    $("#range-insight").textContent = `${BABY.shortName} is ${babyAgeDays()} days old and full-term. Her fill and pin show recorded progress on a wider scale; the green band marks the broad ${reference.ageLabel} reference range.`;
+    const countScaleMax = (range, value) => Math.ceil(Math.max(range.max + 4, range.max * 1.35, value * 1.1) / 2) * 2;
+    const milkScaleMax = Math.ceil(Math.max(reference.bottleMl.max + 200, reference.bottleMl.max * 1.35, dailyBottleMilk * 1.1) / 100) * 100;
+    const sleepScaleMax = Math.ceil(Math.max(24, (dailySleep / 60) * 1.1) / 2) * 2;
     const comparisons = [
-      { label: "Feeds", value: dailyFeeds, range: reference.feeds, display: `${statNumber(dailyFeeds)} / day`, unit: "" },
-      { label: "Bottle milk", value: dailyBottleMilk, range: reference.bottleMl, display: `${Math.round(dailyBottleMilk)} ml`, unit: " ml" },
-      { label: "Diapers", value: dailyDiapers, range: reference.diapers, display: `${statNumber(dailyDiapers)} / day`, unit: "" },
-      { label: "Sleep", value: dailySleep / 60, range: reference.sleepHours, display: formatDuration(dailySleep), unit: "h" }
+      { key: "feeds", label: "Feeds", value: dailyFeeds, range: reference.feeds, scaleMax: countScaleMax(reference.feeds, dailyFeeds), display: `${statNumber(dailyFeeds)} / day`, average: `${reference.feeds.average} / day`, format: (value) => `${value}` },
+      { key: "milk", label: "Bottle milk", value: dailyBottleMilk, range: reference.bottleMl, scaleMax: milkScaleMax, display: `${Math.round(dailyBottleMilk)} ml`, average: `${reference.bottleMl.average} ml`, format: (value) => `${Math.round(value).toLocaleString()} ml` },
+      { key: "diapers", label: "Diapers", value: dailyDiapers, range: reference.diapers, scaleMax: countScaleMax(reference.diapers, dailyDiapers), display: `${statNumber(dailyDiapers)} / day`, average: `${reference.diapers.average} / day`, format: (value) => `${value}` },
+      { key: "sleep", label: "Sleep", value: dailySleep / 60, range: reference.sleepHours, scaleMax: sleepScaleMax, display: formatDuration(dailySleep), average: `${reference.sleepHours.average}h`, format: (value) => `${value}h` }
     ];
     $("#comparison-list").innerHTML = comparisons.map((item) => {
-      const span = Math.max(1, item.range.max - item.range.min);
-      const position = Math.max(4, Math.min(96, ((item.value - item.range.min) / span) * 100));
-      return `<div class="comparison-row"><span class="comparison-label"><strong>${item.label}</strong></span><span class="comparison-track-wrap"><span class="comparison-track"><span class="comparison-value" style="left:${position}%">${item.display}</span><i class="comparison-point" style="left:${position}%"></i></span><span class="comparison-scale"><span>${item.range.min}${item.unit}</span><span>Age avg ${item.range.average}${item.unit}</span><span>${item.range.max}${item.unit}</span></span></span></div>`;
+      const position = Math.max(0, Math.min(100, (item.value / item.scaleMax) * 100));
+      const typicalStart = Math.max(0, Math.min(100, (item.range.min / item.scaleMax) * 100));
+      const typicalEnd = Math.max(typicalStart, Math.min(100, (item.range.max / item.scaleMax) * 100));
+      return `<div class="comparison-row signal-${item.key}"><div class="comparison-heading"><span class="comparison-label"><strong>${item.label}</strong><small>Reference average ${item.average}</small></span><strong class="comparison-current">${item.display}</strong></div><div class="comparison-track-wrap"><span class="comparison-track" role="img" aria-label="${item.label}: ${item.display}; reference ${item.format(item.range.min)} to ${item.format(item.range.max)}; scale zero to ${item.format(item.scaleMax)}" style="--cam-position:${position}%;--typical-start:${typicalStart}%;--typical-width:${typicalEnd - typicalStart}%"><span class="comparison-fill"></span><span class="comparison-typical"></span><i class="range-start"></i><i class="range-end"></i><i class="comparison-pin" title="${BABY.shortName}: ${item.display}"></i></span><span class="comparison-scale"><span>${item.format(0)}</span><span>Reference ${item.format(item.range.min)}–${item.format(item.range.max)}</span><span>${item.format(item.scaleMax)}</span></span></div></div>`;
     }).join("");
 
     renderCharts();
@@ -1381,8 +1390,10 @@
   function openRangeInfo() {
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Designed for reassurance</p><h2 id="sheet-title">How comparisons work</h2></header>
-      <p class="info-copy"><strong>Broad ranges, not scores.</strong> Each line shows lower, age-average, and higher reference values for ${BABY.shortName}’s current age in days. Her pin uses only the days that contain activity data, so unused days do not pull the average down.</p>
-      <p class="info-copy">Mixed feeding is handled carefully: bottle volume can be totaled, but the app will never guess how much milk was taken during breastfeeding.</p>
+      <p class="info-copy"><strong>Broad ranges, not scores.</strong> Each track starts at zero and extends beyond the typical band so you can see ${BABY.shortName}’s real progress and position. The colored fill and pin are her recorded value; the pastel-green band is the broad reference range for her current age in days.</p>
+      <p class="info-copy">For 7- and 30-day views, the pin averages only days containing activity data, so unused days do not pull the result down.</p>
+      <p class="info-copy"><strong>${BABY.gestationalAgeWeeks} weeks · ${BABY.ethnicity} · ${BABY.sex.toLowerCase()}.</strong> This signal reference uses Cam’s full-term history and her feeding pattern: ${BABY.feedingProfile.toLowerCase()}. Sex and ethnicity are not used as unsupported corrections to feed, diaper, or sleep ranges.</p>
+      <p class="info-copy">Bottle volume is measurable for Cam’s expressed breast milk and formula feeds. Because her current weight has not been measured, the volume reference remains deliberately broad and does not claim to be a weight-based target.</p>
       <p class="info-copy">Important warning signs should use separately reviewed rules and should never wait for the evening report.</p>
       <span class="feedback-pill">Educational guidance only</span>
       <div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Got it</button></div>
