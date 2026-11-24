@@ -241,6 +241,7 @@ export async function GET() {
   if (!session) return unauthorized();
 
   const window = latestCompletedWindow();
+  const gptConfigured = Boolean(process.env.OPENAI_API_KEY?.trim());
   const existing = await prisma.camCareDailyInsight.findUnique({
     where: {
       userId_reportDate: {
@@ -249,7 +250,10 @@ export async function GET() {
       },
     },
   });
-  if (existing?.suggestion) {
+  if (
+    existing?.suggestion &&
+    (existing.status === "ready" || !gptConfigured)
+  ) {
     return NextResponse.json(
       responsePayload(existing, window.nextAvailableAt),
       { headers: noStoreHeaders },
