@@ -9,7 +9,7 @@
       content="LittleLog infant feeding, diaper, sleep, and bath tracker"
     />
     <title>LittleLog — Cam’s Baby Care</title>
-    <link rel="stylesheet" href="./styles.css?v=20261124c" />
+    <link rel="stylesheet" href="./styles.css?v=20261124d" />
   </head>
   <body>
     <section class="sync-gate" id="sync-gate" aria-labelledby="sync-gate-title">
@@ -63,7 +63,7 @@
               <header class="app-header">
                 <button class="baby-chip" id="baby-chip" type="button" aria-label="Open baby profile">
                   <span class="baby-avatar" aria-hidden="true"><img data-user-avatar src="./house_cam.jpg" alt="" /></span>
-                  <span><strong>Cam</strong><small id="baby-age-label">5 days</small></span>
+                  <span><strong>Cam</strong><small id="baby-age-label">5 days old</small></span>
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4" /></svg>
                 </button>
                 <button class="icon-button" id="settings-button" type="button" aria-label="Open settings">
@@ -74,19 +74,18 @@
               <section class="view active" id="view-today" data-view="today" aria-label="Today">
                 <div class="today-heading">
                   <div><p class="eyebrow" id="today-label">Monday, 23 November</p><h2 id="greeting-text">How is Cam doing?</h2></div>
-                  <div class="soft-badge"><span></span> All caught up</div>
                 </div>
 
                 <div class="active-sessions" id="active-sessions" aria-live="polite"></div>
 
                 <div class="last-feed-card">
                   <div class="last-feed-copy">
-                    <span class="feed-orb" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s7-4.2 7-10.2A4.3 4.3 0 0 0 12 7.5a4.3 4.3 0 0 0-7 3.3C5 16.8 12 21 12 21Z" /></svg></span>
+                    <span class="feed-orb" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 3h6v3l2 2v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8l2-2V3Zm-2 8h10" /></svg></span>
                     <span><small>Last feed</small><strong id="last-feed-text">1h 12m ago</strong><em id="last-feed-detail">Bottle · 90 ml</em></span>
                   </div>
                 </div>
 
-                <div class="section-row"><h3>Quick log</h3><span>Tap once to begin</span></div>
+                <div class="section-row"><h3>Quick log</h3></div>
                 <div class="quick-grid">
                   <button class="quick-card feed" data-action="feed" type="button">
                     <span class="quick-icon"><svg viewBox="0 0 24 24"><path d="M9 3h6v3l2 2v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8l2-2V3Zm-2 8h10" /></svg></span>
@@ -100,19 +99,19 @@
                     <span class="quick-icon"><svg viewBox="0 0 24 24"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4a8.5 8.5 0 1 0 11.2 11.2Z" /></svg></span>
                     <span><strong>Sleep</strong><small>Start a timer</small></span>
                   </button>
-                  <button class="quick-card bath" data-action="bath" type="button">
-                    <span class="quick-icon"><svg viewBox="0 0 24 24"><path d="M4 11h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6v-3Zm3 0V6a3 3 0 0 1 6 0m-7 14-1 2m13-2 1 2M13 8h3" /></svg></span>
-                    <span><strong>Bath</strong><small>Always 10 min</small></span>
+                  <button class="quick-card bath" data-action="other" type="button">
+                    <span class="quick-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M6 6l12 12M18 6 6 18" /></svg></span>
+                    <span><strong>Other Activities</strong><small>Bath, sun, or walk</small></span>
                   </button>
                 </div>
 
-                <div class="section-row timeline-heading"><h3>Today</h3><button id="clear-demo" type="button">Clear history</button></div>
+                <div class="section-row timeline-heading"><h3>Care-day timeline</h3><button id="open-activity-pattern" type="button">Activities pattern</button></div>
                 <div class="timeline" id="timeline" aria-live="polite"></div>
                 <div class="safe-bottom-space"></div>
               </section>
 
               <section class="view" id="view-stats" data-view="stats" aria-label="Statistics">
-                <div class="page-heading"><p class="eyebrow">Patterns, not pressure</p><h2>Statistics</h2></div>
+                <div class="page-heading"><p class="eyebrow" id="stats-date-label">Monday, 23 November</p><h2>Statistics</h2></div>
                 <div class="period-switch" role="group" aria-label="Statistics period">
                   <button data-period="today" type="button">Today</button>
                   <button class="active" data-period="week" type="button">7 days</button>
@@ -145,17 +144,14 @@
               </section>
 
               <section class="view" id="view-reports" data-view="reports" aria-label="Reports">
-                <div class="page-heading"><p class="eyebrow">Short and useful</p><h2>Evening reports</h2></div>
+                <div class="page-heading"><p class="eyebrow" id="reports-date-label">Monday, 23 November</p><h2>Evening reports</h2></div>
                 <article class="report-hero">
-                  <div class="report-hero-top"><span class="moon-orb"><svg viewBox="0 0 24 24"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4a8.5 8.5 0 1 0 11.2 11.2Z" /></svg></span><span><small>Today at 8:00 PM</small><strong>Cam’s day at a glance</strong></span></div>
-                  <div class="report-window"><strong>Daily report window</strong><span>8:00 PM yesterday → 8:00 PM today</span></div>
+                  <div class="report-hero-top"><span class="moon-orb"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8m-8 4h8m-8 4h5M3 8h2m14 0h2" /></svg></span><span><small>8:00 PM yesterday → 8:00 PM today</small><strong>Cam’s day at a glance</strong></span></div>
                   <p id="daily-report-copy">Cam’s daily summary will appear here as activities are recorded.</p>
                   <div class="report-tip"><strong>Gentle suggestion</strong><p id="daily-tip">Preparing Cam’s latest completed care-day comparison.</p><small id="daily-tip-meta">Generated once daily after 8:00 PM</small></div>
-                  <button class="primary-button" id="preview-notification" type="button">Preview notification</button>
                 </article>
 
                 <div class="report-schedule">
-                  <div class="schedule-row"><span class="schedule-icon daily"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 2v4m8-4v4M5 9h14" /></svg></span><span><strong>Daily summary</strong><small>Every day at 8:00 PM</small></span><label class="toggle"><input id="daily-toggle" type="checkbox" checked /><i></i></label></div>
                   <div class="schedule-row"><span class="schedule-icon weekly"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 2v4m8-4v4M5 9h14M8 13h3m2 0h3M8 16h3" /></svg></span><span><strong>Weekly review</strong><small>Sunday at 8:00 PM</small></span><label class="toggle"><input id="weekly-toggle" type="checkbox" checked /><i></i></label></div>
                 </div>
 
@@ -167,11 +163,10 @@
               </section>
 
               <section class="view" id="view-baby" data-view="baby" aria-label="Baby profile">
-                <div class="page-heading"><p class="eyebrow">Made for your baby</p><h2>Baby profile</h2></div>
+                <p class="eyebrow standalone-date" id="profile-date-label">Monday, 23 November</p>
                 <div class="profile-card">
                   <div class="large-avatar"><img data-user-avatar src="./house_cam.jpg" alt="" /></div>
-                  <div><h3>Phan Hoa Trà</h3><p id="profile-summary">Girl · Born 18 November 2026 at 8:00 AM · 3.4 kg at birth</p></div>
-                  <button id="edit-profile" type="button">Edit</button>
+                  <div class="profile-card-copy"><div class="profile-name-row"><h3>Phan Hoa Trà</h3><button id="edit-profile" type="button" aria-label="Edit baby profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg></button></div><p id="profile-summary">Girl · Born 18 November 2026 at 8:00 AM · 3.4 kg at birth</p></div>
                 </div>
                 <div class="profile-section">
                   <h3>Growth</h3>
@@ -185,13 +180,34 @@
                 </div>
                 <div class="safe-bottom-space"></div>
               </section>
+
+              <section class="view" id="view-vaccine" data-view="vaccine" aria-label="Vaccine tracker">
+                <div class="vaccine-heading"><div><p class="eyebrow" id="vaccine-date-label">Monday, 23 November</p><h2>Vaccine tracker</h2><p>Keep planned doses and completed shots together.</p></div><span class="vaccine-heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m14 4 6 6m-8-4 6 6M7 11l6 6m-8-4 6 6m3-11-9 9-2 5 5-2 9-9M3 21l3-3" /></svg></span></div>
+
+                <article class="vaccine-hero" id="vaccine-next-card">
+                  <span class="vaccine-hero-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3v3m12-3v3M4 8h16v12H4zM8 12h3m2 0h3m-8 4h3" /></svg></span>
+                  <span><small>Next planned dose</small><strong id="vaccine-next-name">No vaccine scheduled</strong><em id="vaccine-next-time">Add the clinic’s recommended date</em></span>
+                  <span class="vaccine-count" id="vaccine-upcoming-count">0</span>
+                </article>
+
+                <div class="vaccine-actions">
+                  <button class="vaccine-action primary" id="schedule-vaccine" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 2v4m8-4v4M5 9h14m-7 3v5m-2.5-2.5h5" /></svg><span><strong>Schedule vaccine</strong><small>Save the planned time</small></span></button>
+                  <button class="vaccine-action secondary" id="record-vaccine" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 4 6 6m-8-4 6 6M7 11l6 6m-8-4 6 6m3-11-9 9-2 5 5-2 9-9M3 21l3-3" /></svg><span><strong>Record a shot</strong><small>Add one already taken</small></span></button>
+                </div>
+
+                <div class="vaccine-reminder"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Zm-8 12h4" /></svg><p>Scheduled doses stay in Upcoming until you mark them done. Always use the date advised by Cam’s clinic.</p></div>
+
+                <section class="vaccine-section" aria-labelledby="upcoming-vaccines-title"><div class="vaccine-section-title"><h3 id="upcoming-vaccines-title">Upcoming</h3><span id="vaccine-upcoming-summary">No planned doses</span></div><div class="vaccine-list" id="vaccine-upcoming-list"></div></section>
+                <section class="vaccine-section" aria-labelledby="completed-vaccines-title"><div class="vaccine-section-title"><h3 id="completed-vaccines-title">Completed</h3><span id="vaccine-completed-summary">No shots recorded</span></div><div class="vaccine-list" id="vaccine-completed-list"></div></section>
+                <div class="safe-bottom-space"></div>
+              </section>
             </div>
 
             <nav class="bottom-nav" aria-label="Primary navigation">
               <button class="active" data-nav="today" type="button"><svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z" /></svg><span>Today</span></button>
               <button data-nav="stats" type="button"><svg viewBox="0 0 24 24"><path d="M5 19V9m7 10V4m7 15v-7" /></svg><span>Stats</span></button>
               <button data-nav="reports" type="button"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8m-8 4h8m-8 4h5" /></svg><span>Reports</span></button>
-              <button data-nav="baby" type="button"><svg viewBox="0 0 24 24"><path d="M12 12.5a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8c.5-4 3-6 7-6s6.5 2 7 6" /></svg><span>Baby</span></button>
+              <button data-nav="vaccine" type="button"><svg viewBox="0 0 24 24"><path d="m14 4 6 6m-8-4 6 6M7 11l6 6m-8-4 6 6m3-11-9 9-2 5 5-2 9-9M3 21l3-3" /></svg><span>Vaccine</span></button>
             </nav>
 
             <div class="sheet-backdrop" id="sheet-backdrop"></div>
@@ -206,6 +222,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20261124c"></script>
+    <script src="./app.js?v=20261124d"></script>
   </body>
 </html>

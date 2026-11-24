@@ -5,7 +5,7 @@ import { hasCamSession } from "@/sites/cam/server/auth";
 export const dynamic = "force-dynamic";
 
 const noStoreHeaders = { "Cache-Control": "no-store" };
-const defaultActiveSessions = { sleep: null, feed: null };
+const defaultActiveSessions = { sleep: null, feed: null, other: null };
 const defaultSettings = { dailyReport: true, weeklyReport: true };
 
 type CamEventInput = {
@@ -42,7 +42,16 @@ function parseEvent(value: unknown): CamEventInput | null {
   const timestampText = shortString(value.timestamp, 100);
   const timestamp = timestampText ? new Date(timestampText) : null;
   const data = isRecord(value.data) ? value.data : {};
-  const allowedTypes = new Set(["feed", "diaper", "sleep", "bath", "note"]);
+  const allowedTypes = new Set([
+    "feed",
+    "diaper",
+    "sleep",
+    "bath",
+    "sunbathing",
+    "walk",
+    "vaccine",
+    "note",
+  ]);
 
   if (
     !id ||

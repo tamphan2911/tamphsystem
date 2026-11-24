@@ -11,6 +11,11 @@
     bornAt: new Date("2026-11-18T08:00:00+07:00"),
     birthWeightKg: 3.4
   };
+  const OTHER_ACTIVITIES = {
+    bath: { type: "bath", title: "Bath", defaultDuration: 10 },
+    sunbathing: { type: "sunbathing", title: "Sunbathing", defaultDuration: 15 },
+    walk: { type: "walk", title: "Take a walk", defaultDuration: 30 }
+  };
   localStorage.removeItem("littlelog-prototype-v1");
   localStorage.removeItem("littlelog-prototype-v2");
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -23,6 +28,9 @@
     note: '<svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /></svg>',
     bottle: '<svg viewBox="0 0 24 24"><path d="M9 3h6v3l2 2v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8l2-2V3Zm-2 8h10" /></svg>',
     bath: '<svg viewBox="0 0 24 24"><path d="M4 11h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6v-3Zm3 0V6a3 3 0 0 1 6 0m-7 14-1 2m13-2 1 2M13 8h3" /></svg>',
+    sunbathing: '<svg viewBox="0 0 24 24"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z" /></svg>',
+    walk: '<svg viewBox="0 0 24 24"><path d="M13 5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-2 4 3-2 2 3 3 1m-8-2-2 5-4 2m6-2 3 2 1 5m-6-7-1 6" /></svg>',
+    vaccine: '<svg viewBox="0 0 24 24"><path d="m14 4 6 6m-8-4 6 6M7 11l6 6m-8-4 6 6m3-11-9 9-2 5 5-2 9-9M3 21l3-3" /></svg>',
     drop: '<svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z" /></svg>',
     dirty: '<svg viewBox="0 0 24 24"><path d="M8 18c-2 0-3.5-1.3-3.5-3S6 12 8 12c-.5-2.6 1-5 4-5 2.8 0 4.3 2.3 3.9 4.6 2.2 0 3.6 1.3 3.6 3.2 0 1.8-1.5 3.2-3.7 3.2H8Zm3.8-11c-.2-2 1.1-3.4 3.2-3" /></svg>',
     check: '<svg viewBox="0 0 24 24"><path d="m5 13 4 4L19 7" /></svg>'
@@ -44,6 +52,13 @@
     return one.getFullYear() === two.getFullYear() && one.getMonth() === two.getMonth() && one.getDate() === two.getDate();
   };
   const formatTime = (date) => new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(new Date(date));
+  const formatDateTime = (date) => new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(date));
+  const toLocalDateTimeValue = (date) => {
+    const value = new Date(date);
+    const local = new Date(value.getTime() - value.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  };
+  const escapeHtml = (value = "") => String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
   const formatDuration = (minutes) => {
     const total = Math.max(0, Math.round(minutes));
     const hours = Math.floor(total / 60);
@@ -61,10 +76,10 @@
   };
   const babyAgeLabel = () => {
     const days = babyAgeDays();
-    if (days < 14) return `${days} day${days === 1 ? "" : "s"}`;
-    if (days < 60) return `${Math.floor(days / 7)} weeks`;
-    const months = Math.floor(days / 30.4375);
-    return `${months} month${months === 1 ? "" : "s"}`;
+    if (days < 30) return `${days} day${days === 1 ? "" : "s"} old`;
+    const months = Math.floor(days / 30);
+    const remainingDays = days % 30;
+    return `${months} month${months === 1 ? "" : "s"}${remainingDays ? ` ${remainingDays} day${remainingDays === 1 ? "" : "s"}` : ""} old`;
   };
   const babyAgeDays = (at = now()) => Math.max(0, Math.floor((new Date(at).getTime() - BABY.bornAt.getTime()) / 86400000));
   const referenceForAgeDays = (ageDays = babyAgeDays()) => {
@@ -87,7 +102,8 @@
       events: [],
       activeSessions: {
         sleep: null,
-        feed: null
+        feed: null,
+        other: null
       },
       settings: { dailyReport: true, weeklyReport: true },
       statsPeriod: "week",
@@ -102,7 +118,8 @@
         : null;
       const saved = JSON.parse(localStorage.getItem(storageKey) || legacyValue);
       if (saved && Array.isArray(saved.events)) {
-        saved.activeSessions ||= { sleep: null, feed: null };
+        saved.activeSessions ||= { sleep: null, feed: null, other: null };
+        saved.activeSessions.other ??= null;
         saved.settings ||= { dailyReport: true, weeklyReport: true };
         saved.statsPeriod ||= "week";
         saved.deletedEventIds = Array.isArray(saved.deletedEventIds) ? saved.deletedEventIds : [];
@@ -166,7 +183,8 @@
     state.events = [...mergedEvents.values()].filter((event) => !deletedIds.has(event.id));
     state.deletedEventIds = [...deletedIds];
     if (!preferLocal || Number(serverState.revision) > 0) {
-      state.activeSessions = serverState.activeSessions || { sleep: null, feed: null };
+      state.activeSessions = serverState.activeSessions || { sleep: null, feed: null, other: null };
+      state.activeSessions.other ??= null;
       state.settings = serverState.settings || { dailyReport: true, weeklyReport: true };
     }
     persistLocalState();
@@ -221,11 +239,12 @@
   function eventsSince(days) {
     const cutoff = startOfDay();
     cutoff.setDate(cutoff.getDate() - (days - 1));
-    return state.events.filter((event) => new Date(event.timestamp) >= cutoff);
+    const currentTime = now();
+    return state.events.filter((event) => event.type !== "vaccine" && new Date(event.timestamp) >= cutoff && new Date(event.timestamp) <= currentTime);
   }
 
   function eventsForToday() {
-    return state.events.filter((event) => isSameDay(event.timestamp, now()));
+    return state.events.filter((event) => event.type !== "vaccine" && isSameDay(event.timestamp, now()));
   }
 
   function dailyReportEvents(dayOffset = 0) {
@@ -236,7 +255,25 @@
     windowStart.setDate(windowStart.getDate() - 1);
     return state.events.filter((event) => {
       const recordedAt = new Date(event.timestamp);
-      return recordedAt >= windowStart && recordedAt < windowEnd;
+      return event.type !== "vaccine" && recordedAt >= windowStart && recordedAt < windowEnd;
+    });
+  }
+
+  function currentCareWindow(at = now()) {
+    const current = new Date(at);
+    const start = startOfDay(current);
+    start.setHours(20, 0, 0, 0);
+    if (current < start) start.setDate(start.getDate() - 1);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    return { start, end };
+  }
+
+  function eventsForCareDay() {
+    const { start, end } = currentCareWindow();
+    return state.events.filter((event) => {
+      const recordedAt = new Date(event.timestamp);
+      return event.type !== "vaccine" && recordedAt >= start && recordedAt < end && recordedAt <= now();
     });
   }
 
@@ -252,7 +289,7 @@
   }
 
   function timeRangeFor(event) {
-    if (event.type !== "feed" && event.type !== "sleep" && event.type !== "bath") return "";
+    if (!["feed", "sleep", "bath", "sunbathing", "walk"].includes(event.type)) return "";
     const durationMin = Number(event.data?.durationMin || 0);
     const end = new Date(event.data?.endAt || event.timestamp);
     const start = event.data?.startAt
@@ -262,45 +299,87 @@
     return `${formatTime(start)}–${formatTime(end)}`;
   }
 
+  function createTimelineItem(event) {
+    const item = document.createElement("article");
+    item.className = "timeline-item";
+
+    const icon = document.createElement("span");
+    const isDirty = event.type === "diaper" && event.data?.kind === "dirty";
+    icon.className = `timeline-icon ${event.type}${isDirty ? " dirty" : ""}`;
+    icon.innerHTML = isDirty ? icons.dirty : iconFor(event.type);
+
+    const main = document.createElement("button");
+    main.className = "timeline-main";
+    main.type = "button";
+    main.dataset.eventId = event.id;
+    const copy = document.createElement("span");
+    copy.className = "timeline-copy";
+    const heading = document.createElement("span");
+    heading.className = "timeline-entry-heading";
+    const title = document.createElement("strong");
+    title.textContent = event.title;
+    const time = document.createElement("span");
+    time.className = "timeline-time";
+    const durationMin = Number(event.data?.durationMin || 0);
+    time.textContent = durationMin && ["feed", "sleep", "bath", "sunbathing", "walk"].includes(event.type)
+      ? formatDuration(durationMin)
+      : formatTime(event.timestamp);
+    heading.append(title, time);
+    const detail = document.createElement("small");
+    const timeRange = timeRangeFor(event);
+    let detailText = event.detail || "No extra details";
+    if (event.type === "diaper") detailText = "Logged";
+    if (["sleep", "bath", "sunbathing", "walk"].includes(event.type)) detailText = event.data?.note || "";
+    if (event.type === "feed" && durationMin) {
+      detailText = detailText.split(" · ").filter((part) => !/^\d+\s*min$/i.test(part.trim())).join(" · ");
+    }
+    detail.textContent = [detailText, timeRange].filter(Boolean).join(" · ");
+    copy.append(heading, detail);
+    main.append(copy);
+
+    const edit = document.createElement("button");
+    edit.className = "timeline-edit";
+    edit.type = "button";
+    edit.dataset.editEventId = event.id;
+    edit.setAttribute("aria-label", `Edit ${event.title}`);
+    edit.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg>';
+    item.append(icon, main, edit);
+    return item;
+  }
+
   function renderTimeline() {
     const timeline = $("#timeline");
-    const events = eventsForToday().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const events = eventsForCareDay().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const { start } = currentCareWindow();
+    const current = now();
+    const dayStart = new Date(start);
+    dayStart.setHours(dayStart.getHours() + 10);
+    const groups = [];
+    if (current >= dayStart) groups.push({ kind: "day", label: "6:00 AM · Day time", start: dayStart, end: current });
+    groups.push({ kind: "night", label: "8:00 PM · Night time", start, end: current >= dayStart ? dayStart : current });
+
     timeline.replaceChildren();
-    if (!events.length) {
-      const empty = document.createElement("div");
-      empty.className = "empty-state";
-      empty.textContent = "Nothing logged yet. Tap an action above to begin.";
-      timeline.appendChild(empty);
-      return;
-    }
-
-    events.forEach((event) => {
-      const button = document.createElement("button");
-      button.className = "timeline-item";
-      button.type = "button";
-      button.dataset.eventId = event.id;
-
-      const icon = document.createElement("span");
-      const isDirty = event.type === "diaper" && event.data?.kind === "dirty";
-      icon.className = `timeline-icon ${event.type}${isDirty ? " dirty" : ""}`;
-      icon.innerHTML = isDirty ? icons.dirty : iconFor(event.type);
-
-      const copy = document.createElement("span");
-      copy.className = "timeline-copy";
-      const heading = document.createElement("span");
-      heading.className = "timeline-entry-heading";
-      const title = document.createElement("strong");
-      title.textContent = event.title;
-      const time = document.createElement("span");
-      time.className = "timeline-time";
-      time.textContent = formatTime(event.timestamp);
-      heading.append(title, time);
-      const detail = document.createElement("small");
-      const timeRange = timeRangeFor(event);
-      detail.textContent = [event.detail || "No extra details", timeRange].filter(Boolean).join(" · ");
-      copy.append(heading, detail);
-      button.append(icon, copy);
-      timeline.appendChild(button);
+    groups.forEach((group) => {
+      const section = document.createElement("section");
+      section.className = `timeline-period ${group.kind}`;
+      const checkpoint = document.createElement("div");
+      checkpoint.className = "timeline-checkpoint";
+      checkpoint.innerHTML = `${group.kind === "day" ? icons.sunbathing : icons.sleep}<span>${group.label}</span>`;
+      const list = document.createElement("div");
+      list.className = "timeline-period-list";
+      const groupEvents = events.filter((event) => {
+        const recordedAt = new Date(event.timestamp);
+        return recordedAt >= group.start && recordedAt < group.end;
+      });
+      if (groupEvents.length) groupEvents.forEach((event) => list.appendChild(createTimelineItem(event)));
+      else {
+        const empty = document.createElement("div");
+        empty.className = "timeline-period-empty";
+        empty.textContent = `No ${group.kind === "day" ? "day-time" : "night-time"} activity logged.`;
+        list.appendChild(empty);
+      }
+      section.append(checkpoint, list);
+      timeline.appendChild(section);
     });
   }
 
@@ -308,6 +387,9 @@
     const feeds = events.filter((event) => event.type === "feed");
     const diapers = events.filter((event) => event.type === "diaper");
     const sleep = events.filter((event) => event.type === "sleep");
+    const baths = events.filter((event) => event.type === "bath");
+    const sunbathing = events.filter((event) => event.type === "sunbathing");
+    const walks = events.filter((event) => event.type === "walk");
     const bottles = feeds.filter((event) => event.data?.mode === "bottle");
     return {
       feeds: feeds.length,
@@ -317,7 +399,10 @@
       wet: diapers.filter((event) => event.data?.kind === "wet").length,
       dirty: diapers.filter((event) => event.data?.kind === "dirty").length,
       diapers: diapers.length,
-      sleepMinutes: sleep.reduce((sum, event) => sum + Number(event.data?.durationMin || 0), 0)
+      sleepMinutes: sleep.reduce((sum, event) => sum + Number(event.data?.durationMin || 0), 0),
+      baths: baths.length,
+      sunbathing: sunbathing.length,
+      walks: walks.length
     };
   }
 
@@ -354,21 +439,17 @@
     const dailyBottleMilk = (totals.breastMilk + totals.formula) / divisor;
     const periodSuffix = days === 1 ? "today" : "per logged day";
     const dataDayLabel = days === 1 ? "Today" : `${dataDays} logged day${dataDays === 1 ? "" : "s"}`;
+    const bottleMilk = totals.breastMilk + totals.formula;
     grid.innerHTML = `
-      <article class="stat-card">
+      <article class="stat-card feed-combined">
         <div class="stat-card-top"><span class="stat-card-icon feed">${iconFor("feed")}</span><span class="delta">${dataDayLabel}</span></div>
-        <strong>${days === 1 ? totals.feeds : dailyFeeds.toFixed(1)}</strong><small>feeds ${periodSuffix}</small>
+        <div class="feed-stat-layout"><span><strong>${days === 1 ? totals.feeds : dailyFeeds.toFixed(1)}</strong><small>feeds ${periodSuffix}</small></span><span><strong>${Math.round(bottleMilk / divisor)} ml</strong><small>bottle milk ${periodSuffix}</small><em>${Math.round(totals.breastMilk / divisor)} ml breast · ${Math.round(totals.formula / divisor)} ml formula</em></span></div>
       </article>
-      <article class="stat-card volume-card">
-        <div class="stat-card-top"><span class="stat-card-icon bottle">${iconFor("feed")}</span><span class="delta">Mixed feeding</span></div>
-        <div class="volume-split"><span><strong>${Math.round(totals.breastMilk / divisor)} ml</strong><small>breast milk</small></span><span><strong>${Math.round(totals.formula / divisor)} ml</strong><small>formula</small></span></div>
-        <small>bottle volume ${periodSuffix}</small>
-      </article>
-      <article class="stat-card">
+      <article class="stat-card diaper-stat">
         <div class="stat-card-top"><span class="stat-card-icon diaper">${iconFor("diaper")}</span><span class="delta">${dailyWet.toFixed(1)} wet · ${dailyDirty.toFixed(1)} dirty</span></div>
         <strong>${days === 1 ? totals.diapers : dailyDiapers.toFixed(1)}</strong><small>diapers ${periodSuffix}</small>
       </article>
-      <article class="stat-card">
+      <article class="stat-card sleep-stat">
         <div class="stat-card-top"><span class="stat-card-icon sleep">${iconFor("sleep")}</span><span class="delta">Including naps</span></div>
         <strong>${formatDuration(dailySleep)}</strong><small>sleep ${periodSuffix}</small>
       </article>
@@ -395,7 +476,7 @@
     const days = [];
     for (let offset = -6; offset <= 0; offset += 1) {
       const date = dateAtOffset(offset, 12, 0);
-      const dayEvents = state.events.filter((event) => isSameDay(event.timestamp, date));
+      const dayEvents = state.events.filter((event) => event.type !== "vaccine" && isSameDay(event.timestamp, date));
       const totals = totalsFor(dayEvents);
       days.push({
         label: offset === 0 ? "Today" : `${new Intl.DateTimeFormat("en", { weekday: "narrow" }).format(date)} ${date.getDate()}`,
@@ -452,7 +533,16 @@
   function renderReports() {
     const today = totalsFor(dailyReportEvents());
     const previous = totalsFor(dailyReportEvents(-1));
-    $("#daily-report-copy").textContent = `Today ${BABY.shortName} had ${today.feeds} ${today.feeds === 1 ? "feed" : "feeds"}, ${today.wet} wet ${today.wet === 1 ? "diaper" : "diapers"}, ${today.dirty} dirty ${today.dirty === 1 ? "diaper" : "diapers"}, and ${formatDuration(today.sleepMinutes)} recorded sleep. Her activity can be compared with her own pattern over time.`;
+    const summary = [
+      `${today.feeds} ${today.feeds === 1 ? "feed" : "feeds"}`,
+      `${today.wet} wet ${today.wet === 1 ? "diaper" : "diapers"}`,
+      `${today.dirty} dirty ${today.dirty === 1 ? "diaper" : "diapers"}`,
+      `${formatDuration(today.sleepMinutes)} recorded sleep`
+    ];
+    if (today.baths) summary.push(`${today.baths} ${today.baths === 1 ? "bath" : "baths"}`);
+    if (today.sunbathing) summary.push(`${today.sunbathing} sunbathing ${today.sunbathing === 1 ? "session" : "sessions"}`);
+    if (today.walks) summary.push(`${today.walks} ${today.walks === 1 ? "walk" : "walks"}`);
+    $("#daily-report-copy").textContent = `${summary.join(" · ")}.`;
     const localSuggestion = `Cam logged ${today.feeds} feeds, ${today.diapers} diaper changes, and ${formatDuration(today.sleepMinutes)} of sleep in this care day; compared with the previous day, feeds were ${today.feeds === previous.feeds ? "steady" : today.feeds > previous.feeds ? "higher" : "lower"}. Use the age-based pattern as a gentle guide, remembering that missing entries and direct breastfeeding can make totals look lower.`;
     $("#daily-tip").textContent = dailyInsight?.suggestion || localSuggestion;
     $("#daily-tip-meta").textContent = dailyInsight
@@ -463,7 +553,6 @@
     $("#weekly-feeds").textContent = weekly.feeds;
     $("#weekly-diapers").textContent = weekly.diapers;
     $("#weekly-sleep").textContent = `${Math.round(weekly.sleepMinutes / 60)}h`;
-    $("#daily-toggle").checked = state.settings.dailyReport;
     $("#weekly-toggle").checked = state.settings.weeklyReport;
   }
 
@@ -489,11 +578,15 @@
   }
 
   function renderDate() {
-    $("#today-label").textContent = new Intl.DateTimeFormat("en", {
+    const label = new Intl.DateTimeFormat("en", {
       weekday: "long",
       day: "numeric",
       month: "long"
     }).format(now());
+    ["#today-label", "#stats-date-label", "#reports-date-label", "#profile-date-label", "#vaccine-date-label"].forEach((selector) => {
+      const target = $(selector);
+      if (target) target.textContent = label;
+    });
   }
 
   function renderBabyDetails() {
@@ -507,15 +600,58 @@
     });
   }
 
+  function vaccineDueStatus(dueAt) {
+    const due = new Date(dueAt);
+    const current = now();
+    const dueDay = startOfDay(due);
+    const currentDay = startOfDay(current);
+    const daysAway = Math.round((dueDay - currentDay) / 86400000);
+    if (due < current) return { label: `Overdue · ${formatDateTime(due)}`, className: "overdue" };
+    if (daysAway === 0) return { label: `Due today · ${formatTime(due)}`, className: "" };
+    if (daysAway === 1) return { label: `Due tomorrow · ${formatTime(due)}`, className: "" };
+    if (daysAway <= 7) return { label: `Due in ${daysAway} days · ${formatDateTime(due)}`, className: "" };
+    return { label: `Scheduled · ${formatDateTime(due)}`, className: "" };
+  }
+
+  function renderVaccine() {
+    const records = state.events.filter((event) => event.type === "vaccine");
+    const upcoming = records
+      .filter((event) => event.data?.status !== "completed")
+      .sort((a, b) => new Date(a.data?.dueAt || a.timestamp) - new Date(b.data?.dueAt || b.timestamp));
+    const completed = records
+      .filter((event) => event.data?.status === "completed")
+      .sort((a, b) => new Date(b.data?.administeredAt || b.timestamp) - new Date(a.data?.administeredAt || a.timestamp));
+    const next = upcoming[0];
+    $("#vaccine-upcoming-count").textContent = String(upcoming.length);
+    $("#vaccine-next-name").textContent = next?.data?.kind || next?.title || "No vaccine scheduled";
+    $("#vaccine-next-time").textContent = next ? vaccineDueStatus(next.data?.dueAt || next.timestamp).label : "Add the clinic’s recommended date";
+    $("#vaccine-upcoming-summary").textContent = upcoming.length ? `${upcoming.length} planned ${upcoming.length === 1 ? "dose" : "doses"}` : "No planned doses";
+    $("#vaccine-completed-summary").textContent = completed.length ? `${completed.length} ${completed.length === 1 ? "shot" : "shots"} recorded` : "No shots recorded";
+
+    $("#vaccine-upcoming-list").innerHTML = upcoming.length ? upcoming.map((event) => {
+      const due = vaccineDueStatus(event.data?.dueAt || event.timestamp);
+      return `<article class="vaccine-item"><button class="vaccine-item-main" data-vaccine-open="${escapeHtml(event.id)}" type="button"><span class="vaccine-item-icon">${icons.vaccine}</span><span class="vaccine-item-copy"><strong>${escapeHtml(event.data?.kind || event.title)}</strong><small>${escapeHtml(event.data?.note || "No note")}</small><span class="vaccine-status ${due.className}">${escapeHtml(due.label)}</span></span></button><button class="vaccine-done" data-vaccine-complete="${escapeHtml(event.id)}" type="button">Mark done</button></article>`;
+    }).join("") : '<div class="vaccine-empty">No vaccines are scheduled yet. Add the date supplied by Cam’s clinic so it stays visible here.</div>';
+
+    $("#vaccine-completed-list").innerHTML = completed.length ? completed.map((event) => {
+      const administeredAt = event.data?.administeredAt || event.timestamp;
+      return `<article class="vaccine-item completed"><button class="vaccine-item-main" data-vaccine-open="${escapeHtml(event.id)}" type="button"><span class="vaccine-item-icon">${icons.check}</span><span class="vaccine-item-copy"><strong>${escapeHtml(event.data?.kind || event.title)}</strong><small>Taken ${escapeHtml(formatDateTime(administeredAt))}</small><span class="vaccine-status completed">Completed</span></span></button><button class="vaccine-done" data-vaccine-open="${escapeHtml(event.id)}" type="button">View</button></article>`;
+    }).join("") : '<div class="vaccine-empty">Completed shots will appear here with both their planned and actual times.</div>';
+  }
+
   function renderSession() {
     const container = $("#active-sessions");
-    const sessions = state.activeSessions || { sleep: null, feed: null };
+    const sessions = state.activeSessions || { sleep: null, feed: null, other: null };
     const cards = [];
     if (sessions.sleep) cards.push({ key: "sleep", session: sessions.sleep, label: "Sleep in progress", icon: icons.sleep });
     if (sessions.feed) {
       const feed = sessions.feed;
       const label = feed.mode === "bottle" ? `${feed.milk} bottle in progress` : `${feed.side || "Breast"} feed in progress`;
       cards.push({ key: "feed", session: feed, label, icon: icons.feed });
+    }
+    if (sessions.other) {
+      const activity = sessions.other;
+      cards.push({ key: "other", session: activity, label: `${activity.title} in progress`, icon: iconFor(activity.type) });
     }
     container.innerHTML = cards.map((item) => `<button class="active-session ${item.key === "feed" ? "feed-session" : ""}" data-stop-session="${item.key}" type="button"><span class="session-icon">${item.icon}</span><span><small>${item.label}</small><strong data-session-timer="${item.key}">00:00</strong></span><span class="stop-pill">Stop</span></button>`).join("");
 
@@ -543,6 +679,7 @@
     renderLastFeed();
     renderStats();
     renderReports();
+    renderVaccine();
     renderSession();
   }
 
@@ -636,7 +773,6 @@
     const eyebrow = options.eyebrow || "Log time";
     const title = options.title || `When did ${activityLabel} happen?`;
     const subtitle = options.subtitle || "Choose right now or scroll back to the time it happened.";
-    const previewLabel = options.previewLabel || "LittleLog will record";
     const confirmNowLabel = options.confirmNowLabel || `Log ${activityLabel} now`;
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">${eyebrow}</p><h2 id="sheet-title">${title}</h2><p class="sheet-subtitle">${subtitle}</p></header>
@@ -652,7 +788,6 @@
           <button id="time-scroller-plus" type="button" aria-label="Move 5 minutes earlier">+</button>
         </span>
         <span class="time-scroller-labels"><span>${rangeLabel(minMinutesAgo)}</span><span>${rangeLabel(midpoint)}</span><span>${rangeLabel(maxMinutesAgo)}</span></span>
-        <span class="time-preview"><small>${previewLabel}</small><strong id="time-preview-value"></strong></span>
       </div>
       <div class="sheet-actions"><button class="sheet-primary" id="confirm-log-time" type="button">${confirmNowLabel}</button></div>
     `);
@@ -664,11 +799,6 @@
     const renderTime = () => {
       const timestamp = selectedTime();
       $("#time-scroller-value").textContent = `${minutesAgo} min ago`;
-      $("#time-preview-value").textContent = new Intl.DateTimeFormat("en", {
-        weekday: "short",
-        hour: "numeric",
-        minute: "2-digit"
-      }).format(timestamp);
       $("#confirm-log-time").textContent = mode === "now"
         ? confirmNowLabel
         : options.confirmEarlierLabel?.(timestamp) || `Log ${activityLabel} at ${formatTime(timestamp)}`;
@@ -804,7 +934,7 @@
       const note = $("#diaper-note").value.trim();
       const titles = { wet: "Wet diaper", dirty: "Dirty diaper" };
       openLogTimeSheet("diaper", (loggedAt) => {
-        addActivityWithWakeCheck(makeEvent("diaper", titles[kind], note || (kind === "wet" ? "Medium" : "Logged"), loggedAt, { kind, note }), `${titles[kind]} logged`, "diaper");
+        addActivityWithWakeCheck(makeEvent("diaper", titles[kind], "Logged", loggedAt, { kind, note }), `${titles[kind]} logged`, "diaper");
       });
     }));
   }
@@ -840,6 +970,74 @@
         endAt: endedAt.toISOString()
       }), "Bath logged", "bath");
     });
+  }
+
+  function openOtherActivitiesSheet() {
+    openSheet(`
+      <header class="sheet-header"><p class="eyebrow">Other activities</p><h2 id="sheet-title">What is Cam doing?</h2><p class="sheet-subtitle">Choose an activity, then start a timer or log when it happened.</p></header>
+      <div class="instant-options three">
+        <button class="instant-option" data-other="bath" type="button">${icons.bath}<span>Bath</span></button>
+        <button class="instant-option" data-other="sunbathing" type="button">${icons.sunbathing}<span>Sunbathing</span></button>
+        <button class="instant-option" data-other="walk" type="button">${icons.walk}<span>Take a walk</span></button>
+      </div>
+    `);
+    $$('[data-other]').forEach((button) => button.addEventListener("click", () => openOtherActivitySheet(button.dataset.other)));
+  }
+
+  function openOtherActivitySheet(activityKey) {
+    const activity = OTHER_ACTIVITIES[activityKey];
+    if (!activity) return;
+    openSheet(`
+      <header class="sheet-header"><p class="eyebrow">Other activity</p><h2 id="sheet-title">${activity.title}</h2><p class="sheet-subtitle">Log a completed activity or start timing it now.</p></header>
+      <span class="choice-label">Duration</span>
+      <div class="wheel-picker"><button id="other-duration-minus" type="button" aria-label="Reduce activity duration">−</button><span class="wheel-value"><small>shorter</small><strong id="other-duration-value">${activity.defaultDuration} min</strong><em>longer</em></span><button id="other-duration-plus" type="button" aria-label="Increase activity duration">+</button></div>
+      <span class="choice-label">Optional note</span><input class="sheet-input" id="other-activity-note" maxlength="100" placeholder="Anything useful to remember" />
+      <div class="sheet-actions two"><button class="sheet-primary" id="log-other-activity" type="button">Log ${activity.title.toLowerCase()}</button><button class="sheet-secondary" id="start-other-activity" type="button">Start timer</button></div>
+    `);
+    let durationMin = activity.defaultDuration;
+    bindWheel("other-duration", activity.defaultDuration, 5, 180, 5, (value) => { durationMin = value; });
+    $("#log-other-activity").addEventListener("click", () => {
+      const note = $("#other-activity-note").value.trim();
+      openLogTimeSheet(activity.title.toLowerCase(), (endedAt) => {
+        const startedAt = new Date(endedAt.getTime() - durationMin * 60000);
+        addActivity(makeEvent(activity.type, activity.title, `${durationMin} min${note ? ` · ${note}` : ""}`, endedAt, { durationMin, note, startAt: startedAt.toISOString(), endAt: endedAt.toISOString() }), `${activity.title} logged`);
+      }, { confirmNowLabel: `Log ${activity.title.toLowerCase()} now` });
+    });
+    $("#start-other-activity").addEventListener("click", () => {
+      if (state.activeSessions?.other) { closeSheet(); return; }
+      state.activeSessions.other = { activityKey, type: activity.type, title: activity.title, note: $("#other-activity-note").value.trim(), startedAt: now().toISOString() };
+      saveState();
+      renderSession();
+      closeSheet();
+    });
+  }
+
+  function openOtherStopSheet() {
+    const session = state.activeSessions?.other;
+    if (!session) return;
+    const elapsedMinutes = Math.max(1, Math.floor((Date.now() - new Date(session.startedAt).getTime()) / 60000));
+    openLogTimeSheet(session.title.toLowerCase(), (endedAt) => stopOtherSession(endedAt), {
+      eyebrow: "Finish activity",
+      title: `When did ${session.title.toLowerCase()} finish?`,
+      subtitle: "Stop right now or scroll back to the actual finish time.",
+      confirmNowLabel: "Stop timer now",
+      confirmEarlierLabel: (timestamp) => `Stop at ${formatTime(timestamp)}`,
+      minMinutesAgo: 1,
+      maxMinutesAgo: Math.min(360, elapsedMinutes),
+      initialMinutesAgo: Math.min(10, elapsedMinutes),
+      stepMinutes: elapsedMinutes < 5 ? 1 : 5
+    });
+  }
+
+  function stopOtherSession(requestedEndedAt = now()) {
+    const session = state.activeSessions?.other;
+    if (!session) return;
+    const startedAt = new Date(session.startedAt);
+    const requested = new Date(requestedEndedAt);
+    const endedAt = new Date(Math.min(Date.now(), Math.max(startedAt.getTime(), requested.getTime())));
+    const durationMin = Math.max(1, Math.round((endedAt - startedAt) / 60000));
+    state.activeSessions.other = null;
+    addActivity(makeEvent(session.type, session.title, `${durationMin} min${session.note ? ` · ${session.note}` : ""}`, endedAt, { durationMin, note: session.note || "", startAt: startedAt.toISOString(), endAt: endedAt.toISOString() }), `${session.title} timer stopped`);
   }
 
   function openNoteSheet() {
@@ -927,6 +1125,88 @@
     }
   }
 
+  function openEditActivitySheet(eventId) {
+    const event = state.events.find((item) => item.id === eventId && item.type !== "vaccine");
+    if (!event) return;
+    const timed = ["feed", "sleep", "bath", "sunbathing", "walk"].includes(event.type);
+    const durationMin = Math.max(1, Number(event.data?.durationMin || 10));
+    const note = event.data?.note || "";
+    const bottleFields = event.type === "feed" && event.data?.mode === "bottle" ? `
+      <label class="choice-label" for="edit-feed-milk">Milk</label><select class="sheet-select" id="edit-feed-milk"><option value="Expressed milk" ${event.data?.milk === "Expressed milk" ? "selected" : ""}>Breast milk</option><option value="Formula" ${event.data?.milk === "Formula" ? "selected" : ""}>Formula</option></select>
+      <label class="choice-label" for="edit-feed-amount">Amount (ml)</label><input class="sheet-input" id="edit-feed-amount" type="number" min="10" max="500" step="10" value="${Number(event.data?.amount || 90)}" />` : "";
+    const breastFields = event.type === "feed" && event.data?.mode === "breast" ? `
+      <label class="choice-label" for="edit-feed-side">Side</label><select class="sheet-select" id="edit-feed-side"><option ${event.data?.side === "Left" ? "selected" : ""}>Left</option><option ${event.data?.side === "Right" ? "selected" : ""}>Right</option><option ${event.data?.side === "Both" ? "selected" : ""}>Both</option></select>` : "";
+    const diaperFields = event.type === "diaper" ? `
+      <label class="choice-label" for="edit-diaper-kind">Diaper</label><select class="sheet-select" id="edit-diaper-kind"><option value="wet" ${event.data?.kind === "wet" ? "selected" : ""}>Wet</option><option value="dirty" ${event.data?.kind === "dirty" ? "selected" : ""}>Dirty</option></select>` : "";
+    openSheet(`
+      <header class="sheet-header"><p class="eyebrow">Correct activity</p><h2 id="sheet-title">Edit ${escapeHtml(event.title)}</h2><p class="sheet-subtitle">Changes sync to the family record after you save.</p></header>
+      ${bottleFields}${breastFields}${diaperFields}
+      <label class="choice-label" for="edit-activity-time">${timed ? "Finish time" : "Recorded time"}</label><input class="sheet-input" id="edit-activity-time" type="datetime-local" value="${toLocalDateTimeValue(event.timestamp)}" />
+      ${timed ? `<label class="choice-label" for="edit-activity-duration">Duration (minutes)</label><input class="sheet-input" id="edit-activity-duration" type="number" min="1" max="1440" step="1" value="${durationMin}" />` : ""}
+      <label class="choice-label" for="edit-activity-note">Optional note</label><textarea class="sheet-textarea" id="edit-activity-note" maxlength="180" placeholder="Anything useful to remember">${escapeHtml(note)}</textarea>
+      <div class="sheet-actions"><button class="sheet-primary" id="save-activity-edit" type="button">Save changes</button></div>
+    `);
+    $("#save-activity-edit").addEventListener("click", () => {
+      const endedAt = new Date($("#edit-activity-time").value);
+      if (Number.isNaN(endedAt.getTime())) { $("#edit-activity-time").focus(); return; }
+      const updatedDuration = timed ? Math.max(1, Number($("#edit-activity-duration").value || durationMin)) : 0;
+      const updatedNote = $("#edit-activity-note").value.trim();
+      event.timestamp = endedAt.toISOString();
+      if (timed) {
+        const startedAt = new Date(endedAt.getTime() - updatedDuration * 60000);
+        event.data = { ...event.data, durationMin: updatedDuration, note: updatedNote, startAt: startedAt.toISOString(), endAt: endedAt.toISOString() };
+      } else event.data = { ...event.data, note: updatedNote };
+      if (event.type === "feed" && event.data.mode === "bottle") {
+        event.data.milk = $("#edit-feed-milk").value;
+        event.data.amount = Math.max(10, Number($("#edit-feed-amount").value || 10));
+        event.title = "Bottle feed";
+        event.detail = `${event.data.milk} · ${event.data.amount} ml · ${updatedDuration} min${updatedNote ? ` · ${updatedNote}` : ""}`;
+      } else if (event.type === "feed") {
+        event.data.side = $("#edit-feed-side").value;
+        event.title = "Breastfeed";
+        event.detail = `${event.data.side} · ${updatedDuration} min${updatedNote ? ` · ${updatedNote}` : ""}`;
+      } else if (event.type === "diaper") {
+        event.data.kind = $("#edit-diaper-kind").value;
+        event.title = event.data.kind === "wet" ? "Wet diaper" : "Dirty diaper";
+        event.detail = "Logged";
+      } else if (timed) {
+        event.detail = `${updatedDuration} min${updatedNote ? ` · ${updatedNote}` : ""}`;
+      } else if (updatedNote) event.detail = updatedNote;
+      saveState();
+      renderAll();
+      closeSheet();
+    });
+  }
+
+  function openActivityPattern() {
+    const events = eventsForCareDay().filter((event) => {
+      const date = new Date(event.timestamp);
+      const hour = date.getHours() + date.getMinutes() / 60;
+      return hour >= 8 && hour <= 20;
+    });
+    const lanes = [
+      { label: "Feeds", types: ["feed"], className: "feed" },
+      { label: "Diapers", types: ["diaper"], className: "diaper" },
+      { label: "Sleep", types: ["sleep"], className: "sleep" },
+      { label: "Other", types: ["bath", "sunbathing", "walk"], className: "other" }
+    ];
+    const laneMarkup = lanes.map((lane) => {
+      const points = events.filter((event) => lane.types.includes(event.type)).map((event) => {
+        const date = new Date(event.timestamp);
+        const hour = date.getHours() + date.getMinutes() / 60;
+        const left = Math.max(0, Math.min(100, ((hour - 8) / 12) * 100));
+        return `<i class="pattern-point ${lane.className}" style="left:${left}%" title="${escapeHtml(event.title)} · ${escapeHtml(formatTime(date))}"></i>`;
+      }).join("");
+      return `<div class="pattern-lane"><strong>${lane.label}</strong><span class="pattern-track">${points}</span></div>`;
+    }).join("");
+    openSheet(`
+      <header class="sheet-header"><p class="eyebrow">Current care day</p><h2 id="sheet-title">Activities pattern</h2><p class="sheet-subtitle">A daytime view from 8:00 AM to 8:00 PM. Each dot marks when an activity was recorded or finished.</p></header>
+      <div class="activity-pattern"><div class="pattern-axis"><span>8 AM</span><span>12 PM</span><span>4 PM</span><span>8 PM</span></div>${laneMarkup}${events.length ? "" : '<div class="pattern-empty">No daytime activities have been logged in this care day.</div>'}</div>
+      <div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
+    `);
+    $('[data-close-sheet]').addEventListener("click", closeSheet);
+  }
+
   function openEventSheet(eventId) {
     const event = state.events.find((item) => item.id === eventId);
     if (!event) return;
@@ -997,6 +1277,97 @@
     $('[data-close-sheet]').addEventListener("click", closeSheet);
   }
 
+  function openVaccineForm(mode = "schedule", event = null) {
+    const isEdit = Boolean(event);
+    const isCompleted = mode === "record" || event?.data?.status === "completed";
+    const defaultPlanned = new Date();
+    defaultPlanned.setDate(defaultPlanned.getDate() + (mode === "schedule" ? 1 : 0));
+    defaultPlanned.setHours(mode === "schedule" ? 9 : defaultPlanned.getHours(), mode === "schedule" ? 0 : defaultPlanned.getMinutes(), 0, 0);
+    const kind = event?.data?.kind || "";
+    const plannedAt = event?.data?.dueAt || event?.timestamp || defaultPlanned;
+    const administeredAt = event?.data?.administeredAt || (mode === "record" ? now() : plannedAt);
+    const note = event?.data?.note || "";
+    openSheet(`
+      <header class="sheet-header"><p class="eyebrow">${isCompleted ? "Shot record" : "Vaccine plan"}</p><h2 id="sheet-title">${isEdit ? "Edit vaccine" : isCompleted ? "Record a vaccine" : "Schedule a vaccine"}</h2><p class="sheet-subtitle">Use the vaccine name and planned date supplied by Cam’s clinic.</p></header>
+      <label class="choice-label" for="vaccine-kind-input">Vaccine</label>
+      <input class="sheet-input" id="vaccine-kind-input" list="vaccine-kind-options" maxlength="100" value="${escapeHtml(kind)}" placeholder="Start typing a vaccine name" />
+      <datalist id="vaccine-kind-options"><option value="Hepatitis B"></option><option value="BCG"></option><option value="DTaP / IPV / Hib"></option><option value="Pneumococcal (PCV)"></option><option value="Rotavirus"></option><option value="Influenza"></option><option value="MMR"></option></datalist>
+      <label class="choice-label" for="vaccine-planned-at">Planned date and time</label>
+      <input class="sheet-input" id="vaccine-planned-at" type="datetime-local" value="${toLocalDateTimeValue(plannedAt)}" />
+      ${isCompleted ? `<label class="choice-label" for="vaccine-administered-at">Actual shot date and time</label><input class="sheet-input" id="vaccine-administered-at" type="datetime-local" value="${toLocalDateTimeValue(administeredAt)}" />` : ""}
+      <label class="choice-label" for="vaccine-note">Note</label>
+      <textarea class="sheet-textarea" id="vaccine-note" maxlength="240" placeholder="Clinic, dose, reaction, or anything useful">${escapeHtml(note)}</textarea>
+      <div class="sheet-actions"><button class="sheet-primary" id="save-vaccine" type="button">${isEdit ? "Save changes" : isCompleted ? "Save completed shot" : "Add to schedule"}</button></div>
+    `);
+    $("#save-vaccine").addEventListener("click", () => {
+      const vaccineKind = $("#vaccine-kind-input").value.trim();
+      const dueAt = new Date($("#vaccine-planned-at").value);
+      const actualInput = $("#vaccine-administered-at");
+      const actualAt = actualInput ? new Date(actualInput.value) : null;
+      const vaccineNote = $("#vaccine-note").value.trim();
+      if (!vaccineKind) { $("#vaccine-kind-input").focus(); return; }
+      if (Number.isNaN(dueAt.getTime())) { $("#vaccine-planned-at").focus(); return; }
+      if (isCompleted && (!actualAt || Number.isNaN(actualAt.getTime()))) { actualInput.focus(); return; }
+      const timestamp = isCompleted ? actualAt : dueAt;
+      const data = {
+        kind: vaccineKind,
+        status: isCompleted ? "completed" : "scheduled",
+        dueAt: dueAt.toISOString(),
+        administeredAt: isCompleted ? actualAt.toISOString() : null,
+        note: vaccineNote
+      };
+      if (event) {
+        event.title = vaccineKind;
+        event.detail = isCompleted ? "Completed" : "Scheduled";
+        event.timestamp = timestamp.toISOString();
+        event.data = data;
+        saveState();
+        renderAll();
+        closeSheet();
+      } else {
+        addActivity(makeEvent("vaccine", vaccineKind, isCompleted ? "Completed" : "Scheduled", timestamp, data), isCompleted ? "Vaccine recorded" : "Vaccine scheduled");
+      }
+    });
+  }
+
+  function openCompleteVaccineSheet(eventId) {
+    const event = state.events.find((item) => item.id === eventId && item.type === "vaccine");
+    if (!event) return;
+    const dueAt = event.data?.dueAt || event.timestamp;
+    openSheet(`
+      <header class="sheet-header"><p class="eyebrow">Mark as done</p><h2 id="sheet-title">${escapeHtml(event.data?.kind || event.title)}</h2><p class="sheet-subtitle">Planned for ${escapeHtml(formatDateTime(dueAt))}. Save when the shot was actually given.</p></header>
+      <label class="choice-label" for="completed-vaccine-time">Actual shot date and time</label><input class="sheet-input" id="completed-vaccine-time" type="datetime-local" value="${toLocalDateTimeValue(now())}" />
+      <label class="choice-label" for="completed-vaccine-note">Note</label><textarea class="sheet-textarea" id="completed-vaccine-note" maxlength="240" placeholder="Clinic, dose, reaction, or anything useful">${escapeHtml(event.data?.note || "")}</textarea>
+      <div class="sheet-actions"><button class="sheet-primary" id="confirm-vaccine-complete" type="button">Mark vaccine done</button></div>
+    `);
+    $("#confirm-vaccine-complete").addEventListener("click", () => {
+      const administeredAt = new Date($("#completed-vaccine-time").value);
+      if (Number.isNaN(administeredAt.getTime())) { $("#completed-vaccine-time").focus(); return; }
+      event.timestamp = administeredAt.toISOString();
+      event.detail = "Completed";
+      event.data = { ...event.data, status: "completed", dueAt: new Date(dueAt).toISOString(), administeredAt: administeredAt.toISOString(), note: $("#completed-vaccine-note").value.trim() };
+      saveState();
+      renderAll();
+      closeSheet();
+    });
+  }
+
+  function openVaccineDetails(eventId) {
+    const event = state.events.find((item) => item.id === eventId && item.type === "vaccine");
+    if (!event) return;
+    const completed = event.data?.status === "completed";
+    openSheet(`
+      <header class="sheet-header"><p class="eyebrow">${completed ? "Completed shot" : "Scheduled dose"}</p><h2 id="sheet-title">${escapeHtml(event.data?.kind || event.title)}</h2><p class="sheet-subtitle">${escapeHtml(event.data?.note || "No note added")}</p></header>
+      <div class="vaccine-detail-grid"><div><span>Planned</span><strong>${escapeHtml(formatDateTime(event.data?.dueAt || event.timestamp))}</strong></div>${completed ? `<div><span>Actually taken</span><strong>${escapeHtml(formatDateTime(event.data?.administeredAt || event.timestamp))}</strong></div>` : ""}<div><span>Status</span><strong>${completed ? "Completed" : vaccineDueStatus(event.data?.dueAt || event.timestamp).label}</strong></div></div>
+      <div class="sheet-actions two"><button class="sheet-secondary" id="edit-vaccine-record" type="button">Edit</button>${completed ? '<button class="sheet-primary" data-close-sheet type="button">Done</button>' : '<button class="sheet-primary" id="complete-vaccine-record" type="button">Mark done</button>'}</div>
+      <div class="sheet-actions"><button class="sheet-danger" id="delete-vaccine-record" type="button">Delete vaccine record</button></div>
+    `);
+    $('[data-close-sheet]')?.addEventListener("click", closeSheet);
+    $("#edit-vaccine-record").addEventListener("click", () => openVaccineForm("edit", event));
+    $("#complete-vaccine-record")?.addEventListener("click", () => openCompleteVaccineSheet(event.id));
+    $("#delete-vaccine-record").addEventListener("click", () => deleteActivity(event.id));
+  }
+
   function openSettings() {
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Settings</p><h2 id="sheet-title">Preferences</h2><p class="sheet-subtitle">Care records and preferences sync securely across approved devices.</p></header>
@@ -1014,8 +1385,9 @@
   }
 
   function clearHistory() {
-    state.deletedEventIds = [...new Set([...(state.deletedEventIds || []), ...state.events.map((event) => event.id)])];
-    state.events = [];
+    const careEvents = state.events.filter((event) => event.type !== "vaccine");
+    state.deletedEventIds = [...new Set([...(state.deletedEventIds || []), ...careEvents.map((event) => event.id)])];
+    state.events = state.events.filter((event) => event.type === "vaccine");
     saveState();
     renderAll();
     closeSheet();
@@ -1032,7 +1404,7 @@
 
   function confirmClearHistory() {
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Clear records</p><h2 id="sheet-title">Delete activity history?</h2><p class="sheet-subtitle">This removes all recorded feeds, diapers, sleep sessions, baths, and notes. Active timers will keep running.</p></header>
+      <header class="sheet-header"><p class="eyebrow">Clear records</p><h2 id="sheet-title">Delete activity history?</h2><p class="sheet-subtitle">This removes care activities but keeps vaccine schedules and completed vaccine records. Active timers will keep running.</p></header>
       <div class="sheet-actions two"><button class="sheet-secondary" data-close-sheet type="button">Cancel</button><button class="sheet-danger" id="confirm-clear" type="button">Clear history</button></div>
     `);
     $('[data-close-sheet]').addEventListener("click", closeSheet);
@@ -1054,11 +1426,13 @@
       if (action === "feed") openFeedSheet();
       if (action === "diaper") openDiaperSheet();
       if (action === "sleep") state.activeSessions?.sleep ? showToast("Sleep is already running · use the timer card to stop", false) : openSleepSheet();
-      if (action === "bath") openBathSheet();
+      if (action === "other") openOtherActivitiesSheet();
     }));
     $("#sheet-close").addEventListener("click", closeSheet);
     $("#sheet-backdrop").addEventListener("click", closeSheet);
     $("#timeline").addEventListener("click", (event) => {
+      const editButton = event.target.closest("[data-edit-event-id]");
+      if (editButton) { openEditActivitySheet(editButton.dataset.editEventId); return; }
       const button = event.target.closest("[data-event-id]");
       if (button) openEventSheet(button.dataset.eventId);
     });
@@ -1067,8 +1441,9 @@
       if (!button) return;
       if (button.dataset.stopSession === "sleep") openSleepStopSheet();
       if (button.dataset.stopSession === "feed") stopFeedSession();
+      if (button.dataset.stopSession === "other") openOtherStopSheet();
     });
-    $("#clear-demo").addEventListener("click", confirmClearHistory);
+    $("#open-activity-pattern").addEventListener("click", openActivityPattern);
     $("#settings-button").addEventListener("click", openSettings);
     $("#baby-chip").addEventListener("click", () => navigate("baby"));
     $("#edit-profile").addEventListener("click", () => openProfileInfo("profile"));
@@ -1080,10 +1455,16 @@
       renderStats();
     }));
     $('[data-open="range-info"]').addEventListener("click", openRangeInfo);
-    $("#preview-notification").addEventListener("click", openNotificationPreview);
     $("#open-weekly").addEventListener("click", openWeeklyReport);
-    $("#daily-toggle").addEventListener("change", (event) => { state.settings.dailyReport = event.target.checked; saveState(); showToast(event.target.checked ? "Daily report enabled" : "Daily report paused", false); });
     $("#weekly-toggle").addEventListener("change", (event) => { state.settings.weeklyReport = event.target.checked; saveState(); showToast(event.target.checked ? "Weekly report enabled" : "Weekly report paused", false); });
+    $("#schedule-vaccine").addEventListener("click", () => openVaccineForm("schedule"));
+    $("#record-vaccine").addEventListener("click", () => openVaccineForm("record"));
+    $("#view-vaccine").addEventListener("click", (event) => {
+      const complete = event.target.closest("[data-vaccine-complete]");
+      if (complete) { openCompleteVaccineSheet(complete.dataset.vaccineComplete); return; }
+      const details = event.target.closest("[data-vaccine-open]");
+      if (details) openVaccineDetails(details.dataset.vaccineOpen);
+    });
 
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") closeSheet();
