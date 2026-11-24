@@ -680,7 +680,7 @@ svg {
 .insight-card,
 .chart-card,
 .report-hero,
-.weekly-card {
+.weekly-report-hero {
   margin-top: 10px;
   padding: 14px;
   border: 1px solid #ebe9f0;
@@ -776,51 +776,26 @@ svg {
 .medical-note p { margin: 0; color: #898696; font-size: .55rem; line-height: 1.45; }
 
 .report-hero { padding: 15px; border-color: #ded8ff; background: linear-gradient(145deg, #f3f0ff, #fff); box-shadow: 0 10px 25px rgba(76,61,161,.08); }
+.weekly-report-hero { padding: 15px; border-color: #d9eee6; background: linear-gradient(145deg, #effaf6, #fff); box-shadow: 0 10px 25px rgba(63,151,126,.08); }
 .report-hero-top { display: flex; align-items: center; gap: 11px; }
 .moon-orb { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 14px; color: #fff; background: linear-gradient(145deg, #7665db, #5544b6); }
-.moon-orb svg { width: 21px; height: 21px; }
+.week-orb { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 14px; color: #fff; background: linear-gradient(145deg, #6abca2, #3d987d); }
+.moon-orb svg, .week-orb svg { width: 21px; height: 21px; }
 .report-hero-top small, .report-hero-top strong { display: block; }
 .report-hero-top small { color: var(--plum); font-size: .56rem; }
 .report-hero-top strong { margin-top: 3px; font-size: .83rem; }
 .report-window { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 13px; padding: 8px 10px; border: 1px solid #e4defb; border-radius: 12px; color: #605a78; background: rgba(255, 255, 255, .72); font-size: .5rem; }
 .report-window strong { color: var(--plum); font-size: .52rem; }
 .report-window span { text-align: right; }
-.report-hero > p { margin: 14px 0 11px; color: #5f5c70; font-size: .69rem; line-height: 1.58; }
+.report-hero > p, .weekly-report-hero > p { margin: 14px 0 11px; color: #5f5c70; font-size: .69rem; line-height: 1.58; }
 .report-tip { padding: 10px 11px; border: 1px solid #ece8ff; border-radius: 14px; background: rgba(255,255,255,.72); }
 .report-tip strong { display: block; color: var(--plum); font-size: .57rem; }
 .report-tip p { margin: 5px 0 0; color: #5f5c70; font-size: .69rem; line-height: 1.58; }
 .report-tip > small { display: block; margin-top: 6px; color: #9793a4; font-size: .48rem; line-height: 1.35; }
+.weekly-tip { border-color: #dcefe8; }
 .primary-button, .outline-button { width: 100%; min-height: 43px; border-radius: 14px; font-size: .7rem; font-weight: 800; cursor: pointer; }
 .primary-button { margin-top: 12px; border: 0; color: #fff; background: var(--plum); box-shadow: 0 6px 14px rgba(84,67,181,.2); }
 .outline-button { margin-top: 15px; border: 1px solid #dedbe9; color: var(--plum); background: #fff; }
-
-.report-schedule { margin-top: 12px; overflow: hidden; border: 1px solid #ebe9f0; border-radius: 19px; background: #fff; }
-.schedule-row { min-height: 63px; display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 10px; padding: 9px 12px; }
-.schedule-row + .schedule-row { border-top: 1px solid #efedf3; }
-.schedule-icon { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 11px; }
-.schedule-icon svg { width: 18px; height: 18px; }
-.schedule-icon.daily { color: var(--plum); background: var(--plum-soft); }
-.schedule-icon.weekly { color: var(--coral); background: var(--coral-soft); }
-.schedule-row strong, .schedule-row small { display: block; }
-.schedule-row strong { font-size: .7rem; }
-.schedule-row small { margin-top: 3px; color: var(--muted); font-size: .55rem; }
-.toggle { position: relative; width: 40px; height: 24px; }
-.toggle input { position: absolute; opacity: 0; pointer-events: none; }
-.toggle i { position: absolute; inset: 0; border-radius: 20px; background: #d7d4df; cursor: pointer; transition: background 150ms ease; }
-.toggle i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(30,28,45,.18); transition: transform 150ms ease; }
-.toggle input:checked + i { background: var(--plum); }
-.toggle input:checked + i::after { transform: translateX(16px); }
-.weekly-title { display: flex; justify-content: space-between; gap: 12px; }
-.weekly-title small, .weekly-title strong { display: block; }
-.weekly-title small { color: var(--muted); font-size: .55rem; }
-.weekly-title strong { margin-top: 3px; font-size: .75rem; }
-.weekly-title button { align-self: center; min-height: 32px; padding: 0 11px; border: 0; border-radius: 10px; color: var(--plum); background: var(--plum-soft); font-size: .6rem; font-weight: 800; cursor: pointer; }
-.weekly-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #efedf3; }
-.weekly-metrics span { text-align: center; }
-.weekly-metrics span + span { border-left: 1px solid #efedf3; }
-.weekly-metrics strong, .weekly-metrics small { display: block; }
-.weekly-metrics strong { font-size: .88rem; }
-.weekly-metrics small { margin-top: 2px; color: var(--muted); font-size: .53rem; }
 
 .profile-card { display: grid; grid-template-columns: 55px minmax(0, 1fr); align-items: center; gap: 11px; margin-top: 4px; padding: 14px; border-radius: 20px; color: #fff; background: linear-gradient(140deg, #5c4bbd, #806fe1); box-shadow: 0 11px 24px rgba(81,64,173,.18); }
 .standalone-date { margin: 4px 0 10px; font-size: .61rem; letter-spacing: .095em; }

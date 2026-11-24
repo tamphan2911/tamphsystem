@@ -9,7 +9,7 @@
       content="LittleLog infant feeding, diaper, sleep, and bath tracker"
     />
     <title>LittleLog — Cam’s Baby Care</title>
-    <link rel="stylesheet" href="./styles.css?v=20261124d" />
+    <link rel="stylesheet" href="./styles.css?v=20261124e" />
   </head>
   <body>
     <section class="sync-gate" id="sync-gate" aria-labelledby="sync-gate-title">
@@ -151,13 +151,10 @@
                   <div class="report-tip"><strong>Gentle suggestion</strong><p id="daily-tip">Preparing Cam’s latest completed care-day comparison.</p><small id="daily-tip-meta">Generated once daily after 8:00 PM</small></div>
                 </article>
 
-                <div class="report-schedule">
-                  <div class="schedule-row"><span class="schedule-icon weekly"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 2v4m8-4v4M5 9h14M8 13h3m2 0h3M8 16h3" /></svg></span><span><strong>Weekly review</strong><small>Sunday at 8:00 PM</small></span><label class="toggle"><input id="weekly-toggle" type="checkbox" checked /><i></i></label></div>
-                </div>
-
-                <article class="weekly-card">
-                  <div class="weekly-title"><span><small>This week</small><strong>Steady routines are forming</strong></span><button id="open-weekly" type="button">View</button></div>
-                  <div class="weekly-metrics"><span><strong id="weekly-feeds">59</strong><small>feeds</small></span><span><strong id="weekly-diapers">47</strong><small>diapers</small></span><span><strong id="weekly-sleep">99h</strong><small>sleep</small></span></div>
+                <article class="weekly-report-hero">
+                  <div class="report-hero-top"><span class="week-orb"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 2v4m8-4v4M5 9h14M8 13h3m2 0h3M8 16h3" /></svg></span><span><small id="weekly-window-label">Baby week 1 · 18 Nov → 25 Nov</small><strong>Cam’s weekly review</strong></span></div>
+                  <p id="weekly-report-copy">Cam’s first baby-week summary is gathering as activities are recorded.</p>
+                  <div class="report-tip weekly-tip"><strong>Weekly suggestion</strong><p id="weekly-tip">Cam’s first weekly suggestion will be generated when baby week 1 is complete.</p><small id="weekly-tip-meta">Generated once per baby week at 8:00 PM</small></div>
                 </article>
                 <div class="safe-bottom-space"></div>
               </section>
@@ -222,6 +219,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20261124d"></script>
+    <script src="./app.js?v=20261124e"></script>
   </body>
 </html>

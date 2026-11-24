@@ -1309,6 +1309,7 @@ model CamCareUser {
   state  CamCareState?
   events CamCareEvent[]
   dailyInsights CamCareDailyInsight[]
+  weeklyInsights CamCareWeeklyInsight[]
 
   @@map("cam_care_user")
 }
@@ -1364,4 +1365,25 @@ model CamCareDailyInsight {
   @@unique([userId, reportDate])
   @@index([userId, windowEnd])
   @@map("cam_care_daily_insight")
+}
+
+model CamCareWeeklyInsight {
+  id          String    @id @default(uuid())
+  userId      String
+  weekNumber  Int
+  windowStart DateTime
+  windowEnd   DateTime
+  status      String
+  suggestion  String?
+  model       String?
+  source      Json
+  generatedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user CamCareUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weekNumber])
+  @@index([userId, windowEnd])
+  @@map("cam_care_weekly_insight")
 }

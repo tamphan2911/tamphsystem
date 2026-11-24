@@ -11,6 +11,8 @@
     bornAt: new Date("2026-11-18T08:00:00+07:00"),
     birthWeightKg: 3.4
   };
+  const WEEK_MS = 7 * 86400000;
+  const FIRST_WEEK_GENERATION_AT = new Date("2026-11-25T20:00:00+07:00");
   const OTHER_ACTIVITIES = {
     bath: { type: "bath", title: "Bath", defaultDuration: 10 },
     sunbathing: { type: "sunbathing", title: "Sunbathing", defaultDuration: 15 },
@@ -137,6 +139,8 @@
   let sessionTicker = null;
   let dailyInsight = null;
   let dailyInsightTimer = null;
+  let weeklyInsight = null;
+  let weeklyInsightTimer = null;
   let syncReady = false;
   let syncChain = Promise.resolve();
 
@@ -256,6 +260,36 @@
     return state.events.filter((event) => {
       const recordedAt = new Date(event.timestamp);
       return event.type !== "vaccine" && recordedAt >= windowStart && recordedAt < windowEnd;
+    });
+  }
+
+  function currentBabyWeek(at = now()) {
+    const elapsed = Math.max(0, new Date(at).getTime() - BABY.bornAt.getTime());
+    const index = Math.floor(elapsed / WEEK_MS);
+    const start = new Date(BABY.bornAt.getTime() + index * WEEK_MS);
+    return { weekNumber: index + 1, start, end: new Date(start.getTime() + WEEK_MS) };
+  }
+
+  function babyWeekGenerationAt(weekNumber) {
+    return new Date(FIRST_WEEK_GENERATION_AT.getTime() + (weekNumber - 1) * WEEK_MS);
+  }
+
+  function weeklyDisplayWindow() {
+    if (weeklyInsight?.weekNumber && weeklyInsight.windowStart && weeklyInsight.windowEnd) {
+      return {
+        weekNumber: weeklyInsight.weekNumber,
+        start: new Date(weeklyInsight.windowStart),
+        end: new Date(weeklyInsight.windowEnd)
+      };
+    }
+    return currentBabyWeek();
+  }
+
+  function eventsForWindow(start, end) {
+    const upperBound = Math.min(new Date(end).getTime(), Date.now());
+    return state.events.filter((event) => {
+      const recordedAt = new Date(event.timestamp).getTime();
+      return event.type !== "vaccine" && recordedAt >= new Date(start).getTime() && recordedAt < upperBound;
     });
   }
 
@@ -549,11 +583,26 @@
       ? `${dailyInsight.provider === "openai" ? "GPT suggestion" : "Age-based backup"} · ${dailyInsight.reportDate} · generated once`
       : "Preparing the latest completed 8 PM report";
 
-    const weekly = totalsFor(eventsSince(7));
-    $("#weekly-feeds").textContent = weekly.feeds;
-    $("#weekly-diapers").textContent = weekly.diapers;
-    $("#weekly-sleep").textContent = `${Math.round(weekly.sleepMinutes / 60)}h`;
-    $("#weekly-toggle").checked = state.settings.weeklyReport;
+    const week = weeklyDisplayWindow();
+    const weekly = totalsFor(eventsForWindow(week.start, week.end));
+    const weeklySummary = [
+      `${weekly.feeds} ${weekly.feeds === 1 ? "feed" : "feeds"}`,
+      `${weekly.wet} wet ${weekly.wet === 1 ? "diaper" : "diapers"}`,
+      `${weekly.dirty} dirty ${weekly.dirty === 1 ? "diaper" : "diapers"}`,
+      `${formatDuration(weekly.sleepMinutes)} recorded sleep`
+    ];
+    if (weekly.baths) weeklySummary.push(`${weekly.baths} ${weekly.baths === 1 ? "bath" : "baths"}`);
+    if (weekly.sunbathing) weeklySummary.push(`${weekly.sunbathing} sunbathing ${weekly.sunbathing === 1 ? "session" : "sessions"}`);
+    if (weekly.walks) weeklySummary.push(`${weekly.walks} ${weekly.walks === 1 ? "walk" : "walks"}`);
+    const shortDate = (date) => new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(date);
+    $("#weekly-window-label").textContent = `Baby week ${week.weekNumber} · ${shortDate(week.start)} → ${shortDate(week.end)}`;
+    $("#weekly-report-copy").textContent = `${weeklySummary.join(" · ")}.`;
+    const nextWeeklyAt = weeklyInsight?.nextAvailableAt ? new Date(weeklyInsight.nextAvailableAt) : babyWeekGenerationAt(week.weekNumber);
+    const pendingSuggestion = `Cam’s first weekly suggestion will be generated at 8:00 PM when baby week ${week.weekNumber} is complete.`;
+    $("#weekly-tip").textContent = weeklyInsight?.suggestion || (weeklyInsight?.status === "generating" ? "Preparing Cam’s completed baby-week comparison now." : pendingSuggestion);
+    $("#weekly-tip-meta").textContent = weeklyInsight?.suggestion
+      ? `${weeklyInsight.provider === "openai" ? "GPT suggestion" : "Age-based backup"} · generated once for baby week ${weeklyInsight.weekNumber}`
+      : `${formatDateTime(nextWeeklyAt)} · based on Cam’s age week, not the calendar week`;
   }
 
   async function refreshDailyInsight() {
@@ -574,6 +623,27 @@
       }
     } catch (_) {
       $("#daily-tip-meta").textContent = "Age-based backup · GPT service unavailable";
+    }
+  }
+
+  async function refreshWeeklyInsight() {
+    if (!syncReady) return;
+    try {
+      const insight = await camRequest("/weekly-insight");
+      weeklyInsight = insight;
+      renderReports();
+      clearTimeout(weeklyInsightTimer);
+      if (insight?.status === "generating") {
+        weeklyInsightTimer = setTimeout(refreshWeeklyInsight, 10_000);
+        return;
+      }
+      const nextAt = new Date(insight?.nextAvailableAt || 0).getTime();
+      const delay = nextAt - Date.now();
+      if (delay > 0 && delay < 2147483647) {
+        weeklyInsightTimer = setTimeout(refreshWeeklyInsight, delay + 2000);
+      }
+    } catch (_) {
+      $("#weekly-tip-meta").textContent = "Age-based backup · weekly service unavailable";
     }
   }
 
@@ -1246,23 +1316,6 @@
     $('[data-close-sheet]').addEventListener("click", closeSheet);
   }
 
-  function openWeeklyReport() {
-    const totals = totalsFor(eventsSince(7));
-    openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Weekly review</p><h2 id="sheet-title">Steady routines are forming</h2><p class="sheet-subtitle">A concise summary to keep or show a pediatrician.</p></header>
-      <div class="mini-report">
-        <div class="mini-report-row"><span>Total feeds</span><strong>${totals.feeds}</strong></div>
-        <div class="mini-report-row"><span>Breast milk by bottle</span><strong>${totals.breastMilk} ml</strong></div>
-        <div class="mini-report-row"><span>Formula by bottle</span><strong>${totals.formula} ml</strong></div>
-        <div class="mini-report-row"><span>Wet / dirty diapers</span><strong>${totals.wet} / ${totals.dirty}</strong></div>
-        <div class="mini-report-row"><span>Recorded sleep</span><strong>${formatDuration(totals.sleepMinutes)}</strong></div>
-      </div>
-      <p class="info-copy"><strong>Pattern:</strong> Feeding frequency and wet diapers remained steady across the week. Continue logging consistently so comparisons become more useful.</p>
-      <div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
-    `);
-    $('[data-close-sheet]').addEventListener("click", closeSheet);
-  }
-
   function openProfileInfo(kind = "profile") {
     const content = kind === "measurements"
       ? { eyebrow: "Growth", title: "Measurements", copy: `${BABY.shortName} weighed ${BABY.birthWeightKg} kg at birth. Future weight, length, and head-circumference measurements can be added here.` }
@@ -1375,7 +1428,7 @@
         <div class="mini-report-row"><span>Time zone</span><strong>Asia/Saigon</strong></div>
         <div class="mini-report-row"><span>Units</span><strong>Metric</strong></div>
         <div class="mini-report-row"><span>Daily report</span><strong>8:00 PM</strong></div>
-        <div class="mini-report-row"><span>Weekly report</span><strong>Sunday · 8:00 PM</strong></div>
+        <div class="mini-report-row"><span>Weekly report</span><strong>Cam’s age week · 8:00 PM</strong></div>
         <div class="mini-report-row"><span>Storage</span><strong>Railway PostgreSQL</strong></div>
       </div>
       <div class="sheet-actions two"><button class="sheet-secondary" id="sign-out-littlelog" type="button">Sign out</button><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
@@ -1455,8 +1508,6 @@
       renderStats();
     }));
     $('[data-open="range-info"]').addEventListener("click", openRangeInfo);
-    $("#open-weekly").addEventListener("click", openWeeklyReport);
-    $("#weekly-toggle").addEventListener("change", (event) => { state.settings.weeklyReport = event.target.checked; saveState(); showToast(event.target.checked ? "Weekly report enabled" : "Weekly report paused", false); });
     $("#schedule-vaccine").addEventListener("click", () => openVaccineForm("schedule"));
     $("#record-vaccine").addEventListener("click", () => openVaccineForm("record"));
     $("#view-vaccine").addEventListener("click", (event) => {
@@ -1498,6 +1549,7 @@
     setSyncStatus("synced", "Secure Railway sync");
     syncSnapshot();
     refreshDailyInsight();
+    refreshWeeklyInsight();
   }
 
   async function initializeSync() {
@@ -1547,11 +1599,13 @@
   window.addEventListener("focus", () => {
     refreshFromServer();
     refreshDailyInsight();
+    refreshWeeklyInsight();
   });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       refreshFromServer();
       refreshDailyInsight();
+      refreshWeeklyInsight();
     }
   });
   setInterval(() => {
