@@ -40,6 +40,7 @@
     vaccine: '<svg viewBox="0 0 24 24"><path d="M12 3c2.5 2 5.3 2.3 7 2.5v5.8c0 4.6-2.8 7.7-7 9.7-4.2-2-7-5.1-7-9.7V5.5C6.7 5.3 9.5 5 12 3Z" /><path d="M12 9.2c-1.5-1.7-4.3-.7-4.3 1.5 0 2 2.3 3.5 4.3 5 2-1.5 4.3-3 4.3-5 0-2.2-2.8-3.2-4.3-1.5Z" /></svg>',
     drop: '<svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z" /></svg>',
     dirty: '<svg viewBox="0 0 24 24"><path d="M8 18c-2 0-3.5-1.3-3.5-3S6 12 8 12c-.5-2.6 1-5 4-5 2.8 0 4.3 2.3 3.9 4.6 2.2 0 3.6 1.3 3.6 3.2 0 1.8-1.5 3.2-3.7 3.2H8Zm3.8-11c-.2-2 1.1-3.4 3.2-3" /></svg>',
+    date: '<svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 2v4m8-4v4M5 9h14" /></svg>',
     check: '<svg viewBox="0 0 24 24"><path d="m5 13 4 4L19 7" /></svg>'
   };
 
@@ -251,14 +252,19 @@
   }
 
   function eventsSince(days) {
-    const cutoff = startOfDay();
+    const currentWindow = currentCareWindow();
+    const cutoff = new Date(currentWindow.start);
     cutoff.setDate(cutoff.getDate() - (days - 1));
     const currentTime = now();
     return state.events.filter((event) => !["vaccine", "pump"].includes(event.type) && new Date(event.timestamp) >= cutoff && new Date(event.timestamp) <= currentTime);
   }
 
   function eventsForToday() {
-    return state.events.filter((event) => !["vaccine", "pump"].includes(event.type) && isSameDay(event.timestamp, now()));
+    const window = currentCareWindow();
+    return state.events.filter((event) => {
+      const recordedAt = new Date(event.timestamp);
+      return !["vaccine", "pump"].includes(event.type) && recordedAt >= window.start && recordedAt < window.end && recordedAt <= now();
+    });
   }
 
   function dailyReportEvents(dayOffset = 0) {
@@ -313,19 +319,25 @@
     return { start, end };
   }
 
-  function eventsForCareDay() {
-    const { start, end } = currentCareWindow();
+  function careWindowAtOffset(offset = 0, at = now()) {
+    const window = currentCareWindow(at);
+    const start = new Date(window.start);
+    const end = new Date(window.end);
+    start.setDate(start.getDate() + offset);
+    end.setDate(end.getDate() + offset);
+    return { start, end };
+  }
+
+  function eventsInCareWindow(window, predicate = () => true) {
+    const upperBound = Math.min(window.end.getTime(), Date.now());
     return state.events.filter((event) => {
-      const recordedAt = new Date(event.timestamp);
-      return event.type !== "vaccine" && recordedAt >= start && recordedAt < end && recordedAt <= now();
+      const recordedAt = new Date(event.timestamp).getTime();
+      return recordedAt >= window.start.getTime() && recordedAt < upperBound && predicate(event);
     });
   }
 
-  function loggedDayCount(events) {
-    return new Set(events.map((event) => {
-      const date = new Date(event.timestamp);
-      return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-    })).size;
+  function eventsForCareDay() {
+    return eventsInCareWindow(currentCareWindow(), (event) => event.type !== "vaccine");
   }
 
   function iconFor(type) {
@@ -362,16 +374,29 @@
     return hour >= 20 || hour < 6 ? "night" : "day";
   }
 
-  function timelineCheckpoints(events) {
+  function timelineEventsFor(predicate) {
+    const currentWindow = currentCareWindow();
+    const currentEvents = eventsInCareWindow(currentWindow, predicate);
+    if (currentEvents.length) return { events: currentEvents, window: currentWindow, fallback: false };
+    const previousWindow = careWindowAtOffset(-1);
+    return { events: eventsInCareWindow(previousWindow, predicate), window: previousWindow, fallback: true };
+  }
+
+  function timelineCheckpoints(events, window, includeFollowingBoundary = false) {
     if (!events.length) return [];
     const intervals = events.map(timelineInterval);
     const firstTime = Math.min(...intervals.map((interval) => interval.start.getTime()));
-    const lastTime = Math.max(...intervals.map((interval) => interval.end.getTime()));
-    const { start, end } = currentCareWindow();
+    const lastEventTime = Math.max(...intervals.map((interval) => interval.end.getTime()));
+    const lastTime = includeFollowingBoundary ? Math.max(lastEventTime, Date.now()) : lastEventTime;
+    const { start, end } = window;
+    const midnight = new Date(start);
+    midnight.setHours(midnight.getHours() + 4);
     const dayStart = new Date(start);
     dayStart.setHours(dayStart.getHours() + 10);
+    const midnightDate = new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short" }).format(midnight);
     return [
       { date: start, kind: "night", label: "8:00 PM · Night time begins" },
+      { date: midnight, kind: "date", label: `12:00 AM · ${midnightDate}` },
       { date: dayStart, kind: "day", label: "6:00 AM · Day time begins" },
       { date: end, kind: "night", label: "8:00 PM · Night time begins" }
     ].filter((checkpoint) => firstTime < checkpoint.date.getTime() && lastTime > checkpoint.date.getTime());
@@ -479,8 +504,9 @@
 
   function renderTimeline() {
     const timeline = $("#timeline");
-    const events = eventsForCareDay().filter((event) => event.type !== "pump");
-    const checkpoints = timelineCheckpoints(events);
+    const timelineData = timelineEventsFor((event) => !["vaccine", "pump"].includes(event.type));
+    const events = timelineData.events;
+    const checkpoints = timelineCheckpoints(events, timelineData.window, timelineData.fallback);
     timeline.replaceChildren();
     if (!events.length) {
       const empty = document.createElement("div");
@@ -500,7 +526,8 @@
       }
       const checkpoint = document.createElement("div");
       checkpoint.className = `timeline-checkpoint ${row.checkpoint.kind}`;
-      checkpoint.innerHTML = `${row.checkpoint.kind === "day" ? icons.sunbathing : icons.sleep}<span>${row.checkpoint.label}</span>`;
+      const checkpointIcon = row.checkpoint.kind === "day" ? icons.sunbathing : row.checkpoint.kind === "date" ? icons.date : icons.sleep;
+      checkpoint.innerHTML = `${checkpointIcon}<span>${row.checkpoint.label}</span>`;
       timeline.appendChild(checkpoint);
     });
   }
@@ -541,50 +568,26 @@
     $("#last-feed-detail").textContent = feed.detail;
   }
 
-  function statsWindow() {
-    if (state.statsPeriod === "today") return { events: eventsForToday(), days: 1, label: "today" };
-    if (state.statsPeriod === "month") return { events: eventsSince(30), days: 30, label: "30 days" };
-    return { events: eventsSince(7), days: 7, label: "7 days" };
+  function activeSleepMinutes(window = currentCareWindow()) {
+    if (!state.activeSessions?.sleep) return 0;
+    const startedAt = Math.max(new Date(state.activeSessions.sleep.startedAt).getTime(), window.start.getTime());
+    const endedAt = Math.min(Date.now(), window.end.getTime());
+    return Math.max(0, (endedAt - startedAt) / 60000);
   }
 
-  function renderStats() {
-    const { events, days } = statsWindow();
-    const totals = totalsFor(events);
-    const grid = $("#stats-grid");
-    const dataDays = days === 1 ? 1 : loggedDayCount(events);
-    const divisor = Math.max(1, dataDays);
-    const dailyFeeds = totals.feeds / divisor;
-    const dailyDiapers = totals.diapers / divisor;
-    const dailyWet = totals.wet / divisor;
-    const dailyDirty = totals.dirty / divisor;
-    const dailySleep = totals.sleepMinutes / divisor;
-    const dailyBottleMilk = (totals.breastMilk + totals.formula) / divisor;
-    const bottleMilk = totals.breastMilk + totals.formula;
-    const statNumber = (value) => days === 1 ? String(Math.round(value)) : value.toFixed(1);
-    grid.innerHTML = `
-      <article class="stat-card feed-combined">
-        <div class="stat-card-top"><span class="stat-card-heading"><span class="stat-card-icon feed">${iconFor("feed")}</span><strong>Feed</strong></span></div>
-        <div class="feed-stat-layout"><span><strong>${statNumber(dailyFeeds)}</strong></span><span><strong>${Math.round(bottleMilk / divisor)} ml</strong><em>${Math.round(totals.breastMilk / divisor)} ml breast · ${Math.round(totals.formula / divisor)} ml formula</em></span></div>
-      </article>
-      <article class="stat-card diaper-stat">
-        <div class="stat-card-top"><span class="stat-card-heading"><span class="stat-card-icon diaper">${iconFor("diaper")}</span><strong>Diapers</strong></span></div>
-        <div class="stat-metric-row"><strong>${statNumber(dailyDiapers)}</strong><span class="diaper-breakdown"><span>${statNumber(dailyWet)} wet</span><i>·</i><span class="dirty-count">${statNumber(dailyDirty)} dirty</span></span></div>
-      </article>
-      <article class="stat-card sleep-stat">
-        <div class="stat-card-top"><span class="stat-card-heading"><span class="stat-card-icon sleep">${iconFor("sleep")}</span><strong>Sleep</strong></span></div>
-        <div class="stat-metric-row"><strong>${formatDuration(dailySleep)}</strong></div>
-      </article>
-    `;
-
+  function renderTodaySignals() {
+    const totals = totalsFor(eventsForToday());
     const reference = referenceForAgeDays();
+    const sleepMinutes = totals.sleepMinutes + activeSleepMinutes();
+    const milkMl = totals.breastMilk + totals.formula;
     const countScaleMax = (range, value) => Math.ceil(Math.max(range.max + 4, range.max * 1.35, value * 1.1) / 2) * 2;
-    const milkScaleMax = Math.ceil(Math.max(reference.bottleMl.max + 200, reference.bottleMl.max * 1.35, dailyBottleMilk * 1.1) / 100) * 100;
-    const sleepScaleMax = Math.ceil(Math.max(24, (dailySleep / 60) * 1.1) / 2) * 2;
+    const milkScaleMax = Math.ceil(Math.max(reference.bottleMl.max + 200, reference.bottleMl.max * 1.35, milkMl * 1.1) / 100) * 100;
+    const sleepScaleMax = Math.ceil(Math.max(24, (sleepMinutes / 60) * 1.1) / 2) * 2;
     const comparisons = [
-      { key: "feeds", label: "Feeds", value: dailyFeeds, range: reference.feeds, scaleMax: countScaleMax(reference.feeds, dailyFeeds), display: `${statNumber(dailyFeeds)} / day`, average: `${reference.feeds.average} / day`, format: (value) => `${value}` },
-      { key: "milk", label: "Milk", value: dailyBottleMilk, range: reference.bottleMl, scaleMax: milkScaleMax, display: `${Math.round(dailyBottleMilk)} ml`, average: `${reference.bottleMl.average} ml`, format: (value) => `${Math.round(value).toLocaleString()} ml` },
-      { key: "diapers", label: "Diapers", value: dailyDiapers, range: reference.diapers, scaleMax: countScaleMax(reference.diapers, dailyDiapers), display: `${statNumber(dailyDiapers)} / day`, average: `${reference.diapers.average} / day`, format: (value) => `${value}` },
-      { key: "sleep", label: "Sleep", value: dailySleep / 60, range: reference.sleepHours, scaleMax: sleepScaleMax, display: formatDuration(dailySleep), average: `${reference.sleepHours.average}h`, format: (value) => `${value}h` }
+      { key: "feeds", label: "Feeds", value: totals.feeds, range: reference.feeds, scaleMax: countScaleMax(reference.feeds, totals.feeds), display: `${Math.round(totals.feeds)} / day`, average: `${reference.feeds.average} / day`, format: (value) => `${value}` },
+      { key: "milk", label: "Milk", value: milkMl, range: reference.bottleMl, scaleMax: milkScaleMax, display: `${Math.round(milkMl)} ml`, average: `${reference.bottleMl.average} ml`, format: (value) => `${Math.round(value).toLocaleString()} ml` },
+      { key: "diapers", label: "Diapers", value: totals.diapers, range: reference.diapers, scaleMax: countScaleMax(reference.diapers, totals.diapers), display: `${Math.round(totals.diapers)} / day`, average: `${reference.diapers.average} / day`, format: (value) => `${value}` },
+      { key: "sleep", label: "Sleep", value: sleepMinutes / 60, range: reference.sleepHours, scaleMax: sleepScaleMax, display: formatDuration(sleepMinutes), average: `${reference.sleepHours.average}h`, format: (value) => `${value}h` }
     ];
     $("#comparison-list").innerHTML = comparisons.map((item) => {
       const position = Math.max(0, Math.min(100, (item.value / item.scaleMax) * 100));
@@ -592,76 +595,120 @@
       const typicalEnd = Math.max(typicalStart, Math.min(100, (item.range.max / item.scaleMax) * 100));
       return `<div class="comparison-row signal-${item.key}"><div class="comparison-heading"><span class="comparison-label"><strong>${item.label}</strong><i aria-hidden="true"></i><small>Reference average ${item.average}</small></span><strong class="comparison-current">${item.display}</strong></div><div class="comparison-track-wrap"><span class="comparison-track" role="img" aria-label="${item.label}: ${item.display}; reference ${item.format(item.range.min)} to ${item.format(item.range.max)}; scale zero to ${item.format(item.scaleMax)}" style="--cam-position:${position}%;--typical-start:${typicalStart}%;--typical-width:${typicalEnd - typicalStart}%;--typical-end:${typicalEnd}%"><span class="comparison-zone range-below"></span><span class="comparison-zone range-reference"></span><span class="comparison-zone range-above"></span><i class="range-start"></i><i class="range-end"></i><i class="comparison-pin" title="${BABY.shortName}: ${item.display}"></i></span><span class="comparison-scale"><span>${item.format(0)}</span><span>Reference ${item.format(item.range.min)}–${item.format(item.range.max)}</span><span>${item.format(item.scaleMax)}</span></span></div></div>`;
     }).join("");
+  }
 
-    renderCharts();
+  function statsTrendDays(dayCount) {
+    const days = [];
+    for (let offset = -(dayCount - 1); offset <= 0; offset += 1) {
+      const window = careWindowAtOffset(offset);
+      if (window.end <= BABY.bornAt) continue;
+      const dayEvents = eventsInCareWindow(window, (event) => !["vaccine", "pump"].includes(event.type));
+      const totals = totalsFor(dayEvents);
+      const activeSleep = offset === 0 ? activeSleepMinutes(window) : 0;
+      const reference = referenceForAgeDays(babyAgeDays(window.end));
+      days.push({
+        date: new Date(window.end),
+        window,
+        current: offset === 0,
+        reference,
+        feeds: totals.feeds,
+        milk: totals.breastMilk + totals.formula,
+        diapers: totals.diapers,
+        sleep: (totals.sleepMinutes + activeSleep) / 60,
+        feedsLogged: dayEvents.some((event) => event.type === "feed"),
+        milkLogged: dayEvents.some((event) => event.type === "feed" && event.data?.mode === "bottle" && Number(event.data?.amount || 0) > 0),
+        diapersLogged: dayEvents.some((event) => event.type === "diaper"),
+        sleepLogged: dayEvents.some((event) => event.type === "sleep") || activeSleep > 0
+      });
+    }
+    return days;
+  }
+
+  function trendReferenceBand(days, rangeFor, x, y) {
+    if (!days.length) return "";
+    let path = `M ${x(0)} ${y(rangeFor(days[0]).max)}`;
+    for (let index = 1; index < days.length; index += 1) {
+      const midpoint = (x(index - 1) + x(index)) / 2;
+      path += ` L ${midpoint} ${y(rangeFor(days[index - 1]).max)} L ${midpoint} ${y(rangeFor(days[index]).max)} L ${x(index)} ${y(rangeFor(days[index]).max)}`;
+    }
+    path += ` L ${x(days.length - 1)} ${y(rangeFor(days[days.length - 1]).min)}`;
+    for (let index = days.length - 2; index >= 0; index -= 1) {
+      const midpoint = (x(index) + x(index + 1)) / 2;
+      path += ` L ${midpoint} ${y(rangeFor(days[index + 1]).min)} L ${midpoint} ${y(rangeFor(days[index]).min)} L ${x(index)} ${y(rangeFor(days[index]).min)}`;
+    }
+    return `${path} Z`;
+  }
+
+  function renderSignalTrend(metric, days, requestedDays) {
+    const width = 330;
+    const height = 178;
+    const plot = { left: 34, right: 8, top: 9, bottom: 29 };
+    const plotWidth = width - plot.left - plot.right;
+    const plotHeight = height - plot.top - plot.bottom;
+    const rangeFor = (day) => day.reference[metric.rangeKey];
+    const observed = days.filter((day) => day[metric.loggedKey]).map((day) => day[metric.key]);
+    const rawMax = Math.max(1, ...observed, ...days.map((day) => rangeFor(day).max));
+    const scaleMax = metric.scaleMax(rawMax);
+    const x = (index) => plot.left + (index / Math.max(1, days.length - 1)) * plotWidth;
+    const y = (value) => plot.top + plotHeight - (Math.max(0, value) / scaleMax) * plotHeight;
+    let linePath = "";
+    let previousIndex = null;
+    days.forEach((day, index) => {
+      if (!day[metric.loggedKey]) { previousIndex = null; return; }
+      linePath += `${previousIndex === index - 1 ? " L" : " M"} ${x(index)} ${y(day[metric.key])}`;
+      previousIndex = index;
+    });
+    const grid = [0, .25, .5, .75, 1].map((ratio) => {
+      const value = scaleMax * ratio;
+      const gridY = y(value);
+      return `<line class="signal-chart-grid" x1="${plot.left}" y1="${gridY}" x2="${width - plot.right}" y2="${gridY}" /><text class="signal-chart-axis" x="${plot.left - 5}" y="${gridY + 3}" text-anchor="end">${metric.axisFormat(value)}</text>`;
+    }).join("");
+    const labelEvery = days.length <= 8 ? 1 : Math.max(1, Math.floor((days.length - 1) / 5));
+    const dateLabels = days.map((day, index) => {
+      if (index % labelEvery && index !== days.length - 1) return "";
+      const label = day.current ? "Today" : new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(day.date);
+      return `<text class="signal-chart-date" x="${x(index)}" y="${height - 8}" text-anchor="middle">${label}</text>`;
+    }).join("");
+    const points = days.map((day, index) => {
+      if (!day[metric.loggedKey]) return "";
+      const dateLabel = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(day.date);
+      return `<circle class="signal-chart-point" cx="${x(index)}" cy="${y(day[metric.key])}" r="3"><title>${dateLabel} · ${metric.valueFormat(day[metric.key])}</title></circle>`;
+    }).join("");
+    const currentRange = rangeFor(days[days.length - 1]);
+    const hasValues = observed.length > 0;
+    return `<article class="signal-trend-card signal-trend-${metric.key}"><header class="signal-trend-heading"><strong>${metric.label}</strong><span><i></i>Reference ${metric.valueFormat(currentRange.min)}–${metric.valueFormat(currentRange.max)}</span></header><div class="signal-line-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric.label} over the available days in the last ${requestedDays} days, with an age-adjusted reference range">${grid}<path class="signal-reference-band" d="${trendReferenceBand(days, rangeFor, x, y)}" />${linePath ? `<path class="signal-chart-line" d="${linePath.trim()}" />` : ""}${points}${dateLabels}${hasValues ? "" : `<text class="signal-chart-empty" x="${plot.left + plotWidth / 2}" y="${plot.top + plotHeight / 2}" text-anchor="middle">No logged ${metric.label.toLowerCase()} yet</text>`}</svg></div></article>`;
+  }
+
+  function renderTrendSignals(dayCount) {
+    const days = statsTrendDays(dayCount);
+    const metrics = [
+      { key: "feeds", loggedKey: "feedsLogged", rangeKey: "feeds", label: "Feeds", scaleMax: (max) => Math.ceil(max * 1.2 / 2) * 2, axisFormat: (value) => `${Math.round(value)}`, valueFormat: (value) => `${Number(value.toFixed(1))} / day` },
+      { key: "milk", loggedKey: "milkLogged", rangeKey: "bottleMl", label: "Milk", scaleMax: (max) => Math.ceil(max * 1.15 / 100) * 100, axisFormat: (value) => `${Math.round(value)}`, valueFormat: (value) => `${Math.round(value)} ml` },
+      { key: "diapers", loggedKey: "diapersLogged", rangeKey: "diapers", label: "Diapers", scaleMax: (max) => Math.ceil(max * 1.2 / 2) * 2, axisFormat: (value) => `${Math.round(value)}`, valueFormat: (value) => `${Number(value.toFixed(1))} / day` },
+      { key: "sleep", loggedKey: "sleepLogged", rangeKey: "sleepHours", label: "Sleep", scaleMax: (max) => Math.max(24, Math.ceil(max * 1.1 / 2) * 2), axisFormat: (value) => `${Number(value.toFixed(1))}h`, valueFormat: (value) => `${Number(value.toFixed(1))}h` }
+    ];
+    $("#stats-trend-charts").innerHTML = metrics.map((metric) => renderSignalTrend(metric, days, dayCount)).join("");
+  }
+
+  function renderStats() {
+    const todaySelected = state.statsPeriod === "today";
+    $("#stats-today-panel").classList.toggle("hidden", !todaySelected);
+    $("#stats-trend-panel").classList.toggle("hidden", todaySelected);
+    if (todaySelected) renderTodaySignals();
+    else renderTrendSignals(state.statsPeriod === "month" ? 30 : 7);
   }
 
   function renderCharts() {
-    const days = [];
-    for (let offset = -6; offset <= 0; offset += 1) {
-      const date = dateAtOffset(offset, 12, 0);
-      const dayEvents = state.events.filter((event) => !["vaccine", "pump"].includes(event.type) && isSameDay(event.timestamp, date));
-      const totals = totalsFor(dayEvents);
-      days.push({
-        label: offset === 0 ? "Today" : `${new Intl.DateTimeFormat("en", { weekday: "narrow" }).format(date)} ${date.getDate()}`,
-        feeds: totals.feeds,
-        wet: totals.wet,
-        dirty: totals.dirty,
-        hasData: dayEvents.length > 0,
-        current: offset === 0
-      });
-    }
-    const loggedDays = days.filter((day) => day.hasData);
-    const divisor = Math.max(1, loggedDays.length);
-    const averageFeeds = loggedDays.reduce((sum, day) => sum + day.feeds, 0) / divisor;
-    const averageDiapers = loggedDays.reduce((sum, day) => sum + day.wet + day.dirty, 0) / divisor;
-    const reference = referenceForAgeDays();
-    const max = Math.max(reference.feeds.max, reference.diapers.max, Math.ceil(averageFeeds + 2), Math.ceil(averageDiapers + 2), ...days.flatMap((day) => [day.feeds, day.wet + day.dirty]));
-    const plotHeight = 100;
-    const feedLineBottom = 24 + (averageFeeds / max) * plotHeight;
-    const diaperLineBottom = 24 + (averageDiapers / max) * plotHeight;
-    $("#activity-chart").innerHTML = `
-      <div class="dual-chart-grid"></div>
-      <div class="average-line feed-average" style="bottom:${feedLineBottom}px" title="${averageFeeds.toFixed(1)} average feeds per day"></div>
-      <div class="average-line diaper-average" style="bottom:${diaperLineBottom}px" title="${averageDiapers.toFixed(1)} average diapers per day"></div>
-      <div class="dual-bars">${days.map((day) => {
-        const diaperTotal = day.wet + day.dirty;
-        const feedHeight = Math.max(2, (day.feeds / max) * plotHeight);
-        const diaperHeight = Math.max(2, (diaperTotal / max) * plotHeight);
-        const wetShare = diaperTotal ? (day.wet / diaperTotal) * 100 : 0;
-        const dirtyShare = diaperTotal ? (day.dirty / diaperTotal) * 100 : 0;
-        return `<span class="dual-day"><span class="day-bar-pair"><span class="metric-bar" style="--bar-height:${feedHeight}px"><em>${day.feeds}</em><i class="feed-bar" style="height:${feedHeight}px" title="${day.feeds} feeds"></i></span><span class="metric-bar" style="--bar-height:${diaperHeight}px"><em>${diaperTotal}</em><i class="diaper-stack" style="height:${diaperHeight}px" title="${day.wet} wet, ${day.dirty} dirty"><b class="diaper-wet" style="height:${wetShare}%"></b><b class="diaper-dirty" style="height:${dirtyShare}%"></b></i></span></span><small class="day-label ${day.current ? "today" : ""}">${day.label}</small></span>`;
-      }).join("")}</div>`;
-    $("#feed-chart-average").textContent = averageFeeds.toFixed(1);
-    $("#diaper-chart-average").textContent = averageDiapers.toFixed(1);
-    $("#activity-average-days").textContent = loggedDays.length ? `${loggedDays.length} logged day${loggedDays.length === 1 ? "" : "s"}` : "No logged days";
-
-    const today = totalsFor(eventsForToday());
-    const activeSleepMinutes = state.activeSessions?.sleep ? Math.max(0, (Date.now() - new Date(state.activeSessions.sleep.startedAt).getTime()) / 60000) : 0;
-    const todaySleep = today.sleepMinutes + activeSleepMinutes;
-    const todaySleepHours = todaySleep / 60;
-    const scaleMaxHours = 24;
-    const typicalStart = (reference.sleepHours.min / scaleMaxHours) * 100;
-    const typicalEnd = (reference.sleepHours.max / scaleMaxHours) * 100;
-    const sleepPosition = Math.max(0, Math.min(100, (todaySleepHours / scaleMaxHours) * 100));
-    $("#sleep-chart-average").textContent = `Total sleep · ${formatDuration(todaySleep)}`;
-    $("#sleep-typical-label").textContent = `Typical: ${reference.sleepHours.min}–${reference.sleepHours.max}h`;
-    const sleepTrack = $("#sleep-track");
-    sleepTrack.style.setProperty("--typical-start", `${typicalStart}%`);
-    sleepTrack.style.setProperty("--typical-width", `${typicalEnd - typicalStart}%`);
-    $("#sleep-track-fill").style.width = `${sleepPosition}%`;
-    $("#sleep-track-pin").style.left = `${sleepPosition}%`;
-    $("#sleep-track-pin").title = `${formatDuration(todaySleep)} recorded today`;
+    renderStats();
   }
 
   function pumpEventsForCareDay() {
-    return eventsForCareDay()
-      .filter((event) => event.type === "pump")
+    return eventsInCareWindow(currentCareWindow(), (event) => event.type === "pump")
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   }
 
   function pumpEventsSince(days) {
-    const cutoff = startOfDay();
+    const cutoff = new Date(currentCareWindow().start);
     cutoff.setDate(cutoff.getDate() - (days - 1));
     return state.events.filter((event) => event.type === "pump" && new Date(event.timestamp) >= cutoff && new Date(event.timestamp) <= now());
   }
@@ -669,7 +716,7 @@
   function pumpEventsForPeriod() {
     if (state.pumpPeriod === "month") return pumpEventsSince(30);
     if (state.pumpPeriod === "week") return pumpEventsSince(7);
-    return state.events.filter((event) => event.type === "pump" && isSameDay(event.timestamp, now()));
+    return pumpEventsForCareDay();
   }
 
   function pumpTotals(events) {
@@ -687,12 +734,24 @@
 
   function renderPumpTimeline() {
     const timeline = $("#pump-timeline");
-    const events = pumpEventsForCareDay();
+    const timelineData = timelineEventsFor((event) => event.type === "pump");
+    const events = timelineData.events;
+    $("#pump-timeline-window").textContent = timelineData.fallback && events.length ? "Previous care day" : "Current care day";
     if (!events.length) {
       timeline.innerHTML = '<div class="pump-timeline-empty">No milk pumping has been logged in this care day yet.</div>';
       return;
     }
-    timeline.innerHTML = events.map((event) => {
+    const checkpoints = timelineCheckpoints(events, timelineData.window, timelineData.fallback);
+    const rows = [
+      ...events.flatMap((event) => splitTimelineEvent(event, checkpoints)).map((event) => ({ type: "activity", time: event.timelineSortTime, event })),
+      ...checkpoints.map((checkpoint) => ({ type: "checkpoint", time: checkpoint.date.getTime(), checkpoint }))
+    ].sort((a, b) => b.time - a.time || (a.type === "activity" ? -1 : 1));
+    timeline.innerHTML = rows.map((row) => {
+      if (row.type === "checkpoint") {
+        const checkpointIcon = row.checkpoint.kind === "day" ? icons.sunbathing : row.checkpoint.kind === "date" ? icons.date : icons.sleep;
+        return `<div class="timeline-checkpoint pump-timeline-checkpoint ${row.checkpoint.kind}">${checkpointIcon}<span>${row.checkpoint.label}</span></div>`;
+      }
+      const event = row.event;
       const leftMl = Number(event.data?.leftMl || 0);
       const rightMl = Number(event.data?.rightMl || 0);
       const durationMin = Number(event.data?.durationMin || 0);
@@ -715,17 +774,18 @@
     const dayCount = Number(state.pumpChartDays) === 30 ? 30 : 7;
     const days = [];
     for (let offset = -(dayCount - 1); offset <= 0; offset += 1) {
-      const date = dateAtOffset(offset, 12, 0);
-      const dayEvents = state.events.filter((event) => isSameDay(event.timestamp, date));
+      const window = careWindowAtOffset(offset);
+      if (window.end <= BABY.bornAt) continue;
+      const dayEvents = eventsInCareWindow(window);
       const pumped = pumpTotals(dayEvents.filter((event) => event.type === "pump")).totalMl;
       const fed = dayEvents
         .filter((event) => event.type === "feed" && event.data?.mode === "bottle")
         .reduce((sum, event) => sum + Number(event.data?.amount || 0), 0);
-      days.push({ date, pumped, fed });
+      days.push({ date: new Date(window.end), pumped, fed });
     }
     const width = 330;
     const height = 190;
-    const plot = { left: 36, right: 8, top: 12, bottom: 30 };
+    const plot = { left: 42, right: 8, top: 12, bottom: 30 };
     const plotWidth = width - plot.left - plot.right;
     const plotHeight = height - plot.top - plot.bottom;
     const observedMax = Math.max(0, ...days.flatMap((day) => [day.pumped, day.fed]));
@@ -737,7 +797,7 @@
     const grid = [0, .25, .5, .75, 1].map((ratio) => {
       const value = Math.round(scaleMax * ratio);
       const gridY = y(value);
-      return `<line class="chart-grid" x1="${plot.left}" y1="${gridY}" x2="${width - plot.right}" y2="${gridY}" /><text class="chart-axis-label" x="${plot.left - 5}" y="${gridY + 3}" text-anchor="end">${value}</text>`;
+      return `<line class="chart-grid" x1="${plot.left}" y1="${gridY}" x2="${width - plot.right}" y2="${gridY}" /><text class="chart-axis-label" x="${plot.left - 6}" y="${gridY + 3}" text-anchor="end">${value}</text>`;
     }).join("");
     const labelEvery = dayCount === 7 ? 1 : 5;
     const labels = days.map((day, index) => {
@@ -749,8 +809,60 @@
       const label = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(day.date);
       return `<circle class="pump-point" cx="${x(index)}" cy="${y(day.pumped)}" r="${dayCount === 7 ? 3 : 2}"><title>${label} · ${day.pumped} ml pumped</title></circle><circle class="fed-point" cx="${x(index)}" cy="${y(day.fed)}" r="${dayCount === 7 ? 3 : 2}"><title>${label} · ${day.fed} ml fed</title></circle>`;
     }).join("");
-    $("#pump-chart-window").textContent = `Last ${dayCount} days · ending today`;
-    $("#pump-line-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily milk pumped and milk fed in millilitres over the last ${dayCount} days">${grid}<polyline class="pump-line" points="${pumpedPoints}" /><polyline class="fed-line" points="${fedPoints}" />${points}${labels}<text class="chart-axis-label" x="8" y="9">ml</text></svg>`;
+    $("#pump-chart-window").textContent = `Last ${dayCount} care days · ending today`;
+    $("#pump-line-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily milk pumped and milk fed in millilitres over the last ${dayCount} care days">${grid}<polyline class="pump-line" points="${pumpedPoints}" /><polyline class="fed-line" points="${fedPoints}" />${points}${labels}<text class="chart-unit-label" x="8" y="10">ml</text></svg>`;
+  }
+
+  function renderPumpSessionChart() {
+    const colors = ["#6b59d3", "#ef7467", "#3aa88d"];
+    const series = [-2, -1, 0].map((offset, index) => {
+      const window = careWindowAtOffset(offset);
+      const events = eventsInCareWindow(window, (event) => event.type === "pump")
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      return {
+        window,
+        events,
+        color: colors[index],
+        label: new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(window.end)
+      };
+    });
+    const width = 330;
+    const height = 205;
+    const plot = { left: 42, right: 57, top: 13, bottom: 33 };
+    const plotWidth = width - plot.left - plot.right;
+    const plotHeight = height - plot.top - plot.bottom;
+    const observedMax = Math.max(0, ...series.flatMap((day) => day.events.map((event) => Number(event.data?.totalMl || Number(event.data?.leftMl || 0) + Number(event.data?.rightMl || 0)))));
+    const scaleMax = Math.max(100, Math.ceil(observedMax / 50) * 50);
+    const x = (hours) => plot.left + (Math.max(0, Math.min(24, hours)) / 24) * plotWidth;
+    const y = (value) => plot.top + plotHeight - (Math.max(0, value) / scaleMax) * plotHeight;
+    const grid = [0, .25, .5, .75, 1].map((ratio) => {
+      const value = Math.round(scaleMax * ratio);
+      const gridY = y(value);
+      return `<line class="session-chart-grid" x1="${plot.left}" y1="${gridY}" x2="${width - plot.right}" y2="${gridY}" /><text class="session-chart-axis" x="${plot.left - 6}" y="${gridY + 3}" text-anchor="end">${value}</text>`;
+    }).join("");
+    const hourTicks = [
+      { hour: 0, label: "8 PM" }, { hour: 4, label: "12 AM" }, { hour: 8, label: "4 AM" },
+      { hour: 12, label: "8 AM" }, { hour: 16, label: "12 PM" }, { hour: 20, label: "4 PM" }, { hour: 24, label: "8 PM" }
+    ].map((tick) => `<line class="session-chart-tick" x1="${x(tick.hour)}" y1="${plot.top}" x2="${x(tick.hour)}" y2="${plot.top + plotHeight}" /><text class="session-chart-date" x="${x(tick.hour)}" y="${height - 9}" text-anchor="middle">${tick.label}</text>`).join("");
+    const usedLabelY = [];
+    const lines = series.map((day, seriesIndex) => {
+      const points = day.events.map((event) => {
+        const timestamp = new Date(event.timestamp);
+        const hours = (timestamp.getTime() - day.window.start.getTime()) / 3600000;
+        const totalMl = Number(event.data?.totalMl || Number(event.data?.leftMl || 0) + Number(event.data?.rightMl || 0));
+        return { x: x(hours), y: y(totalMl), totalMl, timestamp };
+      });
+      const path = points.length ? `M ${points.map((point) => `${point.x} ${point.y}`).join(" L ")}` : "";
+      const dots = points.map((point) => `<circle class="session-chart-point" style="--series-color:${day.color}" cx="${point.x}" cy="${point.y}" r="3.3"><title>${formatTime(point.timestamp)} · ${point.totalMl} ml</title></circle>`).join("");
+      let labelY = points.length ? points[points.length - 1].y : plot.top + 14 + seriesIndex * 18;
+      while (usedLabelY.some((used) => Math.abs(used - labelY) < 13)) labelY += 13;
+      labelY = Math.min(plot.top + plotHeight - 3, labelY);
+      usedLabelY.push(labelY);
+      const leaderStart = points.length ? points[points.length - 1].x + 4 : width - plot.right;
+      return `${path ? `<path class="session-chart-line" style="--series-color:${day.color}" d="${path}" />` : ""}${dots}<line class="session-chart-leader" style="--series-color:${day.color}" x1="${leaderStart}" y1="${labelY}" x2="${width - 42}" y2="${labelY}" /><text class="session-chart-count" style="--series-color:${day.color}" x="${width - 3}" y="${labelY + 3}" text-anchor="end">${day.events.length} pump${day.events.length === 1 ? "" : "s"}</text>`;
+    }).join("");
+    $("#pump-session-legend").innerHTML = series.map((day) => `<span><i style="background:${day.color}"></i>${day.label}</span>`).join("");
+    $("#pump-session-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Total millilitres for each pump by time across three care days">${grid}${hourTicks}${lines}<text class="session-chart-unit" x="8" y="10">ml</text></svg>`;
   }
 
   function renderPump() {
@@ -759,6 +871,7 @@
     renderPumpTimeline();
     renderPumpSummary();
     renderPumpChart();
+    renderPumpSessionChart();
   }
 
   function renderReports() {
@@ -1111,11 +1224,13 @@
     const stepMinutes = 5;
     const initialMinutesAgo = 15;
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Milk pumping</p><h2 id="sheet-title">Log a pump</h2><p class="sheet-subtitle">Record each breast separately. Entering the left amount copies it to the right until you change the right side.</p></header>
-      <span class="choice-label">Milk pumped</span>
+      <header class="sheet-header"><p class="eyebrow">Milk pumping</p><h2 id="sheet-title">Log a pump</h2><p class="sheet-subtitle">Set the total first, then fine-tune the split between left and right.</p></header>
+      <span class="choice-label">Total pumped</span>
+      <div class="wheel-picker pump-total-picker"><button id="pump-total-minus" type="button" aria-label="Reduce total pumped by 10 millilitres">−</button><span class="wheel-value"><small>less</small><strong id="pump-total-value">100 ml</strong><em>more</em></span><button id="pump-total-plus" type="button" aria-label="Increase total pumped by 10 millilitres">+</button></div>
+      <span class="choice-label">Split by breast</span>
       <div class="pump-side-entry-grid">
-        <label class="pump-side-field" for="pump-left-ml"><strong>Left breast</strong><input class="sheet-input" id="pump-left-ml" type="number" min="0" max="500" step="5" inputmode="decimal" placeholder="0 ml" /></label>
-        <label class="pump-side-field" for="pump-right-ml"><strong>Right breast</strong><input class="sheet-input" id="pump-right-ml" type="number" min="0" max="500" step="5" inputmode="decimal" placeholder="Auto-fill" /></label>
+        <div class="pump-side-field"><strong>Left breast</strong><div class="pump-side-wheel"><button id="pump-left-minus" type="button" aria-label="Move 5 millilitres from left to right">−</button><span id="pump-left-value">50 ml</span><button id="pump-left-plus" type="button" aria-label="Move 5 millilitres from right to left">+</button></div></div>
+        <div class="pump-side-field"><strong>Right breast</strong><div class="pump-side-wheel"><button id="pump-right-minus" type="button" aria-label="Move 5 millilitres from right to left">−</button><span id="pump-right-value">50 ml</span><button id="pump-right-plus" type="button" aria-label="Move 5 millilitres from left to right">+</button></div></div>
       </div>
       <span class="choice-label">Pump duration</span>
       <div class="wheel-picker"><button id="pump-duration-minus" type="button" aria-label="Reduce pump duration">−</button><span class="wheel-value"><small>shorter</small><strong id="pump-duration-value">15 min</strong><em>longer</em></span><button id="pump-duration-plus" type="button" aria-label="Increase pump duration">+</button></div>
@@ -1130,17 +1245,42 @@
     `);
 
     let durationMin = 15;
+    let totalMl = 100;
+    let leftMl = 50;
+    let rightMl = 50;
     let mode = "now";
     let minutesAgo = initialMinutesAgo;
-    let rightWasEdited = false;
     bindWheel("pump-duration", 15, 5, 90, 5, (value) => { durationMin = value; });
-    const leftInput = $("#pump-left-ml");
-    const rightInput = $("#pump-right-ml");
     const slider = $("#pump-time-scroller");
-    leftInput.addEventListener("input", () => {
-      if (!rightWasEdited) rightInput.value = leftInput.value;
-    });
-    rightInput.addEventListener("input", () => { rightWasEdited = true; });
+    const renderAmounts = () => {
+      $("#pump-total-value").textContent = `${totalMl} ml`;
+      $("#pump-left-value").textContent = `${leftMl} ml`;
+      $("#pump-right-value").textContent = `${rightMl} ml`;
+    };
+    const adjustTotal = (amount) => {
+      const nextTotal = Math.max(10, Math.min(1000, totalMl + amount));
+      const halfChange = (nextTotal - totalMl) / 2;
+      totalMl = nextTotal;
+      leftMl += halfChange;
+      rightMl += halfChange;
+      renderAmounts();
+    };
+    const adjustSide = (side, amount) => {
+      if (side === "left") {
+        leftMl = Math.max(0, Math.min(totalMl, leftMl + amount));
+        rightMl = totalMl - leftMl;
+      } else {
+        rightMl = Math.max(0, Math.min(totalMl, rightMl + amount));
+        leftMl = totalMl - rightMl;
+      }
+      renderAmounts();
+    };
+    $("#pump-total-minus").addEventListener("click", () => adjustTotal(-10));
+    $("#pump-total-plus").addEventListener("click", () => adjustTotal(10));
+    $("#pump-left-minus").addEventListener("click", () => adjustSide("left", -5));
+    $("#pump-left-plus").addEventListener("click", () => adjustSide("left", 5));
+    $("#pump-right-minus").addEventListener("click", () => adjustSide("right", -5));
+    $("#pump-right-plus").addEventListener("click", () => adjustSide("right", 5));
     const selectedTime = () => new Date(Date.now() - (mode === "earlier" ? minutesAgo : 0) * 60000);
     const renderTime = () => {
       const timestamp = selectedTime();
@@ -1162,22 +1302,20 @@
     $("#pump-time-minus").addEventListener("click", () => adjustTime(-stepMinutes));
     $("#pump-time-plus").addEventListener("click", () => adjustTime(stepMinutes));
     $("#save-pump").addEventListener("click", () => {
-      const leftMl = Math.max(0, Math.min(500, Number(leftInput.value || 0)));
-      const rightMl = Math.max(0, Math.min(500, Number(rightInput.value || 0)));
-      if (!leftMl && !rightMl) { leftInput.focus(); return; }
       const endedAt = selectedTime();
       const startedAt = new Date(endedAt.getTime() - durationMin * 60000);
       const note = $("#pump-note").value.trim();
       addActivity(makeEvent("pump", "Milk pump", `Left ${leftMl} ml · Right ${rightMl} ml · ${durationMin} min`, endedAt, {
         leftMl,
         rightMl,
-        totalMl: leftMl + rightMl,
+        totalMl,
         durationMin,
         note,
         startAt: startedAt.toISOString(),
         endAt: endedAt.toISOString()
       }), "Milk pump logged");
     });
+    renderAmounts();
     renderTime();
   }
 
@@ -1604,8 +1742,8 @@
   function openRangeInfo() {
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Designed for reassurance</p><h2 id="sheet-title">How comparisons work</h2></header>
-      <p class="info-copy"><strong>Broad ranges, not scores.</strong> Each track starts at zero and extends beyond the typical band so you can see ${BABY.shortName}’s real progress and position. The colored fill and pin are her recorded value; the pastel-green band is the broad reference range for her current age in days.</p>
-      <p class="info-copy">For 7- and 30-day views, the pin averages only days containing activity data, so unused days do not pull the result down.</p>
+      <p class="info-copy"><strong>Broad ranges, not scores.</strong> Today’s tracks show ${BABY.shortName}’s recorded position against the broad reference range for her current age in days.</p>
+      <p class="info-copy">The 7- and 30-care-day views plot each logged day as a line. The pastel-green area changes with Cam’s age, and days without that activity are left unplotted instead of being treated as zero.</p>
       <p class="info-copy"><strong>${BABY.gestationalAgeWeeks} weeks · ${BABY.ethnicity} · ${BABY.sex.toLowerCase()}.</strong> This signal reference uses Cam’s full-term history and her feeding pattern: ${BABY.feedingProfile.toLowerCase()}. Sex and ethnicity are not used as unsupported corrections to feed, diaper, or sleep ranges.</p>
       <p class="info-copy">Bottle volume is measurable for Cam’s expressed breast milk and formula feeds. Because her current weight has not been measured, the volume reference remains deliberately broad and does not claim to be a weight-based target.</p>
       <p class="info-copy">Important warning signs should use separately reviewed rules and should never wait for the evening report.</p>

@@ -9,7 +9,7 @@
       content="LittleLog infant feeding, diaper, sleep, and bath tracker"
     />
     <title>LittleLog — Cam’s Baby Care</title>
-    <link rel="stylesheet" href="./styles.css?v=20261124k" />
+    <link rel="stylesheet" href="./styles.css?v=20261124l" />
   </head>
   <body>
     <section class="sync-gate" id="sync-gate" aria-labelledby="sync-gate-title">
@@ -117,26 +117,14 @@
                   <button data-period="week" type="button">7 days</button>
                   <button data-period="month" type="button">30 days</button>
                 </div>
-                <div class="stats-grid" id="stats-grid"></div>
-
-                <article class="insight-card positive comparison-card">
-                  <div class="insight-top"><span class="insight-icon"><svg viewBox="0 0 24 24"><path d="M4 19h16M6 16l4-5 3 2 5-7m0 0h-4m4 0v4" /></svg></span><span><small>Compare to same age reference</small><strong>Four daily signals</strong></span></div>
+                <section class="stats-today-panel" id="stats-today-panel">
                   <div class="comparison-list" id="comparison-list" aria-label="Four tailored comparison graphs"></div>
                   <button class="text-button" data-open="range-info" type="button">How comparisons work</button>
-                </article>
+                </section>
 
-                <article class="chart-card activity-chart-card">
-                  <div class="chart-heading"><span><small>Last 7 days · ending today</small><strong>Feeds and diapers</strong></span><span class="trend-tag">Rolling view</span></div>
-                  <div class="activity-averages"><span><i class="legend-dot feed-dot"></i><small>Avg feeds / logged day</small><strong id="feed-chart-average">8.4</strong></span><span><i class="legend-dot diaper-dot"></i><small>Avg diapers / logged day</small><strong id="diaper-chart-average">6.5</strong></span></div>
-                  <div class="activity-legend"><span><i class="feed-key"></i>Feeds</span><span><i class="wet-key"></i>Wet</span><span><i class="dirty-key"></i>Dirty</span><em id="activity-average-days">Logged days only</em></div>
-                  <div class="dual-chart" id="activity-chart" aria-label="Feeds and stacked wet and dirty diapers for the last seven days"></div>
-                </article>
-
-                <article class="chart-card">
-                  <div class="chart-heading"><span><small>Today only</small><strong id="sleep-chart-average">Total sleep · 14h 12m</strong></span><span class="comparison-text" id="sleep-typical-label">Typical: 14–17h</span></div>
-                  <div class="sleep-track" id="sleep-track"><span id="sleep-track-fill"></span><i class="range-start"></i><i class="range-end"></i><i class="sleep-pin" id="sleep-track-pin"></i></div>
-                  <div class="track-labels"><span>0h</span><span>24h</span></div>
-                </article>
+                <section class="stats-trend-panel hidden" id="stats-trend-panel" aria-live="polite">
+                  <div class="stats-trend-charts" id="stats-trend-charts"></div>
+                </section>
 
                 <div class="medical-note"><svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Zm0 5v4m0 3v.1" /></svg><p>Reference ranges are educational, not a diagnosis. Always follow your pediatrician’s advice.</p></div>
                 <div class="safe-bottom-space"></div>
@@ -151,7 +139,7 @@
                   <svg class="pump-log-plus" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
                 </button>
 
-                <div class="section-row pump-timeline-heading"><h3>Pump timeline</h3><span>Current care day</span></div>
+                <div class="section-row pump-timeline-heading"><h3>Pump timeline</h3><span id="pump-timeline-window">Current care day</span></div>
                 <div class="pump-timeline" id="pump-timeline" aria-live="polite"></div>
 
                 <article class="pump-summary-card">
@@ -163,11 +151,17 @@
                   <div id="pump-summary"></div>
                 </article>
 
-                <article class="chart-card pump-chart-card">
-                  <div class="pump-chart-heading"><span><small id="pump-chart-window">Last 7 days · ending today</small><strong>Milk pumped and Cam fed</strong></span><div class="pump-chart-toggle" role="group" aria-label="Milk chart period"><button class="active" data-pump-chart-days="7" type="button">7 days</button><button data-pump-chart-days="30" type="button">30 days</button></div></div>
+                <section class="pump-chart-section">
+                  <div class="pump-chart-heading"><span><small id="pump-chart-window">Last 7 care days · ending today</small></span><div class="pump-chart-toggle" role="group" aria-label="Milk chart period"><button class="active" data-pump-chart-days="7" type="button">7 days</button><button data-pump-chart-days="30" type="button">30 days</button></div></div>
                   <div class="pump-chart-legend"><span><i class="pumped-line-key"></i>Pumped</span><span><i class="fed-line-key"></i>Cam fed</span></div>
                   <div class="pump-line-chart" id="pump-line-chart" aria-label="Daily millilitres pumped compared with daily millilitres fed"></div>
-                </article>
+                </section>
+
+                <section class="pump-chart-section pump-session-chart-section">
+                  <div class="pump-session-chart-heading"><strong>Pumps across the last 3 care days</strong><small>8:00 PM → 8:00 PM next day</small></div>
+                  <div class="pump-session-legend" id="pump-session-legend"></div>
+                  <div class="pump-session-chart" id="pump-session-chart" aria-label="Pump amounts by time across the last three care days"></div>
+                </section>
                 <div class="safe-bottom-space"></div>
               </section>
 
@@ -248,6 +242,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20261124k"></script>
+    <script src="./app.js?v=20261124l"></script>
   </body>
 </html>
