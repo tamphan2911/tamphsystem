@@ -549,18 +549,14 @@ svg {
 
 .timeline-heading { margin-top: 2px; }
 .timeline-heading button { padding: 5px 0; border: 0; color: var(--muted); background: transparent; font-size: .58rem; cursor: pointer; }
-.timeline { display: grid; gap: 9px; }
-.timeline-period { position: relative; overflow: hidden; padding: 9px 8px 5px; border: 1px solid; border-radius: 18px; }
-.timeline-period.day { border-color: #f0e0b8; background: linear-gradient(145deg, #fffaf0, #fff); }
-.timeline-period.night { border-color: #ddd9f5; background: linear-gradient(145deg, #f3f1ff, #fbfaff); }
-.timeline-checkpoint { display: flex; align-items: center; gap: 7px; margin: 0 2px 4px; color: #6d687b; font-size: .52rem; font-weight: 800; }
-.timeline-checkpoint::after { content: ""; flex: 1; height: 1px; background: currentColor; opacity: .2; }
+.timeline { position: relative; overflow: hidden; padding: 7px 8px; border: 1px solid #e6e2ef; border-radius: 18px; background: #fff; }
+.timeline::before { content: ""; position: absolute; top: 20px; bottom: 20px; left: 26px; width: 1px; background: rgba(111, 104, 133, .16); }
+.timeline-checkpoint { position: relative; z-index: 2; display: flex; align-items: center; gap: 7px; min-height: 30px; padding: 6px 2px; color: #6d687b; background: rgba(255,255,255,.94); font-size: .52rem; font-weight: 800; }
+.timeline-checkpoint::before, .timeline-checkpoint::after { content: ""; flex: 1; height: 1px; background: currentColor; opacity: .28; }
 .timeline-checkpoint svg { width: 14px; height: 14px; }
-.timeline-period.day .timeline-checkpoint { color: #a36c22; }
-.timeline-period.night .timeline-checkpoint { color: #6656bd; }
-.timeline-period-list { position: relative; }
-.timeline-period-list::before { content: ""; position: absolute; top: 12px; bottom: 14px; left: 18px; width: 1px; background: rgba(111, 104, 133, .16); }
-.timeline-period-empty { padding: 12px 6px 10px 45px; color: var(--muted); font-size: .55rem; }
+.timeline-checkpoint.day { color: #a36c22; }
+.timeline-checkpoint.night { color: #6656bd; }
+.timeline-empty { position: relative; z-index: 1; padding: 18px 8px; color: var(--muted); text-align: center; font-size: .62rem; }
 
 .timeline-item {
   position: relative;
@@ -569,8 +565,10 @@ svg {
   gap: 8px;
   align-items: center;
   min-height: 60px;
-  padding: 7px 0;
+  padding: 7px 4px;
 }
+.timeline-item.day { background: linear-gradient(90deg, rgba(255,244,218,.42), transparent 72%); }
+.timeline-item.night { background: linear-gradient(90deg, rgba(239,236,255,.52), transparent 72%); }
 .timeline-main {
   min-width: 0;
   padding: 0;

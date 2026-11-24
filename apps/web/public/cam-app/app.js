@@ -333,9 +333,80 @@
     return `${formatTime(start)}–${formatTime(end)}`;
   }
 
+  function timelineInterval(event) {
+    const end = new Date(event.data?.endAt || event.timestamp);
+    const durationMin = Number(event.data?.durationMin || 0);
+    const start = event.data?.startAt
+      ? new Date(event.data.startAt)
+      : new Date(end.getTime() - durationMin * 60000);
+    const timed = ["feed", "sleep", "bath", "sunbathing", "walk"].includes(event.type)
+      && durationMin > 0
+      && !Number.isNaN(start.getTime())
+      && !Number.isNaN(end.getTime())
+      && end > start;
+    return { start: timed ? start : end, end, timed };
+  }
+
+  function timelineDayPart(date) {
+    const hour = new Date(date).getHours();
+    return hour >= 20 || hour < 6 ? "night" : "day";
+  }
+
+  function timelineCheckpoints(events) {
+    if (!events.length) return [];
+    const intervals = events.map(timelineInterval);
+    const firstTime = Math.min(...intervals.map((interval) => interval.start.getTime()));
+    const lastTime = Math.max(...intervals.map((interval) => interval.end.getTime()));
+    const { start, end } = currentCareWindow();
+    const dayStart = new Date(start);
+    dayStart.setHours(dayStart.getHours() + 10);
+    return [
+      { date: start, kind: "night", label: "8:00 PM · Night time begins" },
+      { date: dayStart, kind: "day", label: "6:00 AM · Day time begins" },
+      { date: end, kind: "night", label: "8:00 PM · Night time begins" }
+    ].filter((checkpoint) => firstTime < checkpoint.date.getTime() && lastTime > checkpoint.date.getTime());
+  }
+
+  function splitTimelineEvent(event, checkpoints) {
+    const interval = timelineInterval(event);
+    if (!interval.timed) {
+      return [{ ...event, timelineKind: timelineDayPart(interval.end), timelineSortTime: interval.end.getTime() }];
+    }
+    const boundaries = checkpoints
+      .map((checkpoint) => checkpoint.date)
+      .filter((date) => date > interval.start && date < interval.end)
+      .sort((a, b) => a - b);
+    const points = [interval.start, ...boundaries, interval.end];
+    return points.slice(0, -1).map((partStart, index) => {
+      const partEnd = points[index + 1];
+      const startsAtCheckpoint = index > 0;
+      const endsAtCheckpoint = index < points.length - 2;
+      let displayStart = new Date(partStart.getTime() + (startsAtCheckpoint ? 60000 : 0));
+      let displayEnd = new Date(partEnd.getTime() - (endsAtCheckpoint ? 60000 : 0));
+      if (displayEnd <= displayStart) {
+        displayStart = new Date(partStart);
+        displayEnd = new Date(partEnd);
+      }
+      const durationMin = Math.max(1, Math.round((displayEnd - displayStart) / 60000));
+      const midpoint = new Date((displayStart.getTime() + displayEnd.getTime()) / 2);
+      return {
+        ...event,
+        timestamp: displayEnd.toISOString(),
+        data: {
+          ...event.data,
+          durationMin,
+          startAt: displayStart.toISOString(),
+          endAt: displayEnd.toISOString()
+        },
+        timelineKind: timelineDayPart(midpoint),
+        timelineSortTime: displayEnd.getTime()
+      };
+    });
+  }
+
   function createTimelineItem(event) {
     const item = document.createElement("article");
-    item.className = "timeline-item";
+    item.className = `timeline-item ${event.timelineKind || timelineDayPart(event.timestamp)}`;
 
     const icon = document.createElement("span");
     const isDirty = event.type === "diaper" && event.data?.kind === "dirty";
@@ -383,37 +454,29 @@
 
   function renderTimeline() {
     const timeline = $("#timeline");
-    const events = eventsForCareDay().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    const { start } = currentCareWindow();
-    const current = now();
-    const dayStart = new Date(start);
-    dayStart.setHours(dayStart.getHours() + 10);
-    const groups = [];
-    if (current >= dayStart) groups.push({ kind: "day", label: "6:00 AM · Day time", start: dayStart, end: current });
-    groups.push({ kind: "night", label: "8:00 PM · Night time", start, end: current >= dayStart ? dayStart : current });
-
+    const events = eventsForCareDay();
+    const checkpoints = timelineCheckpoints(events);
     timeline.replaceChildren();
-    groups.forEach((group) => {
-      const section = document.createElement("section");
-      section.className = `timeline-period ${group.kind}`;
-      const checkpoint = document.createElement("div");
-      checkpoint.className = "timeline-checkpoint";
-      checkpoint.innerHTML = `${group.kind === "day" ? icons.sunbathing : icons.sleep}<span>${group.label}</span>`;
-      const list = document.createElement("div");
-      list.className = "timeline-period-list";
-      const groupEvents = events.filter((event) => {
-        const recordedAt = new Date(event.timestamp);
-        return recordedAt >= group.start && recordedAt < group.end;
-      });
-      if (groupEvents.length) groupEvents.forEach((event) => list.appendChild(createTimelineItem(event)));
-      else {
-        const empty = document.createElement("div");
-        empty.className = "timeline-period-empty";
-        empty.textContent = `No ${group.kind === "day" ? "day-time" : "night-time"} activity logged.`;
-        list.appendChild(empty);
+    if (!events.length) {
+      const empty = document.createElement("div");
+      empty.className = "timeline-empty";
+      empty.textContent = "No activity logged in this care day yet.";
+      timeline.appendChild(empty);
+      return;
+    }
+    const rows = [
+      ...events.flatMap((event) => splitTimelineEvent(event, checkpoints)).map((event) => ({ type: "activity", time: event.timelineSortTime, event })),
+      ...checkpoints.map((checkpoint) => ({ type: "checkpoint", time: checkpoint.date.getTime(), checkpoint }))
+    ].sort((a, b) => b.time - a.time || (a.type === "activity" ? -1 : 1));
+    rows.forEach((row) => {
+      if (row.type === "activity") {
+        timeline.appendChild(createTimelineItem(row.event));
+        return;
       }
-      section.append(checkpoint, list);
-      timeline.appendChild(section);
+      const checkpoint = document.createElement("div");
+      checkpoint.className = `timeline-checkpoint ${row.checkpoint.kind}`;
+      checkpoint.innerHTML = `${row.checkpoint.kind === "day" ? icons.sunbathing : icons.sleep}<span>${row.checkpoint.label}</span>`;
+      timeline.appendChild(checkpoint);
     });
   }
 
