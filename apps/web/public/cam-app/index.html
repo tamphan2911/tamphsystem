@@ -9,7 +9,7 @@
       content="LittleLog infant feeding, diaper, sleep, and bath tracker"
     />
     <title>LittleLog — Cam’s Baby Care</title>
-    <link rel="stylesheet" href="./styles.css?v=20261124f" />
+    <link rel="stylesheet" href="./styles.css?v=20261124g" />
   </head>
   <body>
     <section class="sync-gate" id="sync-gate" aria-labelledby="sync-gate-title">
@@ -113,8 +113,8 @@
               <section class="view" id="view-stats" data-view="stats" aria-label="Statistics">
                 <div class="page-heading"><p class="eyebrow" id="stats-date-label">Monday, 23 November</p><h2>Statistics</h2></div>
                 <div class="period-switch" role="group" aria-label="Statistics period">
-                  <button data-period="today" type="button">Today</button>
-                  <button class="active" data-period="week" type="button">7 days</button>
+                  <button class="active" data-period="today" type="button">Today</button>
+                  <button data-period="week" type="button">7 days</button>
                   <button data-period="month" type="button">30 days</button>
                 </div>
                 <div class="stats-grid" id="stats-grid"></div>
@@ -179,7 +179,7 @@
               </section>
 
               <section class="view" id="view-vaccine" data-view="vaccine" aria-label="Vaccine tracker">
-                <div class="vaccine-heading"><div><p class="eyebrow" id="vaccine-date-label">Monday, 23 November</p><h2>Vaccine tracker</h2><p>Keep planned doses and completed shots together.</p></div><span class="vaccine-heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m14 4 6 6m-8-4 6 6M7 11l6 6m-8-4 6 6m3-11-9 9-2 5 5-2 9-9M3 21l3-3" /></svg></span></div>
+                <div class="vaccine-heading"><div><p class="eyebrow" id="vaccine-date-label">Monday, 23 November</p><h2>Vaccine tracker</h2></div></div>
 
                 <article class="vaccine-hero" id="vaccine-next-card">
                   <span class="vaccine-hero-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3v3m12-3v3M4 8h16v12H4zM8 12h3m2 0h3m-8 4h3" /></svg></span>
@@ -189,7 +189,7 @@
 
                 <div class="vaccine-actions">
                   <button class="vaccine-action primary" id="schedule-vaccine" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 2v4m8-4v4M5 9h14m-7 3v5m-2.5-2.5h5" /></svg><span><strong>Schedule vaccine</strong><small>Save the planned time</small></span></button>
-                  <button class="vaccine-action secondary" id="record-vaccine" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 4 6 6m-8-4 6 6M7 11l6 6m-8-4 6 6m3-11-9 9-2 5 5-2 9-9M3 21l3-3" /></svg><span><strong>Record a shot</strong><small>Add one already taken</small></span></button>
+                  <button class="vaccine-action secondary" id="record-vaccine" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c2.5 2 5.3 2.3 7 2.5v5.8c0 4.6-2.8 7.7-7 9.7-4.2-2-7-5.1-7-9.7V5.5C6.7 5.3 9.5 5 12 3Z" /><path d="M12 9.2c-1.5-1.7-4.3-.7-4.3 1.5 0 2 2.3 3.5 4.3 5 2-1.5 4.3-3 4.3-5 0-2.2-2.8-3.2-4.3-1.5Z" /></svg><span><strong>Record a shot</strong><small>Add one already taken</small></span></button>
                 </div>
 
                 <div class="vaccine-reminder"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Zm-8 12h4" /></svg><p>Scheduled doses stay in Upcoming until you mark them done. Always use the date advised by Cam’s clinic.</p></div>
@@ -204,7 +204,7 @@
               <button class="active" data-nav="today" type="button"><svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z" /></svg><span>Today</span></button>
               <button data-nav="stats" type="button"><svg viewBox="0 0 24 24"><path d="M5 19V9m7 10V4m7 15v-7" /></svg><span>Stats</span></button>
               <button data-nav="reports" type="button"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8m-8 4h8m-8 4h5" /></svg><span>Reports</span></button>
-              <button data-nav="vaccine" type="button"><svg viewBox="0 0 24 24"><path d="m14 4 6 6m-8-4 6 6M7 11l6 6m-8-4 6 6m3-11-9 9-2 5 5-2 9-9M3 21l3-3" /></svg><span>Vaccine</span></button>
+              <button data-nav="vaccine" type="button"><svg viewBox="0 0 24 24"><path d="M12 3c2.5 2 5.3 2.3 7 2.5v5.8c0 4.6-2.8 7.7-7 9.7-4.2-2-7-5.1-7-9.7V5.5C6.7 5.3 9.5 5 12 3Z" /><path d="M12 9.2c-1.5-1.7-4.3-.7-4.3 1.5 0 2 2.3 3.5 4.3 5 2-1.5 4.3-3 4.3-5 0-2.2-2.8-3.2-4.3-1.5Z" /></svg><span>Vaccine</span></button>
             </nav>
 
             <div class="sheet-backdrop" id="sheet-backdrop"></div>
@@ -219,6 +219,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20261124f"></script>
+    <script src="./app.js?v=20261124g"></script>
   </body>
 </html>

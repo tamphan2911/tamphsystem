@@ -84,7 +84,7 @@ async function readState(userId: string) {
     prisma.camCareState.findUnique({ where: { userId } }),
     prisma.camCareEvent.findMany({
       where: { userId, deletedAt: null },
-      orderBy: { timestamp: "asc" },
+      orderBy: [{ timestamp: "asc" }, { createdAt: "asc" }],
     }),
     prisma.camCareEvent.findMany({
       where: { userId, deletedAt: { not: null } },

@@ -32,7 +32,7 @@
     bath: '<svg viewBox="0 0 24 24"><path d="M4 11h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6v-3Zm3 0V6a3 3 0 0 1 6 0m-7 14-1 2m13-2 1 2M13 8h3" /></svg>',
     sunbathing: '<svg viewBox="0 0 24 24"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z" /></svg>',
     walk: '<svg viewBox="0 0 24 24"><path d="M13 5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-2 4 3-2 2 3 3 1m-8-2-2 5-4 2m6-2 3 2 1 5m-6-7-1 6" /></svg>',
-    vaccine: '<svg viewBox="0 0 24 24"><path d="m14 4 6 6m-8-4 6 6M7 11l6 6m-8-4 6 6m3-11-9 9-2 5 5-2 9-9M3 21l3-3" /></svg>',
+    vaccine: '<svg viewBox="0 0 24 24"><path d="M12 3c2.5 2 5.3 2.3 7 2.5v5.8c0 4.6-2.8 7.7-7 9.7-4.2-2-7-5.1-7-9.7V5.5C6.7 5.3 9.5 5 12 3Z" /><path d="M12 9.2c-1.5-1.7-4.3-.7-4.3 1.5 0 2 2.3 3.5 4.3 5 2-1.5 4.3-3 4.3-5 0-2.2-2.8-3.2-4.3-1.5Z" /></svg>',
     drop: '<svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z" /></svg>',
     dirty: '<svg viewBox="0 0 24 24"><path d="M8 18c-2 0-3.5-1.3-3.5-3S6 12 8 12c-.5-2.6 1-5 4-5 2.8 0 4.3 2.3 3.9 4.6 2.2 0 3.6 1.3 3.6 3.2 0 1.8-1.5 3.2-3.7 3.2H8Zm3.8-11c-.2-2 1.1-3.4 3.2-3" /></svg>',
     check: '<svg viewBox="0 0 24 24"><path d="m5 13 4 4L19 7" /></svg>'
@@ -108,7 +108,7 @@
         other: null
       },
       settings: { dailyReport: true, weeklyReport: true },
-      statsPeriod: "week",
+      statsPeriod: "today",
       deletedEventIds: []
     };
   }
@@ -123,7 +123,7 @@
         saved.activeSessions ||= { sleep: null, feed: null, other: null };
         saved.activeSessions.other ??= null;
         saved.settings ||= { dailyReport: true, weeklyReport: true };
-        saved.statsPeriod ||= "week";
+        saved.statsPeriod ||= "today";
         saved.deletedEventIds = Array.isArray(saved.deletedEventIds) ? saved.deletedEventIds : [];
         return saved;
       }
@@ -534,30 +534,29 @@
     const dailyDirty = totals.dirty / divisor;
     const dailySleep = totals.sleepMinutes / divisor;
     const dailyBottleMilk = (totals.breastMilk + totals.formula) / divisor;
-    const periodSuffix = days === 1 ? "today" : "per logged day";
-    const dataDayLabel = days === 1 ? "Today" : `${dataDays} logged day${dataDays === 1 ? "" : "s"}`;
     const bottleMilk = totals.breastMilk + totals.formula;
+    const statNumber = (value) => days === 1 ? String(Math.round(value)) : value.toFixed(1);
     grid.innerHTML = `
       <article class="stat-card feed-combined">
-        <div class="stat-card-top"><span class="stat-card-icon feed">${iconFor("feed")}</span><span class="delta">${dataDayLabel}</span></div>
-        <div class="feed-stat-layout"><span><strong>${days === 1 ? totals.feeds : dailyFeeds.toFixed(1)}</strong><small>feeds ${periodSuffix}</small></span><span><strong>${Math.round(bottleMilk / divisor)} ml</strong><small>bottle milk ${periodSuffix}</small><em>${Math.round(totals.breastMilk / divisor)} ml breast · ${Math.round(totals.formula / divisor)} ml formula</em></span></div>
+        <div class="stat-card-top"><span class="stat-card-heading"><span class="stat-card-icon feed">${iconFor("feed")}</span><strong>Feed</strong></span></div>
+        <div class="feed-stat-layout"><span><strong>${statNumber(dailyFeeds)}</strong></span><span><strong>${Math.round(bottleMilk / divisor)} ml</strong><em>${Math.round(totals.breastMilk / divisor)} ml breast · ${Math.round(totals.formula / divisor)} ml formula</em></span></div>
       </article>
       <article class="stat-card diaper-stat">
-        <div class="stat-card-top"><span class="stat-card-icon diaper">${iconFor("diaper")}</span><span class="delta">${dailyWet.toFixed(1)} wet · ${dailyDirty.toFixed(1)} dirty</span></div>
-        <strong>${days === 1 ? totals.diapers : dailyDiapers.toFixed(1)}</strong><small>diapers ${periodSuffix}</small>
+        <div class="stat-card-top"><span class="stat-card-heading"><span class="stat-card-icon diaper">${iconFor("diaper")}</span><strong>Diapers</strong></span></div>
+        <div class="stat-metric-row"><strong>${statNumber(dailyDiapers)}</strong><span class="diaper-breakdown"><span>${statNumber(dailyWet)} wet</span><i>·</i><span class="dirty-count">${statNumber(dailyDirty)} dirty</span></span></div>
       </article>
       <article class="stat-card sleep-stat">
-        <div class="stat-card-top"><span class="stat-card-icon sleep">${iconFor("sleep")}</span><span class="delta">Including naps</span></div>
-        <strong>${formatDuration(dailySleep)}</strong><small>sleep ${periodSuffix}</small>
+        <div class="stat-card-top"><span class="stat-card-heading"><span class="stat-card-icon sleep">${iconFor("sleep")}</span><strong>Sleep</strong></span></div>
+        <div class="stat-metric-row"><strong>${formatDuration(dailySleep)}</strong></div>
       </article>
     `;
 
     const reference = referenceForAgeDays();
     $("#range-insight").textContent = `${BABY.shortName} is ${babyAgeDays()} days old. Each numbered scale adapts to broad ${reference.ageLabel} patterns and shows the recorded average for logged days only.`;
     const comparisons = [
-      { label: "Feeds", value: dailyFeeds, range: reference.feeds, display: `${dailyFeeds.toFixed(1)} / day`, unit: "" },
+      { label: "Feeds", value: dailyFeeds, range: reference.feeds, display: `${statNumber(dailyFeeds)} / day`, unit: "" },
       { label: "Bottle milk", value: dailyBottleMilk, range: reference.bottleMl, display: `${Math.round(dailyBottleMilk)} ml`, unit: " ml" },
-      { label: "Diapers", value: dailyDiapers, range: reference.diapers, display: `${dailyDiapers.toFixed(1)} / day`, unit: "" },
+      { label: "Diapers", value: dailyDiapers, range: reference.diapers, display: `${statNumber(dailyDiapers)} / day`, unit: "" },
       { label: "Sleep", value: dailySleep / 60, range: reference.sleepHours, display: formatDuration(dailySleep), unit: "h" }
     ];
     $("#comparison-list").innerHTML = comparisons.map((item) => {
@@ -818,44 +817,56 @@
 
   function showToast() {}
 
-  function addActivity(event, message = "Activity logged") {
-    state.events.push(event);
+  function commitActivities(events, message = "Activity logged", onCommit = null) {
+    if (onCommit) onCommit();
+    state.events.push(...events.filter(Boolean));
     saveState();
     renderAll();
     closeSheet();
     showToast(message, true);
   }
 
-  function addActivityWithWakeCheck(event, message, activityLabel) {
-    const sleepSession = state.activeSessions?.sleep;
-    const activityTime = new Date(event.timestamp);
-    const wakeTime = event.type === "feed" && event.data?.startAt
-      ? new Date(event.data.startAt)
-      : activityTime;
-    const sleepStartedAt = sleepSession ? new Date(sleepSession.startedAt) : null;
-    const isBackdated = Date.now() - activityTime.getTime() >= 60000;
-    addActivity(event, message);
-    if (!sleepSession) return;
-
-    if (isBackdated && (event.type === "feed" || event.type === "diaper")) {
-      if (wakeTime >= sleepStartedAt) {
-        stopSleepSession(`Sleep ended when the ${activityLabel} began`, wakeTime);
-      }
-      return;
-    }
-
-    openWakeConfirmation(activityLabel);
+  function addActivity(event, message = "Activity logged") {
+    commitActivities([event], message);
   }
 
-  function openWakeConfirmation(activityLabel) {
+  function addActivityWithWakeCheck(event, message, activityLabel, onCommit = null) {
+    const sleepSession = state.activeSessions?.sleep;
+    if (!sleepSession) {
+      commitActivities([event], message, onCommit);
+      return;
+    }
+    const sleepStartedAt = new Date(sleepSession.startedAt);
+    const activityStart = event.data?.startAt
+      ? new Date(event.data.startAt)
+      : new Date(event.timestamp);
+    const wakeTime = activityStart >= sleepStartedAt ? activityStart : now();
+    openWakeConfirmation(activityLabel, { event, message, wakeTime, onCommit });
+  }
+
+  function openWakeConfirmation(activityLabel, pendingActivity = null) {
+    const actionCopy = pendingActivity
+      ? `The ${activityLabel} is ready to log. Tell LittleLog whether Cam woke up first.`
+      : `The ${activityLabel} began while sleep is running. Tell LittleLog whether Cam woke up.`;
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Sleep is still running</p><h2 id="sheet-title">Did ${BABY.shortName} wake up?</h2><p class="sheet-subtitle">The ${activityLabel} was logged. Tell LittleLog whether to stop the sleep timer.</p></header>
+      <header class="sheet-header"><p class="eyebrow">Sleep is still running</p><h2 id="sheet-title">Did ${BABY.shortName} wake up?</h2><p class="sheet-subtitle">${actionCopy}</p></header>
       <div class="wake-choice"><button class="sheet-primary" id="wake-yes" type="button">Yes, stop sleep</button><button class="sheet-secondary" id="wake-no" type="button">No, keep sleep running</button></div>
     `);
-    $("#wake-yes").addEventListener("click", () => stopSleepSession(`Sleep ended after ${activityLabel}`));
+    $("#wake-yes").addEventListener("click", () => {
+      const sleepEvent = createStoppedSleepEvent(pendingActivity?.wakeTime || now());
+      if (pendingActivity) {
+        commitActivities([sleepEvent, pendingActivity.event], pendingActivity.message, pendingActivity.onCommit);
+        return;
+      }
+      if (sleepEvent) commitActivities([sleepEvent], `Sleep ended when the ${activityLabel} began`);
+    });
     $("#wake-no").addEventListener("click", () => {
+      if (pendingActivity) {
+        commitActivities([pendingActivity.event], pendingActivity.message, pendingActivity.onCommit);
+        return;
+      }
       closeSheet();
-      showToast(`${activityLabel[0].toUpperCase() + activityLabel.slice(1)} logged · sleep continues`, false);
+      showToast(`${activityLabel[0].toUpperCase() + activityLabel.slice(1)} started · sleep continues`, false);
     });
   }
 
@@ -1133,15 +1144,17 @@
       const note = $("#other-activity-note").value.trim();
       openLogTimeSheet(activity.title.toLowerCase(), (endedAt) => {
         const startedAt = new Date(endedAt.getTime() - durationMin * 60000);
-        addActivity(makeEvent(activity.type, activity.title, `${durationMin} min${note ? ` · ${note}` : ""}`, endedAt, { durationMin, note, startAt: startedAt.toISOString(), endAt: endedAt.toISOString() }), `${activity.title} logged`);
+        addActivityWithWakeCheck(makeEvent(activity.type, activity.title, `${durationMin} min${note ? ` · ${note}` : ""}`, endedAt, { durationMin, note, startAt: startedAt.toISOString(), endAt: endedAt.toISOString() }), `${activity.title} logged`, activity.title.toLowerCase());
       }, { confirmNowLabel: `Log ${activity.title.toLowerCase()} now` });
     });
     $("#start-other-activity").addEventListener("click", () => {
       if (state.activeSessions?.other) { closeSheet(); return; }
+      const sleepWasRunning = Boolean(state.activeSessions?.sleep);
       state.activeSessions.other = { activityKey, type: activity.type, title: activity.title, note: $("#other-activity-note").value.trim(), startedAt: now().toISOString() };
       saveState();
       renderSession();
       closeSheet();
+      if (sleepWasRunning) openWakeConfirmation(activity.title.toLowerCase());
     });
   }
 
@@ -1169,8 +1182,12 @@
     const requested = new Date(requestedEndedAt);
     const endedAt = new Date(Math.min(Date.now(), Math.max(startedAt.getTime(), requested.getTime())));
     const durationMin = Math.max(1, Math.round((endedAt - startedAt) / 60000));
-    state.activeSessions.other = null;
-    addActivity(makeEvent(session.type, session.title, `${durationMin} min${session.note ? ` · ${session.note}` : ""}`, endedAt, { durationMin, note: session.note || "", startAt: startedAt.toISOString(), endAt: endedAt.toISOString() }), `${session.title} timer stopped`);
+    addActivityWithWakeCheck(
+      makeEvent(session.type, session.title, `${durationMin} min${session.note ? ` · ${session.note}` : ""}`, endedAt, { durationMin, note: session.note || "", startAt: startedAt.toISOString(), endAt: endedAt.toISOString() }),
+      `${session.title} timer stopped`,
+      session.title.toLowerCase(),
+      () => { state.activeSessions.other = null; }
+    );
   }
 
   function openNoteSheet() {
@@ -1210,9 +1227,9 @@
     });
   }
 
-  function stopSleepSession(message = "Sleep timer stopped", requestedEndedAt = now()) {
+  function createStoppedSleepEvent(requestedEndedAt = now()) {
     const session = state.activeSessions?.sleep;
-    if (!session) return;
+    if (!session) return null;
     const startedAt = new Date(session.startedAt);
     const requestedTime = new Date(requestedEndedAt);
     const currentTime = now();
@@ -1223,11 +1240,16 @@
     const exactMinutes = Math.max(0, (endedAt.getTime() - startedAt.getTime()) / 60000);
     const durationMin = Math.max(1, Math.round(exactMinutes));
     state.activeSessions.sleep = null;
-    addActivity(makeEvent("sleep", "Sleep", exactMinutes < 1 ? "Less than 1 min" : formatDuration(durationMin), endedAt, {
+    return makeEvent("sleep", "Sleep", exactMinutes < 1 ? "Less than 1 min" : formatDuration(durationMin), endedAt, {
       durationMin,
       startAt: session.startedAt,
       endAt: endedAt.toISOString()
-    }), message);
+    });
+  }
+
+  function stopSleepSession(message = "Sleep timer stopped", requestedEndedAt = now()) {
+    const event = createStoppedSleepEvent(requestedEndedAt);
+    if (event) commitActivities([event], message);
   }
 
   function stopFeedSession() {
@@ -1452,7 +1474,7 @@
     const dueAt = event.data?.dueAt || event.timestamp;
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Mark as done</p><h2 id="sheet-title">${escapeHtml(event.data?.kind || event.title)}</h2><p class="sheet-subtitle">Planned for ${escapeHtml(formatDateTime(dueAt))}. Save when the shot was actually given.</p></header>
-      <label class="choice-label" for="completed-vaccine-time">Actual shot date and time</label><input class="sheet-input" id="completed-vaccine-time" type="datetime-local" value="${toLocalDateTimeValue(now())}" />
+      <label class="choice-label" for="completed-vaccine-time">Actual shot date and time</label><input class="sheet-input" id="completed-vaccine-time" type="datetime-local" value="${toLocalDateTimeValue(dueAt)}" />
       <label class="choice-label" for="completed-vaccine-note">Note</label><textarea class="sheet-textarea" id="completed-vaccine-note" maxlength="240" placeholder="Clinic, dose, reaction, or anything useful">${escapeHtml(event.data?.note || "")}</textarea>
       <div class="sheet-actions"><button class="sheet-primary" id="confirm-vaccine-complete" type="button">Mark vaccine done</button></div>
     `);
@@ -1528,6 +1550,12 @@
   }
 
   function navigate(viewName) {
+    if (viewName === "stats") {
+      state.statsPeriod = "today";
+      $$('[data-period]').forEach((button) => button.classList.toggle("active", button.dataset.period === "today"));
+      persistLocalState();
+      renderStats();
+    }
     $$(".view").forEach((view) => view.classList.toggle("active", view.dataset.view === viewName));
     $$('[data-nav]').forEach((button) => button.classList.toggle("active", button.dataset.nav === viewName));
     const view = $(`[data-view="${viewName}"]`);
