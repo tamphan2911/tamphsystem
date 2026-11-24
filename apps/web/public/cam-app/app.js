@@ -60,11 +60,22 @@
     return rest ? `${hours}h ${rest}m ago` : `${hours}h ago`;
   };
   const babyAgeLabel = () => {
-    const days = Math.max(0, Math.floor((Date.now() - BABY.bornAt.getTime()) / 86400000));
+    const days = babyAgeDays();
     if (days < 14) return `${days} day${days === 1 ? "" : "s"}`;
     if (days < 60) return `${Math.floor(days / 7)} weeks`;
     const months = Math.floor(days / 30.4375);
     return `${months} month${months === 1 ? "" : "s"}`;
+  };
+  const babyAgeDays = (at = now()) => Math.max(0, Math.floor((new Date(at).getTime() - BABY.bornAt.getTime()) / 86400000));
+  const referenceForAgeDays = (ageDays = babyAgeDays()) => {
+    if (ageDays <= 1) return { ageLabel: "first 2 days", feeds: { min: 3, average: 4, max: 6 }, bottleMl: { min: 30, average: 90, max: 180 }, diapers: { min: 2, average: 3, max: 4 }, sleepHours: { min: 14, average: 15.5, max: 17 } };
+    if (ageDays <= 3) return { ageLabel: "days 3–4", feeds: { min: 6, average: 9, max: 12 }, bottleMl: { min: 120, average: 240, max: 360 }, diapers: { min: 3, average: 5, max: 7 }, sleepHours: { min: 14, average: 15.5, max: 17 } };
+    if (ageDays <= 5) return { ageLabel: "days 5–6", feeds: { min: 8, average: 10, max: 12 }, bottleMl: { min: 240, average: 360, max: 540 }, diapers: { min: 5, average: 7, max: 9 }, sleepHours: { min: 14, average: 15.5, max: 17 } };
+    if (ageDays <= 30) return { ageLabel: "newborn · 1–4 weeks", feeds: { min: 8, average: 10, max: 12 }, bottleMl: { min: 450, average: 650, max: 850 }, diapers: { min: 6, average: 8, max: 10 }, sleepHours: { min: 14, average: 15.5, max: 17 } };
+    if (ageDays <= 120) return { ageLabel: "1–3 months", feeds: { min: 6, average: 8, max: 10 }, bottleMl: { min: 600, average: 750, max: 900 }, diapers: { min: 5, average: 7, max: 9 }, sleepHours: { min: 14, average: 15.5, max: 17 } };
+    if (ageDays <= 180) return { ageLabel: "4–6 months", feeds: { min: 5, average: 7, max: 9 }, bottleMl: { min: 700, average: 850, max: 1000 }, diapers: { min: 5, average: 7, max: 9 }, sleepHours: { min: 12, average: 14, max: 16 } };
+    if (ageDays <= 365) return { ageLabel: "7–12 months", feeds: { min: 4, average: 5, max: 7 }, bottleMl: { min: 480, average: 650, max: 850 }, diapers: { min: 5, average: 7, max: 9 }, sleepHours: { min: 12, average: 14, max: 16 } };
+    return { ageLabel: "12–24 months", feeds: { min: 3, average: 4, max: 5 }, bottleMl: { min: 300, average: 450, max: 600 }, diapers: { min: 4, average: 6, max: 8 }, sleepHours: { min: 11, average: 12.5, max: 14 } };
   };
 
   function makeEvent(type, title, detail, timestamp, data = {}) {
@@ -107,6 +118,8 @@
   let activeStorageKey = null;
   let currentUser = null;
   let sessionTicker = null;
+  let dailyInsight = null;
+  let dailyInsightTimer = null;
   let syncReady = false;
   let syncChain = Promise.resolve();
 
@@ -215,8 +228,9 @@
     return state.events.filter((event) => isSameDay(event.timestamp, now()));
   }
 
-  function dailyReportEvents() {
+  function dailyReportEvents(dayOffset = 0) {
     const windowEnd = startOfDay();
+    windowEnd.setDate(windowEnd.getDate() + dayOffset);
     windowEnd.setHours(20, 0, 0, 0);
     const windowStart = new Date(windowEnd);
     windowStart.setDate(windowStart.getDate() - 1);
@@ -224,6 +238,13 @@
       const recordedAt = new Date(event.timestamp);
       return recordedAt >= windowStart && recordedAt < windowEnd;
     });
+  }
+
+  function loggedDayCount(events) {
+    return new Set(events.map((event) => {
+      const date = new Date(event.timestamp);
+      return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    })).size;
   }
 
   function iconFor(type) {
@@ -266,17 +287,19 @@
 
       const copy = document.createElement("span");
       copy.className = "timeline-copy";
+      const heading = document.createElement("span");
+      heading.className = "timeline-entry-heading";
       const title = document.createElement("strong");
       title.textContent = event.title;
-      const detail = document.createElement("small");
-      const timeRange = timeRangeFor(event);
-      detail.textContent = [event.detail || "No extra details", timeRange].filter(Boolean).join(" · ");
-      copy.append(title, detail);
-
       const time = document.createElement("span");
       time.className = "timeline-time";
       time.textContent = formatTime(event.timestamp);
-      button.append(icon, copy, time);
+      heading.append(title, time);
+      const detail = document.createElement("small");
+      const timeRange = timeRangeFor(event);
+      detail.textContent = [event.detail || "No extra details", timeRange].filter(Boolean).join(" · ");
+      copy.append(heading, detail);
+      button.append(icon, copy);
       timeline.appendChild(button);
     });
   }
@@ -321,21 +344,24 @@
     const { events, days } = statsWindow();
     const totals = totalsFor(events);
     const grid = $("#stats-grid");
-    const dailyFeeds = totals.feeds / days;
-    const dailyDiapers = totals.diapers / days;
-    const dailyWet = totals.wet / days;
-    const dailyDirty = totals.dirty / days;
-    const dailySleep = totals.sleepMinutes / days;
-    const dailyBottleMilk = (totals.breastMilk + totals.formula) / days;
-    const periodSuffix = days === 1 ? "today" : "per day";
+    const dataDays = days === 1 ? 1 : loggedDayCount(events);
+    const divisor = Math.max(1, dataDays);
+    const dailyFeeds = totals.feeds / divisor;
+    const dailyDiapers = totals.diapers / divisor;
+    const dailyWet = totals.wet / divisor;
+    const dailyDirty = totals.dirty / divisor;
+    const dailySleep = totals.sleepMinutes / divisor;
+    const dailyBottleMilk = (totals.breastMilk + totals.formula) / divisor;
+    const periodSuffix = days === 1 ? "today" : "per logged day";
+    const dataDayLabel = days === 1 ? "Today" : `${dataDays} logged day${dataDays === 1 ? "" : "s"}`;
     grid.innerHTML = `
       <article class="stat-card">
-        <div class="stat-card-top"><span class="stat-card-icon feed">${iconFor("feed")}</span><span class="delta">Steady</span></div>
+        <div class="stat-card-top"><span class="stat-card-icon feed">${iconFor("feed")}</span><span class="delta">${dataDayLabel}</span></div>
         <strong>${days === 1 ? totals.feeds : dailyFeeds.toFixed(1)}</strong><small>feeds ${periodSuffix}</small>
       </article>
       <article class="stat-card volume-card">
         <div class="stat-card-top"><span class="stat-card-icon bottle">${iconFor("feed")}</span><span class="delta">Mixed feeding</span></div>
-        <div class="volume-split"><span><strong>${Math.round(totals.breastMilk / days)} ml</strong><small>breast milk</small></span><span><strong>${Math.round(totals.formula / days)} ml</strong><small>formula</small></span></div>
+        <div class="volume-split"><span><strong>${Math.round(totals.breastMilk / divisor)} ml</strong><small>breast milk</small></span><span><strong>${Math.round(totals.formula / divisor)} ml</strong><small>formula</small></span></div>
         <small>bottle volume ${periodSuffix}</small>
       </article>
       <article class="stat-card">
@@ -348,16 +374,18 @@
       </article>
     `;
 
-    $("#range-insight").textContent = `The middle mark is a broad age-based average. ${BABY.shortName}’s point shows where her recorded daily value sits relative to it.`;
+    const reference = referenceForAgeDays();
+    $("#range-insight").textContent = `${BABY.shortName} is ${babyAgeDays()} days old. Each numbered scale adapts to broad ${reference.ageLabel} patterns and shows the recorded average for logged days only.`;
     const comparisons = [
-      { label: "Feeds", value: dailyFeeds, average: 10, display: `${dailyFeeds.toFixed(1)} / day`, averageLabel: "10" },
-      { label: "Bottle milk", value: dailyBottleMilk, average: 480, display: `${Math.round(dailyBottleMilk)} ml`, averageLabel: "480 ml" },
-      { label: "Diapers", value: dailyDiapers, average: 7, display: `${dailyDiapers.toFixed(1)} / day`, averageLabel: "7" },
-      { label: "Sleep", value: dailySleep / 60, average: 15.5, display: formatDuration(dailySleep), averageLabel: "15.5h" }
+      { label: "Feeds", value: dailyFeeds, range: reference.feeds, display: `${dailyFeeds.toFixed(1)} / day`, unit: "" },
+      { label: "Bottle milk", value: dailyBottleMilk, range: reference.bottleMl, display: `${Math.round(dailyBottleMilk)} ml`, unit: " ml" },
+      { label: "Diapers", value: dailyDiapers, range: reference.diapers, display: `${dailyDiapers.toFixed(1)} / day`, unit: "" },
+      { label: "Sleep", value: dailySleep / 60, range: reference.sleepHours, display: formatDuration(dailySleep), unit: "h" }
     ];
     $("#comparison-list").innerHTML = comparisons.map((item) => {
-      const position = Math.max(10, Math.min(90, 50 + ((item.value - item.average) / item.average) * 32));
-      return `<div class="comparison-row"><span class="comparison-label"><strong>${item.label}</strong><small>${BABY.shortName}’s daily signal</small></span><span class="comparison-track-wrap"><span class="comparison-track"><span class="comparison-value" style="left:${position}%">${item.display}</span><i class="comparison-point" style="left:${position}%"></i></span><span class="comparison-scale"><span>Lower</span><span>Avg ${item.averageLabel}</span><span>Higher</span></span></span></div>`;
+      const span = Math.max(1, item.range.max - item.range.min);
+      const position = Math.max(4, Math.min(96, ((item.value - item.range.min) / span) * 100));
+      return `<div class="comparison-row"><span class="comparison-label"><strong>${item.label}</strong></span><span class="comparison-track-wrap"><span class="comparison-track"><span class="comparison-value" style="left:${position}%">${item.display}</span><i class="comparison-point" style="left:${position}%"></i></span><span class="comparison-scale"><span>${item.range.min}${item.unit}</span><span>Age avg ${item.range.average}${item.unit}</span><span>${item.range.max}${item.unit}</span></span></span></div>`;
     }).join("");
 
     renderCharts();
@@ -374,13 +402,17 @@
         feeds: totals.feeds,
         wet: totals.wet,
         dirty: totals.dirty,
+        hasData: dayEvents.length > 0,
         current: offset === 0
       });
     }
-    const averageFeeds = days.reduce((sum, day) => sum + day.feeds, 0) / 7;
-    const averageDiapers = days.reduce((sum, day) => sum + day.wet + day.dirty, 0) / 7;
-    const max = Math.max(12, Math.ceil(averageFeeds + 2), Math.ceil(averageDiapers + 2), ...days.flatMap((day) => [day.feeds, day.wet + day.dirty]));
-    const plotHeight = 117;
+    const loggedDays = days.filter((day) => day.hasData);
+    const divisor = Math.max(1, loggedDays.length);
+    const averageFeeds = loggedDays.reduce((sum, day) => sum + day.feeds, 0) / divisor;
+    const averageDiapers = loggedDays.reduce((sum, day) => sum + day.wet + day.dirty, 0) / divisor;
+    const reference = referenceForAgeDays();
+    const max = Math.max(reference.feeds.max, reference.diapers.max, Math.ceil(averageFeeds + 2), Math.ceil(averageDiapers + 2), ...days.flatMap((day) => [day.feeds, day.wet + day.dirty]));
+    const plotHeight = 100;
     const feedLineBottom = 24 + (averageFeeds / max) * plotHeight;
     const diaperLineBottom = 24 + (averageDiapers / max) * plotHeight;
     $("#activity-chart").innerHTML = `
@@ -393,24 +425,39 @@
         const diaperHeight = Math.max(2, (diaperTotal / max) * plotHeight);
         const wetShare = diaperTotal ? (day.wet / diaperTotal) * 100 : 0;
         const dirtyShare = diaperTotal ? (day.dirty / diaperTotal) * 100 : 0;
-        return `<span class="dual-day"><span class="day-bar-pair"><i class="feed-bar" style="height:${feedHeight}px" title="${day.feeds} feeds"></i><i class="diaper-stack" style="height:${diaperHeight}px" title="${day.wet} wet, ${day.dirty} dirty"><b class="diaper-wet" style="height:${wetShare}%"></b><b class="diaper-dirty" style="height:${dirtyShare}%"></b></i></span><small class="day-label ${day.current ? "today" : ""}">${day.label}</small></span>`;
+        return `<span class="dual-day"><span class="day-bar-pair"><span class="metric-bar" style="--bar-height:${feedHeight}px"><em>${day.feeds}</em><i class="feed-bar" style="height:${feedHeight}px" title="${day.feeds} feeds"></i></span><span class="metric-bar" style="--bar-height:${diaperHeight}px"><em>${diaperTotal}</em><i class="diaper-stack" style="height:${diaperHeight}px" title="${day.wet} wet, ${day.dirty} dirty"><b class="diaper-wet" style="height:${wetShare}%"></b><b class="diaper-dirty" style="height:${dirtyShare}%"></b></i></span></span><small class="day-label ${day.current ? "today" : ""}">${day.label}</small></span>`;
       }).join("")}</div>`;
     $("#feed-chart-average").textContent = averageFeeds.toFixed(1);
     $("#diaper-chart-average").textContent = averageDiapers.toFixed(1);
+    $("#activity-average-days").textContent = loggedDays.length ? `${loggedDays.length} logged day${loggedDays.length === 1 ? "" : "s"}` : "No logged days";
 
     const today = totalsFor(eventsForToday());
     const activeSleepMinutes = state.activeSessions?.sleep ? Math.max(0, (Date.now() - new Date(state.activeSessions.sleep.startedAt).getTime()) / 60000) : 0;
     const todaySleep = today.sleepMinutes + activeSleepMinutes;
+    const todaySleepHours = todaySleep / 60;
+    const scaleMaxHours = 24;
+    const typicalStart = (reference.sleepHours.min / scaleMaxHours) * 100;
+    const typicalEnd = (reference.sleepHours.max / scaleMaxHours) * 100;
+    const sleepPosition = Math.max(0, Math.min(100, (todaySleepHours / scaleMaxHours) * 100));
     $("#sleep-chart-average").textContent = `Total sleep · ${formatDuration(todaySleep)}`;
-    $("#sleep-track-fill").style.width = `${Math.max(0, Math.min(100, ((todaySleep / 60 - 10) / 10) * 100))}%`;
+    $("#sleep-typical-label").textContent = `Typical: ${reference.sleepHours.min}–${reference.sleepHours.max}h`;
+    const sleepTrack = $("#sleep-track");
+    sleepTrack.style.setProperty("--typical-start", `${typicalStart}%`);
+    sleepTrack.style.setProperty("--typical-width", `${typicalEnd - typicalStart}%`);
+    $("#sleep-track-fill").style.width = `${sleepPosition}%`;
+    $("#sleep-track-pin").style.left = `${sleepPosition}%`;
+    $("#sleep-track-pin").title = `${formatDuration(todaySleep)} recorded today`;
   }
 
   function renderReports() {
     const today = totalsFor(dailyReportEvents());
+    const previous = totalsFor(dailyReportEvents(-1));
     $("#daily-report-copy").textContent = `Today ${BABY.shortName} had ${today.feeds} ${today.feeds === 1 ? "feed" : "feeds"}, ${today.wet} wet ${today.wet === 1 ? "diaper" : "diapers"}, ${today.dirty} dirty ${today.dirty === 1 ? "diaper" : "diapers"}, and ${formatDuration(today.sleepMinutes)} recorded sleep. Her activity can be compared with her own pattern over time.`;
-    $("#daily-tip").textContent = today.sleepMinutes < 12 * 60
-      ? "Some sleep may still be unlogged. Add missing naps before using today’s comparison."
-      : "Keep tonight’s feeds calm and the room softly lit to make settling easier.";
+    const localSuggestion = `Cam logged ${today.feeds} feeds, ${today.diapers} diaper changes, and ${formatDuration(today.sleepMinutes)} of sleep in this care day; compared with the previous day, feeds were ${today.feeds === previous.feeds ? "steady" : today.feeds > previous.feeds ? "higher" : "lower"}. Use the age-based pattern as a gentle guide, remembering that missing entries and direct breastfeeding can make totals look lower.`;
+    $("#daily-tip").textContent = dailyInsight?.suggestion || localSuggestion;
+    $("#daily-tip-meta").textContent = dailyInsight
+      ? `${dailyInsight.provider === "openai" ? "GPT suggestion" : "Age-based backup"} · ${dailyInsight.reportDate} · generated once`
+      : "Preparing the latest completed 8 PM report";
 
     const weekly = totalsFor(eventsSince(7));
     $("#weekly-feeds").textContent = weekly.feeds;
@@ -418,6 +465,27 @@
     $("#weekly-sleep").textContent = `${Math.round(weekly.sleepMinutes / 60)}h`;
     $("#daily-toggle").checked = state.settings.dailyReport;
     $("#weekly-toggle").checked = state.settings.weeklyReport;
+  }
+
+  async function refreshDailyInsight() {
+    if (!syncReady) return;
+    try {
+      const insight = await camRequest("/daily-insight");
+      if (insight?.suggestion) dailyInsight = insight;
+      renderReports();
+      clearTimeout(dailyInsightTimer);
+      if (insight?.status === "generating") {
+        dailyInsightTimer = setTimeout(refreshDailyInsight, 10_000);
+        return;
+      }
+      const nextAt = new Date(insight?.nextAvailableAt || 0).getTime();
+      const delay = nextAt - Date.now();
+      if (delay > 0 && delay < 2147483647) {
+        dailyInsightTimer = setTimeout(refreshDailyInsight, delay + 2000);
+      }
+    } catch (_) {
+      $("#daily-tip-meta").textContent = "Age-based backup · GPT service unavailable";
+    }
   }
 
   function renderDate() {
@@ -560,7 +628,7 @@
 
   function openLogTimeSheet(activityLabel, onConfirm, options = {}) {
     const minMinutesAgo = Math.max(1, Number(options.minMinutesAgo || 5));
-    const maxMinutesAgo = Math.max(minMinutesAgo, Number(options.maxMinutesAgo || 720));
+    const maxMinutesAgo = Math.max(minMinutesAgo, Number(options.maxMinutesAgo || 360));
     const stepMinutes = Math.max(1, Number(options.stepMinutes || 5));
     const initialMinutesAgo = Math.min(maxMinutesAgo, Math.max(minMinutesAgo, Number(options.initialMinutesAgo || 15)));
     const rangeLabel = (minutes) => formatDuration(Math.max(1, Math.round(minutes)));
@@ -578,7 +646,11 @@
       </div>
       <div class="time-scroller-panel hidden" id="time-scroller-panel">
         <span class="time-scroller-value"><small>How long ago?</small><strong id="time-scroller-value">${initialMinutesAgo} min ago</strong></span>
-        <input class="time-scroller" id="time-scroller" type="range" min="${minMinutesAgo}" max="${maxMinutesAgo}" step="${stepMinutes}" value="${initialMinutesAgo}" aria-label="Minutes before now" />
+        <span class="time-scroller-control">
+          <button id="time-scroller-minus" type="button" aria-label="Move 5 minutes closer to now">−</button>
+          <input class="time-scroller" id="time-scroller" type="range" min="${minMinutesAgo}" max="${maxMinutesAgo}" step="${stepMinutes}" value="${initialMinutesAgo}" aria-label="Minutes before now" />
+          <button id="time-scroller-plus" type="button" aria-label="Move 5 minutes earlier">+</button>
+        </span>
         <span class="time-scroller-labels"><span>${rangeLabel(minMinutesAgo)}</span><span>${rangeLabel(midpoint)}</span><span>${rangeLabel(maxMinutesAgo)}</span></span>
         <span class="time-preview"><small>${previewLabel}</small><strong id="time-preview-value"></strong></span>
       </div>
@@ -612,6 +684,13 @@
       minutesAgo = Number(slider.value);
       renderTime();
     });
+    const adjustTime = (amount) => {
+      minutesAgo = Math.max(minMinutesAgo, Math.min(maxMinutesAgo, minutesAgo + amount));
+      slider.value = String(minutesAgo);
+      renderTime();
+    };
+    $("#time-scroller-minus").addEventListener("click", () => adjustTime(-stepMinutes));
+    $("#time-scroller-plus").addEventListener("click", () => adjustTime(stepMinutes));
     $("#confirm-log-time").addEventListener("click", () => onConfirm(selectedTime()));
     renderTime();
   }
@@ -867,7 +946,7 @@
   function openRangeInfo() {
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Designed for reassurance</p><h2 id="sheet-title">How comparisons work</h2></header>
-      <p class="info-copy"><strong>Broad ranges, not scores.</strong> LittleLog compares patterns with age-adjusted references and ${BABY.shortName}’s own history. It avoids labeling a baby “normal” or “abnormal.”</p>
+      <p class="info-copy"><strong>Broad ranges, not scores.</strong> Each line shows lower, age-average, and higher reference values for ${BABY.shortName}’s current age in days. Her pin uses only the days that contain activity data, so unused days do not pull the average down.</p>
       <p class="info-copy">Mixed feeding is handled carefully: bottle volume can be totaled, but the app will never guess how much milk was taken during breastfeeding.</p>
       <p class="info-copy">Important warning signs should use separately reviewed rules and should never wait for the evening report.</p>
       <span class="feedback-pill">Educational guidance only</span>
@@ -881,7 +960,7 @@
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Notification preview</p><h2 id="sheet-title">${BABY.shortName}’s day at a glance</h2><p class="sheet-subtitle">LittleLog · today at 8:00 PM · covers the previous 24 hours</p></header>
       <div class="report-tip" style="margin-top:16px"><strong>Today</strong><p>${totals.feeds} feeds · ${totals.wet} wet diapers · ${totals.dirty} dirty diapers · ${formatDuration(totals.sleepMinutes)} recorded sleep.</p></div>
-      <p class="info-copy">Your records look steady. Keep tonight’s feeds calm and the room softly lit to make settling easier.</p>
+      <p class="info-copy">${dailyInsight?.suggestion || "The latest completed care-day suggestion will appear here after it is prepared."}</p>
       <div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
     `);
     $('[data-close-sheet]').addEventListener("click", closeSheet);
@@ -1037,6 +1116,7 @@
     $("#sync-gate").classList.add("is-hidden");
     setSyncStatus("synced", "Secure Railway sync");
     syncSnapshot();
+    refreshDailyInsight();
   }
 
   async function initializeSync() {
@@ -1083,9 +1163,15 @@
   $("#sync-access-form").addEventListener("submit", submitLogin);
   initializeSync();
   window.addEventListener("online", () => syncSnapshot());
-  window.addEventListener("focus", refreshFromServer);
+  window.addEventListener("focus", () => {
+    refreshFromServer();
+    refreshDailyInsight();
+  });
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") refreshFromServer();
+    if (document.visibilityState === "visible") {
+      refreshFromServer();
+      refreshDailyInsight();
+    }
   });
   setInterval(() => {
     updateStatusTime();

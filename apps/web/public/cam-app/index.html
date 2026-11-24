@@ -6,10 +6,10 @@
     <meta name="theme-color" content="#f7f7fb" />
     <meta
       name="description"
-      content="LittleLog infant feeding, diaper, and sleep tracker"
+      content="LittleLog infant feeding, diaper, sleep, and bath tracker"
     />
     <title>LittleLog — Cam’s Baby Care</title>
-    <link rel="stylesheet" href="./styles.css?v=20261124b" />
+    <link rel="stylesheet" href="./styles.css?v=20261124c" />
   </head>
   <body>
     <section class="sync-gate" id="sync-gate" aria-labelledby="sync-gate-title">
@@ -129,15 +129,15 @@
 
                 <article class="chart-card activity-chart-card">
                   <div class="chart-heading"><span><small>Last 7 days · ending today</small><strong>Feeds and diapers</strong></span><span class="trend-tag">Rolling view</span></div>
-                  <div class="activity-averages"><span><i class="legend-dot feed-dot"></i><small>Avg feeds / day</small><strong id="feed-chart-average">8.4</strong></span><span><i class="legend-dot diaper-dot"></i><small>Avg diapers / day</small><strong id="diaper-chart-average">6.5</strong></span></div>
-                  <div class="activity-legend"><span><i class="feed-key"></i>Feeds</span><span><i class="wet-key"></i>Wet</span><span><i class="dirty-key"></i>Dirty</span></div>
+                  <div class="activity-averages"><span><i class="legend-dot feed-dot"></i><small>Avg feeds / logged day</small><strong id="feed-chart-average">8.4</strong></span><span><i class="legend-dot diaper-dot"></i><small>Avg diapers / logged day</small><strong id="diaper-chart-average">6.5</strong></span></div>
+                  <div class="activity-legend"><span><i class="feed-key"></i>Feeds</span><span><i class="wet-key"></i>Wet</span><span><i class="dirty-key"></i>Dirty</span><em id="activity-average-days">Logged days only</em></div>
                   <div class="dual-chart" id="activity-chart" aria-label="Feeds and stacked wet and dirty diapers for the last seven days"></div>
                 </article>
 
                 <article class="chart-card">
-                  <div class="chart-heading"><span><small>Today only</small><strong id="sleep-chart-average">Total sleep · 14h 12m</strong></span><span class="comparison-text">Typical: 14–17h</span></div>
-                  <div class="sleep-track"><span id="sleep-track-fill"></span><i class="range-start"></i><i class="range-end"></i></div>
-                  <div class="track-labels"><span>10h</span><span>20h</span></div>
+                  <div class="chart-heading"><span><small>Today only</small><strong id="sleep-chart-average">Total sleep · 14h 12m</strong></span><span class="comparison-text" id="sleep-typical-label">Typical: 14–17h</span></div>
+                  <div class="sleep-track" id="sleep-track"><span id="sleep-track-fill"></span><i class="range-start"></i><i class="range-end"></i><i class="sleep-pin" id="sleep-track-pin"></i></div>
+                  <div class="track-labels"><span>0h</span><span>24h</span></div>
                 </article>
 
                 <div class="medical-note"><svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Zm0 5v4m0 3v.1" /></svg><p>Reference ranges are educational, not a diagnosis. Always follow your pediatrician’s advice.</p></div>
@@ -150,7 +150,7 @@
                   <div class="report-hero-top"><span class="moon-orb"><svg viewBox="0 0 24 24"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4a8.5 8.5 0 1 0 11.2 11.2Z" /></svg></span><span><small>Today at 8:00 PM</small><strong>Cam’s day at a glance</strong></span></div>
                   <div class="report-window"><strong>Daily report window</strong><span>8:00 PM yesterday → 8:00 PM today</span></div>
                   <p id="daily-report-copy">Cam’s daily summary will appear here as activities are recorded.</p>
-                  <div class="report-tip"><strong>Gentle suggestion</strong><p id="daily-tip">Keep tonight’s feeds calm and the room softly lit to make settling easier.</p></div>
+                  <div class="report-tip"><strong>Gentle suggestion</strong><p id="daily-tip">Preparing Cam’s latest completed care-day comparison.</p><small id="daily-tip-meta">Generated once daily after 8:00 PM</small></div>
                   <button class="primary-button" id="preview-notification" type="button">Preview notification</button>
                 </article>
 
@@ -206,6 +206,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20261124b"></script>
+    <script src="./app.js?v=20261124c"></script>
   </body>
 </html>

@@ -42,7 +42,7 @@ function parseEvent(value: unknown): CamEventInput | null {
   const timestampText = shortString(value.timestamp, 100);
   const timestamp = timestampText ? new Date(timestampText) : null;
   const data = isRecord(value.data) ? value.data : {};
-  const allowedTypes = new Set(["feed", "diaper", "sleep", "note"]);
+  const allowedTypes = new Set(["feed", "diaper", "sleep", "bath", "note"]);
 
   if (
     !id ||
