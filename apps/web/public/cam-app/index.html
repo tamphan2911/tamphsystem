@@ -9,7 +9,7 @@
       content="LittleLog infant feeding, diaper, and sleep tracker"
     />
     <title>LittleLog — Cam’s Baby Care</title>
-    <link rel="stylesheet" href="./styles.css?v=20261123d" />
+    <link rel="stylesheet" href="./styles.css?v=20261124a" />
   </head>
   <body>
     <section class="sync-gate" id="sync-gate" aria-labelledby="sync-gate-title">
@@ -41,7 +41,7 @@
         <p class="eyebrow">LittleLog</p>
         <h1>Care for Cam,<br />one tap at a time.</h1>
         <p class="guide-copy">
-          Record feeds, diapers, sleep, and notes in a calm space designed for
+          Record feeds, diapers, sleep, and baths in a calm space designed for
           busy moments with Cam.
         </p>
         <div class="guide-steps">
@@ -59,16 +59,6 @@
         <div class="phone-shadow"></div>
         <div class="phone-shell">
           <div class="phone-screen">
-            <div class="status-bar" aria-hidden="true">
-              <span id="status-time">9:41</span>
-              <span class="dynamic-island"></span>
-              <span class="status-icons">
-                <svg viewBox="0 0 22 12"><path d="M1 8.5h2v2H1zm4-3h2v5H5zm4-3h2v8H9zm4-2h2v10h-2z" /></svg>
-                <svg viewBox="0 0 16 12"><path d="M1 4.5a10 10 0 0 1 14 0M4 7.5a6 6 0 0 1 8 0M7 10.5a2 2 0 0 1 2 0" /></svg>
-                <svg viewBox="0 0 25 12"><rect x="1" y="1" width="20" height="10" rx="3"/><path d="M23 4v4"/><rect class="battery-fill" x="3" y="3" width="16" height="6" rx="1"/></svg>
-              </span>
-            </div>
-
             <div class="app-shell">
               <header class="app-header">
                 <button class="baby-chip" id="baby-chip" type="button" aria-label="Open baby profile">
@@ -110,9 +100,9 @@
                     <span class="quick-icon"><svg viewBox="0 0 24 24"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4a8.5 8.5 0 1 0 11.2 11.2Z" /></svg></span>
                     <span><strong>Sleep</strong><small>Start a timer</small></span>
                   </button>
-                  <button class="quick-card note" data-action="note" type="button">
-                    <span class="quick-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /></svg></span>
-                    <span><strong>Note</strong><small>Medicine or other</small></span>
+                  <button class="quick-card bath" data-action="bath" type="button">
+                    <span class="quick-icon"><svg viewBox="0 0 24 24"><path d="M4 11h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6v-3Zm3 0V6a3 3 0 0 1 6 0m-7 14-1 2m13-2 1 2M13 8h3" /></svg></span>
+                    <span><strong>Bath</strong><small>Always 10 min</small></span>
                   </button>
                 </div>
 
@@ -139,7 +129,7 @@
 
                 <article class="chart-card activity-chart-card">
                   <div class="chart-heading"><span><small>Last 7 days · ending today</small><strong>Feeds and diapers</strong></span><span class="trend-tag">Rolling view</span></div>
-                  <div class="activity-averages"><span><i class="legend-dot feed-dot"></i><strong id="feed-chart-average">8.4</strong><small>feeds / day</small></span><span><i class="legend-dot diaper-dot"></i><strong id="diaper-chart-average">6.5</strong><small>diapers / day</small></span></div>
+                  <div class="activity-averages"><span><i class="legend-dot feed-dot"></i><small>Avg feeds / day</small><strong id="feed-chart-average">8.4</strong></span><span><i class="legend-dot diaper-dot"></i><small>Avg diapers / day</small><strong id="diaper-chart-average">6.5</strong></span></div>
                   <div class="activity-legend"><span><i class="feed-key"></i>Feeds</span><span><i class="wet-key"></i>Wet</span><span><i class="dirty-key"></i>Dirty</span></div>
                   <div class="dual-chart" id="activity-chart" aria-label="Feeds and stacked wet and dirty diapers for the last seven days"></div>
                 </article>
@@ -158,6 +148,7 @@
                 <div class="page-heading"><p class="eyebrow">Short and useful</p><h2>Evening reports</h2></div>
                 <article class="report-hero">
                   <div class="report-hero-top"><span class="moon-orb"><svg viewBox="0 0 24 24"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4a8.5 8.5 0 1 0 11.2 11.2Z" /></svg></span><span><small>Today at 8:00 PM</small><strong>Cam’s day at a glance</strong></span></div>
+                  <div class="report-window"><strong>Daily report window</strong><span>8:00 PM yesterday → 8:00 PM today</span></div>
                   <p id="daily-report-copy">Cam’s daily summary will appear here as activities are recorded.</p>
                   <div class="report-tip"><strong>Gentle suggestion</strong><p id="daily-tip">Keep tonight’s feeds calm and the room softly lit to make settling easier.</p></div>
                   <button class="primary-button" id="preview-notification" type="button">Preview notification</button>
@@ -179,13 +170,13 @@
                 <div class="page-heading"><p class="eyebrow">Made for your baby</p><h2>Baby profile</h2></div>
                 <div class="profile-card">
                   <div class="large-avatar"><img data-user-avatar src="./house_cam.jpg" alt="" /></div>
-                  <div><h3>Phan Hoa Trà</h3><p id="profile-summary">Girl · Born 18 November 2026 at 8:00 AM</p></div>
+                  <div><h3>Phan Hoa Trà</h3><p id="profile-summary">Girl · Born 18 November 2026 at 8:00 AM · 3.4 kg at birth</p></div>
                   <button id="edit-profile" type="button">Edit</button>
                 </div>
                 <div class="profile-section">
                   <h3>Growth</h3>
-                  <button class="setting-row" data-profile="measurements" type="button"><span class="setting-icon growth"><svg viewBox="0 0 24 24"><path d="M4 17 17 4m-8 1 2 2m1-5 2 2m-8 5 2 2m-5 1 9 9 9-9-9-9-9 9Z" /></svg></span><span><strong>Measurements</strong><small>No measurements recorded</small></span><svg class="chevron" viewBox="0 0 24 24"><path d="m10 7 5 5-5 5" /></svg></button>
-                  <button class="setting-row" data-profile="age" type="button"><span class="setting-icon age"><svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-13v5l3 2" /></svg></span><span><strong>Birth details</strong><small id="birth-details-row">18 Nov 2026 · 8:00 AM · Girl</small></span><svg class="chevron" viewBox="0 0 24 24"><path d="m10 7 5 5-5 5" /></svg></button>
+                  <button class="setting-row" data-profile="measurements" type="button"><span class="setting-icon growth"><svg viewBox="0 0 24 24"><path d="M4 17 17 4m-8 1 2 2m1-5 2 2m-8 5 2 2m-5 1 9 9 9-9-9-9-9 9Z" /></svg></span><span><strong>Measurements</strong><small id="measurements-summary">Birth weight · 3.4 kg</small></span><svg class="chevron" viewBox="0 0 24 24"><path d="m10 7 5 5-5 5" /></svg></button>
+                  <button class="setting-row" data-profile="age" type="button"><span class="setting-icon age"><svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-13v5l3 2" /></svg></span><span><strong>Birth details</strong><small id="birth-details-row">18 Nov 2026 · 8:00 AM · Girl · 3.4 kg</small></span><svg class="chevron" viewBox="0 0 24 24"><path d="m10 7 5 5-5 5" /></svg></button>
                 </div>
                 <div class="profile-section">
                   <h3>Preferences</h3>
@@ -215,6 +206,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20261123d"></script>
+    <script src="./app.js?v=20261124a"></script>
   </body>
 </html>

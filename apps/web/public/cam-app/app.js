@@ -8,7 +8,8 @@
     shortName: "Cam",
     fullName: "Phan Hoa Trà",
     sex: "Girl",
-    bornAt: new Date("2026-11-18T08:00:00+07:00")
+    bornAt: new Date("2026-11-18T08:00:00+07:00"),
+    birthWeightKg: 3.4
   };
   localStorage.removeItem("littlelog-prototype-v1");
   localStorage.removeItem("littlelog-prototype-v2");
@@ -21,6 +22,7 @@
     sleep: '<svg viewBox="0 0 24 24"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4a8.5 8.5 0 1 0 11.2 11.2Z" /></svg>',
     note: '<svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /></svg>',
     bottle: '<svg viewBox="0 0 24 24"><path d="M9 3h6v3l2 2v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8l2-2V3Zm-2 8h10" /></svg>',
+    bath: '<svg viewBox="0 0 24 24"><path d="M4 11h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6v-3Zm3 0V6a3 3 0 0 1 6 0m-7 14-1 2m13-2 1 2M13 8h3" /></svg>',
     drop: '<svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z" /></svg>',
     dirty: '<svg viewBox="0 0 24 24"><path d="M8 18c-2 0-3.5-1.3-3.5-3S6 12 8 12c-.5-2.6 1-5 4-5 2.8 0 4.3 2.3 3.9 4.6 2.2 0 3.6 1.3 3.6 3.2 0 1.8-1.5 3.2-3.7 3.2H8Zm3.8-11c-.2-2 1.1-3.4 3.2-3" /></svg>',
     check: '<svg viewBox="0 0 24 24"><path d="m5 13 4 4L19 7" /></svg>'
@@ -213,8 +215,30 @@
     return state.events.filter((event) => isSameDay(event.timestamp, now()));
   }
 
+  function dailyReportEvents() {
+    const windowEnd = startOfDay();
+    windowEnd.setHours(20, 0, 0, 0);
+    const windowStart = new Date(windowEnd);
+    windowStart.setDate(windowStart.getDate() - 1);
+    return state.events.filter((event) => {
+      const recordedAt = new Date(event.timestamp);
+      return recordedAt >= windowStart && recordedAt < windowEnd;
+    });
+  }
+
   function iconFor(type) {
     return icons[type] || icons.note;
+  }
+
+  function timeRangeFor(event) {
+    if (event.type !== "feed" && event.type !== "sleep" && event.type !== "bath") return "";
+    const durationMin = Number(event.data?.durationMin || 0);
+    const end = new Date(event.data?.endAt || event.timestamp);
+    const start = event.data?.startAt
+      ? new Date(event.data.startAt)
+      : new Date(end.getTime() - durationMin * 60000);
+    if (!durationMin || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "";
+    return `${formatTime(start)}–${formatTime(end)}`;
   }
 
   function renderTimeline() {
@@ -236,15 +260,17 @@
       button.dataset.eventId = event.id;
 
       const icon = document.createElement("span");
-      icon.className = `timeline-icon ${event.type}`;
-      icon.innerHTML = iconFor(event.type);
+      const isDirty = event.type === "diaper" && event.data?.kind === "dirty";
+      icon.className = `timeline-icon ${event.type}${isDirty ? " dirty" : ""}`;
+      icon.innerHTML = isDirty ? icons.dirty : iconFor(event.type);
 
       const copy = document.createElement("span");
       copy.className = "timeline-copy";
       const title = document.createElement("strong");
       title.textContent = event.title;
       const detail = document.createElement("small");
-      detail.textContent = event.detail || "No extra details";
+      const timeRange = timeRangeFor(event);
+      detail.textContent = [event.detail || "No extra details", timeRange].filter(Boolean).join(" · ");
       copy.append(title, detail);
 
       const time = document.createElement("span");
@@ -300,6 +326,7 @@
     const dailyWet = totals.wet / days;
     const dailyDirty = totals.dirty / days;
     const dailySleep = totals.sleepMinutes / days;
+    const dailyBottleMilk = (totals.breastMilk + totals.formula) / days;
     const periodSuffix = days === 1 ? "today" : "per day";
     grid.innerHTML = `
       <article class="stat-card">
@@ -324,13 +351,13 @@
     $("#range-insight").textContent = `The middle mark is a broad age-based average. ${BABY.shortName}’s point shows where her recorded daily value sits relative to it.`;
     const comparisons = [
       { label: "Feeds", value: dailyFeeds, average: 10, display: `${dailyFeeds.toFixed(1)} / day`, averageLabel: "10" },
-      { label: "Bottle milk", value: totals.bottles / days, average: 480, display: `${Math.round(totals.bottles / days)} ml`, averageLabel: "480 ml" },
+      { label: "Bottle milk", value: dailyBottleMilk, average: 480, display: `${Math.round(dailyBottleMilk)} ml`, averageLabel: "480 ml" },
       { label: "Diapers", value: dailyDiapers, average: 7, display: `${dailyDiapers.toFixed(1)} / day`, averageLabel: "7" },
       { label: "Sleep", value: dailySleep / 60, average: 15.5, display: formatDuration(dailySleep), averageLabel: "15.5h" }
     ];
     $("#comparison-list").innerHTML = comparisons.map((item) => {
       const position = Math.max(10, Math.min(90, 50 + ((item.value - item.average) / item.average) * 32));
-      return `<div class="comparison-row"><span class="comparison-label"><strong>${item.label}</strong><small>${item.display}</small></span><span class="comparison-track-wrap"><span class="comparison-track"><i class="comparison-point" style="left:${position}%"></i></span><span class="comparison-scale"><span>Lower</span><span>Avg ${item.averageLabel}</span><span>Higher</span></span></span></div>`;
+      return `<div class="comparison-row"><span class="comparison-label"><strong>${item.label}</strong><small>${BABY.shortName}’s daily signal</small></span><span class="comparison-track-wrap"><span class="comparison-track"><span class="comparison-value" style="left:${position}%">${item.display}</span><i class="comparison-point" style="left:${position}%"></i></span><span class="comparison-scale"><span>Lower</span><span>Avg ${item.averageLabel}</span><span>Higher</span></span></span></div>`;
     }).join("");
 
     renderCharts();
@@ -358,8 +385,8 @@
     const diaperLineBottom = 24 + (averageDiapers / max) * plotHeight;
     $("#activity-chart").innerHTML = `
       <div class="dual-chart-grid"></div>
-      <div class="average-line feed-average" style="bottom:${feedLineBottom}px"><span><b>${averageFeeds.toFixed(1)}</b> avg feeds</span></div>
-      <div class="average-line diaper-average" style="bottom:${diaperLineBottom}px"><span><b>${averageDiapers.toFixed(1)}</b> avg diapers</span></div>
+      <div class="average-line feed-average" style="bottom:${feedLineBottom}px" title="${averageFeeds.toFixed(1)} average feeds per day"></div>
+      <div class="average-line diaper-average" style="bottom:${diaperLineBottom}px" title="${averageDiapers.toFixed(1)} average diapers per day"></div>
       <div class="dual-bars">${days.map((day) => {
         const diaperTotal = day.wet + day.dirty;
         const feedHeight = Math.max(2, (day.feeds / max) * plotHeight);
@@ -379,7 +406,7 @@
   }
 
   function renderReports() {
-    const today = totalsFor(eventsForToday());
+    const today = totalsFor(dailyReportEvents());
     $("#daily-report-copy").textContent = `Today ${BABY.shortName} had ${today.feeds} ${today.feeds === 1 ? "feed" : "feeds"}, ${today.wet} wet ${today.wet === 1 ? "diaper" : "diapers"}, ${today.dirty} dirty ${today.dirty === 1 ? "diaper" : "diapers"}, and ${formatDuration(today.sleepMinutes)} recorded sleep. Her activity can be compared with her own pattern over time.`;
     $("#daily-tip").textContent = today.sleepMinutes < 12 * 60
       ? "Some sleep may still be unlogged. Add missing naps before using today’s comparison."
@@ -404,6 +431,9 @@
   function renderBabyDetails() {
     $("#baby-age-label").textContent = babyAgeLabel();
     $("#greeting-text").textContent = `How is ${BABY.shortName} doing?`;
+    $("#profile-summary").textContent = `${BABY.sex} · Born 18 November 2026 at 8:00 AM · ${BABY.birthWeightKg} kg at birth`;
+    $("#measurements-summary").textContent = `Birth weight · ${BABY.birthWeightKg} kg`;
+    $("#birth-details-row").textContent = `18 Nov 2026 · 8:00 AM · ${BABY.sex} · ${BABY.birthWeightKg} kg`;
     $$('[data-user-avatar]').forEach((image) => {
       image.src = currentUser?.avatarUrl || "./house_cam.jpg";
     });
@@ -513,6 +543,53 @@
     return () => value;
   }
 
+  function openLogTimeSheet(activityLabel, onConfirm) {
+    openSheet(`
+      <header class="sheet-header"><p class="eyebrow">Log time</p><h2 id="sheet-title">When did ${activityLabel} happen?</h2><p class="sheet-subtitle">Choose right now or scroll back to the time it happened.</p></header>
+      <div class="sheet-tabs time-choice" role="group" aria-label="Choose log time">
+        <button class="active" data-log-time="now" type="button">Right now</button>
+        <button data-log-time="earlier" type="button">Earlier</button>
+      </div>
+      <div class="time-scroller-panel hidden" id="time-scroller-panel">
+        <span class="time-scroller-value"><small>How long ago?</small><strong id="time-scroller-value">15 min ago</strong></span>
+        <input class="time-scroller" id="time-scroller" type="range" min="5" max="720" step="5" value="15" aria-label="Minutes before now" />
+        <span class="time-scroller-labels"><span>5 min</span><span>6 hours</span><span>12 hours</span></span>
+        <span class="time-preview"><small>LittleLog will record</small><strong id="time-preview-value"></strong></span>
+      </div>
+      <div class="sheet-actions"><button class="sheet-primary" id="confirm-log-time" type="button">Log ${activityLabel} now</button></div>
+    `);
+
+    let mode = "now";
+    let minutesAgo = 15;
+    const slider = $("#time-scroller");
+    const selectedTime = () => new Date(Date.now() - (mode === "earlier" ? minutesAgo : 0) * 60000);
+    const renderTime = () => {
+      const timestamp = selectedTime();
+      $("#time-scroller-value").textContent = `${minutesAgo} min ago`;
+      $("#time-preview-value").textContent = new Intl.DateTimeFormat("en", {
+        weekday: "short",
+        hour: "numeric",
+        minute: "2-digit"
+      }).format(timestamp);
+      $("#confirm-log-time").textContent = mode === "now"
+        ? `Log ${activityLabel} now`
+        : `Log ${activityLabel} at ${formatTime(timestamp)}`;
+    };
+
+    $$('[data-log-time]').forEach((button) => button.addEventListener("click", () => {
+      mode = button.dataset.logTime;
+      $$('[data-log-time]').forEach((item) => item.classList.toggle("active", item === button));
+      $("#time-scroller-panel").classList.toggle("hidden", mode !== "earlier");
+      renderTime();
+    }));
+    slider.addEventListener("input", () => {
+      minutesAgo = Number(slider.value);
+      renderTime();
+    });
+    $("#confirm-log-time").addEventListener("click", () => onConfirm(selectedTime()));
+    renderTime();
+  }
+
   function openFeedSheet(defaultTab = "bottle") {
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Quick log</p><h2 id="sheet-title">Feed</h2><p class="sheet-subtitle">Bottle is the default. Log a completed feed or start a live timer.</p></header>
@@ -556,7 +633,17 @@
     $("#quick-breast")?.addEventListener("click", () => {
       const side = $('[data-choice-group="side"] .selected').dataset.value;
       const note = $("#breast-note").value.trim();
-      addActivityWithWakeCheck(makeEvent("feed", "Breastfeed", `${side} · ${breastDuration} min${note ? ` · ${note}` : ""}`, now(), { mode: "breast", side, durationMin: breastDuration, note }), "Breastfeed logged", "feed");
+      openLogTimeSheet("feed", (endedAt) => {
+        const startedAt = new Date(endedAt.getTime() - breastDuration * 60000);
+        addActivityWithWakeCheck(makeEvent("feed", "Breastfeed", `${side} · ${breastDuration} min${note ? ` · ${note}` : ""}`, endedAt, {
+          mode: "breast",
+          side,
+          durationMin: breastDuration,
+          note,
+          startAt: startedAt.toISOString(),
+          endAt: endedAt.toISOString()
+        }), "Breastfeed logged", "feed");
+      });
     });
     $("#start-breast")?.addEventListener("click", () => {
       const side = $('[data-choice-group="side"] .selected').dataset.value;
@@ -572,7 +659,18 @@
     $("#log-bottle")?.addEventListener("click", () => {
       const milk = $('[data-choice-group="milk"] .selected').dataset.value;
       const note = $("#bottle-note").value.trim();
-      addActivityWithWakeCheck(makeEvent("feed", "Bottle feed", `${milk} · ${amount} ml · ${bottleDuration} min${note ? ` · ${note}` : ""}`, now(), { mode: "bottle", milk, amount, durationMin: bottleDuration, note }), "Bottle feed logged", "feed");
+      openLogTimeSheet("feed", (endedAt) => {
+        const startedAt = new Date(endedAt.getTime() - bottleDuration * 60000);
+        addActivityWithWakeCheck(makeEvent("feed", "Bottle feed", `${milk} · ${amount} ml · ${bottleDuration} min${note ? ` · ${note}` : ""}`, endedAt, {
+          mode: "bottle",
+          milk,
+          amount,
+          durationMin: bottleDuration,
+          note,
+          startAt: startedAt.toISOString(),
+          endAt: endedAt.toISOString()
+        }), "Bottle feed logged", "feed");
+      });
     });
     $("#start-bottle")?.addEventListener("click", () => {
       const milk = $('[data-choice-group="milk"] .selected').dataset.value;
@@ -600,7 +698,9 @@
       const kind = button.dataset.diaper;
       const note = $("#diaper-note").value.trim();
       const titles = { wet: "Wet diaper", dirty: "Dirty diaper" };
-      addActivityWithWakeCheck(makeEvent("diaper", titles[kind], note || (kind === "wet" ? "Medium" : "Logged"), now(), { kind, note }), `${titles[kind]} logged`, "diaper");
+      openLogTimeSheet("diaper", (loggedAt) => {
+        addActivityWithWakeCheck(makeEvent("diaper", titles[kind], note || (kind === "wet" ? "Medium" : "Logged"), loggedAt, { kind, note }), `${titles[kind]} logged`, "diaper");
+      });
     }));
   }
 
@@ -625,6 +725,18 @@
     $("#start-sleep").addEventListener("click", () => startSleep(0));
   }
 
+  function openBathSheet() {
+    openLogTimeSheet("bath", (endedAt) => {
+      const durationMin = 10;
+      const startedAt = new Date(endedAt.getTime() - durationMin * 60000);
+      addActivityWithWakeCheck(makeEvent("bath", "Bath", "10 min", endedAt, {
+        durationMin,
+        startAt: startedAt.toISOString(),
+        endAt: endedAt.toISOString()
+      }), "Bath logged", "bath");
+    });
+  }
+
   function openNoteSheet() {
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Remember it later</p><h2 id="sheet-title">Add a note</h2><p class="sheet-subtitle">For medicine, temperature, symptoms, or anything else.</p></header>
@@ -647,33 +759,54 @@
   function stopSleepSession(message = "Sleep timer stopped") {
     const session = state.activeSessions?.sleep;
     if (!session) return;
-    const exactMinutes = Math.max(0, (Date.now() - new Date(session.startedAt).getTime()) / 60000);
+    const endedAt = now();
+    const exactMinutes = Math.max(0, (endedAt.getTime() - new Date(session.startedAt).getTime()) / 60000);
     const durationMin = Math.max(1, Math.round(exactMinutes));
     state.activeSessions.sleep = null;
-    addActivity(makeEvent("sleep", "Sleep", exactMinutes < 1 ? "Less than 1 min" : formatDuration(durationMin), now(), { durationMin }), message);
+    addActivity(makeEvent("sleep", "Sleep", exactMinutes < 1 ? "Less than 1 min" : formatDuration(durationMin), endedAt, {
+      durationMin,
+      startAt: session.startedAt,
+      endAt: endedAt.toISOString()
+    }), message);
   }
 
   function stopFeedSession() {
     const session = state.activeSessions?.feed;
     if (!session) return;
-    const exactMinutes = Math.max(0, (Date.now() - new Date(session.startedAt).getTime()) / 60000);
+    const endedAt = now();
+    const exactMinutes = Math.max(0, (endedAt.getTime() - new Date(session.startedAt).getTime()) / 60000);
     const durationMin = Math.max(1, Math.round(exactMinutes));
     const durationText = exactMinutes < 1 ? "less than 1 min" : formatDuration(durationMin);
     state.activeSessions.feed = null;
     if (session.mode === "bottle") {
-      addActivity(makeEvent("feed", "Bottle feed", `${session.milk} · ${session.amount} ml · ${durationText}`, now(), { mode: "bottle", milk: session.milk, amount: session.amount, durationMin }), "Bottle timer stopped");
+      addActivity(makeEvent("feed", "Bottle feed", `${session.milk} · ${session.amount} ml · ${durationText}`, endedAt, {
+        mode: "bottle",
+        milk: session.milk,
+        amount: session.amount,
+        durationMin,
+        startAt: session.startedAt,
+        endAt: endedAt.toISOString()
+      }), "Bottle timer stopped");
     } else {
-      addActivity(makeEvent("feed", "Breastfeed", `${session.side} · ${durationText}`, now(), { mode: "breast", side: session.side, durationMin }), "Feed timer stopped");
+      addActivity(makeEvent("feed", "Breastfeed", `${session.side} · ${durationText}`, endedAt, {
+        mode: "breast",
+        side: session.side,
+        durationMin,
+        startAt: session.startedAt,
+        endAt: endedAt.toISOString()
+      }), "Feed timer stopped");
     }
   }
 
   function openEventSheet(eventId) {
     const event = state.events.find((item) => item.id === eventId);
     if (!event) return;
+    const timeRange = timeRangeFor(event);
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">${formatTime(event.timestamp)}</p><h2 id="sheet-title">${event.title}</h2><p class="sheet-subtitle">${event.detail || "No extra details"}</p></header>
       <div class="mini-report">
         <div class="mini-report-row"><span>Recorded</span><strong>${new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(event.timestamp))}</strong></div>
+        ${timeRange ? `<div class="mini-report-row"><span>From–to</span><strong>${timeRange}</strong></div>` : ""}
         <div class="mini-report-row"><span>Category</span><strong>${event.type[0].toUpperCase() + event.type.slice(1)}</strong></div>
       </div>
       <div class="sheet-actions"><button class="sheet-danger" id="delete-entry" type="button">Delete entry</button></div>
@@ -694,9 +827,9 @@
   }
 
   function openNotificationPreview() {
-    const totals = totalsFor(eventsForToday());
+    const totals = totalsFor(dailyReportEvents());
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Notification preview</p><h2 id="sheet-title">${BABY.shortName}’s day at a glance</h2><p class="sheet-subtitle">LittleLog · today at 8:00 PM</p></header>
+      <header class="sheet-header"><p class="eyebrow">Notification preview</p><h2 id="sheet-title">${BABY.shortName}’s day at a glance</h2><p class="sheet-subtitle">LittleLog · today at 8:00 PM · covers the previous 24 hours</p></header>
       <div class="report-tip" style="margin-top:16px"><strong>Today</strong><p>${totals.feeds} feeds · ${totals.wet} wet diapers · ${totals.dirty} dirty diapers · ${formatDuration(totals.sleepMinutes)} recorded sleep.</p></div>
       <p class="info-copy">Your records look steady. Keep tonight’s feeds calm and the room softly lit to make settling easier.</p>
       <div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
@@ -723,10 +856,10 @@
 
   function openProfileInfo(kind = "profile") {
     const content = kind === "measurements"
-      ? { eyebrow: "Growth", title: "Measurements", copy: "Record weight, length, and head circumference here to follow growth over time. No measurements have been entered yet." }
+      ? { eyebrow: "Growth", title: "Measurements", copy: `${BABY.shortName} weighed ${BABY.birthWeightKg} kg at birth. Future weight, length, and head-circumference measurements can be added here.` }
       : kind === "age"
-        ? { eyebrow: "Birth details", title: BABY.fullName, copy: `${BABY.shortName} is a girl, born at 8:00 AM on 18 November 2026. Her current age is ${babyAgeLabel()}.` }
-        : { eyebrow: "Baby profile", title: BABY.fullName, copy: `${BABY.shortName} · Girl · Born 18 November 2026 at 8:00 AM.` };
+        ? { eyebrow: "Birth details", title: BABY.fullName, copy: `${BABY.shortName} is a girl, born at 8:00 AM on 18 November 2026, weighing ${BABY.birthWeightKg} kg. Her current age is ${babyAgeLabel()}.` }
+        : { eyebrow: "Baby profile", title: BABY.fullName, copy: `${BABY.shortName} · Girl · Born 18 November 2026 at 8:00 AM · ${BABY.birthWeightKg} kg at birth.` };
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">${content.eyebrow}</p><h2 id="sheet-title">${content.title}</h2></header>
       <p class="info-copy">${content.copy}</p>
@@ -770,7 +903,7 @@
 
   function confirmClearHistory() {
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Clear records</p><h2 id="sheet-title">Delete activity history?</h2><p class="sheet-subtitle">This removes all recorded feeds, diapers, sleep sessions, and notes. Active timers will keep running.</p></header>
+      <header class="sheet-header"><p class="eyebrow">Clear records</p><h2 id="sheet-title">Delete activity history?</h2><p class="sheet-subtitle">This removes all recorded feeds, diapers, sleep sessions, baths, and notes. Active timers will keep running.</p></header>
       <div class="sheet-actions two"><button class="sheet-secondary" data-close-sheet type="button">Cancel</button><button class="sheet-danger" id="confirm-clear" type="button">Clear history</button></div>
     `);
     $('[data-close-sheet]').addEventListener("click", closeSheet);
@@ -792,7 +925,7 @@
       if (action === "feed") openFeedSheet();
       if (action === "diaper") openDiaperSheet();
       if (action === "sleep") state.activeSessions?.sleep ? showToast("Sleep is already running · use the timer card to stop", false) : openSleepSheet();
-      if (action === "note") openNoteSheet();
+      if (action === "bath") openBathSheet();
     }));
     $("#sheet-close").addEventListener("click", closeSheet);
     $("#sheet-backdrop").addEventListener("click", closeSheet);
@@ -829,7 +962,8 @@
   }
 
   function updateStatusTime() {
-    $("#status-time").textContent = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(now());
+    const statusTime = $("#status-time");
+    if (statusTime) statusTime.textContent = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(now());
   }
 
   function setGateStatus(message, isError = false) {
