@@ -489,9 +489,24 @@
   }
 
   function addActivityWithWakeCheck(event, message, activityLabel) {
-    const sleepWasRunning = Boolean(state.activeSessions?.sleep);
+    const sleepSession = state.activeSessions?.sleep;
+    const activityTime = new Date(event.timestamp);
+    const wakeTime = event.type === "feed" && event.data?.startAt
+      ? new Date(event.data.startAt)
+      : activityTime;
+    const sleepStartedAt = sleepSession ? new Date(sleepSession.startedAt) : null;
+    const isBackdated = Date.now() - activityTime.getTime() >= 60000;
     addActivity(event, message);
-    if (sleepWasRunning) openWakeConfirmation(activityLabel);
+    if (!sleepSession) return;
+
+    if (isBackdated && (event.type === "feed" || event.type === "diaper")) {
+      if (wakeTime >= sleepStartedAt) {
+        stopSleepSession(`Sleep ended when the ${activityLabel} began`, wakeTime);
+      }
+      return;
+    }
+
+    openWakeConfirmation(activityLabel);
   }
 
   function openWakeConfirmation(activityLabel) {
@@ -543,24 +558,35 @@
     return () => value;
   }
 
-  function openLogTimeSheet(activityLabel, onConfirm) {
+  function openLogTimeSheet(activityLabel, onConfirm, options = {}) {
+    const minMinutesAgo = Math.max(1, Number(options.minMinutesAgo || 5));
+    const maxMinutesAgo = Math.max(minMinutesAgo, Number(options.maxMinutesAgo || 720));
+    const stepMinutes = Math.max(1, Number(options.stepMinutes || 5));
+    const initialMinutesAgo = Math.min(maxMinutesAgo, Math.max(minMinutesAgo, Number(options.initialMinutesAgo || 15)));
+    const rangeLabel = (minutes) => formatDuration(Math.max(1, Math.round(minutes)));
+    const midpoint = Math.max(minMinutesAgo, Math.round((maxMinutesAgo / 2) / stepMinutes) * stepMinutes);
+    const eyebrow = options.eyebrow || "Log time";
+    const title = options.title || `When did ${activityLabel} happen?`;
+    const subtitle = options.subtitle || "Choose right now or scroll back to the time it happened.";
+    const previewLabel = options.previewLabel || "LittleLog will record";
+    const confirmNowLabel = options.confirmNowLabel || `Log ${activityLabel} now`;
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Log time</p><h2 id="sheet-title">When did ${activityLabel} happen?</h2><p class="sheet-subtitle">Choose right now or scroll back to the time it happened.</p></header>
+      <header class="sheet-header"><p class="eyebrow">${eyebrow}</p><h2 id="sheet-title">${title}</h2><p class="sheet-subtitle">${subtitle}</p></header>
       <div class="sheet-tabs time-choice" role="group" aria-label="Choose log time">
         <button class="active" data-log-time="now" type="button">Right now</button>
         <button data-log-time="earlier" type="button">Earlier</button>
       </div>
       <div class="time-scroller-panel hidden" id="time-scroller-panel">
-        <span class="time-scroller-value"><small>How long ago?</small><strong id="time-scroller-value">15 min ago</strong></span>
-        <input class="time-scroller" id="time-scroller" type="range" min="5" max="720" step="5" value="15" aria-label="Minutes before now" />
-        <span class="time-scroller-labels"><span>5 min</span><span>6 hours</span><span>12 hours</span></span>
-        <span class="time-preview"><small>LittleLog will record</small><strong id="time-preview-value"></strong></span>
+        <span class="time-scroller-value"><small>How long ago?</small><strong id="time-scroller-value">${initialMinutesAgo} min ago</strong></span>
+        <input class="time-scroller" id="time-scroller" type="range" min="${minMinutesAgo}" max="${maxMinutesAgo}" step="${stepMinutes}" value="${initialMinutesAgo}" aria-label="Minutes before now" />
+        <span class="time-scroller-labels"><span>${rangeLabel(minMinutesAgo)}</span><span>${rangeLabel(midpoint)}</span><span>${rangeLabel(maxMinutesAgo)}</span></span>
+        <span class="time-preview"><small>${previewLabel}</small><strong id="time-preview-value"></strong></span>
       </div>
-      <div class="sheet-actions"><button class="sheet-primary" id="confirm-log-time" type="button">Log ${activityLabel} now</button></div>
+      <div class="sheet-actions"><button class="sheet-primary" id="confirm-log-time" type="button">${confirmNowLabel}</button></div>
     `);
 
     let mode = "now";
-    let minutesAgo = 15;
+    let minutesAgo = initialMinutesAgo;
     const slider = $("#time-scroller");
     const selectedTime = () => new Date(Date.now() - (mode === "earlier" ? minutesAgo : 0) * 60000);
     const renderTime = () => {
@@ -572,8 +598,8 @@
         minute: "2-digit"
       }).format(timestamp);
       $("#confirm-log-time").textContent = mode === "now"
-        ? `Log ${activityLabel} now`
-        : `Log ${activityLabel} at ${formatTime(timestamp)}`;
+        ? confirmNowLabel
+        : options.confirmEarlierLabel?.(timestamp) || `Log ${activityLabel} at ${formatTime(timestamp)}`;
     };
 
     $$('[data-log-time]').forEach((button) => button.addEventListener("click", () => {
@@ -756,11 +782,35 @@
     });
   }
 
-  function stopSleepSession(message = "Sleep timer stopped") {
+  function openSleepStopSheet() {
     const session = state.activeSessions?.sleep;
     if (!session) return;
-    const endedAt = now();
-    const exactMinutes = Math.max(0, (endedAt.getTime() - new Date(session.startedAt).getTime()) / 60000);
+    const elapsedMinutes = Math.max(1, Math.floor((Date.now() - new Date(session.startedAt).getTime()) / 60000));
+    openLogTimeSheet("sleep", (endedAt) => stopSleepSession("Sleep timer stopped", endedAt), {
+      eyebrow: "Wake time",
+      title: `When did ${BABY.shortName} wake up?`,
+      subtitle: "Stop the sleep timer right now or scroll back to the actual wake-up time.",
+      previewLabel: "Sleep will end",
+      confirmNowLabel: "Stop sleep now",
+      confirmEarlierLabel: (timestamp) => `Stop sleep at ${formatTime(timestamp)}`,
+      minMinutesAgo: 1,
+      maxMinutesAgo: Math.min(1440, elapsedMinutes),
+      initialMinutesAgo: Math.min(15, elapsedMinutes),
+      stepMinutes: elapsedMinutes < 5 ? 1 : 5
+    });
+  }
+
+  function stopSleepSession(message = "Sleep timer stopped", requestedEndedAt = now()) {
+    const session = state.activeSessions?.sleep;
+    if (!session) return;
+    const startedAt = new Date(session.startedAt);
+    const requestedTime = new Date(requestedEndedAt);
+    const currentTime = now();
+    const endedAt = new Date(Math.min(
+      currentTime.getTime(),
+      Math.max(startedAt.getTime(), Number.isNaN(requestedTime.getTime()) ? currentTime.getTime() : requestedTime.getTime())
+    ));
+    const exactMinutes = Math.max(0, (endedAt.getTime() - startedAt.getTime()) / 60000);
     const durationMin = Math.max(1, Math.round(exactMinutes));
     state.activeSessions.sleep = null;
     addActivity(makeEvent("sleep", "Sleep", exactMinutes < 1 ? "Less than 1 min" : formatDuration(durationMin), endedAt, {
@@ -936,7 +986,7 @@
     $("#active-sessions").addEventListener("click", (event) => {
       const button = event.target.closest("[data-stop-session]");
       if (!button) return;
-      if (button.dataset.stopSession === "sleep") stopSleepSession();
+      if (button.dataset.stopSession === "sleep") openSleepStopSheet();
       if (button.dataset.stopSession === "feed") stopFeedSession();
     });
     $("#clear-demo").addEventListener("click", confirmClearHistory);
