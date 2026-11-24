@@ -36,6 +36,7 @@
     bath: '<svg viewBox="0 0 24 24"><path d="M4 11h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6v-3Zm3 0V6a3 3 0 0 1 6 0m-7 14-1 2m13-2 1 2M13 8h3" /></svg>',
     sunbathing: '<svg viewBox="0 0 24 24"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z" /></svg>',
     walk: '<svg viewBox="0 0 24 24"><path d="M13 5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-2 4 3-2 2 3 3 1m-8-2-2 5-4 2m6-2 3 2 1 5m-6-7-1 6" /></svg>',
+    pump: '<svg viewBox="0 0 24 24"><path d="M8 3h6v5H8zM10 8v3m-3 0h6l2 3v7H5v-7l2-3Zm8-5h3v7h-3m-2-2h2" /></svg>',
     vaccine: '<svg viewBox="0 0 24 24"><path d="M12 3c2.5 2 5.3 2.3 7 2.5v5.8c0 4.6-2.8 7.7-7 9.7-4.2-2-7-5.1-7-9.7V5.5C6.7 5.3 9.5 5 12 3Z" /><path d="M12 9.2c-1.5-1.7-4.3-.7-4.3 1.5 0 2 2.3 3.5 4.3 5 2-1.5 4.3-3 4.3-5 0-2.2-2.8-3.2-4.3-1.5Z" /></svg>',
     drop: '<svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z" /></svg>',
     dirty: '<svg viewBox="0 0 24 24"><path d="M8 18c-2 0-3.5-1.3-3.5-3S6 12 8 12c-.5-2.6 1-5 4-5 2.8 0 4.3 2.3 3.9 4.6 2.2 0 3.6 1.3 3.6 3.2 0 1.8-1.5 3.2-3.7 3.2H8Zm3.8-11c-.2-2 1.1-3.4 3.2-3" /></svg>',
@@ -114,6 +115,8 @@
       },
       settings: { dailyReport: true, weeklyReport: true },
       statsPeriod: "today",
+      pumpPeriod: "today",
+      pumpChartDays: 7,
       deletedEventIds: []
     };
   }
@@ -129,6 +132,8 @@
         saved.activeSessions.other ??= null;
         saved.settings ||= { dailyReport: true, weeklyReport: true };
         saved.statsPeriod ||= "today";
+        saved.pumpPeriod ||= "today";
+        saved.pumpChartDays = Number(saved.pumpChartDays) === 30 ? 30 : 7;
         saved.deletedEventIds = Array.isArray(saved.deletedEventIds) ? saved.deletedEventIds : [];
         return saved;
       }
@@ -249,11 +254,11 @@
     const cutoff = startOfDay();
     cutoff.setDate(cutoff.getDate() - (days - 1));
     const currentTime = now();
-    return state.events.filter((event) => event.type !== "vaccine" && new Date(event.timestamp) >= cutoff && new Date(event.timestamp) <= currentTime);
+    return state.events.filter((event) => !["vaccine", "pump"].includes(event.type) && new Date(event.timestamp) >= cutoff && new Date(event.timestamp) <= currentTime);
   }
 
   function eventsForToday() {
-    return state.events.filter((event) => event.type !== "vaccine" && isSameDay(event.timestamp, now()));
+    return state.events.filter((event) => !["vaccine", "pump"].includes(event.type) && isSameDay(event.timestamp, now()));
   }
 
   function dailyReportEvents(dayOffset = 0) {
@@ -264,7 +269,7 @@
     windowStart.setDate(windowStart.getDate() - 1);
     return state.events.filter((event) => {
       const recordedAt = new Date(event.timestamp);
-      return event.type !== "vaccine" && recordedAt >= windowStart && recordedAt < windowEnd;
+      return !["vaccine", "pump"].includes(event.type) && recordedAt >= windowStart && recordedAt < windowEnd;
     });
   }
 
@@ -294,7 +299,7 @@
     const upperBound = Math.min(new Date(end).getTime(), Date.now());
     return state.events.filter((event) => {
       const recordedAt = new Date(event.timestamp).getTime();
-      return event.type !== "vaccine" && recordedAt >= new Date(start).getTime() && recordedAt < upperBound;
+      return !["vaccine", "pump"].includes(event.type) && recordedAt >= new Date(start).getTime() && recordedAt < upperBound;
     });
   }
 
@@ -328,7 +333,7 @@
   }
 
   function timeRangeFor(event) {
-    if (!["feed", "sleep", "bath", "sunbathing", "walk"].includes(event.type)) return "";
+    if (!["feed", "sleep", "bath", "sunbathing", "walk", "pump"].includes(event.type)) return "";
     const durationMin = Number(event.data?.durationMin || 0);
     const end = new Date(event.data?.endAt || event.timestamp);
     const start = event.data?.startAt
@@ -344,7 +349,7 @@
     const start = event.data?.startAt
       ? new Date(event.data.startAt)
       : new Date(end.getTime() - durationMin * 60000);
-    const timed = ["feed", "sleep", "bath", "sunbathing", "walk"].includes(event.type)
+    const timed = ["feed", "sleep", "bath", "sunbathing", "walk", "pump"].includes(event.type)
       && durationMin > 0
       && !Number.isNaN(start.getTime())
       && !Number.isNaN(end.getTime())
@@ -431,20 +436,35 @@
     const time = document.createElement("span");
     time.className = "timeline-time";
     const durationMin = Number(event.data?.durationMin || 0);
-    time.textContent = durationMin && ["feed", "sleep", "bath", "sunbathing", "walk"].includes(event.type)
+    const timedTypes = ["feed", "sleep", "bath", "sunbathing", "walk"];
+    time.textContent = durationMin && timedTypes.includes(event.type)
       ? formatDuration(durationMin)
       : formatTime(event.timestamp);
-    heading.append(title, time);
+    heading.append(title);
+    if (event.type !== "diaper") heading.append(time);
     const detail = document.createElement("small");
     const timeRange = timeRangeFor(event);
+    const noteText = event.type === "note" ? "" : String(event.data?.note || "").trim();
     let detailText = event.detail || "No extra details";
-    if (event.type === "diaper") detailText = "Logged";
-    if (["sleep", "bath", "sunbathing", "walk"].includes(event.type)) detailText = event.data?.note || "";
-    if (event.type === "feed" && durationMin) {
-      detailText = detailText.split(" · ").filter((part) => !/^\d+\s*min$/i.test(part.trim())).join(" · ");
+    if (event.type === "diaper") {
+      detailText = formatTime(event.timestamp);
+    } else if (event.type === "feed" && event.data?.mode === "bottle") {
+      detailText = [event.data?.milk, `${Number(event.data?.amount || 0)} ml`, timeRange].filter(Boolean).join(" · ");
+    } else if (event.type === "feed") {
+      detailText = [event.data?.side, timeRange].filter(Boolean).join(" · ");
+    } else if (["sleep", "bath", "sunbathing", "walk"].includes(event.type)) {
+      detailText = timeRange;
     }
-    detail.textContent = [detailText, timeRange].filter(Boolean).join(" · ");
-    copy.append(heading, detail);
+    detail.className = "timeline-detail";
+    detail.textContent = detailText;
+    copy.append(heading);
+    if (detailText) copy.append(detail);
+    if (noteText) {
+      const note = document.createElement("small");
+      note.className = "timeline-note";
+      note.textContent = noteText;
+      copy.append(note);
+    }
     main.append(copy);
 
     const edit = document.createElement("button");
@@ -459,7 +479,7 @@
 
   function renderTimeline() {
     const timeline = $("#timeline");
-    const events = eventsForCareDay();
+    const events = eventsForCareDay().filter((event) => event.type !== "pump");
     const checkpoints = timelineCheckpoints(events);
     timeline.replaceChildren();
     if (!events.length) {
@@ -581,7 +601,7 @@
     const days = [];
     for (let offset = -6; offset <= 0; offset += 1) {
       const date = dateAtOffset(offset, 12, 0);
-      const dayEvents = state.events.filter((event) => event.type !== "vaccine" && isSameDay(event.timestamp, date));
+      const dayEvents = state.events.filter((event) => !["vaccine", "pump"].includes(event.type) && isSameDay(event.timestamp, date));
       const totals = totalsFor(dayEvents);
       days.push({
         label: offset === 0 ? "Today" : `${new Intl.DateTimeFormat("en", { weekday: "narrow" }).format(date)} ${date.getDate()}`,
@@ -633,6 +653,113 @@
     $("#sleep-track-fill").style.width = `${sleepPosition}%`;
     $("#sleep-track-pin").style.left = `${sleepPosition}%`;
     $("#sleep-track-pin").title = `${formatDuration(todaySleep)} recorded today`;
+  }
+
+  function pumpEventsForCareDay() {
+    return eventsForCareDay()
+      .filter((event) => event.type === "pump")
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }
+
+  function pumpEventsSince(days) {
+    const cutoff = startOfDay();
+    cutoff.setDate(cutoff.getDate() - (days - 1));
+    return state.events.filter((event) => event.type === "pump" && new Date(event.timestamp) >= cutoff && new Date(event.timestamp) <= now());
+  }
+
+  function pumpEventsForPeriod() {
+    if (state.pumpPeriod === "month") return pumpEventsSince(30);
+    if (state.pumpPeriod === "week") return pumpEventsSince(7);
+    return state.events.filter((event) => event.type === "pump" && isSameDay(event.timestamp, now()));
+  }
+
+  function pumpTotals(events) {
+    return events.reduce((totals, event) => {
+      const leftMl = Number(event.data?.leftMl || 0);
+      const rightMl = Number(event.data?.rightMl || 0);
+      totals.count += 1;
+      totals.durationMin += Number(event.data?.durationMin || 0);
+      totals.leftMl += leftMl;
+      totals.rightMl += rightMl;
+      totals.totalMl += Number(event.data?.totalMl || leftMl + rightMl);
+      return totals;
+    }, { count: 0, durationMin: 0, leftMl: 0, rightMl: 0, totalMl: 0 });
+  }
+
+  function renderPumpTimeline() {
+    const timeline = $("#pump-timeline");
+    const events = pumpEventsForCareDay();
+    if (!events.length) {
+      timeline.innerHTML = '<div class="pump-timeline-empty">No milk pumping has been logged in this care day yet.</div>';
+      return;
+    }
+    timeline.innerHTML = events.map((event) => {
+      const leftMl = Number(event.data?.leftMl || 0);
+      const rightMl = Number(event.data?.rightMl || 0);
+      const durationMin = Number(event.data?.durationMin || 0);
+      const note = String(event.data?.note || "").trim();
+      return `<article class="pump-entry"><div class="pump-entry-head"><span class="pump-entry-icon">${icons.pump}</span><button class="pump-entry-title" data-pump-event-id="${event.id}" type="button"><strong>Milk pump</strong><small>${formatTime(event.timestamp)} · ${formatDuration(durationMin)}</small></button><span class="pump-entry-actions"><button class="pump-entry-edit" data-edit-pump-id="${event.id}" type="button" aria-label="Edit milk pump"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg></button></span></div><div class="pump-sides"><span class="pump-side left"><small>Left breast</small><strong>${leftMl} ml</strong></span><span class="pump-side right"><small>Right breast</small><strong>${rightMl} ml</strong></span></div>${note ? `<p class="pump-entry-note">${escapeHtml(note)}</p>` : ""}</article>`;
+    }).join("");
+  }
+
+  function renderPumpSummary() {
+    const events = pumpEventsForPeriod();
+    const totals = pumpTotals(events);
+    const divisor = Math.max(1, totals.count);
+    const averageDuration = totals.count ? totals.durationMin / divisor : 0;
+    const averageLeft = totals.count ? totals.leftMl / divisor : 0;
+    const averageRight = totals.count ? totals.rightMl / divisor : 0;
+    $("#pump-summary").innerHTML = `<div class="pump-overview"><span><small>Number of pumps</small><strong>${totals.count}</strong></span><span><small>Average duration</small><strong>${formatDuration(averageDuration)}</strong></span><span><small>Total duration</small><strong>${formatDuration(totals.durationMin)}</strong></span></div><div class="pump-side-summary"><article><h4>Left breast</h4><div><small>Total pumped</small><strong>${Math.round(totals.leftMl)} ml</strong></div><div><small>Average / pump</small><strong>${Math.round(averageLeft)} ml</strong></div></article><article><h4>Right breast</h4><div><small>Total pumped</small><strong>${Math.round(totals.rightMl)} ml</strong></div><div><small>Average / pump</small><strong>${Math.round(averageRight)} ml</strong></div></article></div>`;
+  }
+
+  function renderPumpChart() {
+    const dayCount = Number(state.pumpChartDays) === 30 ? 30 : 7;
+    const days = [];
+    for (let offset = -(dayCount - 1); offset <= 0; offset += 1) {
+      const date = dateAtOffset(offset, 12, 0);
+      const dayEvents = state.events.filter((event) => isSameDay(event.timestamp, date));
+      const pumped = pumpTotals(dayEvents.filter((event) => event.type === "pump")).totalMl;
+      const fed = dayEvents
+        .filter((event) => event.type === "feed" && event.data?.mode === "bottle")
+        .reduce((sum, event) => sum + Number(event.data?.amount || 0), 0);
+      days.push({ date, pumped, fed });
+    }
+    const width = 330;
+    const height = 190;
+    const plot = { left: 36, right: 8, top: 12, bottom: 30 };
+    const plotWidth = width - plot.left - plot.right;
+    const plotHeight = height - plot.top - plot.bottom;
+    const observedMax = Math.max(0, ...days.flatMap((day) => [day.pumped, day.fed]));
+    const scaleMax = Math.max(100, Math.ceil(observedMax / 100) * 100);
+    const x = (index) => plot.left + (index / Math.max(1, days.length - 1)) * plotWidth;
+    const y = (value) => plot.top + plotHeight - (value / scaleMax) * plotHeight;
+    const pumpedPoints = days.map((day, index) => `${x(index).toFixed(1)},${y(day.pumped).toFixed(1)}`).join(" ");
+    const fedPoints = days.map((day, index) => `${x(index).toFixed(1)},${y(day.fed).toFixed(1)}`).join(" ");
+    const grid = [0, .25, .5, .75, 1].map((ratio) => {
+      const value = Math.round(scaleMax * ratio);
+      const gridY = y(value);
+      return `<line class="chart-grid" x1="${plot.left}" y1="${gridY}" x2="${width - plot.right}" y2="${gridY}" /><text class="chart-axis-label" x="${plot.left - 5}" y="${gridY + 3}" text-anchor="end">${value}</text>`;
+    }).join("");
+    const labelEvery = dayCount === 7 ? 1 : 5;
+    const labels = days.map((day, index) => {
+      if (index % labelEvery && index !== days.length - 1) return "";
+      const label = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(day.date);
+      return `<text class="chart-date-label" x="${x(index)}" y="${height - 8}" text-anchor="middle">${label}</text>`;
+    }).join("");
+    const points = days.map((day, index) => {
+      const label = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(day.date);
+      return `<circle class="pump-point" cx="${x(index)}" cy="${y(day.pumped)}" r="${dayCount === 7 ? 3 : 2}"><title>${label} · ${day.pumped} ml pumped</title></circle><circle class="fed-point" cx="${x(index)}" cy="${y(day.fed)}" r="${dayCount === 7 ? 3 : 2}"><title>${label} · ${day.fed} ml fed</title></circle>`;
+    }).join("");
+    $("#pump-chart-window").textContent = `Last ${dayCount} days · ending today`;
+    $("#pump-line-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily milk pumped and milk fed in millilitres over the last ${dayCount} days">${grid}<polyline class="pump-line" points="${pumpedPoints}" /><polyline class="fed-line" points="${fedPoints}" />${points}${labels}<text class="chart-axis-label" x="8" y="9">ml</text></svg>`;
+  }
+
+  function renderPump() {
+    $$('[data-pump-period]').forEach((button) => button.classList.toggle("active", button.dataset.pumpPeriod === state.pumpPeriod));
+    $$('[data-pump-chart-days]').forEach((button) => button.classList.toggle("active", Number(button.dataset.pumpChartDays) === Number(state.pumpChartDays)));
+    renderPumpTimeline();
+    renderPumpSummary();
+    renderPumpChart();
   }
 
   function renderReports() {
@@ -724,7 +851,7 @@
       day: "numeric",
       month: "long"
     }).format(now());
-    ["#today-label", "#stats-date-label", "#reports-date-label", "#profile-date-label", "#vaccine-date-label"].forEach((selector) => {
+    ["#today-label", "#stats-date-label", "#pump-date-label", "#reports-date-label", "#profile-date-label", "#vaccine-date-label"].forEach((selector) => {
       const target = $(selector);
       if (target) target.textContent = label;
     });
@@ -819,6 +946,7 @@
     renderTimeline();
     renderLastFeed();
     renderStats();
+    renderPump();
     renderReports();
     renderVaccine();
     renderSession();
@@ -975,6 +1103,82 @@
     $("#time-scroller-minus").addEventListener("click", () => adjustTime(-stepMinutes));
     $("#time-scroller-plus").addEventListener("click", () => adjustTime(stepMinutes));
     $("#confirm-log-time").addEventListener("click", () => onConfirm(selectedTime()));
+    renderTime();
+  }
+
+  function openPumpSheet() {
+    const minMinutesAgo = 5;
+    const maxMinutesAgo = 360;
+    const stepMinutes = 5;
+    const initialMinutesAgo = 15;
+    openSheet(`
+      <header class="sheet-header"><p class="eyebrow">Milk pumping</p><h2 id="sheet-title">Log a pump</h2><p class="sheet-subtitle">Record each breast separately. Entering the left amount copies it to the right until you change the right side.</p></header>
+      <span class="choice-label">Milk pumped</span>
+      <div class="pump-side-entry-grid">
+        <label class="pump-side-field" for="pump-left-ml"><strong>Left breast</strong><input class="sheet-input" id="pump-left-ml" type="number" min="0" max="500" step="5" inputmode="decimal" placeholder="0 ml" /></label>
+        <label class="pump-side-field" for="pump-right-ml"><strong>Right breast</strong><input class="sheet-input" id="pump-right-ml" type="number" min="0" max="500" step="5" inputmode="decimal" placeholder="Auto-fill" /></label>
+      </div>
+      <span class="choice-label">Pump duration</span>
+      <div class="wheel-picker"><button id="pump-duration-minus" type="button" aria-label="Reduce pump duration">−</button><span class="wheel-value"><small>shorter</small><strong id="pump-duration-value">15 min</strong><em>longer</em></span><button id="pump-duration-plus" type="button" aria-label="Increase pump duration">+</button></div>
+      <span class="choice-label">Optional note</span><input class="sheet-input" id="pump-note" maxlength="120" placeholder="Comfort, settings, or anything useful" />
+      <div class="sheet-tabs time-choice" role="group" aria-label="Choose pump time"><button class="active" data-pump-time="now" type="button">Right now</button><button data-pump-time="earlier" type="button">Earlier</button></div>
+      <div class="time-scroller-panel hidden" id="pump-time-panel">
+        <span class="time-scroller-value"><small>How long ago?</small><strong id="pump-time-value">15 min ago</strong></span>
+        <span class="time-scroller-control"><button id="pump-time-minus" type="button" aria-label="Move 5 minutes closer to now">−</button><input class="time-scroller" id="pump-time-scroller" type="range" min="${minMinutesAgo}" max="${maxMinutesAgo}" step="${stepMinutes}" value="${initialMinutesAgo}" aria-label="Minutes before now" /><button id="pump-time-plus" type="button" aria-label="Move 5 minutes earlier">+</button></span>
+        <span class="time-scroller-labels"><span>5m</span><span>3h</span><span>6h</span></span>
+      </div>
+      <div class="sheet-actions"><button class="sheet-primary" id="save-pump" type="button">Log pump now</button></div>
+    `);
+
+    let durationMin = 15;
+    let mode = "now";
+    let minutesAgo = initialMinutesAgo;
+    let rightWasEdited = false;
+    bindWheel("pump-duration", 15, 5, 90, 5, (value) => { durationMin = value; });
+    const leftInput = $("#pump-left-ml");
+    const rightInput = $("#pump-right-ml");
+    const slider = $("#pump-time-scroller");
+    leftInput.addEventListener("input", () => {
+      if (!rightWasEdited) rightInput.value = leftInput.value;
+    });
+    rightInput.addEventListener("input", () => { rightWasEdited = true; });
+    const selectedTime = () => new Date(Date.now() - (mode === "earlier" ? minutesAgo : 0) * 60000);
+    const renderTime = () => {
+      const timestamp = selectedTime();
+      $("#pump-time-value").textContent = `${minutesAgo} min ago`;
+      $("#save-pump").textContent = mode === "now" ? "Log pump now" : `Log pump at ${formatTime(timestamp)}`;
+    };
+    $$('[data-pump-time]').forEach((button) => button.addEventListener("click", () => {
+      mode = button.dataset.pumpTime;
+      $$('[data-pump-time]').forEach((item) => item.classList.toggle("active", item === button));
+      $("#pump-time-panel").classList.toggle("hidden", mode !== "earlier");
+      renderTime();
+    }));
+    slider.addEventListener("input", () => { minutesAgo = Number(slider.value); renderTime(); });
+    const adjustTime = (amount) => {
+      minutesAgo = Math.max(minMinutesAgo, Math.min(maxMinutesAgo, minutesAgo + amount));
+      slider.value = String(minutesAgo);
+      renderTime();
+    };
+    $("#pump-time-minus").addEventListener("click", () => adjustTime(-stepMinutes));
+    $("#pump-time-plus").addEventListener("click", () => adjustTime(stepMinutes));
+    $("#save-pump").addEventListener("click", () => {
+      const leftMl = Math.max(0, Math.min(500, Number(leftInput.value || 0)));
+      const rightMl = Math.max(0, Math.min(500, Number(rightInput.value || 0)));
+      if (!leftMl && !rightMl) { leftInput.focus(); return; }
+      const endedAt = selectedTime();
+      const startedAt = new Date(endedAt.getTime() - durationMin * 60000);
+      const note = $("#pump-note").value.trim();
+      addActivity(makeEvent("pump", "Milk pump", `Left ${leftMl} ml · Right ${rightMl} ml · ${durationMin} min`, endedAt, {
+        leftMl,
+        rightMl,
+        totalMl: leftMl + rightMl,
+        durationMin,
+        note,
+        startAt: startedAt.toISOString(),
+        endAt: endedAt.toISOString()
+      }), "Milk pump logged");
+    });
     renderTime();
   }
 
@@ -1292,7 +1496,7 @@
   function openEditActivitySheet(eventId) {
     const event = state.events.find((item) => item.id === eventId && item.type !== "vaccine");
     if (!event) return;
-    const timed = ["feed", "sleep", "bath", "sunbathing", "walk"].includes(event.type);
+    const timed = ["feed", "sleep", "bath", "sunbathing", "walk", "pump"].includes(event.type);
     const durationMin = Math.max(1, Number(event.data?.durationMin || 10));
     const note = event.data?.note || "";
     const bottleFields = event.type === "feed" && event.data?.mode === "bottle" ? `
@@ -1300,11 +1504,13 @@
       <label class="choice-label" for="edit-feed-amount">Amount (ml)</label><input class="sheet-input" id="edit-feed-amount" type="number" min="10" max="500" step="10" value="${Number(event.data?.amount || 90)}" />` : "";
     const breastFields = event.type === "feed" && event.data?.mode === "breast" ? `
       <label class="choice-label" for="edit-feed-side">Side</label><select class="sheet-select" id="edit-feed-side"><option ${event.data?.side === "Left" ? "selected" : ""}>Left</option><option ${event.data?.side === "Right" ? "selected" : ""}>Right</option><option ${event.data?.side === "Both" ? "selected" : ""}>Both</option></select>` : "";
+    const pumpFields = event.type === "pump" ? `
+      <span class="choice-label">Milk pumped</span><div class="pump-side-entry-grid"><label class="pump-side-field" for="edit-pump-left"><strong>Left breast</strong><input class="sheet-input" id="edit-pump-left" type="number" min="0" max="500" step="5" value="${Number(event.data?.leftMl || 0)}" /></label><label class="pump-side-field" for="edit-pump-right"><strong>Right breast</strong><input class="sheet-input" id="edit-pump-right" type="number" min="0" max="500" step="5" value="${Number(event.data?.rightMl || 0)}" /></label></div>` : "";
     const diaperFields = event.type === "diaper" ? `
       <label class="choice-label" for="edit-diaper-kind">Diaper</label><select class="sheet-select" id="edit-diaper-kind"><option value="wet" ${event.data?.kind === "wet" ? "selected" : ""}>Wet</option><option value="dirty" ${event.data?.kind === "dirty" ? "selected" : ""}>Dirty</option></select>` : "";
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Correct activity</p><h2 id="sheet-title">Edit ${escapeHtml(event.title)}</h2><p class="sheet-subtitle">Changes sync to the family record after you save.</p></header>
-      ${bottleFields}${breastFields}${diaperFields}
+      ${bottleFields}${breastFields}${pumpFields}${diaperFields}
       <label class="choice-label" for="edit-activity-time">${timed ? "Finish time" : "Recorded time"}</label><input class="sheet-input" id="edit-activity-time" type="datetime-local" value="${toLocalDateTimeValue(event.timestamp)}" />
       ${timed ? `<label class="choice-label" for="edit-activity-duration">Duration (minutes)</label><input class="sheet-input" id="edit-activity-duration" type="number" min="1" max="1440" step="1" value="${durationMin}" />` : ""}
       <label class="choice-label" for="edit-activity-note">Optional note</label><textarea class="sheet-textarea" id="edit-activity-note" maxlength="180" placeholder="Anything useful to remember">${escapeHtml(note)}</textarea>
@@ -1313,6 +1519,9 @@
     $("#save-activity-edit").addEventListener("click", () => {
       const endedAt = new Date($("#edit-activity-time").value);
       if (Number.isNaN(endedAt.getTime())) { $("#edit-activity-time").focus(); return; }
+      const editedPumpLeft = event.type === "pump" ? Math.max(0, Math.min(500, Number($("#edit-pump-left").value || 0))) : 0;
+      const editedPumpRight = event.type === "pump" ? Math.max(0, Math.min(500, Number($("#edit-pump-right").value || 0))) : 0;
+      if (event.type === "pump" && !editedPumpLeft && !editedPumpRight) { $("#edit-pump-left").focus(); return; }
       const updatedDuration = timed ? Math.max(1, Number($("#edit-activity-duration").value || durationMin)) : 0;
       const updatedNote = $("#edit-activity-note").value.trim();
       event.timestamp = endedAt.toISOString();
@@ -1320,7 +1529,13 @@
         const startedAt = new Date(endedAt.getTime() - updatedDuration * 60000);
         event.data = { ...event.data, durationMin: updatedDuration, note: updatedNote, startAt: startedAt.toISOString(), endAt: endedAt.toISOString() };
       } else event.data = { ...event.data, note: updatedNote };
-      if (event.type === "feed" && event.data.mode === "bottle") {
+      if (event.type === "pump") {
+        event.data.leftMl = editedPumpLeft;
+        event.data.rightMl = editedPumpRight;
+        event.data.totalMl = event.data.leftMl + event.data.rightMl;
+        event.title = "Milk pump";
+        event.detail = `Left ${event.data.leftMl} ml · Right ${event.data.rightMl} ml · ${updatedDuration} min`;
+      } else if (event.type === "feed" && event.data.mode === "bottle") {
         event.data.milk = $("#edit-feed-milk").value;
         event.data.amount = Math.max(10, Number($("#edit-feed-amount").value || 10));
         event.title = "Bottle feed";
@@ -1591,6 +1806,23 @@
       const button = event.target.closest("[data-event-id]");
       if (button) openEventSheet(button.dataset.eventId);
     });
+    $("#log-pump").addEventListener("click", openPumpSheet);
+    $("#pump-timeline").addEventListener("click", (event) => {
+      const editButton = event.target.closest("[data-edit-pump-id]");
+      if (editButton) { openEditActivitySheet(editButton.dataset.editPumpId); return; }
+      const button = event.target.closest("[data-pump-event-id]");
+      if (button) openEventSheet(button.dataset.pumpEventId);
+    });
+    $$('[data-pump-period]').forEach((button) => button.addEventListener("click", () => {
+      state.pumpPeriod = button.dataset.pumpPeriod;
+      persistLocalState();
+      renderPump();
+    }));
+    $$('[data-pump-chart-days]').forEach((button) => button.addEventListener("click", () => {
+      state.pumpChartDays = Number(button.dataset.pumpChartDays) === 30 ? 30 : 7;
+      persistLocalState();
+      renderPump();
+    }));
     $("#active-sessions").addEventListener("click", (event) => {
       const button = event.target.closest("[data-stop-session]");
       if (!button) return;
