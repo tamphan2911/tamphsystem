@@ -328,11 +328,10 @@
     return { start, end };
   }
 
-  function eventsInCareWindow(window, predicate = () => true) {
-    const upperBound = Math.min(window.end.getTime(), Date.now());
+  function eventsInCareWindow(window, predicate = () => true, at = now()) {
     return state.events.filter((event) => {
       const recordedAt = new Date(event.timestamp).getTime();
-      return recordedAt >= window.start.getTime() && recordedAt < upperBound && predicate(event);
+      return recordedAt >= window.start.getTime() && recordedAt < window.end.getTime() && recordedAt <= at.getTime() && predicate(event);
     });
   }
 
@@ -374,44 +373,48 @@
     return hour >= 20 || hour < 6 ? "night" : "day";
   }
 
-  function timelineEventsFor(predicate) {
-    const currentWindow = currentCareWindow();
-    const currentEvents = eventsInCareWindow(currentWindow, predicate);
-    if (currentEvents.length) return { events: currentEvents, window: currentWindow, fallback: false };
-    const previousWindow = careWindowAtOffset(-1);
-    return { events: eventsInCareWindow(previousWindow, predicate), window: previousWindow, fallback: true };
-  }
-
-  function timelineCheckpoints(events, window, includeFollowingBoundary = false) {
-    if (!events.length) return [];
-    const intervals = events.map(timelineInterval);
-    const firstTime = Math.min(...intervals.map((interval) => interval.start.getTime()));
-    const lastEventTime = Math.max(...intervals.map((interval) => interval.end.getTime()));
-    const lastTime = includeFollowingBoundary ? Math.max(lastEventTime, Date.now()) : lastEventTime;
-    const { start, end } = window;
+  function timelineCheckpoints(start, firstTime, lastTime) {
     const midnight = new Date(start);
     midnight.setHours(midnight.getHours() + 4);
     const dayStart = new Date(start);
     dayStart.setHours(dayStart.getHours() + 10);
-    const midnightDate = new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short" }).format(midnight);
+    const dateLabel = new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short" });
     return [
-      { date: start, kind: "night", label: "8:00 PM · Night time begins" },
-      { date: midnight, kind: "date", label: `12:00 AM · ${midnightDate}` },
-      { date: dayStart, kind: "day", label: "6:00 AM · Day time begins" },
-      { date: end, kind: "night", label: "8:00 PM · Night time begins" }
-    ].filter((checkpoint) => firstTime < checkpoint.date.getTime() && lastTime > checkpoint.date.getTime());
+      { date: start, kind: "night", label: `8:00 PM · ${dateLabel.format(start)} · Night time begins` },
+      { date: midnight, kind: "date", label: `12:00 AM · ${dateLabel.format(midnight)}` },
+      { date: dayStart, kind: "day", label: "6:00 AM · Day time begins" }
+    ].filter(({ date }) => firstTime < date.getTime() && date.getTime() <= lastTime);
   }
 
-  function splitTimelineEvent(event, checkpoints) {
+  function timelineRowsFor(predicate) {
+    const at = now();
+    const current = currentCareWindow(at);
+    const previous = careWindowAtOffset(-1, at);
+    const events = eventsInCareWindow({ start: previous.start, end: current.end }, predicate, at);
+    if (!events.length) return [];
+
+    const intervals = events.map(timelineInterval);
+    const firstTime = Math.max(previous.start.getTime(), Math.min(...intervals.map(({ start }) => start.getTime())));
+    // Keep the 8 PM divider visible while waiting for the new care day's first entry.
+    const lastTime = Math.max(current.start.getTime(), ...intervals.map(({ end }) => end.getTime()));
+    const checkpoints = [previous.start, current.start].flatMap((start) => timelineCheckpoints(start, firstTime, lastTime));
+    const activityRows = events.flatMap((event) => splitTimelineEvent(event, checkpoints, previous.start))
+      .map((event) => ({ type: "activity", time: event.timelineSortTime, event }));
+    const checkpointRows = checkpoints.map((checkpoint) => ({ type: "checkpoint", time: checkpoint.date.getTime(), checkpoint }));
+    return [...activityRows, ...checkpointRows].sort((a, b) => b.time - a.time || Number(b.type === "activity") - Number(a.type === "activity"));
+  }
+
+  function splitTimelineEvent(event, checkpoints, windowStart) {
     const interval = timelineInterval(event);
     if (!interval.timed) {
       return [{ ...event, timelineKind: timelineDayPart(interval.end), timelineSortTime: interval.end.getTime() }];
     }
+    const start = new Date(Math.max(interval.start.getTime(), windowStart.getTime()));
     const boundaries = checkpoints
       .map((checkpoint) => checkpoint.date)
-      .filter((date) => date > interval.start && date < interval.end)
+      .filter((date) => date > start && date < interval.end)
       .sort((a, b) => a - b);
-    const points = [interval.start, ...boundaries, interval.end];
+    const points = [start, ...boundaries, interval.end];
     return points.slice(0, -1).map((partStart, index) => {
       const partEnd = points[index + 1];
       const startsAtCheckpoint = index > 0;
@@ -504,21 +507,15 @@
 
   function renderTimeline() {
     const timeline = $("#timeline");
-    const timelineData = timelineEventsFor((event) => !["vaccine", "pump"].includes(event.type));
-    const events = timelineData.events;
-    const checkpoints = timelineCheckpoints(events, timelineData.window, timelineData.fallback);
+    const rows = timelineRowsFor((event) => !["vaccine", "pump"].includes(event.type));
     timeline.replaceChildren();
-    if (!events.length) {
+    if (!rows.length) {
       const empty = document.createElement("div");
       empty.className = "timeline-empty";
-      empty.textContent = "No activity logged in this care day yet.";
+      empty.textContent = "No activity logged in either care day yet.";
       timeline.appendChild(empty);
       return;
     }
-    const rows = [
-      ...events.flatMap((event) => splitTimelineEvent(event, checkpoints)).map((event) => ({ type: "activity", time: event.timelineSortTime, event })),
-      ...checkpoints.map((checkpoint) => ({ type: "checkpoint", time: checkpoint.date.getTime(), checkpoint }))
-    ].sort((a, b) => b.time - a.time || (a.type === "activity" ? -1 : 1));
     rows.forEach((row) => {
       if (row.type === "activity") {
         timeline.appendChild(createTimelineItem(row.event));
@@ -734,18 +731,11 @@
 
   function renderPumpTimeline() {
     const timeline = $("#pump-timeline");
-    const timelineData = timelineEventsFor((event) => event.type === "pump");
-    const events = timelineData.events;
-    $("#pump-timeline-window").textContent = timelineData.fallback && events.length ? "Previous care day" : "Current care day";
-    if (!events.length) {
-      timeline.innerHTML = '<div class="pump-timeline-empty">No milk pumping has been logged in this care day yet.</div>';
+    const rows = timelineRowsFor((event) => event.type === "pump");
+    if (!rows.length) {
+      timeline.innerHTML = '<div class="pump-timeline-empty">No milk pumping logged in either care day yet.</div>';
       return;
     }
-    const checkpoints = timelineCheckpoints(events, timelineData.window, timelineData.fallback);
-    const rows = [
-      ...events.flatMap((event) => splitTimelineEvent(event, checkpoints)).map((event) => ({ type: "activity", time: event.timelineSortTime, event })),
-      ...checkpoints.map((checkpoint) => ({ type: "checkpoint", time: checkpoint.date.getTime(), checkpoint }))
-    ].sort((a, b) => b.time - a.time || (a.type === "activity" ? -1 : 1));
     timeline.innerHTML = rows.map((row) => {
       if (row.type === "checkpoint") {
         const checkpointIcon = row.checkpoint.kind === "day" ? icons.sunbathing : row.checkpoint.kind === "date" ? icons.date : icons.sleep;
