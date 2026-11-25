@@ -6,13 +6,13 @@ import {
   camAgeDays,
   camReferenceForAge,
 } from "@/sites/cam/server/reference";
+import { camTimeRules, camWeeklyWindow } from "@/sites/cam/server/time-preferences";
 
 export const dynamic = "force-dynamic";
 
 const noStoreHeaders = { "Cache-Control": "no-store" };
 const DAY_MS = 86_400_000;
 const WEEK_MS = 7 * DAY_MS;
-const FIRST_WEEK_GENERATION_AT = new Date("2026-11-25T20:00:00+07:00");
 
 type CareEvent = {
   type: string;
@@ -37,37 +37,6 @@ function unauthorized() {
     { error: "LittleLog sign-in is required." },
     { status: 401, headers: noStoreHeaders },
   );
-}
-
-function weeklyWindow(at = new Date()) {
-  const ageElapsed = Math.max(0, at.getTime() - CAM_BORN_AT.getTime());
-  const currentWeekNumber = Math.floor(ageElapsed / WEEK_MS) + 1;
-  const generationElapsed = at.getTime() - FIRST_WEEK_GENERATION_AT.getTime();
-  const completedWeekNumber =
-    generationElapsed < 0 ? 0 : Math.floor(generationElapsed / WEEK_MS) + 1;
-  const nextAvailableAt = new Date(
-    FIRST_WEEK_GENERATION_AT.getTime() + completedWeekNumber * WEEK_MS,
-  );
-  if (!completedWeekNumber) {
-    return {
-      completedWeekNumber,
-      currentWeekNumber,
-      windowStart: CAM_BORN_AT,
-      windowEnd: new Date(CAM_BORN_AT.getTime() + WEEK_MS),
-      nextAvailableAt,
-    };
-  }
-  return {
-    completedWeekNumber,
-    currentWeekNumber,
-    windowStart: new Date(
-      CAM_BORN_AT.getTime() + (completedWeekNumber - 1) * WEEK_MS,
-    ),
-    windowEnd: new Date(
-      CAM_BORN_AT.getTime() + completedWeekNumber * WEEK_MS,
-    ),
-    nextAvailableAt,
-  };
 }
 
 function numberFromJson(value: Prisma.JsonValue | undefined) {
@@ -242,7 +211,9 @@ export async function GET() {
   const session = await hasCamSession();
   if (!session) return unauthorized();
 
-  const window = weeklyWindow();
+  const storedState = await prisma.camCareState.findUnique({ where: { userId: session.userId }, select: { settings: true } });
+  const { careDayStart } = camTimeRules(storedState?.settings);
+  const window = camWeeklyWindow(CAM_BORN_AT, careDayStart);
   if (!window.completedWeekNumber) {
     return NextResponse.json(
       {
@@ -271,14 +242,16 @@ export async function GET() {
   const existing = await prisma.camCareWeeklyInsight.findUnique({
     where: uniqueWhere,
   });
-  if (existing?.suggestion && (existing.status === "ready" || !gptConfigured)) {
+  const matchesTimeRule = existing?.source && typeof existing.source === "object"
+    && !Array.isArray(existing.source) && existing.source.careDayStart === careDayStart;
+  if (matchesTimeRule && existing?.suggestion && (existing.status === "ready" || !gptConfigured)) {
     return NextResponse.json(
       responsePayload(existing, window.currentWeekNumber, window.nextAvailableAt),
       { headers: noStoreHeaders },
     );
   }
   if (
-    existing?.status === "generating" &&
+    matchesTimeRule && existing?.status === "generating" &&
     Date.now() - existing.updatedAt.getTime() < 2 * 60_000
   ) {
     return NextResponse.json(
@@ -322,7 +295,8 @@ export async function GET() {
   const localFallback = fallbackSuggestion(current, previous, reference.ageLabel);
   const source = {
     babyWeekNumber: window.completedWeekNumber,
-    weekDefinition: "Exact seven-day windows anchored to Cam’s birth time, not calendar weeks; each completed review is generated at 8:00 PM on the week boundary date.",
+    weekDefinition: "Exact seven-day windows anchored to Cam’s birth time, not calendar weeks; each completed review is generated at the configured care-day boundary after the week ends.",
+    careDayStart,
     reportWindow: {
       start: window.windowStart.toISOString(),
       end: window.windowEnd.toISOString(),
@@ -340,7 +314,7 @@ export async function GET() {
   if (existing) {
     await prisma.camCareWeeklyInsight.update({
       where: { id: existing.id },
-      data: { status: "generating", source: source as Prisma.InputJsonValue },
+      data: { status: "generating", suggestion: null, source: source as Prisma.InputJsonValue },
     });
   } else {
     try {

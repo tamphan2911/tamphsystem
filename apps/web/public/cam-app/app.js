@@ -16,7 +16,7 @@
     feedingProfile: "Mostly expressed breast milk by bottle · 2–3 formula feeds daily"
   };
   const WEEK_MS = 7 * 86400000;
-  const FIRST_WEEK_GENERATION_AT = new Date("2026-11-25T20:00:00+07:00");
+  const DEFAULT_TIME_RULES = { careDayStart: "20:00", daytimeStart: "06:00", nighttimeStart: "20:00" };
   const OTHER_ACTIVITIES = {
     bath: { type: "bath", title: "Bath", defaultDuration: 10 },
     sunbathing: { type: "sunbathing", title: "Sunbathing", defaultDuration: 15 },
@@ -60,6 +60,28 @@
     return one.getFullYear() === two.getFullYear() && one.getMonth() === two.getMonth() && one.getDate() === two.getDate();
   };
   const formatTime = (date) => new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(new Date(date));
+  const validClock = (value, fallback) => typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : fallback;
+  const normalizedTimeRules = (settings) => {
+    const rules = Object.fromEntries(Object.entries(DEFAULT_TIME_RULES).map(([key, fallback]) => [key, validClock(settings?.[key], fallback)]));
+    if (rules.daytimeStart === rules.nighttimeStart) {
+      rules.daytimeStart = DEFAULT_TIME_RULES.daytimeStart;
+      rules.nighttimeStart = DEFAULT_TIME_RULES.nighttimeStart;
+    }
+    return rules;
+  };
+  const timeRules = () => normalizedTimeRules(state.settings);
+  const clockMinutes = (clock) => Number(clock.slice(0, 2)) * 60 + Number(clock.slice(3));
+  const formatClock = (clock, compact = false) => {
+    const minutes = typeof clock === "number" ? ((Math.round(clock) % 1440) + 1440) % 1440 : clockMinutes(clock);
+    const hour = Math.floor(minutes / 60);
+    const minute = minutes % 60;
+    return `${hour % 12 || 12}${compact && minute === 0 ? "" : `:${String(minute).padStart(2, "0")}`} ${hour < 12 ? "AM" : "PM"}`;
+  };
+  const atClock = (date, clock) => {
+    const result = startOfDay(date);
+    result.setMinutes(clockMinutes(clock));
+    return result;
+  };
   const formatDateTime = (date) => new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(date));
   const toLocalDateTimeValue = (date) => {
     const value = new Date(date);
@@ -114,7 +136,7 @@
         feed: null,
         other: null
       },
-      settings: { dailyReport: true, weeklyReport: true },
+      settings: { dailyReport: true, weeklyReport: true, ...DEFAULT_TIME_RULES },
       statsPeriod: "today",
       pumpPeriod: "today",
       pumpChartDays: 7,
@@ -131,7 +153,7 @@
       if (saved && Array.isArray(saved.events)) {
         saved.activeSessions ||= { sleep: null, feed: null, other: null };
         saved.activeSessions.other ??= null;
-        saved.settings ||= { dailyReport: true, weeklyReport: true };
+        saved.settings = { dailyReport: true, weeklyReport: true, ...DEFAULT_TIME_RULES, ...(saved.settings || {}) };
         saved.statsPeriod ||= "today";
         saved.pumpPeriod ||= "today";
         saved.pumpChartDays = Number(saved.pumpChartDays) === 30 ? 30 : 7;
@@ -156,6 +178,7 @@
   let toastDismissTimer = null;
   let sleepPreviewTimer = null;
   let syncChain = Promise.resolve();
+  let lastRenderedCareStart = null;
 
   function persistLocalState() {
     if (activeStorageKey) localStorage.setItem(activeStorageKey, JSON.stringify(state));
@@ -202,7 +225,16 @@
     if (!preferLocal || Number(serverState.revision) > 0) {
       state.activeSessions = serverState.activeSessions || { sleep: null, feed: null, other: null };
       state.activeSessions.other ??= null;
-      state.settings = serverState.settings || { dailyReport: true, weeklyReport: true };
+      const localSettings = state.settings || {};
+      const remoteSettings = serverState.settings || {};
+      const localTime = Date.parse(localSettings.timeRulesUpdatedAt || "") || 0;
+      const remoteTime = Date.parse(remoteSettings.timeRulesUpdatedAt || "") || 0;
+      const newerRules = localTime > remoteTime ? localSettings : remoteSettings;
+      state.settings = {
+        dailyReport: true, weeklyReport: true, ...remoteSettings,
+        ...normalizedTimeRules(newerRules),
+        ...(localTime > remoteTime ? { timeRulesUpdatedAt: localSettings.timeRulesUpdatedAt } : {})
+      };
     }
     persistLocalState();
   }
@@ -240,9 +272,21 @@
     if (!syncReady) return;
     await syncChain;
     try {
+      const previousRules = JSON.stringify(timeRules());
       const serverState = await camRequest("/state");
       mergeServerState(serverState, false);
+      const rulesChanged = previousRules !== JSON.stringify(timeRules());
+      if (rulesChanged) {
+        dailyInsight = null;
+        weeklyInsight = null;
+        clearTimeout(dailyInsightTimer);
+        clearTimeout(weeklyInsightTimer);
+      }
       renderAll();
+      if (rulesChanged) {
+        refreshDailyInsight();
+        refreshWeeklyInsight();
+      }
       setSyncStatus("synced", "Secure Railway sync");
     } catch (error) {
       if (error.status === 401) {
@@ -262,9 +306,8 @@
   }
 
   function dailyReportEvents(dayOffset = 0) {
-    const windowEnd = startOfDay();
+    const windowEnd = new Date(currentCareWindow().start);
     windowEnd.setDate(windowEnd.getDate() + dayOffset);
-    windowEnd.setHours(20, 0, 0, 0);
     const windowStart = new Date(windowEnd);
     windowStart.setDate(windowStart.getDate() - 1);
     return state.events.filter((event) => {
@@ -281,7 +324,10 @@
   }
 
   function babyWeekGenerationAt(weekNumber) {
-    return new Date(FIRST_WEEK_GENERATION_AT.getTime() + (weekNumber - 1) * WEEK_MS);
+    const weekEnd = new Date(BABY.bornAt.getTime() + weekNumber * WEEK_MS);
+    const generation = atClock(weekEnd, timeRules().careDayStart);
+    if (generation < weekEnd) generation.setDate(generation.getDate() + 1);
+    return generation;
   }
 
   function weeklyDisplayWindow() {
@@ -305,8 +351,7 @@
 
   function currentCareWindow(at = now()) {
     const current = new Date(at);
-    const start = startOfDay(current);
-    start.setHours(20, 0, 0, 0);
+    const start = atClock(current, timeRules().careDayStart);
     if (current < start) start.setDate(start.getDate() - 1);
     const end = new Date(start);
     end.setDate(end.getDate() + 1);
@@ -363,21 +408,39 @@
   }
 
   function timelineDayPart(date) {
-    const hour = new Date(date).getHours();
-    return hour >= 20 || hour < 6 ? "night" : "day";
+    const current = new Date(date);
+    const minute = current.getHours() * 60 + current.getMinutes();
+    const { daytimeStart, nighttimeStart } = timeRules();
+    const dayStart = clockMinutes(daytimeStart);
+    const dayLength = (clockMinutes(nighttimeStart) - dayStart + 1440) % 1440;
+    return dayLength && (minute - dayStart + 1440) % 1440 < dayLength ? "day" : "night";
   }
 
-  function timelineCheckpoints(start, firstTime, lastTime) {
-    const midnight = new Date(start);
-    midnight.setHours(midnight.getHours() + 4);
-    const dayStart = new Date(start);
-    dayStart.setHours(dayStart.getHours() + 10);
+  function timelineCheckpoints(windowStart, firstTime, lastTime) {
+    const { careDayStart, daytimeStart, nighttimeStart } = timeRules();
     const dateLabel = new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short" });
-    return [
-      { date: start, kind: "night", label: `8:00 PM · ${dateLabel.format(start)} · Night time begins` },
-      { date: midnight, kind: "date", label: `12:00 AM · ${dateLabel.format(midnight)}` },
-      { date: dayStart, kind: "day", label: "6:00 AM · Day time begins" }
-    ].filter(({ date }) => firstTime < date.getTime() && date.getTime() <= lastTime);
+    const checkpoints = new Map();
+    const add = (date, kind) => {
+      const timestamp = date.getTime();
+      if (timestamp <= firstTime || timestamp > lastTime) return;
+      if (!checkpoints.has(timestamp)) checkpoints.set(timestamp, { date, kinds: new Set() });
+      checkpoints.get(timestamp).kinds.add(kind);
+    };
+    for (let date = startOfDay(windowStart); date.getTime() <= lastTime; date.setDate(date.getDate() + 1)) {
+      add(startOfDay(date), "date");
+      add(atClock(date, careDayStart), "care");
+      add(atClock(date, daytimeStart), "day");
+      add(atClock(date, nighttimeStart), "night");
+    }
+    return [...checkpoints.values()].map(({ date, kinds }) => {
+      const details = [];
+      if (kinds.has("care")) details.push("Care day begins");
+      if (kinds.has("day")) details.push("Daytime begins");
+      if (kinds.has("night")) details.push("Nighttime begins");
+      const kind = kinds.has("day") ? "day" : kinds.has("night") ? "night" : kinds.has("care") ? "care" : "date";
+      const label = `${formatTime(date)}${kinds.has("date") || kinds.has("care") ? ` · ${dateLabel.format(date)}` : ""}${details.length ? ` · ${details.join(" · ")}` : ""}`;
+      return { date, kind, label };
+    });
   }
 
   function timelineRowsFor(predicate, at = now()) {
@@ -388,9 +451,9 @@
 
     const intervals = events.map(timelineInterval);
     const firstTime = Math.max(previous.start.getTime(), Math.min(...intervals.map(({ start }) => start.getTime())));
-    // Keep the 8 PM divider visible while waiting for the new care day's first entry.
+    // Keep the care-day divider visible while waiting for the new care day's first entry.
     const lastTime = Math.max(current.start.getTime(), ...intervals.map(({ end }) => end.getTime()));
-    const checkpoints = [previous.start, current.start].flatMap((start) => timelineCheckpoints(start, firstTime, lastTime));
+    const checkpoints = timelineCheckpoints(previous.start, firstTime, lastTime);
     const activityRows = events.flatMap((event) => splitTimelineEvent(event, checkpoints, previous.start))
       .map((event) => ({ type: "activity", time: event.timelineSortTime, event }));
     const checkpointRows = checkpoints.map((checkpoint) => ({ type: "checkpoint", time: checkpoint.date.getTime(), checkpoint }));
@@ -523,7 +586,7 @@
       }
       const checkpoint = document.createElement("div");
       checkpoint.className = `timeline-checkpoint ${row.checkpoint.kind}`;
-      const checkpointIcon = row.checkpoint.kind === "day" ? icons.sunbathing : row.checkpoint.kind === "date" ? icons.date : icons.sleep;
+      const checkpointIcon = row.checkpoint.kind === "day" ? icons.sunbathing : ["date", "care"].includes(row.checkpoint.kind) ? icons.date : icons.sleep;
       checkpoint.innerHTML = `${checkpointIcon}<span>${row.checkpoint.label}</span>`;
       timeline.appendChild(checkpoint);
     });
@@ -741,7 +804,7 @@
     }).join("");
     const points = days.map((day, index) => {
       if (!day[metric.loggedKey]) return "";
-      return `<circle class="signal-chart-point" cx="${x(index)}" cy="${y(day[metric.key])}" r="${requestedDays === 7 ? 3.7 : 2.6}"><title>${dateFormat.format(day.date)}, care day ending ${dateFormat.format(day.careDayEnd)} at 8:00 PM · ${metric.valueFormat(day[metric.key])}</title></circle>`;
+      return `<circle class="signal-chart-point" cx="${x(index)}" cy="${y(day[metric.key])}" r="${requestedDays === 7 ? 3.7 : 2.6}"><title>${dateFormat.format(day.date)}, care day ending ${dateFormat.format(day.careDayEnd)} at ${formatClock(timeRules().careDayStart)} · ${metric.valueFormat(day[metric.key])}</title></circle>`;
     }).join("");
     let previousDotValue = null;
     let previousLabelBelow = false;
@@ -857,7 +920,7 @@
     const separator = '<span class="pump-entry-separator" aria-hidden="true">·</span>';
     timeline.innerHTML = rows.map((row) => {
       if (row.type === "checkpoint") {
-        const checkpointIcon = row.checkpoint.kind === "day" ? icons.sunbathing : row.checkpoint.kind === "date" ? icons.date : icons.sleep;
+        const checkpointIcon = row.checkpoint.kind === "day" ? icons.sunbathing : ["date", "care"].includes(row.checkpoint.kind) ? icons.date : icons.sleep;
         return `<div class="timeline-checkpoint pump-timeline-checkpoint ${row.checkpoint.kind}">${checkpointIcon}<span>${row.checkpoint.label}</span></div>`;
       }
       const event = row.event;
@@ -1034,9 +1097,17 @@
     const x = (hours) => plot.left + (Math.max(0, Math.min(24, hours)) / 24) * (rightEdge - plot.left);
     const y = (value) => bottomEdge - (value / scaleMax) * plotHeight;
     const axis = renderChartYAxis(plot, width, scaleMax, y, "ml");
-    const dayStartX = x(10);
-    const dayNightBackground = `<rect class="session-chart-night" x="${plot.left}" y="${plot.top}" width="${dayStartX - plot.left}" height="${plotHeight}" /><rect class="session-chart-day" x="${dayStartX}" y="${plot.top}" width="${rightEdge - dayStartX}" height="${plotHeight}" /><line class="session-chart-transition" x1="${dayStartX}" y1="${plot.top}" x2="${dayStartX}" y2="${bottomEdge}" />`;
-    const hourTicks = ["8 PM", "12 AM", "4 AM", "8 AM", "12 PM", "4 PM", "8 PM"].map((label, index) => {
+    const { careDayStart, daytimeStart, nighttimeStart } = timeRules();
+    const careStartMinutes = clockMinutes(careDayStart);
+    const boundaries = [0, ...[daytimeStart, nighttimeStart].map((clock) => (clockMinutes(clock) - careStartMinutes + 1440) % 1440).filter(Boolean), 1440].sort((a, b) => a - b);
+    const dayNightBackground = boundaries.slice(0, -1).map((start, index) => {
+      const end = boundaries[index + 1];
+      const middle = new Date(series[0].window.start.getTime() + (start + end) * 30000);
+      const kind = timelineDayPart(middle);
+      return `<rect class="session-chart-${kind}" x="${x(start / 60)}" y="${plot.top}" width="${x(end / 60) - x(start / 60)}" height="${plotHeight}" />${index ? `<line class="session-chart-transition" x1="${x(start / 60)}" y1="${plot.top}" x2="${x(start / 60)}" y2="${bottomEdge}" />` : ""}`;
+    }).join("");
+    const hourTicks = Array.from({ length: 7 }, (_, index) => {
+      const label = formatClock(careStartMinutes + index * 240, true);
       const tickX = x(index * 4);
       const anchor = index === 6 ? "end" : "middle";
       return `<line class="session-chart-tick" x1="${tickX}" y1="${plot.top}" x2="${tickX}" y2="${bottomEdge}" /><text class="session-chart-date" x="${tickX}" y="${bottomEdge + 21}" text-anchor="${anchor}">${label}</text>`;
@@ -1074,7 +1145,7 @@
     });
     const renderLayer = (key) => plottedSeries.map((day) => day[key]).join("");
     const counts = series.map((day) => `${day.events.length} pumps (${day.label} - ${day.date})`).join(", ");
-    $("#pump-session-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Millilitres per pump by time across three care days, with night from 8:00 PM to 6:00 AM and daytime from 6:00 AM to 8:00 PM. ${counts}">${dayNightBackground}${axis}${hourTicks}${renderLayer("leader")}${renderLayer("line")}${renderLayer("label")}</svg>`;
+    $("#pump-session-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Millilitres per pump by time across three care days, with daytime starting at ${formatClock(daytimeStart)} and nighttime starting at ${formatClock(nighttimeStart)}. ${counts}">${dayNightBackground}${axis}${hourTicks}${renderLayer("leader")}${renderLayer("line")}${renderLayer("label")}</svg>`;
   }
 
   function renderPump() {
@@ -1087,6 +1158,8 @@
   }
 
   function renderReports() {
+    const careDayTime = formatClock(timeRules().careDayStart);
+    $("#daily-report-window-label").textContent = `Last complete care day · ${careDayTime} → ${careDayTime}`;
     const today = totalsFor(dailyReportEvents());
     const previous = totalsFor(dailyReportEvents(-1));
     const summary = [
@@ -1103,7 +1176,7 @@
     $("#daily-tip").textContent = dailyInsight?.suggestion || localSuggestion;
     $("#daily-tip-meta").textContent = dailyInsight
       ? `${dailyInsight.provider === "openai" ? "GPT suggestion" : "Age-based backup"} · ${dailyInsight.reportDate} · generated once`
-      : "Preparing the latest completed 8 PM report";
+      : `Preparing the latest completed ${careDayTime} report`;
 
     const week = weeklyDisplayWindow();
     const weekly = totalsFor(eventsForWindow(week.start, week.end));
@@ -1120,7 +1193,7 @@
     $("#weekly-window-label").textContent = `Baby week ${week.weekNumber} · ${shortDate(week.start)} → ${shortDate(week.end)}`;
     $("#weekly-report-copy").textContent = `${weeklySummary.join(" · ")}.`;
     const nextWeeklyAt = weeklyInsight?.nextAvailableAt ? new Date(weeklyInsight.nextAvailableAt) : babyWeekGenerationAt(week.weekNumber);
-    const pendingSuggestion = `Cam’s first weekly suggestion will be generated at 8:00 PM when baby week ${week.weekNumber} is complete.`;
+    const pendingSuggestion = `Cam’s first weekly suggestion will be generated at ${careDayTime} when baby week ${week.weekNumber} is complete.`;
     $("#weekly-tip").textContent = weeklyInsight?.suggestion || (weeklyInsight?.status === "generating" ? "Preparing Cam’s completed baby-week comparison now." : pendingSuggestion);
     $("#weekly-tip-meta").textContent = weeklyInsight?.suggestion
       ? `${weeklyInsight.provider === "openai" ? "GPT suggestion" : "Age-based backup"} · generated once for baby week ${weeklyInsight.weekNumber}`
@@ -1131,7 +1204,7 @@
     if (!syncReady) return;
     try {
       const insight = await camRequest("/daily-insight");
-      if (insight?.suggestion) dailyInsight = insight;
+      dailyInsight = insight?.suggestion ? insight : null;
       renderReports();
       clearTimeout(dailyInsightTimer);
       if (insight?.status === "generating") {
@@ -1190,6 +1263,10 @@
     $$('[data-user-avatar]').forEach((image) => {
       image.src = currentUser?.avatarUrl || "./house_cam.jpg";
     });
+    const { careDayStart, daytimeStart, nighttimeStart } = timeRules();
+    $("#profile-care-day-time").textContent = `${formatClock(careDayStart)} → ${formatClock(careDayStart)}`;
+    $("#profile-daytime-time").textContent = formatClock(daytimeStart);
+    $("#profile-nighttime-time").textContent = formatClock(nighttimeStart);
   }
 
   function vaccineDueStatus(dueAt) {
@@ -1265,6 +1342,7 @@
   }
 
   function renderAll() {
+    lastRenderedCareStart = currentCareWindow().start.getTime();
     renderBabyDetails();
     renderDate();
     renderTimeline();
@@ -2011,10 +2089,13 @@
   }
 
   function openActivityPattern() {
+    const { daytimeStart, nighttimeStart } = timeRules();
+    const dayStartMinutes = clockMinutes(daytimeStart);
+    const dayLength = (clockMinutes(nighttimeStart) - dayStartMinutes + 1440) % 1440;
     const events = eventsForCareDay().filter((event) => {
       const date = new Date(event.timestamp);
-      const hour = date.getHours() + date.getMinutes() / 60;
-      return hour >= 8 && hour <= 20;
+      const minute = date.getHours() * 60 + date.getMinutes();
+      return (minute - dayStartMinutes + 1440) % 1440 < dayLength;
     });
     const lanes = [
       { label: "Feeds", types: ["feed"], className: "feed" },
@@ -2025,15 +2106,15 @@
     const laneMarkup = lanes.map((lane) => {
       const points = events.filter((event) => lane.types.includes(event.type)).map((event) => {
         const date = new Date(event.timestamp);
-        const hour = date.getHours() + date.getMinutes() / 60;
-        const left = Math.max(0, Math.min(100, ((hour - 8) / 12) * 100));
+        const minute = date.getHours() * 60 + date.getMinutes();
+        const left = Math.max(0, Math.min(100, ((minute - dayStartMinutes + 1440) % 1440 / dayLength) * 100));
         return `<i class="pattern-point ${lane.className}" style="left:${left}%" title="${escapeHtml(event.title)} · ${escapeHtml(formatTime(date))}"></i>`;
       }).join("");
       return `<div class="pattern-lane"><strong>${lane.label}</strong><span class="pattern-track">${points}</span></div>`;
     }).join("");
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Current care day</p><h2 id="sheet-title">Activities pattern</h2><p class="sheet-subtitle">A daytime view from 8:00 AM to 8:00 PM. Each dot marks when an activity was recorded or finished.</p></header>
-      <div class="activity-pattern"><div class="pattern-axis"><span>8 AM</span><span>12 PM</span><span>4 PM</span><span>8 PM</span></div>${laneMarkup}${events.length ? "" : '<div class="pattern-empty">No daytime activities have been logged in this care day.</div>'}</div>
+      <header class="sheet-header"><p class="eyebrow">Current care day</p><h2 id="sheet-title">Activities pattern</h2><p class="sheet-subtitle">A daytime view from ${formatClock(daytimeStart)} to ${formatClock(nighttimeStart)}. Each dot marks when an activity was recorded or finished.</p></header>
+      <div class="activity-pattern"><div class="pattern-axis">${[0, 1, 2, 3].map((index) => `<span>${formatClock(dayStartMinutes + dayLength * index / 3, true)}</span>`).join("")}</div>${laneMarkup}${events.length ? "" : '<div class="pattern-empty">No daytime activities have been logged in this care day.</div>'}</div>
       <div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
     `);
     $('[data-close-sheet]').addEventListener("click", closeSheet);
@@ -2072,7 +2153,7 @@
   function openNotificationPreview() {
     const totals = totalsFor(dailyReportEvents());
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Notification preview</p><h2 id="sheet-title">${BABY.shortName}’s day at a glance</h2><p class="sheet-subtitle">LittleLog · today at 8:00 PM · covers the previous 24 hours</p></header>
+      <header class="sheet-header"><p class="eyebrow">Notification preview</p><h2 id="sheet-title">${BABY.shortName}’s day at a glance</h2><p class="sheet-subtitle">LittleLog · ${formatClock(timeRules().careDayStart)} · covers the previous 24 hours</p></header>
       <div class="report-tip" style="margin-top:16px"><strong>Today</strong><p>${totals.feeds} feeds · ${totals.wet} wet diapers · ${totals.dirty} dirty diapers · ${formatDuration(totals.sleepMinutes)} recorded sleep.</p></div>
       <p class="info-copy">${dailyInsight?.suggestion || "The latest completed care-day suggestion will appear here after it is prepared."}</p>
       <div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
@@ -2188,19 +2269,74 @@
   }
 
   function openSettings() {
+    const { careDayStart, daytimeStart, nighttimeStart } = timeRules();
+    const editIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg>';
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Settings</p><h2 id="sheet-title">Preferences</h2><p class="sheet-subtitle">Care records and preferences sync securely across approved devices.</p></header>
       <div class="mini-report">
         <div class="mini-report-row"><span>Time zone</span><strong>Asia/Saigon</strong></div>
+        <div class="mini-report-row time-setting-row"><span>Care day</span><strong>${formatClock(careDayStart)} → ${formatClock(careDayStart)}</strong><button data-edit-time-rule="careDayStart" type="button" aria-label="Edit care day start">${editIcon}</button></div>
+        <div class="mini-report-row time-setting-row"><span>Daytime begins</span><strong>${formatClock(daytimeStart)}</strong><button data-edit-time-rule="daytimeStart" type="button" aria-label="Edit daytime start">${editIcon}</button></div>
+        <div class="mini-report-row time-setting-row"><span>Nighttime begins</span><strong>${formatClock(nighttimeStart)}</strong><button data-edit-time-rule="nighttimeStart" type="button" aria-label="Edit nighttime start">${editIcon}</button></div>
         <div class="mini-report-row"><span>Units</span><strong>Metric</strong></div>
-        <div class="mini-report-row"><span>Daily report</span><strong>8:00 PM</strong></div>
-        <div class="mini-report-row"><span>Weekly report</span><strong>Cam’s age week · 8:00 PM</strong></div>
+        <div class="mini-report-row"><span>Daily report</span><strong>${formatClock(careDayStart)}</strong></div>
+        <div class="mini-report-row"><span>Weekly report</span><strong>Age week · ${formatClock(careDayStart)}</strong></div>
         <div class="mini-report-row"><span>Storage</span><strong>Railway PostgreSQL</strong></div>
       </div>
       <div class="sheet-actions two"><button class="sheet-secondary" id="sign-out-littlelog" type="button">Sign out</button><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
     `);
     $('[data-close-sheet]').addEventListener("click", closeSheet);
+    $$('#sheet-content [data-edit-time-rule]').forEach((button) => button.addEventListener("click", () => openTimePreferenceSheet(button.dataset.editTimeRule)));
     $("#sign-out-littlelog").addEventListener("click", signOutLittleLog);
+  }
+
+  function openTimePreferenceSheet(key) {
+    const choices = {
+      careDayStart: { title: "Care day", detail: "A care day starts at this time and ends at the same time tomorrow." },
+      daytimeStart: { title: "Daytime begins", detail: "Daytime lasts from this time until nighttime begins." },
+      nighttimeStart: { title: "Nighttime begins", detail: "Nighttime lasts from this time until daytime begins." }
+    };
+    const choice = choices[key];
+    if (!choice) return;
+    openSheet(`
+      <header class="sheet-header"><p class="eyebrow">Preferences</p><h2 id="sheet-title">${choice.title}</h2><p class="sheet-subtitle">${choice.detail}</p></header>
+      <label class="choice-label" for="time-rule-input">Start time</label><input class="sheet-input" id="time-rule-input" type="time" value="${timeRules()[key]}" required />
+      <p class="time-rule-error" id="time-rule-error" role="alert" hidden></p>
+      <div class="sheet-actions two"><button class="sheet-secondary" id="cancel-time-rule" type="button">Cancel</button><button class="sheet-primary" id="save-time-rule" type="button">Save time</button></div>
+    `);
+    $("#cancel-time-rule").addEventListener("click", closeSheet);
+    $("#save-time-rule").addEventListener("click", () => {
+      const value = $("#time-rule-input").value;
+      const nextRules = { ...timeRules(), [key]: value };
+      const error = $("#time-rule-error");
+      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+        error.textContent = "Choose a valid time.";
+      } else if (nextRules.daytimeStart === nextRules.nighttimeStart) {
+        error.textContent = "Daytime and nighttime must begin at different times.";
+      } else {
+        error.hidden = true;
+        if (state.settings[key] === value) { closeSheet(); return; }
+        state.settings[key] = value;
+        state.settings.timeRulesUpdatedAt = new Date(Math.max(Date.now(), (Date.parse(state.settings.timeRulesUpdatedAt || "") || 0) + 1)).toISOString();
+        dailyInsight = null;
+        weeklyInsight = null;
+        clearTimeout(dailyInsightTimer);
+        clearTimeout(weeklyInsightTimer);
+        saveState();
+        renderAll();
+        closeSheet();
+        showToast(`${choice.title} updated`);
+        syncChain.then(() => {
+          if ($("#sync-status-badge")?.dataset.syncState === "synced") {
+            refreshDailyInsight();
+            refreshWeeklyInsight();
+          }
+        });
+        return;
+      }
+      error.hidden = false;
+      $("#time-rule-input").focus();
+    });
   }
 
   function clearHistory() {
@@ -2291,6 +2427,7 @@
     $("#baby-chip").addEventListener("click", () => navigate("baby"));
     $("#edit-profile").addEventListener("click", () => openProfileInfo("profile"));
     $$('[data-profile]').forEach((button) => button.addEventListener("click", () => openProfileInfo(button.dataset.profile)));
+    $$('#view-baby [data-edit-time-rule]').forEach((button) => button.addEventListener("click", () => openTimePreferenceSheet(button.dataset.editTimeRule)));
     $$('[data-period]').forEach((button) => button.addEventListener("click", () => {
       state.statsPeriod = button.dataset.period;
       $$('[data-period]').forEach((item) => item.classList.toggle("active", item === button));
@@ -2402,6 +2539,12 @@
   setInterval(() => {
     updateStatusTime();
     if (!syncReady) return;
+    if (currentCareWindow().start.getTime() !== lastRenderedCareStart) {
+      renderAll();
+      refreshDailyInsight();
+      refreshWeeklyInsight();
+      return;
+    }
     renderLastFeed();
     renderVitaminDReminder();
     if (state.activeSessions?.sleep) renderCharts();

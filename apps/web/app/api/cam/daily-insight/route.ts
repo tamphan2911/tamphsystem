@@ -5,13 +5,12 @@ import {
   camAgeDays,
   camReferenceForAge,
 } from "@/sites/cam/server/reference";
+import { camLatestCompletedWindow, camTimeRules } from "@/sites/cam/server/time-preferences";
 
 export const dynamic = "force-dynamic";
 
 const noStoreHeaders = { "Cache-Control": "no-store" };
 const DAY_MS = 86_400_000;
-const REPORT_TIME_ZONE = "Asia/Ho_Chi_Minh";
-const REPORT_OFFSET = "+07:00";
 
 type CareEvent = {
   type: string;
@@ -36,34 +35,6 @@ function unauthorized() {
     { error: "LittleLog sign-in is required." },
     { status: 401, headers: noStoreHeaders },
   );
-}
-
-function dateKey(date: Date) {
-  const parts = new Intl.DateTimeFormat("en", {
-    timeZone: REPORT_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-  const get = (type: string) => parts.find((part) => part.type === type)?.value;
-  return `${get("year")}-${get("month")}-${get("day")}`;
-}
-
-function latestCompletedWindow(at = new Date()) {
-  const today = dateKey(at);
-  const todayEnd = new Date(`${today}T20:00:00${REPORT_OFFSET}`);
-  const windowEnd = new Date(
-    at >= todayEnd ? todayEnd.getTime() : todayEnd.getTime() - DAY_MS,
-  );
-  const nextAvailableAt = new Date(
-    at >= todayEnd ? todayEnd.getTime() + DAY_MS : todayEnd.getTime(),
-  );
-  return {
-    reportDate: dateKey(windowEnd),
-    windowStart: new Date(windowEnd.getTime() - DAY_MS),
-    windowEnd,
-    nextAvailableAt,
-  };
 }
 
 function numberFromJson(value: Prisma.JsonValue | undefined) {
@@ -212,7 +183,7 @@ async function generateOpenAiSuggestion(source: Record<string, unknown>) {
       store: false,
       max_output_tokens: 180,
       instructions:
-        "You write a calm, practical LittleLog suggestion for a parent. Return exactly two short sentences with no heading or bullets. Compare the completed 8 PM care day with the previous day and logged-day average when those exist, then use the supplied age-based reference only as broad educational context. Never diagnose, never call a baby normal or abnormal, and never invent missing data. Mention that direct breastfeeding volume is not measured when bottle volume is relevant.",
+        "You write a calm, practical LittleLog suggestion for a parent. Return exactly two short sentences with no heading or bullets. Compare the completed care day with the previous day and logged-day average when those exist, then use the supplied age-based reference only as broad educational context. Never diagnose, never call a baby normal or abnormal, and never invent missing data. Mention that direct breastfeeding volume is not measured when bottle volume is relevant.",
       input: JSON.stringify(source),
     }),
     signal: AbortSignal.timeout(30_000),
@@ -250,7 +221,9 @@ export async function GET() {
   const session = await hasCamSession();
   if (!session) return unauthorized();
 
-  const window = latestCompletedWindow();
+  const storedState = await prisma.camCareState.findUnique({ where: { userId: session.userId }, select: { settings: true } });
+  const { careDayStart } = camTimeRules(storedState?.settings);
+  const window = camLatestCompletedWindow(careDayStart);
   const gptConfigured = Boolean(process.env.OPENAI_API_KEY?.trim());
   const existing = await prisma.camCareDailyInsight.findUnique({
     where: {
@@ -260,8 +233,10 @@ export async function GET() {
       },
     },
   });
+  const matchesWindow = existing?.windowStart.getTime() === window.windowStart.getTime()
+    && existing?.windowEnd.getTime() === window.windowEnd.getTime();
   if (
-    existing?.suggestion &&
+    matchesWindow && existing?.suggestion &&
     (existing.status === "ready" || !gptConfigured)
   ) {
     return NextResponse.json(
@@ -270,7 +245,7 @@ export async function GET() {
     );
   }
   if (
-    existing?.status === "generating" &&
+    matchesWindow && existing?.status === "generating" &&
     Date.now() - existing.updatedAt.getTime() < 2 * 60_000
   ) {
     return NextResponse.json(
@@ -324,6 +299,7 @@ export async function GET() {
   );
   const source = {
     reportDate: window.reportDate,
+    careDayStart,
     reportWindow: {
       start: window.windowStart.toISOString(),
       end: window.windowEnd.toISOString(),
@@ -341,7 +317,7 @@ export async function GET() {
   if (existing) {
     await prisma.camCareDailyInsight.update({
       where: { id: existing.id },
-      data: { status: "generating", source: source as Prisma.InputJsonValue },
+      data: { status: "generating", suggestion: null, windowStart: window.windowStart, windowEnd: window.windowEnd, source: source as Prisma.InputJsonValue },
     });
   } else {
     try {

@@ -29,3 +29,7 @@ device cannot recreate an activity that another device deleted.
 The browser keeps a local cache for offline use. When connectivity returns, the
 cache synchronizes with Railway PostgreSQL and activity from other devices is
 pulled automatically.
+
+The care-day boundary, daytime start, and nighttime start can be edited in
+Preferences. They default to 8:00 PM, 6:00 AM, and 8:00 PM respectively. Care
+windows, timelines, charts, and report schedules use these synced settings.

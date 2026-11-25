@@ -9,7 +9,7 @@
       content="LittleLog infant feeding, diaper, sleep, and bath tracker"
     />
     <title>LittleLog — Cam’s Baby Care</title>
-    <link rel="stylesheet" href="./styles.css?v=20261125i" />
+    <link rel="stylesheet" href="./styles.css?v=20261125j" />
   </head>
   <body>
     <section class="sync-gate" id="sync-gate" aria-labelledby="sync-gate-title">
@@ -169,17 +169,17 @@
               </section>
 
               <section class="view" id="view-reports" data-view="reports" aria-label="Reports">
-                <div class="page-heading"><p class="eyebrow" id="reports-date-label">Monday, 23 November</p><h2>Evening reports</h2></div>
+                <div class="page-heading"><p class="eyebrow" id="reports-date-label">Monday, 23 November</p><h2>Care reports</h2></div>
                 <article class="report-hero">
-                  <div class="report-hero-top"><span class="moon-orb"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8m-8 4h8m-8 4h5M3 8h2m14 0h2" /></svg></span><span><small>8:00 PM yesterday → 8:00 PM today</small><strong>Cam’s day at a glance</strong></span></div>
+                  <div class="report-hero-top"><span class="moon-orb"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8m-8 4h8m-8 4h5M3 8h2m14 0h2" /></svg></span><span><small id="daily-report-window-label">Last complete care day</small><strong>Cam’s day at a glance</strong></span></div>
                   <p id="daily-report-copy">Cam’s daily summary will appear here as activities are recorded.</p>
-                  <div class="report-tip"><strong>Gentle suggestion</strong><p id="daily-tip">Preparing Cam’s latest completed care-day comparison.</p><small id="daily-tip-meta">Generated once daily after 8:00 PM</small></div>
+                  <div class="report-tip"><strong>Gentle suggestion</strong><p id="daily-tip">Preparing Cam’s latest completed care-day comparison.</p><small id="daily-tip-meta">Generated after each care day</small></div>
                 </article>
 
                 <article class="weekly-report-hero">
                   <div class="report-hero-top"><span class="week-orb"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 2v4m8-4v4M5 9h14M8 13h3m2 0h3M8 16h3" /></svg></span><span><small id="weekly-window-label">Baby week 1 · 18 Nov → 25 Nov</small><strong>Cam’s weekly review</strong></span></div>
                   <p id="weekly-report-copy">Cam’s first baby-week summary is gathering as activities are recorded.</p>
-                  <div class="report-tip weekly-tip"><strong>Weekly suggestion</strong><p id="weekly-tip">Cam’s first weekly suggestion will be generated when baby week 1 is complete.</p><small id="weekly-tip-meta">Generated once per baby week at 8:00 PM</small></div>
+                  <div class="report-tip weekly-tip"><strong>Weekly suggestion</strong><p id="weekly-tip">Cam’s first weekly suggestion will be generated when baby week 1 is complete.</p><small id="weekly-tip-meta">Generated after each baby week</small></div>
                 </article>
                 <div class="safe-bottom-space"></div>
               </section>
@@ -197,6 +197,9 @@
                 </div>
                 <div class="profile-section">
                   <h3>Preferences</h3>
+                  <button class="setting-row" data-edit-time-rule="careDayStart" type="button"><span class="setting-icon clock"><svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-13v5l3 2" /></svg></span><span><strong>Care day</strong><small id="profile-care-day-time">8:00 PM → 8:00 PM</small></span><svg class="setting-edit-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg></button>
+                  <button class="setting-row" data-edit-time-rule="daytimeStart" type="button"><span class="setting-icon daytime"><svg viewBox="0 0 24 24"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z" /></svg></span><span><strong>Daytime begins</strong><small id="profile-daytime-time">6:00 AM</small></span><svg class="setting-edit-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg></button>
+                  <button class="setting-row" data-edit-time-rule="nighttimeStart" type="button"><span class="setting-icon nighttime"><svg viewBox="0 0 24 24"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4a8.5 8.5 0 1 0 11.2 11.2Z" /></svg></span><span><strong>Nighttime begins</strong><small id="profile-nighttime-time">8:00 PM</small></span><svg class="setting-edit-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg></button>
                   <div class="setting-row static"><span class="setting-icon units"><svg viewBox="0 0 24 24"><path d="M7 3h10v18H7zM7 7h4m-4 4h3m-3 4h4" /></svg></span><span><strong>Units</strong><small>Metric · ml, kg, cm</small></span><span class="setting-value">Metric</span></div>
                   <div class="setting-row static"><span class="setting-icon cloud"><svg viewBox="0 0 24 24"><path d="M7 18h11a4 4 0 0 0 .7-7.9A7 7 0 0 0 5.2 9 4.5 4.5 0 0 0 7 18Z" /></svg></span><span><strong>Data storage</strong><small id="sync-status-text">Secure Railway sync</small></span><span class="sync-badge" id="sync-status-badge">Synced</span></div>
                 </div>
@@ -246,6 +249,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20261125i"></script>
+    <script src="./app.js?v=20261125j"></script>
   </body>
 </html>

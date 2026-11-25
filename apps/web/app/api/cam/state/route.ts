@@ -1,6 +1,7 @@
 import { Prisma, prisma } from "@repo/db";
 import { NextResponse } from "next/server";
 import { hasCamSession } from "@/sites/cam/server/auth";
+import { mergeCamSettings } from "@/sites/cam/server/time-preferences";
 
 export const dynamic = "force-dynamic";
 
@@ -161,9 +162,14 @@ export async function PUT(request: Request) {
     body.activeSessions,
     defaultActiveSessions,
   );
-  const settings = normalizeObject(body.settings, defaultSettings);
+  const incomingSettings = normalizeObject(body.settings, defaultSettings);
 
   await prisma.$transaction(async (tx) => {
+    const storedState = await tx.camCareState.findUnique({
+      where: { userId: session.userId },
+      select: { settings: true },
+    });
+    const settings = mergeCamSettings(incomingSettings, storedState?.settings) as Prisma.InputJsonValue;
     for (const event of events as CamEventInput[]) {
       await tx.camCareEvent.upsert({
         where: {
