@@ -716,17 +716,23 @@
     return pumpEventsForCareDay();
   }
 
-  function pumpTotalMl(event) {
-    return Number(event.data?.totalMl || Number(event.data?.leftMl || 0) + Number(event.data?.rightMl || 0));
+  function pumpVolumes(event) {
+    const recordedLeft = Number(event.data?.leftMl) || 0;
+    const recordedRight = Number(event.data?.rightMl) || 0;
+    const totalMl = Math.max(0, recordedLeft + recordedRight);
+    // Keep the recorded sum if an older entry contains a negative split.
+    const leftMl = Math.max(0, Math.min(totalMl, recordedLeft));
+    return { leftMl, rightMl: totalMl - leftMl, totalMl };
   }
 
   function pumpTotals(events) {
     return events.reduce((totals, event) => {
+      const { leftMl, rightMl, totalMl } = pumpVolumes(event);
       totals.count += 1;
       totals.durationMin += Number(event.data?.durationMin || 0);
-      totals.leftMl += Number(event.data?.leftMl || 0);
-      totals.rightMl += Number(event.data?.rightMl || 0);
-      totals.totalMl += pumpTotalMl(event);
+      totals.leftMl += leftMl;
+      totals.rightMl += rightMl;
+      totals.totalMl += totalMl;
       return totals;
     }, { count: 0, durationMin: 0, leftMl: 0, rightMl: 0, totalMl: 0 });
   }
@@ -763,6 +769,7 @@
     const details = pumpTimelineDetails(at);
     const ordinal = new Intl.PluralRules("en", { type: "ordinal" });
     const suffix = { one: "st", two: "nd", few: "rd", other: "th" };
+    const separator = '<span class="pump-entry-separator" aria-hidden="true">·</span>';
     timeline.innerHTML = rows.map((row) => {
       if (row.type === "checkpoint") {
         const checkpointIcon = row.checkpoint.kind === "day" ? icons.sunbathing : row.checkpoint.kind === "date" ? icons.date : icons.sleep;
@@ -771,35 +778,54 @@
       const event = row.event;
       const eventId = escapeHtml(event.id);
       const { number, gap, durationMin } = details.get(event.id);
-      const title = `${number}${suffix[ordinal.select(number)]} pump`;
+      const badge = `${number}${suffix[ordinal.select(number)]}`;
       const time = formatTime(event.timestamp);
       const duration = formatDuration(event.timelineContinues ? event.data.durationMin : durationMin);
-      const gapText = gap === null || event.timelineContinues ? "" : `<span class="pump-entry-gap">${formatDuration(gap)} since last pump</span>`;
-      const meta = `<div class="pump-entry-meta"><span><time datetime="${escapeHtml(event.timestamp)}">${time}</time> · ${duration}</span>${gapText}</div>`;
+      const timeAndDuration = `<time datetime="${escapeHtml(event.timestamp)}">${time}</time>${separator}<span>${duration}</span>`;
       if (event.timelineContinues) {
-        return `<article class="pump-event pump-event-segment">${meta}<button class="pump-entry-continuation" type="button" data-pump-event-id="${eventId}">Pump continues above</button></article>`;
+        return `
+          <article class="pump-event pump-event-segment">
+            <div class="pump-entry-meta">
+              <button class="pump-entry-open pump-entry-values" type="button" data-pump-event-id="${eventId}">
+                ${timeAndDuration}${separator}<span class="pump-entry-continuation">Pump continues above</span>
+              </button>
+            </div>
+          </article>`;
       }
-      const leftMl = Number(event.data?.leftMl || 0);
-      const rightMl = Number(event.data?.rightMl || 0);
-      const totalMl = pumpTotalMl(event);
+      const { leftMl, rightMl, totalMl } = pumpVolumes(event);
+      const leftShare = totalMl > 0 ? leftMl * 100 / totalMl : 0;
+      const leftPercent = Number(leftShare.toFixed(1));
+      const rightPercent = totalMl > 0 ? Number((100 - leftPercent).toFixed(1)) : 0;
+      const gapDuration = gap === null ? "" : formatDuration(gap);
       const note = String(event.data?.note || "").trim();
       return `
         <article class="pump-event">
-          ${meta}
-          <div class="pump-entry">
-            <div class="pump-entry-head">
-              <span class="pump-entry-icon" aria-hidden="true">${number}</span>
-              <button class="pump-entry-title" data-pump-event-id="${eventId}" type="button">
-                <strong>${title}</strong><strong class="pump-entry-total">${totalMl} ml</strong>
-              </button>
-              <button class="pump-entry-edit" data-edit-pump-id="${eventId}" type="button" aria-label="Edit ${title}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg></button>
-            </div>
-            <div class="pump-sides">
-              <span class="pump-side pump-left">Left breast: <strong>${leftMl} ml</strong></span>
-              <span class="pump-side pump-right">Right breast: <strong>${rightMl} ml</strong></span>
-            </div>
-            ${note ? `<p class="pump-entry-note">${escapeHtml(note)}</p>` : ""}
+          <div class="pump-entry-meta">
+            <button class="pump-entry-open" data-pump-event-id="${eventId}" type="button">
+              <span class="pump-entry-icon">${badge}</span><span class="sr-only">pump, </span>
+              <span class="pump-entry-values">
+                <strong>${totalMl} ml</strong>${separator}${timeAndDuration}
+                ${gapDuration ? `${separator}<span class="pump-entry-gap" title="${gapDuration} since last pump">${gapDuration} gap</span>` : ""}
+              </span>
+            </button>
+            <button class="pump-entry-edit" data-edit-pump-id="${eventId}" type="button" aria-label="Edit ${badge} pump"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg></button>
           </div>
+          <div class="pump-balance" role="img" aria-label="Left breast ${leftMl} ml, ${leftPercent}%. Right breast ${rightMl} ml, ${rightPercent}%."
+            style="--pump-left-share:${leftShare}%">
+            <span class="pump-balance-label pump-left">Left</span>
+            <div class="pump-balance-track">
+              <div class="pump-balance-rail">
+                ${totalMl > 0 ? '<span class="pump-balance-fill pump-left"></span><span class="pump-balance-fill pump-right"></span>' : ""}
+              </div>
+              ${totalMl > 0 ? '<span class="pump-balance-pin"></span>' : ""}
+            </div>
+            <span class="pump-balance-label pump-right">Right</span>
+            <div class="pump-balance-values">
+              <span><strong>${leftMl} ml</strong> · ${leftPercent}%</span>
+              <span><strong>${rightMl} ml</strong> · ${rightPercent}%</span>
+            </div>
+          </div>
+          ${note ? `<p class="pump-entry-note">${escapeHtml(note)}</p>` : ""}
         </article>`;
     }).join("");
   }
@@ -883,7 +909,7 @@
     const plot = { left: 42, right: 57, top: 13, bottom: 33 };
     const plotWidth = width - plot.left - plot.right;
     const plotHeight = height - plot.top - plot.bottom;
-    const observedMax = Math.max(0, ...series.flatMap((day) => day.events.map(pumpTotalMl)));
+    const observedMax = Math.max(0, ...series.flatMap((day) => day.events.map((event) => pumpVolumes(event).totalMl)));
     const scaleMax = Math.max(100, Math.ceil(observedMax / 50) * 50);
     const x = (hours) => plot.left + (Math.max(0, Math.min(24, hours)) / 24) * plotWidth;
     const y = (value) => plot.top + plotHeight - (Math.max(0, value) / scaleMax) * plotHeight;
@@ -901,7 +927,7 @@
       const points = day.events.map((event) => {
         const timestamp = new Date(event.timestamp);
         const hours = (timestamp.getTime() - day.window.start.getTime()) / 3600000;
-        const totalMl = pumpTotalMl(event);
+        const { totalMl } = pumpVolumes(event);
         return { x: x(hours), y: y(totalMl), totalMl, timestamp };
       });
       const path = points.length ? `M ${points.map((point) => `${point.x} ${point.y}`).join(" L ")}` : "";
@@ -1313,8 +1339,8 @@
       const nextTotal = Math.max(10, Math.min(1000, totalMl + amount));
       const halfChange = (nextTotal - totalMl) / 2;
       totalMl = nextTotal;
-      leftMl += halfChange;
-      rightMl += halfChange;
+      leftMl = Math.max(0, Math.min(totalMl, leftMl + halfChange));
+      rightMl = totalMl - leftMl;
       renderAmounts();
     };
     const adjustSide = (side, amount) => {
@@ -1693,11 +1719,12 @@
       <label class="choice-label" for="edit-feed-amount">Amount (ml)</label><input class="sheet-input" id="edit-feed-amount" type="number" min="10" max="500" step="10" value="${Number(event.data?.amount || 90)}" />` : "";
     const breastFields = event.type === "feed" && event.data?.mode === "breast" ? `
       <label class="choice-label" for="edit-feed-side">Side</label><select class="sheet-select" id="edit-feed-side"><option ${event.data?.side === "Left" ? "selected" : ""}>Left</option><option ${event.data?.side === "Right" ? "selected" : ""}>Right</option><option ${event.data?.side === "Both" ? "selected" : ""}>Both</option></select>` : "";
-    const pumpFields = event.type === "pump" ? `
+    const pump = event.type === "pump" ? pumpVolumes(event) : null;
+    const pumpFields = pump ? `
       <span class="choice-label">Milk pumped</span>
       <div class="pump-side-entry-grid">
-        <label class="pump-side-field pump-left" for="edit-pump-left"><strong>Left breast</strong><input class="sheet-input" id="edit-pump-left" type="number" min="0" max="500" step="5" value="${Number(event.data?.leftMl || 0)}" /></label>
-        <label class="pump-side-field pump-right" for="edit-pump-right"><strong>Right breast</strong><input class="sheet-input" id="edit-pump-right" type="number" min="0" max="500" step="5" value="${Number(event.data?.rightMl || 0)}" /></label>
+        <label class="pump-side-field pump-left" for="edit-pump-left"><strong>Left breast</strong><input class="sheet-input" id="edit-pump-left" type="number" min="0" max="500" step="5" value="${pump.leftMl}" /></label>
+        <label class="pump-side-field pump-right" for="edit-pump-right"><strong>Right breast</strong><input class="sheet-input" id="edit-pump-right" type="number" min="0" max="500" step="5" value="${pump.rightMl}" /></label>
       </div>` : "";
     const diaperFields = event.type === "diaper" ? `
       <label class="choice-label" for="edit-diaper-kind">Diaper</label><select class="sheet-select" id="edit-diaper-kind"><option value="wet" ${event.data?.kind === "wet" ? "selected" : ""}>Wet</option><option value="dirty" ${event.data?.kind === "dirty" ? "selected" : ""}>Dirty</option></select>` : "";
