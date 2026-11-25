@@ -1,6 +1,8 @@
 (() => {
   "use strict";
 
+  if (document.documentElement.classList.contains("non-phone-device")) return;
+
   const STORAGE_KEY_PREFIX = "littlelog-cam-user";
   const LEGACY_STORAGE_KEYS = ["littlelog-cam-v2", "littlelog-cam-v1"];
   const CAM_API = "/api/cam";
@@ -899,6 +901,11 @@
   }
 
   function renderGrowth() {
+    if (currentRole === "observer") {
+      $("#growth-charts").replaceChildren();
+      $("#growth-health-list").replaceChildren();
+      return;
+    }
     const period = state.growthPeriod || "30";
     $$('[data-growth-period]').forEach((button) => button.classList.toggle("active", button.dataset.growthPeriod === period));
     const end = Date.now();

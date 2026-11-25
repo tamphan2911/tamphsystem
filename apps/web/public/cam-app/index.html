@@ -9,9 +9,16 @@
       content="LittleLog infant feeding, diaper, sleep, and bath tracker"
     />
     <title>LittleLog — Cam’s Baby Care</title>
-    <link rel="stylesheet" href="./styles.css?v=20261125m" />
+    <script>
+      const phoneUserAgent = /iPhone|iPod|Android.*Mobile|Windows Phone|BlackBerry|BB10|Opera Mini|IEMobile/i.test(navigator.userAgent) && !/iPad|Tablet/i.test(navigator.userAgent);
+      document.documentElement.classList.add(phoneUserAgent ? "phone-device" : "non-phone-device");
+    </script>
+    <link rel="stylesheet" href="./styles.css?v=20261125n" />
   </head>
   <body>
+    <main class="phone-only-screen" role="status" aria-labelledby="phone-only-title">
+      <div class="phone-only-card"><span class="phone-only-icon" aria-hidden="true">✦</span><h1 id="phone-only-title">LittleLog is for phones</h1><p>Please open Cam’s baby care page on a phone.</p></div>
+    </main>
     <section class="sync-gate" id="sync-gate" aria-labelledby="sync-gate-title">
       <div class="sync-gate-card">
         <h1 id="sync-gate-title">Family access code</h1>
@@ -132,6 +139,7 @@
                 <div class="medical-note"><svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Zm0 5v4m0 3v.1" /></svg><p>Reference ranges are educational, not a diagnosis. Always follow your pediatrician’s advice.</p></div>
                 <section class="growth-section" aria-labelledby="growth-title">
                   <div class="growth-heading"><div><p class="eyebrow">Beyond daily care</p><h3 id="growth-title">Growth &amp; health</h3></div><button id="log-growth" type="button">Add record</button></div>
+                  <div class="growth-observer-placeholder" role="status"><span aria-hidden="true">✦</span><p>Under construction</p></div>
                   <div class="growth-period-switch" role="group" aria-label="Growth chart period"><button class="active" data-growth-period="30" type="button">30 days</button><button data-growth-period="90" type="button">90 days</button><button data-growth-period="all" type="button">All history</button></div>
                   <div class="growth-charts" id="growth-charts" aria-live="polite"></div>
                   <div class="growth-health-list" id="growth-health-list"></div>
@@ -252,6 +260,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20261125m"></script>
+    <script src="./app.js?v=20261125n"></script>
   </body>
 </html>

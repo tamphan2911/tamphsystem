@@ -117,7 +117,12 @@ export async function GET() {
   const session = await hasCamSession();
   if (!session) return unauthorized();
 
-  return NextResponse.json(await readState(session.userId), {
+  const state = await readState(session.userId);
+  if (session.role === "observer") {
+    state.events = state.events.filter((event) => event.type !== "growth" && event.type !== "sick");
+  }
+
+  return NextResponse.json(state, {
     headers: noStoreHeaders,
   });
 }
