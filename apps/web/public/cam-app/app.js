@@ -481,6 +481,12 @@
     detail.textContent = detailText;
     copy.append(heading);
     if (detailText) copy.append(detail);
+    if (event.type === "feed" && event.data?.vitaminD && !event.timelineContinues) {
+      const vitaminD = document.createElement("small");
+      vitaminD.className = "timeline-note timeline-vitamin-d";
+      vitaminD.textContent = "Vitamin D included";
+      copy.append(vitaminD);
+    }
     if (noteText) {
       const note = document.createElement("small");
       note.className = "timeline-note";
@@ -557,6 +563,21 @@
     }
     $("#last-feed-text").textContent = elapsedText(feed.timestamp);
     $("#last-feed-detail").textContent = feed.detail;
+  }
+
+  function renderVitaminDReminder() {
+    const reminder = $("#vitamin-d-reminder");
+    const sixMonthsOld = new Date(BABY.bornAt);
+    sixMonthsOld.setMonth(sixMonthsOld.getMonth() + 6);
+    const current = now();
+    if (current < BABY.bornAt || current >= sixMonthsOld) {
+      reminder.hidden = true;
+      return;
+    }
+    const givenToday = eventsInCareWindow(currentCareWindow(current), (event) => event.type === "feed" && event.data?.vitaminD === true, current).length > 0;
+    reminder.hidden = false;
+    reminder.dataset.state = givenToday ? "given" : "due";
+    $("#vitamin-d-reminder-text").textContent = givenToday ? "Vitamin D given today" : "Vitamin D due today";
   }
 
   function statsForCareWindow(window, at) {
@@ -1248,6 +1269,7 @@
     renderDate();
     renderTimeline();
     renderLastFeed();
+    renderVitaminDReminder();
     renderStats();
     renderPump();
     renderReports();
@@ -1541,6 +1563,8 @@
         <div class="choice-grid three" data-choice-group="side"><button class="choice-button selected" data-value="Left" type="button">Left</button><button class="choice-button" data-value="Right" type="button">Right</button><button class="choice-button" data-value="Both" type="button">Both</button></div>
         <span class="choice-label">Feed duration</span>
         <div class="wheel-picker"><button id="breast-duration-minus" type="button" aria-label="Reduce breastfeeding duration">−</button><span class="wheel-value"><small>shorter</small><strong id="breast-duration-value">15 min</strong><em>longer</em></span><button id="breast-duration-plus" type="button" aria-label="Increase breastfeeding duration">+</button></div>
+        <span class="choice-label">Supplement</span>
+        <div class="choice-grid single"><button class="choice-button" data-vitamin-d-toggle type="button" aria-pressed="false">Vitamin D included</button></div>
         <span class="choice-label">Optional note</span><input class="sheet-input" id="breast-note" maxlength="80" placeholder="Latch, comfort, or anything useful" />
         <div class="sheet-actions two"><button class="sheet-primary" id="quick-breast" type="button">Log 15 min feed</button><button class="sheet-secondary" id="start-breast" type="button">Start timer</button></div>
       </div>
@@ -1551,6 +1575,8 @@
         <div class="amount-control"><button id="amount-minus" type="button" aria-label="Reduce amount">−</button><span class="amount-display"><strong id="bottle-amount">90 ml</strong><small>Adjust by 10 ml</small></span><button id="amount-plus" type="button" aria-label="Increase amount">+</button></div>
         <span class="choice-label">Feed duration</span>
         <div class="wheel-picker"><button id="bottle-duration-minus" type="button" aria-label="Reduce bottle feed duration">−</button><span class="wheel-value"><small>shorter</small><strong id="bottle-duration-value">15 min</strong><em>longer</em></span><button id="bottle-duration-plus" type="button" aria-label="Increase bottle feed duration">+</button></div>
+        <span class="choice-label">Supplement</span>
+        <div class="choice-grid single"><button class="choice-button" data-vitamin-d-toggle type="button" aria-pressed="false">Vitamin D included</button></div>
         <span class="choice-label">Optional note</span><input class="sheet-input" id="bottle-note" maxlength="80" placeholder="How did the feed go?" />
         <div class="sheet-actions two"><button class="sheet-primary" id="log-bottle" type="button">Log 15 min feed</button><button class="sheet-secondary" id="start-bottle" type="button">Start timer</button></div>
       </div>
@@ -1568,18 +1594,25 @@
         $$(".choice-button", group).forEach((item) => item.classList.toggle("selected", item === button));
       }));
     });
+    $$('[data-vitamin-d-toggle]').forEach((button) => button.addEventListener("click", () => {
+      const selected = button.getAttribute("aria-pressed") !== "true";
+      button.setAttribute("aria-pressed", String(selected));
+      button.classList.toggle("selected", selected);
+    }));
     $("#amount-minus")?.addEventListener("click", () => { amount = Math.max(10, amount - 10); $("#bottle-amount").textContent = `${amount} ml`; });
     $("#amount-plus")?.addEventListener("click", () => { amount = Math.min(360, amount + 10); $("#bottle-amount").textContent = `${amount} ml`; });
     bindWheel("breast-duration", 15, 5, 90, 5, (value) => { breastDuration = value; $("#quick-breast").textContent = `Log ${value} min feed`; });
     bindWheel("bottle-duration", 15, 5, 90, 5, (value) => { bottleDuration = value; $("#log-bottle").textContent = `Log ${value} min feed`; });
     $("#quick-breast")?.addEventListener("click", () => {
       const side = $('[data-choice-group="side"] .selected').dataset.value;
+      const vitaminD = $('[data-feed-panel="breast"] [data-vitamin-d-toggle]').getAttribute("aria-pressed") === "true";
       const note = $("#breast-note").value.trim();
       openLogTimeSheet("feed", (endedAt) => {
         const startedAt = new Date(endedAt.getTime() - breastDuration * 60000);
         addActivityWithWakeCheck(makeEvent("feed", "Breastfeed", `${side} · ${breastDuration} min${note ? ` · ${note}` : ""}`, endedAt, {
           mode: "breast",
           side,
+          vitaminD,
           durationMin: breastDuration,
           note,
           startAt: startedAt.toISOString(),
@@ -1589,9 +1622,10 @@
     });
     $("#start-breast")?.addEventListener("click", () => {
       const side = $('[data-choice-group="side"] .selected').dataset.value;
+      const vitaminD = $('[data-feed-panel="breast"] [data-vitamin-d-toggle]').getAttribute("aria-pressed") === "true";
       if (state.activeSessions.feed) { closeSheet(); showToast("A feed timer is already running", false); return; }
       const sleepWasRunning = Boolean(state.activeSessions.sleep);
-      state.activeSessions.feed = { mode: "breast", side, startedAt: now().toISOString() };
+      state.activeSessions.feed = { mode: "breast", side, vitaminD, startedAt: now().toISOString() };
       saveState();
       renderSession();
       closeSheet();
@@ -1600,6 +1634,7 @@
     });
     $("#log-bottle")?.addEventListener("click", () => {
       const milk = $('[data-choice-group="milk"] .selected').dataset.value;
+      const vitaminD = $('[data-feed-panel="bottle"] [data-vitamin-d-toggle]').getAttribute("aria-pressed") === "true";
       const note = $("#bottle-note").value.trim();
       openLogTimeSheet("feed", (endedAt) => {
         const startedAt = new Date(endedAt.getTime() - bottleDuration * 60000);
@@ -1607,6 +1642,7 @@
           mode: "bottle",
           milk,
           amount,
+          vitaminD,
           durationMin: bottleDuration,
           note,
           startAt: startedAt.toISOString(),
@@ -1616,9 +1652,10 @@
     });
     $("#start-bottle")?.addEventListener("click", () => {
       const milk = $('[data-choice-group="milk"] .selected').dataset.value;
+      const vitaminD = $('[data-feed-panel="bottle"] [data-vitamin-d-toggle]').getAttribute("aria-pressed") === "true";
       if (state.activeSessions.feed) { closeSheet(); showToast("A feed timer is already running", false); return; }
       const sleepWasRunning = Boolean(state.activeSessions.sleep);
-      state.activeSessions.feed = { mode: "bottle", milk, amount, startedAt: now().toISOString() };
+      state.activeSessions.feed = { mode: "bottle", milk, amount, vitaminD, startedAt: now().toISOString() };
       saveState();
       renderSession();
       closeSheet();
@@ -1878,6 +1915,7 @@
         mode: "bottle",
         milk: session.milk,
         amount: session.amount,
+        vitaminD: Boolean(session.vitaminD),
         durationMin,
         startAt: session.startedAt,
         endAt: endedAt.toISOString()
@@ -1886,6 +1924,7 @@
       addActivity(makeEvent("feed", "Breastfeed", `${session.side} · ${durationText}`, endedAt, {
         mode: "breast",
         side: session.side,
+        vitaminD: Boolean(session.vitaminD),
         durationMin,
         startAt: session.startedAt,
         endAt: endedAt.toISOString()
@@ -1918,9 +1957,16 @@
       ${bottleFields}${breastFields}${pumpFields}${diaperFields}
       <label class="choice-label" for="edit-activity-time">${timed ? "Finish time" : "Recorded time"}</label><input class="sheet-input" id="edit-activity-time" type="datetime-local" value="${toLocalDateTimeValue(event.timestamp)}" />
       ${timed ? `<label class="choice-label" for="edit-activity-duration">Duration (minutes)</label><input class="sheet-input" id="edit-activity-duration" type="number" min="1" max="1440" step="1" value="${durationMin}" />` : ""}
+      ${event.type === "feed" ? `<span class="choice-label">Supplement</span><div class="choice-grid single"><button class="choice-button ${event.data?.vitaminD ? "selected" : ""}" id="edit-feed-vitamin-d" type="button" aria-pressed="${event.data?.vitaminD ? "true" : "false"}">Vitamin D included</button></div>` : ""}
       <label class="choice-label" for="edit-activity-note">Optional note</label><textarea class="sheet-textarea" id="edit-activity-note" maxlength="180" placeholder="Anything useful to remember">${escapeHtml(note)}</textarea>
       <div class="sheet-actions"><button class="sheet-primary" id="save-activity-edit" type="button">Save changes</button></div>
     `);
+    $("#edit-feed-vitamin-d")?.addEventListener("click", (clickEvent) => {
+      const button = clickEvent.currentTarget;
+      const selected = button.getAttribute("aria-pressed") !== "true";
+      button.setAttribute("aria-pressed", String(selected));
+      button.classList.toggle("selected", selected);
+    });
     $("#save-activity-edit").addEventListener("click", () => {
       const endedAt = new Date($("#edit-activity-time").value);
       if (Number.isNaN(endedAt.getTime())) { $("#edit-activity-time").focus(); return; }
@@ -1934,6 +1980,7 @@
         const startedAt = new Date(endedAt.getTime() - updatedDuration * 60000);
         event.data = { ...event.data, durationMin: updatedDuration, note: updatedNote, startAt: startedAt.toISOString(), endAt: endedAt.toISOString() };
       } else event.data = { ...event.data, note: updatedNote };
+      if (event.type === "feed") event.data.vitaminD = $("#edit-feed-vitamin-d").getAttribute("aria-pressed") === "true";
       if (event.type === "pump") {
         event.data.leftMl = editedPumpLeft;
         event.data.rightMl = editedPumpRight;
@@ -2356,6 +2403,7 @@
     updateStatusTime();
     if (!syncReady) return;
     renderLastFeed();
+    renderVitaminDReminder();
     if (state.activeSessions?.sleep) renderCharts();
   }, 30000);
   setInterval(refreshFromServer, 45000);
