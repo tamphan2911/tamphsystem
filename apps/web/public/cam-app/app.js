@@ -153,6 +153,8 @@
   let weeklyInsight = null;
   let weeklyInsightTimer = null;
   let syncReady = false;
+  let toastDismissTimer = null;
+  let sleepPreviewTimer = null;
   let syncChain = Promise.resolve();
 
   function persistLocalState() {
@@ -585,7 +587,7 @@
     const comparisons = [
       { key: "feeds", label: "Feeds", value: totals.feeds, range: reference.feeds, scaleMax: countScaleMax(reference.feeds, totals.feeds), display: String(totals.feeds) },
       { key: "milk", label: "Milk", value: milkMl, range: reference.bottleMl, scaleMax: milkScaleMax, display: `${Math.round(milkMl)} ml`, unit: " ml" },
-      { key: "diapers", label: "Diapers", value: totals.diapers, range: reference.diapers, scaleMax: countScaleMax(reference.diapers, totals.diapers), display: `${totals.diapers} (${totals.wet}/${totals.dirty})`, description: `${totals.diapers} total, ${totals.wet} wet, ${totals.dirty} dirty` },
+      { key: "diapers", label: "Diapers", value: totals.diapers, range: reference.diapers, scaleMax: countScaleMax(reference.diapers, totals.diapers), display: `${totals.diapers} (${totals.wet}/${totals.dirty})`, displayMarkup: `<span class="diaper-total">${totals.diapers}</span> (<span class="diaper-wet">${totals.wet}</span>/<span class="diaper-dirty">${totals.dirty}</span>)`, description: `${totals.diapers} total, ${totals.wet} wet, ${totals.dirty} dirty` },
       { key: "sleep", label: "Sleep", value: sleepMinutes / 60, range: reference.sleepHours, scaleMax: sleepScaleMax, display: formatDuration(sleepMinutes), unit: "h" }
     ];
     $("#comparison-list").innerHTML = comparisons.map((item) => {
@@ -606,7 +608,7 @@
               <span class="comparison-zone range-below"></span><span class="comparison-zone range-reference"></span><span class="comparison-zone range-above"></span>
               ${ticks}
               <span class="comparison-endpoint">0</span><span class="comparison-endpoint max">${item.scaleMax.toLocaleString("en")}${unit}</span>
-              <span class="comparison-pin"></span><strong class="comparison-current">${item.display}</strong>
+              <span class="comparison-pin"></span><strong class="comparison-current">${item.displayMarkup || item.display}</strong>
             </div>
           </div>
         </div>`;
@@ -627,12 +629,13 @@
       const labelRight = $(".comparison-label", row).getBoundingClientRect().right;
       const valueLeft = rail.left + valueX - halfWidth;
       const pinBelow = valueLeft < labelRight + 6;
+      row.classList.remove("compact-ticks");
       const tickLabels = $$(".comparison-tick span", track).map((label) => label.getBoundingClientRect());
       const crowdedTicks = tickLabels[0].right + 3 > tickLabels[1].left || tickLabels[1].right + 3 > tickLabels[2].left;
 
       track.style.setProperty("--value-position", `${valueX / rail.width * 100}%`);
       row.classList.toggle("pin-below", pinBelow);
-      row.classList.toggle("crowded-ticks", crowdedTicks);
+      row.classList.toggle("compact-ticks", crowdedTicks);
     });
   }
 
@@ -684,7 +687,7 @@
   function renderSignalTrend(metric, days, requestedDays) {
     const width = 330;
     const height = 202;
-    const plot = { left: 36, right: 15, top: 28, bottom: 49 };
+    const plot = { left: 36, right: requestedDays === 7 ? 22 : 15, top: 28, bottom: 49 };
     const plotWidth = width - plot.left - plot.right;
     const plotHeight = height - plot.top - plot.bottom;
     const rangeFor = (day) => day.reference[metric.rangeKey];
@@ -706,7 +709,7 @@
     const lastIndex = days.length - 1;
     const dateFormat = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" });
     const dateLabels = days.map((day, index) => {
-      if (requestedDays === 7) return `<text class="signal-chart-date" x="${x(index)}" y="${height - 14}" text-anchor="middle">${dateFormat.format(day.date)}</text>`;
+      if (requestedDays === 7) return `<text class="signal-chart-date" x="${x(index)}" y="${height - 14}" text-anchor="middle">${index === lastIndex ? dateFormat.format(day.date) : day.date.getDate()}</text>`;
       const monthStart = day.date.getDate() === 1;
       const fiveDayStep = (lastIndex - index) % 5 === 0;
       if (!fiveDayStep && !monthStart) return "";
@@ -719,27 +722,30 @@
       if (!day[metric.loggedKey]) return "";
       return `<circle class="signal-chart-point" cx="${x(index)}" cy="${y(day[metric.key])}" r="${requestedDays === 7 ? 3.7 : 2.6}"><title>${dateFormat.format(day.date)}, care day ending ${dateFormat.format(day.careDayEnd)} at 8:00 PM · ${metric.valueFormat(day[metric.key])}</title></circle>`;
     }).join("");
-    const pointValues = requestedDays === 7 ? days.map((day, index) => {
+    let previousDotValue = null;
+    let previousLabelBelow = false;
+    const pointValues = (requestedDays === 7 || metric.key === "feeds" || metric.key === "diapers") ? days.map((day, index) => {
       if (!day[metric.loggedKey]) return "";
-      const previous = days[index - 1];
-      const next = days[index + 1];
-      const slope = previous?.[metric.loggedKey] ? day[metric.key] - previous[metric.key] : next?.[metric.loggedKey] ? next[metric.key] - day[metric.key] : 0;
-      const offset = slope < 0 ? 17 : -9;
+      const currentValue = day[metric.key];
+      const below = previousDotValue !== null && (currentValue < previousDotValue || (currentValue === previousDotValue && !previousLabelBelow));
+      const offset = below ? 17 : -9;
+      previousDotValue = currentValue;
+      previousLabelBelow = below;
       const value = metric.axisFormat ? metric.axisFormat(day[metric.key]) : Math.round(day[metric.key]);
       return `<text class="signal-chart-value" x="${x(index)}" y="${y(day[metric.key]) + offset}" text-anchor="middle">${value}</text>`;
     }).join("") : "";
     const hasValues = observed.length > 0;
     const band = referenceDays.length ? `<path class="signal-reference-band" d="${trendReferenceBand(referenceDays, rangeFor, (index) => x(firstReferenceIndex + index), y)}" />` : "";
     const birth = renderBirthBoundary(days, plot, x, height);
-    return `<article class="signal-trend-card signal-trend-${metric.key}"><header class="signal-trend-heading"><strong>${metric.label}</strong></header><div class="signal-line-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric.label} over the last ${requestedDays} care days, with an age-adjusted reference range${birth.marker ? "; Cam’s birth day is marked" : ""}">${birth.background}${axis}${band}${birth.marker}${linePath ? `<path class="signal-chart-line" d="${linePath.trim()}" />` : ""}${points}${pointValues}${dateLabels}${hasValues ? "" : `<text class="signal-chart-empty" x="${plot.left + plotWidth / 2}" y="${plot.top + plotHeight / 2}" text-anchor="middle">No logged ${metric.label.toLowerCase()} yet</text>`}</svg></div></article>`;
+    return `<article class="signal-trend-card signal-trend-${metric.key}${requestedDays === 30 ? " signal-trend-30" : ""}"><header class="signal-trend-heading"><strong>${metric.label}</strong></header><div class="signal-line-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric.label} over the last ${requestedDays} care days, with an age-adjusted reference range${birth.marker ? "; Cam’s birth day is marked" : ""}">${birth.background}${axis}${band}${birth.marker}${linePath ? `<path class="signal-chart-line" d="${linePath.trim()}" />` : ""}${points}${pointValues}${dateLabels}${hasValues ? "" : `<text class="signal-chart-empty" x="${plot.left + plotWidth / 2}" y="${plot.top + plotHeight / 2}" text-anchor="middle">No logged ${metric.label.toLowerCase()} yet</text>`}</svg></div></article>`;
   }
 
   function renderTrendSignals(dayCount) {
     const days = statsTrendDays(dayCount);
     const metrics = [
-      { key: "feeds", loggedKey: "feedsLogged", rangeKey: "feeds", label: "Feeds", unit: "/day", scaleMax: (max) => Math.ceil(max * 1.2 / 2) * 2, valueFormat: (value) => `${Number(value.toFixed(1))} / day` },
+      { key: "feeds", loggedKey: "feedsLogged", rangeKey: "feeds", label: "Feeds", unit: "No.", scaleMax: (max) => Math.ceil(max * 1.2 / 2) * 2, valueFormat: (value) => `${Number(value.toFixed(1))} feeds` },
       { key: "milk", loggedKey: "milkLogged", rangeKey: "bottleMl", label: "Milk", unit: "ml", scaleMax: (max) => Math.ceil(max * 1.15 / 100) * 100, valueFormat: (value) => `${Math.round(value)} ml` },
-      { key: "diapers", loggedKey: "diapersLogged", rangeKey: "diapers", label: "Diapers", unit: "/day", scaleMax: (max) => Math.ceil(max * 1.2 / 2) * 2, valueFormat: (value) => `${Number(value.toFixed(1))} / day` },
+      { key: "diapers", loggedKey: "diapersLogged", rangeKey: "diapers", label: "Diapers", unit: "No.", scaleMax: (max) => Math.ceil(max * 1.2 / 2) * 2, valueFormat: (value) => `${Number(value.toFixed(1))} diapers` },
       { key: "sleep", loggedKey: "sleepLogged", rangeKey: "sleepHours", label: "Sleep", unit: "h", scaleMax: (max) => Math.max(24, Math.ceil(max * 1.1 / 2) * 2), axisFormat: (value) => Number(value.toFixed(1)), valueFormat: (value) => `${Number(value.toFixed(1))}h` }
     ];
     $("#stats-trend-charts").innerHTML = metrics.map((metric) => renderSignalTrend(metric, days, dayCount)).join("");
@@ -965,7 +971,7 @@
     const tickCount = days.length <= 7 ? days.length : 6;
     const labels = Array.from({ length: tickCount }, (_, tick) => {
       const index = Math.round(tick * (days.length - 1) / Math.max(1, tickCount - 1));
-      return `<text class="chart-date-label" x="${x(index)}" y="${height - 8}" text-anchor="middle">${dateFormat.format(days[index].date)}</text>`;
+      return `<text class="chart-date-label" x="${x(index)}" y="${height - 8}" text-anchor="middle">${dayCount === 7 && index !== days.length - 1 ? days[index].date.getDate() : dateFormat.format(days[index].date)}</text>`;
     }).join("");
     const points = days.map((day, index) => {
       if (day.beforeBirth) return "";
@@ -1007,6 +1013,8 @@
     const x = (hours) => plot.left + (Math.max(0, Math.min(24, hours)) / 24) * (rightEdge - plot.left);
     const y = (value) => bottomEdge - (value / scaleMax) * plotHeight;
     const axis = renderChartYAxis(plot, width, scaleMax, y, "ml");
+    const dayStartX = x(10);
+    const dayNightBackground = `<rect class="session-chart-night" x="${plot.left}" y="${plot.top}" width="${dayStartX - plot.left}" height="${plotHeight}" /><rect class="session-chart-day" x="${dayStartX}" y="${plot.top}" width="${rightEdge - dayStartX}" height="${plotHeight}" /><line class="session-chart-transition" x1="${dayStartX}" y1="${plot.top}" x2="${dayStartX}" y2="${bottomEdge}" />`;
     const hourTicks = ["8 PM", "12 AM", "4 AM", "8 AM", "12 PM", "4 PM", "8 PM"].map((label, index) => {
       const tickX = x(index * 4);
       const anchor = index === 6 ? "end" : "middle";
@@ -1045,7 +1053,7 @@
     });
     const renderLayer = (key) => plottedSeries.map((day) => day[key]).join("");
     const counts = series.map((day) => `${day.events.length} pumps (${day.label} - ${day.date})`).join(", ");
-    $("#pump-session-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Millilitres per pump by time across three care days. ${counts}">${axis}${hourTicks}${renderLayer("leader")}${renderLayer("line")}${renderLayer("label")}</svg>`;
+    $("#pump-session-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Millilitres per pump by time across three care days, with night from 8:00 PM to 6:00 AM and daytime from 6:00 AM to 8:00 PM. ${counts}">${dayNightBackground}${axis}${hourTicks}${renderLayer("leader")}${renderLayer("line")}${renderLayer("label")}</svg>`;
   }
 
   function renderPump() {
@@ -1247,7 +1255,15 @@
     renderSession();
   }
 
-  function showToast() {}
+  function showToast(message, success = true) {
+    const toast = $("#activity-toast");
+    if (!toast || !message) return;
+    clearTimeout(toastDismissTimer);
+    toast.textContent = message;
+    toast.dataset.tone = success ? "success" : "info";
+    toast.classList.add("visible");
+    toastDismissTimer = setTimeout(() => toast.classList.remove("visible"), 3000);
+  }
 
   function commitActivities(events, message = "Activity logged", onCommit = null) {
     if (onCommit) onCommit();
@@ -1287,7 +1303,7 @@
     $("#wake-yes").addEventListener("click", () => {
       const sleepEvent = createStoppedSleepEvent(pendingActivity?.wakeTime || now());
       if (pendingActivity) {
-        commitActivities([sleepEvent, pendingActivity.event], pendingActivity.message, pendingActivity.onCommit);
+        commitActivities([sleepEvent, pendingActivity.event], sleepEvent ? `${pendingActivity.message} · sleep ended` : pendingActivity.message, pendingActivity.onCommit);
         return;
       }
       if (sleepEvent) commitActivities([sleepEvent], `Sleep ended when the ${activityLabel} began`);
@@ -1310,16 +1326,30 @@
     saveState();
     renderAll();
     closeSheet();
-    showToast("Entry deleted", true);
+    showToast(`${event.title} deleted`);
+  }
+
+  function openDeleteActivityConfirmation(eventId) {
+    const event = state.events.find((item) => item.id === eventId);
+    if (!event) return;
+    openSheet(`
+      <header class="sheet-header"><p class="eyebrow">Delete activity</p><h2 id="sheet-title">Delete ${escapeHtml(event.title)}?</h2><p class="sheet-subtitle">This removes the entry from the family record on all devices. This cannot be undone.</p></header>
+      <div class="delete-warning"><span>Check this is the right activity before deleting.</span></div>
+      <div class="sheet-actions two"><button class="sheet-secondary" id="cancel-delete" type="button">Keep entry</button><button class="sheet-danger" id="confirm-delete" type="button">Delete entry</button></div>
+    `);
+    $("#cancel-delete").addEventListener("click", closeSheet);
+    $("#confirm-delete").addEventListener("click", () => deleteActivity(eventId));
   }
 
   function openSheet(html) {
+    clearInterval(sleepPreviewTimer);
     $("#sheet-content").innerHTML = html;
     $("#sheet-backdrop").classList.add("open");
     $("#action-sheet").classList.add("open");
   }
 
   function closeSheet() {
+    clearInterval(sleepPreviewTimer);
     $("#sheet-backdrop").classList.remove("open");
     $("#action-sheet").classList.remove("open");
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
@@ -1617,24 +1647,73 @@
   }
 
   function openSleepSheet() {
+    const sleepRunning = Boolean(state.activeSessions.sleep);
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Rest time</p><h2 id="sheet-title">Sleep</h2><p class="sheet-subtitle">Backdate the start when you could not open the app right away.</p></header>
+      <header class="sheet-header sleep-sheet-header"><p class="eyebrow">Rest time</p><div class="sleep-sheet-title-row"><h2 id="sheet-title">Sleep</h2><button class="sleep-log-link" id="open-manual-sleep" type="button">Log past sleep</button></div><p class="sheet-subtitle">${sleepRunning ? "A sleep timer is running. You can still log an earlier sleep." : "Backdate the start when you could not open the app right away."}</p></header>
       <span class="choice-label">Baby fell asleep how many minutes ago?</span>
       <div class="wheel-picker"><button id="sleep-ago-minus" type="button" aria-label="Reduce minutes ago">−</button><span class="wheel-value"><small>more recent</small><strong id="sleep-ago-value">15 min</strong><em>earlier</em></span><button id="sleep-ago-plus" type="button" aria-label="Increase minutes ago">+</button></div>
-      <div class="sheet-actions"><button class="sheet-primary" id="start-sleep-backdated" type="button">Start from 15 min ago</button><button class="sheet-secondary" id="start-sleep" type="button">Start timer now</button></div>
+      <div class="sheet-actions"><button class="sheet-primary" id="start-sleep-backdated" type="button" ${sleepRunning ? "disabled" : ""}>Start timer</button><button class="sheet-secondary" id="start-sleep" type="button" ${sleepRunning ? "disabled" : ""}>Start timer now</button></div>
     `);
     let minutesAgo = 15;
-    bindWheel("sleep-ago", 15, 5, 180, 5, (value) => { minutesAgo = value; $("#start-sleep-backdated").textContent = `Start from ${value} min ago`; });
+    const updateStartTime = () => {
+      $("#start-sleep-backdated").textContent = `Start timer at ${formatTime(new Date(Date.now() - minutesAgo * 60000))}`;
+    };
+    bindWheel("sleep-ago", 15, 5, 180, 5, (value) => { minutesAgo = value; updateStartTime(); });
+    sleepPreviewTimer = setInterval(updateStartTime, 15000);
+    $("#open-manual-sleep").addEventListener("click", openManualSleepSheet);
     const startSleep = (backdateMinutes) => {
       if (state.activeSessions.sleep) { closeSheet(); showToast("Sleep timer is already running", false); return; }
-      state.activeSessions.sleep = { startedAt: new Date(Date.now() - backdateMinutes * 60000).toISOString() };
+      const startedAt = new Date(Date.now() - backdateMinutes * 60000);
+      state.activeSessions.sleep = { startedAt: startedAt.toISOString() };
       saveState();
       renderSession();
       closeSheet();
-      showToast(backdateMinutes ? `Sleep started ${backdateMinutes} min ago` : "Sleep timer started", false);
+      showToast(backdateMinutes ? `Sleep timer started at ${formatTime(startedAt)}` : "Sleep timer started", false);
     };
     $("#start-sleep-backdated").addEventListener("click", () => startSleep(minutesAgo));
     $("#start-sleep").addEventListener("click", () => startSleep(0));
+  }
+
+  function openManualSleepSheet() {
+    const endedAt = now();
+    const startedAt = new Date(endedAt.getTime() - 60 * 60000);
+    openSheet(`
+      <header class="sheet-header"><p class="eyebrow">Past rest</p><h2 id="sheet-title">Log a sleep</h2><p class="sheet-subtitle">Choose when Cam fell asleep and woke up, including across midnight.</p></header>
+      <label class="choice-label" for="sleep-log-start">Fell asleep</label><input class="sheet-input" id="sleep-log-start" type="datetime-local" min="${toLocalDateTimeValue(BABY.bornAt)}" max="${toLocalDateTimeValue(endedAt)}" value="${toLocalDateTimeValue(startedAt)}" />
+      <label class="choice-label" for="sleep-log-end">Woke up</label><input class="sheet-input" id="sleep-log-end" type="datetime-local" min="${toLocalDateTimeValue(BABY.bornAt)}" max="${toLocalDateTimeValue(endedAt)}" value="${toLocalDateTimeValue(endedAt)}" />
+      <p class="sleep-log-duration" id="sleep-log-duration"></p><p class="sleep-log-error" id="sleep-log-error" role="alert" hidden></p>
+      <div class="sheet-actions"><button class="sheet-primary" id="save-sleep-log" type="button">Log sleep</button></div>
+    `);
+    const startInput = $("#sleep-log-start");
+    const endInput = $("#sleep-log-end");
+    const error = $("#sleep-log-error");
+    const readTimes = () => ({ start: new Date(startInput.value), end: new Date(endInput.value) });
+    const renderDuration = () => {
+      const { start, end } = readTimes();
+      error.hidden = true;
+      $("#sleep-log-duration").textContent = Number.isFinite(start.getTime()) && Number.isFinite(end.getTime()) && end > start
+        ? `Sleep duration · ${formatDuration((end - start) / 60000)}`
+        : "Choose a start before the wake-up time.";
+    };
+    startInput.addEventListener("input", renderDuration);
+    endInput.addEventListener("input", renderDuration);
+    $("#save-sleep-log").addEventListener("click", () => {
+      const { start, end } = readTimes();
+      const currentTime = now();
+      let problem = "";
+      if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) problem = "Choose both sleep times.";
+      else if (start < BABY.bornAt) problem = "Sleep cannot start before Cam was born.";
+      else if (end > currentTime) problem = "Wake-up time cannot be in the future.";
+      else if (end <= start) problem = "Wake-up time must be after sleep began.";
+      if (problem) { error.textContent = problem; error.hidden = false; return; }
+      const durationMin = Math.max(1, Math.round((end - start) / 60000));
+      addActivity(makeEvent("sleep", "Sleep", formatDuration(durationMin), end, {
+        durationMin,
+        startAt: start.toISOString(),
+        endAt: end.toISOString()
+      }), "Sleep logged");
+    });
+    renderDuration();
   }
 
   function openBathSheet() {
@@ -1681,12 +1760,13 @@
       }, { confirmNowLabel: `Log ${activity.title.toLowerCase()} now` });
     });
     $("#start-other-activity").addEventListener("click", () => {
-      if (state.activeSessions?.other) { closeSheet(); return; }
+      if (state.activeSessions?.other) { closeSheet(); showToast("An activity timer is already running", false); return; }
       const sleepWasRunning = Boolean(state.activeSessions?.sleep);
       state.activeSessions.other = { activityKey, type: activity.type, title: activity.title, note: $("#other-activity-note").value.trim(), startedAt: now().toISOString() };
       saveState();
       renderSession();
       closeSheet();
+      showToast(`${activity.title} timer started`, false);
       if (sleepWasRunning) openWakeConfirmation(activity.title.toLowerCase());
     });
   }
@@ -1879,6 +1959,7 @@
       saveState();
       renderAll();
       closeSheet();
+      showToast(`${event.title} updated`);
     });
   }
 
@@ -1916,7 +1997,7 @@
     if (!event) return;
     const timeRange = timeRangeFor(event);
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">${formatTime(event.timestamp)}</p><h2 id="sheet-title">${event.title}</h2><p class="sheet-subtitle">${event.detail || "No extra details"}</p></header>
+      <header class="sheet-header"><p class="eyebrow">${formatTime(event.timestamp)}</p><h2 id="sheet-title">${escapeHtml(event.title)}</h2><p class="sheet-subtitle">${escapeHtml(event.detail || "No extra details")}</p></header>
       <div class="mini-report">
         <div class="mini-report-row"><span>Recorded</span><strong>${new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(event.timestamp))}</strong></div>
         ${timeRange ? `<div class="mini-report-row"><span>From–to</span><strong>${timeRange}</strong></div>` : ""}
@@ -1924,7 +2005,7 @@
       </div>
       <div class="sheet-actions"><button class="sheet-danger" id="delete-entry" type="button">Delete entry</button></div>
     `);
-    $("#delete-entry").addEventListener("click", () => deleteActivity(event.id));
+    $("#delete-entry").addEventListener("click", () => openDeleteActivityConfirmation(event.id));
   }
 
   function openRangeInfo() {
@@ -2013,6 +2094,7 @@
         saveState();
         renderAll();
         closeSheet();
+        showToast("Vaccine updated");
       } else {
         addActivity(makeEvent("vaccine", vaccineKind, isCompleted ? "Completed" : "Scheduled", timestamp, data), isCompleted ? "Vaccine recorded" : "Vaccine scheduled");
       }
@@ -2038,6 +2120,7 @@
       saveState();
       renderAll();
       closeSheet();
+      showToast("Vaccine marked done");
     });
   }
 
@@ -2054,7 +2137,7 @@
     $('[data-close-sheet]')?.addEventListener("click", closeSheet);
     $("#edit-vaccine-record").addEventListener("click", () => openVaccineForm("edit", event));
     $("#complete-vaccine-record")?.addEventListener("click", () => openCompleteVaccineSheet(event.id));
-    $("#delete-vaccine-record").addEventListener("click", () => deleteActivity(event.id));
+    $("#delete-vaccine-record").addEventListener("click", () => openDeleteActivityConfirmation(event.id));
   }
 
   function openSettings() {
@@ -2080,6 +2163,7 @@
     saveState();
     renderAll();
     closeSheet();
+    showToast("Activity history cleared");
   }
 
   async function signOutLittleLog() {
@@ -2120,7 +2204,7 @@
       const action = button.dataset.action;
       if (action === "feed") openFeedSheet();
       if (action === "diaper") openDiaperSheet();
-      if (action === "sleep") state.activeSessions?.sleep ? showToast("Sleep is already running · use the timer card to stop", false) : openSleepSheet();
+      if (action === "sleep") openSleepSheet();
       if (action === "other") openOtherActivitiesSheet();
     }));
     $("#sheet-close").addEventListener("click", closeSheet);
