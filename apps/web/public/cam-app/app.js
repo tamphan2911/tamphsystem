@@ -259,14 +259,6 @@
     return state.events.filter((event) => !["vaccine", "pump"].includes(event.type) && new Date(event.timestamp) >= cutoff && new Date(event.timestamp) <= currentTime);
   }
 
-  function eventsForToday() {
-    const window = currentCareWindow();
-    return state.events.filter((event) => {
-      const recordedAt = new Date(event.timestamp);
-      return !["vaccine", "pump"].includes(event.type) && recordedAt >= window.start && recordedAt < window.end && recordedAt <= now();
-    });
-  }
-
   function dailyReportEvents(dayOffset = 0) {
     const windowEnd = startOfDay();
     windowEnd.setDate(windowEnd.getDate() + dayOffset);
@@ -386,8 +378,7 @@
     ].filter(({ date }) => firstTime < date.getTime() && date.getTime() <= lastTime);
   }
 
-  function timelineRowsFor(predicate) {
-    const at = now();
+  function timelineRowsFor(predicate, at = now()) {
     const current = currentCareWindow(at);
     const previous = careWindowAtOffset(-1, at);
     const events = eventsInCareWindow({ start: previous.start, end: current.end }, predicate, at);
@@ -437,6 +428,7 @@
           endAt: displayEnd.toISOString()
         },
         timelineKind: timelineDayPart(midpoint),
+        timelineContinues: endsAtCheckpoint,
         timelineSortTime: displayEnd.getTime()
       };
     });
@@ -565,18 +557,28 @@
     $("#last-feed-detail").textContent = feed.detail;
   }
 
-  function activeSleepMinutes(window = currentCareWindow()) {
-    if (!state.activeSessions?.sleep) return 0;
-    const startedAt = Math.max(new Date(state.activeSessions.sleep.startedAt).getTime(), window.start.getTime());
-    const endedAt = Math.min(Date.now(), window.end.getTime());
-    return Math.max(0, (endedAt - startedAt) / 60000);
+  function statsForCareWindow(window, at) {
+    const events = eventsInCareWindow(window, (event) => !["vaccine", "pump"].includes(event.type), at);
+    const totals = totalsFor(events);
+    const start = window.start.getTime();
+    const end = Math.min(window.end.getTime(), at.getTime());
+    const overlapMinutes = (from, to) => Math.max(0, Math.min(to, end) - Math.max(from, start)) / 60000;
+    const completedSleep = state.events.reduce((minutes, event) => {
+      if (event.type !== "sleep" || new Date(event.timestamp) > at) return minutes;
+      const interval = timelineInterval(event);
+      return interval.timed ? minutes + overlapMinutes(interval.start.getTime(), interval.end.getTime()) : minutes;
+    }, 0);
+    const sleepStart = new Date(state.activeSessions?.sleep?.startedAt).getTime();
+    const activeSleep = Number.isFinite(sleepStart) ? overlapMinutes(sleepStart, at.getTime()) : 0;
+    return { ...totals, sleepMinutes: completedSleep + activeSleep };
   }
 
   function renderTodaySignals() {
-    const totals = totalsFor(eventsForToday());
+    const at = now();
+    const totals = statsForCareWindow(currentCareWindow(at), at);
     const reference = referenceForAgeDays();
-    const sleepMinutes = totals.sleepMinutes + activeSleepMinutes();
-    const milkMl = totals.breastMilk + totals.formula;
+    const sleepMinutes = totals.sleepMinutes;
+    const milkMl = totals.bottles;
     const countScaleMax = (range, value) => Math.ceil(Math.max(range.max + 4, range.max * 1.35, value * 1.1) / 2) * 2;
     const milkScaleMax = Math.ceil(Math.max(reference.bottleMl.max + 200, reference.bottleMl.max * 1.35, milkMl * 1.1) / 100) * 100;
     const sleepScaleMax = Math.ceil(Math.max(24, (sleepMinutes / 60) * 1.1) / 2) * 2;
@@ -596,26 +598,23 @@
 
   function statsTrendDays(dayCount) {
     const days = [];
+    const at = now();
     for (let offset = -(dayCount - 1); offset <= 0; offset += 1) {
-      const window = careWindowAtOffset(offset);
+      const window = careWindowAtOffset(offset, at);
       if (window.end <= BABY.bornAt) continue;
-      const dayEvents = eventsInCareWindow(window, (event) => !["vaccine", "pump"].includes(event.type));
-      const totals = totalsFor(dayEvents);
-      const activeSleep = offset === 0 ? activeSleepMinutes(window) : 0;
+      const totals = statsForCareWindow(window, at);
       const reference = referenceForAgeDays(babyAgeDays(window.end));
       days.push({
-        date: new Date(window.end),
-        window,
-        current: offset === 0,
+        date: window.end,
         reference,
         feeds: totals.feeds,
-        milk: totals.breastMilk + totals.formula,
+        milk: totals.bottles,
         diapers: totals.diapers,
-        sleep: (totals.sleepMinutes + activeSleep) / 60,
-        feedsLogged: dayEvents.some((event) => event.type === "feed"),
-        milkLogged: dayEvents.some((event) => event.type === "feed" && event.data?.mode === "bottle" && Number(event.data?.amount || 0) > 0),
-        diapersLogged: dayEvents.some((event) => event.type === "diaper"),
-        sleepLogged: dayEvents.some((event) => event.type === "sleep") || activeSleep > 0
+        sleep: totals.sleepMinutes / 60,
+        feedsLogged: totals.feeds > 0,
+        milkLogged: totals.bottles > 0,
+        diapersLogged: totals.diapers > 0,
+        sleepLogged: totals.sleepMinutes > 0
       });
     }
     return days;
@@ -660,18 +659,19 @@
       const gridY = y(value);
       return `<line class="signal-chart-grid" x1="${plot.left}" y1="${gridY}" x2="${width - plot.right}" y2="${gridY}" /><text class="signal-chart-axis" x="${plot.left - 5}" y="${gridY + 3}" text-anchor="end">${metric.axisFormat(value)}</text>`;
     }).join("");
-    const labelEvery = days.length <= 8 ? 1 : Math.max(1, Math.floor((days.length - 1) / 5));
-    const dateLabels = days.map((day, index) => {
-      if (index % labelEvery && index !== days.length - 1) return "";
-      const label = day.current ? "Today" : new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(day.date);
-      return `<text class="signal-chart-date" x="${x(index)}" y="${height - 8}" text-anchor="middle">${label}</text>`;
+    const lastIndex = days.length - 1;
+    const tickCount = days.length <= 7 ? days.length : 6;
+    const dateFormat = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" });
+    const dateLabels = Array.from({ length: tickCount }, (_, tick) => {
+      const index = Math.round(tick * lastIndex / Math.max(1, tickCount - 1));
+      const anchor = index === 0 ? "start" : index === lastIndex ? "end" : "middle";
+      return `<text class="signal-chart-date" x="${x(index)}" y="${height - 8}" text-anchor="${anchor}">${dateFormat.format(days[index].date)}</text>`;
     }).join("");
     const points = days.map((day, index) => {
       if (!day[metric.loggedKey]) return "";
-      const dateLabel = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(day.date);
-      return `<circle class="signal-chart-point" cx="${x(index)}" cy="${y(day[metric.key])}" r="3"><title>${dateLabel} · ${metric.valueFormat(day[metric.key])}</title></circle>`;
+      return `<circle class="signal-chart-point" cx="${x(index)}" cy="${y(day[metric.key])}" r="3"><title>${dateFormat.format(day.date)}, care day ending at 8:00 PM · ${metric.valueFormat(day[metric.key])}</title></circle>`;
     }).join("");
-    const currentRange = rangeFor(days[days.length - 1]);
+    const currentRange = days.length ? rangeFor(days[lastIndex]) : referenceForAgeDays()[metric.rangeKey];
     const hasValues = observed.length > 0;
     return `<article class="signal-trend-card signal-trend-${metric.key}"><header class="signal-trend-heading"><strong>${metric.label}</strong><span><i></i>Reference ${metric.valueFormat(currentRange.min)}–${metric.valueFormat(currentRange.max)}</span></header><div class="signal-line-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric.label} over the available days in the last ${requestedDays} days, with an age-adjusted reference range">${grid}<path class="signal-reference-band" d="${trendReferenceBand(days, rangeFor, x, y)}" />${linePath ? `<path class="signal-chart-line" d="${linePath.trim()}" />` : ""}${points}${dateLabels}${hasValues ? "" : `<text class="signal-chart-empty" x="${plot.left + plotWidth / 2}" y="${plot.top + plotHeight / 2}" text-anchor="middle">No logged ${metric.label.toLowerCase()} yet</text>`}</svg></div></article>`;
   }
@@ -689,8 +689,8 @@
 
   function renderStats() {
     const todaySelected = state.statsPeriod === "today";
-    $("#stats-today-panel").classList.toggle("hidden", !todaySelected);
-    $("#stats-trend-panel").classList.toggle("hidden", todaySelected);
+    $("#stats-today-panel").hidden = !todaySelected;
+    $("#stats-trend-panel").hidden = todaySelected;
     if (todaySelected) renderTodaySignals();
     else renderTrendSignals(state.statsPeriod === "month" ? 30 : 7);
   }
@@ -716,37 +716,91 @@
     return pumpEventsForCareDay();
   }
 
+  function pumpTotalMl(event) {
+    return Number(event.data?.totalMl || Number(event.data?.leftMl || 0) + Number(event.data?.rightMl || 0));
+  }
+
   function pumpTotals(events) {
     return events.reduce((totals, event) => {
-      const leftMl = Number(event.data?.leftMl || 0);
-      const rightMl = Number(event.data?.rightMl || 0);
       totals.count += 1;
       totals.durationMin += Number(event.data?.durationMin || 0);
-      totals.leftMl += leftMl;
-      totals.rightMl += rightMl;
-      totals.totalMl += Number(event.data?.totalMl || leftMl + rightMl);
+      totals.leftMl += Number(event.data?.leftMl || 0);
+      totals.rightMl += Number(event.data?.rightMl || 0);
+      totals.totalMl += pumpTotalMl(event);
       return totals;
     }, { count: 0, durationMin: 0, leftMl: 0, rightMl: 0, totalMl: 0 });
   }
 
+  function pumpTimelineDetails(at) {
+    const pumps = state.events
+      .filter((event) => event.type === "pump" && new Date(event.timestamp) <= at)
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const details = new Map();
+    let dayStart = null;
+    let number = 0;
+    let previousTime = null;
+    for (const pump of pumps) {
+      const time = new Date(pump.timestamp);
+      const start = currentCareWindow(time).start.getTime();
+      number = start === dayStart ? number + 1 : 1;
+      dayStart = start;
+      const gap = previousTime === null ? null : (time - previousTime) / 60000;
+      details.set(pump.id, { number, gap, durationMin: Number(pump.data?.durationMin || 0) });
+      previousTime = time;
+    }
+    return details;
+  }
+
   function renderPumpTimeline() {
     const timeline = $("#pump-timeline");
-    const rows = timelineRowsFor((event) => event.type === "pump");
+    const at = now();
+    const rows = timelineRowsFor((event) => event.type === "pump", at);
+    timeline.classList.toggle("has-entries", rows.length > 0);
     if (!rows.length) {
       timeline.innerHTML = '<div class="pump-timeline-empty">No milk pumping logged in either care day yet.</div>';
       return;
     }
+    const details = pumpTimelineDetails(at);
+    const ordinal = new Intl.PluralRules("en", { type: "ordinal" });
+    const suffix = { one: "st", two: "nd", few: "rd", other: "th" };
     timeline.innerHTML = rows.map((row) => {
       if (row.type === "checkpoint") {
         const checkpointIcon = row.checkpoint.kind === "day" ? icons.sunbathing : row.checkpoint.kind === "date" ? icons.date : icons.sleep;
         return `<div class="timeline-checkpoint pump-timeline-checkpoint ${row.checkpoint.kind}">${checkpointIcon}<span>${row.checkpoint.label}</span></div>`;
       }
       const event = row.event;
+      const eventId = escapeHtml(event.id);
+      const { number, gap, durationMin } = details.get(event.id);
+      const title = `${number}${suffix[ordinal.select(number)]} pump`;
+      const time = formatTime(event.timestamp);
+      const duration = formatDuration(event.timelineContinues ? event.data.durationMin : durationMin);
+      const gapText = gap === null || event.timelineContinues ? "" : `<span class="pump-entry-gap">${formatDuration(gap)} since last pump</span>`;
+      const meta = `<div class="pump-entry-meta"><span><time datetime="${escapeHtml(event.timestamp)}">${time}</time> · ${duration}</span>${gapText}</div>`;
+      if (event.timelineContinues) {
+        return `<article class="pump-event pump-event-segment">${meta}<button class="pump-entry-continuation" type="button" data-pump-event-id="${eventId}">Pump continues above</button></article>`;
+      }
       const leftMl = Number(event.data?.leftMl || 0);
       const rightMl = Number(event.data?.rightMl || 0);
-      const durationMin = Number(event.data?.durationMin || 0);
+      const totalMl = pumpTotalMl(event);
       const note = String(event.data?.note || "").trim();
-      return `<article class="pump-entry"><div class="pump-entry-head"><span class="pump-entry-icon">${icons.pump}</span><button class="pump-entry-title" data-pump-event-id="${event.id}" type="button"><strong>Milk pump</strong><small>${formatTime(event.timestamp)} · ${formatDuration(durationMin)}</small></button><span class="pump-entry-actions"><button class="pump-entry-edit" data-edit-pump-id="${event.id}" type="button" aria-label="Edit milk pump"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg></button></span></div><div class="pump-sides"><span class="pump-side left"><small>Left breast</small><strong>${leftMl} ml</strong></span><span class="pump-side right"><small>Right breast</small><strong>${rightMl} ml</strong></span></div>${note ? `<p class="pump-entry-note">${escapeHtml(note)}</p>` : ""}</article>`;
+      return `
+        <article class="pump-event">
+          ${meta}
+          <div class="pump-entry">
+            <div class="pump-entry-head">
+              <span class="pump-entry-icon" aria-hidden="true">${number}</span>
+              <button class="pump-entry-title" data-pump-event-id="${eventId}" type="button">
+                <strong>${title}</strong><strong class="pump-entry-total">${totalMl} ml</strong>
+              </button>
+              <button class="pump-entry-edit" data-edit-pump-id="${eventId}" type="button" aria-label="Edit ${title}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg></button>
+            </div>
+            <div class="pump-sides">
+              <span class="pump-side pump-left">Left breast: <strong>${leftMl} ml</strong></span>
+              <span class="pump-side pump-right">Right breast: <strong>${rightMl} ml</strong></span>
+            </div>
+            ${note ? `<p class="pump-entry-note">${escapeHtml(note)}</p>` : ""}
+          </div>
+        </article>`;
     }).join("");
   }
 
@@ -757,7 +811,16 @@
     const averageDuration = totals.count ? totals.durationMin / divisor : 0;
     const averageLeft = totals.count ? totals.leftMl / divisor : 0;
     const averageRight = totals.count ? totals.rightMl / divisor : 0;
-    $("#pump-summary").innerHTML = `<div class="pump-overview"><span><small>Number of pumps</small><strong>${totals.count}</strong></span><span><small>Average duration</small><strong>${formatDuration(averageDuration)}</strong></span><span><small>Total duration</small><strong>${formatDuration(totals.durationMin)}</strong></span></div><div class="pump-side-summary"><article><h4>Left breast</h4><div><small>Total pumped</small><strong>${Math.round(totals.leftMl)} ml</strong></div><div><small>Average / pump</small><strong>${Math.round(averageLeft)} ml</strong></div></article><article><h4>Right breast</h4><div><small>Total pumped</small><strong>${Math.round(totals.rightMl)} ml</strong></div><div><small>Average / pump</small><strong>${Math.round(averageRight)} ml</strong></div></article></div>`;
+    $("#pump-summary").innerHTML = `
+      <div class="pump-overview">
+        <span><small>No. of pumps</small><strong>${totals.count}</strong></span>
+        <span><small>Avg. duration</small><strong>${formatDuration(averageDuration)}</strong></span>
+        <span><small>Total duration</small><strong>${formatDuration(totals.durationMin)}</strong></span>
+      </div>
+      <div class="pump-side-summary">
+        <article class="pump-left"><h4>Left breast</h4><div><small>Total pumped</small><strong>${Math.round(totals.leftMl)} ml</strong></div><div><small>Average / pump</small><strong>${Math.round(averageLeft)} ml</strong></div></article>
+        <article class="pump-right"><h4>Right breast</h4><div><small>Total pumped</small><strong>${Math.round(totals.rightMl)} ml</strong></div><div><small>Average / pump</small><strong>${Math.round(averageRight)} ml</strong></div></article>
+      </div>`;
   }
 
   function renderPumpChart() {
@@ -799,7 +862,6 @@
       const label = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(day.date);
       return `<circle class="pump-point" cx="${x(index)}" cy="${y(day.pumped)}" r="${dayCount === 7 ? 3 : 2}"><title>${label} · ${day.pumped} ml pumped</title></circle><circle class="fed-point" cx="${x(index)}" cy="${y(day.fed)}" r="${dayCount === 7 ? 3 : 2}"><title>${label} · ${day.fed} ml fed</title></circle>`;
     }).join("");
-    $("#pump-chart-window").textContent = `Last ${dayCount} care days · ending today`;
     $("#pump-line-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily milk pumped and milk fed in millilitres over the last ${dayCount} care days">${grid}<polyline class="pump-line" points="${pumpedPoints}" /><polyline class="fed-line" points="${fedPoints}" />${points}${labels}<text class="chart-unit-label" x="8" y="10">ml</text></svg>`;
   }
 
@@ -821,7 +883,7 @@
     const plot = { left: 42, right: 57, top: 13, bottom: 33 };
     const plotWidth = width - plot.left - plot.right;
     const plotHeight = height - plot.top - plot.bottom;
-    const observedMax = Math.max(0, ...series.flatMap((day) => day.events.map((event) => Number(event.data?.totalMl || Number(event.data?.leftMl || 0) + Number(event.data?.rightMl || 0)))));
+    const observedMax = Math.max(0, ...series.flatMap((day) => day.events.map(pumpTotalMl)));
     const scaleMax = Math.max(100, Math.ceil(observedMax / 50) * 50);
     const x = (hours) => plot.left + (Math.max(0, Math.min(24, hours)) / 24) * plotWidth;
     const y = (value) => plot.top + plotHeight - (Math.max(0, value) / scaleMax) * plotHeight;
@@ -839,7 +901,7 @@
       const points = day.events.map((event) => {
         const timestamp = new Date(event.timestamp);
         const hours = (timestamp.getTime() - day.window.start.getTime()) / 3600000;
-        const totalMl = Number(event.data?.totalMl || Number(event.data?.leftMl || 0) + Number(event.data?.rightMl || 0));
+        const totalMl = pumpTotalMl(event);
         return { x: x(hours), y: y(totalMl), totalMl, timestamp };
       });
       const path = points.length ? `M ${points.map((point) => `${point.x} ${point.y}`).join(" L ")}` : "";
@@ -849,7 +911,7 @@
       labelY = Math.min(plot.top + plotHeight - 3, labelY);
       usedLabelY.push(labelY);
       const leaderStart = points.length ? points[points.length - 1].x + 4 : width - plot.right;
-      return `${path ? `<path class="session-chart-line" style="--series-color:${day.color}" d="${path}" />` : ""}${dots}<line class="session-chart-leader" style="--series-color:${day.color}" x1="${leaderStart}" y1="${labelY}" x2="${width - 42}" y2="${labelY}" /><text class="session-chart-count" style="--series-color:${day.color}" x="${width - 3}" y="${labelY + 3}" text-anchor="end">${day.events.length} pump${day.events.length === 1 ? "" : "s"}</text>`;
+      return `${path ? `<path class="session-chart-line" style="--series-color:${day.color}" d="${path}" />` : ""}${dots}<line class="session-chart-leader" style="--series-color:${day.color}" x1="${leaderStart}" y1="${labelY}" x2="${width - 42}" y2="${labelY}" /><text class="session-chart-count" style="--series-color:${day.color}" x="${width - 34}" y="${labelY + 3}" text-anchor="middle">${day.events.length}</text>`;
     }).join("");
     $("#pump-session-legend").innerHTML = series.map((day) => `<span><i style="background:${day.color}"></i>${day.label}</span>`).join("");
     $("#pump-session-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Total millilitres for each pump by time across three care days">${grid}${hourTicks}${lines}<text class="session-chart-unit" x="8" y="10">ml</text></svg>`;
@@ -1219,8 +1281,8 @@
       <div class="wheel-picker pump-total-picker"><button id="pump-total-minus" type="button" aria-label="Reduce total pumped by 10 millilitres">−</button><span class="wheel-value"><small>less</small><strong id="pump-total-value">100 ml</strong><em>more</em></span><button id="pump-total-plus" type="button" aria-label="Increase total pumped by 10 millilitres">+</button></div>
       <span class="choice-label">Split by breast</span>
       <div class="pump-side-entry-grid">
-        <div class="pump-side-field"><strong>Left breast</strong><div class="pump-side-wheel"><button id="pump-left-minus" type="button" aria-label="Move 5 millilitres from left to right">−</button><span id="pump-left-value">50 ml</span><button id="pump-left-plus" type="button" aria-label="Move 5 millilitres from right to left">+</button></div></div>
-        <div class="pump-side-field"><strong>Right breast</strong><div class="pump-side-wheel"><button id="pump-right-minus" type="button" aria-label="Move 5 millilitres from right to left">−</button><span id="pump-right-value">50 ml</span><button id="pump-right-plus" type="button" aria-label="Move 5 millilitres from left to right">+</button></div></div>
+        <div class="pump-side-field pump-left"><strong>Left breast</strong><div class="pump-side-wheel"><button id="pump-left-minus" type="button" aria-label="Move 5 millilitres from left to right">−</button><span id="pump-left-value">50 ml</span><button id="pump-left-plus" type="button" aria-label="Move 5 millilitres from right to left">+</button></div></div>
+        <div class="pump-side-field pump-right"><strong>Right breast</strong><div class="pump-side-wheel"><button id="pump-right-minus" type="button" aria-label="Move 5 millilitres from right to left">−</button><span id="pump-right-value">50 ml</span><button id="pump-right-plus" type="button" aria-label="Move 5 millilitres from left to right">+</button></div></div>
       </div>
       <span class="choice-label">Pump duration</span>
       <div class="wheel-picker"><button id="pump-duration-minus" type="button" aria-label="Reduce pump duration">−</button><span class="wheel-value"><small>shorter</small><strong id="pump-duration-value">15 min</strong><em>longer</em></span><button id="pump-duration-plus" type="button" aria-label="Increase pump duration">+</button></div>
@@ -1632,7 +1694,11 @@
     const breastFields = event.type === "feed" && event.data?.mode === "breast" ? `
       <label class="choice-label" for="edit-feed-side">Side</label><select class="sheet-select" id="edit-feed-side"><option ${event.data?.side === "Left" ? "selected" : ""}>Left</option><option ${event.data?.side === "Right" ? "selected" : ""}>Right</option><option ${event.data?.side === "Both" ? "selected" : ""}>Both</option></select>` : "";
     const pumpFields = event.type === "pump" ? `
-      <span class="choice-label">Milk pumped</span><div class="pump-side-entry-grid"><label class="pump-side-field" for="edit-pump-left"><strong>Left breast</strong><input class="sheet-input" id="edit-pump-left" type="number" min="0" max="500" step="5" value="${Number(event.data?.leftMl || 0)}" /></label><label class="pump-side-field" for="edit-pump-right"><strong>Right breast</strong><input class="sheet-input" id="edit-pump-right" type="number" min="0" max="500" step="5" value="${Number(event.data?.rightMl || 0)}" /></label></div>` : "";
+      <span class="choice-label">Milk pumped</span>
+      <div class="pump-side-entry-grid">
+        <label class="pump-side-field pump-left" for="edit-pump-left"><strong>Left breast</strong><input class="sheet-input" id="edit-pump-left" type="number" min="0" max="500" step="5" value="${Number(event.data?.leftMl || 0)}" /></label>
+        <label class="pump-side-field pump-right" for="edit-pump-right"><strong>Right breast</strong><input class="sheet-input" id="edit-pump-right" type="number" min="0" max="500" step="5" value="${Number(event.data?.rightMl || 0)}" /></label>
+      </div>` : "";
     const diaperFields = event.type === "diaper" ? `
       <label class="choice-label" for="edit-diaper-kind">Diaper</label><select class="sheet-select" id="edit-diaper-kind"><option value="wet" ${event.data?.kind === "wet" ? "selected" : ""}>Wet</option><option value="dirty" ${event.data?.kind === "dirty" ? "selected" : ""}>Dirty</option></select>` : "";
     openSheet(`

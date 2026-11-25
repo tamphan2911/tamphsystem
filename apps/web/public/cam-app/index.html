@@ -9,7 +9,7 @@
       content="LittleLog infant feeding, diaper, sleep, and bath tracker"
     />
     <title>LittleLog — Cam’s Baby Care</title>
-    <link rel="stylesheet" href="./styles.css?v=20261124l" />
+    <link rel="stylesheet" href="./styles.css?v=20261125b" />
   </head>
   <body>
     <section class="sync-gate" id="sync-gate" aria-labelledby="sync-gate-title">
@@ -122,7 +122,7 @@
                   <button class="text-button" data-open="range-info" type="button">How comparisons work</button>
                 </section>
 
-                <section class="stats-trend-panel hidden" id="stats-trend-panel" aria-live="polite">
+                <section class="stats-trend-panel" id="stats-trend-panel" aria-live="polite" hidden>
                   <div class="stats-trend-charts" id="stats-trend-charts"></div>
                 </section>
 
@@ -139,7 +139,7 @@
                   <svg class="pump-log-plus" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
                 </button>
 
-                <div class="section-row pump-timeline-heading"><h3>Pump timeline</h3><span>Current + previous care day</span></div>
+                <div class="section-row pump-timeline-heading"><h3>Pump timeline</h3></div>
                 <div class="pump-timeline" id="pump-timeline" aria-live="polite"></div>
 
                 <article class="pump-summary-card">
@@ -152,13 +152,14 @@
                 </article>
 
                 <section class="pump-chart-section">
-                  <div class="pump-chart-heading"><span><small id="pump-chart-window">Last 7 care days · ending today</small></span><div class="pump-chart-toggle" role="group" aria-label="Milk chart period"><button class="active" data-pump-chart-days="7" type="button">7 days</button><button data-pump-chart-days="30" type="button">30 days</button></div></div>
-                  <div class="pump-chart-legend"><span><i class="pumped-line-key"></i>Pumped</span><span><i class="fed-line-key"></i>Cam fed</span></div>
+                  <div class="pump-chart-heading">
+                    <div class="pump-chart-legend"><span><i class="pumped-line-key"></i>Pumped</span><span><i class="fed-line-key"></i>Cam fed</span></div>
+                    <div class="pump-chart-toggle" role="group" aria-label="Milk chart period"><button class="active" data-pump-chart-days="7" type="button">7 days</button><button data-pump-chart-days="30" type="button">30 days</button></div>
+                  </div>
                   <div class="pump-line-chart" id="pump-line-chart" aria-label="Daily millilitres pumped compared with daily millilitres fed"></div>
                 </section>
 
                 <section class="pump-chart-section pump-session-chart-section">
-                  <div class="pump-session-chart-heading"><strong>Pumps across the last 3 care days</strong><small>8:00 PM → 8:00 PM next day</small></div>
                   <div class="pump-session-legend" id="pump-session-legend"></div>
                   <div class="pump-session-chart" id="pump-session-chart" aria-label="Pump amounts by time across the last three care days"></div>
                 </section>
@@ -242,6 +243,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20261125a"></script>
+    <script src="./app.js?v=20261125b"></script>
   </body>
 </html>
