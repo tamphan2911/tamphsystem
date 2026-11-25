@@ -722,6 +722,10 @@ svg {
 .chart-axis-grid { color: #e8e5ed; stroke-width: 1; }
 .chart-axis-tick, .chart-axis-unit { fill: #696576; stroke: none; font-size: var(--chart-axis-font, 9px); font-variant-numeric: tabular-nums; }
 .chart-axis-unit { font-weight: 800; }
+.chart-prebirth-area { fill: #efedf5; stroke: none; opacity: .78; }
+.chart-prebirth-label { fill: #948aa8; stroke: none; font-size: 10px; font-style: italic; }
+.chart-birth-line { stroke: #8f77bd; stroke-width: 1.6; stroke-dasharray: 3 3; }
+.chart-birth-label { fill: #7359a6; font-size: 10.5px; font-weight: 800; paint-order: stroke; stroke: #fff; stroke-width: 2px; stroke-linejoin: round; }
 .pump-line-chart .chart-date-label, .pump-session-chart .session-chart-date { fill: #696576; stroke: none; font-size: 11px; }
 .pump-line-chart .pump-line, .pump-line-chart .fed-line { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
 .pump-line-chart .pump-line { color: var(--plum); }

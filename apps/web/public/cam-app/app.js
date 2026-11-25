@@ -644,11 +644,14 @@
       const date = startOfDay(at);
       date.setDate(date.getDate() + offset);
       const beforeBirth = window.end <= BABY.bornAt;
+      const birthCareDay = window.start <= BABY.bornAt && BABY.bornAt < window.end;
       const totals = beforeBirth ? null : statsForCareWindow(window, at);
       const reference = beforeBirth ? null : referenceForAgeDays(babyAgeDays(window.end));
       days.push({
         date,
         careDayEnd: window.end,
+        beforeBirth,
+        birthCareDay,
         reference,
         feeds: totals?.feeds || 0,
         milk: totals?.bottles || 0,
@@ -727,7 +730,8 @@
     }).join("") : "";
     const hasValues = observed.length > 0;
     const band = referenceDays.length ? `<path class="signal-reference-band" d="${trendReferenceBand(referenceDays, rangeFor, (index) => x(firstReferenceIndex + index), y)}" />` : "";
-    return `<article class="signal-trend-card signal-trend-${metric.key}"><header class="signal-trend-heading"><strong>${metric.label}</strong></header><div class="signal-line-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric.label} over the last ${requestedDays} care days, with an age-adjusted reference range">${axis}${band}${linePath ? `<path class="signal-chart-line" d="${linePath.trim()}" />` : ""}${points}${pointValues}${dateLabels}${hasValues ? "" : `<text class="signal-chart-empty" x="${plot.left + plotWidth / 2}" y="${plot.top + plotHeight / 2}" text-anchor="middle">No logged ${metric.label.toLowerCase()} yet</text>`}</svg></div></article>`;
+    const birth = renderBirthBoundary(days, plot, x, height);
+    return `<article class="signal-trend-card signal-trend-${metric.key}"><header class="signal-trend-heading"><strong>${metric.label}</strong></header><div class="signal-line-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric.label} over the last ${requestedDays} care days, with an age-adjusted reference range${birth.marker ? "; Cam’s birth day is marked" : ""}">${birth.background}${axis}${band}${birth.marker}${linePath ? `<path class="signal-chart-line" d="${linePath.trim()}" />` : ""}${points}${pointValues}${dateLabels}${hasValues ? "" : `<text class="signal-chart-empty" x="${plot.left + plotWidth / 2}" y="${plot.top + plotHeight / 2}" text-anchor="middle">No logged ${metric.label.toLowerCase()} yet</text>`}</svg></div></article>`;
   }
 
   function renderTrendSignals(dayCount) {
@@ -913,18 +917,36 @@
     return `<text class="chart-axis-unit" x="${labelX}" y="${plot.top - 12}" text-anchor="end">${unit}</text>${ticks}`;
   }
 
+  function renderBirthBoundary(days, plot, x, height) {
+    const index = days.findIndex((day) => day.birthCareDay);
+    if (index < 0 || !days.some((day) => day.beforeBirth)) return { background: "", marker: "" };
+    const birthX = x(index);
+    const baseline = height - plot.bottom;
+    const shadeWidth = Math.max(0, birthX - plot.left);
+    const birthLabel = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(BABY.bornAt);
+    const anchor = birthX > (plot.left + x(days.length - 1)) / 2 ? "end" : "start";
+    const labelX = birthX + (anchor === "end" ? -5 : 5);
+    const background = `<rect class="chart-prebirth-area" x="${plot.left}" y="${plot.top}" width="${shadeWidth}" height="${baseline - plot.top}" />${shadeWidth > 90 ? `<text class="chart-prebirth-label" x="${plot.left + shadeWidth / 2}" y="${plot.top + (baseline - plot.top) / 2}" text-anchor="middle">Before birth</text>` : ""}`;
+    const marker = `<line class="chart-birth-line" x1="${birthX}" y1="${plot.top}" x2="${birthX}" y2="${baseline}" /><text class="chart-birth-label" x="${labelX}" y="${plot.top - 8}" text-anchor="${anchor}">Born · ${birthLabel}</text>`;
+    return { background, marker };
+  }
+
   function renderPumpChart() {
     const dayCount = Number(state.pumpChartDays) === 30 ? 30 : 7;
     const days = [];
+    const at = now();
     for (let offset = -(dayCount - 1); offset <= 0; offset += 1) {
-      const window = careWindowAtOffset(offset);
-      if (window.end <= BABY.bornAt) continue;
-      const dayEvents = eventsInCareWindow(window);
+      const window = careWindowAtOffset(offset, at);
+      const beforeBirth = window.end <= BABY.bornAt;
+      const birthCareDay = window.start <= BABY.bornAt && BABY.bornAt < window.end;
+      const dayEvents = beforeBirth ? [] : eventsInCareWindow(window, () => true, at);
       const pumped = pumpTotals(dayEvents.filter((event) => event.type === "pump")).totalMl;
       const fed = dayEvents
         .filter((event) => event.type === "feed" && event.data?.mode === "bottle")
         .reduce((sum, event) => sum + Number(event.data?.amount || 0), 0);
-      days.push({ date: new Date(window.end), pumped, fed });
+      const date = startOfDay(at);
+      date.setDate(date.getDate() + offset);
+      days.push({ date, beforeBirth, birthCareDay, pumped, fed });
     }
     const width = 330;
     const height = 190;
@@ -935,8 +957,9 @@
     const plotHeight = height - plot.top - plot.bottom;
     const x = (index) => plot.left + (index / Math.max(1, days.length - 1)) * plotWidth;
     const y = (value) => plot.top + plotHeight - (value / scaleMax) * plotHeight;
-    const pumpedPoints = days.map((day, index) => `${x(index).toFixed(1)},${y(day.pumped).toFixed(1)}`).join(" ");
-    const fedPoints = days.map((day, index) => `${x(index).toFixed(1)},${y(day.fed).toFixed(1)}`).join(" ");
+    const recordedDays = days.map((day, index) => ({ day, index })).filter(({ day }) => !day.beforeBirth);
+    const pumpedPoints = recordedDays.map(({ day, index }) => `${x(index).toFixed(1)},${y(day.pumped).toFixed(1)}`).join(" ");
+    const fedPoints = recordedDays.map(({ day, index }) => `${x(index).toFixed(1)},${y(day.fed).toFixed(1)}`).join(" ");
     const axis = renderChartYAxis(plot, width, scaleMax, y, "ml");
     const dateFormat = new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short" });
     const tickCount = days.length <= 7 ? days.length : 6;
@@ -945,10 +968,12 @@
       return `<text class="chart-date-label" x="${x(index)}" y="${height - 8}" text-anchor="middle">${dateFormat.format(days[index].date)}</text>`;
     }).join("");
     const points = days.map((day, index) => {
+      if (day.beforeBirth) return "";
       const label = dateFormat.format(day.date);
       return `<circle class="pump-point" cx="${x(index)}" cy="${y(day.pumped)}" r="${dayCount === 7 ? 3 : 2}"><title>${label} · ${day.pumped} ml pumped</title></circle><circle class="fed-point" cx="${x(index)}" cy="${y(day.fed)}" r="${dayCount === 7 ? 3 : 2}"><title>${label} · ${day.fed} ml fed</title></circle>`;
     }).join("");
-    $("#pump-line-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily milk pumped and milk fed in millilitres over the last ${dayCount} care days">${axis}<polyline class="pump-line" points="${pumpedPoints}" /><polyline class="fed-line" points="${fedPoints}" />${points}${labels}</svg>`;
+    const birth = renderBirthBoundary(days, plot, x, height);
+    $("#pump-line-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily milk pumped and milk fed in millilitres over the last ${dayCount} care days${birth.marker ? "; Cam’s birth day is marked" : ""}">${birth.background}${axis}${birth.marker}${pumpedPoints ? `<polyline class="pump-line" points="${pumpedPoints}" /><polyline class="fed-line" points="${fedPoints}" />` : ""}${points}${labels}</svg>`;
   }
 
   function renderPumpSessionChart() {
