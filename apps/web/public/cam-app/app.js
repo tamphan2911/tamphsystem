@@ -1471,7 +1471,15 @@
     toastDismissTimer = setTimeout(() => toast.classList.remove("visible"), 3000);
   }
 
+  function requireParentMutation() {
+    if (currentRole !== "observer") return true;
+    showToast("Only parents can make changes.", false);
+    $("#activity-toast").dataset.tone = "restricted";
+    return false;
+  }
+
   function commitActivities(events, message = "Activity logged", onCommit = null) {
+    if (!requireParentMutation()) return;
     if (onCommit) onCommit();
     state.events.push(...events.filter(Boolean));
     saveState();
@@ -1525,6 +1533,7 @@
   }
 
   function deleteActivity(eventId) {
+    if (!requireParentMutation()) return;
     const event = state.events.find((item) => item.id === eventId);
     if (!event) return;
     state.events = state.events.filter((item) => item.id !== eventId);
@@ -1805,6 +1814,7 @@
       });
     });
     $("#start-breast")?.addEventListener("click", () => {
+      if (!requireParentMutation()) return;
       const side = $('[data-choice-group="side"] .selected').dataset.value;
       const vitaminD = $('[data-feed-panel="breast"] [data-vitamin-d-toggle]').getAttribute("aria-pressed") === "true";
       if (state.activeSessions.feed) { closeSheet(); showToast("A feed timer is already running", false); return; }
@@ -1835,6 +1845,7 @@
       });
     });
     $("#start-bottle")?.addEventListener("click", () => {
+      if (!requireParentMutation()) return;
       const milk = $('[data-choice-group="milk"] .selected').dataset.value;
       const vitaminD = $('[data-feed-panel="bottle"] [data-vitamin-d-toggle]').getAttribute("aria-pressed") === "true";
       if (state.activeSessions.feed) { closeSheet(); showToast("A feed timer is already running", false); return; }
@@ -1883,6 +1894,7 @@
     sleepPreviewTimer = setInterval(updateStartTime, 15000);
     $("#open-manual-sleep").addEventListener("click", openManualSleepSheet);
     const startSleep = (backdateMinutes) => {
+      if (!requireParentMutation()) return;
       if (state.activeSessions.sleep) { closeSheet(); showToast("Sleep timer is already running", false); return; }
       const startedAt = new Date(Date.now() - backdateMinutes * 60000);
       state.activeSessions.sleep = { startedAt: startedAt.toISOString() };
@@ -1981,6 +1993,7 @@
       }, { confirmNowLabel: `Log ${activity.title.toLowerCase()} now` });
     });
     $("#start-other-activity").addEventListener("click", () => {
+      if (!requireParentMutation()) return;
       if (state.activeSessions?.other) { closeSheet(); showToast("An activity timer is already running", false); return; }
       const sleepWasRunning = Boolean(state.activeSessions?.sleep);
       state.activeSessions.other = { activityKey, type: activity.type, title: activity.title, note: $("#other-activity-note").value.trim(), startedAt: now().toISOString() };
@@ -2062,6 +2075,7 @@
   }
 
   function createStoppedSleepEvent(requestedEndedAt = now()) {
+    if (!requireParentMutation()) return null;
     const session = state.activeSessions?.sleep;
     if (!session) return null;
     const startedAt = new Date(session.startedAt);
@@ -2087,6 +2101,7 @@
   }
 
   function stopFeedSession() {
+    if (!requireParentMutation()) return;
     const session = state.activeSessions?.feed;
     if (!session) return;
     const endedAt = now();
@@ -2152,6 +2167,7 @@
       button.classList.toggle("selected", selected);
     });
     $("#save-activity-edit").addEventListener("click", () => {
+      if (!requireParentMutation()) return;
       const endedAt = parseDateTimeInput($("#edit-activity-time").value);
       if (Number.isNaN(endedAt.getTime())) { $("#edit-activity-time").focus(); return; }
       const editedPumpLeft = event.type === "pump" ? Math.max(0, Math.min(500, Number($("#edit-pump-left").value || 0))) : 0;
@@ -2304,6 +2320,7 @@
       <div class="sheet-actions"><button class="sheet-primary" id="save-vaccine" type="button">${isEdit ? "Save changes" : isCompleted ? "Save completed shot" : "Add to schedule"}</button></div>
     `);
     $("#save-vaccine").addEventListener("click", () => {
+      if (!requireParentMutation()) return;
       const vaccineKind = $("#vaccine-kind-input").value.trim();
       const dueAt = parseDateTimeInput($("#vaccine-planned-at").value);
       const actualInput = $("#vaccine-administered-at");
@@ -2346,6 +2363,7 @@
       <div class="sheet-actions"><button class="sheet-primary" id="confirm-vaccine-complete" type="button">Mark vaccine done</button></div>
     `);
     $("#confirm-vaccine-complete").addEventListener("click", () => {
+      if (!requireParentMutation()) return;
       const administeredAt = parseDateTimeInput($("#completed-vaccine-time").value);
       if (Number.isNaN(administeredAt.getTime())) { $("#completed-vaccine-time").focus(); return; }
       event.timestamp = administeredAt.toISOString();
@@ -2403,6 +2421,7 @@
     $("#growth-record-type")?.addEventListener("change", (event) => openGrowthForm(null, event.target.value));
     $("#delete-growth-record")?.addEventListener("click", () => openDeleteActivityConfirmation(record.id));
     $("#save-growth-record").addEventListener("click", () => {
+      if (!requireParentMutation()) return;
       const timestamp = parseDateTimeInput($("#growth-record-time").value);
       const error = $("#growth-error");
       if (Number.isNaN(timestamp.getTime()) || timestamp > now()) { error.textContent = "Choose a valid time that has passed."; error.hidden = false; return; }
@@ -2449,6 +2468,7 @@
     `);
     $("#cancel-time-rule").addEventListener("click", closeSheet);
     $("#save-time-rule").addEventListener("click", () => {
+      if (!requireParentMutation()) return;
       const value = $("#time-rule-input").value;
       const nextRules = { ...timeRules(), [key]: value };
       const error = $("#time-rule-error");
@@ -2489,6 +2509,7 @@
   }
 
   function clearHistory() {
+    if (!requireParentMutation()) return;
     const careEvents = state.events.filter((event) => event.type !== "vaccine");
     state.deletedEventIds = [...new Set([...(state.deletedEventIds || []), ...careEvents.map((event) => event.id)])];
     state.events = state.events.filter((event) => event.type === "vaccine");
@@ -2533,8 +2554,12 @@
   function bindGlobalEvents() {
     document.addEventListener("click", (event) => {
       if (currentRole !== "observer") return;
-      const mutatingControl = event.target.closest('[data-action], [data-stop-session], [data-edit-event-id], [data-edit-pump-id], [data-edit-time-rule], [data-vaccine-complete], #log-pump, #log-growth, #schedule-vaccine, #record-vaccine, #edit-profile, #sheet-content .sheet-actions button:not([data-close-sheet]):not(#sign-out-littlelog)');
-      if (mutatingControl) { event.preventDefault(); event.stopImmediatePropagation(); }
+      const writeControl = event.target.closest('[data-stop-session="feed"], #save-pump, #start-breast, #start-bottle, #start-sleep-backdated, #start-sleep, #start-other-activity, #confirm-log-time, #save-sleep-log, #save-note, #save-activity-edit, #save-vaccine, #confirm-vaccine-complete, #save-growth-record, #save-time-rule, #confirm-clear, #confirm-delete, #wake-yes');
+      if (writeControl) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        requireParentMutation();
+      }
     }, true);
     $$('[data-nav]').forEach((button) => button.addEventListener("click", () => navigate(button.dataset.nav)));
     $$('[data-action]').forEach((button) => button.addEventListener("click", () => {
@@ -2600,7 +2625,7 @@
     }));
     $("#growth-health-list").addEventListener("click", (event) => {
       const button = event.target.closest("[data-growth-edit]");
-      if (!button || currentRole === "observer") return;
+      if (!button) return;
       const record = state.events.find((item) => item.id === button.dataset.growthEdit);
       if (record) openGrowthForm(record);
     });
@@ -2696,7 +2721,7 @@
       const card = $(".sync-gate-card");
       const original = [...card.childNodes];
       const welcome = document.createElement("div");
-      welcome.innerHTML = '<div class="observer-welcome-icon" aria-hidden="true">✦</div><h1 id="sync-gate-title">Welcome to Cam’s pooping world</h1><p class="sync-gate-copy">You’re here as a family observer. You can enjoy Cam’s updates, but only her parents can add or change records.</p><button class="observer-welcome-ok" id="observer-welcome-ok" type="button">OK, let me see</button>';
+      welcome.innerHTML = '<div class="observer-welcome-icon" aria-hidden="true">✦</div><h1 id="sync-gate-title">Welcome to Cam’s pooping world</h1><p class="sync-gate-copy">You’re here as a family observer. Explore the app as you like; only her parents can save changes.</p><button class="observer-welcome-ok" id="observer-welcome-ok" type="button">OK, let me see</button>';
       card.replaceChildren(welcome);
       $("#observer-welcome-ok").addEventListener("click", () => { card.replaceChildren(...original); resolve(); }, { once: true });
     });

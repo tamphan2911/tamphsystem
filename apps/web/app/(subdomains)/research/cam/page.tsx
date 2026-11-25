@@ -26,7 +26,7 @@ export default async function CamBabyCarePage() {
     <main className="fixed inset-0 overflow-hidden bg-[#f7f7fb]">
       <iframe
         className="h-full w-full border-0"
-        src="/cam-app/index.html?v=20261125o"
+        src="/cam-app/index.html?v=20261125p"
         title="LittleLog — Cam's Baby Care"
       />
     </main>

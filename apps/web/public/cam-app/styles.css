@@ -1225,11 +1225,9 @@ svg {
 .growth-form-grid .sheet-input { margin-top: 5px; }
 .observer-welcome-icon { display: grid; width: 48px; height: 48px; margin: 0 auto 13px; place-items: center; border-radius: 16px; color: var(--plum); background: var(--plum-soft); font-size: 1.6rem; }
 .observer-welcome-ok { display: block; width: 100%; min-height: 42px; margin-top: 18px; border: 0; border-radius: 13px; color: #fff; background: var(--plum); font: inherit; font-weight: 700; cursor: pointer; }
-.observer-mode .quick-card, .observer-mode #log-pump, .observer-mode #log-growth, .observer-mode #schedule-vaccine, .observer-mode #record-vaccine, .observer-mode [data-edit-event-id], .observer-mode [data-edit-pump-id], .observer-mode [data-growth-edit], .observer-mode [data-vaccine-complete], .observer-mode #edit-profile, .observer-mode #profile-preferences .setting-edit-icon { display: none !important; }
-.observer-mode #profile-preferences .preference-row { cursor: default; }
-.observer-mode [data-stop-session] { pointer-events: none; }
-.observer-mode [data-stop-session] .stop-pill { display: none; }
-.observer-mode #sheet-content [data-edit-time-rule], .observer-mode #sheet-content .sheet-danger, .observer-mode #sheet-content .sheet-actions button:not([data-close-sheet]):not(#sign-out-littlelog) { display: none !important; }
+.observer-mode #log-growth { display: none !important; }
+.activity-toast[data-tone="restricted"] { border-color: #eedfc6; background: #fffaf2; }
+.activity-toast[data-tone="restricted"]::before { content: "!"; color: #99611d; background: #fff0d7; font-size: .78rem; }
 .time-rule-error { margin: 9px 0 0; color: #ae4b43; font-size: .68rem; line-height: 1.4; }
 .time-rule-error[hidden] { display: none; }
 .info-copy { color: #605d70; font-size: .68rem; line-height: 1.58; }
