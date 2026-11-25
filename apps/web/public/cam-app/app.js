@@ -630,15 +630,18 @@
 
   function renderVitaminDReminder() {
     const reminder = $("#vitamin-d-reminder");
+    const feedCard = $(".last-feed-card");
     const sixMonthsOld = new Date(BABY.bornAt);
     sixMonthsOld.setMonth(sixMonthsOld.getMonth() + 6);
     const current = now();
     if (current < BABY.bornAt || current >= sixMonthsOld) {
       reminder.hidden = true;
+      feedCard.classList.remove("has-reminder");
       return;
     }
     const givenToday = eventsInCareWindow(currentCareWindow(current), (event) => event.type === "feed" && event.data?.vitaminD === true, current).length > 0;
     reminder.hidden = false;
+    feedCard.classList.add("has-reminder");
     reminder.dataset.state = givenToday ? "given" : "due";
     $("#vitamin-d-reminder-text").textContent = givenToday ? "Vitamin D given today" : "Vitamin D due today";
   }
@@ -1104,13 +1107,13 @@
       const end = boundaries[index + 1];
       const middle = new Date(series[0].window.start.getTime() + (start + end) * 30000);
       const kind = timelineDayPart(middle);
-      return `<rect class="session-chart-${kind}" x="${x(start / 60)}" y="${plot.top}" width="${x(end / 60) - x(start / 60)}" height="${plotHeight}" />${index ? `<line class="session-chart-transition" x1="${x(start / 60)}" y1="${plot.top}" x2="${x(start / 60)}" y2="${bottomEdge}" />` : ""}`;
+      return `<rect class="session-chart-${kind}" x="${x(start / 60)}" y="${plot.top}" width="${x(end / 60) - x(start / 60)}" height="${plotHeight}" />`;
     }).join("");
     const hourTicks = Array.from({ length: 7 }, (_, index) => {
       const label = formatClock(careStartMinutes + index * 240, true);
       const tickX = x(index * 4);
       const anchor = index === 6 ? "end" : "middle";
-      return `<line class="session-chart-tick" x1="${tickX}" y1="${plot.top}" x2="${tickX}" y2="${bottomEdge}" /><text class="session-chart-date" x="${tickX}" y="${bottomEdge + 21}" text-anchor="${anchor}">${label}</text>`;
+      return `<text class="session-chart-date" x="${tickX}" y="${bottomEdge + 21}" text-anchor="${anchor}">${label}</text>`;
     }).join("");
     const plottedSeries = series.map((day) => {
       const points = day.events.map((event) => {
