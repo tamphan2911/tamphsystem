@@ -805,7 +805,7 @@ svg {
 .insight-top strong { margin-top: 2px; font-size: .77rem; }
 .insight-card > p { margin: 11px 0 7px; color: #676577; font-size: .69rem; line-height: 1.5; }
 .text-button { padding: 5px 0; border: 0; color: var(--plum); background: transparent; font-size: .65rem; font-weight: 800; cursor: pointer; }
-.comparison-list { display: grid; gap: 17px; margin: 18px 0 10px; }
+.comparison-list { display: grid; gap: 9px; margin: 18px 0 10px; }
 .stats-today-panel { padding: 1px 1px 0; }
 .stats-today-panel[hidden], .stats-trend-panel[hidden] { display: none; }
 .stats-today-panel .comparison-list { margin: 3px 0 12px; }
@@ -819,42 +819,42 @@ svg {
 .signal-trend-card.signal-trend-diapers { --signal: var(--mint); }
 .signal-trend-card.signal-trend-sleep { --signal: var(--blue); }
 .signal-trend-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 2px; }
-.signal-trend-heading strong { color: var(--signal); font-size: .9rem; }
-.signal-trend-heading span { display: flex; align-items: center; gap: 5px; color: #477c6e; font-size: .68rem; font-weight: 750; text-align: right; }
-.signal-trend-heading i { width: 12px; height: 7px; flex: 0 0 auto; border-radius: 3px; background: #bfe6d8; }
-.signal-line-chart { min-height: 178px; margin-top: 5px; }
+.signal-trend-heading strong { color: var(--signal); font-size: 1.025rem; }
+.signal-line-chart { --chart-axis-font: 11px; min-height: 202px; margin-top: 5px; }
 .signal-line-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
 .signal-line-chart .signal-reference-band { fill: rgba(191,230,216,.72); color: rgba(69,155,131,.25); stroke: currentColor; stroke-width: .7; }
 .signal-line-chart .signal-chart-line { fill: none; color: var(--signal); stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 .signal-line-chart .signal-chart-point { fill: var(--signal); stroke: #fff; stroke-width: 1.5; }
-.signal-line-chart .signal-chart-date, .signal-line-chart .signal-chart-empty { stroke: none; }
-.signal-line-chart .signal-chart-date { fill: #8f8b99; font-size: 8px; }
-.signal-line-chart .signal-chart-empty { fill: #8f8b99; font-size: 9px; font-style: italic; }
-.comparison-row { --signal: var(--plum); min-width: 0; }
+.signal-line-chart .signal-chart-date, .signal-line-chart .signal-chart-month, .signal-line-chart .signal-chart-empty { stroke: none; }
+.signal-line-chart .signal-chart-date { fill: #696576; font-size: 10.5px; font-weight: 650; }
+.signal-line-chart .signal-chart-month { fill: #696576; font-size: 10.5px; }
+.signal-line-chart .signal-date-tick { stroke: #9b96a6; stroke-width: 1; }
+.signal-line-chart .signal-chart-value { fill: var(--signal); font-size: 11px; font-weight: 800; paint-order: stroke; stroke: #fff; stroke-width: 2.5px; stroke-linejoin: round; }
+.signal-line-chart .signal-chart-empty { fill: #8f8b99; font-size: 11px; font-style: italic; }
+.comparison-row { --signal: var(--plum); --tick-stack: 0px; --pin-extra: 0px; min-width: 0; }
 .comparison-row.signal-milk { --signal: var(--coral); }
 .comparison-row.signal-diapers { --signal: var(--mint); }
 .comparison-row.signal-sleep { --signal: var(--blue); }
-.comparison-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.comparison-label { display: flex; min-width: 0; align-items: center; gap: 8px; }
-.comparison-label strong { flex: 0 0 auto; color: var(--signal); font-size: .815rem; }
-.comparison-label i { width: 1px; height: 14px; flex: 0 0 auto; background: #d9d6e1; }
-.comparison-label small { min-width: 0; overflow: hidden; color: var(--muted); font-size: .665rem; text-overflow: ellipsis; white-space: nowrap; }
-.comparison-current { flex: 0 0 auto; color: var(--signal); font-size: .805rem; font-variant-numeric: tabular-nums; }
-.comparison-track-wrap { min-width: 0; padding-top: 9px; }
+.comparison-row.pin-below { --pin-extra: 18px; }
+.comparison-row.crowded-ticks { --tick-stack: 14px; }
+.comparison-label { display: inline-block; color: var(--signal); font-size: .815rem; line-height: 1.15; }
+.comparison-current { position: absolute; z-index: 8; bottom: calc(100% + 7px); left: var(--value-position, var(--cam-position)); color: var(--signal); font-size: .805rem; font-variant-numeric: tabular-nums; white-space: nowrap; transform: translateX(-50%); }
+.pin-below .comparison-current { top: calc(100% + 23px + var(--tick-stack)); bottom: auto; }
+.comparison-track-wrap { min-width: 0; padding-top: 9px; padding-bottom: calc(25px + var(--tick-stack) + var(--pin-extra)); }
 .comparison-track { position: relative; display: block; height: 13px; border-radius: 10px; background: #ebeaf1; box-shadow: inset 0 0 0 1px rgba(73, 67, 96, .08); }
 .comparison-zone { position: absolute; z-index: 1; top: 0; bottom: 0; }
 .comparison-zone.range-below { left: 0; width: var(--typical-start); border-radius: 10px 0 0 10px; background: #f6ddd3; }
 .comparison-zone.range-reference { left: var(--typical-start); width: var(--typical-width); background: #bfe6d8; }
 .comparison-zone.range-above { right: 0; left: var(--typical-end); border-radius: 0 10px 10px 0; background: #d9def5; }
-.comparison-track i { position: absolute; z-index: 3; top: 0; width: 1px; height: 100%; background: rgba(73, 67, 96, .25); }
-.comparison-track .range-start { left: var(--typical-start); }
-.comparison-track .range-end { left: calc(var(--typical-start) + var(--typical-width)); }
-.comparison-track .comparison-pin { z-index: 5; top: -5px; left: var(--cam-position); width: 2px; height: 23px; border-radius: 2px; background: var(--signal); box-shadow: 0 1px 4px rgba(67, 52, 150, .28); transform: translateX(-50%); }
+.comparison-tick { position: absolute; z-index: 3; top: 0; left: var(--tick-position); width: 1px; height: 100%; background: rgba(73, 67, 96, .28); }
+.comparison-tick > span { position: absolute; top: calc(100% + 7px); left: 50%; color: #37806d; font-size: .7rem; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; transform: translateX(-50%); }
+.comparison-tick-middle > span { top: calc(100% + 7px + var(--tick-stack)); }
+.comparison-endpoint { position: absolute; top: calc(100% + 7px); left: 0; color: #8d8998; font-size: .66rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.comparison-endpoint.max { right: 0; left: auto; }
+.comparison-track .comparison-pin { position: absolute; z-index: 5; top: -5px; left: var(--cam-position); width: 2px; height: 23px; border-radius: 2px; background: var(--signal); box-shadow: 0 1px 4px rgba(67, 52, 150, .28); transform: translateX(-50%); }
 .comparison-track .comparison-pin::before { content: ""; position: absolute; top: -3px; left: 50%; width: 8px; height: 8px; border: 2px solid #fff; border-radius: 50%; background: var(--signal); box-shadow: 0 1px 4px rgba(67,52,150,.25); transform: translateX(-50%); }
-.comparison-scale { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; margin-top: 5px; color: #8d8998; font-size: .635rem; font-variant-numeric: tabular-nums; }
-.comparison-scale span { min-width: 0; white-space: nowrap; }
-.comparison-scale span:nth-child(2) { color: #3b806f; font-weight: 750; text-align: center; }
-.comparison-scale span:last-child { text-align: right; }
+.pin-below .comparison-track .comparison-pin { top: -5px; }
+.pin-below .comparison-track .comparison-pin::before { top: auto; bottom: -3px; }
 
 .chart-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .chart-heading small, .chart-heading strong { display: block; }

@@ -583,17 +583,57 @@
     const milkScaleMax = Math.ceil(Math.max(reference.bottleMl.max + 200, reference.bottleMl.max * 1.35, milkMl * 1.1) / 100) * 100;
     const sleepScaleMax = Math.ceil(Math.max(24, (sleepMinutes / 60) * 1.1) / 2) * 2;
     const comparisons = [
-      { key: "feeds", label: "Feeds", value: totals.feeds, range: reference.feeds, scaleMax: countScaleMax(reference.feeds, totals.feeds), display: `${Math.round(totals.feeds)} / day`, average: `${reference.feeds.average} / day`, format: (value) => `${value}` },
-      { key: "milk", label: "Milk", value: milkMl, range: reference.bottleMl, scaleMax: milkScaleMax, display: `${Math.round(milkMl)} ml`, average: `${reference.bottleMl.average} ml`, format: (value) => `${Math.round(value).toLocaleString()} ml` },
-      { key: "diapers", label: "Diapers", value: totals.diapers, range: reference.diapers, scaleMax: countScaleMax(reference.diapers, totals.diapers), display: `${Math.round(totals.diapers)} / day`, average: `${reference.diapers.average} / day`, format: (value) => `${value}` },
-      { key: "sleep", label: "Sleep", value: sleepMinutes / 60, range: reference.sleepHours, scaleMax: sleepScaleMax, display: formatDuration(sleepMinutes), average: `${reference.sleepHours.average}h`, format: (value) => `${value}h` }
+      { key: "feeds", label: "Feeds", value: totals.feeds, range: reference.feeds, scaleMax: countScaleMax(reference.feeds, totals.feeds), display: String(totals.feeds) },
+      { key: "milk", label: "Milk", value: milkMl, range: reference.bottleMl, scaleMax: milkScaleMax, display: `${Math.round(milkMl)} ml`, unit: " ml" },
+      { key: "diapers", label: "Diapers", value: totals.diapers, range: reference.diapers, scaleMax: countScaleMax(reference.diapers, totals.diapers), display: `${totals.diapers} (${totals.wet}/${totals.dirty})`, description: `${totals.diapers} total, ${totals.wet} wet, ${totals.dirty} dirty` },
+      { key: "sleep", label: "Sleep", value: sleepMinutes / 60, range: reference.sleepHours, scaleMax: sleepScaleMax, display: formatDuration(sleepMinutes), unit: "h" }
     ];
     $("#comparison-list").innerHTML = comparisons.map((item) => {
       const position = Math.max(0, Math.min(100, (item.value / item.scaleMax) * 100));
-      const typicalStart = Math.max(0, Math.min(100, (item.range.min / item.scaleMax) * 100));
-      const typicalEnd = Math.max(typicalStart, Math.min(100, (item.range.max / item.scaleMax) * 100));
-      return `<div class="comparison-row signal-${item.key}"><div class="comparison-heading"><span class="comparison-label"><strong>${item.label}</strong><i aria-hidden="true"></i><small>Reference average ${item.average}</small></span><strong class="comparison-current">${item.display}</strong></div><div class="comparison-track-wrap"><span class="comparison-track" role="img" aria-label="${item.label}: ${item.display}; reference ${item.format(item.range.min)} to ${item.format(item.range.max)}; scale zero to ${item.format(item.scaleMax)}" style="--cam-position:${position}%;--typical-start:${typicalStart}%;--typical-width:${typicalEnd - typicalStart}%;--typical-end:${typicalEnd}%"><span class="comparison-zone range-below"></span><span class="comparison-zone range-reference"></span><span class="comparison-zone range-above"></span><i class="range-start"></i><i class="range-end"></i><i class="comparison-pin" title="${BABY.shortName}: ${item.display}"></i></span><span class="comparison-scale"><span>${item.format(0)}</span><span>Reference ${item.format(item.range.min)}–${item.format(item.range.max)}</span><span>${item.format(item.scaleMax)}</span></span></div></div>`;
+      const { min, max } = item.range;
+      const typicalStart = min * 100 / item.scaleMax;
+      const typicalEnd = max * 100 / item.scaleMax;
+      const unit = item.unit || "";
+      const ticks = [min, (min + max) / 2, max].map((value, index) =>
+        `<span class="comparison-tick${index === 1 ? " comparison-tick-middle" : ""}" style="--tick-position:${value * 100 / item.scaleMax}%"><span>${value.toLocaleString("en")}</span></span>`
+      ).join("");
+      return `
+        <div class="comparison-row signal-${item.key}">
+          <strong class="comparison-label" aria-hidden="true">${item.label}</strong>
+          <div class="comparison-track-wrap">
+            <div class="comparison-track" role="img" aria-label="${item.label}: ${item.description || item.display}; reference ${min}${unit} to ${max}${unit}; scale zero to ${item.scaleMax}${unit}"
+              data-position="${position}" style="--cam-position:${position}%;--typical-start:${typicalStart}%;--typical-width:${typicalEnd - typicalStart}%;--typical-end:${typicalEnd}%">
+              <span class="comparison-zone range-below"></span><span class="comparison-zone range-reference"></span><span class="comparison-zone range-above"></span>
+              ${ticks}
+              <span class="comparison-endpoint">0</span><span class="comparison-endpoint max">${item.scaleMax.toLocaleString("en")}${unit}</span>
+              <span class="comparison-pin"></span><strong class="comparison-current">${item.display}</strong>
+            </div>
+          </div>
+        </div>`;
     }).join("");
+    layoutComparisonPins();
+  }
+
+  function layoutComparisonPins() {
+    $$("#comparison-list .comparison-row").forEach((row) => {
+      const track = $(".comparison-track", row);
+      const rail = track.getBoundingClientRect();
+      if (!rail.width) return;
+
+      const value = $(".comparison-current", row);
+      const halfWidth = value.getBoundingClientRect().width / 2;
+      const pinX = rail.width * Number(track.dataset.position) / 100;
+      const valueX = Math.max(halfWidth, Math.min(rail.width - halfWidth, pinX));
+      const labelRight = $(".comparison-label", row).getBoundingClientRect().right;
+      const valueLeft = rail.left + valueX - halfWidth;
+      const pinBelow = valueLeft < labelRight + 6;
+      const tickLabels = $$(".comparison-tick span", track).map((label) => label.getBoundingClientRect());
+      const crowdedTicks = tickLabels[0].right + 3 > tickLabels[1].left || tickLabels[1].right + 3 > tickLabels[2].left;
+
+      track.style.setProperty("--value-position", `${valueX / rail.width * 100}%`);
+      row.classList.toggle("pin-below", pinBelow);
+      row.classList.toggle("crowded-ticks", crowdedTicks);
+    });
   }
 
   function statsTrendDays(dayCount) {
@@ -601,20 +641,23 @@
     const at = now();
     for (let offset = -(dayCount - 1); offset <= 0; offset += 1) {
       const window = careWindowAtOffset(offset, at);
-      if (window.end <= BABY.bornAt) continue;
-      const totals = statsForCareWindow(window, at);
-      const reference = referenceForAgeDays(babyAgeDays(window.end));
+      const date = startOfDay(at);
+      date.setDate(date.getDate() + offset);
+      const beforeBirth = window.end <= BABY.bornAt;
+      const totals = beforeBirth ? null : statsForCareWindow(window, at);
+      const reference = beforeBirth ? null : referenceForAgeDays(babyAgeDays(window.end));
       days.push({
-        date: window.end,
+        date,
+        careDayEnd: window.end,
         reference,
-        feeds: totals.feeds,
-        milk: totals.bottles,
-        diapers: totals.diapers,
-        sleep: totals.sleepMinutes / 60,
-        feedsLogged: totals.feeds > 0,
-        milkLogged: totals.bottles > 0,
-        diapersLogged: totals.diapers > 0,
-        sleepLogged: totals.sleepMinutes > 0
+        feeds: totals?.feeds || 0,
+        milk: totals?.bottles || 0,
+        diapers: totals?.diapers || 0,
+        sleep: (totals?.sleepMinutes || 0) / 60,
+        feedsLogged: !!totals?.feeds,
+        milkLogged: !!totals?.bottles,
+        diapersLogged: !!totals?.diapers,
+        sleepLogged: !!totals?.sleepMinutes
       });
     }
     return days;
@@ -637,13 +680,15 @@
 
   function renderSignalTrend(metric, days, requestedDays) {
     const width = 330;
-    const height = 178;
-    const plot = { left: 30, right: 8, top: 23, bottom: 29 };
+    const height = 202;
+    const plot = { left: 36, right: 15, top: 28, bottom: 49 };
     const plotWidth = width - plot.left - plot.right;
     const plotHeight = height - plot.top - plot.bottom;
     const rangeFor = (day) => day.reference[metric.rangeKey];
     const observed = days.filter((day) => day[metric.loggedKey]).map((day) => day[metric.key]);
-    const rawMax = Math.max(1, ...observed, ...days.map((day) => rangeFor(day).max));
+    const firstReferenceIndex = days.findIndex((day) => day.reference);
+    const referenceDays = firstReferenceIndex < 0 ? [] : days.slice(firstReferenceIndex);
+    const rawMax = Math.max(1, ...observed, ...referenceDays.map((day) => rangeFor(day).max));
     const scaleMax = metric.scaleMax(rawMax);
     const x = (index) => plot.left + (index / Math.max(1, days.length - 1)) * plotWidth;
     const y = (value) => plot.top + plotHeight - (Math.max(0, value) / scaleMax) * plotHeight;
@@ -656,20 +701,33 @@
     });
     const axis = renderChartYAxis(plot, width, scaleMax, y, metric.unit, metric.axisFormat);
     const lastIndex = days.length - 1;
-    const tickCount = days.length <= 7 ? days.length : 6;
     const dateFormat = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" });
-    const dateLabels = Array.from({ length: tickCount }, (_, tick) => {
-      const index = Math.round(tick * lastIndex / Math.max(1, tickCount - 1));
-      const anchor = index === 0 ? "start" : index === lastIndex ? "end" : "middle";
-      return `<text class="signal-chart-date" x="${x(index)}" y="${height - 8}" text-anchor="${anchor}">${dateFormat.format(days[index].date)}</text>`;
+    const dateLabels = days.map((day, index) => {
+      if (requestedDays === 7) return `<text class="signal-chart-date" x="${x(index)}" y="${height - 14}" text-anchor="middle">${dateFormat.format(day.date)}</text>`;
+      const monthStart = day.date.getDate() === 1;
+      const fiveDayStep = (lastIndex - index) % 5 === 0;
+      if (!fiveDayStep && !monthStart) return "";
+      const adjacentStep = monthStart && ((lastIndex - index + 1) % 5 === 0 || (lastIndex - index - 1) % 5 === 0);
+      const dateY = height - (adjacentStep ? 24 : 36);
+      const month = monthStart ? `<text class="signal-chart-month" x="${x(index)}" y="${dateY + 13}" text-anchor="middle">${new Intl.DateTimeFormat("en", { month: "short" }).format(day.date)}</text>` : "";
+      return `<line class="signal-date-tick" x1="${x(index)}" y1="${y(0)}" x2="${x(index)}" y2="${y(0) + 4}" /><text class="signal-chart-date" x="${x(index)}" y="${dateY}" text-anchor="middle">${day.date.getDate()}</text>${month}`;
     }).join("");
     const points = days.map((day, index) => {
       if (!day[metric.loggedKey]) return "";
-      return `<circle class="signal-chart-point" cx="${x(index)}" cy="${y(day[metric.key])}" r="3"><title>${dateFormat.format(day.date)}, care day ending at 8:00 PM · ${metric.valueFormat(day[metric.key])}</title></circle>`;
+      return `<circle class="signal-chart-point" cx="${x(index)}" cy="${y(day[metric.key])}" r="${requestedDays === 7 ? 3.7 : 2.6}"><title>${dateFormat.format(day.date)}, care day ending ${dateFormat.format(day.careDayEnd)} at 8:00 PM · ${metric.valueFormat(day[metric.key])}</title></circle>`;
     }).join("");
-    const currentRange = days.length ? rangeFor(days[lastIndex]) : referenceForAgeDays()[metric.rangeKey];
+    const pointValues = requestedDays === 7 ? days.map((day, index) => {
+      if (!day[metric.loggedKey]) return "";
+      const previous = days[index - 1];
+      const next = days[index + 1];
+      const slope = previous?.[metric.loggedKey] ? day[metric.key] - previous[metric.key] : next?.[metric.loggedKey] ? next[metric.key] - day[metric.key] : 0;
+      const offset = slope < 0 ? 17 : -9;
+      const value = metric.axisFormat ? metric.axisFormat(day[metric.key]) : Math.round(day[metric.key]);
+      return `<text class="signal-chart-value" x="${x(index)}" y="${y(day[metric.key]) + offset}" text-anchor="middle">${value}</text>`;
+    }).join("") : "";
     const hasValues = observed.length > 0;
-    return `<article class="signal-trend-card signal-trend-${metric.key}"><header class="signal-trend-heading"><strong>${metric.label}</strong><span><i></i>Reference ${metric.valueFormat(currentRange.min)}–${metric.valueFormat(currentRange.max)}</span></header><div class="signal-line-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric.label} over the available days in the last ${requestedDays} days, with an age-adjusted reference range">${axis}<path class="signal-reference-band" d="${trendReferenceBand(days, rangeFor, x, y)}" />${linePath ? `<path class="signal-chart-line" d="${linePath.trim()}" />` : ""}${points}${dateLabels}${hasValues ? "" : `<text class="signal-chart-empty" x="${plot.left + plotWidth / 2}" y="${plot.top + plotHeight / 2}" text-anchor="middle">No logged ${metric.label.toLowerCase()} yet</text>`}</svg></div></article>`;
+    const band = referenceDays.length ? `<path class="signal-reference-band" d="${trendReferenceBand(referenceDays, rangeFor, (index) => x(firstReferenceIndex + index), y)}" />` : "";
+    return `<article class="signal-trend-card signal-trend-${metric.key}"><header class="signal-trend-heading"><strong>${metric.label}</strong></header><div class="signal-line-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric.label} over the last ${requestedDays} care days, with an age-adjusted reference range">${axis}${band}${linePath ? `<path class="signal-chart-line" d="${linePath.trim()}" />` : ""}${points}${pointValues}${dateLabels}${hasValues ? "" : `<text class="signal-chart-empty" x="${plot.left + plotWidth / 2}" y="${plot.top + plotHeight / 2}" text-anchor="middle">No logged ${metric.label.toLowerCase()} yet</text>`}</svg></div></article>`;
   }
 
   function renderTrendSignals(dayCount) {
@@ -908,7 +966,9 @@
         ...day,
         window,
         events,
-        label: day.offset === 0 ? "Today" : dateFormat.format(window.end)
+        label: day.offset === 0 ? "Today" : `${Math.abs(day.offset)}d ago`,
+        date: (() => { const date = startOfDay(at); date.setDate(date.getDate() + day.offset); return dateFormat.format(date); })(),
+        opacity: day.offset === 0 ? .78 : day.offset === -1 ? .92 : .88
       };
     });
     const width = 330;
@@ -937,7 +997,7 @@
       const topLeft = day.offset === -2;
       const belowPlot = day.offset === 0;
       const labelX = topLeft ? plot.left : rightEdge;
-      const labelY = belowPlot ? height - 9 : 17;
+      const labelY = belowPlot ? height - 9 : 13;
       const anchor = points[Math.floor((points.length - 1) * day.pointPosition)];
       let leader = "";
       if (anchor) {
@@ -945,18 +1005,21 @@
         // Today's leader goes around the clock labels in the right gutter.
         const route = belowPlot
           ? `${start} ${rightEdge + 9},${anchor.y} ${rightEdge + 9},${labelY - 4} ${labelX + 3},${labelY - 4}`
-          : `${start} ${labelX + (topLeft ? 7 : -7)},${labelY + 5}`;
+          : `${start} ${labelX + (topLeft ? 7 : -7)},${labelY + 19}`;
         leader = `<polyline class="session-chart-leader" style="--series-color:${day.color}" points="${route}" />`;
       }
       const dots = points.map((point) => `<circle class="session-chart-point" cx="${point.x}" cy="${point.y}" r="3.3"><title>${formatTime(point.timestamp)} · ${point.totalMl} ml</title></circle>`).join("");
       const coordinates = points.map((point) => `${point.x},${point.y}`).join(" ");
       const path = points.length > 1 ? `<polyline class="session-chart-line" points="${coordinates}" />` : "";
-      const line = `<g style="--series-color:${day.color}">${path}${dots}</g>`;
-      const label = `<text class="session-chart-count" style="--series-label-color:${day.labelColor}" x="${labelX}" y="${labelY}" text-anchor="${topLeft ? "start" : "end"}">${points.length} (${day.label})</text>`;
+      const line = `<g class="session-chart-series" style="--series-color:${day.color};opacity:${day.opacity}">${path}${dots}</g>`;
+      const countText = `${points.length} ${points.length === 1 ? "pump" : "pumps"}`;
+      const labelText = `${countText} (${day.label} - ${day.date})`;
+      const content = belowPlot ? labelText : `<tspan x="${labelX}" dy="0">${countText}</tspan> <tspan x="${labelX}" dy="14">(${day.label} - ${day.date})</tspan>`;
+      const label = `<text class="session-chart-count" style="--series-label-color:${day.labelColor}" x="${labelX}" y="${labelY}" text-anchor="${topLeft ? "start" : "end"}" aria-label="${labelText}">${content}</text>`;
       return { leader, line, label };
     });
     const renderLayer = (key) => plottedSeries.map((day) => day[key]).join("");
-    const counts = series.map((day) => `${day.label}: ${day.events.length} pumps`).join(", ");
+    const counts = series.map((day) => `${day.events.length} pumps (${day.label} - ${day.date})`).join(", ");
     $("#pump-session-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Millilitres per pump by time across three care days. ${counts}">${axis}${hourTicks}${renderLayer("leader")}${renderLayer("line")}${renderLayer("label")}</svg>`;
   }
 
@@ -2013,14 +2076,14 @@
   }
 
   function navigate(viewName) {
+    $$(".view").forEach((view) => view.classList.toggle("active", view.dataset.view === viewName));
+    $$('[data-nav]').forEach((button) => button.classList.toggle("active", button.dataset.nav === viewName));
     if (viewName === "stats") {
       state.statsPeriod = "today";
       $$('[data-period]').forEach((button) => button.classList.toggle("active", button.dataset.period === "today"));
       persistLocalState();
       renderStats();
     }
-    $$(".view").forEach((view) => view.classList.toggle("active", view.dataset.view === viewName));
-    $$('[data-nav]').forEach((button) => button.classList.toggle("active", button.dataset.nav === viewName));
     const view = $(`[data-view="${viewName}"]`);
     if (view) view.scrollTop = 0;
     closeSheet();
@@ -2164,6 +2227,7 @@
   }
 
   bindGlobalEvents();
+  window.addEventListener("resize", layoutComparisonPins);
   $("#sync-access-form").addEventListener("submit", submitLogin);
   initializeSync();
   window.addEventListener("online", () => syncSnapshot());
