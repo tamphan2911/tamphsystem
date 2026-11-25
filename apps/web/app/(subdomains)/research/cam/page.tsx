@@ -10,7 +10,7 @@ export default function CamBabyCarePage() {
     <main className="fixed inset-0 overflow-hidden bg-[#f7f7fb]">
       <iframe
         className="h-full w-full border-0"
-        src="/cam-app/index.html?v=20261125c"
+        src="/cam-app/index.html?v=20261125d"
         title="LittleLog — Cam's Baby Care"
       />
     </main>

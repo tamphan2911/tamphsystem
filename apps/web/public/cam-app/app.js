@@ -638,7 +638,7 @@
   function renderSignalTrend(metric, days, requestedDays) {
     const width = 330;
     const height = 178;
-    const plot = { left: 34, right: 8, top: 9, bottom: 29 };
+    const plot = { left: 30, right: 8, top: 23, bottom: 29 };
     const plotWidth = width - plot.left - plot.right;
     const plotHeight = height - plot.top - plot.bottom;
     const rangeFor = (day) => day.reference[metric.rangeKey];
@@ -654,11 +654,7 @@
       linePath += `${previousIndex === index - 1 ? " L" : " M"} ${x(index)} ${y(day[metric.key])}`;
       previousIndex = index;
     });
-    const grid = [0, .25, .5, .75, 1].map((ratio) => {
-      const value = scaleMax * ratio;
-      const gridY = y(value);
-      return `<line class="signal-chart-grid" x1="${plot.left}" y1="${gridY}" x2="${width - plot.right}" y2="${gridY}" /><text class="signal-chart-axis" x="${plot.left - 5}" y="${gridY + 3}" text-anchor="end">${metric.axisFormat(value)}</text>`;
-    }).join("");
+    const axis = renderChartYAxis(plot, width, scaleMax, y, metric.unit, metric.axisFormat);
     const lastIndex = days.length - 1;
     const tickCount = days.length <= 7 ? days.length : 6;
     const dateFormat = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" });
@@ -673,16 +669,16 @@
     }).join("");
     const currentRange = days.length ? rangeFor(days[lastIndex]) : referenceForAgeDays()[metric.rangeKey];
     const hasValues = observed.length > 0;
-    return `<article class="signal-trend-card signal-trend-${metric.key}"><header class="signal-trend-heading"><strong>${metric.label}</strong><span><i></i>Reference ${metric.valueFormat(currentRange.min)}–${metric.valueFormat(currentRange.max)}</span></header><div class="signal-line-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric.label} over the available days in the last ${requestedDays} days, with an age-adjusted reference range">${grid}<path class="signal-reference-band" d="${trendReferenceBand(days, rangeFor, x, y)}" />${linePath ? `<path class="signal-chart-line" d="${linePath.trim()}" />` : ""}${points}${dateLabels}${hasValues ? "" : `<text class="signal-chart-empty" x="${plot.left + plotWidth / 2}" y="${plot.top + plotHeight / 2}" text-anchor="middle">No logged ${metric.label.toLowerCase()} yet</text>`}</svg></div></article>`;
+    return `<article class="signal-trend-card signal-trend-${metric.key}"><header class="signal-trend-heading"><strong>${metric.label}</strong><span><i></i>Reference ${metric.valueFormat(currentRange.min)}–${metric.valueFormat(currentRange.max)}</span></header><div class="signal-line-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric.label} over the available days in the last ${requestedDays} days, with an age-adjusted reference range">${axis}<path class="signal-reference-band" d="${trendReferenceBand(days, rangeFor, x, y)}" />${linePath ? `<path class="signal-chart-line" d="${linePath.trim()}" />` : ""}${points}${dateLabels}${hasValues ? "" : `<text class="signal-chart-empty" x="${plot.left + plotWidth / 2}" y="${plot.top + plotHeight / 2}" text-anchor="middle">No logged ${metric.label.toLowerCase()} yet</text>`}</svg></div></article>`;
   }
 
   function renderTrendSignals(dayCount) {
     const days = statsTrendDays(dayCount);
     const metrics = [
-      { key: "feeds", loggedKey: "feedsLogged", rangeKey: "feeds", label: "Feeds", scaleMax: (max) => Math.ceil(max * 1.2 / 2) * 2, axisFormat: (value) => `${Math.round(value)}`, valueFormat: (value) => `${Number(value.toFixed(1))} / day` },
-      { key: "milk", loggedKey: "milkLogged", rangeKey: "bottleMl", label: "Milk", scaleMax: (max) => Math.ceil(max * 1.15 / 100) * 100, axisFormat: (value) => `${Math.round(value)}`, valueFormat: (value) => `${Math.round(value)} ml` },
-      { key: "diapers", loggedKey: "diapersLogged", rangeKey: "diapers", label: "Diapers", scaleMax: (max) => Math.ceil(max * 1.2 / 2) * 2, axisFormat: (value) => `${Math.round(value)}`, valueFormat: (value) => `${Number(value.toFixed(1))} / day` },
-      { key: "sleep", loggedKey: "sleepLogged", rangeKey: "sleepHours", label: "Sleep", scaleMax: (max) => Math.max(24, Math.ceil(max * 1.1 / 2) * 2), axisFormat: (value) => `${Number(value.toFixed(1))}h`, valueFormat: (value) => `${Number(value.toFixed(1))}h` }
+      { key: "feeds", loggedKey: "feedsLogged", rangeKey: "feeds", label: "Feeds", unit: "/day", scaleMax: (max) => Math.ceil(max * 1.2 / 2) * 2, valueFormat: (value) => `${Number(value.toFixed(1))} / day` },
+      { key: "milk", loggedKey: "milkLogged", rangeKey: "bottleMl", label: "Milk", unit: "ml", scaleMax: (max) => Math.ceil(max * 1.15 / 100) * 100, valueFormat: (value) => `${Math.round(value)} ml` },
+      { key: "diapers", loggedKey: "diapersLogged", rangeKey: "diapers", label: "Diapers", unit: "/day", scaleMax: (max) => Math.ceil(max * 1.2 / 2) * 2, valueFormat: (value) => `${Number(value.toFixed(1))} / day` },
+      { key: "sleep", loggedKey: "sleepLogged", rangeKey: "sleepHours", label: "Sleep", unit: "h", scaleMax: (max) => Math.max(24, Math.ceil(max * 1.1 / 2) * 2), axisFormat: (value) => Number(value.toFixed(1)), valueFormat: (value) => `${Number(value.toFixed(1))}h` }
     ];
     $("#stats-trend-charts").innerHTML = metrics.map((metric) => renderSignalTrend(metric, days, dayCount)).join("");
   }
@@ -849,6 +845,16 @@
       </div>`;
   }
 
+  function renderChartYAxis(plot, width, scaleMax, y, unit, formatTick = Math.round) {
+    const labelX = plot.left - 6;
+    const ticks = [0, .25, .5, .75, 1].map((ratio) => {
+      const value = scaleMax * ratio;
+      const gridY = y(value);
+      return `<line class="chart-axis-grid" x1="${plot.left}" y1="${gridY}" x2="${width - plot.right}" y2="${gridY}" /><text class="chart-axis-tick" x="${labelX}" y="${gridY + 4}" text-anchor="end">${formatTick(value)}</text>`;
+    }).join("");
+    return `<text class="chart-axis-unit" x="${labelX}" y="${plot.top - 12}" text-anchor="end">${unit}</text>${ticks}`;
+  }
+
   function renderPumpChart() {
     const dayCount = Number(state.pumpChartDays) === 30 ? 30 : 7;
     const days = [];
@@ -864,83 +870,94 @@
     }
     const width = 330;
     const height = 190;
-    const plot = { left: 42, right: 8, top: 12, bottom: 30 };
-    const plotWidth = width - plot.left - plot.right;
-    const plotHeight = height - plot.top - plot.bottom;
     const observedMax = Math.max(0, ...days.flatMap((day) => [day.pumped, day.fed]));
     const scaleMax = Math.max(100, Math.ceil(observedMax / 100) * 100);
+    const plot = { left: Math.max(33, 9 + String(scaleMax).length * 7), right: 20, top: 26, bottom: 30 };
+    const plotWidth = width - plot.left - plot.right;
+    const plotHeight = height - plot.top - plot.bottom;
     const x = (index) => plot.left + (index / Math.max(1, days.length - 1)) * plotWidth;
     const y = (value) => plot.top + plotHeight - (value / scaleMax) * plotHeight;
     const pumpedPoints = days.map((day, index) => `${x(index).toFixed(1)},${y(day.pumped).toFixed(1)}`).join(" ");
     const fedPoints = days.map((day, index) => `${x(index).toFixed(1)},${y(day.fed).toFixed(1)}`).join(" ");
-    const grid = [0, .25, .5, .75, 1].map((ratio) => {
-      const value = Math.round(scaleMax * ratio);
-      const gridY = y(value);
-      return `<line class="chart-grid" x1="${plot.left}" y1="${gridY}" x2="${width - plot.right}" y2="${gridY}" /><text class="chart-axis-label" x="${plot.left - 6}" y="${gridY + 3}" text-anchor="end">${value}</text>`;
-    }).join("");
-    const labelEvery = dayCount === 7 ? 1 : 5;
-    const labels = days.map((day, index) => {
-      if (index % labelEvery && index !== days.length - 1) return "";
-      const label = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(day.date);
-      return `<text class="chart-date-label" x="${x(index)}" y="${height - 8}" text-anchor="middle">${label}</text>`;
+    const axis = renderChartYAxis(plot, width, scaleMax, y, "ml");
+    const dateFormat = new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short" });
+    const tickCount = days.length <= 7 ? days.length : 6;
+    const labels = Array.from({ length: tickCount }, (_, tick) => {
+      const index = Math.round(tick * (days.length - 1) / Math.max(1, tickCount - 1));
+      return `<text class="chart-date-label" x="${x(index)}" y="${height - 8}" text-anchor="middle">${dateFormat.format(days[index].date)}</text>`;
     }).join("");
     const points = days.map((day, index) => {
-      const label = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(day.date);
+      const label = dateFormat.format(day.date);
       return `<circle class="pump-point" cx="${x(index)}" cy="${y(day.pumped)}" r="${dayCount === 7 ? 3 : 2}"><title>${label} · ${day.pumped} ml pumped</title></circle><circle class="fed-point" cx="${x(index)}" cy="${y(day.fed)}" r="${dayCount === 7 ? 3 : 2}"><title>${label} · ${day.fed} ml fed</title></circle>`;
     }).join("");
-    $("#pump-line-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily milk pumped and milk fed in millilitres over the last ${dayCount} care days">${grid}<polyline class="pump-line" points="${pumpedPoints}" /><polyline class="fed-line" points="${fedPoints}" />${points}${labels}<text class="chart-unit-label" x="8" y="10">ml</text></svg>`;
+    $("#pump-line-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily milk pumped and milk fed in millilitres over the last ${dayCount} care days">${axis}<polyline class="pump-line" points="${pumpedPoints}" /><polyline class="fed-line" points="${fedPoints}" />${points}${labels}</svg>`;
   }
 
   function renderPumpSessionChart() {
-    const colors = ["#6b59d3", "#ef7467", "#3aa88d"];
-    const series = [-2, -1, 0].map((offset, index) => {
-      const window = careWindowAtOffset(offset);
-      const events = eventsInCareWindow(window, (event) => event.type === "pump")
+    const at = now();
+    const dateFormat = new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short" });
+    const series = [
+      { offset: -2, color: "#6b59d3", labelColor: "#5443a8", pointPosition: 0 },
+      { offset: -1, color: "#ef7467", labelColor: "#a3443a", pointPosition: .5 },
+      { offset: 0, color: "#3aa88d", labelColor: "#246f61", pointPosition: 1 }
+    ].map((day) => {
+      const window = careWindowAtOffset(day.offset, at);
+      const events = eventsInCareWindow(window, (event) => event.type === "pump", at)
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
       return {
+        ...day,
         window,
         events,
-        color: colors[index],
-        label: new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(window.end)
+        label: day.offset === 0 ? "Today" : dateFormat.format(window.end)
       };
     });
     const width = 330;
-    const height = 205;
-    const plot = { left: 42, right: 57, top: 13, bottom: 33 };
-    const plotWidth = width - plot.left - plot.right;
-    const plotHeight = height - plot.top - plot.bottom;
+    const height = 244;
     const observedMax = Math.max(0, ...series.flatMap((day) => day.events.map((event) => pumpVolumes(event).totalMl)));
     const scaleMax = Math.max(100, Math.ceil(observedMax / 50) * 50);
-    const x = (hours) => plot.left + (Math.max(0, Math.min(24, hours)) / 24) * plotWidth;
-    const y = (value) => plot.top + plotHeight - (Math.max(0, value) / scaleMax) * plotHeight;
-    const grid = [0, .25, .5, .75, 1].map((ratio) => {
-      const value = Math.round(scaleMax * ratio);
-      const gridY = y(value);
-      return `<line class="session-chart-grid" x1="${plot.left}" y1="${gridY}" x2="${width - plot.right}" y2="${gridY}" /><text class="session-chart-axis" x="${plot.left - 6}" y="${gridY + 3}" text-anchor="end">${value}</text>`;
+    const plot = { left: Math.max(33, 9 + String(scaleMax).length * 7), right: 17, top: 50, bottom: 58 };
+    const rightEdge = width - plot.right;
+    const bottomEdge = height - plot.bottom;
+    const plotHeight = bottomEdge - plot.top;
+    const x = (hours) => plot.left + (Math.max(0, Math.min(24, hours)) / 24) * (rightEdge - plot.left);
+    const y = (value) => bottomEdge - (value / scaleMax) * plotHeight;
+    const axis = renderChartYAxis(plot, width, scaleMax, y, "ml");
+    const hourTicks = ["8 PM", "12 AM", "4 AM", "8 AM", "12 PM", "4 PM", "8 PM"].map((label, index) => {
+      const tickX = x(index * 4);
+      const anchor = index === 6 ? "end" : "middle";
+      return `<line class="session-chart-tick" x1="${tickX}" y1="${plot.top}" x2="${tickX}" y2="${bottomEdge}" /><text class="session-chart-date" x="${tickX}" y="${bottomEdge + 21}" text-anchor="${anchor}">${label}</text>`;
     }).join("");
-    const hourTicks = [
-      { hour: 0, label: "8 PM" }, { hour: 4, label: "12 AM" }, { hour: 8, label: "4 AM" },
-      { hour: 12, label: "8 AM" }, { hour: 16, label: "12 PM" }, { hour: 20, label: "4 PM" }, { hour: 24, label: "8 PM" }
-    ].map((tick) => `<line class="session-chart-tick" x1="${x(tick.hour)}" y1="${plot.top}" x2="${x(tick.hour)}" y2="${plot.top + plotHeight}" /><text class="session-chart-date" x="${x(tick.hour)}" y="${height - 9}" text-anchor="middle">${tick.label}</text>`).join("");
-    const usedLabelY = [];
-    const lines = series.map((day, seriesIndex) => {
+    const plottedSeries = series.map((day) => {
       const points = day.events.map((event) => {
         const timestamp = new Date(event.timestamp);
         const hours = (timestamp.getTime() - day.window.start.getTime()) / 3600000;
         const { totalMl } = pumpVolumes(event);
         return { x: x(hours), y: y(totalMl), totalMl, timestamp };
       });
-      const path = points.length ? `M ${points.map((point) => `${point.x} ${point.y}`).join(" L ")}` : "";
-      const dots = points.map((point) => `<circle class="session-chart-point" style="--series-color:${day.color}" cx="${point.x}" cy="${point.y}" r="3.3"><title>${formatTime(point.timestamp)} · ${point.totalMl} ml</title></circle>`).join("");
-      let labelY = points.length ? points[points.length - 1].y : plot.top + 14 + seriesIndex * 18;
-      while (usedLabelY.some((used) => Math.abs(used - labelY) < 13)) labelY += 13;
-      labelY = Math.min(plot.top + plotHeight - 3, labelY);
-      usedLabelY.push(labelY);
-      const leaderStart = points.length ? points[points.length - 1].x + 4 : width - plot.right;
-      return `${path ? `<path class="session-chart-line" style="--series-color:${day.color}" d="${path}" />` : ""}${dots}<line class="session-chart-leader" style="--series-color:${day.color}" x1="${leaderStart}" y1="${labelY}" x2="${width - 42}" y2="${labelY}" /><text class="session-chart-count" style="--series-color:${day.color}" x="${width - 34}" y="${labelY + 3}" text-anchor="middle">${day.events.length}</text>`;
-    }).join("");
-    $("#pump-session-legend").innerHTML = series.map((day) => `<span><i style="background:${day.color}"></i>${day.label}</span>`).join("");
-    $("#pump-session-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Total millilitres for each pump by time across three care days">${grid}${hourTicks}${lines}<text class="session-chart-unit" x="8" y="10">ml</text></svg>`;
+      const topLeft = day.offset === -2;
+      const belowPlot = day.offset === 0;
+      const labelX = topLeft ? plot.left : rightEdge;
+      const labelY = belowPlot ? height - 9 : 17;
+      const anchor = points[Math.floor((points.length - 1) * day.pointPosition)];
+      let leader = "";
+      if (anchor) {
+        const start = `${anchor.x},${anchor.y}`;
+        // Today's leader goes around the clock labels in the right gutter.
+        const route = belowPlot
+          ? `${start} ${rightEdge + 9},${anchor.y} ${rightEdge + 9},${labelY - 4} ${labelX + 3},${labelY - 4}`
+          : `${start} ${labelX + (topLeft ? 7 : -7)},${labelY + 5}`;
+        leader = `<polyline class="session-chart-leader" style="--series-color:${day.color}" points="${route}" />`;
+      }
+      const dots = points.map((point) => `<circle class="session-chart-point" cx="${point.x}" cy="${point.y}" r="3.3"><title>${formatTime(point.timestamp)} · ${point.totalMl} ml</title></circle>`).join("");
+      const coordinates = points.map((point) => `${point.x},${point.y}`).join(" ");
+      const path = points.length > 1 ? `<polyline class="session-chart-line" points="${coordinates}" />` : "";
+      const line = `<g style="--series-color:${day.color}">${path}${dots}</g>`;
+      const label = `<text class="session-chart-count" style="--series-label-color:${day.labelColor}" x="${labelX}" y="${labelY}" text-anchor="${topLeft ? "start" : "end"}">${points.length} (${day.label})</text>`;
+      return { leader, line, label };
+    });
+    const renderLayer = (key) => plottedSeries.map((day) => day[key]).join("");
+    const counts = series.map((day) => `${day.label}: ${day.events.length} pumps`).join(", ");
+    $("#pump-session-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Millilitres per pump by time across three care days. ${counts}">${axis}${hourTicks}${renderLayer("leader")}${renderLayer("line")}${renderLayer("label")}</svg>`;
   }
 
   function renderPump() {

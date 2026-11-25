@@ -644,7 +644,7 @@ svg {
 .bottom-nav button.active { color: var(--plum); }
 
 .pump-log-button { width: 100%; min-height: 70px; display: grid; grid-template-columns: 42px minmax(0, 1fr) 28px; align-items: center; gap: 10px; margin-bottom: 18px; padding: 11px 13px; border: 0; border-radius: 20px; color: #fff; background: linear-gradient(135deg, #8067d8, #5d49b5); box-shadow: 0 10px 22px rgba(79, 61, 168, .2); text-align: left; cursor: pointer; }
-.pump-log-icon { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 14px; background: rgba(255,255,255,.16); }
+.pump-log-icon { display: grid; width: 40px; height: 40px; place-items: center; }
 .pump-log-icon svg { width: 22px; height: 22px; }
 .pump-log-button strong, .pump-log-button small { display: block; }
 .pump-log-button strong { font-size: .945rem; }
@@ -710,19 +710,19 @@ svg {
 .pump-chart-section + .pump-chart-section { margin-top: 7px; padding-top: 18px; border-top: 1px solid #e7e3ed; }
 .pump-chart-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .pump-chart-toggle { display: flex; flex: 0 0 auto; gap: 2px; padding: 3px; border-radius: 10px; background: #efedf4; }
-.pump-chart-toggle button { min-height: 29px; padding: 0 8px; border: 0; border-radius: 8px; color: #858191; background: transparent; font-size: .675rem; font-weight: 800; cursor: pointer; }
+.pump-chart-toggle button { min-height: 29px; padding: 0 8px; border: 0; border-radius: 8px; color: #777384; background: transparent; font-size: .8rem; font-weight: 800; cursor: pointer; }
 .pump-chart-toggle button.active { color: var(--ink); background: #fff; box-shadow: 0 2px 7px rgba(45,39,75,.08); }
-.pump-chart-legend { display: flex; flex-wrap: wrap; gap: 5px 13px; color: #777384; font-size: .675rem; }
+.pump-chart-legend { display: flex; flex-wrap: wrap; gap: 5px 10px; color: #696576; font-size: .8rem; }
 .pump-chart-legend span { display: flex; align-items: center; gap: 5px; }
 .pump-chart-legend i { width: 15px; height: 3px; border-radius: 3px; }
 .pumped-line-key { background: var(--plum); }
 .fed-line-key { background: var(--coral); }
-.pump-line-chart { min-height: 190px; margin-top: 5px; }
-.pump-line-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
-.pump-line-chart .chart-grid { color: #e8e5ed; stroke-width: 1; }
-.pump-line-chart .chart-axis-label { fill: #8f8b99; stroke: none; font-size: 10px; }
-.pump-line-chart .chart-date-label { fill: #8f8b99; stroke: none; font-size: 9.5px; }
-.pump-line-chart .chart-unit-label { fill: #777384; stroke: none; font-size: 10px; font-weight: 800; }
+.pump-line-chart, .pump-session-chart { --chart-axis-font: 12px; margin-top: 5px; }
+.pump-line-chart svg, .pump-session-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart-axis-grid { color: #e8e5ed; stroke-width: 1; }
+.chart-axis-tick, .chart-axis-unit { fill: #696576; stroke: none; font-size: var(--chart-axis-font, 9px); font-variant-numeric: tabular-nums; }
+.chart-axis-unit { font-weight: 800; }
+.pump-line-chart .chart-date-label, .pump-session-chart .session-chart-date { fill: #696576; stroke: none; font-size: 11px; }
 .pump-line-chart .pump-line, .pump-line-chart .fed-line { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
 .pump-line-chart .pump-line { color: var(--plum); }
 .pump-line-chart .fed-line { color: var(--coral); }
@@ -737,21 +737,11 @@ svg {
 .pump-side-wheel button { display: grid; width: 29px; height: 34px; padding: 0; place-items: center; border: 0; border-radius: 10px; color: var(--ink); background: rgba(255,255,255,.72); font-size: 1rem; cursor: pointer; }
 .pump-side-wheel span { min-width: 0; color: var(--ink); font-size: .78rem; font-weight: 850; text-align: center; white-space: nowrap; }
 .pump-timeline-checkpoint { margin-left: 17px; padding: 5px 1px; background: transparent; }
-.pump-session-legend { display: flex; flex-wrap: wrap; gap: 7px 13px; color: #777384; font-size: .675rem; }
-.pump-session-legend span { display: flex; align-items: center; gap: 5px; }
-.pump-session-legend i { width: 15px; height: 3px; border-radius: 3px; }
-.pump-session-chart { min-height: 205px; margin-top: 4px; }
-.pump-session-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
-.pump-session-chart .session-chart-grid { color: #e8e5ed; stroke-width: 1; }
 .pump-session-chart .session-chart-tick { color: rgba(232,229,237,.7); stroke-width: 1; }
-.pump-session-chart .session-chart-axis, .pump-session-chart .session-chart-date, .pump-session-chart .session-chart-count, .pump-session-chart .session-chart-unit { stroke: none; }
-.pump-session-chart .session-chart-axis { fill: #8f8b99; font-size: 9px; }
-.pump-session-chart .session-chart-date { fill: #8f8b99; font-size: 7.8px; }
-.pump-session-chart .session-chart-unit { fill: #777384; font-size: 10px; font-weight: 800; }
 .pump-session-chart .session-chart-line { fill: none; color: var(--series-color); stroke: currentColor; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
 .pump-session-chart .session-chart-point { fill: var(--series-color); stroke: #fff; stroke-width: 1.5; }
-.pump-session-chart .session-chart-leader { color: var(--series-color); stroke: currentColor; stroke-width: 1; stroke-dasharray: 2 2; opacity: .58; }
-.pump-session-chart .session-chart-count { fill: var(--series-color); font-size: 7.7px; font-weight: 800; }
+.pump-session-chart .session-chart-leader { fill: none; color: var(--series-color); stroke: currentColor; stroke-width: 1.2; stroke-dasharray: 2 3; stroke-linecap: round; opacity: .8; }
+.pump-session-chart .session-chart-count { fill: var(--series-label-color); stroke: none; font-size: 12px; font-weight: 800; }
 
 .page-heading { margin-top: 5px; }
 .period-switch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-bottom: 15px; padding: 4px; border-radius: 14px; background: #eeedf3; }
@@ -834,12 +824,10 @@ svg {
 .signal-trend-heading i { width: 12px; height: 7px; flex: 0 0 auto; border-radius: 3px; background: #bfe6d8; }
 .signal-line-chart { min-height: 178px; margin-top: 5px; }
 .signal-line-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
-.signal-line-chart .signal-chart-grid { color: #e9e6ee; stroke-width: 1; }
 .signal-line-chart .signal-reference-band { fill: rgba(191,230,216,.72); color: rgba(69,155,131,.25); stroke: currentColor; stroke-width: .7; }
 .signal-line-chart .signal-chart-line { fill: none; color: var(--signal); stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 .signal-line-chart .signal-chart-point { fill: var(--signal); stroke: #fff; stroke-width: 1.5; }
-.signal-line-chart .signal-chart-axis, .signal-line-chart .signal-chart-date, .signal-line-chart .signal-chart-empty { stroke: none; }
-.signal-line-chart .signal-chart-axis { fill: #8f8b99; font-size: 8.5px; }
+.signal-line-chart .signal-chart-date, .signal-line-chart .signal-chart-empty { stroke: none; }
 .signal-line-chart .signal-chart-date { fill: #8f8b99; font-size: 8px; }
 .signal-line-chart .signal-chart-empty { fill: #8f8b99; font-size: 9px; font-style: italic; }
 .comparison-row { --signal: var(--plum); min-width: 0; }
