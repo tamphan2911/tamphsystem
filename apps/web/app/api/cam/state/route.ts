@@ -53,6 +53,8 @@ function parseEvent(value: unknown): CamEventInput | null {
     "pump",
     "vaccine",
     "note",
+    "growth",
+    "sick",
   ]);
 
   if (
@@ -123,6 +125,9 @@ export async function GET() {
 export async function PUT(request: Request) {
   const session = await hasCamSession();
   if (!session) return unauthorized();
+  if (session.role === "observer") {
+    return NextResponse.json({ error: "Observers can view Cam’s records only." }, { status: 403, headers: noStoreHeaders });
+  }
 
   const body = (await request.json().catch(() => null)) as unknown;
   if (!isRecord(body)) {

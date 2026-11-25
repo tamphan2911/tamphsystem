@@ -9,7 +9,7 @@
       content="LittleLog infant feeding, diaper, sleep, and bath tracker"
     />
     <title>LittleLog — Cam’s Baby Care</title>
-    <link rel="stylesheet" href="./styles.css?v=20261125k" />
+    <link rel="stylesheet" href="./styles.css?v=20261125m" />
   </head>
   <body>
     <section class="sync-gate" id="sync-gate" aria-labelledby="sync-gate-title">
@@ -130,6 +130,12 @@
                 </section>
 
                 <div class="medical-note"><svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Zm0 5v4m0 3v.1" /></svg><p>Reference ranges are educational, not a diagnosis. Always follow your pediatrician’s advice.</p></div>
+                <section class="growth-section" aria-labelledby="growth-title">
+                  <div class="growth-heading"><div><p class="eyebrow">Beyond daily care</p><h3 id="growth-title">Growth &amp; health</h3></div><button id="log-growth" type="button">Add record</button></div>
+                  <div class="growth-period-switch" role="group" aria-label="Growth chart period"><button class="active" data-growth-period="30" type="button">30 days</button><button data-growth-period="90" type="button">90 days</button><button data-growth-period="all" type="button">All history</button></div>
+                  <div class="growth-charts" id="growth-charts" aria-live="polite"></div>
+                  <div class="growth-health-list" id="growth-health-list"></div>
+                </section>
                 <div class="safe-bottom-space"></div>
               </section>
 
@@ -173,7 +179,7 @@
                 <article class="report-hero">
                   <div class="report-hero-top"><span class="moon-orb"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8m-8 4h8m-8 4h5M3 8h2m14 0h2" /></svg></span><span><small id="daily-report-window-label">Last complete care day</small><strong>Cam’s day at a glance</strong></span></div>
                   <p id="daily-report-copy">Cam’s daily summary will appear here as activities are recorded.</p>
-                  <div class="report-tip"><strong>Gentle suggestion</strong><p id="daily-tip">Preparing Cam’s latest completed care-day comparison.</p><small id="daily-tip-meta">Generated after each care day</small></div>
+                  <div class="report-tip"><strong>Care suggestion</strong><p id="daily-tip">Reviewing Cam’s care pattern for a useful suggestion…</p><small id="daily-tip-meta">Generated after each care day</small></div>
                 </article>
 
                 <article class="weekly-report-hero">
@@ -197,11 +203,8 @@
                 </div>
                 <div class="profile-section">
                   <h3>Preferences</h3>
-                  <button class="setting-row" data-edit-time-rule="careDayStart" type="button"><span class="setting-icon clock"><svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-13v5l3 2" /></svg></span><span><strong>Care day</strong><small id="profile-care-day-time">8:00 PM → 8:00 PM</small></span><svg class="setting-edit-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg></button>
-                  <button class="setting-row" data-edit-time-rule="daytimeStart" type="button"><span class="setting-icon daytime"><svg viewBox="0 0 24 24"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z" /></svg></span><span><strong>Daytime begins</strong><small id="profile-daytime-time">6:00 AM</small></span><svg class="setting-edit-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg></button>
-                  <button class="setting-row" data-edit-time-rule="nighttimeStart" type="button"><span class="setting-icon nighttime"><svg viewBox="0 0 24 24"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4a8.5 8.5 0 1 0 11.2 11.2Z" /></svg></span><span><strong>Nighttime begins</strong><small id="profile-nighttime-time">8:00 PM</small></span><svg class="setting-edit-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg></button>
-                  <div class="setting-row static"><span class="setting-icon units"><svg viewBox="0 0 24 24"><path d="M7 3h10v18H7zM7 7h4m-4 4h3m-3 4h4" /></svg></span><span><strong>Units</strong><small>Metric · ml, kg, cm</small></span><span class="setting-value">Metric</span></div>
-                  <div class="setting-row static"><span class="setting-icon cloud"><svg viewBox="0 0 24 24"><path d="M7 18h11a4 4 0 0 0 .7-7.9A7 7 0 0 0 5.2 9 4.5 4.5 0 0 0 7 18Z" /></svg></span><span><strong>Data storage</strong><small id="sync-status-text">Secure Railway sync</small></span><span class="sync-badge" id="sync-status-badge">Synced</span></div>
+                  <div id="profile-preferences"></div>
+                  <p class="profile-sync-status" id="sync-status-text">Secure Railway sync</p><span class="sr-only" id="sync-status-badge">Synced</span>
                 </div>
                 <div class="safe-bottom-space"></div>
               </section>
@@ -249,6 +252,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20261125k"></script>
+    <script src="./app.js?v=20261125m"></script>
   </body>
 </html>

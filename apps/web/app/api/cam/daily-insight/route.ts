@@ -6,6 +6,13 @@ import {
   camReferenceForAge,
 } from "@/sites/cam/server/reference";
 import { camLatestCompletedWindow, camTimeRules } from "@/sites/cam/server/time-preferences";
+import {
+  CAM_INSIGHT_SUGGESTION_VERSION,
+  hasCurrentInsightSuggestion,
+  insightInstructions,
+  qualitativeSuggestion,
+  unavailableSuggestion,
+} from "@/sites/cam/server/insight-suggestion";
 
 export const dynamic = "force-dynamic";
 
@@ -118,22 +125,6 @@ function averageLoggedDays(days: CareTotals[]) {
   );
 }
 
-function comparisonWord(current: number, previous: number, unit: string) {
-  if (current === previous) return `${unit} were steady`;
-  return `${unit} were ${current > previous ? "higher" : "lower"}`;
-}
-
-function fallbackSuggestion(
-  current: CareTotals,
-  previous: CareTotals | null,
-  ageLabel: string,
-) {
-  const comparison = previous
-    ? `${comparisonWord(current.feeds, previous.feeds, "feeds")} and ${comparisonWord(current.diapers, previous.diapers, "diaper changes")}`
-    : "this is the first completed care day with enough logged activity to compare";
-  return `Cam logged ${current.feeds} feeds, ${current.diapers} diaper changes, and ${Math.round(current.sleepMinutes / 60)} hours of sleep; ${comparison}. Compare the pattern gently with broad ${ageLabel} references, remembering that missing logs and direct breastfeeding can make totals look lower.`;
-}
-
 function outputText(payload: unknown) {
   if (!payload || typeof payload !== "object") return "";
   const response = payload as {
@@ -149,51 +140,36 @@ function outputText(payload: unknown) {
   return "";
 }
 
-function exactlyTwoSentences(text: string, fallback: string) {
-  const split = (value: string) =>
-    value
-      .replace(/\s+/g, " ")
-      .trim()
-      .split(/(?<=[.!?])\s+/)
-      .filter(Boolean);
-  const generated = split(text);
-  const backup = split(fallback);
-  const sentences = [...generated.slice(0, 2), ...backup].slice(0, 2);
-  return sentences
-    .map((sentence) =>
-      /[.!?]$/.test(sentence) ? sentence : `${sentence}.`,
-    )
-    .join(" ");
-}
-
 async function generateOpenAiSuggestion(source: Record<string, unknown>) {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) return null;
 
   const model = process.env.OPENAI_CAM_MODEL?.trim() || "gpt-6.2-astra";
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      reasoning: { effort: "low" },
-      store: false,
-      max_output_tokens: 180,
-      instructions:
-        "You write a calm, practical LittleLog suggestion for a parent. Return exactly two short sentences with no heading or bullets. Compare the completed care day with the previous day and logged-day average when those exist, then use the supplied age-based reference only as broad educational context. Never diagnose, never call a baby normal or abnormal, and never invent missing data. Mention that direct breastfeeding volume is not measured when bottle volume is relevant.",
-      input: JSON.stringify(source),
-    }),
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!response.ok) {
-    throw new Error(`OpenAI Responses API returned ${response.status}`);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const input = attempt
+      ? { report: source, revision: "Write a fresh interpretation with no counts or totals and a specific next step." }
+      : source;
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        reasoning: { effort: "low" },
+        store: false,
+        max_output_tokens: 500,
+        instructions: insightInstructions("daily"),
+        input: JSON.stringify(input),
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!response.ok) throw new Error(`OpenAI Responses API returned ${response.status}`);
+    const text = qualitativeSuggestion(outputText(await response.json()));
+    if (text) return { text, model };
   }
-  const text = outputText(await response.json()).replace(/\s+/g, " ").trim();
-  if (!text) throw new Error("OpenAI returned an empty suggestion");
-  return { text: text.slice(0, 900), model };
+  throw new Error("OpenAI returned an incomplete or numeric suggestion");
 }
 
 function responsePayload(
@@ -210,7 +186,7 @@ function responsePayload(
     status: insight.status,
     reportDate: insight.reportDate,
     suggestion: insight.suggestion,
-    provider: insight.status === "ready" ? "openai" : "rules",
+    provider: insight.status === "ready" ? "openai" : "unavailable",
     model: insight.model,
     generatedAt: insight.generatedAt?.toISOString() ?? null,
     nextAvailableAt: nextAvailableAt.toISOString(),
@@ -222,8 +198,8 @@ export async function GET() {
   if (!session) return unauthorized();
 
   const storedState = await prisma.camCareState.findUnique({ where: { userId: session.userId }, select: { settings: true } });
-  const { careDayStart } = camTimeRules(storedState?.settings);
-  const window = camLatestCompletedWindow(careDayStart);
+  const { careDayStart, dailyReportTime, timeZone } = camTimeRules(storedState?.settings);
+  const window = camLatestCompletedWindow(careDayStart, new Date(), dailyReportTime, timeZone);
   const gptConfigured = Boolean(process.env.OPENAI_API_KEY?.trim());
   const existing = await prisma.camCareDailyInsight.findUnique({
     where: {
@@ -234,7 +210,8 @@ export async function GET() {
     },
   });
   const matchesWindow = existing?.windowStart.getTime() === window.windowStart.getTime()
-    && existing?.windowEnd.getTime() === window.windowEnd.getTime();
+    && existing?.windowEnd.getTime() === window.windowEnd.getTime()
+    && hasCurrentInsightSuggestion(existing?.source);
   if (
     matchesWindow && existing?.suggestion &&
     (existing.status === "ready" || !gptConfigured)
@@ -243,6 +220,9 @@ export async function GET() {
       responsePayload(existing, window.nextAvailableAt),
       { headers: noStoreHeaders },
     );
+  }
+  if (session.role === "observer") {
+    return NextResponse.json({ status: "pending", reportDate: window.reportDate, suggestion: null, provider: null, model: null, generatedAt: null, nextAvailableAt: window.nextAvailableAt.toISOString() }, { headers: noStoreHeaders });
   }
   if (
     matchesWindow && existing?.status === "generating" &&
@@ -292,14 +272,13 @@ export async function GET() {
   const reference = camReferenceForAge(ageDays);
   const current = totalsFor(currentEvents);
   const previous = previousEvents.length ? totalsFor(previousEvents) : null;
-  const localFallback = fallbackSuggestion(
-    current,
-    previous,
-    reference.ageLabel,
-  );
+  const localFallback = unavailableSuggestion(currentEvents.length > 0);
   const source = {
+    suggestionVersion: CAM_INSIGHT_SUGGESTION_VERSION,
     reportDate: window.reportDate,
     careDayStart,
+    dailyReportTime,
+    timeZone,
     reportWindow: {
       start: window.windowStart.toISOString(),
       end: window.windowEnd.toISOString(),
@@ -357,11 +336,11 @@ export async function GET() {
 
   let suggestion = localFallback;
   let status = "fallback";
-  let model = "age-based-rules";
+  let model: string | null = null;
   try {
     const generated = await generateOpenAiSuggestion(source);
     if (generated) {
-      suggestion = exactlyTwoSentences(generated.text, localFallback);
+      suggestion = generated.text;
       status = "ready";
       model = generated.model;
     }

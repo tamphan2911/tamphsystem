@@ -29,11 +29,14 @@ function safeEqual(left: string, right: string) {
   );
 }
 
-function createSessionToken(secret: string, userId: string) {
+export type CamRole = "parent" | "observer";
+
+function createSessionToken(secret: string, userId: string, role: CamRole) {
   const payload = Buffer.from(
     JSON.stringify({
       scope: "cam-user",
       userId,
+      role,
       expiresAt: Date.now() + SESSION_MAX_AGE_SECONDS * 1000,
     }),
   ).toString("base64url");
@@ -50,7 +53,7 @@ function verifySessionToken(token: string, secret: string) {
   try {
     const parsed = JSON.parse(
       Buffer.from(payload, "base64url").toString("utf8"),
-    ) as { scope?: string; userId?: string; expiresAt?: number };
+    ) as { scope?: string; userId?: string; role?: string; expiresAt?: number };
     const userId = parsed.userId;
     const valid =
       parsed.scope === "cam-user" &&
@@ -58,7 +61,7 @@ function verifySessionToken(token: string, secret: string) {
       userId.length > 0 &&
       typeof parsed.expiresAt === "number" &&
       parsed.expiresAt > Date.now();
-    return valid && userId ? { userId } : null;
+    return valid && userId ? { userId, role: parsed.role === "observer" ? "observer" as const : "parent" as const } : null;
   } catch {
     return null;
   }
@@ -76,13 +79,13 @@ export async function hasCamSession() {
   return token ? verifySessionToken(token, config.sessionSecret) : null;
 }
 
-export async function createCamSession(userId: string) {
+export async function createCamSession(userId: string, role: CamRole = "parent") {
   const config = configuration();
   if (!config.ready) throw new Error("Cam authentication is not configured");
 
   (await cookies()).set(
     CAM_SESSION_COOKIE,
-    createSessionToken(config.sessionSecret, userId),
+    createSessionToken(config.sessionSecret, userId, role),
     {
       httpOnly: true,
       maxAge: SESSION_MAX_AGE_SECONDS,

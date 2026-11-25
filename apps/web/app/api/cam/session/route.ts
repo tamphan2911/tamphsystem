@@ -15,6 +15,8 @@ const ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 8;
 const DUMMY_PASSWORD_HASH =
   "$2b$12$glAfJAYlg9kZDAxG76vSN.8Fu8qRpjn0DgjeIbDYDXX/TjcYcYmDi";
+const OBSERVER_PASSWORD_HASH =
+  "$2b$12$LA9GpTlY44LsWfLAr7LQL.A26aKBIU0skwy5SIoLprEi4BCti02nG";
 
 type AttemptRecord = { count: number; resetAt: number };
 const globalForCamAccess = globalThis as unknown as {
@@ -60,6 +62,7 @@ export async function GET() {
       authenticated: Boolean(user),
       configured: camAuthIsConfigured(),
       user,
+      role: user ? session?.role : null,
     },
     { headers: noStoreHeaders },
   );
@@ -95,12 +98,12 @@ export async function POST(request: NextRequest) {
   const user = username
     ? await prisma.camCareUser.findUnique({ where: { username } })
     : null;
-  const passwordMatches = await bcrypt.compare(
-    password,
-    user?.passwordHash ?? DUMMY_PASSWORD_HASH,
-  );
+  const [parentMatches, observerMatches] = await Promise.all([
+    bcrypt.compare(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH),
+    bcrypt.compare(password, OBSERVER_PASSWORD_HASH),
+  ]);
 
-  if (!user || !passwordMatches) {
+  if (!user || (!parentMatches && !observerMatches)) {
     camAccessAttempts.set(attemptKey, {
       count: (currentAttempts?.count ?? 0) + 1,
       resetAt: currentAttempts?.resetAt ?? Date.now() + ATTEMPT_WINDOW_MS,
@@ -111,9 +114,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const role = parentMatches ? "parent" : "observer";
   camAccessAttempts.delete(attemptKey);
   await Promise.all([
-    createCamSession(user.id),
+    createCamSession(user.id, role),
     prisma.camCareUser.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
@@ -123,6 +127,7 @@ export async function POST(request: NextRequest) {
     {
       authenticated: true,
       configured: true,
+      role,
       user: {
         id: user.id,
         username: user.username,

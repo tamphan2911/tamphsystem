@@ -16,7 +16,7 @@
     feedingProfile: "Mostly expressed breast milk by bottle · 2–3 formula feeds daily"
   };
   const WEEK_MS = 7 * 86400000;
-  const DEFAULT_TIME_RULES = { careDayStart: "20:00", daytimeStart: "06:00", nighttimeStart: "20:00" };
+  const DEFAULT_TIME_RULES = { careDayStart: "20:00", daytimeStart: "06:00", nighttimeStart: "20:00", dailyReportTime: "20:00", weeklyReportTime: "20:00", timeZone: "Asia/Ho_Chi_Minh" };
   const OTHER_ACTIVITIES = {
     bath: { type: "bath", title: "Bath", defaultDuration: 10 },
     sunbathing: { type: "sunbathing", title: "Sunbathing", defaultDuration: 15 },
@@ -46,23 +46,39 @@
 
   const now = () => new Date();
   const uid = () => crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const startOfDay = (date = now()) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const dateAtOffset = (days, hour, minute) => {
-    const date = startOfDay();
-    date.setDate(date.getDate() + days);
-    date.setHours(hour, minute, 0, 0);
-    return date;
+  const selectedTimeZone = () => timeRules().timeZone;
+  const zonedParts = (date) => {
+    const parts = new Intl.DateTimeFormat("en-US", { timeZone: selectedTimeZone(), year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(new Date(date));
+    const part = (name) => Number(parts.find((item) => item.type === name)?.value);
+    return { year: part("year"), month: part("month"), day: part("day"), hour: part("hour"), minute: part("minute"), second: part("second") };
   };
-  const relativeToday = (hoursAgo, minutesAgo = 0) => new Date(Date.now() - ((hoursAgo * 60 + minutesAgo) * 60 * 1000));
-  const isSameDay = (a, b) => {
-    const one = new Date(a);
-    const two = new Date(b);
-    return one.getFullYear() === two.getFullYear() && one.getMonth() === two.getMonth() && one.getDate() === two.getDate();
+  const zonedDateKey = (date) => { const value = zonedParts(date); return `${value.year}-${String(value.month).padStart(2, "0")}-${String(value.day).padStart(2, "0")}`; };
+  const shiftDateKey = (key, days) => { const date = new Date(`${key}T12:00:00Z`); date.setUTCDate(date.getUTCDate() + days); return date.toISOString().slice(0, 10); };
+  const zonedClockOnKey = (key, clock) => {
+    const [year, month, day] = key.split("-").map(Number);
+    const [hour, minute] = clock.split(":").map(Number);
+    const target = Date.UTC(year, month - 1, day, hour, minute);
+    let instant = target;
+    for (let step = 0; step < 4; step++) {
+      const parts = zonedParts(instant);
+      const rendered = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+      const correction = target - rendered;
+      if (!correction) break;
+      instant += correction;
+    }
+    return new Date(instant);
   };
-  const formatTime = (date) => new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(new Date(date));
+  const shiftZonedDays = (date, days) => { const parts = zonedParts(date); return zonedClockOnKey(shiftDateKey(zonedDateKey(date), days), `${String(parts.hour).padStart(2, "0")}:${String(parts.minute).padStart(2, "0")}`); };
+  const startOfDay = (date = now()) => zonedClockOnKey(zonedDateKey(date), "00:00");
+  const formatTime = (date) => new Intl.DateTimeFormat("en", { timeZone: selectedTimeZone(), hour: "numeric", minute: "2-digit" }).format(new Date(date));
   const validClock = (value, fallback) => typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : fallback;
   const normalizedTimeRules = (settings) => {
-    const rules = Object.fromEntries(Object.entries(DEFAULT_TIME_RULES).map(([key, fallback]) => [key, validClock(settings?.[key], fallback)]));
+    const rules = Object.fromEntries(Object.entries(DEFAULT_TIME_RULES).filter(([key]) => key !== "timeZone").map(([key, fallback]) => [key, validClock(settings?.[key], fallback)]));
+    try {
+      rules.timeZone = new Intl.DateTimeFormat("en", { timeZone: settings?.timeZone || DEFAULT_TIME_RULES.timeZone }).resolvedOptions().timeZone;
+    } catch {
+      rules.timeZone = DEFAULT_TIME_RULES.timeZone;
+    }
     if (rules.daytimeStart === rules.nighttimeStart) {
       rules.daytimeStart = DEFAULT_TIME_RULES.daytimeStart;
       rules.nighttimeStart = DEFAULT_TIME_RULES.nighttimeStart;
@@ -77,17 +93,13 @@
     const minute = minutes % 60;
     return `${hour % 12 || 12}${compact && minute === 0 ? "" : `:${String(minute).padStart(2, "0")}`} ${hour < 12 ? "AM" : "PM"}`;
   };
-  const atClock = (date, clock) => {
-    const result = startOfDay(date);
-    result.setMinutes(clockMinutes(clock));
-    return result;
-  };
-  const formatDateTime = (date) => new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(date));
+  const atClock = (date, clock) => zonedClockOnKey(zonedDateKey(date), clock);
+  const formatDateTime = (date) => new Intl.DateTimeFormat("en", { timeZone: selectedTimeZone(), weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(date));
   const toLocalDateTimeValue = (date) => {
-    const value = new Date(date);
-    const local = new Date(value.getTime() - value.getTimezoneOffset() * 60000);
-    return local.toISOString().slice(0, 16);
+    const value = zonedParts(date);
+    return `${value.year}-${String(value.month).padStart(2, "0")}-${String(value.day).padStart(2, "0")}T${String(value.hour).padStart(2, "0")}:${String(value.minute).padStart(2, "0")}`;
   };
+  const parseDateTimeInput = (value) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value || "") ? zonedClockOnKey(value.slice(0, 10), value.slice(11, 16)) : new Date(NaN);
   const escapeHtml = (value = "") => String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
   const formatDuration = (minutes) => {
     const total = Math.max(0, Math.round(minutes));
@@ -140,6 +152,7 @@
       statsPeriod: "today",
       pumpPeriod: "today",
       pumpChartDays: 7,
+      growthPeriod: "30",
       deletedEventIds: []
     };
   }
@@ -157,6 +170,7 @@
         saved.statsPeriod ||= "today";
         saved.pumpPeriod ||= "today";
         saved.pumpChartDays = Number(saved.pumpChartDays) === 30 ? 30 : 7;
+        saved.growthPeriod = ["30", "90", "all"].includes(saved.growthPeriod) ? saved.growthPeriod : "30";
         saved.deletedEventIds = Array.isArray(saved.deletedEventIds) ? saved.deletedEventIds : [];
         return saved;
       }
@@ -169,6 +183,7 @@
   let state = seedState();
   let activeStorageKey = null;
   let currentUser = null;
+  let currentRole = "parent";
   let sessionTicker = null;
   let dailyInsight = null;
   let dailyInsightTimer = null;
@@ -240,7 +255,7 @@
   }
 
   function syncSnapshot() {
-    if (!syncReady) return;
+    if (!syncReady || currentRole === "observer") return;
     const snapshot = JSON.parse(JSON.stringify({
       events: state.events,
       activeSessions: state.activeSessions,
@@ -264,6 +279,7 @@
   }
 
   function saveState() {
+    if (currentRole === "observer") return;
     persistLocalState();
     syncSnapshot();
   }
@@ -299,20 +315,31 @@
 
   function eventsSince(days) {
     const currentWindow = currentCareWindow();
-    const cutoff = new Date(currentWindow.start);
-    cutoff.setDate(cutoff.getDate() - (days - 1));
+    let cutoff = new Date(currentWindow.start);
+    cutoff = shiftZonedDays(cutoff, -(days - 1));
     const currentTime = now();
-    return state.events.filter((event) => !["vaccine", "pump"].includes(event.type) && new Date(event.timestamp) >= cutoff && new Date(event.timestamp) <= currentTime);
+    return state.events.filter((event) => !["vaccine", "pump", "growth", "sick"].includes(event.type) && new Date(event.timestamp) >= cutoff && new Date(event.timestamp) <= currentTime);
+  }
+
+  function dailyReportWindow() {
+    let end = currentCareWindow().start;
+    const availableAt = (boundary) => {
+      let generation = atClock(boundary, timeRules().dailyReportTime);
+      if (generation < boundary) generation = shiftZonedDays(generation, 1);
+      return generation;
+    };
+    while (now() < availableAt(end)) end = shiftZonedDays(end, -1);
+    return { start: shiftZonedDays(end, -1), end, nextAvailableAt: availableAt(shiftZonedDays(end, 1)) };
   }
 
   function dailyReportEvents(dayOffset = 0) {
-    const windowEnd = new Date(currentCareWindow().start);
-    windowEnd.setDate(windowEnd.getDate() + dayOffset);
-    const windowStart = new Date(windowEnd);
-    windowStart.setDate(windowStart.getDate() - 1);
+    let windowEnd = new Date(dailyReportWindow().end);
+    windowEnd = shiftZonedDays(windowEnd, dayOffset);
+    let windowStart = new Date(windowEnd);
+    windowStart = shiftZonedDays(windowStart, -1);
     return state.events.filter((event) => {
       const recordedAt = new Date(event.timestamp);
-      return !["vaccine", "pump"].includes(event.type) && recordedAt >= windowStart && recordedAt < windowEnd;
+      return !["vaccine", "pump", "growth", "sick"].includes(event.type) && recordedAt >= windowStart && recordedAt < windowEnd;
     });
   }
 
@@ -325,8 +352,8 @@
 
   function babyWeekGenerationAt(weekNumber) {
     const weekEnd = new Date(BABY.bornAt.getTime() + weekNumber * WEEK_MS);
-    const generation = atClock(weekEnd, timeRules().careDayStart);
-    if (generation < weekEnd) generation.setDate(generation.getDate() + 1);
+    const generation = atClock(weekEnd, timeRules().weeklyReportTime);
+    if (generation < weekEnd) return shiftZonedDays(generation, 1);
     return generation;
   }
 
@@ -345,25 +372,25 @@
     const upperBound = Math.min(new Date(end).getTime(), Date.now());
     return state.events.filter((event) => {
       const recordedAt = new Date(event.timestamp).getTime();
-      return !["vaccine", "pump"].includes(event.type) && recordedAt >= new Date(start).getTime() && recordedAt < upperBound;
+      return !["vaccine", "pump", "growth", "sick"].includes(event.type) && recordedAt >= new Date(start).getTime() && recordedAt < upperBound;
     });
   }
 
   function currentCareWindow(at = now()) {
     const current = new Date(at);
-    const start = atClock(current, timeRules().careDayStart);
-    if (current < start) start.setDate(start.getDate() - 1);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
+    let start = atClock(current, timeRules().careDayStart);
+    if (current < start) start = shiftZonedDays(start, -1);
+    let end = new Date(start);
+    end = shiftZonedDays(end, 1);
     return { start, end };
   }
 
   function careWindowAtOffset(offset = 0, at = now()) {
     const window = currentCareWindow(at);
-    const start = new Date(window.start);
-    const end = new Date(window.end);
-    start.setDate(start.getDate() + offset);
-    end.setDate(end.getDate() + offset);
+    let start = new Date(window.start);
+    let end = new Date(window.end);
+    start = shiftZonedDays(start, offset);
+    end = shiftZonedDays(end, offset);
     return { start, end };
   }
 
@@ -409,7 +436,8 @@
 
   function timelineDayPart(date) {
     const current = new Date(date);
-    const minute = current.getHours() * 60 + current.getMinutes();
+    const currentParts = zonedParts(current);
+    const minute = currentParts.hour * 60 + currentParts.minute;
     const { daytimeStart, nighttimeStart } = timeRules();
     const dayStart = clockMinutes(daytimeStart);
     const dayLength = (clockMinutes(nighttimeStart) - dayStart + 1440) % 1440;
@@ -418,7 +446,7 @@
 
   function timelineCheckpoints(windowStart, firstTime, lastTime) {
     const { careDayStart, daytimeStart, nighttimeStart } = timeRules();
-    const dateLabel = new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short" });
+    const dateLabel = new Intl.DateTimeFormat("en", { timeZone: selectedTimeZone(), weekday: "short", day: "numeric", month: "short" });
     const checkpoints = new Map();
     const add = (date, kind) => {
       const timestamp = date.getTime();
@@ -426,7 +454,7 @@
       if (!checkpoints.has(timestamp)) checkpoints.set(timestamp, { date, kinds: new Set() });
       checkpoints.get(timestamp).kinds.add(kind);
     };
-    for (let date = startOfDay(windowStart); date.getTime() <= lastTime; date.setDate(date.getDate() + 1)) {
+    for (let date = startOfDay(windowStart); date.getTime() <= lastTime; date = shiftZonedDays(date, 1)) {
       add(startOfDay(date), "date");
       add(atClock(date, careDayStart), "care");
       add(atClock(date, daytimeStart), "day");
@@ -570,7 +598,7 @@
 
   function renderTimeline() {
     const timeline = $("#timeline");
-    const rows = timelineRowsFor((event) => !["vaccine", "pump"].includes(event.type));
+    const rows = timelineRowsFor((event) => !["vaccine", "pump", "growth", "sick"].includes(event.type));
     timeline.replaceChildren();
     if (!rows.length) {
       const empty = document.createElement("div");
@@ -631,8 +659,9 @@
   function renderVitaminDReminder() {
     const reminder = $("#vitamin-d-reminder");
     const feedCard = $(".last-feed-card");
-    const sixMonthsOld = new Date(BABY.bornAt);
-    sixMonthsOld.setMonth(sixMonthsOld.getMonth() + 6);
+    const birthParts = zonedParts(BABY.bornAt);
+    const sixMonthsKey = new Date(Date.UTC(birthParts.year, birthParts.month - 1 + 6, birthParts.day, 12)).toISOString().slice(0, 10);
+    const sixMonthsOld = zonedClockOnKey(sixMonthsKey, `${String(birthParts.hour).padStart(2, "0")}:${String(birthParts.minute).padStart(2, "0")}`);
     const current = now();
     if (current < BABY.bornAt || current >= sixMonthsOld) {
       reminder.hidden = true;
@@ -731,8 +760,8 @@
     const at = now();
     for (let offset = -(dayCount - 1); offset <= 0; offset += 1) {
       const window = careWindowAtOffset(offset, at);
-      const date = startOfDay(at);
-      date.setDate(date.getDate() + offset);
+      let date = startOfDay(at);
+      date = shiftZonedDays(date, offset);
       const beforeBirth = window.end <= BABY.bornAt;
       const birthCareDay = window.start <= BABY.bornAt && BABY.bornAt < window.end;
       const totals = beforeBirth ? null : statsForCareWindow(window, at);
@@ -794,16 +823,16 @@
     });
     const axis = renderChartYAxis(plot, width, scaleMax, y, metric.unit, metric.axisFormat);
     const lastIndex = days.length - 1;
-    const dateFormat = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" });
+    const dateFormat = new Intl.DateTimeFormat("en", { timeZone: selectedTimeZone(), day: "numeric", month: "short" });
     const dateLabels = days.map((day, index) => {
-      if (requestedDays === 7) return `<text class="signal-chart-date" x="${x(index)}" y="${height - 14}" text-anchor="middle">${index === lastIndex ? dateFormat.format(day.date) : day.date.getDate()}</text>`;
-      const monthStart = day.date.getDate() === 1;
+      if (requestedDays === 7) return `<text class="signal-chart-date" x="${x(index)}" y="${height - 14}" text-anchor="middle">${index === lastIndex ? dateFormat.format(day.date) : zonedParts(day.date).day}</text>`;
+      const monthStart = zonedParts(day.date).day === 1;
       const fiveDayStep = (lastIndex - index) % 5 === 0;
       if (!fiveDayStep && !monthStart) return "";
       const adjacentStep = monthStart && ((lastIndex - index + 1) % 5 === 0 || (lastIndex - index - 1) % 5 === 0);
       const dateY = height - (adjacentStep ? 24 : 36);
-      const month = monthStart ? `<text class="signal-chart-month" x="${x(index)}" y="${dateY + 13}" text-anchor="middle">${new Intl.DateTimeFormat("en", { month: "short" }).format(day.date)}</text>` : "";
-      return `<line class="signal-date-tick" x1="${x(index)}" y1="${y(0)}" x2="${x(index)}" y2="${y(0) + 4}" /><text class="signal-chart-date" x="${x(index)}" y="${dateY}" text-anchor="middle">${day.date.getDate()}</text>${month}`;
+      const month = monthStart ? `<text class="signal-chart-month" x="${x(index)}" y="${dateY + 13}" text-anchor="middle">${new Intl.DateTimeFormat("en", { timeZone: selectedTimeZone(), month: "short" }).format(day.date)}</text>` : "";
+      return `<line class="signal-date-tick" x1="${x(index)}" y1="${y(0)}" x2="${x(index)}" y2="${y(0) + 4}" /><text class="signal-chart-date" x="${x(index)}" y="${dateY}" text-anchor="middle">${zonedParts(day.date).day}</text>${month}`;
     }).join("");
     const points = days.map((day, index) => {
       if (!day[metric.loggedKey]) return "";
@@ -844,6 +873,44 @@
     $("#stats-trend-panel").hidden = todaySelected;
     if (todaySelected) renderTodaySignals();
     else renderTrendSignals(state.statsPeriod === "month" ? 30 : 7);
+    renderGrowth();
+  }
+
+  function growthChart(metric, unit, entries, periodStart, periodEnd) {
+    const width = 340, height = 156;
+    const plot = { left: 40, right: 13, top: 17, bottom: 30 };
+    const plotWidth = width - plot.left - plot.right;
+    const plotHeight = height - plot.top - plot.bottom;
+    const values = entries.map((item) => item.value);
+    const low = values.length ? Math.max(0, Math.floor((Math.min(...values) - (metric === "Weight" ? .35 : 3)) * (metric === "Weight" ? 10 : 1)) / (metric === "Weight" ? 10 : 1)) : 0;
+    const high = values.length ? Math.max(low + 1, Math.ceil(Math.max(...values) + (metric === "Weight" ? .35 : 3))) : 1;
+    const x = (date) => plot.left + (new Date(date).getTime() - periodStart) / Math.max(1, periodEnd - periodStart) * plotWidth;
+    const y = (value) => plot.top + (high - value) / (high - low) * plotHeight;
+    const ticks = values.length ? [0, .5, 1].map((fraction) => {
+      const value = low + (high - low) * (1 - fraction);
+      const tickY = plot.top + fraction * plotHeight;
+      return `<line x1="${plot.left}" y1="${tickY}" x2="${width - plot.right}" y2="${tickY}" class="growth-grid"/><text x="${plot.left - 5}" y="${tickY + 4}" text-anchor="end" class="growth-axis">${Number(value.toFixed(1))}</text>`;
+    }).join("") : "";
+    const dateText = (time) => new Intl.DateTimeFormat("en", { timeZone: timeRules().timeZone, month: "short", day: "numeric" }).format(new Date(time));
+    const dateTicks = [periodStart, (periodStart + periodEnd) / 2, periodEnd].map((time, index) => `<text x="${plot.left + index * plotWidth / 2}" y="${height - 6}" text-anchor="${index === 0 ? "start" : index === 2 ? "end" : "middle"}" class="growth-axis">${dateText(time)}</text>`).join("");
+    const coordinates = entries.map((entry) => `${x(entry.timestamp)},${y(entry.value)}`).join(" ");
+    const points = entries.map((entry) => `<circle cx="${x(entry.timestamp)}" cy="${y(entry.value)}" r="3.8" class="growth-point"><title>${dateText(entry.timestamp)} · ${entry.value} ${unit}</title></circle>`).join("");
+    return `<article class="growth-chart-card"><div class="growth-chart-heading"><strong>${metric}</strong><span>${unit}</span></div><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric} over time">${ticks}${dateTicks}${entries.length > 1 ? `<polyline class="growth-line" points="${coordinates}" />` : ""}${points}${entries.length ? "" : `<text class="growth-empty" x="${width / 2}" y="${height / 2}" text-anchor="middle">No ${metric.toLowerCase()} measurements yet</text>`}</svg></article>`;
+  }
+
+  function renderGrowth() {
+    const period = state.growthPeriod || "30";
+    $$('[data-growth-period]').forEach((button) => button.classList.toggle("active", button.dataset.growthPeriod === period));
+    const end = Date.now();
+    const start = period === "all" ? BABY.bornAt.getTime() : end - Number(period) * 86400000;
+    const records = state.events.filter((event) => event.type === "growth" && new Date(event.timestamp).getTime() >= start && new Date(event.timestamp).getTime() <= end);
+    const pointsFor = (key) => records.map((event) => ({ timestamp: event.timestamp, value: Number(event.data?.[key]) })).filter((item) => Number.isFinite(item.value) && item.value > 0).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const birthWeight = { timestamp: BABY.bornAt.toISOString(), value: BABY.birthWeightKg };
+    const weight = pointsFor("weightKg");
+    if (start <= BABY.bornAt.getTime()) weight.unshift(birthWeight);
+    $("#growth-charts").innerHTML = growthChart("Weight", "kg", weight, start, end) + growthChart("Height", "cm", pointsFor("heightCm"), start, end);
+    const recent = state.events.filter((event) => ["growth", "sick"].includes(event.type)).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 6);
+    $("#growth-health-list").innerHTML = recent.length ? `<h4>Recent records</h4>${recent.map((event) => `<article class="growth-health-row"><div><strong>${escapeHtml(event.title)}</strong><small>${escapeHtml(new Intl.DateTimeFormat("en", { timeZone: timeRules().timeZone, month: "short", day: "numeric", year: "numeric" }).format(new Date(event.timestamp)))}</small><p>${escapeHtml(event.detail)}</p></div><button type="button" data-growth-edit="${escapeHtml(event.id)}" aria-label="Edit ${escapeHtml(event.title)}">${preferenceEditIcon()}</button></article>`).join("")}` : '<p class="growth-empty-copy">Add a measurement or health note to see it here.</p>';
   }
 
   function renderCharts() {
@@ -856,8 +923,8 @@
   }
 
   function pumpEventsSince(days) {
-    const cutoff = new Date(currentCareWindow().start);
-    cutoff.setDate(cutoff.getDate() - (days - 1));
+    let cutoff = new Date(currentCareWindow().start);
+    cutoff = shiftZonedDays(cutoff, -(days - 1));
     return state.events.filter((event) => event.type === "pump" && new Date(event.timestamp) >= cutoff && new Date(event.timestamp) <= now());
   }
 
@@ -1016,7 +1083,7 @@
     const birthX = x(index);
     const baseline = height - plot.bottom;
     const shadeWidth = Math.max(0, birthX - plot.left);
-    const birthLabel = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(BABY.bornAt);
+    const birthLabel = new Intl.DateTimeFormat("en", { timeZone: selectedTimeZone(), day: "numeric", month: "short" }).format(BABY.bornAt);
     const anchor = birthX > (plot.left + x(days.length - 1)) / 2 ? "end" : "start";
     const labelX = birthX + (anchor === "end" ? -5 : 5);
     const background = `<rect class="chart-prebirth-area" x="${plot.left}" y="${plot.top}" width="${shadeWidth}" height="${baseline - plot.top}" />${shadeWidth > 90 ? `<text class="chart-prebirth-label" x="${plot.left + shadeWidth / 2}" y="${plot.top + (baseline - plot.top) / 2}" text-anchor="middle">Before birth</text>` : ""}`;
@@ -1037,8 +1104,8 @@
       const fed = dayEvents
         .filter((event) => event.type === "feed" && event.data?.mode === "bottle")
         .reduce((sum, event) => sum + Number(event.data?.amount || 0), 0);
-      const date = startOfDay(at);
-      date.setDate(date.getDate() + offset);
+      let date = startOfDay(at);
+      date = shiftZonedDays(date, offset);
       days.push({ date, beforeBirth, birthCareDay, pumped, fed });
     }
     const width = 330;
@@ -1054,11 +1121,11 @@
     const pumpedPoints = recordedDays.map(({ day, index }) => `${x(index).toFixed(1)},${y(day.pumped).toFixed(1)}`).join(" ");
     const fedPoints = recordedDays.map(({ day, index }) => `${x(index).toFixed(1)},${y(day.fed).toFixed(1)}`).join(" ");
     const axis = renderChartYAxis(plot, width, scaleMax, y, "ml");
-    const dateFormat = new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short" });
+    const dateFormat = new Intl.DateTimeFormat("en-US", { timeZone: selectedTimeZone(), day: "numeric", month: "short" });
     const tickCount = days.length <= 7 ? days.length : 6;
     const labels = Array.from({ length: tickCount }, (_, tick) => {
       const index = Math.round(tick * (days.length - 1) / Math.max(1, tickCount - 1));
-      return `<text class="chart-date-label" x="${x(index)}" y="${height - 8}" text-anchor="middle">${dayCount === 7 && index !== days.length - 1 ? days[index].date.getDate() : dateFormat.format(days[index].date)}</text>`;
+      return `<text class="chart-date-label" x="${x(index)}" y="${height - 8}" text-anchor="middle">${dayCount === 7 && index !== days.length - 1 ? zonedParts(days[index].date).day : dateFormat.format(days[index].date)}</text>`;
     }).join("");
     const points = days.map((day, index) => {
       if (day.beforeBirth) return "";
@@ -1071,7 +1138,7 @@
 
   function renderPumpSessionChart() {
     const at = now();
-    const dateFormat = new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short" });
+    const dateFormat = new Intl.DateTimeFormat("en-US", { timeZone: selectedTimeZone(), day: "numeric", month: "short" });
     const series = [
       { offset: -2, color: "#6b59d3", labelColor: "#5443a8", pointPosition: 0 },
       { offset: -1, color: "#ef7467", labelColor: "#a3443a", pointPosition: .5 },
@@ -1085,7 +1152,7 @@
         window,
         events,
         label: day.offset === 0 ? "Today" : `${Math.abs(day.offset)}d ago`,
-        date: (() => { const date = startOfDay(at); date.setDate(date.getDate() + day.offset); return dateFormat.format(date); })(),
+        date: (() => { const date = shiftZonedDays(startOfDay(at), day.offset); return dateFormat.format(date); })(),
         opacity: day.offset === 0 ? .78 : day.offset === -1 ? .92 : .88
       };
     });
@@ -1162,9 +1229,10 @@
 
   function renderReports() {
     const careDayTime = formatClock(timeRules().careDayStart);
+    const dailyReportTime = formatClock(timeRules().dailyReportTime);
+    const weeklyReportTime = formatClock(timeRules().weeklyReportTime);
     $("#daily-report-window-label").textContent = `Last complete care day · ${careDayTime} → ${careDayTime}`;
     const today = totalsFor(dailyReportEvents());
-    const previous = totalsFor(dailyReportEvents(-1));
     const summary = [
       `${today.feeds} ${today.feeds === 1 ? "feed" : "feeds"}`,
       `${today.wet} wet ${today.wet === 1 ? "diaper" : "diapers"}`,
@@ -1175,11 +1243,10 @@
     if (today.sunbathing) summary.push(`${today.sunbathing} sunbathing ${today.sunbathing === 1 ? "session" : "sessions"}`);
     if (today.walks) summary.push(`${today.walks} ${today.walks === 1 ? "walk" : "walks"}`);
     $("#daily-report-copy").textContent = `${summary.join(" · ")}.`;
-    const localSuggestion = `Cam logged ${today.feeds} feeds, ${today.diapers} diaper changes, and ${formatDuration(today.sleepMinutes)} of sleep in this care day; compared with the previous day, feeds were ${today.feeds === previous.feeds ? "steady" : today.feeds > previous.feeds ? "higher" : "lower"}. Use the age-based pattern as a gentle guide, remembering that missing entries and direct breastfeeding can make totals look lower.`;
-    $("#daily-tip").textContent = dailyInsight?.suggestion || localSuggestion;
+    $("#daily-tip").textContent = dailyInsight?.suggestion || "Reviewing Cam’s care pattern for a useful suggestion…";
     $("#daily-tip-meta").textContent = dailyInsight
-      ? `${dailyInsight.provider === "openai" ? "GPT suggestion" : "Age-based backup"} · ${dailyInsight.reportDate} · generated once`
-      : `Preparing the latest completed ${careDayTime} report`;
+      ? `${dailyInsight.provider === "openai" ? "GPT suggestion" : "AI review unavailable"} · ${dailyInsight.reportDate}`
+      : `Available at ${dailyReportTime} · ${formatDateTime(dailyReportWindow().nextAvailableAt)} next`;
 
     const week = weeklyDisplayWindow();
     const weekly = totalsFor(eventsForWindow(week.start, week.end));
@@ -1192,14 +1259,14 @@
     if (weekly.baths) weeklySummary.push(`${weekly.baths} ${weekly.baths === 1 ? "bath" : "baths"}`);
     if (weekly.sunbathing) weeklySummary.push(`${weekly.sunbathing} sunbathing ${weekly.sunbathing === 1 ? "session" : "sessions"}`);
     if (weekly.walks) weeklySummary.push(`${weekly.walks} ${weekly.walks === 1 ? "walk" : "walks"}`);
-    const shortDate = (date) => new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(date);
+    const shortDate = (date) => new Intl.DateTimeFormat("en", { timeZone: selectedTimeZone(), day: "numeric", month: "short" }).format(date);
     $("#weekly-window-label").textContent = `Baby week ${week.weekNumber} · ${shortDate(week.start)} → ${shortDate(week.end)}`;
     $("#weekly-report-copy").textContent = `${weeklySummary.join(" · ")}.`;
     const nextWeeklyAt = weeklyInsight?.nextAvailableAt ? new Date(weeklyInsight.nextAvailableAt) : babyWeekGenerationAt(week.weekNumber);
-    const pendingSuggestion = `Cam’s first weekly suggestion will be generated at ${careDayTime} when baby week ${week.weekNumber} is complete.`;
+    const pendingSuggestion = `Cam’s weekly suggestion will be generated at ${weeklyReportTime} after baby week ${week.weekNumber} is complete.`;
     $("#weekly-tip").textContent = weeklyInsight?.suggestion || (weeklyInsight?.status === "generating" ? "Preparing Cam’s completed baby-week comparison now." : pendingSuggestion);
     $("#weekly-tip-meta").textContent = weeklyInsight?.suggestion
-      ? `${weeklyInsight.provider === "openai" ? "GPT suggestion" : "Age-based backup"} · generated once for baby week ${weeklyInsight.weekNumber}`
+      ? `${weeklyInsight.provider === "openai" ? "GPT suggestion" : "AI review unavailable"} · baby week ${weeklyInsight.weekNumber}`
       : `${formatDateTime(nextWeeklyAt)} · based on Cam’s age week, not the calendar week`;
   }
 
@@ -1214,13 +1281,20 @@
         dailyInsightTimer = setTimeout(refreshDailyInsight, 10_000);
         return;
       }
+      if (insight?.status === "fallback") {
+        dailyInsightTimer = setTimeout(refreshDailyInsight, 5 * 60_000);
+        return;
+      }
       const nextAt = new Date(insight?.nextAvailableAt || 0).getTime();
       const delay = nextAt - Date.now();
       if (delay > 0 && delay < 2147483647) {
         dailyInsightTimer = setTimeout(refreshDailyInsight, delay + 2000);
       }
     } catch (_) {
-      $("#daily-tip-meta").textContent = "Age-based backup · GPT service unavailable";
+      $("#daily-tip").textContent = "The AI review is temporarily unavailable. Check the report again soon for a suggestion.";
+      $("#daily-tip-meta").textContent = "GPT service unavailable";
+      clearTimeout(dailyInsightTimer);
+      dailyInsightTimer = setTimeout(refreshDailyInsight, 5 * 60_000);
     }
   }
 
@@ -1235,18 +1309,26 @@
         weeklyInsightTimer = setTimeout(refreshWeeklyInsight, 10_000);
         return;
       }
+      if (insight?.status === "fallback") {
+        weeklyInsightTimer = setTimeout(refreshWeeklyInsight, 5 * 60_000);
+        return;
+      }
       const nextAt = new Date(insight?.nextAvailableAt || 0).getTime();
       const delay = nextAt - Date.now();
       if (delay > 0 && delay < 2147483647) {
         weeklyInsightTimer = setTimeout(refreshWeeklyInsight, delay + 2000);
       }
     } catch (_) {
-      $("#weekly-tip-meta").textContent = "Age-based backup · weekly service unavailable";
+      $("#weekly-tip").textContent = "The AI review is temporarily unavailable. Check the report again soon for a suggestion.";
+      $("#weekly-tip-meta").textContent = "GPT service unavailable";
+      clearTimeout(weeklyInsightTimer);
+      weeklyInsightTimer = setTimeout(refreshWeeklyInsight, 5 * 60_000);
     }
   }
 
   function renderDate() {
     const label = new Intl.DateTimeFormat("en", {
+      timeZone: selectedTimeZone(),
       weekday: "long",
       day: "numeric",
       month: "long"
@@ -1260,16 +1342,30 @@
   function renderBabyDetails() {
     $("#baby-age-label").textContent = babyAgeLabel();
     $("#greeting-text").textContent = `How is ${BABY.shortName} doing?`;
-    $("#profile-summary").textContent = `${BABY.sex} · Born 18 November 2026 at 8:00 AM · ${BABY.birthWeightKg} kg at birth`;
-    $("#measurements-summary").textContent = `Birth weight · ${BABY.birthWeightKg} kg`;
-    $("#birth-details-row").textContent = `18 Nov 2026 · 8:00 AM · ${BABY.sex} · ${BABY.birthWeightKg} kg`;
+    $("#profile-summary").textContent = `${BABY.sex} · Born ${formatDateTime(BABY.bornAt)} · ${BABY.birthWeightKg} kg at birth`;
+    const latestWeight = state.events.filter((event) => event.type === "growth" && Number(event.data?.weightKg) > 0).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+    $("#measurements-summary").textContent = latestWeight ? `Latest weight · ${Number(latestWeight.data.weightKg)} kg` : `Birth weight · ${BABY.birthWeightKg} kg`;
+    $("#birth-details-row").textContent = `${formatDateTime(BABY.bornAt)} · ${BABY.sex} · ${BABY.birthWeightKg} kg`;
     $$('[data-user-avatar]').forEach((image) => {
       image.src = currentUser?.avatarUrl || "./house_cam.jpg";
     });
-    const { careDayStart, daytimeStart, nighttimeStart } = timeRules();
-    $("#profile-care-day-time").textContent = `${formatClock(careDayStart)} → ${formatClock(careDayStart)}`;
-    $("#profile-daytime-time").textContent = formatClock(daytimeStart);
-    $("#profile-nighttime-time").textContent = formatClock(nighttimeStart);
+    $("#profile-preferences").innerHTML = preferenceEntries().map(([key, label, value]) => `<button class="setting-row preference-row" data-edit-time-rule="${key}" type="button"><span class="preference-label"><strong>${label}</strong>${preferenceEditIcon()}</span><span class="preference-value">${escapeHtml(value)}</span></button>`).join("");
+  }
+
+  function preferenceEditIcon() {
+    return '<svg class="setting-edit-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg>';
+  }
+
+  function preferenceEntries() {
+    const rules = timeRules();
+    return [
+      ["timeZone", "Time zone", rules.timeZone],
+      ["careDayStart", "Care day", `${formatClock(rules.careDayStart)} → ${formatClock(rules.careDayStart)}`],
+      ["daytimeStart", "Daytime begins", formatClock(rules.daytimeStart)],
+      ["nighttimeStart", "Nighttime begins", formatClock(rules.nighttimeStart)],
+      ["dailyReportTime", "Daily report", formatClock(rules.dailyReportTime)],
+      ["weeklyReportTime", "Weekly report", `Age week · ${formatClock(rules.weeklyReportTime)}`]
+    ];
   }
 
   function vaccineDueStatus(dueAt) {
@@ -1805,7 +1901,7 @@
     const startInput = $("#sleep-log-start");
     const endInput = $("#sleep-log-end");
     const error = $("#sleep-log-error");
-    const readTimes = () => ({ start: new Date(startInput.value), end: new Date(endInput.value) });
+    const readTimes = () => ({ start: parseDateTimeInput(startInput.value), end: parseDateTimeInput(endInput.value) });
     const renderDuration = () => {
       const { start, end } = readTimes();
       error.hidden = true;
@@ -2049,7 +2145,7 @@
       button.classList.toggle("selected", selected);
     });
     $("#save-activity-edit").addEventListener("click", () => {
-      const endedAt = new Date($("#edit-activity-time").value);
+      const endedAt = parseDateTimeInput($("#edit-activity-time").value);
       if (Number.isNaN(endedAt.getTime())) { $("#edit-activity-time").focus(); return; }
       const editedPumpLeft = event.type === "pump" ? Math.max(0, Math.min(500, Number($("#edit-pump-left").value || 0))) : 0;
       const editedPumpRight = event.type === "pump" ? Math.max(0, Math.min(500, Number($("#edit-pump-right").value || 0))) : 0;
@@ -2097,7 +2193,8 @@
     const dayLength = (clockMinutes(nighttimeStart) - dayStartMinutes + 1440) % 1440;
     const events = eventsForCareDay().filter((event) => {
       const date = new Date(event.timestamp);
-      const minute = date.getHours() * 60 + date.getMinutes();
+      const timeParts = zonedParts(date);
+      const minute = timeParts.hour * 60 + timeParts.minute;
       return (minute - dayStartMinutes + 1440) % 1440 < dayLength;
     });
     const lanes = [
@@ -2109,7 +2206,8 @@
     const laneMarkup = lanes.map((lane) => {
       const points = events.filter((event) => lane.types.includes(event.type)).map((event) => {
         const date = new Date(event.timestamp);
-        const minute = date.getHours() * 60 + date.getMinutes();
+        const timeParts = zonedParts(date);
+      const minute = timeParts.hour * 60 + timeParts.minute;
         const left = Math.max(0, Math.min(100, ((minute - dayStartMinutes + 1440) % 1440 / dayLength) * 100));
         return `<i class="pattern-point ${lane.className}" style="left:${left}%" title="${escapeHtml(event.title)} · ${escapeHtml(formatTime(date))}"></i>`;
       }).join("");
@@ -2146,7 +2244,7 @@
       <p class="info-copy">The 7- and 30-care-day views plot each logged day as a line. The pastel-green area changes with Cam’s age, and days without that activity are left unplotted instead of being treated as zero.</p>
       <p class="info-copy"><strong>${BABY.gestationalAgeWeeks} weeks · ${BABY.ethnicity} · ${BABY.sex.toLowerCase()}.</strong> This signal reference uses Cam’s full-term history and her feeding pattern: ${BABY.feedingProfile.toLowerCase()}. Sex and ethnicity are not used as unsupported corrections to feed, diaper, or sleep ranges.</p>
       <p class="info-copy">Bottle volume is measurable for Cam’s expressed breast milk and formula feeds. Because her current weight has not been measured, the volume reference remains deliberately broad and does not claim to be a weight-based target.</p>
-      <p class="info-copy">Important warning signs should use separately reviewed rules and should never wait for the evening report.</p>
+      <p class="info-copy">Important warning signs should use separately reviewed rules and should never wait for the next report.</p>
       <span class="feedback-pill">Educational guidance only</span>
       <div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Got it</button></div>
     `);
@@ -2156,7 +2254,7 @@
   function openNotificationPreview() {
     const totals = totalsFor(dailyReportEvents());
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Notification preview</p><h2 id="sheet-title">${BABY.shortName}’s day at a glance</h2><p class="sheet-subtitle">LittleLog · ${formatClock(timeRules().careDayStart)} · covers the previous 24 hours</p></header>
+      <header class="sheet-header"><p class="eyebrow">Notification preview</p><h2 id="sheet-title">${BABY.shortName}’s day at a glance</h2><p class="sheet-subtitle">LittleLog · ${formatClock(timeRules().dailyReportTime)} · covers the last complete care day</p></header>
       <div class="report-tip" style="margin-top:16px"><strong>Today</strong><p>${totals.feeds} feeds · ${totals.wet} wet diapers · ${totals.dirty} dirty diapers · ${formatDuration(totals.sleepMinutes)} recorded sleep.</p></div>
       <p class="info-copy">${dailyInsight?.suggestion || "The latest completed care-day suggestion will appear here after it is prepared."}</p>
       <div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
@@ -2166,10 +2264,10 @@
 
   function openProfileInfo(kind = "profile") {
     const content = kind === "measurements"
-      ? { eyebrow: "Growth", title: "Measurements", copy: `${BABY.shortName} weighed ${BABY.birthWeightKg} kg at birth. Future weight, length, and head-circumference measurements can be added here.` }
+      ? { eyebrow: "Growth", title: "Measurements", copy: `${BABY.shortName} weighed ${BABY.birthWeightKg} kg at birth. Record weight, height, head circumference, and health notes in Statistics → Growth & health.` }
       : kind === "age"
-        ? { eyebrow: "Birth details", title: BABY.fullName, copy: `${BABY.shortName} is a girl, born at 8:00 AM on 18 November 2026, weighing ${BABY.birthWeightKg} kg. Her current age is ${babyAgeLabel()}.` }
-        : { eyebrow: "Baby profile", title: BABY.fullName, copy: `${BABY.shortName} · Girl · Born 18 November 2026 at 8:00 AM · ${BABY.birthWeightKg} kg at birth.` };
+        ? { eyebrow: "Birth details", title: BABY.fullName, copy: `${BABY.shortName} is a girl, born ${formatDateTime(BABY.bornAt)}, weighing ${BABY.birthWeightKg} kg. Her current age is ${babyAgeLabel()}.` }
+        : { eyebrow: "Baby profile", title: BABY.fullName, copy: `${BABY.shortName} · Girl · Born ${formatDateTime(BABY.bornAt)} · ${BABY.birthWeightKg} kg at birth.` };
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">${content.eyebrow}</p><h2 id="sheet-title">${content.title}</h2></header>
       <p class="info-copy">${content.copy}</p>
@@ -2181,9 +2279,7 @@
   function openVaccineForm(mode = "schedule", event = null) {
     const isEdit = Boolean(event);
     const isCompleted = mode === "record" || event?.data?.status === "completed";
-    const defaultPlanned = new Date();
-    defaultPlanned.setDate(defaultPlanned.getDate() + (mode === "schedule" ? 1 : 0));
-    defaultPlanned.setHours(mode === "schedule" ? 9 : defaultPlanned.getHours(), mode === "schedule" ? 0 : defaultPlanned.getMinutes(), 0, 0);
+    const defaultPlanned = mode === "schedule" ? zonedClockOnKey(shiftDateKey(zonedDateKey(now()), 1), "09:00") : now();
     const kind = event?.data?.kind || "";
     const plannedAt = event?.data?.dueAt || event?.timestamp || defaultPlanned;
     const administeredAt = event?.data?.administeredAt || (mode === "record" ? now() : plannedAt);
@@ -2202,9 +2298,9 @@
     `);
     $("#save-vaccine").addEventListener("click", () => {
       const vaccineKind = $("#vaccine-kind-input").value.trim();
-      const dueAt = new Date($("#vaccine-planned-at").value);
+      const dueAt = parseDateTimeInput($("#vaccine-planned-at").value);
       const actualInput = $("#vaccine-administered-at");
-      const actualAt = actualInput ? new Date(actualInput.value) : null;
+      const actualAt = actualInput ? parseDateTimeInput(actualInput.value) : null;
       const vaccineNote = $("#vaccine-note").value.trim();
       if (!vaccineKind) { $("#vaccine-kind-input").focus(); return; }
       if (Number.isNaN(dueAt.getTime())) { $("#vaccine-planned-at").focus(); return; }
@@ -2243,7 +2339,7 @@
       <div class="sheet-actions"><button class="sheet-primary" id="confirm-vaccine-complete" type="button">Mark vaccine done</button></div>
     `);
     $("#confirm-vaccine-complete").addEventListener("click", () => {
-      const administeredAt = new Date($("#completed-vaccine-time").value);
+      const administeredAt = parseDateTimeInput($("#completed-vaccine-time").value);
       if (Number.isNaN(administeredAt.getTime())) { $("#completed-vaccine-time").focus(); return; }
       event.timestamp = administeredAt.toISOString();
       event.detail = "Completed";
@@ -2272,19 +2368,10 @@
   }
 
   function openSettings() {
-    const { careDayStart, daytimeStart, nighttimeStart } = timeRules();
-    const editIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg>';
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Settings</p><h2 id="sheet-title">Preferences</h2><p class="sheet-subtitle">Care records and preferences sync securely across approved devices.</p></header>
+      <header class="sheet-header"><p class="eyebrow">Settings</p><h2 id="sheet-title">Preferences</h2></header>
       <div class="mini-report">
-        <div class="mini-report-row"><span>Time zone</span><strong>Asia/Saigon</strong></div>
-        <div class="mini-report-row time-setting-row"><span>Care day</span><strong>${formatClock(careDayStart)} → ${formatClock(careDayStart)}</strong><button data-edit-time-rule="careDayStart" type="button" aria-label="Edit care day start">${editIcon}</button></div>
-        <div class="mini-report-row time-setting-row"><span>Daytime begins</span><strong>${formatClock(daytimeStart)}</strong><button data-edit-time-rule="daytimeStart" type="button" aria-label="Edit daytime start">${editIcon}</button></div>
-        <div class="mini-report-row time-setting-row"><span>Nighttime begins</span><strong>${formatClock(nighttimeStart)}</strong><button data-edit-time-rule="nighttimeStart" type="button" aria-label="Edit nighttime start">${editIcon}</button></div>
-        <div class="mini-report-row"><span>Units</span><strong>Metric</strong></div>
-        <div class="mini-report-row"><span>Daily report</span><strong>${formatClock(careDayStart)}</strong></div>
-        <div class="mini-report-row"><span>Weekly report</span><strong>Age week · ${formatClock(careDayStart)}</strong></div>
-        <div class="mini-report-row"><span>Storage</span><strong>Railway PostgreSQL</strong></div>
+        ${preferenceEntries().map(([key, label, value]) => `<div class="mini-report-row time-setting-row"><span class="time-setting-label"><span>${label}</span><button data-edit-time-rule="${key}" type="button" aria-label="Edit ${label.toLowerCase()}">${preferenceEditIcon()}</button></span><strong>${escapeHtml(value)}</strong></div>`).join("")}
       </div>
       <div class="sheet-actions two"><button class="sheet-secondary" id="sign-out-littlelog" type="button">Sign out</button><button class="sheet-primary" data-close-sheet type="button">Done</button></div>
     `);
@@ -2293,17 +2380,63 @@
     $("#sign-out-littlelog").addEventListener("click", signOutLittleLog);
   }
 
+  function openGrowthForm(record = null, kind = "growth") {
+    const type = record?.type || kind;
+    const measurement = type === "growth";
+    openSheet(`
+      <header class="sheet-header"><p class="eyebrow">Growth & health</p><h2 id="sheet-title">${record ? "Edit" : "Add"} ${measurement ? "measurement" : "health note"}</h2></header>
+      ${record ? "" : '<label class="choice-label" for="growth-record-type">Record type</label><select class="sheet-select" id="growth-record-type"><option value="growth" ' + (measurement ? "selected" : "") + '>Measurement</option><option value="sick" ' + (!measurement ? "selected" : "") + '>Sickness / health note</option></select>'}
+      <label class="choice-label" for="growth-record-time">Date and time</label><input class="sheet-input" id="growth-record-time" type="datetime-local" value="${toLocalDateTimeValue(record?.timestamp || now())}" required />
+      ${measurement ? `<div class="growth-form-grid"><label>Weight (kg)<input class="sheet-input" id="growth-weight" type="number" min="0.5" max="30" step="0.01" value="${escapeHtml(record?.data?.weightKg ?? "")}" placeholder="e.g. 3.45" /></label><label>Height (cm)<input class="sheet-input" id="growth-height" type="number" min="20" max="120" step="0.1" value="${escapeHtml(record?.data?.heightCm ?? "")}" placeholder="e.g. 51" /></label><label>Head circumference (cm)<input class="sheet-input" id="growth-head" type="number" min="20" max="70" step="0.1" value="${escapeHtml(record?.data?.headCm ?? "")}" placeholder="Optional" /></label></div>` : `<label class="choice-label" for="growth-symptoms">What happened?</label><textarea class="sheet-textarea" id="growth-symptoms" maxlength="240" placeholder="Symptoms or observation" required>${escapeHtml(record?.data?.symptoms || "")}</textarea><label class="choice-label" for="growth-temperature">Temperature (°C, optional)</label><input class="sheet-input" id="growth-temperature" type="number" min="30" max="43" step="0.1" value="${escapeHtml(record?.data?.temperatureC ?? "")}" />`}
+      <label class="choice-label" for="growth-note">Note (optional)</label><textarea class="sheet-textarea" id="growth-note" maxlength="240" placeholder="Anything useful to remember">${escapeHtml(record?.data?.note || "")}</textarea>
+      <p class="time-rule-error" id="growth-error" role="alert" hidden></p>
+      <div class="sheet-actions"><button class="sheet-primary" id="save-growth-record" type="button">${record ? "Save changes" : "Save record"}</button></div>
+      ${record ? '<div class="sheet-actions"><button class="sheet-danger" id="delete-growth-record" type="button">Delete record</button></div>' : ""}
+    `);
+    $("#growth-record-type")?.addEventListener("change", (event) => openGrowthForm(null, event.target.value));
+    $("#delete-growth-record")?.addEventListener("click", () => openDeleteActivityConfirmation(record.id));
+    $("#save-growth-record").addEventListener("click", () => {
+      const timestamp = parseDateTimeInput($("#growth-record-time").value);
+      const error = $("#growth-error");
+      if (Number.isNaN(timestamp.getTime()) || timestamp > now()) { error.textContent = "Choose a valid time that has passed."; error.hidden = false; return; }
+      const note = $("#growth-note").value.trim();
+      let title, detail, data;
+      if (measurement) {
+        const weightKg = Number($("#growth-weight").value || 0), heightCm = Number($("#growth-height").value || 0), headCm = Number($("#growth-head").value || 0);
+        if ((!weightKg && !heightCm && !headCm) || weightKg < 0 || heightCm < 0 || headCm < 0) { error.textContent = "Enter at least one measurement."; error.hidden = false; return; }
+        if ((weightKg && (weightKg < .5 || weightKg > 30)) || (heightCm && (heightCm < 20 || heightCm > 120)) || (headCm && (headCm < 20 || headCm > 70))) { error.textContent = "Check the measurement values."; error.hidden = false; return; }
+        title = "Growth measurement";
+        detail = [weightKg && `${weightKg} kg`, heightCm && `${heightCm} cm`, headCm && `Head ${headCm} cm`, note].filter(Boolean).join(" · ");
+        data = { weightKg: weightKg || null, heightCm: heightCm || null, headCm: headCm || null, note };
+      } else {
+        const symptoms = $("#growth-symptoms").value.trim();
+        const temperatureC = Number($("#growth-temperature").value || 0);
+        if (!symptoms || (temperatureC && (temperatureC < 30 || temperatureC > 43))) { error.textContent = "Add an observation and check the temperature."; error.hidden = false; return; }
+        title = "Health note";
+        detail = [symptoms, temperatureC && `${temperatureC} °C`, note].filter(Boolean).join(" · ");
+        data = { symptoms, temperatureC: temperatureC || null, note };
+      }
+      if (record) Object.assign(record, { title, detail, timestamp: timestamp.toISOString(), data });
+      else state.events.push(makeEvent(type, title, detail, timestamp, data));
+      saveState(); renderAll(); closeSheet(); showToast(`${measurement ? "Measurement" : "Health note"} ${record ? "updated" : "saved"}`);
+    });
+  }
+
   function openTimePreferenceSheet(key) {
     const choices = {
+      timeZone: { title: "Time zone", detail: "Use the same time zone for care days, timelines, charts, and reports." },
       careDayStart: { title: "Care day", detail: "A care day starts at this time and ends at the same time tomorrow." },
       daytimeStart: { title: "Daytime begins", detail: "Daytime lasts from this time until nighttime begins." },
-      nighttimeStart: { title: "Nighttime begins", detail: "Nighttime lasts from this time until daytime begins." }
+      nighttimeStart: { title: "Nighttime begins", detail: "Nighttime lasts from this time until daytime begins." },
+      dailyReportTime: { title: "Daily report", detail: "The daily review becomes available at this local time, after its care day ends." },
+      weeklyReportTime: { title: "Weekly report", detail: "The baby-week review becomes available at this local time, after that week ends." }
     };
     const choice = choices[key];
     if (!choice) return;
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Preferences</p><h2 id="sheet-title">${choice.title}</h2><p class="sheet-subtitle">${choice.detail}</p></header>
-      <label class="choice-label" for="time-rule-input">Start time</label><input class="sheet-input" id="time-rule-input" type="time" value="${timeRules()[key]}" required />
+      <label class="choice-label" for="time-rule-input">${key === "timeZone" ? "IANA time zone" : "Time"}</label><input class="sheet-input" id="time-rule-input" type="${key === "timeZone" ? "text" : "time"}" value="${escapeHtml(timeRules()[key])}" ${key === "timeZone" ? 'list="cam-time-zone-options" autocomplete="off"' : ""} required />
+      ${key === "timeZone" ? '<datalist id="cam-time-zone-options"><option value="Asia/Ho_Chi_Minh"><option value="Asia/Bangkok"><option value="Asia/Singapore"><option value="Asia/Tokyo"><option value="Europe/London"><option value="America/New_York"><option value="America/Los_Angeles"><option value="Australia/Sydney"></datalist>' : ""}
       <p class="time-rule-error" id="time-rule-error" role="alert" hidden></p>
       <div class="sheet-actions two"><button class="sheet-secondary" id="cancel-time-rule" type="button">Cancel</button><button class="sheet-primary" id="save-time-rule" type="button">Save time</button></div>
     `);
@@ -2312,7 +2445,13 @@
       const value = $("#time-rule-input").value;
       const nextRules = { ...timeRules(), [key]: value };
       const error = $("#time-rule-error");
-      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+      let validTimeZone = true;
+      if (key === "timeZone") {
+        try { new Intl.DateTimeFormat("en", { timeZone: value }); } catch { validTimeZone = false; }
+      }
+      if (key === "timeZone" && !validTimeZone) {
+        error.textContent = "Choose a valid IANA time zone.";
+      } else if (key !== "timeZone" && !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
         error.textContent = "Choose a valid time.";
       } else if (nextRules.daytimeStart === nextRules.nighttimeStart) {
         error.textContent = "Daytime and nighttime must begin at different times.";
@@ -2385,6 +2524,11 @@
   }
 
   function bindGlobalEvents() {
+    document.addEventListener("click", (event) => {
+      if (currentRole !== "observer") return;
+      const mutatingControl = event.target.closest('[data-action], [data-stop-session], [data-edit-event-id], [data-edit-pump-id], [data-edit-time-rule], [data-vaccine-complete], #log-pump, #log-growth, #schedule-vaccine, #record-vaccine, #edit-profile, #sheet-content .sheet-actions button:not([data-close-sheet]):not(#sign-out-littlelog)');
+      if (mutatingControl) { event.preventDefault(); event.stopImmediatePropagation(); }
+    }, true);
     $$('[data-nav]').forEach((button) => button.addEventListener("click", () => navigate(button.dataset.nav)));
     $$('[data-action]').forEach((button) => button.addEventListener("click", () => {
       const action = button.dataset.action;
@@ -2430,7 +2574,10 @@
     $("#baby-chip").addEventListener("click", () => navigate("baby"));
     $("#edit-profile").addEventListener("click", () => openProfileInfo("profile"));
     $$('[data-profile]').forEach((button) => button.addEventListener("click", () => openProfileInfo(button.dataset.profile)));
-    $$('#view-baby [data-edit-time-rule]').forEach((button) => button.addEventListener("click", () => openTimePreferenceSheet(button.dataset.editTimeRule)));
+    $("#profile-preferences").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-edit-time-rule]");
+      if (button) openTimePreferenceSheet(button.dataset.editTimeRule);
+    });
     $$('[data-period]').forEach((button) => button.addEventListener("click", () => {
       state.statsPeriod = button.dataset.period;
       $$('[data-period]').forEach((item) => item.classList.toggle("active", item === button));
@@ -2438,6 +2585,18 @@
       renderStats();
     }));
     $('[data-open="range-info"]').addEventListener("click", openRangeInfo);
+    $("#log-growth").addEventListener("click", () => openGrowthForm());
+    $$('[data-growth-period]').forEach((button) => button.addEventListener("click", () => {
+      state.growthPeriod = button.dataset.growthPeriod;
+      persistLocalState();
+      renderGrowth();
+    }));
+    $("#growth-health-list").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-growth-edit]");
+      if (!button || currentRole === "observer") return;
+      const record = state.events.find((item) => item.id === button.dataset.growthEdit);
+      if (record) openGrowthForm(record);
+    });
     $("#schedule-vaccine").addEventListener("click", () => openVaccineForm("schedule"));
     $("#record-vaccine").addEventListener("click", () => openVaccineForm("record"));
     $("#view-vaccine").addEventListener("click", (event) => {
@@ -2454,7 +2613,7 @@
 
   function updateStatusTime() {
     const statusTime = $("#status-time");
-    if (statusTime) statusTime.textContent = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(now());
+    if (statusTime) statusTime.textContent = formatTime(now());
   }
 
   function setGateStatus(message, isError = false) {
@@ -2463,21 +2622,23 @@
     status.classList.toggle("is-error", isError);
   }
 
-  async function openSyncedApp(user) {
+  async function openSyncedApp(user, role = "parent") {
     setGateStatus("Loading Cam’s care records…");
     currentUser = user;
-    activeStorageKey = `${STORAGE_KEY_PREFIX}-${user.id}-v1`;
-    state = loadState(activeStorageKey, user.username === "traph");
+    currentRole = role;
+    activeStorageKey = role === "observer" ? null : `${STORAGE_KEY_PREFIX}-${user.id}-v1`;
+    state = activeStorageKey ? loadState(activeStorageKey, user.username === "traph") : seedState();
     const serverState = await camRequest("/state");
-    mergeServerState(serverState, true);
+    mergeServerState(serverState, role !== "observer");
     syncReady = true;
+    document.body.classList.toggle("observer-mode", role === "observer");
     renderAll();
     updateStatusTime();
     $("#app-stage").classList.remove("is-locked");
     $("#app-stage").setAttribute("aria-hidden", "false");
     $("#sync-gate").classList.add("is-hidden");
-    setSyncStatus("synced", "Secure Railway sync");
-    syncSnapshot();
+    setSyncStatus("synced", role === "observer" ? "Viewing family records" : "Secure Railway sync");
+    if (role !== "observer") syncSnapshot();
     refreshDailyInsight();
     refreshWeeklyInsight();
   }
@@ -2491,7 +2652,7 @@
         return;
       }
       if (session.authenticated) {
-        await openSyncedApp(session.user);
+        await openSyncedApp(session.user, session.role);
         return;
       }
       setGateStatus("");
@@ -2513,13 +2674,25 @@
         body: JSON.stringify({ username: "traph", password })
       });
       $("#sync-password").value = "";
-      await openSyncedApp(session.user);
+      if (session.role === "observer") await showObserverWelcome();
+      await openSyncedApp(session.user, session.role);
     } catch (error) {
       setGateStatus(error.message || "LittleLog could not sign in.", true);
       $("#sync-password").select();
     } finally {
       submit.disabled = false;
     }
+  }
+
+  function showObserverWelcome() {
+    return new Promise((resolve) => {
+      const card = $(".sync-gate-card");
+      const original = [...card.childNodes];
+      const welcome = document.createElement("div");
+      welcome.innerHTML = '<div class="observer-welcome-icon" aria-hidden="true">✦</div><h1 id="sync-gate-title">Welcome to Cam’s pooping world</h1><p class="sync-gate-copy">You’re here as a family observer. You can enjoy Cam’s updates, but only her parents can add or change records.</p><button class="observer-welcome-ok" id="observer-welcome-ok" type="button">OK, let me see</button>';
+      card.replaceChildren(welcome);
+      $("#observer-welcome-ok").addEventListener("click", () => { card.replaceChildren(...original); resolve(); }, { once: true });
+    });
   }
 
   bindGlobalEvents();

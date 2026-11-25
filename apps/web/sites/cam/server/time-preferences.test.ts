@@ -14,6 +14,9 @@ test("existing families keep the established time rules", () => {
     careDayStart: "20:00",
     daytimeStart: "06:00",
     nighttimeStart: "20:00",
+    dailyReportTime: "20:00",
+    weeklyReportTime: "20:00",
+    timeZone: "Asia/Ho_Chi_Minh",
   });
 });
 
@@ -42,4 +45,17 @@ test("an older device cannot overwrite newer time rules while syncing another ac
   assert.equal(merged.careDayStart, "12:30");
   assert.equal(merged.daytimeStart, "07:15");
   assert.equal(merged.nighttimeStart, "19:45");
+});
+
+test("edited report time delays the daily review until after the care day ends", () => {
+  const before = camLatestCompletedWindow("20:00", new Date("2026-11-25T07:59:00+07:00"), "08:00");
+  const after = camLatestCompletedWindow("20:00", new Date("2026-11-25T08:00:00+07:00"), "08:00");
+  assert.equal(before.reportDate, "2026-11-23");
+  assert.equal(after.reportDate, "2026-11-24");
+  assert.equal(after.nextAvailableAt.toISOString(), "2026-11-26T01:00:00.000Z");
+});
+
+test("care boundaries use the selected time zone", () => {
+  const window = camLatestCompletedWindow("20:00", new Date("2026-11-25T14:00:00Z"), "20:00", "Asia/Tokyo");
+  assert.equal(window.windowEnd.toISOString(), "2026-11-25T11:00:00.000Z");
 });
