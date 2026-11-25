@@ -1418,7 +1418,7 @@
     const container = $("#active-sessions");
     const sessions = state.activeSessions || { sleep: null, feed: null, other: null };
     const cards = [];
-    if (sessions.sleep) cards.push({ key: "sleep", session: sessions.sleep, label: "Sleep in progress", icon: icons.sleep });
+    if (sessions.sleep) cards.push({ key: "sleep", session: sessions.sleep, label: "Shhh... Cam's sleeping!", icon: icons.sleep });
     if (sessions.feed) {
       const feed = sessions.feed;
       const label = feed.mode === "bottle" ? `${feed.milk} bottle in progress` : `${feed.side || "Breast"} feed in progress`;
