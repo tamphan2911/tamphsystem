@@ -2511,7 +2511,7 @@
   }
 
   function openVaccinePlanInfo() {
-    openSheet(`<header class="sheet-header"><p class="eyebrow">About this plan</p><h2 id="sheet-title">Recommended vaccine plan</h2></header><p class="info-copy">Based on Vietnam’s 2026 routine schedule. Recommended ages are guides; confirm products, timing and catch-up with Cam’s clinic.</p><p class="info-copy">Product name and country of origin refer to the vaccine Cam actually receives. Enter them from her vaccination card or ask the clinic. Vitamin K is kept in earlier entries because it is not a vaccine.</p><p class="info-copy"><a href="https://tiemchungmorong.vn/document/thong-tu-52-2025-tt-byt-ngay-31-12-2025-cua-bo-y-te-ban-hanh-danh-muc-benh-truyen-nhiem-doi-tuong-va-pham-vi-phai-su-dung-vac-xin-sinh-pham-y-te-bat-buoc" target="_blank" rel="noopener noreferrer">Ministry of Health schedule</a></p><div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Done</button></div>`);
+    openSheet(`<header class="sheet-header"><p class="eyebrow">About this plan</p><h2 id="sheet-title">Recommended vaccine plan</h2></header><p class="info-copy">Based on Vietnam’s 2026 routine schedule. Recommended ages are guides; confirm products, timing and catch-up with Cam’s clinic.</p><p class="info-copy">Product name and country of origin refer to the vaccine Cam actually receives. Enter them from her vaccination card or ask the clinic.</p><p class="info-copy"><a href="https://tiemchungmorong.vn/document/thong-tu-52-2025-tt-byt-ngay-31-12-2025-cua-bo-y-te-ban-hanh-danh-muc-benh-truyen-nhiem-doi-tuong-va-pham-vi-phai-su-dung-vac-xin-sinh-pham-y-te-bat-buoc" target="_blank" rel="noopener noreferrer">Ministry of Health schedule</a></p><div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Done</button></div>`);
     $('[data-close-sheet]').addEventListener("click", closeSheet);
   }
 
@@ -2533,7 +2533,6 @@
       <label class="choice-label" for="plan-vaccine-origin">Country of origin</label><input class="sheet-input" id="plan-vaccine-origin" maxlength="80" placeholder="Country shown on the card" />
       <label class="choice-label" for="plan-vaccine-note">Note</label><textarea class="sheet-textarea" id="plan-vaccine-note" maxlength="240" placeholder="Clinic, product, reaction, or anything useful"></textarea>
       <div class="sheet-actions two"><button class="sheet-secondary" id="plan-vaccine-schedule" type="button">Save appointment</button><button class="sheet-primary" id="plan-vaccine-given" type="button">Record given</button></div>
-      <div class="sheet-actions"><button class="sheet-secondary" id="plan-vaccine-archive" type="button">Use earlier entry</button></div>
     `);
     const save = (completed) => {
       if (!requireParentMutation()) return;
@@ -2553,7 +2552,6 @@
     };
     $("#plan-vaccine-schedule").addEventListener("click", () => save(false));
     $("#plan-vaccine-given").addEventListener("click", () => save(true));
-    $("#plan-vaccine-archive").addEventListener("click", () => openArchivedVaccinePicker(planId));
   }
 
   function openVaccineForm(mode = "schedule", event = null, seed = null) {

@@ -13,7 +13,7 @@
       const phoneUserAgent = /iPhone|iPod|Android.*Mobile|Windows Phone|BlackBerry|BB10|Opera Mini|IEMobile/i.test(navigator.userAgent) && !/iPad|Tablet/i.test(navigator.userAgent);
       document.documentElement.classList.add(phoneUserAgent ? "phone-device" : "non-phone-device");
     </script>
-    <link rel="stylesheet" href="./styles.css?v=20261126f" />
+    <link rel="stylesheet" href="./styles.css?v=20261126g" />
   </head>
   <body>
     <main class="phone-only-screen" role="status" aria-labelledby="phone-only-title">
@@ -234,7 +234,7 @@
 
                 <section class="vaccine-section" aria-labelledby="upcoming-vaccines-title"><div class="vaccine-section-title"><h3 id="upcoming-vaccines-title">Recommended plan <button class="vaccine-info-button" id="vaccine-plan-info" type="button" aria-label="About the recommended vaccine plan">i</button></h3><span id="vaccine-upcoming-summary">Dose series</span></div><div class="vaccine-order-switch" role="group" aria-label="Order vaccine plan"><button class="active" data-vaccine-view="time" type="button" aria-pressed="true">By time</button><button data-vaccine-view="series" type="button" aria-pressed="false">By vaccine</button></div><div class="vaccine-list" id="vaccine-upcoming-list"></div></section>
                 <section class="vaccine-section" aria-labelledby="completed-vaccines-title"><div class="vaccine-section-title"><h3 id="completed-vaccines-title">Clinic additions</h3><span id="vaccine-completed-summary">Parent records</span></div><div class="vaccine-list" id="vaccine-completed-list"></div></section>
-                <section class="vaccine-section" aria-labelledby="vaccine-archive-title"><div class="vaccine-section-title"><h3 id="vaccine-archive-title">Earlier entries · archive</h3><span id="vaccine-archive-summary">Preserved records</span></div><p class="vaccine-archive-note">These entries were saved before the guided plan. Review them with the clinic and mark the matching doses above; they are preserved here without guessing which dose was given.</p><div class="vaccine-list" id="vaccine-archive-list"></div></section>
+                <section class="vaccine-section" aria-labelledby="vaccine-archive-title" hidden><div class="vaccine-section-title"><h3 id="vaccine-archive-title">Earlier entries · archive</h3><span id="vaccine-archive-summary">Preserved records</span></div><p class="vaccine-archive-note">These entries were saved before the guided plan. Review them with the clinic and mark the matching doses above; they are preserved here without guessing which dose was given.</p><div class="vaccine-list" id="vaccine-archive-list"></div></section>
                 <div class="safe-bottom-space"></div>
               </section>
             </div>
@@ -260,6 +260,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20261126f"></script>
+    <script src="./app.js?v=20261126g"></script>
   </body>
 </html>
