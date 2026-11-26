@@ -581,7 +581,28 @@
     });
   }
 
+  function createTimelineContinuation(event) {
+    const item = document.createElement("article");
+    item.className = `timeline-continuation ${event.timelineKind || timelineDayPart(event.timestamp)}`;
+    const open = document.createElement("button");
+    open.className = "timeline-continuation-open";
+    open.type = "button";
+    open.dataset.eventId = event.id;
+    const time = document.createElement("time");
+    time.dateTime = event.timestamp;
+    time.textContent = formatTime(event.timestamp);
+    const duration = document.createElement("span");
+    duration.textContent = formatDuration(Number(event.data?.durationMin || 0));
+    const label = document.createElement("span");
+    label.className = "timeline-continuation-label";
+    label.textContent = `${event.title} continues above`;
+    open.append(time, document.createTextNode(" · "), duration, document.createTextNode(" · "), label);
+    item.append(open);
+    return item;
+  }
+
   function createTimelineItem(event) {
+    if (event.timelineContinues) return createTimelineContinuation(event);
     const item = document.createElement("article");
     item.className = `timeline-item ${event.timelineKind || timelineDayPart(event.timestamp)}`;
 
@@ -1111,8 +1132,6 @@
       }
       const { leftMl, rightMl, totalMl } = pumpVolumes(event);
       const leftShare = totalMl > 0 ? leftMl * 100 / totalMl : 0;
-      const leftPercent = Number(leftShare.toFixed(1));
-      const rightPercent = totalMl > 0 ? Number((100 - leftPercent).toFixed(1)) : 0;
       const gapDuration = gap === null ? "" : formatDuration(gap);
       const note = String(event.data?.note || "").trim();
       return `
@@ -1127,7 +1146,7 @@
             </button>
             <button class="pump-entry-edit" data-edit-pump-id="${eventId}" type="button" aria-label="Edit ${badge} pump"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-.8 4.8L8 20l10.8-10.8a2.3 2.3 0 0 0-3.2-3.2L4.8 16.8 4 16Zm10-8 3.2 3.2" /></svg></button>
           </div>
-          <div class="pump-balance" role="img" aria-label="Left breast ${leftMl} ml, ${leftPercent}%. Right breast ${rightMl} ml, ${rightPercent}%."
+          <div class="pump-balance" role="img" aria-label="Left breast ${leftMl} ml. Right breast ${rightMl} ml."
             style="--pump-left-share:${leftShare}%">
             <span class="pump-balance-label pump-left">Left</span>
             <div class="pump-balance-track">
@@ -1138,8 +1157,8 @@
             </div>
             <span class="pump-balance-label pump-right">Right</span>
             <div class="pump-balance-values">
-              <span><strong>${leftMl} ml</strong> · ${leftPercent}%</span>
-              <span><strong>${rightMl} ml</strong> · ${rightPercent}%</span>
+              <span><strong>${leftMl} ml</strong></span>
+              <span><strong>${rightMl} ml</strong></span>
             </div>
           </div>
           ${note ? `<p class="pump-entry-note">${escapeHtml(note)}</p>` : ""}
