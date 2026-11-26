@@ -1049,6 +1049,7 @@
         return `<div class="timeline-checkpoint pump-timeline-checkpoint ${row.checkpoint.kind}">${checkpointIcon}<span>${row.checkpoint.label}</span></div>`;
       }
       const event = row.event;
+      const dayPart = event.timelineKind || timelineDayPart(event.timestamp);
       const eventId = escapeHtml(event.id);
       const { number, gap, durationMin } = details.get(event.id);
       const badge = `${number}${suffix[ordinal.select(number)]}`;
@@ -1057,7 +1058,7 @@
       const timeAndDuration = `<time datetime="${escapeHtml(event.timestamp)}">${time}</time>${separator}<span>${duration}</span>`;
       if (event.timelineContinues) {
         return `
-          <article class="pump-event pump-event-segment">
+          <article class="pump-event pump-event-segment ${dayPart}">
             <div class="pump-entry-meta">
               <button class="pump-entry-open pump-entry-values" type="button" data-pump-event-id="${eventId}">
                 ${timeAndDuration}${separator}<span class="pump-entry-continuation">Pump continues above</span>
@@ -1072,7 +1073,7 @@
       const gapDuration = gap === null ? "" : formatDuration(gap);
       const note = String(event.data?.note || "").trim();
       return `
-        <article class="pump-event">
+        <article class="pump-event ${dayPart}">
           <div class="pump-entry-meta">
             <button class="pump-entry-open" data-pump-event-id="${eventId}" type="button">
               <span class="pump-entry-icon">${badge}</span><span class="sr-only">pump, </span>
