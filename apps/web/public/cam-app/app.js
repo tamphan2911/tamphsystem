@@ -1258,9 +1258,9 @@
     const at = now();
     const dateFormat = new Intl.DateTimeFormat("en-US", { timeZone: selectedTimeZone(), day: "numeric", month: "short" });
     const series = [
-      { offset: -2, color: "#6b59d3", labelColor: "#5443a8", pointPosition: 0 },
-      { offset: -1, color: "#ef7467", labelColor: "#a3443a", pointPosition: .5 },
-      { offset: 0, color: "#3aa88d", labelColor: "#246f61", pointPosition: 1 }
+      { offset: -2, color: "#6b59d3" },
+      { offset: -1, color: "#ef7467" },
+      { offset: 0, color: "#3aa88d" }
     ].map((day) => {
       const window = careWindowAtOffset(day.offset, at);
       const events = eventsInCareWindow(window, (event) => event.type === "pump", at)
@@ -1275,10 +1275,10 @@
       };
     });
     const width = 330;
-    const height = 244;
+    const height = 208;
     const observedMax = Math.max(0, ...series.flatMap((day) => day.events.map((event) => pumpVolumes(event).totalMl)));
     const scaleMax = Math.max(100, Math.ceil(observedMax / 50) * 50);
-    const plot = { left: Math.max(33, 9 + String(scaleMax).length * 7), right: 17, top: 50, bottom: 58 };
+    const plot = { left: Math.max(33, 9 + String(scaleMax).length * 7), right: 17, top: 26, bottom: 38 };
     const rightEdge = width - plot.right;
     const bottomEdge = height - plot.bottom;
     const plotHeight = bottomEdge - plot.top;
@@ -1307,33 +1307,14 @@
         const { totalMl } = pumpVolumes(event);
         return { x: x(hours), y: y(totalMl), totalMl, timestamp };
       });
-      const topLeft = day.offset === -2;
-      const belowPlot = day.offset === 0;
-      const labelX = topLeft ? plot.left : rightEdge;
-      const labelY = belowPlot ? height - 9 : 13;
-      const anchor = points[Math.floor((points.length - 1) * day.pointPosition)];
-      let leader = "";
-      if (anchor) {
-        const start = `${anchor.x},${anchor.y}`;
-        // Today's leader goes around the clock labels in the right gutter.
-        const route = belowPlot
-          ? `${start} ${rightEdge + 9},${anchor.y} ${rightEdge + 9},${labelY - 4} ${labelX + 3},${labelY - 4}`
-          : `${start} ${labelX + (topLeft ? 7 : -7)},${labelY + 19}`;
-        leader = `<polyline class="session-chart-leader" style="--series-color:${day.color}" points="${route}" />`;
-      }
       const dots = points.map((point) => `<circle class="session-chart-point" cx="${point.x}" cy="${point.y}" r="3.3"><title>${formatTime(point.timestamp)} · ${point.totalMl} ml</title></circle>`).join("");
       const coordinates = points.map((point) => `${point.x},${point.y}`).join(" ");
       const path = points.length > 1 ? `<polyline class="session-chart-line" points="${coordinates}" />` : "";
-      const line = `<g class="session-chart-series" style="--series-color:${day.color};opacity:${day.opacity}">${path}${dots}</g>`;
-      const countText = `${points.length} ${points.length === 1 ? "pump" : "pumps"}`;
-      const labelText = `${countText} (${day.label} - ${day.date})`;
-      const content = belowPlot ? labelText : `<tspan x="${labelX}" dy="0">${countText}</tspan> <tspan x="${labelX}" dy="14">(${day.label} - ${day.date})</tspan>`;
-      const label = `<text class="session-chart-count" style="--series-label-color:${day.labelColor}" x="${labelX}" y="${labelY}" text-anchor="${topLeft ? "start" : "end"}" aria-label="${labelText}">${content}</text>`;
-      return { leader, line, label };
-    });
-    const renderLayer = (key) => plottedSeries.map((day) => day[key]).join("");
-    const counts = series.map((day) => `${day.events.length} pumps (${day.label} - ${day.date})`).join(", ");
-    $("#pump-session-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Millilitres per pump by time across three care days, with daytime starting at ${formatClock(daytimeStart)} and nighttime starting at ${formatClock(nighttimeStart)}. ${counts}">${dayNightBackground}${axis}${hourTicks}${renderLayer("leader")}${renderLayer("line")}${renderLayer("label")}</svg>`;
+      return `<g class="session-chart-series" style="--series-color:${day.color};opacity:${day.opacity}">${path}${dots}</g>`;
+    }).join("");
+    const legend = `<ul class="pump-session-legend">${series.map((day) => `<li><i class="pump-session-legend-key" style="background:${day.color};opacity:${day.opacity}" aria-hidden="true"></i><span>${day.events.length} ${day.events.length === 1 ? "pump" : "pumps"} (${day.label} - ${day.date})</span></li>`).join("")}</ul>`;
+    const counts = series.map((day) => `${day.events.length} ${day.events.length === 1 ? "pump" : "pumps"} (${day.label} - ${day.date})`).join(", ");
+    $("#pump-session-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Millilitres per pump by time across three care days, with daytime starting at ${formatClock(daytimeStart)} and nighttime starting at ${formatClock(nighttimeStart)}. ${counts}">${dayNightBackground}${axis}${hourTicks}${plottedSeries}</svg>${legend}`;
   }
 
   function renderPump() {

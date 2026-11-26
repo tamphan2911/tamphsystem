@@ -785,8 +785,9 @@ svg {
 .pump-session-chart .session-chart-day { fill: #fff8f0; stroke: none; }
 .pump-session-chart .session-chart-line { fill: none; color: var(--series-color); stroke: currentColor; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
 .pump-session-chart .session-chart-point { fill: var(--series-color); stroke: #fff; stroke-width: 1.5; }
-.pump-session-chart .session-chart-leader { fill: none; color: var(--series-color); stroke: currentColor; stroke-width: 1.2; stroke-dasharray: 2 3; stroke-linecap: round; opacity: .8; }
-.pump-session-chart .session-chart-count { fill: var(--series-label-color); stroke: none; font-size: 12px; font-weight: 400; }
+.pump-session-legend { display: grid; gap: 5px; margin: 3px 0 0; padding: 0 0 0 2px; color: #696576; font-size: .75rem; list-style: none; }
+.pump-session-legend li { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.pump-session-legend-key { flex: 0 0 20px; height: 3px; border-radius: 3px; }
 
 .page-heading { margin-top: 5px; }
 .period-switch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-bottom: 15px; padding: 4px; border-radius: 14px; background: #eeedf3; }
