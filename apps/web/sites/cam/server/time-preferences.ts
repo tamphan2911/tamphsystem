@@ -20,6 +20,15 @@ export type CamTimeRules = {
   timeZone: string;
 };
 
+export const DEFAULT_CAM_REMINDER_AGE_MONTHS = 6;
+
+export function camReminderAgeMonths(settings: unknown) {
+  const value = isRecord(settings) ? settings.reminderAgeMonths : undefined;
+  return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 24
+    ? value
+    : DEFAULT_CAM_REMINDER_AGE_MONTHS;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -62,6 +71,7 @@ export function mergeCamSettings(incoming: unknown, stored: unknown) {
   return {
     ...next,
     ...camTimeRules(selected),
+    reminderAgeMonths: camReminderAgeMonths(selected),
     ...(previousIsNewer ? { timeRulesUpdatedAt: previous.timeRulesUpdatedAt } : {}),
   };
 }

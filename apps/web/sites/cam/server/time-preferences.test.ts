@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   camLatestCompletedWindow,
+  camReminderAgeMonths,
   camTimeRules,
   camWeeklyWindow,
   mergeCamSettings,
@@ -45,6 +46,17 @@ test("an older device cannot overwrite newer time rules while syncing another ac
   assert.equal(merged.careDayStart, "12:30");
   assert.equal(merged.daytimeStart, "07:15");
   assert.equal(merged.nighttimeStart, "19:45");
+});
+
+test("daily care reminder age defaults to six months and follows the newest preference", () => {
+  assert.equal(camReminderAgeMonths({}), 6);
+  assert.equal(camReminderAgeMonths({ reminderAgeMonths: 9 }), 9);
+  assert.equal(camReminderAgeMonths({ reminderAgeMonths: 0 }), 6);
+  const merged = mergeCamSettings(
+    { reminderAgeMonths: 6, timeRulesUpdatedAt: "2026-11-25T05:00:00Z" },
+    { reminderAgeMonths: 9, timeRulesUpdatedAt: "2026-11-25T06:00:00Z" },
+  );
+  assert.equal(merged.reminderAgeMonths, 9);
 });
 
 test("edited report time delays the daily review until after the care day ends", () => {

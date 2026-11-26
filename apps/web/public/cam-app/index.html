@@ -13,11 +13,11 @@
       const phoneUserAgent = /iPhone|iPod|Android.*Mobile|Windows Phone|BlackBerry|BB10|Opera Mini|IEMobile/i.test(navigator.userAgent) && !/iPad|Tablet/i.test(navigator.userAgent);
       document.documentElement.classList.add(phoneUserAgent ? "phone-device" : "non-phone-device");
     </script>
-    <link rel="stylesheet" href="./styles.css?v=20261125p" />
+    <link rel="stylesheet" href="./styles.css?v=20261126a" />
   </head>
   <body>
     <main class="phone-only-screen" role="status" aria-labelledby="phone-only-title">
-      <div class="phone-only-card"><span class="phone-only-icon" aria-hidden="true">✦</span><h1 id="phone-only-title">LittleLog is for phones</h1><p>Please open Cam’s baby care page on a phone.</p></div>
+      <div class="phone-only-card"><span class="phone-only-icon" aria-hidden="true">✦</span><h1 id="phone-only-title">Observer access is for phones</h1><p>Please open Cam’s baby care page on a phone.</p><button class="phone-only-switch" id="phone-only-switch-access" type="button">Use another access code</button></div>
     </main>
     <section class="sync-gate" id="sync-gate" aria-labelledby="sync-gate-title">
       <div class="sync-gate-card">
@@ -91,8 +91,9 @@
                       <span class="feed-orb" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 3h6v3l2 2v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8l2-2V3Zm-2 8h10" /></svg></span>
                       <span><small>Last feed</small><strong id="last-feed-text">1h 12m ago</strong><em id="last-feed-detail">Bottle · 90 ml</em></span>
                     </div>
-                    <div class="vitamin-d-reminder" id="vitamin-d-reminder" role="status" aria-live="polite" hidden><span class="vitamin-d-reminder-icon" aria-hidden="true"></span><span id="vitamin-d-reminder-text"></span></div>
+                    <div class="vitamin-d-reminder" id="vitamin-d-reminder" role="status" aria-live="polite" hidden><span class="vitamin-d-reminder-icon" aria-hidden="true"></span><span class="vitamin-d-reminder-copy"><span id="vitamin-d-reminder-text"></span><small id="vitamin-d-reminder-time" hidden></small></span></div>
                   </div>
+                  <div class="afternoon-care-reminder" id="afternoon-care-reminder" role="status" aria-live="polite" hidden><span class="afternoon-care-reminder-icon" aria-hidden="true"></span><span id="afternoon-care-reminder-text"></span><time id="afternoon-care-reminder-time" hidden></time></div>
                 </div>
 
                 <div class="section-row"><h3>Quick log</h3></div>
@@ -111,7 +112,7 @@
                   </button>
                   <button class="quick-card bath" data-action="other" type="button">
                     <span class="quick-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M6 6l12 12M18 6 6 18" /></svg></span>
-                    <span><strong>Other Activities</strong><small>Bath, sun, or walk</small></span>
+                    <span><strong>Other Activities</strong><small>Bath, care, sun, or walk</small></span>
                   </button>
                 </div>
 
@@ -260,6 +261,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20261125p"></script>
+    <script src="./app.js?v=20261126a"></script>
   </body>
 </html>

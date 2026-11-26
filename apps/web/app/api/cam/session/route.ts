@@ -44,7 +44,7 @@ function activeAttemptRecord(key: string) {
 }
 
 export async function GET() {
-  const session = await hasCamSession();
+  const session = await hasCamSession({ allowObserverNonPhone: true });
   const user = session
     ? await prisma.camCareUser.findUnique({
         where: { id: session.userId },

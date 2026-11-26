@@ -1,8 +1,6 @@
 (() => {
   "use strict";
 
-  if (document.documentElement.classList.contains("non-phone-device")) return;
-
   const STORAGE_KEY_PREFIX = "littlelog-cam-user";
   const LEGACY_STORAGE_KEYS = ["littlelog-cam-v2", "littlelog-cam-v1"];
   const CAM_API = "/api/cam";
@@ -19,11 +17,19 @@
   };
   const WEEK_MS = 7 * 86400000;
   const DEFAULT_TIME_RULES = { careDayStart: "20:00", daytimeStart: "06:00", nighttimeStart: "20:00", dailyReportTime: "20:00", weeklyReportTime: "20:00", timeZone: "Asia/Ho_Chi_Minh" };
+  const DEFAULT_REMINDER_AGE_MONTHS = 6;
+  const normalizeReminderAgeMonths = (value) => Number.isInteger(Number(value)) && Number(value) >= 1 && Number(value) <= 24 ? Number(value) : DEFAULT_REMINDER_AGE_MONTHS;
   const OTHER_ACTIVITIES = {
     bath: { type: "bath", title: "Bath", defaultDuration: 10 },
+    afternoonCare: { type: "afternoonCare", title: "Afternoon care", defaultDuration: 10 },
     sunbathing: { type: "sunbathing", title: "Sunbathing", defaultDuration: 15 },
     walk: { type: "walk", title: "Take a walk", defaultDuration: 30 }
   };
+  const AFTERNOON_CARE_ITEMS = [
+    { key: "nasal", label: "Nasal clean", short: "Nasal" },
+    { key: "eye", label: "Eye clean", short: "Eye" },
+    { key: "moisturizing", label: "Moisturizing", short: "Moist." }
+  ];
   localStorage.removeItem("littlelog-prototype-v1");
   localStorage.removeItem("littlelog-prototype-v2");
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -36,6 +42,7 @@
     note: '<svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /></svg>',
     bottle: '<svg viewBox="0 0 24 24"><path d="M9 3h6v3l2 2v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8l2-2V3Zm-2 8h10" /></svg>',
     bath: '<svg viewBox="0 0 24 24"><path d="M4 11h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6v-3Zm3 0V6a3 3 0 0 1 6 0m-7 14-1 2m13-2 1 2M13 8h3" /></svg>',
+    afternoonCare: '<svg viewBox="0 0 24 24"><path d="M5 6.5h2m3 0h9M5 12h2m3 0h9M5 17.5h2m3 0h9M4.6 6.5l.7.7 1.2-1.4M4.6 12l.7.7 1.2-1.4" /></svg>',
     sunbathing: '<svg viewBox="0 0 24 24"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z" /></svg>',
     walk: '<svg viewBox="0 0 24 24"><path d="M13 5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-2 4 3-2 2 3 3 1m-8-2-2 5-4 2m6-2 3 2 1 5m-6-7-1 6" /></svg>',
     pump: '<svg viewBox="0 0 24 24"><path d="M8 3h6v5H8zM10 8v3m-3 0h6l2 3v7H5v-7l2-3Zm8-5h3v7h-3m-2-2h2" /></svg>',
@@ -88,6 +95,7 @@
     return rules;
   };
   const timeRules = () => normalizedTimeRules(state.settings);
+  const reminderAgeMonths = () => normalizeReminderAgeMonths(state.settings?.reminderAgeMonths);
   const clockMinutes = (clock) => Number(clock.slice(0, 2)) * 60 + Number(clock.slice(3));
   const formatClock = (clock, compact = false) => {
     const minutes = typeof clock === "number" ? ((Math.round(clock) % 1440) + 1440) % 1440 : clockMinutes(clock);
@@ -150,7 +158,7 @@
         feed: null,
         other: null
       },
-      settings: { dailyReport: true, weeklyReport: true, ...DEFAULT_TIME_RULES },
+      settings: { dailyReport: true, weeklyReport: true, ...DEFAULT_TIME_RULES, reminderAgeMonths: DEFAULT_REMINDER_AGE_MONTHS },
       statsPeriod: "today",
       pumpPeriod: "today",
       pumpChartDays: 7,
@@ -168,7 +176,7 @@
       if (saved && Array.isArray(saved.events)) {
         saved.activeSessions ||= { sleep: null, feed: null, other: null };
         saved.activeSessions.other ??= null;
-        saved.settings = { dailyReport: true, weeklyReport: true, ...DEFAULT_TIME_RULES, ...(saved.settings || {}) };
+        saved.settings = { dailyReport: true, weeklyReport: true, ...DEFAULT_TIME_RULES, reminderAgeMonths: DEFAULT_REMINDER_AGE_MONTHS, ...(saved.settings || {}) };
         saved.statsPeriod ||= "today";
         saved.pumpPeriod ||= "today";
         saved.pumpChartDays = Number(saved.pumpChartDays) === 30 ? 30 : 7;
@@ -250,6 +258,7 @@
       state.settings = {
         dailyReport: true, weeklyReport: true, ...remoteSettings,
         ...normalizedTimeRules(newerRules),
+        reminderAgeMonths: normalizeReminderAgeMonths(newerRules.reminderAgeMonths),
         ...(localTime > remoteTime ? { timeRulesUpdatedAt: localSettings.timeRulesUpdatedAt } : {})
       };
     }
@@ -412,7 +421,7 @@
   }
 
   function timeRangeFor(event) {
-    if (!["feed", "sleep", "bath", "sunbathing", "walk", "pump"].includes(event.type)) return "";
+    if (!["feed", "sleep", "bath", "afternoonCare", "sunbathing", "walk", "pump"].includes(event.type)) return "";
     const durationMin = Number(event.data?.durationMin || 0);
     const end = new Date(event.data?.endAt || event.timestamp);
     const start = event.data?.startAt
@@ -428,7 +437,7 @@
     const start = event.data?.startAt
       ? new Date(event.data.startAt)
       : new Date(end.getTime() - durationMin * 60000);
-    const timed = ["feed", "sleep", "bath", "sunbathing", "walk", "pump"].includes(event.type)
+    const timed = ["feed", "sleep", "bath", "afternoonCare", "sunbathing", "walk", "pump"].includes(event.type)
       && durationMin > 0
       && !Number.isNaN(start.getTime())
       && !Number.isNaN(end.getTime())
@@ -551,7 +560,7 @@
     const time = document.createElement("span");
     time.className = "timeline-time";
     const durationMin = Number(event.data?.durationMin || 0);
-    const timedTypes = ["feed", "sleep", "bath", "sunbathing", "walk"];
+    const timedTypes = ["feed", "sleep", "bath", "afternoonCare", "sunbathing", "walk"];
     time.textContent = durationMin && timedTypes.includes(event.type)
       ? formatDuration(durationMin)
       : formatTime(event.timestamp);
@@ -567,7 +576,7 @@
       detailText = [event.data?.milk, `${Number(event.data?.amount || 0)} ml`, timeRange].filter(Boolean).join(" · ");
     } else if (event.type === "feed") {
       detailText = [event.data?.side, timeRange].filter(Boolean).join(" · ");
-    } else if (["sleep", "bath", "sunbathing", "walk"].includes(event.type)) {
+    } else if (["sleep", "bath", "afternoonCare", "sunbathing", "walk"].includes(event.type)) {
       detailText = timeRange;
     }
     detail.className = "timeline-detail";
@@ -579,6 +588,15 @@
       vitaminD.className = "timeline-note timeline-vitamin-d";
       vitaminD.textContent = "Vitamin D included";
       copy.append(vitaminD);
+    }
+    if (event.type === "afternoonCare" && !event.timelineContinues) {
+      const checked = afternoonCareLabels(event.data?.checks);
+      if (checked.length) {
+        const checklist = document.createElement("small");
+        checklist.className = "timeline-note timeline-care-checks";
+        checklist.textContent = checked.map((label) => `✓ ${label}`).join(" · ");
+        copy.append(checklist);
+      }
     }
     if (noteText) {
       const note = document.createElement("small");
@@ -658,23 +676,51 @@
     $("#last-feed-detail").textContent = feed.detail;
   }
 
+  function careRemindersActive(current = now()) {
+    const birthParts = zonedParts(BABY.bornAt);
+    const cutoffKey = new Date(Date.UTC(birthParts.year, birthParts.month - 1 + reminderAgeMonths(), birthParts.day, 12)).toISOString().slice(0, 10);
+    const cutoff = zonedClockOnKey(cutoffKey, `${String(birthParts.hour).padStart(2, "0")}:${String(birthParts.minute).padStart(2, "0")}`);
+    return current >= BABY.bornAt && current < cutoff;
+  }
+
+  function afternoonCareLabels(checks, short = false) {
+    const selected = Array.isArray(checks) ? checks : [];
+    return AFTERNOON_CARE_ITEMS.filter((item) => selected.includes(item.key)).map((item) => short ? item.short : item.label);
+  }
+
   function renderVitaminDReminder() {
     const reminder = $("#vitamin-d-reminder");
     const feedCard = $(".last-feed-card");
-    const birthParts = zonedParts(BABY.bornAt);
-    const sixMonthsKey = new Date(Date.UTC(birthParts.year, birthParts.month - 1 + 6, birthParts.day, 12)).toISOString().slice(0, 10);
-    const sixMonthsOld = zonedClockOnKey(sixMonthsKey, `${String(birthParts.hour).padStart(2, "0")}:${String(birthParts.minute).padStart(2, "0")}`);
     const current = now();
-    if (current < BABY.bornAt || current >= sixMonthsOld) {
+    if (!careRemindersActive(current)) {
       reminder.hidden = true;
       feedCard.classList.remove("has-reminder");
       return;
     }
-    const givenToday = eventsInCareWindow(currentCareWindow(current), (event) => event.type === "feed" && event.data?.vitaminD === true, current).length > 0;
+    const feed = eventsInCareWindow(currentCareWindow(current), (event) => event.type === "feed" && event.data?.vitaminD === true, current)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
     reminder.hidden = false;
     feedCard.classList.add("has-reminder");
-    reminder.dataset.state = givenToday ? "given" : "due";
-    $("#vitamin-d-reminder-text").textContent = givenToday ? "Vitamin D given today" : "Vitamin D due today";
+    reminder.dataset.state = feed ? "given" : "due";
+    $("#vitamin-d-reminder-text").textContent = feed ? "Vitamin D given" : "Vitamin D due today";
+    $("#vitamin-d-reminder-time").hidden = !feed;
+    $("#vitamin-d-reminder-time").textContent = feed ? formatTime(feed.timestamp) : "";
+  }
+
+  function renderAfternoonCareReminder() {
+    const reminder = $("#afternoon-care-reminder");
+    const current = now();
+    if (!careRemindersActive(current)) { reminder.hidden = true; return; }
+    const care = eventsInCareWindow(currentCareWindow(current), (event) => event.type === "afternoonCare", current)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+    reminder.hidden = false;
+    reminder.dataset.state = care ? "given" : "due";
+    const checks = care ? afternoonCareLabels(care.data?.checks, true) : [];
+    const message = care ? `Afternoon care done · ${checks.length ? checks.join(", ") : "No items checked"}` : "Afternoon care due today";
+    $("#afternoon-care-reminder-text").textContent = message;
+    $("#afternoon-care-reminder-time").hidden = !care;
+    $("#afternoon-care-reminder-time").textContent = care ? formatTime(care.timestamp) : "";
+    reminder.title = `${message}${care ? ` · ${formatTime(care.timestamp)}` : ""}`;
   }
 
   function statsForCareWindow(window, at) {
@@ -1370,6 +1416,7 @@
       ["careDayStart", "Care day", `${formatClock(rules.careDayStart)} → ${formatClock(rules.careDayStart)}`],
       ["daytimeStart", "Daytime begins", formatClock(rules.daytimeStart)],
       ["nighttimeStart", "Nighttime begins", formatClock(rules.nighttimeStart)],
+      ["reminderAgeMonths", "Daily care reminders until", `${reminderAgeMonths()} months`],
       ["dailyReportTime", "Daily report", formatClock(rules.dailyReportTime)],
       ["weeklyReportTime", "Weekly report", `Age week · ${formatClock(rules.weeklyReportTime)}`]
     ];
@@ -1454,6 +1501,7 @@
     renderTimeline();
     renderLastFeed();
     renderVitaminDReminder();
+    renderAfternoonCareReminder();
     renderStats();
     renderPump();
     renderReports();
@@ -1964,13 +2012,22 @@
   function openOtherActivitiesSheet() {
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Other activities</p><h2 id="sheet-title">What is Cam doing?</h2><p class="sheet-subtitle">Choose an activity, then start a timer or log when it happened.</p></header>
-      <div class="instant-options three">
+      <div class="instant-options">
         <button class="instant-option" data-other="bath" type="button">${icons.bath}<span>Bath</span></button>
+        <button class="instant-option" data-other="afternoonCare" type="button">${icons.afternoonCare}<span>Afternoon care</span></button>
         <button class="instant-option" data-other="sunbathing" type="button">${icons.sunbathing}<span>Sunbathing</span></button>
         <button class="instant-option" data-other="walk" type="button">${icons.walk}<span>Take a walk</span></button>
       </div>
     `);
     $$('[data-other]').forEach((button) => button.addEventListener("click", () => openOtherActivitySheet(button.dataset.other)));
+  }
+
+  function afternoonCareChecklist(checks = []) {
+    return `<span class="choice-label">Care checklist</span><div class="care-checklist">${AFTERNOON_CARE_ITEMS.map((item) => `<label class="care-check-item"><input type="checkbox" data-care-check="${item.key}" ${checks.includes(item.key) ? "checked" : ""} /><span>${item.label}</span></label>`).join("")}</div>`;
+  }
+
+  function selectedAfternoonCareChecks(root = document) {
+    return $$('[data-care-check]:checked', root).map((input) => input.dataset.careCheck);
   }
 
   function openOtherActivitySheet(activityKey) {
@@ -1980,6 +2037,7 @@
       <header class="sheet-header"><p class="eyebrow">Other activity</p><h2 id="sheet-title">${activity.title}</h2><p class="sheet-subtitle">Log a completed activity or start timing it now.</p></header>
       <span class="choice-label">Duration</span>
       <div class="wheel-picker"><button id="other-duration-minus" type="button" aria-label="Reduce activity duration">−</button><span class="wheel-value"><small>shorter</small><strong id="other-duration-value">${activity.defaultDuration} min</strong><em>longer</em></span><button id="other-duration-plus" type="button" aria-label="Increase activity duration">+</button></div>
+      ${activityKey === "afternoonCare" ? afternoonCareChecklist() : ""}
       <span class="choice-label">Optional note</span><input class="sheet-input" id="other-activity-note" maxlength="100" placeholder="Anything useful to remember" />
       <div class="sheet-actions two"><button class="sheet-primary" id="log-other-activity" type="button">Log ${activity.title.toLowerCase()}</button><button class="sheet-secondary" id="start-other-activity" type="button">Start timer</button></div>
     `);
@@ -1987,16 +2045,17 @@
     bindWheel("other-duration", activity.defaultDuration, 5, 180, 5, (value) => { durationMin = value; });
     $("#log-other-activity").addEventListener("click", () => {
       const note = $("#other-activity-note").value.trim();
+      const checks = activityKey === "afternoonCare" ? selectedAfternoonCareChecks() : [];
       openLogTimeSheet(activity.title.toLowerCase(), (endedAt) => {
         const startedAt = new Date(endedAt.getTime() - durationMin * 60000);
-        addActivityWithWakeCheck(makeEvent(activity.type, activity.title, `${durationMin} min${note ? ` · ${note}` : ""}`, endedAt, { durationMin, note, startAt: startedAt.toISOString(), endAt: endedAt.toISOString() }), `${activity.title} logged`, activity.title.toLowerCase());
+        addActivityWithWakeCheck(makeEvent(activity.type, activity.title, `${durationMin} min${note ? ` · ${note}` : ""}`, endedAt, { durationMin, note, checks, startAt: startedAt.toISOString(), endAt: endedAt.toISOString() }), `${activity.title} logged`, activity.title.toLowerCase());
       }, { confirmNowLabel: `Log ${activity.title.toLowerCase()} now` });
     });
     $("#start-other-activity").addEventListener("click", () => {
       if (!requireParentMutation()) return;
       if (state.activeSessions?.other) { closeSheet(); showToast("An activity timer is already running", false); return; }
       const sleepWasRunning = Boolean(state.activeSessions?.sleep);
-      state.activeSessions.other = { activityKey, type: activity.type, title: activity.title, note: $("#other-activity-note").value.trim(), startedAt: now().toISOString() };
+      state.activeSessions.other = { activityKey, type: activity.type, title: activity.title, note: $("#other-activity-note").value.trim(), checks: activityKey === "afternoonCare" ? selectedAfternoonCareChecks() : [], startedAt: now().toISOString() };
       saveState();
       renderSession();
       closeSheet();
@@ -2009,7 +2068,7 @@
     const session = state.activeSessions?.other;
     if (!session) return;
     const elapsedMinutes = Math.max(1, Math.floor((Date.now() - new Date(session.startedAt).getTime()) / 60000));
-    openLogTimeSheet(session.title.toLowerCase(), (endedAt) => stopOtherSession(endedAt), {
+    openLogTimeSheet(session.title.toLowerCase(), (endedAt) => stopOtherSession(endedAt, session.type === "afternoonCare" ? selectedAfternoonCareChecks() : []), {
       eyebrow: "Finish activity",
       title: `When did ${session.title.toLowerCase()} finish?`,
       subtitle: "Stop right now or scroll back to the actual finish time.",
@@ -2020,9 +2079,13 @@
       initialMinutesAgo: Math.min(10, elapsedMinutes),
       stepMinutes: elapsedMinutes < 5 ? 1 : 5
     });
+    if (session.type === "afternoonCare") {
+      const actions = $("#sheet-content .sheet-actions");
+      actions?.insertAdjacentHTML("beforebegin", afternoonCareChecklist(session.checks || []));
+    }
   }
 
-  function stopOtherSession(requestedEndedAt = now()) {
+  function stopOtherSession(requestedEndedAt = now(), checks = []) {
     const session = state.activeSessions?.other;
     if (!session) return;
     const startedAt = new Date(session.startedAt);
@@ -2030,7 +2093,7 @@
     const endedAt = new Date(Math.min(Date.now(), Math.max(startedAt.getTime(), requested.getTime())));
     const durationMin = Math.max(1, Math.round((endedAt - startedAt) / 60000));
     addActivityWithWakeCheck(
-      makeEvent(session.type, session.title, `${durationMin} min${session.note ? ` · ${session.note}` : ""}`, endedAt, { durationMin, note: session.note || "", startAt: startedAt.toISOString(), endAt: endedAt.toISOString() }),
+      makeEvent(session.type, session.title, `${durationMin} min${session.note ? ` · ${session.note}` : ""}`, endedAt, { durationMin, note: session.note || "", checks, startAt: startedAt.toISOString(), endAt: endedAt.toISOString() }),
       `${session.title} timer stopped`,
       session.title.toLowerCase(),
       () => { state.activeSessions.other = null; }
@@ -2134,7 +2197,7 @@
   function openEditActivitySheet(eventId) {
     const event = state.events.find((item) => item.id === eventId && item.type !== "vaccine");
     if (!event) return;
-    const timed = ["feed", "sleep", "bath", "sunbathing", "walk", "pump"].includes(event.type);
+    const timed = ["feed", "sleep", "bath", "afternoonCare", "sunbathing", "walk", "pump"].includes(event.type);
     const durationMin = Math.max(1, Number(event.data?.durationMin || 10));
     const note = event.data?.note || "";
     const bottleFields = event.type === "feed" && event.data?.mode === "bottle" ? `
@@ -2156,6 +2219,7 @@
       ${bottleFields}${breastFields}${pumpFields}${diaperFields}
       <label class="choice-label" for="edit-activity-time">${timed ? "Finish time" : "Recorded time"}</label><input class="sheet-input" id="edit-activity-time" type="datetime-local" value="${toLocalDateTimeValue(event.timestamp)}" />
       ${timed ? `<label class="choice-label" for="edit-activity-duration">Duration (minutes)</label><input class="sheet-input" id="edit-activity-duration" type="number" min="1" max="1440" step="1" value="${durationMin}" />` : ""}
+      ${event.type === "afternoonCare" ? afternoonCareChecklist(event.data?.checks || []) : ""}
       ${event.type === "feed" ? `<span class="choice-label">Supplement</span><div class="choice-grid single"><button class="choice-button ${event.data?.vitaminD ? "selected" : ""}" id="edit-feed-vitamin-d" type="button" aria-pressed="${event.data?.vitaminD ? "true" : "false"}">Vitamin D included</button></div>` : ""}
       <label class="choice-label" for="edit-activity-note">Optional note</label><textarea class="sheet-textarea" id="edit-activity-note" maxlength="180" placeholder="Anything useful to remember">${escapeHtml(note)}</textarea>
       <div class="sheet-actions"><button class="sheet-primary" id="save-activity-edit" type="button">Save changes</button></div>
@@ -2181,6 +2245,7 @@
         event.data = { ...event.data, durationMin: updatedDuration, note: updatedNote, startAt: startedAt.toISOString(), endAt: endedAt.toISOString() };
       } else event.data = { ...event.data, note: updatedNote };
       if (event.type === "feed") event.data.vitaminD = $("#edit-feed-vitamin-d").getAttribute("aria-pressed") === "true";
+      if (event.type === "afternoonCare") event.data.checks = selectedAfternoonCareChecks();
       if (event.type === "pump") {
         event.data.leftMl = editedPumpLeft;
         event.data.rightMl = editedPumpRight;
@@ -2454,6 +2519,7 @@
       careDayStart: { title: "Care day", detail: "A care day starts at this time and ends at the same time tomorrow." },
       daytimeStart: { title: "Daytime begins", detail: "Daytime lasts from this time until nighttime begins." },
       nighttimeStart: { title: "Nighttime begins", detail: "Nighttime lasts from this time until daytime begins." },
+      reminderAgeMonths: { title: "Daily care reminders", detail: "Show Vitamin D and afternoon care reminders while Cam is younger than this age." },
       dailyReportTime: { title: "Daily report", detail: "The daily review becomes available at this local time, after its care day ends." },
       weeklyReportTime: { title: "Weekly report", detail: "The baby-week review becomes available at this local time, after that week ends." }
     };
@@ -2461,16 +2527,17 @@
     if (!choice) return;
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Preferences</p><h2 id="sheet-title">${choice.title}</h2><p class="sheet-subtitle">${choice.detail}</p></header>
-      <label class="choice-label" for="time-rule-input">${key === "timeZone" ? "IANA time zone" : "Time"}</label><input class="sheet-input" id="time-rule-input" type="${key === "timeZone" ? "text" : "time"}" value="${escapeHtml(timeRules()[key])}" ${key === "timeZone" ? 'list="cam-time-zone-options" autocomplete="off"' : ""} required />
+      <label class="choice-label" for="time-rule-input">${key === "timeZone" ? "IANA time zone" : key === "reminderAgeMonths" ? "Age in months" : "Time"}</label><input class="sheet-input" id="time-rule-input" type="${key === "timeZone" ? "text" : key === "reminderAgeMonths" ? "number" : "time"}" value="${escapeHtml(key === "reminderAgeMonths" ? reminderAgeMonths() : timeRules()[key])}" ${key === "timeZone" ? 'list="cam-time-zone-options" autocomplete="off"' : key === "reminderAgeMonths" ? 'min="1" max="24" step="1"' : ""} required />
       ${key === "timeZone" ? '<datalist id="cam-time-zone-options"><option value="Asia/Ho_Chi_Minh"><option value="Asia/Bangkok"><option value="Asia/Singapore"><option value="Asia/Tokyo"><option value="Europe/London"><option value="America/New_York"><option value="America/Los_Angeles"><option value="Australia/Sydney"></datalist>' : ""}
       <p class="time-rule-error" id="time-rule-error" role="alert" hidden></p>
-      <div class="sheet-actions two"><button class="sheet-secondary" id="cancel-time-rule" type="button">Cancel</button><button class="sheet-primary" id="save-time-rule" type="button">Save time</button></div>
+      <div class="sheet-actions two"><button class="sheet-secondary" id="cancel-time-rule" type="button">Cancel</button><button class="sheet-primary" id="save-time-rule" type="button">Save</button></div>
     `);
     $("#cancel-time-rule").addEventListener("click", closeSheet);
     $("#save-time-rule").addEventListener("click", () => {
       if (!requireParentMutation()) return;
-      const value = $("#time-rule-input").value;
-      const nextRules = { ...timeRules(), [key]: value };
+      const rawValue = $("#time-rule-input").value;
+      const value = key === "reminderAgeMonths" ? Number(rawValue) : rawValue;
+      const nextRules = { ...timeRules(), ...(key === "reminderAgeMonths" ? {} : { [key]: value }) };
       const error = $("#time-rule-error");
       let validTimeZone = true;
       if (key === "timeZone") {
@@ -2478,7 +2545,9 @@
       }
       if (key === "timeZone" && !validTimeZone) {
         error.textContent = "Choose a valid IANA time zone.";
-      } else if (key !== "timeZone" && !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+      } else if (key === "reminderAgeMonths" && (!rawValue || !Number.isInteger(value) || value < 1 || value > 24)) {
+        error.textContent = "Choose an age from 1 to 24 months.";
+      } else if (key !== "timeZone" && key !== "reminderAgeMonths" && !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
         error.textContent = "Choose a valid time.";
       } else if (nextRules.daytimeStart === nextRules.nighttimeStart) {
         error.textContent = "Daytime and nighttime must begin at different times.";
@@ -2654,6 +2723,15 @@
     status.classList.toggle("is-error", isError);
   }
 
+  function blockNonPhoneObserver() {
+    if (!document.documentElement.classList.contains("non-phone-device")) return false;
+    currentRole = "observer";
+    syncReady = false;
+    document.body.classList.add("observer-device-blocked");
+    $("#phone-only-switch-access").focus();
+    return true;
+  }
+
   async function openSyncedApp(user, role = "parent") {
     setGateStatus("Loading Cam’s care records…");
     currentUser = user;
@@ -2684,6 +2762,7 @@
         return;
       }
       if (session.authenticated) {
+        if (session.role === "observer" && blockNonPhoneObserver()) return;
         await openSyncedApp(session.user, session.role);
         return;
       }
@@ -2706,6 +2785,7 @@
         body: JSON.stringify({ username: "traph", password })
       });
       $("#sync-password").value = "";
+      if (session.role === "observer" && blockNonPhoneObserver()) return;
       if (session.role === "observer") await showObserverWelcome();
       await openSyncedApp(session.user, session.role);
     } catch (error) {
@@ -2730,6 +2810,7 @@
   bindGlobalEvents();
   window.addEventListener("resize", layoutComparisonPins);
   $("#sync-access-form").addEventListener("submit", submitLogin);
+  $("#phone-only-switch-access").addEventListener("click", signOutLittleLog);
   initializeSync();
   window.addEventListener("online", () => syncSnapshot());
   window.addEventListener("focus", () => {
@@ -2755,6 +2836,7 @@
     }
     renderLastFeed();
     renderVitaminDReminder();
+    renderAfternoonCareReminder();
     if (state.activeSessions?.sleep) renderCharts();
   }, 30000);
   setInterval(refreshFromServer, 45000);

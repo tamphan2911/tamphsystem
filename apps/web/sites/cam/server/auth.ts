@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 const CAM_SESSION_COOKIE = "cam_family_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 90;
@@ -30,6 +30,11 @@ function safeEqual(left: string, right: string) {
 }
 
 export type CamRole = "parent" | "observer";
+
+export function isCamPhoneUserAgent(userAgent: string) {
+  return /iPhone|iPod|Android.*Mobile|Windows Phone|BlackBerry|BB10|Opera Mini|IEMobile/i.test(userAgent)
+    && !/iPad|Tablet/i.test(userAgent);
+}
 
 function createSessionToken(secret: string, userId: string, role: CamRole) {
   const payload = Buffer.from(
@@ -71,12 +76,17 @@ export function camAuthIsConfigured() {
   return configuration().ready;
 }
 
-export async function hasCamSession() {
+export async function hasCamSession(options: { allowObserverNonPhone?: boolean } = {}) {
   const config = configuration();
   if (!config.ready) return null;
 
   const token = (await cookies()).get(CAM_SESSION_COOKIE)?.value;
-  return token ? verifySessionToken(token, config.sessionSecret) : null;
+  const session = token ? verifySessionToken(token, config.sessionSecret) : null;
+  if (session?.role === "observer" && !options.allowObserverNonPhone) {
+    const userAgent = (await headers()).get("user-agent") ?? "";
+    if (!isCamPhoneUserAgent(userAgent)) return null;
+  }
+  return session;
 }
 
 export async function createCamSession(userId: string, role: CamRole = "parent") {
